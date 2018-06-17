@@ -95,7 +95,7 @@
     "UpdateUserAttributes": "<p>Allows a user to update a specific attribute (one at a time).</p>",
     "UpdateUserPool": "<p>Updates the specified user pool with the specified attributes.</p>",
     "UpdateUserPoolClient": "<p>Allows the developer to update the specified user pool client and password policy.</p>",
-    "VerifySoftwareToken": "<p>Use this API to register a user's entered TOTP code and mark the user's software token MFA status as \"verified\" if successful,</p>",
+    "VerifySoftwareToken": "<p>Use this API to register a user's entered TOTP code and mark the user's software token MFA status as \"verified\" if successful. The request takes an access token or a session string, but not both.</p>",
     "VerifyUserAttribute": "<p>Verifies the specified user attributes in the user pool.</p>"
   },
   "shapes": {
@@ -460,7 +460,8 @@
         "NotifyConfigurationType$SourceArn": "<p>The Amazon Resource Name (ARN) of the identity that is associated with the sending authorization policy. It permits Amazon Cognito to send for the email address specified in the <code>From</code> parameter.</p>",
         "SmsConfigurationType$SnsCallerArn": "<p>The Amazon Resource Name (ARN) of the Amazon Simple Notification Service (SNS) caller.</p>",
         "UpdateGroupRequest$RoleArn": "<p>The new role ARN for the group. This is used for setting the <code>cognito:roles</code> and <code>cognito:preferred_role</code> claims in the token.</p>",
-        "UserImportJobType$CloudWatchLogsRoleArn": "<p>The role ARN for the Amazon CloudWatch Logging role for the user import job. For more information, see \"Creating the CloudWatch Logs IAM Role\" in the Amazon Cognito Developer Guide.</p>"
+        "UserImportJobType$CloudWatchLogsRoleArn": "<p>The role ARN for the Amazon CloudWatch Logging role for the user import job. For more information, see \"Creating the CloudWatch Logs IAM Role\" in the Amazon Cognito Developer Guide.</p>",
+        "UserPoolType$Arn": "<p>The Amazon Resource Name (ARN) for the user pool.</p>"
       }
     },
     "AssociateSoftwareTokenRequest": {
@@ -597,7 +598,7 @@
         "SMSMfaSettingsType$Enabled": "<p>Specifies whether SMS text message MFA is enabled.</p>",
         "SMSMfaSettingsType$PreferredMfa": "<p>The preferred MFA method.</p>",
         "SchemaAttributeType$DeveloperOnlyAttribute": "<p>Specifies whether the attribute type is developer only.</p>",
-        "SchemaAttributeType$Mutable": "<p>Specifies whether the attribute can be changed once it has been created.</p>",
+        "SchemaAttributeType$Mutable": "<p>Specifies whether the value of the attribute can be changed.</p>",
         "SchemaAttributeType$Required": "<p>Specifies whether a user pool attribute is required. If the attribute is required and the user does not provide a value, registration or sign-in will fail.</p>",
         "SignUpResponse$UserConfirmed": "<p>A response from the server indicating that a user registration has been confirmed.</p>",
         "SoftwareTokenMfaConfigType$Enabled": "<p>Specifies whether software token MFA is enabled.</p>",
@@ -624,9 +625,9 @@
     "CallbackURLsListType": {
       "base": null,
       "refs": {
-        "CreateUserPoolClientRequest$CallbackURLs": "<p>A list of allowed callback URLs for the identity providers.</p>",
-        "UpdateUserPoolClientRequest$CallbackURLs": "<p>A list of allowed callback URLs for the identity providers.</p>",
-        "UserPoolClientType$CallbackURLs": "<p>A list of allowed callback URLs for the identity providers.</p>"
+        "CreateUserPoolClientRequest$CallbackURLs": "<p>A list of allowed redirect (callback) URLs for the identity providers.</p> <p>A redirect URI must:</p> <ul> <li> <p>Be an absolute URI.</p> </li> <li> <p>Be registered with the authorization server.</p> </li> <li> <p>Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).</p> </li> <li> <p>Not include a fragment component.</p> </li> </ul> <p>See <a href=\"https://tools.ietf.org/html/rfc6749#section-3.1.2\">OAuth 2.0 - Redirection Endpoint</a>.</p>",
+        "UpdateUserPoolClientRequest$CallbackURLs": "<p>A list of allowed redirect (callback) URLs for the identity providers.</p> <p>A redirect URI must:</p> <ul> <li> <p>Be an absolute URI.</p> </li> <li> <p>Be registered with the authorization server.</p> </li> <li> <p>Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).</p> </li> <li> <p>Not include a fragment component.</p> </li> </ul> <p>See <a href=\"https://tools.ietf.org/html/rfc6749#section-3.1.2\">OAuth 2.0 - Redirection Endpoint</a>.</p>",
+        "UserPoolClientType$CallbackURLs": "<p>A list of allowed redirect (callback) URLs for the identity providers.</p> <p>A redirect URI must:</p> <ul> <li> <p>Be an absolute URI.</p> </li> <li> <p>Be registered with the authorization server.</p> </li> <li> <p>Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).</p> </li> <li> <p>Not include a fragment component.</p> </li> </ul> <p>See <a href=\"https://tools.ietf.org/html/rfc6749#section-3.1.2\">OAuth 2.0 - Redirection Endpoint</a>.</p>"
       }
     },
     "ChallengeName": {
@@ -638,7 +639,7 @@
     "ChallengeNameType": {
       "base": null,
       "refs": {
-        "AdminInitiateAuthResponse$ChallengeName": "<p>The name of the challenge which you are responding to with this call. This is returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge.</p> <ul> <li> <p> <code>SMS_MFA</code>: Next challenge is to supply an <code>SMS_MFA_CODE</code>, delivered via SMS.</p> </li> <li> <p> <code>PASSWORD_VERIFIER</code>: Next challenge is to supply <code>PASSWORD_CLAIM_SIGNATURE</code>, <code>PASSWORD_CLAIM_SECRET_BLOCK</code>, and <code>TIMESTAMP</code> after the client-side SRP calculations.</p> </li> <li> <p> <code>CUSTOM_CHALLENGE</code>: This is returned if your custom authentication flow determines that the user should pass another challenge before tokens are issued.</p> </li> <li> <p> <code>DEVICE_SRP_AUTH</code>: If device tracking was enabled on your user pool and the previous challenges were passed, this challenge is returned so that Amazon Cognito can start tracking this device.</p> </li> <li> <p> <code>DEVICE_PASSWORD_VERIFIER</code>: Similar to <code>PASSWORD_VERIFIER</code>, but for devices only.</p> </li> <li> <p> <code>ADMIN_NO_SRP_AUTH</code>: This is returned if you need to authenticate with <code>USERNAME</code> and <code>PASSWORD</code> directly. An app client must be enabled to use this flow.</p> </li> <li> <p> <code>NEW_PASSWORD_REQUIRED</code>: For users which are required to change their passwords after successful first login. This challenge should be passed with <code>NEW_PASSWORD</code> and any other required attributes.</p> </li> </ul>",
+        "AdminInitiateAuthResponse$ChallengeName": "<p>The name of the challenge which you are responding to with this call. This is returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge.</p> <ul> <li> <p> <code>MFA_SETUP</code>: If MFA is required, users who do not have at least one of the MFA methods set up are presented with an <code>MFA_SETUP</code> challenge. The user must set up at least one MFA type to continue to authenticate.</p> </li> <li> <p> <code>SELECT_MFA_TYPE</code>: Selects the MFA type. Valid MFA options are <code>SMS_MFA</code> for text SMS MFA, and <code>SOFTWARE_TOKEN_MFA</code> for TOTP software token MFA.</p> </li> <li> <p> <code>SMS_MFA</code>: Next challenge is to supply an <code>SMS_MFA_CODE</code>, delivered via SMS.</p> </li> <li> <p> <code>PASSWORD_VERIFIER</code>: Next challenge is to supply <code>PASSWORD_CLAIM_SIGNATURE</code>, <code>PASSWORD_CLAIM_SECRET_BLOCK</code>, and <code>TIMESTAMP</code> after the client-side SRP calculations.</p> </li> <li> <p> <code>CUSTOM_CHALLENGE</code>: This is returned if your custom authentication flow determines that the user should pass another challenge before tokens are issued.</p> </li> <li> <p> <code>DEVICE_SRP_AUTH</code>: If device tracking was enabled on your user pool and the previous challenges were passed, this challenge is returned so that Amazon Cognito can start tracking this device.</p> </li> <li> <p> <code>DEVICE_PASSWORD_VERIFIER</code>: Similar to <code>PASSWORD_VERIFIER</code>, but for devices only.</p> </li> <li> <p> <code>ADMIN_NO_SRP_AUTH</code>: This is returned if you need to authenticate with <code>USERNAME</code> and <code>PASSWORD</code> directly. An app client must be enabled to use this flow.</p> </li> <li> <p> <code>NEW_PASSWORD_REQUIRED</code>: For users which are required to change their passwords after successful first login. This challenge should be passed with <code>NEW_PASSWORD</code> and any other required attributes.</p> </li> </ul>",
         "AdminRespondToAuthChallengeRequest$ChallengeName": "<p>The challenge name. For more information, see .</p>",
         "AdminRespondToAuthChallengeResponse$ChallengeName": "<p>The name of the challenge. For more information, see .</p>",
         "InitiateAuthResponse$ChallengeName": "<p>The name of the challenge which you are responding to with this call. This is returned to you in the <code>AdminInitiateAuth</code> response if you need to pass another challenge.</p> <p>Valid values include the following. Note that all of these challenges require <code>USERNAME</code> and <code>SECRET_HASH</code> (if applicable) in the parameters.</p> <ul> <li> <p> <code>SMS_MFA</code>: Next challenge is to supply an <code>SMS_MFA_CODE</code>, delivered via SMS.</p> </li> <li> <p> <code>PASSWORD_VERIFIER</code>: Next challenge is to supply <code>PASSWORD_CLAIM_SIGNATURE</code>, <code>PASSWORD_CLAIM_SECRET_BLOCK</code>, and <code>TIMESTAMP</code> after the client-side SRP calculations.</p> </li> <li> <p> <code>CUSTOM_CHALLENGE</code>: This is returned if your custom authentication flow determines that the user should pass another challenge before tokens are issued.</p> </li> <li> <p> <code>DEVICE_SRP_AUTH</code>: If device tracking was enabled on your user pool and the previous challenges were passed, this challenge is returned so that Amazon Cognito can start tracking this device.</p> </li> <li> <p> <code>DEVICE_PASSWORD_VERIFIER</code>: Similar to <code>PASSWORD_VERIFIER</code>, but for devices only.</p> </li> <li> <p> <code>NEW_PASSWORD_REQUIRED</code>: For users which are required to change their passwords after successful first login. This challenge should be passed with <code>NEW_PASSWORD</code> and any other required attributes.</p> </li> </ul>",
@@ -1583,7 +1584,7 @@
     "IntegerType": {
       "base": null,
       "refs": {
-        "AuthenticationResultType$ExpiresIn": "<p>The expiration period of the authentication result.</p>",
+        "AuthenticationResultType$ExpiresIn": "<p>The expiration period of the authentication result in seconds.</p>",
         "UserPoolType$EstimatedNumberOfUsers": "<p>A number estimating the size of the user pool.</p>"
       }
     },
@@ -1638,7 +1639,7 @@
         "CreateUserPoolRequest$LambdaConfig": "<p>The Lambda trigger configuration information for the new user pool.</p> <note> <p>In a push model, event sources (such as Amazon S3 and custom applications) need permission to invoke a function. So you will need to make an extra call to add permission for these event sources to invoke your Lambda function.</p> <p/> <p>For more information on using the Lambda API to add permission, see <a href=\"https://docs.aws.amazon.com/lambda/latest/dg/API_AddPermission.html\"> AddPermission </a>. </p> <p>For adding permission using the AWS CLI, see <a href=\"https://docs.aws.amazon.com/cli/latest/reference/lambda/add-permission.html\"> add-permission </a>.</p> </note>",
         "UpdateUserPoolRequest$LambdaConfig": "<p>The AWS Lambda configuration information from the request to update the user pool.</p>",
         "UserPoolDescriptionType$LambdaConfig": "<p>The AWS Lambda configuration information in a user pool description.</p>",
-        "UserPoolType$LambdaConfig": "<p>The AWS Lambda triggers associated with tue user pool.</p>"
+        "UserPoolType$LambdaConfig": "<p>The AWS Lambda triggers associated with the user pool.</p>"
       }
     },
     "LimitExceededException": {
@@ -2039,10 +2040,10 @@
       "base": null,
       "refs": {
         "CallbackURLsListType$member": null,
-        "CreateUserPoolClientRequest$DefaultRedirectURI": "<p>The default redirect URI. Must be in the <code>CallbackURLs</code> list.</p>",
+        "CreateUserPoolClientRequest$DefaultRedirectURI": "<p>The default redirect URI. Must be in the <code>CallbackURLs</code> list.</p> <p>A redirect URI must:</p> <ul> <li> <p>Be an absolute URI.</p> </li> <li> <p>Be registered with the authorization server.</p> </li> <li> <p>Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).</p> </li> <li> <p>Not include a fragment component.</p> </li> </ul> <p>See <a href=\"https://tools.ietf.org/html/rfc6749#section-3.1.2\">OAuth 2.0 - Redirection Endpoint</a>.</p>",
         "LogoutURLsListType$member": null,
-        "UpdateUserPoolClientRequest$DefaultRedirectURI": "<p>The default redirect URI. Must be in the <code>CallbackURLs</code> list.</p>",
-        "UserPoolClientType$DefaultRedirectURI": "<p>The default redirect URI. Must be in the <code>CallbackURLs</code> list.</p>"
+        "UpdateUserPoolClientRequest$DefaultRedirectURI": "<p>The default redirect URI. Must be in the <code>CallbackURLs</code> list.</p> <p>A redirect URI must:</p> <ul> <li> <p>Be an absolute URI.</p> </li> <li> <p>Be registered with the authorization server.</p> </li> <li> <p>Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).</p> </li> <li> <p>Not include a fragment component.</p> </li> </ul> <p>See <a href=\"https://tools.ietf.org/html/rfc6749#section-3.1.2\">OAuth 2.0 - Redirection Endpoint</a>.</p>",
+        "UserPoolClientType$DefaultRedirectURI": "<p>The default redirect URI. Must be in the <code>CallbackURLs</code> list.</p> <p>A redirect URI must:</p> <ul> <li> <p>Be an absolute URI.</p> </li> <li> <p>Be registered with the authorization server.</p> </li> <li> <p>Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).</p> </li> <li> <p>Not include a fragment component.</p> </li> </ul> <p>See <a href=\"https://tools.ietf.org/html/rfc6749#section-3.1.2\">OAuth 2.0 - Redirection Endpoint</a>.</p>"
       }
     },
     "RefreshTokenValidityType": {

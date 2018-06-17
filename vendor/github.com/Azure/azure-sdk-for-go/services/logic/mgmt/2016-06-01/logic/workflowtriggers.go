@@ -21,6 +21,7 @@ import (
 	"context"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/validation"
 	"net/http"
 )
 
@@ -98,6 +99,75 @@ func (client WorkflowTriggersClient) GetSender(req *http.Request) (*http.Respons
 // GetResponder handles the response to the Get request. The method always
 // closes the http.Response Body.
 func (client WorkflowTriggersClient) GetResponder(resp *http.Response) (result WorkflowTrigger, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetSchemaJSON get the trigger schema as JSON.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// triggerName - the workflow trigger name.
+func (client WorkflowTriggersClient) GetSchemaJSON(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (result JSONSchema, err error) {
+	req, err := client.GetSchemaJSONPreparer(ctx, resourceGroupName, workflowName, triggerName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "GetSchemaJSON", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetSchemaJSONSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "GetSchemaJSON", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetSchemaJSONResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "GetSchemaJSON", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetSchemaJSONPreparer prepares the GetSchemaJSON request.
+func (client WorkflowTriggersClient) GetSchemaJSONPreparer(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"triggerName":       autorest.Encode("path", triggerName),
+		"workflowName":      autorest.Encode("path", workflowName),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/triggers/{triggerName}/schemas/json", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetSchemaJSONSender sends the GetSchemaJSON request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkflowTriggersClient) GetSchemaJSONSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// GetSchemaJSONResponder handles the response to the GetSchemaJSON request. The method always
+// closes the http.Response Body.
+func (client WorkflowTriggersClient) GetSchemaJSONResponder(resp *http.Response) (result JSONSchema, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -211,7 +281,7 @@ func (client WorkflowTriggersClient) ListComplete(ctx context.Context, resourceG
 	return
 }
 
-// ListCallbackURL gets the callback URL for a workflow trigger.
+// ListCallbackURL get the callback URL for a workflow trigger.
 // Parameters:
 // resourceGroupName - the resource group name.
 // workflowName - the workflow name.
@@ -277,6 +347,74 @@ func (client WorkflowTriggersClient) ListCallbackURLResponder(resp *http.Respons
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// Reset resets a workflow trigger.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// triggerName - the workflow trigger name.
+func (client WorkflowTriggersClient) Reset(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (result autorest.Response, err error) {
+	req, err := client.ResetPreparer(ctx, resourceGroupName, workflowName, triggerName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "Reset", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ResetSender(req)
+	if err != nil {
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "Reset", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ResetResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "Reset", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ResetPreparer prepares the Reset request.
+func (client WorkflowTriggersClient) ResetPreparer(ctx context.Context, resourceGroupName string, workflowName string, triggerName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"triggerName":       autorest.Encode("path", triggerName),
+		"workflowName":      autorest.Encode("path", workflowName),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/triggers/{triggerName}/reset", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ResetSender sends the Reset request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkflowTriggersClient) ResetSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ResetResponder handles the response to the Reset request. The method always
+// closes the http.Response Body.
+func (client WorkflowTriggersClient) ResetResponder(resp *http.Response) (result autorest.Response, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByClosing())
+	result.Response = resp
 	return
 }
 
@@ -346,5 +484,82 @@ func (client WorkflowTriggersClient) RunResponder(resp *http.Response) (result S
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// SetState sets the state of a workflow trigger.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// triggerName - the workflow trigger name.
+// setState - the workflow trigger state.
+func (client WorkflowTriggersClient) SetState(ctx context.Context, resourceGroupName string, workflowName string, triggerName string, setState SetTriggerStateActionDefinition) (result autorest.Response, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: setState,
+			Constraints: []validation.Constraint{{Target: "setState.Source", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("logic.WorkflowTriggersClient", "SetState", err.Error())
+	}
+
+	req, err := client.SetStatePreparer(ctx, resourceGroupName, workflowName, triggerName, setState)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "SetState", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.SetStateSender(req)
+	if err != nil {
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "SetState", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.SetStateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowTriggersClient", "SetState", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// SetStatePreparer prepares the SetState request.
+func (client WorkflowTriggersClient) SetStatePreparer(ctx context.Context, resourceGroupName string, workflowName string, triggerName string, setState SetTriggerStateActionDefinition) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"triggerName":       autorest.Encode("path", triggerName),
+		"workflowName":      autorest.Encode("path", workflowName),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/triggers/{triggerName}/setState", pathParameters),
+		autorest.WithJSON(setState),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// SetStateSender sends the SetState request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkflowTriggersClient) SetStateSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// SetStateResponder handles the response to the SetState request. The method always
+// closes the http.Response Body.
+func (client WorkflowTriggersClient) SetStateResponder(resp *http.Response) (result autorest.Response, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByClosing())
+	result.Response = resp
 	return
 }

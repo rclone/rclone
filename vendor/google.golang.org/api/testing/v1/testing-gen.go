@@ -1601,6 +1601,38 @@ func (s *Orientation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ProvidedSoftwareCatalog: The currently provided software environment
+// on the devices under test.
+type ProvidedSoftwareCatalog struct {
+	// OrchestratorVersion: A string representing the current version of
+	// Android Test Orchestrator that
+	// is provided by TestExecutionService. Example: "1.0.2 beta"
+	OrchestratorVersion string `json:"orchestratorVersion,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OrchestratorVersion")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OrchestratorVersion") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ProvidedSoftwareCatalog) MarshalJSON() ([]byte, error) {
+	type NoMethod ProvidedSoftwareCatalog
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // RegularFile: A file or directory to install on the device before the
 // test starts
 type RegularFile struct {
@@ -1889,6 +1921,10 @@ type TestEnvironmentCatalog struct {
 	// NetworkConfigurationCatalog: Supported network configurations
 	NetworkConfigurationCatalog *NetworkConfigurationCatalog `json:"networkConfigurationCatalog,omitempty"`
 
+	// SoftwareCatalog: The software test environment provided by
+	// TestExecutionService.
+	SoftwareCatalog *ProvidedSoftwareCatalog `json:"softwareCatalog,omitempty"`
+
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
@@ -2103,11 +2139,18 @@ type TestMatrix struct {
 	// allowed.
 	//   "TEST_ONLY_APK" - The APK is marked as "testOnly".
 	// NOT USED
+	//   "MALFORMED_IPA" - The input IPA could not be parsed.
+	// NOT USED
 	//   "NO_CODE_APK" - APK contains no code.
 	// See
 	// also
 	// https://developer.android.com/guide/topics/manifest/application-e
 	// lement.html#code
+	//   "INVALID_INPUT_APK" - Either the provided input APK path was
+	// malformed,
+	// the APK file does not exist, or the user does not have permission
+	// to
+	// access the APK file.
 	InvalidMatrixDetails string `json:"invalidMatrixDetails,omitempty"`
 
 	// ProjectId: The cloud project that owns the test matrix.
@@ -3258,7 +3301,8 @@ func (c *TestEnvironmentCatalogGetCall) Do(opts ...googleapi.CallOption) (*TestE
 	//       "enum": [
 	//         "ENVIRONMENT_TYPE_UNSPECIFIED",
 	//         "ANDROID",
-	//         "NETWORK_CONFIGURATION"
+	//         "NETWORK_CONFIGURATION",
+	//         "PROVIDED_SOFTWARE"
 	//       ],
 	//       "location": "path",
 	//       "required": true,

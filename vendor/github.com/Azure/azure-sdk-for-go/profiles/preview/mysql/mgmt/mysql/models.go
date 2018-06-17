@@ -87,6 +87,16 @@ const (
 	SslEnforcementEnumEnabled  SslEnforcementEnum = original.SslEnforcementEnumEnabled
 )
 
+type VirtualNetworkRuleState = original.VirtualNetworkRuleState
+
+const (
+	Deleting     VirtualNetworkRuleState = original.Deleting
+	Initializing VirtualNetworkRuleState = original.Initializing
+	InProgress   VirtualNetworkRuleState = original.InProgress
+	Ready        VirtualNetworkRuleState = original.Ready
+	Unknown      VirtualNetworkRuleState = original.Unknown
+)
+
 type Configuration = original.Configuration
 type ConfigurationListResult = original.ConfigurationListResult
 type ConfigurationProperties = original.ConfigurationProperties
@@ -130,8 +140,16 @@ type ServerUpdateParametersProperties = original.ServerUpdateParametersPropertie
 type Sku = original.Sku
 type StorageProfile = original.StorageProfile
 type TrackedResource = original.TrackedResource
+type VirtualNetworkRule = original.VirtualNetworkRule
+type VirtualNetworkRuleListResult = original.VirtualNetworkRuleListResult
+type VirtualNetworkRuleListResultIterator = original.VirtualNetworkRuleListResultIterator
+type VirtualNetworkRuleListResultPage = original.VirtualNetworkRuleListResultPage
+type VirtualNetworkRuleProperties = original.VirtualNetworkRuleProperties
+type VirtualNetworkRulesCreateOrUpdateFuture = original.VirtualNetworkRulesCreateOrUpdateFuture
+type VirtualNetworkRulesDeleteFuture = original.VirtualNetworkRulesDeleteFuture
 type OperationsClient = original.OperationsClient
 type ServersClient = original.ServersClient
+type VirtualNetworkRulesClient = original.VirtualNetworkRulesClient
 
 func NewCheckNameAvailabilityClient(subscriptionID string) CheckNameAvailabilityClient {
 	return original.NewCheckNameAvailabilityClient(subscriptionID)
@@ -196,6 +214,9 @@ func PossibleSkuTierValues() []SkuTier {
 func PossibleSslEnforcementEnumValues() []SslEnforcementEnum {
 	return original.PossibleSslEnforcementEnumValues()
 }
+func PossibleVirtualNetworkRuleStateValues() []VirtualNetworkRuleState {
+	return original.PossibleVirtualNetworkRuleStateValues()
+}
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
@@ -213,4 +234,10 @@ func UserAgent() string {
 }
 func Version() string {
 	return original.Version()
+}
+func NewVirtualNetworkRulesClient(subscriptionID string) VirtualNetworkRulesClient {
+	return original.NewVirtualNetworkRulesClient(subscriptionID)
+}
+func NewVirtualNetworkRulesClientWithBaseURI(baseURI string, subscriptionID string) VirtualNetworkRulesClient {
+	return original.NewVirtualNetworkRulesClientWithBaseURI(baseURI, subscriptionID)
 }

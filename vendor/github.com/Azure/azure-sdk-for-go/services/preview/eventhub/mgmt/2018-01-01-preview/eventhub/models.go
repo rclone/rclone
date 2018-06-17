@@ -288,12 +288,11 @@ type ClusterSku struct {
 // ClustersPatchFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersPatchFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ClustersPatchFuture) Result(client ClustersClient) (c Cluster, err error) {
+func (future *ClustersPatchFuture) Result(client ClustersClient) (c Cluster, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -301,34 +300,15 @@ func (future ClustersPatchFuture) Result(client ClustersClient) (c Cluster, err 
 		return
 	}
 	if !done {
-		return c, azure.NewAsyncOpIncompleteError("eventhub.ClustersPatchFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		c, err = client.PatchResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "eventhub.ClustersPatchFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("eventhub.ClustersPatchFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if c.Response.Response, err = future.GetResult(sender); err == nil && c.Response.Response.StatusCode != http.StatusNoContent {
+		c, err = client.PatchResponder(c.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "eventhub.ClustersPatchFuture", "Result", c.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventhub.ClustersPatchFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	c, err = client.PatchResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventhub.ClustersPatchFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

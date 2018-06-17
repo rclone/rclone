@@ -722,6 +722,14 @@ type ObjectAttrs struct {
 	// encryption in Google Cloud Storage.
 	CustomerKeySHA256 string
 
+	// Cloud KMS key name, in the form
+	// projects/P/locations/L/keyRings/R/cryptoKeys/K, used to encrypt this object,
+	// if the object is encrypted by such a key.
+	//
+	// Providing both a KMSKeyName and a customer-supplied encryption key (via
+	// ObjectHandle.Key) will result in an error when writing an object.
+	KMSKeyName string
+
 	// Prefix is set only for ObjectAttrs which represent synthetic "directory
 	// entries" when iterating over buckets using Query.Delimiter. See
 	// ObjectIterator.Next. When set, no other fields in ObjectAttrs will be
@@ -779,6 +787,7 @@ func newObject(o *raw.Object) *ObjectAttrs {
 		Metageneration:     o.Metageneration,
 		StorageClass:       o.StorageClass,
 		CustomerKeySHA256:  sha256,
+		KMSKeyName:         o.KmsKeyName,
 		Created:            convertTime(o.TimeCreated),
 		Deleted:            convertTime(o.TimeDeleted),
 		Updated:            convertTime(o.Updated),

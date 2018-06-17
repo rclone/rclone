@@ -108,15 +108,17 @@ func (client ManagedClustersClient) CreateOrUpdatePreparer(ctx context.Context, 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagedClustersClient) CreateOrUpdateSender(req *http.Request) (future ManagedClustersCreateOrUpdateFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -177,15 +179,17 @@ func (client ManagedClustersClient) DeletePreparer(ctx context.Context, resource
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagedClustersClient) DeleteSender(req *http.Request) (future ManagedClustersDeleteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -268,8 +272,77 @@ func (client ManagedClustersClient) GetResponder(resp *http.Response) (result Ma
 	return
 }
 
-// GetAccessProfiles gets the accessProfile for the specified role name of the managed cluster with a specified
-// resource group and name.
+// GetAccessProfile gets the accessProfile for the specified role name of the managed cluster with a specified resource
+// group and name.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// resourceName - the name of the managed cluster resource.
+// roleName - the name of the role for managed cluster accessProfile resource.
+func (client ManagedClustersClient) GetAccessProfile(ctx context.Context, resourceGroupName string, resourceName string, roleName string) (result ManagedClusterAccessProfile, err error) {
+	req, err := client.GetAccessProfilePreparer(ctx, resourceGroupName, resourceName, roleName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersClient", "GetAccessProfile", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetAccessProfileSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersClient", "GetAccessProfile", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetAccessProfileResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "containerservice.ManagedClustersClient", "GetAccessProfile", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetAccessProfilePreparer prepares the GetAccessProfile request.
+func (client ManagedClustersClient) GetAccessProfilePreparer(ctx context.Context, resourceGroupName string, resourceName string, roleName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"resourceName":      autorest.Encode("path", resourceName),
+		"roleName":          autorest.Encode("path", roleName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-08-31"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ContainerService/managedClusters/{resourceName}/accessProfiles/{roleName}/listCredential", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetAccessProfileSender sends the GetAccessProfile request. The method will close the
+// http.Response Body if it receives an error.
+func (client ManagedClustersClient) GetAccessProfileSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// GetAccessProfileResponder handles the response to the GetAccessProfile request. The method always
+// closes the http.Response Body.
+func (client ManagedClustersClient) GetAccessProfileResponder(resp *http.Response) (result ManagedClusterAccessProfile, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetAccessProfiles use ManagedClusters_GetAccessProfile instead.
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // resourceName - the name of the managed cluster resource.

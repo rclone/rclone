@@ -26,8 +26,8 @@ import (
 )
 
 // CheckNameAvailabilityClient is the the Microsoft Azure management API provides create, read, update, and delete
-// functionality for Azure PostgreSQL resources including servers, databases, firewall rules, log files and
-// configurations with new business model.
+// functionality for Azure PostgreSQL resources including servers, databases, firewall rules, VNET rules, security
+// alert policies, log files and configurations with new business model.
 type CheckNameAvailabilityClient struct {
 	BaseClient
 }

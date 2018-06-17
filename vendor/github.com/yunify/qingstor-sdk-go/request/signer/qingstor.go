@@ -87,7 +87,7 @@ func (qss *QingStorSigner) BuildSignature(request *http.Request) (string, error)
 
 	logger.Debugf(nil, fmt.Sprintf(
 		"QingStor authorization: [%d] %s",
-		convert.StringToUnixTimestamp(request.Header.Get("Date"), convert.RFC822),
+		convert.StringToTimestamp(request.Header.Get("Date"), convert.RFC822),
 		authorization,
 	))
 
@@ -113,7 +113,7 @@ func (qss *QingStorSigner) BuildQuerySignature(request *http.Request, expires in
 
 	logger.Debugf(nil, fmt.Sprintf(
 		"QingStor query signature: [%d] %s",
-		convert.StringToUnixTimestamp(request.Header.Get("Date"), convert.RFC822),
+		convert.StringToTimestamp(request.Header.Get("Date"), convert.RFC822),
 		query,
 	))
 
@@ -143,7 +143,7 @@ func (qss *QingStorSigner) BuildStringToSign(request *http.Request) (string, err
 
 	logger.Debugf(nil, fmt.Sprintf(
 		"QingStor string to sign: [%d] %s",
-		convert.StringToUnixTimestamp(request.Header.Get("Date"), convert.RFC822),
+		convert.StringToTimestamp(request.Header.Get("Date"), convert.RFC822),
 		stringToSign,
 	))
 
@@ -169,7 +169,7 @@ func (qss *QingStorSigner) BuildQueryStringToSign(request *http.Request, expires
 
 	logger.Debugf(nil, fmt.Sprintf(
 		"QingStor query string to sign: [%d] %s",
-		convert.StringToUnixTimestamp(request.Header.Get("Date"), convert.RFC822),
+		convert.StringToTimestamp(request.Header.Get("Date"), convert.RFC822),
 		stringToSign,
 	))
 
@@ -233,7 +233,7 @@ func (qss *QingStorSigner) buildCanonicalizedResource(request *http.Request) (st
 
 	logger.Debugf(nil, fmt.Sprintf(
 		"QingStor canonicalized resource: [%d] %s",
-		convert.StringToUnixTimestamp(request.Header.Get("Date"), convert.RFC822),
+		convert.StringToTimestamp(request.Header.Get("Date"), convert.RFC822),
 		path,
 	))
 

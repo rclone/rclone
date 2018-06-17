@@ -862,7 +862,7 @@ func (c *ActivitiesListCall) Do(opts ...googleapi.CallOption) (*Activities, erro
 	//     "applicationName": {
 	//       "description": "Application name for which the events are to be retrieved.",
 	//       "location": "path",
-	//       "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)",
+	//       "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)|(meet)",
 	//       "required": true,
 	//       "type": "string"
 	//     },
@@ -1130,7 +1130,7 @@ func (c *ActivitiesWatchCall) Do(opts ...googleapi.CallOption) (*Channel, error)
 	//     "applicationName": {
 	//       "description": "Application name for which the events are to be retrieved.",
 	//       "location": "path",
-	//       "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)",
+	//       "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)|(meet)",
 	//       "required": true,
 	//       "type": "string"
 	//     },

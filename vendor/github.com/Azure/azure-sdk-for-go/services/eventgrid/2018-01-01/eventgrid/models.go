@@ -21,6 +21,33 @@ import (
 	"github.com/Azure/go-autorest/autorest/date"
 )
 
+// JobState enumerates the values for job state.
+type JobState string
+
+const (
+	// Canceled The job was canceled. This is a final state for the job.
+	Canceled JobState = "Canceled"
+	// Canceling The job is in the process of being canceled. This is a transient state for the job.
+	Canceling JobState = "Canceling"
+	// Error The job has encountered an error. This is a final state for the job.
+	Error JobState = "Error"
+	// Finished The job is finished. This is a final state for the job.
+	Finished JobState = "Finished"
+	// Processing The job is processing. This is a transient state for the job.
+	Processing JobState = "Processing"
+	// Queued The job is in a queued state, waiting for resources to become available. This is a transient
+	// state.
+	Queued JobState = "Queued"
+	// Scheduled The job is being scheduled to run on an available resource. This is a transient state, between
+	// queued and processing states.
+	Scheduled JobState = "Scheduled"
+)
+
+// PossibleJobStateValues returns an array of possible values for the JobState const type.
+func PossibleJobStateValues() []JobState {
+	return []JobState{Canceled, Canceling, Error, Finished, Processing, Queued, Scheduled}
+}
+
 // ContainerRegistryEventActor the agent that initiated the event. For most situations, this could be from the
 // authorization context of the request.
 type ContainerRegistryEventActor struct {
@@ -128,7 +155,7 @@ type ContainerRegistryImagePushedEventData struct {
 // DeviceLifeCycleEventProperties schema of the Data property of an EventGridEvent for a device life cycle event
 // (DeviceCreated, DeviceDeleted).
 type DeviceLifeCycleEventProperties struct {
-	// DeviceID - The unique identifier of the device. This case-sensitive string can be up to 128 characters long, and supports ASCII 7-bit alphanumeric characters plus the following special characters: - : . + % _ # * ? ! ( ) , = @ ; $ '.
+	// DeviceID - The unique identifier of the device. This case-sensitive string can be up to 128 characters long, and supports ASCII 7-bit alphanumeric characters plus the following special characters: - : . + % _ &#35; * ? ! ( ) , = @ ; $ '.
 	DeviceID *string `json:"deviceId,omitempty"`
 	// HubName - Name of the IoT Hub where the device was created or deleted.
 	HubName *string `json:"hubName,omitempty"`
@@ -245,7 +272,7 @@ type EventHubCaptureFileCreatedEventData struct {
 
 // IotHubDeviceCreatedEventData event data for Microsoft.Devices.DeviceCreated event.
 type IotHubDeviceCreatedEventData struct {
-	// DeviceID - The unique identifier of the device. This case-sensitive string can be up to 128 characters long, and supports ASCII 7-bit alphanumeric characters plus the following special characters: - : . + % _ # * ? ! ( ) , = @ ; $ '.
+	// DeviceID - The unique identifier of the device. This case-sensitive string can be up to 128 characters long, and supports ASCII 7-bit alphanumeric characters plus the following special characters: - : . + % _ &#35; * ? ! ( ) , = @ ; $ '.
 	DeviceID *string `json:"deviceId,omitempty"`
 	// HubName - Name of the IoT Hub where the device was created or deleted.
 	HubName *string `json:"hubName,omitempty"`
@@ -259,7 +286,7 @@ type IotHubDeviceCreatedEventData struct {
 
 // IotHubDeviceDeletedEventData event data for Microsoft.Devices.DeviceDeleted event.
 type IotHubDeviceDeletedEventData struct {
-	// DeviceID - The unique identifier of the device. This case-sensitive string can be up to 128 characters long, and supports ASCII 7-bit alphanumeric characters plus the following special characters: - : . + % _ # * ? ! ( ) , = @ ; $ '.
+	// DeviceID - The unique identifier of the device. This case-sensitive string can be up to 128 characters long, and supports ASCII 7-bit alphanumeric characters plus the following special characters: - : . + % _ &#35; * ? ! ( ) , = @ ; $ '.
 	DeviceID *string `json:"deviceId,omitempty"`
 	// HubName - Name of the IoT Hub where the device was created or deleted.
 	HubName *string `json:"hubName,omitempty"`
@@ -269,6 +296,15 @@ type IotHubDeviceDeletedEventData struct {
 	OperationTimestamp *string `json:"operationTimestamp,omitempty"`
 	// Twin - Information about the device twin, which is the cloud represenation of application device metadata.
 	Twin *DeviceTwinInfo `json:"twin,omitempty"`
+}
+
+// MediaJobStateChangeEventData schema of the Data property of an EventGridEvent for a
+// Microsoft.Media.JobStateChange event.
+type MediaJobStateChangeEventData struct {
+	// PreviousState - The previous state of the Job. Possible values include: 'Canceled', 'Canceling', 'Error', 'Finished', 'Processing', 'Queued', 'Scheduled'
+	PreviousState JobState `json:"previousState,omitempty"`
+	// State - The new state of the Job. Possible values include: 'Canceled', 'Canceling', 'Error', 'Finished', 'Processing', 'Queued', 'Scheduled'
+	State JobState `json:"state,omitempty"`
 }
 
 // ResourceDeleteCancelData schema of the Data property of an EventGridEvent for an
@@ -435,6 +471,40 @@ type ResourceWriteSuccessData struct {
 	HTTPRequest *string `json:"httpRequest,omitempty"`
 }
 
+// ServiceBusActiveMessagesAvailableWithNoListenersEventData schema of the Data property of an EventGridEvent for a
+// Microsoft.ServiceBus.ActiveMessagesAvailableWithNoListeners event.
+type ServiceBusActiveMessagesAvailableWithNoListenersEventData struct {
+	// NamespaceName - The namespace name of the Microsoft.ServiceBus resource.
+	NamespaceName *string `json:"namespaceName,omitempty"`
+	// RequestURI - The endpoint of the Microsoft.ServiceBus resource.
+	RequestURI *string `json:"requestUri,omitempty"`
+	// EntityType - The entity type of the Microsoft.ServiceBus resource. Could be one of 'queue' or 'subscriber'.
+	EntityType *string `json:"entityType,omitempty"`
+	// QueueName - The name of the Microsoft.ServiceBus queue. If the entity type is of type 'subscriber', then this value will be null.
+	QueueName *string `json:"queueName,omitempty"`
+	// TopicName - The name of the Microsoft.ServiceBus topic. If the entity type is of type 'queue', then this value will be null.
+	TopicName *string `json:"topicName,omitempty"`
+	// SubscriptionName - The name of the Microsoft.ServiceBus topic's subscription. If the entity type is of type 'queue', then this value will be null.
+	SubscriptionName *string `json:"subscriptionName,omitempty"`
+}
+
+// ServiceBusDeadletterMessagesAvailableWithNoListenersEventData schema of the Data property of an EventGridEvent
+// for a Microsoft.ServiceBus.DeadletterMessagesAvailableWithNoListenersEvent event.
+type ServiceBusDeadletterMessagesAvailableWithNoListenersEventData struct {
+	// NamespaceName - The namespace name of the Microsoft.ServiceBus resource.
+	NamespaceName *string `json:"namespaceName,omitempty"`
+	// RequestURI - The endpoint of the Microsoft.ServiceBus resource.
+	RequestURI *string `json:"requestUri,omitempty"`
+	// EntityType - The entity type of the Microsoft.ServiceBus resource. Could be one of 'queue' or 'subscriber'.
+	EntityType *string `json:"entityType,omitempty"`
+	// QueueName - The name of the Microsoft.ServiceBus queue. If the entity type is of type 'subscriber', then this value will be null.
+	QueueName *string `json:"queueName,omitempty"`
+	// TopicName - The name of the Microsoft.ServiceBus topic. If the entity type is of type 'queue', then this value will be null.
+	TopicName *string `json:"topicName,omitempty"`
+	// SubscriptionName - The name of the Microsoft.ServiceBus topic's subscription. If the entity type is of type 'queue', then this value will be null.
+	SubscriptionName *string `json:"subscriptionName,omitempty"`
+}
+
 // StorageBlobCreatedEventData schema of the Data property of an EventGridEvent for an
 // Microsoft.Storage.BlobCreated event.
 type StorageBlobCreatedEventData struct {
@@ -479,4 +549,28 @@ type StorageBlobDeletedEventData struct {
 	Sequencer *string `json:"sequencer,omitempty"`
 	// StorageDiagnostics - For service use only. Diagnostic data occasionally included by the Azure Storage service. This property should be ignored by event consumers.
 	StorageDiagnostics interface{} `json:"storageDiagnostics,omitempty"`
+}
+
+// SubscriptionDeletedEventData schema of the Data property of an EventGridEvent for a
+// Microsoft.EventGrid.SubscriptionDeletedEvent.
+type SubscriptionDeletedEventData struct {
+	// EventSubscriptionID - The Azure resource ID of the deleted event subscription.
+	EventSubscriptionID *string `json:"eventSubscriptionId,omitempty"`
+}
+
+// SubscriptionValidationEventData schema of the Data property of an EventGridEvent for a
+// Microsoft.EventGrid.SubscriptionValidationEvent.
+type SubscriptionValidationEventData struct {
+	// ValidationCode - The validation code sent by Azure Event Grid to validate an event subscription. To complete the validation handshake, the subscriber must either respond with this validation code as part of the validation response, or perform a GET request on the validationUrl (available starting version 2018-05-01-preview).
+	ValidationCode *string `json:"validationCode,omitempty"`
+	// ValidationURL - The validation URL sent by Azure Event Grid (available starting version 2018-05-01-preview). To complete the validation handshake, the subscriber must either respond with the validationCode as part of the validation response, or perform a GET request on the validationUrl (available starting version 2018-05-01-preview).
+	ValidationURL *string `json:"validationUrl,omitempty"`
+}
+
+// SubscriptionValidationResponse to complete an event subscription validation handshake, a subscriber can use
+// either the validationCode or the validationUrl received in a SubscriptionValidationEvent. When the
+// validationCode is used, the SubscriptionValidationResponse can be used to build the response.
+type SubscriptionValidationResponse struct {
+	// ValidationResponse - The validation response sent by the subscriber to Azure Event Grid to complete the validation of an event subscription.
+	ValidationResponse *string `json:"validationResponse,omitempty"`
 }

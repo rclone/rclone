@@ -63,11 +63,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -87,12 +82,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -121,7 +110,7 @@
     "folders": {
       "methods": {
         "create": {
-          "description": "Creates a Folder in the resource hierarchy.\nReturns an Operation which can be used to track the progress of the\nfolder creation workflow.\nUpon success the Operation.response field will be populated with the\ncreated Folder.\n\nIn order to succeed, the addition of this new Folder must not violate\nthe Folder naming, height or fanout constraints.\n\n+ The Folder's display_name must be distinct from all other Folder's that\nshare its parent.\n+ The addition of the Folder must not cause the active Folder hierarchy\nto exceed a height of 4. Note, the full active + deleted Folder hierarchy\nis allowed to reach a height of 8; this provides additional headroom when\nmoving folders that contain deleted folders.\n+ The addition of the Folder must not cause the total number of Folders\nunder its parent to exceed 100.\n\nIf the operation fails due to a folder constraint violation,\na PreconditionFailure explaining the violation will be returned.\nIf the failure occurs synchronously then the PreconditionFailure\nwill be returned via the Status.details field and if it occurs\nasynchronously then the PreconditionFailure will be returned\nvia the the Operation.error field.\n\nThe caller must have `resourcemanager.folders.create` permission on the\nidentified parent.",
+          "description": "Creates a Folder in the resource hierarchy.\nReturns an Operation which can be used to track the progress of the\nfolder creation workflow.\nUpon success the Operation.response field will be populated with the\ncreated Folder.\n\nIn order to succeed, the addition of this new Folder must not violate\nthe Folder naming, height or fanout constraints.\n\n+ The Folder's display_name must be distinct from all other Folder's that\nshare its parent.\n+ The addition of the Folder must not cause the active Folder hierarchy\nto exceed a height of 4. Note, the full active + deleted Folder hierarchy\nis allowed to reach a height of 8; this provides additional headroom when\nmoving folders that contain deleted folders.\n+ The addition of the Folder must not cause the total number of Folders\nunder its parent to exceed 100.\n\nIf the operation fails due to a folder constraint violation, some errors\nmay be returned by the CreateFolder request, with status code\nFAILED_PRECONDITION and an error description. Other folder constraint\nviolations will be communicated in the Operation, with the specific\nPreconditionFailure returned via the details list in the Operation.error\nfield.\n\nThe caller must have `resourcemanager.folders.create` permission on the\nidentified parent.",
           "flatPath": "v2/folders",
           "httpMethod": "POST",
           "id": "cloudresourcemanager.folders.create",
@@ -430,7 +419,7 @@
       }
     }
   },
-  "revision": "20180418",
+  "revision": "20180611",
   "rootUrl": "https://cloudresourcemanager.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -740,7 +729,7 @@
           "type": "string"
         },
         "query": {
-          "description": "Search criteria used to select the Folders to return.\nIf no search criteria is specified then all accessible folders will be\nreturned.\n\nQuery expressions can be used to restrict results based upon displayName,\nlifecycleState and parent, where the operators `=`, `NOT`, `AND` and `OR`\ncan be used along with the suffix wildcard symbol `*`.\n\nSome example queries are:\n\n|Query | Description|\n|----- | -----------|\n|displayName=Test* | Folders whose display name starts with \"Test\".\n|lifecycleState=ACTIVE | Folders whose lifecycleState is ACTIVE.\n|parent=folders/123 | Folders whose parent is \"folders/123\".\n|parent=folders/123 AND lifecycleState=ACTIVE | Active folders whose parent is \"folders/123\".|",
+          "description": "Search criteria used to select the Folders to return.\nIf no search criteria is specified then all accessible folders will be\nreturned.\n\nQuery expressions can be used to restrict results based upon displayName,\nlifecycleState and parent, where the operators `=`, `NOT`, `AND` and `OR`\ncan be used along with the suffix wildcard symbol `*`.\n\nThe displayName field in a query expression should use escaped quotes\nfor values that include whitespace to prevent unexpected behavior.\n\nSome example queries are:\n\n|Query | Description|\n|----- | -----------|\n|displayName=Test* | Folders whose display name starts with \"Test\".|\n|lifecycleState=ACTIVE | Folders whose lifecycleState is ACTIVE.|\n|parent=folders/123 | Folders whose parent is \"folders/123\".|\n|parent=folders/123 AND lifecycleState=ACTIVE | Active folders whose parent is \"folders/123\".|\n|displayName=\\\\\"Test String\\\\\"|Folders whose display name includes both \"Test\" and \"String\".|",
           "type": "string"
         }
       },

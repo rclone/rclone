@@ -29,7 +29,7 @@
   "description": "Creates and runs virtual machines on Google Cloud Platform.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/compute/docs/reference/latest/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/c13ap50TJbrFJ4KI7Spdwypwr3E\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/IurywadF-jE9WvkrxG6q8D7zy7k\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/compute_engine-16.png",
     "x32": "https://www.google.com/images/icons/product/compute_engine-32.png"
@@ -138,7 +138,7 @@
           ]
         },
         "get": {
-          "description": "Returns the specified accelerator type. Gets a list of available accelerator types by making a list() request.",
+          "description": "Returns the specified accelerator type.",
           "httpMethod": "GET",
           "id": "compute.acceleratorTypes.get",
           "parameterOrder": [
@@ -1290,7 +1290,7 @@
           },
           "path": "{project}/global/backendBuckets/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "GlobalSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -2535,7 +2535,7 @@
           },
           "path": "{project}/zones/{zone}/disks/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "ZoneSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -4884,7 +4884,7 @@
           },
           "path": "{project}/zones/{zone}/hosts/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "ZoneSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -5794,7 +5794,7 @@
           },
           "path": "{project}/global/images/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "GlobalSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -8581,7 +8581,7 @@
           },
           "path": "{project}/zones/{zone}/instances/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "ZoneSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -9840,7 +9840,7 @@
           },
           "path": "{project}/regions/{region}/interconnectAttachments/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "RegionSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -10111,7 +10111,7 @@
           ]
         },
         "get": {
-          "description": "Returns the specified interconnect. Gets a list of available interconnects by making a list() request.",
+          "description": "Returns the specified interconnect. Get a list of available interconnects by making a list() request.",
           "httpMethod": "GET",
           "id": "compute.interconnects.get",
           "parameterOrder": [
@@ -10327,7 +10327,7 @@
           },
           "path": "{project}/global/interconnects/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "GlobalSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -10508,7 +10508,7 @@
           },
           "path": "{project}/global/licenseCodes/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "GlobalSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -10702,7 +10702,7 @@
           ]
         },
         "list": {
-          "description": "Retrieves the list of licenses available in the specified project. This method does not get any licenses that belong to other projects, including licenses attached to publicly-available images, like Debian 8. If you want to get a list of publicly-available licenses, use this method to make a request to the respective image project, such as debian-cloud or windows-cloud.",
+          "description": "Retrieves the list of licenses available in the specified project. This method does not get any licenses that belong to other projects, including licenses attached to publicly-available images, like Debian 9. If you want to get a list of publicly-available licenses, use this method to make a request to the respective image project, such as debian-cloud or windows-cloud.",
           "httpMethod": "GET",
           "id": "compute.licenses.list",
           "parameterOrder": [
@@ -10776,7 +10776,7 @@
           },
           "path": "{project}/global/licenses/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "GlobalSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -12051,7 +12051,7 @@
           ]
         },
         "get": {
-          "description": "Returns the specified NodeGroup. Gets a list of available NodeGroups by making a list() request.",
+          "description": "Returns the specified NodeGroup. Get a list of available NodeGroups by making a list() request.",
           "httpMethod": "GET",
           "id": "compute.nodeGroups.get",
           "parameterOrder": [
@@ -12274,7 +12274,7 @@
           },
           "path": "{project}/zones/{zone}/nodeGroups/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "ZoneSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -12693,7 +12693,7 @@
           },
           "path": "{project}/regions/{region}/nodeTemplates/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "RegionSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -17553,7 +17553,7 @@
           },
           "path": "{project}/regions/{region}/resourcePolicies/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "RegionSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -18516,6 +18516,54 @@
             "https://www.googleapis.com/auth/compute.readonly"
           ]
         },
+        "listPreconfiguredExpressionSets": {
+          "description": "Gets the current list of preconfigured Web Application Firewall (WAF) expressions.",
+          "httpMethod": "GET",
+          "id": "compute.securityPolicies.listPreconfiguredExpressionSets",
+          "parameterOrder": [
+            "project"
+          ],
+          "parameters": {
+            "filter": {
+              "description": "A filter expression that filters resources listed in the response. The expression must specify the field name, a comparison operator, and the value that you want to use for filtering. The value must be a string, a number, or a boolean. The comparison operator must be either =, !=, \u003e, or \u003c.\n\nFor example, if you are filtering Compute Engine instances, you can exclude instances named example-instance by specifying name != example-instance.\n\nYou can also filter nested fields. For example, you could specify scheduling.automaticRestart = false to include instances only if they are not scheduled for automatic restarts. You can use filtering on nested fields to filter based on resource labels.\n\nTo filter on multiple expressions, provide each separate expression within parentheses. For example, (scheduling.automaticRestart = true) (cpuPlatform = \"Intel Skylake\"). By default, each expression is an AND expression. However, you can include AND and OR expressions explicitly. For example, (cpuPlatform = \"Intel Skylake\") OR (cpuPlatform = \"Intel Broadwell\") AND (scheduling.automaticRestart = true).",
+              "location": "query",
+              "type": "string"
+            },
+            "maxResults": {
+              "default": "500",
+              "description": "The maximum number of results per page that should be returned. If the number of available results is larger than maxResults, Compute Engine returns a nextPageToken that can be used to get the next page of results in subsequent list requests. Acceptable values are 0 to 500, inclusive. (Default: 500)",
+              "format": "uint32",
+              "location": "query",
+              "minimum": "0",
+              "type": "integer"
+            },
+            "orderBy": {
+              "description": "Sorts list results by a certain order. By default, results are returned in alphanumerical order based on the resource name.\n\nYou can also sort results in descending order based on the creation timestamp using orderBy=\"creationTimestamp desc\". This sorts results based on the creationTimestamp field in reverse chronological order (newest result first). Use this to sort resources like operations so that the newest operation is returned first.\n\nCurrently, only sorting by name or creationTimestamp desc is supported.",
+              "location": "query",
+              "type": "string"
+            },
+            "pageToken": {
+              "description": "Specifies a page token to use. Set pageToken to the nextPageToken returned by a previous list request to get the next page of results.",
+              "location": "query",
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/global/securityPolicies/listPreconfiguredExpressionSets",
+          "response": {
+            "$ref": "SecurityPoliciesListPreconfiguredExpressionSetsResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
         "patch": {
           "description": "Patches the specified policy with the data included in the request.",
           "httpMethod": "PATCH",
@@ -18635,6 +18683,42 @@
             }
           },
           "path": "{project}/global/securityPolicies/{securityPolicy}/removeRule",
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "setLabels": {
+          "description": "Sets the labels on a security policy. To learn more about labels, read the Labeling Resources documentation.",
+          "httpMethod": "POST",
+          "id": "compute.securityPolicies.setLabels",
+          "parameterOrder": [
+            "project",
+            "resource"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "resource": {
+              "description": "Name of the resource for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9_]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/global/securityPolicies/{resource}/setLabels",
+          "request": {
+            "$ref": "GlobalSetLabelsRequest"
+          },
           "response": {
             "$ref": "Operation"
           },
@@ -18865,7 +18949,7 @@
           },
           "path": "{project}/global/snapshots/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "GlobalSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -19887,7 +19971,7 @@
           },
           "path": "{project}/regions/{region}/subnetworks/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "RegionSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -22821,6 +22905,339 @@
         }
       }
     },
+    "vpnGateways": {
+      "methods": {
+        "aggregatedList": {
+          "description": "Retrieves an aggregated list of VPN gateways.",
+          "httpMethod": "GET",
+          "id": "compute.vpnGateways.aggregatedList",
+          "parameterOrder": [
+            "project"
+          ],
+          "parameters": {
+            "filter": {
+              "description": "A filter expression that filters resources listed in the response. The expression must specify the field name, a comparison operator, and the value that you want to use for filtering. The value must be a string, a number, or a boolean. The comparison operator must be either =, !=, \u003e, or \u003c.\n\nFor example, if you are filtering Compute Engine instances, you can exclude instances named example-instance by specifying name != example-instance.\n\nYou can also filter nested fields. For example, you could specify scheduling.automaticRestart = false to include instances only if they are not scheduled for automatic restarts. You can use filtering on nested fields to filter based on resource labels.\n\nTo filter on multiple expressions, provide each separate expression within parentheses. For example, (scheduling.automaticRestart = true) (cpuPlatform = \"Intel Skylake\"). By default, each expression is an AND expression. However, you can include AND and OR expressions explicitly. For example, (cpuPlatform = \"Intel Skylake\") OR (cpuPlatform = \"Intel Broadwell\") AND (scheduling.automaticRestart = true).",
+              "location": "query",
+              "type": "string"
+            },
+            "maxResults": {
+              "default": "500",
+              "description": "The maximum number of results per page that should be returned. If the number of available results is larger than maxResults, Compute Engine returns a nextPageToken that can be used to get the next page of results in subsequent list requests. Acceptable values are 0 to 500, inclusive. (Default: 500)",
+              "format": "uint32",
+              "location": "query",
+              "minimum": "0",
+              "type": "integer"
+            },
+            "orderBy": {
+              "description": "Sorts list results by a certain order. By default, results are returned in alphanumerical order based on the resource name.\n\nYou can also sort results in descending order based on the creation timestamp using orderBy=\"creationTimestamp desc\". This sorts results based on the creationTimestamp field in reverse chronological order (newest result first). Use this to sort resources like operations so that the newest operation is returned first.\n\nCurrently, only sorting by name or creationTimestamp desc is supported.",
+              "location": "query",
+              "type": "string"
+            },
+            "pageToken": {
+              "description": "Specifies a page token to use. Set pageToken to the nextPageToken returned by a previous list request to get the next page of results.",
+              "location": "query",
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/aggregated/vpnGateways",
+          "response": {
+            "$ref": "VpnGatewayAggregatedList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        },
+        "delete": {
+          "description": "Deletes the specified VPN gateway.",
+          "httpMethod": "DELETE",
+          "id": "compute.vpnGateways.delete",
+          "parameterOrder": [
+            "project",
+            "region",
+            "vpnGateway"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            },
+            "vpnGateway": {
+              "description": "Name of the VPN gateway to delete.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/vpnGateways/{vpnGateway}",
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "get": {
+          "description": "Returns the specified VPN gateway. Gets a list of available VPN gateways by making a list() request.",
+          "httpMethod": "GET",
+          "id": "compute.vpnGateways.get",
+          "parameterOrder": [
+            "project",
+            "region",
+            "vpnGateway"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "vpnGateway": {
+              "description": "Name of the VPN gateway to return.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/vpnGateways/{vpnGateway}",
+          "response": {
+            "$ref": "VpnGateway"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        },
+        "insert": {
+          "description": "Creates a VPN gateway in the specified project and region using the data included in the request.",
+          "httpMethod": "POST",
+          "id": "compute.vpnGateways.insert",
+          "parameterOrder": [
+            "project",
+            "region"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/vpnGateways",
+          "request": {
+            "$ref": "VpnGateway"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "list": {
+          "description": "Retrieves a list of VPN gateways available to the specified project and region.",
+          "httpMethod": "GET",
+          "id": "compute.vpnGateways.list",
+          "parameterOrder": [
+            "project",
+            "region"
+          ],
+          "parameters": {
+            "filter": {
+              "description": "A filter expression that filters resources listed in the response. The expression must specify the field name, a comparison operator, and the value that you want to use for filtering. The value must be a string, a number, or a boolean. The comparison operator must be either =, !=, \u003e, or \u003c.\n\nFor example, if you are filtering Compute Engine instances, you can exclude instances named example-instance by specifying name != example-instance.\n\nYou can also filter nested fields. For example, you could specify scheduling.automaticRestart = false to include instances only if they are not scheduled for automatic restarts. You can use filtering on nested fields to filter based on resource labels.\n\nTo filter on multiple expressions, provide each separate expression within parentheses. For example, (scheduling.automaticRestart = true) (cpuPlatform = \"Intel Skylake\"). By default, each expression is an AND expression. However, you can include AND and OR expressions explicitly. For example, (cpuPlatform = \"Intel Skylake\") OR (cpuPlatform = \"Intel Broadwell\") AND (scheduling.automaticRestart = true).",
+              "location": "query",
+              "type": "string"
+            },
+            "maxResults": {
+              "default": "500",
+              "description": "The maximum number of results per page that should be returned. If the number of available results is larger than maxResults, Compute Engine returns a nextPageToken that can be used to get the next page of results in subsequent list requests. Acceptable values are 0 to 500, inclusive. (Default: 500)",
+              "format": "uint32",
+              "location": "query",
+              "minimum": "0",
+              "type": "integer"
+            },
+            "orderBy": {
+              "description": "Sorts list results by a certain order. By default, results are returned in alphanumerical order based on the resource name.\n\nYou can also sort results in descending order based on the creation timestamp using orderBy=\"creationTimestamp desc\". This sorts results based on the creationTimestamp field in reverse chronological order (newest result first). Use this to sort resources like operations so that the newest operation is returned first.\n\nCurrently, only sorting by name or creationTimestamp desc is supported.",
+              "location": "query",
+              "type": "string"
+            },
+            "pageToken": {
+              "description": "Specifies a page token to use. Set pageToken to the nextPageToken returned by a previous list request to get the next page of results.",
+              "location": "query",
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/vpnGateways",
+          "response": {
+            "$ref": "VpnGatewayList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        },
+        "setLabels": {
+          "description": "Sets the labels on a VpnGateway. To learn more about labels, read the Labeling Resources documentation.",
+          "httpMethod": "POST",
+          "id": "compute.vpnGateways.setLabels",
+          "parameterOrder": [
+            "project",
+            "region",
+            "resource"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "The region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            },
+            "resource": {
+              "description": "Name of the resource for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/vpnGateways/{resource}/setLabels",
+          "request": {
+            "$ref": "RegionSetLabelsRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "testIamPermissions": {
+          "description": "Returns permissions that a caller has on the specified resource.",
+          "httpMethod": "POST",
+          "id": "compute.vpnGateways.testIamPermissions",
+          "parameterOrder": [
+            "project",
+            "region",
+            "resource"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "The name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "resource": {
+              "description": "Name of the resource for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/vpnGateways/{resource}/testIamPermissions",
+          "request": {
+            "$ref": "TestPermissionsRequest"
+          },
+          "response": {
+            "$ref": "TestPermissionsResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        }
+      }
+    },
     "vpnTunnels": {
       "methods": {
         "aggregatedList": {
@@ -23425,7 +23842,6 @@
       }
     }
   },
-  "revision": "20180427",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "AcceleratorConfig": {
@@ -23999,9 +24415,11 @@
           "description": "[Output Only] The status of the address, which can be one of RESERVING, RESERVED, or IN_USE. An address that is RESERVING is currently in the process of being reserved. A RESERVED address is currently reserved and available to use. An IN_USE address is currently being used by another resource and is not available.",
           "enum": [
             "IN_USE",
-            "RESERVED"
+            "RESERVED",
+            "RESERVING"
           ],
           "enumDescriptions": [
+            "",
             "",
             ""
           ],
@@ -24505,6 +24923,10 @@
         "sourceImageEncryptionKey": {
           "$ref": "CustomerEncryptionKey",
           "description": "The customer-supplied encryption key of the source image. Required if the source image is protected by a customer-supplied encryption key.\n\nInstance templates do not store customer-supplied encryption keys, so you cannot create disks for instances in a managed instance group if the source images are encrypted with your own keys."
+        },
+        "sourceSnapshot": {
+          "description": "The source snapshot to create this disk. When creating a new instance, one of initializeParams.sourceSnapshot or disks.source is required except for local SSD.\n\nTo create a disk with a snapshot that you created, specify the snapshot name in the following format:\nglobal/snapshots/my-backup\n\n\nIf the source snapshot is deleted later, this field will not be set.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -25527,9 +25949,11 @@
           "enum": [
             "EXTERNAL",
             "INTERNAL",
+            "INTERNAL_SELF_MANAGED",
             "INVALID_LOAD_BALANCING_SCHEME"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             ""
@@ -25824,11 +26248,33 @@
         "oauth2ClientId": {
           "type": "string"
         },
+        "oauth2ClientInfo": {
+          "$ref": "BackendServiceIAPOAuth2ClientInfo",
+          "description": "[Input Only] OAuth client info required to generate client id to be used for IAP."
+        },
         "oauth2ClientSecret": {
           "type": "string"
         },
         "oauth2ClientSecretSha256": {
           "description": "[Output Only] SHA256 hash value for the field oauth2_client_secret above.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BackendServiceIAPOAuth2ClientInfo": {
+      "id": "BackendServiceIAPOAuth2ClientInfo",
+      "properties": {
+        "applicationName": {
+          "description": "Application name to be used in OAuth consent screen.",
+          "type": "string"
+        },
+        "clientName": {
+          "description": "Name of the client to be generated. Optional - If not provided, the name will be autogenerated by the backend.",
+          "type": "string"
+        },
+        "developerEmailAddress": {
+          "description": "Developer's information to be used in OAuth consent screen.",
           "type": "string"
         }
       },
@@ -26058,7 +26504,7 @@
           "description": "The condition that is associated with this binding. NOTE: an unsatisfied condition will not allow user access via current binding. Different bindings, including their conditions, are examined independently. This field is only visible as GOOGLE_INTERNAL or CONDITION_TRUSTED_TESTER."
         },
         "members": {
-          "description": "Specifies the identities requesting access for a Cloud Platform resource. `members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@gmail.com` or `joe@example.com`.\n\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`.\n\n\n\n* `domain:{domain}`: A Google Apps domain name that represents all the users of that domain. For example, `google.com` or `example.com`.",
+          "description": "Specifies the identities requesting access for a Cloud Platform resource. `members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@gmail.com` .\n\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`.\n\n\n\n* `domain:{domain}`: A Google Apps domain name that represents all the users of that domain. For example, `google.com` or `example.com`.",
           "items": {
             "type": "string"
           },
@@ -26202,10 +26648,10 @@
           "type": "string"
         },
         "type": {
-          "description": "The type of commitment, which affects the discount rate and the eligible resources. Type MEMORY_OPTIMIZED_VM specifies a commitment that will only apply to memory optimized VMs. Type NORMAL specifies a commitment that applies to all other resources.",
+          "description": "The type of commitment, which affects the discount rate and the eligible resources. Type MEMORY_OPTIMIZED specifies a commitment that will only apply to memory optimized machines.",
           "enum": [
-            "MEMORY_OPTIMIZED_VM",
-            "NORMAL",
+            "GENERAL_PURPOSE",
+            "MEMORY_OPTIMIZED",
             "TYPE_UNSPECIFIED"
           ],
           "enumDescriptions": [
@@ -27203,6 +27649,10 @@
           "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
           "type": "string"
         },
+        "region": {
+          "description": "[Output Only] URL of the region where the disk type resides. Only applicable for regional resources. You must specify this field as part of the HTTP request URL. It is not settable as a field in the request body.",
+          "type": "string"
+        },
         "selfLink": {
           "description": "[Output Only] Server-defined URL for the resource.",
           "type": "string"
@@ -27794,7 +28244,7 @@
           "type": "boolean"
         },
         "enableLogging": {
-          "description": "This field denotes whether to enable logging for a particular firewall rule. If logging is enabled, logs will be exported to the configured export destination for all firewall logs in the network. Logs may be exported to BigQuery or Pub/Sub.",
+          "description": "This field denotes whether to enable logging for a particular firewall rule. If logging is enabled, logs will be exported to Stackdriver.",
           "type": "boolean"
         },
         "id": {
@@ -28030,6 +28480,10 @@
             ""
           ],
           "type": "string"
+        },
+        "allPorts": {
+          "description": "This field is used along with the backend_service field for internal load balancing or with the target field for internal TargetInstance. This field cannot be used with port or portRange fields.\n\nWhen the load balancing scheme is INTERNAL and protocol is TCP/UDP, specify this field to allow packets addressed to any ports will be forwarded to the backends configured with this forwarding rule.",
+          "type": "boolean"
         },
         "backendService": {
           "description": "This field is not used for external load balancing.\n\nFor internal load balancing, this field identifies the BackendService resource to receive the matched traffic.",
@@ -28503,6 +28957,28 @@
           },
           "description": "A list of labels to apply for this resource. Each label key \u0026 value must comply with RFC1035. Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash. For example, \"webserver-frontend\": \"images\". A label value can also be empty (e.g. \"my-label\": \"\").",
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "GlobalSetPolicyRequest": {
+      "id": "GlobalSetPolicyRequest",
+      "properties": {
+        "bindings": {
+          "description": "Flatten Policy to create a backwacd compatible wire-format. Deprecated. Use 'policy' to specify bindings.",
+          "items": {
+            "$ref": "Binding"
+          },
+          "type": "array"
+        },
+        "etag": {
+          "description": "Flatten Policy to create a backward compatible wire-format. Deprecated. Use 'policy' to specify the etag.",
+          "format": "byte",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "Policy",
+          "description": "REQUIRED: The complete policy to be applied to the 'resource'. The size of the policy is limited to a few 10s of KB. An empty policy is in general a valid policy but certain services (like Projects) might reject them."
         }
       },
       "type": "object"
@@ -30799,6 +31275,10 @@
         "shieldedVmIntegrityPolicy": {
           "$ref": "ShieldedVmIntegrityPolicy"
         },
+        "sourceMachineImage": {
+          "description": "Source machine image",
+          "type": "string"
+        },
         "startRestricted": {
           "description": "[Output Only] Whether a VM has been restricted for start because Compute Engine has detected suspicious activity.",
           "type": "boolean"
@@ -31303,7 +31783,7 @@
           "type": "string"
         },
         "fingerprint": {
-          "description": "Fingerprint of this resource. This field may be used in optimistic locking. It will be ignored when inserting an InstanceGroupManager. An up-to-date fingerprint must be provided in order to update the InstanceGroupManager or the field need to be unset.",
+          "description": "Fingerprint of this resource. This field may be used in optimistic locking. It will be ignored when inserting an InstanceGroupManager. An up-to-date fingerprint must be provided in order to update the InstanceGroupManager.",
           "format": "byte",
           "type": "string"
         },
@@ -31820,9 +32300,11 @@
         "instanceRedistributionType": {
           "enum": [
             "NONE",
-            "PROACTIVE"
+            "PROACTIVE",
+            "UNSPECIFIED_TYPE"
           ],
           "enumDescriptions": [
+            "",
             "",
             ""
           ],
@@ -35298,7 +35780,7 @@
       "type": "object"
     },
     "ManagedInstance": {
-      "description": "Next available tag: 12",
+      "description": "A Managed Instance resource.",
       "id": "ManagedInstance",
       "properties": {
         "currentAction": {
@@ -36532,7 +37014,7 @@
           "type": "string"
         },
         "description": {
-          "description": "[Output Only] An optional textual description of the resource.",
+          "description": "An optional description of this resource. Provide this property when you create the resource.",
           "type": "string"
         },
         "id": {
@@ -36824,6 +37306,10 @@
           },
           "type": "array"
         },
+        "name": {
+          "description": "The name of the node.",
+          "type": "string"
+        },
         "nodeType": {
           "description": "The type of this node.",
           "type": "string"
@@ -36850,6 +37336,12 @@
           "items": {
             "format": "int32",
             "type": "integer"
+          },
+          "type": "array"
+        },
+        "nodes": {
+          "items": {
+            "type": "string"
           },
           "type": "array"
         }
@@ -37749,7 +38241,7 @@
       "id": "Operation",
       "properties": {
         "clientOperationId": {
-          "description": "[Output Only] Reserved for future use.",
+          "description": "[Output Only] The value of `requestId` if you provided it in the request. Not present otherwise.",
           "type": "string"
         },
         "creationTimestamp": {
@@ -38326,8 +38818,13 @@
     "PerInstanceConfig": {
       "id": "PerInstanceConfig",
       "properties": {
+        "fingerprint": {
+          "description": "Fingerprint of this per-instance config. This field may be used in optimistic locking. It will be ignored when inserting a per-instance config. An up-to-date fingerprint must be provided in order to update an existing per-instance config or the field needs to be unset.",
+          "format": "byte",
+          "type": "string"
+        },
         "instance": {
-          "description": "The URL of the instance. Serves as a merge key during UpdatePerInstanceConfigs operation.",
+          "description": "The URL of the instance. Serves as a merge key during UpdatePerInstanceConfigs operation, i.e. if per-instance config with the same instance URL exists then it will be updated, otherwise a new one will be created.",
           "type": "string"
         },
         "override": {
@@ -38374,6 +38871,19 @@
           "description": "Deprecated.",
           "format": "int32",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "PreconfiguredWafSet": {
+      "id": "PreconfiguredWafSet",
+      "properties": {
+        "expressionSets": {
+          "description": "List of entities that are currently supported for WAF rules.",
+          "items": {
+            "$ref": "WafExpressionSet"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -38581,6 +39091,7 @@
             "IN_USE_MAINTENANCE_WINDOWS",
             "LOCAL_SSD_TOTAL_GB",
             "NETWORKS",
+            "NETWORK_ENDPOINT_GROUPS",
             "NVIDIA_K80_GPUS",
             "NVIDIA_P100_GPUS",
             "NVIDIA_P100_VWS_GPUS",
@@ -38589,6 +39100,7 @@
             "PREEMPTIBLE_LOCAL_SSD_GB",
             "PREEMPTIBLE_NVIDIA_K80_GPUS",
             "PREEMPTIBLE_NVIDIA_P100_GPUS",
+            "PREEMPTIBLE_NVIDIA_V100_GPUS",
             "PRIVATE_V6_ACCESS_SUBNETWORKS",
             "REGIONAL_AUTOSCALERS",
             "REGIONAL_INSTANCE_GROUP_MANAGERS",
@@ -38613,6 +39125,8 @@
             "VPN_TUNNELS"
           ],
           "enumDescriptions": [
+            "",
+            "",
             "",
             "",
             "",
@@ -39773,6 +40287,28 @@
       },
       "type": "object"
     },
+    "RegionSetPolicyRequest": {
+      "id": "RegionSetPolicyRequest",
+      "properties": {
+        "bindings": {
+          "description": "Flatten Policy to create a backwacd compatible wire-format. Deprecated. Use 'policy' to specify bindings.",
+          "items": {
+            "$ref": "Binding"
+          },
+          "type": "array"
+        },
+        "etag": {
+          "description": "Flatten Policy to create a backward compatible wire-format. Deprecated. Use 'policy' to specify the etag.",
+          "format": "byte",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "Policy",
+          "description": "REQUIRED: The complete policy to be applied to the 'resource'. The size of the policy is limited to a few 10s of KB. An empty policy is in general a valid policy but certain services (like Projects) might reject them."
+        }
+      },
+      "type": "object"
+    },
     "RegionUrlMapsValidateRequest": {
       "id": "RegionUrlMapsValidateRequest",
       "properties": {
@@ -40254,13 +40790,6 @@
           },
           "description": "Labels to apply to automatic snapshots. These can be later modified by the setLabels method. Label values may be empty.",
           "type": "object"
-        },
-        "storageLocations": {
-          "description": "GCS bucket storage location of the auto snapshot (regional or multi-regional).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         }
       },
       "type": "object"
@@ -40748,7 +41277,7 @@
           "type": "string"
         },
         "nats": {
-          "description": "A list of Nat services created in this router. The maximum number of Nat services within a Router is 3 for Alpha.",
+          "description": "A list of Nat services created in this router.",
           "items": {
             "$ref": "RouterNat"
           },
@@ -40784,21 +41313,6 @@
         },
         "range": {
           "description": "The IP range to advertise. The value must be a CIDR-formatted string.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "RouterAdvertisedPrefix": {
-      "description": "Description-tagged prefixes for the router to advertise.",
-      "id": "RouterAdvertisedPrefix",
-      "properties": {
-        "description": {
-          "description": "User-specified description for the prefix.",
-          "type": "string"
-        },
-        "prefix": {
-          "description": "The prefix to advertise. The value must be a CIDR-formatted string.",
           "type": "string"
         }
       },
@@ -40952,13 +41466,6 @@
           },
           "type": "array"
         },
-        "advertisedPrefixs": {
-          "description": "User-specified list of individual prefixes to advertise in custom mode. This field can only be populated if advertise_mode is CUSTOM and is advertised to all peers of the router. These prefixes will be advertised in addition to any specified groups. Leave this field blank to advertise no custom prefixes.",
-          "items": {
-            "$ref": "RouterAdvertisedPrefix"
-          },
-          "type": "array"
-        },
         "asn": {
           "description": "Local BGP Autonomous System Number (ASN). Must be an RFC6996 private ASN, either 16-bit or 32-bit. The value will be fixed for this router resource. All VPN tunnels that link to this router will have the same local ASN.",
           "format": "uint32",
@@ -40999,13 +41506,6 @@
           "description": "User-specified list of individual IP ranges to advertise in custom mode. This field can only be populated if advertise_mode is CUSTOM and overrides the list defined for the router (in Bgp message). These IP ranges will be advertised in addition to any specified groups. Leave this field blank to advertise no custom IP ranges.",
           "items": {
             "$ref": "RouterAdvertisedIpRange"
-          },
-          "type": "array"
-        },
-        "advertisedPrefixs": {
-          "description": "User-specified list of individual prefixes to advertise in custom mode. This field can only be populated if advertise_mode is CUSTOM and overrides the list defined for the router (in Bgp message). These prefixes will be advertised in addition to any specified groups. Leave this field blank to advertise no custom prefixes.",
-          "items": {
-            "$ref": "RouterAdvertisedPrefix"
           },
           "type": "array"
         },
@@ -41209,6 +41709,16 @@
           },
           "type": "array"
         },
+        "icmpIdleTimeoutSec": {
+          "description": "Timeout (in seconds) for ICMP connections. Defaults to 30s if not set.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "minPortsPerVm": {
+          "description": "Minimum number of ports allocated to a VM from this NAT config. If not set, a default number of ports is allocated to a VM. This gets rounded up to the nearest power of 2. Eg. if the value of this field is 50, at least 64 ports will be allocated to a VM.",
+          "format": "int32",
+          "type": "integer"
+        },
         "name": {
           "description": "Unique name of this Nat service. The name must be 1-63 characters long and comply with RFC1035.",
           "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
@@ -41253,6 +41763,21 @@
             "$ref": "RouterNatSubnetworkToNat"
           },
           "type": "array"
+        },
+        "tcpEstablishedIdleTimeoutSec": {
+          "description": "Timeout (in seconds) for TCP established connections. Defaults to 1200s if not set.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "tcpTransitoryIdleTimeoutSec": {
+          "description": "Timeout (in seconds) for TCP transitory connections. Defaults to 30s if not set.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "udpIdleTimeoutSec": {
+          "description": "Timeout (in seconds) for UDP connections. Defaults to 30s if not set.",
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -41729,8 +42254,26 @@
       },
       "type": "object"
     },
+    "SecurityPoliciesListPreconfiguredExpressionSetsResponse": {
+      "id": "SecurityPoliciesListPreconfiguredExpressionSetsResponse",
+      "properties": {
+        "preconfiguredExpressionSets": {
+          "$ref": "SecurityPoliciesWafConfig"
+        }
+      },
+      "type": "object"
+    },
+    "SecurityPoliciesWafConfig": {
+      "id": "SecurityPoliciesWafConfig",
+      "properties": {
+        "wafRules": {
+          "$ref": "PreconfiguredWafSet"
+        }
+      },
+      "type": "object"
+    },
     "SecurityPolicy": {
-      "description": "A security policy is comprised of one or more rules. It can also be associated with one or more 'targets'.",
+      "description": "A security policy is comprised of one or more rules. It can also be associated with one or more 'targets'. Next available tag: 11",
       "id": "SecurityPolicy",
       "properties": {
         "creationTimestamp": {
@@ -41755,6 +42298,18 @@
           "default": "compute#securityPolicy",
           "description": "[Output only] Type of the resource. Always compute#securityPolicyfor security policies",
           "type": "string"
+        },
+        "labelFingerprint": {
+          "description": "A fingerprint for the labels being applied to this security policy, which is essentially a hash of the labels set used for optimistic locking. The fingerprint is initially generated by Compute Engine and changes after every request to modify or update labels. You must always provide an up-to-date fingerprint hash in order to update or change labels.\n\nTo see the latest fingerprint, make get() request to the security policy.",
+          "format": "byte",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Labels to apply to this security policy resource. These can be later modified by the setLabels method. Each label key/value must comply with RFC1035. Label values may be empty.",
+          "type": "object"
         },
         "name": {
           "description": "Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.",
@@ -42116,7 +42671,7 @@
           "type": "object"
         },
         "licenseCodes": {
-          "description": "Integer license codes indicating which licenses are attached to this snapshot.",
+          "description": "[Output Only] Integer license codes indicating which licenses are attached to this snapshot.",
           "items": {
             "format": "int64",
             "type": "string"
@@ -46165,6 +46720,411 @@
       },
       "type": "object"
     },
+    "VpnGateway": {
+      "description": "Represents a VPN gateway resource.",
+      "id": "VpnGateway",
+      "properties": {
+        "creationTimestamp": {
+          "description": "[Output Only] Creation timestamp in RFC3339 text format.",
+          "type": "string"
+        },
+        "description": {
+          "description": "An optional description of this resource. Provide this property when you create the resource.",
+          "type": "string"
+        },
+        "id": {
+          "description": "[Output Only] The unique identifier for the resource. This identifier is defined by the server.",
+          "format": "uint64",
+          "type": "string"
+        },
+        "kind": {
+          "default": "compute#vpnGateway",
+          "description": "[Output Only] Type of resource. Always compute#vpnGateway for VPN gateways.",
+          "type": "string"
+        },
+        "labelFingerprint": {
+          "description": "A fingerprint for the labels being applied to this VpnGateway, which is essentially a hash of the labels set used for optimistic locking. The fingerprint is initially generated by Compute Engine and changes after every request to modify or update labels. You must always provide an up-to-date fingerprint hash in order to update or change labels.\n\nTo see the latest fingerprint, make a get() request to retrieve an VpnGateway.",
+          "format": "byte",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Labels to apply to this VpnGateway resource. These can be later modified by the setLabels method. Each label key/value must comply with RFC1035. Label values may be empty.",
+          "type": "object"
+        },
+        "name": {
+          "annotations": {
+            "required": [
+              "compute.vpnGateways.insert"
+            ]
+          },
+          "description": "Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.",
+          "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+          "type": "string"
+        },
+        "network": {
+          "annotations": {
+            "required": [
+              "compute.vpnGateways.insert"
+            ]
+          },
+          "description": "URL of the network to which this VPN gateway is attached. Provided by the client when the VPN gateway is created.",
+          "type": "string"
+        },
+        "region": {
+          "description": "[Output Only] URL of the region where the VPN gateway resides.",
+          "type": "string"
+        },
+        "selfLink": {
+          "description": "[Output Only] Server-defined URL for the resource.",
+          "type": "string"
+        },
+        "vpnInterfaces": {
+          "description": "[Output Only] A list of interfaces on this VPN gateway.",
+          "items": {
+            "$ref": "VpnGatewayVpnGatewayInterface"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "VpnGatewayAggregatedList": {
+      "id": "VpnGatewayAggregatedList",
+      "properties": {
+        "id": {
+          "description": "[Output Only] Unique identifier for the resource; defined by the server.",
+          "type": "string"
+        },
+        "items": {
+          "additionalProperties": {
+            "$ref": "VpnGatewaysScopedList",
+            "description": "[Output Only] Name of the scope containing this set of VPN gateways."
+          },
+          "description": "A list of VpnGateway resources.",
+          "type": "object"
+        },
+        "kind": {
+          "default": "compute#vpnGatewayAggregatedList",
+          "description": "[Output Only] Type of resource. Always compute#vpnGateway for VPN gateways.",
+          "type": "string"
+        },
+        "nextPageToken": {
+          "description": "[Output Only] This token allows you to get the next page of results for list requests. If the number of results is larger than maxResults, use the nextPageToken as a value for the query parameter pageToken in the next list request. Subsequent list requests will have their own nextPageToken to continue paging through the results.",
+          "type": "string"
+        },
+        "selfLink": {
+          "description": "[Output Only] Server-defined URL for this resource.",
+          "type": "string"
+        },
+        "warning": {
+          "description": "[Output Only] Informational warning message.",
+          "properties": {
+            "code": {
+              "description": "[Output Only] A warning code, if applicable. For example, Compute Engine returns NO_RESULTS_ON_PAGE if there are no results in the response.",
+              "enum": [
+                "CLEANUP_FAILED",
+                "DEPRECATED_RESOURCE_USED",
+                "DEPRECATED_TYPE_USED",
+                "DISK_SIZE_LARGER_THAN_IMAGE_SIZE",
+                "EXPERIMENTAL_TYPE_USED",
+                "EXTERNAL_API_WARNING",
+                "FIELD_VALUE_OVERRIDEN",
+                "INJECTED_KERNELS_DEPRECATED",
+                "MISSING_TYPE_DEPENDENCY",
+                "NEXT_HOP_ADDRESS_NOT_ASSIGNED",
+                "NEXT_HOP_CANNOT_IP_FORWARD",
+                "NEXT_HOP_INSTANCE_NOT_FOUND",
+                "NEXT_HOP_INSTANCE_NOT_ON_NETWORK",
+                "NEXT_HOP_NOT_RUNNING",
+                "NOT_CRITICAL_ERROR",
+                "NO_RESULTS_ON_PAGE",
+                "REQUIRED_TOS_AGREEMENT",
+                "RESOURCE_IN_USE_BY_OTHER_RESOURCE_WARNING",
+                "RESOURCE_NOT_DELETED",
+                "SCHEMA_VALIDATION_IGNORED",
+                "SINGLE_INSTANCE_PROPERTY_TEMPLATE",
+                "UNDECLARED_PROPERTIES",
+                "UNREACHABLE"
+              ],
+              "enumDescriptions": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "type": "string"
+            },
+            "data": {
+              "description": "[Output Only] Metadata about this warning in key: value format. For example:\n\"data\": [ { \"key\": \"scope\", \"value\": \"zones/us-east1-d\" }",
+              "items": {
+                "properties": {
+                  "key": {
+                    "description": "[Output Only] A key that provides more detail on the warning being returned. For example, for warnings where there are no results in a list request for a particular zone, this key might be scope and the key value might be the zone name. Other examples might be a key indicating a deprecated resource and a suggested replacement, or a warning about invalid network settings (for example, if an instance attempts to perform IP forwarding but is not enabled for IP forwarding).",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "[Output Only] A warning data value corresponding to the key.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "message": {
+              "description": "[Output Only] A human-readable description of the warning code.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "VpnGatewayList": {
+      "description": "Contains a list of VpnGateway resources.",
+      "id": "VpnGatewayList",
+      "properties": {
+        "id": {
+          "description": "[Output Only] Unique identifier for the resource; defined by the server.",
+          "type": "string"
+        },
+        "items": {
+          "description": "A list of VpnGateway resources.",
+          "items": {
+            "$ref": "VpnGateway"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "default": "compute#vpnGatewayList",
+          "description": "[Output Only] Type of resource. Always compute#vpnGateway for VPN gateways.",
+          "type": "string"
+        },
+        "nextPageToken": {
+          "description": "[Output Only] This token allows you to get the next page of results for list requests. If the number of results is larger than maxResults, use the nextPageToken as a value for the query parameter pageToken in the next list request. Subsequent list requests will have their own nextPageToken to continue paging through the results.",
+          "type": "string"
+        },
+        "selfLink": {
+          "description": "[Output Only] Server-defined URL for this resource.",
+          "type": "string"
+        },
+        "warning": {
+          "description": "[Output Only] Informational warning message.",
+          "properties": {
+            "code": {
+              "description": "[Output Only] A warning code, if applicable. For example, Compute Engine returns NO_RESULTS_ON_PAGE if there are no results in the response.",
+              "enum": [
+                "CLEANUP_FAILED",
+                "DEPRECATED_RESOURCE_USED",
+                "DEPRECATED_TYPE_USED",
+                "DISK_SIZE_LARGER_THAN_IMAGE_SIZE",
+                "EXPERIMENTAL_TYPE_USED",
+                "EXTERNAL_API_WARNING",
+                "FIELD_VALUE_OVERRIDEN",
+                "INJECTED_KERNELS_DEPRECATED",
+                "MISSING_TYPE_DEPENDENCY",
+                "NEXT_HOP_ADDRESS_NOT_ASSIGNED",
+                "NEXT_HOP_CANNOT_IP_FORWARD",
+                "NEXT_HOP_INSTANCE_NOT_FOUND",
+                "NEXT_HOP_INSTANCE_NOT_ON_NETWORK",
+                "NEXT_HOP_NOT_RUNNING",
+                "NOT_CRITICAL_ERROR",
+                "NO_RESULTS_ON_PAGE",
+                "REQUIRED_TOS_AGREEMENT",
+                "RESOURCE_IN_USE_BY_OTHER_RESOURCE_WARNING",
+                "RESOURCE_NOT_DELETED",
+                "SCHEMA_VALIDATION_IGNORED",
+                "SINGLE_INSTANCE_PROPERTY_TEMPLATE",
+                "UNDECLARED_PROPERTIES",
+                "UNREACHABLE"
+              ],
+              "enumDescriptions": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "type": "string"
+            },
+            "data": {
+              "description": "[Output Only] Metadata about this warning in key: value format. For example:\n\"data\": [ { \"key\": \"scope\", \"value\": \"zones/us-east1-d\" }",
+              "items": {
+                "properties": {
+                  "key": {
+                    "description": "[Output Only] A key that provides more detail on the warning being returned. For example, for warnings where there are no results in a list request for a particular zone, this key might be scope and the key value might be the zone name. Other examples might be a key indicating a deprecated resource and a suggested replacement, or a warning about invalid network settings (for example, if an instance attempts to perform IP forwarding but is not enabled for IP forwarding).",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "[Output Only] A warning data value corresponding to the key.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "message": {
+              "description": "[Output Only] A human-readable description of the warning code.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "VpnGatewayVpnGatewayInterface": {
+      "description": "A VPN gateway interface.",
+      "id": "VpnGatewayVpnGatewayInterface",
+      "properties": {
+        "id": {
+          "description": "The numeric ID of this VPN gateway interface.",
+          "format": "uint32",
+          "type": "integer"
+        },
+        "ipAddress": {
+          "description": "The external IP address for this VPN gateway interface.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "VpnGatewaysScopedList": {
+      "id": "VpnGatewaysScopedList",
+      "properties": {
+        "vpnGateways": {
+          "description": "[Output Only] A list of VPN gateways contained in this scope.",
+          "items": {
+            "$ref": "VpnGateway"
+          },
+          "type": "array"
+        },
+        "warning": {
+          "description": "[Output Only] Informational warning which replaces the list of addresses when the list is empty.",
+          "properties": {
+            "code": {
+              "description": "[Output Only] A warning code, if applicable. For example, Compute Engine returns NO_RESULTS_ON_PAGE if there are no results in the response.",
+              "enum": [
+                "CLEANUP_FAILED",
+                "DEPRECATED_RESOURCE_USED",
+                "DEPRECATED_TYPE_USED",
+                "DISK_SIZE_LARGER_THAN_IMAGE_SIZE",
+                "EXPERIMENTAL_TYPE_USED",
+                "EXTERNAL_API_WARNING",
+                "FIELD_VALUE_OVERRIDEN",
+                "INJECTED_KERNELS_DEPRECATED",
+                "MISSING_TYPE_DEPENDENCY",
+                "NEXT_HOP_ADDRESS_NOT_ASSIGNED",
+                "NEXT_HOP_CANNOT_IP_FORWARD",
+                "NEXT_HOP_INSTANCE_NOT_FOUND",
+                "NEXT_HOP_INSTANCE_NOT_ON_NETWORK",
+                "NEXT_HOP_NOT_RUNNING",
+                "NOT_CRITICAL_ERROR",
+                "NO_RESULTS_ON_PAGE",
+                "REQUIRED_TOS_AGREEMENT",
+                "RESOURCE_IN_USE_BY_OTHER_RESOURCE_WARNING",
+                "RESOURCE_NOT_DELETED",
+                "SCHEMA_VALIDATION_IGNORED",
+                "SINGLE_INSTANCE_PROPERTY_TEMPLATE",
+                "UNDECLARED_PROPERTIES",
+                "UNREACHABLE"
+              ],
+              "enumDescriptions": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "type": "string"
+            },
+            "data": {
+              "description": "[Output Only] Metadata about this warning in key: value format. For example:\n\"data\": [ { \"key\": \"scope\", \"value\": \"zones/us-east1-d\" }",
+              "items": {
+                "properties": {
+                  "key": {
+                    "description": "[Output Only] A key that provides more detail on the warning being returned. For example, for warnings where there are no results in a list request for a particular zone, this key might be scope and the key value might be the zone name. Other examples might be a key indicating a deprecated resource and a suggested replacement, or a warning about invalid network settings (for example, if an instance attempts to perform IP forwarding but is not enabled for IP forwarding).",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "[Output Only] A warning data value corresponding to the key.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "message": {
+              "description": "[Output Only] A human-readable description of the warning code.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "VpnTunnel": {
       "description": "VPN tunnel resource. (== resource_for beta.vpnTunnels ==) (== resource_for v1.vpnTunnels ==)",
       "id": "VpnTunnel",
@@ -46291,6 +47251,15 @@
         "targetVpnGateway": {
           "description": "URL of the Target VPN gateway with which this VPN tunnel is associated. Provided by the client when the VPN tunnel is created.",
           "type": "string"
+        },
+        "vpnGateway": {
+          "description": "URL of the VPN gateway with which this VPN tunnel is associated. Provided by the client when the VPN tunnel is created. This must be used (instead of target_vpn_gateway) if a High Availability VPN gateway resource is created.",
+          "type": "string"
+        },
+        "vpnGatewayInterface": {
+          "description": "The interface ID of the VPN gateway with which this VPN tunnel is associated.",
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -46609,6 +47578,40 @@
             }
           },
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "WafExpressionSet": {
+      "id": "WafExpressionSet",
+      "properties": {
+        "aliases": {
+          "description": "A list of alternate IDs. The format should be: - E.g. XSS-stable Generic suffix like \"stable\" is particularly useful if a policy likes to avail newer set of expressions without having to change the policy. A given alias name can't be used for more than one entity set.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "expressions": {
+          "description": "List of available expressions.",
+          "items": {
+            "$ref": "WafExpressionSetExpression"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "Google specified expression set ID. The format should be: - E.g. XSS-20170329",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "WafExpressionSetExpression": {
+      "id": "WafExpressionSetExpression",
+      "properties": {
+        "id": {
+          "description": "Expression ID should uniquely identify the origin of the expression. E.g. owasp-crs-v020901-id973337 identifies Owasp core rule set version 2.9.1 rule id 973337. The ID could be used to determine the individual attack definition that has been detected. It could also be used to exclude it from the policy in case of false positive.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -46933,6 +47936,28 @@
           },
           "description": "The labels to set for this resource.",
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "ZoneSetPolicyRequest": {
+      "id": "ZoneSetPolicyRequest",
+      "properties": {
+        "bindings": {
+          "description": "Flatten Policy to create a backwacd compatible wire-format. Deprecated. Use 'policy' to specify bindings.",
+          "items": {
+            "$ref": "Binding"
+          },
+          "type": "array"
+        },
+        "etag": {
+          "description": "Flatten Policy to create a backward compatible wire-format. Deprecated. Use 'policy' to specify the etag.",
+          "format": "byte",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "Policy",
+          "description": "REQUIRED: The complete policy to be applied to the 'resource'. The size of the policy is limited to a few 10s of KB. An empty policy is in general a valid policy but certain services (like Projects) might reject them."
         }
       },
       "type": "object"

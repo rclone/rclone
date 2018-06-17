@@ -299,12 +299,11 @@ type CommitmentPlan struct {
 // CreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CreateOrUpdateFuture) Result(client Client) (ws WebService, err error) {
+func (future *CreateOrUpdateFuture) Result(client Client) (ws WebService, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -312,34 +311,15 @@ func (future CreateOrUpdateFuture) Result(client Client) (ws WebService, err err
 		return
 	}
 	if !done {
-		return ws, azure.NewAsyncOpIncompleteError("webservices.CreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ws, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("webservices.CreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ws.Response.Response, err = future.GetResult(sender); err == nil && ws.Response.Response.StatusCode != http.StatusNoContent {
+		ws, err = client.CreateOrUpdateResponder(ws.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", ws.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ws, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -624,12 +604,11 @@ func (page PaginatedWebServicesListPage) Values() []WebService {
 // PatchFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type PatchFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future PatchFuture) Result(client Client) (ws WebService, err error) {
+func (future *PatchFuture) Result(client Client) (ws WebService, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -637,34 +616,15 @@ func (future PatchFuture) Result(client Client) (ws WebService, err error) {
 		return
 	}
 	if !done {
-		return ws, azure.NewAsyncOpIncompleteError("webservices.PatchFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ws, err = client.PatchResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("webservices.PatchFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ws.Response.Response, err = future.GetResult(sender); err == nil && ws.Response.Response.StatusCode != http.StatusNoContent {
+		ws, err = client.PatchResponder(ws.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", ws.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ws, err = client.PatchResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -978,12 +938,11 @@ type RealtimeConfiguration struct {
 // RemoveFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type RemoveFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future RemoveFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future *RemoveFuture) Result(client Client) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -991,35 +950,10 @@ func (future RemoveFuture) Result(client Client) (ar autorest.Response, err erro
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("webservices.RemoveFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.RemoveResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "webservices.RemoveFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("webservices.RemoveFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "webservices.RemoveFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.RemoveResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "webservices.RemoveFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

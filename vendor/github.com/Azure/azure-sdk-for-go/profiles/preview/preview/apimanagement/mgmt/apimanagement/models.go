@@ -424,6 +424,7 @@ type EmailTemplateUpdateParameterProperties = original.EmailTemplateUpdateParame
 type EmailTemplateUpdateParameters = original.EmailTemplateUpdateParameters
 type ErrorFieldContract = original.ErrorFieldContract
 type ErrorResponse = original.ErrorResponse
+type ErrorResponseBody = original.ErrorResponseBody
 type GenerateSsoURLResult = original.GenerateSsoURLResult
 type GroupCollection = original.GroupCollection
 type GroupCollectionIterator = original.GroupCollectionIterator

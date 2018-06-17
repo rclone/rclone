@@ -3827,6 +3827,10 @@ type CreateStackInput struct {
 
 	// The storage connectors to enable.
 	StorageConnectors []*StorageConnector `type:"list"`
+
+	// The actions that are enabled or disabled for users during their streaming
+	// sessions. By default, these actions are enabled.
+	UserSettings []*UserSetting `min:"1" type:"list"`
 }
 
 // String returns the string representation
@@ -3848,6 +3852,9 @@ func (s *CreateStackInput) Validate() error {
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
+	if s.UserSettings != nil && len(s.UserSettings) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("UserSettings", 1))
+	}
 	if s.StorageConnectors != nil {
 		for i, v := range s.StorageConnectors {
 			if v == nil {
@@ -3855,6 +3862,16 @@ func (s *CreateStackInput) Validate() error {
 			}
 			if err := v.Validate(); err != nil {
 				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "StorageConnectors", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.UserSettings != nil {
+		for i, v := range s.UserSettings {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "UserSettings", i), err.(request.ErrInvalidParams))
 			}
 		}
 	}
@@ -3898,6 +3915,12 @@ func (s *CreateStackInput) SetRedirectURL(v string) *CreateStackInput {
 // SetStorageConnectors sets the StorageConnectors field's value.
 func (s *CreateStackInput) SetStorageConnectors(v []*StorageConnector) *CreateStackInput {
 	s.StorageConnectors = v
+	return s
+}
+
+// SetUserSettings sets the UserSettings field's value.
+func (s *CreateStackInput) SetUserSettings(v []*UserSetting) *CreateStackInput {
+	s.UserSettings = v
 	return s
 }
 
@@ -6118,6 +6141,10 @@ type Stack struct {
 
 	// The storage connectors to enable.
 	StorageConnectors []*StorageConnector `type:"list"`
+
+	// The actions that are enabled or disabled for users during their streaming
+	// sessions. By default these actions are enabled.
+	UserSettings []*UserSetting `min:"1" type:"list"`
 }
 
 // String returns the string representation
@@ -6181,6 +6208,12 @@ func (s *Stack) SetStackErrors(v []*StackError) *Stack {
 // SetStorageConnectors sets the StorageConnectors field's value.
 func (s *Stack) SetStorageConnectors(v []*StorageConnector) *Stack {
 	s.StorageConnectors = v
+	return s
+}
+
+// SetUserSettings sets the UserSettings field's value.
+func (s *Stack) SetUserSettings(v []*UserSetting) *Stack {
+	s.UserSettings = v
 	return s
 }
 
@@ -6468,7 +6501,7 @@ func (s *StopImageBuilderOutput) SetImageBuilder(v *ImageBuilder) *StopImageBuil
 	return s
 }
 
-// Describes a storage connector.
+// Describes a connector to enable persistent storage for users.
 type StorageConnector struct {
 	_ struct{} `type:"structure"`
 
@@ -6476,6 +6509,9 @@ type StorageConnector struct {
 	//
 	// ConnectorType is a required field
 	ConnectorType *string `type:"string" required:"true" enum:"StorageConnectorType"`
+
+	// The names of the domains for the G Suite account.
+	Domains []*string `type:"list"`
 
 	// The ARN of the storage connector.
 	ResourceIdentifier *string `min:"1" type:"string"`
@@ -6510,6 +6546,12 @@ func (s *StorageConnector) Validate() error {
 // SetConnectorType sets the ConnectorType field's value.
 func (s *StorageConnector) SetConnectorType(v string) *StorageConnector {
 	s.ConnectorType = &v
+	return s
+}
+
+// SetDomains sets the Domains field's value.
+func (s *StorageConnector) SetDomains(v []*string) *StorageConnector {
+	s.Domains = v
 	return s
 }
 
@@ -7002,6 +7044,10 @@ type UpdateStackInput struct {
 
 	// The storage connectors to enable.
 	StorageConnectors []*StorageConnector `type:"list"`
+
+	// The actions that are enabled or disabled for users during their streaming
+	// sessions. By default, these actions are enabled.
+	UserSettings []*UserSetting `min:"1" type:"list"`
 }
 
 // String returns the string representation
@@ -7023,6 +7069,9 @@ func (s *UpdateStackInput) Validate() error {
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
+	if s.UserSettings != nil && len(s.UserSettings) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("UserSettings", 1))
+	}
 	if s.StorageConnectors != nil {
 		for i, v := range s.StorageConnectors {
 			if v == nil {
@@ -7030,6 +7079,16 @@ func (s *UpdateStackInput) Validate() error {
 			}
 			if err := v.Validate(); err != nil {
 				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "StorageConnectors", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.UserSettings != nil {
+		for i, v := range s.UserSettings {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "UserSettings", i), err.(request.ErrInvalidParams))
 			}
 		}
 	}
@@ -7088,6 +7147,12 @@ func (s *UpdateStackInput) SetStorageConnectors(v []*StorageConnector) *UpdateSt
 	return s
 }
 
+// SetUserSettings sets the UserSettings field's value.
+func (s *UpdateStackInput) SetUserSettings(v []*UserSetting) *UpdateStackInput {
+	s.UserSettings = v
+	return s
+}
+
 type UpdateStackOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7108,6 +7173,60 @@ func (s UpdateStackOutput) GoString() string {
 // SetStack sets the Stack field's value.
 func (s *UpdateStackOutput) SetStack(v *Stack) *UpdateStackOutput {
 	s.Stack = v
+	return s
+}
+
+// Describes an action and whether the action is enabled or disabled for users
+// during their streaming sessions.
+type UserSetting struct {
+	_ struct{} `type:"structure"`
+
+	// The action that is enabled or disabled.
+	//
+	// Action is a required field
+	Action *string `type:"string" required:"true" enum:"Action"`
+
+	// Indicates whether the action is enabled or disabled.
+	//
+	// Permission is a required field
+	Permission *string `type:"string" required:"true" enum:"Permission"`
+}
+
+// String returns the string representation
+func (s UserSetting) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UserSetting) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UserSetting) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UserSetting"}
+	if s.Action == nil {
+		invalidParams.Add(request.NewErrParamRequired("Action"))
+	}
+	if s.Permission == nil {
+		invalidParams.Add(request.NewErrParamRequired("Permission"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAction sets the Action field's value.
+func (s *UserSetting) SetAction(v string) *UserSetting {
+	s.Action = &v
+	return s
+}
+
+// SetPermission sets the Permission field's value.
+func (s *UserSetting) SetPermission(v string) *UserSetting {
+	s.Permission = &v
 	return s
 }
 
@@ -7143,6 +7262,23 @@ func (s *VpcConfig) SetSubnetIds(v []*string) *VpcConfig {
 	s.SubnetIds = v
 	return s
 }
+
+const (
+	// ActionClipboardCopyFromLocalDevice is a Action enum value
+	ActionClipboardCopyFromLocalDevice = "CLIPBOARD_COPY_FROM_LOCAL_DEVICE"
+
+	// ActionClipboardCopyToLocalDevice is a Action enum value
+	ActionClipboardCopyToLocalDevice = "CLIPBOARD_COPY_TO_LOCAL_DEVICE"
+
+	// ActionFileUpload is a Action enum value
+	ActionFileUpload = "FILE_UPLOAD"
+
+	// ActionFileDownload is a Action enum value
+	ActionFileDownload = "FILE_DOWNLOAD"
+
+	// ActionPrintingToLocalDevice is a Action enum value
+	ActionPrintingToLocalDevice = "PRINTING_TO_LOCAL_DEVICE"
+)
 
 const (
 	// AuthenticationTypeApi is a AuthenticationType enum value
@@ -7335,6 +7471,14 @@ const (
 )
 
 const (
+	// PermissionEnabled is a Permission enum value
+	PermissionEnabled = "ENABLED"
+
+	// PermissionDisabled is a Permission enum value
+	PermissionDisabled = "DISABLED"
+)
+
+const (
 	// PlatformTypeWindows is a PlatformType enum value
 	PlatformTypeWindows = "WINDOWS"
 )
@@ -7355,6 +7499,12 @@ const (
 	// StackAttributeStorageConnectors is a StackAttribute enum value
 	StackAttributeStorageConnectors = "STORAGE_CONNECTORS"
 
+	// StackAttributeStorageConnectorHomefolders is a StackAttribute enum value
+	StackAttributeStorageConnectorHomefolders = "STORAGE_CONNECTOR_HOMEFOLDERS"
+
+	// StackAttributeStorageConnectorGoogleDrive is a StackAttribute enum value
+	StackAttributeStorageConnectorGoogleDrive = "STORAGE_CONNECTOR_GOOGLE_DRIVE"
+
 	// StackAttributeRedirectUrl is a StackAttribute enum value
 	StackAttributeRedirectUrl = "REDIRECT_URL"
 
@@ -7363,6 +7513,9 @@ const (
 
 	// StackAttributeThemeName is a StackAttribute enum value
 	StackAttributeThemeName = "THEME_NAME"
+
+	// StackAttributeUserSettings is a StackAttribute enum value
+	StackAttributeUserSettings = "USER_SETTINGS"
 )
 
 const (
@@ -7377,6 +7530,9 @@ const (
 const (
 	// StorageConnectorTypeHomefolders is a StorageConnectorType enum value
 	StorageConnectorTypeHomefolders = "HOMEFOLDERS"
+
+	// StorageConnectorTypeGoogleDrive is a StorageConnectorType enum value
+	StorageConnectorTypeGoogleDrive = "GOOGLE_DRIVE"
 )
 
 const (

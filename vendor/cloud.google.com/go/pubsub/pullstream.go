@@ -17,6 +17,7 @@ package pubsub
 import (
 	"io"
 	"sync"
+	"time"
 
 	vkit "cloud.google.com/go/pubsub/apiv1"
 	gax "github.com/googleapis/gax-go"
@@ -104,18 +105,23 @@ func (s *pullStream) call(f func(pb.Subscriber_StreamingPullClient) error) error
 		err error
 		bo  gax.Backoff
 	)
-	for {
+	for i := 0; ; i++ {
 		spc, err = s.get(spc)
 		if err != nil {
 			// Preserve the existing behavior of not retrying on open. Is that a bug?
 			// (If we do decide to retry, don't retry after we're closed.)
 			return err
 		}
+		start := time.Now()
 		err = f(*spc)
 		if err != nil {
 			if isRetryable(err) {
 				recordStat(s.ctx, StreamRetryCount, 1)
-				gax.Sleep(s.ctx, bo.Pause())
+				if time.Since(start) < 30*time.Second { // don't sleep if we've been blocked for a while
+					if err := gax.Sleep(s.ctx, bo.Pause()); err != nil {
+						return err
+					}
+				}
 				continue
 			}
 			s.mu.Lock()

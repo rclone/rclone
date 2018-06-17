@@ -14,8 +14,8 @@
 [[projects]]
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
-  revision = "29f476ffa9c4cd4fd14336b6043090ac1ad76733"
-  version = "v0.21.0"
+  revision = "0fd7230b2a7505833d5f69b75cbd6c9582401479"
+  version = "v0.23.0"
 
 [[projects]]
   name = "github.com/Azure/azure-sdk-for-go"
@@ -23,8 +23,8 @@
     "storage",
     "version"
   ]
-  revision = "4650843026a7fdec254a8d9cf893693a254edd0b"
-  version = "v16.2.1"
+  revision = "cd93ccfe0395e70031704ca68f14606588eec120"
+  version = "v17.3.0"
 
 [[projects]]
   name = "github.com/Azure/go-autorest"
@@ -34,8 +34,8 @@
     "autorest/azure",
     "autorest/date"
   ]
-  revision = "eaa7994b2278094c904d31993d26f56324db3052"
-  version = "v10.8.1"
+  revision = "f04d503958a4fe854c1b41667c73f8813c9dd9c3"
+  version = "v10.11.2"
 
 [[projects]]
   branch = "master"
@@ -74,6 +74,7 @@
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
     "aws/credentials/stscreds",
+    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
@@ -84,6 +85,8 @@
     "internal/sdkrand",
     "internal/shareddefaults",
     "private/protocol",
+    "private/protocol/eventstream",
+    "private/protocol/eventstream/eventstreamapi",
     "private/protocol/query",
     "private/protocol/query/queryutil",
     "private/protocol/rest",
@@ -94,8 +97,8 @@
     "service/s3/s3manager",
     "service/sts"
   ]
-  revision = "4f5d298bd2dcb34b06d944594f458d1f77ac4d66"
-  version = "v1.13.42"
+  revision = "bfc1a07cf158c30c41a3eefba8aae043d0bb5bff"
+  version = "v1.14.8"
 
 [[projects]]
   name = "github.com/billziss-gh/cgofuse"
@@ -154,8 +157,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
-  version = "v1.36.0"
+  revision = "06f5f3d67269ccec1fe5fe4134ba6e982984f7f5"
+  version = "v1.37.0"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -193,10 +196,10 @@
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
-  branch = "master"
   name = "github.com/kr/fs"
   packages = ["."]
-  revision = "2788f0dbd16903de03cb8186e5c7d97b69ad387b"
+  revision = "1455def202f6e05b95cc7bfc7e8ae67ae5141eba"
+  version = "v0.1.0"
 
 [[projects]]
   name = "github.com/marstr/guid"
@@ -217,16 +220,16 @@
   revision = "887eb06ab6a255fbf5744b5812788e884078620a"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ncw/swift"
   packages = ["."]
   revision = "b2a7479cf26fa841ff90dd932d0221cb5c50782d"
+  version = "v1.0.39"
 
 [[projects]]
   branch = "master"
   name = "github.com/nsf/termbox-go"
   packages = ["."]
-  revision = "5a49b82160547cc98fca189a677a1c14eff796f8"
+  revision = "5c94acc5e6eb520f1bcd183974e01171cc4c23b3"
 
 [[projects]]
   branch = "master"
@@ -249,8 +252,8 @@
     "log",
     "reopen"
   ]
-  revision = "b98065a377794d577e2a0e32869378b9ce4b8952"
-  version = "v0.1.1"
+  revision = "807ee759d82c84982a89fb3dc875ef884942f1e5"
+  version = "v0.2.0"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -261,8 +264,8 @@
 [[projects]]
   name = "github.com/pkg/sftp"
   packages = ["."]
-  revision = "5bf2a174b604c6b5549dd9740d924ff2f02e3ad7"
-  version = "1.6.0"
+  revision = "57673e38ea946592a59c26592b7e6fbda646975b"
+  version = "1.8.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -292,7 +295,7 @@
   branch = "master"
   name = "github.com/sevlyar/go-daemon"
   packages = ["."]
-  revision = "45a2ba1b7c6710a044163fa109bf08d060bc3afa"
+  revision = "f9261e73885de99b1647d68bedadf2b9a99ad11f"
 
 [[projects]]
   branch = "master"
@@ -306,8 +309,8 @@
     ".",
     "doc"
   ]
-  revision = "a1f051bc3eba734da4772d60e2d677f47cf93ef4"
-  version = "v0.0.2"
+  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -321,8 +324,8 @@
     "assert",
     "require"
   ]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
@@ -351,8 +354,8 @@
     "service",
     "utils"
   ]
-  revision = "9e88dc1b83728e1462fd74bb61b0f5e28ac95bb6"
-  version = "v2.2.12"
+  revision = "4f9ac88c5fec7350e960aabd0de1f1ede0ad2895"
+  version = "v2.2.14"
 
 [[projects]]
   branch = "master"
@@ -364,6 +367,7 @@
     "ed25519",
     "ed25519/internal/edwards25519",
     "internal/chacha20",
+    "internal/subtle",
     "nacl/secretbox",
     "pbkdf2",
     "poly1305",
@@ -373,7 +377,7 @@
     "ssh/agent",
     "ssh/terminal"
   ]
-  revision = "4ec37c66abab2c7e02ae775328b2ff001c3f025a"
+  revision = "027cca12c2d63e3d62b670d901e8a2c95854feec"
 
 [[projects]]
   branch = "master"
@@ -387,13 +391,12 @@
     "http2",
     "http2/hpack",
     "idna",
-    "lex/httplex",
     "publicsuffix",
     "webdav",
     "webdav/internal/xml",
     "websocket"
   ]
-  revision = "640f4622ab692b87c2f3a94265e6f579fe38263d"
+  revision = "db08ff08e8622530d9ed3a0e8ac279f6d4c02196"
 
 [[projects]]
   branch = "master"
@@ -405,7 +408,7 @@
     "jws",
     "jwt"
   ]
-  revision = "cdc340f7c179dbbfa4afd43b7614e8fcadde4269"
+  revision = "1e0a3fa8ba9a5c9eb35c271780101fdaf1b205d7"
 
 [[projects]]
   branch = "master"
@@ -414,7 +417,7 @@
     "unix",
     "windows"
   ]
-  revision = "6f686a352de66814cdd080d970febae7767857a3"
+  revision = "6c888cc515d3ed83fc103cf1d84468aad274b0a7"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -453,7 +456,7 @@
     "googleapi/internal/uritemplates",
     "storage/v1"
   ]
-  revision = "bb395b674c9930450ea7243b3e3c8f43150f4c11"
+  revision = "2eea9ba0a3d94f6ab46508083e299a00bbbc65f6"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -470,8 +473,8 @@
     "log",
     "urlfetch"
   ]
-  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
-  version = "v1.0.0"
+  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
+  version = "v1.1.0"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -482,6 +485,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e250c0e18b90fecd81621d7ffcc1580931e668bac9048de910fdf6df8e4a140c"
+  inputs-digest = "c1378c5fc821e27711155958ff64b3c74b56818ba4733dbfe0c86d518c32880e"
   solver-name = "gps-cdcl"
   solver-version = 1

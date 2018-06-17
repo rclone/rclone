@@ -24,13 +24,14 @@ import (
 	"time"
 
 	"cloud.google.com/go/internal/testutil"
+	"cloud.google.com/go/internal/uid"
 	"cloud.google.com/go/storage"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
-var sinkIDs = testutil.NewUIDSpace("GO-CLIENT-TEST-SINK")
+var sinkIDs = uid.NewSpace("GO-CLIENT-TEST-SINK", nil)
 
 const testFilter = ""
 
@@ -40,7 +41,7 @@ var testSinkDestination string
 // Returns a cleanup function to be called after the tests finish.
 func initSinks(ctx context.Context) func() {
 	// Create a unique GCS bucket so concurrent tests don't interfere with each other.
-	bucketIDs := testutil.NewUIDSpace(testProjectID + "-log-sink")
+	bucketIDs := uid.NewSpace(testProjectID+"-log-sink", nil)
 	testBucket := bucketIDs.New()
 	testSinkDestination = "storage.googleapis.com/" + testBucket
 	var storageClient *storage.Client

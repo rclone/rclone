@@ -59,6 +59,7 @@ func New(client *http.Client) (*Service, error) {
 		return nil, errors.New("client is nil")
 	}
 	s := &Service{client: client, BasePath: basePath}
+	s.Files = NewFilesService(s)
 	s.Images = NewImagesService(s)
 	s.Locations = NewLocationsService(s)
 	s.Operations = NewOperationsService(s)
@@ -69,6 +70,8 @@ type Service struct {
 	client    *http.Client
 	BasePath  string // API endpoint base URL
 	UserAgent string // optional additional User-Agent fragment
+
+	Files *FilesService
 
 	Images *ImagesService
 
@@ -82,6 +85,15 @@ func (s *Service) userAgent() string {
 		return googleapi.UserAgent
 	}
 	return googleapi.UserAgent + " " + s.UserAgent
+}
+
+func NewFilesService(s *Service) *FilesService {
+	rs := &FilesService{s: s}
+	return rs
+}
+
+type FilesService struct {
+	s *Service
 }
 
 func NewImagesService(s *Service) *ImagesService {
@@ -123,6 +135,40 @@ type OperationsService struct {
 	s *Service
 }
 
+// AnnotateFileResponse: Response to a single file annotation request. A
+// file may contain one or more
+// images, which individually have their own responses.
+type AnnotateFileResponse struct {
+	// InputConfig: Information about the file for which this response is
+	// generated.
+	InputConfig *InputConfig `json:"inputConfig,omitempty"`
+
+	// Responses: Individual responses to images found within the file.
+	Responses []*AnnotateImageResponse `json:"responses,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "InputConfig") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InputConfig") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AnnotateFileResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod AnnotateFileResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // AnnotateImageRequest: Request for performing Google Cloud Vision API
 // tasks over a user-provided
 // image, with user-requested features.
@@ -161,6 +207,11 @@ func (s *AnnotateImageRequest) MarshalJSON() ([]byte, error) {
 
 // AnnotateImageResponse: Response to an image annotation request.
 type AnnotateImageResponse struct {
+	// Context: If present, contextual information is needed to understand
+	// where this image
+	// comes from.
+	Context *ImageAnnotationContext `json:"context,omitempty"`
+
 	// CropHintsAnnotation: If present, crop hints have completed
 	// successfully.
 	CropHintsAnnotation *CropHintsAnnotation `json:"cropHintsAnnotation,omitempty"`
@@ -209,26 +260,155 @@ type AnnotateImageResponse struct {
 	// WebDetection: If present, web detection has completed successfully.
 	WebDetection *WebDetection `json:"webDetection,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "CropHintsAnnotation")
-	// to unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "Context") to
+	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "CropHintsAnnotation") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "Context") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
 func (s *AnnotateImageResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod AnnotateImageResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AsyncAnnotateFileRequest: An offline file annotation request.
+type AsyncAnnotateFileRequest struct {
+	// Features: Required. Requested features.
+	Features []*Feature `json:"features,omitempty"`
+
+	// ImageContext: Additional context that may accompany the image(s) in
+	// the file.
+	ImageContext *ImageContext `json:"imageContext,omitempty"`
+
+	// InputConfig: Required. Information about the input file.
+	InputConfig *InputConfig `json:"inputConfig,omitempty"`
+
+	// OutputConfig: Required. The desired output location and metadata
+	// (e.g. format).
+	OutputConfig *OutputConfig `json:"outputConfig,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Features") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Features") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AsyncAnnotateFileRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod AsyncAnnotateFileRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AsyncAnnotateFileResponse: The response for a single offline file
+// annotation request.
+type AsyncAnnotateFileResponse struct {
+	// OutputConfig: The output location and metadata from
+	// AsyncAnnotateFileRequest.
+	OutputConfig *OutputConfig `json:"outputConfig,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OutputConfig") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OutputConfig") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AsyncAnnotateFileResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod AsyncAnnotateFileResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AsyncBatchAnnotateFilesRequest: Multiple async file annotation
+// requests are batched into a single service
+// call.
+type AsyncBatchAnnotateFilesRequest struct {
+	// Requests: Individual async file annotation requests for this batch.
+	Requests []*AsyncAnnotateFileRequest `json:"requests,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Requests") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Requests") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AsyncBatchAnnotateFilesRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod AsyncBatchAnnotateFilesRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AsyncBatchAnnotateFilesResponse: Response to an async batch file
+// annotation request.
+type AsyncBatchAnnotateFilesResponse struct {
+	// Responses: The list of file annotation responses, one for each
+	// request in
+	// AsyncBatchAnnotateFilesRequest.
+	Responses []*AsyncAnnotateFileResponse `json:"responses,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Responses") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Responses") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AsyncBatchAnnotateFilesResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod AsyncBatchAnnotateFilesResponse
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -384,23 +564,27 @@ func (s *Block) UnmarshalJSON(data []byte) error {
 
 // BoundingPoly: A bounding polygon for the detected image annotation.
 type BoundingPoly struct {
+	// NormalizedVertices: The bounding polygon normalized vertices.
+	NormalizedVertices []*NormalizedVertex `json:"normalizedVertices,omitempty"`
+
 	// Vertices: The bounding polygon vertices.
 	Vertices []*Vertex `json:"vertices,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Vertices") to
-	// unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "NormalizedVertices")
+	// to unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
 	// server regardless of whether the field is empty or not. This may be
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Vertices") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "NormalizedVertices") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -1305,6 +1489,86 @@ type Feature struct {
 
 func (s *Feature) MarshalJSON() ([]byte, error) {
 	type NoMethod Feature
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GcsDestination: The Google Cloud Storage location where the output
+// will be written to.
+type GcsDestination struct {
+	// Uri: Google Cloud Storage URI where the results will be stored.
+	// Results will
+	// be in JSON format and preceded by its corresponding input URI. This
+	// field
+	// can either represent a single file, or a prefix for multiple
+	// outputs.
+	// Prefixes must end in a `/`.
+	//
+	// Examples:
+	//
+	// *    File: gs://bucket-name/filename.json
+	// *    Prefix: gs://bucket-name/prefix/here/
+	// *    File: gs://bucket-name/prefix/here
+	//
+	// If multiple outputs, each response is still AnnotateFileResponse,
+	// each of
+	// which contains some subset of the full list of
+	// AnnotateImageResponse.
+	// Multiple outputs can happen if, for example, the output JSON is too
+	// large
+	// and overflows into multiple sharded files.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Uri") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Uri") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GcsDestination) MarshalJSON() ([]byte, error) {
+	type NoMethod GcsDestination
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GcsSource: The Google Cloud Storage location where the input will be
+// read from.
+type GcsSource struct {
+	// Uri: Google Cloud Storage URI for the input file. This must only be
+	// a
+	// Google Cloud Storage object. Wildcards are not currently supported.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Uri") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Uri") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GcsSource) MarshalJSON() ([]byte, error) {
+	type NoMethod GcsSource
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3119,7 +3383,9 @@ func (s *GoogleCloudVisionV1p2beta1Vertex) MarshalJSON() ([]byte, error) {
 // GoogleCloudVisionV1p2beta1WebDetection: Relevant information for the
 // image from the Internet.
 type GoogleCloudVisionV1p2beta1WebDetection struct {
-	// BestGuessLabels: Best guess text labels for the request image.
+	// BestGuessLabels: The service's best guess as to the topic of the
+	// request image.
+	// Inferred from similar images on the open web.
 	BestGuessLabels []*GoogleCloudVisionV1p2beta1WebDetectionWebLabel `json:"bestGuessLabels,omitempty"`
 
 	// FullMatchingImages: Fully matching images from the Internet.
@@ -3432,6 +3698,288 @@ func (s *GoogleCloudVisionV1p2beta1Word) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// GoogleCloudVisionV1p3beta1BatchOperationMetadata: Metadata for the
+// batch operations such as the current state.
+//
+// This is included in the `metadata` field of the `Operation` returned
+// by the
+// `GetOperation` call of the `google::longrunning::Operations` service.
+type GoogleCloudVisionV1p3beta1BatchOperationMetadata struct {
+	// EndTime: The time when the batch request is finished
+	// and
+	// google.longrunning.Operation.done is set to true.
+	EndTime string `json:"endTime,omitempty"`
+
+	// State: The current state of the batch operation.
+	//
+	// Possible values:
+	//   "STATE_UNSPECIFIED" - Invalid.
+	//   "PROCESSING" - Request is actively being processed.
+	//   "SUCCESSFUL" - The request is done and at least one item has been
+	// successfully
+	// processed.
+	//   "FAILED" - The request is done and no item has been successfully
+	// processed.
+	//   "CANCELLED" - The request is done after the
+	// longrunning.Operations.CancelOperation has
+	// been called by the user.  Any records that were processed before
+	// the
+	// cancel command are output as specified in the request.
+	State string `json:"state,omitempty"`
+
+	// SubmitTime: The time when the batch request was submitted to the
+	// server.
+	SubmitTime string `json:"submitTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EndTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EndTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p3beta1BatchOperationMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p3beta1BatchOperationMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p3beta1BoundingPoly: A bounding polygon for the
+// detected image annotation.
+type GoogleCloudVisionV1p3beta1BoundingPoly struct {
+	// NormalizedVertices: The bounding polygon normalized vertices.
+	NormalizedVertices []*GoogleCloudVisionV1p3beta1NormalizedVertex `json:"normalizedVertices,omitempty"`
+
+	// Vertices: The bounding polygon vertices.
+	Vertices []*GoogleCloudVisionV1p3beta1Vertex `json:"vertices,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "NormalizedVertices")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "NormalizedVertices") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p3beta1BoundingPoly) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p3beta1BoundingPoly
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p3beta1ImportProductSetsResponse: Response message
+// for the `ImportProductSets` method.
+//
+// This message is returned by
+// the
+// google.longrunning.Operations.GetOperation method in the
+// returned
+// google.longrunning.Operation.response field.
+type GoogleCloudVisionV1p3beta1ImportProductSetsResponse struct {
+	// ReferenceImages: The list of reference_images that are imported
+	// successfully.
+	ReferenceImages []*GoogleCloudVisionV1p3beta1ReferenceImage `json:"referenceImages,omitempty"`
+
+	// Statuses: The rpc status for each ImportProductSet request, including
+	// both successes
+	// and errors.
+	//
+	// The number of statuses here matches the number of lines in the csv
+	// file,
+	// and statuses[i] stores the success or failure status of processing
+	// the i-th
+	// line of the csv, starting from line 0.
+	Statuses []*Status `json:"statuses,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ReferenceImages") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ReferenceImages") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p3beta1ImportProductSetsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p3beta1ImportProductSetsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p3beta1NormalizedVertex: A vertex represents a 2D
+// point in the image.
+// NOTE: the normalized vertex coordinates are relative to the original
+// image
+// and range from 0 to 1.
+type GoogleCloudVisionV1p3beta1NormalizedVertex struct {
+	// X: X coordinate.
+	X float64 `json:"x,omitempty"`
+
+	// Y: Y coordinate.
+	Y float64 `json:"y,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "X") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "X") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p3beta1NormalizedVertex) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p3beta1NormalizedVertex
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *GoogleCloudVisionV1p3beta1NormalizedVertex) UnmarshalJSON(data []byte) error {
+	type NoMethod GoogleCloudVisionV1p3beta1NormalizedVertex
+	var s1 struct {
+		X gensupport.JSONFloat64 `json:"x"`
+		Y gensupport.JSONFloat64 `json:"y"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.X = float64(s1.X)
+	s.Y = float64(s1.Y)
+	return nil
+}
+
+// GoogleCloudVisionV1p3beta1ReferenceImage: A `ReferenceImage`
+// represents a product image and its associated metadata,
+// such as bounding boxes.
+type GoogleCloudVisionV1p3beta1ReferenceImage struct {
+	// BoundingPolys: Bounding polygons around the areas of interest in the
+	// reference image.
+	// Optional. If this field is empty, the system will try to detect
+	// regions of
+	// interest. At most 10 bounding polygons will be used.
+	//
+	// The provided shape is converted into a non-rotated rectangle.
+	// Once
+	// converted, the small edge of the rectangle must be greater than or
+	// equal
+	// to 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is ok;
+	// 1:5
+	// is not).
+	BoundingPolys []*GoogleCloudVisionV1p3beta1BoundingPoly `json:"boundingPolys,omitempty"`
+
+	// Name: The resource name of the reference image.
+	//
+	// Format
+	// is:
+	//
+	// `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referen
+	// ceImages/IMAGE_ID`.
+	//
+	// This field is ignored when creating a reference image.
+	Name string `json:"name,omitempty"`
+
+	// Uri: The Google Cloud Storage URI of the reference image.
+	//
+	// The URI must start with `gs://`.
+	//
+	// Required.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BoundingPolys") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BoundingPolys") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p3beta1ReferenceImage) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p3beta1ReferenceImage
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVisionV1p3beta1Vertex: A vertex represents a 2D point in
+// the image.
+// NOTE: the vertex coordinates are in the same scale as the original
+// image.
+type GoogleCloudVisionV1p3beta1Vertex struct {
+	// X: X coordinate.
+	X int64 `json:"x,omitempty"`
+
+	// Y: Y coordinate.
+	Y int64 `json:"y,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "X") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "X") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVisionV1p3beta1Vertex) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVisionV1p3beta1Vertex
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Image: Client image to perform Google Cloud Vision API tasks over.
 type Image struct {
 	// Content: Image content, represented as a stream of bytes.
@@ -3466,6 +4014,41 @@ type Image struct {
 
 func (s *Image) MarshalJSON() ([]byte, error) {
 	type NoMethod Image
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ImageAnnotationContext: If an image was produced from a file (e.g. a
+// PDF), this message gives
+// information about the source of that image.
+type ImageAnnotationContext struct {
+	// PageNumber: If the file was a PDF or TIFF, this field gives the page
+	// number within
+	// the file used to produce the image.
+	PageNumber int64 `json:"pageNumber,omitempty"`
+
+	// Uri: The URI of the file used to produce the image.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "PageNumber") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "PageNumber") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ImageAnnotationContext) MarshalJSON() ([]byte, error) {
+	type NoMethod ImageAnnotationContext
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3611,6 +4194,39 @@ type ImageSource struct {
 
 func (s *ImageSource) MarshalJSON() ([]byte, error) {
 	type NoMethod ImageSource
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// InputConfig: The desired input location and metadata.
+type InputConfig struct {
+	// GcsSource: The Google Cloud Storage location to read the input from.
+	GcsSource *GcsSource `json:"gcsSource,omitempty"`
+
+	// MimeType: The type of the file. Currently only "application/pdf" and
+	// "image/tiff"
+	// are supported. Wildcards are not supported.
+	MimeType string `json:"mimeType,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "GcsSource") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "GcsSource") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *InputConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod InputConfig
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3837,6 +4453,56 @@ func (s *LocationInfo) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// NormalizedVertex: A vertex represents a 2D point in the image.
+// NOTE: the normalized vertex coordinates are relative to the original
+// image
+// and range from 0 to 1.
+type NormalizedVertex struct {
+	// X: X coordinate.
+	X float64 `json:"x,omitempty"`
+
+	// Y: Y coordinate.
+	Y float64 `json:"y,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "X") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "X") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *NormalizedVertex) MarshalJSON() ([]byte, error) {
+	type NoMethod NormalizedVertex
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *NormalizedVertex) UnmarshalJSON(data []byte) error {
+	type NoMethod NormalizedVertex
+	var s1 struct {
+		X gensupport.JSONFloat64 `json:"x"`
+		Y gensupport.JSONFloat64 `json:"y"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.X = float64(s1.X)
+	s.Y = float64(s1.Y)
+	return nil
+}
+
 // Operation: This resource represents a long-running operation that is
 // the result of a
 // network API call.
@@ -3908,6 +4574,95 @@ type Operation struct {
 
 func (s *Operation) MarshalJSON() ([]byte, error) {
 	type NoMethod Operation
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// OperationMetadata: Contains metadata for the BatchAnnotateImages
+// operation.
+type OperationMetadata struct {
+	// CreateTime: The time when the batch request was received.
+	CreateTime string `json:"createTime,omitempty"`
+
+	// State: Current state of the batch operation.
+	//
+	// Possible values:
+	//   "STATE_UNSPECIFIED" - Invalid.
+	//   "CREATED" - Request is received.
+	//   "RUNNING" - Request is actively being processed.
+	//   "DONE" - The batch processing is done.
+	//   "CANCELLED" - The batch processing was cancelled.
+	State string `json:"state,omitempty"`
+
+	// UpdateTime: The time when the operation result was last updated.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CreateTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CreateTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OperationMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod OperationMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// OutputConfig: The desired output location and metadata.
+type OutputConfig struct {
+	// BatchSize: The max number of response protos to put into each output
+	// JSON file on
+	// Google Cloud Storage.
+	// The valid range is [1, 100]. If not specified, the default value is
+	// 20.
+	//
+	// For example, for one pdf file with 100 pages, 100 response protos
+	// will
+	// be generated. If `batch_size` = 20, then 5 json files each
+	// containing 20 response protos will be written under the
+	// prefix
+	// `gcs_destination`.`uri`.
+	//
+	// Currently, batch_size only applies to GcsDestination, with potential
+	// future
+	// support for other output configurations.
+	BatchSize int64 `json:"batchSize,omitempty"`
+
+	// GcsDestination: The Google Cloud Storage location to write the
+	// output(s) to.
+	GcsDestination *GcsDestination `json:"gcsDestination,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "BatchSize") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "BatchSize") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OutputConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod OutputConfig
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -4550,7 +5305,9 @@ func (s *Vertex) MarshalJSON() ([]byte, error) {
 
 // WebDetection: Relevant information for the image from the Internet.
 type WebDetection struct {
-	// BestGuessLabels: Best guess text labels for the request image.
+	// BestGuessLabels: The service's best guess as to the topic of the
+	// request image.
+	// Inferred from similar images on the open web.
 	BestGuessLabels []*WebLabel `json:"bestGuessLabels,omitempty"`
 
 	// FullMatchingImages: Fully matching images from the Internet.
@@ -4887,6 +5644,137 @@ func (s *Word) UnmarshalJSON(data []byte) error {
 	}
 	s.Confidence = float64(s1.Confidence)
 	return nil
+}
+
+// method id "vision.files.asyncBatchAnnotate":
+
+type FilesAsyncBatchAnnotateCall struct {
+	s                              *Service
+	asyncbatchannotatefilesrequest *AsyncBatchAnnotateFilesRequest
+	urlParams_                     gensupport.URLParams
+	ctx_                           context.Context
+	header_                        http.Header
+}
+
+// AsyncBatchAnnotate: Run asynchronous image detection and annotation
+// for a list of generic
+// files, such as PDF files, which may contain multiple pages and
+// multiple
+// images per page. Progress and results can be retrieved through
+// the
+// `google.longrunning.Operations` interface.
+// `Operation.metadata` contains `OperationMetadata`
+// (metadata).
+// `Operation.response` contains `AsyncBatchAnnotateFilesResponse`
+// (results).
+func (r *FilesService) AsyncBatchAnnotate(asyncbatchannotatefilesrequest *AsyncBatchAnnotateFilesRequest) *FilesAsyncBatchAnnotateCall {
+	c := &FilesAsyncBatchAnnotateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.asyncbatchannotatefilesrequest = asyncbatchannotatefilesrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *FilesAsyncBatchAnnotateCall) Fields(s ...googleapi.Field) *FilesAsyncBatchAnnotateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *FilesAsyncBatchAnnotateCall) Context(ctx context.Context) *FilesAsyncBatchAnnotateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *FilesAsyncBatchAnnotateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *FilesAsyncBatchAnnotateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.asyncbatchannotatefilesrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/files:asyncBatchAnnotate")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "vision.files.asyncBatchAnnotate" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *FilesAsyncBatchAnnotateCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Run asynchronous image detection and annotation for a list of generic\nfiles, such as PDF files, which may contain multiple pages and multiple\nimages per page. Progress and results can be retrieved through the\n`google.longrunning.Operations` interface.\n`Operation.metadata` contains `OperationMetadata` (metadata).\n`Operation.response` contains `AsyncBatchAnnotateFilesResponse` (results).",
+	//   "flatPath": "v1/files:asyncBatchAnnotate",
+	//   "httpMethod": "POST",
+	//   "id": "vision.files.asyncBatchAnnotate",
+	//   "parameterOrder": [],
+	//   "parameters": {},
+	//   "path": "v1/files:asyncBatchAnnotate",
+	//   "request": {
+	//     "$ref": "AsyncBatchAnnotateFilesRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-vision"
+	//   ]
+	// }
+
 }
 
 // method id "vision.images.annotate":

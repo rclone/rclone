@@ -1281,6 +1281,7 @@ func (c *CloudWatchLogs) DescribeDestinationsPages(input *DescribeDestinationsIn
 // for more information on using Contexts.
 func (c *CloudWatchLogs) DescribeDestinationsPagesWithContext(ctx aws.Context, input *DescribeDestinationsInput, fn func(*DescribeDestinationsOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
+		EndPageOnSameToken: true,
 		NewRequest: func() (*request.Request, error) {
 			var inCpy *DescribeDestinationsInput
 			if input != nil {
@@ -1503,6 +1504,7 @@ func (c *CloudWatchLogs) DescribeLogGroupsPages(input *DescribeLogGroupsInput, f
 // for more information on using Contexts.
 func (c *CloudWatchLogs) DescribeLogGroupsPagesWithContext(ctx aws.Context, input *DescribeLogGroupsInput, fn func(*DescribeLogGroupsOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
+		EndPageOnSameToken: true,
 		NewRequest: func() (*request.Request, error) {
 			var inCpy *DescribeLogGroupsInput
 			if input != nil {
@@ -1649,6 +1651,7 @@ func (c *CloudWatchLogs) DescribeLogStreamsPages(input *DescribeLogStreamsInput,
 // for more information on using Contexts.
 func (c *CloudWatchLogs) DescribeLogStreamsPagesWithContext(ctx aws.Context, input *DescribeLogStreamsInput, fn func(*DescribeLogStreamsOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
+		EndPageOnSameToken: true,
 		NewRequest: func() (*request.Request, error) {
 			var inCpy *DescribeLogStreamsInput
 			if input != nil {
@@ -1792,6 +1795,7 @@ func (c *CloudWatchLogs) DescribeMetricFiltersPages(input *DescribeMetricFilters
 // for more information on using Contexts.
 func (c *CloudWatchLogs) DescribeMetricFiltersPagesWithContext(ctx aws.Context, input *DescribeMetricFiltersInput, fn func(*DescribeMetricFiltersOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
+		EndPageOnSameToken: true,
 		NewRequest: func() (*request.Request, error) {
 			var inCpy *DescribeMetricFiltersInput
 			if input != nil {
@@ -2017,6 +2021,7 @@ func (c *CloudWatchLogs) DescribeSubscriptionFiltersPages(input *DescribeSubscri
 // for more information on using Contexts.
 func (c *CloudWatchLogs) DescribeSubscriptionFiltersPagesWithContext(ctx aws.Context, input *DescribeSubscriptionFiltersInput, fn func(*DescribeSubscriptionFiltersOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
+		EndPageOnSameToken: true,
 		NewRequest: func() (*request.Request, error) {
 			var inCpy *DescribeSubscriptionFiltersInput
 			if input != nil {
@@ -2264,6 +2269,7 @@ func (c *CloudWatchLogs) FilterLogEventsPages(input *FilterLogEventsInput, fn fu
 // for more information on using Contexts.
 func (c *CloudWatchLogs) FilterLogEventsPagesWithContext(ctx aws.Context, input *FilterLogEventsInput, fn func(*FilterLogEventsOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
+		EndPageOnSameToken: true,
 		NewRequest: func() (*request.Request, error) {
 			var inCpy *FilterLogEventsInput
 			if input != nil {
@@ -2410,6 +2416,7 @@ func (c *CloudWatchLogs) GetLogEventsPages(input *GetLogEventsInput, fn func(*Ge
 // for more information on using Contexts.
 func (c *CloudWatchLogs) GetLogEventsPagesWithContext(ctx aws.Context, input *GetLogEventsInput, fn func(*GetLogEventsOutput, bool) bool, opts ...request.Option) error {
 	p := request.Pagination{
+		EndPageOnSameToken: true,
 		NewRequest: func() (*request.Request, error) {
 			var inCpy *GetLogEventsInput
 			if input != nil {

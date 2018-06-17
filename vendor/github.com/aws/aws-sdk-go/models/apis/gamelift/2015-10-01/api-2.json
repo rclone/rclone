@@ -771,6 +771,21 @@
         {"shape":"TerminalRoutingStrategyException"}
       ]
     },
+    "StartFleetActions":{
+      "name":"StartFleetActions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"StartFleetActionsInput"},
+      "output":{"shape":"StartFleetActionsOutput"},
+      "errors":[
+        {"shape":"InternalServiceException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"NotFoundException"}
+      ]
+    },
     "StartGameSessionPlacement":{
       "name":"StartGameSessionPlacement",
       "http":{
@@ -814,6 +829,21 @@
         {"shape":"NotFoundException"},
         {"shape":"InternalServiceException"},
         {"shape":"UnsupportedRegionException"}
+      ]
+    },
+    "StopFleetActions":{
+      "name":"StopFleetActions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"StopFleetActionsInput"},
+      "output":{"shape":"StopFleetActionsOutput"},
+      "errors":[
+        {"shape":"InternalServiceException"},
+        {"shape":"InvalidRequestException"},
+        {"shape":"UnauthorizedException"},
+        {"shape":"NotFoundException"}
       ]
     },
     "StopGameSessionPlacement":{
@@ -1878,6 +1908,16 @@
       "type":"list",
       "member":{"shape":"Event"}
     },
+    "FleetAction":{
+      "type":"string",
+      "enum":["AUTO_SCALING"]
+    },
+    "FleetActionList":{
+      "type":"list",
+      "member":{"shape":"FleetAction"},
+      "max":1,
+      "min":1
+    },
     "FleetAttributes":{
       "type":"structure",
       "members":{
@@ -1897,7 +1937,8 @@
         "NewGameSessionProtectionPolicy":{"shape":"ProtectionPolicy"},
         "OperatingSystem":{"shape":"OperatingSystem"},
         "ResourceCreationLimitPolicy":{"shape":"ResourceCreationLimitPolicy"},
-        "MetricGroups":{"shape":"MetricGroupList"}
+        "MetricGroups":{"shape":"MetricGroupList"},
+        "StoppedActions":{"shape":"FleetActionList"}
       }
     },
     "FleetAttributesList":{
@@ -2619,6 +2660,13 @@
         "TIMEDOUT"
       ]
     },
+    "PolicyType":{
+      "type":"string",
+      "enum":[
+        "RuleBased",
+        "TargetBased"
+      ]
+    },
     "PortNumber":{
       "type":"integer",
       "max":60000,
@@ -2644,11 +2692,6 @@
       "required":[
         "Name",
         "FleetId",
-        "ScalingAdjustment",
-        "ScalingAdjustmentType",
-        "Threshold",
-        "ComparisonOperator",
-        "EvaluationPeriods",
         "MetricName"
       ],
       "members":{
@@ -2659,7 +2702,9 @@
         "Threshold":{"shape":"Double"},
         "ComparisonOperator":{"shape":"ComparisonOperatorType"},
         "EvaluationPeriods":{"shape":"PositiveInteger"},
-        "MetricName":{"shape":"MetricName"}
+        "MetricName":{"shape":"MetricName"},
+        "PolicyType":{"shape":"PolicyType"},
+        "TargetConfiguration":{"shape":"TargetConfiguration"}
       }
     },
     "PutScalingPolicyOutput":{
@@ -2766,7 +2811,9 @@
         "ComparisonOperator":{"shape":"ComparisonOperatorType"},
         "Threshold":{"shape":"Double"},
         "EvaluationPeriods":{"shape":"PositiveInteger"},
-        "MetricName":{"shape":"MetricName"}
+        "MetricName":{"shape":"MetricName"},
+        "PolicyType":{"shape":"PolicyType"},
+        "TargetConfiguration":{"shape":"TargetConfiguration"}
       }
     },
     "ScalingPolicyList":{
@@ -2826,6 +2873,22 @@
       "max":300,
       "min":0,
       "pattern":"[a-zA-Z0-9:_/-]*"
+    },
+    "StartFleetActionsInput":{
+      "type":"structure",
+      "required":[
+        "FleetId",
+        "Actions"
+      ],
+      "members":{
+        "FleetId":{"shape":"FleetId"},
+        "Actions":{"shape":"FleetActionList"}
+      }
+    },
+    "StartFleetActionsOutput":{
+      "type":"structure",
+      "members":{
+      }
     },
     "StartGameSessionPlacementInput":{
       "type":"structure",
@@ -2889,6 +2952,22 @@
         "MatchmakingTicket":{"shape":"MatchmakingTicket"}
       }
     },
+    "StopFleetActionsInput":{
+      "type":"structure",
+      "required":[
+        "FleetId",
+        "Actions"
+      ],
+      "members":{
+        "FleetId":{"shape":"FleetId"},
+        "Actions":{"shape":"FleetActionList"}
+      }
+    },
+    "StopFleetActionsOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "StopGameSessionPlacementInput":{
       "type":"structure",
       "required":["PlacementId"],
@@ -2924,6 +3003,13 @@
       "member":{"shape":"NonZeroAndMaxString"}
     },
     "StringModel":{"type":"string"},
+    "TargetConfiguration":{
+      "type":"structure",
+      "required":["TargetValue"],
+      "members":{
+        "TargetValue":{"shape":"Double"}
+      }
+    },
     "TerminalRoutingStrategyException":{
       "type":"structure",
       "members":{

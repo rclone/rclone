@@ -87,7 +87,128 @@ type ErrorResponse struct {
 	Error *ErrorInfo `json:"error,omitempty"`
 }
 
-// Resource ...
+// Operation REST API operation
+type Operation struct {
+	// Name - Operation name: {provider}/{resource}/{operation}
+	Name *string `json:"name,omitempty"`
+	// Display - The object that represents the operation.
+	Display *OperationDisplay `json:"display,omitempty"`
+}
+
+// OperationDisplay the object that represents the operation.
+type OperationDisplay struct {
+	// Provider - Service provider: Microsoft.ResourceProvider
+	Provider *string `json:"provider,omitempty"`
+	// Resource - Resource on which the operation is performed.
+	Resource *string `json:"resource,omitempty"`
+	// Operation - Operation type: Read, write, delete, etc.
+	Operation *string `json:"operation,omitempty"`
+}
+
+// OperationListResult result of the request to list Resource Provider operations. It contains a list of operations
+// and a URL link to get the next set of results.
+type OperationListResult struct {
+	autorest.Response `json:"-"`
+	// Value - List of Resource Provider operations supported by the Resource Provider resource provider.
+	Value *[]Operation `json:"value,omitempty"`
+	// NextLink - URL to get the next set of operation list results if there are any.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// OperationListResultIterator provides access to a complete listing of Operation values.
+type OperationListResultIterator struct {
+	i    int
+	page OperationListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *OperationListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter OperationListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter OperationListResultIterator) Response() OperationListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter OperationListResultIterator) Value() Operation {
+	if !iter.page.NotDone() {
+		return Operation{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (olr OperationListResult) IsEmpty() bool {
+	return olr.Value == nil || len(*olr.Value) == 0
+}
+
+// operationListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (olr OperationListResult) operationListResultPreparer() (*http.Request, error) {
+	if olr.NextLink == nil || len(to.String(olr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(olr.NextLink)))
+}
+
+// OperationListResultPage contains a page of Operation values.
+type OperationListResultPage struct {
+	fn  func(OperationListResult) (OperationListResult, error)
+	olr OperationListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *OperationListResultPage) Next() error {
+	next, err := page.fn(page.olr)
+	if err != nil {
+		return err
+	}
+	page.olr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page OperationListResultPage) NotDone() bool {
+	return !page.olr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page OperationListResultPage) Response() OperationListResult {
+	return page.olr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page OperationListResultPage) Values() []Operation {
+	if page.olr.IsEmpty() {
+		return nil
+	}
+	return *page.olr.Value
+}
+
+// Resource the core properties of ARM resources
 type Resource struct {
 	// ID - Fully qualified resource Id for the resource. Ex - /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}
 	ID *string `json:"id,omitempty"`
@@ -392,12 +513,11 @@ type WorkspaceProviderAuthorization struct {
 // operation.
 type WorkspacesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w Workspace, err error) {
+func (future *WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w Workspace, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -405,34 +525,15 @@ func (future WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w 
 		return
 	}
 	if !done {
-		return w, azure.NewAsyncOpIncompleteError("databricks.WorkspacesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		w, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "databricks.WorkspacesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("databricks.WorkspacesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if w.Response.Response, err = future.GetResult(sender); err == nil && w.Response.Response.StatusCode != http.StatusNoContent {
+		w, err = client.CreateOrUpdateResponder(w.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "databricks.WorkspacesCreateOrUpdateFuture", "Result", w.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databricks.WorkspacesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	w, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databricks.WorkspacesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -440,12 +541,11 @@ func (future WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w 
 // WorkspacesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type WorkspacesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future WorkspacesDeleteFuture) Result(client WorkspacesClient) (ar autorest.Response, err error) {
+func (future *WorkspacesDeleteFuture) Result(client WorkspacesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -453,47 +553,21 @@ func (future WorkspacesDeleteFuture) Result(client WorkspacesClient) (ar autores
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("databricks.WorkspacesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "databricks.WorkspacesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("databricks.WorkspacesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databricks.WorkspacesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databricks.WorkspacesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // WorkspacesUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type WorkspacesUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future WorkspacesUpdateFuture) Result(client WorkspacesClient) (w Workspace, err error) {
+func (future *WorkspacesUpdateFuture) Result(client WorkspacesClient) (w Workspace, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -501,34 +575,15 @@ func (future WorkspacesUpdateFuture) Result(client WorkspacesClient) (w Workspac
 		return
 	}
 	if !done {
-		return w, azure.NewAsyncOpIncompleteError("databricks.WorkspacesUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		w, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "databricks.WorkspacesUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("databricks.WorkspacesUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if w.Response.Response, err = future.GetResult(sender); err == nil && w.Response.Response.StatusCode != http.StatusNoContent {
+		w, err = client.UpdateResponder(w.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "databricks.WorkspacesUpdateFuture", "Result", w.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databricks.WorkspacesUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	w, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databricks.WorkspacesUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

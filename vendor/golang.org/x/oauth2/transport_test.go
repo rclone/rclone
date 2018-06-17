@@ -1,6 +1,8 @@
 package oauth2
 
 import (
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,6 +26,64 @@ func TestTransportNilTokenSource(t *testing.T) {
 	}
 	if resp != nil {
 		t.Errorf("Response = %v; want nil", resp)
+	}
+}
+
+type readCloseCounter struct {
+	CloseCount int
+	ReadErr    error
+}
+
+func (r *readCloseCounter) Read(b []byte) (int, error) {
+	return 0, r.ReadErr
+}
+
+func (r *readCloseCounter) Close() error {
+	r.CloseCount++
+	return nil
+}
+
+func TestTransportCloseRequestBody(t *testing.T) {
+	tr := &Transport{}
+	server := newMockServer(func(w http.ResponseWriter, r *http.Request) {})
+	defer server.Close()
+	client := &http.Client{Transport: tr}
+	body := &readCloseCounter{
+		ReadErr: errors.New("readCloseCounter.Read not implemented"),
+	}
+	resp, err := client.Post(server.URL, "application/json", body)
+	if err == nil {
+		t.Errorf("got no errors, want an error with nil token source")
+	}
+	if resp != nil {
+		t.Errorf("Response = %v; want nil", resp)
+	}
+	if expected := 1; body.CloseCount != expected {
+		t.Errorf("Body was closed %d times, expected %d", body.CloseCount, expected)
+	}
+}
+
+func TestTransportCloseRequestBodySuccess(t *testing.T) {
+	tr := &Transport{
+		Source: StaticTokenSource(&Token{
+			AccessToken: "abc",
+		}),
+	}
+	server := newMockServer(func(w http.ResponseWriter, r *http.Request) {})
+	defer server.Close()
+	client := &http.Client{Transport: tr}
+	body := &readCloseCounter{
+		ReadErr: io.EOF,
+	}
+	resp, err := client.Post(server.URL, "application/json", body)
+	if err != nil {
+		t.Errorf("got error %v; expected none", err)
+	}
+	if resp == nil {
+		t.Errorf("Response is nil; expected non-nil")
+	}
+	if expected := 1; body.CloseCount != expected {
+		t.Errorf("Body was closed %d times, expected %d", body.CloseCount, expected)
 	}
 }
 

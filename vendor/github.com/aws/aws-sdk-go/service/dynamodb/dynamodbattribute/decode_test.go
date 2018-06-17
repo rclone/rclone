@@ -234,6 +234,30 @@ func TestUnmarshalListError(t *testing.T) {
 	}
 }
 
+func TestUnmarshalConvertToData(t *testing.T) {
+	type T struct {
+		Int       int
+		Str       string
+		ByteSlice []byte
+		StrSlice  []string
+	}
+
+	exp := T{
+		Int:       42,
+		Str:       "foo",
+		ByteSlice: []byte{42, 97, 83},
+		StrSlice:  []string{"cat", "dog"},
+	}
+	av, err := ConvertToMap(exp)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+
+	var act T
+	err = UnmarshalMap(av, &act)
+	assertConvertTest(t, 0, act, exp, err, nil)
+}
+
 func TestUnmarshalMapShared(t *testing.T) {
 	for i, c := range sharedMapTestCases {
 		err := UnmarshalMap(c.in, c.actual)

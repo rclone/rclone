@@ -19,8 +19,9 @@
 //
 //   NOTE: This package is in alpha. It is not stable, and is likely to change.
 //
-// Provides methods for detection of privacy-sensitive fragments in text,
-// images, and Google Cloud Platform storage repositories.
+// Provides methods for detection, risk analysis, and de-identification of
+// privacy-sensitive fragments in text, images, and Google Cloud Platform
+// storage repositories.
 package dlp // import "cloud.google.com/go/dlp/apiv2"
 
 import (

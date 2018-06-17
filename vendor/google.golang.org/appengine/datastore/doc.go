@@ -87,7 +87,7 @@ behavior for struct pointers. Struct pointers are more strongly typed and are
 easier to use; PropertyLoadSavers are more flexible.
 
 The actual types passed do not have to match between Get and Put calls or even
-across different App Engine requests. It is valid to put a *PropertyList and
+across different calls to datastore. It is valid to put a *PropertyList and
 get that same entity as a *myStruct, or put a *myStruct0 and get a *myStruct1.
 Conceptually, any entity is saved as a sequence of properties, and is loaded
 into the destination value on a property-by-property basis. When loading into
@@ -97,18 +97,28 @@ caller whether this error is fatal, recoverable or ignorable.
 
 By default, for struct pointers, all properties are potentially indexed, and
 the property name is the same as the field name (and hence must start with an
-upper case letter). Fields may have a `datastore:"name,options"` tag. The tag
-name is the property name, which must be one or more valid Go identifiers
-joined by ".", but may start with a lower case letter. An empty tag name means
-to just use the field name. A "-" tag name means that the datastore will
-ignore that field. If options is "noindex" then the field will not be indexed.
-If the options is "" then the comma may be omitted. There are no other
-recognized options.
+upper case letter).
 
-Fields (except for []byte) are indexed by default. Strings longer than 1500
-bytes cannot be indexed; fields used to store long strings should be
-tagged with "noindex". Similarly, ByteStrings longer than 1500 bytes cannot be
-indexed.
+Fields may have a `datastore:"name,options"` tag. The tag name is the
+property name, which must be one or more valid Go identifiers joined by ".",
+but may start with a lower case letter. An empty tag name means to just use the
+field name. A "-" tag name means that the datastore will ignore that field.
+
+The only valid options are "omitempty" and "noindex".
+
+If the options include "omitempty" and the value of the field is empty, then the field will be omitted on Save.
+The empty values are false, 0, any nil interface value, and any array, slice, map, or string of length zero.
+Struct field values will never be empty.
+
+If options include "noindex" then the field will not be indexed. All fields are indexed
+by default. Strings or byte slices longer than 1500 bytes cannot be indexed;
+fields used to store long strings and byte slices must be tagged with "noindex"
+or they will cause Put operations to fail.
+
+To use multiple options together, separate them by a comma.
+The order does not matter.
+
+If the options is "" then the comma may be omitted.
 
 Example code:
 
@@ -200,7 +210,7 @@ Example code:
 	func (x *CustomPropsExample) Save() ([]datastore.Property, error) {
 		// Validate the Sum field.
 		if x.Sum != x.I + x.J {
-			return errors.New("CustomPropsExample has inconsistent sum")
+			return nil, errors.New("CustomPropsExample has inconsistent sum")
 		}
 		// Save I and J as usual. The code below is equivalent to calling
 		// "return datastore.SaveStruct(x)", but is done manually for
@@ -214,7 +224,7 @@ Example code:
 				Name:  "J",
 				Value: int64(x.J),
 			},
-		}
+		}, nil
 	}
 
 The *PropertyList type implements PropertyLoadSaver, and can therefore hold an
@@ -343,7 +353,7 @@ Example code:
 				continue
 			}
 			for p, rep := range props {
-				fmt.Fprintf(w, "\t-%s (%s)\n", p, strings.Join(", ", rep))
+				fmt.Fprintf(w, "\t-%s (%s)\n", p, strings.Join(rep, ", "))
 			}
 		}
 	}

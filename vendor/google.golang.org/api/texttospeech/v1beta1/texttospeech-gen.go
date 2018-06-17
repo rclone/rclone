@@ -1,6 +1,6 @@
 // Package texttospeech provides access to the Cloud Text-to-Speech API.
 //
-// See http://cloud.google.com/text-to-speech/
+// See https://cloud.google.com/text-to-speech/
 //
 // Usage example:
 //

@@ -63,11 +63,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -87,12 +82,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -291,7 +280,7 @@
       }
     }
   },
-  "revision": "20180410",
+  "revision": "20180610",
   "rootUrl": "https://servicecontrol.googleapis.com/",
   "schemas": {
     "AllocateInfo": {
@@ -399,6 +388,10 @@
           "$ref": "RequestMetadata",
           "description": "Metadata about the operation."
         },
+        "resourceLocation": {
+          "$ref": "ResourceLocation",
+          "description": "The resource location information."
+        },
         "resourceName": {
           "description": "The resource or collection that is the target of the operation.\nThe name is a scheme-less URI, not including the API service name.\nFor example:\n\n    \"shelves/SHELF_ID/books\"\n    \"shelves/SHELF_ID/books/BOOK_ID\"",
           "type": "string"
@@ -426,6 +419,43 @@
         "status": {
           "$ref": "Status",
           "description": "The status of the overall operation."
+        }
+      },
+      "type": "object"
+    },
+    "Auth": {
+      "description": "This message defines request authentication attributes. Terminology is\nbased on the JSON Web Token (JWT) standard, but the terms also\ncorrelate to concepts in other standards.",
+      "id": "Auth",
+      "properties": {
+        "accessLevels": {
+          "description": "A list of access level resource names that allow resources to be\naccessed by authenticated requester. It is part of Secure GCP processing\nfor the incoming request. An access level string has the format:\n\"//{api_service_name}/accessPolicies/{policy_id}/accessLevels/{short_name}\"\n\nExample:\n\"//accesscontextmanager.googleapis.com/accessPolicies/MY_POLICY_ID/accessLevels/MY_LEVEL\"",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "audiences": {
+          "description": "The intended audience(s) for this authentication information. Reflects\nthe audience (`aud`) claim within a JWT. The audience\nvalue(s) depends on the `issuer`, but typically include one or more of\nthe following pieces of information:\n\n*  The services intended to receive the credential such as\n   [\"pubsub.googleapis.com\", \"storage.googleapis.com\"]\n*  A set of service-based scopes. For example,\n   [\"https://www.googleapis.com/auth/cloud-platform\"]\n*  The client id of an app, such as the Firebase project id for JWTs\n   from Firebase Auth.\n\nConsult the documentation for the credential issuer to determine the\ninformation provided.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "claims": {
+          "additionalProperties": {
+            "description": "Properties of the object.",
+            "type": "any"
+          },
+          "description": "Structured claims presented with the credential. JWTs include\n`{key: value}` pairs for standard and private claims. The following\nis a subset of the standard required and optional claims that would\ntypically be presented for a Google-based JWT:\n\n   {'iss': 'accounts.google.com',\n    'sub': '113289723416554971153',\n    'aud': ['123456789012', 'pubsub.googleapis.com'],\n    'azp': '123456789012.apps.googleusercontent.com',\n    'email': 'jsmith@example.com',\n    'iat': 1353601026,\n    'exp': 1353604926}\n\nSAML assertions are similarly specified, but with an identity provider\ndependent structure.",
+          "type": "object"
+        },
+        "presenter": {
+          "description": "The authorized presenter of the credential. Reflects the optional\nAuthorized Presenter (`azp`) claim within a JWT or the\nOAuth client id. For example, a Google Cloud Platform client id looks\nas follows: \"123456789012.apps.googleusercontent.com\".",
+          "type": "string"
+        },
+        "principal": {
+          "description": "The authenticated principal. Reflects the issuer (`iss`) and subject\n(`sub`) claims within a JWT. The issuer and subject should be `/`\ndelimited, with `/` percent-encoded within the subject fragment. For\nGoogle accounts, the principal format is:\n\"https://accounts.google.com/{id}\"",
+          "type": "string"
         }
       },
       "type": "object"
@@ -468,6 +498,10 @@
         "resource": {
           "description": "The resource being accessed, as a REST-style string. For example:\n\n    bigquery.googleapis.com/projects/PROJECTID/datasets/DATASETID",
           "type": "string"
+        },
+        "resourceAttributes": {
+          "$ref": "Resource",
+          "description": "Resource attributes used in IAM condition evaluation. This field contains\nresource attributes like resource type and resource name.\n\nTo get the whole view of the attributes used in IAM\ncondition evaluation, the user must also look into\n`AuditLog.request_metadata.request_attributes`."
         }
       },
       "type": "object"
@@ -1316,6 +1350,70 @@
       },
       "type": "object"
     },
+    "Request": {
+      "description": "This message defines attributes for an HTTP request. If the actual\nrequest is not an HTTP request, the runtime system should try to map\nthe actual request to an equivalent HTTP request.",
+      "id": "Request",
+      "properties": {
+        "auth": {
+          "$ref": "Auth",
+          "description": "The request authentication. May be absent for unauthenticated requests.\nDerived from the HTTP request `Authorization` header or equivalent."
+        },
+        "fragment": {
+          "description": "The HTTP URL fragment. No URL decoding is performed.",
+          "type": "string"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The HTTP request headers. If multiple headers share the same key, they\nmust be merged according to the HTTP spec. All header keys must be\nlowercased, because HTTP header keys are case-insensitive.",
+          "type": "object"
+        },
+        "host": {
+          "description": "The HTTP request `Host` header value.",
+          "type": "string"
+        },
+        "id": {
+          "description": "The unique ID for a request, which can be propagated to downstream\nsystems. The ID should have low probability of collision\nwithin a single day for a specific service.",
+          "type": "string"
+        },
+        "method": {
+          "description": "The HTTP request method, such as `GET`, `POST`.",
+          "type": "string"
+        },
+        "path": {
+          "description": "The HTTP URL path.",
+          "type": "string"
+        },
+        "protocol": {
+          "description": "The network protocol used with the request, such as \"http/1.1\",\n\"spdy/3\", \"h2\", \"h2c\", \"webrtc\", \"tcp\", \"udp\", \"quic\". See\nhttps://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#alpn-protocol-ids\nfor details.",
+          "type": "string"
+        },
+        "query": {
+          "description": "The HTTP URL query in the format of `name1=value`\u0026name2=value2`, as it\nappears in the first line of the HTTP request. No decoding is performed.",
+          "type": "string"
+        },
+        "reason": {
+          "description": "A special parameter for request reason. It is used by security systems\nto associate auditing information with a request.",
+          "type": "string"
+        },
+        "scheme": {
+          "description": "The HTTP URL scheme, such as `http` and `https`.",
+          "type": "string"
+        },
+        "size": {
+          "description": "The HTTP request size in bytes. If unknown, it must be -1.",
+          "format": "int64",
+          "type": "string"
+        },
+        "time": {
+          "description": "The timestamp when the `destination` service receives the first byte of\nthe request.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RequestMetadata": {
       "description": "Metadata about the request.",
       "id": "RequestMetadata",
@@ -1330,6 +1428,36 @@
         },
         "callerSuppliedUserAgent": {
           "description": "The user agent of the caller.\nThis information is not authenticated and should be treated accordingly.\nFor example:\n\n+   `google-api-python-client/1.4.0`:\n    The request was made by the Google API client for Python.\n+   `Cloud SDK Command Line Tool apitools-client/1.0 gcloud/0.9.62`:\n    The request was made by the Google Cloud SDK CLI (gcloud).\n+   `AppEngine-Google; (+http://code.google.com/appengine; appid: s~my-project`:\n    The request was made from the `my-project` App Engine app.\nNOLINT",
+          "type": "string"
+        },
+        "requestAttributes": {
+          "$ref": "Request",
+          "description": "Request attributes used in IAM condition evaluation. This field contains\nrequest attributes like request time and access levels associated with\nthe request.\n\nTo get the whole view of the attributes used in IAM\ncondition evaluation, the user must also look into\n`AuditLog.authentication_info.resource_attributes`."
+        }
+      },
+      "type": "object"
+    },
+    "Resource": {
+      "description": "This message defines core attributes for a resource. A resource is an\naddressable (named) entity provided by the destination service. For\nexample, a file stored on a network storage service.",
+      "id": "Resource",
+      "properties": {
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The labels or tags on the resource, such as AWS resource tags and\nKubernetes resource labels.",
+          "type": "object"
+        },
+        "name": {
+          "description": "The stable identifier (name) of a resource on the `service`. A resource\ncan be logically identified as \"//{resource.service}/{resource.name}\".\nThe differences between a resource name and a URI are:\n\n*   Resource name is a logical identifier, independent of network\n    protocol and API version. For example,\n    `//pubsub.googleapis.com/projects/123/topics/news-feed`.\n*   URI often includes protocol and version information, so it can\n    be used directly by applications. For example,\n    `https://pubsub.googleapis.com/v1/projects/123/topics/news-feed`.\n\nSee https://cloud.google.com/apis/design/resource_names for details.",
+          "type": "string"
+        },
+        "service": {
+          "description": "The name of the service that this resource belongs to, such as\n`pubsub.googleapis.com`. The service may be different from the DNS\nhostname that actually serves the request.",
+          "type": "string"
+        },
+        "type": {
+          "description": "The type of the resource. The scheme is platform-specific because\ndifferent platforms define their resources differently.",
           "type": "string"
         }
       },
@@ -1346,6 +1474,20 @@
         "resourceName": {
           "description": "Name of the resource. This is used for auditing purposes.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ResourceLocation": {
+      "description": "Location information about a resource.",
+      "id": "ResourceLocation",
+      "properties": {
+        "currentLocations": {
+          "description": "The locations of a resource after the execution of the operation.\nFor example:\n\n    \"europe-west1-a\"\n    \"us-east1\"\n    \"nam3\"",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"

@@ -515,12 +515,11 @@ type AccountRegenerateKeyParameters struct {
 // AccountsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsCreateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountsCreateFuture) Result(client AccountsClient) (a Account, err error) {
+func (future *AccountsCreateFuture) Result(client AccountsClient) (a Account, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -528,34 +527,15 @@ func (future AccountsCreateFuture) Result(client AccountsClient) (a Account, err
 		return
 	}
 	if !done {
-		return a, azure.NewAsyncOpIncompleteError("storage.AccountsCreateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		a, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storage.AccountsCreateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if a.Response.Response, err = future.GetResult(sender); err == nil && a.Response.Response.StatusCode != http.StatusNoContent {
+		a, err = client.CreateResponder(a.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", a.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	a, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storage.AccountsCreateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

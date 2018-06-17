@@ -98,15 +98,17 @@ func (client DeviceSettingsClient) CreateOrUpdateAlertSettingsPreparer(ctx conte
 // CreateOrUpdateAlertSettingsSender sends the CreateOrUpdateAlertSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) CreateOrUpdateAlertSettingsSender(req *http.Request) (future DeviceSettingsCreateOrUpdateAlertSettingsFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -182,15 +184,17 @@ func (client DeviceSettingsClient) CreateOrUpdateTimeSettingsPreparer(ctx contex
 // CreateOrUpdateTimeSettingsSender sends the CreateOrUpdateTimeSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) CreateOrUpdateTimeSettingsSender(req *http.Request) (future DeviceSettingsCreateOrUpdateTimeSettingsFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -564,15 +568,17 @@ func (client DeviceSettingsClient) SyncRemotemanagementCertificatePreparer(ctx c
 // SyncRemotemanagementCertificateSender sends the SyncRemotemanagementCertificate request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) SyncRemotemanagementCertificateSender(req *http.Request) (future DeviceSettingsSyncRemotemanagementCertificateFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -644,15 +650,17 @@ func (client DeviceSettingsClient) UpdateNetworkSettingsPreparer(ctx context.Con
 // UpdateNetworkSettingsSender sends the UpdateNetworkSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) UpdateNetworkSettingsSender(req *http.Request) (future DeviceSettingsUpdateNetworkSettingsFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -725,15 +733,17 @@ func (client DeviceSettingsClient) UpdateSecuritySettingsPreparer(ctx context.Co
 // UpdateSecuritySettingsSender sends the UpdateSecuritySettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) UpdateSecuritySettingsSender(req *http.Request) (future DeviceSettingsUpdateSecuritySettingsFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 

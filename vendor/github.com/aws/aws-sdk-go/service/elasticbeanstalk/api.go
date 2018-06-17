@@ -152,7 +152,7 @@ func (c *ElasticBeanstalk) ApplyEnvironmentManagedActionRequest(input *ApplyEnvi
 // API operation ApplyEnvironmentManagedAction for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 //   * ErrCodeManagedActionInvalidStateException "ManagedActionInvalidStateException"
@@ -776,7 +776,7 @@ func (c *ElasticBeanstalk) CreatePlatformVersionRequest(input *CreatePlatformVer
 //   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 //   * ErrCodeTooManyPlatformsException "TooManyPlatformsException"
@@ -1315,7 +1315,7 @@ func (c *ElasticBeanstalk) DeletePlatformVersionRequest(input *DeletePlatformVer
 //   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 //   * ErrCodePlatformVersionStillReferencedException "PlatformVersionStillReferencedException"
@@ -1809,7 +1809,7 @@ func (c *ElasticBeanstalk) DescribeEnvironmentHealthRequest(input *DescribeEnvir
 //   One or more input parameters is not valid. Please correct the input parameters
 //   and try the operation again.
 //
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentHealth
@@ -1888,7 +1888,7 @@ func (c *ElasticBeanstalk) DescribeEnvironmentManagedActionHistoryRequest(input 
 // API operation DescribeEnvironmentManagedActionHistory for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentManagedActionHistory
@@ -1967,7 +1967,7 @@ func (c *ElasticBeanstalk) DescribeEnvironmentManagedActionsRequest(input *Descr
 // API operation DescribeEnvironmentManagedActions for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeEnvironmentManagedActions
@@ -2337,7 +2337,7 @@ func (c *ElasticBeanstalk) DescribeInstancesHealthRequest(input *DescribeInstanc
 //   One or more input parameters is not valid. Please correct the input parameters
 //   and try the operation again.
 //
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribeInstancesHealth
@@ -2420,7 +2420,7 @@ func (c *ElasticBeanstalk) DescribePlatformVersionRequest(input *DescribePlatfor
 //   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/DescribePlatformVersion
@@ -2578,7 +2578,7 @@ func (c *ElasticBeanstalk) ListPlatformVersionsRequest(input *ListPlatformVersio
 //   The specified account does not have sufficient privileges for one or more
 //   AWS services.
 //
-//   * ErrCodeServiceException "ServiceException"
+//   * ErrCodeServiceException "ElasticBeanstalkServiceException"
 //   A generic service exception has occurred.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticbeanstalk-2010-12-01/ListPlatformVersions

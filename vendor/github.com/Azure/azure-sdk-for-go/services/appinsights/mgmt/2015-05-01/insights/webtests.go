@@ -344,6 +344,101 @@ func (client WebTestsClient) ListComplete(ctx context.Context) (result WebTestLi
 	return
 }
 
+// ListByComponent get all Application Insights web tests defined for the specified component.
+// Parameters:
+// componentName - the name of the Application Insights component resource.
+// resourceGroupName - the name of the resource group.
+func (client WebTestsClient) ListByComponent(ctx context.Context, componentName string, resourceGroupName string) (result WebTestListResultPage, err error) {
+	result.fn = client.listByComponentNextResults
+	req, err := client.ListByComponentPreparer(ctx, componentName, resourceGroupName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.WebTestsClient", "ListByComponent", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListByComponentSender(req)
+	if err != nil {
+		result.wtlr.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "insights.WebTestsClient", "ListByComponent", resp, "Failure sending request")
+		return
+	}
+
+	result.wtlr, err = client.ListByComponentResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.WebTestsClient", "ListByComponent", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListByComponentPreparer prepares the ListByComponent request.
+func (client WebTestsClient) ListByComponentPreparer(ctx context.Context, componentName string, resourceGroupName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"componentName":     autorest.Encode("path", componentName),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2015-05-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Insights/components/{componentName}/webtests", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListByComponentSender sends the ListByComponent request. The method will close the
+// http.Response Body if it receives an error.
+func (client WebTestsClient) ListByComponentSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListByComponentResponder handles the response to the ListByComponent request. The method always
+// closes the http.Response Body.
+func (client WebTestsClient) ListByComponentResponder(resp *http.Response) (result WebTestListResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// listByComponentNextResults retrieves the next set of results, if any.
+func (client WebTestsClient) listByComponentNextResults(lastResults WebTestListResult) (result WebTestListResult, err error) {
+	req, err := lastResults.webTestListResultPreparer()
+	if err != nil {
+		return result, autorest.NewErrorWithError(err, "insights.WebTestsClient", "listByComponentNextResults", nil, "Failure preparing next results request")
+	}
+	if req == nil {
+		return
+	}
+	resp, err := client.ListByComponentSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		return result, autorest.NewErrorWithError(err, "insights.WebTestsClient", "listByComponentNextResults", resp, "Failure sending next results request")
+	}
+	result, err = client.ListByComponentResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.WebTestsClient", "listByComponentNextResults", resp, "Failure responding to next results request")
+	}
+	return
+}
+
+// ListByComponentComplete enumerates all values, automatically crossing page boundaries as required.
+func (client WebTestsClient) ListByComponentComplete(ctx context.Context, componentName string, resourceGroupName string) (result WebTestListResultIterator, err error) {
+	result.page, err = client.ListByComponent(ctx, componentName, resourceGroupName)
+	return
+}
+
 // ListByResourceGroup get all Application Insights web tests defined within a specified resource group.
 // Parameters:
 // resourceGroupName - the name of the resource group.

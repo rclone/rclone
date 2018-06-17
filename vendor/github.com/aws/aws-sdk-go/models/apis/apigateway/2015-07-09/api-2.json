@@ -2858,7 +2858,8 @@
       "type":"string",
       "enum":[
         "REGIONAL",
-        "EDGE"
+        "EDGE",
+        "PRIVATE"
       ]
     },
     "ExportResponse":{

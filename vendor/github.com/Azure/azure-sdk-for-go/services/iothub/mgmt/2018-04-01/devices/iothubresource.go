@@ -269,15 +269,17 @@ func (client IotHubResourceClient) CreateOrUpdatePreparer(ctx context.Context, r
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotHubResourceClient) CreateOrUpdateSender(req *http.Request) (future IotHubResourceCreateOrUpdateFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -338,15 +340,17 @@ func (client IotHubResourceClient) DeletePreparer(ctx context.Context, resourceG
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotHubResourceClient) DeleteSender(req *http.Request) (future IotHubResourceDeleteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent, http.StatusNotFound))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent, http.StatusNotFound))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -576,6 +580,98 @@ func (client IotHubResourceClient) GetResponder(resp *http.Response) (result Iot
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetEndpointHealth get the health for routing endpoints.
+func (client IotHubResourceClient) GetEndpointHealth(ctx context.Context, resourceGroupName string, iotHubName string) (result EndpointHealthDataListResultPage, err error) {
+	result.fn = client.getEndpointHealthNextResults
+	req, err := client.GetEndpointHealthPreparer(ctx, resourceGroupName, iotHubName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "GetEndpointHealth", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetEndpointHealthSender(req)
+	if err != nil {
+		result.ehdlr.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "GetEndpointHealth", resp, "Failure sending request")
+		return
+	}
+
+	result.ehdlr, err = client.GetEndpointHealthResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "GetEndpointHealth", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetEndpointHealthPreparer prepares the GetEndpointHealth request.
+func (client IotHubResourceClient) GetEndpointHealthPreparer(ctx context.Context, resourceGroupName string, iotHubName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"iotHubName":        autorest.Encode("path", iotHubName),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2018-04-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{iotHubName}/routingEndpointsHealth", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetEndpointHealthSender sends the GetEndpointHealth request. The method will close the
+// http.Response Body if it receives an error.
+func (client IotHubResourceClient) GetEndpointHealthSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// GetEndpointHealthResponder handles the response to the GetEndpointHealth request. The method always
+// closes the http.Response Body.
+func (client IotHubResourceClient) GetEndpointHealthResponder(resp *http.Response) (result EndpointHealthDataListResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// getEndpointHealthNextResults retrieves the next set of results, if any.
+func (client IotHubResourceClient) getEndpointHealthNextResults(lastResults EndpointHealthDataListResult) (result EndpointHealthDataListResult, err error) {
+	req, err := lastResults.endpointHealthDataListResultPreparer()
+	if err != nil {
+		return result, autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "getEndpointHealthNextResults", nil, "Failure preparing next results request")
+	}
+	if req == nil {
+		return
+	}
+	resp, err := client.GetEndpointHealthSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		return result, autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "getEndpointHealthNextResults", resp, "Failure sending next results request")
+	}
+	result, err = client.GetEndpointHealthResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "getEndpointHealthNextResults", resp, "Failure responding to next results request")
+	}
+	return
+}
+
+// GetEndpointHealthComplete enumerates all values, automatically crossing page boundaries as required.
+func (client IotHubResourceClient) GetEndpointHealthComplete(ctx context.Context, resourceGroupName string, iotHubName string) (result EndpointHealthDataListResultIterator, err error) {
+	result.page, err = client.GetEndpointHealth(ctx, resourceGroupName, iotHubName)
 	return
 }
 
@@ -1599,6 +1695,160 @@ func (client IotHubResourceClient) ListKeysComplete(ctx context.Context, resourc
 	return
 }
 
+// TestAllRoutes test all routes configured in this Iot Hub
+// Parameters:
+// input - input for testing all routes
+// iotHubName - iotHub to be tested
+// resourceGroupName - resource group which Iot Hub belongs to
+func (client IotHubResourceClient) TestAllRoutes(ctx context.Context, input TestAllRoutesInput, iotHubName string, resourceGroupName string) (result TestAllRoutesResult, err error) {
+	req, err := client.TestAllRoutesPreparer(ctx, input, iotHubName, resourceGroupName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "TestAllRoutes", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.TestAllRoutesSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "TestAllRoutes", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.TestAllRoutesResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "TestAllRoutes", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// TestAllRoutesPreparer prepares the TestAllRoutes request.
+func (client IotHubResourceClient) TestAllRoutesPreparer(ctx context.Context, input TestAllRoutesInput, iotHubName string, resourceGroupName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"iotHubName":        autorest.Encode("path", iotHubName),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2018-04-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{iotHubName}/routing/routes/$testall", pathParameters),
+		autorest.WithJSON(input),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// TestAllRoutesSender sends the TestAllRoutes request. The method will close the
+// http.Response Body if it receives an error.
+func (client IotHubResourceClient) TestAllRoutesSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// TestAllRoutesResponder handles the response to the TestAllRoutes request. The method always
+// closes the http.Response Body.
+func (client IotHubResourceClient) TestAllRoutesResponder(resp *http.Response) (result TestAllRoutesResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// TestRoute test the new route for this Iot Hub
+// Parameters:
+// input - route that needs to be tested
+// iotHubName - iotHub to be tested
+// resourceGroupName - resource group which Iot Hub belongs to
+func (client IotHubResourceClient) TestRoute(ctx context.Context, input TestRouteInput, iotHubName string, resourceGroupName string) (result TestRouteResult, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: input,
+			Constraints: []validation.Constraint{{Target: "input.Route", Name: validation.Null, Rule: true,
+				Chain: []validation.Constraint{{Target: "input.Route.Name", Name: validation.Null, Rule: true,
+					Chain: []validation.Constraint{{Target: "input.Route.Name", Name: validation.Pattern, Rule: `^[A-Za-z0-9-._]{1,64}$`, Chain: nil}}},
+					{Target: "input.Route.EndpointNames", Name: validation.Null, Rule: true,
+						Chain: []validation.Constraint{{Target: "input.Route.EndpointNames", Name: validation.MaxItems, Rule: 1, Chain: nil},
+							{Target: "input.Route.EndpointNames", Name: validation.MinItems, Rule: 1, Chain: nil},
+						}},
+					{Target: "input.Route.IsEnabled", Name: validation.Null, Rule: true, Chain: nil},
+				}}}}}); err != nil {
+		return result, validation.NewError("devices.IotHubResourceClient", "TestRoute", err.Error())
+	}
+
+	req, err := client.TestRoutePreparer(ctx, input, iotHubName, resourceGroupName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "TestRoute", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.TestRouteSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "TestRoute", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.TestRouteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "devices.IotHubResourceClient", "TestRoute", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// TestRoutePreparer prepares the TestRoute request.
+func (client IotHubResourceClient) TestRoutePreparer(ctx context.Context, input TestRouteInput, iotHubName string, resourceGroupName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"iotHubName":        autorest.Encode("path", iotHubName),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2018-04-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Devices/IotHubs/{iotHubName}/routing/routes/$testnew", pathParameters),
+		autorest.WithJSON(input),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// TestRouteSender sends the TestRoute request. The method will close the
+// http.Response Body if it receives an error.
+func (client IotHubResourceClient) TestRouteSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// TestRouteResponder handles the response to the TestRoute request. The method always
+// closes the http.Response Body.
+func (client IotHubResourceClient) TestRouteResponder(resp *http.Response) (result TestRouteResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // Update update an existing IoT Hub tags. to update other fields use the CreateOrUpdate method
 // Parameters:
 // resourceGroupName - resource group identifier.
@@ -1646,15 +1896,17 @@ func (client IotHubResourceClient) UpdatePreparer(ctx context.Context, resourceG
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client IotHubResourceClient) UpdateSender(req *http.Request) (future IotHubResourceUpdateFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 

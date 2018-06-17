@@ -51,7 +51,7 @@ func (client ScheduledQueryRulesClient) CreateOrUpdate(ctx context.Context, reso
 			Constraints: []validation.Constraint{{Target: "parameters.LogSearchRule", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.LogSearchRule.Source", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.LogSearchRule.Source.Query", Name: validation.Null, Rule: true, Chain: nil},
-						{Target: "parameters.LogSearchRule.Source.DatasourceID", Name: validation.Null, Rule: true, Chain: nil},
+						{Target: "parameters.LogSearchRule.Source.DataSourceID", Name: validation.Null, Rule: true, Chain: nil},
 					}},
 					{Target: "parameters.LogSearchRule.Schedule", Name: validation.Null, Rule: true,
 						Chain: []validation.Constraint{{Target: "parameters.LogSearchRule.Schedule.FrequencyInMinutes", Name: validation.Null, Rule: true, Chain: nil},

@@ -25,7 +25,7 @@ import (
 	"net/http"
 )
 
-// VersionClient is the azure Service Fabric Resource Provider API Client
+// VersionClient is the service Fabric Management Client
 type VersionClient struct {
 	BaseClient
 }
@@ -89,15 +89,17 @@ func (client VersionClient) DeletePreparer(ctx context.Context, subscriptionID s
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client VersionClient) DeleteSender(req *http.Request) (future VersionDeleteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -314,15 +316,17 @@ func (client VersionClient) PutPreparer(ctx context.Context, subscriptionID stri
 // PutSender sends the Put request. The method will close the
 // http.Response Body if it receives an error.
 func (client VersionClient) PutSender(req *http.Request) (future VersionPutFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 

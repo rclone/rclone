@@ -3,8 +3,8 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package log provides the means of querying an application's logs from
-within an App Engine application.
+Package log provides the means of writing and querying an application's logs
+from within an App Engine application.
 
 Example:
 	c := appengine.NewContext(r)

@@ -66,11 +66,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -90,12 +85,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -349,7 +338,7 @@
       }
     }
   },
-  "revision": "20180503",
+  "revision": "20180607",
   "rootUrl": "https://serviceusage.googleapis.com/",
   "schemas": {
     "Api": {
@@ -474,10 +463,6 @@
         "allowWithoutCredential": {
           "description": "If true, the service accepts API keys without any other credential.",
           "type": "boolean"
-        },
-        "customAuth": {
-          "$ref": "CustomAuthRequirements",
-          "description": "Configuration for custom authentication."
         },
         "oauth": {
           "$ref": "OAuthRequirements",
@@ -693,17 +678,6 @@
       },
       "type": "object"
     },
-    "CustomAuthRequirements": {
-      "description": "Configuration for a custom authentication provider.",
-      "id": "CustomAuthRequirements",
-      "properties": {
-        "provider": {
-          "description": "A configuration string containing connection information for the\nauthentication provider, typically formatted as a SmartService string\n(go/smartservice).",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "CustomError": {
       "description": "Customize service error responses.  For example, list any service\nspecific protobuf types that can appear in error detail lists of\nerror responses.\n\nExample:\n\n    custom_error:\n      types:\n      - google.foo.v1.CustomError\n      - google.foo.v1.AnotherError",
       "id": "CustomError",
@@ -822,6 +796,12 @@
           "type": "string"
         }
       },
+      "type": "object"
+    },
+    "Empty": {
+      "description": "A generic empty message that you can re-use to avoid defining duplicated\nempty messages in your APIs. A typical example is to use it as the request\nor the response type of an API method. For instance:\n\n    service Foo {\n      rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n    }\n\nThe JSON representation for `Empty` is empty JSON object `{}`.",
+      "id": "Empty",
+      "properties": {},
       "type": "object"
     },
     "EnableFailure": {

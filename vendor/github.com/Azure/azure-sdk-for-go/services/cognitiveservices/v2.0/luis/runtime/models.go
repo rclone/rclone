@@ -218,13 +218,13 @@ type LuisResult struct {
 	Entities *[]EntityModel `json:"entities,omitempty"`
 	// CompositeEntities - The composite entities extracted from the utterance.
 	CompositeEntities *[]CompositeEntityModel `json:"compositeEntities,omitempty"`
-	Sentiment         *Sentiment              `json:"sentiment,omitempty"`
+	SentimentAnalysis *Sentiment              `json:"sentimentAnalysis,omitempty"`
 }
 
 // Sentiment sentiment of the input utterance.
 type Sentiment struct {
 	// Label - The polarity of the sentiment, can be positive, neutral or negative.
 	Label *string `json:"label,omitempty"`
-	// Score - Score of the sentiment, ranges from 0 (most negative) to 1 (most negative).
+	// Score - Score of the sentiment, ranges from 0 (most negative) to 1 (most positive).
 	Score *float64 `json:"score,omitempty"`
 }

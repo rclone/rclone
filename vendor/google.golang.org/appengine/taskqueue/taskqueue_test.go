@@ -7,8 +7,10 @@ package taskqueue
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
+	"time"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/internal"
@@ -112,5 +114,60 @@ func TestAddWithEmptyPath(t *testing.T) {
 	})
 	if _, err := Add(c, &Task{}, "a-queue"); err != nil {
 		t.Fatalf("Add: %v", err)
+	}
+}
+
+func TestParseRequestHeaders(t *testing.T) {
+	tests := []struct {
+		Header http.Header
+		Want   RequestHeaders
+	}{
+		{
+			Header: map[string][]string{
+				"X-Appengine-Queuename":            []string{"foo"},
+				"X-Appengine-Taskname":             []string{"bar"},
+				"X-Appengine-Taskretrycount":       []string{"4294967297"}, // 2^32 + 1
+				"X-Appengine-Taskexecutioncount":   []string{"4294967298"}, // 2^32 + 2
+				"X-Appengine-Tasketa":              []string{"1500000000"},
+				"X-Appengine-Taskpreviousresponse": []string{"404"},
+				"X-Appengine-Taskretryreason":      []string{"baz"},
+				"X-Appengine-Failfast":             []string{"yes"},
+			},
+			Want: RequestHeaders{
+				QueueName:            "foo",
+				TaskName:             "bar",
+				TaskRetryCount:       4294967297,
+				TaskExecutionCount:   4294967298,
+				TaskETA:              time.Date(2017, time.July, 14, 2, 40, 0, 0, time.UTC),
+				TaskPreviousResponse: 404,
+				TaskRetryReason:      "baz",
+				FailFast:             true,
+			},
+		},
+		{
+			Header: map[string][]string{},
+			Want: RequestHeaders{
+				QueueName:            "",
+				TaskName:             "",
+				TaskRetryCount:       0,
+				TaskExecutionCount:   0,
+				TaskETA:              time.Time{},
+				TaskPreviousResponse: 0,
+				TaskRetryReason:      "",
+				FailFast:             false,
+			},
+		},
+	}
+
+	for idx, test := range tests {
+		got := *ParseRequestHeaders(test.Header)
+		if got.TaskETA.UnixNano() != test.Want.TaskETA.UnixNano() {
+			t.Errorf("%d. ParseRequestHeaders got TaskETA %v, wanted %v", idx, got.TaskETA, test.Want.TaskETA)
+		}
+		got.TaskETA = time.Time{}
+		test.Want.TaskETA = time.Time{}
+		if !reflect.DeepEqual(got, test.Want) {
+			t.Errorf("%d. ParseRequestHeaders got %v, wanted %v", idx, got, test.Want)
+		}
 	}
 }

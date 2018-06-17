@@ -109,7 +109,6 @@ func (e *G1) Marshal() []byte {
 	xBytes := new(big.Int).Mod(e.p.x, p).Bytes()
 	yBytes := new(big.Int).Mod(e.p.y, p).Bytes()
 
-
 	ret := make([]byte, numBytes*2)
 	copy(ret[1*numBytes-len(xBytes):], xBytes)
 	copy(ret[2*numBytes-len(yBytes):], yBytes)
@@ -223,7 +222,6 @@ func (n *G2) Marshal() []byte {
 	xyBytes := new(big.Int).Mod(n.p.x.y, p).Bytes()
 	yxBytes := new(big.Int).Mod(n.p.y.x, p).Bytes()
 	yyBytes := new(big.Int).Mod(n.p.y.y, p).Bytes()
-
 
 	ret := make([]byte, numBytes*4)
 	copy(ret[1*numBytes-len(xxBytes):], xxBytes)

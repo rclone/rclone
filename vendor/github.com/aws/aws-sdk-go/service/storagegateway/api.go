@@ -6643,6 +6643,10 @@ type CachediSCSIVolume struct {
 	// don’t have this time stamp.
 	CreatedDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
+	// The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
+	KMSKey *string `min:"20" type:"string"`
+
 	// If the cached volume was created from a snapshot, this field contains the
 	// snapshot ID used, e.g. snap-78e22663. Otherwise, this field is not included.
 	SourceSnapshotId *string `type:"string"`
@@ -6691,6 +6695,12 @@ func (s CachediSCSIVolume) GoString() string {
 // SetCreatedDate sets the CreatedDate field's value.
 func (s *CachediSCSIVolume) SetCreatedDate(v time.Time) *CachediSCSIVolume {
 	s.CreatedDate = &v
+	return s
+}
+
+// SetKMSKey sets the KMSKey field's value.
+func (s *CachediSCSIVolume) SetKMSKey(v string) *CachediSCSIVolume {
+	s.KMSKey = &v
 	return s
 }
 
@@ -6989,6 +6999,14 @@ type CreateCachediSCSIVolumeInput struct {
 	// GatewayARN is a required field
 	GatewayARN *string `min:"50" type:"string" required:"true"`
 
+	// True to use Amazon S3 server side encryption with your own AWS KMS key, or
+	// false to use a key managed by Amazon S3. Optional.
+	KMSEncrypted *bool `type:"boolean"`
+
+	// The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
+	KMSKey *string `min:"20" type:"string"`
+
 	// NetworkInterfaceId is a required field
 	NetworkInterfaceId *string `type:"string" required:"true"`
 
@@ -7032,6 +7050,9 @@ func (s *CreateCachediSCSIVolumeInput) Validate() error {
 	if s.GatewayARN != nil && len(*s.GatewayARN) < 50 {
 		invalidParams.Add(request.NewErrParamMinLen("GatewayARN", 50))
 	}
+	if s.KMSKey != nil && len(*s.KMSKey) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("KMSKey", 20))
+	}
 	if s.NetworkInterfaceId == nil {
 		invalidParams.Add(request.NewErrParamRequired("NetworkInterfaceId"))
 	}
@@ -7063,6 +7084,18 @@ func (s *CreateCachediSCSIVolumeInput) SetClientToken(v string) *CreateCachediSC
 // SetGatewayARN sets the GatewayARN field's value.
 func (s *CreateCachediSCSIVolumeInput) SetGatewayARN(v string) *CreateCachediSCSIVolumeInput {
 	s.GatewayARN = &v
+	return s
+}
+
+// SetKMSEncrypted sets the KMSEncrypted field's value.
+func (s *CreateCachediSCSIVolumeInput) SetKMSEncrypted(v bool) *CreateCachediSCSIVolumeInput {
+	s.KMSEncrypted = &v
+	return s
+}
+
+// SetKMSKey sets the KMSKey field's value.
+func (s *CreateCachediSCSIVolumeInput) SetKMSKey(v string) *CreateCachediSCSIVolumeInput {
+	s.KMSKey = &v
 	return s
 }
 
@@ -7141,8 +7174,8 @@ type CreateNFSFileShareInput struct {
 	ClientToken *string `min:"5" type:"string" required:"true"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by file
-	// gateway. Possible values are S3_STANDARD or S3_STANDARD_IA. If this field
-	// is not populated, the default value S3_STANDARD is used. Optional.
+	// gateway. Possible values are S3_STANDARD, S3_STANDARD_IA or S3_ONEZONE_IA.
+	// If this field is not populated, the default value S3_STANDARD is used. Optional.
 	DefaultStorageClass *string `min:"5" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the file gateway on which you want to create
@@ -7160,8 +7193,8 @@ type CreateNFSFileShareInput struct {
 	// false to use a key managed by Amazon S3. Optional.
 	KMSEncrypted *bool `type:"boolean"`
 
-	// The KMS key used for Amazon S3 server side encryption. This value can only
-	// be set when KmsEncrypted is true. Optional.
+	// The Amazon Resource Name (ARN) KMS key used for Amazon S3 server side encryption.
+	// This value can only be set when KMSEncrypted is true. Optional.
 	KMSKey *string `min:"20" type:"string"`
 
 	// The ARN of the backed storage used for storing file data.
@@ -7757,6 +7790,14 @@ type CreateTapeWithBarcodeInput struct {
 	// GatewayARN is a required field
 	GatewayARN *string `min:"50" type:"string" required:"true"`
 
+	// True to use Amazon S3 server side encryption with your own AWS KMS key, or
+	// false to use a key managed by Amazon S3. Optional.
+	KMSEncrypted *bool `type:"boolean"`
+
+	// The Amazon Resource Name (ARN) of the KMS Key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
+	KMSKey *string `min:"20" type:"string"`
+
 	// The barcode that you want to assign to the tape.
 	//
 	// Barcodes cannot be reused. This includes barcodes used for tapes that have
@@ -7792,6 +7833,9 @@ func (s *CreateTapeWithBarcodeInput) Validate() error {
 	if s.GatewayARN != nil && len(*s.GatewayARN) < 50 {
 		invalidParams.Add(request.NewErrParamMinLen("GatewayARN", 50))
 	}
+	if s.KMSKey != nil && len(*s.KMSKey) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("KMSKey", 20))
+	}
 	if s.TapeBarcode == nil {
 		invalidParams.Add(request.NewErrParamRequired("TapeBarcode"))
 	}
@@ -7811,6 +7855,18 @@ func (s *CreateTapeWithBarcodeInput) Validate() error {
 // SetGatewayARN sets the GatewayARN field's value.
 func (s *CreateTapeWithBarcodeInput) SetGatewayARN(v string) *CreateTapeWithBarcodeInput {
 	s.GatewayARN = &v
+	return s
+}
+
+// SetKMSEncrypted sets the KMSEncrypted field's value.
+func (s *CreateTapeWithBarcodeInput) SetKMSEncrypted(v bool) *CreateTapeWithBarcodeInput {
+	s.KMSEncrypted = &v
+	return s
+}
+
+// SetKMSKey sets the KMSKey field's value.
+func (s *CreateTapeWithBarcodeInput) SetKMSKey(v string) *CreateTapeWithBarcodeInput {
+	s.KMSKey = &v
 	return s
 }
 
@@ -7870,6 +7926,14 @@ type CreateTapesInput struct {
 	// GatewayARN is a required field
 	GatewayARN *string `min:"50" type:"string" required:"true"`
 
+	// True to use Amazon S3 server side encryption with your own AWS KMS key, or
+	// false to use a key managed by Amazon S3. Optional.
+	KMSEncrypted *bool `type:"boolean"`
+
+	// The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
+	KMSKey *string `min:"20" type:"string"`
+
 	// The number of virtual tapes that you want to create.
 	//
 	// NumTapesToCreate is a required field
@@ -7917,6 +7981,9 @@ func (s *CreateTapesInput) Validate() error {
 	if s.GatewayARN != nil && len(*s.GatewayARN) < 50 {
 		invalidParams.Add(request.NewErrParamMinLen("GatewayARN", 50))
 	}
+	if s.KMSKey != nil && len(*s.KMSKey) < 20 {
+		invalidParams.Add(request.NewErrParamMinLen("KMSKey", 20))
+	}
 	if s.NumTapesToCreate == nil {
 		invalidParams.Add(request.NewErrParamRequired("NumTapesToCreate"))
 	}
@@ -7948,6 +8015,18 @@ func (s *CreateTapesInput) SetClientToken(v string) *CreateTapesInput {
 // SetGatewayARN sets the GatewayARN field's value.
 func (s *CreateTapesInput) SetGatewayARN(v string) *CreateTapesInput {
 	s.GatewayARN = &v
+	return s
+}
+
+// SetKMSEncrypted sets the KMSEncrypted field's value.
+func (s *CreateTapesInput) SetKMSEncrypted(v bool) *CreateTapesInput {
+	s.KMSEncrypted = &v
+	return s
+}
+
+// SetKMSKey sets the KMSKey field's value.
+func (s *CreateTapesInput) SetKMSKey(v string) *CreateTapesInput {
+	s.KMSKey = &v
 	return s
 }
 
@@ -11279,8 +11358,8 @@ type NFSFileShareInfo struct {
 	ClientList []*string `min:"1" type:"list"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by file
-	// gateway. Possible values are S3_STANDARD or S3_STANDARD_IA. If this field
-	// is not populated, the default value S3_STANDARD is used. Optional.
+	// gateway. Possible values are S3_STANDARD, S3_STANDARD_IA or S3_ONEZONE_IA.
+	// If this field is not populated, the default value S3_STANDARD is used. Optional.
 	DefaultStorageClass *string `min:"5" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the file share.
@@ -11306,7 +11385,8 @@ type NFSFileShareInfo struct {
 	// to use a key managed by Amazon S3. Optional.
 	KMSEncrypted *bool `type:"boolean"`
 
-	// The ARN of the KMS key used for Amazon S3 server side encryption.
+	// The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
 	KMSKey *string `min:"20" type:"string"`
 
 	// The ARN of the backend storage used for storing file data.
@@ -12378,6 +12458,10 @@ func (s *Tag) SetValue(v string) *Tag {
 type Tape struct {
 	_ struct{} `type:"structure"`
 
+	// The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
+	KMSKey *string `min:"20" type:"string"`
+
 	// For archiving virtual tapes, indicates how much data remains to be uploaded
 	// before archiving is complete.
 	//
@@ -12417,6 +12501,12 @@ func (s Tape) String() string {
 // GoString returns the string representation
 func (s Tape) GoString() string {
 	return s.String()
+}
+
+// SetKMSKey sets the KMSKey field's value.
+func (s *Tape) SetKMSKey(v string) *Tape {
+	s.KMSKey = &v
+	return s
 }
 
 // SetProgress sets the Progress field's value.
@@ -12473,9 +12563,13 @@ type TapeArchive struct {
 
 	// The time that the archiving of the virtual tape was completed.
 	//
-	// The string format of the completion time is in the ISO8601 extended YYYY-MM-DD'T'HH:MM:SS'Z'
+	// The default time stamp format is in the ISO8601 extended YYYY-MM-DD'T'HH:MM:SS'Z'
 	// format.
 	CompletionTime *time.Time `type:"timestamp" timestampFormat:"unix"`
+
+	// The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
+	KMSKey *string `min:"20" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the tape gateway that the virtual tape
 	// is being retrieved to.
@@ -12489,6 +12583,7 @@ type TapeArchive struct {
 	// The barcode that identifies the archived virtual tape.
 	TapeBarcode *string `min:"7" type:"string"`
 
+	// The date the virtual tape was created.
 	TapeCreatedDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// The size, in bytes, of the archived virtual tape.
@@ -12516,6 +12611,12 @@ func (s TapeArchive) GoString() string {
 // SetCompletionTime sets the CompletionTime field's value.
 func (s *TapeArchive) SetCompletionTime(v time.Time) *TapeArchive {
 	s.CompletionTime = &v
+	return s
+}
+
+// SetKMSKey sets the KMSKey field's value.
+func (s *TapeArchive) SetKMSKey(v string) *TapeArchive {
+	s.KMSKey = &v
 	return s
 }
 
@@ -12632,8 +12733,8 @@ type TapeRecoveryPointInfo struct {
 	// The time when the point-in-time view of the virtual tape was replicated for
 	// later recovery.
 	//
-	// The string format of the tape recovery point time is in the ISO8601 extended
-	// YYYY-MM-DD'T'HH:MM:SS'Z' format.
+	// The default time stamp format of the tape recovery point time is in the ISO8601
+	// extended YYYY-MM-DD'T'HH:MM:SS'Z' format.
 	TapeRecoveryPointTime *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// The size, in bytes, of the virtual tapes to recover.
@@ -13210,8 +13311,8 @@ type UpdateNFSFileShareInput struct {
 	ClientList []*string `min:"1" type:"list"`
 
 	// The default storage class for objects put into an Amazon S3 bucket by a file
-	// gateway. Possible values are S3_STANDARD or S3_STANDARD_IA. If this field
-	// is not populated, the default value S3_STANDARD is used. Optional.
+	// gateway. Possible values are S3_STANDARD, S3_STANDARD_IA or S3_ONEZONE_IA.
+	// If this field is not populated, the default value S3_STANDARD is used. Optional.
 	DefaultStorageClass *string `min:"5" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the file share to be updated.
@@ -13228,8 +13329,8 @@ type UpdateNFSFileShareInput struct {
 	// false to use a key managed by Amazon S3. Optional.
 	KMSEncrypted *bool `type:"boolean"`
 
-	// The KMS key used for Amazon S3 server side encryption. This value can only
-	// be set when KmsEncrypted is true. Optional.
+	// The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side
+	// encryption. This value can only be set when KMSEncrypted is true. Optional.
 	KMSKey *string `min:"20" type:"string"`
 
 	// The default values for the file share. Optional.

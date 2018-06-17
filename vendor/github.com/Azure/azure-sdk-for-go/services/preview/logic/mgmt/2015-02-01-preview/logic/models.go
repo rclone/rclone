@@ -1293,12 +1293,11 @@ type WorkflowSecretKeys struct {
 // WorkflowsRunFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type WorkflowsRunFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future WorkflowsRunFuture) Result(client WorkflowsClient) (wr WorkflowRun, err error) {
+func (future *WorkflowsRunFuture) Result(client WorkflowsClient) (wr WorkflowRun, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1306,34 +1305,15 @@ func (future WorkflowsRunFuture) Result(client WorkflowsClient) (wr WorkflowRun,
 		return
 	}
 	if !done {
-		return wr, azure.NewAsyncOpIncompleteError("logic.WorkflowsRunFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		wr, err = client.RunResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "logic.WorkflowsRunFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("logic.WorkflowsRunFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if wr.Response.Response, err = future.GetResult(sender); err == nil && wr.Response.Response.StatusCode != http.StatusNoContent {
+		wr, err = client.RunResponder(wr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "logic.WorkflowsRunFuture", "Result", wr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "logic.WorkflowsRunFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	wr, err = client.RunResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "logic.WorkflowsRunFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

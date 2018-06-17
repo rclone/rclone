@@ -3,17 +3,16 @@ package sftp
 // Methods on the Request object to make working with the Flags bitmasks and
 // Attr(ibutes) byte blob easier. Use Pflags() when working with an Open/Write
 // request and AttrFlags() and Attributes() when working with SetStat requests.
-
 import "os"
 
-// Open packet pflags
-type pflags struct {
+// File Open and Write Flags. Correlate directly with with os.OpenFile flags
+// (https://golang.org/pkg/os/#pkg-constants).
+type FileOpenFlags struct {
 	Read, Write, Append, Creat, Trunc, Excl bool
 }
 
-// testable constructor
-func newPflags(flags uint32) pflags {
-	return pflags{
+func newFileOpenFlags(flags uint32) FileOpenFlags {
+	return FileOpenFlags{
 		Read:   flags&ssh_FXF_READ != 0,
 		Write:  flags&ssh_FXF_WRITE != 0,
 		Append: flags&ssh_FXF_APPEND != 0,
@@ -23,19 +22,21 @@ func newPflags(flags uint32) pflags {
 	}
 }
 
-// Check bitmap/uint32 for Open packet pflag values
-func (r *Request) Pflags() pflags {
-	return newPflags(r.Flags)
+// Pflags converts the bitmap/uint32 from SFTP Open packet pflag values,
+// into a FileOpenFlags struct with booleans set for flags set in bitmap.
+func (r *Request) Pflags() FileOpenFlags {
+	return newFileOpenFlags(r.Flags)
 }
 
-// File attribute flags
-type aflags struct {
+// Flags that indicate whether SFTP file attributes were passed. When a flag is
+// true the corresponding attribute should be available from the FileStat
+// object returned by Attributes method. Used with SetStat.
+type FileAttrFlags struct {
 	Size, UidGid, Permissions, Acmodtime bool
 }
 
-// testable constructor
-func newAflags(flags uint32) aflags {
-	return aflags{
+func newFileAttrFlags(flags uint32) FileAttrFlags {
+	return FileAttrFlags{
 		Size:        (flags & ssh_FILEXFER_ATTR_SIZE) != 0,
 		UidGid:      (flags & ssh_FILEXFER_ATTR_UIDGID) != 0,
 		Permissions: (flags & ssh_FILEXFER_ATTR_PERMISSIONS) != 0,
@@ -43,21 +44,20 @@ func newAflags(flags uint32) aflags {
 	}
 }
 
-// Check bitmap/uint32 for file attribute flags
-func (r *Request) AttrFlags(flags uint32) aflags {
-	return newAflags(r.Flags)
+// FileAttrFlags returns a FileAttrFlags boolean struct based on the
+// bitmap/uint32 file attribute flags from the SFTP packaet.
+func (r *Request) AttrFlags() FileAttrFlags {
+	return newFileAttrFlags(r.Flags)
 }
 
-// File attributes
-type fileattrs FileStat
-
-// Return Mode wrapped in os.FileMode
-func (a fileattrs) FileMode() os.FileMode {
+// FileMode returns the Mode SFTP file attributes wrapped as os.FileMode
+func (a FileStat) FileMode() os.FileMode {
 	return os.FileMode(a.Mode)
 }
 
-// Parse file attributes byte blob and return them in object
-func (r *Request) Attributes() fileattrs {
-	fa, _ := getFileStat(r.Flags, r.Attrs)
-	return fileattrs(*fa)
+// Attributres parses file attributes byte blob and return them in a
+// FileStat object.
+func (r *Request) Attributes() *FileStat {
+	fs, _ := getFileStat(r.Flags, r.Attrs)
+	return fs
 }

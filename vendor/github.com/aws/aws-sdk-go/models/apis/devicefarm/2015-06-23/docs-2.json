@@ -175,6 +175,7 @@
     "AmazonResourceNames": {
       "base": null,
       "refs": {
+        "CreateRemoteAccessSessionConfiguration$vpceConfigurationArns": "<p>An array of Amazon Resource Names (ARNs) included in the VPC endpoint configuration.</p>",
         "ScheduleRunConfiguration$vpceConfigurationArns": "<p>An array of Amazon Resource Names (ARNs) for your VPC endpoint configurations.</p>",
         "ScheduleRunConfiguration$auxiliaryApps": "<p>A list of auxiliary apps for the run.</p>"
       }

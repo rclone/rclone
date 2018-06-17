@@ -41,8 +41,8 @@ func NewMarketplacesClientWithBaseURI(baseURI string, subscriptionID string) Mar
 	return MarketplacesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
-// List lists the marketplaces for a scope by subscriptionId. Marketplaces are available via this API only for May 1,
-// 2014 or later.
+// List lists the marketplaces for a scope by subscriptionId and current billing period. Marketplaces are available via
+// this API only for May 1, 2014 or later.
 // Parameters:
 // filter - may be used to filter marketplaces by properties/usageEnd (Utc time), properties/usageStart (Utc
 // time), properties/resourceGroup, properties/instanceName or properties/instanceId. The filter supports 'eq',

@@ -45,6 +45,11 @@ const (
 type ErrorDetail = original.ErrorDetail
 type ErrorInfo = original.ErrorInfo
 type ErrorResponse = original.ErrorResponse
+type Operation = original.Operation
+type OperationDisplay = original.OperationDisplay
+type OperationListResult = original.OperationListResult
+type OperationListResultIterator = original.OperationListResultIterator
+type OperationListResultPage = original.OperationListResultPage
 type Resource = original.Resource
 type Sku = original.Sku
 type TrackedResource = original.TrackedResource
@@ -58,6 +63,7 @@ type WorkspacesCreateOrUpdateFuture = original.WorkspacesCreateOrUpdateFuture
 type WorkspacesDeleteFuture = original.WorkspacesDeleteFuture
 type WorkspacesUpdateFuture = original.WorkspacesUpdateFuture
 type WorkspaceUpdate = original.WorkspaceUpdate
+type OperationsClient = original.OperationsClient
 type WorkspacesClient = original.WorkspacesClient
 
 func New(subscriptionID string) BaseClient {
@@ -68,6 +74,12 @@ func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 }
 func PossibleProvisioningStateValues() []ProvisioningState {
 	return original.PossibleProvisioningStateValues()
+}
+func NewOperationsClient(subscriptionID string) OperationsClient {
+	return original.NewOperationsClient(subscriptionID)
+}
+func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
+	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"

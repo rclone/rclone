@@ -872,6 +872,12 @@ type GoogleCloudServicebrokerV1alpha1__ServiceInstance struct {
 	// Timestamp for when the instance was created.
 	CreateTime string `json:"createTime,omitempty"`
 
+	// DeploymentName: Output only.
+	// Name of the Deployment Manager deployment used for provisioning of
+	// this
+	// service instance.
+	DeploymentName string `json:"deploymentName,omitempty"`
+
 	// InstanceId: The id of the service instance. Must be unique within GCP
 	// project.
 	// Maximum length is 64, GUID recommended.

@@ -242,12 +242,11 @@ type OperationsDisplayDefinition struct {
 // operation.
 type SupportPlanTypesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future SupportPlanTypesCreateOrUpdateFuture) Result(client SupportPlanTypesClient) (cspre CanonicalSupportPlanResponseEnvelope, err error) {
+func (future *SupportPlanTypesCreateOrUpdateFuture) Result(client SupportPlanTypesClient) (cspre CanonicalSupportPlanResponseEnvelope, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -255,34 +254,15 @@ func (future SupportPlanTypesCreateOrUpdateFuture) Result(client SupportPlanType
 		return
 	}
 	if !done {
-		return cspre, azure.NewAsyncOpIncompleteError("addons.SupportPlanTypesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		cspre, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("addons.SupportPlanTypesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if cspre.Response.Response, err = future.GetResult(sender); err == nil && cspre.Response.Response.StatusCode != http.StatusNoContent {
+		cspre, err = client.CreateOrUpdateResponder(cspre.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesCreateOrUpdateFuture", "Result", cspre.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	cspre, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -291,12 +271,11 @@ func (future SupportPlanTypesCreateOrUpdateFuture) Result(client SupportPlanType
 // operation.
 type SupportPlanTypesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future SupportPlanTypesDeleteFuture) Result(client SupportPlanTypesClient) (cspre CanonicalSupportPlanResponseEnvelope, err error) {
+func (future *SupportPlanTypesDeleteFuture) Result(client SupportPlanTypesClient) (cspre CanonicalSupportPlanResponseEnvelope, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -304,34 +283,15 @@ func (future SupportPlanTypesDeleteFuture) Result(client SupportPlanTypesClient)
 		return
 	}
 	if !done {
-		return cspre, azure.NewAsyncOpIncompleteError("addons.SupportPlanTypesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		cspre, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("addons.SupportPlanTypesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if cspre.Response.Response, err = future.GetResult(sender); err == nil && cspre.Response.Response.StatusCode != http.StatusNoContent {
+		cspre, err = client.DeleteResponder(cspre.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesDeleteFuture", "Result", cspre.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	cspre, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "addons.SupportPlanTypesDeleteFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

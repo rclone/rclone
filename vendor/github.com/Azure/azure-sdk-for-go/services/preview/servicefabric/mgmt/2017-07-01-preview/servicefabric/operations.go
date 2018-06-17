@@ -24,7 +24,7 @@ import (
 	"net/http"
 )
 
-// OperationsClient is the azure Service Fabric Resource Provider API Client
+// OperationsClient is the service Fabric Management Client
 type OperationsClient struct {
 	BaseClient
 }

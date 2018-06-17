@@ -47,8 +47,7 @@ func NewExperimentsClientWithBaseURI(baseURI string, subscriptionID string) Expe
 // characters along with dash (-) and underscore (_). The name must be from 1 through 64 characters long.
 // experimentName - the name of the experiment. Experiment names can only contain a combination of alphanumeric
 // characters along with dash (-) and underscore (_). The name must be from 1 through 64 characters long.
-// parameters - the parameters to provide for the experiment creation.
-func (client ExperimentsClient) Create(ctx context.Context, resourceGroupName string, workspaceName string, experimentName string, parameters interface{}) (result ExperimentsCreateFuture, err error) {
+func (client ExperimentsClient) Create(ctx context.Context, resourceGroupName string, workspaceName string, experimentName string) (result ExperimentsCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}},
@@ -63,7 +62,7 @@ func (client ExperimentsClient) Create(ctx context.Context, resourceGroupName st
 		return result, validation.NewError("batchai.ExperimentsClient", "Create", err.Error())
 	}
 
-	req, err := client.CreatePreparer(ctx, resourceGroupName, workspaceName, experimentName, parameters)
+	req, err := client.CreatePreparer(ctx, resourceGroupName, workspaceName, experimentName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "batchai.ExperimentsClient", "Create", nil, "Failure preparing request")
 		return
@@ -79,7 +78,7 @@ func (client ExperimentsClient) Create(ctx context.Context, resourceGroupName st
 }
 
 // CreatePreparer prepares the Create request.
-func (client ExperimentsClient) CreatePreparer(ctx context.Context, resourceGroupName string, workspaceName string, experimentName string, parameters interface{}) (*http.Request, error) {
+func (client ExperimentsClient) CreatePreparer(ctx context.Context, resourceGroupName string, workspaceName string, experimentName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"experimentName":    autorest.Encode("path", experimentName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
@@ -93,11 +92,9 @@ func (client ExperimentsClient) CreatePreparer(ctx context.Context, resourceGrou
 	}
 
 	preparer := autorest.CreatePreparer(
-		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.BatchAI/workspaces/{workspaceName}/experiments/{experimentName}", pathParameters),
-		autorest.WithJSON(parameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
@@ -105,15 +102,17 @@ func (client ExperimentsClient) CreatePreparer(ctx context.Context, resourceGrou
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExperimentsClient) CreateSender(req *http.Request) (future ExperimentsCreateFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -192,15 +191,17 @@ func (client ExperimentsClient) DeletePreparer(ctx context.Context, resourceGrou
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExperimentsClient) DeleteSender(req *http.Request) (future ExperimentsDeleteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 

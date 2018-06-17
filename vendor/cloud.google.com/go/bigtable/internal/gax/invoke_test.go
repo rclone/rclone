@@ -34,7 +34,7 @@ func TestRandomizedDelays(t *testing.T) {
 	deadline := time.Now().Add(1 * time.Second)
 	ctx, _ := context.WithDeadline(context.Background(), deadline)
 	var invokeTime time.Time
-	Invoke(ctx, func(childCtx context.Context) error {
+	_ = Invoke(ctx, func(childCtx context.Context) error {
 		// Keep failing, make sure we never slept more than max (plus a fudge factor)
 		if !invokeTime.IsZero() {
 			if got, want := time.Since(invokeTime), max; got > (want + 20*time.Millisecond) {

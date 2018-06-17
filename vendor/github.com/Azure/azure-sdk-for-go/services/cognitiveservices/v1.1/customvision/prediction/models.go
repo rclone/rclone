@@ -23,24 +23,33 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// ImagePredictionResultModel result of an image prediction request
-type ImagePredictionResultModel struct {
-	autorest.Response `json:"-"`
-	ID                *uuid.UUID                 `json:"Id,omitempty"`
-	Project           *uuid.UUID                 `json:"Project,omitempty"`
-	Iteration         *uuid.UUID                 `json:"Iteration,omitempty"`
-	Created           *date.Time                 `json:"Created,omitempty"`
-	Predictions       *[]ImageTagPredictionModel `json:"Predictions,omitempty"`
+// BoundingBox ...
+type BoundingBox struct {
+	Left   *float64 `json:"left,omitempty"`
+	Top    *float64 `json:"top,omitempty"`
+	Width  *float64 `json:"width,omitempty"`
+	Height *float64 `json:"height,omitempty"`
 }
 
-// ImageTagPredictionModel ...
-type ImageTagPredictionModel struct {
-	TagID       *uuid.UUID `json:"TagId,omitempty"`
-	Tag         *string    `json:"Tag,omitempty"`
-	Probability *float64   `json:"Probability,omitempty"`
+// ImagePrediction ...
+type ImagePrediction struct {
+	autorest.Response `json:"-"`
+	ID                *uuid.UUID `json:"id,omitempty"`
+	Project           *uuid.UUID `json:"project,omitempty"`
+	Iteration         *uuid.UUID `json:"iteration,omitempty"`
+	Created           *date.Time `json:"created,omitempty"`
+	Predictions       *[]Model   `json:"predictions,omitempty"`
 }
 
 // ImageURL ...
 type ImageURL struct {
-	URL *string `json:"Url,omitempty"`
+	URL *string `json:"url,omitempty"`
+}
+
+// Model ...
+type Model struct {
+	Probability *float64     `json:"probability,omitempty"`
+	TagID       *uuid.UUID   `json:"tagId,omitempty"`
+	TagName     *string      `json:"tagName,omitempty"`
+	BoundingBox *BoundingBox `json:"boundingBox,omitempty"`
 }

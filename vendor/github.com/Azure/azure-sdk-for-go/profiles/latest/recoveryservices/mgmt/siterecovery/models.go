@@ -728,6 +728,7 @@ type ProtectableItemCollection = original.ProtectableItemCollection
 type ProtectableItemCollectionIterator = original.ProtectableItemCollectionIterator
 type ProtectableItemCollectionPage = original.ProtectableItemCollectionPage
 type ProtectableItemProperties = original.ProtectableItemProperties
+type ProtectableItemQueryParameter = original.ProtectableItemQueryParameter
 type ProtectedItemsQueryParameter = original.ProtectedItemsQueryParameter
 type ProtectionContainer = original.ProtectionContainer
 type ProtectionContainerCollection = original.ProtectionContainerCollection

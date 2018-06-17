@@ -708,7 +708,7 @@
     "Duration": {
       "base": null,
       "refs": {
-        "BlueInstanceTerminationOption$terminationWaitTimeInMinutes": "<p>The number of minutes to wait after a successful blue/green deployment before terminating instances from the original environment.</p>",
+        "BlueInstanceTerminationOption$terminationWaitTimeInMinutes": "<p>The number of minutes to wait after a successful blue/green deployment before terminating instances from the original environment. The maximum setting is 2880 minutes (2 days).</p>",
         "DeploymentReadyOption$waitTimeInMinutes": "<p>The number of minutes to wait before the status of a blue/green deployment changed to Stopped if rerouting is not started manually. Applies only to the STOP_DEPLOYMENT option for actionOnTimeout</p>"
       }
     },
@@ -758,7 +758,7 @@
     "ELBInfoList": {
       "base": null,
       "refs": {
-        "LoadBalancerInfo$elbInfoList": "<p>An array containing information about the load balancer to use for load balancing in a deployment. In Elastic Load Balancing, load balancers are used with Classic Load Balancers.</p>"
+        "LoadBalancerInfo$elbInfoList": "<p>An array containing information about the load balancer to use for load balancing in a deployment. In Elastic Load Balancing, load balancers are used with Classic Load Balancers.</p> <note> <p> Adding more than one load balancer to the array is not supported. </p> </note>"
       }
     },
     "ELBName": {
@@ -1824,7 +1824,7 @@
     "TargetGroupInfoList": {
       "base": null,
       "refs": {
-        "LoadBalancerInfo$targetGroupInfoList": "<p>An array containing information about the target group to use for load balancing in a deployment. In Elastic Load Balancing, target groups are used with Application Load Balancers.</p>"
+        "LoadBalancerInfo$targetGroupInfoList": "<p>An array containing information about the target group to use for load balancing in a deployment. In Elastic Load Balancing, target groups are used with Application Load Balancers.</p> <note> <p> Adding more than one target group to the array is not supported. </p> </note>"
       }
     },
     "TargetGroupName": {

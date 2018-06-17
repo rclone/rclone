@@ -41,8 +41,8 @@ func NewUsageDetailsClientWithBaseURI(baseURI string, subscriptionID string) Usa
 	return UsageDetailsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
-// List lists the usage details for a scope by billing period. Usage details are available via this API only for May 1,
-// 2014 or later.
+// List lists the usage details for a scope by current billing period. Usage details are available via this API only
+// for May 1, 2014 or later.
 // Parameters:
 // expand - may be used to expand the properties/additionalProperties or properties/meterDetails within a list
 // of usage details. By default, these fields are not included when listing usage details.
@@ -54,7 +54,7 @@ func NewUsageDetailsClientWithBaseURI(baseURI string, subscriptionID string) Usa
 // contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that
 // specifies a starting point to use for subsequent calls.
 // top - may be used to limit the number of results to the most recent N usageDetails.
-// apply - oData apply expression to aggregatie usageDetails by tags or (tags and properties/usageStart)
+// apply - oData apply expression to aggregate usageDetails by tags or (tags and properties/usageStart)
 func (client UsageDetailsClient) List(ctx context.Context, expand string, filter string, skiptoken string, top *int32, apply string) (result UsageDetailsListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: top,
@@ -178,7 +178,7 @@ func (client UsageDetailsClient) ListComplete(ctx context.Context, expand string
 // time), properties/resourceGroup, properties/instanceName or properties/instanceId. The filter supports 'eq',
 // 'lt', 'gt', 'le', 'ge', and 'and'. It does not currently support 'ne', 'or', or 'not'. Tag filter is a key
 // value pair string where key and value is separated by a colon (:).
-// apply - oData apply expression to aggregatie usageDetails by tags or (tags and properties/usageStart) for
+// apply - oData apply expression to aggregate usageDetails by tags or (tags and properties/usageStart) for
 // specified billing period
 // skiptoken - skiptoken is only used if a previous operation returned a partial result. If a previous response
 // contains a nextLink element, the value of the nextLink element will include a skiptoken parameter that

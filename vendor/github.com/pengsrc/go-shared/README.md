@@ -14,6 +14,6 @@ Useful packages for the Go programming language.
 4. Push to the branch (`git push origin new-feature`)
 5. Create a new Pull Request
 
-## LICENSE
+## License
 
 The Apache License (Version 2.0, January 2004).

@@ -176,8 +176,6 @@ func TestRequestCmdr(t *testing.T) {
 	assert.Equal(t, rpkt, statusFromError(rpkt, errTest))
 }
 
-func TestRequestInfoList(t *testing.T)     { testInfoMethod(t, "List") }
-func TestRequestInfoReadlink(t *testing.T) { testInfoMethod(t, "Readlink") }
 func TestRequestInfoStat(t *testing.T) {
 	handlers := newTestHandlers()
 	request := testRequest("Stat")
@@ -188,6 +186,8 @@ func TestRequestInfoStat(t *testing.T) {
 	assert.Equal(t, spkt.info.Name(), "request_test.go")
 }
 
+func TestRequestInfoList(t *testing.T)     { testInfoMethod(t, "List") }
+func TestRequestInfoReadlink(t *testing.T) { testInfoMethod(t, "Readlink") }
 func testInfoMethod(t *testing.T, method string) {
 	handlers := newTestHandlers()
 	request := testRequest(method)
@@ -197,4 +197,17 @@ func testInfoMethod(t *testing.T, method string) {
 	assert.True(t, ok)
 	assert.IsType(t, sshFxpNameAttr{}, npkt.NameAttrs[0])
 	assert.Equal(t, npkt.NameAttrs[0].Name, "request_test.go")
+}
+
+func TestOpendirHandleReuse(t *testing.T) {
+	handlers := newTestHandlers()
+	request := testRequest("Stat")
+	pkt := fakePacket{myid: 1}
+	rpkt := request.call(handlers, pkt)
+	assert.IsType(t, &sshFxpStatResponse{}, rpkt)
+
+	request.Method = "List"
+	pkt = fakePacket{myid: 2}
+	rpkt = request.call(handlers, pkt)
+	assert.IsType(t, &sshFxpNamePacket{}, rpkt)
 }

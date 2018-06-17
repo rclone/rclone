@@ -10,6 +10,11 @@
       "output_token": "NextToken",
       "limit_key": "MaxResults"
     },
+    "ListHyperParameterTuningJobs": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxResults"
+    },
     "ListModels": {
       "input_token": "NextToken",
       "output_token": "NextToken",
@@ -31,6 +36,11 @@
       "limit_key": "MaxResults"
     },
     "ListTrainingJobs": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxResults"
+    },
+    "ListTrainingJobsForHyperParameterTuningJob": {
       "input_token": "NextToken",
       "output_token": "NextToken",
       "limit_key": "MaxResults"

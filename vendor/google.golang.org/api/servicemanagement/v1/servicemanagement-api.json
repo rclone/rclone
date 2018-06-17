@@ -69,11 +69,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -93,12 +88,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -887,7 +876,7 @@
       }
     }
   },
-  "revision": "20180420",
+  "revision": "20180612",
   "rootUrl": "https://servicemanagement.googleapis.com/",
   "schemas": {
     "Advice": {
@@ -1071,10 +1060,6 @@
         "allowWithoutCredential": {
           "description": "If true, the service accepts API keys without any other credential.",
           "type": "boolean"
-        },
-        "customAuth": {
-          "$ref": "CustomAuthRequirements",
-          "description": "Configuration for custom authentication."
         },
         "oauth": {
           "$ref": "OAuthRequirements",
@@ -1374,17 +1359,6 @@
       "properties": {
         "environment": {
           "description": "The service control environment to use. If empty, no control plane\nfeature (like quota and billing) will be enabled.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "CustomAuthRequirements": {
-      "description": "Configuration for a custom authentication provider.",
-      "id": "CustomAuthRequirements",
-      "properties": {
-        "provider": {
-          "description": "A configuration string containing connection information for the\nauthentication provider, typically formatted as a SmartService string\n(go/smartservice).",
           "type": "string"
         }
       },

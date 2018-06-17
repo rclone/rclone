@@ -854,7 +854,7 @@ type Lien struct {
 
 	// Reason: Concise user-visible strings indicating why an action cannot
 	// be performed
-	// on a resource. Maximum lenth of 200 characters.
+	// on a resource. Maximum length of 200 characters.
 	//
 	// Example: 'Holds production API key'
 	Reason string `json:"reason,omitempty"`
@@ -990,6 +990,15 @@ type ListConstraint struct {
 	// default to a configuration
 	// that matches the value specified in this `Constraint`.
 	SuggestedValue string `json:"suggestedValue,omitempty"`
+
+	// SupportsUnder: Indicates whether subtrees of Cloud Resource Manager
+	// resource hierarchy
+	// can be used in `Policy.allowed_values` and `Policy.denied_values`.
+	// For
+	// example, "under:folders/123" would match any resource under
+	// the
+	// 'folders/123' folder.
+	SupportsUnder bool `json:"supportsUnder,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "SuggestedValue") to
 	// unconditionally include in API requests. By default, fields with
@@ -1136,41 +1145,55 @@ func (s *ListOrgPoliciesResponse) MarshalJSON() ([]byte, error) {
 // behaves at this
 // resource.
 //
-// A `ListPolicy` can define specific values that are allowed or denied
-// by
-// setting either the `allowed_values` or `denied_values` fields. It can
-// also
-// be used to allow or deny all values, by setting the `all_values`
-// field. If
-// `all_values` is `ALL_VALUES_UNSPECIFIED`, exactly one of
-// `allowed_values`
-// or `denied_values` must be set (attempting to set both or neither
-// will
-// result in a failed request). If `all_values` is set to either `ALLOW`
-// or
-// `DENY`, `allowed_values` and `denied_values` must be unset.
+// `ListPolicy` can define specific values and subtrees of Cloud
+// Resource
+// Manager resource hierarchy (`Organizations`, `Folders`, `Projects`)
+// that
+// are allowed or denied by setting the `allowed_values` and
+// `denied_values`
+// fields. This is achieved by using the `under:` and optional `is:`
+// prefixes.
+// The `under:` prefix is used to denote resource subtree values.
+// The `is:` prefix is used to denote specific values, and is required
+// only
+// if the value contains a ":". Values prefixed with "is:" are treated
+// the
+// same as values with no prefix.
+// Ancestry subtrees must be in one of the following formats:
+//     - “projects/<project-id>”, e.g.
+// “projects/tokyo-rain-123”
+//     - “folders/<folder-id>”, e.g. “folders/1234”
+//     - “organizations/<organization-id>”, e.g.
+// “organizations/1234”
+// The `supports_under` field of the associated `Constraint`  defines
+// whether
+// ancestry prefixes can be used. You can set `allowed_values`
+// and
+// `denied_values` in the same `Policy` if `all_values`
+// is
+// `ALL_VALUES_UNSPECIFIED`. `ALLOW` or `DENY` are used to allow or deny
+// all
+// values. If `all_values` is set to either `ALLOW` or
+// `DENY`,
+// `allowed_values` and `denied_values` must be unset.
 type ListPolicy struct {
 	// AllValues: The policy all_values state.
 	//
 	// Possible values:
-	//   "ALL_VALUES_UNSPECIFIED" - Indicates that either allowed_values or
+	//   "ALL_VALUES_UNSPECIFIED" - Indicates that allowed_values or
 	// denied_values must be set.
 	//   "ALLOW" - A policy with this set allows all values.
 	//   "DENY" - A policy with this set denies all values.
 	AllValues string `json:"allValues,omitempty"`
 
 	// AllowedValues: List of values allowed  at this resource. Can only be
-	// set if no values
-	// are set for `denied_values` and `all_values` is set
-	// to
-	// `ALL_VALUES_UNSPECIFIED`.
+	// set if `all_values`
+	// is set to `ALL_VALUES_UNSPECIFIED`.
 	AllowedValues []string `json:"allowedValues,omitempty"`
 
 	// DeniedValues: List of values denied at this resource. Can only be set
-	// if no values are
-	// set for `allowed_values` and `all_values` is set
-	// to
-	// `ALL_VALUES_UNSPECIFIED`.
+	// if `all_values`
+	// is set to `ALL_VALUES_UNSPECIFIED`.
 	DeniedValues []string `json:"deniedValues,omitempty"`
 
 	// InheritFromParent: Determines the inheritance behavior for this
@@ -1214,13 +1237,14 @@ type ListPolicy struct {
 	// DENY,
 	// then an attempt to activate any API will be denied.
 	//
-	// The following examples demonstrate different possible
-	// layerings:
+	// The following examples demonstrate different possible layerings
+	// for
+	// `projects/bar` parented by `organizations/foo`:
 	//
 	// Example 1 (no inherited values):
 	//   `organizations/foo` has a `Policy` with values:
 	//     {allowed_values: “E1” allowed_values:”E2”}
-	//   ``projects/bar`` has `inherit_from_parent` `false` and values:
+	//   `projects/bar` has `inherit_from_parent` `false` and values:
 	//     {allowed_values: "E3" allowed_values: "E4"}
 	// The accepted values at `organizations/foo` are `E1`, `E2`.
 	// The accepted values at `projects/bar` are `E3`, and `E4`.
@@ -1276,6 +1300,21 @@ type ListPolicy struct {
 	//     {all: DENY}
 	// The accepted values at `organizations/foo` are `E1`, E2`.
 	// No value is accepted at `projects/bar`.
+	//
+	// Example 10 (allowed and denied subtrees of Resource Manager
+	// hierarchy):
+	// Given the following resource hierarchy
+	//   O1->{F1, F2}; F1->{P1}; F2->{P2, P3},
+	//   `organizations/foo` has a `Policy` with values:
+	//     {allowed_values: "under:organizations/O1"}
+	//   `projects/bar` has a `Policy` with:
+	//     {allowed_values: "under:projects/P3"}
+	//     {denied_values: "under:folders/F2"}
+	// The accepted values at `organizations/foo` are `organizations/O1`,
+	//   `folders/F1`, `folders/F2`, `projects/P1`, `projects/P2`,
+	//   `projects/P3`.
+	// The accepted values at `projects/bar` are `organizations/O1`,
+	//   `folders/F1`, `projects/P1`.
 	InheritFromParent bool `json:"inheritFromParent,omitempty"`
 
 	// SuggestedValue: Optional. The Google Cloud Console will try to
@@ -2497,6 +2536,9 @@ type FoldersGetEffectiveOrgPolicyCall struct {
 // have
 // an `etag`set because it is a computed `Policy` across multiple
 // resources.
+// Subtrees of Resource Manager resource hierarchy with 'under:' prefix
+// will
+// not be expanded.
 func (r *FoldersService) GetEffectiveOrgPolicy(resource string, geteffectiveorgpolicyrequest *GetEffectiveOrgPolicyRequest) *FoldersGetEffectiveOrgPolicyCall {
 	c := &FoldersGetEffectiveOrgPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -2590,7 +2632,7 @@ func (c *FoldersGetEffectiveOrgPolicyCall) Do(opts ...googleapi.CallOption) (*Or
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.",
+	//   "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.\nSubtrees of Resource Manager resource hierarchy with 'under:' prefix will\nnot be expanded.",
 	//   "flatPath": "v1/folders/{foldersId}:getEffectiveOrgPolicy",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.folders.getEffectiveOrgPolicy",
@@ -3487,6 +3529,154 @@ func (c *LiensDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
 
 }
 
+// method id "cloudresourcemanager.liens.get":
+
+type LiensGetCall struct {
+	s            *Service
+	nameid       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Retrieve a Lien by `name`.
+//
+// Callers of this method will require permission on the `parent`
+// resource.
+// For example, a Lien with a `parent` of `projects/1234` requires
+// permission
+// requires permission `resourcemanager.projects.get`
+// or
+// `resourcemanager.projects.updateLiens`.
+func (r *LiensService) Get(nameid string) *LiensGetCall {
+	c := &LiensGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.nameid = nameid
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *LiensGetCall) Fields(s ...googleapi.Field) *LiensGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *LiensGetCall) IfNoneMatch(entityTag string) *LiensGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *LiensGetCall) Context(ctx context.Context) *LiensGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *LiensGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *LiensGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.nameid,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudresourcemanager.liens.get" call.
+// Exactly one of *Lien or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Lien.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *LiensGetCall) Do(opts ...googleapi.CallOption) (*Lien, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Lien{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieve a Lien by `name`.\n\nCallers of this method will require permission on the `parent` resource.\nFor example, a Lien with a `parent` of `projects/1234` requires permission\nrequires permission `resourcemanager.projects.get` or\n`resourcemanager.projects.updateLiens`.",
+	//   "flatPath": "v1/liens/{liensId}",
+	//   "httpMethod": "GET",
+	//   "id": "cloudresourcemanager.liens.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "The name/identifier of the Lien.",
+	//       "location": "path",
+	//       "pattern": "^liens/.+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Lien"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only"
+	//   ]
+	// }
+
+}
+
 // method id "cloudresourcemanager.liens.list":
 
 type LiensListCall struct {
@@ -4116,6 +4306,9 @@ type OrganizationsGetEffectiveOrgPolicyCall struct {
 // have
 // an `etag`set because it is a computed `Policy` across multiple
 // resources.
+// Subtrees of Resource Manager resource hierarchy with 'under:' prefix
+// will
+// not be expanded.
 func (r *OrganizationsService) GetEffectiveOrgPolicy(resource string, geteffectiveorgpolicyrequest *GetEffectiveOrgPolicyRequest) *OrganizationsGetEffectiveOrgPolicyCall {
 	c := &OrganizationsGetEffectiveOrgPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -4209,7 +4402,7 @@ func (c *OrganizationsGetEffectiveOrgPolicyCall) Do(opts ...googleapi.CallOption
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.",
+	//   "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.\nSubtrees of Resource Manager resource hierarchy with 'under:' prefix will\nnot be expanded.",
 	//   "flatPath": "v1/organizations/{organizationsId}:getEffectiveOrgPolicy",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.organizations.getEffectiveOrgPolicy",
@@ -5591,6 +5784,15 @@ type ProjectsCreateCall struct {
 // new
 // project. The parent is identified by a specified ResourceId,
 // which must include both an ID and a type, such as organization.
+//
+// This method does not associate the new project with a billing
+// account.
+// You can set or update the billing account associated with a project
+// using
+// the
+// [`projects.updateBillingInfo`]
+// (/billing/reference/rest/v1/projects/up
+// dateBillingInfo) method.
 func (r *ProjectsService) Create(project *Project) *ProjectsCreateCall {
 	c := &ProjectsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -5680,7 +5882,7 @@ func (c *ProjectsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject. The parent is identified by a specified ResourceId,\nwhich must include both an ID and a type, such as organization.",
+	//   "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject. The parent is identified by a specified ResourceId,\nwhich must include both an ID and a type, such as organization.\n\nThis method does not associate the new project with a billing account.\nYou can set or update the billing account associated with a project using\nthe [`projects.updateBillingInfo`]\n(/billing/reference/rest/v1/projects/updateBillingInfo) method.",
 	//   "flatPath": "v1/projects",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.projects.create",
@@ -6145,6 +6347,9 @@ type ProjectsGetEffectiveOrgPolicyCall struct {
 // have
 // an `etag`set because it is a computed `Policy` across multiple
 // resources.
+// Subtrees of Resource Manager resource hierarchy with 'under:' prefix
+// will
+// not be expanded.
 func (r *ProjectsService) GetEffectiveOrgPolicy(resource string, geteffectiveorgpolicyrequest *GetEffectiveOrgPolicyRequest) *ProjectsGetEffectiveOrgPolicyCall {
 	c := &ProjectsGetEffectiveOrgPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -6238,7 +6443,7 @@ func (c *ProjectsGetEffectiveOrgPolicyCall) Do(opts ...googleapi.CallOption) (*O
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.",
+	//   "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.\nSubtrees of Resource Manager resource hierarchy with 'under:' prefix will\nnot be expanded.",
 	//   "flatPath": "v1/projects/{projectsId}:getEffectiveOrgPolicy",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.projects.getEffectiveOrgPolicy",

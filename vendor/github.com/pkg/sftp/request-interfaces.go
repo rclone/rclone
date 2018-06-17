@@ -8,8 +8,14 @@ import (
 // Interfaces are differentiated based on required returned values.
 // All input arguments are to be pulled from Request (the only arg).
 
+// The Handler interfaces all take the Request object as its only argument.
+// All the data you should need to handle the call are in the Request object.
+// The request.Method attribute is initially the most important one as it
+// determines which Handler gets called.
+
 // FileReader should return an io.ReaderAt for the filepath
 // Note in cases of an error, the error text will be sent to the client.
+// Called for Methods: Get
 type FileReader interface {
 	Fileread(*Request) (io.ReaderAt, error)
 }
@@ -19,18 +25,21 @@ type FileReader interface {
 // The request server code will call Close() on the returned io.WriterAt
 // ojbect if an io.Closer type assertion succeeds.
 // Note in cases of an error, the error text will be sent to the client.
+// Called for Methods: Put, Open
 type FileWriter interface {
 	Filewrite(*Request) (io.WriterAt, error)
 }
 
 // FileCmder should return an error
 // Note in cases of an error, the error text will be sent to the client.
+// Called for Methods: Setstat, Rename, Rmdir, Mkdir, Symlink, Remove
 type FileCmder interface {
 	Filecmd(*Request) error
 }
 
 // FileLister should return an object that fulfils the ListerAt interface
 // Note in cases of an error, the error text will be sent to the client.
+// Called for Methods: List, Stat, Readlink
 type FileLister interface {
 	Filelist(*Request) (ListerAt, error)
 }

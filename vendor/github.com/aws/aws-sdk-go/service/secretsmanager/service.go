@@ -29,8 +29,9 @@ var initRequest func(*request.Request)
 
 // Service information constants
 const (
-	ServiceName = "secretsmanager" // Service endpoint prefix API calls made to.
-	EndpointsID = ServiceName      // Service ID for Regions and Endpoints metadata.
+	ServiceName = "secretsmanager"  // Service endpoint prefix API calls made to.
+	EndpointsID = ServiceName       // Service ID for Regions and Endpoints metadata.
+	ServiceID   = "Secrets Manager" // ServiceID is a unique identifer of a specific service
 )
 
 // New creates a new instance of the SecretsManager client with a session.
@@ -58,6 +59,7 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   ServiceName,
+				ServiceID:     ServiceID,
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,

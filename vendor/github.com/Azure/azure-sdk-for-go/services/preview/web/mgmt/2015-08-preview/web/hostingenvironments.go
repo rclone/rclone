@@ -86,15 +86,17 @@ func (client HostingEnvironmentsClient) CreateOrUpdateHostingEnvironmentPreparer
 // CreateOrUpdateHostingEnvironmentSender sends the CreateOrUpdateHostingEnvironment request. The method will close the
 // http.Response Body if it receives an error.
 func (client HostingEnvironmentsClient) CreateOrUpdateHostingEnvironmentSender(req *http.Request) (future HostingEnvironmentsCreateOrUpdateHostingEnvironmentFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -158,15 +160,17 @@ func (client HostingEnvironmentsClient) CreateOrUpdateMultiRolePoolPreparer(ctx 
 // CreateOrUpdateMultiRolePoolSender sends the CreateOrUpdateMultiRolePool request. The method will close the
 // http.Response Body if it receives an error.
 func (client HostingEnvironmentsClient) CreateOrUpdateMultiRolePoolSender(req *http.Request) (future HostingEnvironmentsCreateOrUpdateMultiRolePoolFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -232,15 +236,17 @@ func (client HostingEnvironmentsClient) CreateOrUpdateWorkerPoolPreparer(ctx con
 // CreateOrUpdateWorkerPoolSender sends the CreateOrUpdateWorkerPool request. The method will close the
 // http.Response Body if it receives an error.
 func (client HostingEnvironmentsClient) CreateOrUpdateWorkerPoolSender(req *http.Request) (future HostingEnvironmentsCreateOrUpdateWorkerPoolFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -305,15 +311,17 @@ func (client HostingEnvironmentsClient) DeleteHostingEnvironmentPreparer(ctx con
 // DeleteHostingEnvironmentSender sends the DeleteHostingEnvironment request. The method will close the
 // http.Response Body if it receives an error.
 func (client HostingEnvironmentsClient) DeleteHostingEnvironmentSender(req *http.Request) (future HostingEnvironmentsDeleteHostingEnvironmentFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusBadRequest, http.StatusNotFound, http.StatusConflict))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -3019,15 +3027,17 @@ func (client HostingEnvironmentsClient) ResumeHostingEnvironmentPreparer(ctx con
 // ResumeHostingEnvironmentSender sends the ResumeHostingEnvironment request. The method will close the
 // http.Response Body if it receives an error.
 func (client HostingEnvironmentsClient) ResumeHostingEnvironmentSender(req *http.Request) (future HostingEnvironmentsResumeHostingEnvironmentFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -3073,7 +3083,6 @@ func (client HostingEnvironmentsClient) ResumeHostingEnvironmentComplete(ctx con
 	var future HostingEnvironmentsResumeHostingEnvironmentFuture
 	future, err = client.ResumeHostingEnvironment(ctx, resourceGroupName, name)
 	result.Future = future.Future
-	result.req = future.req
 	return
 }
 
@@ -3121,15 +3130,17 @@ func (client HostingEnvironmentsClient) SuspendHostingEnvironmentPreparer(ctx co
 // SuspendHostingEnvironmentSender sends the SuspendHostingEnvironment request. The method will close the
 // http.Response Body if it receives an error.
 func (client HostingEnvironmentsClient) SuspendHostingEnvironmentSender(req *http.Request) (future HostingEnvironmentsSuspendHostingEnvironmentFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -3175,6 +3186,5 @@ func (client HostingEnvironmentsClient) SuspendHostingEnvironmentComplete(ctx co
 	var future HostingEnvironmentsSuspendHostingEnvironmentFuture
 	future, err = client.SuspendHostingEnvironment(ctx, resourceGroupName, name)
 	result.Future = future.Future
-	result.req = future.req
 	return
 }

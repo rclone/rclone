@@ -74,7 +74,7 @@ func main() {
 	b = removePaddingFieldsRegex.ReplaceAll(b, []byte("_"))
 
 	// Remove padding, hidden, or unused fields
-	removeFieldsRegex = regexp.MustCompile(`\bX_\S+`)
+	removeFieldsRegex = regexp.MustCompile(`\b(X_\S+|Padding)`)
 	b = removeFieldsRegex.ReplaceAll(b, []byte("_"))
 
 	// Remove the first line of warning from cgo

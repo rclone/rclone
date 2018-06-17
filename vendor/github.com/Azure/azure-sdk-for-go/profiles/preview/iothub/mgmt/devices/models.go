@@ -56,6 +56,15 @@ const (
 	None             Capabilities = original.None
 )
 
+type EndpointHealthStatus = original.EndpointHealthStatus
+
+const (
+	Dead      EndpointHealthStatus = original.Dead
+	Healthy   EndpointHealthStatus = original.Healthy
+	Unhealthy EndpointHealthStatus = original.Unhealthy
+	Unknown   EndpointHealthStatus = original.Unknown
+)
+
 type IotHubNameUnavailabilityReason = original.IotHubNameUnavailabilityReason
 
 const (
@@ -101,12 +110,12 @@ const (
 type JobStatus = original.JobStatus
 
 const (
-	Cancelled JobStatus = original.Cancelled
-	Completed JobStatus = original.Completed
-	Enqueued  JobStatus = original.Enqueued
-	Failed    JobStatus = original.Failed
-	Running   JobStatus = original.Running
-	Unknown   JobStatus = original.Unknown
+	JobStatusCancelled JobStatus = original.JobStatusCancelled
+	JobStatusCompleted JobStatus = original.JobStatusCompleted
+	JobStatusEnqueued  JobStatus = original.JobStatusEnqueued
+	JobStatusFailed    JobStatus = original.JobStatusFailed
+	JobStatusRunning   JobStatus = original.JobStatusRunning
+	JobStatusUnknown   JobStatus = original.JobStatusUnknown
 )
 
 type JobType = original.JobType
@@ -133,13 +142,29 @@ const (
 	OperationMonitoringLevelNone             OperationMonitoringLevel = original.OperationMonitoringLevelNone
 )
 
+type RouteErrorSeverity = original.RouteErrorSeverity
+
+const (
+	Error   RouteErrorSeverity = original.Error
+	Warning RouteErrorSeverity = original.Warning
+)
+
 type RoutingSource = original.RoutingSource
 
 const (
-	DeviceJobLifecycleEvents RoutingSource = original.DeviceJobLifecycleEvents
-	DeviceLifecycleEvents    RoutingSource = original.DeviceLifecycleEvents
-	DeviceMessages           RoutingSource = original.DeviceMessages
-	TwinChangeEvents         RoutingSource = original.TwinChangeEvents
+	RoutingSourceDeviceJobLifecycleEvents RoutingSource = original.RoutingSourceDeviceJobLifecycleEvents
+	RoutingSourceDeviceLifecycleEvents    RoutingSource = original.RoutingSourceDeviceLifecycleEvents
+	RoutingSourceDeviceMessages           RoutingSource = original.RoutingSourceDeviceMessages
+	RoutingSourceInvalid                  RoutingSource = original.RoutingSourceInvalid
+	RoutingSourceTwinChangeEvents         RoutingSource = original.RoutingSourceTwinChangeEvents
+)
+
+type TestResultStatus = original.TestResultStatus
+
+const (
+	False     TestResultStatus = original.False
+	True      TestResultStatus = original.True
+	Undefined TestResultStatus = original.Undefined
 )
 
 type CertificateBodyDescription = original.CertificateBodyDescription
@@ -150,6 +175,10 @@ type CertificatePropertiesWithNonce = original.CertificatePropertiesWithNonce
 type CertificateVerificationDescription = original.CertificateVerificationDescription
 type CertificateWithNonceDescription = original.CertificateWithNonceDescription
 type CloudToDeviceProperties = original.CloudToDeviceProperties
+type EndpointHealthData = original.EndpointHealthData
+type EndpointHealthDataListResult = original.EndpointHealthDataListResult
+type EndpointHealthDataListResultIterator = original.EndpointHealthDataListResultIterator
+type EndpointHealthDataListResultPage = original.EndpointHealthDataListResultPage
 type ErrorDetails = original.ErrorDetails
 type EventHubConsumerGroupInfo = original.EventHubConsumerGroupInfo
 type EventHubConsumerGroupsListResult = original.EventHubConsumerGroupsListResult
@@ -184,7 +213,9 @@ type JobResponse = original.JobResponse
 type JobResponseListResult = original.JobResponseListResult
 type JobResponseListResultIterator = original.JobResponseListResultIterator
 type JobResponseListResultPage = original.JobResponseListResultPage
+type MatchedRoute = original.MatchedRoute
 type MessagingEndpointProperties = original.MessagingEndpointProperties
+type Name = original.Name
 type Operation = original.Operation
 type OperationDisplay = original.OperationDisplay
 type OperationInputs = original.OperationInputs
@@ -194,9 +225,13 @@ type OperationListResultPage = original.OperationListResultPage
 type OperationsMonitoringProperties = original.OperationsMonitoringProperties
 type RegistryStatistics = original.RegistryStatistics
 type Resource = original.Resource
+type RouteCompilationError = original.RouteCompilationError
+type RouteErrorPosition = original.RouteErrorPosition
+type RouteErrorRange = original.RouteErrorRange
 type RouteProperties = original.RouteProperties
 type RoutingEndpoints = original.RoutingEndpoints
 type RoutingEventHubProperties = original.RoutingEventHubProperties
+type RoutingMessage = original.RoutingMessage
 type RoutingProperties = original.RoutingProperties
 type RoutingServiceBusQueueEndpointProperties = original.RoutingServiceBusQueueEndpointProperties
 type RoutingServiceBusTopicEndpointProperties = original.RoutingServiceBusTopicEndpointProperties
@@ -208,7 +243,15 @@ type SharedAccessSignatureAuthorizationRuleListResultIterator = original.SharedA
 type SharedAccessSignatureAuthorizationRuleListResultPage = original.SharedAccessSignatureAuthorizationRuleListResultPage
 type StorageEndpointProperties = original.StorageEndpointProperties
 type TagsResource = original.TagsResource
+type TestAllRoutesInput = original.TestAllRoutesInput
+type TestAllRoutesResult = original.TestAllRoutesResult
+type TestRouteInput = original.TestRouteInput
+type TestRouteResult = original.TestRouteResult
+type TestRouteResultDetails = original.TestRouteResultDetails
+type UserSubscriptionQuota = original.UserSubscriptionQuota
+type UserSubscriptionQuotaListResult = original.UserSubscriptionQuotaListResult
 type OperationsClient = original.OperationsClient
+type ResourceProviderCommonClient = original.ResourceProviderCommonClient
 
 func NewCertificatesClient(subscriptionID string) CertificatesClient {
 	return original.NewCertificatesClient(subscriptionID)
@@ -234,6 +277,9 @@ func PossibleAccessRightsValues() []AccessRights {
 func PossibleCapabilitiesValues() []Capabilities {
 	return original.PossibleCapabilitiesValues()
 }
+func PossibleEndpointHealthStatusValues() []EndpointHealthStatus {
+	return original.PossibleEndpointHealthStatusValues()
+}
 func PossibleIotHubNameUnavailabilityReasonValues() []IotHubNameUnavailabilityReason {
 	return original.PossibleIotHubNameUnavailabilityReasonValues()
 }
@@ -258,14 +304,26 @@ func PossibleJobTypeValues() []JobType {
 func PossibleOperationMonitoringLevelValues() []OperationMonitoringLevel {
 	return original.PossibleOperationMonitoringLevelValues()
 }
+func PossibleRouteErrorSeverityValues() []RouteErrorSeverity {
+	return original.PossibleRouteErrorSeverityValues()
+}
 func PossibleRoutingSourceValues() []RoutingSource {
 	return original.PossibleRoutingSourceValues()
+}
+func PossibleTestResultStatusValues() []TestResultStatus {
+	return original.PossibleTestResultStatusValues()
 }
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
 func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewResourceProviderCommonClient(subscriptionID string) ResourceProviderCommonClient {
+	return original.NewResourceProviderCommonClient(subscriptionID)
+}
+func NewResourceProviderCommonClientWithBaseURI(baseURI string, subscriptionID string) ResourceProviderCommonClient {
+	return original.NewResourceProviderCommonClientWithBaseURI(baseURI, subscriptionID)
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"

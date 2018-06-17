@@ -133,12 +133,11 @@ type ErrorResponse struct {
 // long-running operation.
 type FactoryCreateSubscriptionInEnrollmentAccountFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future FactoryCreateSubscriptionInEnrollmentAccountFuture) Result(client FactoryClient) (cr CreationResult, err error) {
+func (future *FactoryCreateSubscriptionInEnrollmentAccountFuture) Result(client FactoryClient) (cr CreationResult, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -146,34 +145,15 @@ func (future FactoryCreateSubscriptionInEnrollmentAccountFuture) Result(client F
 		return
 	}
 	if !done {
-		return cr, azure.NewAsyncOpIncompleteError("subscription.FactoryCreateSubscriptionInEnrollmentAccountFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		cr, err = client.CreateSubscriptionInEnrollmentAccountResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "subscription.FactoryCreateSubscriptionInEnrollmentAccountFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("subscription.FactoryCreateSubscriptionInEnrollmentAccountFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if cr.Response.Response, err = future.GetResult(sender); err == nil && cr.Response.Response.StatusCode != http.StatusNoContent {
+		cr, err = client.CreateSubscriptionInEnrollmentAccountResponder(cr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "subscription.FactoryCreateSubscriptionInEnrollmentAccountFuture", "Result", cr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "subscription.FactoryCreateSubscriptionInEnrollmentAccountFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	cr, err = client.CreateSubscriptionInEnrollmentAccountResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "subscription.FactoryCreateSubscriptionInEnrollmentAccountFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

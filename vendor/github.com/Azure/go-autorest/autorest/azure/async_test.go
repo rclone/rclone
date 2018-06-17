@@ -19,10 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"reflect"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -31,449 +29,630 @@ import (
 	"github.com/Azure/go-autorest/autorest/mocks"
 )
 
-func TestGetAsyncOperation_ReturnsAzureAsyncOperationHeader(t *testing.T) {
-	r := newAsynchronousResponse()
-
-	if getAsyncOperation(r) != mocks.TestAzureAsyncURL {
-		t.Fatalf("azure: getAsyncOperation failed to extract the Azure-AsyncOperation header -- expected %v, received %v", mocks.TestURL, getAsyncOperation(r))
-	}
-}
-
-func TestGetAsyncOperation_ReturnsEmptyStringIfHeaderIsAbsent(t *testing.T) {
-	r := mocks.NewResponse()
-
-	if len(getAsyncOperation(r)) != 0 {
-		t.Fatalf("azure: getAsyncOperation failed to return empty string when the Azure-AsyncOperation header is absent -- received %v", getAsyncOperation(r))
-	}
-}
-
-func TestHasSucceeded_ReturnsTrueForSuccess(t *testing.T) {
-	if !hasSucceeded(operationSucceeded) {
-		t.Fatal("azure: hasSucceeded failed to return true for success")
-	}
-}
-
-func TestHasSucceeded_ReturnsFalseOtherwise(t *testing.T) {
-	if hasSucceeded("not a success string") {
-		t.Fatal("azure: hasSucceeded returned true for a non-success")
-	}
-}
-
-func TestHasTerminated_ReturnsTrueForValidTerminationStates(t *testing.T) {
-	for _, state := range []string{operationSucceeded, operationCanceled, operationFailed} {
-		if !hasTerminated(state) {
-			t.Fatalf("azure: hasTerminated failed to return true for the '%s' state", state)
-		}
-	}
-}
-
-func TestHasTerminated_ReturnsFalseForUnknownStates(t *testing.T) {
-	if hasTerminated("not a known state") {
-		t.Fatal("azure: hasTerminated returned true for an unknown state")
-	}
-}
-
-func TestOperationError_ErrorReturnsAString(t *testing.T) {
-	s := (ServiceError{Code: "server code", Message: "server error"}).Error()
-	if s == "" {
-		t.Fatalf("azure: operationError#Error failed to return an error")
-	}
-	if !strings.Contains(s, "server code") || !strings.Contains(s, "server error") {
-		t.Fatalf("azure: operationError#Error returned a malformed error -- error='%v'", s)
-	}
-}
-
-func TestOperationResource_StateReturnsState(t *testing.T) {
-	if (operationResource{Status: "state"}).state() != "state" {
-		t.Fatalf("azure: operationResource#state failed to return the correct state")
-	}
-}
-
-func TestOperationResource_HasSucceededReturnsFalseIfNotSuccess(t *testing.T) {
-	if (operationResource{Status: "not a success string"}).hasSucceeded() {
-		t.Fatalf("azure: operationResource#hasSucceeded failed to return false for a canceled operation")
-	}
-}
-
-func TestOperationResource_HasSucceededReturnsTrueIfSuccessful(t *testing.T) {
-	if !(operationResource{Status: operationSucceeded}).hasSucceeded() {
-		t.Fatalf("azure: operationResource#hasSucceeded failed to return true for a successful operation")
-	}
-}
-
-func TestOperationResource_HasTerminatedReturnsTrueForKnownStates(t *testing.T) {
-	for _, state := range []string{operationSucceeded, operationCanceled, operationFailed} {
-		if !(operationResource{Status: state}).hasTerminated() {
-			t.Fatalf("azure: operationResource#hasTerminated failed to return true for the '%s' state", state)
-		}
-	}
-}
-
-func TestOperationResource_HasTerminatedReturnsFalseForUnknownStates(t *testing.T) {
-	if (operationResource{Status: "not a known state"}).hasTerminated() {
-		t.Fatalf("azure: operationResource#hasTerminated returned true for a non-terminal operation")
-	}
-}
-
-func TestProvisioningStatus_StateReturnsState(t *testing.T) {
-	if (provisioningStatus{Properties: provisioningProperties{"state"}}).state() != "state" {
-		t.Fatalf("azure: provisioningStatus#state failed to return the correct state")
-	}
-}
-
-func TestProvisioningStatus_HasSucceededReturnsFalseIfNotSuccess(t *testing.T) {
-	if (provisioningStatus{Properties: provisioningProperties{"not a success string"}}).hasSucceeded() {
-		t.Fatalf("azure: provisioningStatus#hasSucceeded failed to return false for a canceled operation")
-	}
-}
-
-func TestProvisioningStatus_HasSucceededReturnsTrueIfSuccessful(t *testing.T) {
-	if !(provisioningStatus{Properties: provisioningProperties{operationSucceeded}}).hasSucceeded() {
-		t.Fatalf("azure: provisioningStatus#hasSucceeded failed to return true for a successful operation")
-	}
-}
-
-func TestProvisioningStatus_HasTerminatedReturnsTrueForKnownStates(t *testing.T) {
-	for _, state := range []string{operationSucceeded, operationCanceled, operationFailed} {
-		if !(provisioningStatus{Properties: provisioningProperties{state}}).hasTerminated() {
-			t.Fatalf("azure: provisioningStatus#hasTerminated failed to return true for the '%s' state", state)
-		}
-	}
-}
-
-func TestProvisioningStatus_HasTerminatedReturnsFalseForUnknownStates(t *testing.T) {
-	if (provisioningStatus{Properties: provisioningProperties{"not a known state"}}).hasTerminated() {
-		t.Fatalf("azure: provisioningStatus#hasTerminated returned true for a non-terminal operation")
-	}
-}
-
-func TestPollingState_HasSucceededReturnsFalseIfNotSuccess(t *testing.T) {
-	if (pollingState{State: "not a success string"}).hasSucceeded() {
-		t.Fatalf("azure: pollingState#hasSucceeded failed to return false for a canceled operation")
-	}
-}
-
-func TestPollingState_HasSucceededReturnsTrueIfSuccessful(t *testing.T) {
-	if !(pollingState{State: operationSucceeded}).hasSucceeded() {
-		t.Fatalf("azure: pollingState#hasSucceeded failed to return true for a successful operation")
-	}
-}
-
-func TestPollingState_HasTerminatedReturnsTrueForKnownStates(t *testing.T) {
-	for _, state := range []string{operationSucceeded, operationCanceled, operationFailed} {
-		if !(pollingState{State: state}).hasTerminated() {
-			t.Fatalf("azure: pollingState#hasTerminated failed to return true for the '%s' state", state)
-		}
-	}
-}
-
-func TestPollingState_HasTerminatedReturnsFalseForUnknownStates(t *testing.T) {
-	if (pollingState{State: "not a known state"}).hasTerminated() {
-		t.Fatalf("azure: pollingState#hasTerminated returned true for a non-terminal operation")
-	}
-}
-
-func TestUpdatePollingState_ReturnsAnErrorIfOneOccurs(t *testing.T) {
-	resp := mocks.NewResponseWithContent(operationResourceIllegal)
-	err := updatePollingState(resp, &pollingState{})
+func TestCreateFromInvalidRequestVerb(t *testing.T) {
+	resp := mocks.NewResponseWithBodyAndStatus(nil, http.StatusOK, "some status")
+	resp.Request = mocks.NewRequestWithParams(http.MethodGet, mocks.TestURL, nil)
+	_, err := createPollingTracker(resp)
 	if err == nil {
-		t.Fatalf("azure: updatePollingState failed to return an error after a JSON parsing error")
+		t.Fatal("unexpected nil error")
 	}
 }
 
-func TestUpdatePollingState_ReturnsTerminatedForKnownProvisioningStates(t *testing.T) {
-	for _, state := range []string{operationSucceeded, operationCanceled, operationFailed} {
-		resp := mocks.NewResponseWithContent(fmt.Sprintf(pollingStateFormat, state))
-		resp.StatusCode = 42
-		ps := &pollingState{PollingMethod: PollingLocation}
-		updatePollingState(resp, ps)
-		if !ps.hasTerminated() {
-			t.Fatalf("azure: updatePollingState failed to return a terminating pollingState for the '%s' state", state)
-		}
-	}
-}
-
-func TestUpdatePollingState_ReturnsSuccessForSuccessfulProvisioningState(t *testing.T) {
-	resp := mocks.NewResponseWithContent(fmt.Sprintf(pollingStateFormat, operationSucceeded))
-	resp.StatusCode = 42
-	ps := &pollingState{PollingMethod: PollingLocation}
-	updatePollingState(resp, ps)
-	if !ps.hasSucceeded() {
-		t.Fatalf("azure: updatePollingState failed to return a successful pollingState for the '%s' state", operationSucceeded)
-	}
-}
-
-func TestUpdatePollingState_ReturnsInProgressForAllOtherProvisioningStates(t *testing.T) {
-	s := "not a recognized state"
-	resp := mocks.NewResponseWithContent(fmt.Sprintf(pollingStateFormat, s))
-	resp.StatusCode = 42
-	ps := &pollingState{PollingMethod: PollingLocation}
-	updatePollingState(resp, ps)
-	if ps.hasTerminated() {
-		t.Fatalf("azure: updatePollingState returned terminated for unknown state '%s'", s)
-	}
-}
-
-func TestUpdatePollingState_ReturnsSuccessWhenProvisioningStateFieldIsAbsentForSuccessStatusCodes(t *testing.T) {
-	for _, sc := range []int{http.StatusOK, http.StatusCreated, http.StatusNoContent} {
-		resp := mocks.NewResponseWithContent(pollingStateEmpty)
-		resp.StatusCode = sc
-		ps := &pollingState{PollingMethod: PollingLocation}
-		updatePollingState(resp, ps)
-		if !ps.hasSucceeded() {
-			t.Fatalf("azure: updatePollingState failed to return success when the provisionState field is absent for Status Code %d", sc)
-		}
-	}
-}
-
-func TestUpdatePollingState_ReturnsInProgressWhenProvisioningStateFieldIsAbsentForAccepted(t *testing.T) {
-	resp := mocks.NewResponseWithContent(pollingStateEmpty)
-	resp.StatusCode = http.StatusAccepted
-	ps := &pollingState{PollingMethod: PollingLocation}
-	updatePollingState(resp, ps)
-	if ps.hasTerminated() {
-		t.Fatalf("azure: updatePollingState returned terminated when the provisionState field is absent for Status Code Accepted")
-	}
-}
-
-func TestUpdatePollingState_ReturnsFailedWhenProvisioningStateFieldIsAbsentForUnknownStatusCodes(t *testing.T) {
-	resp := mocks.NewResponseWithContent(pollingStateEmpty)
-	resp.StatusCode = 42
-	ps := &pollingState{PollingMethod: PollingLocation}
-	updatePollingState(resp, ps)
-	if !ps.hasTerminated() || ps.hasSucceeded() {
-		t.Fatalf("azure: updatePollingState did not return failed when the provisionState field is absent for an unknown Status Code")
-	}
-}
-
-func TestUpdatePollingState_ReturnsTerminatedForKnownOperationResourceStates(t *testing.T) {
-	for _, state := range []string{operationSucceeded, operationCanceled, operationFailed} {
-		resp := mocks.NewResponseWithContent(fmt.Sprintf(operationResourceFormat, state))
-		resp.StatusCode = 42
-		ps := &pollingState{PollingMethod: PollingAsyncOperation}
-		updatePollingState(resp, ps)
-		if !ps.hasTerminated() {
-			t.Fatalf("azure: updatePollingState failed to return a terminating pollingState for the '%s' state", state)
-		}
-	}
-}
-
-func TestUpdatePollingState_ReturnsSuccessForSuccessfulOperationResourceState(t *testing.T) {
-	resp := mocks.NewResponseWithContent(fmt.Sprintf(operationResourceFormat, operationSucceeded))
-	resp.StatusCode = 42
-	ps := &pollingState{PollingMethod: PollingAsyncOperation}
-	updatePollingState(resp, ps)
-	if !ps.hasSucceeded() {
-		t.Fatalf("azure: updatePollingState failed to return a successful pollingState for the '%s' state", operationSucceeded)
-	}
-}
-
-func TestUpdatePollingState_ReturnsInProgressForAllOtherOperationResourceStates(t *testing.T) {
-	s := "not a recognized state"
-	resp := mocks.NewResponseWithContent(fmt.Sprintf(operationResourceFormat, s))
-	resp.StatusCode = 42
-	ps := &pollingState{PollingMethod: PollingAsyncOperation}
-	updatePollingState(resp, ps)
-	if ps.hasTerminated() {
-		t.Fatalf("azure: updatePollingState returned terminated for unknown state '%s'", s)
-	}
-}
-
-func TestUpdatePollingState_CopiesTheResponseBody(t *testing.T) {
-	s := fmt.Sprintf(pollingStateFormat, operationSucceeded)
-	resp := mocks.NewResponseWithContent(s)
-	resp.StatusCode = 42
-	ps := &pollingState{PollingMethod: PollingAsyncOperation}
-	updatePollingState(resp, ps)
-	b, err := ioutil.ReadAll(resp.Body)
+// DELETE
+func TestCreateDeleteTracker201Success(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusCreated, nil)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
 	if err != nil {
-		t.Fatalf("azure: updatePollingState failed to replace the http.Response Body -- Error='%v'", err)
+		t.Fatalf("failed to create tracker: %v", err)
 	}
-	if string(b) != s {
-		t.Fatalf("azure: updatePollingState failed to copy the http.Response Body -- Expected='%s' Received='%s'", s, string(b))
+	if pt.pollingMethod() != PollingLocation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
 	}
-}
-
-func TestUpdatePollingState_ClosesTheOriginalResponseBody(t *testing.T) {
-	resp := mocks.NewResponse()
-	b := resp.Body.(*mocks.Body)
-	ps := &pollingState{PollingMethod: PollingLocation}
-	updatePollingState(resp, ps)
-	if b.IsOpen() {
-		t.Fatal("azure: updatePollingState failed to close the original http.Response Body")
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
 	}
 }
 
-func TestUpdatePollingState_FailsWhenResponseLacksRequest(t *testing.T) {
-	resp := newAsynchronousResponse()
-	resp.Request = nil
-
-	ps := pollingState{}
-	err := updatePollingState(resp, &ps)
+func TestCreateDeleteTracker201FailNoLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusCreated, nil)
+	_, err := createPollingTracker(resp)
 	if err == nil {
-		t.Fatal("azure: updatePollingState failed to return an error when the http.Response lacked the original http.Request")
+		t.Fatal("unexpected nil error")
 	}
 }
 
-func TestUpdatePollingState_SetsThePollingMethodWhenUsingTheAzureAsyncOperationHeader(t *testing.T) {
-	ps := pollingState{}
-	updatePollingState(newAsynchronousResponse(), &ps)
-
-	if ps.PollingMethod != PollingAsyncOperation {
-		t.Fatal("azure: updatePollingState failed to set the correct response format when using the Azure-AsyncOperation header")
-	}
-}
-
-func TestUpdatePollingState_SetsThePollingMethodWhenUsingTheAzureAsyncOperationHeaderIsMissing(t *testing.T) {
-	resp := newAsynchronousResponse()
-	resp.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-
-	ps := pollingState{}
-	updatePollingState(resp, &ps)
-
-	if ps.PollingMethod != PollingLocation {
-		t.Fatal("azure: updatePollingState failed to set the correct response format when the Azure-AsyncOperation header is absent")
-	}
-}
-
-func TestUpdatePollingState_DoesNotChangeAnExistingReponseFormat(t *testing.T) {
-	resp := newAsynchronousResponse()
-	resp.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-
-	ps := pollingState{PollingMethod: PollingAsyncOperation}
-	updatePollingState(resp, &ps)
-
-	if ps.PollingMethod != PollingAsyncOperation {
-		t.Fatal("azure: updatePollingState failed to leave an existing response format setting")
-	}
-}
-
-func TestUpdatePollingState_PrefersTheAzureAsyncOperationHeader(t *testing.T) {
-	resp := newAsynchronousResponse()
-
-	ps := pollingState{}
-	updatePollingState(resp, &ps)
-
-	if ps.URI != mocks.TestAzureAsyncURL {
-		t.Fatal("azure: updatePollingState failed to prefer the Azure-AsyncOperation header")
-	}
-}
-
-func TestUpdatePollingState_PrefersLocationWhenTheAzureAsyncOperationHeaderMissing(t *testing.T) {
-	resp := newAsynchronousResponse()
-	resp.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-
-	ps := pollingState{}
-	updatePollingState(resp, &ps)
-
-	if ps.URI != mocks.TestLocationURL {
-		t.Fatal("azure: updatePollingState failed to prefer the Location header when the Azure-AsyncOperation header is missing")
-	}
-}
-
-func TestUpdatePollingState_UsesTheObjectLocationIfAsyncHeadersAreMissing(t *testing.T) {
-	resp := newAsynchronousResponse()
-	resp.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	resp.Header.Del(http.CanonicalHeaderKey(autorest.HeaderLocation))
-	resp.Request.Method = http.MethodPatch
-
-	ps := pollingState{}
-	updatePollingState(resp, &ps)
-
-	if ps.URI != mocks.TestURL {
-		t.Fatal("azure: updatePollingState failed to use the Object URL when the asynchronous headers are missing")
-	}
-}
-
-func TestUpdatePollingState_RecognizesLowerCaseHTTPVerbs(t *testing.T) {
-	for _, m := range []string{strings.ToLower(http.MethodPatch), strings.ToLower(http.MethodPut), strings.ToLower(http.MethodGet)} {
-		resp := newAsynchronousResponse()
-		resp.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-		resp.Header.Del(http.CanonicalHeaderKey(autorest.HeaderLocation))
-		resp.Request.Method = m
-
-		ps := pollingState{}
-		updatePollingState(resp, &ps)
-
-		if ps.URI != mocks.TestURL {
-			t.Fatalf("azure: updatePollingState failed to recognize the lower-case HTTP verb '%s'", m)
-		}
-	}
-}
-
-func TestUpdatePollingState_ReturnsAnErrorIfAsyncHeadersAreMissingForANewOrDeletedObject(t *testing.T) {
-	resp := newAsynchronousResponse()
-	resp.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	resp.Header.Del(http.CanonicalHeaderKey(autorest.HeaderLocation))
-
-	for _, m := range []string{http.MethodDelete, http.MethodPost} {
-		resp.Request.Method = m
-		err := updatePollingState(resp, &pollingState{})
-		if err == nil {
-			t.Fatalf("azure: updatePollingState failed to return an error even though it could not determine the polling URL for Method '%s'", m)
-		}
-	}
-}
-
-func TestNewPollingRequest_ReturnsAnErrorWhenPrepareFails(t *testing.T) {
-	_, err := newPollingRequest(pollingState{PollingMethod: PollingAsyncOperation, URI: mocks.TestBadURL})
+func TestCreateDeleteTracker201FailBadLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusCreated, nil)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
 	if err == nil {
-		t.Fatal("azure: newPollingRequest failed to return an error when Prepare fails")
+		t.Fatal("unexpected nil error")
 	}
 }
 
-func TestNewPollingRequest_DoesNotReturnARequestWhenPrepareFails(t *testing.T) {
-	req, _ := newPollingRequest(pollingState{PollingMethod: PollingAsyncOperation, URI: mocks.TestBadURL})
-	if req != nil {
-		t.Fatal("azure: newPollingRequest returned an http.Request when Prepare failed")
+func TestCreateDeleteTracker202SuccessAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != "" {
+		t.Fatal("expected empty GET URL")
 	}
 }
 
-func TestNewPollingRequest_ReturnsAGetRequest(t *testing.T) {
-	req, _ := newPollingRequest(pollingState{PollingMethod: PollingAsyncOperation, URI: mocks.TestAzureAsyncURL})
-	if req.Method != "GET" {
-		t.Fatalf("azure: newPollingRequest did not create an HTTP GET request -- actual method %v", req.Method)
+func TestCreateDeleteTracker202SuccessLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusAccepted, nil)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingLocation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
 	}
 }
 
-func TestDoPollForAsynchronous_IgnoresUnspecifiedStatusCodes(t *testing.T) {
-	client := mocks.NewSender()
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Duration(0)))
-
-	if client.Attempts() != 1 {
-		t.Fatalf("azure: DoPollForAsynchronous polled for unspecified status code")
+func TestCreateDeleteTracker202SuccessBoth(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
 	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
 }
 
-func TestDoPollForAsynchronous_PollsForSpecifiedStatusCodes(t *testing.T) {
-	client := mocks.NewSender()
-	client.AppendResponse(newAsynchronousResponse())
+func TestCreateDeleteTracker202SuccessBadLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != "" {
+		t.Fatal("expected empty GET URL")
+	}
+}
 
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
+func TestCreateDeleteTracker202FailBadAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
 
-	if client.Attempts() != 2 {
-		t.Fatalf("azure: DoPollForAsynchronous failed to poll for specified status code")
+func TestCreateDeleteTracker202FailBadLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodDelete, nil), http.StatusAccepted, nil)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+// PATCH
+
+func TestCreatePatchTracker201Success(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusCreated, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePatchTracker201SuccessNoHeaders(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusCreated, nil)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingRequestURI {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePatchTracker201FailBadAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusCreated, nil)
+	setAsyncOpHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+func TestCreatePatchTracker202SuccessAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePatchTracker202SuccessLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusAccepted, nil)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingLocation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePatchTracker202SuccessBoth(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePatchTracker202FailBadAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+func TestCreatePatchTracker202FailBadLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPatch, nil), http.StatusAccepted, nil)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+// POST
+
+func TestCreatePostTracker201Success(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusCreated, nil)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingLocation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePostTracker201FailNoHeader(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusCreated, nil)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil err")
+	}
+}
+
+func TestCreatePostTracker201FailBadHeader(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusCreated, nil)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil err")
+	}
+}
+
+func TestCreatePostTracker202SuccessAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != "" {
+		t.Fatal("expected empty final GET URL")
+	}
+}
+
+func TestCreatePostTracker202SuccessLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusAccepted, nil)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingLocation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URI: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePostTracker202SuccessBoth(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePostTracker202SuccessBadLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != "" {
+		t.Fatal("expected empty final GET URL")
+	}
+}
+
+func TestCreatePostTracker202FailBadAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+func TestCreatePostTracker202FailBadLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusAccepted, nil)
+	_, err := createPollingTracker(resp)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+// PUT
+
+func TestCreatePutTracker201SuccessAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusCreated, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePutTracker201SuccessNoHeaders(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusCreated, nil)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingRequestURI {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePutTracker201FailBadAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusCreated, nil)
+	setAsyncOpHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+func TestCreatePutTracker202SuccessAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePutTracker202SuccessLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusAccepted, nil)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingLocation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePutTracker202SuccessBoth(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	mocks.SetLocationHeader(resp, mocks.TestLocationURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestLocationURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePutTracker202SuccessBadLocation(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestAzureAsyncURL)
+	mocks.SetLocationHeader(resp, mocks.TestBadURL)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	if pt.pollingMethod() != PollingAsyncOperation {
+		t.Fatalf("wrong polling method: %s", pt.pollingMethod())
+	}
+	if pt.finalGetURL() != mocks.TestURL {
+		t.Fatalf("wrong final GET URL: %s", pt.finalGetURL())
+	}
+}
+
+func TestCreatePutTracker202FailBadAsyncOp(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusAccepted, nil)
+	setAsyncOpHeader(resp, mocks.TestBadURL)
+	_, err := createPollingTracker(resp)
+	if err == nil {
+		t.Fatal("unexpected nil error")
+	}
+}
+
+func TestPollPutTrackerSuccessNoHeaders(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusAccepted, nil)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	sender := mocks.NewSender()
+	sender.AppendResponse(newProvisioningStatusResponse("InProgress"))
+	err = pt.pollForStatus(sender)
+	if err != nil {
+		t.Fatalf("failed to poll for status: %v", err)
+	}
+	err = pt.checkForErrors()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestPollPutTrackerFailNoHeadersEmptyBody(t *testing.T) {
+	resp := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusAccepted, nil)
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	sender := mocks.NewSender()
+	sender.AppendResponse(mocks.NewResponseWithBodyAndStatus(&mocks.Body{}, http.StatusOK, "status ok"))
+	err = pt.pollForStatus(sender)
+	if err != nil {
+		t.Fatalf("failed to poll for status: %v", err)
+	}
+	err = pt.checkForErrors()
+	if err == nil {
+		t.Fatalf("unexpected nil error")
+	}
+}
+
+// errors
+
+func TestAsyncPollingReturnsWrappedError(t *testing.T) {
+	resp := newSimpleAsyncResp()
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	sender := mocks.NewSender()
+	sender.AppendResponse(newOperationResourceErrorResponse("Failed"))
+	err = pt.pollForStatus(sender)
+	if err != nil {
+		t.Fatalf("failed to poll for status: %v", err)
+	}
+	err = pt.pollingError()
+	if err == nil {
+		t.Fatal("unexpected nil polling error")
+	}
+	if se, ok := err.(*ServiceError); !ok {
+		t.Fatal("incorrect error type")
+	} else if se.Code == "" {
+		t.Fatal("empty service error code")
+	} else if se.Message == "" {
+		t.Fatal("empty service error message")
+	}
+}
+
+func TestLocationPollingReturnsWrappedError(t *testing.T) {
+	resp := newSimpleLocationResp()
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	sender := mocks.NewSender()
+	sender.AppendResponse(newProvisioningStatusErrorResponse("Failed"))
+	err = pt.pollForStatus(sender)
+	if err != nil {
+		t.Fatalf("failed to poll for status: %v", err)
+	}
+	err = pt.pollingError()
+	if err == nil {
+		t.Fatal("unexpected nil polling error")
+	}
+	if se, ok := err.(*ServiceError); !ok {
+		t.Fatal("incorrect error type")
+	} else if se.Code == "" {
+		t.Fatal("empty service error code")
+	} else if se.Message == "" {
+		t.Fatal("empty service error message")
+	}
+}
+
+func TestLocationPollingReturnsUnwrappedError(t *testing.T) {
+	resp := newSimpleLocationResp()
+	pt, err := createPollingTracker(resp)
+	if err != nil {
+		t.Fatalf("failed to create tracker: %v", err)
+	}
+	sender := mocks.NewSender()
+	sender.AppendResponse(newProvisioningStatusUnwrappedErrorResponse("Failed"))
+	err = pt.pollForStatus(sender)
+	if err != nil {
+		t.Fatalf("failed to poll for status: %v", err)
+	}
+	err = pt.pollingError()
+	if err == nil {
+		t.Fatal("unexpected nil polling error")
+	}
+	if se, ok := err.(*ServiceError); !ok {
+		t.Fatal("incorrect error type")
+	} else if se.Code == "" {
+		t.Fatal("empty service error code")
+	} else if se.Message == "" {
+		t.Fatal("empty service error message")
+	}
+}
+
+// DoPollForAsynchronous (legacy so not many tests plus it builds on Future which has more tests)
+
+func TestDoPollForAsynchronous_Success(t *testing.T) {
+	r1 := newSimpleAsyncResp()
+	r2 := newOperationResourceResponse("busy")
+	r3 := newOperationResourceResponse(operationSucceeded)
+
+	sender := mocks.NewSender()
+	sender.AppendResponse(r1)
+	sender.AppendAndRepeatResponse(r2, 2)
+	sender.AppendAndRepeatResponse(r3, 1)
+
+	r, err := autorest.SendWithSender(sender, newAsyncReq(http.MethodPut, nil), DoPollForAsynchronous(time.Millisecond))
+	if err != nil {
+		t.Fatalf("failed to poll for status: %v", err)
 	}
 
-	autorest.Respond(r,
-		autorest.ByClosing())
+	if sender.Attempts() < sender.NumResponses() {
+		t.Fatal("DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
+	}
+	autorest.Respond(r, autorest.ByClosing())
+}
+
+func TestDoPollForAsynchronous_Failed(t *testing.T) {
+	r1 := newSimpleAsyncResp()
+	r2 := newOperationResourceResponse("busy")
+	r3 := newOperationResourceErrorResponse(operationFailed)
+
+	sender := mocks.NewSender()
+	sender.AppendResponse(r1)
+	sender.AppendAndRepeatResponse(r2, 2)
+	sender.AppendAndRepeatResponse(r3, 1)
+
+	r, err := autorest.SendWithSender(sender, newAsyncReq(http.MethodPut, nil), DoPollForAsynchronous(time.Millisecond))
+	if err == nil {
+		t.Fatal("unexpected nil error when polling")
+	}
+	if se, ok := err.(*ServiceError); !ok {
+		t.Fatal("incorrect error type")
+	} else if se.Code == "" {
+		t.Fatal("empty service error code")
+	} else if se.Message == "" {
+		t.Fatal("empty service error message")
+	}
+
+	if sender.Attempts() < sender.NumResponses() {
+		t.Fatalf("DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
+	}
+	autorest.Respond(r, autorest.ByClosing())
 }
 
 func TestDoPollForAsynchronous_CanBeCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	delay := 5 * time.Second
 
-	r1 := newAsynchronousResponse()
+	r1 := newSimpleAsyncResp()
 
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(newOperationResourceResponse("Busy"), -1)
+	sender := mocks.NewSender()
+	sender.AppendResponse(r1)
+	sender.AppendAndRepeatResponse(newOperationResourceResponse("Busy"), -1)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -481,14 +660,11 @@ func TestDoPollForAsynchronous_CanBeCanceled(t *testing.T) {
 	end := time.Now()
 	var err error
 	go func() {
-		req := mocks.NewRequest()
+		req := newAsyncReq(http.MethodPut, nil)
 		req = req.WithContext(ctx)
-
 		var r *http.Response
-		r, err = autorest.SendWithSender(client, req,
-			DoPollForAsynchronous(delay))
-		autorest.Respond(r,
-			autorest.ByClosing())
+		r, err = autorest.SendWithSender(sender, req, DoPollForAsynchronous(delay))
+		autorest.Respond(r, autorest.ByClosing())
 		end = time.Now()
 		wg.Done()
 	}()
@@ -496,554 +672,32 @@ func TestDoPollForAsynchronous_CanBeCanceled(t *testing.T) {
 	wg.Wait()
 	time.Sleep(5 * time.Millisecond)
 	if err == nil {
-		t.Fatalf("azure: DoPollForAsynchronous didn't cancel")
+		t.Fatalf("DoPollForAsynchronous didn't cancel")
 	}
 	if end.Sub(start) >= delay {
-		t.Fatalf("azure: DoPollForAsynchronous failed to cancel")
+		t.Fatalf("DoPollForAsynchronous failed to cancel")
 	}
-}
-
-func TestDoPollForAsynchronous_ClosesAllNonreturnedResponseBodiesWhenPolling(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	b1 := r1.Body.(*mocks.Body)
-	r2 := newOperationResourceResponse("busy")
-	b2 := r2.Body.(*mocks.Body)
-	r3 := newOperationResourceResponse(operationSucceeded)
-	b3 := r3.Body.(*mocks.Body)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendResponse(r3)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if b1.IsOpen() || b2.IsOpen() || b3.IsOpen() {
-		t.Fatalf("azure: DoPollForAsynchronous did not close unreturned response bodies")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_LeavesLastResponseBodyOpen(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceResponse(operationSucceeded)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendResponse(r3)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	b, err := ioutil.ReadAll(r.Body)
-	if len(b) <= 0 || err != nil {
-		t.Fatalf("azure: DoPollForAsynchronous did not leave open the body of the last response - Error='%v'", err)
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_DoesNotPollIfOriginalRequestReturnedAnError(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendResponse(r2)
-	client.SetError(fmt.Errorf("Faux Error"))
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() != 1 {
-		t.Fatalf("azure: DoPollForAsynchronous tried to poll after receiving an error")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_DoesNotPollIfCreatingOperationRequestFails(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	mocks.SetResponseHeader(r1, http.CanonicalHeaderKey(headerAsyncOperation), mocks.TestBadURL)
-	r2 := newOperationResourceResponse("busy")
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() > 1 {
-		t.Fatalf("azure: DoPollForAsynchronous polled with an invalidly formed operation request")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_StopsPollingAfterAnError(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.SetError(fmt.Errorf("Faux Error"))
-	client.SetEmitErrorAfter(2)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() > 3 {
-		t.Fatalf("azure: DoPollForAsynchronous failed to stop polling after receiving an error")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_ReturnsPollingError(t *testing.T) {
-	client := mocks.NewSender()
-	client.AppendAndRepeatResponse(newAsynchronousResponse(), 5)
-	client.SetError(fmt.Errorf("Faux Error"))
-	client.SetEmitErrorAfter(1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if err == nil {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return error from polling")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_PollsForStatusAccepted(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Status = "202 Accepted"
-	r1.StatusCode = http.StatusAccepted
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceResponse(operationCanceled)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() < client.NumResponses() {
-		t.Fatalf("azure: DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_PollsForStatusCreated(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Status = "201 Created"
-	r1.StatusCode = http.StatusCreated
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceResponse(operationCanceled)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() < client.NumResponses() {
-		t.Fatalf("azure: DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_PollsUntilProvisioningStatusTerminates(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r3 := newProvisioningStatusResponse(operationCanceled)
-	r3.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() < client.NumResponses() {
-		t.Fatalf("azure: DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_PollsUntilProvisioningStatusSucceeds(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r3 := newProvisioningStatusResponse(operationSucceeded)
-	r3.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() < client.NumResponses() {
-		t.Fatalf("azure: DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_PollsUntilOperationResourceHasTerminated(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceResponse(operationCanceled)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() < client.NumResponses() {
-		t.Fatalf("azure: DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_PollsUntilOperationResourceHasSucceeded(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceResponse(operationSucceeded)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() < client.NumResponses() {
-		t.Fatalf("azure: DoPollForAsynchronous stopped polling before receiving a terminated OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_StopsPollingWhenOperationResourceHasTerminated(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceResponse(operationCanceled)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 2)
-
-	r, _ := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() > 4 {
-		t.Fatalf("azure: DoPollForAsynchronous failed to stop after receiving a terminated OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_ReturnsAnErrorForCanceledOperations(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceErrorResponse(operationCanceled)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if err == nil || !strings.Contains(fmt.Sprintf("%v", err), "Canceled") {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return an appropriate error for a canceled OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_ReturnsAnErrorForFailedOperations(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceErrorResponse(operationFailed)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if err == nil || !strings.Contains(fmt.Sprintf("%v", err), "Failed") {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return an appropriate error for a canceled OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_WithNilURI(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r1.Header.Del(http.CanonicalHeaderKey(autorest.HeaderLocation))
-
-	r2 := newOperationResourceResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2.Header.Del(http.CanonicalHeaderKey(autorest.HeaderLocation))
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendResponse(r2)
-
-	req, _ := http.NewRequest("POST", "https://microsoft.com/a/b/c/", mocks.NewBody(""))
-	r, err := autorest.SendWithSender(client, req,
-		DoPollForAsynchronous(time.Millisecond))
-
-	if err == nil {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return error for nil URI. got: nil; want: Azure Polling Error - Unable to obtain polling URI for POST")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_ReturnsAnUnknownErrorForFailedOperations(t *testing.T) {
-	// Return unknown error if error not present in last response
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r3 := newProvisioningStatusResponse(operationFailed)
-	r3.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	expected := makeLongRunningOperationErrorString("Unknown", "None")
-	if err.Error() != expected {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return an appropriate error message for an unknown error. \n expected=%q \n got=%q",
-			expected, err.Error())
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_ReturnsErrorForLastErrorResponse(t *testing.T) {
-	// Return error code and message if error present in last response
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r3 := newAsynchronousResponseWithError("400 Bad Request", http.StatusBadRequest)
-	r3.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	expected := makeLongRunningOperationErrorString("InvalidParameter", "tom-service-DISCOVERY-server-base-v1.core.local' is not a valid captured VHD blob name prefix.")
-	if err.Error() != expected {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return an appropriate error message for an unknown error. \n expected=%q \n got=%q",
-			expected, err.Error())
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_ReturnsOperationResourceErrorForFailedOperations(t *testing.T) {
-	// Return Operation resource response with error code and message in last operation resource response
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceErrorResponse(operationFailed)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	expected := makeLongRunningOperationErrorString("BadArgument", "The provided database 'foo' has an invalid username.")
-	if err.Error() != expected {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return an appropriate error message for a failed Operations. \n expected=%q \n got=%q",
-			expected, err.Error())
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_ReturnsErrorForFirstPutRequest(t *testing.T) {
-	// Return 400 bad response with error code and message in first put
-	r1 := newAsynchronousResponseWithError("400 Bad Request", http.StatusBadRequest)
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-
-	res, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-	if err != nil {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return an appropriate error message for a failed Operations. \n expected=%q \n got=%q",
-			errorResponse, err.Error())
-	}
-
-	err = autorest.Respond(res,
-		WithErrorUnlessStatusCode(http.StatusAccepted, http.StatusCreated, http.StatusOK),
-		autorest.ByClosing())
-
-	reqError, ok := err.(*RequestError)
-	if !ok {
-		t.Fatalf("azure: returned error is not azure.RequestError: %T", err)
-	}
-
-	expected := &RequestError{
-		ServiceError: &ServiceError{
-			Code:    "InvalidParameter",
-			Message: "tom-service-DISCOVERY-server-base-v1.core.local' is not a valid captured VHD blob name prefix.",
-		},
-		DetailedError: autorest.DetailedError{
-			StatusCode: 400,
-		},
-	}
-	if !reflect.DeepEqual(reqError, expected) {
-		t.Fatalf("azure: wrong error. expected=%q\ngot=%q", expected, reqError)
-	}
-
-	defer res.Body.Close()
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(b) != errorResponse {
-		t.Fatalf("azure: Response body is wrong. got=%q expected=%q", string(b), errorResponse)
-	}
-
-}
-
-func TestDoPollForAsynchronous_ReturnsNoErrorForSuccessfulOperations(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceErrorResponse(operationSucceeded)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if err != nil {
-		t.Fatalf("azure: DoPollForAsynchronous returned an error for a successful OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
-}
-
-func TestDoPollForAsynchronous_StopsPollingIfItReceivesAnInvalidOperationResource(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r2 := newOperationResourceResponse("busy")
-	r3 := newOperationResourceResponse("busy")
-	r3.Body = mocks.NewBody(operationResourceIllegal)
-	r4 := newOperationResourceResponse(operationSucceeded)
-
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendAndRepeatResponse(r3, 1)
-	client.AppendAndRepeatResponse(r4, 1)
-
-	r, err := autorest.SendWithSender(client, mocks.NewRequest(),
-		DoPollForAsynchronous(time.Millisecond))
-
-	if client.Attempts() > 4 {
-		t.Fatalf("azure: DoPollForAsynchronous failed to stop polling after receiving an invalid OperationResource")
-	}
-	if err == nil {
-		t.Fatalf("azure: DoPollForAsynchronous failed to return an error after receving an invalid OperationResource")
-	}
-
-	autorest.Respond(r,
-		autorest.ByClosing())
 }
 
 func TestFuture_PollsUntilProvisioningStatusSucceeds(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r3 := newProvisioningStatusResponse(operationSucceeded)
-	r3.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
+	r2 := newOperationResourceResponse("busy")
+	r3 := newOperationResourceResponse(operationSucceeded)
 
-	client := mocks.NewSender()
-	client.AppendResponse(r1)
-	client.AppendAndRepeatResponse(r2, 2)
-	client.AppendResponse(r3)
+	sender := mocks.NewSender()
+	sender.AppendAndRepeatResponse(r2, 2)
+	sender.AppendResponse(r3)
 
-	future := NewFuture(mocks.NewRequest())
+	future, err := NewFutureFromResponse(newSimpleAsyncResp())
+	if err != nil {
+		t.Fatalf("failed to create future: %v", err)
+	}
 
-	for done, err := future.Done(client); !done; done, err = future.Done(client) {
-		if future.PollingMethod() != PollingLocation {
-			t.Fatalf("azure: wrong future polling method")
+	for done, err := future.Done(sender); !done; done, err = future.Done(sender) {
+		if future.PollingMethod() != PollingAsyncOperation {
+			t.Fatalf("wrong future polling method: %s", future.PollingMethod())
 		}
 		if err != nil {
-			t.Fatalf("azure: TestFuture polling Done failed")
+			t.Fatalf("polling Done failed: %v", err)
 		}
 		delay, ok := future.GetPollingDelay()
 		if !ok {
@@ -1052,92 +706,93 @@ func TestFuture_PollsUntilProvisioningStatusSucceeds(t *testing.T) {
 		time.Sleep(delay)
 	}
 
-	if client.Attempts() < client.NumResponses() {
-		t.Fatalf("azure: TestFuture stopped polling before receiving a terminated OperationResource")
+	if sender.Attempts() < sender.NumResponses() {
+		t.Fatalf("stopped polling before receiving a terminated OperationResource")
 	}
 
 	autorest.Respond(future.Response(),
 		autorest.ByClosing())
 }
 
-func TestFuture_Marshalling(t *testing.T) {
-	client := mocks.NewSender()
-	client.AppendResponse(newAsynchronousResponse())
-
-	future := NewFuture(mocks.NewRequest())
-	done, err := future.Done(client)
+func TestFuture_MarshallingSuccess(t *testing.T) {
+	future, err := NewFutureFromResponse(newSimpleAsyncResp())
 	if err != nil {
-		t.Fatalf("azure: TestFuture marshalling Done failed")
-	}
-	if done {
-		t.Fatalf("azure: TestFuture marshalling shouldn't be done")
-	}
-	if future.PollingMethod() != PollingAsyncOperation {
-		t.Fatalf("azure: wrong future polling method")
+		t.Fatalf("failed to create future: %v", err)
 	}
 
 	data, err := json.Marshal(future)
 	if err != nil {
-		t.Fatalf("azure: TestFuture failed to marshal")
+		t.Fatalf("failed to marshal: %v", err)
 	}
 
 	var future2 Future
 	err = json.Unmarshal(data, &future2)
 	if err != nil {
-		t.Fatalf("azure: TestFuture failed to unmarshal")
+		t.Fatalf("failed to unmarshal: %v", err)
 	}
 
-	if future.ps.ServiceError != future2.ps.ServiceError {
-		t.Fatalf("azure: TestFuture marshalling ServiceError don't match")
+	if reflect.DeepEqual(future.pt, future2.pt) {
+		t.Fatalf("marshalling unexpected match")
 	}
-	if future.ps.PollingMethod != future2.ps.PollingMethod {
-		t.Fatalf("azure: TestFuture marshalling response formats don't match")
-	}
-	if future.ps.State != future2.ps.State {
-		t.Fatalf("azure: TestFuture marshalling states don't match")
-	}
-	if future.ps.URI != future2.ps.URI {
-		t.Fatalf("azure: TestFuture marshalling URIs don't match")
+
+	// these fields don't get marshalled so nil them before deep comparison
+	future.pt.(*pollingTrackerPut).resp = nil
+	future.pt.(*pollingTrackerPut).rawBody = nil
+	if !reflect.DeepEqual(future.pt, future2.pt) {
+		t.Fatalf("marshalling futures don't match")
 	}
 }
 
-func TestFuture_MarshallingWithServiceError(t *testing.T) {
-	client := mocks.NewSender()
-	client.AppendResponse(newAsynchronousResponseWithError("400 Bad Request", http.StatusBadRequest))
+func TestFuture_MarshallingWithError(t *testing.T) {
+	future, err := NewFutureFromResponse(newAsyncResponseWithError(http.MethodPut))
+	if err != nil {
+		t.Fatalf("failed to create future: %v", err)
+	}
 
-	future := NewFuture(mocks.NewRequest())
-	done, err := future.Done(client)
+	data, err := json.Marshal(future)
+	if err != nil {
+		t.Fatalf("failed to marshal: %v", err)
+	}
+
+	var future2 Future
+	err = json.Unmarshal(data, &future2)
+	if err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	if reflect.DeepEqual(future.pt, future2.pt) {
+		t.Fatalf("marshalling unexpected match")
+	}
+
+	// these fields don't get marshalled so nil them before deep comparison
+	future.pt.(*pollingTrackerPut).resp = nil
+	future.pt.(*pollingTrackerPut).rawBody = nil
+	if !reflect.DeepEqual(future.pt, future2.pt) {
+		t.Fatalf("marshalling futures don't match")
+	}
+}
+
+func TestFuture_CreateFromFailedOperation(t *testing.T) {
+	future, err := NewFutureFromResponse(newAsyncResponseWithError(http.MethodPut))
+	if err != nil {
+		t.Fatalf("failed to create future: %v", err)
+	}
+	done, err := future.Done(mocks.NewSender())
 	if err == nil {
-		t.Fatalf("azure: TestFuture marshalling didn't fail")
+		t.Fatalf("Done should have returned an error")
 	}
-	if done {
-		t.Fatalf("azure: TestFuture marshalling shouldn't be done")
-	}
-	if future.PollingMethod() != "" {
-		t.Fatalf("azure: future shouldn't have polling method")
+	if !done {
+		t.Fatalf("should be done")
 	}
 }
 
 func TestFuture_WaitForCompletion(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r3 := newAsynchronousResponseWithError("Internal server error", http.StatusInternalServerError)
-	r3.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r3.Header.Del(http.CanonicalHeaderKey("Retry-After"))
-	r4 := newProvisioningStatusResponse(operationSucceeded)
-	r4.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
+	r2 := newOperationResourceResponse("busy")
+	r3 := newOperationResourceResponse(operationSucceeded)
 
 	sender := mocks.NewSender()
-	sender.AppendResponse(r1)
-	sender.AppendError(errors.New("transient network failure"))
 	sender.AppendAndRepeatResponse(r2, 2)
 	sender.AppendResponse(r3)
-	sender.AppendResponse(r4)
-
-	future := NewFuture(mocks.NewRequest())
-
 	client := autorest.Client{
 		PollingDelay:    1 * time.Second,
 		PollingDuration: autorest.DefaultPollingDuration,
@@ -1146,13 +801,51 @@ func TestFuture_WaitForCompletion(t *testing.T) {
 		Sender:          sender,
 	}
 
-	err := future.WaitForCompletion(context.Background(), client)
+	future, err := NewFutureFromResponse(newSimpleAsyncResp())
 	if err != nil {
-		t.Fatalf("azure: WaitForCompletion returned non-nil error")
+		t.Fatalf("failed to create future: %v", err)
+	}
+
+	err = future.WaitForCompletion(context.Background(), client)
+	if err != nil {
+		t.Fatalf("WaitForCompletion returned non-nil error")
 	}
 
 	if sender.Attempts() < sender.NumResponses() {
-		t.Fatalf("azure: TestFuture stopped polling before receiving a terminated OperationResource")
+		t.Fatalf("stopped polling before receiving a terminated OperationResource")
+	}
+
+	autorest.Respond(future.Response(),
+		autorest.ByClosing())
+}
+
+func TestFuture_WaitForCompletionRef(t *testing.T) {
+	r2 := newOperationResourceResponse("busy")
+	r3 := newOperationResourceResponse(operationSucceeded)
+
+	sender := mocks.NewSender()
+	sender.AppendAndRepeatResponse(r2, 2)
+	sender.AppendResponse(r3)
+	client := autorest.Client{
+		PollingDelay:    1 * time.Second,
+		PollingDuration: autorest.DefaultPollingDuration,
+		RetryAttempts:   autorest.DefaultRetryAttempts,
+		RetryDuration:   1 * time.Second,
+		Sender:          sender,
+	}
+
+	future, err := NewFutureFromResponse(newSimpleAsyncResp())
+	if err != nil {
+		t.Fatalf("failed to create future: %v", err)
+	}
+
+	err = future.WaitForCompletionRef(context.Background(), client)
+	if err != nil {
+		t.Fatalf("WaitForCompletion returned non-nil error")
+	}
+
+	if sender.Attempts() < sender.NumResponses() {
+		t.Fatalf("stopped polling before receiving a terminated OperationResource")
 	}
 
 	autorest.Respond(future.Response(),
@@ -1160,16 +853,15 @@ func TestFuture_WaitForCompletion(t *testing.T) {
 }
 
 func TestFuture_WaitForCompletionTimedOut(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
 	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
 
 	sender := mocks.NewSender()
-	sender.AppendResponse(r1)
 	sender.AppendAndRepeatResponseWithDelay(r2, 1*time.Second, 5)
 
-	future := NewFuture(mocks.NewRequest())
+	future, err := NewFutureFromResponse(newSimpleAsyncResp())
+	if err != nil {
+		t.Fatalf("failed to create future: %v", err)
+	}
 
 	client := autorest.Client{
 		PollingDelay:    autorest.DefaultPollingDelay,
@@ -1179,21 +871,23 @@ func TestFuture_WaitForCompletionTimedOut(t *testing.T) {
 		Sender:          sender,
 	}
 
-	err := future.WaitForCompletion(context.Background(), client)
+	err = future.WaitForCompletionRef(context.Background(), client)
 	if err == nil {
-		t.Fatalf("azure: WaitForCompletion returned nil error, should have timed out")
+		t.Fatalf("WaitForCompletion returned nil error, should have timed out")
 	}
 }
 
 func TestFuture_WaitForCompletionRetriesExceeded(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
+	r1 := newProvisioningStatusResponse("InProgress")
 
 	sender := mocks.NewSender()
 	sender.AppendResponse(r1)
 	sender.AppendAndRepeatError(errors.New("transient network failure"), autorest.DefaultRetryAttempts+1)
 
-	future := NewFuture(mocks.NewRequest())
+	future, err := NewFutureFromResponse(newSimpleAsyncResp())
+	if err != nil {
+		t.Fatalf("failed to create future: %v", err)
+	}
 
 	client := autorest.Client{
 		PollingDelay:    autorest.DefaultPollingDelay,
@@ -1203,23 +897,22 @@ func TestFuture_WaitForCompletionRetriesExceeded(t *testing.T) {
 		Sender:          sender,
 	}
 
-	err := future.WaitForCompletion(context.Background(), client)
+	err = future.WaitForCompletionRef(context.Background(), client)
 	if err == nil {
-		t.Fatalf("azure: WaitForCompletion returned nil error, should have errored out")
+		t.Fatalf("WaitForCompletion returned nil error, should have errored out")
 	}
 }
 
 func TestFuture_WaitForCompletionCancelled(t *testing.T) {
-	r1 := newAsynchronousResponse()
-	r1.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
-	r2 := newProvisioningStatusResponse("busy")
-	r2.Header.Del(http.CanonicalHeaderKey(headerAsyncOperation))
+	r1 := newProvisioningStatusResponse("InProgress")
 
 	sender := mocks.NewSender()
-	sender.AppendResponse(r1)
-	sender.AppendAndRepeatResponseWithDelay(r2, 1*time.Second, 5)
+	sender.AppendAndRepeatResponseWithDelay(r1, 1*time.Second, 5)
 
-	future := NewFuture(mocks.NewRequest())
+	future, err := NewFutureFromResponse(newSimpleAsyncResp())
+	if err != nil {
+		t.Fatalf("failed to create future: %v", err)
+	}
 
 	client := autorest.Client{
 		PollingDelay:    autorest.DefaultPollingDelay,
@@ -1235,9 +928,9 @@ func TestFuture_WaitForCompletionCancelled(t *testing.T) {
 		cancel()
 	}()
 
-	err := future.WaitForCompletion(ctx, client)
+	err = future.WaitForCompletionRef(ctx, client)
 	if err == nil {
-		t.Fatalf("azure: WaitForCompletion returned nil error, should have been cancelled")
+		t.Fatalf("WaitForCompletion returned nil error, should have been cancelled")
 	}
 }
 
@@ -1245,6 +938,8 @@ const (
 	operationResourceIllegal = `
 	This is not JSON and should fail...badly.
 	`
+
+	// returned from LROs that use Location header
 	pollingStateFormat = `
 	{
 		"unused" : {
@@ -1256,6 +951,7 @@ const (
 	}
 	`
 
+	// returned from LROs that use Location header
 	errorResponse = `
 	{
 		"error" : {
@@ -1265,6 +961,15 @@ const (
 	}
 	`
 
+	// returned from LROs that use Location header
+	unwrappedErrorResponse = `
+	{
+		"code" : "InvalidParameter",
+		"message" : "tom-service-DISCOVERY-server-base-v1.core.local' is not a valid captured VHD blob name prefix."
+	}
+	`
+
+	// returned from LROs that use Location header
 	pollingStateEmpty = `
 	{
 		"unused" : {
@@ -1275,6 +980,7 @@ const (
 	}
 	`
 
+	// returned from LROs that use Azure-AsyncOperation header
 	operationResourceFormat = `
 	{
 		"id": "/subscriptions/id/locations/westus/operationsStatus/sameguid",
@@ -1283,11 +989,13 @@ const (
 		"startTime" : "2006-01-02T15:04:05Z",
 		"endTime" : "2006-01-02T16:04:05Z",
 		"percentComplete" : 50.00,
-
-		"properties" : {}
+		"properties" : {
+			"foo": "bar"
+		}
 	}
 	`
 
+	// returned from LROs that use Azure-AsyncOperation header
 	operationResourceErrorFormat = `
 	{
 		"id": "/subscriptions/id/locations/westus/operationsStatus/sameguid",
@@ -1296,7 +1004,6 @@ const (
 		"startTime" : "2006-01-02T15:04:05Z",
 		"endTime" : "2006-01-02T16:04:05Z",
 		"percentComplete" : 50.00,
-
 		"properties" : {},
 		"error" : {
 			"code" : "BadArgument",
@@ -1306,42 +1013,79 @@ const (
 	`
 )
 
-func newAsynchronousResponse() *http.Response {
-	r := mocks.NewResponseWithStatus("201 Created", http.StatusCreated)
-	r.Body = mocks.NewBody(fmt.Sprintf(pollingStateFormat, operationInProgress))
-	mocks.SetResponseHeader(r, http.CanonicalHeaderKey(headerAsyncOperation), mocks.TestAzureAsyncURL)
-	mocks.SetResponseHeader(r, http.CanonicalHeaderKey(autorest.HeaderLocation), mocks.TestLocationURL)
-	mocks.SetRetryHeader(r, retryDelay)
-	r.Request = mocks.NewRequestForURL(mocks.TestURL)
+// creates an async request with the specified body.
+func newAsyncReq(reqMethod string, body *mocks.Body) *http.Request {
+	return mocks.NewRequestWithParams(reqMethod, mocks.TestURL, body)
+}
+
+// creates an async response with the specified body.
+// the req param is the originating LRO request.
+func newAsyncResp(req *http.Request, statusCode int, body *mocks.Body) *http.Response {
+	status := "Unknown"
+	switch statusCode {
+	case http.StatusOK, http.StatusNoContent:
+		status = "Completed"
+	case http.StatusCreated:
+		status = "Creating"
+	case http.StatusAccepted:
+		status = "In progress"
+	case http.StatusBadRequest:
+		status = "Bad request"
+	}
+	r := mocks.NewResponseWithBodyAndStatus(body, statusCode, status)
+	r.Request = req
 	return r
 }
 
-func newAsynchronousResponseWithError(response string, status int) *http.Response {
-	r := mocks.NewResponseWithStatus(response, status)
-	mocks.SetRetryHeader(r, retryDelay)
-	r.Request = mocks.NewRequestForURL(mocks.TestURL)
-	r.Body = mocks.NewBody(errorResponse)
+// creates a simple LRO response, PUT/201 with Azure-AsyncOperation header
+func newSimpleAsyncResp() *http.Response {
+	r := newAsyncResp(newAsyncReq(http.MethodPut, nil), http.StatusCreated, mocks.NewBody(fmt.Sprintf(operationResourceFormat, operationInProgress)))
+	mocks.SetResponseHeader(r, headerAsyncOperation, mocks.TestAzureAsyncURL)
 	return r
 }
 
+// creates a simple LRO response, POST/201 with Location header
+func newSimpleLocationResp() *http.Response {
+	r := newAsyncResp(newAsyncReq(http.MethodPost, nil), http.StatusCreated, mocks.NewBody(fmt.Sprintf(pollingStateFormat, operationInProgress)))
+	mocks.SetResponseHeader(r, autorest.HeaderLocation, mocks.TestLocationURL)
+	return r
+}
+
+// creates an async response that contains an error (HTTP 400 + error response body)
+func newAsyncResponseWithError(reqMethod string) *http.Response {
+	return newAsyncResp(newAsyncReq(reqMethod, nil), http.StatusBadRequest, mocks.NewBody(errorResponse))
+}
+
+// creates a LRO polling response using the operation resource format (Azure-AsyncOperation LROs)
 func newOperationResourceResponse(status string) *http.Response {
-	r := newAsynchronousResponse()
-	r.Body = mocks.NewBody(fmt.Sprintf(operationResourceFormat, status))
+	r := mocks.NewResponseWithBodyAndStatus(mocks.NewBody(fmt.Sprintf(operationResourceFormat, status)), http.StatusOK, status)
+	mocks.SetRetryHeader(r, retryDelay)
 	return r
 }
 
+// creates a LRO polling error response using the operation resource format (Azure-AsyncOperation LROs)
 func newOperationResourceErrorResponse(status string) *http.Response {
-	r := newAsynchronousResponse()
-	r.Body = mocks.NewBody(fmt.Sprintf(operationResourceErrorFormat, status))
-	return r
+	return mocks.NewResponseWithBodyAndStatus(mocks.NewBody(fmt.Sprintf(operationResourceErrorFormat, status)), http.StatusBadRequest, status)
 }
 
+// creates a LRO polling response using the provisioning state format (Location LROs)
 func newProvisioningStatusResponse(status string) *http.Response {
-	r := newAsynchronousResponse()
-	r.Body = mocks.NewBody(fmt.Sprintf(pollingStateFormat, status))
+	r := mocks.NewResponseWithBodyAndStatus(mocks.NewBody(fmt.Sprintf(pollingStateFormat, status)), http.StatusOK, status)
+	mocks.SetRetryHeader(r, retryDelay)
 	return r
 }
 
-func makeLongRunningOperationErrorString(code string, message string) string {
-	return fmt.Sprintf("Long running operation terminated with status 'Failed': Code=%q Message=%q", code, message)
+// creates a LRO polling error response using the provisioning state format (Location LROs)
+func newProvisioningStatusErrorResponse(status string) *http.Response {
+	return mocks.NewResponseWithBodyAndStatus(mocks.NewBody(errorResponse), http.StatusBadRequest, status)
+}
+
+// creates a LRO polling unwrapped error response using the provisioning state format (Location LROs)
+func newProvisioningStatusUnwrappedErrorResponse(status string) *http.Response {
+	return mocks.NewResponseWithBodyAndStatus(mocks.NewBody(unwrappedErrorResponse), http.StatusBadRequest, status)
+}
+
+// adds the Azure-AsyncOperation header with the specified location to the response
+func setAsyncOpHeader(resp *http.Response, location string) {
+	mocks.SetResponseHeader(resp, http.CanonicalHeaderKey(headerAsyncOperation), location)
 }

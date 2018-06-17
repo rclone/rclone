@@ -63,11 +63,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -87,12 +82,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -303,7 +292,7 @@
     "projects": {
       "methods": {
         "create": {
-          "description": "Creates a Project resource.\n\nInitially, the Project resource is owned by its creator exclusively.\nThe creator can later grant permission to others to read or update the\nProject.\n\nSeveral APIs are activated automatically for the Project, including\nGoogle Cloud Storage. The parent is identified by a specified\nResourceId, which must include both an ID and a type, such as\nproject, folder, or organization.",
+          "description": "Creates a Project resource.\n\nInitially, the Project resource is owned by its creator exclusively.\nThe creator can later grant permission to others to read or update the\nProject.\n\nSeveral APIs are activated automatically for the Project, including\nGoogle Cloud Storage. The parent is identified by a specified\nResourceId, which must include both an ID and a type, such as\nproject, folder, or organization.\n\nThis method does not associate the new project with a billing account.\nYou can set or update the billing account associated with a project using\nthe [`projects.updateBillingInfo`]\n(/billing/reference/rest/v1/projects/updateBillingInfo) method.",
           "flatPath": "v1beta1/projects",
           "httpMethod": "POST",
           "id": "cloudresourcemanager.projects.create",
@@ -576,7 +565,7 @@
       }
     }
   },
-  "revision": "20180418",
+  "revision": "20180606",
   "rootUrl": "https://cloudresourcemanager.googleapis.com/",
   "schemas": {
     "Ancestor": {

@@ -59,11 +59,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -83,12 +78,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -612,7 +601,7 @@
                   "type": "string"
                 },
                 "query": {
-                  "description": "An optional query string to filter creatives. If no filter is specified,\nall active creatives will be returned.\nSupported queries are:\n\u003cul\u003e\n\u003cli\u003eaccountId=\u003ci\u003eaccount_id_string\u003c/i\u003e\n\u003cli\u003ecreativeId=\u003ci\u003ecreative_id_string\u003c/i\u003e\n\u003cli\u003edealsStatus: {approved, conditionally_approved, disapproved,\n                   not_checked}\n\u003cli\u003eopenAuctionStatus: {approved, conditionally_approved, disapproved,\n                          not_checked}\n\u003cli\u003eattribute: {a numeric attribute from the list of attributes}\n\u003cli\u003edisapprovalReason: {a reason from\nDisapprovalReason}\n\u003c/ul\u003e\nExample: 'accountId=12345 AND (dealsStatus:disapproved AND\ndisapprovalReason:unacceptable_content) OR attribute:47'",
+                  "description": "An optional query string to filter creatives. If no filter is specified,\nall active creatives will be returned.\n\u003cp\u003eSupported queries are:\n\u003cul\u003e\n\u003cli\u003eaccountId=\u003ci\u003eaccount_id_string\u003c/i\u003e\n\u003cli\u003ecreativeId=\u003ci\u003ecreative_id_string\u003c/i\u003e\n\u003cli\u003edealsStatus: {approved, conditionally_approved, disapproved,\n                   not_checked}\n\u003cli\u003eopenAuctionStatus: {approved, conditionally_approved, disapproved,\n                          not_checked}\n\u003cli\u003eattribute: {a numeric attribute from the list of attributes}\n\u003cli\u003edisapprovalReason: {a reason from\nDisapprovalReason}\n\u003c/ul\u003e\nExample: 'accountId=12345 AND (dealsStatus:disapproved AND\ndisapprovalReason:unacceptable_content) OR attribute:47'",
                   "location": "query",
                   "type": "string"
                 }
@@ -1947,7 +1936,7 @@
       }
     }
   },
-  "revision": "20180430",
+  "revision": "20180607",
   "rootUrl": "https://adexchangebuyer.googleapis.com/",
   "schemas": {
     "AbsoluteDateRange": {
@@ -2704,7 +2693,10 @@
             "PERSONAL_LOANS",
             "UNSUPPORTED_FLASH_CONTENT",
             "MISUSE_BY_OMID_SCRIPT",
-            "NON_WHITELISTED_OMID_VENDOR"
+            "NON_WHITELISTED_OMID_VENDOR",
+            "DESTINATION_EXPERIENCE",
+            "UNSUPPORTED_LANGUAGE",
+            "NON_SSL_COMPLIANT"
           ],
           "enumDescriptions": [
             "The length of the image animation is longer than allowed.",
@@ -2802,7 +2794,10 @@
             "Financial service ad does not adhere to specifications.",
             "Flash content was found in an unsupported context.",
             "Misuse by an Open Measurement SDK script.",
-            "Use of an Open Measurement SDK vendor not on approved whitelist."
+            "Use of an Open Measurement SDK vendor not on approved whitelist.",
+            "Unacceptable landing page.",
+            "Unsupported language.",
+            "Non-SSL compliant."
           ],
           "type": "string"
         }

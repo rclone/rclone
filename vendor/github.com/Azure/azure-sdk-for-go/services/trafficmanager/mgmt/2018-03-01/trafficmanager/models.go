@@ -133,6 +133,21 @@ func PossibleTrafficRoutingMethodValues() []TrafficRoutingMethod {
 	return []TrafficRoutingMethod{Geographic, Performance, Priority, Weighted}
 }
 
+// TrafficViewEnrollmentStatus enumerates the values for traffic view enrollment status.
+type TrafficViewEnrollmentStatus string
+
+const (
+	// TrafficViewEnrollmentStatusDisabled ...
+	TrafficViewEnrollmentStatusDisabled TrafficViewEnrollmentStatus = "Disabled"
+	// TrafficViewEnrollmentStatusEnabled ...
+	TrafficViewEnrollmentStatusEnabled TrafficViewEnrollmentStatus = "Enabled"
+)
+
+// PossibleTrafficViewEnrollmentStatusValues returns an array of possible values for the TrafficViewEnrollmentStatus const type.
+func PossibleTrafficViewEnrollmentStatusValues() []TrafficViewEnrollmentStatus {
+	return []TrafficViewEnrollmentStatus{TrafficViewEnrollmentStatusDisabled, TrafficViewEnrollmentStatusEnabled}
+}
+
 // CheckTrafficManagerRelativeDNSNameAvailabilityParameters parameters supplied to check Traffic Manager name
 // operation.
 type CheckTrafficManagerRelativeDNSNameAvailabilityParameters struct {
@@ -664,6 +679,8 @@ type ProfileProperties struct {
 	MonitorConfig *MonitorConfig `json:"monitorConfig,omitempty"`
 	// Endpoints - The list of endpoints in the Traffic Manager profile.
 	Endpoints *[]Endpoint `json:"endpoints,omitempty"`
+	// TrafficViewEnrollmentStatus - Indicates whether Traffic View is 'Enabled' or 'Disabled' for the Traffic Manager profile. Null, indicates 'Disabled'. Enabling this feature will increase the cost of the Traffic Manage profile. Possible values include: 'TrafficViewEnrollmentStatusEnabled', 'TrafficViewEnrollmentStatusDisabled'
+	TrafficViewEnrollmentStatus TrafficViewEnrollmentStatus `json:"trafficViewEnrollmentStatus,omitempty"`
 }
 
 // ProxyResource the resource model definition for a ARM proxy resource. It will have everything other than

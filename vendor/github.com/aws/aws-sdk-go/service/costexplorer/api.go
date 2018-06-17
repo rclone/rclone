@@ -977,9 +977,9 @@ func (s *EC2Specification) SetOfferingClass(v string) *EC2Specification {
 //    DataTransfer). The Expression for that looks like this:
 //
 // { "And": [ {"Or": [ {"Dimensions": { "Key": "INSTANCE_TYPE", "Values": [
-//    "m4.x.large", "c4.large" ] }}, {"Tag": { "Key": "TagName", "Values": ["Value1"]
-//    } } ]}, {"Not": {"dimensions": { "Key": "USAGE_TYPE", "Values": ["DataTransfer"]
-//    }}} ] }
+//    "m4.x.large", "c4.large" ] }}, {"Tags": { "Key": "TagName", "Values":
+//    ["Value1"] } } ]}, {"Not": {"Dimensions": { "Key": "USAGE_TYPE", "Values":
+//    ["DataTransfer"] }}} ] }
 //
 // Because each Expression can have only one operator, the service returns an
 //    error if more than one is specified. The following example shows an Expression
@@ -2358,11 +2358,30 @@ func (s *RDSInstanceDetails) SetSizeFlexEligible(v bool) *RDSInstanceDetails {
 type ReservationAggregates struct {
 	_ struct{} `type:"structure"`
 
+	// The monthly cost of your RI, amortized over the RI period.
+	AmortizedRecurringFee *string `type:"string"`
+
+	// The upfront cost of your RI, amortized over the RI period.
+	AmortizedUpfrontFee *string `type:"string"`
+
+	// How much you saved due to purchasing and utilizing RIs. This is calculated
+	// by subtracting the TotalAmortizedFee from the OnDemandCostOfRIHoursUsed.
+	NetRISavings *string `type:"string"`
+
+	// How much your RIs would cost if charged On-Demand rates.
+	OnDemandCostOfRIHoursUsed *string `type:"string"`
+
 	// How many RI hours that you purchased.
 	PurchasedHours *string `type:"string"`
 
 	// The total number of RI hours that you used.
 	TotalActualHours *string `type:"string"`
+
+	// The total cost of your RI, amortized over the RI period.
+	TotalAmortizedFee *string `type:"string"`
+
+	// How much you could save if you use your entire reservation.
+	TotalPotentialRISavings *string `type:"string"`
 
 	// The number of RI hours that you didn't use.
 	UnusedHours *string `type:"string"`
@@ -2381,6 +2400,30 @@ func (s ReservationAggregates) GoString() string {
 	return s.String()
 }
 
+// SetAmortizedRecurringFee sets the AmortizedRecurringFee field's value.
+func (s *ReservationAggregates) SetAmortizedRecurringFee(v string) *ReservationAggregates {
+	s.AmortizedRecurringFee = &v
+	return s
+}
+
+// SetAmortizedUpfrontFee sets the AmortizedUpfrontFee field's value.
+func (s *ReservationAggregates) SetAmortizedUpfrontFee(v string) *ReservationAggregates {
+	s.AmortizedUpfrontFee = &v
+	return s
+}
+
+// SetNetRISavings sets the NetRISavings field's value.
+func (s *ReservationAggregates) SetNetRISavings(v string) *ReservationAggregates {
+	s.NetRISavings = &v
+	return s
+}
+
+// SetOnDemandCostOfRIHoursUsed sets the OnDemandCostOfRIHoursUsed field's value.
+func (s *ReservationAggregates) SetOnDemandCostOfRIHoursUsed(v string) *ReservationAggregates {
+	s.OnDemandCostOfRIHoursUsed = &v
+	return s
+}
+
 // SetPurchasedHours sets the PurchasedHours field's value.
 func (s *ReservationAggregates) SetPurchasedHours(v string) *ReservationAggregates {
 	s.PurchasedHours = &v
@@ -2390,6 +2433,18 @@ func (s *ReservationAggregates) SetPurchasedHours(v string) *ReservationAggregat
 // SetTotalActualHours sets the TotalActualHours field's value.
 func (s *ReservationAggregates) SetTotalActualHours(v string) *ReservationAggregates {
 	s.TotalActualHours = &v
+	return s
+}
+
+// SetTotalAmortizedFee sets the TotalAmortizedFee field's value.
+func (s *ReservationAggregates) SetTotalAmortizedFee(v string) *ReservationAggregates {
+	s.TotalAmortizedFee = &v
+	return s
+}
+
+// SetTotalPotentialRISavings sets the TotalPotentialRISavings field's value.
+func (s *ReservationAggregates) SetTotalPotentialRISavings(v string) *ReservationAggregates {
+	s.TotalPotentialRISavings = &v
 	return s
 }
 

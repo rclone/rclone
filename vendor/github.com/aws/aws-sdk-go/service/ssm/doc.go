@@ -15,7 +15,8 @@
 // (http://docs.aws.amazon.com/systems-manager/latest/userguide/).
 //
 // To get started, verify prerequisites and configure managed instances. For
-// more information, see Systems Manager Prerequisites (http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-setting-up.html).
+// more information, see Systems Manager Prerequisites (http://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-setting-up.html)
+// in the AWS Systems Manager User Guide.
 //
 // For information about other API actions you can perform on Amazon EC2 instances,
 // see the Amazon EC2 API Reference (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/).

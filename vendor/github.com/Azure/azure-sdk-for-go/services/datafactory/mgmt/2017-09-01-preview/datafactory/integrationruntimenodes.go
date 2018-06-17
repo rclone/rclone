@@ -25,30 +25,28 @@ import (
 	"net/http"
 )
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // IntegrationRuntimeNodesClient is the the Azure Data Factory V2 management API provides a RESTful set of web services
 // that interact with Azure Data Factory V2 services.
 type IntegrationRuntimeNodesClient struct {
 	BaseClient
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewIntegrationRuntimeNodesClient creates an instance of the IntegrationRuntimeNodesClient client.
 func NewIntegrationRuntimeNodesClient(subscriptionID string) IntegrationRuntimeNodesClient {
 	return NewIntegrationRuntimeNodesClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewIntegrationRuntimeNodesClientWithBaseURI creates an instance of the IntegrationRuntimeNodesClient client.
 func NewIntegrationRuntimeNodesClientWithBaseURI(baseURI string, subscriptionID string) IntegrationRuntimeNodesClient {
 	return IntegrationRuntimeNodesClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // Delete deletes a self-hosted integration runtime node.
-//
-// resourceGroupName is the resource group name. factoryName is the factory name. integrationRuntimeName is the
-// integration runtime name. nodeName is the integration runtime node name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// factoryName - the factory name.
+// integrationRuntimeName - the integration runtime name.
+// nodeName - the integration runtime node name.
 func (client IntegrationRuntimeNodesClient) Delete(ctx context.Context, resourceGroupName string, factoryName string, integrationRuntimeName string, nodeName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -91,7 +89,6 @@ func (client IntegrationRuntimeNodesClient) Delete(ctx context.Context, resource
 	return
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // DeletePreparer prepares the Delete request.
 func (client IntegrationRuntimeNodesClient) DeletePreparer(ctx context.Context, resourceGroupName string, factoryName string, integrationRuntimeName string, nodeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -115,7 +112,6 @@ func (client IntegrationRuntimeNodesClient) DeletePreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationRuntimeNodesClient) DeleteSender(req *http.Request) (*http.Response, error) {
@@ -123,7 +119,6 @@ func (client IntegrationRuntimeNodesClient) DeleteSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // DeleteResponder handles the response to the Delete request. The method always
 // closes the http.Response Body.
 func (client IntegrationRuntimeNodesClient) DeleteResponder(resp *http.Response) (result autorest.Response, err error) {
@@ -136,11 +131,12 @@ func (client IntegrationRuntimeNodesClient) DeleteResponder(resp *http.Response)
 	return
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetIPAddress get the IP address of self-hosted integration runtime node.
-//
-// resourceGroupName is the resource group name. factoryName is the factory name. integrationRuntimeName is the
-// integration runtime name. nodeName is the integration runtime node name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// factoryName - the factory name.
+// integrationRuntimeName - the integration runtime name.
+// nodeName - the integration runtime node name.
 func (client IntegrationRuntimeNodesClient) GetIPAddress(ctx context.Context, resourceGroupName string, factoryName string, integrationRuntimeName string, nodeName string) (result IntegrationRuntimeNodeIPAddress, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -183,7 +179,6 @@ func (client IntegrationRuntimeNodesClient) GetIPAddress(ctx context.Context, re
 	return
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetIPAddressPreparer prepares the GetIPAddress request.
 func (client IntegrationRuntimeNodesClient) GetIPAddressPreparer(ctx context.Context, resourceGroupName string, factoryName string, integrationRuntimeName string, nodeName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -207,7 +202,6 @@ func (client IntegrationRuntimeNodesClient) GetIPAddressPreparer(ctx context.Con
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetIPAddressSender sends the GetIPAddress request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationRuntimeNodesClient) GetIPAddressSender(req *http.Request) (*http.Response, error) {
@@ -215,7 +209,6 @@ func (client IntegrationRuntimeNodesClient) GetIPAddressSender(req *http.Request
 		azure.DoRetryWithRegistration(client.Client))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // GetIPAddressResponder handles the response to the GetIPAddress request. The method always
 // closes the http.Response Body.
 func (client IntegrationRuntimeNodesClient) GetIPAddressResponder(resp *http.Response) (result IntegrationRuntimeNodeIPAddress, err error) {
@@ -229,12 +222,13 @@ func (client IntegrationRuntimeNodesClient) GetIPAddressResponder(resp *http.Res
 	return
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // Update updates a self-hosted integration runtime node.
-//
-// resourceGroupName is the resource group name. factoryName is the factory name. integrationRuntimeName is the
-// integration runtime name. nodeName is the integration runtime node name. updateIntegrationRuntimeNodeRequest is
-// the parameters for updating an integration runtime node.
+// Parameters:
+// resourceGroupName - the resource group name.
+// factoryName - the factory name.
+// integrationRuntimeName - the integration runtime name.
+// nodeName - the integration runtime node name.
+// updateIntegrationRuntimeNodeRequest - the parameters for updating an integration runtime node.
 func (client IntegrationRuntimeNodesClient) Update(ctx context.Context, resourceGroupName string, factoryName string, integrationRuntimeName string, nodeName string, updateIntegrationRuntimeNodeRequest UpdateIntegrationRuntimeNodeRequest) (result SelfHostedIntegrationRuntimeNode, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -277,7 +271,6 @@ func (client IntegrationRuntimeNodesClient) Update(ctx context.Context, resource
 	return
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // UpdatePreparer prepares the Update request.
 func (client IntegrationRuntimeNodesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, factoryName string, integrationRuntimeName string, nodeName string, updateIntegrationRuntimeNodeRequest UpdateIntegrationRuntimeNodeRequest) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -303,7 +296,6 @@ func (client IntegrationRuntimeNodesClient) UpdatePreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client IntegrationRuntimeNodesClient) UpdateSender(req *http.Request) (*http.Response, error) {
@@ -311,7 +303,6 @@ func (client IntegrationRuntimeNodesClient) UpdateSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // UpdateResponder handles the response to the Update request. The method always
 // closes the http.Response Body.
 func (client IntegrationRuntimeNodesClient) UpdateResponder(resp *http.Response) (result SelfHostedIntegrationRuntimeNode, err error) {

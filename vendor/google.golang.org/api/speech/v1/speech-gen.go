@@ -469,6 +469,21 @@ func (s *RecognizeResponse) MarshalJSON() ([]byte, error) {
 // specific words and phrases
 // in the results.
 type SpeechContext struct {
+	// BiasingStrength: Strength of biasing to use (strong, medium or weak).
+	// If you use strong
+	// biasing option then more likely to see those phrases in the results.
+	// If
+	// biasing streangth is not specified then by default medium biasing
+	// would be
+	// used.
+	//
+	// Possible values:
+	//   "BIASING_STRENGTH_UNSPECIFIED"
+	//   "LOW" - Low bias
+	//   "MEDIUM" - Medium bias
+	//   "HIGH" - High bias
+	BiasingStrength string `json:"biasingStrength,omitempty"`
+
 	// Phrases: *Optional* A list of strings containing words and phrases
 	// "hints" so that
 	// the speech recognition is more likely to recognize them. This can be
@@ -482,7 +497,7 @@ type SpeechContext struct {
 	// [usage limits](https://cloud.google.com/speech/limits#content).
 	Phrases []string `json:"phrases,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Phrases") to
+	// ForceSendFields is a list of field names (e.g. "BiasingStrength") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -490,12 +505,13 @@ type SpeechContext struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Phrases") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "BiasingStrength") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 

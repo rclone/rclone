@@ -1421,6 +1421,10 @@ func (s *CreateTableResponse) MarshalJSON() ([]byte, error) {
 }
 
 // CreateVideoRequest: Creates a video.
+//
+// NOTE: Drive video creation requires that the requesting app have at
+// least one
+// of the drive, drive.readonly, or drive.file OAuth scopes.
 type CreateVideoRequest struct {
 	// ElementProperties: The element properties for the video.
 	//
@@ -1440,7 +1444,11 @@ type CreateVideoRequest struct {
 	//
 	// e.g. For YouTube video
 	// https://www.youtube.com/watch?v=7U3axjORYZ0,
-	// the ID is 7U3axjORYZ0.
+	// the ID is 7U3axjORYZ0. For Drive
+	// video
+	// https://drive.google.com/file/d/1xCgQLFTJi5_Xl8DgW_lcUYq5e-q6Hi5
+	// Q the ID
+	// is 1xCgQLFTJi5_Xl8DgW_lcUYq5e-q6Hi5Q.
 	Id string `json:"id,omitempty"`
 
 	// ObjectId: A user-supplied object ID.
@@ -1463,6 +1471,7 @@ type CreateVideoRequest struct {
 	// Possible values:
 	//   "SOURCE_UNSPECIFIED" - The video source is unspecified.
 	//   "YOUTUBE" - The video source is YouTube.
+	//   "DRIVE" - The video source is Drive.
 	Source string `json:"source,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ElementProperties")
@@ -5471,11 +5480,13 @@ func (s *Size) MarshalJSON() ([]byte, error) {
 // relevant for pages with page_type SLIDE.
 type SlideProperties struct {
 	// LayoutObjectId: The object ID of the layout that this slide is based
-	// on.
+	// on. This property is
+	// read-only.
 	LayoutObjectId string `json:"layoutObjectId,omitempty"`
 
 	// MasterObjectId: The object ID of the master that this slide is based
-	// on.
+	// on. This property is
+	// read-only.
 	MasterObjectId string `json:"masterObjectId,omitempty"`
 
 	// NotesPage: The notes page that this slide is associated with. It
@@ -5491,7 +5502,7 @@ type SlideProperties struct {
 	// speakerNotesObjectId field.
 	// The notes page is read-only except for the text content and styles of
 	// the
-	// speaker notes shape.
+	// speaker notes shape. This property is read-only.
 	NotesPage *Page `json:"notesPage,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "LayoutObjectId") to
@@ -7494,11 +7505,12 @@ type Video struct {
 	// Possible values:
 	//   "SOURCE_UNSPECIFIED" - The video source is unspecified.
 	//   "YOUTUBE" - The video source is YouTube.
+	//   "DRIVE" - The video source is Drive.
 	Source string `json:"source,omitempty"`
 
-	// Url: An URL to a video. The URL is valid as long as the source
-	// video
-	// exists and sharing settings do not change.
+	// Url: An URL to a video. The URL is valid as long as the source video
+	// exists and
+	// sharing settings do not change.
 	Url string `json:"url,omitempty"`
 
 	// VideoProperties: The properties of the video.

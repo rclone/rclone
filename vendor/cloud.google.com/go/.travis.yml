@@ -14,6 +14,7 @@ script:
   GCLOUD_TESTS_GOLANG_KEY="$(pwd)/dulcet-port-762-key.json"
   GCLOUD_TESTS_GOLANG_FIRESTORE_PROJECT_ID="gcloud-golang-firestore-tests"
   GCLOUD_TESTS_GOLANG_FIRESTORE_KEY="$(pwd)/gcloud-golang-firestore-tests-key.json"
+  GCLOUD_TESTS_GOLANG_KEYRING="projects/dulcet-port-762/locations/us/keyRings/go-integration-test"
   ./run-tests.sh $TRAVIS_COMMIT
 env:
   matrix:

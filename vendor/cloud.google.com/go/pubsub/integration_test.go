@@ -26,6 +26,7 @@ import (
 	"cloud.google.com/go/iam"
 	"cloud.google.com/go/internal"
 	"cloud.google.com/go/internal/testutil"
+	"cloud.google.com/go/internal/uid"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
@@ -33,8 +34,8 @@ import (
 )
 
 var (
-	topicIDs = testutil.NewUIDSpace("topic")
-	subIDs   = testutil.NewUIDSpace("sub")
+	topicIDs = uid.NewSpace("topic", nil)
+	subIDs   = uid.NewSpace("sub", nil)
 )
 
 // messageData is used to hold the contents of a message so that it can be compared against the contents

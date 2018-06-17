@@ -183,7 +183,7 @@ func prepare(ctx context.Context, t *testing.T, statements []string) (client *Cl
 	}
 	return client, dbPath, func() {
 		client.Close()
-		if err := admin.DropDatabase(ctx, &adminpb.DropDatabaseRequest{dbPath}); err != nil {
+		if err := admin.DropDatabase(ctx, &adminpb.DropDatabaseRequest{Database: dbPath}); err != nil {
 			t.Logf("failed to drop database %s (error %v), might need a manual removal",
 				dbPath, err)
 		}
@@ -672,11 +672,10 @@ func TestReadWriteTransaction(t *testing.T) {
 				}
 				bf--
 				bb++
-				tx.BufferWrite([]*Mutation{
+				return tx.BufferWrite([]*Mutation{
 					Update("Accounts", []string{"AccountId", "Balance"}, []interface{}{int64(1), bf}),
 					Update("Accounts", []string{"AccountId", "Balance"}, []interface{}{int64(2), bb}),
 				})
-				return nil
 			})
 			if err != nil {
 				t.Fatalf("%d: failed to execute transaction: %v", iter, err)
@@ -924,7 +923,7 @@ func TestNestedTransaction(t *testing.T) {
 	ctx := context.Background()
 	client, _, tearDown := prepare(ctx, t, singerDBStatements)
 	defer tearDown()
-	client.ReadWriteTransaction(ctx, func(ctx context.Context, tx *ReadWriteTransaction) error {
+	_, err := client.ReadWriteTransaction(ctx, func(ctx context.Context, tx *ReadWriteTransaction) error {
 		_, err := client.ReadWriteTransaction(ctx,
 			func(context.Context, *ReadWriteTransaction) error { return nil })
 		if ErrCode(err) != codes.FailedPrecondition {
@@ -942,6 +941,9 @@ func TestNestedTransaction(t *testing.T) {
 		}
 		return nil
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 // Test client recovery on database recreation.
@@ -953,7 +955,7 @@ func TestDbRemovalRecovery(t *testing.T) {
 	defer tearDown()
 
 	// Drop the testing database.
-	if err := admin.DropDatabase(ctx, &adminpb.DropDatabaseRequest{dbPath}); err != nil {
+	if err := admin.DropDatabase(ctx, &adminpb.DropDatabaseRequest{Database: dbPath}); err != nil {
 		t.Fatalf("failed to drop testing database %v: %v", dbPath, err)
 	}
 
@@ -1526,8 +1528,11 @@ func TestTransactionRunner(t *testing.T) {
 			}
 			// txn 1 can abort, in that case we skip closing the channel on retry.
 			once.Do(func() { close(cTxn1Start) })
-			tx.BufferWrite([]*Mutation{
+			e = tx.BufferWrite([]*Mutation{
 				Update("Accounts", []string{"AccountId", "Balance"}, []interface{}{int64(1), int64(b + 1)})})
+			if e != nil {
+				return e
+			}
 			// Wait for second transaction.
 			<-cTxn2Start
 			return nil
@@ -1563,9 +1568,8 @@ func TestTransactionRunner(t *testing.T) {
 			if b2, e = readBalance(tx, 2, true); e != nil {
 				return e
 			}
-			tx.BufferWrite([]*Mutation{
+			return tx.BufferWrite([]*Mutation{
 				Update("Accounts", []string{"AccountId", "Balance"}, []interface{}{int64(2), int64(b1 + b2)})})
-			return nil
 		})
 		if e != nil {
 			t.Errorf("Transaction 2 commit, got %v, want nil.", e)

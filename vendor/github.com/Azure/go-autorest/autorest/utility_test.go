@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -323,6 +324,45 @@ func TestMapToValuesWithArrayValues(t *testing.T) {
 
 	if !isEqual(v, MapToValues(m)) {
 		t.Fatalf("autorest: MapToValues method failed to return correct values - expected(%v) got(%v)", v, MapToValues(m))
+	}
+}
+
+type someTempError struct{}
+
+func (s someTempError) Error() string {
+	return "temporary error"
+}
+func (s someTempError) Timeout() bool {
+	return true
+}
+func (s someTempError) Temporary() bool {
+	return true
+}
+
+func TestIsTemporaryNetworkErrorTrue(t *testing.T) {
+	if !IsTemporaryNetworkError(someTempError{}) {
+		t.Fatal("expected someTempError to be a temporary network error")
+	}
+	if !IsTemporaryNetworkError(errors.New("non-temporary network error")) {
+		t.Fatal("expected random error to be a temporary network error")
+	}
+}
+
+type someFatalError struct{}
+
+func (s someFatalError) Error() string {
+	return "fatal error"
+}
+func (s someFatalError) Timeout() bool {
+	return false
+}
+func (s someFatalError) Temporary() bool {
+	return false
+}
+
+func TestIsTemporaryNetworkErrorFalse(t *testing.T) {
+	if IsTemporaryNetworkError(someFatalError{}) {
+		t.Fatal("expected someFatalError to be a fatal network error")
 	}
 }
 

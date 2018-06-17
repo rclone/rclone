@@ -28,7 +28,7 @@ set -x
 
 export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/key.json"
 export GCLOUD_TESTS_GOLANG_PROJECT_ID="dulcet-port-762"
-export GCLOUD_TESTS_GOLANG_ZONE="us-west1-a"
+export GCLOUD_TESTS_GOLANG_ZONE="us-west1-b"
 export GCLOUD_TESTS_GOLANG_BUCKET="dulcet-port-762-go-cloud-profiler-test"
 
 cd $GOCLOUD_HOME/profiler

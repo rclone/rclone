@@ -70,8 +70,8 @@ function depends_on_changed_package {
   return 1
 }
 
-# Collect the packages into two separate lists. (It is faster go test a list of
-# packages than to individually go test each one.)
+# Collect the packages into two separate lists. (It is faster to call "go test" on a
+# list of packages than to individually "go test" each one.)
 
 shorts=
 fulls=

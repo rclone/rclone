@@ -408,12 +408,11 @@ type ServiceProperties struct {
 // operation.
 type ServicesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ServicesCreateOrUpdateFuture) Result(client ServicesClient) (s Service, err error) {
+func (future *ServicesCreateOrUpdateFuture) Result(client ServicesClient) (s Service, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -421,34 +420,15 @@ func (future ServicesCreateOrUpdateFuture) Result(client ServicesClient) (s Serv
 		return
 	}
 	if !done {
-		return s, azure.NewAsyncOpIncompleteError("search.ServicesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		s, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("search.ServicesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if s.Response.Response, err = future.GetResult(sender); err == nil && s.Response.Response.StatusCode != http.StatusNoContent {
+		s, err = client.CreateOrUpdateResponder(s.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", s.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	s, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "search.ServicesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

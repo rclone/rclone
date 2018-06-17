@@ -355,6 +355,11 @@ func TestRequestReaddir(t *testing.T) {
 		_, err := putTestFile(p.cli, fname, fname)
 		assert.Nil(t, err)
 	}
+	_, err := p.cli.ReadDir("/foo_01")
+	assert.Equal(t, &StatusError{Code: ssh_FX_FAILURE,
+		msg: " /foo_01: not a directory"}, err)
+	_, err = p.cli.ReadDir("/does_not_exist")
+	assert.Equal(t, os.ErrNotExist, err)
 	di, err := p.cli.ReadDir("/")
 	assert.Nil(t, err)
 	assert.Len(t, di, 100)

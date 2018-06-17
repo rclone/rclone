@@ -89,7 +89,7 @@ go test -tags codegen ./private/...
 See the `Makefile` for additional testing tags that can be used in testing.
 
 To test on multiple platform the SDK includes several DockerFiles under the 
-`awstesting/sandbox` folder, and associated make recipes to to execute
+`awstesting/sandbox` folder, and associated make recipes to execute
 unit testing within environments configured for specific Go versions.
 
 ```

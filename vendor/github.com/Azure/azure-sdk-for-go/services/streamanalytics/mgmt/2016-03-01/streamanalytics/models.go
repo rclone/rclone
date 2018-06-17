@@ -2147,12 +2147,11 @@ func (frddp FunctionRetrieveDefaultDefinitionParameters) AsBasicFunctionRetrieve
 // FunctionsTestFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type FunctionsTestFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future FunctionsTestFuture) Result(client FunctionsClient) (rts ResourceTestStatus, err error) {
+func (future *FunctionsTestFuture) Result(client FunctionsClient) (rts ResourceTestStatus, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2160,34 +2159,15 @@ func (future FunctionsTestFuture) Result(client FunctionsClient) (rts ResourceTe
 		return
 	}
 	if !done {
-		return rts, azure.NewAsyncOpIncompleteError("streamanalytics.FunctionsTestFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rts, err = client.TestResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "streamanalytics.FunctionsTestFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("streamanalytics.FunctionsTestFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if rts.Response.Response, err = future.GetResult(sender); err == nil && rts.Response.Response.StatusCode != http.StatusNoContent {
+		rts, err = client.TestResponder(rts.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "streamanalytics.FunctionsTestFuture", "Result", rts.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.FunctionsTestFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	rts, err = client.TestResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.FunctionsTestFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -2508,12 +2488,11 @@ func (IP *InputProperties) UnmarshalJSON(body []byte) error {
 // InputsTestFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type InputsTestFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future InputsTestFuture) Result(client InputsClient) (rts ResourceTestStatus, err error) {
+func (future *InputsTestFuture) Result(client InputsClient) (rts ResourceTestStatus, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2521,34 +2500,15 @@ func (future InputsTestFuture) Result(client InputsClient) (rts ResourceTestStat
 		return
 	}
 	if !done {
-		return rts, azure.NewAsyncOpIncompleteError("streamanalytics.InputsTestFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rts, err = client.TestResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "streamanalytics.InputsTestFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("streamanalytics.InputsTestFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if rts.Response.Response, err = future.GetResult(sender); err == nil && rts.Response.Response.StatusCode != http.StatusNoContent {
+		rts, err = client.TestResponder(rts.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "streamanalytics.InputsTestFuture", "Result", rts.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.InputsTestFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	rts, err = client.TestResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.InputsTestFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3436,12 +3396,11 @@ func (op *OutputProperties) UnmarshalJSON(body []byte) error {
 // OutputsTestFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type OutputsTestFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future OutputsTestFuture) Result(client OutputsClient) (rts ResourceTestStatus, err error) {
+func (future *OutputsTestFuture) Result(client OutputsClient) (rts ResourceTestStatus, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3449,34 +3408,15 @@ func (future OutputsTestFuture) Result(client OutputsClient) (rts ResourceTestSt
 		return
 	}
 	if !done {
-		return rts, azure.NewAsyncOpIncompleteError("streamanalytics.OutputsTestFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rts, err = client.TestResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "streamanalytics.OutputsTestFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("streamanalytics.OutputsTestFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if rts.Response.Response, err = future.GetResult(sender); err == nil && rts.Response.Response.StatusCode != http.StatusNoContent {
+		rts, err = client.TestResponder(rts.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "streamanalytics.OutputsTestFuture", "Result", rts.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.OutputsTestFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	rts, err = client.TestResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.OutputsTestFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -4603,12 +4543,11 @@ type StreamingJobProperties struct {
 // operation.
 type StreamingJobsCreateOrReplaceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future StreamingJobsCreateOrReplaceFuture) Result(client StreamingJobsClient) (sj StreamingJob, err error) {
+func (future *StreamingJobsCreateOrReplaceFuture) Result(client StreamingJobsClient) (sj StreamingJob, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4616,34 +4555,15 @@ func (future StreamingJobsCreateOrReplaceFuture) Result(client StreamingJobsClie
 		return
 	}
 	if !done {
-		return sj, azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsCreateOrReplaceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		sj, err = client.CreateOrReplaceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsCreateOrReplaceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsCreateOrReplaceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if sj.Response.Response, err = future.GetResult(sender); err == nil && sj.Response.Response.StatusCode != http.StatusNoContent {
+		sj, err = client.CreateOrReplaceResponder(sj.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsCreateOrReplaceFuture", "Result", sj.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsCreateOrReplaceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	sj, err = client.CreateOrReplaceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsCreateOrReplaceFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -4651,12 +4571,11 @@ func (future StreamingJobsCreateOrReplaceFuture) Result(client StreamingJobsClie
 // StreamingJobsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type StreamingJobsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future StreamingJobsDeleteFuture) Result(client StreamingJobsClient) (ar autorest.Response, err error) {
+func (future *StreamingJobsDeleteFuture) Result(client StreamingJobsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4664,47 +4583,21 @@ func (future StreamingJobsDeleteFuture) Result(client StreamingJobsClient) (ar a
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // StreamingJobsStartFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type StreamingJobsStartFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future StreamingJobsStartFuture) Result(client StreamingJobsClient) (ar autorest.Response, err error) {
+func (future *StreamingJobsStartFuture) Result(client StreamingJobsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4712,47 +4605,21 @@ func (future StreamingJobsStartFuture) Result(client StreamingJobsClient) (ar au
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsStartFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.StartResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsStartFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsStartFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsStartFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.StartResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsStartFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // StreamingJobsStopFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type StreamingJobsStopFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future StreamingJobsStopFuture) Result(client StreamingJobsClient) (ar autorest.Response, err error) {
+func (future *StreamingJobsStopFuture) Result(client StreamingJobsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4760,35 +4627,10 @@ func (future StreamingJobsStopFuture) Result(client StreamingJobsClient) (ar aut
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsStopFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.StopResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsStopFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("streamanalytics.StreamingJobsStopFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsStopFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.StopResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "streamanalytics.StreamingJobsStopFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

@@ -180,7 +180,8 @@ type CompleteMultipartUploadInput struct {
 	XQSEncryptionCustomerKeyMD5 *string `json:"X-QS-Encryption-Customer-Key-MD5,omitempty" name:"X-QS-Encryption-Customer-Key-MD5" location:"headers"`
 
 	// Object parts
-	ObjectParts []*ObjectPartType `json:"object_parts,omitempty" name:"object_parts" location:"elements"`
+	ObjectParts []*ObjectPartType `json:"object_parts" name:"object_parts" location:"elements"` // Required
+
 }
 
 // Validate validates the input for CompleteMultipartUpload.
@@ -189,6 +190,13 @@ func (v *CompleteMultipartUploadInput) Validate() error {
 	if v.UploadID == nil {
 		return errors.ParameterRequiredError{
 			ParameterName: "UploadID",
+			ParentName:    "CompleteMultipartUploadInput",
+		}
+	}
+
+	if len(v.ObjectParts) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "ObjectParts",
 			ParentName:    "CompleteMultipartUploadInput",
 		}
 	}
@@ -370,14 +378,29 @@ type GetObjectOutput struct {
 	// The response body
 	Body io.ReadCloser `location:"body"`
 
+	// The Cache-Control general-header field is used to specify directives for caching mechanisms in both requests and responses.
+	CacheControl *string `json:"Cache-Control,omitempty" name:"Cache-Control" location:"headers"`
+	// In a multipart/form-data body, the HTTP Content-Disposition general header is a header that can be used on the subpart of a multipart body to give information about the field it applies to.
+	ContentDisposition *string `json:"Content-Disposition,omitempty" name:"Content-Disposition" location:"headers"`
+	// The Content-Encoding entity header is used to compress the media-type.
+	ContentEncoding *string `json:"Content-Encoding,omitempty" name:"Content-Encoding" location:"headers"`
+	// The Content-Language entity header is used to describe the language(s) intended for the audience.
+	ContentLanguage *string `json:"Content-Language,omitempty" name:"Content-Language" location:"headers"`
 	// Object content length
 	ContentLength *int64 `json:"Content-Length,omitempty" name:"Content-Length" location:"headers"`
 	// Range of response data content
 	ContentRange *string `json:"Content-Range,omitempty" name:"Content-Range" location:"headers"`
+	// The Content-Type entity header is used to indicate the media type of the resource.
+	ContentType *string `json:"Content-Type,omitempty" name:"Content-Type" location:"headers"`
 	// MD5sum of the object
 	ETag *string `json:"ETag,omitempty" name:"ETag" location:"headers"`
+	// The Expires header contains the date/time after which the response is considered stale.
+	Expires      *string    `json:"Expires,omitempty" name:"Expires" location:"headers"`
+	LastModified *time.Time `json:"Last-Modified,omitempty" name:"Last-Modified" format:"RFC 822" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
+	// Storage class of the object
+	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
 }
 
 // Close will close the underlay body.
@@ -478,6 +501,8 @@ type HeadObjectOutput struct {
 	LastModified *time.Time `json:"Last-Modified,omitempty" name:"Last-Modified" format:"RFC 822" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
+	// Storage class of the object
+	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
 }
 
 // ImageProcess does Image process with the action on the object
@@ -648,10 +673,33 @@ type InitiateMultipartUploadInput struct {
 	XQSEncryptionCustomerKey *string `json:"X-QS-Encryption-Customer-Key,omitempty" name:"X-QS-Encryption-Customer-Key" location:"headers"`
 	// MD5sum of encryption key
 	XQSEncryptionCustomerKeyMD5 *string `json:"X-QS-Encryption-Customer-Key-MD5,omitempty" name:"X-QS-Encryption-Customer-Key-MD5" location:"headers"`
+	// Specify the storage class for object
+	// XQSStorageClass's available values: STANDARD, STANDARD_IA
+	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
 }
 
 // Validate validates the input for InitiateMultipartUpload.
 func (v *InitiateMultipartUploadInput) Validate() error {
+
+	if v.XQSStorageClass != nil {
+		xQSStorageClassValidValues := []string{"STANDARD", "STANDARD_IA"}
+		xQSStorageClassParameterValue := fmt.Sprint(*v.XQSStorageClass)
+
+		xQSStorageClassIsValid := false
+		for _, value := range xQSStorageClassValidValues {
+			if value == xQSStorageClassParameterValue {
+				xQSStorageClassIsValid = true
+			}
+		}
+
+		if !xQSStorageClassIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "XQSStorageClass",
+				ParameterValue: xQSStorageClassParameterValue,
+				AllowedValues:  xQSStorageClassValidValues,
+			}
+		}
+	}
 
 	return nil
 }
@@ -799,6 +847,8 @@ func (s *Bucket) OptionsObjectRequest(objectKey string, input *OptionsObjectInpu
 		RequestURI:    "/<bucket-name>/<object-key>",
 		StatusCodes: []int{
 			200, // OK
+			304, // Object not modified
+			412, // Object precondition failed
 		},
 	}
 
@@ -949,6 +999,9 @@ type PutObjectInput struct {
 	XQSFetchSource *string `json:"X-QS-Fetch-Source,omitempty" name:"X-QS-Fetch-Source" location:"headers"`
 	// Move source, format (/<bucket-name>/<object-key>)
 	XQSMoveSource *string `json:"X-QS-Move-Source,omitempty" name:"X-QS-Move-Source" location:"headers"`
+	// Specify the storage class for object
+	// XQSStorageClass's available values: STANDARD, STANDARD_IA
+	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
 
 	// The request body
 	Body io.Reader `location:"body"`
@@ -956,6 +1009,26 @@ type PutObjectInput struct {
 
 // Validate validates the input for PutObject.
 func (v *PutObjectInput) Validate() error {
+
+	if v.XQSStorageClass != nil {
+		xQSStorageClassValidValues := []string{"STANDARD", "STANDARD_IA"}
+		xQSStorageClassParameterValue := fmt.Sprint(*v.XQSStorageClass)
+
+		xQSStorageClassIsValid := false
+		for _, value := range xQSStorageClassValidValues {
+			if value == xQSStorageClassParameterValue {
+				xQSStorageClassIsValid = true
+			}
+		}
+
+		if !xQSStorageClassIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "XQSStorageClass",
+				ParameterValue: xQSStorageClassParameterValue,
+				AllowedValues:  xQSStorageClassValidValues,
+			}
+		}
+	}
 
 	return nil
 }

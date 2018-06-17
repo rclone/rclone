@@ -17,6 +17,18 @@
         "ReservationPurchaseRecommendation$AccountScope": "<p>The account scope that AWS recommends that you purchase this instance for. For example, you can purchase this reservation for an entire organization in AWS Organizations.</p>"
       }
     },
+    "AmortizedRecurringFee": {
+      "base": null,
+      "refs": {
+        "ReservationAggregates$AmortizedRecurringFee": "<p>The monthly cost of your RI, amortized over the RI period.</p>"
+      }
+    },
+    "AmortizedUpfrontFee": {
+      "base": null,
+      "refs": {
+        "ReservationAggregates$AmortizedUpfrontFee": "<p>The upfront cost of your RI, amortized over the RI period.</p>"
+      }
+    },
     "AttributeType": {
       "base": null,
       "refs": {
@@ -158,7 +170,7 @@
       }
     },
     "Expression": {
-      "base": "<p>Use <code>Expression</code> to filter by cost or by usage. There are two patterns: </p> <ul> <li> <p>Simple dimension values - You can set the dimension name and values for the filters that you plan to use. For example, you can filter for <code>INSTANCE_TYPE==m4.xlarge OR INSTANCE_TYPE==c4.large</code>. The <code>Expression</code> for that looks like this:</p> <p> <code>{ \"Dimensions\": { \"Key\": \"INSTANCE_TYPE\", \"Values\": [ \"m4.xlarge\", “c4.large” ] } }</code> </p> <p>The list of dimension values are OR'd together to retrieve cost or usage data. You can create <code>Expression</code> and <code>DimensionValues</code> objects using either <code>with*</code> methods or <code>set*</code> methods in multiple lines. </p> </li> <li> <p>Compound dimension values with logical operations - You can use multiple <code>Expression</code> types and the logical operators <code>AND/OR/NOT</code> to create a list of one or more <code>Expression</code> objects. This allows you to filter on more advanced options. For example, you can filter on <code>((INSTANCE_TYPE == m4.large OR INSTANCE_TYPE == m3.large) OR (TAG.Type == Type1)) AND (USAGE_TYPE != DataTransfer)</code>. The <code>Expression</code> for that looks like this:</p> <p> <code>{ \"And\": [ {\"Or\": [ {\"Dimensions\": { \"Key\": \"INSTANCE_TYPE\", \"Values\": [ \"m4.x.large\", \"c4.large\" ] }}, {\"Tag\": { \"Key\": \"TagName\", \"Values\": [\"Value1\"] } } ]}, {\"Not\": {\"dimensions\": { \"Key\": \"USAGE_TYPE\", \"Values\": [\"DataTransfer\"] }}} ] } </code> </p> <note> <p>Because each <code>Expression</code> can have only one operator, the service returns an error if more than one is specified. The following example shows an <code>Expression</code> object that creates an error.</p> </note> <p> <code> { \"And\": [ ... ], \"DimensionValues\": { \"Dimension\": \"USAGE_TYPE\", \"Values\": [ \"DataTransfer\" ] } } </code> </p> </li> </ul>",
+      "base": "<p>Use <code>Expression</code> to filter by cost or by usage. There are two patterns: </p> <ul> <li> <p>Simple dimension values - You can set the dimension name and values for the filters that you plan to use. For example, you can filter for <code>INSTANCE_TYPE==m4.xlarge OR INSTANCE_TYPE==c4.large</code>. The <code>Expression</code> for that looks like this:</p> <p> <code>{ \"Dimensions\": { \"Key\": \"INSTANCE_TYPE\", \"Values\": [ \"m4.xlarge\", “c4.large” ] } }</code> </p> <p>The list of dimension values are OR'd together to retrieve cost or usage data. You can create <code>Expression</code> and <code>DimensionValues</code> objects using either <code>with*</code> methods or <code>set*</code> methods in multiple lines. </p> </li> <li> <p>Compound dimension values with logical operations - You can use multiple <code>Expression</code> types and the logical operators <code>AND/OR/NOT</code> to create a list of one or more <code>Expression</code> objects. This allows you to filter on more advanced options. For example, you can filter on <code>((INSTANCE_TYPE == m4.large OR INSTANCE_TYPE == m3.large) OR (TAG.Type == Type1)) AND (USAGE_TYPE != DataTransfer)</code>. The <code>Expression</code> for that looks like this:</p> <p> <code>{ \"And\": [ {\"Or\": [ {\"Dimensions\": { \"Key\": \"INSTANCE_TYPE\", \"Values\": [ \"m4.x.large\", \"c4.large\" ] }}, {\"Tags\": { \"Key\": \"TagName\", \"Values\": [\"Value1\"] } } ]}, {\"Not\": {\"Dimensions\": { \"Key\": \"USAGE_TYPE\", \"Values\": [\"DataTransfer\"] }}} ] } </code> </p> <note> <p>Because each <code>Expression</code> can have only one operator, the service returns an error if more than one is specified. The following example shows an <code>Expression</code> object that creates an error.</p> </note> <p> <code> { \"And\": [ ... ], \"DimensionValues\": { \"Dimension\": \"USAGE_TYPE\", \"Values\": [ \"DataTransfer\" ] } } </code> </p> </li> </ul>",
       "refs": {
         "Expression$Not": "<p>Return results that don't match a <code>Dimension</code> object.</p>",
         "Expressions$member": null,
@@ -404,6 +416,12 @@
         "ResultByTime$Total": "<p>The total amount of cost or usage accrued during the time period.</p>"
       }
     },
+    "NetRISavings": {
+      "base": null,
+      "refs": {
+        "ReservationAggregates$NetRISavings": "<p>How much you saved due to purchasing and utilizing RIs. This is calculated by subtracting the <code>TotalAmortizedFee</code> from the <code>OnDemandCostOfRIHoursUsed</code>.</p>"
+      }
+    },
     "NextPageToken": {
       "base": null,
       "refs": {
@@ -431,6 +449,12 @@
       "base": null,
       "refs": {
         "EC2Specification$OfferingClass": "<p>Whether you want a recommendation for standard or convertible reservations.</p>"
+      }
+    },
+    "OnDemandCostOfRIHoursUsed": {
+      "base": null,
+      "refs": {
+        "ReservationAggregates$OnDemandCostOfRIHoursUsed": "<p>How much your RIs would cost if charged On-Demand rates.</p>"
       }
     },
     "OnDemandHours": {
@@ -614,6 +638,18 @@
       "base": null,
       "refs": {
         "ReservationAggregates$TotalActualHours": "<p>The total number of RI hours that you used.</p>"
+      }
+    },
+    "TotalAmortizedFee": {
+      "base": null,
+      "refs": {
+        "ReservationAggregates$TotalAmortizedFee": "<p>The total cost of your RI, amortized over the RI period.</p>"
+      }
+    },
+    "TotalPotentialRISavings": {
+      "base": null,
+      "refs": {
+        "ReservationAggregates$TotalPotentialRISavings": "<p>How much you could save if you use your entire reservation.</p>"
       }
     },
     "TotalRunningHours": {

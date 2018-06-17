@@ -51,6 +51,7 @@ func TestBucketAttrsToRawBucket(t *testing.T) {
 				ResponseHeaders: []string{"FOO"},
 			},
 		},
+		Encryption: &BucketEncryption{DefaultKMSKeyName: "key"},
 	}
 	got := attrs.toRawBucket()
 	want := &raw.Bucket{
@@ -76,6 +77,7 @@ func TestBucketAttrsToRawBucket(t *testing.T) {
 				ResponseHeader: []string{"FOO"},
 			},
 		},
+		Encryption: &raw.BucketEncryption{DefaultKmsKeyName: "key"},
 	}
 	if msg := testutil.Diff(got, want); msg != "" {
 		t.Error(msg)
@@ -96,6 +98,8 @@ func TestBucketAttrsToUpdateToRawBucket(t *testing.T) {
 	au := &BucketAttrsToUpdate{
 		VersioningEnabled: false,
 		RequesterPays:     false,
+		RetentionPolicy:   &RetentionPolicy{RetentionPeriod: time.Hour},
+		Encryption:        &BucketEncryption{DefaultKMSKeyName: "key2"},
 	}
 	au.SetLabel("a", "foo")
 	au.DeleteLabel("b")
@@ -114,7 +118,9 @@ func TestBucketAttrsToUpdateToRawBucket(t *testing.T) {
 			RequesterPays:   false,
 			ForceSendFields: []string{"RequesterPays"},
 		},
-		NullFields: []string{"Labels.b"},
+		RetentionPolicy: &raw.BucketRetentionPolicy{RetentionPeriod: 3600},
+		Encryption:      &raw.BucketEncryption{DefaultKmsKeyName: "key2"},
+		NullFields:      []string{"Labels.b"},
 	}
 	if msg := testutil.Diff(got, want); msg != "" {
 		t.Error(msg)
@@ -128,7 +134,19 @@ func TestBucketAttrsToUpdateToRawBucket(t *testing.T) {
 		ForceSendFields: []string{"Labels"},
 		NullFields:      []string{"Labels.b"},
 	}
+	if msg := testutil.Diff(got, want); msg != "" {
+		t.Error(msg)
+	}
 
+	// Test nulls.
+	au3 := &BucketAttrsToUpdate{
+		RetentionPolicy: &RetentionPolicy{},
+		Encryption:      &BucketEncryption{},
+	}
+	got = au3.toRawBucket()
+	want = &raw.Bucket{
+		NullFields: []string{"RetentionPolicy", "Encryption"},
+	}
 	if msg := testutil.Diff(got, want); msg != "" {
 		t.Error(msg)
 	}
@@ -268,6 +286,7 @@ func TestNewBucket(t *testing.T) {
 		Acl: []*raw.BucketAccessControl{
 			{Bucket: "name", Role: "READER", Email: "joe@example.com", Entity: "allUsers"},
 		},
+		Encryption: &raw.BucketEncryption{DefaultKmsKeyName: "key"},
 	}
 	want := &BucketAttrs{
 		Name:              "name",
@@ -306,6 +325,7 @@ func TestNewBucket(t *testing.T) {
 				ResponseHeaders: []string{"FOO"},
 			},
 		},
+		Encryption:       &BucketEncryption{DefaultKMSKeyName: "key"},
 		ACL:              []ACLRule{{Entity: "allUsers", Role: RoleReader}},
 		DefaultObjectACL: []ACLRule{},
 	}

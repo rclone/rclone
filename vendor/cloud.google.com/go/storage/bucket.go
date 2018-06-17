@@ -269,6 +269,9 @@ type BucketAttrs struct {
 
 	// The bucket's Cross-Origin Resource Sharing (CORS) configuration.
 	CORS []CORS
+
+	// The encryption configuration used by default for newly inserted objects.
+	Encryption *BucketEncryption
 }
 
 // Lifecycle is the lifecycle configuration for objects in the bucket.
@@ -406,6 +409,7 @@ func newBucket(b *raw.Bucket) (*BucketAttrs, error) {
 		Lifecycle:         toLifecycle(b.Lifecycle),
 		RetentionPolicy:   rp,
 		CORS:              toCORS(b.Cors),
+		Encryption:        toBucketEncryption(b.Encryption),
 	}
 	acl := make([]ACLRule, len(b.Acl))
 	for i, rule := range b.Acl {
@@ -470,10 +474,11 @@ func (b *BucketAttrs) toRawBucket() *raw.Bucket {
 		Lifecycle:        toRawLifecycle(b.Lifecycle),
 		RetentionPolicy:  b.RetentionPolicy.toRawRetentionPolicy(),
 		Cors:             toRawCORS(b.CORS),
+		Encryption:       b.Encryption.toRawBucketEncryption(),
 	}
 }
 
-// The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+// CORS is the bucket's Cross-Origin Resource Sharing (CORS) configuration.
 type CORS struct {
 	// MaxAge is the value to return in the Access-Control-Max-Age
 	// header used in preflight responses.
@@ -495,14 +500,23 @@ type CORS struct {
 	ResponseHeaders []string
 }
 
+// BucketEncryption is a bucket's encryption configuration.
+type BucketEncryption struct {
+	// A Cloud KMS key name, in the form
+	// projects/P/locations/L/keyRings/R/cryptoKeys/K, that will be used to encrypt
+	// objects inserted into this bucket, if no encryption method is specified.
+	// The key's location must be the same as the bucket's.
+	DefaultKMSKeyName string
+}
+
 type BucketAttrsToUpdate struct {
-	// VersioningEnabled, if set, updates whether the bucket uses versioning.
+	// If set, updates whether the bucket uses versioning.
 	VersioningEnabled optional.Bool
 
-	// RequesterPays, if set, updates whether the bucket is a Requester Pays bucket.
+	// If set, updates whether the bucket is a Requester Pays bucket.
 	RequesterPays optional.Bool
 
-	// RetentionPolicy, if set, updates the retention policy of the bucket. Using
+	// If set, updates the retention policy of the bucket. Using
 	// RetentionPolicy.RetentionPeriod = 0 will delete the existing policy.
 	//
 	// This feature is in private alpha release. It is not currently available to
@@ -510,10 +524,14 @@ type BucketAttrsToUpdate struct {
 	// subject to any SLA or deprecation policy.
 	RetentionPolicy *RetentionPolicy
 
-	// CORS, if set, replaces the CORS configuration with a new configuration.
-	// When an empty slice is provided, all CORS policies are removed; when nil
-	// is provided, the value is ignored in the update.
+	// If set, replaces the CORS configuration with a new configuration.
+	// An empty (rather than nil) slice causes all CORS policies to be removed.
 	CORS []CORS
+
+	// If set, replaces the encryption configuration of the bucket. Using
+	// BucketEncryption.DefaultKMSKeyName = "" will delete the existing
+	// configuration.
+	Encryption *BucketEncryption
 
 	setLabels    map[string]string
 	deleteLabels map[string]bool
@@ -561,6 +579,14 @@ func (ua *BucketAttrsToUpdate) toRawBucket() *raw.Bucket {
 		rb.Billing = &raw.BucketBilling{
 			RequesterPays:   optional.ToBool(ua.RequesterPays),
 			ForceSendFields: []string{"RequesterPays"},
+		}
+	}
+	if ua.Encryption != nil {
+		if ua.Encryption.DefaultKMSKeyName == "" {
+			rb.NullFields = append(rb.NullFields, "Encryption")
+			rb.Encryption = nil
+		} else {
+			rb.Encryption = ua.Encryption.toRawBucketEncryption()
 		}
 	}
 	if ua.setLabels != nil || ua.deleteLabels != nil {
@@ -788,6 +814,22 @@ func toLifecycle(rl *raw.BucketLifecycle) Lifecycle {
 	return l
 }
 
+func (e *BucketEncryption) toRawBucketEncryption() *raw.BucketEncryption {
+	if e == nil {
+		return nil
+	}
+	return &raw.BucketEncryption{
+		DefaultKmsKeyName: e.DefaultKMSKeyName,
+	}
+}
+
+func toBucketEncryption(e *raw.BucketEncryption) *BucketEncryption {
+	if e == nil {
+		return nil
+	}
+	return &BucketEncryption{DefaultKMSKeyName: e.DefaultKmsKeyName}
+}
+
 // Objects returns an iterator over the objects in the bucket that match the Query q.
 // If q is nil, no filtering is done.
 func (b *BucketHandle) Objects(ctx context.Context, q *Query) *ObjectIterator {
@@ -868,8 +910,6 @@ func (it *ObjectIterator) fetch(pageSize int, pageToken string) (string, error) 
 	}
 	return resp.NextPageToken, nil
 }
-
-// TODO(jbd): Add storage.buckets.update.
 
 // Buckets returns an iterator over the buckets in the project. You may
 // optionally set the iterator's Prefix field to restrict the list to buckets

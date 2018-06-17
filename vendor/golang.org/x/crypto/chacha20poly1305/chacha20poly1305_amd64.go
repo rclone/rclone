@@ -9,6 +9,7 @@ package chacha20poly1305
 import (
 	"encoding/binary"
 
+	"golang.org/x/crypto/internal/subtle"
 	"golang.org/x/sys/cpu"
 )
 
@@ -55,6 +56,9 @@ func (c *chacha20poly1305) seal(dst, nonce, plaintext, additionalData []byte) []
 	setupState(&state, &c.key, nonce)
 
 	ret, out := sliceForAppend(dst, len(plaintext)+16)
+	if subtle.InexactOverlap(out, plaintext) {
+		panic("chacha20poly1305: invalid buffer overlap")
+	}
 	chacha20Poly1305Seal(out[:], state[:], plaintext, additionalData)
 	return ret
 }
@@ -69,6 +73,9 @@ func (c *chacha20poly1305) open(dst, nonce, ciphertext, additionalData []byte) (
 
 	ciphertext = ciphertext[:len(ciphertext)-16]
 	ret, out := sliceForAppend(dst, len(ciphertext))
+	if subtle.InexactOverlap(out, ciphertext) {
+		panic("chacha20poly1305: invalid buffer overlap")
+	}
 	if !chacha20Poly1305Open(out, state[:], ciphertext, additionalData) {
 		for i := range out {
 			out[i] = 0

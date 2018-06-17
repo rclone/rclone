@@ -298,12 +298,11 @@ type ProjectResourceListResult struct {
 // ProjectsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ProjectsCreateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ProjectsCreateFuture) Result(client ProjectsClient) (pr ProjectResource, err error) {
+func (future *ProjectsCreateFuture) Result(client ProjectsClient) (pr ProjectResource, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -311,34 +310,15 @@ func (future ProjectsCreateFuture) Result(client ProjectsClient) (pr ProjectReso
 		return
 	}
 	if !done {
-		return pr, azure.NewAsyncOpIncompleteError("visualstudio.ProjectsCreateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		pr, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "visualstudio.ProjectsCreateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("visualstudio.ProjectsCreateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if pr.Response.Response, err = future.GetResult(sender); err == nil && pr.Response.Response.StatusCode != http.StatusNoContent {
+		pr, err = client.CreateResponder(pr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "visualstudio.ProjectsCreateFuture", "Result", pr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "visualstudio.ProjectsCreateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	pr, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "visualstudio.ProjectsCreateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

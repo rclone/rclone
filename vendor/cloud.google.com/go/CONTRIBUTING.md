@@ -31,11 +31,11 @@ To run the integrations tests, creating and configuration of a project in the
 Google Developers Console is required.
 
 After creating a project, you must [create a service account](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#creatinganaccount).
-Ensure the project-level **Owner** 
+Ensure the project-level **Owner**
 [IAM role](console.cloud.google.com/iam-admin/iam/project) role is added to the
 service account. Alternatively, the account can be granted all of the following roles:
-- **Editor** 
-- **Logs Configuration Writer** 
+- **Editor**
+- **Logs Configuration Writer**
 - **PubSub Admin**
 
 Once you create a project, set the following environment variables to be able to
@@ -43,13 +43,19 @@ run the against the actual APIs.
 
 - **GCLOUD_TESTS_GOLANG_PROJECT_ID**: Developers Console project's ID (e.g. bamboo-shift-455)
 - **GCLOUD_TESTS_GOLANG_KEY**: The path to the JSON key file.
-- **GCLOUD_TESTS_API_KEY**: Your API key.
 
-Firestore requires a different project and key:
+Some packages require additional environment variables to be set:
 
-- **GCLOUD_TESTS_GOLANG_FIRESTORE_PROJECT_ID**: Developers Console project's ID
-  supporting Firestore
-- **GCLOUD_TESTS_GOLANG_FIRESTORE_KEY**: The path to the JSON key file.
+- firestore
+  - **GCLOUD_TESTS_GOLANG_FIRESTORE_PROJECT_ID**: project ID for Firestore.
+  - **GCLOUD_TESTS_GOLANG_FIRESTORE_KEY**: The path to the JSON key file.
+- storage
+  - **GCLOUD_TESTS_GOLANG_KEYRING**: The full name of the keyring for the tests, in the
+    form "projects/P/locations/L/keyRings/R".
+- translate
+  - **GCLOUD_TESTS_API_KEY**: API key for using the Translate API.
+- profiler
+  - **GCLOUD_TESTS_GOLANG_ZONE**: Compute Engine zone.
 
 Install the [gcloud command-line tool][gcloudcli] to your machine and use it
 to create some resources used in integration tests.
@@ -80,11 +86,20 @@ $ gcloud beta spanner instances create go-integration-test --config regional-us-
 # NOTE: Spanner instances are priced by the node-hour, so you may want to delete
 # the instance after testing with 'gcloud beta spanner instances delete'.
 
-
+# For Storage integration tests:
+# Enable KMS for your project in the Cloud Console.
+# Create a KMS keyring, in the same location as the default location for your project's buckets.
+$ gcloud kms keyrings create MY_KEYRING --location MY_LOCATION
+# Create two keys in the keyring, named key1 and key2.
+$ gcloud kms keys create key1 --keyring MY_KEYRING --location MY_LOCATION --purpose encryption
+$ gcloud kms keys create key2 --keyring MY_KEYRING --location MY_LOCATION --purpose encryption
+# As mentioned above, set the GCLOUD_TESTS_GOLANG_KEYRING environment variable.
+$ export GCLOUD_TESTS_GOLANG_KEYRING=projects/$GCLOUD_TESTS_GOLANG_PROJECT_ID/locations/MY_LOCATION/keyRings/MY_KEYRING
+# Authorize Google Cloud Storage to encrypt and decrypt using key1.
+gsutil kms authorize -p $GCLOUD_TESTS_GOLANG_PROJECT_ID -k $GCLOUD_TESTS_GOLANG_KEYRING/cryptoKeys/key1
 ```
 
-Once you've set the environment variables, you can run the integration tests by
-running:
+Once you've done the necessary setup, you can run the integration tests by running:
 
 ``` sh
 $ go test -v cloud.google.com/go/...

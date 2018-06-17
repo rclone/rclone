@@ -73,10 +73,18 @@ const (
 	// The response is invalid.
 	ErrCodeInvalidResponseException = "InvalidResponseException"
 
+	// ErrCodeInvalidStateTransitionException for service response error code
+	// "InvalidStateTransitionException".
+	//
+	// An attempt was made to change to an invalid state, for example by deleting
+	// a job or a job execution which is "IN_PROGRESS" without setting the force
+	// parameter.
+	ErrCodeInvalidStateTransitionException = "InvalidStateTransitionException"
+
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//
-	// The number of attached entities exceeds the limit.
+	// A limit has been exceeded.
 	ErrCodeLimitExceededException = "LimitExceededException"
 
 	// ErrCodeMalformedPolicyException for service response error code
@@ -156,8 +164,8 @@ const (
 	// ErrCodeVersionConflictException for service response error code
 	// "VersionConflictException".
 	//
-	// An exception thrown when the version of a thing passed to a command is different
-	// than the version specified with the --version parameter.
+	// An exception thrown when the version of an entity specified with the expectedVersion
+	// parameter does not match the latest version in the system.
 	ErrCodeVersionConflictException = "VersionConflictException"
 
 	// ErrCodeVersionsLimitExceededException for service response error code

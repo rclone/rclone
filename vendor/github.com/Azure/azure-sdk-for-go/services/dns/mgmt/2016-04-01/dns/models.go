@@ -824,12 +824,11 @@ type ZoneProperties struct {
 // ZonesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ZonesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ZonesDeleteFuture) Result(client ZonesClient) (zdr ZoneDeleteResult, err error) {
+func (future *ZonesDeleteFuture) Result(client ZonesClient) (zdr ZoneDeleteResult, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -837,34 +836,15 @@ func (future ZonesDeleteFuture) Result(client ZonesClient) (zdr ZoneDeleteResult
 		return
 	}
 	if !done {
-		return zdr, azure.NewAsyncOpIncompleteError("dns.ZonesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		zdr, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dns.ZonesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if zdr.Response.Response, err = future.GetResult(sender); err == nil && zdr.Response.Response.StatusCode != http.StatusNoContent {
+		zdr, err = client.DeleteResponder(zdr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", zdr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	zdr, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

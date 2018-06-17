@@ -1635,7 +1635,8 @@
       "members":{
         "AcceptLanguage":{"shape":"AcceptLanguage"},
         "PageToken":{"shape":"PageToken"},
-        "PageSize":{"shape":"PageSize"}
+        "PageSize":{"shape":"PageSize"},
+        "PortfolioShareType":{"shape":"PortfolioShareType"}
       }
     },
     "ListAcceptedPortfolioSharesOutput":{
@@ -1912,6 +1913,13 @@
       "min":1
     },
     "PortfolioName":{"type":"string"},
+    "PortfolioShareType":{
+      "type":"string",
+      "enum":[
+        "IMPORTED",
+        "AWS_SERVICECATALOG"
+      ]
+    },
     "Principal":{
       "type":"structure",
       "members":{
@@ -1947,7 +1955,8 @@
       "enum":[
         "CLOUD_FORMATION_TEMPLATE",
         "MARKETPLACE"
-      ]
+      ],
+      "max":8191
     },
     "ProductViewAggregationType":{"type":"string"},
     "ProductViewAggregationValue":{
@@ -1999,9 +2008,18 @@
       "key":{"shape":"ProductViewFilterBy"},
       "value":{"shape":"ProductViewFilterValues"}
     },
-    "ProductViewName":{"type":"string"},
-    "ProductViewOwner":{"type":"string"},
-    "ProductViewShortDescription":{"type":"string"},
+    "ProductViewName":{
+      "type":"string",
+      "max":8191
+    },
+    "ProductViewOwner":{
+      "type":"string",
+      "max":8191
+    },
+    "ProductViewShortDescription":{
+      "type":"string",
+      "max":8191
+    },
     "ProductViewSortBy":{
       "type":"string",
       "enum":[
@@ -2611,9 +2629,18 @@
       "type":"string",
       "pattern":"[\\u0009\\u000a\\u000d\\u0020-\\uD7FF\\uE000-\\uFFFD]*"
     },
-    "SupportDescription":{"type":"string"},
-    "SupportEmail":{"type":"string"},
-    "SupportUrl":{"type":"string"},
+    "SupportDescription":{
+      "type":"string",
+      "max":8191
+    },
+    "SupportEmail":{
+      "type":"string",
+      "max":254
+    },
+    "SupportUrl":{
+      "type":"string",
+      "max":2083
+    },
     "Tag":{
       "type":"structure",
       "required":[

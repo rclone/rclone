@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -118,7 +107,7 @@
     "infoTypes": {
       "methods": {
         "list": {
-          "description": "Returns a list of the sensitive information types that the DLP API\nsupports. For more information, see [Listing supported predefined\ninfoTypes](/dlp/docs/listing-infotypes).",
+          "description": "Returns a list of the sensitive information types that the DLP API\nsupports. See https://cloud.google.com/dlp/docs/infotypes-reference to\nlearn more.",
           "flatPath": "v2/infoTypes",
           "httpMethod": "GET",
           "id": "dlp.infoTypes.list",
@@ -150,7 +139,7 @@
         "deidentifyTemplates": {
           "methods": {
             "create": {
-              "description": "Creates a DeidentifyTemplate for re-using frequently used configuration\nfor de-identifying content, images, and storage.",
+              "description": "Creates a DeidentifyTemplate for re-using frequently used configuration\nfor de-identifying content, images, and storage.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/organizations/{organizationsId}/deidentifyTemplates",
               "httpMethod": "POST",
               "id": "dlp.organizations.deidentifyTemplates.create",
@@ -178,7 +167,7 @@
               ]
             },
             "delete": {
-              "description": "Deletes a DeidentifyTemplate.",
+              "description": "Deletes a DeidentifyTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/organizations/{organizationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
               "httpMethod": "DELETE",
               "id": "dlp.organizations.deidentifyTemplates.delete",
@@ -203,7 +192,7 @@
               ]
             },
             "get": {
-              "description": "Gets a DeidentifyTemplate.",
+              "description": "Gets a DeidentifyTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/organizations/{organizationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
               "httpMethod": "GET",
               "id": "dlp.organizations.deidentifyTemplates.get",
@@ -228,7 +217,7 @@
               ]
             },
             "list": {
-              "description": "Lists DeidentifyTemplates.",
+              "description": "Lists DeidentifyTemplates.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/organizations/{organizationsId}/deidentifyTemplates",
               "httpMethod": "GET",
               "id": "dlp.organizations.deidentifyTemplates.list",
@@ -264,7 +253,7 @@
               ]
             },
             "patch": {
-              "description": "Updates the DeidentifyTemplate.",
+              "description": "Updates the DeidentifyTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/organizations/{organizationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
               "httpMethod": "PATCH",
               "id": "dlp.organizations.deidentifyTemplates.patch",
@@ -296,7 +285,7 @@
         "inspectTemplates": {
           "methods": {
             "create": {
-              "description": "Creates an InspectTemplate for re-using frequently used configuration\nfor inspecting content, images, and storage.",
+              "description": "Creates an InspectTemplate for re-using frequently used configuration\nfor inspecting content, images, and storage.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/organizations/{organizationsId}/inspectTemplates",
               "httpMethod": "POST",
               "id": "dlp.organizations.inspectTemplates.create",
@@ -324,7 +313,7 @@
               ]
             },
             "delete": {
-              "description": "Deletes an InspectTemplate.",
+              "description": "Deletes an InspectTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/organizations/{organizationsId}/inspectTemplates/{inspectTemplatesId}",
               "httpMethod": "DELETE",
               "id": "dlp.organizations.inspectTemplates.delete",
@@ -349,7 +338,7 @@
               ]
             },
             "get": {
-              "description": "Gets an InspectTemplate.",
+              "description": "Gets an InspectTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/organizations/{organizationsId}/inspectTemplates/{inspectTemplatesId}",
               "httpMethod": "GET",
               "id": "dlp.organizations.inspectTemplates.get",
@@ -374,7 +363,7 @@
               ]
             },
             "list": {
-              "description": "Lists InspectTemplates.",
+              "description": "Lists InspectTemplates.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/organizations/{organizationsId}/inspectTemplates",
               "httpMethod": "GET",
               "id": "dlp.organizations.inspectTemplates.list",
@@ -410,7 +399,7 @@
               ]
             },
             "patch": {
-              "description": "Updates the InspectTemplate.",
+              "description": "Updates the InspectTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/organizations/{organizationsId}/inspectTemplates/{inspectTemplatesId}",
               "httpMethod": "PATCH",
               "id": "dlp.organizations.inspectTemplates.patch",
@@ -446,7 +435,7 @@
         "content": {
           "methods": {
             "deidentify": {
-              "description": "De-identifies potentially sensitive info from a ContentItem.\nThis method has limits on input size and output size.\n[How-to guide](/dlp/docs/deidentify-sensitive-data)",
+              "description": "De-identifies potentially sensitive info from a ContentItem.\nThis method has limits on input size and output size.\nSee https://cloud.google.com/dlp/docs/deidentify-sensitive-data to\nlearn more.",
               "flatPath": "v2/projects/{projectsId}/content:deidentify",
               "httpMethod": "POST",
               "id": "dlp.projects.content.deidentify",
@@ -474,7 +463,7 @@
               ]
             },
             "inspect": {
-              "description": "Finds potentially sensitive info in content.\nThis method has limits on input size, processing time, and output size.\n[How-to guide for text](/dlp/docs/inspecting-text), [How-to guide for\nimages](/dlp/docs/inspecting-images)",
+              "description": "Finds potentially sensitive info in content.\nThis method has limits on input size, processing time, and output size.\n\nFor how to guides, see https://cloud.google.com/dlp/docs/inspecting-images\nand https://cloud.google.com/dlp/docs/inspecting-text,",
               "flatPath": "v2/projects/{projectsId}/content:inspect",
               "httpMethod": "POST",
               "id": "dlp.projects.content.inspect",
@@ -502,7 +491,7 @@
               ]
             },
             "reidentify": {
-              "description": "Re-identifies content that has been de-identified.",
+              "description": "Re-identifies content that has been de-identified.\nSee\nhttps://cloud.google.com/dlp/docs/pseudonymization#re-identification_in_free_text_code_example\nto learn more.",
               "flatPath": "v2/projects/{projectsId}/content:reidentify",
               "httpMethod": "POST",
               "id": "dlp.projects.content.reidentify",
@@ -534,7 +523,7 @@
         "deidentifyTemplates": {
           "methods": {
             "create": {
-              "description": "Creates a DeidentifyTemplate for re-using frequently used configuration\nfor de-identifying content, images, and storage.",
+              "description": "Creates a DeidentifyTemplate for re-using frequently used configuration\nfor de-identifying content, images, and storage.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/projects/{projectsId}/deidentifyTemplates",
               "httpMethod": "POST",
               "id": "dlp.projects.deidentifyTemplates.create",
@@ -562,7 +551,7 @@
               ]
             },
             "delete": {
-              "description": "Deletes a DeidentifyTemplate.",
+              "description": "Deletes a DeidentifyTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/projects/{projectsId}/deidentifyTemplates/{deidentifyTemplatesId}",
               "httpMethod": "DELETE",
               "id": "dlp.projects.deidentifyTemplates.delete",
@@ -587,7 +576,7 @@
               ]
             },
             "get": {
-              "description": "Gets a DeidentifyTemplate.",
+              "description": "Gets a DeidentifyTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/projects/{projectsId}/deidentifyTemplates/{deidentifyTemplatesId}",
               "httpMethod": "GET",
               "id": "dlp.projects.deidentifyTemplates.get",
@@ -612,7 +601,7 @@
               ]
             },
             "list": {
-              "description": "Lists DeidentifyTemplates.",
+              "description": "Lists DeidentifyTemplates.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/projects/{projectsId}/deidentifyTemplates",
               "httpMethod": "GET",
               "id": "dlp.projects.deidentifyTemplates.list",
@@ -648,7 +637,7 @@
               ]
             },
             "patch": {
-              "description": "Updates the DeidentifyTemplate.",
+              "description": "Updates the DeidentifyTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates-deid to learn\nmore.",
               "flatPath": "v2/projects/{projectsId}/deidentifyTemplates/{deidentifyTemplatesId}",
               "httpMethod": "PATCH",
               "id": "dlp.projects.deidentifyTemplates.patch",
@@ -680,7 +669,7 @@
         "dlpJobs": {
           "methods": {
             "cancel": {
-              "description": "Starts asynchronous cancellation on a long-running DlpJob. The server\nmakes a best effort to cancel the DlpJob, but success is not\nguaranteed.",
+              "description": "Starts asynchronous cancellation on a long-running DlpJob. The server\nmakes a best effort to cancel the DlpJob, but success is not\nguaranteed.\nSee https://cloud.google.com/dlp/docs/inspecting-storage and\nhttps://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.",
               "flatPath": "v2/projects/{projectsId}/dlpJobs/{dlpJobsId}:cancel",
               "httpMethod": "POST",
               "id": "dlp.projects.dlpJobs.cancel",
@@ -708,7 +697,7 @@
               ]
             },
             "create": {
-              "description": "Creates a new job to inspect storage or calculate risk metrics.\n[How-to guide](/dlp/docs/compute-risk-analysis).",
+              "description": "Creates a new job to inspect storage or calculate risk metrics.\nSee https://cloud.google.com/dlp/docs/inspecting-storage and\nhttps://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.",
               "flatPath": "v2/projects/{projectsId}/dlpJobs",
               "httpMethod": "POST",
               "id": "dlp.projects.dlpJobs.create",
@@ -736,7 +725,7 @@
               ]
             },
             "delete": {
-              "description": "Deletes a long-running DlpJob. This method indicates that the client is\nno longer interested in the DlpJob result. The job will be cancelled if\npossible.",
+              "description": "Deletes a long-running DlpJob. This method indicates that the client is\nno longer interested in the DlpJob result. The job will be cancelled if\npossible.\nSee https://cloud.google.com/dlp/docs/inspecting-storage and\nhttps://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.",
               "flatPath": "v2/projects/{projectsId}/dlpJobs/{dlpJobsId}",
               "httpMethod": "DELETE",
               "id": "dlp.projects.dlpJobs.delete",
@@ -761,7 +750,7 @@
               ]
             },
             "get": {
-              "description": "Gets the latest state of a long-running DlpJob.",
+              "description": "Gets the latest state of a long-running DlpJob.\nSee https://cloud.google.com/dlp/docs/inspecting-storage and\nhttps://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.",
               "flatPath": "v2/projects/{projectsId}/dlpJobs/{dlpJobsId}",
               "httpMethod": "GET",
               "id": "dlp.projects.dlpJobs.get",
@@ -786,7 +775,7 @@
               ]
             },
             "list": {
-              "description": "Lists DlpJobs that match the specified filter in the request.",
+              "description": "Lists DlpJobs that match the specified filter in the request.\nSee https://cloud.google.com/dlp/docs/inspecting-storage and\nhttps://cloud.google.com/dlp/docs/compute-risk-analysis to learn more.",
               "flatPath": "v2/projects/{projectsId}/dlpJobs",
               "httpMethod": "GET",
               "id": "dlp.projects.dlpJobs.list",
@@ -841,7 +830,7 @@
         "image": {
           "methods": {
             "redact": {
-              "description": "Redacts potentially sensitive info from an image.\nThis method has limits on input size, processing time, and output size.\n[How-to guide](/dlp/docs/redacting-sensitive-data-images)",
+              "description": "Redacts potentially sensitive info from an image.\nThis method has limits on input size, processing time, and output size.\nSee https://cloud.google.com/dlp/docs/redacting-sensitive-data-images to\nlearn more.",
               "flatPath": "v2/projects/{projectsId}/image:redact",
               "httpMethod": "POST",
               "id": "dlp.projects.image.redact",
@@ -873,7 +862,7 @@
         "inspectTemplates": {
           "methods": {
             "create": {
-              "description": "Creates an InspectTemplate for re-using frequently used configuration\nfor inspecting content, images, and storage.",
+              "description": "Creates an InspectTemplate for re-using frequently used configuration\nfor inspecting content, images, and storage.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/projects/{projectsId}/inspectTemplates",
               "httpMethod": "POST",
               "id": "dlp.projects.inspectTemplates.create",
@@ -901,7 +890,7 @@
               ]
             },
             "delete": {
-              "description": "Deletes an InspectTemplate.",
+              "description": "Deletes an InspectTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/projects/{projectsId}/inspectTemplates/{inspectTemplatesId}",
               "httpMethod": "DELETE",
               "id": "dlp.projects.inspectTemplates.delete",
@@ -926,7 +915,7 @@
               ]
             },
             "get": {
-              "description": "Gets an InspectTemplate.",
+              "description": "Gets an InspectTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/projects/{projectsId}/inspectTemplates/{inspectTemplatesId}",
               "httpMethod": "GET",
               "id": "dlp.projects.inspectTemplates.get",
@@ -951,7 +940,7 @@
               ]
             },
             "list": {
-              "description": "Lists InspectTemplates.",
+              "description": "Lists InspectTemplates.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/projects/{projectsId}/inspectTemplates",
               "httpMethod": "GET",
               "id": "dlp.projects.inspectTemplates.list",
@@ -987,7 +976,7 @@
               ]
             },
             "patch": {
-              "description": "Updates the InspectTemplate.",
+              "description": "Updates the InspectTemplate.\nSee https://cloud.google.com/dlp/docs/creating-templates to learn more.",
               "flatPath": "v2/projects/{projectsId}/inspectTemplates/{inspectTemplatesId}",
               "httpMethod": "PATCH",
               "id": "dlp.projects.inspectTemplates.patch",
@@ -1019,7 +1008,7 @@
         "jobTriggers": {
           "methods": {
             "create": {
-              "description": "Creates a job trigger to run DLP actions such as scanning storage for\nsensitive information on a set schedule.",
+              "description": "Creates a job trigger to run DLP actions such as scanning storage for\nsensitive information on a set schedule.\nSee https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.",
               "flatPath": "v2/projects/{projectsId}/jobTriggers",
               "httpMethod": "POST",
               "id": "dlp.projects.jobTriggers.create",
@@ -1047,7 +1036,7 @@
               ]
             },
             "delete": {
-              "description": "Deletes a job trigger.",
+              "description": "Deletes a job trigger.\nSee https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.",
               "flatPath": "v2/projects/{projectsId}/jobTriggers/{jobTriggersId}",
               "httpMethod": "DELETE",
               "id": "dlp.projects.jobTriggers.delete",
@@ -1072,7 +1061,7 @@
               ]
             },
             "get": {
-              "description": "Gets a job trigger.",
+              "description": "Gets a job trigger.\nSee https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.",
               "flatPath": "v2/projects/{projectsId}/jobTriggers/{jobTriggersId}",
               "httpMethod": "GET",
               "id": "dlp.projects.jobTriggers.get",
@@ -1097,7 +1086,7 @@
               ]
             },
             "list": {
-              "description": "Lists job triggers.",
+              "description": "Lists job triggers.\nSee https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.",
               "flatPath": "v2/projects/{projectsId}/jobTriggers",
               "httpMethod": "GET",
               "id": "dlp.projects.jobTriggers.list",
@@ -1106,7 +1095,7 @@
               ],
               "parameters": {
                 "orderBy": {
-                  "description": "Optional comma separated list of triggeredJob fields to order by,\nfollowed by 'asc/desc' postfix, i.e.\n`\"create_time asc,name desc,schedule_mode asc\"`. This list is\ncase-insensitive.\n\nExample: `\"name asc,schedule_mode desc, status desc\"`\n\nSupported filters keys and values are:\n\n- `create_time`: corresponds to time the triggeredJob was created.\n- `update_time`: corresponds to time the triggeredJob was last updated.\n- `name`: corresponds to JobTrigger's display name.\n- `status`: corresponds to the triggeredJob status.",
+                  "description": "Optional comma separated list of triggeredJob fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the triggeredJob was created.\n- `update_time`: corresponds to time the triggeredJob was last updated.\n- `name`: corresponds to JobTrigger's name.",
                   "location": "query",
                   "type": "string"
                 },
@@ -1117,12 +1106,12 @@
                   "type": "integer"
                 },
                 "pageToken": {
-                  "description": "Optional page token to continue retrieval. Comes from previous call\nto ListJobTriggers. `order_by` and `filter` should not change for\nsubsequent calls, but can be omitted if token is specified.",
+                  "description": "Optional page token to continue retrieval. Comes from previous call\nto ListJobTriggers. `order_by` field must not\nchange for subsequent calls.",
                   "location": "query",
                   "type": "string"
                 },
                 "parent": {
-                  "description": "The parent resource name, for example projects/my-project-id.",
+                  "description": "The parent resource name, for example `projects/my-project-id`.",
                   "location": "path",
                   "pattern": "^projects/[^/]+$",
                   "required": true,
@@ -1138,7 +1127,7 @@
               ]
             },
             "patch": {
-              "description": "Updates a job trigger.",
+              "description": "Updates a job trigger.\nSee https://cloud.google.com/dlp/docs/creating-job-triggers to learn more.",
               "flatPath": "v2/projects/{projectsId}/jobTriggers/{jobTriggersId}",
               "httpMethod": "PATCH",
               "id": "dlp.projects.jobTriggers.patch",
@@ -1170,11 +1159,11 @@
       }
     }
   },
-  "revision": "20180501",
+  "revision": "20180612",
   "rootUrl": "https://dlp.googleapis.com/",
   "schemas": {
     "GooglePrivacyDlpV2Action": {
-      "description": "A task to execute on the completion of a job.",
+      "description": "A task to execute on the completion of a job.\nSee https://cloud.google.com/dlp/docs/concepts-actions to learn more.",
       "id": "GooglePrivacyDlpV2Action",
       "properties": {
         "pubSub": {
@@ -1198,6 +1187,9 @@
       "properties": {
         "categoricalStatsResult": {
           "$ref": "GooglePrivacyDlpV2CategoricalStatsResult"
+        },
+        "deltaPresenceEstimationResult": {
+          "$ref": "GooglePrivacyDlpV2DeltaPresenceEstimationResult"
         },
         "kAnonymityResult": {
           "$ref": "GooglePrivacyDlpV2KAnonymityResult"
@@ -1223,6 +1215,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2AuxiliaryTable": {
+      "description": "An auxiliary table contains statistical information on the relative\nfrequency of different quasi-identifiers values. It has one or several\nquasi-identifiers columns, and one column that indicates the relative\nfrequency of each quasi-identifier tuple.\nIf a tuple is present in the data but not in the auxiliary table, the\ncorresponding relative frequency is assumed to be zero (and thus, the\ntuple is highly reidentifiable).",
       "id": "GooglePrivacyDlpV2AuxiliaryTable",
       "properties": {
         "quasiIds": {
@@ -1273,6 +1266,19 @@
         "rowsLimit": {
           "description": "Max number of rows to scan. If the table has more rows than this value, the\nrest of the rows are omitted. If not set, or if set to 0, all rows will be\nscanned. Cannot be used in conjunction with TimespanConfig.",
           "format": "int64",
+          "type": "string"
+        },
+        "sampleMethod": {
+          "enum": [
+            "SAMPLE_METHOD_UNSPECIFIED",
+            "TOP",
+            "RANDOM_START"
+          ],
+          "enumDescriptions": [
+            "",
+            "Scan from the top (default).",
+            "Randomly pick the row to start scanning. The scanned rows are contiguous."
+          ],
           "type": "string"
         },
         "tableReference": {
@@ -1348,7 +1354,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2BucketingConfig": {
-      "description": "Generalization function that buckets values based on ranges. The ranges and\nreplacement values are dynamically provided by the user for custom behavior,\nsuch as 1-30 -\u003e LOW 31-65 -\u003e MEDIUM 66-100 -\u003e HIGH\nThis can be used on\ndata of type: number, long, string, timestamp.\nIf the bound `Value` type differs from the type of data being transformed, we\nwill first attempt converting the type of the data to be transformed to match\nthe type of the bound before comparing.",
+      "description": "Generalization function that buckets values based on ranges. The ranges and\nreplacement values are dynamically provided by the user for custom behavior,\nsuch as 1-30 -\u003e LOW 31-65 -\u003e MEDIUM 66-100 -\u003e HIGH\nThis can be used on\ndata of type: number, long, string, timestamp.\nIf the bound `Value` type differs from the type of data being transformed, we\nwill first attempt converting the type of the data to be transformed to match\nthe type of the bound before comparing.\nSee https://cloud.google.com/dlp/docs/concepts-bucketing to learn more.",
       "id": "GooglePrivacyDlpV2BucketingConfig",
       "properties": {
         "buckets": {
@@ -1543,12 +1549,30 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "filesLimitPercent": {
+          "description": "Limits the number of files to scan to this percentage of the input FileSet.\nNumber of files scanned is rounded down. Must be between 0 and 100,\ninclusively. Both 0 and 100 means no limit. Defaults to 0.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "sampleMethod": {
+          "enum": [
+            "SAMPLE_METHOD_UNSPECIFIED",
+            "TOP",
+            "RANDOM_START"
+          ],
+          "enumDescriptions": [
+            "",
+            "Scan from the top (default).",
+            "For each file larger than bytes_limit_per_file, randomly pick the offset\nto start scanning. The scanned bytes are contiguous."
+          ],
+          "type": "string"
         }
       },
       "type": "object"
     },
     "GooglePrivacyDlpV2CloudStoragePath": {
-      "description": "Message representing a path in Cloud Storage.",
+      "description": "Message representing a single file or path in Cloud Storage.",
       "id": "GooglePrivacyDlpV2CloudStoragePath",
       "properties": {
         "path": {
@@ -1642,7 +1666,7 @@
         },
         "table": {
           "$ref": "GooglePrivacyDlpV2Table",
-          "description": "Structured content for inspection."
+          "description": "Structured content for inspection. See\nhttps://cloud.google.com/dlp/docs/inspecting-text#inspecting_a_table to\nlearn more."
         },
         "value": {
           "description": "String data to inspect or redact.",
@@ -1773,7 +1797,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig": {
-      "description": "Replaces an identifier with a surrogate using FPE with the FFX\nmode of operation; however when used in the `ReidentifyContent` API method,\nit serves the opposite function by reversing the surrogate back into\nthe original identifier.\nThe identifier must be encoded as ASCII.\nFor a given crypto key and context, the same identifier will be\nreplaced with the same surrogate.\nIdentifiers must be at least two characters long.\nIn the case that the identifier is the empty string, it will be skipped.\nSee [Pseudonymization](/dlp/docs/pseudonymization) for example usage.",
+      "description": "Replaces an identifier with a surrogate using FPE with the FFX\nmode of operation; however when used in the `ReidentifyContent` API method,\nit serves the opposite function by reversing the surrogate back into\nthe original identifier.\nThe identifier must be encoded as ASCII.\nFor a given crypto key and context, the same identifier will be\nreplaced with the same surrogate.\nIdentifiers must be at least two characters long.\nIn the case that the identifier is the empty string, it will be skipped.\nSee https://cloud.google.com/dlp/docs/pseudonymization to learn more.",
       "id": "GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig",
       "properties": {
         "commonAlphabet": {
@@ -1795,7 +1819,7 @@
         },
         "context": {
           "$ref": "GooglePrivacyDlpV2FieldId",
-          "description": "The 'tweak', a context may be used for higher security since the same\nidentifier in two different contexts won't be given the same surrogate. If\nthe context is not set, a default tweak will be used.\n\nIf the context is set but:\n\n1. there is no record present when transforming a given value or\n1. the field is not present when transforming a given value,\n\na default tweak will be used.\n\nNote that case (1) is expected when an `InfoTypeTransformation` is\napplied to both structured and non-structured `ContentItem`s.\nCurrently, the referenced field may be of value type integer or string.\n\nThe tweak is constructed as a sequence of bytes in big endian byte order\nsuch that:\n\n- a 64 bit integer is encoded followed by a single byte of value 1\n- a string is encoded in UTF-8 format followed by a single byte of value\n å 2"
+          "description": "The 'tweak', a context may be used for higher security since the same\nidentifier in two different contexts won't be given the same surrogate. If\nthe context is not set, a default tweak will be used.\n\nIf the context is set but:\n\n1. there is no record present when transforming a given value or\n1. the field is not present when transforming a given value,\n\na default tweak will be used.\n\nNote that case (1) is expected when an `InfoTypeTransformation` is\napplied to both structured and non-structured `ContentItem`s.\nCurrently, the referenced field may be of value type integer or string.\n\nThe tweak is constructed as a sequence of bytes in big endian byte order\nsuch that:\n\n- a 64 bit integer is encoded followed by a single byte of value 1\n- a string is encoded in UTF-8 format followed by a single byte of value 2"
         },
         "cryptoKey": {
           "$ref": "GooglePrivacyDlpV2CryptoKey",
@@ -1822,7 +1846,7 @@
       "id": "GooglePrivacyDlpV2CustomInfoType",
       "properties": {
         "detectionRules": {
-          "description": "Set of detection rules to apply to all findings of this custom info type.\nRules are applied in order that they are specified. Not supported for the\n`surrogate_type` custom info type.",
+          "description": "Set of detection rules to apply to all findings of this CustomInfoType.\nRules are applied in order that they are specified. Not supported for the\n`surrogate_type` CustomInfoType.",
           "items": {
             "$ref": "GooglePrivacyDlpV2DetectionRule"
           },
@@ -1830,14 +1854,14 @@
         },
         "dictionary": {
           "$ref": "GooglePrivacyDlpV2Dictionary",
-          "description": "Dictionary-based custom info type."
+          "description": "A list of phrases to detect as a CustomInfoType."
         },
         "infoType": {
           "$ref": "GooglePrivacyDlpV2InfoType",
-          "description": "Info type configuration. All custom info types must have configurations\nthat do not conflict with built-in info types or other custom info types."
+          "description": "All CustomInfoTypes must have a name\nthat does not conflict with built-in InfoTypes or other CustomInfoTypes."
         },
         "likelihood": {
-          "description": "Likelihood to return for this custom info type. This base value can be\naltered by a detection rule if the finding meets the criteria specified by\nthe rule. Defaults to `VERY_LIKELY` if not specified.",
+          "description": "Likelihood to return for this CustomInfoType. This base value can be\naltered by a detection rule if the finding meets the criteria specified by\nthe rule. Defaults to `VERY_LIKELY` if not specified.",
           "enum": [
             "LIKELIHOOD_UNSPECIFIED",
             "VERY_UNLIKELY",
@@ -1847,7 +1871,7 @@
             "VERY_LIKELY"
           ],
           "enumDescriptions": [
-            "Default value; information with all likelihoods is included.",
+            "Default value; same as POSSIBLE.",
             "Few matching elements.",
             "",
             "Some matching elements.",
@@ -1858,11 +1882,11 @@
         },
         "regex": {
           "$ref": "GooglePrivacyDlpV2Regex",
-          "description": "Regex-based custom info type."
+          "description": "Regular expression based CustomInfoType."
         },
         "surrogateType": {
           "$ref": "GooglePrivacyDlpV2SurrogateType",
-          "description": "Surrogate info type."
+          "description": "Message for detecting output from deidentification transformations that\nsupport reversing."
         }
       },
       "type": "object"
@@ -1894,7 +1918,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2DateShiftConfig": {
-      "description": "Shifts dates by random number of days, with option to be consistent for the\nsame context.",
+      "description": "Shifts dates by random number of days, with option to be consistent for the\nsame context. See https://cloud.google.com/dlp/docs/concepts-date-shifting\nto learn more.",
       "id": "GooglePrivacyDlpV2DateShiftConfig",
       "properties": {
         "context": {
@@ -2016,7 +2040,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2DeidentifyTemplate": {
-      "description": "The DeidentifyTemplates contains instructions on how to deidentify content.",
+      "description": "The DeidentifyTemplates contains instructions on how to deidentify content.\nSee https://cloud.google.com/dlp/docs/concepts-templates to learn more.",
       "id": "GooglePrivacyDlpV2DeidentifyTemplate",
       "properties": {
         "createTime": {
@@ -2048,8 +2072,100 @@
       },
       "type": "object"
     },
+    "GooglePrivacyDlpV2DeltaPresenceEstimationConfig": {
+      "description": "δ-presence metric, used to estimate how likely it is for an attacker to\nfigure out that one given individual appears in a de-identified dataset.\nSimilarly to the k-map metric, we cannot compute δ-presence exactly without\nknowing the attack dataset, so we use a statistical model instead.",
+      "id": "GooglePrivacyDlpV2DeltaPresenceEstimationConfig",
+      "properties": {
+        "auxiliaryTables": {
+          "description": "Several auxiliary tables can be used in the analysis. Each custom_tag\nused to tag a quasi-identifiers field must appear in exactly one\nfield of one auxiliary table.",
+          "items": {
+            "$ref": "GooglePrivacyDlpV2StatisticalTable"
+          },
+          "type": "array"
+        },
+        "quasiIds": {
+          "description": "Fields considered to be quasi-identifiers. No two fields can have the\nsame tag. [required]",
+          "items": {
+            "$ref": "GooglePrivacyDlpV2QuasiId"
+          },
+          "type": "array"
+        },
+        "regionCode": {
+          "description": "ISO 3166-1 alpha-2 region code to use in the statistical modeling.\nRequired if no column is tagged with a region-specific InfoType (like\nUS_ZIP_5) or a region code.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GooglePrivacyDlpV2DeltaPresenceEstimationHistogramBucket": {
+      "description": "A DeltaPresenceEstimationHistogramBucket message with the following\nvalues:\n  min_probability: 0.1\n  max_probability: 0.2\n  frequency: 42\nmeans that there are 42 records for which δ is in [0.1, 0.2). An\nimportant particular case is when min_probability = max_probability = 1:\nthen, every individual who shares this quasi-identifier combination is in\nthe dataset.",
+      "id": "GooglePrivacyDlpV2DeltaPresenceEstimationHistogramBucket",
+      "properties": {
+        "bucketSize": {
+          "description": "Number of records within these probability bounds.",
+          "format": "int64",
+          "type": "string"
+        },
+        "bucketValueCount": {
+          "description": "Total number of distinct quasi-identifier tuple values in this bucket.",
+          "format": "int64",
+          "type": "string"
+        },
+        "bucketValues": {
+          "description": "Sample of quasi-identifier tuple values in this bucket. The total\nnumber of classes returned per bucket is capped at 20.",
+          "items": {
+            "$ref": "GooglePrivacyDlpV2DeltaPresenceEstimationQuasiIdValues"
+          },
+          "type": "array"
+        },
+        "maxProbability": {
+          "description": "Always greater than or equal to min_probability.",
+          "format": "double",
+          "type": "number"
+        },
+        "minProbability": {
+          "description": "Between 0 and 1.",
+          "format": "double",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "GooglePrivacyDlpV2DeltaPresenceEstimationQuasiIdValues": {
+      "description": "A tuple of values for the quasi-identifier columns.",
+      "id": "GooglePrivacyDlpV2DeltaPresenceEstimationQuasiIdValues",
+      "properties": {
+        "estimatedProbability": {
+          "description": "The estimated probability that a given individual sharing these\nquasi-identifier values is in the dataset. This value, typically called\nδ, is the ratio between the number of records in the dataset with these\nquasi-identifier values, and the total number of individuals (inside\n*and* outside the dataset) with these quasi-identifier values.\nFor example, if there are 15 individuals in the dataset who share the\nsame quasi-identifier values, and an estimated 100 people in the entire\npopulation with these values, then δ is 0.15.",
+          "format": "double",
+          "type": "number"
+        },
+        "quasiIdsValues": {
+          "description": "The quasi-identifier values.",
+          "items": {
+            "$ref": "GooglePrivacyDlpV2Value"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GooglePrivacyDlpV2DeltaPresenceEstimationResult": {
+      "description": "Result of the δ-presence computation. Note that these results are an\nestimation, not exact values.",
+      "id": "GooglePrivacyDlpV2DeltaPresenceEstimationResult",
+      "properties": {
+        "deltaPresenceEstimationHistogram": {
+          "description": "The intervals [min_probability, max_probability) do not overlap. If a\nvalue doesn't correspond to any such interval, the associated frequency\nis zero. For example, the following records:\n  {min_probability: 0, max_probability: 0.1, frequency: 17}\n  {min_probability: 0.2, max_probability: 0.3, frequency: 42}\n  {min_probability: 0.3, max_probability: 0.4, frequency: 99}\nmean that there are no record with an estimated probability in [0.1, 0.2)\nnor larger or equal to 0.4.",
+          "items": {
+            "$ref": "GooglePrivacyDlpV2DeltaPresenceEstimationHistogramBucket"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "GooglePrivacyDlpV2DetectionRule": {
-      "description": "Rule for modifying a custom info type to alter behavior under certain\ncircumstances, depending on the specific details of the rule. Not supported\nfor the `surrogate_type` custom info type.",
+      "description": "Rule for modifying a CustomInfoType to alter behavior under certain\ncircumstances, depending on the specific details of the rule. Not supported\nfor the `surrogate_type` custom info type.",
       "id": "GooglePrivacyDlpV2DetectionRule",
       "properties": {
         "hotwordRule": {
@@ -2288,7 +2404,7 @@
             "VERY_LIKELY"
           ],
           "enumDescriptions": [
-            "Default value; information with all likelihoods is included.",
+            "Default value; same as POSSIBLE.",
             "Few matching elements.",
             "",
             "Some matching elements.",
@@ -2336,7 +2452,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2FixedSizeBucketingConfig": {
-      "description": "Buckets values based on fixed size ranges. The\nBucketing transformation can provide all of this functionality,\nbut requires more configuration. This message is provided as a convenience to\nthe user for simple bucketing strategies.\n\nThe transformed value will be a hyphenated string of\n\u003clower_bound\u003e-\u003cupper_bound\u003e, i.e if lower_bound = 10 and upper_bound = 20\nall values that are within this bucket will be replaced with \"10-20\".\n\nThis can be used on data of type: double, long.\n\nIf the bound Value type differs from the type of data\nbeing transformed, we will first attempt converting the type of the data to\nbe transformed to match the type of the bound before comparing.",
+      "description": "Buckets values based on fixed size ranges. The\nBucketing transformation can provide all of this functionality,\nbut requires more configuration. This message is provided as a convenience to\nthe user for simple bucketing strategies.\n\nThe transformed value will be a hyphenated string of\n\u003clower_bound\u003e-\u003cupper_bound\u003e, i.e if lower_bound = 10 and upper_bound = 20\nall values that are within this bucket will be replaced with \"10-20\".\n\nThis can be used on data of type: double, long.\n\nIf the bound Value type differs from the type of data\nbeing transformed, we will first attempt converting the type of the data to\nbe transformed to match the type of the bound before comparing.\n\nSee https://cloud.google.com/dlp/docs/concepts-bucketing to learn more.",
       "id": "GooglePrivacyDlpV2FixedSizeBucketingConfig",
       "properties": {
         "bucketSize": {
@@ -2356,12 +2472,12 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2HotwordRule": {
-      "description": "Detection rule that adjusts the likelihood of findings within a certain\nproximity of hotwords.",
+      "description": "The rule that adjusts the likelihood of findings within a certain\nproximity of hotwords.",
       "id": "GooglePrivacyDlpV2HotwordRule",
       "properties": {
         "hotwordRegex": {
           "$ref": "GooglePrivacyDlpV2Regex",
-          "description": "Regex pattern defining what qualifies as a hotword."
+          "description": "Regular expression pattern defining what qualifies as a hotword."
         },
         "likelihoodAdjustment": {
           "$ref": "GooglePrivacyDlpV2LikelihoodAdjustment",
@@ -2397,7 +2513,7 @@
           "description": "Only one per info_type should be provided per request. If not\nspecified, and redact_all_text is false, the DLP API will redact all\ntext that it matches against all info_types that are found, but not\nspecified in another ImageRedactionConfig."
         },
         "redactAllText": {
-          "description": "If true, all text found in the image, regardless whether it matches an\ninfo_type, is redacted.",
+          "description": "If true, all text found in the image, regardless whether it matches an\ninfo_type, is redacted. Only one should be provided.",
           "type": "boolean"
         },
         "redactionColor": {
@@ -2412,7 +2528,7 @@
       "id": "GooglePrivacyDlpV2InfoType",
       "properties": {
         "name": {
-          "description": "Name of the information type.",
+          "description": "Name of the information type. Either a name of your choosing when\ncreating a CustomInfoType, or one of the names listed\nat https://cloud.google.com/dlp/docs/infotypes-reference when specifying\na built-in type.",
           "type": "string"
         }
       },
@@ -2487,7 +2603,7 @@
       "id": "GooglePrivacyDlpV2InfoTypeTransformation",
       "properties": {
         "infoTypes": {
-          "description": "InfoTypes to apply the transformation to. Empty list will match all\navailable infoTypes for this transformation.",
+          "description": "InfoTypes to apply the transformation to. An empty list will cause\nthis transformation to apply to all findings that correspond to\ninfoTypes that were requested in `InspectConfig`.",
           "items": {
             "$ref": "GooglePrivacyDlpV2InfoType"
           },
@@ -2536,7 +2652,7 @@
           "type": "array"
         },
         "customInfoTypes": {
-          "description": "Custom infoTypes provided by the user.",
+          "description": "CustomInfoTypes provided by the user. See\nhttps://cloud.google.com/dlp/docs/creating-custom-infotypes to learn more.",
           "items": {
             "$ref": "GooglePrivacyDlpV2CustomInfoType"
           },
@@ -2551,7 +2667,7 @@
           "type": "boolean"
         },
         "infoTypes": {
-          "description": "Restricts what info_types to look for. The values must correspond to\nInfoType values returned by ListInfoTypes or found in documentation.",
+          "description": "Restricts what info_types to look for. The values must correspond to\nInfoType values returned by ListInfoTypes or listed at\nhttps://cloud.google.com/dlp/docs/infotypes-reference.",
           "items": {
             "$ref": "GooglePrivacyDlpV2InfoType"
           },
@@ -2561,7 +2677,7 @@
           "$ref": "GooglePrivacyDlpV2FindingLimits"
         },
         "minLikelihood": {
-          "description": "Only returns findings equal or above this threshold. The default is\nPOSSIBLE.",
+          "description": "Only returns findings equal or above this threshold. The default is\nPOSSIBLE.\nSee https://cloud.google.com/dlp/docs/likelihood to learn more.",
           "enum": [
             "LIKELIHOOD_UNSPECIFIED",
             "VERY_UNLIKELY",
@@ -2571,7 +2687,7 @@
             "VERY_LIKELY"
           ],
           "enumDescriptions": [
-            "Default value; information with all likelihoods is included.",
+            "Default value; same as POSSIBLE.",
             "Few matching elements.",
             "",
             "Some matching elements.",
@@ -2672,7 +2788,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2InspectTemplate": {
-      "description": "The inspectTemplate contains a configuration (set of types of sensitive data\nto be detected) to be used anywhere you otherwise would normally specify\nInspectConfig.",
+      "description": "The inspectTemplate contains a configuration (set of types of sensitive data\nto be detected) to be used anywhere you otherwise would normally specify\nInspectConfig. See https://cloud.google.com/dlp/docs/concepts-templates\nto learn more.",
       "id": "GooglePrivacyDlpV2InspectTemplate",
       "properties": {
         "createTime": {
@@ -2705,7 +2821,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2JobTrigger": {
-      "description": "Contains a configuration to make dlp api calls on a repeating basis.",
+      "description": "Contains a configuration to make dlp api calls on a repeating basis.\nSee https://cloud.google.com/dlp/docs/concepts-job-triggers to learn more.",
       "id": "GooglePrivacyDlpV2JobTrigger",
       "properties": {
         "createTime": {
@@ -3103,7 +3219,7 @@
             "VERY_LIKELY"
           ],
           "enumDescriptions": [
-            "Default value; information with all likelihoods is included.",
+            "Default value; same as POSSIBLE.",
             "Few matching elements.",
             "",
             "Some matching elements.",
@@ -3266,7 +3382,7 @@
       "id": "GooglePrivacyDlpV2OutputStorageConfig",
       "properties": {
         "outputSchema": {
-          "description": "Schema used for writing the findings. Columns are derived from the\n`Finding` object. If appending to an existing table, any columns from the\npredefined schema that are missing will be added. No columns in the\nexisting table will be deleted.\n\nIf unspecified, then all available columns will be used for a new table,\nand no changes will be made to an existing table.",
+          "description": "Schema used for writing the findings for Inspect jobs. This field is only\nused for Inspect and must be unspecified for Risk jobs. Columns are derived\nfrom the `Finding` object. If appending to an existing table, any columns\nfrom the predefined schema that are missing will be added. No columns in\nthe existing table will be deleted.\n\nIf unspecified, then all available columns will be used for a new table,\nand no changes will be made to an existing table.",
           "enum": [
             "OUTPUT_SCHEMA_UNSPECIFIED",
             "BASIC_COLUMNS",
@@ -3287,7 +3403,7 @@
         },
         "table": {
           "$ref": "GooglePrivacyDlpV2BigQueryTable",
-          "description": "Store findings in an existing table or a new table in an existing\ndataset. Each column in an existing table must have the same name, type,\nand mode of a field in the `Finding` object. If table_id is not set a new\none will be generated for you with the following format:\ndlp_googleapis_yyyy_mm_dd_[dlp_job_id]. Pacific timezone will be used for\ngenerating the date details."
+          "description": "Store findings in an existing table or a new table in an existing\ndataset. If table_id is not set a new one will be generated\nfor you with the following format:\ndlp_googleapis_yyyy_mm_dd_[dlp_job_id]. Pacific timezone will be used for\ngenerating the date details.\n\nFor Inspect, each column in an existing output table must have the same\nname, type, and mode of a field in the `Finding` object.\n\nFor Risk, an existing output table should be the output of a previous\nRisk analysis job run on the same source table, with the same privacy\nmetric and quasi-identifiers. Risk jobs that analyze the same table but\ncompute a different privacy metric, or use different sets of\nquasi-identifiers, cannot store their results in the same table."
         }
       },
       "type": "object"
@@ -3371,6 +3487,9 @@
         "categoricalStatsConfig": {
           "$ref": "GooglePrivacyDlpV2CategoricalStatsConfig"
         },
+        "deltaPresenceEstimationConfig": {
+          "$ref": "GooglePrivacyDlpV2DeltaPresenceEstimationConfig"
+        },
         "kAnonymityConfig": {
           "$ref": "GooglePrivacyDlpV2KAnonymityConfig"
         },
@@ -3420,9 +3539,45 @@
       },
       "type": "object"
     },
+    "GooglePrivacyDlpV2QuasiId": {
+      "description": "A column with a semantic tag attached.",
+      "id": "GooglePrivacyDlpV2QuasiId",
+      "properties": {
+        "customTag": {
+          "description": "A column can be tagged with a custom tag. In this case, the user must\nindicate an auxiliary table that contains statistical information on\nthe possible values of this column (below).",
+          "type": "string"
+        },
+        "field": {
+          "$ref": "GooglePrivacyDlpV2FieldId",
+          "description": "Identifies the column. [required]"
+        },
+        "inferred": {
+          "$ref": "GoogleProtobufEmpty",
+          "description": "If no semantic tag is indicated, we infer the statistical model from\nthe distribution of values in the input data"
+        },
+        "infoType": {
+          "$ref": "GooglePrivacyDlpV2InfoType",
+          "description": "A column can be tagged with a InfoType to use the relevant public\ndataset as a statistical model of population, if available. We\ncurrently support US ZIP codes, region codes, ages and genders.\nTo programmatically obtain the list of supported InfoTypes, use\nListInfoTypes with the supported_by=RISK_ANALYSIS filter."
+        }
+      },
+      "type": "object"
+    },
     "GooglePrivacyDlpV2QuasiIdField": {
       "description": "A quasi-identifier column has a custom_tag, used to know which column\nin the data corresponds to which column in the statistical model.",
       "id": "GooglePrivacyDlpV2QuasiIdField",
+      "properties": {
+        "customTag": {
+          "type": "string"
+        },
+        "field": {
+          "$ref": "GooglePrivacyDlpV2FieldId"
+        }
+      },
+      "type": "object"
+    },
+    "GooglePrivacyDlpV2QuasiIdentifierField": {
+      "description": "A quasi-identifier column has a custom_tag, used to know which column\nin the data corresponds to which column in the statistical model.",
+      "id": "GooglePrivacyDlpV2QuasiIdentifierField",
       "properties": {
         "customTag": {
           "type": "string"
@@ -3542,7 +3697,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2RedactImageRequest": {
-      "description": "Request to search for potentially sensitive info in a list of items\nand replace it with a default or provided content.",
+      "description": "Request to search for potentially sensitive info in an image and redact it\nby covering it with a colored rectangle.",
       "id": "GooglePrivacyDlpV2RedactImageRequest",
       "properties": {
         "byteItem": {
@@ -3686,7 +3841,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2RiskAnalysisJobConfig": {
-      "description": "Configuration for a risk analysis job.",
+      "description": "Configuration for a risk analysis job. See\nhttps://cloud.google.com/dlp/docs/concepts-risk-analysis to learn more.",
       "id": "GooglePrivacyDlpV2RiskAnalysisJobConfig",
       "properties": {
         "actions": {
@@ -3720,7 +3875,7 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2SaveFindings": {
-      "description": "If set, the detailed findings will be persisted to the specified\nOutputStorageConfig. Only a single instance of this action can be\nspecified.\nCompatible with: Inspect",
+      "description": "If set, the detailed findings will be persisted to the specified\nOutputStorageConfig. Only a single instance of this action can be\nspecified.\nCompatible with: Inspect, Risk",
       "id": "GooglePrivacyDlpV2SaveFindings",
       "properties": {
         "outputConfig": {
@@ -3734,9 +3889,31 @@
       "id": "GooglePrivacyDlpV2Schedule",
       "properties": {
         "recurrencePeriodDuration": {
-          "description": "With this option a job is started a regular periodic basis. For\nexample: every 10 minutes.\n\nA scheduled start time will be skipped if the previous\nexecution has not ended when its scheduled time occurs.\n\nThis value must be set to a time duration greater than or equal\nto 60 minutes and can be no longer than 60 days.",
+          "description": "With this option a job is started a regular periodic basis. For\nexample: every day (86400 seconds).\n\nA scheduled start time will be skipped if the previous\nexecution has not ended when its scheduled time occurs.\n\nThis value must be set to a time duration greater than or equal\nto 1 day and can be no longer than 60 days.",
           "format": "google-duration",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GooglePrivacyDlpV2StatisticalTable": {
+      "description": "An auxiliary table containing statistical information on the relative\nfrequency of different quasi-identifiers values. It has one or several\nquasi-identifiers columns, and one column that indicates the relative\nfrequency of each quasi-identifier tuple.\nIf a tuple is present in the data but not in the auxiliary table, the\ncorresponding relative frequency is assumed to be zero (and thus, the\ntuple is highly reidentifiable).",
+      "id": "GooglePrivacyDlpV2StatisticalTable",
+      "properties": {
+        "quasiIds": {
+          "description": "Quasi-identifier columns. [required]",
+          "items": {
+            "$ref": "GooglePrivacyDlpV2QuasiIdentifierField"
+          },
+          "type": "array"
+        },
+        "relativeFrequency": {
+          "$ref": "GooglePrivacyDlpV2FieldId",
+          "description": "The relative frequency column must contain a floating-point number\nbetween 0 and 1 (inclusive). Null values are assumed to be zero.\n[required]"
+        },
+        "table": {
+          "$ref": "GooglePrivacyDlpV2BigQueryTable",
+          "description": "Auxiliary table location. [required]"
         }
       },
       "type": "object"
@@ -3792,13 +3969,13 @@
       "type": "object"
     },
     "GooglePrivacyDlpV2SurrogateType": {
-      "description": "Message for detecting output from deidentification transformations\nsuch as\n[`CryptoReplaceFfxFpeConfig`](/dlp/docs/reference/rest/v2/organizations.deidentifyTemplates#cryptoreplaceffxfpeconfig).\nThese types of transformations are\nthose that perform pseudonymization, thereby producing a \"surrogate\" as\noutput. This should be used in conjunction with a field on the\ntransformation such as `surrogate_info_type`. This custom info type does\nnot support the use of `detection_rules`.",
+      "description": "Message for detecting output from deidentification transformations\nsuch as\n[`CryptoReplaceFfxFpeConfig`](/dlp/docs/reference/rest/v2/organizations.deidentifyTemplates#cryptoreplaceffxfpeconfig).\nThese types of transformations are\nthose that perform pseudonymization, thereby producing a \"surrogate\" as\noutput. This should be used in conjunction with a field on the\ntransformation such as `surrogate_info_type`. This CustomInfoType does\nnot support the use of `detection_rules`.",
       "id": "GooglePrivacyDlpV2SurrogateType",
       "properties": {},
       "type": "object"
     },
     "GooglePrivacyDlpV2Table": {
-      "description": "Structured content to inspect. Up to 50,000 `Value`s per request allowed.",
+      "description": "Structured content to inspect. Up to 50,000 `Value`s per request allowed.\nSee https://cloud.google.com/dlp/docs/inspecting-text#inspecting_a_table to\nlearn more.",
       "id": "GooglePrivacyDlpV2Table",
       "properties": {
         "headers": {

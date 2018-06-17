@@ -151,7 +151,8 @@ const (
 	// "HierarchyLevelLimitExceededException".
 	//
 	// A hierarchy can have a maximum of 15 levels. For more information, see Working
-	// with Systems Manager Parameters (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
+	// with Systems Manager Parameters (http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html)
+	// in the AWS Systems Manager User Guide.
 	ErrCodeHierarchyLevelLimitExceededException = "HierarchyLevelLimitExceededException"
 
 	// ErrCodeHierarchyTypeMismatchException for service response error code
@@ -305,12 +306,12 @@ const (
 	//
 	// You do not have permission to access the instance.
 	//
-	// The SSM Agent is not running. On managed instances and Linux instances, verify
+	// SSM Agent is not running. On managed instances and Linux instances, verify
 	// that the SSM Agent is running. On EC2 Windows instances, verify that the
 	// EC2Config service is running.
 	//
-	// The SSM Agent or EC2Config service is not registered to the SSM endpoint.
-	// Try reinstalling the SSM Agent or EC2Config service.
+	// SSM Agent or EC2Config service is not registered to the SSM endpoint. Try
+	// reinstalling SSM Agent or EC2Config service.
 	//
 	// The instance is not in valid state. Valid states are: Running, Pending, Stopped,
 	// Stopping. Invalid states are: Shutting-down and Terminated.

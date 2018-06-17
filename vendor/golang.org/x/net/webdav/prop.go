@@ -7,6 +7,7 @@ package webdav
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -376,10 +377,37 @@ func findContentLength(ctx context.Context, fs FileSystem, ls LockSystem, name s
 }
 
 func findLastModified(ctx context.Context, fs FileSystem, ls LockSystem, name string, fi os.FileInfo) (string, error) {
-	return fi.ModTime().Format(http.TimeFormat), nil
+	return fi.ModTime().UTC().Format(http.TimeFormat), nil
+}
+
+// ErrNotImplemented should be returned by optional interfaces if they
+// want the original implementation to be used.
+var ErrNotImplemented = errors.New("not implemented")
+
+// ContentTyper is an optional interface for the os.FileInfo
+// objects returned by the FileSystem.
+//
+// If this interface is defined then it will be used to read the
+// content type from the object.
+//
+// If this interface is not defined the file will be opened and the
+// content type will be guessed from the initial contents of the file.
+type ContentTyper interface {
+	// ContentType returns the content type for the file.
+	//
+	// If this returns error ErrNotImplemented then the error will
+	// be ignored and the base implementation will be used
+	// instead.
+	ContentType(ctx context.Context) (string, error)
 }
 
 func findContentType(ctx context.Context, fs FileSystem, ls LockSystem, name string, fi os.FileInfo) (string, error) {
+	if do, ok := fi.(ContentTyper); ok {
+		ctype, err := do.ContentType(ctx)
+		if err != ErrNotImplemented {
+			return ctype, err
+		}
+	}
 	f, err := fs.OpenFile(ctx, name, os.O_RDONLY, 0)
 	if err != nil {
 		return "", err
@@ -402,7 +430,31 @@ func findContentType(ctx context.Context, fs FileSystem, ls LockSystem, name str
 	return ctype, err
 }
 
+// ETager is an optional interface for the os.FileInfo objects
+// returned by the FileSystem.
+//
+// If this interface is defined then it will be used to read the ETag
+// for the object.
+//
+// If this interface is not defined an ETag will be computed using the
+// ModTime() and the Size() methods of the os.FileInfo object.
+type ETager interface {
+	// ETag returns an ETag for the file.  This should be of the
+	// form "value" or W/"value"
+	//
+	// If this returns error ErrNotImplemented then the error will
+	// be ignored and the base implementation will be used
+	// instead.
+	ETag(ctx context.Context) (string, error)
+}
+
 func findETag(ctx context.Context, fs FileSystem, ls LockSystem, name string, fi os.FileInfo) (string, error) {
+	if do, ok := fi.(ETager); ok {
+		etag, err := do.ETag(ctx)
+		if err != ErrNotImplemented {
+			return etag, err
+		}
+	}
 	// The Apache http 2.4 web server by default concatenates the
 	// modification time and size of a file. We replicate the heuristic
 	// with nanosecond granularity.

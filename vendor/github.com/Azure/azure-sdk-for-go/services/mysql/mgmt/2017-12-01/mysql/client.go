@@ -1,7 +1,7 @@
 // Package mysql implements the Azure ARM Mysql service API version 2017-12-01.
 //
 // The Microsoft Azure management API provides create, read, update, and delete functionality for Azure MySQL resources
-// including servers, databases, firewall rules, log files and configurations with new business model.
+// including servers, databases, firewall rules, VNET rules, log files and configurations with new business model.
 package mysql
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

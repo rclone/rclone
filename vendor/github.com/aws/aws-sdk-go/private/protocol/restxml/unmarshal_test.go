@@ -76,6 +76,7 @@ func newOutputService1ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice1protocoltest",
+				ServiceID:     "OutputService1ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -459,6 +460,7 @@ func newOutputService2ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice2protocoltest",
+				ServiceID:     "OutputService2ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -603,6 +605,7 @@ func newOutputService3ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice3protocoltest",
+				ServiceID:     "OutputService3ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -746,6 +749,7 @@ func newOutputService4ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice4protocoltest",
+				ServiceID:     "OutputService4ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -889,6 +893,7 @@ func newOutputService5ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice5protocoltest",
+				ServiceID:     "OutputService5ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1032,6 +1037,7 @@ func newOutputService6ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice6protocoltest",
+				ServiceID:     "OutputService6ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1187,6 +1193,7 @@ func newOutputService7ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice7protocoltest",
+				ServiceID:     "OutputService7ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1330,6 +1337,7 @@ func newOutputService8ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice8protocoltest",
+				ServiceID:     "OutputService8ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1473,6 +1481,7 @@ func newOutputService9ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice9protocoltest",
+				ServiceID:     "OutputService9ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1636,6 +1645,7 @@ func newOutputService10ProtocolTestClient(cfg aws.Config, handlers request.Handl
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice10protocoltest",
+				ServiceID:     "OutputService10ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1779,6 +1789,7 @@ func newOutputService11ProtocolTestClient(cfg aws.Config, handlers request.Handl
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice11protocoltest",
+				ServiceID:     "OutputService11ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1986,6 +1997,7 @@ func newOutputService12ProtocolTestClient(cfg aws.Config, handlers request.Handl
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice12protocoltest",
+				ServiceID:     "OutputService12ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -2129,6 +2141,7 @@ func newOutputService13ProtocolTestClient(cfg aws.Config, handlers request.Handl
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice13protocoltest",
+				ServiceID:     "OutputService13ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -2378,6 +2391,7 @@ func newOutputService14ProtocolTestClient(cfg aws.Config, handlers request.Handl
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "outputservice14protocoltest",
+				ServiceID:     "OutputService14ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -2587,7 +2601,7 @@ func TestOutputService1ProtocolTestScalarMembersCase1(t *testing.T) {
 	if e, a := "myname", *out.Str; e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
-	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamp.String(); e != a {
+	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamp.UTC().String(); e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 	if e, a := true, *out.TrueBool; e != a {
@@ -2645,7 +2659,7 @@ func TestOutputService1ProtocolTestScalarMembersCase2(t *testing.T) {
 	if e, a := "", *out.Str; e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
-	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamp.String(); e != a {
+	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamp.UTC().String(); e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 	if e, a := true, *out.TrueBool; e != a {
@@ -2680,10 +2694,10 @@ func TestOutputService1ProtocolTestScalarMembersCase3(t *testing.T) {
 	if e, a := "value2", string(out.Blobs[1]); e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
-	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamps[0].String(); e != a {
+	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamps[0].UTC().String(); e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
-	if e, a := time.Unix(1.422172801e+09, 0).UTC().String(), out.Timestamps[1].String(); e != a {
+	if e, a := time.Unix(1.422172801e+09, 0).UTC().String(), out.Timestamps[1].UTC().String(); e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 
@@ -2995,7 +3009,7 @@ func TestOutputService11ProtocolTestScalarMembersInHeadersCase1(t *testing.T) {
 	if e, a := "string", *out.Str; e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
-	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamp.String(); e != a {
+	if e, a := time.Unix(1.4221728e+09, 0).UTC().String(), out.Timestamp.UTC().String(); e != a {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 	if e, a := true, *out.TrueBool; e != a {

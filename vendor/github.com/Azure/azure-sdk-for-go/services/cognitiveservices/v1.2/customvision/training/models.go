@@ -23,6 +23,103 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// DomainType enumerates the values for domain type.
+type DomainType string
+
+const (
+	// Classification ...
+	Classification DomainType = "Classification"
+	// ObjectDetection ...
+	ObjectDetection DomainType = "ObjectDetection"
+)
+
+// PossibleDomainTypeValues returns an array of possible values for the DomainType const type.
+func PossibleDomainTypeValues() []DomainType {
+	return []DomainType{Classification, ObjectDetection}
+}
+
+// ExportFlavor enumerates the values for export flavor.
+type ExportFlavor string
+
+const (
+	// Linux ...
+	Linux ExportFlavor = "Linux"
+	// Windows ...
+	Windows ExportFlavor = "Windows"
+)
+
+// PossibleExportFlavorValues returns an array of possible values for the ExportFlavor const type.
+func PossibleExportFlavorValues() []ExportFlavor {
+	return []ExportFlavor{Linux, Windows}
+}
+
+// ExportPlatform enumerates the values for export platform.
+type ExportPlatform string
+
+const (
+	// CoreML ...
+	CoreML ExportPlatform = "CoreML"
+	// DockerFile ...
+	DockerFile ExportPlatform = "DockerFile"
+	// ONNX ...
+	ONNX ExportPlatform = "ONNX"
+	// TensorFlow ...
+	TensorFlow ExportPlatform = "TensorFlow"
+)
+
+// PossibleExportPlatformValues returns an array of possible values for the ExportPlatform const type.
+func PossibleExportPlatformValues() []ExportPlatform {
+	return []ExportPlatform{CoreML, DockerFile, ONNX, TensorFlow}
+}
+
+// ExportStatusModel enumerates the values for export status model.
+type ExportStatusModel string
+
+const (
+	// Done ...
+	Done ExportStatusModel = "Done"
+	// Exporting ...
+	Exporting ExportStatusModel = "Exporting"
+	// Failed ...
+	Failed ExportStatusModel = "Failed"
+)
+
+// PossibleExportStatusModelValues returns an array of possible values for the ExportStatusModel const type.
+func PossibleExportStatusModelValues() []ExportStatusModel {
+	return []ExportStatusModel{Done, Exporting, Failed}
+}
+
+// ImageUploadStatus enumerates the values for image upload status.
+type ImageUploadStatus string
+
+const (
+	// ErrorImageFormat ...
+	ErrorImageFormat ImageUploadStatus = "ErrorImageFormat"
+	// ErrorImageSize ...
+	ErrorImageSize ImageUploadStatus = "ErrorImageSize"
+	// ErrorLimitExceed ...
+	ErrorLimitExceed ImageUploadStatus = "ErrorLimitExceed"
+	// ErrorRegionLimitExceed ...
+	ErrorRegionLimitExceed ImageUploadStatus = "ErrorRegionLimitExceed"
+	// ErrorSource ...
+	ErrorSource ImageUploadStatus = "ErrorSource"
+	// ErrorStorage ...
+	ErrorStorage ImageUploadStatus = "ErrorStorage"
+	// ErrorTagLimitExceed ...
+	ErrorTagLimitExceed ImageUploadStatus = "ErrorTagLimitExceed"
+	// ErrorUnknown ...
+	ErrorUnknown ImageUploadStatus = "ErrorUnknown"
+	// OK ...
+	OK ImageUploadStatus = "OK"
+	// OKDuplicate ...
+	OKDuplicate ImageUploadStatus = "OKDuplicate"
+)
+
+// PossibleImageUploadStatusValues returns an array of possible values for the ImageUploadStatus const type.
+func PossibleImageUploadStatusValues() []ImageUploadStatus {
+	return []ImageUploadStatus{ErrorImageFormat, ErrorImageSize, ErrorLimitExceed, ErrorRegionLimitExceed, ErrorSource, ErrorStorage, ErrorTagLimitExceed, ErrorUnknown, OK, OKDuplicate}
+}
+
 // OrderBy enumerates the values for order by.
 type OrderBy string
 
@@ -40,271 +137,260 @@ func PossibleOrderByValues() []OrderBy {
 	return []OrderBy{Newest, Oldest, Suggested}
 }
 
-// Platform enumerates the values for platform.
-type Platform string
-
-const (
-	// CoreML ...
-	CoreML Platform = "CoreML"
-	// TensorFlow ...
-	TensorFlow Platform = "TensorFlow"
-)
-
-// PossiblePlatformValues returns an array of possible values for the Platform const type.
-func PossiblePlatformValues() []Platform {
-	return []Platform{CoreML, TensorFlow}
-}
-
-// Status enumerates the values for status.
-type Status string
-
-const (
-	// ErrorImageFormat ...
-	ErrorImageFormat Status = "ErrorImageFormat"
-	// ErrorImageSize ...
-	ErrorImageSize Status = "ErrorImageSize"
-	// ErrorLimitExceed ...
-	ErrorLimitExceed Status = "ErrorLimitExceed"
-	// ErrorSource ...
-	ErrorSource Status = "ErrorSource"
-	// ErrorStorage ...
-	ErrorStorage Status = "ErrorStorage"
-	// ErrorTagLimitExceed ...
-	ErrorTagLimitExceed Status = "ErrorTagLimitExceed"
-	// ErrorUnknown ...
-	ErrorUnknown Status = "ErrorUnknown"
-	// OK ...
-	OK Status = "OK"
-	// OKDuplicate ...
-	OKDuplicate Status = "OKDuplicate"
-)
-
-// PossibleStatusValues returns an array of possible values for the Status const type.
-func PossibleStatusValues() []Status {
-	return []Status{ErrorImageFormat, ErrorImageSize, ErrorLimitExceed, ErrorSource, ErrorStorage, ErrorTagLimitExceed, ErrorUnknown, OK, OKDuplicate}
-}
-
-// Status1 enumerates the values for status 1.
-type Status1 string
-
-const (
-	// Done ...
-	Done Status1 = "Done"
-	// Exporting ...
-	Exporting Status1 = "Exporting"
-	// Failed ...
-	Failed Status1 = "Failed"
-)
-
-// PossibleStatus1Values returns an array of possible values for the Status1 const type.
-func PossibleStatus1Values() []Status1 {
-	return []Status1{Done, Exporting, Failed}
-}
-
-// Account represents a user account
-type Account struct {
-	autorest.Response `json:"-"`
-	// UserName - Gets the name of the account owner
-	UserName *string `json:"UserName,omitempty"`
-	// Email - Gets the email associated with this account
-	Email *string `json:"Email,omitempty"`
-	// Keys - Gets the api keys associated with this account
-	Keys *APIKeys `json:"Keys,omitempty"`
-	// Quotas - Gets the quotas associated with this account
-	Quotas *AccountQuota `json:"Quotas,omitempty"`
-}
-
-// AccountQuota represents a set of quotas assocated with an account
-type AccountQuota struct {
-	// Tier - Gets the tier of user
-	Tier *string `json:"Tier,omitempty"`
-	// Projects - Gets the project quota
-	Projects *Quota `json:"Projects,omitempty"`
-	// Predictions - Gets the prediction quota
-	Predictions *Quota `json:"Predictions,omitempty"`
-	// PerProject - Gets a list of quotas that apply per-project for each project
-	PerProject *[]PerProjectQuota `json:"PerProject,omitempty"`
-}
-
-// APIKeys ...
-type APIKeys struct {
-	TrainingKeys   *KeyPair `json:"TrainingKeys,omitempty"`
-	PredictionKeys *KeyPair `json:"PredictionKeys,omitempty"`
+// BoundingBox ...
+type BoundingBox struct {
+	Left   *float64 `json:"left,omitempty"`
+	Top    *float64 `json:"top,omitempty"`
+	Width  *float64 `json:"width,omitempty"`
+	Height *float64 `json:"height,omitempty"`
 }
 
 // Domain ...
 type Domain struct {
 	autorest.Response `json:"-"`
-	ID                *uuid.UUID `json:"Id,omitempty"`
-	Name              *string    `json:"Name,omitempty"`
-	Exportable        *bool      `json:"Exportable,omitempty"`
+	ID                *uuid.UUID `json:"id,omitempty"`
+	Name              *string    `json:"name,omitempty"`
+	// Type - Possible values include: 'Classification', 'ObjectDetection'
+	Type       DomainType `json:"type,omitempty"`
+	Exportable *bool      `json:"exportable,omitempty"`
+	Enabled    *bool      `json:"enabled,omitempty"`
 }
 
 // Export ...
 type Export struct {
 	autorest.Response `json:"-"`
-	// Platform - Possible values include: 'CoreML', 'TensorFlow'
-	Platform Platform `json:"Platform,omitempty"`
+	// Platform - Possible values include: 'CoreML', 'TensorFlow', 'DockerFile', 'ONNX'
+	Platform ExportPlatform `json:"platform,omitempty"`
 	// Status - Possible values include: 'Exporting', 'Failed', 'Done'
-	Status      Status1 `json:"Status,omitempty"`
-	DownloadURI *string `json:"DownloadUri,omitempty"`
+	Status      ExportStatusModel `json:"status,omitempty"`
+	DownloadURI *string           `json:"downloadUri,omitempty"`
+	// Flavor - Possible values include: 'Linux', 'Windows'
+	Flavor ExportFlavor `json:"flavor,omitempty"`
 }
 
 // Image image model to be sent as JSON
 type Image struct {
-	ID           *uuid.UUID       `json:"Id,omitempty"`
-	Created      *date.Time       `json:"Created,omitempty"`
-	Width        *int32           `json:"Width,omitempty"`
-	Height       *int32           `json:"Height,omitempty"`
-	ImageURI     *string          `json:"ImageUri,omitempty"`
-	ThumbnailURI *string          `json:"ThumbnailUri,omitempty"`
-	Tags         *[]ImageTag      `json:"Tags,omitempty"`
-	Predictions  *[]PredictionTag `json:"Predictions,omitempty"`
+	ID           *uuid.UUID     `json:"id,omitempty"`
+	Created      *date.Time     `json:"created,omitempty"`
+	Width        *int32         `json:"width,omitempty"`
+	Height       *int32         `json:"height,omitempty"`
+	ImageURI     *string        `json:"imageUri,omitempty"`
+	ThumbnailURI *string        `json:"thumbnailUri,omitempty"`
+	Tags         *[]ImageTag    `json:"tags,omitempty"`
+	Regions      *[]ImageRegion `json:"regions,omitempty"`
 }
 
 // ImageCreateResult ...
 type ImageCreateResult struct {
-	SourceURL *string `json:"SourceUrl,omitempty"`
-	// Status - Possible values include: 'OK', 'OKDuplicate', 'ErrorSource', 'ErrorImageFormat', 'ErrorImageSize', 'ErrorStorage', 'ErrorLimitExceed', 'ErrorTagLimitExceed', 'ErrorUnknown'
-	Status Status `json:"Status,omitempty"`
-	Image  *Image `json:"Image,omitempty"`
+	SourceURL *string `json:"sourceUrl,omitempty"`
+	// Status - Possible values include: 'OK', 'OKDuplicate', 'ErrorSource', 'ErrorImageFormat', 'ErrorImageSize', 'ErrorStorage', 'ErrorLimitExceed', 'ErrorTagLimitExceed', 'ErrorRegionLimitExceed', 'ErrorUnknown'
+	Status ImageUploadStatus `json:"status,omitempty"`
+	Image  *Image            `json:"image,omitempty"`
 }
 
 // ImageCreateSummary ...
 type ImageCreateSummary struct {
 	autorest.Response `json:"-"`
-	IsBatchSuccessful *bool                `json:"IsBatchSuccessful,omitempty"`
-	Images            *[]ImageCreateResult `json:"Images,omitempty"`
+	IsBatchSuccessful *bool                `json:"isBatchSuccessful,omitempty"`
+	Images            *[]ImageCreateResult `json:"images,omitempty"`
 }
 
 // ImageFileCreateBatch ...
 type ImageFileCreateBatch struct {
-	Images *[]ImageFileCreateEntry `json:"Images,omitempty"`
-	TagIds *[]uuid.UUID            `json:"TagIds,omitempty"`
+	Images *[]ImageFileCreateEntry `json:"images,omitempty"`
+	TagIds *[]uuid.UUID            `json:"tagIds,omitempty"`
 }
 
 // ImageFileCreateEntry ...
 type ImageFileCreateEntry struct {
-	Name     *string      `json:"Name,omitempty"`
-	Contents *[]byte      `json:"Contents,omitempty"`
-	TagIds   *[]uuid.UUID `json:"TagIds,omitempty"`
+	Name     *string      `json:"name,omitempty"`
+	Contents *[]byte      `json:"contents,omitempty"`
+	TagIds   *[]uuid.UUID `json:"tagIds,omitempty"`
+	Regions  *[]Region    `json:"regions,omitempty"`
 }
 
 // ImageIDCreateBatch ...
 type ImageIDCreateBatch struct {
-	Images *[]ImageIDCreateEntry `json:"Images,omitempty"`
-	TagIds *[]uuid.UUID          `json:"TagIds,omitempty"`
+	Images *[]ImageIDCreateEntry `json:"images,omitempty"`
+	TagIds *[]uuid.UUID          `json:"tagIds,omitempty"`
 }
 
 // ImageIDCreateEntry ...
 type ImageIDCreateEntry struct {
-	ID     *uuid.UUID   `json:"Id,omitempty"`
-	TagIds *[]uuid.UUID `json:"TagIds,omitempty"`
+	ID      *uuid.UUID   `json:"id,omitempty"`
+	TagIds  *[]uuid.UUID `json:"tagIds,omitempty"`
+	Regions *[]Region    `json:"regions,omitempty"`
 }
 
-// ImagePredictionResult result of an image prediction request
-type ImagePredictionResult struct {
+// ImagePerformance image performance model
+type ImagePerformance struct {
+	Predictions  *[]Prediction  `json:"predictions,omitempty"`
+	ID           *uuid.UUID     `json:"id,omitempty"`
+	Created      *date.Time     `json:"created,omitempty"`
+	Width        *int32         `json:"width,omitempty"`
+	Height       *int32         `json:"height,omitempty"`
+	ImageURI     *string        `json:"imageUri,omitempty"`
+	ThumbnailURI *string        `json:"thumbnailUri,omitempty"`
+	Tags         *[]ImageTag    `json:"tags,omitempty"`
+	Regions      *[]ImageRegion `json:"regions,omitempty"`
+}
+
+// ImagePrediction ...
+type ImagePrediction struct {
 	autorest.Response `json:"-"`
-	ID                *uuid.UUID            `json:"Id,omitempty"`
-	Project           *uuid.UUID            `json:"Project,omitempty"`
-	Iteration         *uuid.UUID            `json:"Iteration,omitempty"`
-	Created           *date.Time            `json:"Created,omitempty"`
-	Predictions       *[]ImageTagPrediction `json:"Predictions,omitempty"`
+	ID                *uuid.UUID    `json:"id,omitempty"`
+	Project           *uuid.UUID    `json:"project,omitempty"`
+	Iteration         *uuid.UUID    `json:"iteration,omitempty"`
+	Created           *date.Time    `json:"created,omitempty"`
+	Predictions       *[]Prediction `json:"predictions,omitempty"`
+}
+
+// ImageRegion ...
+type ImageRegion struct {
+	RegionID *uuid.UUID `json:"regionId,omitempty"`
+	TagName  *string    `json:"tagName,omitempty"`
+	Created  *date.Time `json:"created,omitempty"`
+	TagID    *uuid.UUID `json:"tagId,omitempty"`
+	Left     *float64   `json:"left,omitempty"`
+	Top      *float64   `json:"top,omitempty"`
+	Width    *float64   `json:"width,omitempty"`
+	Height   *float64   `json:"height,omitempty"`
+}
+
+// ImageRegionCreateBatch batch of image region information to create.
+type ImageRegionCreateBatch struct {
+	Regions *[]ImageRegionCreateEntry `json:"regions,omitempty"`
+}
+
+// ImageRegionCreateEntry ...
+type ImageRegionCreateEntry struct {
+	ImageID *uuid.UUID `json:"imageId,omitempty"`
+	TagID   *uuid.UUID `json:"tagId,omitempty"`
+	Left    *float64   `json:"left,omitempty"`
+	Top     *float64   `json:"top,omitempty"`
+	Width   *float64   `json:"width,omitempty"`
+	Height  *float64   `json:"height,omitempty"`
+}
+
+// ImageRegionCreateResult ...
+type ImageRegionCreateResult struct {
+	ImageID  *uuid.UUID `json:"imageId,omitempty"`
+	RegionID *uuid.UUID `json:"regionId,omitempty"`
+	TagName  *string    `json:"tagName,omitempty"`
+	Created  *date.Time `json:"created,omitempty"`
+	TagID    *uuid.UUID `json:"tagId,omitempty"`
+	Left     *float64   `json:"left,omitempty"`
+	Top      *float64   `json:"top,omitempty"`
+	Width    *float64   `json:"width,omitempty"`
+	Height   *float64   `json:"height,omitempty"`
+}
+
+// ImageRegionCreateSummary ...
+type ImageRegionCreateSummary struct {
+	autorest.Response `json:"-"`
+	Created           *[]ImageRegionCreateResult `json:"created,omitempty"`
+	Duplicated        *[]ImageRegionCreateEntry  `json:"duplicated,omitempty"`
+	Exceeded          *[]ImageRegionCreateEntry  `json:"exceeded,omitempty"`
+}
+
+// ImageRegionProposal ...
+type ImageRegionProposal struct {
+	autorest.Response `json:"-"`
+	ProjectID         *uuid.UUID        `json:"projectId,omitempty"`
+	ImageID           *uuid.UUID        `json:"imageId,omitempty"`
+	Proposals         *[]RegionProposal `json:"proposals,omitempty"`
 }
 
 // ImageTag ...
 type ImageTag struct {
-	TagID   *uuid.UUID `json:"TagId,omitempty"`
-	Created *date.Time `json:"Created,omitempty"`
+	TagID   *uuid.UUID `json:"tagId,omitempty"`
+	TagName *string    `json:"tagName,omitempty"`
+	Created *date.Time `json:"created,omitempty"`
 }
 
 // ImageTagCreateBatch ...
 type ImageTagCreateBatch struct {
-	Tags *[]ImageTagCreateEntry `json:"Tags,omitempty"`
+	Tags *[]ImageTagCreateEntry `json:"tags,omitempty"`
 }
 
 // ImageTagCreateEntry ...
 type ImageTagCreateEntry struct {
-	ImageID *uuid.UUID `json:"ImageId,omitempty"`
-	TagID   *uuid.UUID `json:"TagId,omitempty"`
+	ImageID *uuid.UUID `json:"imageId,omitempty"`
+	TagID   *uuid.UUID `json:"tagId,omitempty"`
 }
 
 // ImageTagCreateSummary ...
 type ImageTagCreateSummary struct {
 	autorest.Response `json:"-"`
-	Created           *[]ImageTagCreateEntry `json:"Created,omitempty"`
-	Duplicated        *[]ImageTagCreateEntry `json:"Duplicated,omitempty"`
-	Exceeded          *[]ImageTagCreateEntry `json:"Exceeded,omitempty"`
-}
-
-// ImageTagPrediction ...
-type ImageTagPrediction struct {
-	TagID       *uuid.UUID `json:"TagId,omitempty"`
-	Tag         *string    `json:"Tag,omitempty"`
-	Probability *float64   `json:"Probability,omitempty"`
+	Created           *[]ImageTagCreateEntry `json:"created,omitempty"`
+	Duplicated        *[]ImageTagCreateEntry `json:"duplicated,omitempty"`
+	Exceeded          *[]ImageTagCreateEntry `json:"exceeded,omitempty"`
 }
 
 // ImageURL ...
 type ImageURL struct {
-	URL *string `json:"Url,omitempty"`
+	URL *string `json:"url,omitempty"`
 }
 
 // ImageURLCreateBatch ...
 type ImageURLCreateBatch struct {
-	Images *[]ImageURLCreateEntry `json:"Images,omitempty"`
-	TagIds *[]uuid.UUID           `json:"TagIds,omitempty"`
+	Images *[]ImageURLCreateEntry `json:"images,omitempty"`
+	TagIds *[]uuid.UUID           `json:"tagIds,omitempty"`
 }
 
 // ImageURLCreateEntry ...
 type ImageURLCreateEntry struct {
-	URL    *string      `json:"Url,omitempty"`
-	TagIds *[]uuid.UUID `json:"TagIds,omitempty"`
+	URL     *string      `json:"url,omitempty"`
+	TagIds  *[]uuid.UUID `json:"tagIds,omitempty"`
+	Regions *[]Region    `json:"regions,omitempty"`
+}
+
+// Int32 ...
+type Int32 struct {
+	autorest.Response `json:"-"`
+	Value             *int32 `json:"value,omitempty"`
 }
 
 // Iteration iteration model to be sent over JSON
 type Iteration struct {
 	autorest.Response `json:"-"`
 	// ID - Gets the id of the iteration
-	ID *uuid.UUID `json:"Id,omitempty"`
+	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - Gets or sets the name of the iteration
-	Name *string `json:"Name,omitempty"`
+	Name *string `json:"name,omitempty"`
 	// IsDefault - Gets or sets a value indicating whether the iteration is the default iteration for the project
-	IsDefault *bool `json:"IsDefault,omitempty"`
+	IsDefault *bool `json:"isDefault,omitempty"`
 	// Status - Gets the current iteration status
-	Status *string `json:"Status,omitempty"`
+	Status *string `json:"status,omitempty"`
 	// Created - Gets the time this iteration was completed
-	Created *date.Time `json:"Created,omitempty"`
+	Created *date.Time `json:"created,omitempty"`
 	// LastModified - Gets the time this iteration was last modified
-	LastModified *date.Time `json:"LastModified,omitempty"`
+	LastModified *date.Time `json:"lastModified,omitempty"`
 	// TrainedAt - Gets the time this iteration was last modified
-	TrainedAt *date.Time `json:"TrainedAt,omitempty"`
+	TrainedAt *date.Time `json:"trainedAt,omitempty"`
 	// ProjectID - Gets the project id of the iteration
-	ProjectID *uuid.UUID `json:"ProjectId,omitempty"`
+	ProjectID *uuid.UUID `json:"projectId,omitempty"`
 	// Exportable - Whether the iteration can be exported to another format for download
-	Exportable *bool `json:"Exportable,omitempty"`
+	Exportable *bool `json:"exportable,omitempty"`
 	// DomainID - Get or sets a guid of the domain the iteration has been trained on
-	DomainID *uuid.UUID `json:"DomainId,omitempty"`
+	DomainID *uuid.UUID `json:"domainId,omitempty"`
 }
 
 // IterationPerformance represents the detailed performance data for a trained iteration
 type IterationPerformance struct {
 	autorest.Response `json:"-"`
 	// PerTagPerformance - Gets the per-tag performance details for this iteration
-	PerTagPerformance *[]TagPerformance `json:"PerTagPerformance,omitempty"`
+	PerTagPerformance *[]TagPerformance `json:"perTagPerformance,omitempty"`
 	// Precision - Gets the precision
-	Precision *float64 `json:"Precision,omitempty"`
+	Precision *float64 `json:"precision,omitempty"`
 	// PrecisionStdDeviation - Gets the standard deviation for the precision
-	PrecisionStdDeviation *float64 `json:"PrecisionStdDeviation,omitempty"`
+	PrecisionStdDeviation *float64 `json:"precisionStdDeviation,omitempty"`
 	// Recall - Gets the recall
-	Recall *float64 `json:"Recall,omitempty"`
+	Recall *float64 `json:"recall,omitempty"`
 	// RecallStdDeviation - Gets the standard deviation for the recall
-	RecallStdDeviation *float64 `json:"RecallStdDeviation,omitempty"`
-}
-
-// KeyPair ...
-type KeyPair struct {
-	PrimaryKey   *string `json:"PrimaryKey,omitempty"`
-	SecondaryKey *string `json:"SecondaryKey,omitempty"`
+	RecallStdDeviation *float64 `json:"recallStdDeviation,omitempty"`
+	// AveragePrecision - Gets the average precision when applicable
+	AveragePrecision *float64 `json:"averagePrecision,omitempty"`
 }
 
 // ListDomain ...
@@ -325,6 +411,12 @@ type ListImage struct {
 	Value             *[]Image `json:"value,omitempty"`
 }
 
+// ListImagePerformance ...
+type ListImagePerformance struct {
+	autorest.Response `json:"-"`
+	Value             *[]ImagePerformance `json:"value,omitempty"`
+}
+
 // ListIteration ...
 type ListIteration struct {
 	autorest.Response `json:"-"`
@@ -337,132 +429,125 @@ type ListProject struct {
 	Value             *[]Project `json:"value,omitempty"`
 }
 
-// PerProjectQuota represents a set of quotas for a given project
-type PerProjectQuota struct {
-	// ProjectID - Gets the project id of the project this quota applies to
-	ProjectID *uuid.UUID `json:"ProjectId,omitempty"`
-	// Iterations - Gets the iteration quota for the project
-	Iterations *Quota `json:"Iterations,omitempty"`
-	// Images - Gets the image quota for the project
-	Images *Quota `json:"Images,omitempty"`
-	// Tags - Gets the tag quota for the project
-	Tags *Quota `json:"Tags,omitempty"`
-}
-
-// Prediction result of an image classification request
-type Prediction struct {
-	ID           *uuid.UUID       `json:"Id,omitempty"`
-	Project      *uuid.UUID       `json:"Project,omitempty"`
-	Iteration    *uuid.UUID       `json:"Iteration,omitempty"`
-	Created      *date.Time       `json:"Created,omitempty"`
-	Predictions  *[]PredictionTag `json:"Predictions,omitempty"`
-	ImageURI     *string          `json:"ImageUri,omitempty"`
-	ThumbnailURI *string          `json:"ThumbnailUri,omitempty"`
-}
-
-// PredictionQuery ...
-type PredictionQuery struct {
+// ListTag ...
+type ListTag struct {
 	autorest.Response `json:"-"`
-	Results           *[]Prediction         `json:"Results,omitempty"`
-	Token             *PredictionQueryToken `json:"Token,omitempty"`
+	Value             *[]Tag `json:"value,omitempty"`
+}
+
+// Prediction ...
+type Prediction struct {
+	Probability *float64     `json:"probability,omitempty"`
+	TagID       *uuid.UUID   `json:"tagId,omitempty"`
+	TagName     *string      `json:"tagName,omitempty"`
+	BoundingBox *BoundingBox `json:"boundingBox,omitempty"`
+}
+
+// PredictionQueryResult ...
+type PredictionQueryResult struct {
+	autorest.Response `json:"-"`
+	Token             *PredictionQueryToken    `json:"token,omitempty"`
+	Results           *[]StoredImagePrediction `json:"results,omitempty"`
 }
 
 // PredictionQueryTag ...
 type PredictionQueryTag struct {
-	ID           *uuid.UUID `json:"Id,omitempty"`
-	MinThreshold *float64   `json:"MinThreshold,omitempty"`
-	MaxThreshold *float64   `json:"MaxThreshold,omitempty"`
+	ID           *uuid.UUID `json:"id,omitempty"`
+	MinThreshold *float64   `json:"minThreshold,omitempty"`
+	MaxThreshold *float64   `json:"maxThreshold,omitempty"`
 }
 
 // PredictionQueryToken ...
 type PredictionQueryToken struct {
-	Session      *string `json:"Session,omitempty"`
-	Continuation *string `json:"Continuation,omitempty"`
-	MaxCount     *int32  `json:"MaxCount,omitempty"`
+	Session      *string `json:"session,omitempty"`
+	Continuation *string `json:"continuation,omitempty"`
+	MaxCount     *int32  `json:"maxCount,omitempty"`
 	// OrderBy - Possible values include: 'Newest', 'Oldest', 'Suggested'
-	OrderBy     OrderBy               `json:"OrderBy,omitempty"`
-	Tags        *[]PredictionQueryTag `json:"Tags,omitempty"`
-	IterationID *uuid.UUID            `json:"IterationId,omitempty"`
-	StartTime   *date.Time            `json:"StartTime,omitempty"`
-	EndTime     *date.Time            `json:"EndTime,omitempty"`
-	Application *string               `json:"Application,omitempty"`
-}
-
-// PredictionTag ...
-type PredictionTag struct {
-	TagID       *uuid.UUID `json:"TagId,omitempty"`
-	Tag         *string    `json:"Tag,omitempty"`
-	Probability *float64   `json:"Probability,omitempty"`
+	OrderBy     OrderBy               `json:"orderBy,omitempty"`
+	Tags        *[]PredictionQueryTag `json:"tags,omitempty"`
+	IterationID *uuid.UUID            `json:"iterationId,omitempty"`
+	StartTime   *date.Time            `json:"startTime,omitempty"`
+	EndTime     *date.Time            `json:"endTime,omitempty"`
+	Application *string               `json:"application,omitempty"`
 }
 
 // Project represents a project
 type Project struct {
 	autorest.Response `json:"-"`
 	// ID - Gets the project id
-	ID *uuid.UUID `json:"Id,omitempty"`
+	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - Gets or sets the name of the project
-	Name *string `json:"Name,omitempty"`
+	Name *string `json:"name,omitempty"`
 	// Description - Gets or sets the description of the project
-	Description *string `json:"Description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// Settings - Gets or sets the project settings
-	Settings *ProjectSettings `json:"Settings,omitempty"`
-	// CurrentIterationID - Gets the current iteration id
-	CurrentIterationID *uuid.UUID `json:"CurrentIterationId,omitempty"`
+	Settings *ProjectSettings `json:"settings,omitempty"`
 	// Created - Gets the date this project was created
-	Created *date.Time `json:"Created,omitempty"`
+	Created *date.Time `json:"created,omitempty"`
 	// LastModified - Gets the date this project was last modifed
-	LastModified *date.Time `json:"LastModified,omitempty"`
-	// ThumbnailURI - Gets the thumbnail url representing the image
-	ThumbnailURI *string `json:"ThumbnailUri,omitempty"`
+	LastModified *date.Time `json:"lastModified,omitempty"`
+	// ThumbnailURI - Gets the thumbnail url representing the project
+	ThumbnailURI *string `json:"thumbnailUri,omitempty"`
 }
 
 // ProjectSettings represents settings associated with a project
 type ProjectSettings struct {
 	// DomainID - Gets or sets the id of the Domain to use with this project
-	DomainID *uuid.UUID `json:"DomainId,omitempty"`
+	DomainID *uuid.UUID `json:"domainId,omitempty"`
 }
 
-// Quota represents a quota
-type Quota struct {
-	// Total - The total allowable amount in the quota
-	Total *int32 `json:"Total,omitempty"`
-	// Used - The amount of quota that has currently been used
-	Used *int32 `json:"Used,omitempty"`
-	// TimeUntilReset - Gets the time remaining until the quota resets. Null if this quota does not reset.
-	TimeUntilReset *string `json:"TimeUntilReset,omitempty"`
+// Region ...
+type Region struct {
+	TagID  *uuid.UUID `json:"tagId,omitempty"`
+	Left   *float64   `json:"left,omitempty"`
+	Top    *float64   `json:"top,omitempty"`
+	Width  *float64   `json:"width,omitempty"`
+	Height *float64   `json:"height,omitempty"`
+}
+
+// RegionProposal ...
+type RegionProposal struct {
+	Confidence  *float64     `json:"confidence,omitempty"`
+	BoundingBox *BoundingBox `json:"boundingBox,omitempty"`
+}
+
+// StoredImagePrediction result of an image classification request
+type StoredImagePrediction struct {
+	ImageURI     *string       `json:"imageUri,omitempty"`
+	ThumbnailURI *string       `json:"thumbnailUri,omitempty"`
+	Domain       *uuid.UUID    `json:"domain,omitempty"`
+	ID           *uuid.UUID    `json:"id,omitempty"`
+	Project      *uuid.UUID    `json:"project,omitempty"`
+	Iteration    *uuid.UUID    `json:"iteration,omitempty"`
+	Created      *date.Time    `json:"created,omitempty"`
+	Predictions  *[]Prediction `json:"predictions,omitempty"`
 }
 
 // Tag represents a Tag
 type Tag struct {
 	autorest.Response `json:"-"`
 	// ID - Gets the Tag ID
-	ID *uuid.UUID `json:"Id,omitempty"`
+	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - Gets or sets the name of the tag
-	Name *string `json:"Name,omitempty"`
+	Name *string `json:"name,omitempty"`
 	// Description - Gets or sets the description of the tag
-	Description *string `json:"Description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// ImageCount - Gets the number of images with this tag
-	ImageCount *int32 `json:"ImageCount,omitempty"`
-}
-
-// TagList ...
-type TagList struct {
-	autorest.Response   `json:"-"`
-	Tags                *[]Tag `json:"Tags,omitempty"`
-	TotalTaggedImages   *int32 `json:"TotalTaggedImages,omitempty"`
-	TotalUntaggedImages *int32 `json:"TotalUntaggedImages,omitempty"`
+	ImageCount *int32 `json:"imageCount,omitempty"`
 }
 
 // TagPerformance represents performance data for a particular tag in a trained iteration
 type TagPerformance struct {
-	ID   *uuid.UUID `json:"Id,omitempty"`
-	Name *string    `json:"Name,omitempty"`
+	ID   *uuid.UUID `json:"id,omitempty"`
+	Name *string    `json:"name,omitempty"`
 	// Precision - Gets the precision
-	Precision *float64 `json:"Precision,omitempty"`
+	Precision *float64 `json:"precision,omitempty"`
 	// PrecisionStdDeviation - Gets the standard deviation for the precision
-	PrecisionStdDeviation *float64 `json:"PrecisionStdDeviation,omitempty"`
+	PrecisionStdDeviation *float64 `json:"precisionStdDeviation,omitempty"`
 	// Recall - Gets the recall
-	Recall *float64 `json:"Recall,omitempty"`
+	Recall *float64 `json:"recall,omitempty"`
 	// RecallStdDeviation - Gets the standard deviation for the recall
-	RecallStdDeviation *float64 `json:"RecallStdDeviation,omitempty"`
+	RecallStdDeviation *float64 `json:"recallStdDeviation,omitempty"`
+	// AveragePrecision - Gets the average precision when applicable
+	AveragePrecision *float64 `json:"averagePrecision,omitempty"`
 }

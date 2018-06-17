@@ -93,7 +93,7 @@
   "description": "Manages enterprise resources such as users and groups, administrative notifications, security features, and more.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/admin-sdk/directory/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/cqLS0IwH2Is5IhWrKMNCt4VPtGQ\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/v7vxOssi30MR6abOqdfvqmKaGFQ\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -401,7 +401,7 @@
               "type": "string"
             },
             "query": {
-              "description": "Search string in the format given at http://support.google.com/chromeos/a/bin/answer.py?hl=en\u0026answer=1698333",
+              "description": "Search string in the format given at http://support.google.com/chromeos/a/bin/answer.py?answer=1698333",
               "location": "query",
               "type": "string"
             },
@@ -961,7 +961,7 @@
               "type": "string"
             },
             "query": {
-              "description": "Query string search. Should be of the form \"\". Complete documentation is at https://developers.google.com/admin-sdk/directory/v1/guides/search-users",
+              "description": "Query string search. Should be of the form \"\". Complete documentation is at https://developers.google.com/admin-sdk/directory/v1/guides/search-groups",
               "location": "query",
               "type": "string"
             },
@@ -1542,7 +1542,7 @@
               "type": "string"
             },
             "query": {
-              "description": "Search string in the format given at http://support.google.com/a/bin/answer.py?hl=en\u0026answer=1408863#search",
+              "description": "Search string in the format given at http://support.google.com/a/bin/answer.py?answer=1408863#search",
               "location": "query",
               "type": "string"
             },
@@ -3969,7 +3969,7 @@
       }
     }
   },
-  "revision": "20180423",
+  "revision": "20180604",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Alias": {

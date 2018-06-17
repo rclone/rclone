@@ -65,11 +65,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -89,12 +84,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -481,7 +470,7 @@
       }
     }
   },
-  "revision": "20180124",
+  "revision": "20180605",
   "rootUrl": "https://firebaserules.googleapis.com/",
   "schemas": {
     "Arg": {
@@ -847,6 +836,13 @@
             "Test is a failure."
           ],
           "type": "string"
+        },
+        "visitedExpressions": {
+          "description": "The set of visited expressions for a given test. This returns positions\nand evaluation results of all visited expressions.",
+          "items": {
+            "$ref": "VisitedExpression"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -913,6 +909,21 @@
           "description": "Specifies which fields to update.",
           "format": "google-fieldmask",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "VisitedExpression": {
+      "description": "Store the position and access outcome for an expression visited in rules.",
+      "id": "VisitedExpression",
+      "properties": {
+        "sourcePosition": {
+          "$ref": "SourcePosition",
+          "description": "Position in the `Source` or `Ruleset` where an expression was visited."
+        },
+        "value": {
+          "description": "The evaluated value for the visited expression, e.g. true/false",
+          "type": "any"
         }
       },
       "type": "object"

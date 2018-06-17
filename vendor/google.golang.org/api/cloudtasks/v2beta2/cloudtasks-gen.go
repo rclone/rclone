@@ -4445,13 +4445,6 @@ type ProjectsLocationsQueuesTasksAcknowledgeCall struct {
 // by a later LeaseTasks,
 // GetTask, or
 // ListTasks.
-//
-// To acknowledge multiple tasks at the same time, use
-// [HTTP batching](/storage/docs/json_api/v1/how-tos/batch)
-// or the batching documentation for your client library, for
-// example
-// https://developers.google.com/api-client-library/python/guide/
-// batch.
 func (r *ProjectsLocationsQueuesTasksService) Acknowledge(name string, acknowledgetaskrequest *AcknowledgeTaskRequest) *ProjectsLocationsQueuesTasksAcknowledgeCall {
 	c := &ProjectsLocationsQueuesTasksAcknowledgeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4545,7 +4538,7 @@ func (c *ProjectsLocationsQueuesTasksAcknowledgeCall) Do(opts ...googleapi.CallO
 	}
 	return ret, nil
 	// {
-	//   "description": "Acknowledges a pull task.\n\nThe worker, that is, the entity that\nleased this task must call this method\nto indicate that the work associated with the task has finished.\n\nThe worker must acknowledge a task within the\nlease_duration or the lease\nwill expire and the task will become available to be leased\nagain. After the task is acknowledged, it will not be returned\nby a later LeaseTasks,\nGetTask, or\nListTasks.\n\nTo acknowledge multiple tasks at the same time, use\n[HTTP batching](/storage/docs/json_api/v1/how-tos/batch)\nor the batching documentation for your client library, for example\nhttps://developers.google.com/api-client-library/python/guide/batch.",
+	//   "description": "Acknowledges a pull task.\n\nThe worker, that is, the entity that\nleased this task must call this method\nto indicate that the work associated with the task has finished.\n\nThe worker must acknowledge a task within the\nlease_duration or the lease\nwill expire and the task will become available to be leased\nagain. After the task is acknowledged, it will not be returned\nby a later LeaseTasks,\nGetTask, or\nListTasks.",
 	//   "flatPath": "v2beta2/projects/{projectsId}/locations/{locationsId}/queues/{queuesId}/tasks/{tasksId}:acknowledge",
 	//   "httpMethod": "POST",
 	//   "id": "cloudtasks.projects.locations.queues.tasks.acknowledge",
@@ -4729,13 +4722,6 @@ type ProjectsLocationsQueuesTasksCreateCall struct {
 
 // Create: Creates a task and adds it to a queue.
 //
-// To add multiple tasks at the same time, use
-// [HTTP batching](/storage/docs/json_api/v1/how-tos/batch)
-// or the batching documentation for your client library, for
-// example
-// https://developers.google.com/api-client-library/python/guide/
-// batch.
-//
 // Tasks cannot be updated after creation; there is no UpdateTask
 // command.
 //
@@ -4837,7 +4823,7 @@ func (c *ProjectsLocationsQueuesTasksCreateCall) Do(opts ...googleapi.CallOption
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a task and adds it to a queue.\n\nTo add multiple tasks at the same time, use\n[HTTP batching](/storage/docs/json_api/v1/how-tos/batch)\nor the batching documentation for your client library, for example\nhttps://developers.google.com/api-client-library/python/guide/batch.\n\nTasks cannot be updated after creation; there is no UpdateTask command.\n\n* For [App Engine queues](google.cloud.tasks.v2beta2.AppEngineHttpTarget),\n  the maximum task size is 100KB.\n* For [pull queues](google.cloud.tasks.v2beta2.PullTarget), this\n  the maximum task size is 1MB.",
+	//   "description": "Creates a task and adds it to a queue.\n\nTasks cannot be updated after creation; there is no UpdateTask command.\n\n* For [App Engine queues](google.cloud.tasks.v2beta2.AppEngineHttpTarget),\n  the maximum task size is 100KB.\n* For [pull queues](google.cloud.tasks.v2beta2.PullTarget), this\n  the maximum task size is 1MB.",
 	//   "flatPath": "v2beta2/projects/{projectsId}/locations/{locationsId}/queues/{queuesId}/tasks",
 	//   "httpMethod": "POST",
 	//   "id": "cloudtasks.projects.locations.queues.tasks.create",

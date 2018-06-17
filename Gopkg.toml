@@ -1,20 +1,11 @@
-# github.com/yunify/qingstor-sdk-go depends on an old version of
-# github.com/pengsrc/go-shared - pin the version here
-#
-# When the version here moves on, we can unpin
-# https://github.com/yunify/qingstor-sdk-go/blob/master/glide.yaml
-[[override]]
-  version = "=v0.1.1"
-  name = "github.com/pengsrc/go-shared"
-
 # pin this to master to pull in the macOS changes
-# can likely remove for 1.42
+# can likely remove for 1.43
 [[override]]
   branch = "master"
   name = "github.com/sevlyar/go-daemon"
 
 # pin this to master to pull in the fix for linux/mips
-# can likely remove for 1.42
+# can likely remove for 1.43
 [[override]]
   branch = "master"
   name = "github.com/coreos/bbolt"

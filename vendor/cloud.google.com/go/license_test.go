@@ -53,7 +53,7 @@ func TestLicense(t *testing.T) {
 		if err != nil {
 			return nil
 		}
-		src = src[:140] // Ensure all of the sentinel values are at the top of the file.
+		src = src[:300] // Ensure all of the sentinel values are at the top of the file.
 
 		// Find license
 		for _, sentinel := range sentinels {

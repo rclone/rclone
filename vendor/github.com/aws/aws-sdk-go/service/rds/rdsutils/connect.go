@@ -9,16 +9,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
-// BuildAuthToken will return a authentication token for the database's connect
-// based on the RDS database endpoint, AWS region, IAM user or role, and AWS credentials.
+// BuildAuthToken will return an authorization token used as the password for a DB
+// connection.
 //
-// Endpoint consists of the hostname and port, IE hostname:port, of the RDS database.
-// Region is the AWS region the RDS database is in and where the authentication token
-// will be generated for. DbUser is the IAM user or role the request will be authenticated
-// for. The creds is the AWS credentials the authentication token is signed with.
-//
-// An error is returned if the authentication token is unable to be signed with
-// the credentials, or the endpoint is not a valid URL.
+// * endpoint - Endpoint consists of the port needed to connect to the DB. <host>:<port>
+// * region - Region is the location of where the DB is
+// * dbUser - User account within the database to sign in with
+// * creds - Credentials to be signed with
 //
 // The following example shows how to use BuildAuthToken to create an authentication
 // token for connecting to a MySQL database in RDS.
@@ -27,12 +24,12 @@ import (
 //
 //   // Create the MySQL DNS string for the DB connection
 //   // user:password@protocol(endpoint)/dbname?<params>
-//   dnsStr = fmt.Sprintf("%s:%s@tcp(%s)/%s?tls=true",
+//   connectStr = fmt.Sprintf("%s:%s@tcp(%s)/%s?allowCleartextPasswords=true&tls=rds",
 //      dbUser, authToken, dbEndpoint, dbName,
 //   )
 //
 //   // Use db to perform SQL operations on database
-//   db, err := sql.Open("mysql", dnsStr)
+//   db, err := sql.Open("mysql", connectStr)
 //
 // See http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html
 // for more information on using IAM database authentication with RDS.

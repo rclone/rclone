@@ -89,3 +89,12 @@ func (p *paginationDefinitions) setup() {
 		}
 	}
 }
+
+func enableStopOnSameToken(service string) bool {
+	switch service {
+	case "cloudwatchlogs":
+		return true
+	default:
+		return false
+	}
+}

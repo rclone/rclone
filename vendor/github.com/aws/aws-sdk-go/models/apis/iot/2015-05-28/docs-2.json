@@ -10,6 +10,7 @@
     "AttachThingPrincipal": "<p>Attaches the specified principal to the specified thing.</p>",
     "CancelCertificateTransfer": "<p>Cancels a pending transfer for the specified certificate.</p> <p> <b>Note</b> Only the transfer source account can use this operation to cancel a transfer. (Transfer destinations can use <a>RejectCertificateTransfer</a> instead.) After transfer, AWS IoT returns the certificate to the source account in the INACTIVE state. After the destination account has accepted the transfer, the transfer cannot be cancelled.</p> <p>After a certificate transfer is cancelled, the status of the certificate changes from PENDING_TRANSFER to INACTIVE.</p>",
     "CancelJob": "<p>Cancels a job.</p>",
+    "CancelJobExecution": "<p>Cancels the execution of a job for a given thing.</p>",
     "ClearDefaultAuthorizer": "<p>Clears the default authorizer.</p>",
     "CreateAuthorizer": "<p>Creates an authorizer.</p>",
     "CreateCertificateFromCsr": "<p>Creates an X.509 certificate using the specified certificate signing request.</p> <p> <b>Note:</b> The CSR must include a public key that is either an RSA key with a length of at least 2048 bits or an ECC key from NIST P-256 or NIST P-384 curves. </p> <p> <b>Note:</b> Reusing the same certificate signing request (CSR) results in a distinct certificate.</p> <p>You can create multiple certificates in a batch by creating a directory, copying multiple .csr files into that directory, and then specifying that directory on the command line. The following commands show how to create a batch of certificates given a batch of CSRs.</p> <p>Assuming a set of CSRs are located inside of the directory my-csr-directory:</p> <p>On Linux and OS X, the command is:</p> <p>$ ls my-csr-directory/ | xargs -I {} aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/{}</p> <p>This command lists all of the CSRs in my-csr-directory and pipes each CSR file name to the aws iot create-certificate-from-csr AWS CLI command to create a certificate for the corresponding CSR.</p> <p>The aws iot create-certificate-from-csr part of the command can also be run in parallel to speed up the certificate creation process:</p> <p>$ ls my-csr-directory/ | xargs -P 10 -I {} aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/{}</p> <p>On Windows PowerShell, the command to create certificates for all CSRs in my-csr-directory is:</p> <p>&gt; ls -Name my-csr-directory | %{aws iot create-certificate-from-csr --certificate-signing-request file://my-csr-directory/$_}</p> <p>On a Windows command prompt, the command to create certificates for all CSRs in my-csr-directory is:</p> <p>&gt; forfiles /p my-csr-directory /c \"cmd /c aws iot create-certificate-from-csr --certificate-signing-request file://@path\"</p>",
@@ -27,6 +28,8 @@
     "DeleteAuthorizer": "<p>Deletes an authorizer.</p>",
     "DeleteCACertificate": "<p>Deletes a registered CA certificate.</p>",
     "DeleteCertificate": "<p>Deletes the specified certificate.</p> <p>A certificate cannot be deleted if it has a policy attached to it or if its status is set to ACTIVE. To delete a certificate, first use the <a>DetachPrincipalPolicy</a> API to detach all policies. Next, use the <a>UpdateCertificate</a> API to set the certificate to the INACTIVE status.</p>",
+    "DeleteJob": "<p>Deletes a job and its related job executions.</p> <p>Deleting a job may take time, depending on the number of job executions created for the job and various other factors. While the job is being deleted, the status of the job will be shown as \"DELETION_IN_PROGRESS\". Attempting to delete or cancel a job whose status is already \"DELETION_IN_PROGRESS\" will result in an error.</p> <p>Only 10 jobs may have status \"DELETION_IN_PROGRESS\" at the same time, or a LimitExceededException will occur.</p>",
+    "DeleteJobExecution": "<p>Deletes a job execution.</p>",
     "DeleteOTAUpdate": "<p>Delete an OTA update.</p>",
     "DeletePolicy": "<p>Deletes the specified policy.</p> <p>A policy cannot be deleted if it has non-default versions or it is attached to any certificate.</p> <p>To delete a policy, use the DeletePolicyVersion API to delete all non-default versions of the policy; use the DetachPrincipalPolicy API to detach the policy from any certificate; and then use the DeletePolicy API to delete the policy.</p> <p>When a policy is deleted using DeletePolicy, its default version is deleted with it.</p>",
     "DeletePolicyVersion": "<p>Deletes the specified version of the specified policy. You cannot delete the default version of a policy using this API. To delete the default version of a policy, use <a>DeletePolicy</a>. To find out which version of a policy is marked as the default version, use ListPolicyVersions.</p>",
@@ -59,7 +62,7 @@
     "DetachThingPrincipal": "<p>Detaches the specified principal from the specified thing.</p>",
     "DisableTopicRule": "<p>Disables the rule.</p>",
     "EnableTopicRule": "<p>Enables the rule.</p>",
-    "GetEffectivePolicies": "<p>Gets effective policies.</p>",
+    "GetEffectivePolicies": "<p>Gets a list of the policies that have an effect on the authorization behavior of the specified device when it connects to the AWS IoT device gateway.</p>",
     "GetIndexingConfiguration": "<p>Gets the search configuration.</p>",
     "GetJobDocument": "<p>Gets a job document.</p>",
     "GetLoggingOptions": "<p>Gets the logging options.</p>",
@@ -112,8 +115,8 @@
     "SetV2LoggingOptions": "<p>Sets the logging options for the V2 logging service.</p>",
     "StartThingRegistrationTask": "<p>Creates a bulk thing provisioning task.</p>",
     "StopThingRegistrationTask": "<p>Cancels a bulk thing provisioning task.</p>",
-    "TestAuthorization": "<p>Test custom authorization.</p>",
-    "TestInvokeAuthorizer": "<p>Invoke the specified custom authorizer for testing purposes.</p>",
+    "TestAuthorization": "<p>Tests if a specified principal is authorized to perform an AWS IoT action on a specified resource. Use this to test and debug the authorization behavior of devices that connect to the AWS IoT device gateway.</p>",
+    "TestInvokeAuthorizer": "<p>Tests a custom authorization behavior by invoking a specified custom authorizer. Use this to test and debug the custom authorization behavior of devices that connect to the AWS IoT device gateway.</p>",
     "TransferCertificate": "<p>Transfers the specified certificate to the specified AWS account.</p> <p>You can cancel the transfer until it is acknowledged by the recipient.</p> <p>No notification is sent to the transfer destination's account. It is up to the caller to notify the transfer target.</p> <p>The certificate being transferred must not be in the ACTIVE state. You can use the UpdateCertificate API to deactivate it.</p> <p>The certificate must not have any policies attached to it. You can use the DetachPrincipalPolicy API to detach them.</p>",
     "UpdateAuthorizer": "<p>Updates an authorizer.</p>",
     "UpdateCACertificate": "<p>Updates a registered CA certificate.</p>",
@@ -394,7 +397,7 @@
         "GetLoggingOptionsResponse$roleArn": "<p>The ARN of the IAM role that grants access.</p>",
         "GetV2LoggingOptionsResponse$roleArn": "<p>The IAM role ARN AWS IoT uses to write to your CloudWatch logs.</p>",
         "IotAnalyticsAction$channelArn": "<p>(deprecated) The ARN of the IoT Analytics channel to which message data will be sent.</p>",
-        "IotAnalyticsAction$roleArn": "<p>The ARN of the role which has a policy that grants IoT permission to send message data via IoT Analytics (iotanalytics:BatchPutMessage).</p>",
+        "IotAnalyticsAction$roleArn": "<p>The ARN of the role which has a policy that grants IoT Analytics permission to send message data via IoT Analytics (iotanalytics:BatchPutMessage).</p>",
         "KinesisAction$roleArn": "<p>The ARN of the IAM role that grants access to the Amazon Kinesis stream.</p>",
         "LoggingOptionsPayload$roleArn": "<p>The ARN of the IAM role that grants access.</p>",
         "RepublishAction$roleArn": "<p>The ARN of the IAM role that grants access.</p>",
@@ -466,6 +469,11 @@
     },
     "CancelCertificateTransferRequest": {
       "base": "<p>The input for the CancelCertificateTransfer operation.</p>",
+      "refs": {
+      }
+    },
+    "CancelJobExecutionRequest": {
+      "base": null,
       "refs": {
       }
     },
@@ -927,6 +935,16 @@
       "refs": {
       }
     },
+    "DeleteJobExecutionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteJobRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DeleteOTAUpdateRequest": {
       "base": null,
       "refs": {
@@ -1231,6 +1249,7 @@
     "DetailsMap": {
       "base": null,
       "refs": {
+        "CancelJobExecutionRequest$statusDetails": "<p>A collection of name/value pairs that describe the status of the job execution. If not specified, the statusDetails are unchanged. You can specify at most 10 name/value pairs.</p>",
         "JobExecutionStatusDetails$detailsMap": "<p>The job execution status.</p>"
       }
     },
@@ -1370,9 +1389,16 @@
     "ExecutionNumber": {
       "base": null,
       "refs": {
+        "DeleteJobExecutionRequest$executionNumber": "<p>The ID of the job execution to be deleted. The <code>executionNumber</code> refers to the execution of a particular job on a particular device.</p> <p>Note that once a job execution is deleted, the <code>executionNumber</code> may be reused by IoT, so be sure you get and use the correct value here.</p>",
         "DescribeJobExecutionRequest$executionNumber": "<p>A string (consisting of the digits \"0\" through \"9\" which is used to specify a particular job execution on a particular device.</p>",
         "JobExecution$executionNumber": "<p>A string (consisting of the digits \"0\" through \"9\") which identifies this particular job execution on this particular device. It can be used in commands which return or update job execution information. </p>",
         "JobExecutionSummary$executionNumber": "<p>A string (consisting of the digits \"0\" through \"9\") which identifies this particular job execution on this particular device. It can be used later in commands which return or update job execution information.</p>"
+      }
+    },
+    "ExpectedVersion": {
+      "base": null,
+      "refs": {
+        "CancelJobExecutionRequest$expectedVersion": "<p>(Optional) The expected current version of the job execution. Each time you update the job execution, its version is incremented. If the version of the job execution stored in Jobs does not match, the update is rejected with a VersionMismatch error, and an ErrorResponse that contains the current job execution status data is returned. (This makes it unnecessary to perform a separate DescribeJobExecution request in order to obtain the job execution status data.)</p>"
       }
     },
     "ExpiresInSec": {
@@ -1428,6 +1454,22 @@
       "base": null,
       "refs": {
         "DeleteCertificateRequest$forceDelete": "<p>Forces a certificate request to be deleted.</p>"
+      }
+    },
+    "ForceFlag": {
+      "base": null,
+      "refs": {
+        "CancelJobExecutionRequest$force": "<p>(Optional) If <code>true</code> the job execution will be canceled if it has status IN_PROGRESS or QUEUED, otherwise the job execution will be canceled only if it has status QUEUED. If you attempt to cancel a job execution that is IN_PROGRESS, and you do not set <code>force</code> to <code>true</code>, then an <code>InvalidStateTransitionException</code> will be thrown. The default is <code>false</code>.</p> <p>Canceling a job execution which is \"IN_PROGRESS\", will cause the device to be unable to update the job execution status. Use caution and ensure that the device is able to recover to a valid state.</p>",
+        "CancelJobRequest$force": "<p>(Optional) If <code>true</code> job executions with status \"IN_PROGRESS\" and \"QUEUED\" are canceled, otherwise only job executions with status \"QUEUED\" are canceled. The default is <code>false</code>.</p> <p>Canceling a job which is \"IN_PROGRESS\", will cause a device which is executing the job to be unable to update the job execution status. Use caution and ensure that each device executing a job which is canceled is able to recover to a valid state.</p>",
+        "DeleteJobExecutionRequest$force": "<p>(Optional) When true, you can delete a job execution which is \"IN_PROGRESS\". Otherwise, you can only delete a job execution which is in a terminal state (\"SUCCEEDED\", \"FAILED\", \"REJECTED\", \"REMOVED\" or \"CANCELED\") or an exception will occur. The default is false.</p> <note> <p>Deleting a job execution which is \"IN_PROGRESS\", will cause the device to be unable to access job information or update the job execution status. Use caution and ensure that the device is able to recover to a valid state.</p> </note>",
+        "DeleteJobRequest$force": "<p>(Optional) When true, you can delete a job which is \"IN_PROGRESS\". Otherwise, you can only delete a job which is in a terminal state (\"COMPLETED\" or \"CANCELED\") or an exception will occur. The default is false.</p> <note> <p>Deleting a job which is \"IN_PROGRESS\", will cause a device which is executing the job to be unable to access job information or update the job execution status. Use caution and ensure that each device executing a job which is deleted is able to recover to a valid state.</p> </note>"
+      }
+    },
+    "Forced": {
+      "base": null,
+      "refs": {
+        "Job$forceCanceled": "<p>Will be <code>true</code> if the job was canceled with the optional <code>force</code> parameter set to <code>true</code>.</p>",
+        "JobExecution$forceCanceled": "<p>Will be <code>true</code> if the job execution was canceled with the optional <code>force</code> parameter set to <code>true</code>.</p>"
       }
     },
     "FunctionArn": {
@@ -1650,8 +1692,13 @@
       "refs": {
       }
     },
+    "InvalidStateTransitionException": {
+      "base": "<p>An attempt was made to change to an invalid state, for example by deleting a job or a job execution which is \"IN_PROGRESS\" without setting the <code>force</code> parameter.</p>",
+      "refs": {
+      }
+    },
     "IotAnalyticsAction": {
-      "base": "<p>Sends message data to an AWS IoT Analytics channel.</p>",
+      "base": "<p>Sends messge data to an AWS IoT Analytics channel.</p>",
       "refs": {
         "Action$iotAnalytics": "<p>Sends message data to an AWS IoT Analytics channel.</p>"
       }
@@ -1790,10 +1837,13 @@
       "refs": {
         "AssociateTargetsWithJobRequest$jobId": "<p>The unique identifier you assigned to this job when it was created.</p>",
         "AssociateTargetsWithJobResponse$jobId": "<p>The unique identifier you assigned to this job when it was created.</p>",
+        "CancelJobExecutionRequest$jobId": "<p>The ID of the job to be canceled.</p>",
         "CancelJobRequest$jobId": "<p>The unique identifier you assigned to this job when it was created.</p>",
         "CancelJobResponse$jobId": "<p>The unique identifier you assigned to this job when it was created.</p>",
         "CreateJobRequest$jobId": "<p>A job identifier which must be unique for your AWS account. We recommend using a UUID. Alpha-numeric characters, \"-\" and \"_\" are valid for use here.</p>",
         "CreateJobResponse$jobId": "<p>The unique identifier you assigned to this job.</p>",
+        "DeleteJobExecutionRequest$jobId": "<p>The ID of the job whose execution on a particular device will be deleted.</p>",
+        "DeleteJobRequest$jobId": "<p>The ID of the job to be deleted.</p> <p>After a job deletion is completed, you may reuse this jobId when you create a new job. However, this is not recommended, and you must ensure that your devices are not using the jobId to refer to the deleted job.</p>",
         "DescribeJobExecutionRequest$jobId": "<p>The unique identifier you assigned to this job when it was created.</p>",
         "DescribeJobRequest$jobId": "<p>The unique identifier you assigned to this job when it was created.</p>",
         "GetJobDocumentRequest$jobId": "<p>The unique identifier you assigned to this job when it was created.</p>",
@@ -1898,7 +1948,7 @@
       }
     },
     "LimitExceededException": {
-      "base": "<p>The number of attached entities exceeds the limit.</p>",
+      "base": "<p>A limit has been exceeded.</p>",
       "refs": {
       }
     },
@@ -2301,7 +2351,7 @@
     "MessageFormat": {
       "base": null,
       "refs": {
-        "SnsAction$messageFormat": "<p>The message format of the message to publish. Optional. Accepted values are \"JSON\" and \"RAW\". The default value of the attribute is \"RAW\". SNS uses this setting to determine if the payload should be parsed and relevant platform-specific bits of the payload should be extracted. To read more about SNS message formats, see <a href=\"http://docs.aws.amazon.com/sns/latest/dg/json-formats.html\">http://docs.aws.amazon.com/sns/latest/dg/json-formats.html</a> refer to their official documentation.</p>"
+        "SnsAction$messageFormat": "<p>(Optional) The message format of the message to publish. Accepted values are \"JSON\" and \"RAW\". The default value of the attribute is \"RAW\". SNS uses this setting to determine if the payload should be parsed and relevant platform-specific bits of the payload should be extracted. To read more about SNS message formats, see <a href=\"http://docs.aws.amazon.com/sns/latest/dg/json-formats.html\">http://docs.aws.amazon.com/sns/latest/dg/json-formats.html</a> refer to their official documentation.</p>"
       }
     },
     "MetricName": {
@@ -2719,7 +2769,7 @@
     "ProcessingTargetNameList": {
       "base": null,
       "refs": {
-        "JobProcessDetails$processingTargets": "<p>The devices on which the job is executing.</p>"
+        "JobProcessDetails$processingTargets": "<p>The target devices to which the job execution is being rolled out. This value will be null after the job execution has finished rolling out to all the target devices.</p>"
       }
     },
     "PublicKey": {
@@ -3593,8 +3643,10 @@
       "refs": {
         "AddThingToThingGroupRequest$thingName": "<p>The name of the thing to add to a group.</p>",
         "AttachThingPrincipalRequest$thingName": "<p>The name of the thing.</p>",
+        "CancelJobExecutionRequest$thingName": "<p>The name of the thing whose execution of the job will be canceled.</p>",
         "CreateThingRequest$thingName": "<p>The name of the thing to create.</p>",
         "CreateThingResponse$thingName": "<p>The name of the new thing.</p>",
+        "DeleteJobExecutionRequest$thingName": "<p>The name of the thing whose job execution will be deleted.</p>",
         "DeleteThingRequest$thingName": "<p>The name of the thing to delete.</p>",
         "DescribeJobExecutionRequest$thingName": "<p>The name of the thing on which the job execution is running.</p>",
         "DescribeThingRequest$thingName": "<p>The name of the thing.</p>",
@@ -3900,8 +3952,14 @@
       }
     },
     "VersionConflictException": {
-      "base": "<p>An exception thrown when the version of a thing passed to a command is different than the version specified with the --version parameter.</p>",
+      "base": "<p>An exception thrown when the version of an entity specified with the <code>expectedVersion</code> parameter does not match the latest version in the system.</p>",
       "refs": {
+      }
+    },
+    "VersionNumber": {
+      "base": null,
+      "refs": {
+        "JobExecution$versionNumber": "<p>The version of the job execution. Job execution versions are incremented each time they are updated by a device.</p>"
       }
     },
     "VersionsLimitExceededException": {
@@ -3923,6 +3981,7 @@
         "InvalidQueryException$message": null,
         "InvalidRequestException$message": "<p>The message for the exception.</p>",
         "InvalidResponseException$message": null,
+        "InvalidStateTransitionException$message": null,
         "LimitExceededException$message": "<p>The message for the exception.</p>",
         "MalformedPolicyException$message": "<p>The message for the exception.</p>",
         "NotConfiguredException$message": null,

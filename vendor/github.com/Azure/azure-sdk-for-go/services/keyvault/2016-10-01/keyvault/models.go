@@ -44,13 +44,17 @@ func PossibleActionTypeValues() []ActionType {
 type DeletionRecoveryLevel string
 
 const (
-	// Purgeable ...
+	// Purgeable Soft-delete is not enabled for this vault. A DELETE operation results in immediate and
+	// irreversible data loss.
 	Purgeable DeletionRecoveryLevel = "Purgeable"
-	// Recoverable ...
+	// Recoverable Soft-delete is enabled for this vault and purge has been disabled. A deleted entity will
+	// remain in this state until recovered, or the end of the retention interval.
 	Recoverable DeletionRecoveryLevel = "Recoverable"
-	// RecoverableProtectedSubscription ...
+	// RecoverableProtectedSubscription Soft-delete is enabled for this vault, and the subscription is
+	// protected against immediate deletion.
 	RecoverableProtectedSubscription DeletionRecoveryLevel = "Recoverable+ProtectedSubscription"
-	// RecoverablePurgeable ...
+	// RecoverablePurgeable Soft-delete is enabled for this vault; A priveleged user may trigger an immediate,
+	// irreversible deletion(purge) of a deleted entity.
 	RecoverablePurgeable DeletionRecoveryLevel = "Recoverable+Purgeable"
 )
 
@@ -63,13 +67,13 @@ func PossibleDeletionRecoveryLevelValues() []DeletionRecoveryLevel {
 type JSONWebKeyCurveName string
 
 const (
-	// P256 ...
+	// P256 The NIST P-256 elliptic curve, AKA SECG curve SECP256R1.
 	P256 JSONWebKeyCurveName = "P-256"
-	// P384 ...
+	// P384 The NIST P-384 elliptic curve, AKA SECG curve SECP384R1.
 	P384 JSONWebKeyCurveName = "P-384"
-	// P521 ...
+	// P521 The NIST P-521 elliptic curve, AKA SECG curve SECP521R1.
 	P521 JSONWebKeyCurveName = "P-521"
-	// SECP256K1 ...
+	// SECP256K1 The SECG SECP256K1 elliptic curve.
 	SECP256K1 JSONWebKeyCurveName = "SECP256K1"
 )
 
@@ -1529,7 +1533,7 @@ func (kb KeyBundle) MarshalJSON() ([]byte, error) {
 type KeyCreateParameters struct {
 	// Kty - The type of key to create. For valid values, see JsonWebKeyType. Possible values include: 'EC', 'ECHSM', 'RSA', 'RSAHSM', 'Oct'
 	Kty JSONWebKeyType `json:"kty,omitempty"`
-	// KeySize - The key size in bytes. For example, 1024 or 2048.
+	// KeySize - The key size in bits. For example: 2048, 3072, or 4096 for RSA.
 	KeySize       *int32                 `json:"key_size,omitempty"`
 	KeyOps        *[]JSONWebKeyOperation `json:"key_ops,omitempty"`
 	KeyAttributes *KeyAttributes         `json:"attributes,omitempty"`
@@ -1746,7 +1750,7 @@ type KeyProperties struct {
 	Exportable *bool `json:"exportable,omitempty"`
 	// KeyType - The key type.
 	KeyType *string `json:"kty,omitempty"`
-	// KeySize - The key size in bytes. For example;  1024 or 2048.
+	// KeySize - The key size in bits. For example: 2048, 3072, or 4096 for RSA.
 	KeySize *int32 `json:"key_size,omitempty"`
 	// ReuseKey - Indicates if the same key pair will be used on certificate renewal.
 	ReuseKey *bool `json:"reuse_key,omitempty"`

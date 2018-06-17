@@ -488,7 +488,10 @@ func (e Expression) returnExpression(expressionType expressionType) *string {
 	if e.expressionMap == nil {
 		return nil
 	}
-	return aws.String(e.expressionMap[expressionType])
+	if s, exists := e.expressionMap[expressionType]; exists {
+		return &s
+	}
+	return nil
 }
 
 // exprNode are the generic nodes that represents both Operands and

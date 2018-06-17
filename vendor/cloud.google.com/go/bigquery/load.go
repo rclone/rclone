@@ -47,8 +47,8 @@ type LoadConfig struct {
 	// Custom encryption configuration (e.g., Cloud KMS keys).
 	DestinationEncryptionConfig *EncryptionConfig
 
-	// SchemaUpdateOptions allows the schema of the destination table to be
-	// updated as a side effect of the load job.
+	// Allows the schema of the destination table to be updated as a side effect of
+	// the load job.
 	SchemaUpdateOptions []string
 }
 

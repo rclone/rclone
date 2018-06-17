@@ -88,6 +88,9 @@ func (w *Writer) open() error {
 	if !utf8.ValidString(attrs.Name) {
 		return fmt.Errorf("storage: object name %q is not valid UTF-8", attrs.Name)
 	}
+	if attrs.KMSKeyName != "" && w.o.encryptionKey != nil {
+		return errors.New("storage: cannot use KMSKeyName with a customer-supplied encryption key")
+	}
 	pr, pw := io.Pipe()
 	w.pw = pw
 	w.opened = true
@@ -118,6 +121,9 @@ func (w *Writer) open() error {
 			Context(w.ctx)
 		if w.ProgressFunc != nil {
 			call.ProgressUpdater(func(n, _ int64) { w.ProgressFunc(n) })
+		}
+		if attrs.KMSKeyName != "" {
+			call.KmsKeyName(attrs.KMSKeyName)
 		}
 		if err := setEncryptionHeaders(call.Header(), w.o.encryptionKey, false); err != nil {
 			w.mu.Lock()

@@ -9641,6 +9641,13 @@ type ListAcceptedPortfolioSharesInput struct {
 	// The page token for the next set of results. To retrieve the first set of
 	// results, use null.
 	PageToken *string `type:"string"`
+
+	// The type of shared portfolios to list. The default is to list imported portfolios.
+	//
+	//    * AWS_SERVICECATALOG - List default portfolios
+	//
+	//    * IMPORTED - List imported portfolios
+	PortfolioShareType *string `type:"string" enum:"PortfolioShareType"`
 }
 
 // String returns the string representation
@@ -9668,6 +9675,12 @@ func (s *ListAcceptedPortfolioSharesInput) SetPageSize(v int64) *ListAcceptedPor
 // SetPageToken sets the PageToken field's value.
 func (s *ListAcceptedPortfolioSharesInput) SetPageToken(v string) *ListAcceptedPortfolioSharesInput {
 	s.PageToken = &v
+	return s
+}
+
+// SetPortfolioShareType sets the PortfolioShareType field's value.
+func (s *ListAcceptedPortfolioSharesInput) SetPortfolioShareType(v string) *ListAcceptedPortfolioSharesInput {
+	s.PortfolioShareType = &v
 	return s
 }
 
@@ -14591,6 +14604,14 @@ const (
 
 	// EvaluationTypeDynamic is a EvaluationType enum value
 	EvaluationTypeDynamic = "DYNAMIC"
+)
+
+const (
+	// PortfolioShareTypeImported is a PortfolioShareType enum value
+	PortfolioShareTypeImported = "IMPORTED"
+
+	// PortfolioShareTypeAwsServicecatalog is a PortfolioShareType enum value
+	PortfolioShareTypeAwsServicecatalog = "AWS_SERVICECATALOG"
 )
 
 const (

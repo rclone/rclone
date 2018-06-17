@@ -24,7 +24,7 @@ import (
 	"net/http"
 )
 
-// OperationsClient is the client for the Operations methods of the Servicefabric service.
+// OperationsClient is the service Fabric Management Client
 type OperationsClient struct {
 	BaseClient
 }

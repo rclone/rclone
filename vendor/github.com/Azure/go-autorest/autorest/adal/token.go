@@ -22,8 +22,10 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -136,6 +138,12 @@ func (t *Token) OAuthToken() string {
 	return t.AccessToken
 }
 
+// ServicePrincipalSecret is an interface that allows various secret mechanism to fill the form
+// that is submitted when acquiring an oAuth token.
+type ServicePrincipalSecret interface {
+	SetAuthenticationValues(spt *ServicePrincipalToken, values *url.Values) error
+}
+
 // ServicePrincipalNoSecret represents a secret type that contains no secret
 // meaning it is not valid for fetching a fresh token. This is used by Manual
 type ServicePrincipalNoSecret struct {
@@ -147,15 +155,19 @@ func (noSecret *ServicePrincipalNoSecret) SetAuthenticationValues(spt *ServicePr
 	return fmt.Errorf("Manually created ServicePrincipalToken does not contain secret material to retrieve a new access token")
 }
 
-// ServicePrincipalSecret is an interface that allows various secret mechanism to fill the form
-// that is submitted when acquiring an oAuth token.
-type ServicePrincipalSecret interface {
-	SetAuthenticationValues(spt *ServicePrincipalToken, values *url.Values) error
+// MarshalJSON implements the json.Marshaler interface.
+func (noSecret ServicePrincipalNoSecret) MarshalJSON() ([]byte, error) {
+	type tokenType struct {
+		Type string `json:"type"`
+	}
+	return json.Marshal(tokenType{
+		Type: "ServicePrincipalNoSecret",
+	})
 }
 
 // ServicePrincipalTokenSecret implements ServicePrincipalSecret for client_secret type authorization.
 type ServicePrincipalTokenSecret struct {
-	ClientSecret string
+	ClientSecret string `json:"value"`
 }
 
 // SetAuthenticationValues is a method of the interface ServicePrincipalSecret.
@@ -165,47 +177,22 @@ func (tokenSecret *ServicePrincipalTokenSecret) SetAuthenticationValues(spt *Ser
 	return nil
 }
 
+// MarshalJSON implements the json.Marshaler interface.
+func (tokenSecret ServicePrincipalTokenSecret) MarshalJSON() ([]byte, error) {
+	type tokenType struct {
+		Type  string `json:"type"`
+		Value string `json:"value"`
+	}
+	return json.Marshal(tokenType{
+		Type:  "ServicePrincipalTokenSecret",
+		Value: tokenSecret.ClientSecret,
+	})
+}
+
 // ServicePrincipalCertificateSecret implements ServicePrincipalSecret for generic RSA cert auth with signed JWTs.
 type ServicePrincipalCertificateSecret struct {
 	Certificate *x509.Certificate
 	PrivateKey  *rsa.PrivateKey
-}
-
-// ServicePrincipalMSISecret implements ServicePrincipalSecret for machines running the MSI Extension.
-type ServicePrincipalMSISecret struct {
-}
-
-// ServicePrincipalUsernamePasswordSecret implements ServicePrincipalSecret for username and password auth.
-type ServicePrincipalUsernamePasswordSecret struct {
-	Username string
-	Password string
-}
-
-// ServicePrincipalAuthorizationCodeSecret implements ServicePrincipalSecret for authorization code auth.
-type ServicePrincipalAuthorizationCodeSecret struct {
-	ClientSecret      string
-	AuthorizationCode string
-	RedirectURI       string
-}
-
-// SetAuthenticationValues is a method of the interface ServicePrincipalSecret.
-func (secret *ServicePrincipalAuthorizationCodeSecret) SetAuthenticationValues(spt *ServicePrincipalToken, v *url.Values) error {
-	v.Set("code", secret.AuthorizationCode)
-	v.Set("client_secret", secret.ClientSecret)
-	v.Set("redirect_uri", secret.RedirectURI)
-	return nil
-}
-
-// SetAuthenticationValues is a method of the interface ServicePrincipalSecret.
-func (secret *ServicePrincipalUsernamePasswordSecret) SetAuthenticationValues(spt *ServicePrincipalToken, v *url.Values) error {
-	v.Set("username", secret.Username)
-	v.Set("password", secret.Password)
-	return nil
-}
-
-// SetAuthenticationValues is a method of the interface ServicePrincipalSecret.
-func (msiSecret *ServicePrincipalMSISecret) SetAuthenticationValues(spt *ServicePrincipalToken, v *url.Values) error {
-	return nil
 }
 
 // SignJwt returns the JWT signed with the certificate's private key.
@@ -228,9 +215,9 @@ func (secret *ServicePrincipalCertificateSecret) SignJwt(spt *ServicePrincipalTo
 	token := jwt.New(jwt.SigningMethodRS256)
 	token.Header["x5t"] = thumbprint
 	token.Claims = jwt.MapClaims{
-		"aud": spt.oauthConfig.TokenEndpoint.String(),
-		"iss": spt.clientID,
-		"sub": spt.clientID,
+		"aud": spt.inner.OauthConfig.TokenEndpoint.String(),
+		"iss": spt.inner.ClientID,
+		"sub": spt.inner.ClientID,
 		"jti": base64.URLEncoding.EncodeToString(jti),
 		"nbf": time.Now().Unix(),
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
@@ -253,19 +240,149 @@ func (secret *ServicePrincipalCertificateSecret) SetAuthenticationValues(spt *Se
 	return nil
 }
 
+// MarshalJSON implements the json.Marshaler interface.
+func (secret ServicePrincipalCertificateSecret) MarshalJSON() ([]byte, error) {
+	return nil, errors.New("marshalling ServicePrincipalCertificateSecret is not supported")
+}
+
+// ServicePrincipalMSISecret implements ServicePrincipalSecret for machines running the MSI Extension.
+type ServicePrincipalMSISecret struct {
+}
+
+// SetAuthenticationValues is a method of the interface ServicePrincipalSecret.
+func (msiSecret *ServicePrincipalMSISecret) SetAuthenticationValues(spt *ServicePrincipalToken, v *url.Values) error {
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (msiSecret ServicePrincipalMSISecret) MarshalJSON() ([]byte, error) {
+	return nil, errors.New("marshalling ServicePrincipalMSISecret is not supported")
+}
+
+// ServicePrincipalUsernamePasswordSecret implements ServicePrincipalSecret for username and password auth.
+type ServicePrincipalUsernamePasswordSecret struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// SetAuthenticationValues is a method of the interface ServicePrincipalSecret.
+func (secret *ServicePrincipalUsernamePasswordSecret) SetAuthenticationValues(spt *ServicePrincipalToken, v *url.Values) error {
+	v.Set("username", secret.Username)
+	v.Set("password", secret.Password)
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (secret ServicePrincipalUsernamePasswordSecret) MarshalJSON() ([]byte, error) {
+	type tokenType struct {
+		Type     string `json:"type"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	return json.Marshal(tokenType{
+		Type:     "ServicePrincipalUsernamePasswordSecret",
+		Username: secret.Username,
+		Password: secret.Password,
+	})
+}
+
+// ServicePrincipalAuthorizationCodeSecret implements ServicePrincipalSecret for authorization code auth.
+type ServicePrincipalAuthorizationCodeSecret struct {
+	ClientSecret      string `json:"value"`
+	AuthorizationCode string `json:"authCode"`
+	RedirectURI       string `json:"redirect"`
+}
+
+// SetAuthenticationValues is a method of the interface ServicePrincipalSecret.
+func (secret *ServicePrincipalAuthorizationCodeSecret) SetAuthenticationValues(spt *ServicePrincipalToken, v *url.Values) error {
+	v.Set("code", secret.AuthorizationCode)
+	v.Set("client_secret", secret.ClientSecret)
+	v.Set("redirect_uri", secret.RedirectURI)
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (secret ServicePrincipalAuthorizationCodeSecret) MarshalJSON() ([]byte, error) {
+	type tokenType struct {
+		Type     string `json:"type"`
+		Value    string `json:"value"`
+		AuthCode string `json:"authCode"`
+		Redirect string `json:"redirect"`
+	}
+	return json.Marshal(tokenType{
+		Type:     "ServicePrincipalAuthorizationCodeSecret",
+		Value:    secret.ClientSecret,
+		AuthCode: secret.AuthorizationCode,
+		Redirect: secret.RedirectURI,
+	})
+}
+
 // ServicePrincipalToken encapsulates a Token created for a Service Principal.
 type ServicePrincipalToken struct {
-	token         Token
-	secret        ServicePrincipalSecret
-	oauthConfig   OAuthConfig
-	clientID      string
-	resource      string
-	autoRefresh   bool
-	refreshLock   *sync.RWMutex
-	refreshWithin time.Duration
-	sender        Sender
-
+	inner            servicePrincipalToken
+	refreshLock      *sync.RWMutex
+	sender           Sender
 	refreshCallbacks []TokenRefreshCallback
+}
+
+// MarshalTokenJSON returns the marshalled inner token.
+func (spt ServicePrincipalToken) MarshalTokenJSON() ([]byte, error) {
+	return json.Marshal(spt.inner.Token)
+}
+
+// SetRefreshCallbacks replaces any existing refresh callbacks with the specified callbacks.
+func (spt *ServicePrincipalToken) SetRefreshCallbacks(callbacks []TokenRefreshCallback) {
+	spt.refreshCallbacks = callbacks
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (spt ServicePrincipalToken) MarshalJSON() ([]byte, error) {
+	return json.Marshal(spt.inner)
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (spt *ServicePrincipalToken) UnmarshalJSON(data []byte) error {
+	// need to determine the token type
+	raw := map[string]interface{}{}
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+	secret := raw["secret"].(map[string]interface{})
+	switch secret["type"] {
+	case "ServicePrincipalNoSecret":
+		spt.inner.Secret = &ServicePrincipalNoSecret{}
+	case "ServicePrincipalTokenSecret":
+		spt.inner.Secret = &ServicePrincipalTokenSecret{}
+	case "ServicePrincipalCertificateSecret":
+		return errors.New("unmarshalling ServicePrincipalCertificateSecret is not supported")
+	case "ServicePrincipalMSISecret":
+		return errors.New("unmarshalling ServicePrincipalMSISecret is not supported")
+	case "ServicePrincipalUsernamePasswordSecret":
+		spt.inner.Secret = &ServicePrincipalUsernamePasswordSecret{}
+	case "ServicePrincipalAuthorizationCodeSecret":
+		spt.inner.Secret = &ServicePrincipalAuthorizationCodeSecret{}
+	default:
+		return fmt.Errorf("unrecognized token type '%s'", secret["type"])
+	}
+	err = json.Unmarshal(data, &spt.inner)
+	if err != nil {
+		return err
+	}
+	spt.refreshLock = &sync.RWMutex{}
+	spt.sender = &http.Client{}
+	return nil
+}
+
+// internal type used for marshalling/unmarshalling
+type servicePrincipalToken struct {
+	Token         Token                  `json:"token"`
+	Secret        ServicePrincipalSecret `json:"secret"`
+	OauthConfig   OAuthConfig            `json:"oauth"`
+	ClientID      string                 `json:"clientID"`
+	Resource      string                 `json:"resource"`
+	AutoRefresh   bool                   `json:"autoRefresh"`
+	RefreshWithin time.Duration          `json:"refreshWithin"`
 }
 
 func validateOAuthConfig(oac OAuthConfig) error {
@@ -290,13 +407,15 @@ func NewServicePrincipalTokenWithSecret(oauthConfig OAuthConfig, id string, reso
 		return nil, fmt.Errorf("parameter 'secret' cannot be nil")
 	}
 	spt := &ServicePrincipalToken{
-		oauthConfig:      oauthConfig,
-		secret:           secret,
-		clientID:         id,
-		resource:         resource,
-		autoRefresh:      true,
+		inner: servicePrincipalToken{
+			OauthConfig:   oauthConfig,
+			Secret:        secret,
+			ClientID:      id,
+			Resource:      resource,
+			AutoRefresh:   true,
+			RefreshWithin: defaultRefresh,
+		},
 		refreshLock:      &sync.RWMutex{},
-		refreshWithin:    defaultRefresh,
 		sender:           &http.Client{},
 		refreshCallbacks: callbacks,
 	}
@@ -327,7 +446,39 @@ func NewServicePrincipalTokenFromManualToken(oauthConfig OAuthConfig, clientID s
 		return nil, err
 	}
 
-	spt.token = token
+	spt.inner.Token = token
+
+	return spt, nil
+}
+
+// NewServicePrincipalTokenFromManualTokenSecret creates a ServicePrincipalToken using the supplied token and secret
+func NewServicePrincipalTokenFromManualTokenSecret(oauthConfig OAuthConfig, clientID string, resource string, token Token, secret ServicePrincipalSecret, callbacks ...TokenRefreshCallback) (*ServicePrincipalToken, error) {
+	if err := validateOAuthConfig(oauthConfig); err != nil {
+		return nil, err
+	}
+	if err := validateStringParam(clientID, "clientID"); err != nil {
+		return nil, err
+	}
+	if err := validateStringParam(resource, "resource"); err != nil {
+		return nil, err
+	}
+	if secret == nil {
+		return nil, fmt.Errorf("parameter 'secret' cannot be nil")
+	}
+	if token.IsZero() {
+		return nil, fmt.Errorf("parameter 'token' cannot be zero-initialized")
+	}
+	spt, err := NewServicePrincipalTokenWithSecret(
+		oauthConfig,
+		clientID,
+		resource,
+		secret,
+		callbacks...)
+	if err != nil {
+		return nil, err
+	}
+
+	spt.inner.Token = token
 
 	return spt, nil
 }
@@ -495,20 +646,22 @@ func newServicePrincipalTokenFromMSI(msiEndpoint, resource string, userAssignedI
 	msiEndpointURL.RawQuery = v.Encode()
 
 	spt := &ServicePrincipalToken{
-		oauthConfig: OAuthConfig{
-			TokenEndpoint: *msiEndpointURL,
+		inner: servicePrincipalToken{
+			OauthConfig: OAuthConfig{
+				TokenEndpoint: *msiEndpointURL,
+			},
+			Secret:        &ServicePrincipalMSISecret{},
+			Resource:      resource,
+			AutoRefresh:   true,
+			RefreshWithin: defaultRefresh,
 		},
-		secret:           &ServicePrincipalMSISecret{},
-		resource:         resource,
-		autoRefresh:      true,
 		refreshLock:      &sync.RWMutex{},
-		refreshWithin:    defaultRefresh,
 		sender:           &http.Client{},
 		refreshCallbacks: callbacks,
 	}
 
 	if userAssignedID != nil {
-		spt.clientID = *userAssignedID
+		spt.inner.ClientID = *userAssignedID
 	}
 
 	return spt, nil
@@ -543,12 +696,12 @@ func (spt *ServicePrincipalToken) EnsureFresh() error {
 // EnsureFreshWithContext will refresh the token if it will expire within the refresh window (as set by
 // RefreshWithin) and autoRefresh flag is on.  This method is safe for concurrent use.
 func (spt *ServicePrincipalToken) EnsureFreshWithContext(ctx context.Context) error {
-	if spt.autoRefresh && spt.token.WillExpireIn(spt.refreshWithin) {
+	if spt.inner.AutoRefresh && spt.inner.Token.WillExpireIn(spt.inner.RefreshWithin) {
 		// take the write lock then check to see if the token was already refreshed
 		spt.refreshLock.Lock()
 		defer spt.refreshLock.Unlock()
-		if spt.token.WillExpireIn(spt.refreshWithin) {
-			return spt.refreshInternal(ctx, spt.resource)
+		if spt.inner.Token.WillExpireIn(spt.inner.RefreshWithin) {
+			return spt.refreshInternal(ctx, spt.inner.Resource)
 		}
 	}
 	return nil
@@ -558,7 +711,7 @@ func (spt *ServicePrincipalToken) EnsureFreshWithContext(ctx context.Context) er
 func (spt *ServicePrincipalToken) InvokeRefreshCallbacks(token Token) error {
 	if spt.refreshCallbacks != nil {
 		for _, callback := range spt.refreshCallbacks {
-			err := callback(spt.token)
+			err := callback(spt.inner.Token)
 			if err != nil {
 				return fmt.Errorf("adal: TokenRefreshCallback handler failed. Error = '%v'", err)
 			}
@@ -578,7 +731,7 @@ func (spt *ServicePrincipalToken) Refresh() error {
 func (spt *ServicePrincipalToken) RefreshWithContext(ctx context.Context) error {
 	spt.refreshLock.Lock()
 	defer spt.refreshLock.Unlock()
-	return spt.refreshInternal(ctx, spt.resource)
+	return spt.refreshInternal(ctx, spt.inner.Resource)
 }
 
 // RefreshExchange refreshes the token, but for a different resource.
@@ -596,7 +749,7 @@ func (spt *ServicePrincipalToken) RefreshExchangeWithContext(ctx context.Context
 }
 
 func (spt *ServicePrincipalToken) getGrantType() string {
-	switch spt.secret.(type) {
+	switch spt.inner.Secret.(type) {
 	case *ServicePrincipalUsernamePasswordSecret:
 		return OAuthGrantTypeUserPass
 	case *ServicePrincipalAuthorizationCodeSecret:
@@ -615,22 +768,30 @@ func isIMDS(u url.URL) bool {
 }
 
 func (spt *ServicePrincipalToken) refreshInternal(ctx context.Context, resource string) error {
-	req, err := http.NewRequest(http.MethodPost, spt.oauthConfig.TokenEndpoint.String(), nil)
+	req, err := http.NewRequest(http.MethodPost, spt.inner.OauthConfig.TokenEndpoint.String(), nil)
 	if err != nil {
 		return fmt.Errorf("adal: Failed to build the refresh request. Error = '%v'", err)
 	}
 	req = req.WithContext(ctx)
-	if !isIMDS(spt.oauthConfig.TokenEndpoint) {
+	if !isIMDS(spt.inner.OauthConfig.TokenEndpoint) {
 		v := url.Values{}
-		v.Set("client_id", spt.clientID)
+		v.Set("client_id", spt.inner.ClientID)
 		v.Set("resource", resource)
 
-		if spt.token.RefreshToken != "" {
+		if spt.inner.Token.RefreshToken != "" {
 			v.Set("grant_type", OAuthGrantTypeRefreshToken)
-			v.Set("refresh_token", spt.token.RefreshToken)
+			v.Set("refresh_token", spt.inner.Token.RefreshToken)
+			// web apps must specify client_secret when refreshing tokens
+			// see https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-protocols-oauth-code#refreshing-the-access-tokens
+			if spt.getGrantType() == OAuthGrantTypeAuthorizationCode {
+				err := spt.inner.Secret.SetAuthenticationValues(spt, &v)
+				if err != nil {
+					return err
+				}
+			}
 		} else {
 			v.Set("grant_type", spt.getGrantType())
-			err := spt.secret.SetAuthenticationValues(spt, &v)
+			err := spt.inner.Secret.SetAuthenticationValues(spt, &v)
 			if err != nil {
 				return err
 			}
@@ -643,13 +804,13 @@ func (spt *ServicePrincipalToken) refreshInternal(ctx context.Context, resource 
 		req.Body = body
 	}
 
-	if _, ok := spt.secret.(*ServicePrincipalMSISecret); ok {
+	if _, ok := spt.inner.Secret.(*ServicePrincipalMSISecret); ok {
 		req.Method = http.MethodGet
 		req.Header.Set(metadataHeader, "true")
 	}
 
 	var resp *http.Response
-	if isIMDS(spt.oauthConfig.TokenEndpoint) {
+	if isIMDS(spt.inner.OauthConfig.TokenEndpoint) {
 		resp, err = retry(spt.sender, req)
 	} else {
 		resp, err = spt.sender.Do(req)
@@ -684,12 +845,13 @@ func (spt *ServicePrincipalToken) refreshInternal(ctx context.Context, resource 
 		return fmt.Errorf("adal: Failed to unmarshal the service principal token during refresh. Error = '%v' JSON = '%s'", err, string(rb))
 	}
 
-	spt.token = token
+	spt.inner.Token = token
 
 	return spt.InvokeRefreshCallbacks(token)
 }
 
 func retry(sender Sender, req *http.Request) (resp *http.Response, err error) {
+	// copied from client.go due to circular dependency
 	retries := []int{
 		http.StatusRequestTimeout,      // 408
 		http.StatusTooManyRequests,     // 429
@@ -698,8 +860,10 @@ func retry(sender Sender, req *http.Request) (resp *http.Response, err error) {
 		http.StatusServiceUnavailable,  // 503
 		http.StatusGatewayTimeout,      // 504
 	}
-	// Extra retry status codes requered
-	retries = append(retries, http.StatusNotFound,
+	// extra retry status codes specific to IMDS
+	retries = append(retries,
+		http.StatusNotFound,
+		http.StatusGone,
 		// all remaining 5xx
 		http.StatusNotImplemented,
 		http.StatusHTTPVersionNotSupported,
@@ -709,8 +873,13 @@ func retry(sender Sender, req *http.Request) (resp *http.Response, err error) {
 		http.StatusNotExtended,
 		http.StatusNetworkAuthenticationRequired)
 
+	// see https://docs.microsoft.com/en-us/azure/active-directory/managed-service-identity/how-to-use-vm-token#retry-guidance
+
+	const maxAttempts int = 5
+	const maxDelay time.Duration = 60 * time.Second
+
 	attempt := 0
-	maxAttempts := 5
+	delay := time.Duration(0)
 
 	for attempt < maxAttempts {
 		resp, err = sender.Do(req)
@@ -719,26 +888,36 @@ func retry(sender Sender, req *http.Request) (resp *http.Response, err error) {
 			return
 		}
 
-		if !delay(resp, req.Context().Done()) {
-			select {
-			case <-time.After(time.Second):
-				attempt++
-			case <-req.Context().Done():
-				err = req.Context().Err()
-				return
-			}
+		// perform exponential backoff with a cap.
+		// must increment attempt before calculating delay.
+		attempt++
+		// the base value of 2 is the "delta backoff" as specified in the guidance doc
+		delay += (time.Duration(math.Pow(2, float64(attempt))) * time.Second)
+		if delay > maxDelay {
+			delay = maxDelay
+		}
+
+		select {
+		case <-time.After(delay):
+			// intentionally left blank
+		case <-req.Context().Done():
+			err = req.Context().Err()
+			return
 		}
 	}
 	return
 }
 
+// returns true if the specified error is a temporary network error or false if it's not.
+// if the error doesn't implement the net.Error interface the return value is true.
 func isTemporaryNetworkError(err error) bool {
-	if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+	if netErr, ok := err.(net.Error); !ok || (ok && netErr.Temporary()) {
 		return true
 	}
 	return false
 }
 
+// returns true if slice ints contains the value n
 func containsInt(ints []int, n int) bool {
 	for _, i := range ints {
 		if i == n {
@@ -748,31 +927,15 @@ func containsInt(ints []int, n int) bool {
 	return false
 }
 
-func delay(resp *http.Response, cancel <-chan struct{}) bool {
-	if resp == nil {
-		return false
-	}
-	retryAfter, _ := strconv.Atoi(resp.Header.Get("Retry-After"))
-	if resp.StatusCode == http.StatusTooManyRequests && retryAfter > 0 {
-		select {
-		case <-time.After(time.Duration(retryAfter) * time.Second):
-			return true
-		case <-cancel:
-			return false
-		}
-	}
-	return false
-}
-
 // SetAutoRefresh enables or disables automatic refreshing of stale tokens.
 func (spt *ServicePrincipalToken) SetAutoRefresh(autoRefresh bool) {
-	spt.autoRefresh = autoRefresh
+	spt.inner.AutoRefresh = autoRefresh
 }
 
 // SetRefreshWithin sets the interval within which if the token will expire, EnsureFresh will
 // refresh the token.
 func (spt *ServicePrincipalToken) SetRefreshWithin(d time.Duration) {
-	spt.refreshWithin = d
+	spt.inner.RefreshWithin = d
 	return
 }
 
@@ -784,12 +947,12 @@ func (spt *ServicePrincipalToken) SetSender(s Sender) { spt.sender = s }
 func (spt *ServicePrincipalToken) OAuthToken() string {
 	spt.refreshLock.RLock()
 	defer spt.refreshLock.RUnlock()
-	return spt.token.OAuthToken()
+	return spt.inner.Token.OAuthToken()
 }
 
 // Token returns a copy of the current token.
 func (spt *ServicePrincipalToken) Token() Token {
 	spt.refreshLock.RLock()
 	defer spt.refreshLock.RUnlock()
-	return spt.token
+	return spt.inner.Token
 }

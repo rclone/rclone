@@ -83,11 +83,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -107,12 +102,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -407,7 +396,7 @@
           ],
           "parameters": {
             "personFields": {
-              "description": "**Required.** A field mask to restrict which fields on the person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
+              "description": "**Required.** A field mask to restrict which fields on the person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* sipAddresses\n* skills\n* taglines\n* urls\n* userDefined",
               "format": "google-fieldmask",
               "location": "query",
               "type": "string"
@@ -450,7 +439,7 @@
           "parameterOrder": [],
           "parameters": {
             "personFields": {
-              "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
+              "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* sipAddresses\n* skills\n* taglines\n* urls\n* userDefined",
               "format": "google-fieldmask",
               "location": "query",
               "type": "string"
@@ -501,7 +490,7 @@
               "type": "string"
             },
             "updatePersonFields": {
-              "description": "**Required.** A field mask to restrict which fields on the person are\nupdated. Multiple fields can be specified by separating them with commas.\nAll updated fields will be replaced. Valid values are:\n\n* addresses\n* biographies\n* birthdays\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* relations\n* residences\n* urls",
+              "description": "**Required.** A field mask to restrict which fields on the person are\nupdated. Multiple fields can be specified by separating them with commas.\nAll updated fields will be replaced. Valid values are:\n\n* addresses\n* biographies\n* birthdays\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* relations\n* residences\n* sipAddresses\n* urls\n* userDefined",
               "format": "google-fieldmask",
               "location": "query",
               "type": "string"
@@ -543,7 +532,7 @@
                   "type": "string"
                 },
                 "personFields": {
-                  "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* skills\n* taglines\n* urls",
+                  "description": "**Required.** A field mask to restrict which fields on each person are\nreturned. Multiple fields can be specified by separating them with commas.\nValid values are:\n\n* addresses\n* ageRanges\n* biographies\n* birthdays\n* braggingRights\n* coverPhotos\n* emailAddresses\n* events\n* genders\n* imClients\n* interests\n* locales\n* memberships\n* metadata\n* names\n* nicknames\n* occupations\n* organizations\n* phoneNumbers\n* photos\n* relations\n* relationshipInterests\n* relationshipStatuses\n* residences\n* sipAddresses\n* skills\n* taglines\n* urls\n* userDefined",
                   "format": "google-fieldmask",
                   "location": "query",
                   "type": "string"
@@ -596,7 +585,7 @@
       }
     }
   },
-  "revision": "20180405",
+  "revision": "20180601",
   "rootUrl": "https://people.googleapis.com/",
   "schemas": {
     "Address": {
@@ -648,7 +637,7 @@
           "type": "string"
         },
         "type": {
-          "description": "The type of the address. The type can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `home`\n* `work`\n* `other`",
+          "description": "The type of the address. The type can be custom or one of these predefined\nvalues:\n\n* `home`\n* `work`\n* `other`",
           "type": "string"
         }
       },
@@ -816,7 +805,7 @@
       "id": "ContactGroupMembership",
       "properties": {
         "contactGroupId": {
-          "description": "The contact group ID for the contact group membership. The contact group\nID can be custom or predefined. Possible values include, but are not\nlimited to, the following:\n\n*  `myContacts`\n*  `starred`\n*  A numerical ID for user-created groups.",
+          "description": "The contact group ID for the contact group membership. The contact group\nID can be custom or one of these predefined values:\n\n*  `myContacts`\n*  `starred`\n*  A numerical ID for user-created groups.",
           "type": "string"
         }
       },
@@ -937,7 +926,7 @@
           "description": "Metadata about the email address."
         },
         "type": {
-          "description": "The type of the email address. The type can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `home`\n* `work`\n* `other`",
+          "description": "The type of the email address. The type can be custom or one of these\npredefined values:\n\n* `home`\n* `work`\n* `other`",
           "type": "string"
         },
         "value": {
@@ -970,7 +959,7 @@
           "description": "Metadata about the event."
         },
         "type": {
-          "description": "The type of the event. The type can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `anniversary`\n* `other`",
+          "description": "The type of the event. The type can be custom or one of these predefined\nvalues:\n\n* `anniversary`\n* `other`",
           "type": "string"
         }
       },
@@ -1008,7 +997,7 @@
           "description": "Metadata about the gender."
         },
         "value": {
-          "description": "The gender for the person. The gender can be custom or predefined.\nPossible values include, but are not limited to, the\nfollowing:\n\n* `male`\n* `female`\n* `other`\n* `unknown`",
+          "description": "The gender for the person. The gender can be custom or one of these\npredefined values:\n\n* `male`\n* `female`\n* `other`\n* `unknown`",
           "type": "string"
         }
       },
@@ -1044,11 +1033,11 @@
           "description": "Metadata about the IM client."
         },
         "protocol": {
-          "description": "The protocol of the IM client. The protocol can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `aim`\n* `msn`\n* `yahoo`\n* `skype`\n* `qq`\n* `googleTalk`\n* `icq`\n* `jabber`\n* `netMeeting`",
+          "description": "The protocol of the IM client. The protocol can be custom or one of these\npredefined values:\n\n* `aim`\n* `msn`\n* `yahoo`\n* `skype`\n* `qq`\n* `googleTalk`\n* `icq`\n* `jabber`\n* `netMeeting`",
           "type": "string"
         },
         "type": {
-          "description": "The type of the IM client. The type can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `home`\n* `work`\n* `other`",
+          "description": "The type of the IM client. The type can be custom or one of these\npredefined values:\n\n* `home`\n* `work`\n* `other`",
           "type": "string"
         },
         "username": {
@@ -1368,7 +1357,7 @@
           "type": "string"
         },
         "type": {
-          "description": "The type of the organization. The type can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `work`\n* `school`",
+          "description": "The type of the organization. The type can be custom or  one of these\npredefined values:\n\n* `work`\n* `school`",
           "type": "string"
         }
       },
@@ -1567,6 +1556,13 @@
           "description": "The resource name for the person, assigned by the server. An ASCII string\nwith a max length of 27 characters, in the form of\n`people/`\u003cvar\u003eperson_id\u003c/var\u003e.",
           "type": "string"
         },
+        "sipAddresses": {
+          "description": "The person's SIP addresses.",
+          "items": {
+            "$ref": "SipAddress"
+          },
+          "type": "array"
+        },
         "skills": {
           "description": "The person's skills.",
           "items": {
@@ -1685,7 +1681,7 @@
           "description": "Metadata about the phone number."
         },
         "type": {
-          "description": "The type of the phone number. The type can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `home`\n* `work`\n* `mobile`\n* `homeFax`\n* `workFax`\n* `otherFax`\n* `pager`\n* `workMobile`\n* `workPager`\n* `main`\n* `googleVoice`\n* `other`",
+          "description": "The type of the phone number. The type can be custom or one of these\npredefined values:\n\n* `home`\n* `work`\n* `mobile`\n* `homeFax`\n* `workFax`\n* `otherFax`\n* `pager`\n* `workMobile`\n* `workPager`\n* `main`\n* `googleVoice`\n* `other`",
           "type": "string"
         },
         "value": {
@@ -1771,7 +1767,7 @@
           "type": "string"
         },
         "type": {
-          "description": "The person's relation to the other person. The type can be custom or predefined.\nPossible values include, but are not limited to, the following values:\n\n* `spouse`\n* `child`\n* `mother`\n* `father`\n* `parent`\n* `brother`\n* `sister`\n* `friend`\n* `relative`\n* `domesticPartner`\n* `manager`\n* `assistant`\n* `referredBy`\n* `partner`",
+          "description": "The person's relation to the other person. The type can be custom or one of\nthese predefined values:\n\n* `spouse`\n* `child`\n* `mother`\n* `father`\n* `parent`\n* `brother`\n* `sister`\n* `friend`\n* `relative`\n* `domesticPartner`\n* `manager`\n* `assistant`\n* `referredBy`\n* `partner`",
           "type": "string"
         }
       },
@@ -1790,7 +1786,7 @@
           "description": "Metadata about the relationship interest."
         },
         "value": {
-          "description": "The kind of relationship the person is looking for. The value can be custom\nor predefined. Possible values include, but are not limited to, the\nfollowing values:\n\n* `friend`\n* `date`\n* `relationship`\n* `networking`",
+          "description": "The kind of relationship the person is looking for. The value can be custom\nor one of these predefined values:\n\n* `friend`\n* `date`\n* `relationship`\n* `networking`",
           "type": "string"
         }
       },
@@ -1809,7 +1805,7 @@
           "description": "Metadata about the relationship status."
         },
         "value": {
-          "description": "The relationship status. The value can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `single`\n* `inARelationship`\n* `engaged`\n* `married`\n* `itsComplicated`\n* `openRelationship`\n* `widowed`\n* `inDomesticPartnership`\n* `inCivilUnion`",
+          "description": "The relationship status. The value can be custom or one of these\npredefined values:\n\n* `single`\n* `inARelationship`\n* `engaged`\n* `married`\n* `itsComplicated`\n* `openRelationship`\n* `widowed`\n* `inDomesticPartnership`\n* `inCivilUnion`",
           "type": "string"
         }
       },
@@ -1829,6 +1825,29 @@
         },
         "value": {
           "description": "The address of the residence.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SipAddress": {
+      "description": "A person's SIP address. Session Initial Protocol addresses are used for VoIP\ncommunications to make voice or video calls over the internet.",
+      "id": "SipAddress",
+      "properties": {
+        "formattedType": {
+          "description": "The read-only type of the SIP address translated and formatted in the\nviewer's account locale or the `Accept-Language` HTTP header locale.",
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "FieldMetadata",
+          "description": "Metadata about the SIP address."
+        },
+        "type": {
+          "description": "The type of the SIP address. The type can be custom or or one of these\npredefined values:\n\n* `home`\n* `work`\n* `mobile`\n* `other`",
+          "type": "string"
+        },
+        "value": {
+          "description": "The SIP address in the\n[RFC 3261 19.1](https://tools.ietf.org/html/rfc3261#section-19.1) SIP URI\nformat.",
           "type": "string"
         }
       },
@@ -1957,7 +1976,7 @@
           "description": "Metadata about the URL."
         },
         "type": {
-          "description": "The type of the URL. The type can be custom or predefined.\nPossible values include, but are not limited to, the following:\n\n* `home`\n* `work`\n* `blog`\n* `profile`\n* `homePage`\n* `ftp`\n* `reservations`\n* `appInstallPage`: website for a Google+ application.\n* `other`",
+          "description": "The type of the URL. The type can be custom or one of these predefined\nvalues:\n\n* `home`\n* `work`\n* `blog`\n* `profile`\n* `homePage`\n* `ftp`\n* `reservations`\n* `appInstallPage`: website for a Google+ application.\n* `other`",
           "type": "string"
         },
         "value": {

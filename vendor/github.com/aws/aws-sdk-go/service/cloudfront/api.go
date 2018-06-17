@@ -72,7 +72,7 @@ func (c *CloudFront) CreateCloudFrontOriginAccessIdentityRequest(input *CreateCl
 // API operation CreateCloudFrontOriginAccessIdentity for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeOriginAccessIdentityAlreadyExists "OriginAccessIdentityAlreadyExists"
+//   * ErrCodeOriginAccessIdentityAlreadyExists "CloudFrontOriginAccessIdentityAlreadyExists"
 //   If the CallerReference is a value you already sent in a previous request
 //   to create an identity but the content of the CloudFrontOriginAccessIdentityConfig
 //   is different from the original request, CloudFront returns a CloudFrontOriginAccessIdentityAlreadyExists
@@ -1239,7 +1239,7 @@ func (c *CloudFront) DeleteCloudFrontOriginAccessIdentityRequest(input *DeleteCl
 //   The precondition given in one or more of the request-header fields evaluated
 //   to false.
 //
-//   * ErrCodeOriginAccessIdentityInUse "OriginAccessIdentityInUse"
+//   * ErrCodeOriginAccessIdentityInUse "CloudFrontOriginAccessIdentityInUse"
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudfront-2017-10-30/DeleteCloudFrontOriginAccessIdentity
 func (c *CloudFront) DeleteCloudFrontOriginAccessIdentity(input *DeleteCloudFrontOriginAccessIdentityInput) (*DeleteCloudFrontOriginAccessIdentityOutput, error) {

@@ -42,8 +42,9 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 
 // CheckNameAvailability checks that the SignalR name is valid and is not already in use.
 // Parameters:
+// location - the region
 // parameters - parameters supplied to the operation.
-func (client Client) CheckNameAvailability(ctx context.Context, parameters *NameAvailabilityParameters) (result NameAvailability, err error) {
+func (client Client) CheckNameAvailability(ctx context.Context, location string, parameters *NameAvailabilityParameters) (result NameAvailability, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters", Name: validation.Null, Rule: false,
@@ -53,7 +54,7 @@ func (client Client) CheckNameAvailability(ctx context.Context, parameters *Name
 		return result, validation.NewError("signalr.Client", "CheckNameAvailability", err.Error())
 	}
 
-	req, err := client.CheckNameAvailabilityPreparer(ctx, parameters)
+	req, err := client.CheckNameAvailabilityPreparer(ctx, location, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "signalr.Client", "CheckNameAvailability", nil, "Failure preparing request")
 		return
@@ -75,8 +76,9 @@ func (client Client) CheckNameAvailability(ctx context.Context, parameters *Name
 }
 
 // CheckNameAvailabilityPreparer prepares the CheckNameAvailability request.
-func (client Client) CheckNameAvailabilityPreparer(ctx context.Context, parameters *NameAvailabilityParameters) (*http.Request, error) {
+func (client Client) CheckNameAvailabilityPreparer(ctx context.Context, location string, parameters *NameAvailabilityParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
+		"location":       autorest.Encode("path", location),
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
 
@@ -89,7 +91,7 @@ func (client Client) CheckNameAvailabilityPreparer(ctx context.Context, paramete
 		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPost(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.SignalRService/checkNameAvailability", pathParameters),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.SignalRService/locations/{location}/checkNameAvailability", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	if parameters != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -176,15 +178,17 @@ func (client Client) CreateOrUpdatePreparer(ctx context.Context, resourceGroupNa
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) CreateOrUpdateSender(req *http.Request) (future CreateOrUpdateFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -246,15 +250,17 @@ func (client Client) DeletePreparer(ctx context.Context, resourceGroupName strin
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) DeleteSender(req *http.Request) (future DeleteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -642,15 +648,17 @@ func (client Client) RegenerateKeyPreparer(ctx context.Context, resourceGroupNam
 // RegenerateKeySender sends the RegenerateKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) RegenerateKeySender(req *http.Request) (future RegenerateKeyFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -718,15 +726,17 @@ func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName strin
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 

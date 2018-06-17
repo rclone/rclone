@@ -1602,6 +1602,21 @@ func (page USQLTablePartitionListPage) Values() []USQLTablePartition {
 	return *page.utpl.Value
 }
 
+// USQLTablePreview a Data Lake Analytics catalog table or partition preview rows item.
+type USQLTablePreview struct {
+	autorest.Response `json:"-"`
+	// TotalRowCount - the total number of rows in the table or partition.
+	TotalRowCount *int64 `json:"totalRowCount,omitempty"`
+	// TotalColumnCount - the total number of columns in the table or partition.
+	TotalColumnCount *int64 `json:"totalColumnCount,omitempty"`
+	// Rows - the rows of the table or partition preview, where each row is an array of string representations the row's values. Note: Byte arrays will appear as base-64 encoded values, SqlMap and SqlArray objects will appear as escaped JSON objects, and DateTime objects will appear as ISO formatted UTC date-times.
+	Rows *[][]string `json:"rows,omitempty"`
+	// Truncated - true if the amount of data in the response is less than expected due to the preview operation's size limitations. This can occur if the requested rows or row counts are too large.
+	Truncated *bool `json:"truncated,omitempty"`
+	// Schema - the schema of the table or partition.
+	Schema *[]USQLTableColumn `json:"schema,omitempty"`
+}
+
 // USQLTableStatistics a Data Lake Analytics catalog U-SQL table statistics item.
 type USQLTableStatistics struct {
 	autorest.Response `json:"-"`

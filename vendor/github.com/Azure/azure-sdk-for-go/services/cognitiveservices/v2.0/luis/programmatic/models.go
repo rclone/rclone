@@ -93,13 +93,17 @@ const (
 	ReadableTypeHierarchicalEntityExtractor ReadableType = "Hierarchical Entity Extractor"
 	// ReadableTypeIntentClassifier ...
 	ReadableTypeIntentClassifier ReadableType = "Intent Classifier"
+	// ReadableTypePatternAnyEntityExtractor ...
+	ReadableTypePatternAnyEntityExtractor ReadableType = "Pattern.Any Entity Extractor"
 	// ReadableTypePrebuiltEntityExtractor ...
 	ReadableTypePrebuiltEntityExtractor ReadableType = "Prebuilt Entity Extractor"
+	// ReadableTypeRegexEntityExtractor ...
+	ReadableTypeRegexEntityExtractor ReadableType = "Regex Entity Extractor"
 )
 
 // PossibleReadableTypeValues returns an array of possible values for the ReadableType const type.
 func PossibleReadableTypeValues() []ReadableType {
-	return []ReadableType{ReadableTypeClosedListEntityExtractor, ReadableTypeCompositeEntityExtractor, ReadableTypeEntityExtractor, ReadableTypeHierarchicalChildEntityExtractor, ReadableTypeHierarchicalEntityExtractor, ReadableTypeIntentClassifier, ReadableTypePrebuiltEntityExtractor}
+	return []ReadableType{ReadableTypeClosedListEntityExtractor, ReadableTypeCompositeEntityExtractor, ReadableTypeEntityExtractor, ReadableTypeHierarchicalChildEntityExtractor, ReadableTypeHierarchicalEntityExtractor, ReadableTypeIntentClassifier, ReadableTypePatternAnyEntityExtractor, ReadableTypePrebuiltEntityExtractor, ReadableTypeRegexEntityExtractor}
 }
 
 // ReadableType1 enumerates the values for readable type 1.
@@ -118,13 +122,46 @@ const (
 	ReadableType1HierarchicalEntityExtractor ReadableType1 = "Hierarchical Entity Extractor"
 	// ReadableType1IntentClassifier ...
 	ReadableType1IntentClassifier ReadableType1 = "Intent Classifier"
+	// ReadableType1PatternAnyEntityExtractor ...
+	ReadableType1PatternAnyEntityExtractor ReadableType1 = "Pattern.Any Entity Extractor"
 	// ReadableType1PrebuiltEntityExtractor ...
 	ReadableType1PrebuiltEntityExtractor ReadableType1 = "Prebuilt Entity Extractor"
+	// ReadableType1RegexEntityExtractor ...
+	ReadableType1RegexEntityExtractor ReadableType1 = "Regex Entity Extractor"
 )
 
 // PossibleReadableType1Values returns an array of possible values for the ReadableType1 const type.
 func PossibleReadableType1Values() []ReadableType1 {
-	return []ReadableType1{ReadableType1ClosedListEntityExtractor, ReadableType1CompositeEntityExtractor, ReadableType1EntityExtractor, ReadableType1HierarchicalChildEntityExtractor, ReadableType1HierarchicalEntityExtractor, ReadableType1IntentClassifier, ReadableType1PrebuiltEntityExtractor}
+	return []ReadableType1{ReadableType1ClosedListEntityExtractor, ReadableType1CompositeEntityExtractor, ReadableType1EntityExtractor, ReadableType1HierarchicalChildEntityExtractor, ReadableType1HierarchicalEntityExtractor, ReadableType1IntentClassifier, ReadableType1PatternAnyEntityExtractor, ReadableType1PrebuiltEntityExtractor, ReadableType1RegexEntityExtractor}
+}
+
+// ReadableType10 enumerates the values for readable type 10.
+type ReadableType10 string
+
+const (
+	// ReadableType10ClosedListEntityExtractor ...
+	ReadableType10ClosedListEntityExtractor ReadableType10 = "Closed List Entity Extractor"
+	// ReadableType10CompositeEntityExtractor ...
+	ReadableType10CompositeEntityExtractor ReadableType10 = "Composite Entity Extractor"
+	// ReadableType10EntityExtractor ...
+	ReadableType10EntityExtractor ReadableType10 = "Entity Extractor"
+	// ReadableType10HierarchicalChildEntityExtractor ...
+	ReadableType10HierarchicalChildEntityExtractor ReadableType10 = "Hierarchical Child Entity Extractor"
+	// ReadableType10HierarchicalEntityExtractor ...
+	ReadableType10HierarchicalEntityExtractor ReadableType10 = "Hierarchical Entity Extractor"
+	// ReadableType10IntentClassifier ...
+	ReadableType10IntentClassifier ReadableType10 = "Intent Classifier"
+	// ReadableType10PatternAnyEntityExtractor ...
+	ReadableType10PatternAnyEntityExtractor ReadableType10 = "Pattern.Any Entity Extractor"
+	// ReadableType10PrebuiltEntityExtractor ...
+	ReadableType10PrebuiltEntityExtractor ReadableType10 = "Prebuilt Entity Extractor"
+	// ReadableType10RegexEntityExtractor ...
+	ReadableType10RegexEntityExtractor ReadableType10 = "Regex Entity Extractor"
+)
+
+// PossibleReadableType10Values returns an array of possible values for the ReadableType10 const type.
+func PossibleReadableType10Values() []ReadableType10 {
+	return []ReadableType10{ReadableType10ClosedListEntityExtractor, ReadableType10CompositeEntityExtractor, ReadableType10EntityExtractor, ReadableType10HierarchicalChildEntityExtractor, ReadableType10HierarchicalEntityExtractor, ReadableType10IntentClassifier, ReadableType10PatternAnyEntityExtractor, ReadableType10PrebuiltEntityExtractor, ReadableType10RegexEntityExtractor}
 }
 
 // ReadableType2 enumerates the values for readable type 2.
@@ -143,13 +180,17 @@ const (
 	ReadableType2HierarchicalEntityExtractor ReadableType2 = "Hierarchical Entity Extractor"
 	// ReadableType2IntentClassifier ...
 	ReadableType2IntentClassifier ReadableType2 = "Intent Classifier"
+	// ReadableType2PatternAnyEntityExtractor ...
+	ReadableType2PatternAnyEntityExtractor ReadableType2 = "Pattern.Any Entity Extractor"
 	// ReadableType2PrebuiltEntityExtractor ...
 	ReadableType2PrebuiltEntityExtractor ReadableType2 = "Prebuilt Entity Extractor"
+	// ReadableType2RegexEntityExtractor ...
+	ReadableType2RegexEntityExtractor ReadableType2 = "Regex Entity Extractor"
 )
 
 // PossibleReadableType2Values returns an array of possible values for the ReadableType2 const type.
 func PossibleReadableType2Values() []ReadableType2 {
-	return []ReadableType2{ReadableType2ClosedListEntityExtractor, ReadableType2CompositeEntityExtractor, ReadableType2EntityExtractor, ReadableType2HierarchicalChildEntityExtractor, ReadableType2HierarchicalEntityExtractor, ReadableType2IntentClassifier, ReadableType2PrebuiltEntityExtractor}
+	return []ReadableType2{ReadableType2ClosedListEntityExtractor, ReadableType2CompositeEntityExtractor, ReadableType2EntityExtractor, ReadableType2HierarchicalChildEntityExtractor, ReadableType2HierarchicalEntityExtractor, ReadableType2IntentClassifier, ReadableType2PatternAnyEntityExtractor, ReadableType2PrebuiltEntityExtractor, ReadableType2RegexEntityExtractor}
 }
 
 // ReadableType3 enumerates the values for readable type 3.
@@ -168,13 +209,191 @@ const (
 	ReadableType3HierarchicalEntityExtractor ReadableType3 = "Hierarchical Entity Extractor"
 	// ReadableType3IntentClassifier ...
 	ReadableType3IntentClassifier ReadableType3 = "Intent Classifier"
+	// ReadableType3PatternAnyEntityExtractor ...
+	ReadableType3PatternAnyEntityExtractor ReadableType3 = "Pattern.Any Entity Extractor"
 	// ReadableType3PrebuiltEntityExtractor ...
 	ReadableType3PrebuiltEntityExtractor ReadableType3 = "Prebuilt Entity Extractor"
+	// ReadableType3RegexEntityExtractor ...
+	ReadableType3RegexEntityExtractor ReadableType3 = "Regex Entity Extractor"
 )
 
 // PossibleReadableType3Values returns an array of possible values for the ReadableType3 const type.
 func PossibleReadableType3Values() []ReadableType3 {
-	return []ReadableType3{ReadableType3ClosedListEntityExtractor, ReadableType3CompositeEntityExtractor, ReadableType3EntityExtractor, ReadableType3HierarchicalChildEntityExtractor, ReadableType3HierarchicalEntityExtractor, ReadableType3IntentClassifier, ReadableType3PrebuiltEntityExtractor}
+	return []ReadableType3{ReadableType3ClosedListEntityExtractor, ReadableType3CompositeEntityExtractor, ReadableType3EntityExtractor, ReadableType3HierarchicalChildEntityExtractor, ReadableType3HierarchicalEntityExtractor, ReadableType3IntentClassifier, ReadableType3PatternAnyEntityExtractor, ReadableType3PrebuiltEntityExtractor, ReadableType3RegexEntityExtractor}
+}
+
+// ReadableType4 enumerates the values for readable type 4.
+type ReadableType4 string
+
+const (
+	// ReadableType4ClosedListEntityExtractor ...
+	ReadableType4ClosedListEntityExtractor ReadableType4 = "Closed List Entity Extractor"
+	// ReadableType4CompositeEntityExtractor ...
+	ReadableType4CompositeEntityExtractor ReadableType4 = "Composite Entity Extractor"
+	// ReadableType4EntityExtractor ...
+	ReadableType4EntityExtractor ReadableType4 = "Entity Extractor"
+	// ReadableType4HierarchicalChildEntityExtractor ...
+	ReadableType4HierarchicalChildEntityExtractor ReadableType4 = "Hierarchical Child Entity Extractor"
+	// ReadableType4HierarchicalEntityExtractor ...
+	ReadableType4HierarchicalEntityExtractor ReadableType4 = "Hierarchical Entity Extractor"
+	// ReadableType4IntentClassifier ...
+	ReadableType4IntentClassifier ReadableType4 = "Intent Classifier"
+	// ReadableType4PatternAnyEntityExtractor ...
+	ReadableType4PatternAnyEntityExtractor ReadableType4 = "Pattern.Any Entity Extractor"
+	// ReadableType4PrebuiltEntityExtractor ...
+	ReadableType4PrebuiltEntityExtractor ReadableType4 = "Prebuilt Entity Extractor"
+	// ReadableType4RegexEntityExtractor ...
+	ReadableType4RegexEntityExtractor ReadableType4 = "Regex Entity Extractor"
+)
+
+// PossibleReadableType4Values returns an array of possible values for the ReadableType4 const type.
+func PossibleReadableType4Values() []ReadableType4 {
+	return []ReadableType4{ReadableType4ClosedListEntityExtractor, ReadableType4CompositeEntityExtractor, ReadableType4EntityExtractor, ReadableType4HierarchicalChildEntityExtractor, ReadableType4HierarchicalEntityExtractor, ReadableType4IntentClassifier, ReadableType4PatternAnyEntityExtractor, ReadableType4PrebuiltEntityExtractor, ReadableType4RegexEntityExtractor}
+}
+
+// ReadableType5 enumerates the values for readable type 5.
+type ReadableType5 string
+
+const (
+	// ReadableType5ClosedListEntityExtractor ...
+	ReadableType5ClosedListEntityExtractor ReadableType5 = "Closed List Entity Extractor"
+	// ReadableType5CompositeEntityExtractor ...
+	ReadableType5CompositeEntityExtractor ReadableType5 = "Composite Entity Extractor"
+	// ReadableType5EntityExtractor ...
+	ReadableType5EntityExtractor ReadableType5 = "Entity Extractor"
+	// ReadableType5HierarchicalChildEntityExtractor ...
+	ReadableType5HierarchicalChildEntityExtractor ReadableType5 = "Hierarchical Child Entity Extractor"
+	// ReadableType5HierarchicalEntityExtractor ...
+	ReadableType5HierarchicalEntityExtractor ReadableType5 = "Hierarchical Entity Extractor"
+	// ReadableType5IntentClassifier ...
+	ReadableType5IntentClassifier ReadableType5 = "Intent Classifier"
+	// ReadableType5PatternAnyEntityExtractor ...
+	ReadableType5PatternAnyEntityExtractor ReadableType5 = "Pattern.Any Entity Extractor"
+	// ReadableType5PrebuiltEntityExtractor ...
+	ReadableType5PrebuiltEntityExtractor ReadableType5 = "Prebuilt Entity Extractor"
+	// ReadableType5RegexEntityExtractor ...
+	ReadableType5RegexEntityExtractor ReadableType5 = "Regex Entity Extractor"
+)
+
+// PossibleReadableType5Values returns an array of possible values for the ReadableType5 const type.
+func PossibleReadableType5Values() []ReadableType5 {
+	return []ReadableType5{ReadableType5ClosedListEntityExtractor, ReadableType5CompositeEntityExtractor, ReadableType5EntityExtractor, ReadableType5HierarchicalChildEntityExtractor, ReadableType5HierarchicalEntityExtractor, ReadableType5IntentClassifier, ReadableType5PatternAnyEntityExtractor, ReadableType5PrebuiltEntityExtractor, ReadableType5RegexEntityExtractor}
+}
+
+// ReadableType6 enumerates the values for readable type 6.
+type ReadableType6 string
+
+const (
+	// ReadableType6ClosedListEntityExtractor ...
+	ReadableType6ClosedListEntityExtractor ReadableType6 = "Closed List Entity Extractor"
+	// ReadableType6CompositeEntityExtractor ...
+	ReadableType6CompositeEntityExtractor ReadableType6 = "Composite Entity Extractor"
+	// ReadableType6EntityExtractor ...
+	ReadableType6EntityExtractor ReadableType6 = "Entity Extractor"
+	// ReadableType6HierarchicalChildEntityExtractor ...
+	ReadableType6HierarchicalChildEntityExtractor ReadableType6 = "Hierarchical Child Entity Extractor"
+	// ReadableType6HierarchicalEntityExtractor ...
+	ReadableType6HierarchicalEntityExtractor ReadableType6 = "Hierarchical Entity Extractor"
+	// ReadableType6IntentClassifier ...
+	ReadableType6IntentClassifier ReadableType6 = "Intent Classifier"
+	// ReadableType6PatternAnyEntityExtractor ...
+	ReadableType6PatternAnyEntityExtractor ReadableType6 = "Pattern.Any Entity Extractor"
+	// ReadableType6PrebuiltEntityExtractor ...
+	ReadableType6PrebuiltEntityExtractor ReadableType6 = "Prebuilt Entity Extractor"
+	// ReadableType6RegexEntityExtractor ...
+	ReadableType6RegexEntityExtractor ReadableType6 = "Regex Entity Extractor"
+)
+
+// PossibleReadableType6Values returns an array of possible values for the ReadableType6 const type.
+func PossibleReadableType6Values() []ReadableType6 {
+	return []ReadableType6{ReadableType6ClosedListEntityExtractor, ReadableType6CompositeEntityExtractor, ReadableType6EntityExtractor, ReadableType6HierarchicalChildEntityExtractor, ReadableType6HierarchicalEntityExtractor, ReadableType6IntentClassifier, ReadableType6PatternAnyEntityExtractor, ReadableType6PrebuiltEntityExtractor, ReadableType6RegexEntityExtractor}
+}
+
+// ReadableType7 enumerates the values for readable type 7.
+type ReadableType7 string
+
+const (
+	// ReadableType7ClosedListEntityExtractor ...
+	ReadableType7ClosedListEntityExtractor ReadableType7 = "Closed List Entity Extractor"
+	// ReadableType7CompositeEntityExtractor ...
+	ReadableType7CompositeEntityExtractor ReadableType7 = "Composite Entity Extractor"
+	// ReadableType7EntityExtractor ...
+	ReadableType7EntityExtractor ReadableType7 = "Entity Extractor"
+	// ReadableType7HierarchicalChildEntityExtractor ...
+	ReadableType7HierarchicalChildEntityExtractor ReadableType7 = "Hierarchical Child Entity Extractor"
+	// ReadableType7HierarchicalEntityExtractor ...
+	ReadableType7HierarchicalEntityExtractor ReadableType7 = "Hierarchical Entity Extractor"
+	// ReadableType7IntentClassifier ...
+	ReadableType7IntentClassifier ReadableType7 = "Intent Classifier"
+	// ReadableType7PatternAnyEntityExtractor ...
+	ReadableType7PatternAnyEntityExtractor ReadableType7 = "Pattern.Any Entity Extractor"
+	// ReadableType7PrebuiltEntityExtractor ...
+	ReadableType7PrebuiltEntityExtractor ReadableType7 = "Prebuilt Entity Extractor"
+	// ReadableType7RegexEntityExtractor ...
+	ReadableType7RegexEntityExtractor ReadableType7 = "Regex Entity Extractor"
+)
+
+// PossibleReadableType7Values returns an array of possible values for the ReadableType7 const type.
+func PossibleReadableType7Values() []ReadableType7 {
+	return []ReadableType7{ReadableType7ClosedListEntityExtractor, ReadableType7CompositeEntityExtractor, ReadableType7EntityExtractor, ReadableType7HierarchicalChildEntityExtractor, ReadableType7HierarchicalEntityExtractor, ReadableType7IntentClassifier, ReadableType7PatternAnyEntityExtractor, ReadableType7PrebuiltEntityExtractor, ReadableType7RegexEntityExtractor}
+}
+
+// ReadableType8 enumerates the values for readable type 8.
+type ReadableType8 string
+
+const (
+	// ReadableType8ClosedListEntityExtractor ...
+	ReadableType8ClosedListEntityExtractor ReadableType8 = "Closed List Entity Extractor"
+	// ReadableType8CompositeEntityExtractor ...
+	ReadableType8CompositeEntityExtractor ReadableType8 = "Composite Entity Extractor"
+	// ReadableType8EntityExtractor ...
+	ReadableType8EntityExtractor ReadableType8 = "Entity Extractor"
+	// ReadableType8HierarchicalChildEntityExtractor ...
+	ReadableType8HierarchicalChildEntityExtractor ReadableType8 = "Hierarchical Child Entity Extractor"
+	// ReadableType8HierarchicalEntityExtractor ...
+	ReadableType8HierarchicalEntityExtractor ReadableType8 = "Hierarchical Entity Extractor"
+	// ReadableType8IntentClassifier ...
+	ReadableType8IntentClassifier ReadableType8 = "Intent Classifier"
+	// ReadableType8PatternAnyEntityExtractor ...
+	ReadableType8PatternAnyEntityExtractor ReadableType8 = "Pattern.Any Entity Extractor"
+	// ReadableType8PrebuiltEntityExtractor ...
+	ReadableType8PrebuiltEntityExtractor ReadableType8 = "Prebuilt Entity Extractor"
+	// ReadableType8RegexEntityExtractor ...
+	ReadableType8RegexEntityExtractor ReadableType8 = "Regex Entity Extractor"
+)
+
+// PossibleReadableType8Values returns an array of possible values for the ReadableType8 const type.
+func PossibleReadableType8Values() []ReadableType8 {
+	return []ReadableType8{ReadableType8ClosedListEntityExtractor, ReadableType8CompositeEntityExtractor, ReadableType8EntityExtractor, ReadableType8HierarchicalChildEntityExtractor, ReadableType8HierarchicalEntityExtractor, ReadableType8IntentClassifier, ReadableType8PatternAnyEntityExtractor, ReadableType8PrebuiltEntityExtractor, ReadableType8RegexEntityExtractor}
+}
+
+// ReadableType9 enumerates the values for readable type 9.
+type ReadableType9 string
+
+const (
+	// ReadableType9ClosedListEntityExtractor ...
+	ReadableType9ClosedListEntityExtractor ReadableType9 = "Closed List Entity Extractor"
+	// ReadableType9CompositeEntityExtractor ...
+	ReadableType9CompositeEntityExtractor ReadableType9 = "Composite Entity Extractor"
+	// ReadableType9EntityExtractor ...
+	ReadableType9EntityExtractor ReadableType9 = "Entity Extractor"
+	// ReadableType9HierarchicalChildEntityExtractor ...
+	ReadableType9HierarchicalChildEntityExtractor ReadableType9 = "Hierarchical Child Entity Extractor"
+	// ReadableType9HierarchicalEntityExtractor ...
+	ReadableType9HierarchicalEntityExtractor ReadableType9 = "Hierarchical Entity Extractor"
+	// ReadableType9IntentClassifier ...
+	ReadableType9IntentClassifier ReadableType9 = "Intent Classifier"
+	// ReadableType9PatternAnyEntityExtractor ...
+	ReadableType9PatternAnyEntityExtractor ReadableType9 = "Pattern.Any Entity Extractor"
+	// ReadableType9PrebuiltEntityExtractor ...
+	ReadableType9PrebuiltEntityExtractor ReadableType9 = "Prebuilt Entity Extractor"
+	// ReadableType9RegexEntityExtractor ...
+	ReadableType9RegexEntityExtractor ReadableType9 = "Regex Entity Extractor"
+)
+
+// PossibleReadableType9Values returns an array of possible values for the ReadableType9 const type.
+func PossibleReadableType9Values() []ReadableType9 {
+	return []ReadableType9{ReadableType9ClosedListEntityExtractor, ReadableType9CompositeEntityExtractor, ReadableType9EntityExtractor, ReadableType9HierarchicalChildEntityExtractor, ReadableType9HierarchicalEntityExtractor, ReadableType9IntentClassifier, ReadableType9PatternAnyEntityExtractor, ReadableType9PrebuiltEntityExtractor, ReadableType9RegexEntityExtractor}
 }
 
 // Status enumerates the values for status.
@@ -351,21 +570,23 @@ type ClosedList struct {
 	Name *string `json:"name,omitempty"`
 	// SubLists - Sublists for the feature.
 	SubLists *[]SubClosedList `json:"subLists,omitempty"`
+	Roles    *[]string        `json:"roles,omitempty"`
 }
 
 // ClosedListEntityExtractor closed List Entity Extractor.
 type ClosedListEntityExtractor struct {
 	autorest.Response `json:"-"`
-	// SubLists - List of sub-lists.
-	SubLists *[]SubClosedListResponse `json:"subLists,omitempty"`
 	// ID - The ID of the Entity Model.
 	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - Name of the Entity Model.
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier'
-	ReadableType ReadableType `json:"readableType,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType4EntityExtractor', 'ReadableType4HierarchicalEntityExtractor', 'ReadableType4HierarchicalChildEntityExtractor', 'ReadableType4CompositeEntityExtractor', 'ReadableType4ClosedListEntityExtractor', 'ReadableType4PrebuiltEntityExtractor', 'ReadableType4IntentClassifier', 'ReadableType4PatternAnyEntityExtractor', 'ReadableType4RegexEntityExtractor'
+	ReadableType ReadableType4 `json:"readableType,omitempty"`
+	Roles        *[]EntityRole `json:"roles,omitempty"`
+	// SubLists - List of sub-lists.
+	SubLists *[]SubClosedListResponse `json:"subLists,omitempty"`
 }
 
 // ClosedListModelCreateObject object model for creating a closed list.
@@ -404,16 +625,17 @@ type CompositeChildModelCreateObject struct {
 // CompositeEntityExtractor a Composite Entity Extractor.
 type CompositeEntityExtractor struct {
 	autorest.Response `json:"-"`
-	// Children - List of child entities.
-	Children *[]ChildEntity `json:"children,omitempty"`
 	// ID - The ID of the Entity Model.
 	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - Name of the Entity Model.
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier'
-	ReadableType ReadableType `json:"readableType,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType3EntityExtractor', 'ReadableType3HierarchicalEntityExtractor', 'ReadableType3HierarchicalChildEntityExtractor', 'ReadableType3CompositeEntityExtractor', 'ReadableType3ClosedListEntityExtractor', 'ReadableType3PrebuiltEntityExtractor', 'ReadableType3IntentClassifier', 'ReadableType3PatternAnyEntityExtractor', 'ReadableType3RegexEntityExtractor'
+	ReadableType ReadableType3 `json:"readableType,omitempty"`
+	Roles        *[]EntityRole `json:"roles,omitempty"`
+	// Children - List of child entities.
+	Children *[]ChildEntity `json:"children,omitempty"`
 }
 
 // CompositeEntityModel a composite entity.
@@ -432,12 +654,13 @@ type CustomPrebuiltModel struct {
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableType3EntityExtractor', 'ReadableType3HierarchicalEntityExtractor', 'ReadableType3HierarchicalChildEntityExtractor', 'ReadableType3CompositeEntityExtractor', 'ReadableType3ClosedListEntityExtractor', 'ReadableType3PrebuiltEntityExtractor', 'ReadableType3IntentClassifier'
-	ReadableType ReadableType3 `json:"readableType,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType7EntityExtractor', 'ReadableType7HierarchicalEntityExtractor', 'ReadableType7HierarchicalChildEntityExtractor', 'ReadableType7CompositeEntityExtractor', 'ReadableType7ClosedListEntityExtractor', 'ReadableType7PrebuiltEntityExtractor', 'ReadableType7IntentClassifier', 'ReadableType7PatternAnyEntityExtractor', 'ReadableType7RegexEntityExtractor'
+	ReadableType ReadableType7 `json:"readableType,omitempty"`
 	// CustomPrebuiltDomainName - The domain name.
 	CustomPrebuiltDomainName *string `json:"customPrebuiltDomainName,omitempty"`
 	// CustomPrebuiltModelName - The intent name or entity name.
-	CustomPrebuiltModelName *string `json:"customPrebuiltModelName,omitempty"`
+	CustomPrebuiltModelName *string       `json:"customPrebuiltModelName,omitempty"`
+	Roles                   *[]EntityRole `json:"roles,omitempty"`
 }
 
 // EndpointInfo the base class "ProductionOrStagingEndpointInfo" inherits from.
@@ -482,18 +705,19 @@ type EntitiesSuggestionExample struct {
 // EntityExtractor entity Extractor.
 type EntityExtractor struct {
 	autorest.Response `json:"-"`
-	// CustomPrebuiltDomainName - The domain name.
-	CustomPrebuiltDomainName *string `json:"customPrebuiltDomainName,omitempty"`
-	// CustomPrebuiltModelName - The intent name or entity name.
-	CustomPrebuiltModelName *string `json:"customPrebuiltModelName,omitempty"`
 	// ID - The ID of the Entity Model.
 	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - Name of the Entity Model.
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier'
-	ReadableType ReadableType `json:"readableType,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType8EntityExtractor', 'ReadableType8HierarchicalEntityExtractor', 'ReadableType8HierarchicalChildEntityExtractor', 'ReadableType8CompositeEntityExtractor', 'ReadableType8ClosedListEntityExtractor', 'ReadableType8PrebuiltEntityExtractor', 'ReadableType8IntentClassifier', 'ReadableType8PatternAnyEntityExtractor', 'ReadableType8RegexEntityExtractor'
+	ReadableType ReadableType8 `json:"readableType,omitempty"`
+	Roles        *[]EntityRole `json:"roles,omitempty"`
+	// CustomPrebuiltDomainName - The domain name.
+	CustomPrebuiltDomainName *string `json:"customPrebuiltDomainName,omitempty"`
+	// CustomPrebuiltModelName - The intent name or entity name.
+	CustomPrebuiltModelName *string `json:"customPrebuiltModelName,omitempty"`
 }
 
 // EntityLabel defines the entity type and position of the extracted entity within the example.
@@ -516,6 +740,19 @@ type EntityLabelObject struct {
 	EndCharIndex *int32 `json:"endCharIndex,omitempty"`
 }
 
+// EntityModelInfo an Entity Extractor model info.
+type EntityModelInfo struct {
+	Roles *[]EntityRole `json:"roles,omitempty"`
+	// ID - The ID of the Entity Model.
+	ID *uuid.UUID `json:"id,omitempty"`
+	// Name - Name of the Entity Model.
+	Name *string `json:"name,omitempty"`
+	// TypeID - The type ID of the Entity Model.
+	TypeID *int32 `json:"typeId,omitempty"`
+	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier', 'ReadableTypePatternAnyEntityExtractor', 'ReadableTypeRegexEntityExtractor'
+	ReadableType ReadableType `json:"readableType,omitempty"`
+}
+
 // EntityPrediction a suggested entity.
 type EntityPrediction struct {
 	// EntityName - The entity's name
@@ -526,6 +763,27 @@ type EntityPrediction struct {
 	EndTokenIndex *int32 `json:"endTokenIndex,omitempty"`
 	// Phrase - The actual token(s) that comprise the entity.
 	Phrase *string `json:"phrase,omitempty"`
+}
+
+// EntityRole entity extractor role
+type EntityRole struct {
+	autorest.Response `json:"-"`
+	// ID - The entity role ID.
+	ID *uuid.UUID `json:"id,omitempty"`
+	// Name - The entity role name.
+	Name *string `json:"name,omitempty"`
+}
+
+// EntityRoleCreateObject object model for creating an entity role.
+type EntityRoleCreateObject struct {
+	// Name - The entity role name.
+	Name *string `json:"name,omitempty"`
+}
+
+// EntityRoleUpdateObject object model for updating an entity role.
+type EntityRoleUpdateObject struct {
+	// Name - The entity role name.
+	Name *string `json:"name,omitempty"`
 }
 
 // ErrorResponse error response when invoking an operation on the API.
@@ -557,6 +815,27 @@ type ExampleLabelObject struct {
 	IntentName *string `json:"intentName,omitempty"`
 }
 
+// ExplicitListItem explicit list item
+type ExplicitListItem struct {
+	autorest.Response `json:"-"`
+	// ID - The explicit list item ID.
+	ID *int64 `json:"id,omitempty"`
+	// ExplicitListItem - The explicit list item value.
+	ExplicitListItem *string `json:"explicitListItem,omitempty"`
+}
+
+// ExplicitListItemCreateObject object model for creating an explicit list item.
+type ExplicitListItemCreateObject struct {
+	// ExplicitListItem - The explicit list item.
+	ExplicitListItem *string `json:"explicitListItem,omitempty"`
+}
+
+// ExplicitListItemUpdateObject model object for updating an explicit list item.
+type ExplicitListItemUpdateObject struct {
+	// ExplicitListItem - The explicit list item.
+	ExplicitListItem *string `json:"explicitListItem,omitempty"`
+}
+
 // FeatureInfoObject the base class Features-related response objects inherit from.
 type FeatureInfoObject struct {
 	// ID - A six-digit ID used for Features.
@@ -579,8 +858,8 @@ type HierarchicalChildEntity struct {
 	autorest.Response `json:"-"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableType2EntityExtractor', 'ReadableType2HierarchicalEntityExtractor', 'ReadableType2HierarchicalChildEntityExtractor', 'ReadableType2CompositeEntityExtractor', 'ReadableType2ClosedListEntityExtractor', 'ReadableType2PrebuiltEntityExtractor', 'ReadableType2IntentClassifier'
-	ReadableType ReadableType2 `json:"readableType,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType6EntityExtractor', 'ReadableType6HierarchicalEntityExtractor', 'ReadableType6HierarchicalChildEntityExtractor', 'ReadableType6CompositeEntityExtractor', 'ReadableType6ClosedListEntityExtractor', 'ReadableType6PrebuiltEntityExtractor', 'ReadableType6IntentClassifier', 'ReadableType6PatternAnyEntityExtractor', 'ReadableType6RegexEntityExtractor'
+	ReadableType ReadableType6 `json:"readableType,omitempty"`
 	// ID - The ID (GUID) belonging to a child entity.
 	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - The name of a child entity.
@@ -600,16 +879,17 @@ type HierarchicalChildModelUpdateObject struct {
 // HierarchicalEntityExtractor hierarchical Entity Extractor.
 type HierarchicalEntityExtractor struct {
 	autorest.Response `json:"-"`
-	// Children - List of child entities.
-	Children *[]ChildEntity `json:"children,omitempty"`
 	// ID - The ID of the Entity Model.
 	ID *uuid.UUID `json:"id,omitempty"`
 	// Name - Name of the Entity Model.
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier'
-	ReadableType ReadableType `json:"readableType,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType2EntityExtractor', 'ReadableType2HierarchicalEntityExtractor', 'ReadableType2HierarchicalChildEntityExtractor', 'ReadableType2CompositeEntityExtractor', 'ReadableType2ClosedListEntityExtractor', 'ReadableType2PrebuiltEntityExtractor', 'ReadableType2IntentClassifier', 'ReadableType2PatternAnyEntityExtractor', 'ReadableType2RegexEntityExtractor'
+	ReadableType ReadableType2 `json:"readableType,omitempty"`
+	Roles        *[]EntityRole `json:"roles,omitempty"`
+	// Children - List of child entities.
+	Children *[]ChildEntity `json:"children,omitempty"`
 }
 
 // HierarchicalEntityModel a Hierarchical Entity Extractor.
@@ -622,8 +902,10 @@ type HierarchicalEntityModel struct {
 
 // HierarchicalModel ...
 type HierarchicalModel struct {
-	Name     *string   `json:"name,omitempty"`
-	Children *[]string `json:"children,omitempty"`
+	Name     *string               `json:"name,omitempty"`
+	Children *[]string             `json:"children,omitempty"`
+	Inherits *PrebuiltDomainObject `json:"inherits,omitempty"`
+	Roles    *[]string             `json:"roles,omitempty"`
 }
 
 // Int32 ...
@@ -645,7 +927,7 @@ type IntentClassifier struct {
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier'
+	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier', 'ReadableTypePatternAnyEntityExtractor', 'ReadableTypeRegexEntityExtractor'
 	ReadableType ReadableType `json:"readableType,omitempty"`
 }
 
@@ -792,6 +1074,18 @@ type ListEntityExtractor struct {
 	Value             *[]EntityExtractor `json:"value,omitempty"`
 }
 
+// ListEntityRole ...
+type ListEntityRole struct {
+	autorest.Response `json:"-"`
+	Value             *[]EntityRole `json:"value,omitempty"`
+}
+
+// ListExplicitListItem ...
+type ListExplicitListItem struct {
+	autorest.Response `json:"-"`
+	Value             *[]ExplicitListItem `json:"value,omitempty"`
+}
+
 // ListHierarchicalEntityExtractor ...
 type ListHierarchicalEntityExtractor struct {
 	autorest.Response `json:"-"`
@@ -828,6 +1122,18 @@ type ListModelTrainingInfo struct {
 	Value             *[]ModelTrainingInfo `json:"value,omitempty"`
 }
 
+// ListPatternAnyEntityExtractor ...
+type ListPatternAnyEntityExtractor struct {
+	autorest.Response `json:"-"`
+	Value             *[]PatternAnyEntityExtractor `json:"value,omitempty"`
+}
+
+// ListPatternRuleInfo ...
+type ListPatternRuleInfo struct {
+	autorest.Response `json:"-"`
+	Value             *[]PatternRuleInfo `json:"value,omitempty"`
+}
+
 // ListPhraseListFeatureInfo ...
 type ListPhraseListFeatureInfo struct {
 	autorest.Response `json:"-"`
@@ -844,6 +1150,12 @@ type ListPrebuiltDomain struct {
 type ListPrebuiltEntityExtractor struct {
 	autorest.Response `json:"-"`
 	Value             *[]PrebuiltEntityExtractor `json:"value,omitempty"`
+}
+
+// ListRegexEntityExtractor ...
+type ListRegexEntityExtractor struct {
+	autorest.Response `json:"-"`
+	Value             *[]RegexEntityExtractor `json:"value,omitempty"`
 }
 
 // ListString ...
@@ -881,16 +1193,22 @@ type LuisApp struct {
 	Intents *[]HierarchicalModel `json:"intents,omitempty"`
 	// Entities - List of entities.
 	Entities *[]HierarchicalModel `json:"entities,omitempty"`
-	// BingEntities - List of prebuilt intents.
-	BingEntities *[]string `json:"bing_entities,omitempty"`
 	// ClosedLists - List of closed lists.
 	ClosedLists *[]ClosedList `json:"closedLists,omitempty"`
 	// Composites - List of composite entities.
 	Composites *[]HierarchicalModel `json:"composites,omitempty"`
+	// PatternAnyEntities - List of Pattern.Any entities.
+	PatternAnyEntities *[]PatternAny `json:"patternAnyEntities,omitempty"`
+	// RegexEntities - List of regular expression entities.
+	RegexEntities *[]RegexEntity `json:"regex_entities,omitempty"`
+	// PrebuiltEntities - List of prebuilt entities.
+	PrebuiltEntities *[]PrebuiltEntity `json:"prebuiltEntities,omitempty"`
 	// RegexFeatures - List of pattern features.
 	RegexFeatures *[]JSONRegexFeature `json:"regex_features,omitempty"`
 	// ModelFeatures - List of model features.
 	ModelFeatures *[]JSONModelFeature `json:"model_features,omitempty"`
+	// Patterns - List of patterns.
+	Patterns *[]PatternRule `json:"patterns,omitempty"`
 	// Utterances - List of sample utterances.
 	Utterances *[]JSONUtterance `json:"utterances,omitempty"`
 }
@@ -916,20 +1234,29 @@ func (la LuisApp) MarshalJSON() ([]byte, error) {
 	if la.Entities != nil {
 		objectMap["entities"] = la.Entities
 	}
-	if la.BingEntities != nil {
-		objectMap["bing_entities"] = la.BingEntities
-	}
 	if la.ClosedLists != nil {
 		objectMap["closedLists"] = la.ClosedLists
 	}
 	if la.Composites != nil {
 		objectMap["composites"] = la.Composites
 	}
+	if la.PatternAnyEntities != nil {
+		objectMap["patternAnyEntities"] = la.PatternAnyEntities
+	}
+	if la.RegexEntities != nil {
+		objectMap["regex_entities"] = la.RegexEntities
+	}
+	if la.PrebuiltEntities != nil {
+		objectMap["prebuiltEntities"] = la.PrebuiltEntities
+	}
 	if la.RegexFeatures != nil {
 		objectMap["regex_features"] = la.RegexFeatures
 	}
 	if la.ModelFeatures != nil {
 		objectMap["model_features"] = la.ModelFeatures
+	}
+	if la.Patterns != nil {
+		objectMap["patterns"] = la.Patterns
 	}
 	if la.Utterances != nil {
 		objectMap["utterances"] = la.Utterances
@@ -954,12 +1281,21 @@ type ModelInfo struct {
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier'
+	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier', 'ReadableTypePatternAnyEntityExtractor', 'ReadableTypeRegexEntityExtractor'
 	ReadableType ReadableType `json:"readableType,omitempty"`
 }
 
 // ModelInfoResponse an application model info.
 type ModelInfoResponse struct {
+	// ID - The ID of the Entity Model.
+	ID *uuid.UUID `json:"id,omitempty"`
+	// Name - Name of the Entity Model.
+	Name *string `json:"name,omitempty"`
+	// TypeID - The type ID of the Entity Model.
+	TypeID *int32 `json:"typeId,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType1EntityExtractor', 'ReadableType1HierarchicalEntityExtractor', 'ReadableType1HierarchicalChildEntityExtractor', 'ReadableType1CompositeEntityExtractor', 'ReadableType1ClosedListEntityExtractor', 'ReadableType1PrebuiltEntityExtractor', 'ReadableType1IntentClassifier', 'ReadableType1PatternAnyEntityExtractor', 'ReadableType1RegexEntityExtractor'
+	ReadableType ReadableType1 `json:"readableType,omitempty"`
+	Roles        *[]EntityRole `json:"roles,omitempty"`
 	// Children - List of child entities.
 	Children *[]ChildEntity `json:"children,omitempty"`
 	// SubLists - List of sub-lists.
@@ -968,14 +1304,9 @@ type ModelInfoResponse struct {
 	CustomPrebuiltDomainName *string `json:"customPrebuiltDomainName,omitempty"`
 	// CustomPrebuiltModelName - The intent name or entity name.
 	CustomPrebuiltModelName *string `json:"customPrebuiltModelName,omitempty"`
-	// ID - The ID of the Entity Model.
-	ID *uuid.UUID `json:"id,omitempty"`
-	// Name - Name of the Entity Model.
-	Name *string `json:"name,omitempty"`
-	// TypeID - The type ID of the Entity Model.
-	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableType1EntityExtractor', 'ReadableType1HierarchicalEntityExtractor', 'ReadableType1HierarchicalChildEntityExtractor', 'ReadableType1CompositeEntityExtractor', 'ReadableType1ClosedListEntityExtractor', 'ReadableType1PrebuiltEntityExtractor', 'ReadableType1IntentClassifier'
-	ReadableType ReadableType1 `json:"readableType,omitempty"`
+	// RegexPattern - The Regex entity pattern.
+	RegexPattern *string             `json:"regexPattern,omitempty"`
+	ExplicitList *[]ExplicitListItem `json:"explicitList,omitempty"`
 }
 
 // ModelTrainingDetails model Training Details.
@@ -1020,6 +1351,44 @@ type OperationStatus struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// PatternAny pattern.Any Entity Extractor.
+type PatternAny struct {
+	Name         *string   `json:"name,omitempty"`
+	ExplicitList *[]string `json:"explicitList,omitempty"`
+	Roles        *[]string `json:"roles,omitempty"`
+}
+
+// PatternAnyEntityExtractor pattern.Any Entity Extractor.
+type PatternAnyEntityExtractor struct {
+	autorest.Response `json:"-"`
+	// ID - The ID of the Entity Model.
+	ID *uuid.UUID `json:"id,omitempty"`
+	// Name - Name of the Entity Model.
+	Name *string `json:"name,omitempty"`
+	// TypeID - The type ID of the Entity Model.
+	TypeID *int32 `json:"typeId,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType10EntityExtractor', 'ReadableType10HierarchicalEntityExtractor', 'ReadableType10HierarchicalChildEntityExtractor', 'ReadableType10CompositeEntityExtractor', 'ReadableType10ClosedListEntityExtractor', 'ReadableType10PrebuiltEntityExtractor', 'ReadableType10IntentClassifier', 'ReadableType10PatternAnyEntityExtractor', 'ReadableType10RegexEntityExtractor'
+	ReadableType ReadableType10      `json:"readableType,omitempty"`
+	Roles        *[]EntityRole       `json:"roles,omitempty"`
+	ExplicitList *[]ExplicitListItem `json:"explicitList,omitempty"`
+}
+
+// PatternAnyModelCreateObject model object for creating a Pattern.Any entity model.
+type PatternAnyModelCreateObject struct {
+	// Name - The model name.
+	Name *string `json:"name,omitempty"`
+	// ExplicitList - The Pattern.Any explicit list.
+	ExplicitList *[]string `json:"explicitList,omitempty"`
+}
+
+// PatternAnyModelUpdateObject model object for updating a Pattern.Any entity model.
+type PatternAnyModelUpdateObject struct {
+	// Name - The model name.
+	Name *string `json:"name,omitempty"`
+	// ExplicitList - The Pattern.Any explicit list.
+	ExplicitList *[]string `json:"explicitList,omitempty"`
+}
+
 // PatternCreateObject object model for creating a Pattern feature.
 type PatternCreateObject struct {
 	// Pattern - The Regular Expression to match.
@@ -1038,6 +1407,43 @@ type PatternFeatureInfo struct {
 	Name *string `json:"name,omitempty"`
 	// IsActive - Indicates if the feature is enabled.
 	IsActive *bool `json:"isActive,omitempty"`
+}
+
+// PatternRule pattern
+type PatternRule struct {
+	// Pattern - The pattern text.
+	Pattern *string `json:"pattern,omitempty"`
+	// Intent - The intent's name where the pattern belongs to.
+	Intent *string `json:"intent,omitempty"`
+}
+
+// PatternRuleCreateObject object model for creating a pattern
+type PatternRuleCreateObject struct {
+	// Pattern - The pattern text.
+	Pattern *string `json:"pattern,omitempty"`
+	// Intent - The intent's name which the pattern belongs to.
+	Intent *string `json:"intent,omitempty"`
+}
+
+// PatternRuleInfo pattern rule
+type PatternRuleInfo struct {
+	autorest.Response `json:"-"`
+	// ID - The pattern ID.
+	ID *uuid.UUID `json:"id,omitempty"`
+	// Pattern - The pattern text.
+	Pattern *string `json:"pattern,omitempty"`
+	// Intent - The intent's name where the pattern belongs to.
+	Intent *string `json:"intent,omitempty"`
+}
+
+// PatternRuleUpdateObject object model for updating a pattern.
+type PatternRuleUpdateObject struct {
+	// ID - The pattern ID.
+	ID *uuid.UUID `json:"id,omitempty"`
+	// Pattern - The pattern text.
+	Pattern *string `json:"pattern,omitempty"`
+	// Intent - The intent's name which the pattern belongs to.
+	Intent *string `json:"intent,omitempty"`
 }
 
 // PatternUpdateObject object model for updating an existing Pattern feature.
@@ -1148,6 +1554,18 @@ type PrebuiltDomainModelCreateObject struct {
 	ModelName *string `json:"modelName,omitempty"`
 }
 
+// PrebuiltDomainObject ...
+type PrebuiltDomainObject struct {
+	DomainName *string `json:"domain_name,omitempty"`
+	ModelName  *string `json:"model_name,omitempty"`
+}
+
+// PrebuiltEntity prebuilt Entity Extractor.
+type PrebuiltEntity struct {
+	Name  *string   `json:"name,omitempty"`
+	Roles *[]string `json:"roles,omitempty"`
+}
+
 // PrebuiltEntityExtractor prebuilt Entity Extractor.
 type PrebuiltEntityExtractor struct {
 	autorest.Response `json:"-"`
@@ -1157,8 +1575,9 @@ type PrebuiltEntityExtractor struct {
 	Name *string `json:"name,omitempty"`
 	// TypeID - The type ID of the Entity Model.
 	TypeID *int32 `json:"typeId,omitempty"`
-	// ReadableType - Possible values include: 'ReadableTypeEntityExtractor', 'ReadableTypeHierarchicalEntityExtractor', 'ReadableTypeHierarchicalChildEntityExtractor', 'ReadableTypeCompositeEntityExtractor', 'ReadableTypeClosedListEntityExtractor', 'ReadableTypePrebuiltEntityExtractor', 'ReadableTypeIntentClassifier'
-	ReadableType ReadableType `json:"readableType,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType5EntityExtractor', 'ReadableType5HierarchicalEntityExtractor', 'ReadableType5HierarchicalChildEntityExtractor', 'ReadableType5CompositeEntityExtractor', 'ReadableType5ClosedListEntityExtractor', 'ReadableType5PrebuiltEntityExtractor', 'ReadableType5IntentClassifier', 'ReadableType5PatternAnyEntityExtractor', 'ReadableType5RegexEntityExtractor'
+	ReadableType ReadableType5 `json:"readableType,omitempty"`
+	Roles        *[]EntityRole `json:"roles,omitempty"`
 }
 
 // ProductionOrStagingEndpointInfo ...
@@ -1184,6 +1603,45 @@ type ProductionOrStagingEndpointInfo struct {
 type ReadCloser struct {
 	autorest.Response `json:"-"`
 	Value             *io.ReadCloser `json:"value,omitempty"`
+}
+
+// RegexEntity regular Expression Entity Extractor.
+type RegexEntity struct {
+	Name         *string   `json:"name,omitempty"`
+	RegexPattern *string   `json:"regexPattern,omitempty"`
+	Roles        *[]string `json:"roles,omitempty"`
+}
+
+// RegexEntityExtractor regex Entity Extractor.
+type RegexEntityExtractor struct {
+	autorest.Response `json:"-"`
+	// ID - The ID of the Entity Model.
+	ID *uuid.UUID `json:"id,omitempty"`
+	// Name - Name of the Entity Model.
+	Name *string `json:"name,omitempty"`
+	// TypeID - The type ID of the Entity Model.
+	TypeID *int32 `json:"typeId,omitempty"`
+	// ReadableType - Possible values include: 'ReadableType9EntityExtractor', 'ReadableType9HierarchicalEntityExtractor', 'ReadableType9HierarchicalChildEntityExtractor', 'ReadableType9CompositeEntityExtractor', 'ReadableType9ClosedListEntityExtractor', 'ReadableType9PrebuiltEntityExtractor', 'ReadableType9IntentClassifier', 'ReadableType9PatternAnyEntityExtractor', 'ReadableType9RegexEntityExtractor'
+	ReadableType ReadableType9 `json:"readableType,omitempty"`
+	Roles        *[]EntityRole `json:"roles,omitempty"`
+	// RegexPattern - The Regex entity pattern.
+	RegexPattern *string `json:"regexPattern,omitempty"`
+}
+
+// RegexModelCreateObject model object for creating a regex entity model.
+type RegexModelCreateObject struct {
+	// RegexPattern - The regex entity pattern.
+	RegexPattern *string `json:"regexPattern,omitempty"`
+	// Name - The model name.
+	Name *string `json:"name,omitempty"`
+}
+
+// RegexModelUpdateObject model object for updating a regex entity model.
+type RegexModelUpdateObject struct {
+	// RegexPattern - The regex entity pattern.
+	RegexPattern *string `json:"regexPattern,omitempty"`
+	// Name - The model name.
+	Name *string `json:"name,omitempty"`
 }
 
 // SetString ...

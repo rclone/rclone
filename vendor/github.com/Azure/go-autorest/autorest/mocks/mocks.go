@@ -80,6 +80,14 @@ func (body *Body) reset() *Body {
 	return body
 }
 
+// Length returns the number of bytes in the body.
+func (body *Body) Length() int64 {
+	if body == nil {
+		return 0
+	}
+	return int64(len(body.b))
+}
+
 type response struct {
 	r *http.Response
 	e error

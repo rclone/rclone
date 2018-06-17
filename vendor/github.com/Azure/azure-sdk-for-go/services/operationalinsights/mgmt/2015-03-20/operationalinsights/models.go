@@ -718,12 +718,11 @@ type WorkspacePurgeStatusResponse struct {
 // operation.
 type WorkspacesGetSearchResultsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future WorkspacesGetSearchResultsFuture) Result(client WorkspacesClient) (srr SearchResultsResponse, err error) {
+func (future *WorkspacesGetSearchResultsFuture) Result(client WorkspacesClient) (srr SearchResultsResponse, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -731,34 +730,15 @@ func (future WorkspacesGetSearchResultsFuture) Result(client WorkspacesClient) (
 		return
 	}
 	if !done {
-		return srr, azure.NewAsyncOpIncompleteError("operationalinsights.WorkspacesGetSearchResultsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		srr, err = client.GetSearchResultsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesGetSearchResultsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("operationalinsights.WorkspacesGetSearchResultsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if srr.Response.Response, err = future.GetResult(sender); err == nil && srr.Response.Response.StatusCode != http.StatusNoContent {
+		srr, err = client.GetSearchResultsResponder(srr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesGetSearchResultsFuture", "Result", srr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesGetSearchResultsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	srr, err = client.GetSearchResultsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesGetSearchResultsFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -766,12 +746,11 @@ func (future WorkspacesGetSearchResultsFuture) Result(client WorkspacesClient) (
 // WorkspacesPurgeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type WorkspacesPurgeFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future WorkspacesPurgeFuture) Result(client WorkspacesClient) (so SetObject, err error) {
+func (future *WorkspacesPurgeFuture) Result(client WorkspacesClient) (so SetObject, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -779,34 +758,15 @@ func (future WorkspacesPurgeFuture) Result(client WorkspacesClient) (so SetObjec
 		return
 	}
 	if !done {
-		return so, azure.NewAsyncOpIncompleteError("operationalinsights.WorkspacesPurgeFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		so, err = client.PurgeResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesPurgeFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("operationalinsights.WorkspacesPurgeFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if so.Response.Response, err = future.GetResult(sender); err == nil && so.Response.Response.StatusCode != http.StatusNoContent {
+		so, err = client.PurgeResponder(so.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesPurgeFuture", "Result", so.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesPurgeFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	so, err = client.PurgeResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesPurgeFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

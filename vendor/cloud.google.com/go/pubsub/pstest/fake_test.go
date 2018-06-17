@@ -194,13 +194,13 @@ func TestStreamingPull(t *testing.T) {
 		{Data: []byte("d2")},
 		{Data: []byte("d3")},
 	})
-	got := pullN(t, len(want), sclient, sub)
+	got := pubsubMessages(pullN(t, len(want), sclient, sub))
 	if diff := testutil.Diff(got, want); diff != "" {
 		t.Error(diff)
 	}
 }
 
-func TestAck(t *testing.T) {
+func TestStreamingPullAck(t *testing.T) {
 	// Ack each message as it arrives. Make sure we don't see dups.
 	minAckDeadlineSecs = 1
 	pclient, sclient, _ := newFake(t)
@@ -244,6 +244,77 @@ func TestAck(t *testing.T) {
 		if err := spc.Send(req); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestAcknowledge(t *testing.T) {
+	ctx := context.Background()
+	pclient, sclient, srv := newFake(t)
+	top := mustCreateTopic(t, pclient, &pb.Topic{Name: "projects/P/topics/T"})
+	sub := mustCreateSubscription(t, sclient, &pb.Subscription{
+		Name:               "projects/P/subscriptions/S",
+		Topic:              top.Name,
+		AckDeadlineSeconds: 10,
+	})
+
+	publish(t, pclient, top, []*pb.PubsubMessage{
+		{Data: []byte("d1")},
+		{Data: []byte("d2")},
+		{Data: []byte("d3")},
+	})
+	msgs := pullN(t, 3, sclient, sub)
+	var ackIDs []string
+	for _, m := range msgs {
+		ackIDs = append(ackIDs, m.AckId)
+	}
+	if _, err := sclient.Acknowledge(ctx, &pb.AcknowledgeRequest{
+		Subscription: sub.Name,
+		AckIds:       ackIDs,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	smsgs := srv.Messages()
+	if got, want := len(smsgs), 3; got != want {
+		t.Fatalf("got %d messages, want %d", got, want)
+	}
+	for _, sm := range smsgs {
+		if sm.Acks != 1 {
+			t.Errorf("message %s: got %d acks, want 1", sm.ID, sm.Acks)
+		}
+	}
+}
+
+func TestModAck(t *testing.T) {
+	ctx := context.Background()
+	pclient, sclient, _ := newFake(t)
+	top := mustCreateTopic(t, pclient, &pb.Topic{Name: "projects/P/topics/T"})
+	sub := mustCreateSubscription(t, sclient, &pb.Subscription{
+		Name:               "projects/P/subscriptions/S",
+		Topic:              top.Name,
+		AckDeadlineSeconds: 10,
+	})
+
+	publish(t, pclient, top, []*pb.PubsubMessage{
+		{Data: []byte("d1")},
+		{Data: []byte("d2")},
+		{Data: []byte("d3")},
+	})
+	msgs := pullN(t, 3, sclient, sub)
+	var ackIDs []string
+	for _, m := range msgs {
+		ackIDs = append(ackIDs, m.AckId)
+	}
+	if _, err := sclient.ModifyAckDeadline(ctx, &pb.ModifyAckDeadlineRequest{
+		Subscription:       sub.Name,
+		AckIds:             ackIDs,
+		AckDeadlineSeconds: 0,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// Having nacked all three messages, we should see them again.
+	msgs = pullN(t, 3, sclient, sub)
+	if got, want := len(msgs), 3; got != want {
+		t.Errorf("got %d messages, want %d", got, want)
 	}
 }
 
@@ -312,8 +383,8 @@ func TestMultiSubs(t *testing.T) {
 		{Data: []byte("d2")},
 		{Data: []byte("d3")},
 	})
-	got1 := pullN(t, len(want), sclient, sub1)
-	got2 := pullN(t, len(want), sclient, sub2)
+	got1 := pubsubMessages(pullN(t, len(want), sclient, sub1))
+	got2 := pubsubMessages(pullN(t, len(want), sclient, sub2))
 	if diff := testutil.Diff(got1, want); diff != "" {
 		t.Error(diff)
 	}
@@ -386,16 +457,16 @@ func mustStartPull(t *testing.T, sc pb.SubscriberClient, sub *pb.Subscription) p
 	return spc
 }
 
-func pullN(t *testing.T, n int, sc pb.SubscriberClient, sub *pb.Subscription) map[string]*pb.PubsubMessage {
+func pullN(t *testing.T, n int, sc pb.SubscriberClient, sub *pb.Subscription) map[string]*pb.ReceivedMessage {
 	spc := mustStartPull(t, sc, sub)
-	got := map[string]*pb.PubsubMessage{}
+	got := map[string]*pb.ReceivedMessage{}
 	for i := 0; i < n; i++ {
 		res, err := spc.Recv()
 		if err != nil {
 			t.Fatal(err)
 		}
 		for _, m := range res.ReceivedMessages {
-			got[m.Message.MessageId] = m.Message
+			got[m.Message.MessageId] = m
 		}
 	}
 	if err := spc.CloseSend(); err != nil {
@@ -406,6 +477,14 @@ func pullN(t *testing.T, n int, sc pb.SubscriberClient, sub *pb.Subscription) ma
 		t.Fatalf("Recv returned <%v> instead of EOF; res = %v", err, res)
 	}
 	return got
+}
+
+func pubsubMessages(rms map[string]*pb.ReceivedMessage) map[string]*pb.PubsubMessage {
+	ms := map[string]*pb.PubsubMessage{}
+	for k, rm := range rms {
+		ms[k] = rm.Message
+	}
+	return ms
 }
 
 func mustCreateTopic(t *testing.T, pc pb.PublisherClient, topic *pb.Topic) *pb.Topic {

@@ -65,6 +65,12 @@ const (
 	// The requested configuration is not valid.
 	ErrCodeInvalidConfigurationRequestException = "InvalidConfigurationRequest"
 
+	// ErrCodeInvalidLoadBalancerActionException for service response error code
+	// "InvalidLoadBalancerAction".
+	//
+	// The requested action is not valid.
+	ErrCodeInvalidLoadBalancerActionException = "InvalidLoadBalancerAction"
+
 	// ErrCodeInvalidSchemeException for service response error code
 	// "InvalidScheme".
 	//
@@ -149,6 +155,12 @@ const (
 	//
 	// The specified target group does not exist.
 	ErrCodeTargetGroupNotFoundException = "TargetGroupNotFound"
+
+	// ErrCodeTooManyActionsException for service response error code
+	// "TooManyActions".
+	//
+	// You've reached the limit on the number of actions per rule.
+	ErrCodeTooManyActionsException = "TooManyActions"
 
 	// ErrCodeTooManyCertificatesException for service response error code
 	// "TooManyCertificates".

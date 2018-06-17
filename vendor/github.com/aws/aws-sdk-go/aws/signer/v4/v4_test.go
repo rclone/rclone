@@ -223,13 +223,33 @@ func TestSignBodyGlacier(t *testing.T) {
 	}
 }
 
-func TestPresignEmptyBodyS3(t *testing.T) {
-	req, body := buildRequest("s3", "us-east-1", "hello")
+func TestPresign_SignedPayload(t *testing.T) {
+	req, body := buildRequest("glacier", "us-east-1", "hello")
 	signer := buildSigner()
-	signer.Presign(req, body, "s3", "us-east-1", 5*time.Minute, time.Now())
+	signer.Presign(req, body, "glacier", "us-east-1", 5*time.Minute, time.Now())
+	hash := req.Header.Get("X-Amz-Content-Sha256")
+	if e, a := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", hash; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+}
+
+func TestPresign_UnsignedPayload(t *testing.T) {
+	req, body := buildRequest("service-name", "us-east-1", "hello")
+	signer := buildSigner()
+	signer.UnsignedPayload = true
+	signer.Presign(req, body, "service-name", "us-east-1", 5*time.Minute, time.Now())
 	hash := req.Header.Get("X-Amz-Content-Sha256")
 	if e, a := "UNSIGNED-PAYLOAD", hash; e != a {
 		t.Errorf("expect %v, got %v", e, a)
+	}
+}
+
+func TestPresign_UnsignedPayload_S3(t *testing.T) {
+	req, body := buildRequest("s3", "us-east-1", "hello")
+	signer := buildSigner()
+	signer.Presign(req, body, "s3", "us-east-1", 5*time.Minute, time.Now())
+	if a := req.Header.Get("X-Amz-Content-Sha256"); len(a) != 0 {
+		t.Errorf("expect no content sha256 got %v", a)
 	}
 }
 

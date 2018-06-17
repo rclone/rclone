@@ -1,6 +1,7 @@
 package dynamodbattribute
 
 import (
+	"encoding/base64"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -538,6 +539,16 @@ func (d *Decoder) decodeString(s *string, v reflect.Value, fieldTag tag) error {
 	switch v.Kind() {
 	case reflect.String:
 		v.SetString(*s)
+	case reflect.Slice:
+		// To maintain backwards compatibility with the ConvertFrom family of methods
+		// which converted []byte into base64-encoded strings if the input was typed
+		if v.Type() == byteSliceType {
+			decoded, err := base64.StdEncoding.DecodeString(*s)
+			if err != nil {
+				return &UnmarshalError{Err: err, Value: "string", Type: v.Type()}
+			}
+			v.SetBytes(decoded)
+		}
 	case reflect.Interface:
 		// Ensure type aliasing is handled properly
 		v.Set(reflect.ValueOf(*s).Convert(v.Type()))

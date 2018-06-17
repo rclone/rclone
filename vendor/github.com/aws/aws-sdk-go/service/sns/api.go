@@ -1376,6 +1376,8 @@ func (c *SNS) ListEndpointsByPlatformApplicationRequest(input *ListEndpointsByPl
 // are no more records to return, NextToken will be null. For more information,
 // see Using Amazon SNS Mobile Push Notifications (http://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html).
 //
+// This action is throttled at 30 transactions per second (TPS).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1624,6 +1626,8 @@ func (c *SNS) ListPlatformApplicationsRequest(input *ListPlatformApplicationsInp
 // no more records to return, NextToken will be null. For more information,
 // see Using Amazon SNS Mobile Push Notifications (http://docs.aws.amazon.com/sns/latest/dg/SNSMobilePush.html).
 //
+// This action is throttled at 15 transactions per second (TPS).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1768,6 +1772,8 @@ func (c *SNS) ListSubscriptionsRequest(input *ListSubscriptionsInput) (req *requ
 // is also returned. Use the NextToken parameter in a new ListSubscriptions
 // call to get further results.
 //
+// This action is throttled at 30 transactions per second (TPS).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1911,6 +1917,8 @@ func (c *SNS) ListSubscriptionsByTopicRequest(input *ListSubscriptionsByTopicInp
 // a limited list of subscriptions, up to 100. If there are more subscriptions,
 // a NextToken is also returned. Use the NextToken parameter in a new ListSubscriptionsByTopic
 // call to get further results.
+//
+// This action is throttled at 30 transactions per second (TPS).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2057,6 +2065,8 @@ func (c *SNS) ListTopicsRequest(input *ListTopicsInput) (req *request.Request, o
 // Returns a list of the requester's topics. Each call returns a limited list
 // of topics, up to 100. If there are more topics, a NextToken is also returned.
 // Use the NextToken parameter in a new ListTopics call to get further results.
+//
+// This action is throttled at 30 transactions per second (TPS).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2283,10 +2293,15 @@ func (c *SNS) PublishRequest(input *PublishInput) (req *request.Request, output 
 
 // Publish API operation for Amazon Simple Notification Service.
 //
-// Sends a message to all of a topic's subscribed endpoints. When a messageId
-// is returned, the message has been saved and Amazon SNS will attempt to deliver
-// it to the topic's subscribers shortly. The format of the outgoing message
-// to each subscribed endpoint depends on the notification protocol.
+// Sends a message to an Amazon SNS topic or sends a text message (SMS message)
+// directly to a phone number.
+//
+// If you send a message to a topic, Amazon SNS delivers the message to each
+// endpoint that is subscribed to the topic. The format of the message depends
+// on the notification protocol for each subscribed endpoint.
+//
+// When a messageId is returned, the message has been saved and Amazon SNS will
+// attempt to deliver it shortly.
 //
 // To use the Publish action for sending a message to a mobile endpoint, such
 // as an app on a Kindle device or mobile phone, you must specify the EndpointArn
@@ -2764,7 +2779,8 @@ func (c *SNS) SetSubscriptionAttributesRequest(input *SetSubscriptionAttributesI
 
 // SetSubscriptionAttributes API operation for Amazon Simple Notification Service.
 //
-// Allows a subscription owner to set an attribute of the topic to a new value.
+// Allows a subscription owner to set an attribute of the subscription to a
+// new value.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2776,6 +2792,11 @@ func (c *SNS) SetSubscriptionAttributesRequest(input *SetSubscriptionAttributesI
 // Returned Error Codes:
 //   * ErrCodeInvalidParameterException "InvalidParameter"
 //   Indicates that a request parameter does not comply with the associated constraints.
+//
+//   * ErrCodeFilterPolicyLimitExceededException "FilterPolicyLimitExceeded"
+//   Indicates that the number of filter polices in your AWS account exceeds the
+//   limit. To add more filter polices, submit an SNS Limit Increase case in the
+//   AWS Support Center.
 //
 //   * ErrCodeInternalErrorException "InternalError"
 //   Indicates an internal service error.
@@ -2947,6 +2968,8 @@ func (c *SNS) SubscribeRequest(input *SubscribeInput) (req *request.Request, out
 // the ConfirmSubscription action with the token from the confirmation message.
 // Confirmation tokens are valid for three days.
 //
+// This action is throttled at 100 transactions per second (TPS).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -2957,6 +2980,11 @@ func (c *SNS) SubscribeRequest(input *SubscribeInput) (req *request.Request, out
 // Returned Error Codes:
 //   * ErrCodeSubscriptionLimitExceededException "SubscriptionLimitExceeded"
 //   Indicates that the customer already owns the maximum allowed number of subscriptions.
+//
+//   * ErrCodeFilterPolicyLimitExceededException "FilterPolicyLimitExceeded"
+//   Indicates that the number of filter polices in your AWS account exceeds the
+//   limit. To add more filter polices, submit an SNS Limit Increase case in the
+//   AWS Support Center.
 //
 //   * ErrCodeInvalidParameterException "InvalidParameter"
 //   Indicates that a request parameter does not comply with the associated constraints.
@@ -3044,6 +3072,8 @@ func (c *SNS) UnsubscribeRequest(input *UnsubscribeInput) (req *request.Request,
 // authentication and the requester is not the subscription owner, a final cancellation
 // message is delivered to the endpoint, so that the endpoint owner can easily
 // resubscribe to the topic if the Unsubscribe request was unintended.
+//
+// This action is throttled at 100 transactions per second (TPS).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4047,21 +4077,31 @@ type GetSubscriptionAttributesOutput struct {
 	// A map of the subscription's attributes. Attributes in this map include the
 	// following:
 	//
-	//    * SubscriptionArn -- the subscription's ARN
-	//
-	//    * TopicArn -- the topic ARN that the subscription is associated with
-	//
-	//    * Owner -- the AWS account ID of the subscription's owner
-	//
 	//    * ConfirmationWasAuthenticated -- true if the subscription confirmation
-	//    request was authenticated
+	//    request was authenticated.
 	//
-	//    * DeliveryPolicy -- the JSON serialization of the subscription's delivery
-	//    policy
+	//    * DeliveryPolicy -- The JSON serialization of the subscription's delivery
+	//    policy.
 	//
-	//    * EffectiveDeliveryPolicy -- the JSON serialization of the effective delivery
+	//    * EffectiveDeliveryPolicy -- The JSON serialization of the effective delivery
 	//    policy that takes into account the topic delivery policy and account system
-	//    defaults
+	//    defaults.
+	//
+	//    * FilterPolicy -- The filter policy JSON that is assigned to the subscription.
+	//
+	//    * Owner -- The AWS account ID of the subscription's owner.
+	//
+	//    * PendingConfirmation -- true if the subscription hasn't been confirmed.
+	//    To confirm a pending subscription, call the ConfirmSubscription action
+	//    with a confirmation token.
+	//
+	//    * RawMessageDelivery -- true if raw message delivery is enabled for the
+	//    subscription. Raw messages are free of JSON formatting and can be sent
+	//    to HTTP/S and Amazon SQS endpoints.
+	//
+	//    * SubscriptionArn -- The subscription's ARN.
+	//
+	//    * TopicArn -- The topic ARN that the subscription is associated with.
 	Attributes map[string]*string `type:"map"`
 }
 
@@ -4586,8 +4626,9 @@ type MessageAttributeValue struct {
 	// BinaryValue is automatically base64 encoded/decoded by the SDK.
 	BinaryValue []byte `type:"blob"`
 
-	// Amazon SNS supports the following logical data types: String, Number, and
-	// Binary. For more information, see Message Attribute Data Types (http://docs.aws.amazon.com/sns/latest/dg/SNSMessageAttributes.html#SNSMessageAttributes.DataTypes).
+	// Amazon SNS supports the following logical data types: String, String.Array,
+	// Number, and Binary. For more information, see Message Attribute Data Types
+	// (http://docs.aws.amazon.com/sns/latest/dg/SNSMessageAttributes.html#SNSMessageAttributes.DataTypes).
 	//
 	// DataType is a required field
 	DataType *string `type:"string" required:"true"`
@@ -4729,17 +4770,26 @@ func (s *PlatformApplication) SetPlatformApplicationArn(v string) *PlatformAppli
 type PublishInput struct {
 	_ struct{} `type:"structure"`
 
-	// The message you want to send to the topic.
+	// The message you want to send.
 	//
-	// If you want to send the same message to all transport protocols, include
-	// the text of the message as a String value.
-	//
+	// If you are publishing to a topic and you want to send the same message to
+	// all transport protocols, include the text of the message as a String value.
 	// If you want to send different messages for each transport protocol, set the
 	// value of the MessageStructure parameter to json and use a JSON object for
 	// the Message parameter.
 	//
-	// Constraints: Messages must be UTF-8 encoded strings at most 256 KB in size
-	// (262144 bytes, not 262144 characters).
+	// Constraints:
+	//
+	// With the exception of SMS, messages must be UTF-8 encoded strings and at
+	// most 256 KB in size (262144 bytes, not 262144 characters).
+	//
+	//    * For SMS, each message can contain up to 140 bytes, and the character
+	//    limit depends on the encoding scheme. For example, an SMS message can
+	//    contain 160 GSM characters, 140 ASCII characters, or 70 UCS-2 characters.
+	//    If you publish a message that exceeds the size limit, Amazon SNS sends
+	//    it as multiple messages, each fitting within the size limit. Messages
+	//    are not cut off in the middle of a word but on whole-word boundaries.
+	//    The total size limit for a single SMS publish action is 1600 bytes.
 	//
 	// JSON-specific constraints:
 	//
@@ -5186,8 +5236,10 @@ type SetSMSAttributesInput struct {
 	// costs that exceed your limit.
 	//
 	// By default, the spend limit is set to the maximum allowed by Amazon SNS.
-	// If you want to exceed the maximum, contact AWS Support (https://aws.amazon.com/premiumsupport/)
-	// or your AWS sales representative for a service limit increase.
+	// If you want to raise the limit, submit an SNS Limit Increase case (https://console.aws.amazon.com/support/home#/case/create?issueType=service-limit-increase&limitType=service-code-sns).
+	// For New limit value, enter your desired monthly spend limit. In the Use Case
+	// Description field, explain that you are requesting an SMS monthly spend limit
+	// increase.
 	//
 	// DeliveryStatusIAMRole – The ARN of the IAM role that allows Amazon SNS to
 	// write logs about SMS deliveries in CloudWatch Logs. For each SMS message
@@ -5301,7 +5353,7 @@ type SetSubscriptionAttributesInput struct {
 	// The name of the attribute you want to set. Only a subset of the subscriptions
 	// attributes are mutable.
 	//
-	// Valid values: DeliveryPolicy | RawMessageDelivery
+	// Valid values: DeliveryPolicy | FilterPolicy | RawMessageDelivery
 	//
 	// AttributeName is a required field
 	AttributeName *string `type:"string" required:"true"`
@@ -5456,6 +5508,10 @@ func (s SetTopicAttributesOutput) GoString() string {
 type SubscribeInput struct {
 	_ struct{} `type:"structure"`
 
+	// Assigns attributes to the subscription as a map of key-value pairs. You can
+	// assign any attribute that is supported by the SetSubscriptionAttributes action.
+	Attributes map[string]*string `type:"map"`
+
 	// The endpoint that you want to receive notifications. Endpoints vary by protocol:
 	//
 	//    * For the http protocol, the endpoint is an URL beginning with "http://"
@@ -5499,6 +5555,21 @@ type SubscribeInput struct {
 	// Protocol is a required field
 	Protocol *string `type:"string" required:"true"`
 
+	// Sets whether the response from the Subscribe request includes the subscription
+	// ARN, even if the subscription is not yet confirmed.
+	//
+	// If you set this parameter to false, the response includes the ARN for confirmed
+	// subscriptions, but it includes an ARN value of "pending subscription" for
+	// subscriptions that are not yet confirmed. A subscription becomes confirmed
+	// when the subscriber calls the ConfirmSubscription action with a confirmation
+	// token.
+	//
+	// If you set this parameter to true, the response includes the ARN in all cases,
+	// even if the subscription is not yet confirmed.
+	//
+	// The default value is false.
+	ReturnSubscriptionArn *bool `type:"boolean"`
+
 	// The ARN of the topic you want to subscribe to.
 	//
 	// TopicArn is a required field
@@ -5531,6 +5602,12 @@ func (s *SubscribeInput) Validate() error {
 	return nil
 }
 
+// SetAttributes sets the Attributes field's value.
+func (s *SubscribeInput) SetAttributes(v map[string]*string) *SubscribeInput {
+	s.Attributes = v
+	return s
+}
+
 // SetEndpoint sets the Endpoint field's value.
 func (s *SubscribeInput) SetEndpoint(v string) *SubscribeInput {
 	s.Endpoint = &v
@@ -5540,6 +5617,12 @@ func (s *SubscribeInput) SetEndpoint(v string) *SubscribeInput {
 // SetProtocol sets the Protocol field's value.
 func (s *SubscribeInput) SetProtocol(v string) *SubscribeInput {
 	s.Protocol = &v
+	return s
+}
+
+// SetReturnSubscriptionArn sets the ReturnSubscriptionArn field's value.
+func (s *SubscribeInput) SetReturnSubscriptionArn(v bool) *SubscribeInput {
+	s.ReturnSubscriptionArn = &v
 	return s
 }
 
@@ -5553,8 +5636,10 @@ func (s *SubscribeInput) SetTopicArn(v string) *SubscribeInput {
 type SubscribeOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the subscription, if the service was able to create a subscription
-	// immediately (without requiring endpoint owner confirmation).
+	// The ARN of the subscription if it is confirmed, or the string "pending confirmation"
+	// if the subscription requires confirmation. However, if the API request parameter
+	// ReturnSubscriptionArn is true, then the value is always the subscription
+	// ARN, even if the subscription requires confirmation.
 	SubscriptionArn *string `type:"string"`
 }
 

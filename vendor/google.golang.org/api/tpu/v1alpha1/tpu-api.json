@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -697,7 +686,7 @@
       }
     }
   },
-  "revision": "20180411",
+  "revision": "20180601",
   "rootUrl": "https://tpu.googleapis.com/",
   "schemas": {
     "AcceleratorType": {
@@ -932,6 +921,9 @@
           "description": "Output only.\nDEPRECATED! Use network_endpoints instead.\nThe network port for the TPU Node as visible to Compute Engine instances.",
           "type": "string"
         },
+        "schedulingConfig": {
+          "$ref": "SchedulingConfig"
+        },
         "serviceAccount": {
           "description": "Output only.\nThe service account used to run the tensor flow services within the node.\nTo share resources, including Google Cloud Storage data, with the\nTensorflow job running in the Node, this account must have permissions to\nthat data.",
           "type": "string"
@@ -1058,6 +1050,15 @@
       "description": "Request for ResetNode.",
       "id": "ResetNodeRequest",
       "properties": {},
+      "type": "object"
+    },
+    "SchedulingConfig": {
+      "id": "SchedulingConfig",
+      "properties": {
+        "preemptible": {
+          "type": "boolean"
+        }
+      },
       "type": "object"
     },
     "StartNodeRequest": {

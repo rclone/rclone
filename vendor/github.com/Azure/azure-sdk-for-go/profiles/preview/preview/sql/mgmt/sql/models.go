@@ -21,6 +21,7 @@ package sql
 
 import original "github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/2017-10-01-preview/sql"
 
+type BackupShortTermRetentionPoliciesClient = original.BackupShortTermRetentionPoliciesClient
 type CapabilitiesClient = original.CapabilitiesClient
 
 const (
@@ -30,6 +31,7 @@ const (
 type BaseClient = original.BaseClient
 type DatabaseOperationsClient = original.DatabaseOperationsClient
 type DatabasesClient = original.DatabasesClient
+type DatabaseVulnerabilityAssessmentScansClient = original.DatabaseVulnerabilityAssessmentScansClient
 type ElasticPoolOperationsClient = original.ElasticPoolOperationsClient
 type ElasticPoolsClient = original.ElasticPoolsClient
 type InstanceFailoverGroupsClient = original.InstanceFailoverGroupsClient
@@ -190,6 +192,26 @@ const (
 	WideWorldImportersStd  SampleName = original.WideWorldImportersStd
 )
 
+type VulnerabilityAssessmentScanState = original.VulnerabilityAssessmentScanState
+
+const (
+	VulnerabilityAssessmentScanStateFailed      VulnerabilityAssessmentScanState = original.VulnerabilityAssessmentScanStateFailed
+	VulnerabilityAssessmentScanStateFailedToRun VulnerabilityAssessmentScanState = original.VulnerabilityAssessmentScanStateFailedToRun
+	VulnerabilityAssessmentScanStateInProgress  VulnerabilityAssessmentScanState = original.VulnerabilityAssessmentScanStateInProgress
+	VulnerabilityAssessmentScanStatePassed      VulnerabilityAssessmentScanState = original.VulnerabilityAssessmentScanStatePassed
+)
+
+type VulnerabilityAssessmentScanTriggerType = original.VulnerabilityAssessmentScanTriggerType
+
+const (
+	OnDemand  VulnerabilityAssessmentScanTriggerType = original.OnDemand
+	Recurring VulnerabilityAssessmentScanTriggerType = original.Recurring
+)
+
+type BackupShortTermRetentionPoliciesCreateOrUpdateFuture = original.BackupShortTermRetentionPoliciesCreateOrUpdateFuture
+type BackupShortTermRetentionPoliciesUpdateFuture = original.BackupShortTermRetentionPoliciesUpdateFuture
+type BackupShortTermRetentionPolicy = original.BackupShortTermRetentionPolicy
+type BackupShortTermRetentionPolicyProperties = original.BackupShortTermRetentionPolicyProperties
 type Database = original.Database
 type DatabaseListResult = original.DatabaseListResult
 type DatabaseListResultIterator = original.DatabaseListResultIterator
@@ -207,6 +229,11 @@ type DatabasesResumeFuture = original.DatabasesResumeFuture
 type DatabasesUpdateFuture = original.DatabasesUpdateFuture
 type DatabasesUpgradeDataWarehouseFuture = original.DatabasesUpgradeDataWarehouseFuture
 type DatabaseUpdate = original.DatabaseUpdate
+type DatabaseVulnerabilityAssessment = original.DatabaseVulnerabilityAssessment
+type DatabaseVulnerabilityAssessmentProperties = original.DatabaseVulnerabilityAssessmentProperties
+type DatabaseVulnerabilityAssessmentScanExportProperties = original.DatabaseVulnerabilityAssessmentScanExportProperties
+type DatabaseVulnerabilityAssessmentScansExport = original.DatabaseVulnerabilityAssessmentScansExport
+type DatabaseVulnerabilityAssessmentScansInitiateScanFuture = original.DatabaseVulnerabilityAssessmentScansInitiateScanFuture
 type EditionCapability = original.EditionCapability
 type ElasticPool = original.ElasticPool
 type ElasticPoolEditionCapability = original.ElasticPoolEditionCapability
@@ -256,14 +283,22 @@ type Resource = original.Resource
 type ResourceMoveDefinition = original.ResourceMoveDefinition
 type ServerVersionCapability = original.ServerVersionCapability
 type ServiceObjectiveCapability = original.ServiceObjectiveCapability
-type ShortTermRetentionPoliciesCreateOrUpdateFuture = original.ShortTermRetentionPoliciesCreateOrUpdateFuture
-type ShortTermRetentionPoliciesUpdateFuture = original.ShortTermRetentionPoliciesUpdateFuture
-type ShortTermRetentionPolicy = original.ShortTermRetentionPolicy
-type ShortTermRetentionPolicyProperties = original.ShortTermRetentionPolicyProperties
 type Sku = original.Sku
 type TrackedResource = original.TrackedResource
-type ShortTermRetentionPoliciesClient = original.ShortTermRetentionPoliciesClient
+type VulnerabilityAssessmentRecurringScansProperties = original.VulnerabilityAssessmentRecurringScansProperties
+type VulnerabilityAssessmentScanError = original.VulnerabilityAssessmentScanError
+type VulnerabilityAssessmentScanRecord = original.VulnerabilityAssessmentScanRecord
+type VulnerabilityAssessmentScanRecordListResult = original.VulnerabilityAssessmentScanRecordListResult
+type VulnerabilityAssessmentScanRecordListResultIterator = original.VulnerabilityAssessmentScanRecordListResultIterator
+type VulnerabilityAssessmentScanRecordListResultPage = original.VulnerabilityAssessmentScanRecordListResultPage
+type VulnerabilityAssessmentScanRecordProperties = original.VulnerabilityAssessmentScanRecordProperties
 
+func NewBackupShortTermRetentionPoliciesClient(subscriptionID string) BackupShortTermRetentionPoliciesClient {
+	return original.NewBackupShortTermRetentionPoliciesClient(subscriptionID)
+}
+func NewBackupShortTermRetentionPoliciesClientWithBaseURI(baseURI string, subscriptionID string) BackupShortTermRetentionPoliciesClient {
+	return original.NewBackupShortTermRetentionPoliciesClientWithBaseURI(baseURI, subscriptionID)
+}
 func NewCapabilitiesClient(subscriptionID string) CapabilitiesClient {
 	return original.NewCapabilitiesClient(subscriptionID)
 }
@@ -287,6 +322,12 @@ func NewDatabasesClient(subscriptionID string) DatabasesClient {
 }
 func NewDatabasesClientWithBaseURI(baseURI string, subscriptionID string) DatabasesClient {
 	return original.NewDatabasesClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewDatabaseVulnerabilityAssessmentScansClient(subscriptionID string) DatabaseVulnerabilityAssessmentScansClient {
+	return original.NewDatabaseVulnerabilityAssessmentScansClient(subscriptionID)
+}
+func NewDatabaseVulnerabilityAssessmentScansClientWithBaseURI(baseURI string, subscriptionID string) DatabaseVulnerabilityAssessmentScansClient {
+	return original.NewDatabaseVulnerabilityAssessmentScansClientWithBaseURI(baseURI, subscriptionID)
 }
 func NewElasticPoolOperationsClient(subscriptionID string) ElasticPoolOperationsClient {
 	return original.NewElasticPoolOperationsClient(subscriptionID)
@@ -357,11 +398,11 @@ func PossibleReadWriteEndpointFailoverPolicyValues() []ReadWriteEndpointFailover
 func PossibleSampleNameValues() []SampleName {
 	return original.PossibleSampleNameValues()
 }
-func NewShortTermRetentionPoliciesClient(subscriptionID string) ShortTermRetentionPoliciesClient {
-	return original.NewShortTermRetentionPoliciesClient(subscriptionID)
+func PossibleVulnerabilityAssessmentScanStateValues() []VulnerabilityAssessmentScanState {
+	return original.PossibleVulnerabilityAssessmentScanStateValues()
 }
-func NewShortTermRetentionPoliciesClientWithBaseURI(baseURI string, subscriptionID string) ShortTermRetentionPoliciesClient {
-	return original.NewShortTermRetentionPoliciesClientWithBaseURI(baseURI, subscriptionID)
+func PossibleVulnerabilityAssessmentScanTriggerTypeValues() []VulnerabilityAssessmentScanTriggerType {
+	return original.PossibleVulnerabilityAssessmentScanTriggerTypeValues()
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"

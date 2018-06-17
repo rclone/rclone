@@ -62,7 +62,8 @@ type DocumentChange struct {
 // https://github.com/googleapis/nodejs-firestore/blob/master/src/watch.js.
 
 // The sole target ID for all streams from this client.
-const watchTargetID int32 = 'g' + 'o'
+// Variable for testing.
+var watchTargetID int32 = 'g' + 'o'
 
 var defaultBackoff = gax.Backoff{
 	// Values from https://github.com/googleapis/nodejs-firestore/blob/master/src/backoff.js.
@@ -98,7 +99,7 @@ func newWatchStreamForDocument(ctx context.Context, dr *DocumentRef) *watchStrea
 	compare := func(_, _ *DocumentSnapshot) (int, error) { return 0, nil }
 	return newWatchStream(ctx, dr.Parent.c, compare, &pb.Target{
 		TargetType: &pb.Target_Documents{
-			Documents: &pb.Target_DocumentsTarget{[]string{dr.Path}},
+			Documents: &pb.Target_DocumentsTarget{Documents: []string{dr.Path}},
 		},
 		TargetId: watchTargetID,
 	})

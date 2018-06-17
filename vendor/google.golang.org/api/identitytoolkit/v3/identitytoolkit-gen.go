@@ -485,6 +485,15 @@ type IdentitytoolkitRelyingpartyCreateAuthUriRequest struct {
 	// SessionId: The session_id passed by client.
 	SessionId string `json:"sessionId,omitempty"`
 
+	// TenantId: For multi-tenant use cases, in order to construct sign-in
+	// URL with the correct IDP parameters, Firebear needs to know which
+	// Tenant to retrieve IDP configs from.
+	TenantId string `json:"tenantId,omitempty"`
+
+	// TenantProjectNumber: Tenant project number to be used for idp
+	// discovery.
+	TenantProjectNumber uint64 `json:"tenantProjectNumber,omitempty,string"`
+
 	// ForceSendFields is a list of field names (e.g. "AppId") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -1146,6 +1155,15 @@ type IdentitytoolkitRelyingpartySignupNewUserRequest struct {
 	// PhotoUrl: The photo url of the user.
 	PhotoUrl string `json:"photoUrl,omitempty"`
 
+	// TenantId: For multi-tenant use cases, in order to construct sign-in
+	// URL with the correct IDP parameters, Firebear needs to know which
+	// Tenant to retrieve IDP configs from.
+	TenantId string `json:"tenantId,omitempty"`
+
+	// TenantProjectNumber: Tenant project number to be used for idp
+	// discovery.
+	TenantProjectNumber uint64 `json:"tenantProjectNumber,omitempty,string"`
+
 	// ForceSendFields is a list of field names (e.g. "CaptchaChallenge") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -1286,6 +1304,15 @@ type IdentitytoolkitRelyingpartyVerifyAssertionRequest struct {
 	// createAuthUri request.
 	SessionId string `json:"sessionId,omitempty"`
 
+	// TenantId: For multi-tenant use cases, in order to construct sign-in
+	// URL with the correct IDP parameters, Firebear needs to know which
+	// Tenant to retrieve IDP configs from.
+	TenantId string `json:"tenantId,omitempty"`
+
+	// TenantProjectNumber: Tenant project number to be used for idp
+	// discovery.
+	TenantProjectNumber uint64 `json:"tenantProjectNumber,omitempty,string"`
+
 	// ForceSendFields is a list of field names (e.g. "AutoCreate") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -1383,6 +1410,15 @@ type IdentitytoolkitRelyingpartyVerifyPasswordRequest struct {
 	// ReturnSecureToken: Whether return sts id token and refresh token
 	// instead of gitkit token.
 	ReturnSecureToken bool `json:"returnSecureToken,omitempty"`
+
+	// TenantId: For multi-tenant use cases, in order to construct sign-in
+	// URL with the correct IDP parameters, Firebear needs to know which
+	// Tenant to retrieve IDP configs from.
+	TenantId string `json:"tenantId,omitempty"`
+
+	// TenantProjectNumber: Tenant project number to be used for idp
+	// discovery.
+	TenantProjectNumber uint64 `json:"tenantProjectNumber,omitempty,string"`
 
 	// ForceSendFields is a list of field names (e.g. "CaptchaChallenge") to
 	// unconditionally include in API requests. By default, fields with

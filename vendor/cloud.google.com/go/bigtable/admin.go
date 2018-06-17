@@ -867,7 +867,7 @@ func (iac *InstanceAdminClient) Clusters(ctx context.Context, instanceId string)
 // GetCluster fetches a cluster in an instance
 func (iac *InstanceAdminClient) GetCluster(ctx context.Context, instanceID, clusterID string) (*ClusterInfo, error) {
 	ctx = mergeOutgoingMetadata(ctx, iac.md)
-	req := &btapb.GetClusterRequest{Name: "projects/" + iac.project + "/instances/" + instanceID + "/clusters" + clusterID}
+	req := &btapb.GetClusterRequest{Name: "projects/" + iac.project + "/instances/" + instanceID + "/clusters/" + clusterID}
 	c, err := iac.iClient.GetCluster(ctx, req)
 	if err != nil {
 		return nil, err

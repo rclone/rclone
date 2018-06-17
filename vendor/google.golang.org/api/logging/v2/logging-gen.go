@@ -1249,10 +1249,8 @@ type LogExclusion struct {
 	// entries to be excluded. By using the sample function, you can exclude
 	// less than 100% of the matching log entries. For example, the
 	// following filter matches 99% of low-severity log entries from load
-	// balancers:
-	// "resource.type=http_load_balancer severity<ERROR sample(insertId,
-	// 0.99)"
-	//
+	// balancers:"resource.type=http_load_balancer severity<ERROR
+	// sample(insertId, 0.99)"
 	Filter string `json:"filter,omitempty"`
 
 	// Name: Required. A client-assigned identifier, such as

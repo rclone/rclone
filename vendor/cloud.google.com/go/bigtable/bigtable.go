@@ -192,6 +192,9 @@ func (t *Table) ReadRows(ctx context.Context, arg RowSet, f func(Row) bool, opts
 				tracePrintf(ctx, attrMap, "Retry details in ReadRows")
 				return err
 			}
+			attrMap["time_secs"] = time.Since(startTime).Seconds()
+			attrMap["rowCount"] = len(res.Chunks)
+			tracePrintf(ctx, attrMap, "Details in ReadRows")
 
 			for _, cc := range res.Chunks {
 				row, err := cr.Process(cc)

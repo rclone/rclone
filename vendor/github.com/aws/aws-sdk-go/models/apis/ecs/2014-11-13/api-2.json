@@ -790,8 +790,7 @@
       "type":"structure",
       "required":[
         "serviceName",
-        "taskDefinition",
-        "desiredCount"
+        "taskDefinition"
       ],
       "members":{
         "cluster":{"shape":"String"},
@@ -808,7 +807,8 @@
         "placementConstraints":{"shape":"PlacementConstraints"},
         "placementStrategy":{"shape":"PlacementStrategies"},
         "networkConfiguration":{"shape":"NetworkConfiguration"},
-        "healthCheckGracePeriodSeconds":{"shape":"BoxedInteger"}
+        "healthCheckGracePeriodSeconds":{"shape":"BoxedInteger"},
+        "schedulingStrategy":{"shape":"SchedulingStrategy"}
       }
     },
     "CreateServiceResponse":{
@@ -849,7 +849,8 @@
       "required":["service"],
       "members":{
         "cluster":{"shape":"String"},
-        "service":{"shape":"String"}
+        "service":{"shape":"String"},
+        "force":{"shape":"BoxedBoolean"}
       }
     },
     "DeleteServiceResponse":{
@@ -1187,7 +1188,8 @@
         "cluster":{"shape":"String"},
         "nextToken":{"shape":"String"},
         "maxResults":{"shape":"BoxedInteger"},
-        "launchType":{"shape":"LaunchType"}
+        "launchType":{"shape":"LaunchType"},
+        "schedulingStrategy":{"shape":"SchedulingStrategy"}
       }
     },
     "ListServicesResponse":{
@@ -1515,6 +1517,13 @@
         "failures":{"shape":"Failures"}
       }
     },
+    "SchedulingStrategy":{
+      "type":"string",
+      "enum":[
+        "REPLICA",
+        "DAEMON"
+      ]
+    },
     "ServerException":{
       "type":"structure",
       "members":{
@@ -1546,7 +1555,8 @@
         "placementConstraints":{"shape":"PlacementConstraints"},
         "placementStrategy":{"shape":"PlacementStrategies"},
         "networkConfiguration":{"shape":"NetworkConfiguration"},
-        "healthCheckGracePeriodSeconds":{"shape":"BoxedInteger"}
+        "healthCheckGracePeriodSeconds":{"shape":"BoxedInteger"},
+        "schedulingStrategy":{"shape":"SchedulingStrategy"}
       }
     },
     "ServiceEvent":{
@@ -1581,7 +1591,9 @@
       "type":"structure",
       "members":{
         "registryArn":{"shape":"String"},
-        "port":{"shape":"BoxedInteger"}
+        "port":{"shape":"BoxedInteger"},
+        "containerName":{"shape":"String"},
+        "containerPort":{"shape":"BoxedInteger"}
       }
     },
     "Services":{

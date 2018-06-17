@@ -42,12 +42,16 @@ func NewChannelsClientWithBaseURI(baseURI string, subscriptionID string) Channel
 
 // Create creates a Channel registration for a Bot Service
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 // channelName - the name of the Channel resource.
 // parameters - the parameters to provide for the created bot.
 func (client ChannelsClient) Create(ctx context.Context, resourceGroupName string, resourceName string, channelName ChannelName, parameters BotChannel) (result BotChannel, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -122,11 +126,15 @@ func (client ChannelsClient) CreateResponder(resp *http.Response) (result BotCha
 
 // Delete deletes a Channel registration from a Bot Service
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 // channelName - the name of the Bot resource.
 func (client ChannelsClient) Delete(ctx context.Context, resourceGroupName string, resourceName string, channelName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -202,11 +210,15 @@ func (client ChannelsClient) DeleteResponder(resp *http.Response) (result autore
 
 // Get returns a BotService Channel registration specified by the parameters.
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 // channelName - the name of the Bot resource.
 func (client ChannelsClient) Get(ctx context.Context, resourceGroupName string, resourceName string, channelName string) (result BotChannel, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -283,10 +295,14 @@ func (client ChannelsClient) GetResponder(resp *http.Response) (result BotChanne
 
 // ListByResourceGroup returns all the Channel registrations of a particular BotService resource
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 func (client ChannelsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, resourceName string) (result ChannelResponseListPage, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -386,11 +402,15 @@ func (client ChannelsClient) ListByResourceGroupComplete(ctx context.Context, re
 
 // ListWithKeys lists a Channel registration for a Bot Service including secrets
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 // channelName - the name of the Channel resource.
 func (client ChannelsClient) ListWithKeys(ctx context.Context, resourceGroupName string, resourceName string, channelName ChannelName) (result BotChannel, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -463,12 +483,16 @@ func (client ChannelsClient) ListWithKeysResponder(resp *http.Response) (result 
 
 // Update updates a Channel registration for a Bot Service
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 // channelName - the name of the Channel resource.
 // parameters - the parameters to provide for the created bot.
 func (client ChannelsClient) Update(ctx context.Context, resourceGroupName string, resourceName string, channelName ChannelName, parameters BotChannel) (result BotChannel, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},

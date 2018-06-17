@@ -24,6 +24,10 @@ Note: This package is in beta. Some backwards-incompatible changes may occur.
 See https://cloud.google.com/spanner/docs/getting-started/go/ for an introduction
 to Cloud Spanner and additional help on using this API.
 
+See https://godoc.org/cloud.google.com/go for authentication, timeouts,
+connection pooling and similar aspects of this package.
+
+
 Creating a Client
 
 To start working with this package, create a client that refers to the database
@@ -307,10 +311,5 @@ Tracing
 This client has been instrumented to use OpenCensus tracing (http://opencensus.io).
 To enable tracing, see "Enabling Tracing for a Program" at
 https://godoc.org/go.opencensus.io/trace. OpenCensus tracing requires Go 1.8 or higher.
-
-Authentication
-
-See examples of authorization and authentication at
-https://godoc.org/cloud.google.com/go#pkg-examples.
 */
 package spanner // import "cloud.google.com/go/spanner"

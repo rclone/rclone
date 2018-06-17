@@ -241,12 +241,11 @@ func (cp CommonProperties) MarshalJSON() ([]byte, error) {
 // CreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CreateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CreateFuture) Result(client Client) (rt ResourceType, err error) {
+func (future *CreateFuture) Result(client Client) (rt ResourceType, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -254,34 +253,15 @@ func (future CreateFuture) Result(client Client) (rt ResourceType, err error) {
 		return
 	}
 	if !done {
-		return rt, azure.NewAsyncOpIncompleteError("redis.CreateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rt, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("redis.CreateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if rt.Response.Response, err = future.GetResult(sender); err == nil && rt.Response.Response.StatusCode != http.StatusNoContent {
+		rt, err = client.CreateResponder(rt.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", rt.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	rt, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.CreateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -420,12 +400,11 @@ func (cp CreateProperties) MarshalJSON() ([]byte, error) {
 // DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future *DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -433,47 +412,21 @@ func (future DeleteFuture) Result(client Client) (ar autorest.Response, err erro
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("redis.DeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "redis.DeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("redis.DeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.DeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.DeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // ExportDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ExportDataFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ExportDataFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future *ExportDataFuture) Result(client Client) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -481,35 +434,10 @@ func (future ExportDataFuture) Result(client Client) (ar autorest.Response, err 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("redis.ExportDataFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ExportDataResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "redis.ExportDataFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("redis.ExportDataFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.ExportDataFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ExportDataResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.ExportDataFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -765,12 +693,11 @@ type ForceRebootResponse struct {
 // ImportDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ImportDataFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ImportDataFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future *ImportDataFuture) Result(client Client) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -778,35 +705,10 @@ func (future ImportDataFuture) Result(client Client) (ar autorest.Response, err 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("redis.ImportDataFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ImportDataResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "redis.ImportDataFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("redis.ImportDataFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.ImportDataFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ImportDataResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.ImportDataFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -827,12 +729,11 @@ type LinkedServer struct {
 // LinkedServerCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type LinkedServerCreateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future LinkedServerCreateFuture) Result(client LinkedServerClient) (lswp LinkedServerWithProperties, err error) {
+func (future *LinkedServerCreateFuture) Result(client LinkedServerClient) (lswp LinkedServerWithProperties, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -840,34 +741,15 @@ func (future LinkedServerCreateFuture) Result(client LinkedServerClient) (lswp L
 		return
 	}
 	if !done {
-		return lswp, azure.NewAsyncOpIncompleteError("redis.LinkedServerCreateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		lswp, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "redis.LinkedServerCreateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("redis.LinkedServerCreateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if lswp.Response.Response, err = future.GetResult(sender); err == nil && lswp.Response.Response.StatusCode != http.StatusNoContent {
+		lswp, err = client.CreateResponder(lswp.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "redis.LinkedServerCreateFuture", "Result", lswp.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.LinkedServerCreateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	lswp, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "redis.LinkedServerCreateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

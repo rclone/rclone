@@ -62,11 +62,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -86,12 +81,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -278,7 +267,7 @@
       }
     }
   },
-  "revision": "20180501",
+  "revision": "20180607",
   "rootUrl": "https://genomics.googleapis.com/",
   "schemas": {
     "Accelerator": {
@@ -308,6 +297,10 @@
           },
           "type": "array"
         },
+        "credentials": {
+          "$ref": "Secret",
+          "description": "If the specified image is hosted on a private registry other than Google\nContainer Registry, the credentials required to pull the image must be\nspecified here as an encrypted secret.\n\nThe secret must decrypt to a JSON encoded dictionary containing both\n`username` and `password` keys."
+        },
         "entrypoint": {
           "description": "If specified, overrides the ENTRYPOINT specified in the container.",
           "type": "string"
@@ -328,7 +321,7 @@
             "Normally, once an action fails no further actions are run.  This flag\nindicates that this action must be run even if the pipeline has already\nfailed.  This is useful for actions that copy output files off of the VM\nor for debugging.",
             "Enable access to the FUSE device for this action.  Filesystems can then\nbe mounted into disks shared with other actions.  The other actions do\nnot need the ENABLE_FUSE flag to access the mounted filesystem.\n\nThis has the effect of causing the container to be executed with\nCAP_SYS_ADMIN and exposes /dev/fuse to the container, so it should only\nbe used for containers you trust.",
             "Expose all ports specified by EXPOSE statements in the container.  To\ndiscover the host side port numbers, consult the ACTION_STARTED event in\nthe operation metadata.",
-            "Normally, all container images are downloaded before any actions are\nexecuted.  This helps prevent typos in URIs or issues like lack of disk\nspace from wasting large amounts of compute resources.\n\nIf set, this flag prevents the worker from downloading the image until\njust before the action is executed.\n\nThis is useful for two reasons: first, if the image is large and a step\nearlier in the pipeline can fail, it can save time to avoid fetching the\nimage until it is needed.\n\nSecond, if the image is private (that is, it requires running `docker\nlogin` to access) this flag **must** be set so that a preceding action\ncan establish the credentials required to fetch it.",
+            "Normally, all container images are downloaded before any actions are\nexecuted.  This helps prevent typos in URIs or issues like lack of disk\nspace from wasting large amounts of compute resources.\n\nIf set, this flag prevents the worker from downloading the image until\njust before the action is executed.",
             "Normally, a small portion of the container's standard error stream is\ncaptured and returned inside the ContainerStoppedEvent.  Setting this\nflag disables this functionality."
           ],
           "items": {
@@ -738,7 +731,11 @@
       "id": "Network",
       "properties": {
         "name": {
-          "description": "The network name to attach the VM's network interface to.  If unspecified,\nthe global default network is used.",
+          "description": "The network name to attach the VM's network interface to.  The value will\nbe prefixed with \"global/networks/\" unless it contains a \"/\" in which case\nit is assumed to be a fully specified network resource URL.\n\nIf unspecified, the global default network is used.",
+          "type": "string"
+        },
+        "subnetwork": {
+          "description": "If the specified network is configured for custom subnet creation, the\nname of the subnetwork to attach the instance to must be specified here.\n\nThe value is prefixed with \"regions/*/subnetworks/\" unless it contains a\n\"/\" in which case it is assumed to be a full specified subnetwork resource\nURL.\n\nIf the '*' character appears in the value, it is replaced with the region\nthat the virtual machine has been allocated in.",
           "type": "string"
         },
         "usePrivateAddress": {
@@ -965,6 +962,21 @@
         "computeEngine": {
           "$ref": "ComputeEngine",
           "description": "Execution information specific to Google Compute Engine."
+        }
+      },
+      "type": "object"
+    },
+    "Secret": {
+      "description": "Secret holds encrypted information that is only decrypted and stored in RAM\nby the worker VM when running the pipeline.",
+      "id": "Secret",
+      "properties": {
+        "cipherText": {
+          "description": "The value of the cipherText response from the `encrypt` method.",
+          "type": "string"
+        },
+        "keyName": {
+          "description": "The name of the Cloud KMS key that will be used to decrypt the secret\nvalue.  The VM service account must have the required permissions and\nauthentication scopes to invoke the `decrypt` method on the specified key.",
+          "type": "string"
         }
       },
       "type": "object"

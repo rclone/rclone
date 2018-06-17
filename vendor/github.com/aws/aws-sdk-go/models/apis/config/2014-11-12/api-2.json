@@ -107,6 +107,18 @@
         {"shape":"InvalidParameterValueException"}
       ]
     },
+    "DeleteRetentionConfiguration":{
+      "name":"DeleteRetentionConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteRetentionConfigurationRequest"},
+      "errors":[
+        {"shape":"InvalidParameterValueException"},
+        {"shape":"NoSuchRetentionConfigurationException"}
+      ]
+    },
     "DeliverConfigSnapshot":{
       "name":"DeliverConfigSnapshot",
       "http":{
@@ -294,6 +306,20 @@
         {"shape":"InvalidParameterValueException"},
         {"shape":"InvalidNextTokenException"},
         {"shape":"InvalidLimitException"}
+      ]
+    },
+    "DescribeRetentionConfigurations":{
+      "name":"DescribeRetentionConfigurations",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeRetentionConfigurationsRequest"},
+      "output":{"shape":"DescribeRetentionConfigurationsResponse"},
+      "errors":[
+        {"shape":"InvalidParameterValueException"},
+        {"shape":"NoSuchRetentionConfigurationException"},
+        {"shape":"InvalidNextTokenException"}
       ]
     },
     "GetAggregateComplianceDetailsByConfigRule":{
@@ -505,6 +531,19 @@
         {"shape":"InvalidParameterValueException"},
         {"shape":"InvalidResultTokenException"},
         {"shape":"NoSuchConfigRuleException"}
+      ]
+    },
+    "PutRetentionConfiguration":{
+      "name":"PutRetentionConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PutRetentionConfigurationRequest"},
+      "output":{"shape":"PutRetentionConfigurationResponse"},
+      "errors":[
+        {"shape":"InvalidParameterValueException"},
+        {"shape":"MaxNumberOfRetentionConfigurationsExceededException"}
       ]
     },
     "StartConfigRulesEvaluation":{
@@ -1081,6 +1120,13 @@
         "RequesterAwsRegion":{"shape":"AwsRegion"}
       }
     },
+    "DeleteRetentionConfigurationRequest":{
+      "type":"structure",
+      "required":["RetentionConfigurationName"],
+      "members":{
+        "RetentionConfigurationName":{"shape":"RetentionConfigurationName"}
+      }
+    },
     "DeliverConfigSnapshotRequest":{
       "type":"structure",
       "required":["deliveryChannelName"],
@@ -1322,6 +1368,20 @@
       "members":{
         "PendingAggregationRequests":{"shape":"PendingAggregationRequestList"},
         "NextToken":{"shape":"String"}
+      }
+    },
+    "DescribeRetentionConfigurationsRequest":{
+      "type":"structure",
+      "members":{
+        "RetentionConfigurationNames":{"shape":"RetentionConfigurationNameList"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
+    "DescribeRetentionConfigurationsResponse":{
+      "type":"structure",
+      "members":{
+        "RetentionConfigurations":{"shape":"RetentionConfigurationList"},
+        "NextToken":{"shape":"NextToken"}
       }
     },
     "EarlierTime":{"type":"timestamp"},
@@ -1665,6 +1725,12 @@
       },
       "exception":true
     },
+    "MaxNumberOfRetentionConfigurationsExceededException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "MaximumExecutionFrequency":{
       "type":"string",
       "enum":[
@@ -1735,6 +1801,12 @@
       "exception":true
     },
     "NoSuchDeliveryChannelException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "NoSuchRetentionConfigurationException":{
       "type":"structure",
       "members":{
       },
@@ -1846,6 +1918,19 @@
       "type":"structure",
       "members":{
         "FailedEvaluations":{"shape":"Evaluations"}
+      }
+    },
+    "PutRetentionConfigurationRequest":{
+      "type":"structure",
+      "required":["RetentionPeriodInDays"],
+      "members":{
+        "RetentionPeriodInDays":{"shape":"RetentionPeriodInDays"}
+      }
+    },
+    "PutRetentionConfigurationResponse":{
+      "type":"structure",
+      "members":{
+        "RetentionConfiguration":{"shape":"RetentionConfiguration"}
       }
     },
     "RecorderName":{
@@ -2014,7 +2099,8 @@
         "AWS::ElasticBeanstalk::Application",
         "AWS::ElasticBeanstalk::ApplicationVersion",
         "AWS::ElasticBeanstalk::Environment",
-        "AWS::ElasticLoadBalancing::LoadBalancer"
+        "AWS::ElasticLoadBalancing::LoadBalancer",
+        "AWS::XRay::EncryptionConfig"
       ]
     },
     "ResourceTypeList":{
@@ -2026,6 +2112,38 @@
       "member":{"shape":"StringWithCharLimit256"},
       "max":20,
       "min":0
+    },
+    "RetentionConfiguration":{
+      "type":"structure",
+      "required":[
+        "Name",
+        "RetentionPeriodInDays"
+      ],
+      "members":{
+        "Name":{"shape":"RetentionConfigurationName"},
+        "RetentionPeriodInDays":{"shape":"RetentionPeriodInDays"}
+      }
+    },
+    "RetentionConfigurationList":{
+      "type":"list",
+      "member":{"shape":"RetentionConfiguration"}
+    },
+    "RetentionConfigurationName":{
+      "type":"string",
+      "max":256,
+      "min":1,
+      "pattern":"[\\w\\-]+"
+    },
+    "RetentionConfigurationNameList":{
+      "type":"list",
+      "member":{"shape":"RetentionConfigurationName"},
+      "max":1,
+      "min":0
+    },
+    "RetentionPeriodInDays":{
+      "type":"integer",
+      "max":2557,
+      "min":30
     },
     "RuleLimit":{
       "type":"integer",

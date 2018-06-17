@@ -48,8 +48,8 @@ func (r *ReaderSource) populateLoadConfig(lc *bq.JobConfigurationLoad) io.Reader
 // file may live in Google Cloud Storage (see GCSReference), or it may be
 // loaded into a table via the Table.LoaderFromReader.
 type FileConfig struct {
-	// SourceFormat is the format of the GCS data to be read.
-	// Allowed values are: CSV, Avro, JSON, DatastoreBackup.  The default is CSV.
+	// SourceFormat is the format of the data to be read.
+	// Allowed values are: CSV, Avro, Parquet, JSON, DatastoreBackup.  The default is CSV.
 	SourceFormat DataFormat
 
 	// Indicates if we should automatically infer the options and

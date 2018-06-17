@@ -15,7 +15,11 @@ import (
 )
 
 func Current(ctx context.Context) *User {
-	u := user.Current(internal.ClassicContextFromContext(ctx))
+	c, err := internal.ClassicContextFromContext(ctx)
+	if err != nil {
+		panic(err)
+	}
+	u := user.Current(c)
 	if u == nil {
 		return nil
 	}
@@ -31,5 +35,10 @@ func Current(ctx context.Context) *User {
 }
 
 func IsAdmin(ctx context.Context) bool {
-	return user.IsAdmin(internal.ClassicContextFromContext(ctx))
+	c, err := internal.ClassicContextFromContext(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return user.IsAdmin(c)
 }

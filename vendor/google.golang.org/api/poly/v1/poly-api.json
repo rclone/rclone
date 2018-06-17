@@ -51,11 +51,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -75,12 +70,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -301,7 +290,7 @@
       }
     }
   },
-  "revision": "20180217",
+  "revision": "20180610",
   "rootUrl": "https://poly.googleapis.com/",
   "schemas": {
     "Asset": {
@@ -689,6 +678,10 @@
       "description": "Hints for displaying the asset, based on information available when the asset\nwas uploaded.",
       "id": "PresentationParams",
       "properties": {
+        "backgroundColor": {
+          "description": "A background color which could be used for displaying the 3D asset in a\n'thumbnail' or 'palette' style view. Authors have the option to set this\nbackground color when publishing or editing their asset.\n\nThis is represented as a six-digit hexademical triplet specifying the\nRGB components of the background color, e.g. #FF0000 for Red.",
+          "type": "string"
+        },
         "colorSpace": {
           "description": "The materials' diffuse/albedo color. This does not apply to vertex colors\nor texture maps.",
           "enum": [

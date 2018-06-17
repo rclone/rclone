@@ -38,6 +38,13 @@ type Subscription struct {
 	Name            string `json:"name"`
 	State           string `json:"state"`
 	TenantID        string `json:"tenantId"`
+	User            *User  `json:"user"`
+}
+
+// User represents a User from the Azure CLI
+type User struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 // ProfilePath returns the path where the Azure Profile is stored from the Azure CLI

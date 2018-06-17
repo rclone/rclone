@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -1275,7 +1264,7 @@
       }
     }
   },
-  "revision": "20180430",
+  "revision": "20180604",
   "rootUrl": "https://dialogflow.googleapis.com/",
   "schemas": {
     "GoogleCloudDialogflowV2Agent": {
@@ -1685,7 +1674,7 @@
       "id": "GoogleCloudDialogflowV2ExportAgentRequest",
       "properties": {
         "agentUri": {
-          "description": "Optional. The Google Cloud Storage URI to export the agent to.\nNote: The URI must start with\n\"gs://\". If left unspecified, the serialized agent is returned inline.",
+          "description": "Optional. The\n[Google Cloud Storage](https://cloud.google.com/storage/docs/)\nURI to export the agent to.\nThe format of this URI must be `gs://\u003cbucket-name\u003e/\u003cobject-name\u003e`.\nIf left unspecified, the serialized agent is returned inline.",
           "type": "string"
         }
       },
@@ -1771,7 +1760,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2Intent": {
-      "description": "Represents an intent.\nIntents convert a number of user expressions or patterns into an action. An\naction is an extraction of a user command or sentence semantics.",
+      "description": "Represents an intent.\nIntents convert a number of user expressions or patterns into an action. An\naction is an extraction of a user command or sentence semantics.\nNext available field number: 22.",
       "id": "GoogleCloudDialogflowV2Intent",
       "properties": {
         "action": {
@@ -2974,7 +2963,7 @@
       "type": "object"
     },
     "GoogleCloudDialogflowV2beta1Intent": {
-      "description": "Represents an intent.\nIntents convert a number of user expressions or patterns into an action. An\naction is an extraction of a user command or sentence semantics.",
+      "description": "Represents an intent.\nIntents convert a number of user expressions or patterns into an action. An\naction is an extraction of a user command or sentence semantics.\nNext available field number: 22.",
       "id": "GoogleCloudDialogflowV2beta1Intent",
       "properties": {
         "action": {
@@ -3051,7 +3040,7 @@
           "type": "boolean"
         },
         "mlEnabled": {
-          "description": "Optional. Indicates whether Machine Learning is enabled for the intent.\nNote: If `ml_enabled` setting is set to false, then this intent is not\ntaken into account during inference in `ML ONLY` match mode. Also,\nauto-markup in the UI is turned off.\nDEPRECATED! Please use `ml_disabled` field instead.\nNOTE: If neither `ml_enabled` nor `ml_disabled` field is set, then the\ndefault value is determined as follows:\n- Before April 15th, 2018 the default is:\n  ml_enabled = false / ml_disabled = true.\n- After April 15th, 2018 the default is:\n  ml_enabled = true / ml_disabled = false.",
+          "description": "Optional. Indicates whether Machine Learning is enabled for the intent.\nNote: If `ml_enabled` setting is set to false, then this intent is not\ntaken into account during inference in `ML ONLY` match mode. Also,\nauto-markup in the UI is turned off.\nDEPRECATED! Please use `ml_disabled` field instead.\nNOTE: If both `ml_enabled` and `ml_disabled` are either not set or false,\nthen the default value is determined as follows:\n- Before April 15th, 2018 the default is:\n  ml_enabled = false / ml_disabled = true.\n- After April 15th, 2018 the default is:\n  ml_enabled = true / ml_disabled = false.",
           "type": "boolean"
         },
         "name": {
@@ -3348,7 +3337,7 @@
       "id": "GoogleCloudDialogflowV2beta1IntentMessageImage",
       "properties": {
         "accessibilityText": {
-          "description": "Optional. A text description of the image to be used for accessibility,\ne.g., screen readers.",
+          "description": "A text description of the image to be used for accessibility,\ne.g., screen readers. Required if image_uri is set for CarouselSelect.",
           "type": "string"
         },
         "imageUri": {

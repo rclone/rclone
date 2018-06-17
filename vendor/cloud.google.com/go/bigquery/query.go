@@ -119,6 +119,10 @@ type QueryConfig struct {
 
 	// Custom encryption configuration (e.g., Cloud KMS keys).
 	DestinationEncryptionConfig *EncryptionConfig
+
+	// Allows the schema of the destination table to be updated as a side effect of
+	// the query job.
+	SchemaUpdateOptions []string
 }
 
 func (qc *QueryConfig) toBQ() (*bq.JobConfiguration, error) {
@@ -131,6 +135,7 @@ func (qc *QueryConfig) toBQ() (*bq.JobConfiguration, error) {
 		MaximumBytesBilled:                 qc.MaxBytesBilled,
 		TimePartitioning:                   qc.TimePartitioning.toBQ(),
 		DestinationEncryptionConfiguration: qc.DestinationEncryptionConfig.toBQ(),
+		SchemaUpdateOptions:                qc.SchemaUpdateOptions,
 	}
 	if len(qc.TableDefinitions) > 0 {
 		qconf.TableDefinitions = make(map[string]bq.ExternalDataConfiguration)
@@ -162,11 +167,12 @@ func (qc *QueryConfig) toBQ() (*bq.JobConfiguration, error) {
 	if len(qc.Parameters) > 0 && qc.UseLegacySQL {
 		return nil, errors.New("bigquery: cannot provide both Parameters (implying standard SQL) and UseLegacySQL")
 	}
+	ptrue := true
+	pfalse := false
 	if qc.UseLegacySQL {
-		qconf.UseLegacySql = true
+		qconf.UseLegacySql = &ptrue
 	} else {
-		qconf.UseLegacySql = false
-		qconf.ForceSendFields = append(qconf.ForceSendFields, "UseLegacySql")
+		qconf.UseLegacySql = &pfalse
 	}
 	if qc.Dst != nil && !qc.Dst.implicitTable() {
 		qconf.DestinationTable = qc.Dst.toBQ()
@@ -188,18 +194,21 @@ func (qc *QueryConfig) toBQ() (*bq.JobConfiguration, error) {
 func bqToQueryConfig(q *bq.JobConfiguration, c *Client) (*QueryConfig, error) {
 	qq := q.Query
 	qc := &QueryConfig{
-		Labels:            q.Labels,
-		DryRun:            q.DryRun,
-		Q:                 qq.Query,
-		CreateDisposition: TableCreateDisposition(qq.CreateDisposition),
-		WriteDisposition:  TableWriteDisposition(qq.WriteDisposition),
-		AllowLargeResults: qq.AllowLargeResults,
-		Priority:          QueryPriority(qq.Priority),
-		MaxBytesBilled:    qq.MaximumBytesBilled,
-		UseLegacySQL:      qq.UseLegacySql,
-		UseStandardSQL:    !qq.UseLegacySql,
-		TimePartitioning:  bqToTimePartitioning(qq.TimePartitioning),
+		Labels:                      q.Labels,
+		DryRun:                      q.DryRun,
+		Q:                           qq.Query,
+		CreateDisposition:           TableCreateDisposition(qq.CreateDisposition),
+		WriteDisposition:            TableWriteDisposition(qq.WriteDisposition),
+		AllowLargeResults:           qq.AllowLargeResults,
+		Priority:                    QueryPriority(qq.Priority),
+		MaxBytesBilled:              qq.MaximumBytesBilled,
+		UseLegacySQL:                qq.UseLegacySql == nil || *qq.UseLegacySql,
+		TimePartitioning:            bqToTimePartitioning(qq.TimePartitioning),
+		DestinationEncryptionConfig: bqToEncryptionConfig(qq.DestinationEncryptionConfiguration),
+		SchemaUpdateOptions:         qq.SchemaUpdateOptions,
 	}
+	qc.UseStandardSQL = !qc.UseLegacySQL
+
 	if len(qq.TableDefinitions) > 0 {
 		qc.TableDefinitions = make(map[string]ExternalData)
 	}

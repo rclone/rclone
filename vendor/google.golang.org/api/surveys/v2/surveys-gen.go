@@ -60,7 +60,6 @@ func New(client *http.Client) (*Service, error) {
 		return nil, errors.New("client is nil")
 	}
 	s := &Service{client: client, BasePath: basePath}
-	s.Mobileapppanels = NewMobileapppanelsService(s)
 	s.Results = NewResultsService(s)
 	s.Surveys = NewSurveysService(s)
 	return s, nil
@@ -70,8 +69,6 @@ type Service struct {
 	client    *http.Client
 	BasePath  string // API endpoint base URL
 	UserAgent string // optional additional User-Agent fragment
-
-	Mobileapppanels *MobileapppanelsService
 
 	Results *ResultsService
 
@@ -83,15 +80,6 @@ func (s *Service) userAgent() string {
 		return googleapi.UserAgent
 	}
 	return googleapi.UserAgent + " " + s.UserAgent
-}
-
-func NewMobileapppanelsService(s *Service) *MobileapppanelsService {
-	rs := &MobileapppanelsService{s: s}
-	return rs
-}
-
-type MobileapppanelsService struct {
-	s *Service
 }
 
 func NewResultsService(s *Service) *ResultsService {
@@ -136,107 +124,6 @@ type FieldMask struct {
 
 func (s *FieldMask) MarshalJSON() ([]byte, error) {
 	type NoMethod FieldMask
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// MobileAppPanel: Representation of an individual pre-defined panel
-// object defining a targeted audience of opinion rewards mobile app
-// users.
-type MobileAppPanel struct {
-	// Country: Country code for the country of the users that the panel
-	// contains. Uses standard ISO 3166-1 2-character language codes. For
-	// instance, 'US' for the United States, and 'GB' for the United
-	// Kingdom. Any survey created targeting this panel must also target the
-	// corresponding country.
-	Country string `json:"country,omitempty"`
-
-	// IsPublicPanel: Whether or not the panel is accessible to all API
-	// users.
-	IsPublicPanel bool `json:"isPublicPanel,omitempty"`
-
-	// Language: Language code that the panel can target. For instance,
-	// 'en-US'. Uses standard BCP47 language codes. See specification. Any
-	// survey created targeting this panel must also target the
-	// corresponding language.
-	Language string `json:"language,omitempty"`
-
-	// MobileAppPanelId: Unique panel ID string. This corresponds to the
-	// mobile_app_panel_id used in Survey Insert requests.
-	MobileAppPanelId string `json:"mobileAppPanelId,omitempty"`
-
-	// Name: Human readable name of the audience panel.
-	Name string `json:"name,omitempty"`
-
-	// Owners: List of email addresses for users who can target members of
-	// this panel. Must contain at least the address of the user making the
-	// API call for panels that are not public. This field will be empty for
-	// public panels.
-	Owners []string `json:"owners,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "Country") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Country") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *MobileAppPanel) MarshalJSON() ([]byte, error) {
-	type NoMethod MobileAppPanel
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-type MobileAppPanelsListResponse struct {
-	PageInfo *PageInfo `json:"pageInfo,omitempty"`
-
-	// RequestId: Unique request ID used for logging and debugging. Please
-	// include in any error reporting or troubleshooting requests.
-	RequestId string `json:"requestId,omitempty"`
-
-	// Resources: An individual predefined panel of Opinion Rewards mobile
-	// users.
-	Resources []*MobileAppPanel `json:"resources,omitempty"`
-
-	TokenPagination *TokenPagination `json:"tokenPagination,omitempty"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "PageInfo") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "PageInfo") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *MobileAppPanelsListResponse) MarshalJSON() ([]byte, error) {
-	type NoMethod MobileAppPanelsListResponse
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -424,11 +311,6 @@ type SurveyAudience struct {
 	// standard BCP47 language codes. See specification.
 	Languages []string `json:"languages,omitempty"`
 
-	// MobileAppPanelId: Key for predefined panel that causes survey to be
-	// sent to a predefined set of Opinion Rewards App users. You must set
-	// PopulationSource to ANDROID_APP_PANEL to use this field.
-	MobileAppPanelId string `json:"mobileAppPanelId,omitempty"`
-
 	// PopulationSource: Online population source where the respondents are
 	// sampled from.
 	PopulationSource string `json:"populationSource,omitempty"`
@@ -467,24 +349,25 @@ type SurveyCost struct {
 	// CurrencyCode: Currency code that the cost is given in.
 	CurrencyCode string `json:"currencyCode,omitempty"`
 
-	// MaxCostPerResponseNanos: Threshold to start a survey automatically if
-	// the quoted price is at most this value. When a survey has a Screener
-	// (threshold) question, it must go through an incidence pricing test to
-	// determine the final cost per response. Typically you will have to
-	// make a followup call to start the survey giving the final computed
-	// cost per response. If the survey has no threshold_answers, setting
-	// this property will return an error. By specifying this property, you
-	// indicate the max price per response you are willing to pay in advance
-	// of the incidence test. If the price turns out to be lower than the
-	// specified value, the survey will begin immediately and you will be
-	// charged at the rate determined by the incidence pricing test. If the
-	// price turns out to be greater than the specified value the survey
-	// will not be started and you will instead be notified what price was
-	// determined by the incidence test. At that point, you must raise the
-	// value of this property to be greater than or equal to that cost
-	// before attempting to start the survey again. This will immediately
-	// start the survey as long the incidence test was run within the last
-	// 21 days.
+	// MaxCostPerResponseNanos: *Deprecated* Threshold to start a survey
+	// automatically if the quoted price is at most this value. When a
+	// survey has a Screener (threshold) question, it must go through an
+	// incidence pricing test to determine the final cost per response.
+	// Typically you will have to make a followup call to start the survey
+	// giving the final computed cost per response. If the survey has no
+	// threshold_answers, setting this property will return an error. By
+	// specifying this property, you indicate the max price per response you
+	// are willing to pay in advance of the incidence test. If the price
+	// turns out to be lower than the specified value, the survey will begin
+	// immediately and you will be charged at the rate determined by the
+	// incidence pricing test. If the price turns out to be greater than the
+	// specified value the survey will not be started and you will instead
+	// be notified what price was determined by the incidence test. At that
+	// point, you must raise the value of this property to be greater than
+	// or equal to that cost before attempting to start the survey again.
+	// This will immediately start the survey as long the incidence test was
+	// run within the last 21 days. This will no longer be available after
+	// June 2018.
 	MaxCostPerResponseNanos int64 `json:"maxCostPerResponseNanos,omitempty,string"`
 
 	// Nanos: Cost of survey in nano units of the given currency. DEPRECATED
@@ -798,9 +681,10 @@ func (s *SurveysListResponse) MarshalJSON() ([]byte, error) {
 }
 
 type SurveysStartRequest struct {
-	// MaxCostPerResponseNanos: Threshold to start a survey automically if
-	// the quoted prices is less than or equal to this value. See
-	// Survey.Cost for more details.
+	// MaxCostPerResponseNanos: *Deprecated* Threshold to start a survey
+	// automatically if the quoted prices is less than or equal to this
+	// value. See Survey.Cost for more details. This will no longer be
+	// available after June 2018.
 	MaxCostPerResponseNanos int64 `json:"maxCostPerResponseNanos,omitempty,string"`
 
 	// ForceSendFields is a list of field names (e.g.
@@ -918,438 +802,6 @@ func (s *TokenPagination) MarshalJSON() ([]byte, error) {
 	type NoMethod TokenPagination
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// method id "surveys.mobileapppanels.get":
-
-type MobileapppanelsGetCall struct {
-	s            *Service
-	panelId      string
-	urlParams_   gensupport.URLParams
-	ifNoneMatch_ string
-	ctx_         context.Context
-	header_      http.Header
-}
-
-// Get: Retrieves a MobileAppPanel that is available to the
-// authenticated user.
-func (r *MobileapppanelsService) Get(panelId string) *MobileapppanelsGetCall {
-	c := &MobileapppanelsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.panelId = panelId
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *MobileapppanelsGetCall) Fields(s ...googleapi.Field) *MobileapppanelsGetCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// IfNoneMatch sets the optional parameter which makes the operation
-// fail if the object's ETag matches the given value. This is useful for
-// getting updates only after the object has changed since the last
-// request. Use googleapi.IsNotModified to check whether the response
-// error from Do is the result of In-None-Match.
-func (c *MobileapppanelsGetCall) IfNoneMatch(entityTag string) *MobileapppanelsGetCall {
-	c.ifNoneMatch_ = entityTag
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *MobileapppanelsGetCall) Context(ctx context.Context) *MobileapppanelsGetCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *MobileapppanelsGetCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *MobileapppanelsGetCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	var body io.Reader = nil
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "mobileAppPanels/{panelId}")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("GET", urls, body)
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"panelId": c.panelId,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "surveys.mobileapppanels.get" call.
-// Exactly one of *MobileAppPanel or error will be non-nil. Any non-2xx
-// status code is an error. Response headers are in either
-// *MobileAppPanel.ServerResponse.Header or (if a response was returned
-// at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *MobileapppanelsGetCall) Do(opts ...googleapi.CallOption) (*MobileAppPanel, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &MobileAppPanel{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Retrieves a MobileAppPanel that is available to the authenticated user.",
-	//   "httpMethod": "GET",
-	//   "id": "surveys.mobileapppanels.get",
-	//   "parameterOrder": [
-	//     "panelId"
-	//   ],
-	//   "parameters": {
-	//     "panelId": {
-	//       "description": "External URL ID for the panel.",
-	//       "location": "path",
-	//       "required": true,
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "mobileAppPanels/{panelId}",
-	//   "response": {
-	//     "$ref": "MobileAppPanel"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/surveys",
-	//     "https://www.googleapis.com/auth/surveys.readonly",
-	//     "https://www.googleapis.com/auth/userinfo.email"
-	//   ]
-	// }
-
-}
-
-// method id "surveys.mobileapppanels.list":
-
-type MobileapppanelsListCall struct {
-	s            *Service
-	urlParams_   gensupport.URLParams
-	ifNoneMatch_ string
-	ctx_         context.Context
-	header_      http.Header
-}
-
-// List: Lists the MobileAppPanels available to the authenticated user.
-func (r *MobileapppanelsService) List() *MobileapppanelsListCall {
-	c := &MobileapppanelsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	return c
-}
-
-// MaxResults sets the optional parameter "maxResults":
-func (c *MobileapppanelsListCall) MaxResults(maxResults int64) *MobileapppanelsListCall {
-	c.urlParams_.Set("maxResults", fmt.Sprint(maxResults))
-	return c
-}
-
-// StartIndex sets the optional parameter "startIndex":
-func (c *MobileapppanelsListCall) StartIndex(startIndex int64) *MobileapppanelsListCall {
-	c.urlParams_.Set("startIndex", fmt.Sprint(startIndex))
-	return c
-}
-
-// Token sets the optional parameter "token":
-func (c *MobileapppanelsListCall) Token(token string) *MobileapppanelsListCall {
-	c.urlParams_.Set("token", token)
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *MobileapppanelsListCall) Fields(s ...googleapi.Field) *MobileapppanelsListCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// IfNoneMatch sets the optional parameter which makes the operation
-// fail if the object's ETag matches the given value. This is useful for
-// getting updates only after the object has changed since the last
-// request. Use googleapi.IsNotModified to check whether the response
-// error from Do is the result of In-None-Match.
-func (c *MobileapppanelsListCall) IfNoneMatch(entityTag string) *MobileapppanelsListCall {
-	c.ifNoneMatch_ = entityTag
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *MobileapppanelsListCall) Context(ctx context.Context) *MobileapppanelsListCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *MobileapppanelsListCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *MobileapppanelsListCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	var body io.Reader = nil
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "mobileAppPanels")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("GET", urls, body)
-	req.Header = reqHeaders
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "surveys.mobileapppanels.list" call.
-// Exactly one of *MobileAppPanelsListResponse or error will be non-nil.
-// Any non-2xx status code is an error. Response headers are in either
-// *MobileAppPanelsListResponse.ServerResponse.Header or (if a response
-// was returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *MobileapppanelsListCall) Do(opts ...googleapi.CallOption) (*MobileAppPanelsListResponse, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &MobileAppPanelsListResponse{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Lists the MobileAppPanels available to the authenticated user.",
-	//   "httpMethod": "GET",
-	//   "id": "surveys.mobileapppanels.list",
-	//   "parameters": {
-	//     "maxResults": {
-	//       "format": "uint32",
-	//       "location": "query",
-	//       "type": "integer"
-	//     },
-	//     "startIndex": {
-	//       "format": "uint32",
-	//       "location": "query",
-	//       "type": "integer"
-	//     },
-	//     "token": {
-	//       "location": "query",
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "mobileAppPanels",
-	//   "response": {
-	//     "$ref": "MobileAppPanelsListResponse"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/surveys",
-	//     "https://www.googleapis.com/auth/surveys.readonly",
-	//     "https://www.googleapis.com/auth/userinfo.email"
-	//   ]
-	// }
-
-}
-
-// method id "surveys.mobileapppanels.update":
-
-type MobileapppanelsUpdateCall struct {
-	s              *Service
-	panelId        string
-	mobileapppanel *MobileAppPanel
-	urlParams_     gensupport.URLParams
-	ctx_           context.Context
-	header_        http.Header
-}
-
-// Update: Updates a MobileAppPanel. Currently the only property that
-// can be updated is the owners property.
-func (r *MobileapppanelsService) Update(panelId string, mobileapppanel *MobileAppPanel) *MobileapppanelsUpdateCall {
-	c := &MobileapppanelsUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.panelId = panelId
-	c.mobileapppanel = mobileapppanel
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *MobileapppanelsUpdateCall) Fields(s ...googleapi.Field) *MobileapppanelsUpdateCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *MobileapppanelsUpdateCall) Context(ctx context.Context) *MobileapppanelsUpdateCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *MobileapppanelsUpdateCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *MobileapppanelsUpdateCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.mobileapppanel)
-	if err != nil {
-		return nil, err
-	}
-	reqHeaders.Set("Content-Type", "application/json")
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "mobileAppPanels/{panelId}")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("PUT", urls, body)
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"panelId": c.panelId,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "surveys.mobileapppanels.update" call.
-// Exactly one of *MobileAppPanel or error will be non-nil. Any non-2xx
-// status code is an error. Response headers are in either
-// *MobileAppPanel.ServerResponse.Header or (if a response was returned
-// at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *MobileapppanelsUpdateCall) Do(opts ...googleapi.CallOption) (*MobileAppPanel, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &MobileAppPanel{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := gensupport.DecodeResponse(target, res); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Updates a MobileAppPanel. Currently the only property that can be updated is the owners property.",
-	//   "httpMethod": "PUT",
-	//   "id": "surveys.mobileapppanels.update",
-	//   "parameterOrder": [
-	//     "panelId"
-	//   ],
-	//   "parameters": {
-	//     "panelId": {
-	//       "description": "External URL ID for the panel.",
-	//       "location": "path",
-	//       "required": true,
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "mobileAppPanels/{panelId}",
-	//   "request": {
-	//     "$ref": "MobileAppPanel"
-	//   },
-	//   "response": {
-	//     "$ref": "MobileAppPanel"
-	//   },
-	//   "scopes": [
-	//     "https://www.googleapis.com/auth/surveys",
-	//     "https://www.googleapis.com/auth/userinfo.email"
-	//   ]
-	// }
-
 }
 
 // method id "surveys.results.get":

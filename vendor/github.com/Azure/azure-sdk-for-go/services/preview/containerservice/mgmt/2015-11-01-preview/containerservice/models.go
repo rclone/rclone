@@ -272,12 +272,11 @@ func (cs *ContainerService) UnmarshalJSON(body []byte) error {
 // CreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CreateOrUpdateFuture) Result(client Client) (cs ContainerService, err error) {
+func (future *CreateOrUpdateFuture) Result(client Client) (cs ContainerService, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -285,34 +284,15 @@ func (future CreateOrUpdateFuture) Result(client Client) (cs ContainerService, e
 		return
 	}
 	if !done {
-		return cs, azure.NewAsyncOpIncompleteError("containerservice.CreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		cs, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "containerservice.CreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("containerservice.CreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if cs.Response.Response, err = future.GetResult(sender); err == nil && cs.Response.Response.StatusCode != http.StatusNoContent {
+		cs, err = client.CreateOrUpdateResponder(cs.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "containerservice.CreateOrUpdateFuture", "Result", cs.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "containerservice.CreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	cs, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "containerservice.CreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -320,12 +300,11 @@ func (future CreateOrUpdateFuture) Result(client Client) (cs ContainerService, e
 // DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future *DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -333,35 +312,10 @@ func (future DeleteFuture) Result(client Client) (ar autorest.Response, err erro
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("containerservice.DeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "containerservice.DeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("containerservice.DeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "containerservice.DeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "containerservice.DeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

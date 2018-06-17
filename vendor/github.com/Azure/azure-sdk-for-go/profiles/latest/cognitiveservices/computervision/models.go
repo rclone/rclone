@@ -78,43 +78,36 @@ const (
 	Male   Gender = original.Male
 )
 
-type Language1 = original.Language1
-
-const (
-	En Language1 = original.En
-	Zh Language1 = original.Zh
-)
-
 type OcrLanguages = original.OcrLanguages
 
 const (
-	OcrLanguagesAr     OcrLanguages = original.OcrLanguagesAr
-	OcrLanguagesCs     OcrLanguages = original.OcrLanguagesCs
-	OcrLanguagesDa     OcrLanguages = original.OcrLanguagesDa
-	OcrLanguagesDe     OcrLanguages = original.OcrLanguagesDe
-	OcrLanguagesEl     OcrLanguages = original.OcrLanguagesEl
-	OcrLanguagesEn     OcrLanguages = original.OcrLanguagesEn
-	OcrLanguagesEs     OcrLanguages = original.OcrLanguagesEs
-	OcrLanguagesFi     OcrLanguages = original.OcrLanguagesFi
-	OcrLanguagesFr     OcrLanguages = original.OcrLanguagesFr
-	OcrLanguagesHu     OcrLanguages = original.OcrLanguagesHu
-	OcrLanguagesIt     OcrLanguages = original.OcrLanguagesIt
-	OcrLanguagesJa     OcrLanguages = original.OcrLanguagesJa
-	OcrLanguagesKo     OcrLanguages = original.OcrLanguagesKo
-	OcrLanguagesNb     OcrLanguages = original.OcrLanguagesNb
-	OcrLanguagesNl     OcrLanguages = original.OcrLanguagesNl
-	OcrLanguagesPl     OcrLanguages = original.OcrLanguagesPl
-	OcrLanguagesPt     OcrLanguages = original.OcrLanguagesPt
-	OcrLanguagesRo     OcrLanguages = original.OcrLanguagesRo
-	OcrLanguagesRu     OcrLanguages = original.OcrLanguagesRu
-	OcrLanguagesSk     OcrLanguages = original.OcrLanguagesSk
-	OcrLanguagesSrCyrl OcrLanguages = original.OcrLanguagesSrCyrl
-	OcrLanguagesSrLatn OcrLanguages = original.OcrLanguagesSrLatn
-	OcrLanguagesSv     OcrLanguages = original.OcrLanguagesSv
-	OcrLanguagesTr     OcrLanguages = original.OcrLanguagesTr
-	OcrLanguagesUnk    OcrLanguages = original.OcrLanguagesUnk
-	OcrLanguagesZhHans OcrLanguages = original.OcrLanguagesZhHans
-	OcrLanguagesZhHant OcrLanguages = original.OcrLanguagesZhHant
+	Ar     OcrLanguages = original.Ar
+	Cs     OcrLanguages = original.Cs
+	Da     OcrLanguages = original.Da
+	De     OcrLanguages = original.De
+	El     OcrLanguages = original.El
+	En     OcrLanguages = original.En
+	Es     OcrLanguages = original.Es
+	Fi     OcrLanguages = original.Fi
+	Fr     OcrLanguages = original.Fr
+	Hu     OcrLanguages = original.Hu
+	It     OcrLanguages = original.It
+	Ja     OcrLanguages = original.Ja
+	Ko     OcrLanguages = original.Ko
+	Nb     OcrLanguages = original.Nb
+	Nl     OcrLanguages = original.Nl
+	Pl     OcrLanguages = original.Pl
+	Pt     OcrLanguages = original.Pt
+	Ro     OcrLanguages = original.Ro
+	Ru     OcrLanguages = original.Ru
+	Sk     OcrLanguages = original.Sk
+	SrCyrl OcrLanguages = original.SrCyrl
+	SrLatn OcrLanguages = original.SrLatn
+	Sv     OcrLanguages = original.Sv
+	Tr     OcrLanguages = original.Tr
+	Unk    OcrLanguages = original.Unk
+	ZhHans OcrLanguages = original.ZhHans
+	ZhHant OcrLanguages = original.ZhHant
 )
 
 type TextOperationStatusCodes = original.TextOperationStatusCodes
@@ -189,9 +182,6 @@ func PossibleErrorCodesValues() []ErrorCodes {
 }
 func PossibleGenderValues() []Gender {
 	return original.PossibleGenderValues()
-}
-func PossibleLanguage1Values() []Language1 {
-	return original.PossibleLanguage1Values()
 }
 func PossibleOcrLanguagesValues() []OcrLanguages {
 	return original.PossibleOcrLanguagesValues()

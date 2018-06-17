@@ -282,6 +282,14 @@ const (
 	Hour FrequencyUnit = original.Hour
 )
 
+type FtpsState = original.FtpsState
+
+const (
+	AllAllowed FtpsState = original.AllAllowed
+	Disabled   FtpsState = original.Disabled
+	FtpsOnly   FtpsState = original.FtpsOnly
+)
+
 type HostingEnvironmentStatus = original.HostingEnvironmentStatus
 
 const (
@@ -533,9 +541,9 @@ const (
 type SslState = original.SslState
 
 const (
-	Disabled       SslState = original.Disabled
-	IPBasedEnabled SslState = original.IPBasedEnabled
-	SniEnabled     SslState = original.SniEnabled
+	SslStateDisabled       SslState = original.SslStateDisabled
+	SslStateIPBasedEnabled SslState = original.SslStateIPBasedEnabled
+	SslStateSniEnabled     SslState = original.SslStateSniEnabled
 )
 
 type StatusOptions = original.StatusOptions
@@ -670,6 +678,8 @@ type AppsMigrateMySQLFuture = original.AppsMigrateMySQLFuture
 type AppsMigrateStorageFuture = original.AppsMigrateStorageFuture
 type AppsRestoreFromBackupBlobFuture = original.AppsRestoreFromBackupBlobFuture
 type AppsRestoreFromBackupBlobSlotFuture = original.AppsRestoreFromBackupBlobSlotFuture
+type AppsRestoreFromDeletedAppFuture = original.AppsRestoreFromDeletedAppFuture
+type AppsRestoreFromDeletedAppSlotFuture = original.AppsRestoreFromDeletedAppSlotFuture
 type AppsRestoreFuture = original.AppsRestoreFuture
 type AppsRestoreSlotFuture = original.AppsRestoreSlotFuture
 type AppsRestoreSnapshotFuture = original.AppsRestoreSnapshotFuture
@@ -740,6 +750,8 @@ type DataSource = original.DataSource
 type DefaultErrorResponse = original.DefaultErrorResponse
 type DefaultErrorResponseError = original.DefaultErrorResponseError
 type DefaultErrorResponseErrorDetailsItem = original.DefaultErrorResponseErrorDetailsItem
+type DeletedAppRestoreRequest = original.DeletedAppRestoreRequest
+type DeletedAppRestoreRequestProperties = original.DeletedAppRestoreRequestProperties
 type DeletedSite = original.DeletedSite
 type DeletedWebAppCollection = original.DeletedWebAppCollection
 type DeletedWebAppCollectionIterator = original.DeletedWebAppCollectionIterator
@@ -1225,6 +1237,9 @@ func PossibleDomainTypeValues() []DomainType {
 }
 func PossibleFrequencyUnitValues() []FrequencyUnit {
 	return original.PossibleFrequencyUnitValues()
+}
+func PossibleFtpsStateValues() []FtpsState {
+	return original.PossibleFtpsStateValues()
 }
 func PossibleHostingEnvironmentStatusValues() []HostingEnvironmentStatus {
 	return original.PossibleHostingEnvironmentStatusValues()

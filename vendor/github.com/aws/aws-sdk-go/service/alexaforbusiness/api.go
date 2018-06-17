@@ -9673,6 +9673,9 @@ const (
 const (
 	// DeviceEventTypeConnectionStatus is a DeviceEventType enum value
 	DeviceEventTypeConnectionStatus = "CONNECTION_STATUS"
+
+	// DeviceEventTypeDeviceStatus is a DeviceEventType enum value
+	DeviceEventTypeDeviceStatus = "DEVICE_STATUS"
 )
 
 const (
@@ -9684,6 +9687,9 @@ const (
 
 	// DeviceStatusWasOffline is a DeviceStatus enum value
 	DeviceStatusWasOffline = "WAS_OFFLINE"
+
+	// DeviceStatusDeregistered is a DeviceStatus enum value
+	DeviceStatusDeregistered = "DEREGISTERED"
 )
 
 const (

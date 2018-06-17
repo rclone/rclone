@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -876,7 +865,7 @@
       }
     }
   },
-  "revision": "20180427",
+  "revision": "20180605",
   "rootUrl": "https://servicebroker.googleapis.com/",
   "schemas": {
     "GoogleCloudServicebrokerV1beta1__Binding": {
@@ -900,6 +889,10 @@
           "format": "google-datetime",
           "type": "string"
         },
+        "deploymentName": {
+          "description": "Output only.\nString containing the Deployment Manager deployment name that was created\nfor this binding,",
+          "type": "string"
+        },
         "parameters": {
           "additionalProperties": {
             "description": "Properties of the object.",
@@ -910,6 +903,10 @@
         },
         "plan_id": {
           "description": "The ID of the plan. See `Service` and `Plan` resources for details.\nMaximum length is 64, GUID recommended.\nRequired.",
+          "type": "string"
+        },
+        "resourceName": {
+          "description": "Output only.\nThe resource name of the binding, e.g.\nprojects/project_id/brokers/broker_id/service_instances/instance_id/bindings/binding_id.",
           "type": "string"
         },
         "service_id": {
@@ -1061,8 +1058,16 @@
           "description": "Credentials to use the binding.",
           "type": "object"
         },
+        "deploymentName": {
+          "description": "String containing the Deployment Manager deployment name that was created\nfor this binding,",
+          "type": "string"
+        },
         "description": {
           "description": "Used to communicate description of the response. Usually for non-standard\nerror codes.\nhttps://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#service-broker-errors",
+          "type": "string"
+        },
+        "resourceName": {
+          "description": "Output only.\nThe resource name of the binding, e.g.\nprojects/project_id/brokers/broker_id/service_instances/instance_id/bindings/binding_id.",
           "type": "string"
         },
         "route_service_url": {
@@ -1309,6 +1314,10 @@
         "createTime": {
           "description": "Output only.\nTimestamp for when the instance was created.",
           "format": "google-datetime",
+          "type": "string"
+        },
+        "deploymentName": {
+          "description": "Output only.\nString containing the Deployment Manager deployment name that was created\nfor this instance,",
           "type": "string"
         },
         "description": {

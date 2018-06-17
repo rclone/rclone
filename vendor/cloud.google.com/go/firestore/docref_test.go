@@ -89,7 +89,7 @@ func TestDocGet(t *testing.T) {
 }
 
 func TestDocSet(t *testing.T) {
-	// Most tests for Set are in the cross-language tests.
+	// Most tests for Set are in the conformance tests.
 	ctx := context.Background()
 	c, srv := newMock(t)
 
@@ -134,7 +134,7 @@ func TestDocSet(t *testing.T) {
 func TestDocCreate(t *testing.T) {
 	// Verify creation with structs. In particular, make sure zero values
 	// are handled well.
-	// Other tests for Create are handled by the cross-language tests.
+	// Other tests for Create are handled by the conformance tests.
 	ctx := context.Background()
 	c, srv := newMock(t)
 
@@ -199,7 +199,7 @@ var (
 	testFields = map[string]*pb.Value{"a": intval(1)}
 )
 
-// Update is tested by the cross-language tests.
+// Update is tested by the conformance tests.
 
 func TestFPVsFromData(t *testing.T) {
 	type S struct{ X int }

@@ -20,6 +20,26 @@ import (
 	pb "google.golang.org/appengine/internal/datastore"
 )
 
+type KeyRangeCollisionError struct {
+	start int64
+	end   int64
+}
+
+func (e *KeyRangeCollisionError) Error() string {
+	return fmt.Sprintf("datastore: Collision when attempting to allocate range [%d, %d]",
+		e.start, e.end)
+}
+
+type KeyRangeContentionError struct {
+	start int64
+	end   int64
+}
+
+func (e *KeyRangeContentionError) Error() string {
+	return fmt.Sprintf("datastore: Contention when attempting to allocate range [%d, %d]",
+		e.start, e.end)
+}
+
 // Key represents the datastore key for a stored entity, and is immutable.
 type Key struct {
 	kind      string
@@ -306,4 +326,71 @@ func AllocateIDs(c context.Context, kind string, parent *Key, n int) (low, high 
 		return 0, 0, fmt.Errorf("datastore: internal error: could not allocate %d IDs", n)
 	}
 	return low, high, nil
+}
+
+// AllocateIDRange allocates a range of IDs with specific endpoints.
+// The range is inclusive at both the low and high end. Once these IDs have been
+// allocated, you can manually assign them to newly created entities.
+//
+// The Datastore's automatic ID allocator never assigns a key that has already
+// been allocated (either through automatic ID allocation or through an explicit
+// AllocateIDs call). As a result, entities written to the given key range will
+// never be overwritten. However, writing entities with manually assigned keys in
+// this range may overwrite existing entities (or new entities written by a separate
+// request), depending on the error returned.
+//
+// Use this only if you have an existing numeric ID range that you want to reserve
+// (for example, bulk loading entities that already have IDs). If you don't care
+// about which IDs you receive, use AllocateIDs instead.
+//
+// AllocateIDRange returns nil if the range is successfully allocated. If one or more
+// entities with an ID in the given range already exist, it returns a KeyRangeCollisionError.
+// If the Datastore has already cached IDs in this range (e.g. from a previous call to
+// AllocateIDRange), it returns a KeyRangeContentionError. Errors of other types indicate
+// problems with arguments or an error returned directly from the Datastore.
+func AllocateIDRange(c context.Context, kind string, parent *Key, start, end int64) (err error) {
+	if kind == "" {
+		return errors.New("datastore: AllocateIDRange given an empty kind")
+	}
+
+	if start < 1 || end < 1 {
+		return errors.New("datastore: AllocateIDRange start and end must both be greater than 0")
+	}
+
+	if start > end {
+		return errors.New("datastore: AllocateIDRange start must be before end")
+	}
+
+	req := &pb.AllocateIdsRequest{
+		ModelKey: keyToProto("", NewIncompleteKey(c, kind, parent)),
+		Max:      proto.Int64(end),
+	}
+	res := &pb.AllocateIdsResponse{}
+	if err := internal.Call(c, "datastore_v3", "AllocateIds", req, res); err != nil {
+		return err
+	}
+
+	// Check for collisions, i.e. existing entities with IDs in this range.
+	// We could do this before the allocation, but we'd still have to do it
+	// afterward as well to catch the race condition where an entity is inserted
+	// after that initial check but before the allocation. Skip the up-front check
+	// and just do it once.
+	q := NewQuery(kind).Filter("__key__ >=", NewKey(c, kind, "", start, parent)).
+		Filter("__key__ <=", NewKey(c, kind, "", end, parent)).KeysOnly().Limit(1)
+
+	keys, err := q.GetAll(c, nil)
+	if err != nil {
+		return err
+	}
+	if len(keys) != 0 {
+		return &KeyRangeCollisionError{start: start, end: end}
+	}
+
+	// Check for a race condition, i.e. cases where the datastore may have
+	// cached ID batches that contain IDs in this range.
+	if start < res.GetStart() {
+		return &KeyRangeContentionError{start: start, end: end}
+	}
+
+	return nil
 }

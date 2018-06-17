@@ -469,7 +469,7 @@
       }
     }
   },
-  "revision": "20180416",
+  "revision": "20180420",
   "rootUrl": "https://cloudfunctions.googleapis.com/",
   "schemas": {
     "CallFunctionRequest": {
@@ -536,6 +536,10 @@
         },
         "name": {
           "description": "A user-defined name of the function. Function names must be unique\nglobally and match pattern `projects/*/locations/*/functions/*`",
+          "type": "string"
+        },
+        "runtime": {
+          "description": "The runtime in which the function is going to run. If empty, defaults to\nNode.js 6.",
           "type": "string"
         },
         "serviceAccountEmail": {
@@ -940,7 +944,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Cloud Functions API",
+  "title": "Cloud Functions API",
   "version": "v1",
   "version_module": true
 }

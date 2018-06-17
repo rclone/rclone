@@ -244,14 +244,14 @@ type Instance struct {
 	CreateTime string `json:"createTime,omitempty"`
 
 	// CurrentLocationId: Output only. The current zone where the Redis
-	// endpoint is placed. In
-	// single zone deployments, this will always be the same as
+	// endpoint is placed. For Basic
+	// Tier instances, this will always be the same as the
 	// [location_id]
-	// provided by the user at creation time. In cross-zone instances
-	// (only
-	// applicable in STANDARD_HA tier), this can be either [location_id]
-	// or
-	// [alternative_location_id] and can change on a failover event.
+	// provided by the user at creation time. For Standard Tier
+	// instances,
+	// this can be either [location_id] or [alternative_location_id] and
+	// can
+	// change after a failover event.
 	CurrentLocationId string `json:"currentLocationId,omitempty"`
 
 	// DisplayName: An arbitrary and optional user-provided name for the
@@ -272,12 +272,12 @@ type Instance struct {
 	// tier,
 	// instances will be created across two zones for protection against
 	// zonal
-	// failures. if [alternative_location_id] is also provided, it must
+	// failures. If [alternative_location_id] is also provided, it must
 	// be
 	// different from [location_id].
 	LocationId string `json:"locationId,omitempty"`
 
-	// MemorySizeGb: Required. Redis memory size in GB, up to 200GB.
+	// MemorySizeGb: Required. Redis memory size in GiB.
 	MemorySizeGb int64 `json:"memorySizeGb,omitempty"`
 
 	// Name: Required. Unique name of the resource in this scope including
@@ -289,7 +289,7 @@ type Instance struct {
 	//
 	// Note: Redis instances are managed and addressed at regional level
 	// so
-	// location_id here refers to a GCP region; however, users get to choose
+	// location_id here refers to a GCP region; however, users may choose
 	// which
 	// specific zone (or collection of zones for cross-zone instances) an
 	// instance
@@ -306,8 +306,9 @@ type Instance struct {
 	// http://redis.io/topics/config. Currently, the only supported
 	// parameters
 	// are:
-	//  * maxmemory-policy
-	//  * notify-keyspace-events
+	//
+	//  *   maxmemory-policy
+	//  *   notify-keyspace-events
 	RedisConfigs map[string]string `json:"redisConfigs,omitempty"`
 
 	// RedisVersion: Optional. The version of Redis software.
@@ -323,7 +324,7 @@ type Instance struct {
 	// instance. If not provided, the service will choose an unused /29
 	// block,
 	// for example, 10.0.0.0/29 or 192.168.0.0/29. Ranges must be unique
-	// and non-overlapping with existing subnets in a network.
+	// and non-overlapping with existing subnets in an authorized network.
 	ReservedIpRange string `json:"reservedIpRange,omitempty"`
 
 	// State: Output only. The current state of this instance.
@@ -1257,7 +1258,7 @@ type ProjectsLocationsInstancesCreateCall struct {
 // Create: Creates a Redis instance based on the specified tier and
 // memory size.
 //
-// By default, the instance is peered to the project's
+// By default, the instance is accessible from the project's
 // [default
 // network](/compute/docs/networks-and-firewalls#networks).
 //
@@ -1379,7 +1380,7 @@ func (c *ProjectsLocationsInstancesCreateCall) Do(opts ...googleapi.CallOption) 
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a Redis instance based on the specified tier and memory size.\n\nBy default, the instance is peered to the project's\n[default network](/compute/docs/networks-and-firewalls#networks).\n\nThe creation is executed asynchronously and callers may check the returned\noperation to track its progress. Once the operation is completed the Redis\ninstance will be fully functional. Completed longrunning.Operation will\ncontain the new instance object in the response field.\n\nThe returned operation is automatically deleted after a few hours, so there\nis no need to call DeleteOperation.",
+	//   "description": "Creates a Redis instance based on the specified tier and memory size.\n\nBy default, the instance is accessible from the project's\n[default network](/compute/docs/networks-and-firewalls#networks).\n\nThe creation is executed asynchronously and callers may check the returned\noperation to track its progress. Once the operation is completed the Redis\ninstance will be fully functional. Completed longrunning.Operation will\ncontain the new instance object in the response field.\n\nThe returned operation is automatically deleted after a few hours, so there\nis no need to call DeleteOperation.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/instances",
 	//   "httpMethod": "POST",
 	//   "id": "redis.projects.locations.instances.create",
@@ -1914,10 +1915,11 @@ func (r *ProjectsLocationsInstancesService) Patch(name string, instance *Instanc
 // this field. The elements of the repeated paths field may only include
 // these
 // fields from Instance:
-// * `display_name`
-// * `labels`
-// * `redis_config`
-// * `redis_version`
+//
+//  *   `displayName`
+//  *   `labels`
+//  *   `memorySizeGb`
+//  *   `redisConfig`
 func (c *ProjectsLocationsInstancesPatchCall) UpdateMask(updateMask string) *ProjectsLocationsInstancesPatchCall {
 	c.urlParams_.Set("updateMask", updateMask)
 	return c
@@ -2018,14 +2020,14 @@ func (c *ProjectsLocationsInstancesPatchCall) Do(opts ...googleapi.CallOption) (
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Required. Unique name of the resource in this scope including project and\nlocation using the form:\n    `projects/{project_id}/locations/{location_id}/instances/{instance_id}`\n\nNote: Redis instances are managed and addressed at regional level so\nlocation_id here refers to a GCP region; however, users get to choose which\nspecific zone (or collection of zones for cross-zone instances) an instance\nshould be provisioned in. Refer to [location_id] and\n[alternative_location_id] fields for more details.",
+	//       "description": "Required. Unique name of the resource in this scope including project and\nlocation using the form:\n    `projects/{project_id}/locations/{location_id}/instances/{instance_id}`\n\nNote: Redis instances are managed and addressed at regional level so\nlocation_id here refers to a GCP region; however, users may choose which\nspecific zone (or collection of zones for cross-zone instances) an instance\nshould be provisioned in. Refer to [location_id] and\n[alternative_location_id] fields for more details.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/instances/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "updateMask": {
-	//       "description": "Required. Mask of fields to update. At least one path must be supplied in\nthis field. The elements of the repeated paths field may only include these\nfields from Instance:\n* `display_name`\n* `labels`\n* `redis_config`\n* `redis_version`",
+	//       "description": "Required. Mask of fields to update. At least one path must be supplied in\nthis field. The elements of the repeated paths field may only include these\nfields from Instance:\n\n *   `displayName`\n *   `labels`\n *   `memorySizeGb`\n *   `redisConfig`",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"

@@ -25,23 +25,40 @@ import (
 	"net/http"
 )
 
+// AccessKeyType enumerates the values for access key type.
+type AccessKeyType string
+
+const (
+	// NotSpecified ...
+	NotSpecified AccessKeyType = "NotSpecified"
+	// Primary ...
+	Primary AccessKeyType = "Primary"
+	// Secondary ...
+	Secondary AccessKeyType = "Secondary"
+)
+
+// PossibleAccessKeyTypeValues returns an array of possible values for the AccessKeyType const type.
+func PossibleAccessKeyTypeValues() []AccessKeyType {
+	return []AccessKeyType{NotSpecified, Primary, Secondary}
+}
+
 // AgreementType enumerates the values for agreement type.
 type AgreementType string
 
 const (
-	// AS2 ...
-	AS2 AgreementType = "AS2"
-	// Edifact ...
-	Edifact AgreementType = "Edifact"
-	// NotSpecified ...
-	NotSpecified AgreementType = "NotSpecified"
-	// X12 ...
-	X12 AgreementType = "X12"
+	// AgreementTypeAS2 ...
+	AgreementTypeAS2 AgreementType = "AS2"
+	// AgreementTypeEdifact ...
+	AgreementTypeEdifact AgreementType = "Edifact"
+	// AgreementTypeNotSpecified ...
+	AgreementTypeNotSpecified AgreementType = "NotSpecified"
+	// AgreementTypeX12 ...
+	AgreementTypeX12 AgreementType = "X12"
 )
 
 // PossibleAgreementTypeValues returns an array of possible values for the AgreementType const type.
 func PossibleAgreementTypeValues() []AgreementType {
-	return []AgreementType{AS2, Edifact, NotSpecified, X12}
+	return []AgreementType{AgreementTypeAS2, AgreementTypeEdifact, AgreementTypeNotSpecified, AgreementTypeX12}
 }
 
 // DayOfWeek enumerates the values for day of week.
@@ -175,6 +192,29 @@ const (
 // PossibleEncryptionAlgorithmValues returns an array of possible values for the EncryptionAlgorithm const type.
 func PossibleEncryptionAlgorithmValues() []EncryptionAlgorithm {
 	return []EncryptionAlgorithm{EncryptionAlgorithmAES128, EncryptionAlgorithmAES192, EncryptionAlgorithmAES256, EncryptionAlgorithmDES3, EncryptionAlgorithmNone, EncryptionAlgorithmNotSpecified, EncryptionAlgorithmRC2}
+}
+
+// EventLevel enumerates the values for event level.
+type EventLevel string
+
+const (
+	// Critical ...
+	Critical EventLevel = "Critical"
+	// Error ...
+	Error EventLevel = "Error"
+	// Informational ...
+	Informational EventLevel = "Informational"
+	// LogAlways ...
+	LogAlways EventLevel = "LogAlways"
+	// Verbose ...
+	Verbose EventLevel = "Verbose"
+	// Warning ...
+	Warning EventLevel = "Warning"
+)
+
+// PossibleEventLevelValues returns an array of possible values for the EventLevel const type.
+func PossibleEventLevelValues() []EventLevel {
+	return []EventLevel{Critical, Error, Informational, LogAlways, Verbose, Warning}
 }
 
 // HashingAlgorithm enumerates the values for hashing algorithm.
@@ -419,6 +459,64 @@ const (
 // PossibleSkuNameValues returns an array of possible values for the SkuName const type.
 func PossibleSkuNameValues() []SkuName {
 	return []SkuName{SkuNameBasic, SkuNameFree, SkuNameNotSpecified, SkuNamePremium, SkuNameShared, SkuNameStandard}
+}
+
+// TrackEventsOperationOptions enumerates the values for track events operation options.
+type TrackEventsOperationOptions string
+
+const (
+	// DisableSourceInfoEnrich ...
+	DisableSourceInfoEnrich TrackEventsOperationOptions = "DisableSourceInfoEnrich"
+	// None ...
+	None TrackEventsOperationOptions = "None"
+)
+
+// PossibleTrackEventsOperationOptionsValues returns an array of possible values for the TrackEventsOperationOptions const type.
+func PossibleTrackEventsOperationOptionsValues() []TrackEventsOperationOptions {
+	return []TrackEventsOperationOptions{DisableSourceInfoEnrich, None}
+}
+
+// TrackingRecordType enumerates the values for tracking record type.
+type TrackingRecordType string
+
+const (
+	// TrackingRecordTypeAS2MDN ...
+	TrackingRecordTypeAS2MDN TrackingRecordType = "AS2MDN"
+	// TrackingRecordTypeAS2Message ...
+	TrackingRecordTypeAS2Message TrackingRecordType = "AS2Message"
+	// TrackingRecordTypeCustom ...
+	TrackingRecordTypeCustom TrackingRecordType = "Custom"
+	// TrackingRecordTypeEdifactFunctionalGroup ...
+	TrackingRecordTypeEdifactFunctionalGroup TrackingRecordType = "EdifactFunctionalGroup"
+	// TrackingRecordTypeEdifactFunctionalGroupAcknowledgment ...
+	TrackingRecordTypeEdifactFunctionalGroupAcknowledgment TrackingRecordType = "EdifactFunctionalGroupAcknowledgment"
+	// TrackingRecordTypeEdifactInterchange ...
+	TrackingRecordTypeEdifactInterchange TrackingRecordType = "EdifactInterchange"
+	// TrackingRecordTypeEdifactInterchangeAcknowledgment ...
+	TrackingRecordTypeEdifactInterchangeAcknowledgment TrackingRecordType = "EdifactInterchangeAcknowledgment"
+	// TrackingRecordTypeEdifactTransactionSet ...
+	TrackingRecordTypeEdifactTransactionSet TrackingRecordType = "EdifactTransactionSet"
+	// TrackingRecordTypeEdifactTransactionSetAcknowledgment ...
+	TrackingRecordTypeEdifactTransactionSetAcknowledgment TrackingRecordType = "EdifactTransactionSetAcknowledgment"
+	// TrackingRecordTypeNotSpecified ...
+	TrackingRecordTypeNotSpecified TrackingRecordType = "NotSpecified"
+	// TrackingRecordTypeX12FunctionalGroup ...
+	TrackingRecordTypeX12FunctionalGroup TrackingRecordType = "X12FunctionalGroup"
+	// TrackingRecordTypeX12FunctionalGroupAcknowledgment ...
+	TrackingRecordTypeX12FunctionalGroupAcknowledgment TrackingRecordType = "X12FunctionalGroupAcknowledgment"
+	// TrackingRecordTypeX12Interchange ...
+	TrackingRecordTypeX12Interchange TrackingRecordType = "X12Interchange"
+	// TrackingRecordTypeX12InterchangeAcknowledgment ...
+	TrackingRecordTypeX12InterchangeAcknowledgment TrackingRecordType = "X12InterchangeAcknowledgment"
+	// TrackingRecordTypeX12TransactionSet ...
+	TrackingRecordTypeX12TransactionSet TrackingRecordType = "X12TransactionSet"
+	// TrackingRecordTypeX12TransactionSetAcknowledgment ...
+	TrackingRecordTypeX12TransactionSetAcknowledgment TrackingRecordType = "X12TransactionSetAcknowledgment"
+)
+
+// PossibleTrackingRecordTypeValues returns an array of possible values for the TrackingRecordType const type.
+func PossibleTrackingRecordTypeValues() []TrackingRecordType {
+	return []TrackingRecordType{TrackingRecordTypeAS2MDN, TrackingRecordTypeAS2Message, TrackingRecordTypeCustom, TrackingRecordTypeEdifactFunctionalGroup, TrackingRecordTypeEdifactFunctionalGroupAcknowledgment, TrackingRecordTypeEdifactInterchange, TrackingRecordTypeEdifactInterchangeAcknowledgment, TrackingRecordTypeEdifactTransactionSet, TrackingRecordTypeEdifactTransactionSetAcknowledgment, TrackingRecordTypeNotSpecified, TrackingRecordTypeX12FunctionalGroup, TrackingRecordTypeX12FunctionalGroupAcknowledgment, TrackingRecordTypeX12Interchange, TrackingRecordTypeX12InterchangeAcknowledgment, TrackingRecordTypeX12TransactionSet, TrackingRecordTypeX12TransactionSetAcknowledgment}
 }
 
 // TrailingSeparatorPolicy enumerates the values for trailing separator policy.
@@ -670,6 +768,12 @@ func PossibleX12TimeFormatValues() []X12TimeFormat {
 	return []X12TimeFormat{X12TimeFormatHHMM, X12TimeFormatHHMMSS, X12TimeFormatHHMMSSd, X12TimeFormatHHMMSSdd, X12TimeFormatNotSpecified}
 }
 
+// AccessKeyRegenerateActionDefinition ...
+type AccessKeyRegenerateActionDefinition struct {
+	// KeyType - Possible values include: 'NotSpecified', 'Primary', 'Secondary'
+	KeyType AccessKeyType `json:"keyType,omitempty"`
+}
+
 // AgreementContent the integration account agreement content.
 type AgreementContent struct {
 	// AS2 - The AS2 agreement content.
@@ -680,7 +784,30 @@ type AgreementContent struct {
 	Edifact *EdifactAgreementContent `json:"edifact,omitempty"`
 }
 
-// AS2AcknowledgementConnectionSettings the AS2 agreement acknowledegment connection settings.
+// ArtifactContentPropertiesDefinition the artifact content properties definition.
+type ArtifactContentPropertiesDefinition struct {
+	Content interface{} `json:"content,omitempty"`
+	// ContentType - The content type.
+	ContentType *string `json:"contentType,omitempty"`
+	// ContentLink - The content link.
+	ContentLink *ContentLink `json:"contentLink,omitempty"`
+	// CreatedTime - The artifact creation time.
+	CreatedTime *date.Time `json:"createdTime,omitempty"`
+	// ChangedTime - The artifact changed time.
+	ChangedTime *date.Time  `json:"changedTime,omitempty"`
+	Metadata    interface{} `json:"metadata,omitempty"`
+}
+
+// ArtifactProperties the artifact properties definition.
+type ArtifactProperties struct {
+	// CreatedTime - The artifact creation time.
+	CreatedTime *date.Time `json:"createdTime,omitempty"`
+	// ChangedTime - The artifact changed time.
+	ChangedTime *date.Time  `json:"changedTime,omitempty"`
+	Metadata    interface{} `json:"metadata,omitempty"`
+}
+
+// AS2AcknowledgementConnectionSettings the AS2 agreement acknowledgement connection settings.
 type AS2AcknowledgementConnectionSettings struct {
 	// IgnoreCertificateNameMismatch - The value indicating whether to ignore mismatch in certificate name.
 	IgnoreCertificateNameMismatch *bool `json:"ignoreCertificateNameMismatch,omitempty"`
@@ -756,7 +883,7 @@ type AS2MessageConnectionSettings struct {
 	UnfoldHTTPHeaders *bool `json:"unfoldHttpHeaders,omitempty"`
 }
 
-// AS2OneWayAgreement the integration account AS2 oneway agreement.
+// AS2OneWayAgreement the integration account AS2 one-way agreement.
 type AS2OneWayAgreement struct {
 	// SenderBusinessIdentity - The sender business identity
 	SenderBusinessIdentity *BusinessIdentity `json:"senderBusinessIdentity,omitempty"`
@@ -832,10 +959,159 @@ type AS2ValidationSettings struct {
 	SigningAlgorithm SigningAlgorithm `json:"signingAlgorithm,omitempty"`
 }
 
+// AssemblyCollection a collection of assembly definitions.
+type AssemblyCollection struct {
+	autorest.Response `json:"-"`
+	Value             *[]AssemblyDefinition `json:"value,omitempty"`
+}
+
+// AssemblyDefinition the assembly definition.
+type AssemblyDefinition struct {
+	autorest.Response `json:"-"`
+	// Properties - The assembly properties.
+	Properties *AssemblyProperties `json:"properties,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
+	// Name - Gets the resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Gets the resource type.
+	Type *string `json:"type,omitempty"`
+	// Location - The resource location.
+	Location *string `json:"location,omitempty"`
+	// Tags - The resource tags.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for AssemblyDefinition.
+func (ad AssemblyDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ad.Properties != nil {
+		objectMap["properties"] = ad.Properties
+	}
+	if ad.ID != nil {
+		objectMap["id"] = ad.ID
+	}
+	if ad.Name != nil {
+		objectMap["name"] = ad.Name
+	}
+	if ad.Type != nil {
+		objectMap["type"] = ad.Type
+	}
+	if ad.Location != nil {
+		objectMap["location"] = ad.Location
+	}
+	if ad.Tags != nil {
+		objectMap["tags"] = ad.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// AssemblyProperties the assembly properties definition.
+type AssemblyProperties struct {
+	// AssemblyName - The assembly name.
+	AssemblyName *string `json:"assemblyName,omitempty"`
+	// AssemblyVersion - The assembly version.
+	AssemblyVersion *string `json:"assemblyVersion,omitempty"`
+	// AssemblyCulture - The assembly culture.
+	AssemblyCulture *string `json:"assemblyCulture,omitempty"`
+	// AssemblyPublicKeyToken - The assembly public key token.
+	AssemblyPublicKeyToken *string     `json:"assemblyPublicKeyToken,omitempty"`
+	Content                interface{} `json:"content,omitempty"`
+	// ContentType - The content type.
+	ContentType *string `json:"contentType,omitempty"`
+	// ContentLink - The content link.
+	ContentLink *ContentLink `json:"contentLink,omitempty"`
+	// CreatedTime - The artifact creation time.
+	CreatedTime *date.Time `json:"createdTime,omitempty"`
+	// ChangedTime - The artifact changed time.
+	ChangedTime *date.Time  `json:"changedTime,omitempty"`
+	Metadata    interface{} `json:"metadata,omitempty"`
+}
+
+// AzureResourceErrorInfo the azure resource error info.
+type AzureResourceErrorInfo struct {
+	// Message - The error message.
+	Message *string `json:"message,omitempty"`
+	// Details - The error details.
+	Details *[]AzureResourceErrorInfo `json:"details,omitempty"`
+	// Code - The error code.
+	Code *string `json:"code,omitempty"`
+}
+
 // B2BPartnerContent the B2B partner content.
 type B2BPartnerContent struct {
 	// BusinessIdentities - The list of partner business identities.
 	BusinessIdentities *[]BusinessIdentity `json:"businessIdentities,omitempty"`
+}
+
+// BatchConfiguration the batch configuration resource definition.
+type BatchConfiguration struct {
+	autorest.Response `json:"-"`
+	// Properties - The batch configuration properties.
+	Properties *BatchConfigurationProperties `json:"properties,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
+	// Name - Gets the resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Gets the resource type.
+	Type *string `json:"type,omitempty"`
+	// Location - The resource location.
+	Location *string `json:"location,omitempty"`
+	// Tags - The resource tags.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for BatchConfiguration.
+func (bc BatchConfiguration) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if bc.Properties != nil {
+		objectMap["properties"] = bc.Properties
+	}
+	if bc.ID != nil {
+		objectMap["id"] = bc.ID
+	}
+	if bc.Name != nil {
+		objectMap["name"] = bc.Name
+	}
+	if bc.Type != nil {
+		objectMap["type"] = bc.Type
+	}
+	if bc.Location != nil {
+		objectMap["location"] = bc.Location
+	}
+	if bc.Tags != nil {
+		objectMap["tags"] = bc.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// BatchConfigurationCollection a collection of batch configurations.
+type BatchConfigurationCollection struct {
+	autorest.Response `json:"-"`
+	Value             *[]BatchConfiguration `json:"value,omitempty"`
+}
+
+// BatchConfigurationProperties the batch configuration properties definition.
+type BatchConfigurationProperties struct {
+	// BatchGroupName - The name of the batch group.
+	BatchGroupName *string `json:"batchGroupName,omitempty"`
+	// ReleaseCriteria - The batch release criteria.
+	ReleaseCriteria *BatchReleaseCriteria `json:"releaseCriteria,omitempty"`
+	// CreatedTime - The artifact creation time.
+	CreatedTime *date.Time `json:"createdTime,omitempty"`
+	// ChangedTime - The artifact changed time.
+	ChangedTime *date.Time  `json:"changedTime,omitempty"`
+	Metadata    interface{} `json:"metadata,omitempty"`
+}
+
+// BatchReleaseCriteria the batch release criteria.
+type BatchReleaseCriteria struct {
+	// MessageCount - The message count.
+	MessageCount *int32 `json:"messageCount,omitempty"`
+	// BatchSize - The batch size in bytes.
+	BatchSize *int32 `json:"batchSize,omitempty"`
+	// Recurrence - The recurrence.
+	Recurrence *WorkflowTriggerRecurrence `json:"recurrence,omitempty"`
 }
 
 // BusinessIdentity the integration account partner's business identity.
@@ -921,7 +1197,7 @@ type EdifactDelimiterOverride struct {
 	MessageID *string `json:"messageId,omitempty"`
 	// MessageVersion - The message version.
 	MessageVersion *string `json:"messageVersion,omitempty"`
-	// MessageRelease - The message releaseversion.
+	// MessageRelease - The message release.
 	MessageRelease *string `json:"messageRelease,omitempty"`
 	// DataElementSeparator - The data element separator.
 	DataElementSeparator *int32 `json:"dataElementSeparator,omitempty"`
@@ -943,7 +1219,7 @@ type EdifactDelimiterOverride struct {
 	TargetNamespace *string `json:"targetNamespace,omitempty"`
 }
 
-// EdifactEnvelopeOverride the Edifact enevlope override settings.
+// EdifactEnvelopeOverride the Edifact envelope override settings.
 type EdifactEnvelopeOverride struct {
 	// MessageID - The message id on which this envelope settings has to be applied.
 	MessageID *string `json:"messageId,omitempty"`
@@ -1211,6 +1487,12 @@ type EdifactValidationSettings struct {
 	TrailingSeparatorPolicy TrailingSeparatorPolicy `json:"trailingSeparatorPolicy,omitempty"`
 }
 
+// ErrorInfo the error info.
+type ErrorInfo struct {
+	// Code - The error code.
+	Code *string `json:"code,omitempty"`
+}
+
 // ErrorProperties error properties indicate why the Logic service was not able to process the incoming request.
 // The reason is provided in the error message.
 type ErrorProperties struct {
@@ -1220,11 +1502,35 @@ type ErrorProperties struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// ErrorResponse error reponse indicates Logic service is not able to process the incoming request. The error
+// ErrorResponse error response indicates Logic service is not able to process the incoming request. The error
 // property contains the error details.
 type ErrorResponse struct {
 	// Error - The error properties.
 	Error *ErrorProperties `json:"error,omitempty"`
+}
+
+// Expression ...
+type Expression struct {
+	Text           *string                 `json:"text,omitempty"`
+	Value          interface{}             `json:"value,omitempty"`
+	Subexpressions *[]Expression           `json:"subexpressions,omitempty"`
+	Error          *AzureResourceErrorInfo `json:"error,omitempty"`
+}
+
+// ExpressionRoot ...
+type ExpressionRoot struct {
+	// Path - The path.
+	Path           *string                 `json:"path,omitempty"`
+	Text           *string                 `json:"text,omitempty"`
+	Value          interface{}             `json:"value,omitempty"`
+	Subexpressions *[]Expression           `json:"subexpressions,omitempty"`
+	Error          *AzureResourceErrorInfo `json:"error,omitempty"`
+}
+
+// ExpressionTraces ...
+type ExpressionTraces struct {
+	autorest.Response `json:"-"`
+	Inputs            *[]ExpressionRoot `json:"inputs,omitempty"`
 }
 
 // GenerateUpgradedDefinitionParameters the parameters to generate upgraded definition.
@@ -1397,7 +1703,7 @@ func (iaa *IntegrationAccountAgreement) UnmarshalJSON(body []byte) error {
 
 // IntegrationAccountAgreementFilter the integration account agreement filter for odata query.
 type IntegrationAccountAgreementFilter struct {
-	// AgreementType - The agreement type of integration account agreement. Possible values include: 'NotSpecified', 'AS2', 'X12', 'Edifact'
+	// AgreementType - The agreement type of integration account agreement. Possible values include: 'AgreementTypeNotSpecified', 'AgreementTypeAS2', 'AgreementTypeX12', 'AgreementTypeEdifact'
 	AgreementType AgreementType `json:"agreementType,omitempty"`
 }
 
@@ -1512,7 +1818,7 @@ type IntegrationAccountAgreementProperties struct {
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
 	Metadata interface{} `json:"metadata,omitempty"`
-	// AgreementType - The agreement type. Possible values include: 'NotSpecified', 'AS2', 'X12', 'Edifact'
+	// AgreementType - The agreement type. Possible values include: 'AgreementTypeNotSpecified', 'AgreementTypeAS2', 'AgreementTypeX12', 'AgreementTypeEdifact'
 	AgreementType AgreementType `json:"agreementType,omitempty"`
 	// HostPartner - The integration account partner that is set as host partner for this agreement.
 	HostPartner *string `json:"hostPartner,omitempty"`
@@ -2810,6 +3116,42 @@ type IntegrationAccountSku struct {
 	Name IntegrationAccountSkuName `json:"name,omitempty"`
 }
 
+// JSONSchema the JSON schema.
+type JSONSchema struct {
+	autorest.Response `json:"-"`
+	// Title - The JSON title.
+	Title *string `json:"title,omitempty"`
+	// Content - The JSON content.
+	Content *string `json:"content,omitempty"`
+}
+
+// KeyVaultKey the key vault key.
+type KeyVaultKey struct {
+	// Kid - The key id.
+	Kid *string `json:"kid,omitempty"`
+	// Attributes - The key attributes.
+	Attributes *KeyVaultKeyAttributes `json:"attributes,omitempty"`
+}
+
+// KeyVaultKeyAttributes the key attributes.
+type KeyVaultKeyAttributes struct {
+	// Enabled - Whether the key is enabled or not.
+	Enabled *bool `json:"enabled,omitempty"`
+	// Created - When the key was created.
+	Created *int64 `json:"created,omitempty"`
+	// Updated - When the key was updated.
+	Updated *int64 `json:"updated,omitempty"`
+}
+
+// KeyVaultKeyCollection collection of key vault keys.
+type KeyVaultKeyCollection struct {
+	autorest.Response `json:"-"`
+	// Value - The key vault keys.
+	Value *[]KeyVaultKey `json:"value,omitempty"`
+	// SkipToken - The skip token.
+	SkipToken *string `json:"skipToken,omitempty"`
+}
+
 // KeyVaultKeyReference the reference to the key vault key.
 type KeyVaultKeyReference struct {
 	// KeyVault - The key vault reference.
@@ -2828,6 +3170,24 @@ type KeyVaultKeyReferenceKeyVault struct {
 	Name *string `json:"name,omitempty"`
 	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
+}
+
+// KeyVaultReference the key vault reference.
+type KeyVaultReference struct {
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
+	// Name - Gets the resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Gets the resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// ListKeyVaultKeysDefinition the list key vault keys definition.
+type ListKeyVaultKeysDefinition struct {
+	// KeyVault - The key vault reference.
+	KeyVault *KeyVaultReference `json:"keyVault,omitempty"`
+	// SkipToken - The skip token.
+	SkipToken *string `json:"skipToken,omitempty"`
 }
 
 // Operation logic REST API operation
@@ -2951,6 +3311,51 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// OperationResult the operation result definition.
+type OperationResult struct {
+	// TrackingID - Gets the tracking id.
+	TrackingID *string `json:"trackingId,omitempty"`
+	// Inputs - Gets the inputs.
+	Inputs interface{} `json:"inputs,omitempty"`
+	// InputsLink - Gets the link to inputs.
+	InputsLink *ContentLink `json:"inputsLink,omitempty"`
+	// Outputs - Gets the outputs.
+	Outputs interface{} `json:"outputs,omitempty"`
+	// OutputsLink - Gets the link to outputs.
+	OutputsLink *ContentLink `json:"outputsLink,omitempty"`
+	// TrackedProperties - Gets the tracked properties.
+	TrackedProperties interface{} `json:"trackedProperties,omitempty"`
+	// RetryHistory - Gets the retry histories.
+	RetryHistory   *[]RetryHistory `json:"retryHistory,omitempty"`
+	IterationCount *int32          `json:"iterationCount,omitempty"`
+	// StartTime - The start time of the workflow scope repetition.
+	StartTime *date.Time `json:"startTime,omitempty"`
+	// EndTime - The end time of the workflow scope repetition.
+	EndTime *date.Time `json:"endTime,omitempty"`
+	// Correlation - The correlation properties.
+	Correlation *RunActionCorrelation `json:"correlation,omitempty"`
+	// Status - The status of the workflow scope repetition. Possible values include: 'WorkflowStatusNotSpecified', 'WorkflowStatusPaused', 'WorkflowStatusRunning', 'WorkflowStatusWaiting', 'WorkflowStatusSucceeded', 'WorkflowStatusSkipped', 'WorkflowStatusSuspended', 'WorkflowStatusCancelled', 'WorkflowStatusFailed', 'WorkflowStatusFaulted', 'WorkflowStatusTimedOut', 'WorkflowStatusAborted', 'WorkflowStatusIgnored'
+	Status WorkflowStatus `json:"status,omitempty"`
+	// Code - The workflow scope repetition code.
+	Code  *string     `json:"code,omitempty"`
+	Error interface{} `json:"error,omitempty"`
+}
+
+// OperationResultProperties the run operation result properties.
+type OperationResultProperties struct {
+	// StartTime - The start time of the workflow scope repetition.
+	StartTime *date.Time `json:"startTime,omitempty"`
+	// EndTime - The end time of the workflow scope repetition.
+	EndTime *date.Time `json:"endTime,omitempty"`
+	// Correlation - The correlation properties.
+	Correlation *RunActionCorrelation `json:"correlation,omitempty"`
+	// Status - The status of the workflow scope repetition. Possible values include: 'WorkflowStatusNotSpecified', 'WorkflowStatusPaused', 'WorkflowStatusRunning', 'WorkflowStatusWaiting', 'WorkflowStatusSucceeded', 'WorkflowStatusSkipped', 'WorkflowStatusSuspended', 'WorkflowStatusCancelled', 'WorkflowStatusFailed', 'WorkflowStatusFaulted', 'WorkflowStatusTimedOut', 'WorkflowStatusAborted', 'WorkflowStatusIgnored'
+	Status WorkflowStatus `json:"status,omitempty"`
+	// Code - The workflow scope repetition code.
+	Code  *string     `json:"code,omitempty"`
+	Error interface{} `json:"error,omitempty"`
+}
+
 // PartnerContent the integration account partner content.
 type PartnerContent struct {
 	// B2b - The B2B partner content.
@@ -2971,7 +3376,7 @@ type RecurrenceSchedule struct {
 	MonthlyOccurrences *[]RecurrenceScheduleOccurrence `json:"monthlyOccurrences,omitempty"`
 }
 
-// RecurrenceScheduleOccurrence the recurrence schedule occurence.
+// RecurrenceScheduleOccurrence the recurrence schedule occurrence.
 type RecurrenceScheduleOccurrence struct {
 	// Day - The day of the week. Possible values include: 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 	Day DayOfWeek `json:"day,omitempty"`
@@ -2983,6 +3388,14 @@ type RecurrenceScheduleOccurrence struct {
 type RegenerateActionParameter struct {
 	// KeyType - The key type. Possible values include: 'KeyTypeNotSpecified', 'KeyTypePrimary', 'KeyTypeSecondary'
 	KeyType KeyType `json:"keyType,omitempty"`
+}
+
+// RepetitionIndex the workflow run action repetition index.
+type RepetitionIndex struct {
+	// ScopeName - The scope.
+	ScopeName *string `json:"scopeName,omitempty"`
+	// ItemIndex - The index.
+	ItemIndex *int32 `json:"itemIndex,omitempty"`
 }
 
 // Resource the base resource type.
@@ -3046,10 +3459,33 @@ type RetryHistory struct {
 	Error *ErrorResponse `json:"error,omitempty"`
 }
 
+// RunActionCorrelation the workflow run action correlation properties.
+type RunActionCorrelation struct {
+	// ActionTrackingID - The action tracking identifier.
+	ActionTrackingID *string `json:"actionTrackingId,omitempty"`
+	// ClientTrackingID - The client tracking identifier.
+	ClientTrackingID *string `json:"clientTrackingId,omitempty"`
+	// ClientKeywords - The client keywords.
+	ClientKeywords *[]string `json:"clientKeywords,omitempty"`
+}
+
+// RunCorrelation the correlation properties.
+type RunCorrelation struct {
+	// ClientTrackingID - The client tracking identifier.
+	ClientTrackingID *string `json:"clientTrackingId,omitempty"`
+	// ClientKeywords - The client keywords.
+	ClientKeywords *[]string `json:"clientKeywords,omitempty"`
+}
+
 // SetObject ...
 type SetObject struct {
 	autorest.Response `json:"-"`
 	Value             interface{} `json:"value,omitempty"`
+}
+
+// SetTriggerStateActionDefinition ...
+type SetTriggerStateActionDefinition struct {
+	Source *WorkflowTrigger `json:"source,omitempty"`
 }
 
 // Sku the sku type.
@@ -3064,6 +3500,30 @@ type Sku struct {
 type SubResource struct {
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
+}
+
+// TrackingEvent ...
+type TrackingEvent struct {
+	// EventLevel - Possible values include: 'LogAlways', 'Critical', 'Error', 'Warning', 'Informational', 'Verbose'
+	EventLevel EventLevel `json:"eventLevel,omitempty"`
+	EventTime  *date.Time `json:"eventTime,omitempty"`
+	// RecordType - Possible values include: 'TrackingRecordTypeNotSpecified', 'TrackingRecordTypeCustom', 'TrackingRecordTypeAS2Message', 'TrackingRecordTypeAS2MDN', 'TrackingRecordTypeX12Interchange', 'TrackingRecordTypeX12FunctionalGroup', 'TrackingRecordTypeX12TransactionSet', 'TrackingRecordTypeX12InterchangeAcknowledgment', 'TrackingRecordTypeX12FunctionalGroupAcknowledgment', 'TrackingRecordTypeX12TransactionSetAcknowledgment', 'TrackingRecordTypeEdifactInterchange', 'TrackingRecordTypeEdifactFunctionalGroup', 'TrackingRecordTypeEdifactTransactionSet', 'TrackingRecordTypeEdifactInterchangeAcknowledgment', 'TrackingRecordTypeEdifactFunctionalGroupAcknowledgment', 'TrackingRecordTypeEdifactTransactionSetAcknowledgment'
+	RecordType TrackingRecordType      `json:"recordType,omitempty"`
+	Error      *TrackingEventErrorInfo `json:"error,omitempty"`
+}
+
+// TrackingEventErrorInfo ...
+type TrackingEventErrorInfo struct {
+	Message *string `json:"message,omitempty"`
+	Code    *string `json:"code,omitempty"`
+}
+
+// TrackingEventsDefinition ...
+type TrackingEventsDefinition struct {
+	SourceType *string `json:"sourceType,omitempty"`
+	// TrackEventsOptions - Possible values include: 'None', 'DisableSourceInfoEnrich'
+	TrackEventsOptions TrackEventsOperationOptions `json:"trackEventsOptions,omitempty"`
+	Events             *[]TrackingEvent            `json:"events,omitempty"`
 }
 
 // Workflow the workflow type.
@@ -3666,6 +4126,154 @@ type WorkflowRunActionProperties struct {
 	RetryHistory *[]RetryHistory `json:"retryHistory,omitempty"`
 }
 
+// WorkflowRunActionRepetitionDefinition the workflow run action repetition definition.
+type WorkflowRunActionRepetitionDefinition struct {
+	autorest.Response `json:"-"`
+	// WorkflowRunActionRepetitionProperties - The workflow run action repetition properties definition.
+	*WorkflowRunActionRepetitionProperties `json:"properties,omitempty"`
+	// ID - The resource id.
+	ID *string `json:"id,omitempty"`
+	// Name - Gets the resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Gets the resource type.
+	Type *string `json:"type,omitempty"`
+	// Location - The resource location.
+	Location *string `json:"location,omitempty"`
+	// Tags - The resource tags.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for WorkflowRunActionRepetitionDefinition.
+func (wrard WorkflowRunActionRepetitionDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wrard.WorkflowRunActionRepetitionProperties != nil {
+		objectMap["properties"] = wrard.WorkflowRunActionRepetitionProperties
+	}
+	if wrard.ID != nil {
+		objectMap["id"] = wrard.ID
+	}
+	if wrard.Name != nil {
+		objectMap["name"] = wrard.Name
+	}
+	if wrard.Type != nil {
+		objectMap["type"] = wrard.Type
+	}
+	if wrard.Location != nil {
+		objectMap["location"] = wrard.Location
+	}
+	if wrard.Tags != nil {
+		objectMap["tags"] = wrard.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for WorkflowRunActionRepetitionDefinition struct.
+func (wrard *WorkflowRunActionRepetitionDefinition) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var workflowRunActionRepetitionProperties WorkflowRunActionRepetitionProperties
+				err = json.Unmarshal(*v, &workflowRunActionRepetitionProperties)
+				if err != nil {
+					return err
+				}
+				wrard.WorkflowRunActionRepetitionProperties = &workflowRunActionRepetitionProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				wrard.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				wrard.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				wrard.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				wrard.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				wrard.Tags = tags
+			}
+		}
+	}
+
+	return nil
+}
+
+// WorkflowRunActionRepetitionDefinitionCollection a collection of workflow run action repetitions.
+type WorkflowRunActionRepetitionDefinitionCollection struct {
+	autorest.Response `json:"-"`
+	Value             *[]WorkflowRunActionRepetitionDefinition `json:"value,omitempty"`
+}
+
+// WorkflowRunActionRepetitionProperties the workflow run action repetition properties definition.
+type WorkflowRunActionRepetitionProperties struct {
+	// RepetitionIndexes - The repetition indexes.
+	RepetitionIndexes *[]RepetitionIndex `json:"repetitionIndexes,omitempty"`
+	// TrackingID - Gets the tracking id.
+	TrackingID *string `json:"trackingId,omitempty"`
+	// Inputs - Gets the inputs.
+	Inputs interface{} `json:"inputs,omitempty"`
+	// InputsLink - Gets the link to inputs.
+	InputsLink *ContentLink `json:"inputsLink,omitempty"`
+	// Outputs - Gets the outputs.
+	Outputs interface{} `json:"outputs,omitempty"`
+	// OutputsLink - Gets the link to outputs.
+	OutputsLink *ContentLink `json:"outputsLink,omitempty"`
+	// TrackedProperties - Gets the tracked properties.
+	TrackedProperties interface{} `json:"trackedProperties,omitempty"`
+	// RetryHistory - Gets the retry histories.
+	RetryHistory   *[]RetryHistory `json:"retryHistory,omitempty"`
+	IterationCount *int32          `json:"iterationCount,omitempty"`
+	// StartTime - The start time of the workflow scope repetition.
+	StartTime *date.Time `json:"startTime,omitempty"`
+	// EndTime - The end time of the workflow scope repetition.
+	EndTime *date.Time `json:"endTime,omitempty"`
+	// Correlation - The correlation properties.
+	Correlation *RunActionCorrelation `json:"correlation,omitempty"`
+	// Status - The status of the workflow scope repetition. Possible values include: 'WorkflowStatusNotSpecified', 'WorkflowStatusPaused', 'WorkflowStatusRunning', 'WorkflowStatusWaiting', 'WorkflowStatusSucceeded', 'WorkflowStatusSkipped', 'WorkflowStatusSuspended', 'WorkflowStatusCancelled', 'WorkflowStatusFailed', 'WorkflowStatusFaulted', 'WorkflowStatusTimedOut', 'WorkflowStatusAborted', 'WorkflowStatusIgnored'
+	Status WorkflowStatus `json:"status,omitempty"`
+	// Code - The workflow scope repetition code.
+	Code  *string     `json:"code,omitempty"`
+	Error interface{} `json:"error,omitempty"`
+}
+
 // WorkflowRunFilter the workflow run filter.
 type WorkflowRunFilter struct {
 	// Status - The status of workflow run. Possible values include: 'WorkflowStatusNotSpecified', 'WorkflowStatusPaused', 'WorkflowStatusRunning', 'WorkflowStatusWaiting', 'WorkflowStatusSucceeded', 'WorkflowStatusSkipped', 'WorkflowStatusSuspended', 'WorkflowStatusCancelled', 'WorkflowStatusFailed', 'WorkflowStatusFaulted', 'WorkflowStatusTimedOut', 'WorkflowStatusAborted', 'WorkflowStatusIgnored'
@@ -3776,6 +4384,8 @@ func (page WorkflowRunListResultPage) Values() []WorkflowRun {
 
 // WorkflowRunProperties the workflow run properties.
 type WorkflowRunProperties struct {
+	// WaitEndTime - Gets the wait end time.
+	WaitEndTime *date.Time `json:"waitEndTime,omitempty"`
 	// StartTime - Gets the start time.
 	StartTime *date.Time `json:"startTime,omitempty"`
 	// EndTime - Gets the end time.
@@ -3803,6 +4413,9 @@ type WorkflowRunProperties struct {
 // MarshalJSON is the custom marshaler for WorkflowRunProperties.
 func (wrp WorkflowRunProperties) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
+	if wrp.WaitEndTime != nil {
+		objectMap["waitEndTime"] = wrp.WaitEndTime
+	}
 	if wrp.StartTime != nil {
 		objectMap["startTime"] = wrp.StartTime
 	}
@@ -3849,6 +4462,8 @@ type WorkflowRunTrigger struct {
 	Outputs interface{} `json:"outputs,omitempty"`
 	// OutputsLink - Gets the link to outputs.
 	OutputsLink *ContentLink `json:"outputsLink,omitempty"`
+	// ScheduledTime - Gets the scheduled time.
+	ScheduledTime *date.Time `json:"scheduledTime,omitempty"`
 	// StartTime - Gets the start time.
 	StartTime *date.Time `json:"startTime,omitempty"`
 	// EndTime - Gets the end time.
@@ -4198,6 +4813,8 @@ type WorkflowTriggerListCallbackURLQueries struct {
 	Sv *string `json:"sv,omitempty"`
 	// Sig - The SAS signature.
 	Sig *string `json:"sig,omitempty"`
+	// Se - The SAS timestamp.
+	Se *string `json:"se,omitempty"`
 }
 
 // WorkflowTriggerListResult the list of workflow triggers.
@@ -4331,9 +4948,9 @@ type WorkflowTriggerRecurrence struct {
 	// Interval - The interval.
 	Interval *int32 `json:"interval,omitempty"`
 	// StartTime - The start time.
-	StartTime *date.Time `json:"startTime,omitempty"`
+	StartTime *string `json:"startTime,omitempty"`
 	// EndTime - The end time.
-	EndTime *date.Time `json:"endTime,omitempty"`
+	EndTime *string `json:"endTime,omitempty"`
 	// TimeZone - The time zone.
 	TimeZone *string `json:"timeZone,omitempty"`
 	// Schedule - The recurrence schedule.
@@ -4775,7 +5392,7 @@ type X12MessageIdentifier struct {
 	MessageID *string `json:"messageId,omitempty"`
 }
 
-// X12OneWayAgreement the X12 oneway agreement.
+// X12OneWayAgreement the X12 one-way agreement.
 type X12OneWayAgreement struct {
 	// SenderBusinessIdentity - The sender business identity
 	SenderBusinessIdentity *BusinessIdentity `json:"senderBusinessIdentity,omitempty"`

@@ -121,7 +121,7 @@ func (s *Service) Config() (Config, error) {
 }
 
 func updateDescription(handle windows.Handle, desc string) error {
-	d := windows.SERVICE_DESCRIPTION{toPtr(desc)}
+	d := windows.SERVICE_DESCRIPTION{Description: toPtr(desc)}
 	return windows.ChangeServiceConfig2(handle,
 		windows.SERVICE_CONFIG_DESCRIPTION, (*byte)(unsafe.Pointer(&d)))
 }

@@ -1,6 +1,6 @@
 // Package servicefabric implements the Azure ARM Servicefabric service API version 2017-07-01-preview.
 //
-// Azure Service Fabric Resource Provider API Client
+// Service Fabric Management Client
 package servicefabric
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -31,6 +31,7 @@ import (
 
 	cinternal "cloud.google.com/go/internal"
 	"cloud.google.com/go/internal/testutil"
+	"cloud.google.com/go/internal/uid"
 	"cloud.google.com/go/logging"
 	ltesting "cloud.google.com/go/logging/internal/testing"
 	"cloud.google.com/go/logging/logadmin"
@@ -46,7 +47,7 @@ import (
 
 const testLogIDPrefix = "GO-LOGGING-CLIENT/TEST-LOG"
 
-var uids = testutil.NewUIDSpace(testLogIDPrefix)
+var uids = uid.NewSpace(testLogIDPrefix, nil)
 
 var (
 	client        *logging.Client

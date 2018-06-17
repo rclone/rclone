@@ -71,7 +71,7 @@ func (b *BaseUnpacker) exposeStatusCode() error {
 		case *int:
 			logger.Infof(nil, fmt.Sprintf(
 				"QingStor response status code: [%d] %d",
-				convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
+				convert.StringToTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
 				b.httpResponse.StatusCode,
 			))
 			value.Set(reflect.ValueOf(&b.httpResponse.StatusCode))
@@ -84,7 +84,7 @@ func (b *BaseUnpacker) exposeStatusCode() error {
 func (b *BaseUnpacker) parseResponseHeaders() error {
 	logger.Infof(nil, fmt.Sprintf(
 		"QingStor response headers: [%d] %s",
-		convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
+		convert.StringToTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
 		fmt.Sprint(b.httpResponse.Header),
 	))
 
@@ -152,7 +152,7 @@ func (b *BaseUnpacker) parseResponseBody() error {
 
 				logger.Infof(nil, fmt.Sprintf(
 					"QingStor response body string: [%d] %s",
-					convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
+					convert.StringToTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
 					string(buffer.Bytes()),
 				))
 
@@ -167,23 +167,37 @@ func (b *BaseUnpacker) parseResponseBody() error {
 }
 
 func (b *BaseUnpacker) parseResponseElements() error {
-	if b.isResponseRight() {
-		if b.httpResponse.Header.Get("Content-Type") == "application/json" {
-			buffer := &bytes.Buffer{}
-			buffer.ReadFrom(b.httpResponse.Body)
-			b.httpResponse.Body.Close()
+	if !b.isResponseRight() {
+		return nil
+	}
 
-			logger.Infof(nil, fmt.Sprintf(
-				"QingStor response body string: [%d] %s",
-				convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
-				string(buffer.Bytes()),
-			))
+	// Do not parse GetObject and ImageProcess's body.
+	if b.operation.APIName == "GET Object" ||
+		b.operation.APIName == "Image Process" {
+		return nil
+	}
 
-			err := json.Unmarshal(buffer.Bytes(), b.output.Interface())
-			if err != nil {
-				return err
-			}
-		}
+	if b.httpResponse.Header.Get("Content-Type") != "application/json" {
+		return nil
+	}
+
+	buffer := &bytes.Buffer{}
+	buffer.ReadFrom(b.httpResponse.Body)
+	b.httpResponse.Body.Close()
+
+	if buffer.Len() == 0 {
+		return nil
+	}
+
+	logger.Infof(nil, fmt.Sprintf(
+		"QingStor response body string: [%d] %s",
+		convert.StringToTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
+		string(buffer.Bytes()),
+	))
+
+	err := json.Unmarshal(buffer.Bytes(), b.output.Interface())
+	if err != nil {
+		return err
 	}
 
 	return nil

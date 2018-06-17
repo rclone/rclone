@@ -62,6 +62,9 @@ const (
 	// View and manage the provisioning of users on your domain
 	AdminDirectoryUserScope = "https://www.googleapis.com/auth/admin.directory.user"
 
+	// View and manage your Google Docs documents
+	DocumentsScope = "https://www.googleapis.com/auth/documents"
+
 	// View and manage the files in your Google Drive
 	DriveScope = "https://www.googleapis.com/auth/drive"
 
@@ -848,6 +851,9 @@ type GoogleAppsScriptTypeProcess struct {
 	//   "TRIGGER" - The process was started from an event-based trigger.
 	//   "WEBAPP" - The process was started from a web app entry point.
 	//   "EDITOR" - The process was started using the Apps Script IDE.
+	//   "SIMPLE_TRIGGER" - The process was started from a GSuite simple
+	// trigger.
+	//   "MENU" - The process was started from a GSuite menu item.
 	ProcessType string `json:"processType,omitempty"`
 
 	// ProjectName: Name of the script being executed.
@@ -1300,14 +1306,13 @@ func (s *MetricsValue) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Operation: A representation of a execution of an Apps Script function
-// that is started using run. The execution response does not arrive
+// Operation: A representation of an execution of an Apps Script
+// function started with run. The execution response does not arrive
 // until the function finishes executing. The maximum execution runtime
 // is listed in the [Apps Script quotas
 // guide](/apps-script/guides/services/quotas#current_limitations).
-// <p>After the execution is started, it can have one of four
-// outcomes:</p> <ul> <li> If the script function returns successfully,
-// the
+// <p>After execution has started, it can have one of four outcomes:</p>
+// <ul> <li> If the script function returns successfully, the
 //   response field contains an
 //   ExecutionResponse object
 //   with the function's return value in the object's `result`
@@ -1478,9 +1483,8 @@ type Status struct {
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which is in English. Any
-	// user-facing error message is localized and sent in the
-	// [google.rpc.Status.details](google.rpc.Status.details) field, or
-	// localized by the client.
+	// user-facing error message is localized and sent in the details field,
+	// or localized by the client.
 	Message string `json:"message,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Code") to
@@ -1706,6 +1710,8 @@ func (c *ProcessesListCall) UserProcessFilterStatuses(userProcessFilterStatuses 
 //   "TRIGGER"
 //   "WEBAPP"
 //   "EDITOR"
+//   "SIMPLE_TRIGGER"
+//   "MENU"
 func (c *ProcessesListCall) UserProcessFilterTypes(userProcessFilterTypes ...string) *ProcessesListCall {
 	c.urlParams_.SetMulti("userProcessFilter.types", append([]string{}, userProcessFilterTypes...))
 	return c
@@ -1893,7 +1899,9 @@ func (c *ProcessesListCall) Do(opts ...googleapi.CallOption) (*ListUserProcesses
 	//         "TIME_DRIVEN",
 	//         "TRIGGER",
 	//         "WEBAPP",
-	//         "EDITOR"
+	//         "EDITOR",
+	//         "SIMPLE_TRIGGER",
+	//         "MENU"
 	//       ],
 	//       "location": "query",
 	//       "repeated": true,
@@ -2053,6 +2061,8 @@ func (c *ProcessesListScriptProcessesCall) ScriptProcessFilterStatuses(scriptPro
 //   "TRIGGER"
 //   "WEBAPP"
 //   "EDITOR"
+//   "SIMPLE_TRIGGER"
+//   "MENU"
 func (c *ProcessesListScriptProcessesCall) ScriptProcessFilterTypes(scriptProcessFilterTypes ...string) *ProcessesListScriptProcessesCall {
 	c.urlParams_.SetMulti("scriptProcessFilter.types", append([]string{}, scriptProcessFilterTypes...))
 	return c
@@ -2235,7 +2245,9 @@ func (c *ProcessesListScriptProcessesCall) Do(opts ...googleapi.CallOption) (*Li
 	//         "TIME_DRIVEN",
 	//         "TRIGGER",
 	//         "WEBAPP",
-	//         "EDITOR"
+	//         "EDITOR",
+	//         "SIMPLE_TRIGGER",
+	//         "MENU"
 	//       ],
 	//       "location": "query",
 	//       "repeated": true,
@@ -4341,6 +4353,7 @@ func (c *ScriptsRunCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 	//     "https://www.google.com/m8/feeds",
 	//     "https://www.googleapis.com/auth/admin.directory.group",
 	//     "https://www.googleapis.com/auth/admin.directory.user",
+	//     "https://www.googleapis.com/auth/documents",
 	//     "https://www.googleapis.com/auth/drive",
 	//     "https://www.googleapis.com/auth/forms",
 	//     "https://www.googleapis.com/auth/forms.currentonly",

@@ -85,11 +85,11 @@ func (c *KMS) CancelKeyDeletionRequest(input *CancelKeyDeletionInput) (req *requ
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -212,7 +212,7 @@ func (c *KMS) CreateAliasRequest(input *CreateAliasInput) (req *request.Request,
 //   * ErrCodeInvalidAliasNameException "InvalidAliasNameException"
 //   The request was rejected because the specified alias name is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -221,7 +221,7 @@ func (c *KMS) CreateAliasRequest(input *CreateAliasInput) (req *request.Request,
 //   see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html)
 //   in the AWS Key Management Service Developer Guide.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -326,7 +326,7 @@ func (c *KMS) CreateGrantRequest(input *CreateGrantInput) (req *request.Request,
 //   * ErrCodeInvalidArnException "InvalidArnException"
 //   The request was rejected because a specified ARN was not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -338,7 +338,7 @@ func (c *KMS) CreateGrantRequest(input *CreateGrantInput) (req *request.Request,
 //   see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html)
 //   in the AWS Key Management Service Developer Guide.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -449,7 +449,7 @@ func (c *KMS) CreateKeyRequest(input *CreateKeyInput) (req *request.Request, out
 //   The request was rejected because a specified parameter is not supported or
 //   a specified resource is not valid for this operation.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -576,11 +576,11 @@ func (c *KMS) DecryptRequest(input *DecryptInput) (req *request.Request, output 
 //   * ErrCodeInvalidGrantTokenException "InvalidGrantTokenException"
 //   The request was rejected because the specified grant token is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -684,11 +684,11 @@ func (c *KMS) DeleteAliasRequest(input *DeleteAliasInput) (req *request.Request,
 //   The request was rejected because the specified entity or resource could not
 //   be found.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -799,11 +799,11 @@ func (c *KMS) DeleteImportedKeyMaterialRequest(input *DeleteImportedKeyMaterialI
 //   The request was rejected because the specified entity or resource could not
 //   be found.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -901,7 +901,7 @@ func (c *KMS) DescribeKeyRequest(input *DescribeKeyInput) (req *request.Request,
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -1000,11 +1000,11 @@ func (c *KMS) DisableKeyRequest(input *DisableKeyInput) (req *request.Request, o
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -1106,11 +1106,11 @@ func (c *KMS) DisableKeyRotationRequest(input *DisableKeyRotationInput) (req *re
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -1213,7 +1213,7 @@ func (c *KMS) EnableKeyRequest(input *EnableKeyInput) (req *request.Request, out
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -1222,7 +1222,7 @@ func (c *KMS) EnableKeyRequest(input *EnableKeyInput) (req *request.Request, out
 //   see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html)
 //   in the AWS Key Management Service Developer Guide.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -1324,11 +1324,11 @@ func (c *KMS) EnableKeyRotationRequest(input *EnableKeyRotationInput) (req *requ
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -1459,11 +1459,11 @@ func (c *KMS) EncryptRequest(input *EncryptInput) (req *request.Request, output 
 //   * ErrCodeInvalidGrantTokenException "InvalidGrantTokenException"
 //   The request was rejected because the specified grant token is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -1613,11 +1613,11 @@ func (c *KMS) GenerateDataKeyRequest(input *GenerateDataKeyInput) (req *request.
 //   * ErrCodeInvalidGrantTokenException "InvalidGrantTokenException"
 //   The request was rejected because the specified grant token is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -1739,11 +1739,11 @@ func (c *KMS) GenerateDataKeyWithoutPlaintextRequest(input *GenerateDataKeyWitho
 //   * ErrCodeInvalidGrantTokenException "InvalidGrantTokenException"
 //   The request was rejected because the specified grant token is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -1835,7 +1835,7 @@ func (c *KMS) GenerateRandomRequest(input *GenerateRandomInput) (req *request.Re
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -1927,11 +1927,11 @@ func (c *KMS) GetKeyPolicyRequest(input *GetKeyPolicyInput) (req *request.Reques
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -2030,11 +2030,11 @@ func (c *KMS) GetKeyRotationStatusRequest(input *GetKeyRotationStatusInput) (req
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -2153,11 +2153,11 @@ func (c *KMS) GetParametersForImportRequest(input *GetParametersForImportInput) 
 //   The request was rejected because the specified entity or resource could not
 //   be found.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -2291,11 +2291,11 @@ func (c *KMS) ImportKeyMaterialRequest(input *ImportKeyMaterialInput) (req *requ
 //   The request was rejected because the specified entity or resource could not
 //   be found.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -2419,7 +2419,7 @@ func (c *KMS) ListAliasesRequest(input *ListAliasesInput) (req *request.Request,
 //   The request was rejected because the marker that specifies where pagination
 //   should next begin is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -2573,11 +2573,11 @@ func (c *KMS) ListGrantsRequest(input *ListGrantsInput) (req *request.Request, o
 //   * ErrCodeInvalidArnException "InvalidArnException"
 //   The request was rejected because a specified ARN was not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -2731,11 +2731,11 @@ func (c *KMS) ListKeyPoliciesRequest(input *ListKeyPoliciesInput) (req *request.
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -2880,7 +2880,7 @@ func (c *KMS) ListKeysRequest(input *ListKeysInput) (req *request.Request, outpu
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -3016,7 +3016,7 @@ func (c *KMS) ListResourceTagsRequest(input *ListResourceTagsInput) (req *reques
 // API operation ListResourceTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -3126,7 +3126,7 @@ func (c *KMS) ListRetirableGrantsRequest(input *ListRetirableGrantsInput) (req *
 //   The request was rejected because the specified entity or resource could not
 //   be found.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -3231,7 +3231,7 @@ func (c *KMS) PutKeyPolicyRequest(input *PutKeyPolicyInput) (req *request.Reques
 //   The request was rejected because a specified parameter is not supported or
 //   a specified resource is not valid for this operation.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -3240,7 +3240,7 @@ func (c *KMS) PutKeyPolicyRequest(input *PutKeyPolicyInput) (req *request.Reques
 //   see Limits (http://docs.aws.amazon.com/kms/latest/developerguide/limits.html)
 //   in the AWS Key Management Service Developer Guide.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -3363,11 +3363,11 @@ func (c *KMS) ReEncryptRequest(input *ReEncryptInput) (req *request.Request, out
 //   * ErrCodeInvalidGrantTokenException "InvalidGrantTokenException"
 //   The request was rejected because the specified grant token is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -3485,11 +3485,11 @@ func (c *KMS) RetireGrantRequest(input *RetireGrantInput) (req *request.Request,
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -3593,11 +3593,11 @@ func (c *KMS) RevokeGrantRequest(input *RevokeGrantInput) (req *request.Request,
 //   * ErrCodeInvalidGrantIdException "InvalidGrantIdException"
 //   The request was rejected because the specified GrantId is not valid.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -3709,11 +3709,11 @@ func (c *KMS) ScheduleKeyDeletionRequest(input *ScheduleKeyDeletionInput) (req *
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -3813,7 +3813,7 @@ func (c *KMS) TagResourceRequest(input *TagResourceInput) (req *request.Request,
 // API operation TagResource for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -3824,7 +3824,7 @@ func (c *KMS) TagResourceRequest(input *TagResourceInput) (req *request.Request,
 //   * ErrCodeInvalidArnException "InvalidArnException"
 //   The request was rejected because a specified ARN was not valid.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -3923,7 +3923,7 @@ func (c *KMS) UntagResourceRequest(input *UntagResourceInput) (req *request.Requ
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
@@ -3934,7 +3934,7 @@ func (c *KMS) UntagResourceRequest(input *UntagResourceInput) (req *request.Requ
 //   * ErrCodeInvalidArnException "InvalidArnException"
 //   The request was rejected because a specified ARN was not valid.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -4050,11 +4050,11 @@ func (c *KMS) UpdateAliasRequest(input *UpdateAliasInput) (req *request.Request,
 //   The request was rejected because the specified entity or resource could not
 //   be found.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //
@@ -4154,11 +4154,11 @@ func (c *KMS) UpdateKeyDescriptionRequest(input *UpdateKeyDescriptionInput) (req
 //   The system timed out while trying to fulfill the request. The request can
 //   be retried.
 //
-//   * ErrCodeInternalException "InternalException"
+//   * ErrCodeInternalException "KMSInternalException"
 //   The request was rejected because an internal exception occurred. The request
 //   can be retried.
 //
-//   * ErrCodeInvalidStateException "InvalidStateException"
+//   * ErrCodeInvalidStateException "KMSInvalidStateException"
 //   The request was rejected because the state of the specified resource is not
 //   valid for this request.
 //

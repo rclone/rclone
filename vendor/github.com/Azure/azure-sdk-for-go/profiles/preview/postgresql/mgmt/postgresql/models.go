@@ -57,6 +57,13 @@ const (
 	User         OperationOrigin = original.User
 )
 
+type ServerSecurityAlertPolicyState = original.ServerSecurityAlertPolicyState
+
+const (
+	ServerSecurityAlertPolicyStateDisabled ServerSecurityAlertPolicyState = original.ServerSecurityAlertPolicyStateDisabled
+	ServerSecurityAlertPolicyStateEnabled  ServerSecurityAlertPolicyState = original.ServerSecurityAlertPolicyStateEnabled
+)
+
 type ServerState = original.ServerState
 
 const (
@@ -87,6 +94,16 @@ const (
 	SslEnforcementEnumEnabled  SslEnforcementEnum = original.SslEnforcementEnumEnabled
 )
 
+type VirtualNetworkRuleState = original.VirtualNetworkRuleState
+
+const (
+	Deleting     VirtualNetworkRuleState = original.Deleting
+	Initializing VirtualNetworkRuleState = original.Initializing
+	InProgress   VirtualNetworkRuleState = original.InProgress
+	Ready        VirtualNetworkRuleState = original.Ready
+	Unknown      VirtualNetworkRuleState = original.Unknown
+)
+
 type Configuration = original.Configuration
 type ConfigurationListResult = original.ConfigurationListResult
 type ConfigurationProperties = original.ConfigurationProperties
@@ -113,6 +130,7 @@ type PerformanceTierListResult = original.PerformanceTierListResult
 type PerformanceTierProperties = original.PerformanceTierProperties
 type PerformanceTierServiceLevelObjectives = original.PerformanceTierServiceLevelObjectives
 type ProxyResource = original.ProxyResource
+type SecurityAlertPolicyProperties = original.SecurityAlertPolicyProperties
 type Server = original.Server
 type ServerForCreate = original.ServerForCreate
 type ServerListResult = original.ServerListResult
@@ -124,14 +142,25 @@ type ServerPropertiesForGeoRestore = original.ServerPropertiesForGeoRestore
 type ServerPropertiesForRestore = original.ServerPropertiesForRestore
 type ServersCreateFuture = original.ServersCreateFuture
 type ServersDeleteFuture = original.ServersDeleteFuture
+type ServerSecurityAlertPoliciesCreateOrUpdateFuture = original.ServerSecurityAlertPoliciesCreateOrUpdateFuture
+type ServerSecurityAlertPolicy = original.ServerSecurityAlertPolicy
 type ServersUpdateFuture = original.ServersUpdateFuture
 type ServerUpdateParameters = original.ServerUpdateParameters
 type ServerUpdateParametersProperties = original.ServerUpdateParametersProperties
 type Sku = original.Sku
 type StorageProfile = original.StorageProfile
 type TrackedResource = original.TrackedResource
+type VirtualNetworkRule = original.VirtualNetworkRule
+type VirtualNetworkRuleListResult = original.VirtualNetworkRuleListResult
+type VirtualNetworkRuleListResultIterator = original.VirtualNetworkRuleListResultIterator
+type VirtualNetworkRuleListResultPage = original.VirtualNetworkRuleListResultPage
+type VirtualNetworkRuleProperties = original.VirtualNetworkRuleProperties
+type VirtualNetworkRulesCreateOrUpdateFuture = original.VirtualNetworkRulesCreateOrUpdateFuture
+type VirtualNetworkRulesDeleteFuture = original.VirtualNetworkRulesDeleteFuture
 type OperationsClient = original.OperationsClient
 type ServersClient = original.ServersClient
+type ServerSecurityAlertPoliciesClient = original.ServerSecurityAlertPoliciesClient
+type VirtualNetworkRulesClient = original.VirtualNetworkRulesClient
 
 func NewCheckNameAvailabilityClient(subscriptionID string) CheckNameAvailabilityClient {
 	return original.NewCheckNameAvailabilityClient(subscriptionID)
@@ -184,6 +213,9 @@ func PossibleGeoRedundantBackupValues() []GeoRedundantBackup {
 func PossibleOperationOriginValues() []OperationOrigin {
 	return original.PossibleOperationOriginValues()
 }
+func PossibleServerSecurityAlertPolicyStateValues() []ServerSecurityAlertPolicyState {
+	return original.PossibleServerSecurityAlertPolicyStateValues()
+}
 func PossibleServerStateValues() []ServerState {
 	return original.PossibleServerStateValues()
 }
@@ -195,6 +227,9 @@ func PossibleSkuTierValues() []SkuTier {
 }
 func PossibleSslEnforcementEnumValues() []SslEnforcementEnum {
 	return original.PossibleSslEnforcementEnumValues()
+}
+func PossibleVirtualNetworkRuleStateValues() []VirtualNetworkRuleState {
+	return original.PossibleVirtualNetworkRuleStateValues()
 }
 func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
@@ -208,9 +243,21 @@ func NewServersClient(subscriptionID string) ServersClient {
 func NewServersClientWithBaseURI(baseURI string, subscriptionID string) ServersClient {
 	return original.NewServersClientWithBaseURI(baseURI, subscriptionID)
 }
+func NewServerSecurityAlertPoliciesClient(subscriptionID string) ServerSecurityAlertPoliciesClient {
+	return original.NewServerSecurityAlertPoliciesClient(subscriptionID)
+}
+func NewServerSecurityAlertPoliciesClientWithBaseURI(baseURI string, subscriptionID string) ServerSecurityAlertPoliciesClient {
+	return original.NewServerSecurityAlertPoliciesClientWithBaseURI(baseURI, subscriptionID)
+}
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"
 }
 func Version() string {
 	return original.Version()
+}
+func NewVirtualNetworkRulesClient(subscriptionID string) VirtualNetworkRulesClient {
+	return original.NewVirtualNetworkRulesClient(subscriptionID)
+}
+func NewVirtualNetworkRulesClientWithBaseURI(baseURI string, subscriptionID string) VirtualNetworkRulesClient {
+	return original.NewVirtualNetworkRulesClientWithBaseURI(baseURI, subscriptionID)
 }

@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -787,7 +776,7 @@
       }
     }
   },
-  "revision": "20180427",
+  "revision": "20180605",
   "rootUrl": "https://servicebroker.googleapis.com/",
   "schemas": {
     "GoogleCloudServicebrokerV1alpha1__Binding": {
@@ -1174,6 +1163,10 @@
         "createTime": {
           "description": "Output only.\nTimestamp for when the instance was created.",
           "format": "google-datetime",
+          "type": "string"
+        },
+        "deploymentName": {
+          "description": "Output only.\nName of the Deployment Manager deployment used for provisioning of this\nservice instance.",
           "type": "string"
         },
         "instance_id": {

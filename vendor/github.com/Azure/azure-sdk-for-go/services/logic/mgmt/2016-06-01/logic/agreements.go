@@ -786,3 +786,74 @@ func (client AgreementsClient) ListByIntegrationAccountsComplete(ctx context.Con
 	result.page, err = client.ListByIntegrationAccounts(ctx, resourceGroupName, integrationAccountName, top, filter)
 	return
 }
+
+// ListContentCallbackURL get the content callback url.
+// Parameters:
+// resourceGroupName - the resource group name.
+// integrationAccountName - the integration account name.
+// agreementName - the integration account agreement name.
+func (client AgreementsClient) ListContentCallbackURL(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string, listContentCallbackURL GetCallbackURLParameters) (result WorkflowTriggerCallbackURL, err error) {
+	req, err := client.ListContentCallbackURLPreparer(ctx, resourceGroupName, integrationAccountName, agreementName, listContentCallbackURL)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.AgreementsClient", "ListContentCallbackURL", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListContentCallbackURLSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "logic.AgreementsClient", "ListContentCallbackURL", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ListContentCallbackURLResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.AgreementsClient", "ListContentCallbackURL", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListContentCallbackURLPreparer prepares the ListContentCallbackURL request.
+func (client AgreementsClient) ListContentCallbackURLPreparer(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string, listContentCallbackURL GetCallbackURLParameters) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"agreementName":          autorest.Encode("path", agreementName),
+		"integrationAccountName": autorest.Encode("path", integrationAccountName),
+		"resourceGroupName":      autorest.Encode("path", resourceGroupName),
+		"subscriptionId":         autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/integrationAccounts/{integrationAccountName}/agreements/{agreementName}/listContentCallbackUrl", pathParameters),
+		autorest.WithJSON(listContentCallbackURL),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListContentCallbackURLSender sends the ListContentCallbackURL request. The method will close the
+// http.Response Body if it receives an error.
+func (client AgreementsClient) ListContentCallbackURLSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListContentCallbackURLResponder handles the response to the ListContentCallbackURL request. The method always
+// closes the http.Response Body.
+func (client AgreementsClient) ListContentCallbackURLResponder(resp *http.Response) (result WorkflowTriggerCallbackURL, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}

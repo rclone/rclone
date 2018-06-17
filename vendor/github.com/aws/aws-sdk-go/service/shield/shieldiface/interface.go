@@ -26,7 +26,7 @@ import (
 //    // myFunc uses an SDK service client to make a request to
 //    // AWS Shield.
 //    func myFunc(svc shieldiface.ShieldAPI) bool {
-//        // Make svc.CreateProtection request
+//        // Make svc.AssociateDRTLogBucket request
 //    }
 //
 //    func main() {
@@ -42,7 +42,7 @@ import (
 //    type mockShieldClient struct {
 //        shieldiface.ShieldAPI
 //    }
-//    func (m *mockShieldClient) CreateProtection(input *shield.CreateProtectionInput) (*shield.CreateProtectionOutput, error) {
+//    func (m *mockShieldClient) AssociateDRTLogBucket(input *shield.AssociateDRTLogBucketInput) (*shield.AssociateDRTLogBucketOutput, error) {
 //        // mock response/functionality
 //    }
 //
@@ -60,6 +60,14 @@ import (
 // and waiters. Its suggested to use the pattern above for testing, or using
 // tooling to generate mocks to satisfy the interfaces.
 type ShieldAPI interface {
+	AssociateDRTLogBucket(*shield.AssociateDRTLogBucketInput) (*shield.AssociateDRTLogBucketOutput, error)
+	AssociateDRTLogBucketWithContext(aws.Context, *shield.AssociateDRTLogBucketInput, ...request.Option) (*shield.AssociateDRTLogBucketOutput, error)
+	AssociateDRTLogBucketRequest(*shield.AssociateDRTLogBucketInput) (*request.Request, *shield.AssociateDRTLogBucketOutput)
+
+	AssociateDRTRole(*shield.AssociateDRTRoleInput) (*shield.AssociateDRTRoleOutput, error)
+	AssociateDRTRoleWithContext(aws.Context, *shield.AssociateDRTRoleInput, ...request.Option) (*shield.AssociateDRTRoleOutput, error)
+	AssociateDRTRoleRequest(*shield.AssociateDRTRoleInput) (*request.Request, *shield.AssociateDRTRoleOutput)
+
 	CreateProtection(*shield.CreateProtectionInput) (*shield.CreateProtectionOutput, error)
 	CreateProtectionWithContext(aws.Context, *shield.CreateProtectionInput, ...request.Option) (*shield.CreateProtectionOutput, error)
 	CreateProtectionRequest(*shield.CreateProtectionInput) (*request.Request, *shield.CreateProtectionOutput)
@@ -80,6 +88,14 @@ type ShieldAPI interface {
 	DescribeAttackWithContext(aws.Context, *shield.DescribeAttackInput, ...request.Option) (*shield.DescribeAttackOutput, error)
 	DescribeAttackRequest(*shield.DescribeAttackInput) (*request.Request, *shield.DescribeAttackOutput)
 
+	DescribeDRTAccess(*shield.DescribeDRTAccessInput) (*shield.DescribeDRTAccessOutput, error)
+	DescribeDRTAccessWithContext(aws.Context, *shield.DescribeDRTAccessInput, ...request.Option) (*shield.DescribeDRTAccessOutput, error)
+	DescribeDRTAccessRequest(*shield.DescribeDRTAccessInput) (*request.Request, *shield.DescribeDRTAccessOutput)
+
+	DescribeEmergencyContactSettings(*shield.DescribeEmergencyContactSettingsInput) (*shield.DescribeEmergencyContactSettingsOutput, error)
+	DescribeEmergencyContactSettingsWithContext(aws.Context, *shield.DescribeEmergencyContactSettingsInput, ...request.Option) (*shield.DescribeEmergencyContactSettingsOutput, error)
+	DescribeEmergencyContactSettingsRequest(*shield.DescribeEmergencyContactSettingsInput) (*request.Request, *shield.DescribeEmergencyContactSettingsOutput)
+
 	DescribeProtection(*shield.DescribeProtectionInput) (*shield.DescribeProtectionOutput, error)
 	DescribeProtectionWithContext(aws.Context, *shield.DescribeProtectionInput, ...request.Option) (*shield.DescribeProtectionOutput, error)
 	DescribeProtectionRequest(*shield.DescribeProtectionInput) (*request.Request, *shield.DescribeProtectionOutput)
@@ -87,6 +103,14 @@ type ShieldAPI interface {
 	DescribeSubscription(*shield.DescribeSubscriptionInput) (*shield.DescribeSubscriptionOutput, error)
 	DescribeSubscriptionWithContext(aws.Context, *shield.DescribeSubscriptionInput, ...request.Option) (*shield.DescribeSubscriptionOutput, error)
 	DescribeSubscriptionRequest(*shield.DescribeSubscriptionInput) (*request.Request, *shield.DescribeSubscriptionOutput)
+
+	DisassociateDRTLogBucket(*shield.DisassociateDRTLogBucketInput) (*shield.DisassociateDRTLogBucketOutput, error)
+	DisassociateDRTLogBucketWithContext(aws.Context, *shield.DisassociateDRTLogBucketInput, ...request.Option) (*shield.DisassociateDRTLogBucketOutput, error)
+	DisassociateDRTLogBucketRequest(*shield.DisassociateDRTLogBucketInput) (*request.Request, *shield.DisassociateDRTLogBucketOutput)
+
+	DisassociateDRTRole(*shield.DisassociateDRTRoleInput) (*shield.DisassociateDRTRoleOutput, error)
+	DisassociateDRTRoleWithContext(aws.Context, *shield.DisassociateDRTRoleInput, ...request.Option) (*shield.DisassociateDRTRoleOutput, error)
+	DisassociateDRTRoleRequest(*shield.DisassociateDRTRoleInput) (*request.Request, *shield.DisassociateDRTRoleOutput)
 
 	GetSubscriptionState(*shield.GetSubscriptionStateInput) (*shield.GetSubscriptionStateOutput, error)
 	GetSubscriptionStateWithContext(aws.Context, *shield.GetSubscriptionStateInput, ...request.Option) (*shield.GetSubscriptionStateOutput, error)
@@ -99,6 +123,14 @@ type ShieldAPI interface {
 	ListProtections(*shield.ListProtectionsInput) (*shield.ListProtectionsOutput, error)
 	ListProtectionsWithContext(aws.Context, *shield.ListProtectionsInput, ...request.Option) (*shield.ListProtectionsOutput, error)
 	ListProtectionsRequest(*shield.ListProtectionsInput) (*request.Request, *shield.ListProtectionsOutput)
+
+	UpdateEmergencyContactSettings(*shield.UpdateEmergencyContactSettingsInput) (*shield.UpdateEmergencyContactSettingsOutput, error)
+	UpdateEmergencyContactSettingsWithContext(aws.Context, *shield.UpdateEmergencyContactSettingsInput, ...request.Option) (*shield.UpdateEmergencyContactSettingsOutput, error)
+	UpdateEmergencyContactSettingsRequest(*shield.UpdateEmergencyContactSettingsInput) (*request.Request, *shield.UpdateEmergencyContactSettingsOutput)
+
+	UpdateSubscription(*shield.UpdateSubscriptionInput) (*shield.UpdateSubscriptionOutput, error)
+	UpdateSubscriptionWithContext(aws.Context, *shield.UpdateSubscriptionInput, ...request.Option) (*shield.UpdateSubscriptionOutput, error)
+	UpdateSubscriptionRequest(*shield.UpdateSubscriptionInput) (*request.Request, *shield.UpdateSubscriptionOutput)
 }
 
 var _ ShieldAPI = (*shield.Shield)(nil)

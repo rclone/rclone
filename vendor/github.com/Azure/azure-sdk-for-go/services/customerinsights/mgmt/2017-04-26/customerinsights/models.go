@@ -1241,12 +1241,11 @@ func (crf *ConnectorResourceFormat) UnmarshalJSON(body []byte) error {
 // operation.
 type ConnectorsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ConnectorsCreateOrUpdateFuture) Result(client ConnectorsClient) (crf ConnectorResourceFormat, err error) {
+func (future *ConnectorsCreateOrUpdateFuture) Result(client ConnectorsClient) (crf ConnectorResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1254,34 +1253,15 @@ func (future ConnectorsCreateOrUpdateFuture) Result(client ConnectorsClient) (cr
 		return
 	}
 	if !done {
-		return crf, azure.NewAsyncOpIncompleteError("customerinsights.ConnectorsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		crf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.ConnectorsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if crf.Response.Response, err = future.GetResult(sender); err == nil && crf.Response.Response.StatusCode != http.StatusNoContent {
+		crf, err = client.CreateOrUpdateResponder(crf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", crf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	crf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1289,12 +1269,11 @@ func (future ConnectorsCreateOrUpdateFuture) Result(client ConnectorsClient) (cr
 // ConnectorsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ConnectorsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ConnectorsDeleteFuture) Result(client ConnectorsClient) (ar autorest.Response, err error) {
+func (future *ConnectorsDeleteFuture) Result(client ConnectorsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1302,35 +1281,10 @@ func (future ConnectorsDeleteFuture) Result(client ConnectorsClient) (ar autores
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("customerinsights.ConnectorsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.ConnectorsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ConnectorsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1873,12 +1827,11 @@ type HubPropertiesFormat struct {
 // HubsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type HubsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future HubsDeleteFuture) Result(client HubsClient) (ar autorest.Response, err error) {
+func (future *HubsDeleteFuture) Result(client HubsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1886,35 +1839,10 @@ func (future HubsDeleteFuture) Result(client HubsClient) (ar autorest.Response, 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("customerinsights.HubsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.HubsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.HubsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.HubsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.HubsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -2116,12 +2044,11 @@ func (irf *InteractionResourceFormat) UnmarshalJSON(body []byte) error {
 // operation.
 type InteractionsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future InteractionsCreateOrUpdateFuture) Result(client InteractionsClient) (irf InteractionResourceFormat, err error) {
+func (future *InteractionsCreateOrUpdateFuture) Result(client InteractionsClient) (irf InteractionResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2129,34 +2056,15 @@ func (future InteractionsCreateOrUpdateFuture) Result(client InteractionsClient)
 		return
 	}
 	if !done {
-		return irf, azure.NewAsyncOpIncompleteError("customerinsights.InteractionsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		irf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.InteractionsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if irf.Response.Response, err = future.GetResult(sender); err == nil && irf.Response.Response.StatusCode != http.StatusNoContent {
+		irf, err = client.CreateOrUpdateResponder(irf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", irf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	irf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.InteractionsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -2519,12 +2427,11 @@ type KpiAlias struct {
 // KpiCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type KpiCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future KpiCreateOrUpdateFuture) Result(client KpiClient) (krf KpiResourceFormat, err error) {
+func (future *KpiCreateOrUpdateFuture) Result(client KpiClient) (krf KpiResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2532,34 +2439,15 @@ func (future KpiCreateOrUpdateFuture) Result(client KpiClient) (krf KpiResourceF
 		return
 	}
 	if !done {
-		return krf, azure.NewAsyncOpIncompleteError("customerinsights.KpiCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		krf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.KpiCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if krf.Response.Response, err = future.GetResult(sender); err == nil && krf.Response.Response.StatusCode != http.StatusNoContent {
+		krf, err = client.CreateOrUpdateResponder(krf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", krf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	krf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.KpiCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -2672,12 +2560,11 @@ func (kd KpiDefinition) MarshalJSON() ([]byte, error) {
 // KpiDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type KpiDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future KpiDeleteFuture) Result(client KpiClient) (ar autorest.Response, err error) {
+func (future *KpiDeleteFuture) Result(client KpiClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2685,35 +2572,10 @@ func (future KpiDeleteFuture) Result(client KpiClient) (ar autorest.Response, er
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("customerinsights.KpiDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.KpiDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.KpiDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.KpiDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.KpiDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3210,12 +3072,11 @@ func (lrf *LinkResourceFormat) UnmarshalJSON(body []byte) error {
 // LinksCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type LinksCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future LinksCreateOrUpdateFuture) Result(client LinksClient) (lrf LinkResourceFormat, err error) {
+func (future *LinksCreateOrUpdateFuture) Result(client LinksClient) (lrf LinkResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3223,34 +3084,15 @@ func (future LinksCreateOrUpdateFuture) Result(client LinksClient) (lrf LinkReso
 		return
 	}
 	if !done {
-		return lrf, azure.NewAsyncOpIncompleteError("customerinsights.LinksCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		lrf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.LinksCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if lrf.Response.Response, err = future.GetResult(sender); err == nil && lrf.Response.Response.StatusCode != http.StatusNoContent {
+		lrf, err = client.CreateOrUpdateResponder(lrf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", lrf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	lrf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.LinksCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3836,12 +3678,11 @@ func (prf *PredictionResourceFormat) UnmarshalJSON(body []byte) error {
 // operation.
 type PredictionsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future PredictionsCreateOrUpdateFuture) Result(client PredictionsClient) (prf PredictionResourceFormat, err error) {
+func (future *PredictionsCreateOrUpdateFuture) Result(client PredictionsClient) (prf PredictionResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3849,34 +3690,15 @@ func (future PredictionsCreateOrUpdateFuture) Result(client PredictionsClient) (
 		return
 	}
 	if !done {
-		return prf, azure.NewAsyncOpIncompleteError("customerinsights.PredictionsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		prf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.PredictionsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.PredictionsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if prf.Response.Response, err = future.GetResult(sender); err == nil && prf.Response.Response.StatusCode != http.StatusNoContent {
+		prf, err = client.CreateOrUpdateResponder(prf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.PredictionsCreateOrUpdateFuture", "Result", prf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.PredictionsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	prf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.PredictionsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3884,12 +3706,11 @@ func (future PredictionsCreateOrUpdateFuture) Result(client PredictionsClient) (
 // PredictionsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type PredictionsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future PredictionsDeleteFuture) Result(client PredictionsClient) (ar autorest.Response, err error) {
+func (future *PredictionsDeleteFuture) Result(client PredictionsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3897,35 +3718,10 @@ func (future PredictionsDeleteFuture) Result(client PredictionsClient) (ar autor
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("customerinsights.PredictionsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.PredictionsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.PredictionsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.PredictionsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.PredictionsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -4176,12 +3972,11 @@ func (prf *ProfileResourceFormat) UnmarshalJSON(body []byte) error {
 // operation.
 type ProfilesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ProfilesCreateOrUpdateFuture) Result(client ProfilesClient) (prf ProfileResourceFormat, err error) {
+func (future *ProfilesCreateOrUpdateFuture) Result(client ProfilesClient) (prf ProfileResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4189,34 +3984,15 @@ func (future ProfilesCreateOrUpdateFuture) Result(client ProfilesClient) (prf Pr
 		return
 	}
 	if !done {
-		return prf, azure.NewAsyncOpIncompleteError("customerinsights.ProfilesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		prf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.ProfilesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if prf.Response.Response, err = future.GetResult(sender); err == nil && prf.Response.Response.StatusCode != http.StatusNoContent {
+		prf, err = client.CreateOrUpdateResponder(prf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", prf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	prf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -4224,12 +4000,11 @@ func (future ProfilesCreateOrUpdateFuture) Result(client ProfilesClient) (prf Pr
 // ProfilesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ProfilesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ProfilesDeleteFuture) Result(client ProfilesClient) (ar autorest.Response, err error) {
+func (future *ProfilesDeleteFuture) Result(client ProfilesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4237,35 +4012,10 @@ func (future ProfilesDeleteFuture) Result(client ProfilesClient) (ar autorest.Re
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("customerinsights.ProfilesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.ProfilesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.ProfilesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.ProfilesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -4748,12 +4498,11 @@ func (rlrf *RelationshipLinkResourceFormat) UnmarshalJSON(body []byte) error {
 // operation.
 type RelationshipLinksCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future RelationshipLinksCreateOrUpdateFuture) Result(client RelationshipLinksClient) (rlrf RelationshipLinkResourceFormat, err error) {
+func (future *RelationshipLinksCreateOrUpdateFuture) Result(client RelationshipLinksClient) (rlrf RelationshipLinkResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4761,34 +4510,15 @@ func (future RelationshipLinksCreateOrUpdateFuture) Result(client RelationshipLi
 		return
 	}
 	if !done {
-		return rlrf, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipLinksCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rlrf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.RelationshipLinksCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if rlrf.Response.Response, err = future.GetResult(sender); err == nil && rlrf.Response.Response.StatusCode != http.StatusNoContent {
+		rlrf, err = client.CreateOrUpdateResponder(rlrf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", rlrf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	rlrf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -4797,12 +4527,11 @@ func (future RelationshipLinksCreateOrUpdateFuture) Result(client RelationshipLi
 // operation.
 type RelationshipLinksDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future RelationshipLinksDeleteFuture) Result(client RelationshipLinksClient) (ar autorest.Response, err error) {
+func (future *RelationshipLinksDeleteFuture) Result(client RelationshipLinksClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4810,35 +4539,10 @@ func (future RelationshipLinksDeleteFuture) Result(client RelationshipLinksClien
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipLinksDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.RelationshipLinksDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipLinksDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -5029,12 +4733,11 @@ func (rrf *RelationshipResourceFormat) UnmarshalJSON(body []byte) error {
 // operation.
 type RelationshipsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future RelationshipsCreateOrUpdateFuture) Result(client RelationshipsClient) (rrf RelationshipResourceFormat, err error) {
+func (future *RelationshipsCreateOrUpdateFuture) Result(client RelationshipsClient) (rrf RelationshipResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -5042,34 +4745,15 @@ func (future RelationshipsCreateOrUpdateFuture) Result(client RelationshipsClien
 		return
 	}
 	if !done {
-		return rrf, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rrf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.RelationshipsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if rrf.Response.Response, err = future.GetResult(sender); err == nil && rrf.Response.Response.StatusCode != http.StatusNoContent {
+		rrf, err = client.CreateOrUpdateResponder(rrf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", rrf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	rrf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -5077,12 +4761,11 @@ func (future RelationshipsCreateOrUpdateFuture) Result(client RelationshipsClien
 // RelationshipsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type RelationshipsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future RelationshipsDeleteFuture) Result(client RelationshipsClient) (ar autorest.Response, err error) {
+func (future *RelationshipsDeleteFuture) Result(client RelationshipsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -5090,35 +4773,10 @@ func (future RelationshipsDeleteFuture) Result(client RelationshipsClient) (ar a
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("customerinsights.RelationshipsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.RelationshipsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RelationshipsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -5498,12 +5156,11 @@ func (rarf *RoleAssignmentResourceFormat) UnmarshalJSON(body []byte) error {
 // operation.
 type RoleAssignmentsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future RoleAssignmentsCreateOrUpdateFuture) Result(client RoleAssignmentsClient) (rarf RoleAssignmentResourceFormat, err error) {
+func (future *RoleAssignmentsCreateOrUpdateFuture) Result(client RoleAssignmentsClient) (rarf RoleAssignmentResourceFormat, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -5511,34 +5168,15 @@ func (future RoleAssignmentsCreateOrUpdateFuture) Result(client RoleAssignmentsC
 		return
 	}
 	if !done {
-		return rarf, azure.NewAsyncOpIncompleteError("customerinsights.RoleAssignmentsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		rarf, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("customerinsights.RoleAssignmentsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if rarf.Response.Response, err = future.GetResult(sender); err == nil && rarf.Response.Response.StatusCode != http.StatusNoContent {
+		rarf, err = client.CreateOrUpdateResponder(rarf.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", rarf.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	rarf, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "customerinsights.RoleAssignmentsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

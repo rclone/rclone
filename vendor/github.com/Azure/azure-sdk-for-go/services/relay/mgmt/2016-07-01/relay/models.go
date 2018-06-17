@@ -769,12 +769,11 @@ type NamespaceProperties struct {
 // operation.
 type NamespacesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (n Namespace, err error) {
+func (future *NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (n Namespace, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -782,34 +781,15 @@ func (future NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (n 
 		return
 	}
 	if !done {
-		return n, azure.NewAsyncOpIncompleteError("relay.NamespacesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		n, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "relay.NamespacesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("relay.NamespacesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if n.Response.Response, err = future.GetResult(sender); err == nil && n.Response.Response.StatusCode != http.StatusNoContent {
+		n, err = client.CreateOrUpdateResponder(n.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "relay.NamespacesCreateOrUpdateFuture", "Result", n.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "relay.NamespacesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	n, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "relay.NamespacesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -817,12 +797,11 @@ func (future NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (n 
 // NamespacesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type NamespacesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future NamespacesDeleteFuture) Result(client NamespacesClient) (ar autorest.Response, err error) {
+func (future *NamespacesDeleteFuture) Result(client NamespacesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -830,35 +809,10 @@ func (future NamespacesDeleteFuture) Result(client NamespacesClient) (ar autores
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("relay.NamespacesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "relay.NamespacesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("relay.NamespacesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "relay.NamespacesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "relay.NamespacesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

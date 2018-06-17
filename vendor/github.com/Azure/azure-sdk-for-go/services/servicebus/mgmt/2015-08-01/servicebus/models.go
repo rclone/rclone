@@ -558,12 +558,11 @@ func (nr *NamespaceResource) UnmarshalJSON(body []byte) error {
 // operation.
 type NamespacesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (nr NamespaceResource, err error) {
+func (future *NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (nr NamespaceResource, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -571,34 +570,15 @@ func (future NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (nr
 		return
 	}
 	if !done {
-		return nr, azure.NewAsyncOpIncompleteError("servicebus.NamespacesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		nr, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "servicebus.NamespacesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("servicebus.NamespacesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if nr.Response.Response, err = future.GetResult(sender); err == nil && nr.Response.Response.StatusCode != http.StatusNoContent {
+		nr, err = client.CreateOrUpdateResponder(nr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "servicebus.NamespacesCreateOrUpdateFuture", "Result", nr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "servicebus.NamespacesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	nr, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "servicebus.NamespacesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -606,12 +586,11 @@ func (future NamespacesCreateOrUpdateFuture) Result(client NamespacesClient) (nr
 // NamespacesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type NamespacesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future NamespacesDeleteFuture) Result(client NamespacesClient) (ar autorest.Response, err error) {
+func (future *NamespacesDeleteFuture) Result(client NamespacesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -619,35 +598,10 @@ func (future NamespacesDeleteFuture) Result(client NamespacesClient) (ar autores
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("servicebus.NamespacesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "servicebus.NamespacesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("servicebus.NamespacesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "servicebus.NamespacesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "servicebus.NamespacesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

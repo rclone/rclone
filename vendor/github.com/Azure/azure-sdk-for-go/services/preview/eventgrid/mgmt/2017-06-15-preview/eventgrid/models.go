@@ -323,12 +323,11 @@ type EventSubscriptionProperties struct {
 // operation.
 type EventSubscriptionsCreateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future EventSubscriptionsCreateFuture) Result(client EventSubscriptionsClient) (es EventSubscription, err error) {
+func (future *EventSubscriptionsCreateFuture) Result(client EventSubscriptionsClient) (es EventSubscription, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -336,34 +335,15 @@ func (future EventSubscriptionsCreateFuture) Result(client EventSubscriptionsCli
 		return
 	}
 	if !done {
-		return es, azure.NewAsyncOpIncompleteError("eventgrid.EventSubscriptionsCreateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		es, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsCreateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("eventgrid.EventSubscriptionsCreateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if es.Response.Response, err = future.GetResult(sender); err == nil && es.Response.Response.StatusCode != http.StatusNoContent {
+		es, err = client.CreateResponder(es.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsCreateFuture", "Result", es.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsCreateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	es, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsCreateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -372,12 +352,11 @@ func (future EventSubscriptionsCreateFuture) Result(client EventSubscriptionsCli
 // operation.
 type EventSubscriptionsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future EventSubscriptionsDeleteFuture) Result(client EventSubscriptionsClient) (ar autorest.Response, err error) {
+func (future *EventSubscriptionsDeleteFuture) Result(client EventSubscriptionsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -385,35 +364,10 @@ func (future EventSubscriptionsDeleteFuture) Result(client EventSubscriptionsCli
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("eventgrid.EventSubscriptionsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("eventgrid.EventSubscriptionsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -428,12 +382,11 @@ type EventSubscriptionsListResult struct {
 // operation.
 type EventSubscriptionsUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future EventSubscriptionsUpdateFuture) Result(client EventSubscriptionsClient) (es EventSubscription, err error) {
+func (future *EventSubscriptionsUpdateFuture) Result(client EventSubscriptionsClient) (es EventSubscription, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -441,34 +394,15 @@ func (future EventSubscriptionsUpdateFuture) Result(client EventSubscriptionsCli
 		return
 	}
 	if !done {
-		return es, azure.NewAsyncOpIncompleteError("eventgrid.EventSubscriptionsUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		es, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("eventgrid.EventSubscriptionsUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if es.Response.Response, err = future.GetResult(sender); err == nil && es.Response.Response.StatusCode != http.StatusNoContent {
+		es, err = client.UpdateResponder(es.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsUpdateFuture", "Result", es.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	es, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.EventSubscriptionsUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -749,12 +683,11 @@ type TopicRegenerateKeyRequest struct {
 // TopicsCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type TopicsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future TopicsCreateOrUpdateFuture) Result(client TopicsClient) (t Topic, err error) {
+func (future *TopicsCreateOrUpdateFuture) Result(client TopicsClient) (t Topic, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -762,34 +695,15 @@ func (future TopicsCreateOrUpdateFuture) Result(client TopicsClient) (t Topic, e
 		return
 	}
 	if !done {
-		return t, azure.NewAsyncOpIncompleteError("eventgrid.TopicsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		t, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "eventgrid.TopicsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("eventgrid.TopicsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if t.Response.Response, err = future.GetResult(sender); err == nil && t.Response.Response.StatusCode != http.StatusNoContent {
+		t, err = client.CreateOrUpdateResponder(t.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "eventgrid.TopicsCreateOrUpdateFuture", "Result", t.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.TopicsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	t, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.TopicsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -797,12 +711,11 @@ func (future TopicsCreateOrUpdateFuture) Result(client TopicsClient) (t Topic, e
 // TopicsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type TopicsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future TopicsDeleteFuture) Result(client TopicsClient) (ar autorest.Response, err error) {
+func (future *TopicsDeleteFuture) Result(client TopicsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -810,35 +723,10 @@ func (future TopicsDeleteFuture) Result(client TopicsClient) (ar autorest.Respon
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("eventgrid.TopicsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "eventgrid.TopicsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("eventgrid.TopicsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.TopicsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "eventgrid.TopicsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

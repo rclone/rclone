@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -145,6 +146,48 @@ func NewPOSTTask(path string, params url.Values) *Task {
 		Header:  h,
 		Method:  "POST",
 	}
+}
+
+// RequestHeaders are the special HTTP request headers available to push task
+// HTTP request handlers. These headers are set internally by App Engine.
+// See https://cloud.google.com/appengine/docs/standard/go/taskqueue/push/creating-handlers#reading_request_headers
+// for a description of the fields.
+type RequestHeaders struct {
+	QueueName          string
+	TaskName           string
+	TaskRetryCount     int64
+	TaskExecutionCount int64
+	TaskETA            time.Time
+
+	TaskPreviousResponse int
+	TaskRetryReason      string
+	FailFast             bool
+}
+
+// ParseRequestHeaders parses the special HTTP request headers available to push
+// task request handlers. This function silently ignores values of the wrong
+// format.
+func ParseRequestHeaders(h http.Header) *RequestHeaders {
+	ret := &RequestHeaders{
+		QueueName: h.Get("X-AppEngine-QueueName"),
+		TaskName:  h.Get("X-AppEngine-TaskName"),
+	}
+
+	ret.TaskRetryCount, _ = strconv.ParseInt(h.Get("X-AppEngine-TaskRetryCount"), 10, 64)
+	ret.TaskExecutionCount, _ = strconv.ParseInt(h.Get("X-AppEngine-TaskExecutionCount"), 10, 64)
+
+	etaSecs, _ := strconv.ParseInt(h.Get("X-AppEngine-TaskETA"), 10, 64)
+	if etaSecs != 0 {
+		ret.TaskETA = time.Unix(etaSecs, 0)
+	}
+
+	ret.TaskPreviousResponse, _ = strconv.Atoi(h.Get("X-AppEngine-TaskPreviousResponse"))
+	ret.TaskRetryReason = h.Get("X-AppEngine-TaskRetryReason")
+	if h.Get("X-AppEngine-FailFast") != "" {
+		ret.FailFast = true
+	}
+
+	return ret
 }
 
 var (
@@ -321,6 +364,8 @@ func Delete(c context.Context, task *Task, queueName string) error {
 
 // DeleteMulti deletes multiple tasks from a named queue.
 // If a given task could not be deleted, an appengine.MultiError is returned.
+// Each task is deleted independently; one may fail to delete while the others
+// are sucessfully deleted.
 func DeleteMulti(c context.Context, tasks []*Task, queueName string) error {
 	taskNames := make([][]byte, len(tasks))
 	for i, t := range tasks {

@@ -4,6 +4,15 @@ package shield
 
 const (
 
+	// ErrCodeAccessDeniedForDependencyException for service response error code
+	// "AccessDeniedForDependencyException".
+	//
+	// In order to grant the necessary access to the DDoS Response Team, the user
+	// submitting AssociateDRTRole must have the iam:PassRole permission. This error
+	// indicates the user did not have the appropriate permissions. For more information,
+	// see Granting a User Permissions to Pass a Role to an AWS Service (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html).
+	ErrCodeAccessDeniedForDependencyException = "AccessDeniedForDependencyException"
+
 	// ErrCodeInternalErrorException for service response error code
 	// "InternalErrorException".
 	//
@@ -17,6 +26,13 @@ const (
 	// Exception that indicates that the operation would not cause any change to
 	// occur.
 	ErrCodeInvalidOperationException = "InvalidOperationException"
+
+	// ErrCodeInvalidPaginationTokenException for service response error code
+	// "InvalidPaginationTokenException".
+	//
+	// Exception that indicates that the NextToken specified in the request is invalid.
+	// Submit the request using the NextToken value that was returned in the response.
+	ErrCodeInvalidPaginationTokenException = "InvalidPaginationTokenException"
 
 	// ErrCodeInvalidParameterException for service response error code
 	// "InvalidParameterException".
@@ -44,9 +60,17 @@ const (
 	// ErrCodeLockedSubscriptionException for service response error code
 	// "LockedSubscriptionException".
 	//
-	// Exception that indicates that the subscription you are trying to delete has
-	// not yet completed the 1-year commitment. You cannot delete this subscription.
+	// You are trying to update a subscription that has not yet completed the 1-year
+	// commitment. You can change the AutoRenew parameter during the last 30 days
+	// of your subscription. This exception indicates that you are attempting to
+	// change AutoRenew prior to that period.
 	ErrCodeLockedSubscriptionException = "LockedSubscriptionException"
+
+	// ErrCodeNoAssociatedRoleException for service response error code
+	// "NoAssociatedRoleException".
+	//
+	// The ARN of the role that you specifed does not exist.
+	ErrCodeNoAssociatedRoleException = "NoAssociatedRoleException"
 
 	// ErrCodeOptimisticLockException for service response error code
 	// "OptimisticLockException".

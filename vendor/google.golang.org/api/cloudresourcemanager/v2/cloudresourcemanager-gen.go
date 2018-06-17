@@ -804,18 +804,25 @@ type SearchFoldersRequest struct {
 	// `OR`
 	// can be used along with the suffix wildcard symbol `*`.
 	//
+	// The displayName field in a query expression should use escaped
+	// quotes
+	// for values that include whitespace to prevent unexpected
+	// behavior.
+	//
 	// Some example queries are:
 	//
 	// |Query | Description|
 	// |----- | -----------|
 	// |displayName=Test* | Folders whose display name starts with
-	// "Test".
+	// "Test".|
 	// |lifecycleState=ACTIVE | Folders whose lifecycleState is
-	// ACTIVE.
+	// ACTIVE.|
 	// |parent=folders/123 | Folders whose parent is
-	// "folders/123".
+	// "folders/123".|
 	// |parent=folders/123 AND lifecycleState=ACTIVE | Active folders whose
 	// parent is "folders/123".|
+	// |displayName=\\"Test String\\"|Folders whose display name includes
+	// both "Test" and "String".|
 	Query string `json:"query,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PageSize") to
@@ -1151,13 +1158,17 @@ type FoldersCreateCall struct {
 // Folders
 // under its parent to exceed 100.
 //
-// If the operation fails due to a folder constraint violation,
-// a PreconditionFailure explaining the violation will be returned.
-// If the failure occurs synchronously then the PreconditionFailure
-// will be returned via the Status.details field and if it
-// occurs
-// asynchronously then the PreconditionFailure will be returned
-// via the the Operation.error field.
+// If the operation fails due to a folder constraint violation, some
+// errors
+// may be returned by the CreateFolder request, with status
+// code
+// FAILED_PRECONDITION and an error description. Other folder
+// constraint
+// violations will be communicated in the Operation, with the
+// specific
+// PreconditionFailure returned via the details list in the
+// Operation.error
+// field.
 //
 // The caller must have `resourcemanager.folders.create` permission on
 // the
@@ -1260,7 +1271,7 @@ func (c *FoldersCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a Folder in the resource hierarchy.\nReturns an Operation which can be used to track the progress of the\nfolder creation workflow.\nUpon success the Operation.response field will be populated with the\ncreated Folder.\n\nIn order to succeed, the addition of this new Folder must not violate\nthe Folder naming, height or fanout constraints.\n\n+ The Folder's display_name must be distinct from all other Folder's that\nshare its parent.\n+ The addition of the Folder must not cause the active Folder hierarchy\nto exceed a height of 4. Note, the full active + deleted Folder hierarchy\nis allowed to reach a height of 8; this provides additional headroom when\nmoving folders that contain deleted folders.\n+ The addition of the Folder must not cause the total number of Folders\nunder its parent to exceed 100.\n\nIf the operation fails due to a folder constraint violation,\na PreconditionFailure explaining the violation will be returned.\nIf the failure occurs synchronously then the PreconditionFailure\nwill be returned via the Status.details field and if it occurs\nasynchronously then the PreconditionFailure will be returned\nvia the the Operation.error field.\n\nThe caller must have `resourcemanager.folders.create` permission on the\nidentified parent.",
+	//   "description": "Creates a Folder in the resource hierarchy.\nReturns an Operation which can be used to track the progress of the\nfolder creation workflow.\nUpon success the Operation.response field will be populated with the\ncreated Folder.\n\nIn order to succeed, the addition of this new Folder must not violate\nthe Folder naming, height or fanout constraints.\n\n+ The Folder's display_name must be distinct from all other Folder's that\nshare its parent.\n+ The addition of the Folder must not cause the active Folder hierarchy\nto exceed a height of 4. Note, the full active + deleted Folder hierarchy\nis allowed to reach a height of 8; this provides additional headroom when\nmoving folders that contain deleted folders.\n+ The addition of the Folder must not cause the total number of Folders\nunder its parent to exceed 100.\n\nIf the operation fails due to a folder constraint violation, some errors\nmay be returned by the CreateFolder request, with status code\nFAILED_PRECONDITION and an error description. Other folder constraint\nviolations will be communicated in the Operation, with the specific\nPreconditionFailure returned via the details list in the Operation.error\nfield.\n\nThe caller must have `resourcemanager.folders.create` permission on the\nidentified parent.",
 	//   "flatPath": "v2/folders",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.folders.create",

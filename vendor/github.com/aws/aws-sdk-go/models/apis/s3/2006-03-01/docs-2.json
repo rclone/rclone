@@ -414,6 +414,13 @@
         "Stats$BytesProcessed": "Total number of uncompressed object bytes processed."
       }
     },
+    "BytesReturned": {
+      "base": null,
+      "refs": {
+        "Progress$BytesReturned": "Current number of bytes of records payload data returned.",
+        "Stats$BytesReturned": "Total number of bytes of records payload data returned."
+      }
+    },
     "BytesScanned": {
       "base": null,
       "refs": {

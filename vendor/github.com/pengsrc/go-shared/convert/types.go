@@ -19,7 +19,7 @@ func StringValue(v *string) string {
 }
 
 // StringSlice converts a slice of string values into a slice of
-// string pointers
+// string pointers.
 func StringSlice(src []string) []*string {
 	dst := make([]*string, len(src))
 	for i := 0; i < len(src); i++ {
@@ -29,7 +29,7 @@ func StringSlice(src []string) []*string {
 }
 
 // StringValueSlice converts a slice of string pointers into a slice of
-// string values
+// string values.
 func StringValueSlice(src []*string) []string {
 	dst := make([]string, len(src))
 	for i := 0; i < len(src); i++ {
@@ -41,7 +41,7 @@ func StringValueSlice(src []*string) []string {
 }
 
 // StringMap converts a string map of string values into a string
-// map of string pointers
+// map of string pointers.
 func StringMap(src map[string]string) map[string]*string {
 	dst := make(map[string]*string)
 	for k, val := range src {
@@ -52,7 +52,7 @@ func StringMap(src map[string]string) map[string]*string {
 }
 
 // StringValueMap converts a string map of string pointers into a string
-// map of string values
+// map of string values.
 func StringValueMap(src map[string]*string) map[string]string {
 	dst := make(map[string]string)
 	for k, val := range src {
@@ -78,7 +78,7 @@ func BoolValue(v *bool) bool {
 }
 
 // BoolSlice converts a slice of bool values into a slice of
-// bool pointers
+// bool pointers.
 func BoolSlice(src []bool) []*bool {
 	dst := make([]*bool, len(src))
 	for i := 0; i < len(src); i++ {
@@ -88,7 +88,7 @@ func BoolSlice(src []bool) []*bool {
 }
 
 // BoolValueSlice converts a slice of bool pointers into a slice of
-// bool values
+// bool values.
 func BoolValueSlice(src []*bool) []bool {
 	dst := make([]bool, len(src))
 	for i := 0; i < len(src); i++ {
@@ -100,7 +100,7 @@ func BoolValueSlice(src []*bool) []bool {
 }
 
 // BoolMap converts a string map of bool values into a string
-// map of bool pointers
+// map of bool pointers.
 func BoolMap(src map[string]bool) map[string]*bool {
 	dst := make(map[string]*bool)
 	for k, val := range src {
@@ -111,7 +111,7 @@ func BoolMap(src map[string]bool) map[string]*bool {
 }
 
 // BoolValueMap converts a string map of bool pointers into a string
-// map of bool values
+// map of bool values.
 func BoolValueMap(src map[string]*bool) map[string]bool {
 	dst := make(map[string]bool)
 	for k, val := range src {
@@ -137,7 +137,7 @@ func IntValue(v *int) int {
 }
 
 // IntSlice converts a slice of int values into a slice of
-// int pointers
+// int pointers.
 func IntSlice(src []int) []*int {
 	dst := make([]*int, len(src))
 	for i := 0; i < len(src); i++ {
@@ -147,7 +147,7 @@ func IntSlice(src []int) []*int {
 }
 
 // IntValueSlice converts a slice of int pointers into a slice of
-// int values
+// int values.
 func IntValueSlice(src []*int) []int {
 	dst := make([]int, len(src))
 	for i := 0; i < len(src); i++ {
@@ -159,7 +159,7 @@ func IntValueSlice(src []*int) []int {
 }
 
 // IntMap converts a string map of int values into a string
-// map of int pointers
+// map of int pointers.
 func IntMap(src map[string]int) map[string]*int {
 	dst := make(map[string]*int)
 	for k, val := range src {
@@ -170,7 +170,7 @@ func IntMap(src map[string]int) map[string]*int {
 }
 
 // IntValueMap converts a string map of int pointers into a string
-// map of int values
+// map of int values.
 func IntValueMap(src map[string]*int) map[string]int {
 	dst := make(map[string]int)
 	for k, val := range src {
@@ -196,7 +196,7 @@ func Int32Value(v *int32) int32 {
 }
 
 // Int32Slice converts a slice of int32 values into a slice of
-// int32 pointers
+// int32 pointers.
 func Int32Slice(src []int32) []*int32 {
 	dst := make([]*int32, len(src))
 	for i := 0; i < len(src); i++ {
@@ -206,7 +206,7 @@ func Int32Slice(src []int32) []*int32 {
 }
 
 // Int32ValueSlice converts a slice of int32 pointers into a slice of
-// int32 values
+// int32 values.
 func Int32ValueSlice(src []*int32) []int32 {
 	dst := make([]int32, len(src))
 	for i := 0; i < len(src); i++ {
@@ -218,7 +218,7 @@ func Int32ValueSlice(src []*int32) []int32 {
 }
 
 // Int32Map converts a string map of int32 values into a string
-// map of int32 pointers
+// map of int32 pointers.
 func Int32Map(src map[string]int32) map[string]*int32 {
 	dst := make(map[string]*int32)
 	for k, val := range src {
@@ -229,7 +229,7 @@ func Int32Map(src map[string]int32) map[string]*int32 {
 }
 
 // Int32ValueMap converts a string map of int32 pointers into a string
-// map of int32 values
+// map of int32 values.
 func Int32ValueMap(src map[string]*int32) map[string]int32 {
 	dst := make(map[string]int32)
 	for k, val := range src {
@@ -255,7 +255,7 @@ func Int64Value(v *int64) int64 {
 }
 
 // Int64Slice converts a slice of int64 values into a slice of
-// int64 pointers
+// int64 pointers.
 func Int64Slice(src []int64) []*int64 {
 	dst := make([]*int64, len(src))
 	for i := 0; i < len(src); i++ {
@@ -265,7 +265,7 @@ func Int64Slice(src []int64) []*int64 {
 }
 
 // Int64ValueSlice converts a slice of int64 pointers into a slice of
-// int64 values
+// int64 values.
 func Int64ValueSlice(src []*int64) []int64 {
 	dst := make([]int64, len(src))
 	for i := 0; i < len(src); i++ {
@@ -277,7 +277,7 @@ func Int64ValueSlice(src []*int64) []int64 {
 }
 
 // Int64Map converts a string map of int64 values into a string
-// map of int64 pointers
+// map of int64 pointers.
 func Int64Map(src map[string]int64) map[string]*int64 {
 	dst := make(map[string]*int64)
 	for k, val := range src {
@@ -288,7 +288,7 @@ func Int64Map(src map[string]int64) map[string]*int64 {
 }
 
 // Int64ValueMap converts a string map of int64 pointers into a string
-// map of int64 values
+// map of int64 values.
 func Int64ValueMap(src map[string]*int64) map[string]int64 {
 	dst := make(map[string]int64)
 	for k, val := range src {
@@ -351,7 +351,7 @@ func Uint64Value(v *uint64) uint64 {
 }
 
 // Uint64Slice converts a slice of uint64 values into a slice of
-// uint64 pointers
+// uint64 pointers.
 func Uint64Slice(src []uint64) []*uint64 {
 	dst := make([]*uint64, len(src))
 	for i := 0; i < len(src); i++ {
@@ -361,7 +361,7 @@ func Uint64Slice(src []uint64) []*uint64 {
 }
 
 // Uint64ValueSlice converts a slice of uint64 pointers into a slice of
-// uint64 values
+// uint64 values.
 func Uint64ValueSlice(src []*uint64) []uint64 {
 	dst := make([]uint64, len(src))
 	for i := 0; i < len(src); i++ {
@@ -387,7 +387,7 @@ func Float32Value(v *float32) float32 {
 }
 
 // Float32Slice converts a slice of float32 values into a slice of
-// float32 pointers
+// float32 pointers.
 func Float32Slice(src []float32) []*float32 {
 	dst := make([]*float32, len(src))
 	for i := 0; i < len(src); i++ {
@@ -397,7 +397,7 @@ func Float32Slice(src []float32) []*float32 {
 }
 
 // Float32ValueSlice converts a slice of float32 pointers into a slice of
-// float32 values
+// float32 values.
 func Float32ValueSlice(src []*float32) []float32 {
 	dst := make([]float32, len(src))
 	for i := 0; i < len(src); i++ {
@@ -409,7 +409,7 @@ func Float32ValueSlice(src []*float32) []float32 {
 }
 
 // Float32Map converts a string map of float32 values into a string
-// map of float32 pointers
+// map of float32 pointers.
 func Float32Map(src map[string]float32) map[string]*float32 {
 	dst := make(map[string]*float32)
 	for k, val := range src {
@@ -420,7 +420,7 @@ func Float32Map(src map[string]float32) map[string]*float32 {
 }
 
 // Float32ValueMap converts a string map of float32 pointers into a string
-// map of float32 values
+// map of float32 values.
 func Float32ValueMap(src map[string]*float32) map[string]float32 {
 	dst := make(map[string]float32)
 	for k, val := range src {
@@ -446,7 +446,7 @@ func Float64Value(v *float64) float64 {
 }
 
 // Float64Slice converts a slice of float64 values into a slice of
-// float64 pointers
+// float64 pointers.
 func Float64Slice(src []float64) []*float64 {
 	dst := make([]*float64, len(src))
 	for i := 0; i < len(src); i++ {
@@ -456,7 +456,7 @@ func Float64Slice(src []float64) []*float64 {
 }
 
 // Float64ValueSlice converts a slice of float64 pointers into a slice of
-// float64 values
+// float64 values.
 func Float64ValueSlice(src []*float64) []float64 {
 	dst := make([]float64, len(src))
 	for i := 0; i < len(src); i++ {
@@ -468,7 +468,7 @@ func Float64ValueSlice(src []*float64) []float64 {
 }
 
 // Float64Map converts a string map of float64 values into a string
-// map of float64 pointers
+// map of float64 pointers.
 func Float64Map(src map[string]float64) map[string]*float64 {
 	dst := make(map[string]*float64)
 	for k, val := range src {
@@ -479,7 +479,7 @@ func Float64Map(src map[string]float64) map[string]*float64 {
 }
 
 // Float64ValueMap converts a string map of float64 pointers into a string
-// map of float64 values
+// map of float64 values.
 func Float64ValueMap(src map[string]*float64) map[string]float64 {
 	dst := make(map[string]float64)
 	for k, val := range src {
@@ -505,7 +505,7 @@ func TimeValue(v *time.Time) time.Time {
 }
 
 // TimeSlice converts a slice of time.Time values into a slice of
-// time.Time pointers
+// time.Time pointers.
 func TimeSlice(src []time.Time) []*time.Time {
 	dst := make([]*time.Time, len(src))
 	for i := 0; i < len(src); i++ {
@@ -515,7 +515,7 @@ func TimeSlice(src []time.Time) []*time.Time {
 }
 
 // TimeValueSlice converts a slice of time.Time pointers into a slice of
-// time.Time values
+// time.Time values.
 func TimeValueSlice(src []*time.Time) []time.Time {
 	dst := make([]time.Time, len(src))
 	for i := 0; i < len(src); i++ {
@@ -527,7 +527,7 @@ func TimeValueSlice(src []*time.Time) []time.Time {
 }
 
 // TimeMap converts a string map of time.Time values into a string
-// map of time.Time pointers
+// map of time.Time pointers.
 func TimeMap(src map[string]time.Time) map[string]*time.Time {
 	dst := make(map[string]*time.Time)
 	for k, val := range src {
@@ -538,7 +538,7 @@ func TimeMap(src map[string]time.Time) map[string]*time.Time {
 }
 
 // TimeValueMap converts a string map of time.Time pointers into a string
-// map of time.Time values
+// map of time.Time values.
 func TimeValueMap(src map[string]*time.Time) map[string]time.Time {
 	dst := make(map[string]time.Time)
 	for k, val := range src {

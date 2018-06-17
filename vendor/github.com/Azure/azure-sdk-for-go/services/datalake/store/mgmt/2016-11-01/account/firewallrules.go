@@ -122,7 +122,7 @@ func (client FirewallRulesClient) CreateOrUpdateResponder(resp *http.Response) (
 	return
 }
 
-// Delete deletes the specified firewall rule from the specified Data Lake Store account
+// Delete deletes the specified firewall rule from the specified Data Lake Store account.
 // Parameters:
 // resourceGroupName - the name of the Azure resource group.
 // accountName - the name of the Data Lake Store account.

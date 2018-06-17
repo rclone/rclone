@@ -199,6 +199,10 @@ type DirectoryServiceAPI interface {
 	RemoveTagsFromResourceWithContext(aws.Context, *directoryservice.RemoveTagsFromResourceInput, ...request.Option) (*directoryservice.RemoveTagsFromResourceOutput, error)
 	RemoveTagsFromResourceRequest(*directoryservice.RemoveTagsFromResourceInput) (*request.Request, *directoryservice.RemoveTagsFromResourceOutput)
 
+	ResetUserPassword(*directoryservice.ResetUserPasswordInput) (*directoryservice.ResetUserPasswordOutput, error)
+	ResetUserPasswordWithContext(aws.Context, *directoryservice.ResetUserPasswordInput, ...request.Option) (*directoryservice.ResetUserPasswordOutput, error)
+	ResetUserPasswordRequest(*directoryservice.ResetUserPasswordInput) (*request.Request, *directoryservice.ResetUserPasswordOutput)
+
 	RestoreFromSnapshot(*directoryservice.RestoreFromSnapshotInput) (*directoryservice.RestoreFromSnapshotOutput, error)
 	RestoreFromSnapshotWithContext(aws.Context, *directoryservice.RestoreFromSnapshotInput, ...request.Option) (*directoryservice.RestoreFromSnapshotOutput, error)
 	RestoreFromSnapshotRequest(*directoryservice.RestoreFromSnapshotInput) (*request.Request, *directoryservice.RestoreFromSnapshotOutput)

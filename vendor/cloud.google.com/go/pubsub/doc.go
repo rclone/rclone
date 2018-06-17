@@ -23,6 +23,10 @@ Note: This package is in beta. Some backwards-incompatible changes may occur.
 More information about Google Cloud Pub/Sub is available at
 https://cloud.google.com/pubsub/docs
 
+See https://godoc.org/cloud.google.com/go for authentication, timeouts,
+connection pooling and similar aspects of this package.
+
+
 Publishing
 
 Google Cloud Pub/Sub messages are published to topics. Topics may be created
@@ -111,11 +115,6 @@ process messages, and the redelivery delay if messages fail to be acknowledged
 increases the available time for client code to process messages. However, if
 the client code neglects to call Message.Ack/Nack, a large MaxExtension will
 increase the delay before the message is redelivered.
-
-Authentication
-
-See examples of authorization and authentication at
-https://godoc.org/cloud.google.com/go#pkg-examples.
 
 Slow Message Processing
 

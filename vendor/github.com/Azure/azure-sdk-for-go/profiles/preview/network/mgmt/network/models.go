@@ -19,7 +19,7 @@
 
 package network
 
-import original "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-04-01/network"
+import original "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2018-05-01/network"
 
 type ApplicationGatewaysClient = original.ApplicationGatewaysClient
 type ApplicationSecurityGroupsClient = original.ApplicationSecurityGroupsClient
@@ -636,24 +636,36 @@ type VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuName
 
 const (
 	VirtualNetworkGatewaySkuNameBasic            VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameBasic
+	VirtualNetworkGatewaySkuNameErGw1AZ          VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameErGw1AZ
+	VirtualNetworkGatewaySkuNameErGw2AZ          VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameErGw2AZ
+	VirtualNetworkGatewaySkuNameErGw3AZ          VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameErGw3AZ
 	VirtualNetworkGatewaySkuNameHighPerformance  VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameHighPerformance
 	VirtualNetworkGatewaySkuNameStandard         VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameStandard
 	VirtualNetworkGatewaySkuNameUltraPerformance VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameUltraPerformance
 	VirtualNetworkGatewaySkuNameVpnGw1           VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameVpnGw1
+	VirtualNetworkGatewaySkuNameVpnGw1AZ         VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameVpnGw1AZ
 	VirtualNetworkGatewaySkuNameVpnGw2           VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameVpnGw2
+	VirtualNetworkGatewaySkuNameVpnGw2AZ         VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameVpnGw2AZ
 	VirtualNetworkGatewaySkuNameVpnGw3           VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameVpnGw3
+	VirtualNetworkGatewaySkuNameVpnGw3AZ         VirtualNetworkGatewaySkuName = original.VirtualNetworkGatewaySkuNameVpnGw3AZ
 )
 
 type VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTier
 
 const (
 	VirtualNetworkGatewaySkuTierBasic            VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierBasic
+	VirtualNetworkGatewaySkuTierErGw1AZ          VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierErGw1AZ
+	VirtualNetworkGatewaySkuTierErGw2AZ          VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierErGw2AZ
+	VirtualNetworkGatewaySkuTierErGw3AZ          VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierErGw3AZ
 	VirtualNetworkGatewaySkuTierHighPerformance  VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierHighPerformance
 	VirtualNetworkGatewaySkuTierStandard         VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierStandard
 	VirtualNetworkGatewaySkuTierUltraPerformance VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierUltraPerformance
 	VirtualNetworkGatewaySkuTierVpnGw1           VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierVpnGw1
+	VirtualNetworkGatewaySkuTierVpnGw1AZ         VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierVpnGw1AZ
 	VirtualNetworkGatewaySkuTierVpnGw2           VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierVpnGw2
+	VirtualNetworkGatewaySkuTierVpnGw2AZ         VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierVpnGw2AZ
 	VirtualNetworkGatewaySkuTierVpnGw3           VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierVpnGw3
+	VirtualNetworkGatewaySkuTierVpnGw3AZ         VirtualNetworkGatewaySkuTier = original.VirtualNetworkGatewaySkuTierVpnGw3AZ
 )
 
 type VirtualNetworkGatewayType = original.VirtualNetworkGatewayType
@@ -1071,6 +1083,8 @@ type Topology = original.Topology
 type TopologyAssociation = original.TopologyAssociation
 type TopologyParameters = original.TopologyParameters
 type TopologyResource = original.TopologyResource
+type TrafficAnalyticsConfigurationProperties = original.TrafficAnalyticsConfigurationProperties
+type TrafficAnalyticsProperties = original.TrafficAnalyticsProperties
 type TroubleshootingDetails = original.TroubleshootingDetails
 type TroubleshootingParameters = original.TroubleshootingParameters
 type TroubleshootingProperties = original.TroubleshootingProperties
@@ -1115,11 +1129,9 @@ type VirtualNetworkGatewaysGenerateVpnProfileFuture = original.VirtualNetworkGat
 type VirtualNetworkGatewaysGetAdvertisedRoutesFuture = original.VirtualNetworkGatewaysGetAdvertisedRoutesFuture
 type VirtualNetworkGatewaysGetBgpPeerStatusFuture = original.VirtualNetworkGatewaysGetBgpPeerStatusFuture
 type VirtualNetworkGatewaysGetLearnedRoutesFuture = original.VirtualNetworkGatewaysGetLearnedRoutesFuture
-type VirtualNetworkGatewaysGetVpnclientIpsecParametersFuture = original.VirtualNetworkGatewaysGetVpnclientIpsecParametersFuture
 type VirtualNetworkGatewaysGetVpnProfilePackageURLFuture = original.VirtualNetworkGatewaysGetVpnProfilePackageURLFuture
 type VirtualNetworkGatewaySku = original.VirtualNetworkGatewaySku
 type VirtualNetworkGatewaysResetFuture = original.VirtualNetworkGatewaysResetFuture
-type VirtualNetworkGatewaysSetVpnclientIpsecParametersFuture = original.VirtualNetworkGatewaysSetVpnclientIpsecParametersFuture
 type VirtualNetworkGatewaysUpdateTagsFuture = original.VirtualNetworkGatewaysUpdateTagsFuture
 type VirtualNetworkListResult = original.VirtualNetworkListResult
 type VirtualNetworkListResultIterator = original.VirtualNetworkListResultIterator

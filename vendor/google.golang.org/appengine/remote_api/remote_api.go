@@ -39,7 +39,7 @@ func handle(w http.ResponseWriter, req *http.Request) {
 		)
 	}
 
-	if u == nil || !u.Admin {
+	if !appengine.IsDevAppServer() && (u == nil || !u.Admin) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		io.WriteString(w, "You must be logged in as an administrator to access this.\n")

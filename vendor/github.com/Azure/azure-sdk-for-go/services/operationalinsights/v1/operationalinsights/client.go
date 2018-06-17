@@ -21,7 +21,11 @@ package operationalinsights
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"context"
 	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/validation"
+	"net/http"
 )
 
 const (
@@ -48,4 +52,72 @@ func NewWithBaseURI(baseURI string, workspaceID string) BaseClient {
 		BaseURI:     baseURI,
 		WorkspaceID: workspaceID,
 	}
+}
+
+// Query executes an Analytics query for data. [Here](/documentation/2-Using-the-API/Query) is an example for using
+// POST with an Analytics query.
+// Parameters:
+// body - the Analytics query. Learn more about the [Analytics query
+// syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/)
+func (client BaseClient) Query(ctx context.Context, body QueryBody) (result QueryResults, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: body,
+			Constraints: []validation.Constraint{{Target: "body.Query", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("operationalinsights.BaseClient", "Query", err.Error())
+	}
+
+	req, err := client.QueryPreparer(ctx, body)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "operationalinsights.BaseClient", "Query", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.QuerySender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "operationalinsights.BaseClient", "Query", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.QueryResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "operationalinsights.BaseClient", "Query", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// QueryPreparer prepares the Query request.
+func (client BaseClient) QueryPreparer(ctx context.Context, body QueryBody) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"workspaceId": autorest.Encode("path", client.WorkspaceID),
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/workspaces/{workspaceId}/query", pathParameters),
+		autorest.WithJSON(body))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// QuerySender sends the Query request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) QuerySender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// QueryResponder handles the response to the Query request. The method always
+// closes the http.Response Body.
+func (client BaseClient) QueryResponder(resp *http.Response) (result QueryResults, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
 }

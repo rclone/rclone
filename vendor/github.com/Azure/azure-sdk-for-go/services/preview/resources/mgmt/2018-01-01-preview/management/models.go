@@ -96,28 +96,28 @@ func PossibleReasonValues() []Reason {
 type Type string
 
 const (
-	// ProvidersMicrosoftManagementmanagementGroup ...
-	ProvidersMicrosoftManagementmanagementGroup Type = "/providers/Microsoft.Management/managementGroup"
+	// ProvidersMicrosoftManagementmanagementGroups ...
+	ProvidersMicrosoftManagementmanagementGroups Type = "/providers/Microsoft.Management/managementGroups"
 )
 
 // PossibleTypeValues returns an array of possible values for the Type const type.
 func PossibleTypeValues() []Type {
-	return []Type{ProvidersMicrosoftManagementmanagementGroup}
+	return []Type{ProvidersMicrosoftManagementmanagementGroups}
 }
 
 // Type1 enumerates the values for type 1.
 type Type1 string
 
 const (
-	// ProvidersMicrosoftManagementmanagementGroups ...
-	ProvidersMicrosoftManagementmanagementGroups Type1 = "/providers/Microsoft.Management/managementGroups"
-	// Subscriptions ...
-	Subscriptions Type1 = "/subscriptions"
+	// Type1ProvidersMicrosoftManagementmanagementGroups ...
+	Type1ProvidersMicrosoftManagementmanagementGroups Type1 = "/providers/Microsoft.Management/managementGroups"
+	// Type1Subscriptions ...
+	Type1Subscriptions Type1 = "/subscriptions"
 )
 
 // PossibleType1Values returns an array of possible values for the Type1 const type.
 func PossibleType1Values() []Type1 {
-	return []Type1{ProvidersMicrosoftManagementmanagementGroups, Subscriptions}
+	return []Type1{Type1ProvidersMicrosoftManagementmanagementGroups, Type1Subscriptions}
 }
 
 // Type2 enumerates the values for type 2.
@@ -139,7 +139,7 @@ func PossibleType2Values() []Type2 {
 type CheckNameAvailabilityRequest struct {
 	// Name - the name to check for availability
 	Name *string `json:"name,omitempty"`
-	// Type - fully qualified resource type which includes provider namespace. Possible values include: 'ProvidersMicrosoftManagementmanagementGroup'
+	// Type - fully qualified resource type which includes provider namespace. Possible values include: 'ProvidersMicrosoftManagementmanagementGroups'
 	Type Type `json:"type,omitempty"`
 }
 
@@ -156,7 +156,7 @@ type CheckNameAvailabilityResult struct {
 
 // ChildInfo the child information of a management group.
 type ChildInfo struct {
-	// Type - The fully qualified resource type which includes provider namespace (e.g. /providers/Microsoft.Management/managementGroups). Possible values include: 'ProvidersMicrosoftManagementmanagementGroups', 'Subscriptions'
+	// Type - The fully qualified resource type which includes provider namespace (e.g. /providers/Microsoft.Management/managementGroups). Possible values include: 'Type1ProvidersMicrosoftManagementmanagementGroups', 'Type1Subscriptions'
 	Type Type1 `json:"type,omitempty"`
 	// ID - The fully qualified ID for the child resource (management group or subscription).  For example, /providers/Microsoft.Management/managementGroups/0000000-0000-0000-0000-000000000000
 	ID *string `json:"id,omitempty"`
@@ -293,12 +293,11 @@ func (cmgr *CreateManagementGroupRequest) UnmarshalJSON(body []byte) error {
 // CreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CreateOrUpdateFuture) Result(client Client) (so SetObject, err error) {
+func (future *CreateOrUpdateFuture) Result(client Client) (so SetObject, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -306,34 +305,15 @@ func (future CreateOrUpdateFuture) Result(client Client) (so SetObject, err erro
 		return
 	}
 	if !done {
-		return so, azure.NewAsyncOpIncompleteError("managementgroups.CreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		so, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "managementgroups.CreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("managementgroups.CreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if so.Response.Response, err = future.GetResult(sender); err == nil && so.Response.Response.StatusCode != http.StatusNoContent {
+		so, err = client.CreateOrUpdateResponder(so.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "managementgroups.CreateOrUpdateFuture", "Result", so.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "managementgroups.CreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	so, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "managementgroups.CreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -351,12 +331,11 @@ type CreateParentGroupInfo struct {
 // DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeleteFuture) Result(client Client) (or OperationResults, err error) {
+func (future *DeleteFuture) Result(client Client) (or OperationResults, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -364,34 +343,15 @@ func (future DeleteFuture) Result(client Client) (or OperationResults, err error
 		return
 	}
 	if !done {
-		return or, azure.NewAsyncOpIncompleteError("managementgroups.DeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		or, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "managementgroups.DeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("managementgroups.DeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if or.Response.Response, err = future.GetResult(sender); err == nil && or.Response.Response.StatusCode != http.StatusNoContent {
+		or, err = client.DeleteResponder(or.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "managementgroups.DeleteFuture", "Result", or.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "managementgroups.DeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	or, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "managementgroups.DeleteFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

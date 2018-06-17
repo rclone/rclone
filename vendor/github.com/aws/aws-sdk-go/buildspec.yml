@@ -10,7 +10,7 @@ phases:
       - mkdir -p /go/src/github.com/aws
       - ln -s $SDK_CB_ROOT $SDK_GO_ROOT
       - cd $SDK_GO_ROOT
-      - make unit
+      - make ci-test
       - cd $SDK_CB_ROOT
       - #echo Compiling the Go code...
   post_build:

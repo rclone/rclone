@@ -1468,12 +1468,11 @@ func (jrup *JobResourceUpdateParameter) UnmarshalJSON(body []byte) error {
 // JobsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobsCreateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future JobsCreateFuture) Result(client JobsClient) (jr JobResource, err error) {
+func (future *JobsCreateFuture) Result(client JobsClient) (jr JobResource, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1481,34 +1480,15 @@ func (future JobsCreateFuture) Result(client JobsClient) (jr JobResource, err er
 		return
 	}
 	if !done {
-		return jr, azure.NewAsyncOpIncompleteError("databox.JobsCreateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		jr, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "databox.JobsCreateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("databox.JobsCreateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if jr.Response.Response, err = future.GetResult(sender); err == nil && jr.Response.Response.StatusCode != http.StatusNoContent {
+		jr, err = client.CreateResponder(jr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "databox.JobsCreateFuture", "Result", jr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databox.JobsCreateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	jr, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databox.JobsCreateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1626,12 +1606,11 @@ type JobStages struct {
 // JobsUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobsUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future JobsUpdateFuture) Result(client JobsClient) (jr JobResource, err error) {
+func (future *JobsUpdateFuture) Result(client JobsClient) (jr JobResource, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1639,34 +1618,15 @@ func (future JobsUpdateFuture) Result(client JobsClient) (jr JobResource, err er
 		return
 	}
 	if !done {
-		return jr, azure.NewAsyncOpIncompleteError("databox.JobsUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		jr, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "databox.JobsUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("databox.JobsUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if jr.Response.Response, err = future.GetResult(sender); err == nil && jr.Response.Response.StatusCode != http.StatusNoContent {
+		jr, err = client.UpdateResponder(jr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "databox.JobsUpdateFuture", "Result", jr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databox.JobsUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	jr, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "databox.JobsUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

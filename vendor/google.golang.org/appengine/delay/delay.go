@@ -9,6 +9,7 @@ user request by using the taskqueue API.
 To declare a function that may be executed later, call Func
 in a top-level assignment context, passing it an arbitrary string key
 and a function whose first argument is of type context.Context.
+The key is used to look up the function so it can be called later.
 	var laterFunc = delay.Func("key", myFunc)
 It is also possible to use a function literal.
 	var laterFunc = delay.Func("key", func(c context.Context, x string) {
@@ -73,16 +74,21 @@ const (
 	queue = ""
 )
 
+type contextKey int
+
 var (
 	// registry of all delayed functions
 	funcs = make(map[string]*Function)
 
 	// precomputed types
-	contextType = reflect.TypeOf((*context.Context)(nil)).Elem()
-	errorType   = reflect.TypeOf((*error)(nil)).Elem()
+	errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 	// errors
-	errFirstArg = errors.New("first argument must be context.Context")
+	errFirstArg         = errors.New("first argument must be context.Context")
+	errOutsideDelayFunc = errors.New("request headers are only available inside a delay.Func")
+
+	// context keys
+	headersContextKey contextKey = 0
 )
 
 // Func declares a new Function. The second argument must be a function with a
@@ -105,7 +111,7 @@ func Func(key string, i interface{}) *Function {
 		f.err = errors.New("not a function")
 		return f
 	}
-	if t.NumIn() == 0 || t.In(0) != contextType {
+	if t.NumIn() == 0 || !isContext(t.In(0)) {
 		f.err = errFirstArg
 		return f
 	}
@@ -221,6 +227,15 @@ func (f *Function) Task(args ...interface{}) (*taskqueue.Task, error) {
 	}, nil
 }
 
+// Request returns the special task-queue HTTP request headers for the current
+// task queue handler. Returns an error if called from outside a delay.Func.
+func RequestHeaders(c context.Context) (*taskqueue.RequestHeaders, error) {
+	if ret, ok := c.Value(headersContextKey).(*taskqueue.RequestHeaders); ok {
+		return ret, nil
+	}
+	return nil, errOutsideDelayFunc
+}
+
 var taskqueueAdder = taskqueue.Add // for testing
 
 func init() {
@@ -231,6 +246,8 @@ func init() {
 
 func runFunc(c context.Context, w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
+
+	c = context.WithValue(c, headersContextKey, taskqueue.ParseRequestHeaders(req.Header))
 
 	var inv invocation
 	if err := gob.NewDecoder(req.Body).Decode(&inv); err != nil {

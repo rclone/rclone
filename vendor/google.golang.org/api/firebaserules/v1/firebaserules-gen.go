@@ -824,6 +824,11 @@ type TestResult struct {
 	//   "FAILURE" - Test is a failure.
 	State string `json:"state,omitempty"`
 
+	// VisitedExpressions: The set of visited expressions for a given test.
+	// This returns positions
+	// and evaluation results of all visited expressions.
+	VisitedExpressions []*VisitedExpression `json:"visitedExpressions,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "DebugMessages") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -985,6 +990,41 @@ type UpdateReleaseRequest struct {
 
 func (s *UpdateReleaseRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod UpdateReleaseRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// VisitedExpression: Store the position and access outcome for an
+// expression visited in rules.
+type VisitedExpression struct {
+	// SourcePosition: Position in the `Source` or `Ruleset` where an
+	// expression was visited.
+	SourcePosition *SourcePosition `json:"sourcePosition,omitempty"`
+
+	// Value: The evaluated value for the visited expression, e.g.
+	// true/false
+	Value interface{} `json:"value,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "SourcePosition") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "SourcePosition") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *VisitedExpression) MarshalJSON() ([]byte, error) {
+	type NoMethod VisitedExpression
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding"
 	"io"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -173,8 +174,16 @@ func (rs *RequestServer) packetWorker(
 			rpkt = cleanPacketPath(pkt)
 		case *sshFxpOpendirPacket:
 			request := requestFromPacket(ctx, pkt)
-			handle := rs.nextRequest(request)
-			rpkt = sshFxpHandlePacket{pkt.id(), handle}
+			rpkt = request.call(rs.Handlers, pkt)
+			if stat, ok := rpkt.(*sshFxpStatResponse); ok {
+				if stat.info.IsDir() {
+					handle := rs.nextRequest(request)
+					rpkt = sshFxpHandlePacket{pkt.id(), handle}
+				} else {
+					rpkt = statusFromError(pkt, &os.PathError{
+						Path: request.Filepath, Err: syscall.ENOTDIR})
+				}
+			}
 		case *sshFxpOpenPacket:
 			request := requestFromPacket(ctx, pkt)
 			handle := rs.nextRequest(request)

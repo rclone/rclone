@@ -89,6 +89,35 @@ func httpHelloName(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("Hello, %s!", name)))
 }
 
+func TestHTTPRequestWithNoParams(t *testing.T) {
+	var got *http.Request
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		got = r
+		w.WriteHeader(http.StatusOK)
+	}
+
+	True(t, HTTPSuccess(t, handler, "GET", "/url", nil))
+
+	Empty(t, got.URL.Query())
+	Equal(t, "/url", got.URL.RequestURI())
+}
+
+func TestHTTPRequestWithParams(t *testing.T) {
+	var got *http.Request
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		got = r
+		w.WriteHeader(http.StatusOK)
+	}
+	params := url.Values{}
+	params.Add("id", "12345")
+
+	True(t, HTTPSuccess(t, handler, "GET", "/url", params))
+
+	Equal(t, url.Values{"id": []string{"12345"}}, got.URL.Query())
+	Equal(t, "/url?id=12345", got.URL.String())
+	Equal(t, "/url?id=12345", got.URL.RequestURI())
+}
+
 func TestHttpBody(t *testing.T) {
 	assert := New(t)
 	mockT := new(testing.T)

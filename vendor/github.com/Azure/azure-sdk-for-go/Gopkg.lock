@@ -12,8 +12,8 @@
     "autorest/to",
     "autorest/validation"
   ]
-  revision = "eaa7994b2278094c904d31993d26f56324db3052"
-  version = "v10.8.1"
+  revision = "4de44cd533576f3c7b44dcb08dc03754d217144d"
+  version = "v10.9.2"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
@@ -34,7 +34,7 @@
     "cassette",
     "recorder"
   ]
-  revision = "b68d3628568e385c2f706bf3f0db84f9c32fe610"
+  revision = "f8a7e8b9c630b486df74145bb887793a1b85459b"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -80,8 +80,8 @@
 [[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
-  revision = "c3beff4c2358b44d0493c7dda585e7db7ff28ae6"
-  version = "v1.7.6"
+  revision = "c2353362d570a7bfa228149c62842019201cfb71"
+  version = "v1.8.0"
 
 [[projects]]
   name = "github.com/marstr/collection"
@@ -111,13 +111,13 @@
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
-  revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
+  revision = "3864e76763d94a6df2f9960b16a20a33da9f9a66"
 
 [[projects]]
   branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "00c29f56e2386353d58c599509e8dc3801b0d716"
+  revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
 
 [[projects]]
   name = "github.com/pelletier/go-toml"
@@ -155,8 +155,8 @@
 [[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "a1f051bc3eba734da4772d60e2d677f47cf93ef4"
-  version = "v0.0.2"
+  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
+  version = "v0.0.3"
 
 [[projects]]
   branch = "master"
@@ -183,13 +183,13 @@
     "pkcs12",
     "pkcs12/internal/rc2"
   ]
-  revision = "76a954637dfa3223c13edb4529f981f0d62cfa26"
+  revision = "5ba7f63082460102a45837dbd1827e10f9479ac0"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "78d5f264b493f125018180c204871ecf58a2dce1"
+  revision = "c11f84a56e43e20a78cee75a7c034031ecf57d1f"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -212,7 +212,7 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "ae8027637c91c400af8a3e006c35c7011b3ca1fe"
+  revision = "a5b4c53f6e8bdcafa95a94671bf2d1203365858b"
 
 [[projects]]
   branch = "v1"
@@ -229,6 +229,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fe4a318be50163472da549167fc3c68e0e1e6fd39987f7028721365cfe8a82ed"
+  inputs-digest = "3ba7e7e6599059a0ac88f854eca95495c02501ebe2e0be13b38e4f2b823d5c53"
   solver-name = "gps-cdcl"
   solver-version = 1

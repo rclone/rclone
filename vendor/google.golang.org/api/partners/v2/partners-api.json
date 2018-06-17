@@ -50,11 +50,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -74,12 +69,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -1172,7 +1161,7 @@
       }
     }
   },
-  "revision": "20180403",
+  "revision": "20180605",
   "rootUrl": "https://partners.googleapis.com/",
   "schemas": {
     "AdWordsManagerAccountInfo": {
@@ -1522,6 +1511,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "badgeAuthorityInAwn": {
+          "description": "Whether the company's badge authority is in AWN",
+          "type": "boolean"
         },
         "badgeTier": {
           "description": "Partner badge tier",

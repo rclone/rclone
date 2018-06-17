@@ -192,12 +192,11 @@ func PossibleTierTypeValues() []TierType {
 // AccountsCreateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsCreateFutureType struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountsCreateFutureType) Result(client AccountsClient) (dlaa DataLakeAnalyticsAccount, err error) {
+func (future *AccountsCreateFutureType) Result(client AccountsClient) (dlaa DataLakeAnalyticsAccount, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -205,34 +204,15 @@ func (future AccountsCreateFutureType) Result(client AccountsClient) (dlaa DataL
 		return
 	}
 	if !done {
-		return dlaa, azure.NewAsyncOpIncompleteError("account.AccountsCreateFutureType")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		dlaa, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("account.AccountsCreateFutureType")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if dlaa.Response.Response, err = future.GetResult(sender); err == nil && dlaa.Response.Response.StatusCode != http.StatusNoContent {
+		dlaa, err = client.CreateResponder(dlaa.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", dlaa.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", resp, "Failure sending request")
-		return
-	}
-	dlaa, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -240,12 +220,11 @@ func (future AccountsCreateFutureType) Result(client AccountsClient) (dlaa DataL
 // AccountsDeleteFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsDeleteFutureType struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountsDeleteFutureType) Result(client AccountsClient) (ar autorest.Response, err error) {
+func (future *AccountsDeleteFutureType) Result(client AccountsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -253,47 +232,21 @@ func (future AccountsDeleteFutureType) Result(client AccountsClient) (ar autores
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("account.AccountsDeleteFutureType")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("account.AccountsDeleteFutureType")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // AccountsUpdateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsUpdateFutureType struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountsUpdateFutureType) Result(client AccountsClient) (dlaa DataLakeAnalyticsAccount, err error) {
+func (future *AccountsUpdateFutureType) Result(client AccountsClient) (dlaa DataLakeAnalyticsAccount, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -301,34 +254,15 @@ func (future AccountsUpdateFutureType) Result(client AccountsClient) (dlaa DataL
 		return
 	}
 	if !done {
-		return dlaa, azure.NewAsyncOpIncompleteError("account.AccountsUpdateFutureType")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		dlaa, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("account.AccountsUpdateFutureType")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if dlaa.Response.Response, err = future.GetResult(sender); err == nil && dlaa.Response.Response.StatusCode != http.StatusNoContent {
+		dlaa, err = client.UpdateResponder(dlaa.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", dlaa.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", resp, "Failure sending request")
-		return
-	}
-	dlaa, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -2575,9 +2509,9 @@ type UpdateDataLakeAnalyticsAccountProperties struct {
 	StorageAccounts *[]UpdateStorageAccountWithAccountParameters `json:"storageAccounts,omitempty"`
 	// ComputePolicies - The list of compute policies associated with this account.
 	ComputePolicies *[]UpdateComputePolicyWithAccountParameters `json:"computePolicies,omitempty"`
-	// FirewallRules - The list of firewall rules associated with this Data Lake Analytics account.
+	// FirewallRules - The list of firewall rules associated with this account.
 	FirewallRules *[]UpdateFirewallRuleWithAccountParameters `json:"firewallRules,omitempty"`
-	// FirewallState - The current state of the IP address firewall for this Data Lake Analytics account. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
+	// FirewallState - The current state of the IP address firewall for this account. Disabling the firewall does not remove existing rules, they will just be ignored until the firewall is re-enabled. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
 	FirewallState FirewallState `json:"firewallState,omitempty"`
 	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'Enabled', 'Disabled'
 	FirewallAllowAzureIps FirewallAllowAzureIpsState `json:"firewallAllowAzureIps,omitempty"`

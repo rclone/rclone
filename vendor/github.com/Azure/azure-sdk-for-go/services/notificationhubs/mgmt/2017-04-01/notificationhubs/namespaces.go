@@ -308,15 +308,17 @@ func (client NamespacesClient) DeletePreparer(ctx context.Context, resourceGroup
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) DeleteSender(req *http.Request) (future NamespacesDeleteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -820,7 +822,7 @@ func (client NamespacesClient) ListAuthorizationRulesComplete(ctx context.Contex
 // resourceGroupName - the name of the resource group.
 // namespaceName - the namespace name.
 // authorizationRuleName - the connection string of the namespace for the specified authorizationRule.
-func (client NamespacesClient) ListKeys(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result ResourceListKeys, err error) {
+func (client NamespacesClient) ListKeys(ctx context.Context, resourceGroupName string, namespaceName string, authorizationRuleName string) (result SharedAccessAuthorizationRuleListResult, err error) {
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, namespaceName, authorizationRuleName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "notificationhubs.NamespacesClient", "ListKeys", nil, "Failure preparing request")
@@ -873,7 +875,7 @@ func (client NamespacesClient) ListKeysSender(req *http.Request) (*http.Response
 
 // ListKeysResponder handles the response to the ListKeys request. The method always
 // closes the http.Response Body.
-func (client NamespacesClient) ListKeysResponder(resp *http.Response) (result ResourceListKeys, err error) {
+func (client NamespacesClient) ListKeysResponder(resp *http.Response) (result SharedAccessAuthorizationRuleListResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

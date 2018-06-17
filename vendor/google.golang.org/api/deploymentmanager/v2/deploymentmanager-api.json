@@ -24,7 +24,7 @@
   "description": "Declares, configures, and deploys complex solutions on Google Cloud Platform.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/deployment-manager/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/AwjFnEseEkjUP7nl3FbV-mrXtTg\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/4vHGfy0PBj0rG7tIHK1cZJWS9Ek\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -426,7 +426,7 @@
           },
           "path": "{project}/global/deployments/{resource}/setIamPolicy",
           "request": {
-            "$ref": "Policy"
+            "$ref": "GlobalSetPolicyRequest"
           },
           "response": {
             "$ref": "Policy"
@@ -932,7 +932,7 @@
       }
     }
   },
-  "revision": "20180323",
+  "revision": "20180503",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -998,7 +998,7 @@
           "description": "The condition that is associated with this binding. NOTE: an unsatisfied condition will not allow user access via current binding. Different bindings, including their conditions, are examined independently. This field is only visible as GOOGLE_INTERNAL or CONDITION_TRUSTED_TESTER."
         },
         "members": {
-          "description": "Specifies the identities requesting access for a Cloud Platform resource. `members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@gmail.com` or `joe@example.com`.\n\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`.\n\n\n\n* `domain:{domain}`: A Google Apps domain name that represents all the users of that domain. For example, `google.com` or `example.com`.",
+          "description": "Specifies the identities requesting access for a Cloud Platform resource. `members` can have the following values:\n\n* `allUsers`: A special identifier that represents anyone who is on the internet; with or without a Google account.\n\n* `allAuthenticatedUsers`: A special identifier that represents anyone who is authenticated with a Google account or a service account.\n\n* `user:{emailid}`: An email address that represents a specific Google account. For example, `alice@gmail.com` .\n\n\n\n* `serviceAccount:{emailid}`: An email address that represents a service account. For example, `my-other-app@appspot.gserviceaccount.com`.\n\n* `group:{emailid}`: An email address that represents a Google group. For example, `admins@example.com`.\n\n\n\n* `domain:{domain}`: A Google Apps domain name that represents all the users of that domain. For example, `google.com` or `example.com`.",
           "items": {
             "type": "string"
           },
@@ -1223,6 +1223,28 @@
       },
       "type": "object"
     },
+    "GlobalSetPolicyRequest": {
+      "id": "GlobalSetPolicyRequest",
+      "properties": {
+        "bindings": {
+          "description": "Flatten Policy to create a backwacd compatible wire-format. Deprecated. Use 'policy' to specify bindings.",
+          "items": {
+            "$ref": "Binding"
+          },
+          "type": "array"
+        },
+        "etag": {
+          "description": "Flatten Policy to create a backward compatible wire-format. Deprecated. Use 'policy' to specify the etag.",
+          "format": "byte",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "Policy",
+          "description": "REQUIRED: The complete policy to be applied to the 'resource'. The size of the policy is limited to a few 10s of KB. An empty policy is in general a valid policy but certain services (like Projects) might reject them."
+        }
+      },
+      "type": "object"
+    },
     "ImportFile": {
       "description": "",
       "id": "ImportFile",
@@ -1364,7 +1386,7 @@
       "id": "Operation",
       "properties": {
         "clientOperationId": {
-          "description": "[Output Only] Reserved for future use.",
+          "description": "[Output Only] The value of `requestId` if you provided it in the request. Not present otherwise.",
           "type": "string"
         },
         "creationTimestamp": {
@@ -1535,7 +1557,7 @@
       "type": "object"
     },
     "Policy": {
-      "description": "Defines an Identity and Access Management (IAM) policy. It is used to specify access control policies for Cloud Platform resources.\n\n\n\nA `Policy` consists of a list of `bindings`. A `Binding` binds a list of `members` to a `role`, where the members can be user accounts, Google groups, Google domains, and service accounts. A `role` is a named list of permissions defined by IAM.\n\n**Example**\n\n{ \"bindings\": [ { \"role\": \"roles/owner\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-other-app@appspot.gserviceaccount.com\", ] }, { \"role\": \"roles/viewer\", \"members\": [\"user:sean@example.com\"] } ] }\n\nFor a description of IAM and its features, see the [IAM developer's guide](https://cloud.google.com/iam/docs).",
+      "description": "Defines an Identity and Access Management (IAM) policy. It is used to specify access control policies for Cloud Platform resources.\n\n\n\nA `Policy` consists of a list of `bindings`. A `binding` binds a list of `members` to a `role`, where the members can be user accounts, Google groups, Google domains, and service accounts. A `role` is a named list of permissions defined by IAM.\n\n**JSON Example**\n\n{ \"bindings\": [ { \"role\": \"roles/owner\", \"members\": [ \"user:mike@example.com\", \"group:admins@example.com\", \"domain:google.com\", \"serviceAccount:my-other-app@appspot.gserviceaccount.com\" ] }, { \"role\": \"roles/viewer\", \"members\": [\"user:sean@example.com\"] } ] }\n\n**YAML Example**\n\nbindings: - members: - user:mike@example.com - group:admins@example.com - domain:google.com - serviceAccount:my-other-app@appspot.gserviceaccount.com role: roles/owner - members: - user:sean@example.com role: roles/viewer\n\n\n\nFor a description of IAM and its features, see the [IAM developer's guide](https://cloud.google.com/iam/docs).",
       "id": "Policy",
       "properties": {
         "auditConfigs": {

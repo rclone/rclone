@@ -448,6 +448,7 @@ type IdentifyResult struct {
 
 // ImageURL ...
 type ImageURL struct {
+	// URL - Publicly reachable URL of an image
 	URL *string `json:"url,omitempty"`
 }
 

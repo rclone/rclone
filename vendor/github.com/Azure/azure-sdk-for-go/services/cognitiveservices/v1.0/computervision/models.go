@@ -140,84 +140,69 @@ func PossibleGenderValues() []Gender {
 	return []Gender{Female, Male}
 }
 
-// Language1 enumerates the values for language 1.
-type Language1 string
-
-const (
-	// En ...
-	En Language1 = "en"
-	// Zh ...
-	Zh Language1 = "zh"
-)
-
-// PossibleLanguage1Values returns an array of possible values for the Language1 const type.
-func PossibleLanguage1Values() []Language1 {
-	return []Language1{En, Zh}
-}
-
 // OcrLanguages enumerates the values for ocr languages.
 type OcrLanguages string
 
 const (
-	// OcrLanguagesAr ...
-	OcrLanguagesAr OcrLanguages = "ar"
-	// OcrLanguagesCs ...
-	OcrLanguagesCs OcrLanguages = "cs"
-	// OcrLanguagesDa ...
-	OcrLanguagesDa OcrLanguages = "da"
-	// OcrLanguagesDe ...
-	OcrLanguagesDe OcrLanguages = "de"
-	// OcrLanguagesEl ...
-	OcrLanguagesEl OcrLanguages = "el"
-	// OcrLanguagesEn ...
-	OcrLanguagesEn OcrLanguages = "en"
-	// OcrLanguagesEs ...
-	OcrLanguagesEs OcrLanguages = "es"
-	// OcrLanguagesFi ...
-	OcrLanguagesFi OcrLanguages = "fi"
-	// OcrLanguagesFr ...
-	OcrLanguagesFr OcrLanguages = "fr"
-	// OcrLanguagesHu ...
-	OcrLanguagesHu OcrLanguages = "hu"
-	// OcrLanguagesIt ...
-	OcrLanguagesIt OcrLanguages = "it"
-	// OcrLanguagesJa ...
-	OcrLanguagesJa OcrLanguages = "ja"
-	// OcrLanguagesKo ...
-	OcrLanguagesKo OcrLanguages = "ko"
-	// OcrLanguagesNb ...
-	OcrLanguagesNb OcrLanguages = "nb"
-	// OcrLanguagesNl ...
-	OcrLanguagesNl OcrLanguages = "nl"
-	// OcrLanguagesPl ...
-	OcrLanguagesPl OcrLanguages = "pl"
-	// OcrLanguagesPt ...
-	OcrLanguagesPt OcrLanguages = "pt"
-	// OcrLanguagesRo ...
-	OcrLanguagesRo OcrLanguages = "ro"
-	// OcrLanguagesRu ...
-	OcrLanguagesRu OcrLanguages = "ru"
-	// OcrLanguagesSk ...
-	OcrLanguagesSk OcrLanguages = "sk"
-	// OcrLanguagesSrCyrl ...
-	OcrLanguagesSrCyrl OcrLanguages = "sr-Cyrl"
-	// OcrLanguagesSrLatn ...
-	OcrLanguagesSrLatn OcrLanguages = "sr-Latn"
-	// OcrLanguagesSv ...
-	OcrLanguagesSv OcrLanguages = "sv"
-	// OcrLanguagesTr ...
-	OcrLanguagesTr OcrLanguages = "tr"
-	// OcrLanguagesUnk ...
-	OcrLanguagesUnk OcrLanguages = "unk"
-	// OcrLanguagesZhHans ...
-	OcrLanguagesZhHans OcrLanguages = "zh-Hans"
-	// OcrLanguagesZhHant ...
-	OcrLanguagesZhHant OcrLanguages = "zh-Hant"
+	// Ar ...
+	Ar OcrLanguages = "ar"
+	// Cs ...
+	Cs OcrLanguages = "cs"
+	// Da ...
+	Da OcrLanguages = "da"
+	// De ...
+	De OcrLanguages = "de"
+	// El ...
+	El OcrLanguages = "el"
+	// En ...
+	En OcrLanguages = "en"
+	// Es ...
+	Es OcrLanguages = "es"
+	// Fi ...
+	Fi OcrLanguages = "fi"
+	// Fr ...
+	Fr OcrLanguages = "fr"
+	// Hu ...
+	Hu OcrLanguages = "hu"
+	// It ...
+	It OcrLanguages = "it"
+	// Ja ...
+	Ja OcrLanguages = "ja"
+	// Ko ...
+	Ko OcrLanguages = "ko"
+	// Nb ...
+	Nb OcrLanguages = "nb"
+	// Nl ...
+	Nl OcrLanguages = "nl"
+	// Pl ...
+	Pl OcrLanguages = "pl"
+	// Pt ...
+	Pt OcrLanguages = "pt"
+	// Ro ...
+	Ro OcrLanguages = "ro"
+	// Ru ...
+	Ru OcrLanguages = "ru"
+	// Sk ...
+	Sk OcrLanguages = "sk"
+	// SrCyrl ...
+	SrCyrl OcrLanguages = "sr-Cyrl"
+	// SrLatn ...
+	SrLatn OcrLanguages = "sr-Latn"
+	// Sv ...
+	Sv OcrLanguages = "sv"
+	// Tr ...
+	Tr OcrLanguages = "tr"
+	// Unk ...
+	Unk OcrLanguages = "unk"
+	// ZhHans ...
+	ZhHans OcrLanguages = "zh-Hans"
+	// ZhHant ...
+	ZhHant OcrLanguages = "zh-Hant"
 )
 
 // PossibleOcrLanguagesValues returns an array of possible values for the OcrLanguages const type.
 func PossibleOcrLanguagesValues() []OcrLanguages {
-	return []OcrLanguages{OcrLanguagesAr, OcrLanguagesCs, OcrLanguagesDa, OcrLanguagesDe, OcrLanguagesEl, OcrLanguagesEn, OcrLanguagesEs, OcrLanguagesFi, OcrLanguagesFr, OcrLanguagesHu, OcrLanguagesIt, OcrLanguagesJa, OcrLanguagesKo, OcrLanguagesNb, OcrLanguagesNl, OcrLanguagesPl, OcrLanguagesPt, OcrLanguagesRo, OcrLanguagesRu, OcrLanguagesSk, OcrLanguagesSrCyrl, OcrLanguagesSrLatn, OcrLanguagesSv, OcrLanguagesTr, OcrLanguagesUnk, OcrLanguagesZhHans, OcrLanguagesZhHant}
+	return []OcrLanguages{Ar, Cs, Da, De, El, En, Es, Fi, Fr, Hu, It, Ja, Ko, Nb, Nl, Pl, Pt, Ro, Ru, Sk, SrCyrl, SrLatn, Sv, Tr, Unk, ZhHans, ZhHant}
 }
 
 // TextOperationStatusCodes enumerates the values for text operation status codes.
@@ -281,8 +266,7 @@ type Category struct {
 	// Name - Name of the category.
 	Name *string `json:"name,omitempty"`
 	// Score - Scoring of the category.
-	Score *float64 `json:"score,omitempty"`
-	// Detail - Additional category detail if available.
+	Score  *float64        `json:"score,omitempty"`
 	Detail *CategoryDetail `json:"detail,omitempty"`
 }
 
@@ -323,13 +307,11 @@ type DomainModelResult struct {
 
 // DomainModelResults result of image analysis using a specific domain model including additional metadata.
 type DomainModelResults struct {
-	autorest.Response `json:"-"`
-	// DomainModelResult - Result of the image analysis.
+	autorest.Response  `json:"-"`
 	*DomainModelResult `json:"result,omitempty"`
 	// RequestID - Id of the REST API request.
-	RequestID *string `json:"requestId,omitempty"`
-	// Metadata - Additional image metadata
-	Metadata *ImageMetadata `json:"metadata,omitempty"`
+	RequestID *string        `json:"requestId,omitempty"`
+	Metadata  *ImageMetadata `json:"metadata,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for DomainModelResults.
@@ -425,22 +407,17 @@ type ImageAnalysis struct {
 	autorest.Response `json:"-"`
 	// Categories - An array indicating identified categories.
 	Categories *[]Category `json:"categories,omitempty"`
-	// Adult - A property scoring on whether the image is adult-oriented and/or racy.
-	Adult *AdultInfo `json:"adult,omitempty"`
-	// Color - A property scoring on color spectrums.
-	Color *ColorInfo `json:"color,omitempty"`
-	// ImageType - A property indicating type of image (whether it's clipart or line drawing)
-	ImageType *ImageType `json:"imageType,omitempty"`
+	Adult      *AdultInfo  `json:"adult,omitempty"`
+	Color      *ColorInfo  `json:"color,omitempty"`
+	ImageType  *ImageType  `json:"imageType,omitempty"`
 	// Tags - A list of tags with confidence level.
-	Tags *[]ImageTag `json:"tags,omitempty"`
-	// Description - Description of the image.
+	Tags        *[]ImageTag              `json:"tags,omitempty"`
 	Description *ImageDescriptionDetails `json:"description,omitempty"`
 	// Faces - An array of possible faces within the image.
 	Faces *[]FaceDescription `json:"faces,omitempty"`
 	// RequestID - Id of the request for tracking purposes.
-	RequestID *string `json:"requestId,omitempty"`
-	// Metadata - Image metadata
-	Metadata *ImageMetadata `json:"metadata,omitempty"`
+	RequestID *string        `json:"requestId,omitempty"`
+	Metadata  *ImageMetadata `json:"metadata,omitempty"`
 }
 
 // ImageCaption an image caption, i.e. a brief description of what the image depicts.
@@ -499,9 +476,8 @@ type ImageDescriptionDetails struct {
 	// Captions - A list of captions, sorted by confidence level.
 	Captions *[]ImageCaption `json:"captions,omitempty"`
 	// RequestID - Id of the REST API request.
-	RequestID *string `json:"requestId,omitempty"`
-	// Metadata - Image metadata
-	Metadata *ImageMetadata `json:"metadata,omitempty"`
+	RequestID *string        `json:"requestId,omitempty"`
+	Metadata  *ImageMetadata `json:"metadata,omitempty"`
 }
 
 // ImageMetadata image metadata
@@ -532,6 +508,7 @@ type ImageType struct {
 
 // ImageURL ...
 type ImageURL struct {
+	// URL - Publicly reachable URL of an image
 	URL *string `json:"url,omitempty"`
 }
 
@@ -607,9 +584,8 @@ type TagResult struct {
 	// Tags - A list of tags with confidence level.
 	Tags *[]ImageTag `json:"tags,omitempty"`
 	// RequestID - Id of the REST API request.
-	RequestID *string `json:"requestId,omitempty"`
-	// Metadata - Image metadata
-	Metadata *ImageMetadata `json:"metadata,omitempty"`
+	RequestID *string        `json:"requestId,omitempty"`
+	Metadata  *ImageMetadata `json:"metadata,omitempty"`
 }
 
 // TextOperationResult ...

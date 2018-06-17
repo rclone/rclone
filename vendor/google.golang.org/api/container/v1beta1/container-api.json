@@ -202,6 +202,31 @@
               "scopes": [
                 "https://www.googleapis.com/auth/cloud-platform"
               ]
+            },
+            "list": {
+              "description": "",
+              "flatPath": "v1beta1/projects/{projectsId}/locations",
+              "httpMethod": "GET",
+              "id": "container.projects.locations.list",
+              "parameterOrder": [
+                "parent"
+              ],
+              "parameters": {
+                "parent": {
+                  "description": "Contains the name of the resource requested.\nSpecific in the format 'projects/*/locations'.",
+                  "location": "path",
+                  "pattern": "^projects/[^/]+$",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "path": "v1beta1/{+parent}/locations",
+              "response": {
+                "$ref": "ListLocationsResponse"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ]
             }
           },
           "resources": {
@@ -304,7 +329,7 @@
                   ]
                 },
                 "get": {
-                  "description": "Gets the details of a specific cluster.",
+                  "description": "Gets the details for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
                   "httpMethod": "GET",
                   "id": "container.projects.locations.clusters.get",
@@ -379,7 +404,7 @@
                   ]
                 },
                 "setAddons": {
-                  "description": "Sets the addons of a specific cluster.",
+                  "description": "Sets the addons for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setAddons",
                   "httpMethod": "POST",
                   "id": "container.projects.locations.clusters.setAddons",
@@ -435,7 +460,7 @@
                   ]
                 },
                 "setLocations": {
-                  "description": "Sets the locations of a specific cluster.",
+                  "description": "Sets the locations for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLocations",
                   "httpMethod": "POST",
                   "id": "container.projects.locations.clusters.setLocations",
@@ -463,7 +488,7 @@
                   ]
                 },
                 "setLogging": {
-                  "description": "Sets the logging service of a specific cluster.",
+                  "description": "Sets the logging service for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setLogging",
                   "httpMethod": "POST",
                   "id": "container.projects.locations.clusters.setLogging",
@@ -519,7 +544,7 @@
                   ]
                 },
                 "setMasterAuth": {
-                  "description": "Used to set master auth materials. Currently supports :-\nChanging the admin password of a specific cluster.\nThis can be either via password generation or explicitly set.\nModify basic_auth.csv and reset the K8S API server.",
+                  "description": "Used to set master auth materials. Currently supports :-\nChanging the admin password for a specific cluster.\nThis can be either via password generation or explicitly set.\nModify basic_auth.csv and reset the K8S API server.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setMasterAuth",
                   "httpMethod": "POST",
                   "id": "container.projects.locations.clusters.setMasterAuth",
@@ -547,7 +572,7 @@
                   ]
                 },
                 "setMonitoring": {
-                  "description": "Sets the monitoring service of a specific cluster.",
+                  "description": "Sets the monitoring service for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:setMonitoring",
                   "httpMethod": "POST",
                   "id": "container.projects.locations.clusters.setMonitoring",
@@ -659,7 +684,7 @@
                   ]
                 },
                 "update": {
-                  "description": "Updates the settings of a specific cluster.",
+                  "description": "Updates the settings for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}",
                   "httpMethod": "PUT",
                   "id": "container.projects.locations.clusters.update",
@@ -687,7 +712,7 @@
                   ]
                 },
                 "updateMaster": {
-                  "description": "Updates the master of a specific cluster.",
+                  "description": "Updates the master for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}:updateMaster",
                   "httpMethod": "POST",
                   "id": "container.projects.locations.clusters.updateMaster",
@@ -961,7 +986,7 @@
                       ]
                     },
                     "setSize": {
-                      "description": "Sets the size of a specific node pool.",
+                      "description": "Sets the size for a specific node pool.",
                       "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/clusters/{clustersId}/nodePools/{nodePoolsId}:setSize",
                       "httpMethod": "POST",
                       "id": "container.projects.locations.clusters.nodePools.setSize",
@@ -1172,7 +1197,7 @@
             "clusters": {
               "methods": {
                 "addons": {
-                  "description": "Sets the addons of a specific cluster.",
+                  "description": "Sets the addons for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/addons",
                   "httpMethod": "POST",
                   "id": "container.projects.zones.clusters.addons",
@@ -1331,7 +1356,7 @@
                   ]
                 },
                 "get": {
-                  "description": "Gets the details of a specific cluster.",
+                  "description": "Gets the details for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
                   "httpMethod": "GET",
                   "id": "container.projects.zones.clusters.get",
@@ -1451,7 +1476,7 @@
                   ]
                 },
                 "locations": {
-                  "description": "Sets the locations of a specific cluster.",
+                  "description": "Sets the locations for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/locations",
                   "httpMethod": "POST",
                   "id": "container.projects.zones.clusters.locations",
@@ -1492,7 +1517,7 @@
                   ]
                 },
                 "logging": {
-                  "description": "Sets the logging service of a specific cluster.",
+                  "description": "Sets the logging service for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/logging",
                   "httpMethod": "POST",
                   "id": "container.projects.zones.clusters.logging",
@@ -1533,7 +1558,7 @@
                   ]
                 },
                 "master": {
-                  "description": "Updates the master of a specific cluster.",
+                  "description": "Updates the master for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/master",
                   "httpMethod": "POST",
                   "id": "container.projects.zones.clusters.master",
@@ -1574,7 +1599,7 @@
                   ]
                 },
                 "monitoring": {
-                  "description": "Sets the monitoring service of a specific cluster.",
+                  "description": "Sets the monitoring service for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/monitoring",
                   "httpMethod": "POST",
                   "id": "container.projects.zones.clusters.monitoring",
@@ -1697,7 +1722,7 @@
                   ]
                 },
                 "setMasterAuth": {
-                  "description": "Used to set master auth materials. Currently supports :-\nChanging the admin password of a specific cluster.\nThis can be either via password generation or explicitly set.\nModify basic_auth.csv and reset the K8S API server.",
+                  "description": "Used to set master auth materials. Currently supports :-\nChanging the admin password for a specific cluster.\nThis can be either via password generation or explicitly set.\nModify basic_auth.csv and reset the K8S API server.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}:setMasterAuth",
                   "httpMethod": "POST",
                   "id": "container.projects.zones.clusters.setMasterAuth",
@@ -1820,7 +1845,7 @@
                   ]
                 },
                 "update": {
-                  "description": "Updates the settings of a specific cluster.",
+                  "description": "Updates the settings for a specific cluster.",
                   "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}",
                   "httpMethod": "PUT",
                   "id": "container.projects.zones.clusters.update",
@@ -2193,7 +2218,7 @@
                       ]
                     },
                     "setSize": {
-                      "description": "Sets the size of a specific node pool.",
+                      "description": "Sets the size for a specific node pool.",
                       "flatPath": "v1beta1/projects/{projectId}/zones/{zone}/clusters/{clusterId}/nodePools/{nodePoolId}/setSize",
                       "httpMethod": "POST",
                       "id": "container.projects.zones.clusters.nodePools.setSize",
@@ -2421,7 +2446,7 @@
       }
     }
   },
-  "revision": "20180412",
+  "revision": "20180524",
   "rootUrl": "https://container.googleapis.com/",
   "schemas": {
     "AcceleratorConfig": {
@@ -2474,6 +2499,17 @@
         "description": {
           "description": "[Output only] This field is set when upgrades are about to commence\nwith the description of the upgrade.",
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BinaryAuthorization": {
+      "description": "Configuration for Binary Authorization.",
+      "id": "BinaryAuthorization",
+      "properties": {
+        "enabled": {
+          "description": "Enable Binary Authorization for this cluster. If enabled, all container\nimages will be validated by Google Binauthz.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -2534,6 +2570,10 @@
         "addonsConfig": {
           "$ref": "AddonsConfig",
           "description": "Configurations for the various addons available to run in the cluster."
+        },
+        "binaryAuthorization": {
+          "$ref": "BinaryAuthorization",
+          "description": "Configuration for Binary Authorization."
         },
         "clusterIpv4Cidr": {
           "description": "The IP address range of the container pods in this cluster, in\n[CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)\nnotation (e.g. `10.96.0.0/14`). Leave blank to have\none automatically chosen or specify a `/14` block in `10.0.0.0/8`.",
@@ -2734,6 +2774,10 @@
         "desiredAddonsConfig": {
           "$ref": "AddonsConfig",
           "description": "Configurations for the various addons available to run in the cluster."
+        },
+        "desiredBinaryAuthorization": {
+          "$ref": "BinaryAuthorization",
+          "description": "The desired configuration options for the Binary Authorization feature."
         },
         "desiredImageType": {
           "description": "The desired image type for the node pool.\nNOTE: Set the \"desired_node_pool\" field as well.",
@@ -2991,6 +3035,24 @@
       },
       "type": "object"
     },
+    "ListLocationsResponse": {
+      "description": "ListLocationsResponse returns the list of all GKE locations and their\nrecommendation state.",
+      "id": "ListLocationsResponse",
+      "properties": {
+        "locations": {
+          "description": "A full list of GKE locations.",
+          "items": {
+            "$ref": "Location"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "Only return ListLocationsResponse that occur after the page_token. This\nvalue should be populated from the ListLocationsResponse.next_page_token if\nthat response token was set (which happens when listing more Locations than\nfit in a single ListLocationsResponse).",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ListNodePoolsResponse": {
       "description": "ListNodePoolsResponse is the result of ListNodePoolsRequest.",
       "id": "ListNodePoolsResponse",
@@ -3040,6 +3102,35 @@
             "$ref": "UsableSubnetwork"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Location": {
+      "description": "Location returns the location name, and if the location is recommended\nfor GKE cluster scheduling.",
+      "id": "Location",
+      "properties": {
+        "name": {
+          "description": "Contains the name of the resource requested.\nSpecific in the format 'projects/*/locations/*'.",
+          "type": "string"
+        },
+        "recommended": {
+          "description": "Recommended is a bool combining the drain state of the location (ie- has\nthe region been drained manually?), and the stockout status of any zone\naccording to Zone Advisor. This will be internal only for use by pantheon.",
+          "type": "boolean"
+        },
+        "type": {
+          "description": "Contains the type of location this Location is for.\nRegional or Zonal.",
+          "enum": [
+            "LOCATION_TYPE_UNSPECIFIED",
+            "ZONE",
+            "REGION"
+          ],
+          "enumDescriptions": [
+            "LOCATION_TYPE_UNSPECIFIED means the location type was not determined.",
+            "A GKE Location where Zonal clusters can be created.",
+            "A GKE Location where Regional clusters can be created."
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -3115,6 +3206,31 @@
       },
       "type": "object"
     },
+    "Metric": {
+      "description": "Progress metric is (string, int|float|string) pair.",
+      "id": "Metric",
+      "properties": {
+        "doubleValue": {
+          "description": "For metrics with floating point value.",
+          "format": "double",
+          "type": "number"
+        },
+        "intValue": {
+          "description": "For metrics with integer value.",
+          "format": "int64",
+          "type": "string"
+        },
+        "name": {
+          "description": "Metric name, required.\ne.g., \"nodes total\", \"percent done\"",
+          "type": "string"
+        },
+        "stringValue": {
+          "description": "For metrics with custom values (ratios, visual progress, etc.).",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "NetworkConfig": {
       "description": "NetworkConfig reports the relative names of network \u0026 subnetwork.",
       "id": "NetworkConfig",
@@ -3179,6 +3295,10 @@
           "description": "Size of the disk attached to each node, specified in GB.\nThe smallest allowed disk size is 10GB.\n\nIf unspecified, the default disk size is 100GB.",
           "format": "int32",
           "type": "integer"
+        },
+        "diskType": {
+          "description": "Type of the disk attached to each node (e.g. 'pd-standard' or 'pd-ssd')\n\nIf unspecified, the default disk type is 'pd-standard'",
+          "type": "string"
         },
         "imageType": {
           "description": "The image type to use for this node. Note that for a given image type,\nthe latest version of it will be used.",
@@ -3449,6 +3569,10 @@
           ],
           "type": "string"
         },
+        "progress": {
+          "$ref": "OperationProgress",
+          "description": "[Output only] Progress information for an operation."
+        },
         "selfLink": {
           "description": "Server-defined URL for the resource.",
           "type": "string"
@@ -3485,6 +3609,49 @@
         },
         "zone": {
           "description": "The name of the Google Compute Engine\n[zone](/compute/docs/zones#available) in which the operation\nis taking place.\nThis field is deprecated, use location instead.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "OperationProgress": {
+      "description": "Information about operation (or operation stage) progress.",
+      "id": "OperationProgress",
+      "properties": {
+        "metrics": {
+          "description": "Progress metric bundle, for example:\n  metrics: [{name: \"nodes done\",     int_value: 15},\n            {name: \"nodes total\",    int_value: 32}]\nor\n  metrics: [{name: \"progress\",       double_value: 0.56},\n            {name: \"progress scale\", double_value: 1.0}]",
+          "items": {
+            "$ref": "Metric"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "A non-parameterized string describing an operation stage.\nUnset for single-stage operations.",
+          "type": "string"
+        },
+        "stages": {
+          "description": "Substages of an operation or a stage.",
+          "items": {
+            "$ref": "OperationProgress"
+          },
+          "type": "array"
+        },
+        "status": {
+          "description": "Status of an operation stage.\nUnset for single-stage operations.",
+          "enum": [
+            "STATUS_UNSPECIFIED",
+            "PENDING",
+            "RUNNING",
+            "DONE",
+            "ABORTING"
+          ],
+          "enumDescriptions": [
+            "Not set.",
+            "The operation has been created.",
+            "The operation is currently running.",
+            "The operation is done, either cancelled or completed.",
+            "The operation is aborting."
+          ],
           "type": "string"
         }
       },

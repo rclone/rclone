@@ -32,7 +32,7 @@ const (
 
 	// Maximum allowed depth when recursively substituing variable names.
 	_DEPTH_VALUES = 99
-	_VERSION      = "1.36.0"
+	_VERSION      = "1.37.0"
 )
 
 // Version returns current package version literal.
@@ -145,6 +145,11 @@ type LoadOptions struct {
 	// Relevant quote:  Values can also span multiple lines, as long as they are indented deeper
 	// than the first line of the value.
 	AllowPythonMultilineValues bool
+	// SpaceBeforeInlineComment indicates whether to allow comment symbols (\# and \;) inside value.
+	// Docs: https://docs.python.org/2/library/configparser.html
+	// Quote: Comments may appear on their own in an otherwise empty line, or may be entered in lines holding values or section names.
+	// In the latter case, they need to be preceded by a whitespace character to be recognized as a comment.
+	SpaceBeforeInlineComment bool
 	// UnescapeValueDoubleQuotes indicates whether to unescape double quotes inside value to regular format
 	// when value is surrounded by double quotes, e.g. key="a \"value\"" => key=a "value"
 	UnescapeValueDoubleQuotes bool

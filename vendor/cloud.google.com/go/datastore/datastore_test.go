@@ -152,17 +152,19 @@ type NoOmit struct {
 }
 
 type OmitAll struct {
-	A string `datastore:",omitempty"`
-	B int    `datastore:"Bb,omitempty"`
-	C bool   `datastore:",omitempty,noindex"`
-	F []int  `datastore:",omitempty"`
+	A string    `datastore:",omitempty"`
+	B int       `datastore:"Bb,omitempty"`
+	C bool      `datastore:",omitempty,noindex"`
+	D time.Time `datastore:",omitempty"`
+	F []int     `datastore:",omitempty"`
 }
 
 type Omit struct {
-	A string `datastore:",omitempty"`
-	B int    `datastore:"Bb,omitempty"`
-	C bool   `datastore:",omitempty,noindex"`
-	F []int  `datastore:",omitempty"`
+	A string    `datastore:",omitempty"`
+	B int       `datastore:"Bb,omitempty"`
+	C bool      `datastore:",omitempty,noindex"`
+	D time.Time `datastore:",omitempty"`
+	F []int     `datastore:",omitempty"`
 	S `datastore:",omitempty"`
 }
 

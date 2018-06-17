@@ -42,7 +42,7 @@ func NewTagsClientWithBaseURI(baseURI string, subscriptionID string) TagsClient 
 
 // Get get all available tag keys for a billing account.
 // Parameters:
-// billingAccountID - azure Billing Account ID.
+// billingAccountID - billingAccount ID
 func (client TagsClient) Get(ctx context.Context, billingAccountID string) (result Tags, err error) {
 	req, err := client.GetPreparer(ctx, billingAccountID)
 	if err != nil {

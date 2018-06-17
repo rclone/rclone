@@ -76,6 +76,8 @@ type Client struct {
 	// Metadata to be sent with each request.
 	md           metadata.MD
 	idleSessions *sessionPool
+	// sessionLabels for the sessions created by this client.
+	sessionLabels map[string]string
 }
 
 // ClientConfig has configurations for the client.
@@ -86,6 +88,9 @@ type ClientConfig struct {
 	co          []option.ClientOption
 	// SessionPoolConfig is the configuration for session pool.
 	SessionPoolConfig
+	// SessionLabels for the sessions created by this client.
+	// See https://cloud.google.com/spanner/docs/reference/rpc/google.spanner.v1#session for more info.
+	SessionLabels map[string]string
 }
 
 // errDial returns error for dialing to Cloud Spanner.
@@ -126,6 +131,12 @@ func NewClientWithConfig(ctx context.Context, database string, config ClientConf
 			resourcePrefixHeader, database,
 			xGoogHeaderKey, xGoogHeaderVal),
 	}
+	// Make a copy of labels.
+	c.sessionLabels = make(map[string]string)
+	for k, v := range config.SessionLabels {
+		c.sessionLabels[k] = v
+	}
+	// gRPC options
 	allOpts := []option.ClientOption{
 		option.WithEndpoint(endpoint),
 		option.WithScopes(Scope),
@@ -141,7 +152,7 @@ func NewClientWithConfig(ctx context.Context, database string, config ClientConf
 	if config.NumChannels == 0 {
 		config.NumChannels = numChannels
 	}
-	// Default MaxOpened sessions
+	// Default configs for session pool.
 	if config.MaxOpened == 0 {
 		config.MaxOpened = uint64(config.NumChannels * 100)
 	}
@@ -161,6 +172,7 @@ func NewClientWithConfig(ctx context.Context, database string, config ClientConf
 		// TODO: support more loadbalancing options.
 		return c.rrNext(), nil
 	}
+	config.SessionPoolConfig.sessionLabels = c.sessionLabels
 	sp, err := newSessionPool(database, config.SessionPoolConfig, c.md)
 	if err != nil {
 		c.Close()
@@ -252,7 +264,7 @@ func (c *Client) BatchReadOnlyTransaction(ctx context.Context, tb TimestampBound
 	// create session
 	sc := c.rrNext()
 	err = runRetryable(ctx, func(ctx context.Context) error {
-		sid, e := sc.CreateSession(ctx, &sppb.CreateSessionRequest{Database: c.database})
+		sid, e := sc.CreateSession(ctx, &sppb.CreateSessionRequest{Database: c.database, Session: &sppb.Session{Labels: c.sessionLabels}})
 		if e != nil {
 			return e
 		}
@@ -430,8 +442,7 @@ func (c *Client) Apply(ctx context.Context, ms []*Mutation, opts ...ApplyOption)
 	}
 	if !ao.atLeastOnce {
 		return c.ReadWriteTransaction(ctx, func(ctx context.Context, t *ReadWriteTransaction) error {
-			t.BufferWrite(ms)
-			return nil
+			return t.BufferWrite(ms)
 		})
 	}
 

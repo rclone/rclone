@@ -42,11 +42,15 @@ func NewBotsClientWithBaseURI(baseURI string, subscriptionID string) BotsClient 
 
 // Create creates a Bot Service. Bot Service is a resource group wide resource type.
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 // parameters - the parameters to provide for the created bot.
 func (client BotsClient) Create(ctx context.Context, resourceGroupName string, resourceName string, parameters Bot) (result Bot, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -126,10 +130,14 @@ func (client BotsClient) CreateResponder(resp *http.Response) (result Bot, err e
 
 // Delete deletes a Bot Service from the resource group.
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 func (client BotsClient) Delete(ctx context.Context, resourceGroupName string, resourceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -200,10 +208,14 @@ func (client BotsClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // Get returns a BotService specified by the parameters.
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 func (client BotsClient) Get(ctx context.Context, resourceGroupName string, resourceName string) (result Bot, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},
@@ -427,8 +439,16 @@ func (client BotsClient) ListComplete(ctx context.Context) (result BotResponseLi
 
 // ListByResourceGroup returns all the resources of a particular type belonging to a resource group
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 func (client BotsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result BotResponseListPage, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("botservice.BotsClient", "ListByResourceGroup", err.Error())
+	}
+
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -520,11 +540,15 @@ func (client BotsClient) ListByResourceGroupComplete(ctx context.Context, resour
 
 // Update updates a Bot Service
 // Parameters:
-// resourceGroupName - the name of the resource group within the user's subscription.
+// resourceGroupName - the name of the Bot resource group in the user subscription.
 // resourceName - the name of the Bot resource.
 // parameters - the parameters to provide for the created bot.
 func (client BotsClient) Update(ctx context.Context, resourceGroupName string, resourceName string, parameters Bot) (result Bot, err error) {
 	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 2, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}},
 		{TargetValue: resourceName,
 			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "resourceName", Name: validation.MinLength, Rule: 2, Chain: nil},

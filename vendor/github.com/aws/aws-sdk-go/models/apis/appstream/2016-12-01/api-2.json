@@ -493,6 +493,16 @@
       "min":1,
       "sensitive":true
     },
+    "Action":{
+      "type":"string",
+      "enum":[
+        "CLIPBOARD_COPY_FROM_LOCAL_DEVICE",
+        "CLIPBOARD_COPY_TO_LOCAL_DEVICE",
+        "FILE_UPLOAD",
+        "FILE_DOWNLOAD",
+        "PRINTING_TO_LOCAL_DEVICE"
+      ]
+    },
     "Application":{
       "type":"structure",
       "members":{
@@ -685,7 +695,8 @@
         "DisplayName":{"shape":"DisplayName"},
         "StorageConnectors":{"shape":"StorageConnectorList"},
         "RedirectURL":{"shape":"RedirectURL"},
-        "FeedbackURL":{"shape":"FeedbackURL"}
+        "FeedbackURL":{"shape":"FeedbackURL"},
+        "UserSettings":{"shape":"UserSettingList"}
       }
     },
     "CreateStackResult":{
@@ -914,12 +925,21 @@
       "type":"string",
       "max":100
     },
+    "Domain":{
+      "type":"string",
+      "max":64
+    },
     "DomainJoinInfo":{
       "type":"structure",
       "members":{
         "DirectoryName":{"shape":"DirectoryName"},
         "OrganizationalUnitDistinguishedName":{"shape":"OrganizationalUnitDistinguishedName"}
       }
+    },
+    "DomainList":{
+      "type":"list",
+      "member":{"shape":"Domain"},
+      "max":10
     },
     "ErrorMessage":{"type":"string"},
     "ExpireSessionRequest":{
@@ -1247,6 +1267,13 @@
       "type":"list",
       "member":{"shape":"OrganizationalUnitDistinguishedName"}
     },
+    "Permission":{
+      "type":"string",
+      "enum":[
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
     "PlatformType":{
       "type":"string",
       "enum":["WINDOWS"]
@@ -1362,16 +1389,20 @@
         "StorageConnectors":{"shape":"StorageConnectorList"},
         "RedirectURL":{"shape":"RedirectURL"},
         "FeedbackURL":{"shape":"FeedbackURL"},
-        "StackErrors":{"shape":"StackErrors"}
+        "StackErrors":{"shape":"StackErrors"},
+        "UserSettings":{"shape":"UserSettingList"}
       }
     },
     "StackAttribute":{
       "type":"string",
       "enum":[
         "STORAGE_CONNECTORS",
+        "STORAGE_CONNECTOR_HOMEFOLDERS",
+        "STORAGE_CONNECTOR_GOOGLE_DRIVE",
         "REDIRECT_URL",
         "FEEDBACK_URL",
-        "THEME_NAME"
+        "THEME_NAME",
+        "USER_SETTINGS"
       ]
     },
     "StackAttributes":{
@@ -1456,7 +1487,8 @@
       "required":["ConnectorType"],
       "members":{
         "ConnectorType":{"shape":"StorageConnectorType"},
-        "ResourceIdentifier":{"shape":"ResourceIdentifier"}
+        "ResourceIdentifier":{"shape":"ResourceIdentifier"},
+        "Domains":{"shape":"DomainList"}
       }
     },
     "StorageConnectorList":{
@@ -1465,7 +1497,10 @@
     },
     "StorageConnectorType":{
       "type":"string",
-      "enum":["HOMEFOLDERS"]
+      "enum":[
+        "HOMEFOLDERS",
+        "GOOGLE_DRIVE"
+      ]
     },
     "StreamingUrlUserId":{
       "type":"string",
@@ -1600,7 +1635,8 @@
         },
         "RedirectURL":{"shape":"RedirectURL"},
         "FeedbackURL":{"shape":"FeedbackURL"},
-        "AttributesToDelete":{"shape":"StackAttributes"}
+        "AttributesToDelete":{"shape":"StackAttributes"},
+        "UserSettings":{"shape":"UserSettingList"}
       }
     },
     "UpdateStackResult":{
@@ -1613,6 +1649,22 @@
       "type":"string",
       "max":32,
       "min":2
+    },
+    "UserSetting":{
+      "type":"structure",
+      "required":[
+        "Action",
+        "Permission"
+      ],
+      "members":{
+        "Action":{"shape":"Action"},
+        "Permission":{"shape":"Permission"}
+      }
+    },
+    "UserSettingList":{
+      "type":"list",
+      "member":{"shape":"UserSetting"},
+      "min":1
     },
     "VisibilityType":{
       "type":"string",

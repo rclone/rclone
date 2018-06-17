@@ -3759,3 +3759,22 @@ func TestIssue20704Race(t *testing.T) {
 		resp.Body.Close()
 	}
 }
+
+func TestServer_Rejects_TooSmall(t *testing.T) {
+	testServerResponse(t, func(w http.ResponseWriter, r *http.Request) error {
+		return nil
+	}, func(st *serverTester) {
+		st.writeHeaders(HeadersFrameParam{
+			StreamID: 1, // clients send odd numbers
+			BlockFragment: st.encodeHeader(
+				":method", "POST",
+				"content-length", "4",
+			),
+			EndStream:  false, // to say DATA frames are coming
+			EndHeaders: true,
+		})
+		st.writeData(1, true, []byte("12345"))
+
+		st.wantRSTStream(1, ErrCodeProtocol)
+	})
+}

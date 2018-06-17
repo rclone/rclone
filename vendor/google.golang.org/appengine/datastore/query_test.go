@@ -464,7 +464,7 @@ func TestQueryToProto(t *testing.T) {
 		},
 		{
 			desc:  "standard query",
-			query: NewQuery("kind").Order("-I").Filter("I >", 17).Filter("U =", "Dave").Limit(7).Offset(42),
+			query: NewQuery("kind").Order("-I").Filter("I >", 17).Filter("U =", "Dave").Limit(7).Offset(42).BatchSize(5),
 			want: &pb.Query{
 				Kind: proto.String("kind"),
 				Filter: []*pb.Query_Filter{
@@ -497,6 +497,7 @@ func TestQueryToProto(t *testing.T) {
 				},
 				Limit:  proto.Int32(7),
 				Offset: proto.Int32(42),
+				Count:  proto.Int32(5),
 			},
 		},
 		{

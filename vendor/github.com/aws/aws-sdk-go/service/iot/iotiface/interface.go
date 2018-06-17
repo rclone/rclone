@@ -92,6 +92,10 @@ type IoTAPI interface {
 	CancelJobWithContext(aws.Context, *iot.CancelJobInput, ...request.Option) (*iot.CancelJobOutput, error)
 	CancelJobRequest(*iot.CancelJobInput) (*request.Request, *iot.CancelJobOutput)
 
+	CancelJobExecution(*iot.CancelJobExecutionInput) (*iot.CancelJobExecutionOutput, error)
+	CancelJobExecutionWithContext(aws.Context, *iot.CancelJobExecutionInput, ...request.Option) (*iot.CancelJobExecutionOutput, error)
+	CancelJobExecutionRequest(*iot.CancelJobExecutionInput) (*request.Request, *iot.CancelJobExecutionOutput)
+
 	ClearDefaultAuthorizer(*iot.ClearDefaultAuthorizerInput) (*iot.ClearDefaultAuthorizerOutput, error)
 	ClearDefaultAuthorizerWithContext(aws.Context, *iot.ClearDefaultAuthorizerInput, ...request.Option) (*iot.ClearDefaultAuthorizerOutput, error)
 	ClearDefaultAuthorizerRequest(*iot.ClearDefaultAuthorizerInput) (*request.Request, *iot.ClearDefaultAuthorizerOutput)
@@ -159,6 +163,14 @@ type IoTAPI interface {
 	DeleteCertificate(*iot.DeleteCertificateInput) (*iot.DeleteCertificateOutput, error)
 	DeleteCertificateWithContext(aws.Context, *iot.DeleteCertificateInput, ...request.Option) (*iot.DeleteCertificateOutput, error)
 	DeleteCertificateRequest(*iot.DeleteCertificateInput) (*request.Request, *iot.DeleteCertificateOutput)
+
+	DeleteJob(*iot.DeleteJobInput) (*iot.DeleteJobOutput, error)
+	DeleteJobWithContext(aws.Context, *iot.DeleteJobInput, ...request.Option) (*iot.DeleteJobOutput, error)
+	DeleteJobRequest(*iot.DeleteJobInput) (*request.Request, *iot.DeleteJobOutput)
+
+	DeleteJobExecution(*iot.DeleteJobExecutionInput) (*iot.DeleteJobExecutionOutput, error)
+	DeleteJobExecutionWithContext(aws.Context, *iot.DeleteJobExecutionInput, ...request.Option) (*iot.DeleteJobExecutionOutput, error)
+	DeleteJobExecutionRequest(*iot.DeleteJobExecutionInput) (*request.Request, *iot.DeleteJobExecutionOutput)
 
 	DeleteOTAUpdate(*iot.DeleteOTAUpdateInput) (*iot.DeleteOTAUpdateOutput, error)
 	DeleteOTAUpdateWithContext(aws.Context, *iot.DeleteOTAUpdateInput, ...request.Option) (*iot.DeleteOTAUpdateOutput, error)

@@ -23,6 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"golang.org/x/net/context"
 	btapb "google.golang.org/genproto/googleapis/bigtable/admin/v2"
 	btpb "google.golang.org/genproto/googleapis/bigtable/v2"
@@ -99,7 +101,9 @@ func TestConcurrentMutationsReadModifyAndGC(t *testing.T) {
 					RowKey:    []byte(fmt.Sprint(rand.Intn(100))),
 					Mutations: ms(),
 				}
-				s.MutateRow(ctx, req)
+				if _, err := s.MutateRow(ctx, req); err != nil {
+					panic(err) // can't use t.Fatal in goroutine
+				}
 			}
 		}()
 		wg.Add(1)
@@ -548,7 +552,9 @@ func TestReadRowsOrder(t *testing.T) {
 		}
 	}
 	for i := count; i > 0; i-- {
-		s.ReadModifyWriteRow(ctx, rmw(i))
+		if _, err := s.ReadModifyWriteRow(ctx, rmw(i)); err != nil {
+			t.Fatal(err)
+		}
 	}
 	req = &btpb.ReadRowsRequest{
 		TableName: tblInfo.Name,
@@ -618,6 +624,87 @@ func TestCheckAndMutateRowWithoutPredicate(t *testing.T) {
 		t.Errorf("CheckAndMutateRow error: %v", err)
 	} else if got, want := res.PredicateMatched, true; got != want {
 		t.Errorf("Invalid PredicateMatched value: got %t, want %t", got, want)
+	}
+}
+
+func TestServer_ReadModifyWriteRow(t *testing.T) {
+	s := &server{
+		tables: make(map[string]*table),
+	}
+
+	ctx := context.Background()
+	newTbl := btapb.Table{
+		ColumnFamilies: map[string]*btapb.ColumnFamily{
+			"cf": {GcRule: &btapb.GcRule{Rule: &btapb.GcRule_MaxNumVersions{MaxNumVersions: 1}}},
+		},
+	}
+	tbl, err := s.CreateTable(ctx, &btapb.CreateTableRequest{Parent: "cluster", TableId: "t", Table: &newTbl})
+	if err != nil {
+		t.Fatalf("Creating table: %v", err)
+	}
+
+	req := &btpb.ReadModifyWriteRowRequest{
+		TableName: tbl.Name,
+		RowKey:    []byte("row-key"),
+		Rules: []*btpb.ReadModifyWriteRule{
+			{
+				FamilyName:      "cf",
+				ColumnQualifier: []byte("q1"),
+				Rule: &btpb.ReadModifyWriteRule_AppendValue{
+					AppendValue: []byte("a"),
+				},
+			},
+			// multiple ops for same cell
+			{
+				FamilyName:      "cf",
+				ColumnQualifier: []byte("q1"),
+				Rule: &btpb.ReadModifyWriteRule_AppendValue{
+					AppendValue: []byte("b"),
+				},
+			},
+			// different cell whose qualifier should sort before the prior rules
+			{
+				FamilyName:      "cf",
+				ColumnQualifier: []byte("q0"),
+				Rule: &btpb.ReadModifyWriteRule_IncrementAmount{
+					IncrementAmount: 1,
+				},
+			},
+		},
+	}
+
+	got, err := s.ReadModifyWriteRow(ctx, req)
+
+	if err != nil {
+		t.Fatalf("ReadModifyWriteRow error: %v", err)
+	}
+
+	want := &btpb.ReadModifyWriteRowResponse{
+		Row: &btpb.Row{
+			Key: []byte("row-key"),
+			Families: []*btpb.Family{{
+				Name: "cf",
+				Columns: []*btpb.Column{
+					{
+						Qualifier: []byte("q0"),
+						Cells: []*btpb.Cell{{
+							Value: []byte{0, 0, 0, 0, 0, 0, 0, 1},
+						}},
+					},
+					{
+						Qualifier: []byte("q1"),
+						Cells: []*btpb.Cell{{
+							Value: []byte("ab"),
+						}},
+					},
+				},
+			}},
+		},
+	}
+
+	diff := cmp.Diff(got, want, cmpopts.IgnoreFields(btpb.Cell{}, "TimestampMicros"))
+	if diff != "" {
+		t.Errorf("unexpected response: %s", diff)
 	}
 }
 

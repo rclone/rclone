@@ -44,7 +44,7 @@ func NewCostTagsClientWithBaseURI(baseURI string, subscriptionID string) CostTag
 // requires latest eTag to be set in the request mandatorily. You may obtain the latest eTag by performing a get
 // operation. Create operation does not require eTag.
 // Parameters:
-// billingAccountID - azure Billing Account ID.
+// billingAccountID - billingAccount ID
 // parameters - parameters supplied to the Create cost tags operation.
 func (client CostTagsClient) CreateOrUpdate(ctx context.Context, billingAccountID string, parameters CostTags) (result CostTags, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, billingAccountID, parameters)
@@ -83,7 +83,7 @@ func (client CostTagsClient) CreateOrUpdatePreparer(ctx context.Context, billing
 		autorest.AsContentType("application/json; charset=utf-8"),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/providers/Microsoft.CostManagement/billingAccounts/{billingAccountId}/providers/Microsoft.Consumption/costTags", pathParameters),
+		autorest.WithPathParameters("/providers/Microsoft.Billing/billingAccounts/{billingAccountId}/providers/Microsoft.Consumption/costTags", pathParameters),
 		autorest.WithJSON(parameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
@@ -111,7 +111,7 @@ func (client CostTagsClient) CreateOrUpdateResponder(resp *http.Response) (resul
 
 // Get get cost tags for a billing account.
 // Parameters:
-// billingAccountID - azure Billing Account ID.
+// billingAccountID - billingAccount ID
 func (client CostTagsClient) Get(ctx context.Context, billingAccountID string) (result CostTags, err error) {
 	req, err := client.GetPreparer(ctx, billingAccountID)
 	if err != nil {
@@ -148,7 +148,7 @@ func (client CostTagsClient) GetPreparer(ctx context.Context, billingAccountID s
 	preparer := autorest.CreatePreparer(
 		autorest.AsGet(),
 		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/providers/Microsoft.CostManagement/billingAccounts/{billingAccountId}/providers/Microsoft.Consumption/costTags", pathParameters),
+		autorest.WithPathParameters("/providers/Microsoft.Billing/billingAccounts/{billingAccountId}/providers/Microsoft.Consumption/costTags", pathParameters),
 		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }

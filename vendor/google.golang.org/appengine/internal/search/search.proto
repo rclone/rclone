@@ -99,6 +99,12 @@ message Document {
   optional string language = 2 [default = "en"];
   repeated Field field = 3;
   optional int32 order_id = 4;
+  optional OrderIdSource order_id_source = 6 [default = SUPPLIED];
+
+  enum OrderIdSource {
+    DEFAULTED = 0;
+    SUPPLIED = 1;
+  }
 
   enum Storage {
     DISK = 0;

@@ -29,7 +29,7 @@
   "description": "Creates and runs virtual machines on Google Cloud Platform.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/compute/docs/reference/latest/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/lEZNlk_TKPcpkzZuUbkH7l21XY4\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/iIle7JnS-3QsRu7zF_GBvrXnSz4\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/compute_engine-16.png",
     "x32": "https://www.google.com/images/icons/product/compute_engine-32.png"
@@ -138,7 +138,7 @@
           ]
         },
         "get": {
-          "description": "Returns the specified accelerator type. Gets a list of available accelerator types by making a list() request.",
+          "description": "Returns the specified accelerator type.",
           "httpMethod": "GET",
           "id": "compute.acceleratorTypes.get",
           "parameterOrder": [
@@ -5263,6 +5263,11 @@
             "instance"
           ],
           "parameters": {
+            "forceAttach": {
+              "description": "Whether to force attach the disk even if it's currently attached to another instance. This is only available for regional disks.",
+              "location": "query",
+              "type": "boolean"
+            },
             "instance": {
               "description": "The instance name for this request.",
               "location": "path",
@@ -6770,6 +6775,55 @@
             "https://www.googleapis.com/auth/compute",
             "https://www.googleapis.com/auth/compute.readonly"
           ]
+        },
+        "patch": {
+          "description": "Updates the specified interconnect attachment with the data included in the request. This method supports PATCH semantics and uses the JSON merge patch format and processing rules.",
+          "httpMethod": "PATCH",
+          "id": "compute.interconnectAttachments.patch",
+          "parameterOrder": [
+            "project",
+            "region",
+            "interconnectAttachment"
+          ],
+          "parameters": {
+            "interconnectAttachment": {
+              "description": "Name of the interconnect attachment to patch.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region scoping this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/interconnectAttachments/{interconnectAttachment}",
+          "request": {
+            "$ref": "InterconnectAttachment"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
         }
       }
     },
@@ -6901,7 +6955,7 @@
           ]
         },
         "get": {
-          "description": "Returns the specified interconnect. Gets a list of available interconnects by making a list() request.",
+          "description": "Returns the specified interconnect. Get a list of available interconnects by making a list() request.",
           "httpMethod": "GET",
           "id": "compute.interconnects.get",
           "parameterOrder": [
@@ -7245,7 +7299,7 @@
           ]
         },
         "list": {
-          "description": "Retrieves the list of licenses available in the specified project. This method does not get any licenses that belong to other projects, including licenses attached to publicly-available images, like Debian 8. If you want to get a list of publicly-available licenses, use this method to make a request to the respective image project, such as debian-cloud or windows-cloud.",
+          "description": "Retrieves the list of licenses available in the specified project. This method does not get any licenses that belong to other projects, including licenses attached to publicly-available images, like Debian 9. If you want to get a list of publicly-available licenses, use this method to make a request to the respective image project, such as debian-cloud or windows-cloud.",
           "httpMethod": "GET",
           "id": "compute.licenses.list",
           "parameterOrder": [
@@ -9010,6 +9064,495 @@
           "path": "{project}/regions/{region}/commitments",
           "response": {
             "$ref": "CommitmentList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        }
+      }
+    },
+    "regionDiskTypes": {
+      "methods": {
+        "get": {
+          "description": "Returns the specified regional disk type. Gets a list of available disk types by making a list() request.",
+          "httpMethod": "GET",
+          "id": "compute.regionDiskTypes.get",
+          "parameterOrder": [
+            "project",
+            "region",
+            "diskType"
+          ],
+          "parameters": {
+            "diskType": {
+              "description": "Name of the disk type to return.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "The name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/diskTypes/{diskType}",
+          "response": {
+            "$ref": "DiskType"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        },
+        "list": {
+          "description": "Retrieves a list of regional disk types available to the specified project.",
+          "httpMethod": "GET",
+          "id": "compute.regionDiskTypes.list",
+          "parameterOrder": [
+            "project",
+            "region"
+          ],
+          "parameters": {
+            "filter": {
+              "description": "A filter expression that filters resources listed in the response. The expression must specify the field name, a comparison operator, and the value that you want to use for filtering. The value must be a string, a number, or a boolean. The comparison operator must be either =, !=, \u003e, or \u003c.\n\nFor example, if you are filtering Compute Engine instances, you can exclude instances named example-instance by specifying name != example-instance.\n\nYou can also filter nested fields. For example, you could specify scheduling.automaticRestart = false to include instances only if they are not scheduled for automatic restarts. You can use filtering on nested fields to filter based on resource labels.\n\nTo filter on multiple expressions, provide each separate expression within parentheses. For example, (scheduling.automaticRestart = true) (cpuPlatform = \"Intel Skylake\"). By default, each expression is an AND expression. However, you can include AND and OR expressions explicitly. For example, (cpuPlatform = \"Intel Skylake\") OR (cpuPlatform = \"Intel Broadwell\") AND (scheduling.automaticRestart = true).",
+              "location": "query",
+              "type": "string"
+            },
+            "maxResults": {
+              "default": "500",
+              "description": "The maximum number of results per page that should be returned. If the number of available results is larger than maxResults, Compute Engine returns a nextPageToken that can be used to get the next page of results in subsequent list requests. Acceptable values are 0 to 500, inclusive. (Default: 500)",
+              "format": "uint32",
+              "location": "query",
+              "minimum": "0",
+              "type": "integer"
+            },
+            "orderBy": {
+              "description": "Sorts list results by a certain order. By default, results are returned in alphanumerical order based on the resource name.\n\nYou can also sort results in descending order based on the creation timestamp using orderBy=\"creationTimestamp desc\". This sorts results based on the creationTimestamp field in reverse chronological order (newest result first). Use this to sort resources like operations so that the newest operation is returned first.\n\nCurrently, only sorting by name or creationTimestamp desc is supported.",
+              "location": "query",
+              "type": "string"
+            },
+            "pageToken": {
+              "description": "Specifies a page token to use. Set pageToken to the nextPageToken returned by a previous list request to get the next page of results.",
+              "location": "query",
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "The name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/diskTypes",
+          "response": {
+            "$ref": "RegionDiskTypeList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        }
+      }
+    },
+    "regionDisks": {
+      "methods": {
+        "createSnapshot": {
+          "description": "Creates a snapshot of this regional disk.",
+          "httpMethod": "POST",
+          "id": "compute.regionDisks.createSnapshot",
+          "parameterOrder": [
+            "project",
+            "region",
+            "disk"
+          ],
+          "parameters": {
+            "disk": {
+              "description": "Name of the regional persistent disk to snapshot.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks/{disk}/createSnapshot",
+          "request": {
+            "$ref": "Snapshot"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "delete": {
+          "description": "Deletes the specified regional persistent disk. Deleting a regional disk removes all the replicas of its data permanently and is irreversible. However, deleting a disk does not delete any snapshots previously made from the disk. You must separately delete snapshots.",
+          "httpMethod": "DELETE",
+          "id": "compute.regionDisks.delete",
+          "parameterOrder": [
+            "project",
+            "region",
+            "disk"
+          ],
+          "parameters": {
+            "disk": {
+              "description": "Name of the regional persistent disk to delete.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks/{disk}",
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "get": {
+          "description": "Returns a specified regional persistent disk.",
+          "httpMethod": "GET",
+          "id": "compute.regionDisks.get",
+          "parameterOrder": [
+            "project",
+            "region",
+            "disk"
+          ],
+          "parameters": {
+            "disk": {
+              "description": "Name of the regional persistent disk to return.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks/{disk}",
+          "response": {
+            "$ref": "Disk"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        },
+        "insert": {
+          "description": "Creates a persistent regional disk in the specified project using the data included in the request.",
+          "httpMethod": "POST",
+          "id": "compute.regionDisks.insert",
+          "parameterOrder": [
+            "project",
+            "region"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            },
+            "sourceImage": {
+              "description": "Optional. Source image to restore onto a disk.",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks",
+          "request": {
+            "$ref": "Disk"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "list": {
+          "description": "Retrieves the list of persistent disks contained within the specified region.",
+          "httpMethod": "GET",
+          "id": "compute.regionDisks.list",
+          "parameterOrder": [
+            "project",
+            "region"
+          ],
+          "parameters": {
+            "filter": {
+              "description": "A filter expression that filters resources listed in the response. The expression must specify the field name, a comparison operator, and the value that you want to use for filtering. The value must be a string, a number, or a boolean. The comparison operator must be either =, !=, \u003e, or \u003c.\n\nFor example, if you are filtering Compute Engine instances, you can exclude instances named example-instance by specifying name != example-instance.\n\nYou can also filter nested fields. For example, you could specify scheduling.automaticRestart = false to include instances only if they are not scheduled for automatic restarts. You can use filtering on nested fields to filter based on resource labels.\n\nTo filter on multiple expressions, provide each separate expression within parentheses. For example, (scheduling.automaticRestart = true) (cpuPlatform = \"Intel Skylake\"). By default, each expression is an AND expression. However, you can include AND and OR expressions explicitly. For example, (cpuPlatform = \"Intel Skylake\") OR (cpuPlatform = \"Intel Broadwell\") AND (scheduling.automaticRestart = true).",
+              "location": "query",
+              "type": "string"
+            },
+            "maxResults": {
+              "default": "500",
+              "description": "The maximum number of results per page that should be returned. If the number of available results is larger than maxResults, Compute Engine returns a nextPageToken that can be used to get the next page of results in subsequent list requests. Acceptable values are 0 to 500, inclusive. (Default: 500)",
+              "format": "uint32",
+              "location": "query",
+              "minimum": "0",
+              "type": "integer"
+            },
+            "orderBy": {
+              "description": "Sorts list results by a certain order. By default, results are returned in alphanumerical order based on the resource name.\n\nYou can also sort results in descending order based on the creation timestamp using orderBy=\"creationTimestamp desc\". This sorts results based on the creationTimestamp field in reverse chronological order (newest result first). Use this to sort resources like operations so that the newest operation is returned first.\n\nCurrently, only sorting by name or creationTimestamp desc is supported.",
+              "location": "query",
+              "type": "string"
+            },
+            "pageToken": {
+              "description": "Specifies a page token to use. Set pageToken to the nextPageToken returned by a previous list request to get the next page of results.",
+              "location": "query",
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks",
+          "response": {
+            "$ref": "DiskList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/compute.readonly"
+          ]
+        },
+        "resize": {
+          "description": "Resizes the specified regional persistent disk.",
+          "httpMethod": "POST",
+          "id": "compute.regionDisks.resize",
+          "parameterOrder": [
+            "project",
+            "region",
+            "disk"
+          ],
+          "parameters": {
+            "disk": {
+              "description": "Name of the regional persistent disk.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "The project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks/{disk}/resize",
+          "request": {
+            "$ref": "RegionDisksResizeRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "setLabels": {
+          "description": "Sets the labels on the target regional disk.",
+          "httpMethod": "POST",
+          "id": "compute.regionDisks.setLabels",
+          "parameterOrder": [
+            "project",
+            "region",
+            "resource"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "The region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            },
+            "resource": {
+              "description": "Name of the resource for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks/{resource}/setLabels",
+          "request": {
+            "$ref": "RegionSetLabelsRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
+        "testIamPermissions": {
+          "description": "Returns permissions that a caller has on the specified resource.",
+          "httpMethod": "POST",
+          "id": "compute.regionDisks.testIamPermissions",
+          "parameterOrder": [
+            "project",
+            "region",
+            "resource"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "The name of the region for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            },
+            "resource": {
+              "description": "Name of the resource for this request.",
+              "location": "path",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/regions/{region}/disks/{resource}/testIamPermissions",
+          "request": {
+            "$ref": "TestPermissionsRequest"
+          },
+          "response": {
+            "$ref": "TestPermissionsResponse"
           },
           "scopes": [
             "https://www.googleapis.com/auth/cloud-platform",
@@ -11878,6 +12421,46 @@
             "https://www.googleapis.com/auth/compute.readonly"
           ]
         },
+        "setQuicOverride": {
+          "description": "Sets the QUIC override policy for TargetHttpsProxy.",
+          "httpMethod": "POST",
+          "id": "compute.targetHttpsProxies.setQuicOverride",
+          "parameterOrder": [
+            "project",
+            "targetHttpsProxy"
+          ],
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "location": "path",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "required": true,
+              "type": "string"
+            },
+            "requestId": {
+              "description": "An optional request ID to identify requests. Specify a unique request ID so that if you must retry your request, the server will know to ignore the request if it has already been completed.\n\nFor example, consider a situation where you make an initial request and the request times out. If you make the request again with the same request ID, the server can check if original operation with the same request ID was received, and if so, will ignore the second request. This prevents clients from accidentally creating duplicate commitments.\n\nThe request ID must be a valid UUID with the exception that zero UUID is not supported (00000000-0000-0000-0000-000000000000).",
+              "location": "query",
+              "type": "string"
+            },
+            "targetHttpsProxy": {
+              "description": "Name of the TargetHttpsProxy resource to set the QUIC override policy for. The name should conform to RFC1035.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "{project}/global/targetHttpsProxies/{targetHttpsProxy}/setQuicOverride",
+          "request": {
+            "$ref": "TargetHttpsProxiesSetQuicOverrideRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ]
+        },
         "setSslCertificates": {
           "description": "Replaces SslCertificates for TargetHttpsProxy.",
           "httpMethod": "POST",
@@ -14361,7 +14944,7 @@
       }
     }
   },
-  "revision": "20180417",
+  "revision": "20180525",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "AcceleratorConfig": {
@@ -14860,9 +15443,11 @@
           "description": "[Output Only] The status of the address, which can be one of RESERVING, RESERVED, or IN_USE. An address that is RESERVING is currently in the process of being reserved. A RESERVED address is currently reserved and available to use. An IN_USE address is currently being used by another resource and is not available.",
           "enum": [
             "IN_USE",
-            "RESERVED"
+            "RESERVED",
+            "RESERVING"
           ],
           "enumDescriptions": [
+            "",
             "",
             ""
           ],
@@ -17207,6 +17792,17 @@
           "description": "Internal use only.",
           "type": "string"
         },
+        "region": {
+          "description": "[Output Only] URL of the region where the disk resides. Only applicable for regional resources. You must specify this field as part of the HTTP request URL. It is not settable as a field in the request body.",
+          "type": "string"
+        },
+        "replicaZones": {
+          "description": "URLs of the zones where the disk should be replicated to. Only applicable for regional resources.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "selfLink": {
           "description": "[Output Only] Server-defined fully-qualified URL for this resource.",
           "type": "string"
@@ -17386,6 +17982,47 @@
       },
       "type": "object"
     },
+    "DiskInstantiationConfig": {
+      "description": "A specification of the desired way to instantiate a disk in the instance template when its created from a source instance.",
+      "id": "DiskInstantiationConfig",
+      "properties": {
+        "autoDelete": {
+          "description": "Specifies whether the disk will be auto-deleted when the instance is deleted (but not when the disk is detached from the instance).",
+          "type": "boolean"
+        },
+        "customImage": {
+          "description": "The custom source image to be used to restore this disk when instantiating this instance template.",
+          "type": "string"
+        },
+        "deviceName": {
+          "description": "Specifies the device name of the disk to which the configurations apply to.",
+          "type": "string"
+        },
+        "instantiateFrom": {
+          "description": "Specifies whether to include the disk and what image to use. Possible values are:  \n- source-image: to use the same image that was used to create the source instance's corresponding disk. Applicable to the boot disk and additional read-write disks. \n- source-image-family: to use the same image family that was used to create the source instance's corresponding disk. Applicable to the boot disk and additional read-write disks. \n- custom-image: to use a user-provided image url for disk creation. Applicable to the boot disk and additional read-write disks. \n- attach-read-only: to attach a read-only disk. Applicable to read-only disks. \n- do-not-include: to exclude a disk from the template. Applicable to additional read-write disks, local SSDs, and read-only disks.",
+          "enum": [
+            "ATTACH_READ_ONLY",
+            "BLANK",
+            "CUSTOM_IMAGE",
+            "DEFAULT",
+            "DO_NOT_INCLUDE",
+            "SOURCE_IMAGE",
+            "SOURCE_IMAGE_FAMILY"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "DiskList": {
       "description": "A list of Disk resources.",
       "id": "DiskList",
@@ -17546,6 +18183,10 @@
         "name": {
           "description": "[Output Only] Name of the resource.",
           "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+          "type": "string"
+        },
+        "region": {
+          "description": "[Output Only] URL of the region where the disk type resides. Only applicable for regional resources. You must specify this field as part of the HTTP request URL. It is not settable as a field in the request body.",
           "type": "string"
         },
         "selfLink": {
@@ -20293,7 +20934,7 @@
           "type": "string"
         },
         "fingerprint": {
-          "description": "Fingerprint of this resource. This field may be used in optimistic locking. It will be ignored when inserting an InstanceGroupManager. An up-to-date fingerprint must be provided in order to update the InstanceGroupManager or the field need to be unset.",
+          "description": "Fingerprint of this resource. This field may be used in optimistic locking. It will be ignored when inserting an InstanceGroupManager. An up-to-date fingerprint must be provided in order to update the InstanceGroupManager.",
           "format": "byte",
           "type": "string"
         },
@@ -21439,6 +22080,14 @@
         "selfLink": {
           "description": "[Output Only] The URL for this instance template. The server defines this URL.",
           "type": "string"
+        },
+        "sourceInstance": {
+          "description": "The source instance used to create the template. You can provide this as a partial or full URL to the resource. For example, the following are valid values:  \n- https://www.googleapis.com/compute/v1/projects/project/zones/zone/instances/instance \n- projects/project/zones/zone/instances/instance",
+          "type": "string"
+        },
+        "sourceInstanceParams": {
+          "$ref": "SourceInstanceParams",
+          "description": "The source instance params to use to create this instance template."
         }
       },
       "type": "object"
@@ -21828,9 +22477,11 @@
           "description": "Type of interconnect. Note that \"IT_PRIVATE\" has been deprecated in favor of \"DEDICATED\"",
           "enum": [
             "DEDICATED",
-            "IT_PRIVATE"
+            "IT_PRIVATE",
+            "PARTNER"
           ],
           "enumDescriptions": [
+            "",
             "",
             ""
           ],
@@ -21898,6 +22549,18 @@
         "selfLink": {
           "description": "[Output Only] Server-defined URL for the resource.",
           "type": "string"
+        },
+        "state": {
+          "description": "[Output Only] The current state of whether or not this Interconnect is functional.",
+          "enum": [
+            "ACTIVE",
+            "UNPROVISIONED"
+          ],
+          "enumDescriptions": [
+            "",
+            ""
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -21906,6 +22569,45 @@
       "description": "Represents an InterconnectAttachment (VLAN attachment) resource. For more information, see  Creating VLAN Attachments. (== resource_for beta.interconnectAttachments ==) (== resource_for v1.interconnectAttachments ==)",
       "id": "InterconnectAttachment",
       "properties": {
+        "adminEnabled": {
+          "description": "Determines whether this Attachment will carry packets. Not present for PARTNER_PROVIDER.",
+          "type": "boolean"
+        },
+        "bandwidth": {
+          "description": "Provisioned bandwidth capacity for the interconnectAttachment. Can be set by the partner to update the customer's provisioned bandwidth. Output only for for PARTNER type, mutable for PARTNER_PROVIDER, not available for DEDICATED.",
+          "enum": [
+            "BPS_100M",
+            "BPS_10G",
+            "BPS_1G",
+            "BPS_200M",
+            "BPS_2G",
+            "BPS_300M",
+            "BPS_400M",
+            "BPS_500M",
+            "BPS_50M",
+            "BPS_5G"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        },
+        "candidateSubnets": {
+          "description": "Up to 16 candidate prefixes that can be used to restrict the allocation of cloudRouterIpAddress and customerRouterIpAddress for this attachment. All prefixes must be within link-local address space (169.254.0.0/16) and must be /29 or shorter (/28, /27, etc). Google will attempt to select an unused /29 from the supplied candidate prefix(es). The request will fail if all possible /29s are in use on Google?s edge. If not supplied, Google will randomly select an unused /29 from all of link-local space.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "cloudRouterIpAddress": {
           "description": "[Output Only] IPv4 address + prefix length to be configured on Cloud Router Interface for this interconnect attachment.",
           "type": "string"
@@ -21920,6 +22622,20 @@
         },
         "description": {
           "description": "An optional description of this resource.",
+          "type": "string"
+        },
+        "edgeAvailabilityDomain": {
+          "description": "Desired availability domain for the attachment. Only available for type PARTNER, at creation time. For improved reliability, customers should configure a pair of attachments with one per availability domain. The selected availability domain will be provided to the Partner via the pairing key so that the provisioned circuit will lie in the specified domain. If not specified, the value will default to AVAILABILITY_DOMAIN_ANY.",
+          "enum": [
+            "AVAILABILITY_DOMAIN_1",
+            "AVAILABILITY_DOMAIN_2",
+            "AVAILABILITY_DOMAIN_ANY"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            ""
+          ],
           "type": "string"
         },
         "googleReferenceId": {
@@ -21957,6 +22673,19 @@
           ],
           "type": "string"
         },
+        "pairingKey": {
+          "description": "[Output only for type PARTNER. Input only for PARTNER_PROVIDER. Not present for DEDICATED]. The opaque identifier of an PARTNER attachment used to initiate provisioning with a selected partner. Of the form \"XXXXX/region/domain\"",
+          "type": "string"
+        },
+        "partnerAsn": {
+          "description": "Optional BGP ASN for the router that should be supplied by a layer 3 Partner if they configured BGP on behalf of the customer. Output only for PARTNER type, input only for PARTNER_PROVIDER, not available for DEDICATED.",
+          "format": "int64",
+          "type": "string"
+        },
+        "partnerMetadata": {
+          "$ref": "InterconnectAttachmentPartnerMetadata",
+          "description": "Informational metadata about Partner attachments from Partners to display to customers. Output only for for PARTNER type, mutable for PARTNER_PROVIDER, not available for DEDICATED."
+        },
         "privateInterconnectInfo": {
           "$ref": "InterconnectAttachmentPrivateInfo",
           "description": "[Output Only] Information specific to an InterconnectAttachment. This property is populated if the interconnect that this is attached to is of type DEDICATED."
@@ -21972,6 +22701,46 @@
         "selfLink": {
           "description": "[Output Only] Server-defined URL for the resource.",
           "type": "string"
+        },
+        "state": {
+          "description": "[Output Only] The current state of this attachment's functionality.",
+          "enum": [
+            "ACTIVE",
+            "DEFUNCT",
+            "PARTNER_REQUEST_RECEIVED",
+            "PENDING_CUSTOMER",
+            "PENDING_PARTNER",
+            "STATE_UNSPECIFIED",
+            "UNPROVISIONED"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "DEDICATED",
+            "PARTNER",
+            "PARTNER_PROVIDER"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        },
+        "vlanTag8021q": {
+          "description": "Available only for DEDICATED and PARTNER_PROVIDER. Desired VLAN tag for this attachment, in the range 2-4094. This field refers to 802.1q VLAN tag, also known as IEEE 802.1Q Only specified at creation time.",
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -22196,6 +22965,25 @@
             }
           },
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "InterconnectAttachmentPartnerMetadata": {
+      "description": "Informational metadata about Partner attachments from Partners to display to customers. These fields are propagated from PARTNER_PROVIDER attachments to their corresponding PARTNER attachments.",
+      "id": "InterconnectAttachmentPartnerMetadata",
+      "properties": {
+        "interconnectName": {
+          "description": "Plain text name of the Interconnect this attachment is connected to, as displayed in the Partner?s portal. For instance ?Chicago 1?. This value may be validated to match approved Partner values.",
+          "type": "string"
+        },
+        "partnerName": {
+          "description": "Plain text name of the Partner providing this attachment. This value may be validated to match approved Partner values.",
+          "type": "string"
+        },
+        "portalUrl": {
+          "description": "URL of the Partner?s portal for this Attachment. Partners may customise this to be a deep-link to the specific resource on the Partner portal. This value may be validated to match approved Partner values.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -23411,7 +24199,7 @@
       "type": "object"
     },
     "ManagedInstance": {
-      "description": "Next available tag: 12",
+      "description": "A Managed Instance resource.",
       "id": "ManagedInstance",
       "properties": {
         "currentAction": {
@@ -23896,7 +24684,7 @@
       "id": "Operation",
       "properties": {
         "clientOperationId": {
-          "description": "[Output Only] Reserved for future use.",
+          "description": "[Output Only] The value of `requestId` if you provided it in the request. Not present otherwise.",
           "type": "string"
         },
         "creationTimestamp": {
@@ -24621,6 +25409,8 @@
             "INSTANCE_GROUP_MANAGERS",
             "INSTANCE_TEMPLATES",
             "INTERCONNECTS",
+            "INTERCONNECT_ATTACHMENTS_PER_REGION",
+            "INTERCONNECT_ATTACHMENTS_TOTAL_MBPS",
             "INTERNAL_ADDRESSES",
             "IN_USE_ADDRESSES",
             "LOCAL_SSD_TOTAL_GB",
@@ -24632,6 +25422,7 @@
             "PREEMPTIBLE_LOCAL_SSD_GB",
             "PREEMPTIBLE_NVIDIA_K80_GPUS",
             "PREEMPTIBLE_NVIDIA_P100_GPUS",
+            "PREEMPTIBLE_NVIDIA_V100_GPUS",
             "REGIONAL_AUTOSCALERS",
             "REGIONAL_INSTANCE_GROUP_MANAGERS",
             "ROUTERS",
@@ -24654,6 +25445,9 @@
             "VPN_TUNNELS"
           ],
           "enumDescriptions": [
+            "",
+            "",
+            "",
             "",
             "",
             "",
@@ -24907,6 +25701,128 @@
             }
           },
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "RegionDiskTypeList": {
+      "id": "RegionDiskTypeList",
+      "properties": {
+        "id": {
+          "description": "[Output Only] Unique identifier for the resource; defined by the server.",
+          "type": "string"
+        },
+        "items": {
+          "description": "A list of DiskType resources.",
+          "items": {
+            "$ref": "DiskType"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "default": "compute#regionDiskTypeList",
+          "description": "[Output Only] Type of resource. Always compute#regionDiskTypeList for region disk types.",
+          "type": "string"
+        },
+        "nextPageToken": {
+          "description": "[Output Only] This token allows you to get the next page of results for list requests. If the number of results is larger than maxResults, use the nextPageToken as a value for the query parameter pageToken in the next list request. Subsequent list requests will have their own nextPageToken to continue paging through the results.",
+          "type": "string"
+        },
+        "selfLink": {
+          "description": "[Output Only] Server-defined URL for this resource.",
+          "type": "string"
+        },
+        "warning": {
+          "description": "[Output Only] Informational warning message.",
+          "properties": {
+            "code": {
+              "description": "[Output Only] A warning code, if applicable. For example, Compute Engine returns NO_RESULTS_ON_PAGE if there are no results in the response.",
+              "enum": [
+                "CLEANUP_FAILED",
+                "DEPRECATED_RESOURCE_USED",
+                "DEPRECATED_TYPE_USED",
+                "DISK_SIZE_LARGER_THAN_IMAGE_SIZE",
+                "EXPERIMENTAL_TYPE_USED",
+                "EXTERNAL_API_WARNING",
+                "FIELD_VALUE_OVERRIDEN",
+                "INJECTED_KERNELS_DEPRECATED",
+                "MISSING_TYPE_DEPENDENCY",
+                "NEXT_HOP_ADDRESS_NOT_ASSIGNED",
+                "NEXT_HOP_CANNOT_IP_FORWARD",
+                "NEXT_HOP_INSTANCE_NOT_FOUND",
+                "NEXT_HOP_INSTANCE_NOT_ON_NETWORK",
+                "NEXT_HOP_NOT_RUNNING",
+                "NOT_CRITICAL_ERROR",
+                "NO_RESULTS_ON_PAGE",
+                "REQUIRED_TOS_AGREEMENT",
+                "RESOURCE_IN_USE_BY_OTHER_RESOURCE_WARNING",
+                "RESOURCE_NOT_DELETED",
+                "SCHEMA_VALIDATION_IGNORED",
+                "SINGLE_INSTANCE_PROPERTY_TEMPLATE",
+                "UNDECLARED_PROPERTIES",
+                "UNREACHABLE"
+              ],
+              "enumDescriptions": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "type": "string"
+            },
+            "data": {
+              "description": "[Output Only] Metadata about this warning in key: value format. For example:\n\"data\": [ { \"key\": \"scope\", \"value\": \"zones/us-east1-d\" }",
+              "items": {
+                "properties": {
+                  "key": {
+                    "description": "[Output Only] A key that provides more detail on the warning being returned. For example, for warnings where there are no results in a list request for a particular zone, this key might be scope and the key value might be the zone name. Other examples might be a key indicating a deprecated resource and a suggested replacement, or a warning about invalid network settings (for example, if an instance attempts to perform IP forwarding but is not enabled for IP forwarding).",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "[Output Only] A warning data value corresponding to the key.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "message": {
+              "description": "[Output Only] A human-readable description of the warning code.",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "RegionDisksResizeRequest": {
+      "id": "RegionDisksResizeRequest",
+      "properties": {
+        "sizeGb": {
+          "description": "The new size of the regional persistent disk, which is specified in GB.",
+          "format": "int64",
+          "type": "string"
         }
       },
       "type": "object"
@@ -25474,6 +26390,24 @@
               "type": "string"
             }
           },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "RegionSetLabelsRequest": {
+      "id": "RegionSetLabelsRequest",
+      "properties": {
+        "labelFingerprint": {
+          "description": "The fingerprint of the previous set of labels for this resource, used to detect conflicts. The fingerprint is initially generated by Compute Engine and changes after every request to modify or update labels. You must always provide an up-to-date fingerprint hash in order to update or change labels. Make a get() request to the resource to get the latest fingerprint.",
+          "format": "byte",
+          "type": "string"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The labels to set for this resource.",
           "type": "object"
         }
       },
@@ -26103,6 +27037,18 @@
           "description": "IP address of the interface inside Google Cloud Platform. Only IPv4 is supported.",
           "type": "string"
         },
+        "managementType": {
+          "description": "[Output Only] Type of how the resource/configuration of the BGP peer is managed. MANAGED_BY_USER is the default value; MANAGED_BY_ATTACHMENT represents an BGP peer that is automatically created for PARTNER interconnectAttachment, Google will automatically create/delete this type of BGP peer when the PARTNER interconnectAttachment is created/deleted.",
+          "enum": [
+            "MANAGED_BY_ATTACHMENT",
+            "MANAGED_BY_USER"
+          ],
+          "enumDescriptions": [
+            "",
+            ""
+          ],
+          "type": "string"
+        },
         "name": {
           "description": "Name of this BGP peer. The name must be 1-63 characters long and comply with RFC1035.",
           "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
@@ -26133,6 +27079,18 @@
         },
         "linkedVpnTunnel": {
           "description": "URI of the linked VPN tunnel. It must be in the same region as the router. Each interface can have at most one linked resource and it could either be a VPN Tunnel or an interconnect attachment.",
+          "type": "string"
+        },
+        "managementType": {
+          "description": "[Output Only] Type of how the resource/configuration of the interface is managed. MANAGED_BY_USER is the default value; MANAGED_BY_ATTACHMENT represents an interface that is automatically created for PARTNER type interconnectAttachment, Google will automatically create/update/delete this type of interface when the PARTNER interconnectAttachment is created/provisioned/deleted.",
+          "enum": [
+            "MANAGED_BY_ATTACHMENT",
+            "MANAGED_BY_USER"
+          ],
+          "enumDescriptions": [
+            "",
+            ""
+          ],
           "type": "string"
         },
         "name": {
@@ -26613,7 +27571,7 @@
           "type": "object"
         },
         "licenseCodes": {
-          "description": "Integer license codes indicating which licenses are attached to this snapshot.",
+          "description": "[Output Only] Integer license codes indicating which licenses are attached to this snapshot.",
           "items": {
             "format": "int64",
             "type": "string"
@@ -26798,6 +27756,20 @@
             }
           },
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "SourceInstanceParams": {
+      "description": "A specification of the parameters to use when creating the instance template from a source instance.",
+      "id": "SourceInstanceParams",
+      "properties": {
+        "diskConfigs": {
+          "description": "Attached disks configuration. If not provided, defaults are applied: For boot disk and any other R/W disks, new custom images will be created from each disk. For read-only disks, they will be attached in read-only mode. Local SSD disks will be created as blank volumes.",
+          "items": {
+            "$ref": "DiskInstantiationConfig"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -27267,6 +28239,10 @@
         "description": {
           "description": "An optional description of this resource. Provide this property when you create the resource. This field can be set only at resource creation time.",
           "type": "string"
+        },
+        "enableFlowLogs": {
+          "description": "Whether to enable flow logging for this subnetwork.",
+          "type": "boolean"
         },
         "fingerprint": {
           "description": "Fingerprint of this resource. A hash of the contents stored in this object. This field is used in optimistic locking. This field will be ignored when inserting a Subnetwork. An up-to-date fingerprint must be provided in order to update the Subnetwork.",
@@ -27878,6 +28854,26 @@
       },
       "type": "object"
     },
+    "TargetHttpsProxiesSetQuicOverrideRequest": {
+      "id": "TargetHttpsProxiesSetQuicOverrideRequest",
+      "properties": {
+        "quicOverride": {
+          "description": "QUIC policy for the TargetHttpsProxy resource.",
+          "enum": [
+            "DISABLE",
+            "ENABLE",
+            "NONE"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "TargetHttpsProxiesSetSslCertificatesRequest": {
       "id": "TargetHttpsProxiesSetSslCertificatesRequest",
       "properties": {
@@ -27916,6 +28912,20 @@
         "name": {
           "description": "Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.",
           "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+          "type": "string"
+        },
+        "quicOverride": {
+          "description": "Specifies the QUIC override policy for this TargetHttpsProxy resource. This determines whether the load balancer will attempt to negotiate QUIC with clients or not. Can specify one of NONE, ENABLE, or DISABLE. Specify ENABLE to always enable QUIC, Enables QUIC when set to ENABLE, and disables QUIC when set to DISABLE. If NONE is specified, uses the QUIC policy with no user overrides, which is equivalent to DISABLE. Not specifying this field is equivalent to specifying NONE.",
+          "enum": [
+            "DISABLE",
+            "ENABLE",
+            "NONE"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            ""
+          ],
           "type": "string"
         },
         "selfLink": {

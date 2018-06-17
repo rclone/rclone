@@ -17,6 +17,9 @@
         "https://www.googleapis.com/auth/admin.directory.user": {
           "description": "View and manage the provisioning of users on your domain"
         },
+        "https://www.googleapis.com/auth/documents": {
+          "description": "View and manage your Google Docs documents"
+        },
         "https://www.googleapis.com/auth/drive": {
           "description": "View and manage the files in your Google Drive"
         },
@@ -90,11 +93,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -114,12 +112,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -223,7 +215,9 @@
                 "TIME_DRIVEN",
                 "TRIGGER",
                 "WEBAPP",
-                "EDITOR"
+                "EDITOR",
+                "SIMPLE_TRIGGER",
+                "MENU"
               ],
               "location": "query",
               "repeated": true,
@@ -319,7 +313,9 @@
                 "TIME_DRIVEN",
                 "TRIGGER",
                 "WEBAPP",
-                "EDITOR"
+                "EDITOR",
+                "SIMPLE_TRIGGER",
+                "MENU"
               ],
               "location": "query",
               "repeated": true,
@@ -742,6 +738,7 @@
             "https://www.google.com/m8/feeds",
             "https://www.googleapis.com/auth/admin.directory.group",
             "https://www.googleapis.com/auth/admin.directory.user",
+            "https://www.googleapis.com/auth/documents",
             "https://www.googleapis.com/auth/drive",
             "https://www.googleapis.com/auth/forms",
             "https://www.googleapis.com/auth/forms.currentonly",
@@ -753,7 +750,7 @@
       }
     }
   },
-  "revision": "20180501",
+  "revision": "20180601",
   "rootUrl": "https://script.googleapis.com/",
   "schemas": {
     "Content": {
@@ -1151,7 +1148,9 @@
             "TIME_DRIVEN",
             "TRIGGER",
             "WEBAPP",
-            "EDITOR"
+            "EDITOR",
+            "SIMPLE_TRIGGER",
+            "MENU"
           ],
           "enumDescriptions": [
             "Unspecified type.",
@@ -1160,7 +1159,9 @@
             "The process was started from a time-based trigger.",
             "The process was started from an event-based trigger.",
             "The process was started from a web app entry point.",
-            "The process was started using the Apps Script IDE."
+            "The process was started using the Apps Script IDE.",
+            "The process was started from a GSuite simple trigger.",
+            "The process was started from a GSuite menu item."
           ],
           "type": "string"
         },
@@ -1433,7 +1434,7 @@
       "type": "object"
     },
     "Operation": {
-      "description": "A representation of a execution of an Apps Script function that is started using run. The execution response does not arrive until the function finishes executing. The maximum execution runtime is listed in the [Apps Script quotas guide](/apps-script/guides/services/quotas#current_limitations). \u003cp\u003eAfter the execution is started, it can have one of four outcomes:\u003c/p\u003e \u003cul\u003e \u003cli\u003e If the script function returns successfully, the\n  response field contains an\n  ExecutionResponse object\n  with the function's return value in the object's `result` field.\u003c/li\u003e\n\u003cli\u003e If the script function (or Apps Script itself) throws an exception, the\n  error field contains a\n  Status object. The `Status` object's `details`\n  field contains an array with a single\n  ExecutionError object that\n  provides information about the nature of the error.\u003c/li\u003e\n\u003cli\u003e If the execution has not yet completed,\n  the done field is `false` and\n  the neither the `response` nor `error` fields are present.\u003c/li\u003e\n\u003cli\u003e If the `run` call itself fails (for example, because of a\n  malformed request or an authorization error), the method returns an HTTP\n  response code in the 4XX range with a different format for the response\n  body. Client libraries automatically convert a 4XX response into an\n  exception class.\u003c/li\u003e\n\u003c/ul\u003e",
+      "description": "A representation of an execution of an Apps Script function started with run. The execution response does not arrive until the function finishes executing. The maximum execution runtime is listed in the [Apps Script quotas guide](/apps-script/guides/services/quotas#current_limitations). \u003cp\u003eAfter execution has started, it can have one of four outcomes:\u003c/p\u003e \u003cul\u003e \u003cli\u003e If the script function returns successfully, the\n  response field contains an\n  ExecutionResponse object\n  with the function's return value in the object's `result` field.\u003c/li\u003e\n\u003cli\u003e If the script function (or Apps Script itself) throws an exception, the\n  error field contains a\n  Status object. The `Status` object's `details`\n  field contains an array with a single\n  ExecutionError object that\n  provides information about the nature of the error.\u003c/li\u003e\n\u003cli\u003e If the execution has not yet completed,\n  the done field is `false` and\n  the neither the `response` nor `error` fields are present.\u003c/li\u003e\n\u003cli\u003e If the `run` call itself fails (for example, because of a\n  malformed request or an authorization error), the method returns an HTTP\n  response code in the 4XX range with a different format for the response\n  body. Client libraries automatically convert a 4XX response into an\n  exception class.\u003c/li\u003e\n\u003c/ul\u003e",
       "id": "Operation",
       "properties": {
         "done": {
@@ -1529,7 +1530,7 @@
           "type": "array"
         },
         "message": {
-          "description": "A developer-facing error message, which is in English. Any user-facing error message is localized and sent in the [google.rpc.Status.details](google.rpc.Status.details) field, or localized by the client.",
+          "description": "A developer-facing error message, which is in English. Any user-facing error message is localized and sent in the details field, or localized by the client.",
           "type": "string"
         }
       },

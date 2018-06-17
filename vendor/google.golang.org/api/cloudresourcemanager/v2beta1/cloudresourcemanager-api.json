@@ -63,11 +63,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -87,12 +82,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -430,7 +419,7 @@
       }
     }
   },
-  "revision": "20180418",
+  "revision": "20180606",
   "rootUrl": "https://cloudresourcemanager.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -740,7 +729,7 @@
           "type": "string"
         },
         "query": {
-          "description": "Search criteria used to select the Folders to return.\nIf no search criteria is specified then all accessible folders will be\nreturned.\n\nQuery expressions can be used to restrict results based upon displayName,\nlifecycleState and parent, where the operators `=`, `NOT`, `AND` and `OR`\ncan be used along with the suffix wildcard symbol `*`.\n\nSome example queries are:\n\n|Query | Description|\n|----- | -----------|\n|displayName=Test*|Folders whose display name starts with \"Test\".|\n|lifecycleState=ACTIVE|Folders whose lifecycleState is ACTIVE.|\n|parent=folders/123|Folders whose parent is \"folders/123\".|\n|parent=folders/123 AND lifecycleState=ACTIVE|Active folders whose parent is \"folders/123\".|",
+          "description": "Search criteria used to select the Folders to return.\nIf no search criteria is specified then all accessible folders will be\nreturned.\n\nQuery expressions can be used to restrict results based upon displayName,\nlifecycleState and parent, where the operators `=`, `NOT`, `AND` and `OR`\ncan be used along with the suffix wildcard symbol `*`.\n\nThe displayName field in a query expression should use escaped quotes\nfor values that include whitespace to prevent unexpected behavior.\n\nSome example queries are:\n\n|Query | Description|\n|----- | -----------|\n|displayName=Test*|Folders whose display name starts with \"Test\".|\n|lifecycleState=ACTIVE|Folders whose lifecycleState is ACTIVE.|\n|parent=folders/123|Folders whose parent is \"folders/123\".|\n|parent=folders/123 AND lifecycleState=ACTIVE|Active folders whose parent is \"folders/123\".|\n|displayName=\\\\\"Test String\\\\\"|Folders whose display name includes both \"Test\" and \"String\".|",
           "type": "string"
         }
       },

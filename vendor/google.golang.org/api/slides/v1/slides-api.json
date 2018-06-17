@@ -77,11 +77,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -101,12 +96,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -311,7 +300,7 @@
       }
     }
   },
-  "revision": "20180409",
+  "revision": "20180608",
   "rootUrl": "https://slides.googleapis.com/",
   "schemas": {
     "AffineTransform": {
@@ -1060,7 +1049,7 @@
       "type": "object"
     },
     "CreateVideoRequest": {
-      "description": "Creates a video.",
+      "description": "Creates a video.\n\nNOTE: Drive video creation requires that the requesting app have at least one\nof the drive, drive.readonly, or drive.file OAuth scopes.",
       "id": "CreateVideoRequest",
       "properties": {
         "elementProperties": {
@@ -1068,7 +1057,7 @@
           "description": "The element properties for the video.\n\nThe PageElementProperties.size property is\noptional. If you don't specify a size, a default size is chosen by the\nserver.\n\nThe PageElementProperties.transform property is\noptional. The transform must not have shear components.\nIf you don't specify a transform, the video will be placed at the top left\ncorner of the page."
         },
         "id": {
-          "description": "The video source's unique identifier for this video.\n\ne.g. For YouTube video https://www.youtube.com/watch?v=7U3axjORYZ0,\nthe ID is 7U3axjORYZ0.",
+          "description": "The video source's unique identifier for this video.\n\ne.g. For YouTube video https://www.youtube.com/watch?v=7U3axjORYZ0,\nthe ID is 7U3axjORYZ0. For Drive video\nhttps://drive.google.com/file/d/1xCgQLFTJi5_Xl8DgW_lcUYq5e-q6Hi5Q the ID\nis 1xCgQLFTJi5_Xl8DgW_lcUYq5e-q6Hi5Q.",
           "type": "string"
         },
         "objectId": {
@@ -1079,11 +1068,13 @@
           "description": "The video source.",
           "enum": [
             "SOURCE_UNSPECIFIED",
-            "YOUTUBE"
+            "YOUTUBE",
+            "DRIVE"
           ],
           "enumDescriptions": [
             "The video source is unspecified.",
-            "The video source is YouTube."
+            "The video source is YouTube.",
+            "The video source is Drive."
           ],
           "type": "string"
         }
@@ -3342,16 +3333,16 @@
       "id": "SlideProperties",
       "properties": {
         "layoutObjectId": {
-          "description": "The object ID of the layout that this slide is based on.",
+          "description": "The object ID of the layout that this slide is based on. This property is\nread-only.",
           "type": "string"
         },
         "masterObjectId": {
-          "description": "The object ID of the master that this slide is based on.",
+          "description": "The object ID of the master that this slide is based on. This property is\nread-only.",
           "type": "string"
         },
         "notesPage": {
           "$ref": "Page",
-          "description": "The notes page that this slide is associated with. It defines the visual\nappearance of a notes page when printing or exporting slides with speaker\nnotes. A notes page inherits properties from the\nnotes master.\nThe placeholder shape with type BODY on the notes page contains the speaker\nnotes for this slide. The ID of this shape is identified by the\nspeakerNotesObjectId field.\nThe notes page is read-only except for the text content and styles of the\nspeaker notes shape."
+          "description": "The notes page that this slide is associated with. It defines the visual\nappearance of a notes page when printing or exporting slides with speaker\nnotes. A notes page inherits properties from the\nnotes master.\nThe placeholder shape with type BODY on the notes page contains the speaker\nnotes for this slide. The ID of this shape is identified by the\nspeakerNotesObjectId field.\nThe notes page is read-only except for the text content and styles of the\nspeaker notes shape. This property is read-only."
         }
       },
       "type": "object"
@@ -4289,16 +4280,18 @@
           "description": "The video source.",
           "enum": [
             "SOURCE_UNSPECIFIED",
-            "YOUTUBE"
+            "YOUTUBE",
+            "DRIVE"
           ],
           "enumDescriptions": [
             "The video source is unspecified.",
-            "The video source is YouTube."
+            "The video source is YouTube.",
+            "The video source is Drive."
           ],
           "type": "string"
         },
         "url": {
-          "description": "An URL to a video. The URL is valid as long as the source video\nexists and sharing settings do not change.",
+          "description": "An URL to a video. The URL is valid as long as the source video exists and\nsharing settings do not change.",
           "type": "string"
         },
         "videoProperties": {

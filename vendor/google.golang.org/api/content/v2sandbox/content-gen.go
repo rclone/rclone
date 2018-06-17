@@ -56,6 +56,8 @@ func New(client *http.Client) (*APIService, error) {
 		return nil, errors.New("client is nil")
 	}
 	s := &APIService{client: client, BasePath: basePath}
+	s.Orderinvoices = NewOrderinvoicesService(s)
+	s.Orderpayments = NewOrderpaymentsService(s)
 	s.Orders = NewOrdersService(s)
 	return s, nil
 }
@@ -64,6 +66,10 @@ type APIService struct {
 	client    *http.Client
 	BasePath  string // API endpoint base URL
 	UserAgent string // optional additional User-Agent fragment
+
+	Orderinvoices *OrderinvoicesService
+
+	Orderpayments *OrderpaymentsService
 
 	Orders *OrdersService
 }
@@ -75,6 +81,24 @@ func (s *APIService) userAgent() string {
 	return googleapi.UserAgent + " " + s.UserAgent
 }
 
+func NewOrderinvoicesService(s *APIService) *OrderinvoicesService {
+	rs := &OrderinvoicesService{s: s}
+	return rs
+}
+
+type OrderinvoicesService struct {
+	s *APIService
+}
+
+func NewOrderpaymentsService(s *APIService) *OrderpaymentsService {
+	rs := &OrderpaymentsService{s: s}
+	return rs
+}
+
+type OrderpaymentsService struct {
+	s *APIService
+}
+
 func NewOrdersService(s *APIService) *OrdersService {
 	rs := &OrdersService{s: s}
 	return rs
@@ -82,6 +106,36 @@ func NewOrdersService(s *APIService) *OrdersService {
 
 type OrdersService struct {
 	s *APIService
+}
+
+type Amount struct {
+	// Pretax: Value before taxes.
+	Pretax *Price `json:"pretax,omitempty"`
+
+	// Tax: Tax value.
+	Tax *Price `json:"tax,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Pretax") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Pretax") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Amount) MarshalJSON() ([]byte, error) {
+	type NoMethod Amount
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Error: An error returned by the API.
@@ -148,6 +202,90 @@ type Errors struct {
 
 func (s *Errors) MarshalJSON() ([]byte, error) {
 	type NoMethod Errors
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type InvoiceSummary struct {
+	// AdditionalChargeSummaries: Summary of the total amounts of the
+	// additional charges.
+	AdditionalChargeSummaries []*InvoiceSummaryAdditionalChargeSummary `json:"additionalChargeSummaries,omitempty"`
+
+	// CustomerBalance: Customer balance on this invoice. A positive amount
+	// means the customer is paying, a negative one means the customer is
+	// receiving money. Note that it must always be true that
+	// merchant_balance + customer_balance + google_balance = 0.
+	CustomerBalance *Amount `json:"customerBalance,omitempty"`
+
+	// GoogleBalance: Google balance on this invoice. A positive amount
+	// means Google is paying, a negative one means Google is receiving
+	// money. Note that it must always be true that merchant_balance +
+	// customer_balance + google_balance = 0.
+	GoogleBalance *Amount `json:"googleBalance,omitempty"`
+
+	// MerchantBalance: Merchant balance on this invoice. A positive amount
+	// means the merchant is paying, a negative one means the merchant is
+	// receiving money. Note that it must always be true that
+	// merchant_balance + customer_balance + google_balance = 0.
+	MerchantBalance *Amount `json:"merchantBalance,omitempty"`
+
+	// ProductTotal: Total price for the product.
+	ProductTotal *Amount `json:"productTotal,omitempty"`
+
+	// PromotionSummaries: Summary for each promotion.
+	PromotionSummaries []*Promotion `json:"promotionSummaries,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "AdditionalChargeSummaries") to unconditionally include in API
+	// requests. By default, fields with empty values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "AdditionalChargeSummaries") to include in API requests with the JSON
+	// null value. By default, fields with empty values are omitted from API
+	// requests. However, any field with an empty value appearing in
+	// NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *InvoiceSummary) MarshalJSON() ([]byte, error) {
+	type NoMethod InvoiceSummary
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type InvoiceSummaryAdditionalChargeSummary struct {
+	// TotalAmount: Total additional charge for this type.
+	TotalAmount *Amount `json:"totalAmount,omitempty"`
+
+	// Type: Type of the additional charge.
+	Type string `json:"type,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TotalAmount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TotalAmount") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *InvoiceSummaryAdditionalChargeSummary) MarshalJSON() ([]byte, error) {
+	type NoMethod InvoiceSummaryAdditionalChargeSummary
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -312,8 +450,8 @@ type OrderCancellation struct {
 
 	// Reason: The reason for the cancellation. Orders that are cancelled
 	// with a noInventory reason will lead to the removal of the product
-	// from POG until you make an update to that product. This will not
-	// affect your Shopping ads.
+	// from Shopping Actions until you make an update to that product. This
+	// will not affect your Shopping ads.
 	Reason string `json:"reason,omitempty"`
 
 	// ReasonText: The explanation of the reason.
@@ -1088,6 +1226,483 @@ type OrderShipmentLineItemShipment struct {
 
 func (s *OrderShipmentLineItemShipment) MarshalJSON() ([]byte, error) {
 	type NoMethod OrderShipmentLineItemShipment
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderinvoicesCreateChargeInvoiceRequest struct {
+	// InvoiceId: The ID of the invoice.
+	InvoiceId string `json:"invoiceId,omitempty"`
+
+	// InvoiceSummary: Invoice summary.
+	InvoiceSummary *InvoiceSummary `json:"invoiceSummary,omitempty"`
+
+	// LineItemInvoices: Invoice details per line item.
+	LineItemInvoices []*ShipmentInvoiceLineItemInvoice `json:"lineItemInvoices,omitempty"`
+
+	// OperationId: The ID of the operation, unique across all operations
+	// for a given order.
+	OperationId string `json:"operationId,omitempty"`
+
+	// ShipmentGroupId: ID of the shipment group.
+	ShipmentGroupId string `json:"shipmentGroupId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "InvoiceId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InvoiceId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderinvoicesCreateChargeInvoiceRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderinvoicesCreateChargeInvoiceRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderinvoicesCreateChargeInvoiceResponse struct {
+	// ExecutionStatus: The status of the execution.
+	ExecutionStatus string `json:"executionStatus,omitempty"`
+
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "content#orderinvoicesCreateChargeInvoiceResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ExecutionStatus") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ExecutionStatus") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderinvoicesCreateChargeInvoiceResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderinvoicesCreateChargeInvoiceResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderinvoicesCreateRefundInvoiceRequest struct {
+	// InvoiceId: The ID of the invoice.
+	InvoiceId string `json:"invoiceId,omitempty"`
+
+	// OperationId: The ID of the operation, unique across all operations
+	// for a given order.
+	OperationId string `json:"operationId,omitempty"`
+
+	// RefundOnlyOption: Option to create a refund-only invoice. Exactly one
+	// of refund_option and return_option must be provided.
+	RefundOnlyOption *OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceRefundOption `json:"refundOnlyOption,omitempty"`
+
+	// ReturnOption: Option to create an invoice for a refund and mark all
+	// items within the invoice as returned. Exactly one of refund_option
+	// and return_option must be provided.
+	ReturnOption *OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceReturnOption `json:"returnOption,omitempty"`
+
+	// ShipmentInvoices: Invoice details for different shipment groups.
+	ShipmentInvoices []*ShipmentInvoice `json:"shipmentInvoices,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "InvoiceId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InvoiceId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderinvoicesCreateRefundInvoiceRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderinvoicesCreateRefundInvoiceRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderinvoicesCreateRefundInvoiceResponse struct {
+	// ExecutionStatus: The status of the execution.
+	ExecutionStatus string `json:"executionStatus,omitempty"`
+
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "content#orderinvoicesCreateRefundInvoiceResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ExecutionStatus") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ExecutionStatus") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderinvoicesCreateRefundInvoiceResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderinvoicesCreateRefundInvoiceResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceRefundOption struct {
+	// Description: Optional description of the refund reason.
+	Description string `json:"description,omitempty"`
+
+	// Reason: Reason for the refund.
+	Reason string `json:"reason,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Description") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Description") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceRefundOption) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceRefundOption
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceReturnOption struct {
+	// Description: Optional description of the return reason.
+	Description string `json:"description,omitempty"`
+
+	// Reason: Reason for the return.
+	Reason string `json:"reason,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Description") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Description") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceReturnOption) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderinvoicesCustomBatchRequestEntryCreateRefundInvoiceReturnOption
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyAuthApprovedRequest struct {
+	AuthAmountPretax *Price `json:"authAmountPretax,omitempty"`
+
+	AuthAmountTax *Price `json:"authAmountTax,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AuthAmountPretax") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AuthAmountPretax") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyAuthApprovedRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyAuthApprovedRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyAuthApprovedResponse struct {
+	// ExecutionStatus: The status of the execution.
+	ExecutionStatus string `json:"executionStatus,omitempty"`
+
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "content#orderpaymentsNotifyAuthApprovedResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ExecutionStatus") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ExecutionStatus") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyAuthApprovedResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyAuthApprovedResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyAuthDeclinedRequest struct {
+	// DeclineReason: Reason why payment authorization was declined.
+	DeclineReason string `json:"declineReason,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DeclineReason") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DeclineReason") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyAuthDeclinedRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyAuthDeclinedRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyAuthDeclinedResponse struct {
+	// ExecutionStatus: The status of the execution.
+	ExecutionStatus string `json:"executionStatus,omitempty"`
+
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "content#orderpaymentsNotifyAuthDeclinedResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ExecutionStatus") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ExecutionStatus") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyAuthDeclinedResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyAuthDeclinedResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyChargeRequest struct {
+	// ChargeState: Whether charge was successful.
+	ChargeState string `json:"chargeState,omitempty"`
+
+	// InvoiceId: Invoice ID from orderInvoice service that corresponds to
+	// the charge.
+	InvoiceId string `json:"invoiceId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ChargeState") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ChargeState") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyChargeRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyChargeRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyChargeResponse struct {
+	// ExecutionStatus: The status of the execution.
+	ExecutionStatus string `json:"executionStatus,omitempty"`
+
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "content#orderpaymentsNotifyChargeResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ExecutionStatus") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ExecutionStatus") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyChargeResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyChargeResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyRefundRequest struct {
+	// InvoiceId: Invoice ID from orderInvoice service that corresponds to
+	// the charge.
+	InvoiceId string `json:"invoiceId,omitempty"`
+
+	// RefundState: Whether refund was successful.
+	RefundState string `json:"refundState,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "InvoiceId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InvoiceId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyRefundRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyRefundRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type OrderpaymentsNotifyRefundResponse struct {
+	// ExecutionStatus: The status of the execution.
+	ExecutionStatus string `json:"executionStatus,omitempty"`
+
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "content#orderpaymentsNotifyRefundResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "ExecutionStatus") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ExecutionStatus") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrderpaymentsNotifyRefundResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod OrderpaymentsNotifyRefundResponse
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1879,6 +2494,10 @@ type OrdersCustomBatchRequestEntryShipLineItems struct {
 
 	// LineItems: Line items to ship.
 	LineItems []*OrderShipmentLineItemShipment `json:"lineItems,omitempty"`
+
+	// ShipmentGroupId: ID of the shipment group. Required for orders that
+	// use the orderinvoices service.
+	ShipmentGroupId string `json:"shipmentGroupId,omitempty"`
 
 	// ShipmentId: Deprecated. Please use shipmentInfo instead. The ID of
 	// the shipment.
@@ -2724,6 +3343,10 @@ type OrdersShipLineItemsRequest struct {
 	// for a given order.
 	OperationId string `json:"operationId,omitempty"`
 
+	// ShipmentGroupId: ID of the shipment group. Required for orders that
+	// use the orderinvoices service.
+	ShipmentGroupId string `json:"shipmentGroupId,omitempty"`
+
 	// ShipmentId: Deprecated. Please use shipmentInfo instead. The ID of
 	// the shipment.
 	ShipmentId string `json:"shipmentId,omitempty"`
@@ -3054,9 +3677,119 @@ func (s *Price) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type Promotion struct {
+	// PromotionAmount: Amount of the promotion. The values here are the
+	// promotion applied to the unit price pretax and to the total of the
+	// tax amounts.
+	PromotionAmount *Amount `json:"promotionAmount,omitempty"`
+
+	// PromotionId: ID of the promotion.
+	PromotionId string `json:"promotionId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "PromotionAmount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "PromotionAmount") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Promotion) MarshalJSON() ([]byte, error) {
+	type NoMethod Promotion
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type ShipmentInvoice struct {
+	// InvoiceSummary: Invoice summary.
+	InvoiceSummary *InvoiceSummary `json:"invoiceSummary,omitempty"`
+
+	// LineItemInvoices: Invoice details per line item.
+	LineItemInvoices []*ShipmentInvoiceLineItemInvoice `json:"lineItemInvoices,omitempty"`
+
+	// ShipmentGroupId: ID of the shipment group.
+	ShipmentGroupId string `json:"shipmentGroupId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "InvoiceSummary") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InvoiceSummary") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ShipmentInvoice) MarshalJSON() ([]byte, error) {
+	type NoMethod ShipmentInvoice
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type ShipmentInvoiceLineItemInvoice struct {
+	// LineItemId: ID of the line item. Either lineItemId or productId must
+	// be set.
+	LineItemId string `json:"lineItemId,omitempty"`
+
+	// ProductId: ID of the product. This is the REST ID used in the
+	// products service. Either lineItemId or productId must be set.
+	ProductId string `json:"productId,omitempty"`
+
+	// ShipmentUnitIds: Unit IDs to define specific units within the line
+	// item.
+	ShipmentUnitIds []string `json:"shipmentUnitIds,omitempty"`
+
+	// UnitInvoice: Invoice details for a single unit.
+	UnitInvoice *UnitInvoice `json:"unitInvoice,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LineItemId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LineItemId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ShipmentInvoiceLineItemInvoice) MarshalJSON() ([]byte, error) {
+	type NoMethod ShipmentInvoiceLineItemInvoice
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 type TestOrder struct {
 	// Customer: The details of the customer who placed the order.
 	Customer *TestOrderCustomer `json:"customer,omitempty"`
+
+	// EnableOrderinvoices: Whether the orderinvoices service should support
+	// this order.
+	EnableOrderinvoices bool `json:"enableOrderinvoices,omitempty"`
 
 	// Kind: Identifies what kind of resource this is. Value: the fixed
 	// string "content#testOrder".
@@ -3329,6 +4062,990 @@ func (s *TestOrderPaymentMethod) MarshalJSON() ([]byte, error) {
 	type NoMethod TestOrderPaymentMethod
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type UnitInvoice struct {
+	// AdditionalCharges: Additional charges for a unit, e.g. shipping
+	// costs.
+	AdditionalCharges []*UnitInvoiceAdditionalCharge `json:"additionalCharges,omitempty"`
+
+	// Promotions: Promotions applied to a unit.
+	Promotions []*Promotion `json:"promotions,omitempty"`
+
+	// UnitPricePretax: Price of the unit, before applying taxes.
+	UnitPricePretax *Price `json:"unitPricePretax,omitempty"`
+
+	// UnitPriceTaxes: Tax amounts to apply to the unit price.
+	UnitPriceTaxes []*UnitInvoiceTaxLine `json:"unitPriceTaxes,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AdditionalCharges")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AdditionalCharges") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UnitInvoice) MarshalJSON() ([]byte, error) {
+	type NoMethod UnitInvoice
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type UnitInvoiceAdditionalCharge struct {
+	// AdditionalChargeAmount: Amount of the additional charge.
+	AdditionalChargeAmount *Amount `json:"additionalChargeAmount,omitempty"`
+
+	// AdditionalChargePromotions: Promotions applied to the additional
+	// charge.
+	AdditionalChargePromotions []*Promotion `json:"additionalChargePromotions,omitempty"`
+
+	// Type: Type of the additional charge.
+	Type string `json:"type,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "AdditionalChargeAmount") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AdditionalChargeAmount")
+	// to include in API requests with the JSON null value. By default,
+	// fields with empty values are omitted from API requests. However, any
+	// field with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UnitInvoiceAdditionalCharge) MarshalJSON() ([]byte, error) {
+	type NoMethod UnitInvoiceAdditionalCharge
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type UnitInvoiceTaxLine struct {
+	// TaxAmount: Tax amount for the tax type.
+	TaxAmount *Price `json:"taxAmount,omitempty"`
+
+	// TaxName: Optional name of the tax type.
+	TaxName string `json:"taxName,omitempty"`
+
+	// TaxType: Type of the tax.
+	TaxType string `json:"taxType,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TaxAmount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TaxAmount") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UnitInvoiceTaxLine) MarshalJSON() ([]byte, error) {
+	type NoMethod UnitInvoiceTaxLine
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// method id "content.orderinvoices.createchargeinvoice":
+
+type OrderinvoicesCreatechargeinvoiceCall struct {
+	s                                       *APIService
+	merchantId                              uint64
+	orderId                                 string
+	orderinvoicescreatechargeinvoicerequest *OrderinvoicesCreateChargeInvoiceRequest
+	urlParams_                              gensupport.URLParams
+	ctx_                                    context.Context
+	header_                                 http.Header
+}
+
+// Createchargeinvoice: Creates a charge invoice for a shipment group,
+// and triggers a charge capture for non-facilitated payment orders.
+func (r *OrderinvoicesService) Createchargeinvoice(merchantId uint64, orderId string, orderinvoicescreatechargeinvoicerequest *OrderinvoicesCreateChargeInvoiceRequest) *OrderinvoicesCreatechargeinvoiceCall {
+	c := &OrderinvoicesCreatechargeinvoiceCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.merchantId = merchantId
+	c.orderId = orderId
+	c.orderinvoicescreatechargeinvoicerequest = orderinvoicescreatechargeinvoicerequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OrderinvoicesCreatechargeinvoiceCall) Fields(s ...googleapi.Field) *OrderinvoicesCreatechargeinvoiceCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OrderinvoicesCreatechargeinvoiceCall) Context(ctx context.Context) *OrderinvoicesCreatechargeinvoiceCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OrderinvoicesCreatechargeinvoiceCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OrderinvoicesCreatechargeinvoiceCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.orderinvoicescreatechargeinvoicerequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{merchantId}/orderinvoices/{orderId}/createChargeInvoice")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"merchantId": strconv.FormatUint(c.merchantId, 10),
+		"orderId":    c.orderId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "content.orderinvoices.createchargeinvoice" call.
+// Exactly one of *OrderinvoicesCreateChargeInvoiceResponse or error
+// will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *OrderinvoicesCreateChargeInvoiceResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *OrderinvoicesCreatechargeinvoiceCall) Do(opts ...googleapi.CallOption) (*OrderinvoicesCreateChargeInvoiceResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &OrderinvoicesCreateChargeInvoiceResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a charge invoice for a shipment group, and triggers a charge capture for non-facilitated payment orders.",
+	//   "httpMethod": "POST",
+	//   "id": "content.orderinvoices.createchargeinvoice",
+	//   "parameterOrder": [
+	//     "merchantId",
+	//     "orderId"
+	//   ],
+	//   "parameters": {
+	//     "merchantId": {
+	//       "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "orderId": {
+	//       "description": "The ID of the order.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{merchantId}/orderinvoices/{orderId}/createChargeInvoice",
+	//   "request": {
+	//     "$ref": "OrderinvoicesCreateChargeInvoiceRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "OrderinvoicesCreateChargeInvoiceResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/content"
+	//   ]
+	// }
+
+}
+
+// method id "content.orderinvoices.createrefundinvoice":
+
+type OrderinvoicesCreaterefundinvoiceCall struct {
+	s                                       *APIService
+	merchantId                              uint64
+	orderId                                 string
+	orderinvoicescreaterefundinvoicerequest *OrderinvoicesCreateRefundInvoiceRequest
+	urlParams_                              gensupport.URLParams
+	ctx_                                    context.Context
+	header_                                 http.Header
+}
+
+// Createrefundinvoice: Creates a refund invoice for one or more
+// shipment groups, and triggers a refund for non-facilitated payment
+// orders.
+func (r *OrderinvoicesService) Createrefundinvoice(merchantId uint64, orderId string, orderinvoicescreaterefundinvoicerequest *OrderinvoicesCreateRefundInvoiceRequest) *OrderinvoicesCreaterefundinvoiceCall {
+	c := &OrderinvoicesCreaterefundinvoiceCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.merchantId = merchantId
+	c.orderId = orderId
+	c.orderinvoicescreaterefundinvoicerequest = orderinvoicescreaterefundinvoicerequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OrderinvoicesCreaterefundinvoiceCall) Fields(s ...googleapi.Field) *OrderinvoicesCreaterefundinvoiceCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OrderinvoicesCreaterefundinvoiceCall) Context(ctx context.Context) *OrderinvoicesCreaterefundinvoiceCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OrderinvoicesCreaterefundinvoiceCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OrderinvoicesCreaterefundinvoiceCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.orderinvoicescreaterefundinvoicerequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{merchantId}/orderinvoices/{orderId}/createRefundInvoice")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"merchantId": strconv.FormatUint(c.merchantId, 10),
+		"orderId":    c.orderId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "content.orderinvoices.createrefundinvoice" call.
+// Exactly one of *OrderinvoicesCreateRefundInvoiceResponse or error
+// will be non-nil. Any non-2xx status code is an error. Response
+// headers are in either
+// *OrderinvoicesCreateRefundInvoiceResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *OrderinvoicesCreaterefundinvoiceCall) Do(opts ...googleapi.CallOption) (*OrderinvoicesCreateRefundInvoiceResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &OrderinvoicesCreateRefundInvoiceResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a refund invoice for one or more shipment groups, and triggers a refund for non-facilitated payment orders.",
+	//   "httpMethod": "POST",
+	//   "id": "content.orderinvoices.createrefundinvoice",
+	//   "parameterOrder": [
+	//     "merchantId",
+	//     "orderId"
+	//   ],
+	//   "parameters": {
+	//     "merchantId": {
+	//       "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "orderId": {
+	//       "description": "The ID of the order.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{merchantId}/orderinvoices/{orderId}/createRefundInvoice",
+	//   "request": {
+	//     "$ref": "OrderinvoicesCreateRefundInvoiceRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "OrderinvoicesCreateRefundInvoiceResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/content"
+	//   ]
+	// }
+
+}
+
+// method id "content.orderpayments.notifyauthapproved":
+
+type OrderpaymentsNotifyauthapprovedCall struct {
+	s                                      *APIService
+	merchantId                             uint64
+	orderId                                string
+	orderpaymentsnotifyauthapprovedrequest *OrderpaymentsNotifyAuthApprovedRequest
+	urlParams_                             gensupport.URLParams
+	ctx_                                   context.Context
+	header_                                http.Header
+}
+
+// Notifyauthapproved: Notify about successfully authorizing user's
+// payment method for a given amount.
+func (r *OrderpaymentsService) Notifyauthapproved(merchantId uint64, orderId string, orderpaymentsnotifyauthapprovedrequest *OrderpaymentsNotifyAuthApprovedRequest) *OrderpaymentsNotifyauthapprovedCall {
+	c := &OrderpaymentsNotifyauthapprovedCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.merchantId = merchantId
+	c.orderId = orderId
+	c.orderpaymentsnotifyauthapprovedrequest = orderpaymentsnotifyauthapprovedrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OrderpaymentsNotifyauthapprovedCall) Fields(s ...googleapi.Field) *OrderpaymentsNotifyauthapprovedCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OrderpaymentsNotifyauthapprovedCall) Context(ctx context.Context) *OrderpaymentsNotifyauthapprovedCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OrderpaymentsNotifyauthapprovedCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OrderpaymentsNotifyauthapprovedCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.orderpaymentsnotifyauthapprovedrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{merchantId}/orderpayments/{orderId}/notifyAuthApproved")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"merchantId": strconv.FormatUint(c.merchantId, 10),
+		"orderId":    c.orderId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "content.orderpayments.notifyauthapproved" call.
+// Exactly one of *OrderpaymentsNotifyAuthApprovedResponse or error will
+// be non-nil. Any non-2xx status code is an error. Response headers are
+// in either
+// *OrderpaymentsNotifyAuthApprovedResponse.ServerResponse.Header or (if
+// a response was returned at all) in error.(*googleapi.Error).Header.
+// Use googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *OrderpaymentsNotifyauthapprovedCall) Do(opts ...googleapi.CallOption) (*OrderpaymentsNotifyAuthApprovedResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &OrderpaymentsNotifyAuthApprovedResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Notify about successfully authorizing user's payment method for a given amount.",
+	//   "httpMethod": "POST",
+	//   "id": "content.orderpayments.notifyauthapproved",
+	//   "parameterOrder": [
+	//     "merchantId",
+	//     "orderId"
+	//   ],
+	//   "parameters": {
+	//     "merchantId": {
+	//       "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "orderId": {
+	//       "description": "The ID of the order for for which payment authorization is happening.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{merchantId}/orderpayments/{orderId}/notifyAuthApproved",
+	//   "request": {
+	//     "$ref": "OrderpaymentsNotifyAuthApprovedRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "OrderpaymentsNotifyAuthApprovedResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/content"
+	//   ]
+	// }
+
+}
+
+// method id "content.orderpayments.notifyauthdeclined":
+
+type OrderpaymentsNotifyauthdeclinedCall struct {
+	s                                      *APIService
+	merchantId                             uint64
+	orderId                                string
+	orderpaymentsnotifyauthdeclinedrequest *OrderpaymentsNotifyAuthDeclinedRequest
+	urlParams_                             gensupport.URLParams
+	ctx_                                   context.Context
+	header_                                http.Header
+}
+
+// Notifyauthdeclined: Notify about failure to authorize user's payment
+// method.
+func (r *OrderpaymentsService) Notifyauthdeclined(merchantId uint64, orderId string, orderpaymentsnotifyauthdeclinedrequest *OrderpaymentsNotifyAuthDeclinedRequest) *OrderpaymentsNotifyauthdeclinedCall {
+	c := &OrderpaymentsNotifyauthdeclinedCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.merchantId = merchantId
+	c.orderId = orderId
+	c.orderpaymentsnotifyauthdeclinedrequest = orderpaymentsnotifyauthdeclinedrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OrderpaymentsNotifyauthdeclinedCall) Fields(s ...googleapi.Field) *OrderpaymentsNotifyauthdeclinedCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OrderpaymentsNotifyauthdeclinedCall) Context(ctx context.Context) *OrderpaymentsNotifyauthdeclinedCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OrderpaymentsNotifyauthdeclinedCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OrderpaymentsNotifyauthdeclinedCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.orderpaymentsnotifyauthdeclinedrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{merchantId}/orderpayments/{orderId}/notifyAuthDeclined")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"merchantId": strconv.FormatUint(c.merchantId, 10),
+		"orderId":    c.orderId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "content.orderpayments.notifyauthdeclined" call.
+// Exactly one of *OrderpaymentsNotifyAuthDeclinedResponse or error will
+// be non-nil. Any non-2xx status code is an error. Response headers are
+// in either
+// *OrderpaymentsNotifyAuthDeclinedResponse.ServerResponse.Header or (if
+// a response was returned at all) in error.(*googleapi.Error).Header.
+// Use googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *OrderpaymentsNotifyauthdeclinedCall) Do(opts ...googleapi.CallOption) (*OrderpaymentsNotifyAuthDeclinedResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &OrderpaymentsNotifyAuthDeclinedResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Notify about failure to authorize user's payment method.",
+	//   "httpMethod": "POST",
+	//   "id": "content.orderpayments.notifyauthdeclined",
+	//   "parameterOrder": [
+	//     "merchantId",
+	//     "orderId"
+	//   ],
+	//   "parameters": {
+	//     "merchantId": {
+	//       "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "orderId": {
+	//       "description": "The ID of the order for which payment authorization was declined.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{merchantId}/orderpayments/{orderId}/notifyAuthDeclined",
+	//   "request": {
+	//     "$ref": "OrderpaymentsNotifyAuthDeclinedRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "OrderpaymentsNotifyAuthDeclinedResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/content"
+	//   ]
+	// }
+
+}
+
+// method id "content.orderpayments.notifycharge":
+
+type OrderpaymentsNotifychargeCall struct {
+	s                                *APIService
+	merchantId                       uint64
+	orderId                          string
+	orderpaymentsnotifychargerequest *OrderpaymentsNotifyChargeRequest
+	urlParams_                       gensupport.URLParams
+	ctx_                             context.Context
+	header_                          http.Header
+}
+
+// Notifycharge: Notify about charge on user's selected payments method.
+func (r *OrderpaymentsService) Notifycharge(merchantId uint64, orderId string, orderpaymentsnotifychargerequest *OrderpaymentsNotifyChargeRequest) *OrderpaymentsNotifychargeCall {
+	c := &OrderpaymentsNotifychargeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.merchantId = merchantId
+	c.orderId = orderId
+	c.orderpaymentsnotifychargerequest = orderpaymentsnotifychargerequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OrderpaymentsNotifychargeCall) Fields(s ...googleapi.Field) *OrderpaymentsNotifychargeCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OrderpaymentsNotifychargeCall) Context(ctx context.Context) *OrderpaymentsNotifychargeCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OrderpaymentsNotifychargeCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OrderpaymentsNotifychargeCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.orderpaymentsnotifychargerequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{merchantId}/orderpayments/{orderId}/notifyCharge")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"merchantId": strconv.FormatUint(c.merchantId, 10),
+		"orderId":    c.orderId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "content.orderpayments.notifycharge" call.
+// Exactly one of *OrderpaymentsNotifyChargeResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *OrderpaymentsNotifyChargeResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *OrderpaymentsNotifychargeCall) Do(opts ...googleapi.CallOption) (*OrderpaymentsNotifyChargeResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &OrderpaymentsNotifyChargeResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Notify about charge on user's selected payments method.",
+	//   "httpMethod": "POST",
+	//   "id": "content.orderpayments.notifycharge",
+	//   "parameterOrder": [
+	//     "merchantId",
+	//     "orderId"
+	//   ],
+	//   "parameters": {
+	//     "merchantId": {
+	//       "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "orderId": {
+	//       "description": "The ID of the order for which charge is happening.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{merchantId}/orderpayments/{orderId}/notifyCharge",
+	//   "request": {
+	//     "$ref": "OrderpaymentsNotifyChargeRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "OrderpaymentsNotifyChargeResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/content"
+	//   ]
+	// }
+
+}
+
+// method id "content.orderpayments.notifyrefund":
+
+type OrderpaymentsNotifyrefundCall struct {
+	s                                *APIService
+	merchantId                       uint64
+	orderId                          string
+	orderpaymentsnotifyrefundrequest *OrderpaymentsNotifyRefundRequest
+	urlParams_                       gensupport.URLParams
+	ctx_                             context.Context
+	header_                          http.Header
+}
+
+// Notifyrefund: Notify about refund on user's selected payments method.
+func (r *OrderpaymentsService) Notifyrefund(merchantId uint64, orderId string, orderpaymentsnotifyrefundrequest *OrderpaymentsNotifyRefundRequest) *OrderpaymentsNotifyrefundCall {
+	c := &OrderpaymentsNotifyrefundCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.merchantId = merchantId
+	c.orderId = orderId
+	c.orderpaymentsnotifyrefundrequest = orderpaymentsnotifyrefundrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OrderpaymentsNotifyrefundCall) Fields(s ...googleapi.Field) *OrderpaymentsNotifyrefundCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OrderpaymentsNotifyrefundCall) Context(ctx context.Context) *OrderpaymentsNotifyrefundCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OrderpaymentsNotifyrefundCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OrderpaymentsNotifyrefundCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.orderpaymentsnotifyrefundrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{merchantId}/orderpayments/{orderId}/notifyRefund")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"merchantId": strconv.FormatUint(c.merchantId, 10),
+		"orderId":    c.orderId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "content.orderpayments.notifyrefund" call.
+// Exactly one of *OrderpaymentsNotifyRefundResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *OrderpaymentsNotifyRefundResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *OrderpaymentsNotifyrefundCall) Do(opts ...googleapi.CallOption) (*OrderpaymentsNotifyRefundResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &OrderpaymentsNotifyRefundResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Notify about refund on user's selected payments method.",
+	//   "httpMethod": "POST",
+	//   "id": "content.orderpayments.notifyrefund",
+	//   "parameterOrder": [
+	//     "merchantId",
+	//     "orderId"
+	//   ],
+	//   "parameters": {
+	//     "merchantId": {
+	//       "description": "The ID of the account that manages the order. This cannot be a multi-client account.",
+	//       "format": "uint64",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "orderId": {
+	//       "description": "The ID of the order for which charge is happening.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{merchantId}/orderpayments/{orderId}/notifyRefund",
+	//   "request": {
+	//     "$ref": "OrderpaymentsNotifyRefundRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "OrderpaymentsNotifyRefundResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/content"
+	//   ]
+	// }
+
 }
 
 // method id "content.orders.acknowledge":

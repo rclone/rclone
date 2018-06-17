@@ -704,12 +704,11 @@ type EnvironmentResourceProperties struct {
 // operation.
 type EnvironmentsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future EnvironmentsCreateOrUpdateFuture) Result(client EnvironmentsClient) (er EnvironmentResource, err error) {
+func (future *EnvironmentsCreateOrUpdateFuture) Result(client EnvironmentsClient) (er EnvironmentResource, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -717,34 +716,15 @@ func (future EnvironmentsCreateOrUpdateFuture) Result(client EnvironmentsClient)
 		return
 	}
 	if !done {
-		return er, azure.NewAsyncOpIncompleteError("timeseriesinsights.EnvironmentsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		er, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("timeseriesinsights.EnvironmentsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if er.Response.Response, err = future.GetResult(sender); err == nil && er.Response.Response.StatusCode != http.StatusNoContent {
+		er, err = client.CreateOrUpdateResponder(er.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsCreateOrUpdateFuture", "Result", er.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	er, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -767,12 +747,11 @@ type EnvironmentStatus struct {
 // EnvironmentsUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type EnvironmentsUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future EnvironmentsUpdateFuture) Result(client EnvironmentsClient) (er EnvironmentResource, err error) {
+func (future *EnvironmentsUpdateFuture) Result(client EnvironmentsClient) (er EnvironmentResource, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -780,34 +759,15 @@ func (future EnvironmentsUpdateFuture) Result(client EnvironmentsClient) (er Env
 		return
 	}
 	if !done {
-		return er, azure.NewAsyncOpIncompleteError("timeseriesinsights.EnvironmentsUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		er, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("timeseriesinsights.EnvironmentsUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if er.Response.Response, err = future.GetResult(sender); err == nil && er.Response.Response.StatusCode != http.StatusNoContent {
+		er, err = client.UpdateResponder(er.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsUpdateFuture", "Result", er.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	er, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "timeseriesinsights.EnvironmentsUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

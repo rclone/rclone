@@ -17,9 +17,9 @@ const renewJitter = time.Hour
 // domainRenewal tracks the state used by the periodic timers
 // renewing a single domain's cert.
 type domainRenewal struct {
-	m      *Manager
-	domain string
-	key    crypto.Signer
+	m   *Manager
+	ck  certKey
+	key crypto.Signer
 
 	timerMu sync.Mutex
 	timer   *time.Timer
@@ -77,7 +77,7 @@ func (dr *domainRenewal) updateState(state *certState) {
 	dr.m.stateMu.Lock()
 	defer dr.m.stateMu.Unlock()
 	dr.key = state.key
-	dr.m.state[dr.domain] = state
+	dr.m.state[dr.ck] = state
 }
 
 // do is similar to Manager.createCert but it doesn't lock a Manager.state item.
@@ -91,7 +91,7 @@ func (dr *domainRenewal) updateState(state *certState) {
 func (dr *domainRenewal) do(ctx context.Context) (time.Duration, error) {
 	// a race is likely unavoidable in a distributed environment
 	// but we try nonetheless
-	if tlscert, err := dr.m.cacheGet(ctx, dr.domain); err == nil {
+	if tlscert, err := dr.m.cacheGet(ctx, dr.ck); err == nil {
 		next := dr.next(tlscert.Leaf.NotAfter)
 		if next > dr.m.renewBefore()+renewJitter {
 			signer, ok := tlscert.PrivateKey.(crypto.Signer)
@@ -107,7 +107,7 @@ func (dr *domainRenewal) do(ctx context.Context) (time.Duration, error) {
 		}
 	}
 
-	der, leaf, err := dr.m.authorizedCert(ctx, dr.key, dr.domain)
+	der, leaf, err := dr.m.authorizedCert(ctx, dr.key, dr.ck)
 	if err != nil {
 		return 0, err
 	}
@@ -120,7 +120,7 @@ func (dr *domainRenewal) do(ctx context.Context) (time.Duration, error) {
 	if err != nil {
 		return 0, err
 	}
-	if err := dr.m.cachePut(ctx, dr.domain, tlscert); err != nil {
+	if err := dr.m.cachePut(ctx, dr.ck, tlscert); err != nil {
 		return 0, err
 	}
 	dr.updateState(state)

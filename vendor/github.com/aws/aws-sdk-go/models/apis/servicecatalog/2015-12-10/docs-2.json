@@ -1179,6 +1179,12 @@
         "LaunchPathSummary$Name": "<p>The name of the portfolio to which the user was assigned.</p>"
       }
     },
+    "PortfolioShareType": {
+      "base": null,
+      "refs": {
+        "ListAcceptedPortfolioSharesInput$PortfolioShareType": "<p>The type of shared portfolios to list. The default is to list imported portfolios.</p> <ul> <li> <p> <code>AWS_SERVICECATALOG</code> - List default portfolios</p> </li> <li> <p> <code>IMPORTED</code> - List imported portfolios</p> </li> </ul>"
+      }
+    },
     "Principal": {
       "base": "<p>Information about a principal.</p>",
       "refs": {

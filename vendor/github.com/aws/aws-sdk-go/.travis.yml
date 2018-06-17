@@ -40,11 +40,8 @@ matrix:
         - os: osx
           go: tip
 
-install:
-  - make get-deps
-
 script:
-  - make unit-with-race-cover
+  - make ci-test
 
 branches:
   only:

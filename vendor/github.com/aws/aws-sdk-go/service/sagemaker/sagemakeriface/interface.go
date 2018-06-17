@@ -72,6 +72,10 @@ type SageMakerAPI interface {
 	CreateEndpointConfigWithContext(aws.Context, *sagemaker.CreateEndpointConfigInput, ...request.Option) (*sagemaker.CreateEndpointConfigOutput, error)
 	CreateEndpointConfigRequest(*sagemaker.CreateEndpointConfigInput) (*request.Request, *sagemaker.CreateEndpointConfigOutput)
 
+	CreateHyperParameterTuningJob(*sagemaker.CreateHyperParameterTuningJobInput) (*sagemaker.CreateHyperParameterTuningJobOutput, error)
+	CreateHyperParameterTuningJobWithContext(aws.Context, *sagemaker.CreateHyperParameterTuningJobInput, ...request.Option) (*sagemaker.CreateHyperParameterTuningJobOutput, error)
+	CreateHyperParameterTuningJobRequest(*sagemaker.CreateHyperParameterTuningJobInput) (*request.Request, *sagemaker.CreateHyperParameterTuningJobOutput)
+
 	CreateModel(*sagemaker.CreateModelInput) (*sagemaker.CreateModelOutput, error)
 	CreateModelWithContext(aws.Context, *sagemaker.CreateModelInput, ...request.Option) (*sagemaker.CreateModelOutput, error)
 	CreateModelRequest(*sagemaker.CreateModelInput) (*request.Request, *sagemaker.CreateModelOutput)
@@ -124,6 +128,10 @@ type SageMakerAPI interface {
 	DescribeEndpointConfigWithContext(aws.Context, *sagemaker.DescribeEndpointConfigInput, ...request.Option) (*sagemaker.DescribeEndpointConfigOutput, error)
 	DescribeEndpointConfigRequest(*sagemaker.DescribeEndpointConfigInput) (*request.Request, *sagemaker.DescribeEndpointConfigOutput)
 
+	DescribeHyperParameterTuningJob(*sagemaker.DescribeHyperParameterTuningJobInput) (*sagemaker.DescribeHyperParameterTuningJobOutput, error)
+	DescribeHyperParameterTuningJobWithContext(aws.Context, *sagemaker.DescribeHyperParameterTuningJobInput, ...request.Option) (*sagemaker.DescribeHyperParameterTuningJobOutput, error)
+	DescribeHyperParameterTuningJobRequest(*sagemaker.DescribeHyperParameterTuningJobInput) (*request.Request, *sagemaker.DescribeHyperParameterTuningJobOutput)
+
 	DescribeModel(*sagemaker.DescribeModelInput) (*sagemaker.DescribeModelOutput, error)
 	DescribeModelWithContext(aws.Context, *sagemaker.DescribeModelInput, ...request.Option) (*sagemaker.DescribeModelOutput, error)
 	DescribeModelRequest(*sagemaker.DescribeModelInput) (*request.Request, *sagemaker.DescribeModelOutput)
@@ -153,6 +161,13 @@ type SageMakerAPI interface {
 
 	ListEndpointsPages(*sagemaker.ListEndpointsInput, func(*sagemaker.ListEndpointsOutput, bool) bool) error
 	ListEndpointsPagesWithContext(aws.Context, *sagemaker.ListEndpointsInput, func(*sagemaker.ListEndpointsOutput, bool) bool, ...request.Option) error
+
+	ListHyperParameterTuningJobs(*sagemaker.ListHyperParameterTuningJobsInput) (*sagemaker.ListHyperParameterTuningJobsOutput, error)
+	ListHyperParameterTuningJobsWithContext(aws.Context, *sagemaker.ListHyperParameterTuningJobsInput, ...request.Option) (*sagemaker.ListHyperParameterTuningJobsOutput, error)
+	ListHyperParameterTuningJobsRequest(*sagemaker.ListHyperParameterTuningJobsInput) (*request.Request, *sagemaker.ListHyperParameterTuningJobsOutput)
+
+	ListHyperParameterTuningJobsPages(*sagemaker.ListHyperParameterTuningJobsInput, func(*sagemaker.ListHyperParameterTuningJobsOutput, bool) bool) error
+	ListHyperParameterTuningJobsPagesWithContext(aws.Context, *sagemaker.ListHyperParameterTuningJobsInput, func(*sagemaker.ListHyperParameterTuningJobsOutput, bool) bool, ...request.Option) error
 
 	ListModels(*sagemaker.ListModelsInput) (*sagemaker.ListModelsOutput, error)
 	ListModelsWithContext(aws.Context, *sagemaker.ListModelsInput, ...request.Option) (*sagemaker.ListModelsOutput, error)
@@ -189,9 +204,20 @@ type SageMakerAPI interface {
 	ListTrainingJobsPages(*sagemaker.ListTrainingJobsInput, func(*sagemaker.ListTrainingJobsOutput, bool) bool) error
 	ListTrainingJobsPagesWithContext(aws.Context, *sagemaker.ListTrainingJobsInput, func(*sagemaker.ListTrainingJobsOutput, bool) bool, ...request.Option) error
 
+	ListTrainingJobsForHyperParameterTuningJob(*sagemaker.ListTrainingJobsForHyperParameterTuningJobInput) (*sagemaker.ListTrainingJobsForHyperParameterTuningJobOutput, error)
+	ListTrainingJobsForHyperParameterTuningJobWithContext(aws.Context, *sagemaker.ListTrainingJobsForHyperParameterTuningJobInput, ...request.Option) (*sagemaker.ListTrainingJobsForHyperParameterTuningJobOutput, error)
+	ListTrainingJobsForHyperParameterTuningJobRequest(*sagemaker.ListTrainingJobsForHyperParameterTuningJobInput) (*request.Request, *sagemaker.ListTrainingJobsForHyperParameterTuningJobOutput)
+
+	ListTrainingJobsForHyperParameterTuningJobPages(*sagemaker.ListTrainingJobsForHyperParameterTuningJobInput, func(*sagemaker.ListTrainingJobsForHyperParameterTuningJobOutput, bool) bool) error
+	ListTrainingJobsForHyperParameterTuningJobPagesWithContext(aws.Context, *sagemaker.ListTrainingJobsForHyperParameterTuningJobInput, func(*sagemaker.ListTrainingJobsForHyperParameterTuningJobOutput, bool) bool, ...request.Option) error
+
 	StartNotebookInstance(*sagemaker.StartNotebookInstanceInput) (*sagemaker.StartNotebookInstanceOutput, error)
 	StartNotebookInstanceWithContext(aws.Context, *sagemaker.StartNotebookInstanceInput, ...request.Option) (*sagemaker.StartNotebookInstanceOutput, error)
 	StartNotebookInstanceRequest(*sagemaker.StartNotebookInstanceInput) (*request.Request, *sagemaker.StartNotebookInstanceOutput)
+
+	StopHyperParameterTuningJob(*sagemaker.StopHyperParameterTuningJobInput) (*sagemaker.StopHyperParameterTuningJobOutput, error)
+	StopHyperParameterTuningJobWithContext(aws.Context, *sagemaker.StopHyperParameterTuningJobInput, ...request.Option) (*sagemaker.StopHyperParameterTuningJobOutput, error)
+	StopHyperParameterTuningJobRequest(*sagemaker.StopHyperParameterTuningJobInput) (*request.Request, *sagemaker.StopHyperParameterTuningJobOutput)
 
 	StopNotebookInstance(*sagemaker.StopNotebookInstanceInput) (*sagemaker.StopNotebookInstanceOutput, error)
 	StopNotebookInstanceWithContext(aws.Context, *sagemaker.StopNotebookInstanceInput, ...request.Option) (*sagemaker.StopNotebookInstanceOutput, error)

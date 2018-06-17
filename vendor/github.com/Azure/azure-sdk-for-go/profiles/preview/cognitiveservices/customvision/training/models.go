@@ -26,6 +26,52 @@ const (
 )
 
 type BaseClient = original.BaseClient
+type DomainType = original.DomainType
+
+const (
+	Classification  DomainType = original.Classification
+	ObjectDetection DomainType = original.ObjectDetection
+)
+
+type ExportFlavor = original.ExportFlavor
+
+const (
+	Linux   ExportFlavor = original.Linux
+	Windows ExportFlavor = original.Windows
+)
+
+type ExportPlatform = original.ExportPlatform
+
+const (
+	CoreML     ExportPlatform = original.CoreML
+	DockerFile ExportPlatform = original.DockerFile
+	ONNX       ExportPlatform = original.ONNX
+	TensorFlow ExportPlatform = original.TensorFlow
+)
+
+type ExportStatusModel = original.ExportStatusModel
+
+const (
+	Done      ExportStatusModel = original.Done
+	Exporting ExportStatusModel = original.Exporting
+	Failed    ExportStatusModel = original.Failed
+)
+
+type ImageUploadStatus = original.ImageUploadStatus
+
+const (
+	ErrorImageFormat       ImageUploadStatus = original.ErrorImageFormat
+	ErrorImageSize         ImageUploadStatus = original.ErrorImageSize
+	ErrorLimitExceed       ImageUploadStatus = original.ErrorLimitExceed
+	ErrorRegionLimitExceed ImageUploadStatus = original.ErrorRegionLimitExceed
+	ErrorSource            ImageUploadStatus = original.ErrorSource
+	ErrorStorage           ImageUploadStatus = original.ErrorStorage
+	ErrorTagLimitExceed    ImageUploadStatus = original.ErrorTagLimitExceed
+	ErrorUnknown           ImageUploadStatus = original.ErrorUnknown
+	OK                     ImageUploadStatus = original.OK
+	OKDuplicate            ImageUploadStatus = original.OKDuplicate
+)
+
 type OrderBy = original.OrderBy
 
 const (
@@ -34,38 +80,7 @@ const (
 	Suggested OrderBy = original.Suggested
 )
 
-type Platform = original.Platform
-
-const (
-	CoreML     Platform = original.CoreML
-	TensorFlow Platform = original.TensorFlow
-)
-
-type Status = original.Status
-
-const (
-	ErrorImageFormat    Status = original.ErrorImageFormat
-	ErrorImageSize      Status = original.ErrorImageSize
-	ErrorLimitExceed    Status = original.ErrorLimitExceed
-	ErrorSource         Status = original.ErrorSource
-	ErrorStorage        Status = original.ErrorStorage
-	ErrorTagLimitExceed Status = original.ErrorTagLimitExceed
-	ErrorUnknown        Status = original.ErrorUnknown
-	OK                  Status = original.OK
-	OKDuplicate         Status = original.OKDuplicate
-)
-
-type Status1 = original.Status1
-
-const (
-	Done      Status1 = original.Done
-	Exporting Status1 = original.Exporting
-	Failed    Status1 = original.Failed
-)
-
-type Account = original.Account
-type AccountQuota = original.AccountQuota
-type APIKeys = original.APIKeys
+type BoundingBox = original.BoundingBox
 type Domain = original.Domain
 type Export = original.Export
 type Image = original.Image
@@ -75,34 +90,41 @@ type ImageFileCreateBatch = original.ImageFileCreateBatch
 type ImageFileCreateEntry = original.ImageFileCreateEntry
 type ImageIDCreateBatch = original.ImageIDCreateBatch
 type ImageIDCreateEntry = original.ImageIDCreateEntry
-type ImagePredictionResult = original.ImagePredictionResult
+type ImagePerformance = original.ImagePerformance
+type ImagePrediction = original.ImagePrediction
+type ImageRegion = original.ImageRegion
+type ImageRegionCreateBatch = original.ImageRegionCreateBatch
+type ImageRegionCreateEntry = original.ImageRegionCreateEntry
+type ImageRegionCreateResult = original.ImageRegionCreateResult
+type ImageRegionCreateSummary = original.ImageRegionCreateSummary
+type ImageRegionProposal = original.ImageRegionProposal
 type ImageTag = original.ImageTag
 type ImageTagCreateBatch = original.ImageTagCreateBatch
 type ImageTagCreateEntry = original.ImageTagCreateEntry
 type ImageTagCreateSummary = original.ImageTagCreateSummary
-type ImageTagPrediction = original.ImageTagPrediction
 type ImageURL = original.ImageURL
 type ImageURLCreateBatch = original.ImageURLCreateBatch
 type ImageURLCreateEntry = original.ImageURLCreateEntry
+type Int32 = original.Int32
 type Iteration = original.Iteration
 type IterationPerformance = original.IterationPerformance
-type KeyPair = original.KeyPair
 type ListDomain = original.ListDomain
 type ListExport = original.ListExport
 type ListImage = original.ListImage
+type ListImagePerformance = original.ListImagePerformance
 type ListIteration = original.ListIteration
 type ListProject = original.ListProject
-type PerProjectQuota = original.PerProjectQuota
+type ListTag = original.ListTag
 type Prediction = original.Prediction
-type PredictionQuery = original.PredictionQuery
+type PredictionQueryResult = original.PredictionQueryResult
 type PredictionQueryTag = original.PredictionQueryTag
 type PredictionQueryToken = original.PredictionQueryToken
-type PredictionTag = original.PredictionTag
 type Project = original.Project
 type ProjectSettings = original.ProjectSettings
-type Quota = original.Quota
+type Region = original.Region
+type RegionProposal = original.RegionProposal
+type StoredImagePrediction = original.StoredImagePrediction
 type Tag = original.Tag
-type TagList = original.TagList
 type TagPerformance = original.TagPerformance
 
 func New(aPIKey string) BaseClient {
@@ -111,17 +133,23 @@ func New(aPIKey string) BaseClient {
 func NewWithBaseURI(baseURI string, aPIKey string) BaseClient {
 	return original.NewWithBaseURI(baseURI, aPIKey)
 }
+func PossibleDomainTypeValues() []DomainType {
+	return original.PossibleDomainTypeValues()
+}
+func PossibleExportFlavorValues() []ExportFlavor {
+	return original.PossibleExportFlavorValues()
+}
+func PossibleExportPlatformValues() []ExportPlatform {
+	return original.PossibleExportPlatformValues()
+}
+func PossibleExportStatusModelValues() []ExportStatusModel {
+	return original.PossibleExportStatusModelValues()
+}
+func PossibleImageUploadStatusValues() []ImageUploadStatus {
+	return original.PossibleImageUploadStatusValues()
+}
 func PossibleOrderByValues() []OrderBy {
 	return original.PossibleOrderByValues()
-}
-func PossiblePlatformValues() []Platform {
-	return original.PossiblePlatformValues()
-}
-func PossibleStatusValues() []Status {
-	return original.PossibleStatusValues()
-}
-func PossibleStatus1Values() []Status1 {
-	return original.PossibleStatus1Values()
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/preview"

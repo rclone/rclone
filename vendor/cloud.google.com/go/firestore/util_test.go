@@ -103,23 +103,23 @@ func intval(i int) *pb.Value {
 }
 
 func int64val(i int64) *pb.Value {
-	return &pb.Value{&pb.Value_IntegerValue{i}}
+	return &pb.Value{ValueType: &pb.Value_IntegerValue{i}}
 }
 
 func boolval(b bool) *pb.Value {
-	return &pb.Value{&pb.Value_BooleanValue{b}}
+	return &pb.Value{ValueType: &pb.Value_BooleanValue{b}}
 }
 
 func floatval(f float64) *pb.Value {
-	return &pb.Value{&pb.Value_DoubleValue{f}}
+	return &pb.Value{ValueType: &pb.Value_DoubleValue{f}}
 }
 
 func strval(s string) *pb.Value {
-	return &pb.Value{&pb.Value_StringValue{s}}
+	return &pb.Value{ValueType: &pb.Value_StringValue{s}}
 }
 
 func bytesval(b []byte) *pb.Value {
-	return &pb.Value{&pb.Value_BytesValue{b}}
+	return &pb.Value{ValueType: &pb.Value_BytesValue{b}}
 }
 
 func tsval(t time.Time) *pb.Value {
@@ -127,24 +127,24 @@ func tsval(t time.Time) *pb.Value {
 	if err != nil {
 		panic(fmt.Sprintf("bad time %s in test: %v", t, err))
 	}
-	return &pb.Value{&pb.Value_TimestampValue{ts}}
+	return &pb.Value{ValueType: &pb.Value_TimestampValue{ts}}
 }
 
 func geoval(ll *latlng.LatLng) *pb.Value {
-	return &pb.Value{&pb.Value_GeoPointValue{ll}}
+	return &pb.Value{ValueType: &pb.Value_GeoPointValue{ll}}
 }
 
 func arrayval(s ...*pb.Value) *pb.Value {
 	if s == nil {
 		s = []*pb.Value{}
 	}
-	return &pb.Value{&pb.Value_ArrayValue{&pb.ArrayValue{s}}}
+	return &pb.Value{ValueType: &pb.Value_ArrayValue{&pb.ArrayValue{Values: s}}}
 }
 
 func mapval(m map[string]*pb.Value) *pb.Value {
-	return &pb.Value{&pb.Value_MapValue{&pb.MapValue{m}}}
+	return &pb.Value{ValueType: &pb.Value_MapValue{&pb.MapValue{Fields: m}}}
 }
 
 func refval(path string) *pb.Value {
-	return &pb.Value{&pb.Value_ReferenceValue{path}}
+	return &pb.Value{ValueType: &pb.Value_ReferenceValue{path}}
 }

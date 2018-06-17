@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -992,7 +981,7 @@
       }
     }
   },
-  "revision": "20180420",
+  "revision": "20180605",
   "rootUrl": "https://ml.googleapis.com/",
   "schemas": {
     "GoogleApi__HttpBody": {
@@ -1044,7 +1033,7 @@
       "id": "GoogleCloudMlV1__AutoScaling",
       "properties": {
         "minNodes": {
-          "description": "Optional. The minimum number of nodes to allocate for this model. These\nnodes are always up, starting from the time the model is deployed, so the\ncost of operating this model will be at least\n`rate` * `min_nodes` * number of hours since last billing cycle,\nwhere `rate` is the cost per node-hour as documented in the\n[pricing guide](/ml-engine/docs/pricing),\neven if no predictions are performed. There is additional cost for each\nprediction performed.\n\nUnlike manual scaling, if the load gets too heavy for the nodes\nthat are up, the service will automatically add nodes to handle the\nincreased load as well as scale back as traffic drops, always maintaining\nat least `min_nodes`. You will be charged for the time in which additional\nnodes are used.\n\nIf not specified, `min_nodes` defaults to 0, in which case, when traffic\nto a model stops (and after a cool-down period), nodes will be shut down\nand no charges will be incurred until traffic to the model resumes.",
+          "description": "Optional. The minimum number of nodes to allocate for this model. These\nnodes are always up, starting from the time the model is deployed.\nTherefore, the cost of operating this model will be at least\n`rate` * `min_nodes` * number of hours since last billing cycle,\nwhere `rate` is the cost per node-hour as documented in the\n[pricing guide](/ml-engine/docs/pricing),\neven if no predictions are performed. There is additional cost for each\nprediction performed.\n\nUnlike manual scaling, if the load gets too heavy for the nodes\nthat are up, the service will automatically add nodes to handle the\nincreased load as well as scale back as traffic drops, always maintaining\nat least `min_nodes`. You will be charged for the time in which additional\nnodes are used.\n\nIf not specified, `min_nodes` defaults to 0, in which case, when traffic\nto a model stops (and after a cool-down period), nodes will be shut down\nand no charges will be incurred until traffic to the model resumes.\n\nYou can set `min_nodes` when creating the model version, and you can also\nupdate `min_nodes` for an existing version:\n\u003cpre\u003e\nupdate_body.json:\n{\n  'autoScaling': {\n    'minNodes': 5\n  }\n}\n\u003c/pre\u003e\nHTTP request:\n\u003cpre\u003e\nPATCH https://ml.googleapis.com/v1/{name=projects/*/models/*/versions/*}?update_mask=autoScaling.minNodes -d @./update_body.json\n\u003c/pre\u003e",
           "format": "int32",
           "type": "integer"
         }
@@ -1065,13 +1054,15 @@
           "enumDescriptions": [
             "Unspecified accelerator type. Default to no GPU.",
             "Nvidia tesla k80 GPU.",
-            "Nvidia tesla P100 GPU."
+            "Nvidia tesla P100 GPU.",
+            "Nvidia tesla V100 GPU."
           ],
           "items": {
             "enum": [
               "ACCELERATOR_TYPE_UNSPECIFIED",
               "NVIDIA_TESLA_K80",
-              "NVIDIA_TESLA_P100"
+              "NVIDIA_TESLA_P100",
+              "NVIDIA_TESLA_V100"
             ],
             "type": "string"
           },
@@ -1684,7 +1675,7 @@
           "type": "string"
         },
         "masterType": {
-          "description": "Optional. Specifies the type of virtual machine to use for your training\njob's master worker.\n\nThe following types are supported:\n\n\u003cdl\u003e\n  \u003cdt\u003estandard\u003c/dt\u003e\n  \u003cdd\u003e\n  A basic machine configuration suitable for training simple models with\n  small to moderate datasets.\n  \u003c/dd\u003e\n  \u003cdt\u003elarge_model\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with a lot of memory, specially suited for parameter servers\n  when your model is large (having many hidden layers or layers with very\n  large numbers of nodes).\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_s\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine suitable for the master and workers of the cluster when your\n  model requires more computation than the standard machine can handle\n  satisfactorily.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with roughly twice the number of cores and roughly double the\n  memory of \u003ccode suppresswarning=\"true\"\u003ecomplex_model_s\u003c/code\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_l\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with roughly twice the number of cores and roughly double the\n  memory of \u003ccode suppresswarning=\"true\"\u003ecomplex_model_m\u003c/code\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003estandard_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ccode suppresswarning=\"true\"\u003estandard\u003c/code\u003e that\n  also includes a single NVIDIA Tesla K80 GPU. See more about\n  \u003ca href=\"/ml-engine/docs/tensorflow/using-gpus\"\u003eusing GPUs to\n  train your model\u003c/a\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to\n  \u003ccode suppresswarning=\"true\"\u003ecomplex_model_m\u003c/code\u003e that also includes\n  four NVIDIA Tesla K80 GPUs.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_l_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to\n  \u003ccode suppresswarning=\"true\"\u003ecomplex_model_l\u003c/code\u003e that also includes\n  eight NVIDIA Tesla K80 GPUs.\n  \u003c/dd\u003e\n  \u003cdt\u003estandard_p100\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ccode suppresswarning=\"true\"\u003estandard\u003c/code\u003e that\n  also includes a single NVIDIA Tesla P100 GPU. The availability of these\n  GPUs is in the Beta launch stage.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m_p100\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to\n  \u003ccode suppresswarning=\"true\"\u003ecomplex_model_m\u003c/code\u003e that also includes\n  four NVIDIA Tesla P100 GPUs. The availability of these GPUs is in\n  the Beta launch stage.\n  \u003c/dd\u003e\n  \u003cdt\u003estandard_tpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A TPU VM including one Cloud TPU. The availability of Cloud TPU is in\n  \u003ci\u003eBeta\u003c/i\u003e launch stage. See more about\n  \u003ca href=\"/ml-engine/docs/tensorflow/using-tpus\"\u003eusing TPUs to train\n  your model\u003c/a\u003e.\n  \u003c/dd\u003e\n\u003c/dl\u003e\n\nYou must set this value when `scaleTier` is set to `CUSTOM`.",
+          "description": "Optional. Specifies the type of virtual machine to use for your training\njob's master worker.\n\nThe following types are supported:\n\n\u003cdl\u003e\n  \u003cdt\u003estandard\u003c/dt\u003e\n  \u003cdd\u003e\n  A basic machine configuration suitable for training simple models with\n  small to moderate datasets.\n  \u003c/dd\u003e\n  \u003cdt\u003elarge_model\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with a lot of memory, specially suited for parameter servers\n  when your model is large (having many hidden layers or layers with very\n  large numbers of nodes).\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_s\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine suitable for the master and workers of the cluster when your\n  model requires more computation than the standard machine can handle\n  satisfactorily.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with roughly twice the number of cores and roughly double the\n  memory of \u003ci\u003ecomplex_model_s\u003c/i\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_l\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine with roughly twice the number of cores and roughly double the\n  memory of \u003ci\u003ecomplex_model_m\u003c/i\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003estandard_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ci\u003estandard\u003c/i\u003e that\n  also includes a single NVIDIA Tesla K80 GPU. See more about\n  \u003ca href=\"/ml-engine/docs/tensorflow/using-gpus\"\u003eusing GPUs to\n  train your model\u003c/a\u003e.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ci\u003ecomplex_model_m\u003c/i\u003e that also includes\n  four NVIDIA Tesla K80 GPUs.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_l_gpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ci\u003ecomplex_model_l\u003c/i\u003e that also includes\n  eight NVIDIA Tesla K80 GPUs.\n  \u003c/dd\u003e\n  \u003cdt\u003estandard_p100\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ci\u003estandard\u003c/i\u003e that\n  also includes a single NVIDIA Tesla P100 GPU. The availability of these\n  GPUs is in the \u003ci\u003eBeta\u003c/i\u003e launch stage.\n  \u003c/dd\u003e\n  \u003cdt\u003ecomplex_model_m_p100\u003c/dt\u003e\n  \u003cdd\u003e\n  A machine equivalent to \u003ci\u003ecomplex_model_m\u003c/i\u003e that also includes\n  four NVIDIA Tesla P100 GPUs. The availability of these GPUs is in\n  the \u003ci\u003eBeta\u003c/i\u003e launch stage.\n  \u003c/dd\u003e\n  \u003cdt\u003ecloud_tpu\u003c/dt\u003e\n  \u003cdd\u003e\n  A TPU VM including one Cloud TPU. The availability of Cloud TPU is in\n  \u003ci\u003eBeta\u003c/i\u003e launch stage. See more about\n  \u003ca href=\"/ml-engine/docs/tensorflow/using-tpus\"\u003eusing TPUs to train\n  your model\u003c/a\u003e.\n  \u003c/dd\u003e\n\u003c/dl\u003e\n\nYou must set this value when `scaleTier` is set to `CUSTOM`.",
           "type": "string"
         },
         "packageUris": {
@@ -1813,10 +1804,10 @@
             "XGBOOST"
           ],
           "enumDescriptions": [
-            "",
-            "",
-            "",
-            ""
+            "Unspecified framework. Defaults to TensorFlow.",
+            "Tensorflow framework.",
+            "Scikit-learn framework.",
+            "XGBoost framework."
           ],
           "type": "string"
         },

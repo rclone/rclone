@@ -218,9 +218,10 @@ func IsTokenRefreshError(err error) bool {
 	return false
 }
 
-// IsTemporaryNetworkError returns true if the specified error is a temporary network error.
+// IsTemporaryNetworkError returns true if the specified error is a temporary network error or false
+// if it's not.  If the error doesn't implement the net.Error interface the return value is true.
 func IsTemporaryNetworkError(err error) bool {
-	if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+	if netErr, ok := err.(net.Error); !ok || (ok && netErr.Temporary()) {
 		return true
 	}
 	return false

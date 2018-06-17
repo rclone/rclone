@@ -72,11 +72,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -96,12 +91,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -2546,7 +2535,7 @@
       }
     }
   },
-  "revision": "20180424",
+  "revision": "20180604",
   "rootUrl": "https://logging.googleapis.com/",
   "schemas": {
     "BucketOptions": {
@@ -3042,7 +3031,7 @@
           "type": "boolean"
         },
         "filter": {
-          "description": "Required. An advanced logs filter that matches the log entries to be excluded. By using the sample function, you can exclude less than 100% of the matching log entries. For example, the following filter matches 99% of low-severity log entries from load balancers:\n\"resource.type=http_load_balancer severity\u003cERROR sample(insertId, 0.99)\"\n",
+          "description": "Required. An advanced logs filter that matches the log entries to be excluded. By using the sample function, you can exclude less than 100% of the matching log entries. For example, the following filter matches 99% of low-severity log entries from load balancers:\"resource.type=http_load_balancer severity\u003cERROR sample(insertId, 0.99)\"",
           "type": "string"
         },
         "name": {

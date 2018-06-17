@@ -1005,12 +1005,11 @@ type AccessControlRecordProperties struct {
 // long-running operation.
 type AccessControlRecordsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccessControlRecordsCreateOrUpdateFuture) Result(client AccessControlRecordsClient) (acr AccessControlRecord, err error) {
+func (future *AccessControlRecordsCreateOrUpdateFuture) Result(client AccessControlRecordsClient) (acr AccessControlRecord, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1018,34 +1017,15 @@ func (future AccessControlRecordsCreateOrUpdateFuture) Result(client AccessContr
 		return
 	}
 	if !done {
-		return acr, azure.NewAsyncOpIncompleteError("storsimple.AccessControlRecordsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		acr, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.AccessControlRecordsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.AccessControlRecordsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if acr.Response.Response, err = future.GetResult(sender); err == nil && acr.Response.Response.StatusCode != http.StatusNoContent {
+		acr, err = client.CreateOrUpdateResponder(acr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.AccessControlRecordsCreateOrUpdateFuture", "Result", acr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.AccessControlRecordsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	acr, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.AccessControlRecordsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1054,12 +1034,11 @@ func (future AccessControlRecordsCreateOrUpdateFuture) Result(client AccessContr
 // operation.
 type AccessControlRecordsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccessControlRecordsDeleteFuture) Result(client AccessControlRecordsClient) (ar autorest.Response, err error) {
+func (future *AccessControlRecordsDeleteFuture) Result(client AccessControlRecordsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1067,35 +1046,10 @@ func (future AccessControlRecordsDeleteFuture) Result(client AccessControlRecord
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.AccessControlRecordsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.AccessControlRecordsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.AccessControlRecordsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.AccessControlRecordsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.AccessControlRecordsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1896,12 +1850,11 @@ func (page BackupListPage) Values() []Backup {
 // operation.
 type BackupPoliciesBackupNowFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupPoliciesBackupNowFuture) Result(client BackupPoliciesClient) (ar autorest.Response, err error) {
+func (future *BackupPoliciesBackupNowFuture) Result(client BackupPoliciesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1909,35 +1862,10 @@ func (future BackupPoliciesBackupNowFuture) Result(client BackupPoliciesClient) 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.BackupPoliciesBackupNowFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.BackupNowResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesBackupNowFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupPoliciesBackupNowFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesBackupNowFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.BackupNowResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesBackupNowFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1945,12 +1873,11 @@ func (future BackupPoliciesBackupNowFuture) Result(client BackupPoliciesClient) 
 // operation.
 type BackupPoliciesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupPoliciesCreateOrUpdateFuture) Result(client BackupPoliciesClient) (bp BackupPolicy, err error) {
+func (future *BackupPoliciesCreateOrUpdateFuture) Result(client BackupPoliciesClient) (bp BackupPolicy, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1958,34 +1885,15 @@ func (future BackupPoliciesCreateOrUpdateFuture) Result(client BackupPoliciesCli
 		return
 	}
 	if !done {
-		return bp, azure.NewAsyncOpIncompleteError("storsimple.BackupPoliciesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		bp, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupPoliciesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if bp.Response.Response, err = future.GetResult(sender); err == nil && bp.Response.Response.StatusCode != http.StatusNoContent {
+		bp, err = client.CreateOrUpdateResponder(bp.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesCreateOrUpdateFuture", "Result", bp.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	bp, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1993,12 +1901,11 @@ func (future BackupPoliciesCreateOrUpdateFuture) Result(client BackupPoliciesCli
 // BackupPoliciesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type BackupPoliciesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupPoliciesDeleteFuture) Result(client BackupPoliciesClient) (ar autorest.Response, err error) {
+func (future *BackupPoliciesDeleteFuture) Result(client BackupPoliciesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2006,35 +1913,10 @@ func (future BackupPoliciesDeleteFuture) Result(client BackupPoliciesClient) (ar
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.BackupPoliciesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupPoliciesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupPoliciesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -2300,12 +2182,11 @@ type BackupScheduleProperties struct {
 // operation.
 type BackupSchedulesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupSchedulesCreateOrUpdateFuture) Result(client BackupSchedulesClient) (bs BackupSchedule, err error) {
+func (future *BackupSchedulesCreateOrUpdateFuture) Result(client BackupSchedulesClient) (bs BackupSchedule, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2313,34 +2194,15 @@ func (future BackupSchedulesCreateOrUpdateFuture) Result(client BackupSchedulesC
 		return
 	}
 	if !done {
-		return bs, azure.NewAsyncOpIncompleteError("storsimple.BackupSchedulesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		bs, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupSchedulesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupSchedulesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if bs.Response.Response, err = future.GetResult(sender); err == nil && bs.Response.Response.StatusCode != http.StatusNoContent {
+		bs, err = client.CreateOrUpdateResponder(bs.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.BackupSchedulesCreateOrUpdateFuture", "Result", bs.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupSchedulesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	bs, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupSchedulesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -2349,12 +2211,11 @@ func (future BackupSchedulesCreateOrUpdateFuture) Result(client BackupSchedulesC
 // operation.
 type BackupSchedulesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupSchedulesDeleteFuture) Result(client BackupSchedulesClient) (ar autorest.Response, err error) {
+func (future *BackupSchedulesDeleteFuture) Result(client BackupSchedulesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2362,47 +2223,21 @@ func (future BackupSchedulesDeleteFuture) Result(client BackupSchedulesClient) (
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.BackupSchedulesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupSchedulesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupSchedulesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupSchedulesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupSchedulesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // BackupsCloneFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type BackupsCloneFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupsCloneFuture) Result(client BackupsClient) (ar autorest.Response, err error) {
+func (future *BackupsCloneFuture) Result(client BackupsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2410,47 +2245,21 @@ func (future BackupsCloneFuture) Result(client BackupsClient) (ar autorest.Respo
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.BackupsCloneFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.CloneResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupsCloneFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupsCloneFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupsCloneFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.CloneResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupsCloneFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // BackupsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type BackupsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupsDeleteFuture) Result(client BackupsClient) (ar autorest.Response, err error) {
+func (future *BackupsDeleteFuture) Result(client BackupsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2458,47 +2267,21 @@ func (future BackupsDeleteFuture) Result(client BackupsClient) (ar autorest.Resp
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.BackupsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // BackupsRestoreFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type BackupsRestoreFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BackupsRestoreFuture) Result(client BackupsClient) (ar autorest.Response, err error) {
+func (future *BackupsRestoreFuture) Result(client BackupsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2506,35 +2289,10 @@ func (future BackupsRestoreFuture) Result(client BackupsClient) (ar autorest.Res
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.BackupsRestoreFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.RestoreResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BackupsRestoreFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BackupsRestoreFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupsRestoreFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.RestoreResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BackupsRestoreFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -2665,12 +2423,11 @@ type BandwidthSettingList struct {
 // operation.
 type BandwidthSettingsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BandwidthSettingsCreateOrUpdateFuture) Result(client BandwidthSettingsClient) (bs BandwidthSetting, err error) {
+func (future *BandwidthSettingsCreateOrUpdateFuture) Result(client BandwidthSettingsClient) (bs BandwidthSetting, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2678,34 +2435,15 @@ func (future BandwidthSettingsCreateOrUpdateFuture) Result(client BandwidthSetti
 		return
 	}
 	if !done {
-		return bs, azure.NewAsyncOpIncompleteError("storsimple.BandwidthSettingsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		bs, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BandwidthSettingsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BandwidthSettingsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if bs.Response.Response, err = future.GetResult(sender); err == nil && bs.Response.Response.StatusCode != http.StatusNoContent {
+		bs, err = client.CreateOrUpdateResponder(bs.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.BandwidthSettingsCreateOrUpdateFuture", "Result", bs.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BandwidthSettingsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	bs, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BandwidthSettingsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -2714,12 +2452,11 @@ func (future BandwidthSettingsCreateOrUpdateFuture) Result(client BandwidthSetti
 // operation.
 type BandwidthSettingsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future BandwidthSettingsDeleteFuture) Result(client BandwidthSettingsClient) (ar autorest.Response, err error) {
+func (future *BandwidthSettingsDeleteFuture) Result(client BandwidthSettingsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2727,35 +2464,10 @@ func (future BandwidthSettingsDeleteFuture) Result(client BandwidthSettingsClien
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.BandwidthSettingsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.BandwidthSettingsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.BandwidthSettingsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BandwidthSettingsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.BandwidthSettingsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -2961,12 +2673,11 @@ type CloudApplianceSettings struct {
 // operation.
 type CloudAppliancesProvisionFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CloudAppliancesProvisionFuture) Result(client CloudAppliancesClient) (ar autorest.Response, err error) {
+func (future *CloudAppliancesProvisionFuture) Result(client CloudAppliancesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2974,35 +2685,10 @@ func (future CloudAppliancesProvisionFuture) Result(client CloudAppliancesClient
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.CloudAppliancesProvisionFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ProvisionResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.CloudAppliancesProvisionFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.CloudAppliancesProvisionFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.CloudAppliancesProvisionFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ProvisionResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.CloudAppliancesProvisionFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3462,12 +3148,11 @@ type DeviceRolloverDetails struct {
 // DevicesConfigureFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DevicesConfigureFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DevicesConfigureFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
+func (future *DevicesConfigureFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3475,47 +3160,21 @@ func (future DevicesConfigureFuture) Result(client DevicesClient) (ar autorest.R
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.DevicesConfigureFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ConfigureResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DevicesConfigureFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DevicesConfigureFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesConfigureFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ConfigureResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesConfigureFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // DevicesDeactivateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DevicesDeactivateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DevicesDeactivateFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
+func (future *DevicesDeactivateFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3523,47 +3182,21 @@ func (future DevicesDeactivateFuture) Result(client DevicesClient) (ar autorest.
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.DevicesDeactivateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeactivateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DevicesDeactivateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DevicesDeactivateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesDeactivateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeactivateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesDeactivateFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // DevicesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DevicesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DevicesDeleteFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
+func (future *DevicesDeleteFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3571,35 +3204,10 @@ func (future DevicesDeleteFuture) Result(client DevicesClient) (ar autorest.Resp
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.DevicesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DevicesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DevicesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3607,12 +3215,11 @@ func (future DevicesDeleteFuture) Result(client DevicesClient) (ar autorest.Resp
 // long-running operation.
 type DeviceSettingsCreateOrUpdateAlertSettingsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeviceSettingsCreateOrUpdateAlertSettingsFuture) Result(client DeviceSettingsClient) (as AlertSettings, err error) {
+func (future *DeviceSettingsCreateOrUpdateAlertSettingsFuture) Result(client DeviceSettingsClient) (as AlertSettings, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3620,34 +3227,15 @@ func (future DeviceSettingsCreateOrUpdateAlertSettingsFuture) Result(client Devi
 		return
 	}
 	if !done {
-		return as, azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsCreateOrUpdateAlertSettingsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		as, err = client.CreateOrUpdateAlertSettingsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateAlertSettingsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsCreateOrUpdateAlertSettingsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if as.Response.Response, err = future.GetResult(sender); err == nil && as.Response.Response.StatusCode != http.StatusNoContent {
+		as, err = client.CreateOrUpdateAlertSettingsResponder(as.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateAlertSettingsFuture", "Result", as.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateAlertSettingsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	as, err = client.CreateOrUpdateAlertSettingsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateAlertSettingsFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3656,12 +3244,11 @@ func (future DeviceSettingsCreateOrUpdateAlertSettingsFuture) Result(client Devi
 // long-running operation.
 type DeviceSettingsCreateOrUpdateTimeSettingsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeviceSettingsCreateOrUpdateTimeSettingsFuture) Result(client DeviceSettingsClient) (ts TimeSettings, err error) {
+func (future *DeviceSettingsCreateOrUpdateTimeSettingsFuture) Result(client DeviceSettingsClient) (ts TimeSettings, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3669,34 +3256,15 @@ func (future DeviceSettingsCreateOrUpdateTimeSettingsFuture) Result(client Devic
 		return
 	}
 	if !done {
-		return ts, azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsCreateOrUpdateTimeSettingsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ts, err = client.CreateOrUpdateTimeSettingsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateTimeSettingsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsCreateOrUpdateTimeSettingsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ts.Response.Response, err = future.GetResult(sender); err == nil && ts.Response.Response.StatusCode != http.StatusNoContent {
+		ts, err = client.CreateOrUpdateTimeSettingsResponder(ts.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateTimeSettingsFuture", "Result", ts.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateTimeSettingsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ts, err = client.CreateOrUpdateTimeSettingsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsCreateOrUpdateTimeSettingsFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3705,12 +3273,11 @@ func (future DeviceSettingsCreateOrUpdateTimeSettingsFuture) Result(client Devic
 // a long-running operation.
 type DeviceSettingsSyncRemotemanagementCertificateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeviceSettingsSyncRemotemanagementCertificateFuture) Result(client DeviceSettingsClient) (ar autorest.Response, err error) {
+func (future *DeviceSettingsSyncRemotemanagementCertificateFuture) Result(client DeviceSettingsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3718,35 +3285,10 @@ func (future DeviceSettingsSyncRemotemanagementCertificateFuture) Result(client 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsSyncRemotemanagementCertificateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.SyncRemotemanagementCertificateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsSyncRemotemanagementCertificateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsSyncRemotemanagementCertificateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsSyncRemotemanagementCertificateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.SyncRemotemanagementCertificateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsSyncRemotemanagementCertificateFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3754,12 +3296,11 @@ func (future DeviceSettingsSyncRemotemanagementCertificateFuture) Result(client 
 // long-running operation.
 type DeviceSettingsUpdateNetworkSettingsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeviceSettingsUpdateNetworkSettingsFuture) Result(client DeviceSettingsClient) (ns NetworkSettings, err error) {
+func (future *DeviceSettingsUpdateNetworkSettingsFuture) Result(client DeviceSettingsClient) (ns NetworkSettings, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3767,34 +3308,15 @@ func (future DeviceSettingsUpdateNetworkSettingsFuture) Result(client DeviceSett
 		return
 	}
 	if !done {
-		return ns, azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsUpdateNetworkSettingsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ns, err = client.UpdateNetworkSettingsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateNetworkSettingsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsUpdateNetworkSettingsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ns.Response.Response, err = future.GetResult(sender); err == nil && ns.Response.Response.StatusCode != http.StatusNoContent {
+		ns, err = client.UpdateNetworkSettingsResponder(ns.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateNetworkSettingsFuture", "Result", ns.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateNetworkSettingsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ns, err = client.UpdateNetworkSettingsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateNetworkSettingsFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3803,12 +3325,11 @@ func (future DeviceSettingsUpdateNetworkSettingsFuture) Result(client DeviceSett
 // long-running operation.
 type DeviceSettingsUpdateSecuritySettingsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DeviceSettingsUpdateSecuritySettingsFuture) Result(client DeviceSettingsClient) (ss SecuritySettings, err error) {
+func (future *DeviceSettingsUpdateSecuritySettingsFuture) Result(client DeviceSettingsClient) (ss SecuritySettings, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3816,34 +3337,15 @@ func (future DeviceSettingsUpdateSecuritySettingsFuture) Result(client DeviceSet
 		return
 	}
 	if !done {
-		return ss, azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsUpdateSecuritySettingsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ss, err = client.UpdateSecuritySettingsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateSecuritySettingsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DeviceSettingsUpdateSecuritySettingsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ss.Response.Response, err = future.GetResult(sender); err == nil && ss.Response.Response.StatusCode != http.StatusNoContent {
+		ss, err = client.UpdateSecuritySettingsResponder(ss.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateSecuritySettingsFuture", "Result", ss.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateSecuritySettingsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ss, err = client.UpdateSecuritySettingsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DeviceSettingsUpdateSecuritySettingsFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3851,12 +3353,11 @@ func (future DeviceSettingsUpdateSecuritySettingsFuture) Result(client DeviceSet
 // DevicesFailoverFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DevicesFailoverFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DevicesFailoverFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
+func (future *DevicesFailoverFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3864,35 +3365,10 @@ func (future DevicesFailoverFuture) Result(client DevicesClient) (ar autorest.Re
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.DevicesFailoverFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.FailoverResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DevicesFailoverFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DevicesFailoverFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesFailoverFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.FailoverResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesFailoverFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3900,12 +3376,11 @@ func (future DevicesFailoverFuture) Result(client DevicesClient) (ar autorest.Re
 // operation.
 type DevicesInstallUpdatesFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DevicesInstallUpdatesFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
+func (future *DevicesInstallUpdatesFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3913,35 +3388,10 @@ func (future DevicesInstallUpdatesFuture) Result(client DevicesClient) (ar autor
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.DevicesInstallUpdatesFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.InstallUpdatesResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DevicesInstallUpdatesFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DevicesInstallUpdatesFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesInstallUpdatesFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.InstallUpdatesResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesInstallUpdatesFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3949,12 +3399,11 @@ func (future DevicesInstallUpdatesFuture) Result(client DevicesClient) (ar autor
 // operation.
 type DevicesScanForUpdatesFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DevicesScanForUpdatesFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
+func (future *DevicesScanForUpdatesFuture) Result(client DevicesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3962,35 +3411,10 @@ func (future DevicesScanForUpdatesFuture) Result(client DevicesClient) (ar autor
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.DevicesScanForUpdatesFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ScanForUpdatesResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.DevicesScanForUpdatesFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.DevicesScanForUpdatesFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesScanForUpdatesFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ScanForUpdatesResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.DevicesScanForUpdatesFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -4333,12 +3757,11 @@ type HardwareComponentGroupProperties struct {
 // of a long-running operation.
 type HardwareComponentGroupsChangeControllerPowerStateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future HardwareComponentGroupsChangeControllerPowerStateFuture) Result(client HardwareComponentGroupsClient) (ar autorest.Response, err error) {
+func (future *HardwareComponentGroupsChangeControllerPowerStateFuture) Result(client HardwareComponentGroupsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4346,35 +3769,10 @@ func (future HardwareComponentGroupsChangeControllerPowerStateFuture) Result(cli
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.HardwareComponentGroupsChangeControllerPowerStateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ChangeControllerPowerStateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.HardwareComponentGroupsChangeControllerPowerStateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.HardwareComponentGroupsChangeControllerPowerStateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.HardwareComponentGroupsChangeControllerPowerStateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ChangeControllerPowerStateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.HardwareComponentGroupsChangeControllerPowerStateFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -4703,12 +4101,11 @@ type JobProperties struct {
 // JobsCancelFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobsCancelFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future JobsCancelFuture) Result(client JobsClient) (ar autorest.Response, err error) {
+func (future *JobsCancelFuture) Result(client JobsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4716,35 +4113,10 @@ func (future JobsCancelFuture) Result(client JobsClient) (ar autorest.Response, 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.JobsCancelFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.CancelResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.JobsCancelFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.JobsCancelFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.JobsCancelFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.CancelResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.JobsCancelFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -5757,12 +5129,11 @@ type StorageAccountCredentialProperties struct {
 // long-running operation.
 type StorageAccountCredentialsCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future StorageAccountCredentialsCreateOrUpdateFuture) Result(client StorageAccountCredentialsClient) (sac StorageAccountCredential, err error) {
+func (future *StorageAccountCredentialsCreateOrUpdateFuture) Result(client StorageAccountCredentialsClient) (sac StorageAccountCredential, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -5770,34 +5141,15 @@ func (future StorageAccountCredentialsCreateOrUpdateFuture) Result(client Storag
 		return
 	}
 	if !done {
-		return sac, azure.NewAsyncOpIncompleteError("storsimple.StorageAccountCredentialsCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		sac, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.StorageAccountCredentialsCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.StorageAccountCredentialsCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if sac.Response.Response, err = future.GetResult(sender); err == nil && sac.Response.Response.StatusCode != http.StatusNoContent {
+		sac, err = client.CreateOrUpdateResponder(sac.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.StorageAccountCredentialsCreateOrUpdateFuture", "Result", sac.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.StorageAccountCredentialsCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	sac, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.StorageAccountCredentialsCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -5806,12 +5158,11 @@ func (future StorageAccountCredentialsCreateOrUpdateFuture) Result(client Storag
 // operation.
 type StorageAccountCredentialsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future StorageAccountCredentialsDeleteFuture) Result(client StorageAccountCredentialsClient) (ar autorest.Response, err error) {
+func (future *StorageAccountCredentialsDeleteFuture) Result(client StorageAccountCredentialsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -5819,35 +5170,10 @@ func (future StorageAccountCredentialsDeleteFuture) Result(client StorageAccount
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.StorageAccountCredentialsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.StorageAccountCredentialsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.StorageAccountCredentialsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.StorageAccountCredentialsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.StorageAccountCredentialsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -6351,12 +5677,11 @@ type VolumeContainerProperties struct {
 // operation.
 type VolumeContainersCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VolumeContainersCreateOrUpdateFuture) Result(client VolumeContainersClient) (vc VolumeContainer, err error) {
+func (future *VolumeContainersCreateOrUpdateFuture) Result(client VolumeContainersClient) (vc VolumeContainer, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -6364,34 +5689,15 @@ func (future VolumeContainersCreateOrUpdateFuture) Result(client VolumeContainer
 		return
 	}
 	if !done {
-		return vc, azure.NewAsyncOpIncompleteError("storsimple.VolumeContainersCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		vc, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.VolumeContainersCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.VolumeContainersCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if vc.Response.Response, err = future.GetResult(sender); err == nil && vc.Response.Response.StatusCode != http.StatusNoContent {
+		vc, err = client.CreateOrUpdateResponder(vc.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.VolumeContainersCreateOrUpdateFuture", "Result", vc.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumeContainersCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	vc, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumeContainersCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -6400,12 +5706,11 @@ func (future VolumeContainersCreateOrUpdateFuture) Result(client VolumeContainer
 // operation.
 type VolumeContainersDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VolumeContainersDeleteFuture) Result(client VolumeContainersClient) (ar autorest.Response, err error) {
+func (future *VolumeContainersDeleteFuture) Result(client VolumeContainersClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -6413,35 +5718,10 @@ func (future VolumeContainersDeleteFuture) Result(client VolumeContainersClient)
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.VolumeContainersDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.VolumeContainersDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.VolumeContainersDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumeContainersDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumeContainersDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -6496,12 +5776,11 @@ type VolumeProperties struct {
 // operation.
 type VolumesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VolumesCreateOrUpdateFuture) Result(client VolumesClient) (vVar Volume, err error) {
+func (future *VolumesCreateOrUpdateFuture) Result(client VolumesClient) (vVar Volume, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -6509,34 +5788,15 @@ func (future VolumesCreateOrUpdateFuture) Result(client VolumesClient) (vVar Vol
 		return
 	}
 	if !done {
-		return vVar, azure.NewAsyncOpIncompleteError("storsimple.VolumesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		vVar, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.VolumesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.VolumesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if vVar.Response.Response, err = future.GetResult(sender); err == nil && vVar.Response.Response.StatusCode != http.StatusNoContent {
+		vVar, err = client.CreateOrUpdateResponder(vVar.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "storsimple.VolumesCreateOrUpdateFuture", "Result", vVar.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	vVar, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -6544,12 +5804,11 @@ func (future VolumesCreateOrUpdateFuture) Result(client VolumesClient) (vVar Vol
 // VolumesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type VolumesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VolumesDeleteFuture) Result(client VolumesClient) (ar autorest.Response, err error) {
+func (future *VolumesDeleteFuture) Result(client VolumesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -6557,35 +5816,10 @@ func (future VolumesDeleteFuture) Result(client VolumesClient) (ar autorest.Resp
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("storsimple.VolumesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "storsimple.VolumesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("storsimple.VolumesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "storsimple.VolumesDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

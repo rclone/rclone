@@ -840,12 +840,11 @@ type WorkspaceProperties struct {
 // operation.
 type WorkspacesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w Workspace, err error) {
+func (future *WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w Workspace, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -853,34 +852,15 @@ func (future WorkspacesCreateOrUpdateFuture) Result(client WorkspacesClient) (w 
 		return
 	}
 	if !done {
-		return w, azure.NewAsyncOpIncompleteError("operationalinsights.WorkspacesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		w, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("operationalinsights.WorkspacesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if w.Response.Response, err = future.GetResult(sender); err == nil && w.Response.Response.StatusCode != http.StatusNoContent {
+		w, err = client.CreateOrUpdateResponder(w.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesCreateOrUpdateFuture", "Result", w.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	w, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

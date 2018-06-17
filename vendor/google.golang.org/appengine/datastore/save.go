@@ -111,6 +111,12 @@ func valueToProto(defaultAppID, name string, v reflect.Value, multiple bool) (p 
 	return p, ""
 }
 
+type saveOpts struct {
+	noIndex   bool
+	multiple  bool
+	omitEmpty bool
+}
+
 // saveEntity saves an EntityProto into a PropertyLoadSaver or struct pointer.
 func saveEntity(defaultAppID string, key *Key, src interface{}) (*pb.EntityProto, error) {
 	var err error
@@ -126,11 +132,14 @@ func saveEntity(defaultAppID string, key *Key, src interface{}) (*pb.EntityProto
 	return propertiesToProto(defaultAppID, key, props)
 }
 
-func saveStructProperty(props *[]Property, name string, noIndex, multiple bool, v reflect.Value) error {
+func saveStructProperty(props *[]Property, name string, opts saveOpts, v reflect.Value) error {
+	if opts.omitEmpty && isEmptyValue(v) {
+		return nil
+	}
 	p := Property{
 		Name:     name,
-		NoIndex:  noIndex,
-		Multiple: multiple,
+		NoIndex:  opts.noIndex,
+		Multiple: opts.multiple,
 	}
 	switch x := v.Interface().(type) {
 	case *Key:
@@ -166,7 +175,7 @@ func saveStructProperty(props *[]Property, name string, noIndex, multiple bool, 
 			if err != nil {
 				return fmt.Errorf("datastore: unsupported struct field: %v", err)
 			}
-			return sub.(structPLS).save(props, name, noIndex, multiple)
+			return sub.save(props, name+".", opts)
 		}
 	}
 	if p.Value == nil {
@@ -178,37 +187,35 @@ func saveStructProperty(props *[]Property, name string, noIndex, multiple bool, 
 
 func (s structPLS) Save() ([]Property, error) {
 	var props []Property
-	if err := s.save(&props, "", false, false); err != nil {
+	if err := s.save(&props, "", saveOpts{}); err != nil {
 		return nil, err
 	}
 	return props, nil
 }
 
-func (s structPLS) save(props *[]Property, prefix string, noIndex, multiple bool) error {
-	for i, t := range s.codec.byIndex {
-		if t.name == "-" {
-			continue
-		}
-		name := t.name
-		if prefix != "" {
-			name = prefix + name
-		}
-		v := s.v.Field(i)
+func (s structPLS) save(props *[]Property, prefix string, opts saveOpts) error {
+	for name, f := range s.codec.fields {
+		name = prefix + name
+		v := s.v.FieldByIndex(f.path)
 		if !v.IsValid() || !v.CanSet() {
 			continue
 		}
-		noIndex1 := noIndex || t.noIndex
+		var opts1 saveOpts
+		opts1.noIndex = opts.noIndex || f.noIndex
+		opts1.multiple = opts.multiple
+		opts1.omitEmpty = f.omitEmpty // don't propagate
 		// For slice fields that aren't []byte, save each element.
 		if v.Kind() == reflect.Slice && v.Type().Elem().Kind() != reflect.Uint8 {
+			opts1.multiple = true
 			for j := 0; j < v.Len(); j++ {
-				if err := saveStructProperty(props, name, noIndex1, true, v.Index(j)); err != nil {
+				if err := saveStructProperty(props, name, opts1, v.Index(j)); err != nil {
 					return err
 				}
 			}
 			continue
 		}
 		// Otherwise, save the field itself.
-		if err := saveStructProperty(props, name, noIndex1, multiple, v); err != nil {
+		if err := saveStructProperty(props, name, opts1, v); err != nil {
 			return err
 		}
 	}
@@ -297,4 +304,30 @@ func propertiesToProto(defaultAppID string, key *Key, props []Property) (*pb.Ent
 		}
 	}
 	return e, nil
+}
+
+// isEmptyValue is taken from the encoding/json package in the standard library.
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		// TODO(perfomance): Only reflect.String needed, other property types are not supported (copy/paste from json package)
+		return v.Len() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		// TODO(perfomance): Uint* are unsupported property types - should be removed (copy/paste from json package)
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	case reflect.Struct:
+		switch x := v.Interface().(type) {
+		case time.Time:
+			return x.IsZero()
+		}
+	}
+	return false
 }

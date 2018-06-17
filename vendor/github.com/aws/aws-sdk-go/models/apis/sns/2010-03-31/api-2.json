@@ -1,13 +1,14 @@
 {
   "version":"2.0",
   "metadata":{
-    "uid":"sns-2010-03-31",
     "apiVersion":"2010-03-31",
     "endpointPrefix":"sns",
     "protocol":"query",
     "serviceAbbreviation":"Amazon SNS",
     "serviceFullName":"Amazon Simple Notification Service",
+    "serviceId":"SNS",
     "signatureVersion":"v4",
+    "uid":"sns-2010-03-31",
     "xmlNamespace":"http://sns.amazonaws.com/doc/2010-03-31/"
   },
   "operations":{
@@ -458,6 +459,7 @@
       "input":{"shape":"SetSubscriptionAttributesInput"},
       "errors":[
         {"shape":"InvalidParameterException"},
+        {"shape":"FilterPolicyLimitExceededException"},
         {"shape":"InternalErrorException"},
         {"shape":"NotFoundException"},
         {"shape":"AuthorizationErrorException"}
@@ -490,6 +492,7 @@
       },
       "errors":[
         {"shape":"SubscriptionLimitExceededException"},
+        {"shape":"FilterPolicyLimitExceededException"},
         {"shape":"InvalidParameterException"},
         {"shape":"InternalErrorException"},
         {"shape":"NotFoundException"},
@@ -666,6 +669,18 @@
       "error":{
         "code":"EndpointDisabled",
         "httpStatusCode":400,
+        "senderFault":true
+      },
+      "exception":true
+    },
+    "FilterPolicyLimitExceededException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"string"}
+      },
+      "error":{
+        "code":"FilterPolicyLimitExceeded",
+        "httpStatusCode":403,
         "senderFault":true
       },
       "exception":true
@@ -1035,7 +1050,9 @@
       "members":{
         "TopicArn":{"shape":"topicARN"},
         "Protocol":{"shape":"protocol"},
-        "Endpoint":{"shape":"endpoint"}
+        "Endpoint":{"shape":"endpoint"},
+        "Attributes":{"shape":"SubscriptionAttributesMap"},
+        "ReturnSubscriptionArn":{"shape":"boolean"}
       }
     },
     "SubscribeResponse":{
