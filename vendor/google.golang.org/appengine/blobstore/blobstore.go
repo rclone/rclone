@@ -8,6 +8,7 @@ package blobstore // import "google.golang.org/appengine/blobstore"
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
+	"golang.org/x/text/encoding/htmlindex"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
@@ -199,12 +201,40 @@ func ParseUpload(req *http.Request) (blobs map[string][]*BlobInfo, other url.Val
 			return nil, nil, err
 		}
 		bi.BlobKey = appengine.BlobKey(params["blob-key"])
+		charset := params["charset"]
+
 		if ctype != "message/external-body" || bi.BlobKey == "" {
 			if formKey != "" {
 				slurp, serr := ioutil.ReadAll(part)
 				if serr != nil {
 					return nil, nil, errorf("error reading %q MIME part", formKey)
 				}
+
+				// Handle base64 content transfer encoding. multipart.Part transparently
+				// handles quoted-printable, and no special handling is required for
+				// 7bit, 8bit, or binary.
+				ctype, params, err = mime.ParseMediaType(part.Header.Get("Content-Transfer-Encoding"))
+				if err == nil && ctype == "base64" {
+					slurp, serr = ioutil.ReadAll(base64.NewDecoder(
+						base64.StdEncoding, bytes.NewReader(slurp)))
+					if serr != nil {
+						return nil, nil, errorf("error %s decoding %q MIME part", ctype, formKey)
+					}
+				}
+
+				// Handle charset
+				if charset != "" {
+					encoding, err := htmlindex.Get(charset)
+					if err != nil {
+						return nil, nil, errorf("error getting decoder for charset %q", charset)
+					}
+
+					slurp, err = encoding.NewDecoder().Bytes(slurp)
+					if err != nil {
+						return nil, nil, errorf("error decoding from charset %q", charset)
+					}
+				}
+
 				other[formKey] = append(other[formKey], string(slurp))
 			}
 			continue

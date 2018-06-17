@@ -1062,12 +1062,11 @@ type Properties struct {
 // ReservationMergeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ReservationMergeFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ReservationMergeFuture) Result(client Client) (lr ListResponse, err error) {
+func (future *ReservationMergeFuture) Result(client Client) (lr ListResponse, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1075,34 +1074,15 @@ func (future ReservationMergeFuture) Result(client Client) (lr ListResponse, err
 		return
 	}
 	if !done {
-		return lr, azure.NewAsyncOpIncompleteError("reservations.ReservationMergeFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		lr, err = client.MergeResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "reservations.ReservationMergeFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("reservations.ReservationMergeFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if lr.Response.Response, err = future.GetResult(sender); err == nil && lr.Response.Response.StatusCode != http.StatusNoContent {
+		lr, err = client.MergeResponder(lr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "reservations.ReservationMergeFuture", "Result", lr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "reservations.ReservationMergeFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	lr, err = client.MergeResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "reservations.ReservationMergeFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1110,12 +1090,11 @@ func (future ReservationMergeFuture) Result(client Client) (lr ListResponse, err
 // ReservationUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ReservationUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ReservationUpdateFuture) Result(client Client) (r Response, err error) {
+func (future *ReservationUpdateFuture) Result(client Client) (r Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1123,34 +1102,15 @@ func (future ReservationUpdateFuture) Result(client Client) (r Response, err err
 		return
 	}
 	if !done {
-		return r, azure.NewAsyncOpIncompleteError("reservations.ReservationUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		r, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "reservations.ReservationUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("reservations.ReservationUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if r.Response.Response, err = future.GetResult(sender); err == nil && r.Response.Response.StatusCode != http.StatusNoContent {
+		r, err = client.UpdateResponder(r.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "reservations.ReservationUpdateFuture", "Result", r.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "reservations.ReservationUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	r, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "reservations.ReservationUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1199,12 +1159,11 @@ type SkuRestriction struct {
 // SplitFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type SplitFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future SplitFuture) Result(client Client) (lr ListResponse, err error) {
+func (future *SplitFuture) Result(client Client) (lr ListResponse, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1212,34 +1171,15 @@ func (future SplitFuture) Result(client Client) (lr ListResponse, err error) {
 		return
 	}
 	if !done {
-		return lr, azure.NewAsyncOpIncompleteError("reservations.SplitFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		lr, err = client.SplitResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "reservations.SplitFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("reservations.SplitFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if lr.Response.Response, err = future.GetResult(sender); err == nil && lr.Response.Response.StatusCode != http.StatusNoContent {
+		lr, err = client.SplitResponder(lr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "reservations.SplitFuture", "Result", lr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "reservations.SplitFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	lr, err = client.SplitResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "reservations.SplitFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

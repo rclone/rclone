@@ -821,15 +821,17 @@ func (client SitesClient) CreateOrUpdateSitePreparer(ctx context.Context, resour
 // CreateOrUpdateSiteSender sends the CreateOrUpdateSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteSender(req *http.Request) (future SitesCreateOrUpdateSiteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -1347,15 +1349,17 @@ func (client SitesClient) CreateOrUpdateSiteSlotPreparer(ctx context.Context, re
 // CreateOrUpdateSiteSlotSender sends the CreateOrUpdateSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) CreateOrUpdateSiteSlotSender(req *http.Request) (future SitesCreateOrUpdateSiteSlotFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -8869,15 +8873,17 @@ func (client SitesClient) ListSitePublishingCredentialsPreparer(ctx context.Cont
 // ListSitePublishingCredentialsSender sends the ListSitePublishingCredentials request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePublishingCredentialsSender(req *http.Request) (future SitesListSitePublishingCredentialsFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -8940,15 +8946,17 @@ func (client SitesClient) ListSitePublishingCredentialsSlotPreparer(ctx context.
 // ListSitePublishingCredentialsSlotSender sends the ListSitePublishingCredentialsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) ListSitePublishingCredentialsSlotSender(req *http.Request) (future SitesListSitePublishingCredentialsSlotFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -9291,15 +9299,17 @@ func (client SitesClient) RecoverSitePreparer(ctx context.Context, resourceGroup
 // RecoverSiteSender sends the RecoverSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RecoverSiteSender(req *http.Request) (future SitesRecoverSiteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNotFound))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNotFound))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -9366,15 +9376,17 @@ func (client SitesClient) RecoverSiteSlotPreparer(ctx context.Context, resourceG
 // RecoverSiteSlotSender sends the RecoverSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RecoverSiteSlotSender(req *http.Request) (future SitesRecoverSiteSlotFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNotFound))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNotFound))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -9730,15 +9742,17 @@ func (client SitesClient) RestoreSitePreparer(ctx context.Context, resourceGroup
 // RestoreSiteSender sends the RestoreSite request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RestoreSiteSender(req *http.Request) (future SitesRestoreSiteFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -9806,15 +9820,17 @@ func (client SitesClient) RestoreSiteSlotPreparer(ctx context.Context, resourceG
 // RestoreSiteSlotSender sends the RestoreSiteSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) RestoreSiteSlotSender(req *http.Request) (future SitesRestoreSiteSlotFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -10152,15 +10168,17 @@ func (client SitesClient) SwapSlotsSlotPreparer(ctx context.Context, resourceGro
 // SwapSlotsSlotSender sends the SwapSlotsSlot request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) SwapSlotsSlotSender(req *http.Request) (future SitesSwapSlotsSlotFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 
@@ -10224,15 +10242,17 @@ func (client SitesClient) SwapSlotWithProductionPreparer(ctx context.Context, re
 // SwapSlotWithProductionSender sends the SwapSlotWithProduction request. The method will close the
 // http.Response Body if it receives an error.
 func (client SitesClient) SwapSlotWithProductionSender(req *http.Request) (future SitesSwapSlotWithProductionFuture, err error) {
-	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
-	future.Future = azure.NewFuture(req)
-	future.req = req
-	_, err = future.Done(sender)
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(future.Response(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
 	return
 }
 

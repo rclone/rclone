@@ -40,42 +40,42 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 	return Client{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
-// CheckAvailability checks the availability of the given notificationHub in a namespace.
+// CheckNotificationHubAvailability checks the availability of the given notificationHub in a namespace.
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // namespaceName - the namespace name.
 // parameters - the notificationHub name.
-func (client Client) CheckAvailability(ctx context.Context, resourceGroupName string, namespaceName string, parameters CheckAvailabilityParameters) (result CheckAvailabilityResult, err error) {
+func (client Client) CheckNotificationHubAvailability(ctx context.Context, resourceGroupName string, namespaceName string, parameters CheckAvailabilityParameters) (result CheckAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewError("notificationhubs.Client", "CheckAvailability", err.Error())
+		return result, validation.NewError("notificationhubs.Client", "CheckNotificationHubAvailability", err.Error())
 	}
 
-	req, err := client.CheckAvailabilityPreparer(ctx, resourceGroupName, namespaceName, parameters)
+	req, err := client.CheckNotificationHubAvailabilityPreparer(ctx, resourceGroupName, namespaceName, parameters)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "CheckAvailability", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "CheckNotificationHubAvailability", nil, "Failure preparing request")
 		return
 	}
 
-	resp, err := client.CheckAvailabilitySender(req)
+	resp, err := client.CheckNotificationHubAvailabilitySender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "CheckAvailability", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "CheckNotificationHubAvailability", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.CheckAvailabilityResponder(resp)
+	result, err = client.CheckNotificationHubAvailabilityResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "CheckAvailability", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "CheckNotificationHubAvailability", resp, "Failure responding to request")
 	}
 
 	return
 }
 
-// CheckAvailabilityPreparer prepares the CheckAvailability request.
-func (client Client) CheckAvailabilityPreparer(ctx context.Context, resourceGroupName string, namespaceName string, parameters CheckAvailabilityParameters) (*http.Request, error) {
+// CheckNotificationHubAvailabilityPreparer prepares the CheckNotificationHubAvailability request.
+func (client Client) CheckNotificationHubAvailabilityPreparer(ctx context.Context, resourceGroupName string, namespaceName string, parameters CheckAvailabilityParameters) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"namespaceName":     autorest.Encode("path", namespaceName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
@@ -97,16 +97,16 @@ func (client Client) CheckAvailabilityPreparer(ctx context.Context, resourceGrou
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// CheckAvailabilitySender sends the CheckAvailability request. The method will close the
+// CheckNotificationHubAvailabilitySender sends the CheckNotificationHubAvailability request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) CheckAvailabilitySender(req *http.Request) (*http.Response, error) {
+func (client Client) CheckNotificationHubAvailabilitySender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client, req,
 		azure.DoRetryWithRegistration(client.Client))
 }
 
-// CheckAvailabilityResponder handles the response to the CheckAvailability request. The method always
+// CheckNotificationHubAvailabilityResponder handles the response to the CheckNotificationHubAvailability request. The method always
 // closes the http.Response Body.
-func (client Client) CheckAvailabilityResponder(resp *http.Response) (result CheckAvailabilityResult, err error) {
+func (client Client) CheckNotificationHubAvailabilityResponder(resp *http.Response) (result CheckAvailabilityResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

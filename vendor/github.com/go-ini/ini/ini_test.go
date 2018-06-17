@@ -65,7 +65,7 @@ NAME = Unknwon
 		So(err, ShouldBeNil)
 		So(f, ShouldNotBeNil)
 
-		// Vaildate values make sure all sources are loaded correctly
+		// Validate values make sure all sources are loaded correctly
 		sec := f.Section("")
 		So(sec.Key("NAME").String(), ShouldEqual, "ini")
 		So(sec.Key("VERSION").String(), ShouldEqual, "v1")
@@ -88,7 +88,23 @@ NAME = Unknwon
 		})
 	})
 
-	Convey("Cant't parse small python-compatible INI files", t, func() {
+	Convey("Can't properly parse INI files containing `#` or `;` in value", t, func() {
+		f, err := ini.Load([]byte(`
+	[author]
+	NAME = U#n#k#n#w#o#n
+	GITHUB = U;n;k;n;w;o;n
+	`))
+		So(err, ShouldBeNil)
+		So(f, ShouldNotBeNil)
+
+		sec := f.Section("author")
+		nameValue := sec.Key("NAME").String()
+		githubValue := sec.Key("GITHUB").String()
+		So(nameValue, ShouldEqual, "U")
+		So(githubValue, ShouldEqual, "U")
+	})
+
+	Convey("Can't parse small python-compatible INI files", t, func() {
 		f, err := ini.Load([]byte(`
 [long]
 long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
@@ -103,7 +119,7 @@ long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
 		So(err.Error(), ShouldEqual, "key-value delimiter not found: foo\n")
 	})
 
-	Convey("Cant't parse big python-compatible INI files", t, func() {
+	Convey("Can't parse big python-compatible INI files", t, func() {
 		f, err := ini.Load([]byte(`
 [long]
 long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
@@ -324,12 +340,14 @@ key2=c\d\`))
 					IgnoreInlineComment:        true,
 				}, []byte(`
 key1=value ;comment
-key2=value2 #comment2`))
+key2=value2 #comment2
+key3=val#ue #comment3`))
 				So(err, ShouldBeNil)
 				So(f, ShouldNotBeNil)
 
 				So(f.Section("").Key("key1").String(), ShouldEqual, `value ;comment`)
 				So(f.Section("").Key("key2").String(), ShouldEqual, `value2 #comment2`)
+				So(f.Section("").Key("key3").String(), ShouldEqual, `val#ue #comment3`)
 
 				Convey("Inverse case", func() {
 					f, err := ini.LoadSources(ini.LoadOptions{AllowPythonMultilineValues: true}, []byte(`
@@ -461,11 +479,11 @@ key = test value <span style="color: %s\; background: %s">more text</span>
 				}, []byte(`
 [long]
 long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
-   foo
-   bar
-   foobar
-   barfoo
-   -----END RSA PRIVATE KEY-----
+  foo
+  bar
+  foobar
+  barfoo
+  -----END RSA PRIVATE KEY-----
 `))
 				So(err, ShouldBeNil)
 				So(f, ShouldNotBeNil)
@@ -481,103 +499,103 @@ long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
 				}, []byte(`
 [long]
 long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
-    1foo
-    2bar
-    3foobar
-    4barfoo
-    5foo
-    6bar
-    7foobar
-    8barfoo
-    9foo
-    10bar
-    11foobar
-    12barfoo
-    13foo
-    14bar
-    15foobar
-    16barfoo
-    17foo
-    18bar
-    19foobar
-    20barfoo
-    21foo
-    22bar
-    23foobar
-    24barfoo
-    25foo
-    26bar
-    27foobar
-    28barfoo
-    29foo
-    30bar
-    31foobar
-    32barfoo
-    33foo
-    34bar
-    35foobar
-    36barfoo
-    37foo
-    38bar
-    39foobar
-    40barfoo
-    41foo
-    42bar
-    43foobar
-    44barfoo
-    45foo
-    46bar
-    47foobar
-    48barfoo
-    49foo
-    50bar
-    51foobar
-    52barfoo
-    53foo
-    54bar
-    55foobar
-    56barfoo
-    57foo
-    58bar
-    59foobar
-    60barfoo
-    61foo
-    62bar
-    63foobar
-    64barfoo
-    65foo
-    66bar
-    67foobar
-    68barfoo
-    69foo
-    70bar
-    71foobar
-    72barfoo
-    73foo
-    74bar
-    75foobar
-    76barfoo
-    77foo
-    78bar
-    79foobar
-    80barfoo
-    81foo
-    82bar
-    83foobar
-    84barfoo
-    85foo
-    86bar
-    87foobar
-    88barfoo
-    89foo
-    90bar
-    91foobar
-    92barfoo
-    93foo
-    94bar
-    95foobar
-    96barfoo
-    -----END RSA PRIVATE KEY-----
+   1foo
+   2bar
+   3foobar
+   4barfoo
+   5foo
+   6bar
+   7foobar
+   8barfoo
+   9foo
+   10bar
+   11foobar
+   12barfoo
+   13foo
+   14bar
+   15foobar
+   16barfoo
+   17foo
+   18bar
+   19foobar
+   20barfoo
+   21foo
+   22bar
+   23foobar
+   24barfoo
+   25foo
+   26bar
+   27foobar
+   28barfoo
+   29foo
+   30bar
+   31foobar
+   32barfoo
+   33foo
+   34bar
+   35foobar
+   36barfoo
+   37foo
+   38bar
+   39foobar
+   40barfoo
+   41foo
+   42bar
+   43foobar
+   44barfoo
+   45foo
+   46bar
+   47foobar
+   48barfoo
+   49foo
+   50bar
+   51foobar
+   52barfoo
+   53foo
+   54bar
+   55foobar
+   56barfoo
+   57foo
+   58bar
+   59foobar
+   60barfoo
+   61foo
+   62bar
+   63foobar
+   64barfoo
+   65foo
+   66bar
+   67foobar
+   68barfoo
+   69foo
+   70bar
+   71foobar
+   72barfoo
+   73foo
+   74bar
+   75foobar
+   76barfoo
+   77foo
+   78bar
+   79foobar
+   80barfoo
+   81foo
+   82bar
+   83foobar
+   84barfoo
+   85foo
+   86bar
+   87foobar
+   88barfoo
+   89foo
+   90bar
+   91foobar
+   92barfoo
+   93foo
+   94bar
+   95foobar
+   96barfoo
+   -----END RSA PRIVATE KEY-----
 `))
 				So(err, ShouldBeNil)
 				So(f, ShouldNotBeNil)
@@ -734,6 +752,44 @@ my lesson state data – 1111111111111111111000000000000000001110000
 					So(err, ShouldNotBeNil)
 				})
 			})
+
+			Convey("And false `SpaceBeforeInlineComment`", func() {
+				Convey("Can't parse INI files containing `#` or `;` in value", func() {
+					f, err := ini.LoadSources(
+						ini.LoadOptions{AllowPythonMultilineValues: false, SpaceBeforeInlineComment: false},
+						[]byte(`
+[author]
+NAME = U#n#k#n#w#o#n
+GITHUB = U;n;k;n;w;o;n
+`))
+					So(err, ShouldBeNil)
+					So(f, ShouldNotBeNil)
+						sec := f.Section("author")
+					nameValue := sec.Key("NAME").String()
+					githubValue := sec.Key("GITHUB").String()
+					So(nameValue, ShouldEqual, "U")
+					So(githubValue, ShouldEqual, "U")
+				})
+			})
+
+			Convey("And true `SpaceBeforeInlineComment`", func() {
+				Convey("Can parse INI files containing `#` or `;` in value", func() {
+					f, err := ini.LoadSources(
+						ini.LoadOptions{AllowPythonMultilineValues: false, SpaceBeforeInlineComment: true},
+						[]byte(`
+[author]
+NAME = U#n#k#n#w#o#n
+GITHUB = U;n;k;n;w;o;n
+`))
+					So(err, ShouldBeNil)
+					So(f, ShouldNotBeNil)
+					sec := f.Section("author")
+					nameValue := sec.Key("NAME").String()
+					githubValue := sec.Key("GITHUB").String()
+					So(nameValue, ShouldEqual, "U#n#k#n#w#o#n")
+					So(githubValue, ShouldEqual, "U;n;k;n;w;o;n")
+				})
+			})
 		})
 
 		Convey("with false `AllowPythonMultilineValues`", func() {
@@ -806,12 +862,14 @@ key2=c\d\`))
 					IgnoreInlineComment:        true,
 				}, []byte(`
 key1=value ;comment
-key2=value2 #comment2`))
+key2=value2 #comment2
+key3=val#ue #comment3`))
 				So(err, ShouldBeNil)
 				So(f, ShouldNotBeNil)
 
 				So(f.Section("").Key("key1").String(), ShouldEqual, `value ;comment`)
 				So(f.Section("").Key("key2").String(), ShouldEqual, `value2 #comment2`)
+				So(f.Section("").Key("key3").String(), ShouldEqual, `val#ue #comment3`)
 
 				Convey("Inverse case", func() {
 					f, err := ini.LoadSources(ini.LoadOptions{AllowPythonMultilineValues: false}, []byte(`
@@ -935,122 +993,122 @@ key = test value <span style="color: %s\; background: %s">more text</span>
 				So(f.Section("").Key("key").String(), ShouldEqual, `test value <span style="color: %s; background: %s">more text</span>`)
 			})
 
-			Convey("Cant't parse small python-compatible INI files", func() {
+			Convey("Can't parse small python-compatible INI files", func() {
 				f, err := ini.LoadSources(ini.LoadOptions{AllowPythonMultilineValues: false}, []byte(`
 [long]
 long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
-   foo
-   bar
-   foobar
-   barfoo
-   -----END RSA PRIVATE KEY-----
+  foo
+  bar
+  foobar
+  barfoo
+  -----END RSA PRIVATE KEY-----
 `))
 				So(err, ShouldNotBeNil)
 				So(f, ShouldBeNil)
 				So(err.Error(), ShouldEqual, "key-value delimiter not found: foo\n")
 			})
 
-			Convey("Cant't parse big python-compatible INI files", func() {
+			Convey("Can't parse big python-compatible INI files", func() {
 				f, err := ini.LoadSources(ini.LoadOptions{AllowPythonMultilineValues: false}, []byte(`
 [long]
 long_rsa_private_key = -----BEGIN RSA PRIVATE KEY-----
-   1foo
-   2bar
-   3foobar
-   4barfoo
-   5foo
-   6bar
-   7foobar
-   8barfoo
-   9foo
-   10bar
-   11foobar
-   12barfoo
-   13foo
-   14bar
-   15foobar
-   16barfoo
-   17foo
-   18bar
-   19foobar
-   20barfoo
-   21foo
-   22bar
-   23foobar
-   24barfoo
-   25foo
-   26bar
-   27foobar
-   28barfoo
-   29foo
-   30bar
-   31foobar
-   32barfoo
-   33foo
-   34bar
-   35foobar
-   36barfoo
-   37foo
-   38bar
-   39foobar
-   40barfoo
-   41foo
-   42bar
-   43foobar
-   44barfoo
-   45foo
-   46bar
-   47foobar
-   48barfoo
-   49foo
-   50bar
-   51foobar
-   52barfoo
-   53foo
-   54bar
-   55foobar
-   56barfoo
-   57foo
-   58bar
-   59foobar
-   60barfoo
-   61foo
-   62bar
-   63foobar
-   64barfoo
-   65foo
-   66bar
-   67foobar
-   68barfoo
-   69foo
-   70bar
-   71foobar
-   72barfoo
-   73foo
-   74bar
-   75foobar
-   76barfoo
-   77foo
-   78bar
-   79foobar
-   80barfoo
-   81foo
-   82bar
-   83foobar
-   84barfoo
-   85foo
-   86bar
-   87foobar
-   88barfoo
-   89foo
-   90bar
-   91foobar
-   92barfoo
-   93foo
-   94bar
-   95foobar
-   96barfoo
-   -----END RSA PRIVATE KEY-----
+  1foo
+  2bar
+  3foobar
+  4barfoo
+  5foo
+  6bar
+  7foobar
+  8barfoo
+  9foo
+  10bar
+  11foobar
+  12barfoo
+  13foo
+  14bar
+  15foobar
+  16barfoo
+  17foo
+  18bar
+  19foobar
+  20barfoo
+  21foo
+  22bar
+  23foobar
+  24barfoo
+  25foo
+  26bar
+  27foobar
+  28barfoo
+  29foo
+  30bar
+  31foobar
+  32barfoo
+  33foo
+  34bar
+  35foobar
+  36barfoo
+  37foo
+  38bar
+  39foobar
+  40barfoo
+  41foo
+  42bar
+  43foobar
+  44barfoo
+  45foo
+  46bar
+  47foobar
+  48barfoo
+  49foo
+  50bar
+  51foobar
+  52barfoo
+  53foo
+  54bar
+  55foobar
+  56barfoo
+  57foo
+  58bar
+  59foobar
+  60barfoo
+  61foo
+  62bar
+  63foobar
+  64barfoo
+  65foo
+  66bar
+  67foobar
+  68barfoo
+  69foo
+  70bar
+  71foobar
+  72barfoo
+  73foo
+  74bar
+  75foobar
+  76barfoo
+  77foo
+  78bar
+  79foobar
+  80barfoo
+  81foo
+  82bar
+  83foobar
+  84barfoo
+  85foo
+  86bar
+  87foobar
+  88barfoo
+  89foo
+  90bar
+  91foobar
+  92barfoo
+  93foo
+  94bar
+  95foobar
+  96barfoo
+  -----END RSA PRIVATE KEY-----
 `))
 				So(err, ShouldNotBeNil)
 				So(f, ShouldBeNil)
@@ -1107,6 +1165,44 @@ my lesson state data – 1111111111111111111000000000000000001110000
 my lesson state data – 1111111111111111111000000000000000001110000
 111111111111111111100000000000111000000000 – end my lesson state data`))
 					So(err, ShouldNotBeNil)
+				})
+			})
+
+			Convey("And false `SpaceBeforeInlineComment`", func() {
+				Convey("Can't parse INI files containing `#` or `;` in value", func() {
+					f, err := ini.LoadSources(
+						ini.LoadOptions{AllowPythonMultilineValues: true, SpaceBeforeInlineComment: false},
+						[]byte(`
+[author]
+NAME = U#n#k#n#w#o#n
+GITHUB = U;n;k;n;w;o;n
+`))
+					So(err, ShouldBeNil)
+					So(f, ShouldNotBeNil)
+					sec := f.Section("author")
+					nameValue := sec.Key("NAME").String()
+					githubValue := sec.Key("GITHUB").String()
+					So(nameValue, ShouldEqual, "U")
+					So(githubValue, ShouldEqual, "U")
+				})
+			})
+
+			Convey("And true `SpaceBeforeInlineComment`", func() {
+				Convey("Can parse INI files containing `#` or `;` in value", func() {
+					f, err := ini.LoadSources(
+						ini.LoadOptions{AllowPythonMultilineValues: true, SpaceBeforeInlineComment: true},
+						[]byte(`
+[author]
+NAME = U#n#k#n#w#o#n
+GITHUB = U;n;k;n;w;o;n
+`))
+					So(err, ShouldBeNil)
+					So(f, ShouldNotBeNil)
+					sec := f.Section("author")
+					nameValue := sec.Key("NAME").String()
+					githubValue := sec.Key("GITHUB").String()
+					So(nameValue, ShouldEqual, "U#n#k#n#w#o#n")
+					So(githubValue, ShouldEqual, "U;n;k;n;w;o;n")
 				})
 			})
 		})

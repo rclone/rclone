@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// InMemHandler returns a Hanlders object with the test handlers
+// InMemHandler returns a Hanlders object with the test handlers.
 func InMemHandler() Handlers {
 	root := &root{
 		files: make(map[string]*memFile),
@@ -24,7 +24,7 @@ func InMemHandler() Handlers {
 	return Handlers{root, root, root, root}
 }
 
-// Handlers
+// Example Handlers
 func (fs *root) Fileread(r *Request) (io.ReaderAt, error) {
 	if fs.mockErr != nil {
 		return nil, fs.mockErr

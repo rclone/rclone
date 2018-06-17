@@ -179,6 +179,17 @@ type Action struct {
 	// inside the container.
 	Commands []string `json:"commands,omitempty"`
 
+	// Credentials: If the specified image is hosted on a private registry
+	// other than Google
+	// Container Registry, the credentials required to pull the image must
+	// be
+	// specified here as an encrypted secret.
+	//
+	// The secret must decrypt to a JSON encoded dictionary containing
+	// both
+	// `username` and `password` keys.
+	Credentials *Secret `json:"credentials,omitempty"`
+
 	// Entrypoint: If specified, overrides the ENTRYPOINT specified in the
 	// container.
 	Entrypoint string `json:"entrypoint,omitempty"`
@@ -256,18 +267,6 @@ type Action struct {
 	// If set, this flag prevents the worker from downloading the image
 	// until
 	// just before the action is executed.
-	//
-	// This is useful for two reasons: first, if the image is large and a
-	// step
-	// earlier in the pipeline can fail, it can save time to avoid fetching
-	// the
-	// image until it is needed.
-	//
-	// Second, if the image is private (that is, it requires running
-	// `docker
-	// login` to access) this flag **must** be set so that a preceding
-	// action
-	// can establish the credentials required to fetch it.
 	//   "DISABLE_STANDARD_ERROR_CAPTURE" - Normally, a small portion of the
 	// container's standard error stream is
 	// captured and returned inside the ContainerStoppedEvent.  Setting
@@ -1104,10 +1103,30 @@ func (s *Mount) MarshalJSON() ([]byte, error) {
 
 // Network: VM networking options.
 type Network struct {
-	// Name: The network name to attach the VM's network interface to.  If
-	// unspecified,
-	// the global default network is used.
+	// Name: The network name to attach the VM's network interface to.  The
+	// value will
+	// be prefixed with "global/networks/" unless it contains a "/" in which
+	// case
+	// it is assumed to be a fully specified network resource URL.
+	//
+	// If unspecified, the global default network is used.
 	Name string `json:"name,omitempty"`
+
+	// Subnetwork: If the specified network is configured for custom subnet
+	// creation, the
+	// name of the subnetwork to attach the instance to must be specified
+	// here.
+	//
+	// The value is prefixed with "regions/*/subnetworks/" unless it
+	// contains a
+	// "/" in which case it is assumed to be a full specified subnetwork
+	// resource
+	// URL.
+	//
+	// If the '*' character appears in the value, it is replaced with the
+	// region
+	// that the virtual machine has been allocated in.
+	Subnetwork string `json:"subnetwork,omitempty"`
 
 	// UsePrivateAddress: If set to true, do not attach a public IP address
 	// to the VM.  Note that
@@ -1515,6 +1534,45 @@ type RuntimeMetadata struct {
 
 func (s *RuntimeMetadata) MarshalJSON() ([]byte, error) {
 	type NoMethod RuntimeMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Secret: Secret holds encrypted information that is only decrypted and
+// stored in RAM
+// by the worker VM when running the pipeline.
+type Secret struct {
+	// CipherText: The value of the cipherText response from the `encrypt`
+	// method.
+	CipherText string `json:"cipherText,omitempty"`
+
+	// KeyName: The name of the Cloud KMS key that will be used to decrypt
+	// the secret
+	// value.  The VM service account must have the required permissions
+	// and
+	// authentication scopes to invoke the `decrypt` method on the specified
+	// key.
+	KeyName string `json:"keyName,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CipherText") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CipherText") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Secret) MarshalJSON() ([]byte, error) {
+	type NoMethod Secret
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

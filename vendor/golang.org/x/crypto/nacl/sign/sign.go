@@ -24,6 +24,7 @@ import (
 	"io"
 
 	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/internal/subtle"
 )
 
 // Overhead is the number of bytes of overhead when signing a message.
@@ -47,6 +48,9 @@ func GenerateKey(rand io.Reader) (publicKey *[32]byte, privateKey *[64]byte, err
 func Sign(out, message []byte, privateKey *[64]byte) []byte {
 	sig := ed25519.Sign(ed25519.PrivateKey((*privateKey)[:]), message)
 	ret, out := sliceForAppend(out, Overhead+len(message))
+	if subtle.AnyOverlap(out, message) {
+		panic("nacl: invalid buffer overlap")
+	}
 	copy(out, sig)
 	copy(out[Overhead:], message)
 	return ret
@@ -63,6 +67,9 @@ func Open(out, signedMessage []byte, publicKey *[32]byte) ([]byte, bool) {
 		return nil, false
 	}
 	ret, out := sliceForAppend(out, len(signedMessage)-Overhead)
+	if subtle.AnyOverlap(out, signedMessage) {
+		panic("nacl: invalid buffer overlap")
+	}
 	copy(out, signedMessage[Overhead:])
 	return ret, true
 }

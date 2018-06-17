@@ -2,18 +2,51 @@
   "version": "2.0",
   "service": "<fullname>AWS Shield Advanced</fullname> <p>This is the <i>AWS Shield Advanced API Reference</i>. This guide is for developers who need detailed information about the AWS Shield Advanced API actions, data types, and errors. For detailed information about AWS WAF and AWS Shield Advanced features and an overview of how to use the AWS WAF and AWS Shield Advanced APIs, see the <a href=\"http://docs.aws.amazon.com/waf/latest/developerguide/\">AWS WAF and AWS Shield Developer Guide</a>.</p>",
   "operations": {
-    "CreateProtection": "<p>Enables AWS Shield Advanced for a specific AWS resource. The resource can be an Amazon CloudFront distribution, Elastic Load Balancing load balancer, Elastic IP Address, or an Amazon Route 53 hosted zone.</p>",
-    "CreateSubscription": "<p>Activates AWS Shield Advanced for an account.</p>",
+    "AssociateDRTLogBucket": "<p>Authorizes the DDoS Response team (DRT) to access the specified Amazon S3 bucket containing your flow logs. You can associate up to 10 Amazon S3 buckets with your subscription.</p> <p>To use the services of the DRT and make an <code>AssociateDRTLogBucket</code> request, you must be subscribed to the <a href=\"https://aws.amazon.com/premiumsupport/business-support/\">Business Support plan</a> or the <a href=\"https://aws.amazon.com/premiumsupport/enterprise-support/\">Enterprise Support plan</a>.</p>",
+    "AssociateDRTRole": "<p>Authorizes the DDoS Response team (DRT), using the specified role, to access your AWS account to assist with DDoS attack mitigation during potential attacks. This enables the DRT to inspect your AWS WAF configuration and create or update AWS WAF rules and web ACLs.</p> <p>You can associate only one <code>RoleArn</code> with your subscription. If you submit an <code>AssociateDRTRole</code> request for an account that already has an associated role, the new <code>RoleArn</code> will replace the existing <code>RoleArn</code>. </p> <p>Prior to making the <code>AssociateDRTRole</code> request, you must attach the <a href=\"https://console.aws.amazon.com/iam/home?#/policies/arn:aws:iam::aws:policy/service-role/AWSShieldDRTAccessPolicy\">AWSShieldDRTAccessPolicy</a> managed policy to the role you will specify in the request. For more information see <a href=\" https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html\">Attaching and Detaching IAM Policies</a>. The role must also trust the service principal <code> drt.shield.amazonaws.com</code>. For more information, see <a href=\"https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html\">IAM JSON Policy Elements: Principal</a>.</p> <p>The DRT will have access only to your AWS WAF and Shield resources. By submitting this request, you authorize the DRT to inspect your AWS WAF and Shield configuration and create and update AWS WAF rules and web ACLs on your behalf. The DRT takes these actions only if explicitly authorized by you.</p> <p>You must have the <code>iam:PassRole</code> permission to make an <code>AssociateDRTRole</code> request. For more information, see <a href=\"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html\">Granting a User Permissions to Pass a Role to an AWS Service</a>. </p> <p>To use the services of the DRT and make an <code>AssociateDRTRole</code> request, you must be subscribed to the <a href=\"https://aws.amazon.com/premiumsupport/business-support/\">Business Support plan</a> or the <a href=\"https://aws.amazon.com/premiumsupport/enterprise-support/\">Enterprise Support plan</a>.</p>",
+    "CreateProtection": "<p>Enables AWS Shield Advanced for a specific AWS resource. The resource can be an Amazon CloudFront distribution, Elastic Load Balancing load balancer, Elastic IP Address, or an Amazon Route 53 hosted zone.</p> <p>You can add protection to only a single resource with each CreateProtection request. If you want to add protection to multiple resources at once, use the <a href=\"https://console.aws.amazon.com/waf/\">AWS WAF console</a>. For more information see <a href=\"https://docs.aws.amazon.com/waf/latest/developerguide/getting-started-ddos.html\">Getting Started with AWS Shield Advanced</a> and <a href=\"https://docs.aws.amazon.com/waf/latest/developerguide/configure-new-protection.html\">Add AWS Shield Advanced Protection to more AWS Resources</a>.</p>",
+    "CreateSubscription": "<p>Activates AWS Shield Advanced for an account.</p> <p>As part of this request you can specify <code>EmergencySettings</code> that automaticaly grant the DDoS response team (DRT) needed permissions to assist you during a suspected DDoS attack. For more information see <a href=\"https://docs.aws.amazon.com/waf/latest/developerguide/authorize-DRT.html\">Authorize the DDoS Response Team to Create Rules and Web ACLs on Your Behalf</a>.</p> <p>When you initally create a subscription, your subscription is set to be automatically renewed at the end of the existing subscription period. You can change this by submitting an <code>UpdateSubscription</code> request. </p>",
     "DeleteProtection": "<p>Deletes an AWS Shield Advanced <a>Protection</a>.</p>",
     "DeleteSubscription": "<p>Removes AWS Shield Advanced from an account. AWS Shield Advanced requires a 1-year subscription commitment. You cannot delete a subscription prior to the completion of that commitment. </p>",
     "DescribeAttack": "<p>Describes the details of a DDoS attack. </p>",
+    "DescribeDRTAccess": "<p>Returns the current role and list of Amazon S3 log buckets used by the DDoS Response team (DRT) to access your AWS account while assisting with attack mitigation.</p>",
+    "DescribeEmergencyContactSettings": "<p>Lists the email addresses that the DRT can use to contact you during a suspected attack.</p>",
     "DescribeProtection": "<p>Lists the details of a <a>Protection</a> object.</p>",
     "DescribeSubscription": "<p>Provides details about the AWS Shield Advanced subscription for an account.</p>",
+    "DisassociateDRTLogBucket": "<p>Removes the DDoS Response team's (DRT) access to the specified Amazon S3 bucket containing your flow logs.</p> <p>To make a <code>DisassociateDRTLogBucket</code> request, you must be subscribed to the <a href=\"https://aws.amazon.com/premiumsupport/business-support/\">Business Support plan</a> or the <a href=\"https://aws.amazon.com/premiumsupport/enterprise-support/\">Enterprise Support plan</a>. However, if you are not subscribed to one of these support plans, but had been previously and had granted the DRT access to your account, you can submit a <code>DisassociateDRTLogBucket</code> request to remove this access.</p>",
+    "DisassociateDRTRole": "<p>Removes the DDoS Response team's (DRT) access to your AWS account.</p> <p>To make a <code>DisassociateDRTRole</code> request, you must be subscribed to the <a href=\"https://aws.amazon.com/premiumsupport/business-support/\">Business Support plan</a> or the <a href=\"https://aws.amazon.com/premiumsupport/enterprise-support/\">Enterprise Support plan</a>. However, if you are not subscribed to one of these support plans, but had been previously and had granted the DRT access to your account, you can submit a <code>DisassociateDRTRole</code> request to remove this access.</p>",
     "GetSubscriptionState": "<p>Returns the <code>SubscriptionState</code>, either <code>Active</code> or <code>Inactive</code>.</p>",
     "ListAttacks": "<p>Returns all ongoing DDoS attacks or all DDoS attacks during a specified time period.</p>",
-    "ListProtections": "<p>Lists all <a>Protection</a> objects for the account.</p>"
+    "ListProtections": "<p>Lists all <a>Protection</a> objects for the account.</p>",
+    "UpdateEmergencyContactSettings": "<p>Updates the details of the list of email addresses that the DRT can use to contact you during a suspected attack.</p>",
+    "UpdateSubscription": "<p>Updates the details of an existing subscription. Only enter values for parameters you want to change. Empty parameters are not updated.</p>"
   },
   "shapes": {
+    "AccessDeniedForDependencyException": {
+      "base": "<p>In order to grant the necessary access to the DDoS Response Team, the user submitting <code>AssociateDRTRole</code> must have the <code>iam:PassRole</code> permission. This error indicates the user did not have the appropriate permissions. For more information, see <a href=\"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html\">Granting a User Permissions to Pass a Role to an AWS Service</a>. </p>",
+      "refs": {
+      }
+    },
+    "AssociateDRTLogBucketRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AssociateDRTLogBucketResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AssociateDRTRoleRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AssociateDRTRoleResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "AttackDetail": {
       "base": "<p>The details of a DDoS attack.</p>",
       "refs": {
@@ -86,6 +119,13 @@
         "AttackSummary$AttackVectors": "<p>The list of attacks for a specified time period.</p>"
       }
     },
+    "AutoRenew": {
+      "base": null,
+      "refs": {
+        "Subscription$AutoRenew": "<p>If <code>ENABLED</code>, the subscription will be automatically renewed at the end of the existing subscription period.</p> <p>When you initally create a subscription, <code>AutoRenew</code> is set to <code>ENABLED</code>. You can change this by submitting an <code>UpdateSubscription</code> request. If the <code>UpdateSubscription</code> request does not included a value for <code>AutoRenew</code>, the existing value for <code>AutoRenew</code> remains unchanged.</p>",
+        "UpdateSubscriptionRequest$AutoRenew": "<p>When you initally create a subscription, <code>AutoRenew</code> is set to <code>ENABLED</code>. If <code>ENABLED</code>, the subscription will be automatically renewed at the end of the existing subscription period. You can change this by submitting an <code>UpdateSubscription</code> request. If the <code>UpdateSubscription</code> request does not included a value for <code>AutoRenew</code>, the existing value for <code>AutoRenew</code> remains unchanged.</p>"
+      }
+    },
     "Contributor": {
       "base": "<p>A contributor to the attack and their contribution.</p>",
       "refs": {
@@ -142,6 +182,26 @@
       "refs": {
       }
     },
+    "DescribeDRTAccessRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeDRTAccessResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeEmergencyContactSettingsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeEmergencyContactSettingsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DescribeProtectionRequest": {
       "base": null,
       "refs": {
@@ -162,6 +222,26 @@
       "refs": {
       }
     },
+    "DisassociateDRTLogBucketRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DisassociateDRTLogBucketResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DisassociateDRTRoleRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DisassociateDRTRoleResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "Double": {
       "base": null,
       "refs": {
@@ -174,6 +254,25 @@
       "base": null,
       "refs": {
         "Subscription$TimeCommitmentInSeconds": "<p>The length, in seconds, of the AWS Shield Advanced subscription for the account.</p>"
+      }
+    },
+    "EmailAddress": {
+      "base": null,
+      "refs": {
+        "EmergencyContact$EmailAddress": "<p>An email address that the DRT can use to contact you during a suspected attack.</p>"
+      }
+    },
+    "EmergencyContact": {
+      "base": "<p>Contact information that the DRT can use to contact you during a suspected attack.</p>",
+      "refs": {
+        "EmergencyContactList$member": null
+      }
+    },
+    "EmergencyContactList": {
+      "base": null,
+      "refs": {
+        "DescribeEmergencyContactSettingsResponse$EmergencyContactList": "<p>A list of email addresses that the DRT can use to contact you during a suspected attack.</p>",
+        "UpdateEmergencyContactSettingsRequest$EmergencyContactList": "<p>A list of email addresses that the DRT can use to contact you during a suspected attack.</p>"
       }
     },
     "GetSubscriptionStateRequest": {
@@ -202,6 +301,11 @@
       "refs": {
       }
     },
+    "InvalidPaginationTokenException": {
+      "base": "<p>Exception that indicates that the NextToken specified in the request is invalid. Submit the request using the NextToken value that was returned in the response.</p>",
+      "refs": {
+      }
+    },
     "InvalidParameterException": {
       "base": "<p>Exception that indicates that the parameters passed to the API are invalid. </p>",
       "refs": {
@@ -210,6 +314,12 @@
     "InvalidResourceException": {
       "base": "<p>Exception that indicates that the resource is invalid. You might not have access to the resource, or the resource might not exist.</p>",
       "refs": {
+      }
+    },
+    "Limit": {
+      "base": "<p>Specifies how many protections of a given type you can create.</p>",
+      "refs": {
+        "Limits$member": null
       }
     },
     "LimitNumber": {
@@ -222,6 +332,12 @@
       "base": null,
       "refs": {
         "LimitsExceededException$Type": null
+      }
+    },
+    "Limits": {
+      "base": null,
+      "refs": {
+        "Subscription$Limits": "<p>Specifies how many protections of a given type you can create.</p>"
       }
     },
     "LimitsExceededException": {
@@ -250,15 +366,30 @@
       }
     },
     "LockedSubscriptionException": {
-      "base": "<p>Exception that indicates that the subscription you are trying to delete has not yet completed the 1-year commitment. You cannot delete this subscription.</p>",
+      "base": "<p>You are trying to update a subscription that has not yet completed the 1-year commitment. You can change the <code>AutoRenew</code> parameter during the last 30 days of your subscription. This exception indicates that you are attempting to change <code>AutoRenew</code> prior to that period.</p>",
       "refs": {
+      }
+    },
+    "LogBucket": {
+      "base": null,
+      "refs": {
+        "AssociateDRTLogBucketRequest$LogBucket": "<p>The Amazon S3 bucket that contains your flow logs.</p>",
+        "DisassociateDRTLogBucketRequest$LogBucket": "<p>The Amazon S3 bucket that contains your flow logs.</p>",
+        "LogBucketList$member": null
+      }
+    },
+    "LogBucketList": {
+      "base": null,
+      "refs": {
+        "DescribeDRTAccessResponse$LogBucketList": "<p>The list of Amazon S3 buckets accessed by the DRT.</p>"
       }
     },
     "Long": {
       "base": null,
       "refs": {
         "AttackProperty$Total": "<p>The total contributions made to this attack by all contributors, not just the five listed in the <code>TopContributors</code> list.</p>",
-        "Contributor$Value": "<p>The contribution of this contributor expressed in <a>Protection</a> units. For example <code>10,000</code>.</p>"
+        "Contributor$Value": "<p>The contribution of this contributor expressed in <a>Protection</a> units. For example <code>10,000</code>.</p>",
+        "Limit$Max": "<p>The maximum number of protections that can be created for the specified <code>Type</code>.</p>"
       }
     },
     "MaxResults": {
@@ -278,6 +409,11 @@
       "base": null,
       "refs": {
         "AttackDetail$Mitigations": "<p>List of mitigation actions taken for the attack.</p>"
+      }
+    },
+    "NoAssociatedRoleException": {
+      "base": "<p>The ARN of the role that you specifed does not exist.</p>",
+      "refs": {
       }
     },
     "OptimisticLockException": {
@@ -339,6 +475,13 @@
       "refs": {
       }
     },
+    "RoleArn": {
+      "base": null,
+      "refs": {
+        "AssociateDRTRoleRequest$RoleArn": "<p>The Amazon Resource Name (ARN) of the role the DRT will use to access your AWS account.</p> <p>Prior to making the <code>AssociateDRTRole</code> request, you must attach the <a href=\"https://console.aws.amazon.com/iam/home?#/policies/arn:aws:iam::aws:policy/service-role/AWSShieldDRTAccessPolicy\">AWSShieldDRTAccessPolicy</a> managed policy to this role. For more information see <a href=\" https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-attach-detach.html\">Attaching and Detaching IAM Policies</a>.</p>",
+        "DescribeDRTAccessResponse$RoleArn": "<p>The Amazon Resource Name (ARN) of the role the DRT used to access your AWS account.</p>"
+      }
+    },
     "String": {
       "base": null,
       "refs": {
@@ -346,6 +489,7 @@
         "AttackSummary$ResourceArn": "<p>The ARN (Amazon Resource Name) of the resource that was attacked.</p>",
         "AttackVectorDescription$VectorType": "<p>The attack type. Valid values:</p> <ul> <li> <p>UDP_TRAFFIC</p> </li> <li> <p>UDP_FRAGMENT</p> </li> <li> <p>GENERIC_UDP_REFLECTION</p> </li> <li> <p>DNS_REFLECTION</p> </li> <li> <p>NTP_REFLECTION</p> </li> <li> <p>CHARGEN_REFLECTION</p> </li> <li> <p>SSDP_REFLECTION</p> </li> <li> <p>PORT_MAPPER</p> </li> <li> <p>RIP_REFLECTION</p> </li> <li> <p>SNMP_REFLECTION</p> </li> <li> <p>MSSQL_REFLECTION</p> </li> <li> <p>NET_BIOS_REFLECTION</p> </li> <li> <p>SYN_FLOOD</p> </li> <li> <p>ACK_FLOOD</p> </li> <li> <p>REQUEST_FLOOD</p> </li> </ul>",
         "Contributor$Name": "<p>The name of the contributor. This is dependent on the <code>AttackPropertyIdentifier</code>. For example, if the <code>AttackPropertyIdentifier</code> is <code>SOURCE_COUNTRY</code>, the <code>Name</code> could be <code>United States</code>.</p>",
+        "Limit$Type": "<p>The type of protection.</p>",
         "Mitigation$MitigationName": "<p>The name of the mitigation taken for this attack.</p>",
         "SubResourceSummary$Id": "<p>The unique identifier (ID) of the <code>SubResource</code>.</p>",
         "SummarizedAttackVector$VectorType": "<p>The attack type, for example, SNMP reflection or SYN flood.</p>",
@@ -419,7 +563,8 @@
     "Timestamp": {
       "base": null,
       "refs": {
-        "Subscription$StartTime": "<p>The start time of the subscription, in Unix time in seconds. For more information see <a href=\"http://docs.aws.amazon.com/cli/latest/userguide/cli-using-param.html#parameter-types\">timestamp</a>.</p>"
+        "Subscription$StartTime": "<p>The start time of the subscription, in Unix time in seconds. For more information see <a href=\"http://docs.aws.amazon.com/cli/latest/userguide/cli-using-param.html#parameter-types\">timestamp</a>.</p>",
+        "Subscription$EndTime": "<p>The date and time your subscription will end.</p>"
       }
     },
     "Token": {
@@ -443,15 +588,38 @@
         "AttackProperty$Unit": "<p>The unit of the <code>Value</code> of the contributions.</p>"
       }
     },
+    "UpdateEmergencyContactSettingsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateEmergencyContactSettingsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateSubscriptionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateSubscriptionResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "errorMessage": {
       "base": null,
       "refs": {
+        "AccessDeniedForDependencyException$message": null,
         "InternalErrorException$message": null,
         "InvalidOperationException$message": null,
+        "InvalidPaginationTokenException$message": null,
         "InvalidParameterException$message": null,
         "InvalidResourceException$message": null,
         "LimitsExceededException$message": null,
         "LockedSubscriptionException$message": null,
+        "NoAssociatedRoleException$message": null,
         "OptimisticLockException$message": null,
         "ResourceAlreadyExistsException$message": null,
         "ResourceNotFoundException$message": null

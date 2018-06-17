@@ -1,10 +1,10 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,7 +42,7 @@ func ExampleIamClient_ListServiceAccounts() {
 	}
 
 	req := &adminpb.ListServiceAccountsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	it := c.ListServiceAccounts(ctx, req)
 	for {
@@ -66,7 +66,7 @@ func ExampleIamClient_GetServiceAccount() {
 	}
 
 	req := &adminpb.GetServiceAccountRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetServiceAccount(ctx, req)
 	if err != nil {
@@ -84,7 +84,7 @@ func ExampleIamClient_CreateServiceAccount() {
 	}
 
 	req := &adminpb.CreateServiceAccountRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateServiceAccount(ctx, req)
 	if err != nil {
@@ -102,7 +102,7 @@ func ExampleIamClient_UpdateServiceAccount() {
 	}
 
 	req := &adminpb.ServiceAccount{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.UpdateServiceAccount(ctx, req)
 	if err != nil {
@@ -120,7 +120,7 @@ func ExampleIamClient_DeleteServiceAccount() {
 	}
 
 	req := &adminpb.DeleteServiceAccountRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteServiceAccount(ctx, req)
 	if err != nil {
@@ -136,7 +136,7 @@ func ExampleIamClient_ListServiceAccountKeys() {
 	}
 
 	req := &adminpb.ListServiceAccountKeysRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.ListServiceAccountKeys(ctx, req)
 	if err != nil {
@@ -154,7 +154,7 @@ func ExampleIamClient_GetServiceAccountKey() {
 	}
 
 	req := &adminpb.GetServiceAccountKeyRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.GetServiceAccountKey(ctx, req)
 	if err != nil {
@@ -172,7 +172,7 @@ func ExampleIamClient_CreateServiceAccountKey() {
 	}
 
 	req := &adminpb.CreateServiceAccountKeyRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.CreateServiceAccountKey(ctx, req)
 	if err != nil {
@@ -190,7 +190,7 @@ func ExampleIamClient_DeleteServiceAccountKey() {
 	}
 
 	req := &adminpb.DeleteServiceAccountKeyRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	err = c.DeleteServiceAccountKey(ctx, req)
 	if err != nil {
@@ -206,7 +206,7 @@ func ExampleIamClient_SignBlob() {
 	}
 
 	req := &adminpb.SignBlobRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.SignBlob(ctx, req)
 	if err != nil {
@@ -224,7 +224,7 @@ func ExampleIamClient_TestIamPermissions() {
 	}
 
 	req := &iampb.TestIamPermissionsRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.TestIamPermissions(ctx, req)
 	if err != nil {
@@ -242,9 +242,27 @@ func ExampleIamClient_QueryGrantableRoles() {
 	}
 
 	req := &adminpb.QueryGrantableRolesRequest{
-	// TODO: Fill request struct fields.
+		// TODO: Fill request struct fields.
 	}
 	resp, err := c.QueryGrantableRoles(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleIamClient_SignJwt() {
+	ctx := context.Background()
+	c, err := admin.NewIamClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &adminpb.SignJwtRequest{
+		// TODO: Fill request struct fields.
+	}
+	resp, err := c.SignJwt(ctx, req)
 	if err != nil {
 		// TODO: Handle error.
 	}

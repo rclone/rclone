@@ -475,6 +475,7 @@ func TestNamespaceQuery(t *testing.T) {
 
 	var gs []Gopher
 
+	// Ignore errors for the rest of this test.
 	client.GetAll(ctx, NewQuery("gopher"), &gs)
 	if got, want := <-gotNamespace, ""; got != want {
 		t.Errorf("GetAll: got namespace %q, want %q", got, want)

@@ -121,6 +121,74 @@ func (client FactoriesClient) CancelPipelineRunResponder(resp *http.Response) (r
 	return
 }
 
+// ConfigureFactoryRepo updates a factory's repo information.
+// Parameters:
+// locationID - the location identifier.
+// factoryRepoUpdate - update factory repo request definition.
+func (client FactoriesClient) ConfigureFactoryRepo(ctx context.Context, locationID string, factoryRepoUpdate FactoryRepoUpdate) (result Factory, err error) {
+	req, err := client.ConfigureFactoryRepoPreparer(ctx, locationID, factoryRepoUpdate)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "datafactory.FactoriesClient", "ConfigureFactoryRepo", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ConfigureFactoryRepoSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "datafactory.FactoriesClient", "ConfigureFactoryRepo", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ConfigureFactoryRepoResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "datafactory.FactoriesClient", "ConfigureFactoryRepo", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ConfigureFactoryRepoPreparer prepares the ConfigureFactoryRepo request.
+func (client FactoriesClient) ConfigureFactoryRepoPreparer(ctx context.Context, locationID string, factoryRepoUpdate FactoryRepoUpdate) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"locationId":     autorest.Encode("path", locationID),
+		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-09-01-preview"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.DataFactory/locations/{locationId}/configureFactoryRepo", pathParameters),
+		autorest.WithJSON(factoryRepoUpdate),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ConfigureFactoryRepoSender sends the ConfigureFactoryRepo request. The method will close the
+// http.Response Body if it receives an error.
+func (client FactoriesClient) ConfigureFactoryRepoSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ConfigureFactoryRepoResponder handles the response to the ConfigureFactoryRepo request. The method always
+// closes the http.Response Body.
+func (client FactoriesClient) ConfigureFactoryRepoResponder(resp *http.Response) (result Factory, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // CreateOrUpdate creates or updates a factory.
 // Parameters:
 // resourceGroupName - the resource group name.

@@ -7105,6 +7105,9 @@ type CreateRemoteAccessSessionConfiguration struct {
 
 	// The billing method for the remote access session.
 	BillingMethod *string `locationName:"billingMethod" type:"string" enum:"BillingMethod"`
+
+	// An array of Amazon Resource Names (ARNs) included in the VPC endpoint configuration.
+	VpceConfigurationArns []*string `locationName:"vpceConfigurationArns" type:"list"`
 }
 
 // String returns the string representation
@@ -7120,6 +7123,12 @@ func (s CreateRemoteAccessSessionConfiguration) GoString() string {
 // SetBillingMethod sets the BillingMethod field's value.
 func (s *CreateRemoteAccessSessionConfiguration) SetBillingMethod(v string) *CreateRemoteAccessSessionConfiguration {
 	s.BillingMethod = &v
+	return s
+}
+
+// SetVpceConfigurationArns sets the VpceConfigurationArns field's value.
+func (s *CreateRemoteAccessSessionConfiguration) SetVpceConfigurationArns(v []*string) *CreateRemoteAccessSessionConfiguration {
+	s.VpceConfigurationArns = v
 	return s
 }
 

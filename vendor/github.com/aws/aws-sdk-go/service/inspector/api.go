@@ -182,6 +182,10 @@ func (c *Inspector) CreateAssessmentTargetRequest(input *CreateAssessmentTargetI
 //   The request was rejected because it referenced an entity that does not exist.
 //   The error code describes the entity.
 //
+//   * ErrCodeInvalidCrossAccountRoleException "InvalidCrossAccountRoleException"
+//   Amazon Inspector cannot assume the cross-account role that it needs to list
+//   your EC2 instances during the assessment run.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/inspector-2016-02-16/CreateAssessmentTarget
 func (c *Inspector) CreateAssessmentTarget(input *CreateAssessmentTargetInput) (*CreateAssessmentTargetOutput, error) {
 	req, out := c.CreateAssessmentTargetRequest(input)
@@ -4278,9 +4282,7 @@ type AssessmentTarget struct {
 
 	// The ARN that specifies the resource group that is associated with the assessment
 	// target.
-	//
-	// ResourceGroupArn is a required field
-	ResourceGroupArn *string `locationName:"resourceGroupArn" min:"1" type:"string" required:"true"`
+	ResourceGroupArn *string `locationName:"resourceGroupArn" min:"1" type:"string"`
 
 	// The time at which UpdateAssessmentTarget is called.
 	//
@@ -4692,9 +4694,7 @@ type CreateAssessmentTargetInput struct {
 
 	// The ARN that specifies the resource group that is used to create the assessment
 	// target.
-	//
-	// ResourceGroupArn is a required field
-	ResourceGroupArn *string `locationName:"resourceGroupArn" min:"1" type:"string" required:"true"`
+	ResourceGroupArn *string `locationName:"resourceGroupArn" min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -4715,9 +4715,6 @@ func (s *CreateAssessmentTargetInput) Validate() error {
 	}
 	if s.AssessmentTargetName != nil && len(*s.AssessmentTargetName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("AssessmentTargetName", 1))
-	}
-	if s.ResourceGroupArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceGroupArn"))
 	}
 	if s.ResourceGroupArn != nil && len(*s.ResourceGroupArn) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ResourceGroupArn", 1))
@@ -8203,9 +8200,7 @@ type UpdateAssessmentTargetInput struct {
 
 	// The ARN of the resource group that is used to specify the new resource group
 	// to associate with the assessment target.
-	//
-	// ResourceGroupArn is a required field
-	ResourceGroupArn *string `locationName:"resourceGroupArn" min:"1" type:"string" required:"true"`
+	ResourceGroupArn *string `locationName:"resourceGroupArn" min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -8232,9 +8227,6 @@ func (s *UpdateAssessmentTargetInput) Validate() error {
 	}
 	if s.AssessmentTargetName != nil && len(*s.AssessmentTargetName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("AssessmentTargetName", 1))
-	}
-	if s.ResourceGroupArn == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceGroupArn"))
 	}
 	if s.ResourceGroupArn != nil && len(*s.ResourceGroupArn) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ResourceGroupArn", 1))

@@ -55,7 +55,7 @@ func (c *Firehose) CreateDeliveryStreamRequest(input *CreateDeliveryStreamInput)
 
 // CreateDeliveryStream API operation for Amazon Kinesis Firehose.
 //
-// Creates a delivery stream.
+// Creates a Kinesis Data Firehose delivery stream.
 //
 // By default, you can create up to 50 delivery streams per AWS Region.
 //
@@ -67,15 +67,15 @@ func (c *Firehose) CreateDeliveryStreamRequest(input *CreateDeliveryStreamInput)
 //
 // A Kinesis Data Firehose delivery stream can be configured to receive records
 // directly from providers using PutRecord or PutRecordBatch, or it can be configured
-// to use an existing Kinesis data stream as its source. To specify a Kinesis
-// data stream as input, set the DeliveryStreamType parameter to KinesisStreamAsSource,
-// and provide the Kinesis data stream Amazon Resource Name (ARN) and role ARN
-// in the KinesisStreamSourceConfiguration parameter.
+// to use an existing Kinesis stream as its source. To specify a Kinesis data
+// stream as input, set the DeliveryStreamType parameter to KinesisStreamAsSource,
+// and provide the Kinesis stream Amazon Resource Name (ARN) and role ARN in
+// the KinesisStreamSourceConfiguration parameter.
 //
 // A delivery stream is configured with a single destination: Amazon S3, Amazon
-// ES, Amazon Redshift, or Splunk. Specify only one of the following destination
-// configuration parameters: ExtendedS3DestinationConfiguration, S3DestinationConfiguration,
-// ElasticsearchDestinationConfiguration, RedshiftDestinationConfiguration,
+// ES, Amazon Redshift, or Splunk. You must specify only one of the following
+// destination configuration parameters: ExtendedS3DestinationConfiguration,
+// S3DestinationConfiguration, ElasticsearchDestinationConfiguration, RedshiftDestinationConfiguration,
 // or SplunkDestinationConfiguration.
 //
 // When you specify S3DestinationConfiguration, you can also provide the following
@@ -84,31 +84,30 @@ func (c *Firehose) CreateDeliveryStreamRequest(input *CreateDeliveryStreamInput)
 // buffers data up to 5 MB or for 5 minutes, whichever condition is satisfied
 // first. BufferingHints is a hint, so there are some cases where the service
 // cannot adhere to these conditions strictly. For example, record boundaries
-// are such that the size is a little over or under the configured buffering
+// might be such that the size is a little over or under the configured buffering
 // size. By default, no encryption is performed. We strongly recommend that
 // you enable encryption to ensure secure data storage in Amazon S3.
 //
 // A few notes about Amazon Redshift as a destination:
 //
 //    * An Amazon Redshift destination requires an S3 bucket as intermediate
-//    location. This is because Kinesis Data Firehose first delivers data to
-//    Amazon S3 and then uses COPY syntax to load data into an Amazon Redshift
-//    table. This is specified in the RedshiftDestinationConfiguration.S3Configuration
-//    parameter.
+//    location. Kinesis Data Firehose first delivers data to Amazon S3 and then
+//    uses COPY syntax to load data into an Amazon Redshift table. This is specified
+//    in the RedshiftDestinationConfiguration.S3Configuration parameter.
 //
 //    * The compression formats SNAPPY or ZIP cannot be specified in RedshiftDestinationConfiguration.S3Configuration
 //    because the Amazon Redshift COPY operation that reads from the S3 bucket
 //    doesn't support these compression formats.
 //
-//    * We strongly recommend that you use the user name and password that you
-//    provide exclusively with Kinesis Data Firehose. In addition, the permissions
-//    for the account should be restricted for Amazon Redshift INSERT permissions.
+//    * We strongly recommend that you use the user name and password you provide
+//    exclusively with Kinesis Data Firehose, and that the permissions for the
+//    account are restricted for Amazon Redshift INSERT permissions.
 //
 // Kinesis Data Firehose assumes the IAM role that is configured as part of
 // the destination. The role should allow the Kinesis Data Firehose principal
 // to assume the role, and the role should have permissions that allow the service
-// to deliver the data. For more information, see Grant Kinesis Firehose Access
-// to an Amazon S3 Destination (http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3)
+// to deliver the data. For more information, see Grant Kinesis Data Firehose
+// Access to an Amazon S3 Destination (http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3)
 // in the Amazon Kinesis Data Firehose Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -202,10 +201,10 @@ func (c *Firehose) DeleteDeliveryStreamRequest(input *DeleteDeliveryStreamInput)
 //
 // To check the state of a delivery stream, use DescribeDeliveryStream.
 //
-// While the delivery stream is DELETING state, the service may continue to
-// accept the records, but the service doesn't make any guarantees with respect
-// to delivering the data. Therefore, as a best practice, you should first stop
-// any applications that are sending records before deleting a delivery stream.
+// While the delivery stream is DELETING state, the service might continue to
+// accept the records, but it doesn't make any guarantees with respect to delivering
+// the data. Therefore, as a best practice, you should first stop any applications
+// that are sending records before deleting a delivery stream.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -542,15 +541,16 @@ func (c *Firehose) PutRecordRequest(input *PutRecordInput) (req *request.Request
 // Applications using these operations are referred to as producers.
 //
 // By default, each delivery stream can take in up to 2,000 transactions per
-// second, 5,000 records per second, or 5 MB per second. Note that if you use
-// PutRecord and PutRecordBatch, the limits are an aggregate across these two
-// operations for each delivery stream. For more information about limits and
-// how to request an increase, see Amazon Kinesis Data Firehose Limits (http://docs.aws.amazon.com/firehose/latest/dev/limits.html).
+// second, 5,000 records per second, or 5 MB per second. If you use PutRecord
+// and PutRecordBatch, the limits are an aggregate across these two operations
+// for each delivery stream. For more information about limits and how to request
+// an increase, see Amazon Kinesis Data Firehose Limits (http://docs.aws.amazon.com/firehose/latest/dev/limits.html).
 //
 // You must specify the name of the delivery stream and the data record when
 // using PutRecord. The data record consists of a data blob that can be up to
-// 1,000 KB in size and any kind of data. For example, it can be a segment from
-// a log file, geographic location data, website clickstream data, and so on.
+// 1,000 KB in size, and any kind of data. For example, it can be a segment
+// from a log file, geographic location data, website clickstream data, and
+// so on.
 //
 // Kinesis Data Firehose buffers records before delivering them to the destination.
 // To disambiguate the data blobs at the destination, a common solution is to
@@ -567,7 +567,7 @@ func (c *Firehose) PutRecordRequest(input *PutRecordInput) (req *request.Request
 // limits have been exceeded for the delivery stream.
 //
 // Data records sent to Kinesis Data Firehose are stored for 24 hours from the
-// time they are added to a delivery stream as it attempts to send the records
+// time they are added to a delivery stream as it tries to send the records
 // to the destination. If the destination is unreachable for more than 24 hours,
 // the data is no longer available.
 //
@@ -674,7 +674,7 @@ func (c *Firehose) PutRecordBatchRequest(input *PutRecordBatchInput) (req *reque
 //
 // You must specify the name of the delivery stream and the data record when
 // using PutRecord. The data record consists of a data blob that can be up to
-// 1,000 KB in size and any kind of data. For example, it could be a segment
+// 1,000 KB in size, and any kind of data. For example, it could be a segment
 // from a log file, geographic location data, website clickstream data, and
 // so on.
 //
@@ -690,7 +690,7 @@ func (c *Firehose) PutRecordBatchRequest(input *PutRecordBatchInput) (req *reque
 // correlates with a record in the request array using the same ordering, from
 // the top to the bottom. The response array always includes the same number
 // of records as the request array. RequestResponses includes both successfully
-// and unsuccessfully processed records. Kinesis Data Firehose attempts to process
+// and unsuccessfully processed records. Kinesis Data Firehose tries to process
 // all records in each PutRecordBatch request. A single record failure does
 // not stop the processing of subsequent records.
 //
@@ -1022,8 +1022,8 @@ func (c *Firehose) UpdateDestinationRequest(input *UpdateDestinationInput) (req 
 // and conflicting merges. This is a required field, and the service updates
 // the configuration only if the existing configuration has a version ID that
 // matches. After the update is applied successfully, the version ID is updated,
-// and you can retrieve it using DescribeDeliveryStream. Use the new version
-// ID to set CurrentDeliveryStreamVersionId in the next call.
+// and can be retrieved using DescribeDeliveryStream. Use the new version ID
+// to set CurrentDeliveryStreamVersionId in the next call.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1070,7 +1070,7 @@ func (c *Firehose) UpdateDestinationWithContext(ctx aws.Context, input *UpdateDe
 
 // Describes hints for the buffering to perform before delivering data to the
 // destination. These options are treated as hints, and therefore Kinesis Data
-// Firehose might choose to use different values whenever it is optimal.
+// Firehose might choose to use different values when it is optimal.
 type BufferingHints struct {
 	_ struct{} `type:"structure"`
 
@@ -1252,8 +1252,9 @@ type CreateDeliveryStreamInput struct {
 	_ struct{} `type:"structure"`
 
 	// The name of the delivery stream. This name must be unique per AWS account
-	// in the same Region. If the delivery streams are in different accounts or
-	// different Regions, you can have multiple delivery streams with the same name.
+	// in the same AWS Region. If the delivery streams are in different accounts
+	// or different Regions, you can have multiple delivery streams with the same
+	// name.
 	//
 	// DeliveryStreamName is a required field
 	DeliveryStreamName *string `min:"1" type:"string" required:"true"`
@@ -1414,6 +1415,80 @@ func (s *CreateDeliveryStreamOutput) SetDeliveryStreamARN(v string) *CreateDeliv
 	return s
 }
 
+// Specifies that you want Kinesis Data Firehose to convert data from the JSON
+// format to the Parquet or ORC format before writing it to Amazon S3. Kinesis
+// Data Firehose uses the serializer and deserializer that you specify, in addition
+// to the column information from the AWS Glue table, to deserialize your input
+// data from JSON and then serialize it to the Parquet or ORC format. For more
+// information, see Kinesis Data Firehose Record Format Conversion (https://docs.aws.amazon.com/firehose/latest/dev/record-format-conversion.html).
+type DataFormatConversionConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Defaults to true. Set it to false if you want to disable format conversion
+	// while preserving the configuration details.
+	Enabled *bool `type:"boolean"`
+
+	// Specifies the deserializer that you want Kinesis Data Firehose to use to
+	// convert the format of your data from JSON.
+	InputFormatConfiguration *InputFormatConfiguration `type:"structure"`
+
+	// Specifies the serializer that you want Kinesis Data Firehose to use to convert
+	// the format of your data to the Parquet or ORC format.
+	OutputFormatConfiguration *OutputFormatConfiguration `type:"structure"`
+
+	// Specifies the AWS Glue Data Catalog table that contains the column information.
+	SchemaConfiguration *SchemaConfiguration `type:"structure"`
+}
+
+// String returns the string representation
+func (s DataFormatConversionConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DataFormatConversionConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DataFormatConversionConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DataFormatConversionConfiguration"}
+	if s.OutputFormatConfiguration != nil {
+		if err := s.OutputFormatConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("OutputFormatConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *DataFormatConversionConfiguration) SetEnabled(v bool) *DataFormatConversionConfiguration {
+	s.Enabled = &v
+	return s
+}
+
+// SetInputFormatConfiguration sets the InputFormatConfiguration field's value.
+func (s *DataFormatConversionConfiguration) SetInputFormatConfiguration(v *InputFormatConfiguration) *DataFormatConversionConfiguration {
+	s.InputFormatConfiguration = v
+	return s
+}
+
+// SetOutputFormatConfiguration sets the OutputFormatConfiguration field's value.
+func (s *DataFormatConversionConfiguration) SetOutputFormatConfiguration(v *OutputFormatConfiguration) *DataFormatConversionConfiguration {
+	s.OutputFormatConfiguration = v
+	return s
+}
+
+// SetSchemaConfiguration sets the SchemaConfiguration field's value.
+func (s *DataFormatConversionConfiguration) SetSchemaConfiguration(v *SchemaConfiguration) *DataFormatConversionConfiguration {
+	s.SchemaConfiguration = v
+	return s
+}
+
 type DeleteDeliveryStreamInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1476,7 +1551,8 @@ type DeliveryStreamDescription struct {
 	// The date and time that the delivery stream was created.
 	CreateTimestamp *time.Time `type:"timestamp" timestampFormat:"unix"`
 
-	// The Amazon Resource Name (ARN) of the delivery stream.
+	// The Amazon Resource Name (ARN) of the delivery stream. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// DeliveryStreamARN is a required field
 	DeliveryStreamARN *string `min:"1" type:"string" required:"true"`
@@ -1606,11 +1682,11 @@ type DescribeDeliveryStreamInput struct {
 	DeliveryStreamName *string `min:"1" type:"string" required:"true"`
 
 	// The ID of the destination to start returning the destination information.
-	// Currently, Kinesis Data Firehose supports one destination per delivery stream.
+	// Kinesis Data Firehose supports one destination per delivery stream.
 	ExclusiveStartDestinationId *string `min:"1" type:"string"`
 
-	// The limit on the number of destinations to return. Currently, you can have
-	// one destination per delivery stream.
+	// The limit on the number of destinations to return. You can have one destination
+	// per delivery stream.
 	Limit *int64 `min:"1" type:"integer"`
 }
 
@@ -1686,6 +1762,51 @@ func (s DescribeDeliveryStreamOutput) GoString() string {
 // SetDeliveryStreamDescription sets the DeliveryStreamDescription field's value.
 func (s *DescribeDeliveryStreamOutput) SetDeliveryStreamDescription(v *DeliveryStreamDescription) *DescribeDeliveryStreamOutput {
 	s.DeliveryStreamDescription = v
+	return s
+}
+
+// The deserializer you want Kinesis Data Firehose to use for converting the
+// input data from JSON. Kinesis Data Firehose then serializes the data to its
+// final format using the Serializer. Kinesis Data Firehose supports two types
+// of deserializers: the Apache Hive JSON SerDe (https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-JSON)
+// and the OpenX JSON SerDe (https://github.com/rcongiu/Hive-JSON-Serde).
+type Deserializer struct {
+	_ struct{} `type:"structure"`
+
+	// The native Hive / HCatalog JsonSerDe. Used by Kinesis Data Firehose for deserializing
+	// data, which means converting it from the JSON format in preparation for serializing
+	// it to the Parquet or ORC format. This is one of two deserializers you can
+	// choose, depending on which one offers the functionality you need. The other
+	// option is the OpenX SerDe.
+	HiveJsonSerDe *HiveJsonSerDe `type:"structure"`
+
+	// The OpenX SerDe. Used by Kinesis Data Firehose for deserializing data, which
+	// means converting it from the JSON format in preparation for serializing it
+	// to the Parquet or ORC format. This is one of two deserializers you can choose,
+	// depending on which one offers the functionality you need. The other option
+	// is the native Hive / HCatalog JsonSerDe.
+	OpenXJsonSerDe *OpenXJsonSerDe `type:"structure"`
+}
+
+// String returns the string representation
+func (s Deserializer) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Deserializer) GoString() string {
+	return s.String()
+}
+
+// SetHiveJsonSerDe sets the HiveJsonSerDe field's value.
+func (s *Deserializer) SetHiveJsonSerDe(v *HiveJsonSerDe) *Deserializer {
+	s.HiveJsonSerDe = v
+	return s
+}
+
+// SetOpenXJsonSerDe sets the OpenXJsonSerDe field's value.
+func (s *Deserializer) SetOpenXJsonSerDe(v *OpenXJsonSerDe) *Deserializer {
+	s.OpenXJsonSerDe = v
 	return s
 }
 
@@ -1824,12 +1945,13 @@ type ElasticsearchDestinationConfiguration struct {
 	// are used.
 	BufferingHints *ElasticsearchBufferingHints `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The ARN of the Amazon ES domain. The IAM role must have permissions for DescribeElasticsearchDomain,
 	// DescribeElasticsearchDomains, and DescribeElasticsearchDomainConfig after
-	// assuming the role specified in RoleARN.
+	// assuming the role specified in RoleARN. For more information, see Amazon
+	// Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// DomainARN is a required field
 	DomainARN *string `min:"1" type:"string" required:"true"`
@@ -1855,18 +1977,19 @@ type ElasticsearchDestinationConfiguration struct {
 	// The Amazon Resource Name (ARN) of the IAM role to be assumed by Kinesis Data
 	// Firehose for calling the Amazon ES Configuration API and for indexing documents.
 	// For more information, see Grant Kinesis Data Firehose Access to an Amazon
-	// Destination (http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3).
+	// S3 Destination (http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3)
+	// and Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
 
-	// Defines how documents should be delivered to Amazon S3. When set to FailedDocumentsOnly,
-	// Kinesis Data Firehose writes any documents that could not be indexed to the
-	// configured Amazon S3 destination, with elasticsearch-failed/ appended to
-	// the key prefix. When set to AllDocuments, Kinesis Data Firehose delivers
-	// all incoming records to Amazon S3, and also writes failed documents with
-	// elasticsearch-failed/ appended to the prefix. For more information, see Data
-	// Delivery Failure Handling (http://docs.aws.amazon.com/firehose/latest/dev/basic-deliver.html#retry).
+	// Defines how documents should be delivered to Amazon S3. When it is set to
+	// FailedDocumentsOnly, Kinesis Data Firehose writes any documents that could
+	// not be indexed to the configured Amazon S3 destination, with elasticsearch-failed/
+	// appended to the key prefix. When set to AllDocuments, Kinesis Data Firehose
+	// delivers all incoming records to Amazon S3, and also writes failed documents
+	// with elasticsearch-failed/ appended to the prefix. For more information,
+	// see Amazon S3 Backup for the Amazon ES Destination (http://docs.aws.amazon.com/firehose/latest/dev/basic-deliver.html#es-s3-backup).
 	// Default value is FailedDocumentsOnly.
 	S3BackupMode *string `type:"string" enum:"ElasticsearchS3BackupMode"`
 
@@ -1875,7 +1998,10 @@ type ElasticsearchDestinationConfiguration struct {
 	// S3Configuration is a required field
 	S3Configuration *S3DestinationConfiguration `type:"structure" required:"true"`
 
-	// The Elasticsearch type name.
+	// The Elasticsearch type name. For Elasticsearch 6.x, there can be only one
+	// type per index. If you try to specify a new type for an existing index that
+	// already has another type, Kinesis Data Firehose returns an error during run
+	// time.
 	//
 	// TypeName is a required field
 	TypeName *string `min:"1" type:"string" required:"true"`
@@ -2016,10 +2142,11 @@ type ElasticsearchDestinationDescription struct {
 	// The buffering options.
 	BufferingHints *ElasticsearchBufferingHints `type:"structure"`
 
-	// The CloudWatch logging options.
+	// The Amazon CloudWatch logging options.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
-	// The ARN of the Amazon ES domain.
+	// The ARN of the Amazon ES domain. For more information, see Amazon Resource
+	// Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	DomainARN *string `min:"1" type:"string"`
 
 	// The Elasticsearch index name.
@@ -2034,7 +2161,8 @@ type ElasticsearchDestinationDescription struct {
 	// The Amazon ES retry options.
 	RetryOptions *ElasticsearchRetryOptions `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	RoleARN *string `min:"1" type:"string"`
 
 	// The Amazon S3 backup mode.
@@ -2136,7 +2264,8 @@ type ElasticsearchDestinationUpdate struct {
 
 	// The ARN of the Amazon ES domain. The IAM role must have permissions for DescribeElasticsearchDomain,
 	// DescribeElasticsearchDomains, and DescribeElasticsearchDomainConfig after
-	// assuming the IAM role specified in RoleARN.
+	// assuming the IAM role specified in RoleARN. For more information, see Amazon
+	// Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	DomainARN *string `min:"1" type:"string"`
 
 	// The Elasticsearch index name.
@@ -2158,13 +2287,16 @@ type ElasticsearchDestinationUpdate struct {
 	// The Amazon Resource Name (ARN) of the IAM role to be assumed by Kinesis Data
 	// Firehose for calling the Amazon ES Configuration API and for indexing documents.
 	// For more information, see Grant Kinesis Data Firehose Access to an Amazon
-	// S3 Destination (http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3).
+	// S3 Destination (http://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html#using-iam-s3)
+	// and Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	RoleARN *string `min:"1" type:"string"`
 
 	// The Amazon S3 destination.
 	S3Update *S3DestinationUpdate `type:"structure"`
 
-	// The Elasticsearch type name.
+	// The Elasticsearch type name. For Elasticsearch 6.x, there can be only one
+	// type per index. If you try to specify a new type for an existing index that
+	// already has another type, Kinesis Data Firehose returns an error during runtime.
 	TypeName *string `min:"1" type:"string"`
 }
 
@@ -2281,7 +2413,7 @@ type ElasticsearchRetryOptions struct {
 	_ struct{} `type:"structure"`
 
 	// After an initial failure to deliver to Amazon ES, the total amount of time
-	// during which Kinesis Data Firehose re-attempts delivery (including the first
+	// during which Kinesis Data Firehose retries delivery (including the first
 	// attempt). After this time has elapsed, the failed documents are written to
 	// Amazon S3. Default value is 300 seconds (5 minutes). A value of 0 (zero)
 	// results in no retries.
@@ -2357,7 +2489,8 @@ func (s *EncryptionConfiguration) SetNoEncryptionConfig(v string) *EncryptionCon
 type ExtendedS3DestinationConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the S3 bucket.
+	// The ARN of the S3 bucket. For more information, see Amazon Resource Names
+	// (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// BucketARN is a required field
 	BucketARN *string `min:"1" type:"string" required:"true"`
@@ -2365,11 +2498,15 @@ type ExtendedS3DestinationConfiguration struct {
 	// The buffering option.
 	BufferingHints *BufferingHints `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The compression format. If no value is specified, the default is UNCOMPRESSED.
 	CompressionFormat *string `type:"string" enum:"CompressionFormat"`
+
+	// The serializer, deserializer, and schema for converting data from the JSON
+	// format to the Parquet or ORC format before writing it to Amazon S3.
+	DataFormatConversionConfiguration *DataFormatConversionConfiguration `type:"structure"`
 
 	// The encryption configuration. If no value is specified, the default is no
 	// encryption.
@@ -2386,7 +2523,8 @@ type ExtendedS3DestinationConfiguration struct {
 	// The data processing configuration.
 	ProcessingConfiguration *ProcessingConfiguration `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -2426,6 +2564,11 @@ func (s *ExtendedS3DestinationConfiguration) Validate() error {
 	if s.BufferingHints != nil {
 		if err := s.BufferingHints.Validate(); err != nil {
 			invalidParams.AddNested("BufferingHints", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DataFormatConversionConfiguration != nil {
+		if err := s.DataFormatConversionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("DataFormatConversionConfiguration", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.EncryptionConfiguration != nil {
@@ -2474,6 +2617,12 @@ func (s *ExtendedS3DestinationConfiguration) SetCompressionFormat(v string) *Ext
 	return s
 }
 
+// SetDataFormatConversionConfiguration sets the DataFormatConversionConfiguration field's value.
+func (s *ExtendedS3DestinationConfiguration) SetDataFormatConversionConfiguration(v *DataFormatConversionConfiguration) *ExtendedS3DestinationConfiguration {
+	s.DataFormatConversionConfiguration = v
+	return s
+}
+
 // SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
 func (s *ExtendedS3DestinationConfiguration) SetEncryptionConfiguration(v *EncryptionConfiguration) *ExtendedS3DestinationConfiguration {
 	s.EncryptionConfiguration = v
@@ -2514,7 +2663,8 @@ func (s *ExtendedS3DestinationConfiguration) SetS3BackupMode(v string) *Extended
 type ExtendedS3DestinationDescription struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the S3 bucket.
+	// The ARN of the S3 bucket. For more information, see Amazon Resource Names
+	// (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// BucketARN is a required field
 	BucketARN *string `min:"1" type:"string" required:"true"`
@@ -2524,13 +2674,17 @@ type ExtendedS3DestinationDescription struct {
 	// BufferingHints is a required field
 	BufferingHints *BufferingHints `type:"structure" required:"true"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The compression format. If no value is specified, the default is UNCOMPRESSED.
 	//
 	// CompressionFormat is a required field
 	CompressionFormat *string `type:"string" required:"true" enum:"CompressionFormat"`
+
+	// The serializer, deserializer, and schema for converting data from the JSON
+	// format to the Parquet or ORC format before writing it to Amazon S3.
+	DataFormatConversionConfiguration *DataFormatConversionConfiguration `type:"structure"`
 
 	// The encryption configuration. If no value is specified, the default is no
 	// encryption.
@@ -2539,16 +2693,18 @@ type ExtendedS3DestinationDescription struct {
 	EncryptionConfiguration *EncryptionConfiguration `type:"structure" required:"true"`
 
 	// The "YYYY/MM/DD/HH" time format prefix is automatically used for delivered
-	// S3 files. You can specify an extra prefix to be added in front of the time
-	// format prefix. If the prefix ends with a slash, it appears as a folder in
-	// the S3 bucket. For more information, see Amazon S3 Object Name Format (http://docs.aws.amazon.com/firehose/latest/dev/basic-deliver.html#s3-object-name)
+	// Amazon S3 files. You can specify an extra prefix to be added in front of
+	// the time format prefix. If the prefix ends with a slash, it appears as a
+	// folder in the S3 bucket. For more information, see Amazon S3 Object Name
+	// Format (http://docs.aws.amazon.com/firehose/latest/dev/basic-deliver.html#s3-object-name)
 	// in the Amazon Kinesis Data Firehose Developer Guide.
 	Prefix *string `type:"string"`
 
 	// The data processing configuration.
 	ProcessingConfiguration *ProcessingConfiguration `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -2594,6 +2750,12 @@ func (s *ExtendedS3DestinationDescription) SetCompressionFormat(v string) *Exten
 	return s
 }
 
+// SetDataFormatConversionConfiguration sets the DataFormatConversionConfiguration field's value.
+func (s *ExtendedS3DestinationDescription) SetDataFormatConversionConfiguration(v *DataFormatConversionConfiguration) *ExtendedS3DestinationDescription {
+	s.DataFormatConversionConfiguration = v
+	return s
+}
+
 // SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
 func (s *ExtendedS3DestinationDescription) SetEncryptionConfiguration(v *EncryptionConfiguration) *ExtendedS3DestinationDescription {
 	s.EncryptionConfiguration = v
@@ -2634,17 +2796,22 @@ func (s *ExtendedS3DestinationDescription) SetS3BackupMode(v string) *ExtendedS3
 type ExtendedS3DestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the S3 bucket.
+	// The ARN of the S3 bucket. For more information, see Amazon Resource Names
+	// (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	BucketARN *string `min:"1" type:"string"`
 
 	// The buffering option.
 	BufferingHints *BufferingHints `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The compression format. If no value is specified, the default is UNCOMPRESSED.
 	CompressionFormat *string `type:"string" enum:"CompressionFormat"`
+
+	// The serializer, deserializer, and schema for converting data from the JSON
+	// format to the Parquet or ORC format before writing it to Amazon S3.
+	DataFormatConversionConfiguration *DataFormatConversionConfiguration `type:"structure"`
 
 	// The encryption configuration. If no value is specified, the default is no
 	// encryption.
@@ -2661,7 +2828,8 @@ type ExtendedS3DestinationUpdate struct {
 	// The data processing configuration.
 	ProcessingConfiguration *ProcessingConfiguration `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	RoleARN *string `min:"1" type:"string"`
 
 	// Enables or disables Amazon S3 backup mode.
@@ -2693,6 +2861,11 @@ func (s *ExtendedS3DestinationUpdate) Validate() error {
 	if s.BufferingHints != nil {
 		if err := s.BufferingHints.Validate(); err != nil {
 			invalidParams.AddNested("BufferingHints", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DataFormatConversionConfiguration != nil {
+		if err := s.DataFormatConversionConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("DataFormatConversionConfiguration", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.EncryptionConfiguration != nil {
@@ -2741,6 +2914,12 @@ func (s *ExtendedS3DestinationUpdate) SetCompressionFormat(v string) *ExtendedS3
 	return s
 }
 
+// SetDataFormatConversionConfiguration sets the DataFormatConversionConfiguration field's value.
+func (s *ExtendedS3DestinationUpdate) SetDataFormatConversionConfiguration(v *DataFormatConversionConfiguration) *ExtendedS3DestinationUpdate {
+	s.DataFormatConversionConfiguration = v
+	return s
+}
+
 // SetEncryptionConfiguration sets the EncryptionConfiguration field's value.
 func (s *ExtendedS3DestinationUpdate) SetEncryptionConfiguration(v *EncryptionConfiguration) *ExtendedS3DestinationUpdate {
 	s.EncryptionConfiguration = v
@@ -2777,12 +2956,74 @@ func (s *ExtendedS3DestinationUpdate) SetS3BackupUpdate(v *S3DestinationUpdate) 
 	return s
 }
 
+// The native Hive / HCatalog JsonSerDe. Used by Kinesis Data Firehose for deserializing
+// data, which means converting it from the JSON format in preparation for serializing
+// it to the Parquet or ORC format. This is one of two deserializers you can
+// choose, depending on which one offers the functionality you need. The other
+// option is the OpenX SerDe.
+type HiveJsonSerDe struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates how you want Kinesis Data Firehose to parse the date and time stamps
+	// that may be present in your input data JSON. To specify these format strings,
+	// follow the pattern syntax of JodaTime's DateTimeFormat format strings. For
+	// more information, see Class DateTimeFormat (https://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html).
+	// You can also use the special value millis to parse time stamps in epoch milliseconds.
+	// If you don't specify a format, Kinesis Data Firehose uses java.sql.Timestamp::valueOf
+	// by default.
+	TimestampFormats []*string `type:"list"`
+}
+
+// String returns the string representation
+func (s HiveJsonSerDe) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s HiveJsonSerDe) GoString() string {
+	return s.String()
+}
+
+// SetTimestampFormats sets the TimestampFormats field's value.
+func (s *HiveJsonSerDe) SetTimestampFormats(v []*string) *HiveJsonSerDe {
+	s.TimestampFormats = v
+	return s
+}
+
+// Specifies the deserializer you want to use to convert the format of the input
+// data.
+type InputFormatConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies which deserializer to use. You can choose either the Apache Hive
+	// JSON SerDe or the OpenX JSON SerDe. If both are non-null, the server rejects
+	// the request.
+	Deserializer *Deserializer `type:"structure"`
+}
+
+// String returns the string representation
+func (s InputFormatConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputFormatConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetDeserializer sets the Deserializer field's value.
+func (s *InputFormatConfiguration) SetDeserializer(v *Deserializer) *InputFormatConfiguration {
+	s.Deserializer = v
+	return s
+}
+
 // Describes an encryption key for a destination in Amazon S3.
 type KMSEncryptionConfig struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the encryption key. Must belong to the
-	// same AWS Region as the destination Amazon S3 bucket.
+	// same AWS Region as the destination Amazon S3 bucket. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// AWSKMSKeyARN is a required field
 	AWSKMSKeyARN *string `min:"1" type:"string" required:"true"`
@@ -2825,12 +3066,15 @@ func (s *KMSEncryptionConfig) SetAWSKMSKeyARN(v string) *KMSEncryptionConfig {
 type KinesisStreamSourceConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the source Kinesis data stream.
+	// The ARN of the source Kinesis data stream. For more information, see Amazon
+	// Kinesis Data Streams ARN Format (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-kinesis-streams).
 	//
 	// KinesisStreamARN is a required field
 	KinesisStreamARN *string `min:"1" type:"string" required:"true"`
 
 	// The ARN of the role that provides access to the source Kinesis data stream.
+	// For more information, see AWS Identity and Access Management (IAM) ARN Format
+	// (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-iam).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -2889,10 +3133,12 @@ type KinesisStreamSourceDescription struct {
 	// starting with this time stamp.
 	DeliveryStartTimestamp *time.Time `type:"timestamp" timestampFormat:"unix"`
 
-	// The Amazon Resource Name (ARN) of the source Kinesis data stream.
+	// The Amazon Resource Name (ARN) of the source Kinesis data stream. For more
+	// information, see Amazon Kinesis Data Streams ARN Format (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-kinesis-streams).
 	KinesisStreamARN *string `min:"1" type:"string"`
 
-	// The ARN of the role used by the source Kinesis data stream.
+	// The ARN of the role used by the source Kinesis data stream. For more information,
+	// see AWS Identity and Access Management (IAM) ARN Format (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html#arn-syntax-iam).
 	RoleARN *string `min:"1" type:"string"`
 }
 
@@ -3130,6 +3376,349 @@ func (s *ListTagsForDeliveryStreamOutput) SetHasMoreTags(v bool) *ListTagsForDel
 // SetTags sets the Tags field's value.
 func (s *ListTagsForDeliveryStreamOutput) SetTags(v []*Tag) *ListTagsForDeliveryStreamOutput {
 	s.Tags = v
+	return s
+}
+
+// The OpenX SerDe. Used by Kinesis Data Firehose for deserializing data, which
+// means converting it from the JSON format in preparation for serializing it
+// to the Parquet or ORC format. This is one of two deserializers you can choose,
+// depending on which one offers the functionality you need. The other option
+// is the native Hive / HCatalog JsonSerDe.
+type OpenXJsonSerDe struct {
+	_ struct{} `type:"structure"`
+
+	// When set to true, which is the default, Kinesis Data Firehose converts JSON
+	// keys to lowercase before deserializing them.
+	CaseInsensitive *bool `type:"boolean"`
+
+	// Maps column names to JSON keys that aren't identical to the column names.
+	// This is useful when the JSON contains keys that are Hive keywords. For example,
+	// timestamp is a Hive keyword. If you have a JSON key named timestamp, set
+	// this parameter to {"ts": "timestamp"} to map this key to a column named ts.
+	ColumnToJsonKeyMappings map[string]*string `type:"map"`
+
+	// When set to true, specifies that the names of the keys include dots and that
+	// you want Kinesis Data Firehose to replace them with underscores. This is
+	// useful because Apache Hive does not allow dots in column names. For example,
+	// if the JSON contains a key whose name is "a.b", you can define the column
+	// name to be "a_b" when using this option.
+	//
+	// The default is false.
+	ConvertDotsInJsonKeysToUnderscores *bool `type:"boolean"`
+}
+
+// String returns the string representation
+func (s OpenXJsonSerDe) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OpenXJsonSerDe) GoString() string {
+	return s.String()
+}
+
+// SetCaseInsensitive sets the CaseInsensitive field's value.
+func (s *OpenXJsonSerDe) SetCaseInsensitive(v bool) *OpenXJsonSerDe {
+	s.CaseInsensitive = &v
+	return s
+}
+
+// SetColumnToJsonKeyMappings sets the ColumnToJsonKeyMappings field's value.
+func (s *OpenXJsonSerDe) SetColumnToJsonKeyMappings(v map[string]*string) *OpenXJsonSerDe {
+	s.ColumnToJsonKeyMappings = v
+	return s
+}
+
+// SetConvertDotsInJsonKeysToUnderscores sets the ConvertDotsInJsonKeysToUnderscores field's value.
+func (s *OpenXJsonSerDe) SetConvertDotsInJsonKeysToUnderscores(v bool) *OpenXJsonSerDe {
+	s.ConvertDotsInJsonKeysToUnderscores = &v
+	return s
+}
+
+// A serializer to use for converting data to the ORC format before storing
+// it in Amazon S3. For more information, see Apache ORC (https://orc.apache.org/docs/).
+type OrcSerDe struct {
+	_ struct{} `type:"structure"`
+
+	// The Hadoop Distributed File System (HDFS) block size. This is useful if you
+	// intend to copy the data from Amazon S3 to HDFS before querying. The default
+	// is 256 MiB and the minimum is 64 MiB. Kinesis Data Firehose uses this value
+	// for padding calculations.
+	BlockSizeBytes *int64 `min:"6.7108864e+07" type:"integer"`
+
+	// The column names for which you want Kinesis Data Firehose to create bloom
+	// filters. The default is null.
+	BloomFilterColumns []*string `type:"list"`
+
+	// The Bloom filter false positive probability (FPP). The lower the FPP, the
+	// bigger the Bloom filter. The default value is 0.05, the minimum is 0, and
+	// the maximum is 1.
+	BloomFilterFalsePositiveProbability *float64 `type:"double"`
+
+	// The compression code to use over data blocks. The default is SNAPPY.
+	Compression *string `type:"string" enum:"OrcCompression"`
+
+	// Represents the fraction of the total number of non-null rows. To turn off
+	// dictionary encoding, set this fraction to a number that is less than the
+	// number of distinct keys in a dictionary. To always use dictionary encoding,
+	// set this threshold to 1.
+	DictionaryKeyThreshold *float64 `type:"double"`
+
+	// Set this to true to indicate that you want stripes to be padded to the HDFS
+	// block boundaries. This is useful if you intend to copy the data from Amazon
+	// S3 to HDFS before querying. The default is false.
+	EnablePadding *bool `type:"boolean"`
+
+	// The version of the file to write. The possible values are V0_11 and V0_12.
+	// The default is V0_12.
+	FormatVersion *string `type:"string" enum:"OrcFormatVersion"`
+
+	// A number between 0 and 1 that defines the tolerance for block padding as
+	// a decimal fraction of stripe size. The default value is 0.05, which means
+	// 5 percent of stripe size.
+	//
+	// For the default values of 64 MiB ORC stripes and 256 MiB HDFS blocks, the
+	// default block padding tolerance of 5 percent reserves a maximum of 3.2 MiB
+	// for padding within the 256 MiB block. In such a case, if the available size
+	// within the block is more than 3.2 MiB, a new, smaller stripe is inserted
+	// to fit within that space. This ensures that no stripe crosses block boundaries
+	// and causes remote reads within a node-local task.
+	//
+	// Kinesis Data Firehose ignores this parameter when OrcSerDe$EnablePadding
+	// is false.
+	PaddingTolerance *float64 `type:"double"`
+
+	// The number of rows between index entries. The default is 10,000 and the minimum
+	// is 1,000.
+	RowIndexStride *int64 `min:"1000" type:"integer"`
+
+	// The number of bytes in each stripe. The default is 64 MiB and the minimum
+	// is 8 MiB.
+	StripeSizeBytes *int64 `min:"8.388608e+06" type:"integer"`
+}
+
+// String returns the string representation
+func (s OrcSerDe) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OrcSerDe) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OrcSerDe) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OrcSerDe"}
+	if s.BlockSizeBytes != nil && *s.BlockSizeBytes < 6.7108864e+07 {
+		invalidParams.Add(request.NewErrParamMinValue("BlockSizeBytes", 6.7108864e+07))
+	}
+	if s.RowIndexStride != nil && *s.RowIndexStride < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("RowIndexStride", 1000))
+	}
+	if s.StripeSizeBytes != nil && *s.StripeSizeBytes < 8.388608e+06 {
+		invalidParams.Add(request.NewErrParamMinValue("StripeSizeBytes", 8.388608e+06))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBlockSizeBytes sets the BlockSizeBytes field's value.
+func (s *OrcSerDe) SetBlockSizeBytes(v int64) *OrcSerDe {
+	s.BlockSizeBytes = &v
+	return s
+}
+
+// SetBloomFilterColumns sets the BloomFilterColumns field's value.
+func (s *OrcSerDe) SetBloomFilterColumns(v []*string) *OrcSerDe {
+	s.BloomFilterColumns = v
+	return s
+}
+
+// SetBloomFilterFalsePositiveProbability sets the BloomFilterFalsePositiveProbability field's value.
+func (s *OrcSerDe) SetBloomFilterFalsePositiveProbability(v float64) *OrcSerDe {
+	s.BloomFilterFalsePositiveProbability = &v
+	return s
+}
+
+// SetCompression sets the Compression field's value.
+func (s *OrcSerDe) SetCompression(v string) *OrcSerDe {
+	s.Compression = &v
+	return s
+}
+
+// SetDictionaryKeyThreshold sets the DictionaryKeyThreshold field's value.
+func (s *OrcSerDe) SetDictionaryKeyThreshold(v float64) *OrcSerDe {
+	s.DictionaryKeyThreshold = &v
+	return s
+}
+
+// SetEnablePadding sets the EnablePadding field's value.
+func (s *OrcSerDe) SetEnablePadding(v bool) *OrcSerDe {
+	s.EnablePadding = &v
+	return s
+}
+
+// SetFormatVersion sets the FormatVersion field's value.
+func (s *OrcSerDe) SetFormatVersion(v string) *OrcSerDe {
+	s.FormatVersion = &v
+	return s
+}
+
+// SetPaddingTolerance sets the PaddingTolerance field's value.
+func (s *OrcSerDe) SetPaddingTolerance(v float64) *OrcSerDe {
+	s.PaddingTolerance = &v
+	return s
+}
+
+// SetRowIndexStride sets the RowIndexStride field's value.
+func (s *OrcSerDe) SetRowIndexStride(v int64) *OrcSerDe {
+	s.RowIndexStride = &v
+	return s
+}
+
+// SetStripeSizeBytes sets the StripeSizeBytes field's value.
+func (s *OrcSerDe) SetStripeSizeBytes(v int64) *OrcSerDe {
+	s.StripeSizeBytes = &v
+	return s
+}
+
+// Specifies the serializer that you want Kinesis Data Firehose to use to convert
+// the format of your data before it writes it to Amazon S3.
+type OutputFormatConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies which serializer to use. You can choose either the ORC SerDe or
+	// the Parquet SerDe. If both are non-null, the server rejects the request.
+	Serializer *Serializer `type:"structure"`
+}
+
+// String returns the string representation
+func (s OutputFormatConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s OutputFormatConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OutputFormatConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OutputFormatConfiguration"}
+	if s.Serializer != nil {
+		if err := s.Serializer.Validate(); err != nil {
+			invalidParams.AddNested("Serializer", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetSerializer sets the Serializer field's value.
+func (s *OutputFormatConfiguration) SetSerializer(v *Serializer) *OutputFormatConfiguration {
+	s.Serializer = v
+	return s
+}
+
+// A serializer to use for converting data to the Parquet format before storing
+// it in Amazon S3. For more information, see Apache Parquet (https://parquet.apache.org/documentation/latest/).
+type ParquetSerDe struct {
+	_ struct{} `type:"structure"`
+
+	// The Hadoop Distributed File System (HDFS) block size. This is useful if you
+	// intend to copy the data from Amazon S3 to HDFS before querying. The default
+	// is 256 MiB and the minimum is 64 MiB. Kinesis Data Firehose uses this value
+	// for padding calculations.
+	BlockSizeBytes *int64 `min:"6.7108864e+07" type:"integer"`
+
+	// The compression code to use over data blocks. The possible values are UNCOMPRESSED,
+	// SNAPPY, and GZIP, with the default being SNAPPY. Use SNAPPY for higher decompression
+	// speed. Use GZIP if the compression ration is more important than speed.
+	Compression *string `type:"string" enum:"ParquetCompression"`
+
+	// Indicates whether to enable dictionary compression.
+	EnableDictionaryCompression *bool `type:"boolean"`
+
+	// The maximum amount of padding to apply. This is useful if you intend to copy
+	// the data from Amazon S3 to HDFS before querying. The default is 0.
+	MaxPaddingBytes *int64 `type:"integer"`
+
+	// The Parquet page size. Column chunks are divided into pages. A page is conceptually
+	// an indivisible unit (in terms of compression and encoding). The minimum value
+	// is 64 KiB and the default is 1 MiB.
+	PageSizeBytes *int64 `min:"65536" type:"integer"`
+
+	// Indicates the version of row format to output. The possible values are V1
+	// and V2. The default is V1.
+	WriterVersion *string `type:"string" enum:"ParquetWriterVersion"`
+}
+
+// String returns the string representation
+func (s ParquetSerDe) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ParquetSerDe) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ParquetSerDe) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ParquetSerDe"}
+	if s.BlockSizeBytes != nil && *s.BlockSizeBytes < 6.7108864e+07 {
+		invalidParams.Add(request.NewErrParamMinValue("BlockSizeBytes", 6.7108864e+07))
+	}
+	if s.PageSizeBytes != nil && *s.PageSizeBytes < 65536 {
+		invalidParams.Add(request.NewErrParamMinValue("PageSizeBytes", 65536))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBlockSizeBytes sets the BlockSizeBytes field's value.
+func (s *ParquetSerDe) SetBlockSizeBytes(v int64) *ParquetSerDe {
+	s.BlockSizeBytes = &v
+	return s
+}
+
+// SetCompression sets the Compression field's value.
+func (s *ParquetSerDe) SetCompression(v string) *ParquetSerDe {
+	s.Compression = &v
+	return s
+}
+
+// SetEnableDictionaryCompression sets the EnableDictionaryCompression field's value.
+func (s *ParquetSerDe) SetEnableDictionaryCompression(v bool) *ParquetSerDe {
+	s.EnableDictionaryCompression = &v
+	return s
+}
+
+// SetMaxPaddingBytes sets the MaxPaddingBytes field's value.
+func (s *ParquetSerDe) SetMaxPaddingBytes(v int64) *ParquetSerDe {
+	s.MaxPaddingBytes = &v
+	return s
+}
+
+// SetPageSizeBytes sets the PageSizeBytes field's value.
+func (s *ParquetSerDe) SetPageSizeBytes(v int64) *ParquetSerDe {
+	s.PageSizeBytes = &v
+	return s
+}
+
+// SetWriterVersion sets the WriterVersion field's value.
+func (s *ParquetSerDe) SetWriterVersion(v string) *ParquetSerDe {
+	s.WriterVersion = &v
 	return s
 }
 
@@ -3606,7 +4195,8 @@ type RedshiftDestinationConfiguration struct {
 	// to Amazon Redshift. Default value is 3600 (60 minutes).
 	RetryOptions *RedshiftRetryOptions `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -3773,7 +4363,7 @@ func (s *RedshiftDestinationConfiguration) SetUsername(v string) *RedshiftDestin
 type RedshiftDestinationDescription struct {
 	_ struct{} `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The database connection string.
@@ -3793,7 +4383,8 @@ type RedshiftDestinationDescription struct {
 	// to Amazon Redshift. Default value is 3600 (60 minutes).
 	RetryOptions *RedshiftRetryOptions `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -3889,7 +4480,7 @@ func (s *RedshiftDestinationDescription) SetUsername(v string) *RedshiftDestinat
 type RedshiftDestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The database connection string.
@@ -3908,7 +4499,8 @@ type RedshiftDestinationUpdate struct {
 	// to Amazon Redshift. Default value is 3600 (60 minutes).
 	RetryOptions *RedshiftRetryOptions `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	RoleARN *string `min:"1" type:"string"`
 
 	// The Amazon S3 backup mode.
@@ -4079,7 +4671,8 @@ func (s *RedshiftRetryOptions) SetDurationInSeconds(v int64) *RedshiftRetryOptio
 type S3DestinationConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the S3 bucket.
+	// The ARN of the S3 bucket. For more information, see Amazon Resource Names
+	// (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// BucketARN is a required field
 	BucketARN *string `min:"1" type:"string" required:"true"`
@@ -4110,7 +4703,8 @@ type S3DestinationConfiguration struct {
 	// in the Amazon Kinesis Data Firehose Developer Guide.
 	Prefix *string `type:"string"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -4204,7 +4798,8 @@ func (s *S3DestinationConfiguration) SetRoleARN(v string) *S3DestinationConfigur
 type S3DestinationDescription struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the S3 bucket.
+	// The ARN of the S3 bucket. For more information, see Amazon Resource Names
+	// (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// BucketARN is a required field
 	BucketARN *string `min:"1" type:"string" required:"true"`
@@ -4215,7 +4810,7 @@ type S3DestinationDescription struct {
 	// BufferingHints is a required field
 	BufferingHints *BufferingHints `type:"structure" required:"true"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The compression format. If no value is specified, the default is UNCOMPRESSED.
@@ -4237,7 +4832,8 @@ type S3DestinationDescription struct {
 	// in the Amazon Kinesis Data Firehose Developer Guide.
 	Prefix *string `type:"string"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -4299,7 +4895,8 @@ func (s *S3DestinationDescription) SetRoleARN(v string) *S3DestinationDescriptio
 type S3DestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
-	// The ARN of the S3 bucket.
+	// The ARN of the S3 bucket. For more information, see Amazon Resource Names
+	// (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	BucketARN *string `min:"1" type:"string"`
 
 	// The buffering option. If no value is specified, BufferingHints object default
@@ -4328,7 +4925,8 @@ type S3DestinationUpdate struct {
 	// in the Amazon Kinesis Data Firehose Developer Guide.
 	Prefix *string `type:"string"`
 
-	// The Amazon Resource Name (ARN) of the AWS credentials.
+	// The Amazon Resource Name (ARN) of the AWS credentials. For more information,
+	// see Amazon Resource Names (ARNs) and AWS Service Namespaces (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
 	RoleARN *string `min:"1" type:"string"`
 }
 
@@ -4410,6 +5008,142 @@ func (s *S3DestinationUpdate) SetRoleARN(v string) *S3DestinationUpdate {
 	return s
 }
 
+// Specifies the schema to which you want Kinesis Data Firehose to configure
+// your data before it writes it to Amazon S3.
+type SchemaConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the AWS Glue Data Catalog. If you don't supply this, the AWS account
+	// ID is used by default.
+	CatalogId *string `type:"string"`
+
+	// Specifies the name of the AWS Glue database that contains the schema for
+	// the output data.
+	DatabaseName *string `type:"string"`
+
+	// If you don't specify an AWS Region, the default is the current Region.
+	Region *string `type:"string"`
+
+	// The role that Kinesis Data Firehose can use to access AWS Glue. This role
+	// must be in the same account you use for Kinesis Data Firehose. Cross-account
+	// roles aren't allowed.
+	RoleARN *string `type:"string"`
+
+	// Specifies the AWS Glue table that contains the column information that constitutes
+	// your data schema.
+	TableName *string `type:"string"`
+
+	// Specifies the table version for the output data schema. If you don't specify
+	// this version ID, or if you set it to LATEST, Kinesis Data Firehose uses the
+	// most recent version. This means that any updates to the table are automatically
+	// picked up.
+	VersionId *string `type:"string"`
+}
+
+// String returns the string representation
+func (s SchemaConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SchemaConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetCatalogId sets the CatalogId field's value.
+func (s *SchemaConfiguration) SetCatalogId(v string) *SchemaConfiguration {
+	s.CatalogId = &v
+	return s
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *SchemaConfiguration) SetDatabaseName(v string) *SchemaConfiguration {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetRegion sets the Region field's value.
+func (s *SchemaConfiguration) SetRegion(v string) *SchemaConfiguration {
+	s.Region = &v
+	return s
+}
+
+// SetRoleARN sets the RoleARN field's value.
+func (s *SchemaConfiguration) SetRoleARN(v string) *SchemaConfiguration {
+	s.RoleARN = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *SchemaConfiguration) SetTableName(v string) *SchemaConfiguration {
+	s.TableName = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *SchemaConfiguration) SetVersionId(v string) *SchemaConfiguration {
+	s.VersionId = &v
+	return s
+}
+
+// The serializer that you want Kinesis Data Firehose to use to convert data
+// to the target format before writing it to Amazon S3. Kinesis Data Firehose
+// supports two types of serializers: the ORC SerDe (https://hive.apache.org/javadocs/r1.2.2/api/org/apache/hadoop/hive/ql/io/orc/OrcSerde.html)
+// and the Parquet SerDe (https://hive.apache.org/javadocs/r1.2.2/api/org/apache/hadoop/hive/ql/io/parquet/serde/ParquetHiveSerDe.html).
+type Serializer struct {
+	_ struct{} `type:"structure"`
+
+	// A serializer to use for converting data to the ORC format before storing
+	// it in Amazon S3. For more information, see Apache ORC (https://orc.apache.org/docs/).
+	OrcSerDe *OrcSerDe `type:"structure"`
+
+	// A serializer to use for converting data to the Parquet format before storing
+	// it in Amazon S3. For more information, see Apache Parquet (https://parquet.apache.org/documentation/latest/).
+	ParquetSerDe *ParquetSerDe `type:"structure"`
+}
+
+// String returns the string representation
+func (s Serializer) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s Serializer) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Serializer) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Serializer"}
+	if s.OrcSerDe != nil {
+		if err := s.OrcSerDe.Validate(); err != nil {
+			invalidParams.AddNested("OrcSerDe", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ParquetSerDe != nil {
+		if err := s.ParquetSerDe.Validate(); err != nil {
+			invalidParams.AddNested("ParquetSerDe", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetOrcSerDe sets the OrcSerDe field's value.
+func (s *Serializer) SetOrcSerDe(v *OrcSerDe) *Serializer {
+	s.OrcSerDe = v
+	return s
+}
+
+// SetParquetSerDe sets the ParquetSerDe field's value.
+func (s *Serializer) SetParquetSerDe(v *ParquetSerDe) *Serializer {
+	s.ParquetSerDe = v
+	return s
+}
+
 // Details about a Kinesis data stream used as the source for a Kinesis Data
 // Firehose delivery stream.
 type SourceDescription struct {
@@ -4439,7 +5173,7 @@ func (s *SourceDescription) SetKinesisStreamSourceDescription(v *KinesisStreamSo
 type SplunkDestinationConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The amount of time that Kinesis Data Firehose waits to receive an acknowledgment
@@ -4588,7 +5322,7 @@ func (s *SplunkDestinationConfiguration) SetS3Configuration(v *S3DestinationConf
 type SplunkDestinationDescription struct {
 	_ struct{} `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The amount of time that Kinesis Data Firehose waits to receive an acknowledgment
@@ -4604,8 +5338,7 @@ type SplunkDestinationDescription struct {
 	// This type can be either "Raw" or "Event."
 	HECEndpointType *string `type:"string" enum:"HECEndpointType"`
 
-	// This is a GUID you obtain from your Splunk cluster when you create a new
-	// HEC endpoint.
+	// A GUID you obtain from your Splunk cluster when you create a new HEC endpoint.
 	HECToken *string `type:"string"`
 
 	// The data processing configuration.
@@ -4694,7 +5427,7 @@ func (s *SplunkDestinationDescription) SetS3DestinationDescription(v *S3Destinat
 type SplunkDestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
-	// The CloudWatch logging options for your delivery stream.
+	// The Amazon CloudWatch logging options for your delivery stream.
 	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
 
 	// The amount of time that Kinesis Data Firehose waits to receive an acknowledgment
@@ -5060,7 +5793,7 @@ type UpdateDestinationInput struct {
 	_ struct{} `type:"structure"`
 
 	// Obtain this value from the VersionId result of DeliveryStreamDescription.
-	// This value is required, and it helps the service perform conditional operations.
+	// This value is required, and helps the service perform conditional operations.
 	// For example, if there is an interleaving update and this value is null, then
 	// the update destination fails. After the update is successful, the VersionId
 	// value is updated. The service then performs a merge of the old configuration
@@ -5289,6 +6022,44 @@ const (
 const (
 	// NoEncryptionConfigNoEncryption is a NoEncryptionConfig enum value
 	NoEncryptionConfigNoEncryption = "NoEncryption"
+)
+
+const (
+	// OrcCompressionNone is a OrcCompression enum value
+	OrcCompressionNone = "NONE"
+
+	// OrcCompressionZlib is a OrcCompression enum value
+	OrcCompressionZlib = "ZLIB"
+
+	// OrcCompressionSnappy is a OrcCompression enum value
+	OrcCompressionSnappy = "SNAPPY"
+)
+
+const (
+	// OrcFormatVersionV011 is a OrcFormatVersion enum value
+	OrcFormatVersionV011 = "V0_11"
+
+	// OrcFormatVersionV012 is a OrcFormatVersion enum value
+	OrcFormatVersionV012 = "V0_12"
+)
+
+const (
+	// ParquetCompressionUncompressed is a ParquetCompression enum value
+	ParquetCompressionUncompressed = "UNCOMPRESSED"
+
+	// ParquetCompressionGzip is a ParquetCompression enum value
+	ParquetCompressionGzip = "GZIP"
+
+	// ParquetCompressionSnappy is a ParquetCompression enum value
+	ParquetCompressionSnappy = "SNAPPY"
+)
+
+const (
+	// ParquetWriterVersionV1 is a ParquetWriterVersion enum value
+	ParquetWriterVersionV1 = "V1"
+
+	// ParquetWriterVersionV2 is a ParquetWriterVersion enum value
+	ParquetWriterVersionV2 = "V2"
 )
 
 const (

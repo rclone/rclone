@@ -599,6 +599,9 @@ type Company struct {
 	// auto-approved for associating with this company.
 	AutoApprovalEmailDomains []string `json:"autoApprovalEmailDomains,omitempty"`
 
+	// BadgeAuthorityInAwn: Whether the company's badge authority is in AWN
+	BadgeAuthorityInAwn bool `json:"badgeAuthorityInAwn,omitempty"`
+
 	// BadgeTier: Partner badge tier
 	//
 	// Possible values:

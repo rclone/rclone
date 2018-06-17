@@ -11,7 +11,6 @@ import (
 	"go/build"
 	"net"
 	"os"
-	"syscall"
 	"testing"
 
 	"golang.org/x/sys/unix"
@@ -72,24 +71,10 @@ func TestSCMCredentials(t *testing.T) {
 		defer cli.Close()
 
 		var ucred unix.Ucred
-		ucred.Pid = int32(os.Getpid() - 1)
+		ucred.Pid = int32(os.Getpid())
 		ucred.Uid = uint32(os.Getuid())
 		ucred.Gid = uint32(os.Getgid())
 		oob := unix.UnixCredentials(&ucred)
-		_, _, err = cli.(*net.UnixConn).WriteMsgUnix(nil, oob, nil)
-		if op, ok := err.(*net.OpError); ok {
-			err = op.Err
-		}
-		if sys, ok := err.(*os.SyscallError); ok {
-			err = sys.Err
-		}
-		if err != syscall.EPERM {
-			t.Fatalf("WriteMsgUnix failed with %v, want EPERM", err)
-		}
-
-		// Fix the PID.
-		ucred.Pid = int32(os.Getpid())
-		oob = unix.UnixCredentials(&ucred)
 
 		// On SOCK_STREAM, this is internally going to send a dummy byte
 		n, oobn, err := cli.(*net.UnixConn).WriteMsgUnix(nil, oob, nil)

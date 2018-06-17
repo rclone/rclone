@@ -15,10 +15,10 @@
 package storage
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -31,6 +31,8 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
+
+var testEncryptionKey = []byte("secret-key-that-is-32-bytes-long")
 
 type fakeTransport struct {
 	gotReq  *http.Request
@@ -93,14 +95,9 @@ func TestErrorOnObjectsInsertCall(t *testing.T) {
 
 	// Retry on 5xx
 	ft := &fakeTransport{}
-	ft.addResult(&http.Response{
-		StatusCode: 503,
-		Body:       ioutil.NopCloser(&bytes.Buffer{}),
-	}, nil)
-	ft.addResult(&http.Response{
-		StatusCode: 200,
-		Body:       ioutil.NopCloser(strings.NewReader("{}")),
-	}, nil)
+	ft.addResult(&http.Response{StatusCode: 503, Body: bodyReader("")}, nil)
+	ft.addResult(&http.Response{StatusCode: 200, Body: bodyReader("{}")}, nil)
+
 	wc = doWrite(&http.Client{Transport: ft})
 	if err := wc.Close(); err != nil {
 		t.Errorf("got %v, want nil", err)
@@ -115,17 +112,20 @@ func TestEncryption(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	ft := &fakeTransport{}
+	ft.addResult(&http.Response{StatusCode: 200, Body: bodyReader("{}")}, nil)
 	hc := &http.Client{Transport: ft}
 	client, err := NewClient(ctx, option.WithHTTPClient(hc))
 	if err != nil {
 		t.Fatalf("error when creating client: %v", err)
 	}
 	obj := client.Bucket("bucketname").Object("filename1")
-	key := []byte("secret-key-that-is-32-bytes-long")
-	wc := obj.Key(key).NewWriter(ctx)
-	// TODO(jba): use something other than fakeTransport, which always returns error.
-	wc.Write([]byte("hello world"))
-	wc.Close()
+	wc := obj.Key(testEncryptionKey).NewWriter(ctx)
+	if _, err := wc.Write([]byte("hello world")); err != nil {
+		t.Fatal(err)
+	}
+	if err := wc.Close(); err != nil {
+		t.Fatal(err)
+	}
 	if got, want := ft.gotReq.Header.Get("x-goog-encryption-algorithm"), "AES256"; got != want {
 		t.Errorf("algorithm: got %q, want %q", got, want)
 	}
@@ -133,10 +133,10 @@ func TestEncryption(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decoding key: %v", err)
 	}
-	if !testutil.Equal(gotKey, key) {
-		t.Errorf("key: got %v, want %v", gotKey, key)
+	if !testutil.Equal(gotKey, testEncryptionKey) {
+		t.Errorf("key: got %v, want %v", gotKey, testEncryptionKey)
 	}
-	wantHash := sha256.Sum256(key)
+	wantHash := sha256.Sum256(testEncryptionKey)
 	gotHash, err := base64.StdEncoding.DecodeString(ft.gotReq.Header.Get("x-goog-encryption-key-sha256"))
 	if err != nil {
 		t.Fatalf("decoding hash: %v", err)
@@ -144,6 +144,21 @@ func TestEncryption(t *testing.T) {
 	if !testutil.Equal(gotHash, wantHash[:]) { // wantHash is an array
 		t.Errorf("hash: got\n%v, want\n%v", gotHash, wantHash)
 	}
+
+	// Using a customer-supplied encryption key and a KMS key together is an error.
+	checkKMSError := func(msg string, err error) {
+		if err == nil {
+			t.Errorf("%s: got nil, want error", msg)
+		} else if !strings.Contains(err.Error(), "KMS") {
+			t.Errorf(`%s: got %q, want it to contain "KMS"`, msg, err)
+		}
+	}
+
+	wc = obj.Key(testEncryptionKey).NewWriter(ctx)
+	wc.KMSKeyName = "key"
+	_, err = wc.Write([]byte{})
+	checkKMSError("Write", err)
+	checkKMSError("Close", wc.Close())
 }
 
 // This test demonstrates the data race on Writer.err that can happen when the
@@ -171,4 +186,8 @@ func TestRaceOnCancel(t *testing.T) {
 	cancel()
 	// This call to Write concurrently reads w.err (L169).
 	w.Write([]byte(nil))
+}
+
+func bodyReader(s string) io.ReadCloser {
+	return ioutil.NopCloser(strings.NewReader(s))
 }

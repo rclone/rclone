@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<p>AWS IoT Analytics provides advanced data analysis for AWS IoT. It allows you to collect large amounts of device data, process messages, store them, and then query the data and run sophisticated analytics to make accurate decisions in your IoT applications and machine learning use cases. AWS IoT Analytics enables advanced data exploration through integration with Jupyter Notebooks and data visualization through integration with Amazon QuickSight.</p> <p>Traditional analytics and business intelligence tools are designed to process structured data. IoT data often comes from devices that record noisy processes (such as temperature, motion, or sound). As a result, the data from these devices can have significant gaps, corrupted messages, and false readings that must be cleaned up before analysis can occur. Also, IoT data is often only meaningful in the context of other data from external sources. </p> <p>AWS IoT Analytics automates each of the steps required to analyze data from IoT devices. AWS IoT Analytics filters, transforms, and enriches IoT data before storing it in a time-series data store for analysis. You can set up the service to collect only the data you need from your devices, apply mathematical transforms to process the data, and enrich the data with device-specific metadata such as device type and location before storing it. Then, you can analyze your data by running queries using the built-in SQL query engine, or perform more complex analytics and machine learning inference. AWS IoT Analytics includes models for common IoT use cases so you can answer questions like which devices are about to fail or which customers are at risk of abandoning their wearable devices.</p>",
+  "service": "<p>AWS IoT Analytics allows you to collect large amounts of device data, process messages, and store them. You can then query the data and run sophisticated analytics on it. AWS IoT Analytics enables advanced data exploration through integration with Jupyter Notebooks and data visualization through integration with Amazon QuickSight.</p> <p>Traditional analytics and business intelligence tools are designed to process structured data. IoT data often comes from devices that record noisy processes (such as temperature, motion, or sound). As a result the data from these devices can have significant gaps, corrupted messages, and false readings that must be cleaned up before analysis can occur. Also, IoT data is often only meaningful in the context of other data from external sources. </p> <p>AWS IoT Analytics automates the steps required to analyze data from IoT devices. AWS IoT Analytics filters, transforms, and enriches IoT data before storing it in a time-series data store for analysis. You can set up the service to collect only the data you need from your devices, apply mathematical transforms to process the data, and enrich the data with device-specific metadata such as device type and location before storing it. Then, you can analyze your data by running queries using the built-in SQL query engine, or perform more complex analytics and machine learning inference. AWS IoT Analytics includes pre-built models for common IoT use cases so you can answer questions like which devices are about to fail or which customers are at risk of abandoning their wearable devices.</p>",
   "operations": {
     "BatchPutMessage": "<p>Sends messages to a channel.</p>",
     "CancelPipelineReprocessing": "<p>Cancels the reprocessing of data through the pipeline.</p>",
@@ -24,10 +24,13 @@
     "ListDatasets": "<p>Retrieves information about data sets.</p>",
     "ListDatastores": "<p>Retrieves a list of data stores.</p>",
     "ListPipelines": "<p>Retrieves a list of pipelines.</p>",
-    "PutLoggingOptions": "<p>Sets or updates the AWS IoT Analytics logging options.</p>",
+    "ListTagsForResource": "<p>Lists the tags (metadata) which you have assigned to the resource.</p>",
+    "PutLoggingOptions": "<p>Sets or updates the AWS IoT Analytics logging options.</p> <p>Note that if you update the value of any <code>loggingOptions</code> field, it takes up to one minute for the change to take effect. Also, if you change the policy attached to the role you specified in the roleArn field (for example, to correct an invalid policy) it takes up to 5 minutes for that change to take effect. </p>",
     "RunPipelineActivity": "<p>Simulates the results of running a pipeline activity on a message payload.</p>",
     "SampleChannelData": "<p>Retrieves a sample of messages from the specified channel ingested during the specified timeframe. Up to 10 messages can be retrieved.</p>",
     "StartPipelineReprocessing": "<p>Starts the reprocessing of raw message data through the pipeline.</p>",
+    "TagResource": "<p>Adds to or modifies the tags of the given resource. Tags are metadata which can be used to manage a resource.</p>",
+    "UntagResource": "<p>Removes the given tags (metadata) from the resource.</p>",
     "UpdateChannel": "<p>Updates the settings of a channel.</p>",
     "UpdateDataset": "<p>Updates the settings of a data set.</p>",
     "UpdateDatastore": "<p>Updates the settings of a data store.</p>",
@@ -590,6 +593,16 @@
       "refs": {
       }
     },
+    "ListTagsForResourceRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListTagsForResourceResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "LogResult": {
       "base": null,
       "refs": {
@@ -652,7 +665,7 @@
       "base": null,
       "refs": {
         "BatchPutMessageErrorEntry$messageId": "<p>The ID of the message that caused the error. (See the value corresponding to the \"messageId\" key in the message object.)</p>",
-        "Message$messageId": "<p>The ID you wish to assign to the message.</p>"
+        "Message$messageId": "<p>The ID you wish to assign to the message. Each \"messageId\" must be unique within each batch sent.</p>"
       }
     },
     "MessagePayload": {
@@ -798,6 +811,14 @@
       "refs": {
       }
     },
+    "ResourceArn": {
+      "base": null,
+      "refs": {
+        "ListTagsForResourceRequest$resourceArn": "<p>The ARN of the resource whose tags you want to list.</p>",
+        "TagResourceRequest$resourceArn": "<p>The ARN of the resource whose tags will be modified.</p>",
+        "UntagResourceRequest$resourceArn": "<p>The ARN of the resource whose tags will be removed.</p>"
+      }
+    },
     "ResourceNotFoundException": {
       "base": "<p>A resource with the specified name could not be found.</p>",
       "refs": {
@@ -902,6 +923,52 @@
         "StartPipelineReprocessingRequest$startTime": "<p>The start time (inclusive) of raw message data that is reprocessed.</p>"
       }
     },
+    "Tag": {
+      "base": "<p>A set of key/value pairs which are used to manage the resource.</p>",
+      "refs": {
+        "TagList$member": null
+      }
+    },
+    "TagKey": {
+      "base": null,
+      "refs": {
+        "Tag$key": "<p>The tag's key.</p>",
+        "TagKeyList$member": null
+      }
+    },
+    "TagKeyList": {
+      "base": null,
+      "refs": {
+        "UntagResourceRequest$tagKeys": "<p>The keys of those tags which will be removed.</p>"
+      }
+    },
+    "TagList": {
+      "base": null,
+      "refs": {
+        "CreateChannelRequest$tags": "<p>Metadata which can be used to manage the channel.</p>",
+        "CreateDatasetRequest$tags": "<p>Metadata which can be used to manage the data set.</p>",
+        "CreateDatastoreRequest$tags": "<p>Metadata which can be used to manage the data store.</p>",
+        "CreatePipelineRequest$tags": "<p>Metadata which can be used to manage the pipeline.</p>",
+        "ListTagsForResourceResponse$tags": "<p>The tags (metadata) which you have assigned to the resource.</p>",
+        "TagResourceRequest$tags": "<p>The new or modified tags for the resource.</p>"
+      }
+    },
+    "TagResourceRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "TagResourceResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "TagValue": {
+      "base": null,
+      "refs": {
+        "Tag$value": "<p>The tag's value.</p>"
+      }
+    },
     "ThrottlingException": {
       "base": "<p>The request was denied due to request throttling.</p>",
       "refs": {
@@ -934,6 +1001,16 @@
       "base": null,
       "refs": {
         "RetentionPeriod$unlimited": "<p>If true, message data is kept indefinitely.</p>"
+      }
+    },
+    "UntagResourceRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UntagResourceResponse": {
+      "base": null,
+      "refs": {
       }
     },
     "UpdateChannelRequest": {

@@ -551,6 +551,24 @@
         {"shape":"ServiceException"}
       ]
     },
+    "ResetUserPassword":{
+      "name":"ResetUserPassword",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ResetUserPasswordRequest"},
+      "output":{"shape":"ResetUserPasswordResult"},
+      "errors":[
+        {"shape":"DirectoryUnavailableException"},
+        {"shape":"UserDoesNotExistException"},
+        {"shape":"InvalidPasswordException"},
+        {"shape":"UnsupportedOperationException"},
+        {"shape":"EntityDoesNotExistException"},
+        {"shape":"ClientException"},
+        {"shape":"ServiceException"}
+      ]
+    },
     "RestoreFromSnapshot":{
       "name":"RestoreFromSnapshot",
       "http":{
@@ -960,6 +978,12 @@
       }
     },
     "CreatedDateTime":{"type":"timestamp"},
+    "CustomerUserName":{
+      "type":"string",
+      "max":64,
+      "min":1,
+      "pattern":"^(?!.*\\\\|.*\"|.*\\/|.*\\[|.*\\]|.*:|.*;|.*\\||.*=|.*,|.*\\+|.*\\*|.*\\?|.*<|.*>|.*@).*$"
+    },
     "DeleteAssociatedConditionalForwarder":{"type":"boolean"},
     "DeleteConditionalForwarderRequest":{
       "type":"structure",
@@ -1481,6 +1505,14 @@
       },
       "exception":true
     },
+    "InvalidPasswordException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ExceptionMessage"},
+        "RequestId":{"shape":"RequestId"}
+      },
+      "exception":true
+    },
     "IpAddr":{
       "type":"string",
       "pattern":"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
@@ -1725,6 +1757,24 @@
     "RequestId":{
       "type":"string",
       "pattern":"^([A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12})$"
+    },
+    "ResetUserPasswordRequest":{
+      "type":"structure",
+      "required":[
+        "DirectoryId",
+        "UserName",
+        "NewPassword"
+      ],
+      "members":{
+        "DirectoryId":{"shape":"DirectoryId"},
+        "UserName":{"shape":"CustomerUserName"},
+        "NewPassword":{"shape":"UserPassword"}
+      }
+    },
+    "ResetUserPasswordResult":{
+      "type":"structure",
+      "members":{
+      }
     },
     "ResourceId":{
       "type":"string",
@@ -2077,10 +2127,24 @@
     },
     "UpdateSecurityGroupForDirectoryControllers":{"type":"boolean"},
     "UseSameUsername":{"type":"boolean"},
+    "UserDoesNotExistException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ExceptionMessage"},
+        "RequestId":{"shape":"RequestId"}
+      },
+      "exception":true
+    },
     "UserName":{
       "type":"string",
       "min":1,
       "pattern":"[a-zA-Z0-9._-]+"
+    },
+    "UserPassword":{
+      "type":"string",
+      "max":127,
+      "min":1,
+      "sensitive":true
     },
     "VerifyTrustRequest":{
       "type":"structure",

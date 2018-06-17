@@ -1030,6 +1030,7 @@
       }
     },
     "BytesProcessed":{"type":"long"},
+    "BytesReturned":{"type":"long"},
     "BytesScanned":{"type":"long"},
     "CORSConfiguration":{
       "type":"structure",
@@ -4183,7 +4184,8 @@
       "type":"structure",
       "members":{
         "BytesScanned":{"shape":"BytesScanned"},
-        "BytesProcessed":{"shape":"BytesProcessed"}
+        "BytesProcessed":{"shape":"BytesProcessed"},
+        "BytesReturned":{"shape":"BytesReturned"}
       }
     },
     "ProgressEvent":{
@@ -5432,7 +5434,8 @@
       "type":"structure",
       "members":{
         "BytesScanned":{"shape":"BytesScanned"},
-        "BytesProcessed":{"shape":"BytesProcessed"}
+        "BytesProcessed":{"shape":"BytesProcessed"},
+        "BytesReturned":{"shape":"BytesReturned"}
       }
     },
     "StatsEvent":{

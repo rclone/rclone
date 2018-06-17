@@ -104,7 +104,7 @@ func RateLimit(err error) (time.Duration, bool) {
 	if e.Header == nil {
 		return 0, true
 	}
-	return retryAfter(e.Header.Get("Retry-After"), 0), true
+	return retryAfter(e.Header.Get("Retry-After")), true
 }
 
 // Account is a user account. It is associated with a private key.
@@ -296,8 +296,8 @@ func (e *wireError) error(h http.Header) *Error {
 	}
 }
 
-// CertOption is an optional argument type for the TLSSNIxChallengeCert methods for
-// customizing a temporary certificate for TLS-SNI challenges.
+// CertOption is an optional argument type for the TLS ChallengeCert methods for
+// customizing a temporary certificate for TLS-based challenges.
 type CertOption interface {
 	privateCertOpt()
 }
@@ -317,7 +317,7 @@ func (*certOptKey) privateCertOpt() {}
 // WithTemplate creates an option for specifying a certificate template.
 // See x509.CreateCertificate for template usage details.
 //
-// In TLSSNIxChallengeCert methods, the template is also used as parent,
+// In TLS ChallengeCert methods, the template is also used as parent,
 // resulting in a self-signed certificate.
 // The DNSNames field of t is always overwritten for tls-sni challenge certs.
 func WithTemplate(t *x509.Certificate) CertOption {

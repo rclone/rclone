@@ -11,7 +11,6 @@ For examples of what can be done take a look at demos in the _demos directory. Y
 
 There are also some interesting projects using termbox-go:
  - [godit](https://github.com/nsf/godit) is an emacsish lightweight text editor written using termbox.
- - [gomatrix](https://github.com/GeertJohan/gomatrix) connects to The Matrix and displays its data streams in your terminal.
  - [gotetris](https://github.com/jjinux/gotetris) is an implementation of Tetris.
  - [sokoban-go](https://github.com/rn2dy/sokoban-go) is an implementation of sokoban game.
  - [hecate](https://github.com/evanmiller/hecate) is a hex editor designed by Satan.
@@ -36,4 +35,9 @@ There are also some interesting projects using termbox-go:
  - [pinger](https://github.com/hirose31/pinger) helps you to monitor numerous hosts using ICMP ECHO_REQUEST.
  - [vixl44](https://github.com/sebashwa/vixl44) lets you create pixel art inside your terminal using vim movements
  - [zterm](https://github.com/varunrau/zterm) is a typing game inspired by http://zty.pe/
+ - [gotypist](https://github.com/pb-/gotypist) is a fun touch-typing tutor following Steve Yegge's method.
  - [cointop](https://github.com/miguelmota/cointop) is an interactive terminal based UI application for tracking cryptocurrencies.
+ - [pexpo](https://github.com/nnao45/pexpo) is a terminal sending ping tool written in Go.
+
+### API reference
+[godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)

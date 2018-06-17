@@ -20,6 +20,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -87,12 +88,12 @@ func TestTokenWillExpireIn(t *testing.T) {
 func TestServicePrincipalTokenSetAutoRefresh(t *testing.T) {
 	spt := newServicePrincipalToken()
 
-	if !spt.autoRefresh {
+	if !spt.inner.AutoRefresh {
 		t.Fatal("adal: ServicePrincipalToken did not default to automatic token refreshing")
 	}
 
 	spt.SetAutoRefresh(false)
-	if spt.autoRefresh {
+	if spt.inner.AutoRefresh {
 		t.Fatal("adal: ServicePrincipalToken#SetAutoRefresh did not disable automatic token refreshing")
 	}
 }
@@ -100,12 +101,12 @@ func TestServicePrincipalTokenSetAutoRefresh(t *testing.T) {
 func TestServicePrincipalTokenSetRefreshWithin(t *testing.T) {
 	spt := newServicePrincipalToken()
 
-	if spt.refreshWithin != defaultRefresh {
+	if spt.inner.RefreshWithin != defaultRefresh {
 		t.Fatal("adal: ServicePrincipalToken did not correctly set the default refresh interval")
 	}
 
 	spt.SetRefreshWithin(2 * defaultRefresh)
-	if spt.refreshWithin != 2*defaultRefresh {
+	if spt.inner.RefreshWithin != 2*defaultRefresh {
 		t.Fatal("adal: ServicePrincipalToken#SetRefreshWithin did not set the refresh interval")
 	}
 }
@@ -354,6 +355,19 @@ func TestServicePrincipalTokenAuthorizationCodeRefreshSetsBody(t *testing.T) {
 			t.Fatalf("adal: ServicePrincipalTokenAuthorizationCode#Refresh did not correctly set the HTTP Request Body.")
 		}
 	})
+	testServicePrincipalTokenRefreshSetsBody(t, spt, func(t *testing.T, b []byte) {
+		body := string(b)
+
+		values, _ := url.ParseQuery(body)
+		if values["client_id"][0] != "id" ||
+			values["grant_type"][0] != OAuthGrantTypeRefreshToken ||
+			values["code"][0] != "code" ||
+			values["client_secret"][0] != "clientSecret" ||
+			values["redirect_uri"][0] != "http://redirectUri/getToken" ||
+			values["resource"][0] != "resource" {
+			t.Fatalf("adal: ServicePrincipalTokenAuthorizationCode#Refresh did not correctly set the HTTP Request Body.")
+		}
+	})
 }
 
 func TestServicePrincipalTokenSecretRefreshSetsBody(t *testing.T) {
@@ -479,12 +493,12 @@ func TestServicePrincipalTokenRefreshUnmarshals(t *testing.T) {
 	err := spt.Refresh()
 	if err != nil {
 		t.Fatalf("adal: ServicePrincipalToken#Refresh returned an unexpected error (%v)", err)
-	} else if spt.token.AccessToken != "accessToken" ||
-		spt.token.ExpiresIn != "3600" ||
-		spt.token.ExpiresOn != expiresOn ||
-		spt.token.NotBefore != expiresOn ||
-		spt.token.Resource != "resource" ||
-		spt.token.Type != "Bearer" {
+	} else if spt.inner.Token.AccessToken != "accessToken" ||
+		spt.inner.Token.ExpiresIn != "3600" ||
+		spt.inner.Token.ExpiresOn != expiresOn ||
+		spt.inner.Token.NotBefore != expiresOn ||
+		spt.inner.Token.Resource != "resource" ||
+		spt.inner.Token.Type != "Bearer" {
 		t.Fatalf("adal: ServicePrincipalToken#Refresh failed correctly unmarshal the JSON -- expected %v, received %v",
 			j, *spt)
 	}
@@ -492,7 +506,7 @@ func TestServicePrincipalTokenRefreshUnmarshals(t *testing.T) {
 
 func TestServicePrincipalTokenEnsureFreshRefreshes(t *testing.T) {
 	spt := newServicePrincipalToken()
-	expireToken(&spt.token)
+	expireToken(&spt.inner.Token)
 
 	body := mocks.NewBody(newTokenJSON("test", "test"))
 	resp := mocks.NewResponseWithBodyAndStatus(body, http.StatusOK, "OK")
@@ -520,7 +534,7 @@ func TestServicePrincipalTokenEnsureFreshRefreshes(t *testing.T) {
 
 func TestServicePrincipalTokenEnsureFreshFails(t *testing.T) {
 	spt := newServicePrincipalToken()
-	expireToken(&spt.token)
+	expireToken(&spt.inner.Token)
 
 	c := mocks.NewSender()
 	c.SetError(fmt.Errorf("some failure"))
@@ -537,7 +551,7 @@ func TestServicePrincipalTokenEnsureFreshFails(t *testing.T) {
 
 func TestServicePrincipalTokenEnsureFreshSkipsIfFresh(t *testing.T) {
 	spt := newServicePrincipalToken()
-	setTokenToExpireIn(&spt.token, 1000*time.Second)
+	setTokenToExpireIn(&spt.inner.Token, 1000*time.Second)
 
 	f := false
 	c := mocks.NewSender()
@@ -604,7 +618,7 @@ func TestRefreshCallbackErrorPropagates(t *testing.T) {
 // This demonstrates the danger of manual token without a refresh token
 func TestServicePrincipalTokenManualRefreshFailsWithoutRefresh(t *testing.T) {
 	spt := newServicePrincipalTokenManual()
-	spt.token.RefreshToken = ""
+	spt.inner.Token.RefreshToken = ""
 	err := spt.Refresh()
 	if err == nil {
 		t.Fatalf("adal: ServicePrincipalToken#Refresh should have failed with a ManualTokenSecret without a refresh token")
@@ -621,11 +635,11 @@ func TestNewServicePrincipalTokenFromMSI(t *testing.T) {
 	}
 
 	// check some of the SPT fields
-	if _, ok := spt.secret.(*ServicePrincipalMSISecret); !ok {
+	if _, ok := spt.inner.Secret.(*ServicePrincipalMSISecret); !ok {
 		t.Fatal("SPT secret was not of MSI type")
 	}
 
-	if spt.resource != resource {
+	if spt.inner.Resource != resource {
 		t.Fatal("SPT came back with incorrect resource")
 	}
 
@@ -645,11 +659,11 @@ func TestNewServicePrincipalTokenFromMSIWithUserAssignedID(t *testing.T) {
 	}
 
 	// check some of the SPT fields
-	if _, ok := spt.secret.(*ServicePrincipalMSISecret); !ok {
+	if _, ok := spt.inner.Secret.(*ServicePrincipalMSISecret); !ok {
 		t.Fatal("SPT secret was not of MSI type")
 	}
 
-	if spt.resource != resource {
+	if spt.inner.Resource != resource {
 		t.Fatal("SPT came back with incorrect resource")
 	}
 
@@ -657,9 +671,32 @@ func TestNewServicePrincipalTokenFromMSIWithUserAssignedID(t *testing.T) {
 		t.Fatal("SPT had incorrect refresh callbacks.")
 	}
 
-	if spt.clientID != userID {
+	if spt.inner.ClientID != userID {
 		t.Fatal("SPT had incorrect client ID")
 	}
+}
+
+func TestNewServicePrincipalTokenFromManualTokenSecret(t *testing.T) {
+	token := newToken()
+	secret := &ServicePrincipalAuthorizationCodeSecret{
+		ClientSecret:      "clientSecret",
+		AuthorizationCode: "code123",
+		RedirectURI:       "redirect",
+	}
+
+	spt, err := NewServicePrincipalTokenFromManualTokenSecret(TestOAuthConfig, "id", "resource", *token, secret, nil)
+	if err != nil {
+		t.Fatalf("Failed creating new SPT: %s", err)
+	}
+
+	if !reflect.DeepEqual(*token, spt.inner.Token) {
+		t.Fatalf("Tokens do not match: %s, %s", *token, spt.inner.Token)
+	}
+
+	if !reflect.DeepEqual(secret, spt.inner.Secret) {
+		t.Fatalf("Secrets do not match: %s, %s", secret, spt.inner.Secret)
+	}
+
 }
 
 func TestGetVMEndpoint(t *testing.T) {
@@ -670,6 +707,129 @@ func TestGetVMEndpoint(t *testing.T) {
 
 	if endpoint != msiEndpoint {
 		t.Fatal("Didn't get correct endpoint")
+	}
+}
+
+func TestMarshalServicePrincipalNoSecret(t *testing.T) {
+	spt := newServicePrincipalTokenManual()
+	b, err := json.Marshal(spt)
+	if err != nil {
+		t.Fatalf("failed to marshal token: %+v", err)
+	}
+	var spt2 *ServicePrincipalToken
+	err = json.Unmarshal(b, &spt2)
+	if err != nil {
+		t.Fatalf("failed to unmarshal token: %+v", err)
+	}
+	if !reflect.DeepEqual(spt, spt2) {
+		t.Fatal("tokens don't match")
+	}
+}
+
+func TestMarshalServicePrincipalTokenSecret(t *testing.T) {
+	spt := newServicePrincipalToken()
+	b, err := json.Marshal(spt)
+	if err != nil {
+		t.Fatalf("failed to marshal token: %+v", err)
+	}
+	var spt2 *ServicePrincipalToken
+	err = json.Unmarshal(b, &spt2)
+	if err != nil {
+		t.Fatalf("failed to unmarshal token: %+v", err)
+	}
+	if !reflect.DeepEqual(spt, spt2) {
+		t.Fatal("tokens don't match")
+	}
+}
+
+func TestMarshalServicePrincipalCertificateSecret(t *testing.T) {
+	spt := newServicePrincipalTokenCertificate(t)
+	b, err := json.Marshal(spt)
+	if err == nil {
+		t.Fatal("expected error when marshalling certificate token")
+	}
+	var spt2 *ServicePrincipalToken
+	err = json.Unmarshal(b, &spt2)
+	if err == nil {
+		t.Fatal("expected error when unmarshalling certificate token")
+	}
+}
+
+func TestMarshalServicePrincipalMSISecret(t *testing.T) {
+	spt, err := newServicePrincipalTokenFromMSI("http://msiendpoint/", "https://resource", nil)
+	if err != nil {
+		t.Fatalf("failed to get MSI SPT: %+v", err)
+	}
+	b, err := json.Marshal(spt)
+	if err == nil {
+		t.Fatal("expected error when marshalling MSI token")
+	}
+	var spt2 *ServicePrincipalToken
+	err = json.Unmarshal(b, &spt2)
+	if err == nil {
+		t.Fatal("expected error when unmarshalling MSI token")
+	}
+}
+
+func TestMarshalServicePrincipalUsernamePasswordSecret(t *testing.T) {
+	spt := newServicePrincipalTokenUsernamePassword(t)
+	b, err := json.Marshal(spt)
+	if err != nil {
+		t.Fatalf("failed to marshal token: %+v", err)
+	}
+	var spt2 *ServicePrincipalToken
+	err = json.Unmarshal(b, &spt2)
+	if err != nil {
+		t.Fatalf("failed to unmarshal token: %+v", err)
+	}
+	if !reflect.DeepEqual(spt, spt2) {
+		t.Fatal("tokens don't match")
+	}
+}
+
+func TestMarshalServicePrincipalAuthorizationCodeSecret(t *testing.T) {
+	spt := newServicePrincipalTokenAuthorizationCode(t)
+	b, err := json.Marshal(spt)
+	if err != nil {
+		t.Fatalf("failed to marshal token: %+v", err)
+	}
+	var spt2 *ServicePrincipalToken
+	err = json.Unmarshal(b, &spt2)
+	if err != nil {
+		t.Fatalf("failed to unmarshal token: %+v", err)
+	}
+	if !reflect.DeepEqual(spt, spt2) {
+		t.Fatal("tokens don't match")
+	}
+}
+
+func TestMarshalInnerToken(t *testing.T) {
+	spt := newServicePrincipalTokenManual()
+	tokenJSON, err := spt.MarshalTokenJSON()
+	if err != nil {
+		t.Fatalf("failed to marshal token: %+v", err)
+	}
+
+	testToken := newToken()
+	testToken.RefreshToken = "refreshtoken"
+
+	testTokenJSON, err := json.Marshal(testToken)
+	if err != nil {
+		t.Fatalf("failed to marshal test token: %+v", err)
+	}
+
+	if !reflect.DeepEqual(tokenJSON, testTokenJSON) {
+		t.Fatalf("tokens don't match: %s, %s", tokenJSON, testTokenJSON)
+	}
+
+	var t1 *Token
+	err = json.Unmarshal(tokenJSON, &t1)
+	if err != nil {
+		t.Fatalf("failed to unmarshal token: %+v", err)
+	}
+
+	if !reflect.DeepEqual(t1, testToken) {
+		t.Fatalf("tokens don't match: %s, %s", t1, testToken)
 	}
 }
 
@@ -688,7 +848,8 @@ func newTokenJSON(expiresOn string, resource string) string {
 		"expires_on"   : "%s",
 		"not_before"   : "%s",
 		"resource"     : "%s",
-		"token_type"   : "Bearer"
+		"token_type"   : "Bearer",
+		"refresh_token": "ABC123"
 		}`,
 		expiresOn, expiresOn, resource)
 }

@@ -380,6 +380,22 @@
     "x32": "https://www.google.com/images/icons/product/android-32.png"
    },
    "documentationLink": "https://developers.google.com/android-publisher",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "androidpublisher:v3",
+   "name": "androidpublisher",
+   "version": "v3",
+   "title": "Google Play Developer API",
+   "description": "Lets Android application developers access their Google Play accounts.",
+   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/androidpublisher/v3/rest",
+   "discoveryLink": "./apis/androidpublisher/v3/rest",
+   "icons": {
+    "x16": "https://www.google.com/images/icons/product/android-16.png",
+    "x32": "https://www.google.com/images/icons/product/android-32.png"
+   },
+   "documentationLink": "https://developers.google.com/android-publisher",
    "preferred": true
   },
   {
@@ -678,7 +694,7 @@
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
-   "documentationLink": "http://cloud.google.com/debugger",
+   "documentationLink": "https://cloud.google.com/debugger",
    "preferred": true
   },
   {
@@ -724,21 +740,6 @@
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
    "documentationLink": "https://cloud.google.com/functions",
-   "preferred": false
-  },
-  {
-   "kind": "discovery#directoryItem",
-   "id": "cloudiot:v1alpha1",
-   "name": "cloudiot",
-   "version": "v1alpha1",
-   "title": "Cloud IoT API",
-   "description": "Registers and manages IoT (Internet of Things) devices that connect to the Google Cloud Platform.",
-   "discoveryRestUrl": "https://cloudiot.googleapis.com/$discovery/rest?version=v1alpha1",
-   "icons": {
-    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
-    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
-   },
-   "documentationLink": "https://cloud.google.com/iot",
    "preferred": false
   },
   {
@@ -882,7 +883,7 @@
    "name": "cloudtasks",
    "version": "v2beta2",
    "title": "Cloud Tasks API",
-   "description": "Manages the execution of large numbers of distributed requests. Cloud Tasks is in Alpha.",
+   "description": "Manages the execution of large numbers of distributed requests.",
    "discoveryRestUrl": "https://cloudtasks.googleapis.com/$discovery/rest?version=v2beta2",
    "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
@@ -1112,7 +1113,7 @@
    "id": "datastore:v1",
    "name": "datastore",
    "version": "v1",
-   "title": "Google Cloud Datastore API",
+   "title": "Cloud Datastore API",
    "description": "Accesses the schemaless NoSQL database to provide fully managed, robust, scalable storage for your application.",
    "discoveryRestUrl": "https://datastore.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -1127,7 +1128,7 @@
    "id": "datastore:v1beta1",
    "name": "datastore",
    "version": "v1beta1",
-   "title": "Google Cloud Datastore API",
+   "title": "Cloud Datastore API",
    "description": "Accesses the schemaless NoSQL database to provide fully managed, robust, scalable storage for your application.",
    "discoveryRestUrl": "https://datastore.googleapis.com/$discovery/rest?version=v1beta1",
    "icons": {
@@ -1142,7 +1143,7 @@
    "id": "datastore:v1beta3",
    "name": "datastore",
    "version": "v1beta3",
-   "title": "Google Cloud Datastore API",
+   "title": "Cloud Datastore API",
    "description": "Accesses the schemaless NoSQL database to provide fully managed, robust, scalable storage for your application.",
    "discoveryRestUrl": "https://datastore.googleapis.com/$discovery/rest?version=v1beta3",
    "icons": {
@@ -1225,6 +1226,22 @@
    "description": "Manages your DoubleClick Campaign Manager ad campaigns and reports.",
    "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.0/rest",
    "discoveryLink": "./apis/dfareporting/v3.0/rest",
+   "icons": {
+    "x16": "https://www.google.com/images/icons/product/doubleclick-16.gif",
+    "x32": "https://www.google.com/images/icons/product/doubleclick-32.gif"
+   },
+   "documentationLink": "https://developers.google.com/doubleclick-advertisers/",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "dfareporting:v3.1",
+   "name": "dfareporting",
+   "version": "v3.1",
+   "title": "DCM/DFA Reporting And Trafficking API",
+   "description": "Manages your DoubleClick Campaign Manager ad campaigns and reports.",
+   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/dfareporting/v3.1/rest",
+   "discoveryLink": "./apis/dfareporting/v3.1/rest",
    "icons": {
     "x16": "https://www.google.com/images/icons/product/doubleclick-16.gif",
     "x32": "https://www.google.com/images/icons/product/doubleclick-32.gif"
@@ -1458,7 +1475,7 @@
    "id": "firestore:v1beta1",
    "name": "firestore",
    "version": "v1beta1",
-   "title": "Google Cloud Firestore API",
+   "title": "Cloud Firestore API",
    "description": "",
    "discoveryRestUrl": "https://firestore.googleapis.com/$discovery/rest?version=v1beta1",
    "icons": {
@@ -1674,6 +1691,21 @@
   },
   {
    "kind": "discovery#directoryItem",
+   "id": "iamcredentials:v1",
+   "name": "iamcredentials",
+   "version": "v1",
+   "title": "IAM Service Account Credentials API",
+   "description": "IAM Service Account Credentials API",
+   "discoveryRestUrl": "https://iamcredentials.googleapis.com/$discovery/rest?version=v1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://developers.google.com/identity/protocols/OAuth2ServiceAccount",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
    "id": "identitytoolkit:v3",
    "name": "identitytoolkit",
    "version": "v3",
@@ -1686,6 +1718,21 @@
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
    "documentationLink": "https://developers.google.com/identity-toolkit/v3/",
+   "preferred": true
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "jobs:v2",
+   "name": "jobs",
+   "version": "v2",
+   "title": "Cloud Job Discovery",
+   "description": "Cloud Job Discovery provides the capability to create, read, update, and delete job postings, as well as search jobs based on keywords and filters.",
+   "discoveryRestUrl": "https://jobs.googleapis.com/$discovery/rest?version=v2",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/job-discovery/docs",
    "preferred": true
   },
   {
@@ -2168,25 +2215,6 @@
    "labels": [
     "limited_availability"
    ],
-   "preferred": false
-  },
-  {
-   "kind": "discovery#directoryItem",
-   "id": "replicapool:v1beta2",
-   "name": "replicapool",
-   "version": "v1beta2",
-   "title": "Google Compute Engine Instance Group Manager API",
-   "description": "[Deprecated. Please use Instance Group Manager in Compute API] Provides groups of homogenous Compute Engine instances.",
-   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/replicapool/v1beta2/rest",
-   "discoveryLink": "./apis/replicapool/v1beta2/rest",
-   "icons": {
-    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
-    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
-   },
-   "documentationLink": "https://developers.google.com/compute/docs/instance-groups/manager/v1beta2",
-   "labels": [
-    "limited_availability"
-   ],
    "preferred": true
   },
   {
@@ -2229,48 +2257,10 @@
   },
   {
    "kind": "discovery#directoryItem",
-   "id": "resourceviews:v1beta1",
-   "name": "resourceviews",
-   "version": "v1beta1",
-   "title": "Resource Views API",
-   "description": "The Resource View API allows users to create and manage logical sets of Google Compute Engine instances.",
-   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/resourceviews/v1beta1/rest",
-   "discoveryLink": "./apis/resourceviews/v1beta1/rest",
-   "icons": {
-    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
-    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
-   },
-   "documentationLink": "https://developers.google.com/compute/",
-   "labels": [
-    "limited_availability"
-   ],
-   "preferred": false
-  },
-  {
-   "kind": "discovery#directoryItem",
-   "id": "resourceviews:v1beta2",
-   "name": "resourceviews",
-   "version": "v1beta2",
-   "title": "Google Compute Engine Instance Groups API",
-   "description": "The Resource View API allows users to create and manage logical sets of Google Compute Engine instances.",
-   "discoveryRestUrl": "https://www.googleapis.com/discovery/v1/apis/resourceviews/v1beta2/rest",
-   "discoveryLink": "./apis/resourceviews/v1beta2/rest",
-   "icons": {
-    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
-    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
-   },
-   "documentationLink": "https://developers.google.com/compute/",
-   "labels": [
-    "limited_availability"
-   ],
-   "preferred": true
-  },
-  {
-   "kind": "discovery#directoryItem",
    "id": "runtimeconfig:v1",
    "name": "runtimeconfig",
    "version": "v1",
-   "title": "Google Cloud Runtime Configuration API",
+   "title": "Cloud Runtime Configuration API",
    "description": "The Runtime Configurator allows you to dynamically configure and expose variables through Google Cloud Platform. In addition, you can also set Watchers and Waiters that will watch for changes to your data and return based on certain conditions.",
    "discoveryRestUrl": "https://runtimeconfig.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -2285,7 +2275,7 @@
    "id": "runtimeconfig:v1beta1",
    "name": "runtimeconfig",
    "version": "v1beta1",
-   "title": "Google Cloud Runtime Configuration API",
+   "title": "Cloud Runtime Configuration API",
    "description": "The Runtime Configurator allows you to dynamically configure and expose variables through Google Cloud Platform. In addition, you can also set Watchers and Waiters that will watch for changes to your data and return based on certain conditions.",
    "discoveryRestUrl": "https://runtimeconfig.googleapis.com/$discovery/rest?version=v1beta1",
    "icons": {
@@ -2676,7 +2666,7 @@
    "id": "storagetransfer:v1",
    "name": "storagetransfer",
    "version": "v1",
-   "title": "Google Storage Transfer API",
+   "title": "Storage Transfer API",
    "description": "Transfers data from external data sources to a Google Cloud Storage bucket or between Google Cloud Storage buckets.",
    "discoveryRestUrl": "https://storagetransfer.googleapis.com/$discovery/rest?version=v1",
    "icons": {
@@ -2791,7 +2781,7 @@
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
-   "documentationLink": "http://cloud.google.com/text-to-speech/",
+   "documentationLink": "https://cloud.google.com/text-to-speech/",
    "preferred": true
   },
   {
@@ -2823,6 +2813,21 @@
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
    "documentationLink": "https://cloud.google.com/tpu/",
+   "preferred": false
+  },
+  {
+   "kind": "discovery#directoryItem",
+   "id": "tpu:v1",
+   "name": "tpu",
+   "version": "v1",
+   "title": "Cloud TPU API",
+   "description": "TPU API provides customers with access to Google TPU technology.",
+   "discoveryRestUrl": "https://tpu.googleapis.com/$discovery/rest?version=v1",
+   "icons": {
+    "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+    "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+   },
+   "documentationLink": "https://cloud.google.com/tpu/",
    "preferred": true
   },
   {
@@ -2830,7 +2835,7 @@
    "id": "translate:v2",
    "name": "translate",
    "version": "v2",
-   "title": "Google Cloud Translation API",
+   "title": "Cloud Translation API",
    "description": "The Google Cloud Translation API lets websites and programs integrate with Google Translate programmatically.",
    "discoveryRestUrl": "https://translation.googleapis.com/$discovery/rest?version=v2",
    "icons": {
@@ -3071,7 +3076,7 @@
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
    },
-   "documentationLink": "http://developers.google.com/youtube/analytics",
+   "documentationLink": "https://developers.google.com/youtube/analytics",
    "preferred": true
   },
   {

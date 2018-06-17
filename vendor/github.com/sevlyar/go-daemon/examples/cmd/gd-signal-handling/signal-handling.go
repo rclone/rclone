@@ -68,10 +68,13 @@ var (
 )
 
 func worker() {
+	LOOP:
 	for {
-		time.Sleep(time.Second)
-		if _, ok := <-stop; ok {
-			break
+		time.Sleep(time.Second) // this is work to be done by worker.
+		select {
+		case <- stop:
+			break LOOP
+		default:
 		}
 	}
 	done <- struct{}{}

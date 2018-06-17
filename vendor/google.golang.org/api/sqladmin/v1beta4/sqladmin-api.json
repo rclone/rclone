@@ -18,7 +18,7 @@
   "description": "Creates and configures Cloud SQL instances, which provide fully-managed MySQL databases.",
   "discoveryVersion": "v1",
   "documentationLink": "https://cloud.google.com/sql/docs/reference/latest",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/JK0E1gVAzolIm-0oBe-45M8ICm0\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/dydRcA1ZbC7nkSRFII_LV6ikPbg\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -486,6 +486,37 @@
     },
     "instances": {
       "methods": {
+        "addServerCa": {
+          "description": "Add a new trusted Certificate Authority (CA) version for the specified instance. Required to prepare for a certificate rotation. If a CA version was previously added but never used in a certificate rotation, this operation replaces that version. There can not be more than one CA version waiting to be rotated in.",
+          "httpMethod": "POST",
+          "id": "sql.instances.addServerCa",
+          "parameterOrder": [
+            "project",
+            "instance"
+          ],
+          "parameters": {
+            "instance": {
+              "description": "Cloud SQL instance ID. This does not include the project ID.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID of the project that contains the instance.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "projects/{project}/instances/{instance}/addServerCa",
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/sqlservice.admin"
+          ]
+        },
         "clone": {
           "description": "Creates a Cloud SQL instance as a clone of the source instance. The API is not ready for Second Generation instances yet.",
           "httpMethod": "POST",
@@ -783,6 +814,37 @@
             "https://www.googleapis.com/auth/sqlservice.admin"
           ]
         },
+        "listServerCas": {
+          "description": "Lists all of the trusted Certificate Authorities (CAs) for the specified instance. There can be up to three CAs listed: the CA that was used to sign the certificate that is currently in use, a CA that has been added but not yet used to sign a certificate, and a CA used to sign a certificate that has previously rotated out.",
+          "httpMethod": "GET",
+          "id": "sql.instances.listServerCas",
+          "parameterOrder": [
+            "project",
+            "instance"
+          ],
+          "parameters": {
+            "instance": {
+              "description": "Cloud SQL instance ID. This does not include the project ID.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID of the project that contains the instance.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "projects/{project}/instances/{instance}/listServerCas",
+          "response": {
+            "$ref": "InstancesListServerCasResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/sqlservice.admin"
+          ]
+        },
         "patch": {
           "description": "Updates settings of a Cloud SQL instance. Caution: This is not a partial update, so you must include values for all the settings that you want to retain. For partial updates, use patch.. This method supports patch semantics.",
           "httpMethod": "PATCH",
@@ -935,6 +997,40 @@
           "path": "projects/{project}/instances/{instance}/restoreBackup",
           "request": {
             "$ref": "InstancesRestoreBackupRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/sqlservice.admin"
+          ]
+        },
+        "rotateServerCa": {
+          "description": "Rotates the server certificate to one signed by the Certificate Authority (CA) version previously added with the addServerCA method.",
+          "httpMethod": "POST",
+          "id": "sql.instances.rotateServerCa",
+          "parameterOrder": [
+            "project",
+            "instance"
+          ],
+          "parameters": {
+            "instance": {
+              "description": "Cloud SQL instance ID. This does not include the project ID.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Project ID of the project that contains the instance.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "projects/{project}/instances/{instance}/rotateServerCa",
+          "request": {
+            "$ref": "InstancesRotateServerCaRequest"
           },
           "response": {
             "$ref": "Operation"
@@ -1524,7 +1620,7 @@
       }
     }
   },
-  "revision": "20180314",
+  "revision": "20180507",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "AclEntry": {
@@ -2272,6 +2368,28 @@
       },
       "type": "object"
     },
+    "InstancesListServerCasResponse": {
+      "description": "Instances ListServerCas response.",
+      "id": "InstancesListServerCasResponse",
+      "properties": {
+        "activeVersion": {
+          "type": "string"
+        },
+        "certs": {
+          "description": "List of server CA certificates for the instance.",
+          "items": {
+            "$ref": "SslCert"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "default": "sql#instancesListServerCas",
+          "description": "This is always sql#instancesListServerCas.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "InstancesRestoreBackupRequest": {
       "description": "Database instance restore backup request.",
       "id": "InstancesRestoreBackupRequest",
@@ -2279,6 +2397,17 @@
         "restoreBackupContext": {
           "$ref": "RestoreBackupContext",
           "description": "Parameters required to perform the restore backup operation."
+        }
+      },
+      "type": "object"
+    },
+    "InstancesRotateServerCaRequest": {
+      "description": "Rotate Server CA request.",
+      "id": "InstancesRotateServerCaRequest",
+      "properties": {
+        "rotateServerCaContext": {
+          "$ref": "RotateServerCaContext",
+          "description": "Contains details about the rotate server CA operation."
         }
       },
       "type": "object"
@@ -2625,6 +2754,22 @@
         "kind": {
           "default": "sql#restoreBackupContext",
           "description": "This is always sql#restoreBackupContext.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "RotateServerCaContext": {
+      "description": "Instance rotate server CA context.",
+      "id": "RotateServerCaContext",
+      "properties": {
+        "kind": {
+          "default": "sql#rotateServerCaContext",
+          "description": "This is always sql#rotateServerCaContext.",
+          "type": "string"
+        },
+        "nextVersion": {
+          "description": "The fingerprint of the next version to be rotated to. If left unspecified, will be rotated to the most recently added server CA version.",
           "type": "string"
         }
       },

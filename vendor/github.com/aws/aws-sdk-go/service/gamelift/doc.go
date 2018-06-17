@@ -17,7 +17,7 @@
 //    a game session.
 //
 //    * Configure and manage game server resources -- Manage builds, fleets,
-//    queues, and aliases; set autoscaling policies; retrieve logs and metrics.
+//    queues, and aliases; set auto-scaling policies; retrieve logs and metrics.
 //
 // This reference guide describes the low-level service API for Amazon GameLift.
 // You can use the API functionality with these tools:
@@ -188,15 +188,19 @@
 //    and the current number of instances in a fleet; adjust fleet capacity
 //    settings to scale up or down.
 //
-// Autoscale -- Manage autoscaling rules and apply them to a fleet.
+// Autoscale -- Manage auto-scaling rules and apply them to a fleet.
 //
-// PutScalingPolicy -- Create a new autoscaling policy, or update an existing
+// PutScalingPolicy -- Create a new auto-scaling policy, or update an existing
 //    one.
 //
-// DescribeScalingPolicies -- Retrieve an existing autoscaling policy.
+// DescribeScalingPolicies -- Retrieve an existing auto-scaling policy.
 //
-// DeleteScalingPolicy -- Delete an autoscaling policy and stop it from affecting
+// DeleteScalingPolicy -- Delete an auto-scaling policy and stop it from affecting
 //    a fleet's capacity.
+//
+// StartFleetActions -- Restart a fleet's auto-scaling policies.
+//
+// StopFleetActions -- Suspend a fleet's auto-scaling policies.
 //
 //    * Manage VPC peering connections for fleets
 //

@@ -73,7 +73,7 @@ func (c *MarketplaceCommerceAnalytics) GenerateDataSetRequest(input *GenerateDat
 // API operation GenerateDataSet for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeException "Exception"
+//   * ErrCodeException "MarketplaceCommerceAnalyticsException"
 //   This exception is thrown when an internal service error occurs.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/marketplacecommerceanalytics-2015-07-01/GenerateDataSet
@@ -162,7 +162,7 @@ func (c *MarketplaceCommerceAnalytics) StartSupportDataExportRequest(input *Star
 // API operation StartSupportDataExport for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeException "Exception"
+//   * ErrCodeException "MarketplaceCommerceAnalyticsException"
 //   This exception is thrown when an internal service error occurs.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/marketplacecommerceanalytics-2015-07-01/StartSupportDataExport

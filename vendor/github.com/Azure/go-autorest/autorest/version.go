@@ -16,5 +16,5 @@ package autorest
 
 // Version returns the semantic version (see http://semver.org).
 func Version() string {
-	return "v10.8.1"
+	return "v10.11.2"
 }

@@ -3618,7 +3618,8 @@ func (c *CloudFormation) UpdateStackSetRequest(input *UpdateStackSetInput) (req 
 
 // UpdateStackSet API operation for AWS CloudFormation.
 //
-// Updates the stack set and all associated stack instances.
+// Updates the stack set, and associated stack instances in the specified accounts
+// and regions.
 //
 // Even if the stack set operation created by updating the stack set fails (completely
 // or partially, below or above a specified failure tolerance), the stack set
@@ -3649,6 +3650,9 @@ func (c *CloudFormation) UpdateStackSetRequest(input *UpdateStackSetInput) (req 
 //
 //   * ErrCodeInvalidOperationException "InvalidOperationException"
 //   The specified operation isn't valid.
+//
+//   * ErrCodeStackInstanceNotFoundException "StackInstanceNotFoundException"
+//   The specified stack instance doesn't exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/cloudformation-2010-05-15/UpdateStackSet
 func (c *CloudFormation) UpdateStackSet(input *UpdateStackSetInput) (*UpdateStackSetOutput, error) {
@@ -5130,8 +5134,8 @@ type CreateStackSetInput struct {
 	//
 	// Specify an IAM role only if you are using customized administrator roles
 	// to control which users or groups can manage specific stack sets within the
-	// same administrator account. For more information, see Define Permissions
-	// for Multiple Administrators (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-prereqs.html)
+	// same administrator account. For more information, see Prerequisites: Granting
+	// Permissions for Stack Set Operations (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-prereqs.html)
 	// in the AWS CloudFormation User Guide.
 	AdministrationRoleARN *string `min:"20" type:"string"`
 
@@ -5183,6 +5187,14 @@ type CreateStackSetInput struct {
 	// A description of the stack set. You can use the description to identify the
 	// stack set's purpose or other important information.
 	Description *string `min:"1" type:"string"`
+
+	// The name of the IAM execution role to use to create the stack set. If you
+	// do not specify an execution role, AWS CloudFormation uses the AWSCloudFormationStackSetExecutionRole
+	// role for the stack set operation.
+	//
+	// Specify an IAM role only if you are using customized execution roles to control
+	// which stack resources users and groups can include in their stack sets.
+	ExecutionRoleName *string `min:"1" type:"string"`
 
 	// The input parameters for the stack set template.
 	Parameters []*Parameter `type:"list"`
@@ -5248,6 +5260,9 @@ func (s *CreateStackSetInput) Validate() error {
 	if s.Description != nil && len(*s.Description) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
 	}
+	if s.ExecutionRoleName != nil && len(*s.ExecutionRoleName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ExecutionRoleName", 1))
+	}
 	if s.StackSetName == nil {
 		invalidParams.Add(request.NewErrParamRequired("StackSetName"))
 	}
@@ -5295,6 +5310,12 @@ func (s *CreateStackSetInput) SetClientRequestToken(v string) *CreateStackSetInp
 // SetDescription sets the Description field's value.
 func (s *CreateStackSetInput) SetDescription(v string) *CreateStackSetInput {
 	s.Description = &v
+	return s
+}
+
+// SetExecutionRoleName sets the ExecutionRoleName field's value.
+func (s *CreateStackSetInput) SetExecutionRoleName(v string) *CreateStackSetInput {
+	s.ExecutionRoleName = &v
 	return s
 }
 
@@ -9765,7 +9786,7 @@ type StackSet struct {
 	//
 	// Use customized administrator roles to control which users or groups can manage
 	// specific stack sets within the same administrator account. For more information,
-	// see Define Permissions for Multiple Administrators (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-prereqs.html)
+	// see Prerequisites: Granting Permissions for Stack Set Operations (http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-prereqs.html)
 	// in the AWS CloudFormation User Guide.
 	AdministrationRoleARN *string `min:"20" type:"string"`
 
@@ -9779,6 +9800,12 @@ type StackSet struct {
 	// A description of the stack set that you specify when the stack set is created
 	// or updated.
 	Description *string `min:"1" type:"string"`
+
+	// The name of the IAM execution role used to create or update the stack set.
+	//
+	// Use customized execution roles to control which stack resources users and
+	// groups can include in their stack sets.
+	ExecutionRoleName *string `min:"1" type:"string"`
 
 	// A list of input parameters for a stack set.
 	Parameters []*Parameter `type:"list"`
@@ -9829,6 +9856,12 @@ func (s *StackSet) SetCapabilities(v []*string) *StackSet {
 // SetDescription sets the Description field's value.
 func (s *StackSet) SetDescription(v string) *StackSet {
 	s.Description = &v
+	return s
+}
+
+// SetExecutionRoleName sets the ExecutionRoleName field's value.
+func (s *StackSet) SetExecutionRoleName(v string) *StackSet {
+	s.ExecutionRoleName = &v
 	return s
 }
 
@@ -9905,6 +9938,12 @@ type StackSetOperation struct {
 	// set operation was successful, or even attempted, in each account or region.
 	EndTimestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
+	// The name of the IAM execution role used to create or update the stack set.
+	//
+	// Use customized execution roles to control which stack resources users and
+	// groups can include in their stack sets.
+	ExecutionRoleName *string `min:"1" type:"string"`
+
 	// The unique ID of a stack set operation.
 	OperationId *string `min:"1" type:"string"`
 
@@ -9973,6 +10012,12 @@ func (s *StackSetOperation) SetCreationTimestamp(v time.Time) *StackSetOperation
 // SetEndTimestamp sets the EndTimestamp field's value.
 func (s *StackSetOperation) SetEndTimestamp(v time.Time) *StackSetOperation {
 	s.EndTimestamp = &v
+	return s
+}
+
+// SetExecutionRoleName sets the ExecutionRoleName field's value.
+func (s *StackSetOperation) SetExecutionRoleName(v string) *StackSetOperation {
+	s.ExecutionRoleName = &v
 	return s
 }
 
@@ -11168,6 +11213,23 @@ func (s *UpdateStackOutput) SetStackId(v string) *UpdateStackOutput {
 type UpdateStackSetInput struct {
 	_ struct{} `type:"structure"`
 
+	// The accounts in which to update associated stack instances. If you specify
+	// accounts, you must also specify the regions in which to update stack set
+	// instances.
+	//
+	// To update all the stack instances associated with this stack set, do not
+	// specify the Accounts or Regions properties.
+	//
+	// If the stack set update includes changes to the template (that is, if the
+	// TemplateBody or TemplateURL properties are specified), or the Parameters
+	// property, AWS CloudFormation marks all stack instances with a status of OUTDATED
+	// prior to updating the stack instances in the specified accounts and regions.
+	// If the stack set update does not include changes to the template or parameters,
+	// AWS CloudFormation updates the stack instances in the specified accounts
+	// and regions, while leaving all other stack instances with their existing
+	// stack instance status.
+	Accounts []*string `type:"list"`
+
 	// The Amazon Resource Number (ARN) of the IAM role to use to update this stack
 	// set.
 	//
@@ -11223,6 +11285,20 @@ type UpdateStackSetInput struct {
 	// A brief description of updates that you are making.
 	Description *string `min:"1" type:"string"`
 
+	// The name of the IAM execution role to use to update the stack set. If you
+	// do not specify an execution role, AWS CloudFormation uses the AWSCloudFormationStackSetExecutionRole
+	// role for the stack set operation.
+	//
+	// Specify an IAM role only if you are using customized execution roles to control
+	// which stack resources users and groups can include in their stack sets.
+	//
+	// If you specify a customized execution role, AWS CloudFormation uses that
+	// role to update the stack. If you do not specify a customized execution role,
+	// AWS CloudFormation performs the update using the role previously associated
+	// with the stack set, so long as you have permissions to perform operations
+	// on the stack set.
+	ExecutionRoleName *string `min:"1" type:"string"`
+
 	// The unique ID for this stack set operation.
 	//
 	// The operation ID also functions as an idempotency token, to ensure that AWS
@@ -11241,6 +11317,22 @@ type UpdateStackSetInput struct {
 
 	// A list of input parameters for the stack set template.
 	Parameters []*Parameter `type:"list"`
+
+	// The regions in which to update associated stack instances. If you specify
+	// regions, you must also specify accounts in which to update stack set instances.
+	//
+	// To update all the stack instances associated with this stack set, do not
+	// specify the Accounts or Regions properties.
+	//
+	// If the stack set update includes changes to the template (that is, if the
+	// TemplateBody or TemplateURL properties are specified), or the Parameters
+	// property, AWS CloudFormation marks all stack instances with a status of OUTDATED
+	// prior to updating the stack instances in the specified accounts and regions.
+	// If the stack set update does not include changes to the template or parameters,
+	// AWS CloudFormation updates the stack instances in the specified accounts
+	// and regions, while leaving all other stack instances with their existing
+	// stack instance status.
+	Regions []*string `type:"list"`
 
 	// The name or unique ID of the stack set that you want to update.
 	//
@@ -11321,6 +11413,9 @@ func (s *UpdateStackSetInput) Validate() error {
 	if s.Description != nil && len(*s.Description) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
 	}
+	if s.ExecutionRoleName != nil && len(*s.ExecutionRoleName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ExecutionRoleName", 1))
+	}
 	if s.OperationId != nil && len(*s.OperationId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("OperationId", 1))
 	}
@@ -11355,6 +11450,12 @@ func (s *UpdateStackSetInput) Validate() error {
 	return nil
 }
 
+// SetAccounts sets the Accounts field's value.
+func (s *UpdateStackSetInput) SetAccounts(v []*string) *UpdateStackSetInput {
+	s.Accounts = v
+	return s
+}
+
 // SetAdministrationRoleARN sets the AdministrationRoleARN field's value.
 func (s *UpdateStackSetInput) SetAdministrationRoleARN(v string) *UpdateStackSetInput {
 	s.AdministrationRoleARN = &v
@@ -11373,6 +11474,12 @@ func (s *UpdateStackSetInput) SetDescription(v string) *UpdateStackSetInput {
 	return s
 }
 
+// SetExecutionRoleName sets the ExecutionRoleName field's value.
+func (s *UpdateStackSetInput) SetExecutionRoleName(v string) *UpdateStackSetInput {
+	s.ExecutionRoleName = &v
+	return s
+}
+
 // SetOperationId sets the OperationId field's value.
 func (s *UpdateStackSetInput) SetOperationId(v string) *UpdateStackSetInput {
 	s.OperationId = &v
@@ -11388,6 +11495,12 @@ func (s *UpdateStackSetInput) SetOperationPreferences(v *StackSetOperationPrefer
 // SetParameters sets the Parameters field's value.
 func (s *UpdateStackSetInput) SetParameters(v []*Parameter) *UpdateStackSetInput {
 	s.Parameters = v
+	return s
+}
+
+// SetRegions sets the Regions field's value.
+func (s *UpdateStackSetInput) SetRegions(v []*string) *UpdateStackSetInput {
+	s.Regions = v
 	return s
 }
 

@@ -4,6 +4,7 @@ package s3
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"testing"
 
@@ -64,4 +65,25 @@ func teardown() {
 	}
 
 	svc.DeleteBucket(&s3.DeleteBucketInput{Bucket: bucketName})
+}
+
+func putTestFile(t *testing.T, filename, key string) {
+	f, err := os.Open(filename)
+	if err != nil {
+		t.Fatalf("failed to open testfile, %v", err)
+	}
+	defer f.Close()
+
+	putTestContent(t, f, key)
+}
+
+func putTestContent(t *testing.T, reader io.ReadSeeker, key string) {
+	_, err := svc.PutObject(&s3.PutObjectInput{
+		Bucket: bucketName,
+		Key:    aws.String(key),
+		Body:   reader,
+	})
+	if err != nil {
+		t.Errorf("expect no error, got %v", err)
+	}
 }

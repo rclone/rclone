@@ -2142,15 +2142,13 @@ type Policy struct {
 
 	// ProductAvailabilityPolicy: The availability granted to the device for
 	// the specified products. "all" gives the device access to all
-	// products, regardless of approval status. "allApproved" entitles the
-	// device to access all products that are approved for the enterprise.
-	// "allApproved" and "all" do not enable automatic visibility of "alpha"
-	// or "beta" tracks. "whitelist" grants the device access the products
-	// specified in productPolicy[]. Only products that are approved or
-	// products that were previously approved (products with revoked
-	// approval) by the enterprise can be whitelisted. If no value is
-	// provided, the availability set at the user level is applied by
-	// default.
+	// products, regardless of approval status. "all" does not enable
+	// automatic visibility of "alpha" or "beta" tracks. "whitelist" grants
+	// the device access the products specified in productPolicy[]. Only
+	// products that are approved or products that were previously approved
+	// (products with revoked approval) by the enterprise can be
+	// whitelisted. If no value is provided, the availability set at the
+	// user level is applied by default.
 	ProductAvailabilityPolicy string `json:"productAvailabilityPolicy,omitempty"`
 
 	// ProductPolicy: The list of product policies.

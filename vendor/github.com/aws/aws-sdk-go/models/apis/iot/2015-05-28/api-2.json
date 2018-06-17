@@ -143,6 +143,22 @@
         {"shape":"ServiceUnavailableException"}
       ]
     },
+    "CancelJobExecution":{
+      "name":"CancelJobExecution",
+      "http":{
+        "method":"PUT",
+        "requestUri":"/things/{thingName}/jobs/{jobId}/cancel"
+      },
+      "input":{"shape":"CancelJobExecutionRequest"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"InvalidStateTransitionException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"VersionConflictException"}
+      ]
+    },
     "ClearDefaultAuthorizer":{
       "name":"ClearDefaultAuthorizer",
       "http":{
@@ -435,6 +451,37 @@
         {"shape":"ServiceUnavailableException"},
         {"shape":"InternalFailureException"},
         {"shape":"ResourceNotFoundException"}
+      ]
+    },
+    "DeleteJob":{
+      "name":"DeleteJob",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/jobs/{jobId}"
+      },
+      "input":{"shape":"DeleteJobRequest"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"InvalidStateTransitionException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"ServiceUnavailableException"}
+      ]
+    },
+    "DeleteJobExecution":{
+      "name":"DeleteJobExecution",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/things/{thingName}/jobs/{jobId}/executionNumber/{executionNumber}"
+      },
+      "input":{"shape":"DeleteJobExecutionRequest"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"InvalidStateTransitionException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"ServiceUnavailableException"}
       ]
     },
     "DeleteOTAUpdate":{
@@ -2348,6 +2395,32 @@
         }
       }
     },
+    "CancelJobExecutionRequest":{
+      "type":"structure",
+      "required":[
+        "jobId",
+        "thingName"
+      ],
+      "members":{
+        "jobId":{
+          "shape":"JobId",
+          "location":"uri",
+          "locationName":"jobId"
+        },
+        "thingName":{
+          "shape":"ThingName",
+          "location":"uri",
+          "locationName":"thingName"
+        },
+        "force":{
+          "shape":"ForceFlag",
+          "location":"querystring",
+          "locationName":"force"
+        },
+        "expectedVersion":{"shape":"ExpectedVersion"},
+        "statusDetails":{"shape":"DetailsMap"}
+      }
+    },
     "CancelJobRequest":{
       "type":"structure",
       "required":["jobId"],
@@ -2357,7 +2430,12 @@
           "location":"uri",
           "locationName":"jobId"
         },
-        "comment":{"shape":"Comment"}
+        "comment":{"shape":"Comment"},
+        "force":{
+          "shape":"ForceFlag",
+          "location":"querystring",
+          "locationName":"force"
+        }
       }
     },
     "CancelJobResponse":{
@@ -2938,6 +3016,52 @@
       },
       "error":{"httpStatusCode":409},
       "exception":true
+    },
+    "DeleteJobExecutionRequest":{
+      "type":"structure",
+      "required":[
+        "jobId",
+        "thingName",
+        "executionNumber"
+      ],
+      "members":{
+        "jobId":{
+          "shape":"JobId",
+          "location":"uri",
+          "locationName":"jobId"
+        },
+        "thingName":{
+          "shape":"ThingName",
+          "location":"uri",
+          "locationName":"thingName"
+        },
+        "executionNumber":{
+          "shape":"ExecutionNumber",
+          "location":"uri",
+          "locationName":"executionNumber"
+        },
+        "force":{
+          "shape":"ForceFlag",
+          "location":"querystring",
+          "locationName":"force"
+        }
+      }
+    },
+    "DeleteJobRequest":{
+      "type":"structure",
+      "required":["jobId"],
+      "members":{
+        "jobId":{
+          "shape":"JobId",
+          "location":"uri",
+          "locationName":"jobId"
+        },
+        "force":{
+          "shape":"ForceFlag",
+          "location":"querystring",
+          "locationName":"force"
+        }
+      }
     },
     "DeleteOTAUpdateRequest":{
       "type":"structure",
@@ -3632,6 +3756,7 @@
       ]
     },
     "ExecutionNumber":{"type":"long"},
+    "ExpectedVersion":{"type":"long"},
     "ExpiresInSec":{
       "type":"long",
       "max":3600,
@@ -3668,6 +3793,8 @@
     },
     "Flag":{"type":"boolean"},
     "ForceDelete":{"type":"boolean"},
+    "ForceFlag":{"type":"boolean"},
+    "Forced":{"type":"boolean"},
     "FunctionArn":{"type":"string"},
     "GEMaxResults":{
       "type":"integer",
@@ -3934,6 +4061,14 @@
       "error":{"httpStatusCode":400},
       "exception":true
     },
+    "InvalidStateTransitionException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"errorMessage"}
+      },
+      "error":{"httpStatusCode":409},
+      "exception":true
+    },
     "IotAnalyticsAction":{
       "type":"structure",
       "members":{
@@ -3952,6 +4087,7 @@
         "jobId":{"shape":"JobId"},
         "targetSelection":{"shape":"TargetSelection"},
         "status":{"shape":"JobStatus"},
+        "forceCanceled":{"shape":"Forced"},
         "comment":{"shape":"Comment"},
         "targets":{"shape":"JobTargets"},
         "description":{"shape":"JobDescription"},
@@ -3990,12 +4126,14 @@
       "members":{
         "jobId":{"shape":"JobId"},
         "status":{"shape":"JobExecutionStatus"},
+        "forceCanceled":{"shape":"Forced"},
         "statusDetails":{"shape":"JobExecutionStatusDetails"},
         "thingArn":{"shape":"ThingArn"},
         "queuedAt":{"shape":"DateType"},
         "startedAt":{"shape":"DateType"},
         "lastUpdatedAt":{"shape":"DateType"},
-        "executionNumber":{"shape":"ExecutionNumber"}
+        "executionNumber":{"shape":"ExecutionNumber"},
+        "versionNumber":{"shape":"VersionNumber"}
       }
     },
     "JobExecutionStatus":{
@@ -4078,7 +4216,8 @@
       "enum":[
         "IN_PROGRESS",
         "CANCELED",
-        "COMPLETED"
+        "COMPLETED",
+        "DELETION_IN_PROGRESS"
       ]
     },
     "JobSummary":{
@@ -6428,6 +6567,7 @@
       "error":{"httpStatusCode":409},
       "exception":true
     },
+    "VersionNumber":{"type":"long"},
     "VersionsLimitExceededException":{
       "type":"structure",
       "members":{

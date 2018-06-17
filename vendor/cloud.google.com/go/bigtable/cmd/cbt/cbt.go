@@ -332,7 +332,8 @@ var commands = []struct {
 		Name: "lookup",
 		Desc: "Read from a single row",
 		do:   doLookup,
-		Usage: "cbt lookup <table> <row> [app-profile=<app profile id>]\n" +
+		Usage: "cbt lookup <table> <row> [cells-per-column=<n>] [app-profile=<app profile id>]\n" +
+			"  cells-per-column=<n> 			Read only this many cells per column\n" +
 			"  app-profile=<app profile id>		The app profile id to use for the request (replication alpha)\n",
 		Required: cbtconfig.ProjectAndInstanceRequired,
 	},
@@ -356,12 +357,13 @@ var commands = []struct {
 		Desc: "Read rows",
 		do:   doRead,
 		Usage: "cbt read <table> [start=<row>] [end=<row>] [prefix=<prefix>]" +
-			" [regex=<regex>] [count=<n>] [app-profile=<app profile id>]\n" +
+			" [regex=<regex>] [count=<n>] [cells-per-column=<n>] [app-profile=<app profile id>]\n" +
 			"  start=<row>		Start reading at this row\n" +
 			"  end=<row>		Stop reading before this row\n" +
 			"  prefix=<prefix>	Read rows with this prefix\n" +
 			"  regex=<regex> 	Read rows with keys matching this regex\n" +
 			"  count=<n>		Read only this many rows\n" +
+			"  cells-per-column=<n>	Read only this many cells per column\n" +
 			"  app-profile=<app profile id>		The app profile id to use for the request (replication alpha)\n",
 		Required: cbtconfig.ProjectAndInstanceRequired,
 	},
@@ -850,19 +852,34 @@ func doListClusters(ctx context.Context, args ...string) {
 
 func doLookup(ctx context.Context, args ...string) {
 	if len(args) < 2 {
-		log.Fatalf("usage: cbt lookup <table> <row> [app-profile=<app profile id>]")
+		log.Fatalf("usage: cbt lookup <table> <row> [cells-per-column=<n>] [app-profile=<app profile id>]")
 	}
-	var appProfile string
-	if len(args) > 2 {
-		i := strings.Index(args[2], "=")
+
+	parsed := make(map[string]string)
+	for _, arg := range args[2:] {
+		i := strings.Index(arg, "=")
 		if i < 0 {
-			log.Fatalf("Bad arg %q", args[2])
+			log.Fatalf("Bad arg %q", arg)
 		}
-		appProfile = strings.Split(args[2], "=")[1]
+		key, val := arg[:i], arg[i+1:]
+		switch key {
+		default:
+			log.Fatalf("Unknown arg key %q", key)
+		case "cells-per-column", "app-profile":
+			parsed[key] = val
+		}
+	}
+	var opts []bigtable.ReadOption
+	if cellsPerColumn := parsed["cells-per-column"]; cellsPerColumn != "" {
+		n, err := strconv.Atoi(cellsPerColumn)
+		if err != nil {
+			log.Fatalf("Bad number of cells per column %q: %v", cellsPerColumn, err)
+		}
+		opts = append(opts, bigtable.RowFilter(bigtable.LatestNFilter(n)))
 	}
 	table, row := args[0], args[1]
-	tbl := getClient(bigtable.ClientConfig{AppProfile: appProfile}).Open(table)
-	r, err := tbl.ReadRow(ctx, row)
+	tbl := getClient(bigtable.ClientConfig{AppProfile: parsed["app-profile"]}).Open(table)
+	r, err := tbl.ReadRow(ctx, row, opts...)
 	if err != nil {
 		log.Fatalf("Reading row: %v", err)
 	}
@@ -995,7 +1012,7 @@ func doRead(ctx context.Context, args ...string) {
 		case "limit":
 			// Be nicer; we used to support this, but renamed it to "end".
 			log.Fatalf("Unknown arg key %q; did you mean %q?", key, "end")
-		case "start", "end", "prefix", "count", "regex", "app-profile":
+		case "start", "end", "prefix", "count", "cells-per-column", "regex", "app-profile":
 			parsed[key] = val
 		}
 	}
@@ -1021,8 +1038,22 @@ func doRead(ctx context.Context, args ...string) {
 		}
 		opts = append(opts, bigtable.LimitRows(n))
 	}
+
+	var filters []bigtable.Filter
+	if cellsPerColumn := parsed["cells-per-column"]; cellsPerColumn != "" {
+		n, err := strconv.Atoi(cellsPerColumn)
+		if err != nil {
+			log.Fatalf("Bad number of cells per column %q: %v", cellsPerColumn, err)
+		}
+		filters = append(filters, bigtable.LatestNFilter(n))
+	}
 	if regex := parsed["regex"]; regex != "" {
-		opts = append(opts, bigtable.RowFilter(bigtable.RowKeyFilter(regex)))
+		filters = append(filters, bigtable.RowKeyFilter(regex))
+	}
+	if len(filters) > 1 {
+		opts = append(opts, bigtable.RowFilter(bigtable.ChainFilters(filters...)))
+	} else if len(filters) == 1 {
+		opts = append(opts, bigtable.RowFilter(filters[0]))
 	}
 
 	// TODO(dsymonds): Support filters.

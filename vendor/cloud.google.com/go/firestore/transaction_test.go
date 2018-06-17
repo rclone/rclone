@@ -92,8 +92,7 @@ func TestRunTransaction(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		tx.Update(docref, []Update{{Path: "count", Value: count.(int64) + 1}})
-		return nil
+		return tx.Update(docref, []Update{{Path: "count", Value: count.(int64) + 1}})
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -137,7 +136,7 @@ func TestRunTransaction(t *testing.T) {
 			Database: db,
 			Options: &pb.TransactionOptions{
 				Mode: &pb.TransactionOptions_ReadWrite_{
-					&pb.TransactionOptions_ReadWrite{tid},
+					&pb.TransactionOptions_ReadWrite{RetryTransaction: tid},
 				},
 			},
 		},
@@ -226,7 +225,9 @@ func TestTransactionErrors(t *testing.T) {
 	srv.addRPC(beginReq, beginRes)
 	srv.addRPC(rollbackReq, &empty.Empty{})
 	err = c.RunTransaction(ctx, func(_ context.Context, tx *Transaction) error {
-		tx.Delete(c.Doc("C/a"))
+		if err := tx.Delete(c.Doc("C/a")); err != nil {
+			return err
+		}
 		if _, err := tx.Get(c.Doc("C/a")); err != nil {
 			return err
 		}
@@ -241,7 +242,9 @@ func TestTransactionErrors(t *testing.T) {
 	srv.addRPC(beginReq, beginRes)
 	srv.addRPC(rollbackReq, &empty.Empty{})
 	err = c.RunTransaction(ctx, func(_ context.Context, tx *Transaction) error {
-		tx.Delete(c.Doc("C/a"))
+		if err := tx.Delete(c.Doc("C/a")); err != nil {
+			return err
+		}
 		it := tx.Documents(c.Collection("C").Select("x"))
 		defer it.Stop()
 		if _, err := it.Next(); err != iterator.Done {
@@ -258,8 +261,12 @@ func TestTransactionErrors(t *testing.T) {
 	srv.addRPC(beginReq, beginRes)
 	srv.addRPC(rollbackReq, &empty.Empty{})
 	err = c.RunTransaction(ctx, func(_ context.Context, tx *Transaction) error {
-		tx.Delete(c.Doc("C/a"))
-		tx.Get(c.Doc("C/a"))
+		if err := tx.Delete(c.Doc("C/a")); err != nil {
+			return err
+		}
+		if _, err := tx.Get(c.Doc("C/a")); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != errReadAfterWrite {
@@ -294,7 +301,7 @@ func TestTransactionErrors(t *testing.T) {
 			Database: db,
 			Options: &pb.TransactionOptions{
 				Mode: &pb.TransactionOptions_ReadWrite_{
-					&pb.TransactionOptions_ReadWrite{tid},
+					&pb.TransactionOptions_ReadWrite{RetryTransaction: tid},
 				},
 			},
 		},

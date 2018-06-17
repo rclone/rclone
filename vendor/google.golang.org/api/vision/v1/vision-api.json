@@ -63,11 +63,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -87,12 +82,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -118,6 +107,29 @@
   },
   "protocol": "rest",
   "resources": {
+    "files": {
+      "methods": {
+        "asyncBatchAnnotate": {
+          "description": "Run asynchronous image detection and annotation for a list of generic\nfiles, such as PDF files, which may contain multiple pages and multiple\nimages per page. Progress and results can be retrieved through the\n`google.longrunning.Operations` interface.\n`Operation.metadata` contains `OperationMetadata` (metadata).\n`Operation.response` contains `AsyncBatchAnnotateFilesResponse` (results).",
+          "flatPath": "v1/files:asyncBatchAnnotate",
+          "httpMethod": "POST",
+          "id": "vision.files.asyncBatchAnnotate",
+          "parameterOrder": [],
+          "parameters": {},
+          "path": "v1/files:asyncBatchAnnotate",
+          "request": {
+            "$ref": "AsyncBatchAnnotateFilesRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-vision"
+          ]
+        }
+      }
+    },
     "images": {
       "methods": {
         "annotate": {
@@ -303,9 +315,27 @@
       }
     }
   },
-  "revision": "20180416",
+  "revision": "20180609",
   "rootUrl": "https://vision.googleapis.com/",
   "schemas": {
+    "AnnotateFileResponse": {
+      "description": "Response to a single file annotation request. A file may contain one or more\nimages, which individually have their own responses.",
+      "id": "AnnotateFileResponse",
+      "properties": {
+        "inputConfig": {
+          "$ref": "InputConfig",
+          "description": "Information about the file for which this response is generated."
+        },
+        "responses": {
+          "description": "Individual responses to images found within the file.",
+          "items": {
+            "$ref": "AnnotateImageResponse"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "AnnotateImageRequest": {
       "description": "Request for performing Google Cloud Vision API tasks over a user-provided\nimage, with user-requested features.",
       "id": "AnnotateImageRequest",
@@ -332,6 +362,10 @@
       "description": "Response to an image annotation request.",
       "id": "AnnotateImageResponse",
       "properties": {
+        "context": {
+          "$ref": "ImageAnnotationContext",
+          "description": "If present, contextual information is needed to understand where this image\ncomes from."
+        },
         "cropHintsAnnotation": {
           "$ref": "CropHintsAnnotation",
           "description": "If present, crop hints have completed successfully."
@@ -390,6 +424,71 @@
         "webDetection": {
           "$ref": "WebDetection",
           "description": "If present, web detection has completed successfully."
+        }
+      },
+      "type": "object"
+    },
+    "AsyncAnnotateFileRequest": {
+      "description": "An offline file annotation request.",
+      "id": "AsyncAnnotateFileRequest",
+      "properties": {
+        "features": {
+          "description": "Required. Requested features.",
+          "items": {
+            "$ref": "Feature"
+          },
+          "type": "array"
+        },
+        "imageContext": {
+          "$ref": "ImageContext",
+          "description": "Additional context that may accompany the image(s) in the file."
+        },
+        "inputConfig": {
+          "$ref": "InputConfig",
+          "description": "Required. Information about the input file."
+        },
+        "outputConfig": {
+          "$ref": "OutputConfig",
+          "description": "Required. The desired output location and metadata (e.g. format)."
+        }
+      },
+      "type": "object"
+    },
+    "AsyncAnnotateFileResponse": {
+      "description": "The response for a single offline file annotation request.",
+      "id": "AsyncAnnotateFileResponse",
+      "properties": {
+        "outputConfig": {
+          "$ref": "OutputConfig",
+          "description": "The output location and metadata from AsyncAnnotateFileRequest."
+        }
+      },
+      "type": "object"
+    },
+    "AsyncBatchAnnotateFilesRequest": {
+      "description": "Multiple async file annotation requests are batched into a single service\ncall.",
+      "id": "AsyncBatchAnnotateFilesRequest",
+      "properties": {
+        "requests": {
+          "description": "Individual async file annotation requests for this batch.",
+          "items": {
+            "$ref": "AsyncAnnotateFileRequest"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "AsyncBatchAnnotateFilesResponse": {
+      "description": "Response to an async batch file annotation request.",
+      "id": "AsyncBatchAnnotateFilesResponse",
+      "properties": {
+        "responses": {
+          "description": "The list of file annotation responses, one for each request in\nAsyncBatchAnnotateFilesRequest.",
+          "items": {
+            "$ref": "AsyncAnnotateFileResponse"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -473,6 +572,13 @@
       "description": "A bounding polygon for the detected image annotation.",
       "id": "BoundingPoly",
       "properties": {
+        "normalizedVertices": {
+          "description": "The bounding polygon normalized vertices.",
+          "items": {
+            "$ref": "NormalizedVertex"
+          },
+          "type": "array"
+        },
         "vertices": {
           "description": "The bounding polygon vertices.",
           "items": {
@@ -934,6 +1040,28 @@
             "Run crop hints.",
             "Run web detection."
           ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GcsDestination": {
+      "description": "The Google Cloud Storage location where the output will be written to.",
+      "id": "GcsDestination",
+      "properties": {
+        "uri": {
+          "description": "Google Cloud Storage URI where the results will be stored. Results will\nbe in JSON format and preceded by its corresponding input URI. This field\ncan either represent a single file, or a prefix for multiple outputs.\nPrefixes must end in a `/`.\n\nExamples:\n\n*    File: gs://bucket-name/filename.json\n*    Prefix: gs://bucket-name/prefix/here/\n*    File: gs://bucket-name/prefix/here\n\nIf multiple outputs, each response is still AnnotateFileResponse, each of\nwhich contains some subset of the full list of AnnotateImageResponse.\nMultiple outputs can happen if, for example, the output JSON is too large\nand overflows into multiple sharded files.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GcsSource": {
+      "description": "The Google Cloud Storage location where the input will be read from.",
+      "id": "GcsSource",
+      "properties": {
+        "uri": {
+          "description": "Google Cloud Storage URI for the input file. This must only be a\nGoogle Cloud Storage object. Wildcards are not currently supported.",
           "type": "string"
         }
       },
@@ -1999,7 +2127,7 @@
       "id": "GoogleCloudVisionV1p2beta1WebDetection",
       "properties": {
         "bestGuessLabels": {
-          "description": "Best guess text labels for the request image.",
+          "description": "The service's best guess as to the topic of the request image.\nInferred from similar images on the open web.",
           "items": {
             "$ref": "GoogleCloudVisionV1p2beta1WebDetectionWebLabel"
           },
@@ -2155,6 +2283,139 @@
       },
       "type": "object"
     },
+    "GoogleCloudVisionV1p3beta1BatchOperationMetadata": {
+      "description": "Metadata for the batch operations such as the current state.\n\nThis is included in the `metadata` field of the `Operation` returned by the\n`GetOperation` call of the `google::longrunning::Operations` service.",
+      "id": "GoogleCloudVisionV1p3beta1BatchOperationMetadata",
+      "properties": {
+        "endTime": {
+          "description": "The time when the batch request is finished and\ngoogle.longrunning.Operation.done is set to true.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "state": {
+          "description": "The current state of the batch operation.",
+          "enum": [
+            "STATE_UNSPECIFIED",
+            "PROCESSING",
+            "SUCCESSFUL",
+            "FAILED",
+            "CANCELLED"
+          ],
+          "enumDescriptions": [
+            "Invalid.",
+            "Request is actively being processed.",
+            "The request is done and at least one item has been successfully\nprocessed.",
+            "The request is done and no item has been successfully processed.",
+            "The request is done after the longrunning.Operations.CancelOperation has\nbeen called by the user.  Any records that were processed before the\ncancel command are output as specified in the request."
+          ],
+          "type": "string"
+        },
+        "submitTime": {
+          "description": "The time when the batch request was submitted to the server.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudVisionV1p3beta1BoundingPoly": {
+      "description": "A bounding polygon for the detected image annotation.",
+      "id": "GoogleCloudVisionV1p3beta1BoundingPoly",
+      "properties": {
+        "normalizedVertices": {
+          "description": "The bounding polygon normalized vertices.",
+          "items": {
+            "$ref": "GoogleCloudVisionV1p3beta1NormalizedVertex"
+          },
+          "type": "array"
+        },
+        "vertices": {
+          "description": "The bounding polygon vertices.",
+          "items": {
+            "$ref": "GoogleCloudVisionV1p3beta1Vertex"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudVisionV1p3beta1ImportProductSetsResponse": {
+      "description": "Response message for the `ImportProductSets` method.\n\nThis message is returned by the\ngoogle.longrunning.Operations.GetOperation method in the returned\ngoogle.longrunning.Operation.response field.",
+      "id": "GoogleCloudVisionV1p3beta1ImportProductSetsResponse",
+      "properties": {
+        "referenceImages": {
+          "description": "The list of reference_images that are imported successfully.",
+          "items": {
+            "$ref": "GoogleCloudVisionV1p3beta1ReferenceImage"
+          },
+          "type": "array"
+        },
+        "statuses": {
+          "description": "The rpc status for each ImportProductSet request, including both successes\nand errors.\n\nThe number of statuses here matches the number of lines in the csv file,\nand statuses[i] stores the success or failure status of processing the i-th\nline of the csv, starting from line 0.",
+          "items": {
+            "$ref": "Status"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudVisionV1p3beta1NormalizedVertex": {
+      "description": "A vertex represents a 2D point in the image.\nNOTE: the normalized vertex coordinates are relative to the original image\nand range from 0 to 1.",
+      "id": "GoogleCloudVisionV1p3beta1NormalizedVertex",
+      "properties": {
+        "x": {
+          "description": "X coordinate.",
+          "format": "float",
+          "type": "number"
+        },
+        "y": {
+          "description": "Y coordinate.",
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudVisionV1p3beta1ReferenceImage": {
+      "description": "A `ReferenceImage` represents a product image and its associated metadata,\nsuch as bounding boxes.",
+      "id": "GoogleCloudVisionV1p3beta1ReferenceImage",
+      "properties": {
+        "boundingPolys": {
+          "description": "Bounding polygons around the areas of interest in the reference image.\nOptional. If this field is empty, the system will try to detect regions of\ninterest. At most 10 bounding polygons will be used.\n\nThe provided shape is converted into a non-rotated rectangle. Once\nconverted, the small edge of the rectangle must be greater than or equal\nto 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is ok; 1:5\nis not).",
+          "items": {
+            "$ref": "GoogleCloudVisionV1p3beta1BoundingPoly"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "The resource name of the reference image.\n\nFormat is:\n\n`projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID`.\n\nThis field is ignored when creating a reference image.",
+          "type": "string"
+        },
+        "uri": {
+          "description": "The Google Cloud Storage URI of the reference image.\n\nThe URI must start with `gs://`.\n\nRequired.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GoogleCloudVisionV1p3beta1Vertex": {
+      "description": "A vertex represents a 2D point in the image.\nNOTE: the vertex coordinates are in the same scale as the original image.",
+      "id": "GoogleCloudVisionV1p3beta1Vertex",
+      "properties": {
+        "x": {
+          "description": "X coordinate.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "y": {
+          "description": "Y coordinate.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "Image": {
       "description": "Client image to perform Google Cloud Vision API tasks over.",
       "id": "Image",
@@ -2167,6 +2428,22 @@
         "source": {
           "$ref": "ImageSource",
           "description": "Google Cloud Storage image location, or publicly-accessible image\nURL. If both `content` and `source` are provided for an image, `content`\ntakes precedence and is used to perform the image annotation request."
+        }
+      },
+      "type": "object"
+    },
+    "ImageAnnotationContext": {
+      "description": "If an image was produced from a file (e.g. a PDF), this message gives\ninformation about the source of that image.",
+      "id": "ImageAnnotationContext",
+      "properties": {
+        "pageNumber": {
+          "description": "If the file was a PDF or TIFF, this field gives the page number within\nthe file used to produce the image.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "uri": {
+          "description": "The URI of the file used to produce the image.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -2218,6 +2495,21 @@
         },
         "imageUri": {
           "description": "The URI of the source image. Can be either:\n\n1. A Google Cloud Storage URI of the form\n   `gs://bucket_name/object_name`. Object versioning is not supported. See\n   [Google Cloud Storage Request\n   URIs](https://cloud.google.com/storage/docs/reference-uris) for more\n   info.\n\n2. A publicly-accessible image HTTP/HTTPS URL. When fetching images from\n   HTTP/HTTPS URLs, Google cannot guarantee that the request will be\n   completed. Your request may fail if the specified host denies the\n   request (e.g. due to request throttling or DOS prevention), or if Google\n   throttles requests to the site for abuse prevention. You should not\n   depend on externally-hosted images for production applications.\n\nWhen both `gcs_image_uri` and `image_uri` are specified, `image_uri` takes\nprecedence.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "InputConfig": {
+      "description": "The desired input location and metadata.",
+      "id": "InputConfig",
+      "properties": {
+        "gcsSource": {
+          "$ref": "GcsSource",
+          "description": "The Google Cloud Storage location to read the input from."
+        },
+        "mimeType": {
+          "description": "The type of the file. Currently only \"application/pdf\" and \"image/tiff\"\nare supported. Wildcards are not supported.",
           "type": "string"
         }
       },
@@ -2373,6 +2665,23 @@
       },
       "type": "object"
     },
+    "NormalizedVertex": {
+      "description": "A vertex represents a 2D point in the image.\nNOTE: the normalized vertex coordinates are relative to the original image\nand range from 0 to 1.",
+      "id": "NormalizedVertex",
+      "properties": {
+        "x": {
+          "description": "X coordinate.",
+          "format": "float",
+          "type": "number"
+        },
+        "y": {
+          "description": "Y coordinate.",
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
     "Operation": {
       "description": "This resource represents a long-running operation that is the result of a\nnetwork API call.",
       "id": "Operation",
@@ -2404,6 +2713,57 @@
           },
           "description": "The normal response of the operation in case of success.  If the original\nmethod returns no data on success, such as `Delete`, the response is\n`google.protobuf.Empty`.  If the original method is standard\n`Get`/`Create`/`Update`, the response should be the resource.  For other\nmethods, the response should have the type `XxxResponse`, where `Xxx`\nis the original method name.  For example, if the original method name\nis `TakeSnapshot()`, the inferred response type is\n`TakeSnapshotResponse`.",
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "OperationMetadata": {
+      "description": "Contains metadata for the BatchAnnotateImages operation.",
+      "id": "OperationMetadata",
+      "properties": {
+        "createTime": {
+          "description": "The time when the batch request was received.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "state": {
+          "description": "Current state of the batch operation.",
+          "enum": [
+            "STATE_UNSPECIFIED",
+            "CREATED",
+            "RUNNING",
+            "DONE",
+            "CANCELLED"
+          ],
+          "enumDescriptions": [
+            "Invalid.",
+            "Request is received.",
+            "Request is actively being processed.",
+            "The batch processing is done.",
+            "The batch processing was cancelled."
+          ],
+          "type": "string"
+        },
+        "updateTime": {
+          "description": "The time when the operation result was last updated.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "OutputConfig": {
+      "description": "The desired output location and metadata.",
+      "id": "OutputConfig",
+      "properties": {
+        "batchSize": {
+          "description": "The max number of response protos to put into each output JSON file on\nGoogle Cloud Storage.\nThe valid range is [1, 100]. If not specified, the default value is 20.\n\nFor example, for one pdf file with 100 pages, 100 response protos will\nbe generated. If `batch_size` = 20, then 5 json files each\ncontaining 20 response protos will be written under the prefix\n`gcs_destination`.`uri`.\n\nCurrently, batch_size only applies to GcsDestination, with potential future\nsupport for other output configurations.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "gcsDestination": {
+          "$ref": "GcsDestination",
+          "description": "The Google Cloud Storage location to write the output(s) to."
         }
       },
       "type": "object"
@@ -2726,7 +3086,7 @@
       "id": "WebDetection",
       "properties": {
         "bestGuessLabels": {
-          "description": "Best guess text labels for the request image.",
+          "description": "The service's best guess as to the topic of the request image.\nInferred from similar images on the open web.",
           "items": {
             "$ref": "WebLabel"
           },

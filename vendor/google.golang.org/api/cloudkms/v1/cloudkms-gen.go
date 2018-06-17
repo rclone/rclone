@@ -393,6 +393,7 @@ type CryptoKey struct {
 	// The CryptoKey's primary version can be updated
 	// via
 	// UpdateCryptoKeyPrimaryVersion.
+	//
 	Primary *CryptoKeyVersion `json:"primary,omitempty"`
 
 	// Purpose: The immutable purpose of this CryptoKey. Currently, the only
@@ -4676,7 +4677,7 @@ type ProjectsLocationsKeyRingsCryptoKeysCryptoKeyVersionsRestoreCall struct {
 
 // Restore: Restore a CryptoKeyVersion in
 // the
-// DESTROY_SCHEDULED,
+// DESTROY_SCHEDULED
 // state.
 //
 // Upon restoration of the CryptoKeyVersion, state
@@ -4775,7 +4776,7 @@ func (c *ProjectsLocationsKeyRingsCryptoKeysCryptoKeyVersionsRestoreCall) Do(opt
 	}
 	return ret, nil
 	// {
-	//   "description": "Restore a CryptoKeyVersion in the\nDESTROY_SCHEDULED,\nstate.\n\nUpon restoration of the CryptoKeyVersion, state\nwill be set to DISABLED,\nand destroy_time will be cleared.",
+	//   "description": "Restore a CryptoKeyVersion in the\nDESTROY_SCHEDULED\nstate.\n\nUpon restoration of the CryptoKeyVersion, state\nwill be set to DISABLED,\nand destroy_time will be cleared.",
 	//   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/keyRings/{keyRingsId}/cryptoKeys/{cryptoKeysId}/cryptoKeyVersions/{cryptoKeyVersionsId}:restore",
 	//   "httpMethod": "POST",
 	//   "id": "cloudkms.projects.locations.keyRings.cryptoKeys.cryptoKeyVersions.restore",

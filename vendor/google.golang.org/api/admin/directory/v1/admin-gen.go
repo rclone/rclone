@@ -5172,7 +5172,7 @@ func (c *ChromeosdevicesListCall) Projection(projection string) *Chromeosdevices
 
 // Query sets the optional parameter "query": Search string in the
 // format given at
-// http://support.google.com/chromeos/a/bin/answer.py?hl=en&answer=1698333
+// http://support.google.com/chromeos/a/bin/answer.py?answer=1698333
 func (c *ChromeosdevicesListCall) Query(query string) *ChromeosdevicesListCall {
 	c.urlParams_.Set("query", query)
 	return c
@@ -5351,7 +5351,7 @@ func (c *ChromeosdevicesListCall) Do(opts ...googleapi.CallOption) (*ChromeOsDev
 	//       "type": "string"
 	//     },
 	//     "query": {
-	//       "description": "Search string in the format given at http://support.google.com/chromeos/a/bin/answer.py?hl=en\u0026answer=1698333",
+	//       "description": "Search string in the format given at http://support.google.com/chromeos/a/bin/answer.py?answer=1698333",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -7725,7 +7725,7 @@ func (c *GroupsListCall) PageToken(pageToken string) *GroupsListCall {
 
 // Query sets the optional parameter "query": Query string search.
 // Should be of the form "". Complete documentation is at
-// https://developers.google.com/admin-sdk/directory/v1/guides/search-users
+// https://developers.google.com/admin-sdk/directory/v1/guides/search-groups
 func (c *GroupsListCall) Query(query string) *GroupsListCall {
 	c.urlParams_.Set("query", query)
 	return c
@@ -7880,7 +7880,7 @@ func (c *GroupsListCall) Do(opts ...googleapi.CallOption) (*Groups, error) {
 	//       "type": "string"
 	//     },
 	//     "query": {
-	//       "description": "Query string search. Should be of the form \"\". Complete documentation is at https://developers.google.com/admin-sdk/directory/v1/guides/search-users",
+	//       "description": "Query string search. Should be of the form \"\". Complete documentation is at https://developers.google.com/admin-sdk/directory/v1/guides/search-groups",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -10079,7 +10079,7 @@ func (c *MobiledevicesListCall) Projection(projection string) *MobiledevicesList
 
 // Query sets the optional parameter "query": Search string in the
 // format given at
-// http://support.google.com/a/bin/answer.py?hl=en&answer=1408863#search
+// http://support.google.com/a/bin/answer.py?answer=1408863#search
 func (c *MobiledevicesListCall) Query(query string) *MobiledevicesListCall {
 	c.urlParams_.Set("query", query)
 	return c
@@ -10255,7 +10255,7 @@ func (c *MobiledevicesListCall) Do(opts ...googleapi.CallOption) (*MobileDevices
 	//       "type": "string"
 	//     },
 	//     "query": {
-	//       "description": "Search string in the format given at http://support.google.com/a/bin/answer.py?hl=en\u0026answer=1408863#search",
+	//       "description": "Search string in the format given at http://support.google.com/a/bin/answer.py?answer=1408863#search",
 	//       "location": "query",
 	//       "type": "string"
 	//     },

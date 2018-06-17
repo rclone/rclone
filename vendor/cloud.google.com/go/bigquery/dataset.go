@@ -147,12 +147,21 @@ func accessListToBQ(a []*AccessEntry) ([]*bq.DatasetAccess, error) {
 	return q, nil
 }
 
-// Delete deletes the dataset.
+// Delete deletes the dataset.  Delete will fail if the dataset is not empty.
 func (d *Dataset) Delete(ctx context.Context) (err error) {
+	return d.deleteInternal(ctx, false)
+}
+
+// DeleteWithContents deletes the dataset, as well as contained resources.
+func (d *Dataset) DeleteWithContents(ctx context.Context) (err error) {
+	return d.deleteInternal(ctx, true)
+}
+
+func (d *Dataset) deleteInternal(ctx context.Context, deleteContents bool) (err error) {
 	ctx = trace.StartSpan(ctx, "cloud.google.com/go/bigquery.Dataset.Delete")
 	defer func() { trace.EndSpan(ctx, err) }()
 
-	call := d.c.bqs.Datasets.Delete(d.ProjectID, d.DatasetID).Context(ctx)
+	call := d.c.bqs.Datasets.Delete(d.ProjectID, d.DatasetID).Context(ctx).DeleteContents(deleteContents)
 	setClientHeader(call.Header())
 	return call.Do()
 }
@@ -336,6 +345,9 @@ func (it *TableIterator) fetch(pageSize int, pageToken string) (string, error) {
 }
 
 func bqToTable(tr *bq.TableReference, c *Client) *Table {
+	if tr == nil {
+		return nil
+	}
 	return &Table{
 		ProjectID: tr.ProjectId,
 		DatasetID: tr.DatasetId,

@@ -240,6 +240,12 @@ func handlePacket(s *Server, p interface{}) error {
 			}},
 		})
 	case *sshFxpOpendirPacket:
+		if stat, err := os.Stat(p.Path); err != nil {
+			return s.sendError(p, err)
+		} else if !stat.IsDir() {
+			return s.sendError(p, &os.PathError{
+				Path: p.Path, Err: syscall.ENOTDIR})
+		}
 		return sshFxpOpenPacket{
 			ID:     p.ID,
 			Path:   p.Path,

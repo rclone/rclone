@@ -17,8 +17,26 @@ Package cloud is the root of the packages used to access Google Cloud
 Services. See https://godoc.org/cloud.google.com/go for a full list
 of sub-packages.
 
-Examples in this package show ways to authorize and authenticate the
-sub packages.
+
+Authentication and Authorization
+
+All the clients in sub-packages support authentication via Google Application Default
+Credentials (see https://cloud.google.com/docs/authentication/production), or
+by providing a JSON key file for a Service Account. See the authentication examples
+in this package for details.
+
+
+Timeouts and Cancellation
+
+By default, all requests in sub-packages will run indefinitely, retrying on transient
+errors when correctness allows. To set timeouts or arrange for cancellation, use
+contexts. See the examples for details.
+
+Do not attempt to control the initial connection (dialing) of a service by setting a
+timeout on the context passed to NewClient. Dialing is non-blocking, so timeouts
+would be ineffective and would only interfere with credential refreshing, which uses
+the same context.
+
 
 Connection Pooling
 
@@ -36,5 +54,18 @@ of cloud client libraries may specify option.WithGRPCConnectionPool(n) as a clie
 option to NewClient calls. This configures the underlying gRPC connections to be
 pooled and addressed in a round robin fashion.
 
+
+Using the Libraries with Docker
+
+Minimal docker images like Alpine lack CA certificates. This causes RPCs to appear to
+hang, because gRPC retries indefinitely. See https://github.com/GoogleCloudPlatform/google-cloud-go/issues/928
+for more information.
+
+Debugging
+
+To see gRPC logs, set the environment variable GRPC_GO_LOG_SEVERITY_LEVEL. See
+https://godoc.org/google.golang.org/grpc/grpclog for more information.
+
+For HTTP logging, set the GODEBUG environment variable to "http2debug=1" or "http2debug=2".
 */
 package cloud // import "cloud.google.com/go"

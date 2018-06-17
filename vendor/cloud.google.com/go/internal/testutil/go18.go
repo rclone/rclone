@@ -35,7 +35,7 @@ func NewTestExporter() *TestExporter {
 
 	view.RegisterExporter(te)
 	view.SetReportingPeriod(time.Millisecond)
-	if err := view.Register(ocgrpc.ClientRequestCountView); err != nil {
+	if err := view.Register(ocgrpc.DefaultClientViews...); err != nil {
 		log.Fatal(err)
 	}
 

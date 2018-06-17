@@ -63,11 +63,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -87,12 +82,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -149,7 +138,7 @@
           ]
         },
         "getEffectiveOrgPolicy": {
-          "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.",
+          "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.\nSubtrees of Resource Manager resource hierarchy with 'under:' prefix will\nnot be expanded.",
           "flatPath": "v1/folders/{foldersId}:getEffectiveOrgPolicy",
           "httpMethod": "POST",
           "id": "cloudresourcemanager.folders.getEffectiveOrgPolicy",
@@ -341,6 +330,32 @@
             "https://www.googleapis.com/auth/cloud-platform.read-only"
           ]
         },
+        "get": {
+          "description": "Retrieve a Lien by `name`.\n\nCallers of this method will require permission on the `parent` resource.\nFor example, a Lien with a `parent` of `projects/1234` requires permission\nrequires permission `resourcemanager.projects.get` or\n`resourcemanager.projects.updateLiens`.",
+          "flatPath": "v1/liens/{liensId}",
+          "httpMethod": "GET",
+          "id": "cloudresourcemanager.liens.get",
+          "parameterOrder": [
+            "name"
+          ],
+          "parameters": {
+            "name": {
+              "description": "The name/identifier of the Lien.",
+              "location": "path",
+              "pattern": "^liens/.+$",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "v1/{+name}",
+          "response": {
+            "$ref": "Lien"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-platform.read-only"
+          ]
+        },
         "list": {
           "description": "List all Liens applied to the `parent` resource.\n\nCallers of this method will require permission on the `parent` resource.\nFor example, a Lien with a `parent` of `projects/1234` requires permission\n`resourcemanager.projects.get`.",
           "flatPath": "v1/liens",
@@ -463,7 +478,7 @@
           ]
         },
         "getEffectiveOrgPolicy": {
-          "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.",
+          "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.\nSubtrees of Resource Manager resource hierarchy with 'under:' prefix will\nnot be expanded.",
           "flatPath": "v1/organizations/{organizationsId}:getEffectiveOrgPolicy",
           "httpMethod": "POST",
           "id": "cloudresourcemanager.organizations.getEffectiveOrgPolicy",
@@ -744,7 +759,7 @@
           ]
         },
         "create": {
-          "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject. The parent is identified by a specified ResourceId,\nwhich must include both an ID and a type, such as organization.",
+          "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject. The parent is identified by a specified ResourceId,\nwhich must include both an ID and a type, such as organization.\n\nThis method does not associate the new project with a billing account.\nYou can set or update the billing account associated with a project using\nthe [`projects.updateBillingInfo`]\n(/billing/reference/rest/v1/projects/updateBillingInfo) method.",
           "flatPath": "v1/projects",
           "httpMethod": "POST",
           "id": "cloudresourcemanager.projects.create",
@@ -839,7 +854,7 @@
           ]
         },
         "getEffectiveOrgPolicy": {
-          "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.",
+          "description": "Gets the effective `Policy` on a resource. This is the result of merging\n`Policies` in the resource hierarchy. The returned `Policy` will not have\nan `etag`set because it is a computed `Policy` across multiple resources.\nSubtrees of Resource Manager resource hierarchy with 'under:' prefix will\nnot be expanded.",
           "flatPath": "v1/projects/{projectsId}:getEffectiveOrgPolicy",
           "httpMethod": "POST",
           "id": "cloudresourcemanager.projects.getEffectiveOrgPolicy",
@@ -1155,7 +1170,7 @@
       }
     }
   },
-  "revision": "20180418",
+  "revision": "20180611",
   "rootUrl": "https://cloudresourcemanager.googleapis.com/",
   "schemas": {
     "Ancestor": {
@@ -1458,7 +1473,7 @@
           "type": "string"
         },
         "reason": {
-          "description": "Concise user-visible strings indicating why an action cannot be performed\non a resource. Maximum lenth of 200 characters.\n\nExample: 'Holds production API key'",
+          "description": "Concise user-visible strings indicating why an action cannot be performed\non a resource. Maximum length of 200 characters.\n\nExample: 'Holds production API key'",
           "type": "string"
         },
         "restrictions": {
@@ -1512,6 +1527,10 @@
         "suggestedValue": {
           "description": "Optional. The Google Cloud Console will try to default to a configuration\nthat matches the value specified in this `Constraint`.",
           "type": "string"
+        },
+        "supportsUnder": {
+          "description": "Indicates whether subtrees of Cloud Resource Manager resource hierarchy\ncan be used in `Policy.allowed_values` and `Policy.denied_values`. For\nexample, `\"under:folders/123\"` would match any resource under the\n'folders/123' folder.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -1569,7 +1588,7 @@
       "type": "object"
     },
     "ListPolicy": {
-      "description": "Used in `policy_type` to specify how `list_policy` behaves at this\nresource.\n\nA `ListPolicy` can define specific values that are allowed or denied by\nsetting either the `allowed_values` or `denied_values` fields. It can also\nbe used to allow or deny all values, by setting the `all_values` field. If\n`all_values` is `ALL_VALUES_UNSPECIFIED`, exactly one of `allowed_values`\nor `denied_values` must be set (attempting to set both or neither will\nresult in a failed request). If `all_values` is set to either `ALLOW` or\n`DENY`, `allowed_values` and `denied_values` must be unset.",
+      "description": "Used in `policy_type` to specify how `list_policy` behaves at this\nresource.\n\n`ListPolicy` can define specific values and subtrees of Cloud Resource\nManager resource hierarchy (`Organizations`, `Folders`, `Projects`) that\nare allowed or denied by setting the `allowed_values` and `denied_values`\nfields. This is achieved by using the `under:` and optional `is:` prefixes.\nThe `under:` prefix is used to denote resource subtree values.\nThe `is:` prefix is used to denote specific values, and is required only\nif the value contains a \":\". Values prefixed with \"is:\" are treated the\nsame as values with no prefix.\nAncestry subtrees must be in one of the following formats:\n    - “projects/\u003cproject-id\u003e”, e.g. “projects/tokyo-rain-123”\n    - “folders/\u003cfolder-id\u003e”, e.g. “folders/1234”\n    - “organizations/\u003corganization-id\u003e”, e.g. “organizations/1234”\nThe `supports_under` field of the associated `Constraint`  defines whether\nancestry prefixes can be used. You can set `allowed_values` and\n`denied_values` in the same `Policy` if `all_values` is\n`ALL_VALUES_UNSPECIFIED`. `ALLOW` or `DENY` are used to allow or deny all\nvalues. If `all_values` is set to either `ALLOW` or `DENY`,\n`allowed_values` and `denied_values` must be unset.",
       "id": "ListPolicy",
       "properties": {
         "allValues": {
@@ -1580,28 +1599,28 @@
             "DENY"
           ],
           "enumDescriptions": [
-            "Indicates that either allowed_values or denied_values must be set.",
+            "Indicates that allowed_values or denied_values must be set.",
             "A policy with this set allows all values.",
             "A policy with this set denies all values."
           ],
           "type": "string"
         },
         "allowedValues": {
-          "description": "List of values allowed  at this resource. Can only be set if no values\nare set for `denied_values` and `all_values` is set to\n`ALL_VALUES_UNSPECIFIED`.",
+          "description": "List of values allowed  at this resource. Can only be set if `all_values`\nis set to `ALL_VALUES_UNSPECIFIED`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "deniedValues": {
-          "description": "List of values denied at this resource. Can only be set if no values are\nset for `allowed_values` and `all_values` is set to\n`ALL_VALUES_UNSPECIFIED`.",
+          "description": "List of values denied at this resource. Can only be set if `all_values`\nis set to `ALL_VALUES_UNSPECIFIED`.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "inheritFromParent": {
-          "description": "Determines the inheritance behavior for this `Policy`.\n\nBy default, a `ListPolicy` set at a resource supercedes any `Policy` set\nanywhere up the resource hierarchy. However, if `inherit_from_parent` is\nset to `true`, then the values from the effective `Policy` of the parent\nresource are inherited, meaning the values set in this `Policy` are\nadded to the values inherited up the hierarchy.\n\nSetting `Policy` hierarchies that inherit both allowed values and denied\nvalues isn't recommended in most circumstances to keep the configuration\nsimple and understandable. However, it is possible to set a `Policy` with\n`allowed_values` set that inherits a `Policy` with `denied_values` set.\nIn this case, the values that are allowed must be in `allowed_values` and\nnot present in `denied_values`.\n\nFor example, suppose you have a `Constraint`\n`constraints/serviceuser.services`, which has a `constraint_type` of\n`list_constraint`, and with `constraint_default` set to `ALLOW`.\nSuppose that at the Organization level, a `Policy` is applied that\nrestricts the allowed API activations to {`E1`, `E2`}. Then, if a\n`Policy` is applied to a project below the Organization that has\n`inherit_from_parent` set to `false` and field all_values set to DENY,\nthen an attempt to activate any API will be denied.\n\nThe following examples demonstrate different possible layerings:\n\nExample 1 (no inherited values):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values:”E2”}\n  ``projects/bar`` has `inherit_from_parent` `false` and values:\n    {allowed_values: \"E3\" allowed_values: \"E4\"}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe accepted values at `projects/bar` are `E3`, and `E4`.\n\nExample 2 (inherited values):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values:”E2”}\n  `projects/bar` has a `Policy` with values:\n    {value: “E3” value: ”E4” inherit_from_parent: true}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe accepted values at `projects/bar` are `E1`, `E2`, `E3`, and `E4`.\n\nExample 3 (inheriting both allowed and denied values):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: \"E1\" allowed_values: \"E2\"}\n  `projects/bar` has a `Policy` with:\n    {denied_values: \"E1\"}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe value accepted at `projects/bar` is `E2`.\n\nExample 4 (RestoreDefault):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values:”E2”}\n  `projects/bar` has a `Policy` with values:\n    {RestoreDefault: {}}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe accepted values at `projects/bar` are either all or none depending on\nthe value of `constraint_default` (if `ALLOW`, all; if\n`DENY`, none).\n\nExample 5 (no policy inherits parent policy):\n  `organizations/foo` has no `Policy` set.\n  `projects/bar` has no `Policy` set.\nThe accepted values at both levels are either all or none depending on\nthe value of `constraint_default` (if `ALLOW`, all; if\n`DENY`, none).\n\nExample 6 (ListConstraint allowing all):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values: ”E2”}\n  `projects/bar` has a `Policy` with:\n    {all: ALLOW}\nThe accepted values at `organizations/foo` are `E1`, E2`.\nAny value is accepted at `projects/bar`.\n\nExample 7 (ListConstraint allowing none):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values: ”E2”}\n  `projects/bar` has a `Policy` with:\n    {all: DENY}\nThe accepted values at `organizations/foo` are `E1`, E2`.\nNo value is accepted at `projects/bar`.",
+          "description": "Determines the inheritance behavior for this `Policy`.\n\nBy default, a `ListPolicy` set at a resource supercedes any `Policy` set\nanywhere up the resource hierarchy. However, if `inherit_from_parent` is\nset to `true`, then the values from the effective `Policy` of the parent\nresource are inherited, meaning the values set in this `Policy` are\nadded to the values inherited up the hierarchy.\n\nSetting `Policy` hierarchies that inherit both allowed values and denied\nvalues isn't recommended in most circumstances to keep the configuration\nsimple and understandable. However, it is possible to set a `Policy` with\n`allowed_values` set that inherits a `Policy` with `denied_values` set.\nIn this case, the values that are allowed must be in `allowed_values` and\nnot present in `denied_values`.\n\nFor example, suppose you have a `Constraint`\n`constraints/serviceuser.services`, which has a `constraint_type` of\n`list_constraint`, and with `constraint_default` set to `ALLOW`.\nSuppose that at the Organization level, a `Policy` is applied that\nrestricts the allowed API activations to {`E1`, `E2`}. Then, if a\n`Policy` is applied to a project below the Organization that has\n`inherit_from_parent` set to `false` and field all_values set to DENY,\nthen an attempt to activate any API will be denied.\n\nThe following examples demonstrate different possible layerings for\n`projects/bar` parented by `organizations/foo`:\n\nExample 1 (no inherited values):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values:”E2”}\n  `projects/bar` has `inherit_from_parent` `false` and values:\n    {allowed_values: \"E3\" allowed_values: \"E4\"}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe accepted values at `projects/bar` are `E3`, and `E4`.\n\nExample 2 (inherited values):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values:”E2”}\n  `projects/bar` has a `Policy` with values:\n    {value: “E3” value: ”E4” inherit_from_parent: true}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe accepted values at `projects/bar` are `E1`, `E2`, `E3`, and `E4`.\n\nExample 3 (inheriting both allowed and denied values):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: \"E1\" allowed_values: \"E2\"}\n  `projects/bar` has a `Policy` with:\n    {denied_values: \"E1\"}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe value accepted at `projects/bar` is `E2`.\n\nExample 4 (RestoreDefault):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values:”E2”}\n  `projects/bar` has a `Policy` with values:\n    {RestoreDefault: {}}\nThe accepted values at `organizations/foo` are `E1`, `E2`.\nThe accepted values at `projects/bar` are either all or none depending on\nthe value of `constraint_default` (if `ALLOW`, all; if\n`DENY`, none).\n\nExample 5 (no policy inherits parent policy):\n  `organizations/foo` has no `Policy` set.\n  `projects/bar` has no `Policy` set.\nThe accepted values at both levels are either all or none depending on\nthe value of `constraint_default` (if `ALLOW`, all; if\n`DENY`, none).\n\nExample 6 (ListConstraint allowing all):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values: ”E2”}\n  `projects/bar` has a `Policy` with:\n    {all: ALLOW}\nThe accepted values at `organizations/foo` are `E1`, E2`.\nAny value is accepted at `projects/bar`.\n\nExample 7 (ListConstraint allowing none):\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: “E1” allowed_values: ”E2”}\n  `projects/bar` has a `Policy` with:\n    {all: DENY}\nThe accepted values at `organizations/foo` are `E1`, E2`.\nNo value is accepted at `projects/bar`.\n\nExample 10 (allowed and denied subtrees of Resource Manager hierarchy):\nGiven the following resource hierarchy\n  O1-\u003e{F1, F2}; F1-\u003e{P1}; F2-\u003e{P2, P3},\n  `organizations/foo` has a `Policy` with values:\n    {allowed_values: \"under:organizations/O1\"}\n  `projects/bar` has a `Policy` with:\n    {allowed_values: \"under:projects/P3\"}\n    {denied_values: \"under:folders/F2\"}\nThe accepted values at `organizations/foo` are `organizations/O1`,\n  `folders/F1`, `folders/F2`, `projects/P1`, `projects/P2`,\n  `projects/P3`.\nThe accepted values at `projects/bar` are `organizations/O1`,\n  `folders/F1`, `projects/P1`.",
           "type": "boolean"
         },
         "suggestedValue": {

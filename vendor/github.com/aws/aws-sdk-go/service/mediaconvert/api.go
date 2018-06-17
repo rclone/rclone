@@ -3,6 +3,7 @@
 package mediaconvert
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -1786,7 +1787,12 @@ func (c *MediaConvert) UpdateQueueWithContext(ctx aws.Context, input *UpdateQueu
 }
 
 // Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to
-// the value AAC.
+// the value AAC. The service accepts one of two mutually exclusive groups of
+// AAC settings--VBR and CBR. To select one of these modes, set the value of
+// Bitrate control mode (rateControlMode) to "VBR" or "CBR". In VBR mode, you
+// control the audio quality with the setting VBR quality (vbrQuality). In CBR
+// mode, you use the setting Bitrate (bitrate). Defaults and valid values depend
+// on the rate control mode.
 type AacSettings struct {
 	_ struct{} `type:"structure"`
 
@@ -1801,9 +1807,9 @@ type AacSettings struct {
 	// and FollowInputAudioType.
 	AudioDescriptionBroadcasterMix *string `locationName:"audioDescriptionBroadcasterMix" type:"string" enum:"AacAudioDescriptionBroadcasterMix"`
 
-	// Average bitrate in bits/second. Valid values depend on rate control mode
-	// and profile.
-	Bitrate *int64 `locationName:"bitrate" type:"integer"`
+	// Average bitrate in bits/second. Defaults and valid values depend on rate
+	// control mode and profile.
+	Bitrate *int64 `locationName:"bitrate" min:"6000" type:"integer"`
 
 	// AAC Profile.
 	CodecProfile *string `locationName:"codecProfile" type:"string" enum:"AacCodecProfile"`
@@ -1813,7 +1819,9 @@ type AacSettings struct {
 	// Mix)" setting receives a stereo description plus control track and emits
 	// a mono AAC encode of the description track, with control data emitted in
 	// the PES header as per ETSI TS 101 154 Annex E.
-	CodingMode *string `locationName:"codingMode" type:"string" enum:"AacCodingMode"`
+	//
+	// CodingMode is a required field
+	CodingMode *string `locationName:"codingMode" type:"string" required:"true" enum:"AacCodingMode"`
 
 	// Rate Control Mode.
 	RateControlMode *string `locationName:"rateControlMode" type:"string" enum:"AacRateControlMode"`
@@ -1823,7 +1831,9 @@ type AacSettings struct {
 	RawFormat *string `locationName:"rawFormat" type:"string" enum:"AacRawFormat"`
 
 	// Sample rate in Hz. Valid values depend on rate control mode and profile.
-	SampleRate *int64 `locationName:"sampleRate" type:"integer"`
+	//
+	// SampleRate is a required field
+	SampleRate *int64 `locationName:"sampleRate" min:"8000" type:"integer" required:"true"`
 
 	// Use MPEG-2 AAC instead of MPEG-4 AAC audio for raw or MPEG-2 Transport Stream
 	// containers.
@@ -1841,6 +1851,28 @@ func (s AacSettings) String() string {
 // GoString returns the string representation
 func (s AacSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AacSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AacSettings"}
+	if s.Bitrate != nil && *s.Bitrate < 6000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 6000))
+	}
+	if s.CodingMode == nil {
+		invalidParams.Add(request.NewErrParamRequired("CodingMode"))
+	}
+	if s.SampleRate == nil {
+		invalidParams.Add(request.NewErrParamRequired("SampleRate"))
+	}
+	if s.SampleRate != nil && *s.SampleRate < 8000 {
+		invalidParams.Add(request.NewErrParamMinValue("SampleRate", 8000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioDescriptionBroadcasterMix sets the AudioDescriptionBroadcasterMix field's value.
@@ -1903,7 +1935,7 @@ type Ac3Settings struct {
 	_ struct{} `type:"structure"`
 
 	// Average bitrate in bits/second. Valid bitrates depend on the coding mode.
-	Bitrate *int64 `locationName:"bitrate" type:"integer"`
+	Bitrate *int64 `locationName:"bitrate" min:"64000" type:"integer"`
 
 	// Specifies the "Bitstream Mode" (bsmod) for the emitted AC-3 stream. See ATSC
 	// A/52-2012 for background on these values.
@@ -1914,7 +1946,7 @@ type Ac3Settings struct {
 
 	// Sets the dialnorm for the output. If blank and input audio is Dolby Digital,
 	// dialnorm will be passed through.
-	Dialnorm *int64 `locationName:"dialnorm" type:"integer"`
+	Dialnorm *int64 `locationName:"dialnorm" min:"1" type:"integer"`
 
 	// If set to FILM_STANDARD, adds dynamic range compression signaling to the
 	// output bitstream as defined in the Dolby Digital specification.
@@ -1930,7 +1962,7 @@ type Ac3Settings struct {
 	MetadataControl *string `locationName:"metadataControl" type:"string" enum:"Ac3MetadataControl"`
 
 	// Sample rate in hz. Sample rate is always 48000.
-	SampleRate *int64 `locationName:"sampleRate" type:"integer"`
+	SampleRate *int64 `locationName:"sampleRate" min:"48000" type:"integer"`
 }
 
 // String returns the string representation
@@ -1941,6 +1973,25 @@ func (s Ac3Settings) String() string {
 // GoString returns the string representation
 func (s Ac3Settings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Ac3Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Ac3Settings"}
+	if s.Bitrate != nil && *s.Bitrate < 64000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 64000))
+	}
+	if s.Dialnorm != nil && *s.Dialnorm < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Dialnorm", 1))
+	}
+	if s.SampleRate != nil && *s.SampleRate < 48000 {
+		invalidParams.Add(request.NewErrParamMinValue("SampleRate", 48000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetBitrate sets the Bitrate field's value.
@@ -1998,15 +2049,15 @@ type AiffSettings struct {
 
 	// Specify Bit depth (BitDepth), in bits per sample, to choose the encoding
 	// quality for this audio track.
-	BitDepth *int64 `locationName:"bitDepth" type:"integer"`
+	BitDepth *int64 `locationName:"bitDepth" min:"16" type:"integer"`
 
 	// Set Channels to specify the number of channels in this output audio track.
 	// Choosing Mono in the console will give you 1 output channel; choosing Stereo
 	// will give you 2. In the API, valid values are 1 and 2.
-	Channels *int64 `locationName:"channels" type:"integer"`
+	Channels *int64 `locationName:"channels" min:"1" type:"integer"`
 
 	// Sample rate in hz.
-	SampleRate *int64 `locationName:"sampleRate" type:"integer"`
+	SampleRate *int64 `locationName:"sampleRate" min:"8000" type:"integer"`
 }
 
 // String returns the string representation
@@ -2017,6 +2068,25 @@ func (s AiffSettings) String() string {
 // GoString returns the string representation
 func (s AiffSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AiffSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AiffSettings"}
+	if s.BitDepth != nil && *s.BitDepth < 16 {
+		invalidParams.Add(request.NewErrParamMinValue("BitDepth", 16))
+	}
+	if s.Channels != nil && *s.Channels < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Channels", 1))
+	}
+	if s.SampleRate != nil && *s.SampleRate < 8000 {
+		invalidParams.Add(request.NewErrParamMinValue("SampleRate", 8000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetBitDepth sets the BitDepth field's value.
@@ -2043,7 +2113,7 @@ type AncillarySourceSettings struct {
 
 	// Specifies the 608 channel number in the ancillary data track from which to
 	// extract captions. Unused for passthrough.
-	SourceAncillaryChannelNumber *int64 `locationName:"sourceAncillaryChannelNumber" type:"integer"`
+	SourceAncillaryChannelNumber *int64 `locationName:"sourceAncillaryChannelNumber" min:"1" type:"integer"`
 }
 
 // String returns the string representation
@@ -2054,6 +2124,19 @@ func (s AncillarySourceSettings) String() string {
 // GoString returns the string representation
 func (s AncillarySourceSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AncillarySourceSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AncillarySourceSettings"}
+	if s.SourceAncillaryChannelNumber != nil && *s.SourceAncillaryChannelNumber < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("SourceAncillaryChannelNumber", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetSourceAncillaryChannelNumber sets the SourceAncillaryChannelNumber field's value.
@@ -2072,7 +2155,12 @@ type AudioCodecSettings struct {
 	_ struct{} `type:"structure"`
 
 	// Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to
-	// the value AAC.
+	// the value AAC. The service accepts one of two mutually exclusive groups of
+	// AAC settings--VBR and CBR. To select one of these modes, set the value of
+	// Bitrate control mode (rateControlMode) to "VBR" or "CBR". In VBR mode, you
+	// control the audio quality with the setting VBR quality (vbrQuality). In CBR
+	// mode, you use the setting Bitrate (bitrate). Defaults and valid values depend
+	// on the rate control mode.
 	AacSettings *AacSettings `locationName:"aacSettings" type:"structure"`
 
 	// Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to
@@ -2084,7 +2172,9 @@ type AudioCodecSettings struct {
 	AiffSettings *AiffSettings `locationName:"aiffSettings" type:"structure"`
 
 	// Type of Audio codec.
-	Codec *string `locationName:"codec" type:"string" enum:"AudioCodec"`
+	//
+	// Codec is a required field
+	Codec *string `locationName:"codec" type:"string" required:"true" enum:"AudioCodec"`
 
 	// Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to
 	// the value EAC3.
@@ -2107,6 +2197,49 @@ func (s AudioCodecSettings) String() string {
 // GoString returns the string representation
 func (s AudioCodecSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AudioCodecSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AudioCodecSettings"}
+	if s.Codec == nil {
+		invalidParams.Add(request.NewErrParamRequired("Codec"))
+	}
+	if s.AacSettings != nil {
+		if err := s.AacSettings.Validate(); err != nil {
+			invalidParams.AddNested("AacSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Ac3Settings != nil {
+		if err := s.Ac3Settings.Validate(); err != nil {
+			invalidParams.AddNested("Ac3Settings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.AiffSettings != nil {
+		if err := s.AiffSettings.Validate(); err != nil {
+			invalidParams.AddNested("AiffSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Eac3Settings != nil {
+		if err := s.Eac3Settings.Validate(); err != nil {
+			invalidParams.AddNested("Eac3Settings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Mp2Settings != nil {
+		if err := s.Mp2Settings.Validate(); err != nil {
+			invalidParams.AddNested("Mp2Settings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.WavSettings != nil {
+		if err := s.WavSettings.Validate(); err != nil {
+			invalidParams.AddNested("WavSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAacSettings sets the AacSettings field's value.
@@ -2189,7 +2322,16 @@ type AudioDescription struct {
 	// enum you choose, define the corresponding settings object. The following
 	// lists the codec enum, settings object pairs. * AAC, AacSettings * MP2, Mp2Settings
 	// * WAV, WavSettings * AIFF, AiffSettings * AC3, Ac3Settings * EAC3, Eac3Settings
-	CodecSettings *AudioCodecSettings `locationName:"codecSettings" type:"structure"`
+	//
+	// CodecSettings is a required field
+	CodecSettings *AudioCodecSettings `locationName:"codecSettings" type:"structure" required:"true"`
+
+	// Specify the language for this audio output track, using the ISO 639-2 or
+	// ISO 639-3 three-letter language code. The language specified will be used
+	// when 'Follow Input Language Code' is not selected or when 'Follow Input Language
+	// Code' is selected but there is no ISO 639 language code specified by the
+	// input.
+	CustomLanguageCode *string `locationName:"customLanguageCode" min:"3" type:"string"`
 
 	// Indicates the language of the audio output track. The ISO 639 language specified
 	// in the 'Language Code' drop down will be used when 'Follow Input Language
@@ -2222,6 +2364,37 @@ func (s AudioDescription) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AudioDescription) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AudioDescription"}
+	if s.CodecSettings == nil {
+		invalidParams.Add(request.NewErrParamRequired("CodecSettings"))
+	}
+	if s.CustomLanguageCode != nil && len(*s.CustomLanguageCode) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("CustomLanguageCode", 3))
+	}
+	if s.AudioNormalizationSettings != nil {
+		if err := s.AudioNormalizationSettings.Validate(); err != nil {
+			invalidParams.AddNested("AudioNormalizationSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.CodecSettings != nil {
+		if err := s.CodecSettings.Validate(); err != nil {
+			invalidParams.AddNested("CodecSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.RemixSettings != nil {
+		if err := s.RemixSettings.Validate(); err != nil {
+			invalidParams.AddNested("RemixSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetAudioNormalizationSettings sets the AudioNormalizationSettings field's value.
 func (s *AudioDescription) SetAudioNormalizationSettings(v *AudioNormalizationSettings) *AudioDescription {
 	s.AudioNormalizationSettings = v
@@ -2249,6 +2422,12 @@ func (s *AudioDescription) SetAudioTypeControl(v string) *AudioDescription {
 // SetCodecSettings sets the CodecSettings field's value.
 func (s *AudioDescription) SetCodecSettings(v *AudioCodecSettings) *AudioDescription {
 	s.CodecSettings = v
+	return s
+}
+
+// SetCustomLanguageCode sets the CustomLanguageCode field's value.
+func (s *AudioDescription) SetCustomLanguageCode(v string) *AudioDescription {
+	s.CustomLanguageCode = &v
 	return s
 }
 
@@ -2317,6 +2496,19 @@ func (s AudioNormalizationSettings) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AudioNormalizationSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AudioNormalizationSettings"}
+	if s.CorrectionGateLevel != nil && *s.CorrectionGateLevel < -70 {
+		invalidParams.Add(request.NewErrParamMinValue("CorrectionGateLevel", -70))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetAlgorithm sets the Algorithm field's value.
 func (s *AudioNormalizationSettings) SetAlgorithm(v string) *AudioNormalizationSettings {
 	s.Algorithm = &v
@@ -2357,10 +2549,13 @@ func (s *AudioNormalizationSettings) SetTargetLkfs(v float64) *AudioNormalizatio
 type AudioSelector struct {
 	_ struct{} `type:"structure"`
 
-	// When an "Audio Description":#audio_description specifies an AudioSelector
-	// or AudioSelectorGroup for which no matching source is found in the input,
-	// then the audio selector marked as DEFAULT will be used. If none are marked
-	// as default, silence will be inserted for the duration of the input.
+	// Selects a specific language code from within an audio source, using the ISO
+	// 639-2 or ISO 639-3 three-letter language code
+	CustomLanguageCode *string `locationName:"customLanguageCode" min:"3" type:"string"`
+
+	// Enable this setting on one audio selector to set it as the default for the
+	// job. The service uses this default for outputs where it can't find the specified
+	// input audio. If you don't set a default, those outputs have no audio.
 	DefaultSelection *string `locationName:"defaultSelection" type:"string" enum:"AudioDefaultSelection"`
 
 	// Specifies audio data from an external file source.
@@ -2377,23 +2572,31 @@ type AudioSelector struct {
 	// 0x101).
 	Pids []*int64 `locationName:"pids" type:"list"`
 
-	// Applies only when input streams contain Dolby E. Enter the program ID (according
-	// to the metadata in the audio) of the Dolby E program to extract from the
-	// specified track. One program extracted per audio selector. To select multiple
-	// programs, create multiple selectors with the same Track and different Program
-	// numbers. "All channels" means to ignore the program IDs and include all the
-	// channels in this selector; useful if metadata is known to be incorrect.
+	// Use this setting for input streams that contain Dolby E, to have the service
+	// extract specific program data from the track. To select multiple programs,
+	// create multiple selectors with the same Track and different Program numbers.
+	// In the console, this setting is visible when you set Selector type to Track.
+	// Choose the program number from the dropdown list. If you are sending a JSON
+	// file, provide the program ID, which is part of the audio metadata. If your
+	// input file has incorrect metadata, you can choose All channels instead of
+	// a program number to have the service ignore the program IDs and include all
+	// the programs in the track.
 	ProgramSelection *int64 `locationName:"programSelection" type:"integer"`
 
-	// Advanced audio remixing settings.
+	// Use these settings to reorder the audio channels of one input to match those
+	// of another input. This allows you to combine the two files into a single
+	// output, one after the other.
 	RemixSettings *RemixSettings `locationName:"remixSettings" type:"structure"`
 
 	// Specifies the type of the audio selector.
 	SelectorType *string `locationName:"selectorType" type:"string" enum:"AudioSelectorType"`
 
-	// Identify the channel to include in this selector by entering the 1-based
-	// track index. To combine several tracks, enter a comma-separated list, e.g.
-	// "1,2,3" for tracks 1-3.
+	// Identify a track from the input audio to include in this selector by entering
+	// the track index number. To include several tracks in a single audio selector,
+	// specify multiple tracks as follows. Using the console, enter a comma-separated
+	// list. For examle, type "1,2,3" to include tracks 1 through 3. Specifying
+	// directly in your JSON job file, provide the track numbers in an array. For
+	// example, "tracks": [1,2,3].
 	Tracks []*int64 `locationName:"tracks" type:"list"`
 }
 
@@ -2405,6 +2608,33 @@ func (s AudioSelector) String() string {
 // GoString returns the string representation
 func (s AudioSelector) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AudioSelector) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AudioSelector"}
+	if s.CustomLanguageCode != nil && len(*s.CustomLanguageCode) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("CustomLanguageCode", 3))
+	}
+	if s.Offset != nil && *s.Offset < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("Offset", -2.147483648e+09))
+	}
+	if s.RemixSettings != nil {
+		if err := s.RemixSettings.Validate(); err != nil {
+			invalidParams.AddNested("RemixSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCustomLanguageCode sets the CustomLanguageCode field's value.
+func (s *AudioSelector) SetCustomLanguageCode(v string) *AudioSelector {
+	s.CustomLanguageCode = &v
+	return s
 }
 
 // SetDefaultSelection sets the DefaultSelection field's value.
@@ -2465,11 +2695,13 @@ func (s *AudioSelector) SetTracks(v []*int64) *AudioSelector {
 type AudioSelectorGroup struct {
 	_ struct{} `type:"structure"`
 
-	// Name of an "Audio Selector":#inputs-audio_selector within the same input
-	// to include in the group. Audio selector names are standardized, based on
-	// their order within the input (e.g. "Audio Selector 1"). The audio_selector_name
-	// parameter can be repeated to add any number of audio selectors to the group.
-	AudioSelectorNames []*string `locationName:"audioSelectorNames" type:"list"`
+	// Name of an Audio Selector within the same input to include in the group.
+	// Audio selector names are standardized, based on their order within the input
+	// (e.g., "Audio Selector 1"). The audio selector name parameter can be repeated
+	// to add any number of audio selectors to the group.
+	//
+	// AudioSelectorNames is a required field
+	AudioSelectorNames []*string `locationName:"audioSelectorNames" type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -2480,6 +2712,19 @@ func (s AudioSelectorGroup) String() string {
 // GoString returns the string representation
 func (s AudioSelectorGroup) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AudioSelectorGroup) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AudioSelectorGroup"}
+	if s.AudioSelectorNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("AudioSelectorNames"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioSelectorNames sets the AudioSelectorNames field's value.
@@ -2494,7 +2739,7 @@ type AvailBlanking struct {
 
 	// Blanking image to be used. Leave empty for solid black. Only bmp and png
 	// images are supported.
-	AvailBlankingImage *string `locationName:"availBlankingImage" type:"string"`
+	AvailBlankingImage *string `locationName:"availBlankingImage" min:"14" type:"string"`
 }
 
 // String returns the string representation
@@ -2505,6 +2750,19 @@ func (s AvailBlanking) String() string {
 // GoString returns the string representation
 func (s AvailBlanking) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AvailBlanking) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AvailBlanking"}
+	if s.AvailBlankingImage != nil && len(*s.AvailBlankingImage) < 14 {
+		invalidParams.Add(request.NewErrParamMinLen("AvailBlankingImage", 14))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAvailBlankingImage sets the AvailBlankingImage field's value.
@@ -2525,7 +2783,9 @@ type BurninDestinationSettings struct {
 	// This option is not valid for source captions that are STL, 608/embedded or
 	// teletext. These source settings are already pre-defined by the caption stream.
 	// All burn-in and DVB-Sub font settings must match.
-	Alignment *string `locationName:"alignment" type:"string" enum:"BurninSubtitleAlignment"`
+	//
+	// Alignment is a required field
+	Alignment *string `locationName:"alignment" type:"string" required:"true" enum:"BurninSubtitleAlignment"`
 
 	// Specifies the color of the rectangle behind the captions.All burn-in and
 	// DVB-Sub font settings must match.
@@ -2544,11 +2804,13 @@ type BurninDestinationSettings struct {
 
 	// Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.All
 	// burn-in and DVB-Sub font settings must match.
-	FontOpacity *int64 `locationName:"fontOpacity" type:"integer"`
+	//
+	// FontOpacity is a required field
+	FontOpacity *int64 `locationName:"fontOpacity" type:"integer" required:"true"`
 
 	// Font resolution in DPI (dots per inch); default is 96 dpi.All burn-in and
 	// DVB-Sub font settings must match.
-	FontResolution *int64 `locationName:"fontResolution" type:"integer"`
+	FontResolution *int64 `locationName:"fontResolution" min:"96" type:"integer"`
 
 	// A positive integer indicates the exact font size in points. Set to 0 for
 	// automatic font size selection. All burn-in and DVB-Sub font settings must
@@ -2559,13 +2821,17 @@ type BurninDestinationSettings struct {
 	// that are either 608/embedded or teletext. These source settings are already
 	// pre-defined by the caption stream. All burn-in and DVB-Sub font settings
 	// must match.
-	OutlineColor *string `locationName:"outlineColor" type:"string" enum:"BurninSubtitleOutlineColor"`
+	//
+	// OutlineColor is a required field
+	OutlineColor *string `locationName:"outlineColor" type:"string" required:"true" enum:"BurninSubtitleOutlineColor"`
 
 	// Specifies font outline size in pixels. This option is not valid for source
 	// captions that are either 608/embedded or teletext. These source settings
 	// are already pre-defined by the caption stream. All burn-in and DVB-Sub font
 	// settings must match.
-	OutlineSize *int64 `locationName:"outlineSize" type:"integer"`
+	//
+	// OutlineSize is a required field
+	OutlineSize *int64 `locationName:"outlineSize" type:"integer" required:"true"`
 
 	// Specifies the color of the shadow cast by the captions.All burn-in and DVB-Sub
 	// font settings must match.
@@ -2586,9 +2852,11 @@ type BurninDestinationSettings struct {
 	// burn-in and DVB-Sub font settings must match.
 	ShadowYOffset *int64 `locationName:"shadowYOffset" type:"integer"`
 
-	// Controls whether a fixed grid size or proportional font spacing will be used
-	// to generate the output subtitles bitmap. Only applicable for Teletext inputs
-	// and DVB-Sub/Burn-in outputs.
+	// Only applies to jobs with input captions in Teletext or STL formats. Specify
+	// whether the spacing between letters in your captions is set by the captions
+	// grid or varies depending on letter width. Choose fixed grid to conform to
+	// the spacing specified in the captions file more accurately. Choose proportional
+	// to make the text easier to read if the captions are closed caption.
 	TeletextSpacing *string `locationName:"teletextSpacing" type:"string" enum:"BurninSubtitleTeletextSpacing"`
 
 	// Specifies the horizontal position of the caption relative to the left side
@@ -2618,6 +2886,37 @@ func (s BurninDestinationSettings) String() string {
 // GoString returns the string representation
 func (s BurninDestinationSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BurninDestinationSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BurninDestinationSettings"}
+	if s.Alignment == nil {
+		invalidParams.Add(request.NewErrParamRequired("Alignment"))
+	}
+	if s.FontOpacity == nil {
+		invalidParams.Add(request.NewErrParamRequired("FontOpacity"))
+	}
+	if s.FontResolution != nil && *s.FontResolution < 96 {
+		invalidParams.Add(request.NewErrParamMinValue("FontResolution", 96))
+	}
+	if s.OutlineColor == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutlineColor"))
+	}
+	if s.OutlineSize == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutlineSize"))
+	}
+	if s.ShadowXOffset != nil && *s.ShadowXOffset < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("ShadowXOffset", -2.147483648e+09))
+	}
+	if s.ShadowYOffset != nil && *s.ShadowYOffset < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("ShadowYOffset", -2.147483648e+09))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAlignment sets the Alignment field's value.
@@ -2778,11 +3077,19 @@ type CaptionDescription struct {
 	// input when generating captions. The name should be of the format "Caption
 	// Selector ", which denotes that the Nth Caption Selector will be used from
 	// each input.
-	CaptionSelectorName *string `locationName:"captionSelectorName" type:"string"`
+	//
+	// CaptionSelectorName is a required field
+	CaptionSelectorName *string `locationName:"captionSelectorName" min:"1" type:"string" required:"true"`
+
+	// Indicates the language of the caption output track, using the ISO 639-2 or
+	// ISO 639-3 three-letter language code
+	CustomLanguageCode *string `locationName:"customLanguageCode" min:"3" type:"string"`
 
 	// Specific settings required by destination type. Note that burnin_destination_settings
 	// are not available if the source of the caption data is Embedded or Teletext.
-	DestinationSettings *CaptionDestinationSettings `locationName:"destinationSettings" type:"structure"`
+	//
+	// DestinationSettings is a required field
+	DestinationSettings *CaptionDestinationSettings `locationName:"destinationSettings" type:"structure" required:"true"`
 
 	// Indicates the language of the caption output track.
 	LanguageCode *string `locationName:"languageCode" type:"string" enum:"LanguageCode"`
@@ -2803,9 +3110,42 @@ func (s CaptionDescription) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CaptionDescription) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CaptionDescription"}
+	if s.CaptionSelectorName == nil {
+		invalidParams.Add(request.NewErrParamRequired("CaptionSelectorName"))
+	}
+	if s.CaptionSelectorName != nil && len(*s.CaptionSelectorName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CaptionSelectorName", 1))
+	}
+	if s.CustomLanguageCode != nil && len(*s.CustomLanguageCode) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("CustomLanguageCode", 3))
+	}
+	if s.DestinationSettings == nil {
+		invalidParams.Add(request.NewErrParamRequired("DestinationSettings"))
+	}
+	if s.DestinationSettings != nil {
+		if err := s.DestinationSettings.Validate(); err != nil {
+			invalidParams.AddNested("DestinationSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetCaptionSelectorName sets the CaptionSelectorName field's value.
 func (s *CaptionDescription) SetCaptionSelectorName(v string) *CaptionDescription {
 	s.CaptionSelectorName = &v
+	return s
+}
+
+// SetCustomLanguageCode sets the CustomLanguageCode field's value.
+func (s *CaptionDescription) SetCustomLanguageCode(v string) *CaptionDescription {
+	s.CustomLanguageCode = &v
 	return s
 }
 
@@ -2831,9 +3171,15 @@ func (s *CaptionDescription) SetLanguageDescription(v string) *CaptionDescriptio
 type CaptionDescriptionPreset struct {
 	_ struct{} `type:"structure"`
 
+	// Indicates the language of the caption output track, using the ISO 639-2 or
+	// ISO 639-3 three-letter language code
+	CustomLanguageCode *string `locationName:"customLanguageCode" min:"3" type:"string"`
+
 	// Specific settings required by destination type. Note that burnin_destination_settings
 	// are not available if the source of the caption data is Embedded or Teletext.
-	DestinationSettings *CaptionDestinationSettings `locationName:"destinationSettings" type:"structure"`
+	//
+	// DestinationSettings is a required field
+	DestinationSettings *CaptionDestinationSettings `locationName:"destinationSettings" type:"structure" required:"true"`
 
 	// Indicates the language of the caption output track.
 	LanguageCode *string `locationName:"languageCode" type:"string" enum:"LanguageCode"`
@@ -2852,6 +3198,33 @@ func (s CaptionDescriptionPreset) String() string {
 // GoString returns the string representation
 func (s CaptionDescriptionPreset) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CaptionDescriptionPreset) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CaptionDescriptionPreset"}
+	if s.CustomLanguageCode != nil && len(*s.CustomLanguageCode) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("CustomLanguageCode", 3))
+	}
+	if s.DestinationSettings == nil {
+		invalidParams.Add(request.NewErrParamRequired("DestinationSettings"))
+	}
+	if s.DestinationSettings != nil {
+		if err := s.DestinationSettings.Validate(); err != nil {
+			invalidParams.AddNested("DestinationSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCustomLanguageCode sets the CustomLanguageCode field's value.
+func (s *CaptionDescriptionPreset) SetCustomLanguageCode(v string) *CaptionDescriptionPreset {
+	s.CustomLanguageCode = &v
+	return s
 }
 
 // SetDestinationSettings sets the DestinationSettings field's value.
@@ -2882,7 +3255,9 @@ type CaptionDestinationSettings struct {
 
 	// Type of Caption output, including Burn-In, Embedded, SCC, SRT, TTML, WebVTT,
 	// DVB-Sub, Teletext.
-	DestinationType *string `locationName:"destinationType" type:"string" enum:"CaptionDestinationType"`
+	//
+	// DestinationType is a required field
+	DestinationType *string `locationName:"destinationType" type:"string" required:"true" enum:"CaptionDestinationType"`
 
 	// DVB-Sub Destination Settings
 	DvbSubDestinationSettings *DvbSubDestinationSettings `locationName:"dvbSubDestinationSettings" type:"structure"`
@@ -2906,6 +3281,34 @@ func (s CaptionDestinationSettings) String() string {
 // GoString returns the string representation
 func (s CaptionDestinationSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CaptionDestinationSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CaptionDestinationSettings"}
+	if s.DestinationType == nil {
+		invalidParams.Add(request.NewErrParamRequired("DestinationType"))
+	}
+	if s.BurninDestinationSettings != nil {
+		if err := s.BurninDestinationSettings.Validate(); err != nil {
+			invalidParams.AddNested("BurninDestinationSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DvbSubDestinationSettings != nil {
+		if err := s.DvbSubDestinationSettings.Validate(); err != nil {
+			invalidParams.AddNested("DvbSubDestinationSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.TeletextDestinationSettings != nil {
+		if err := s.TeletextDestinationSettings.Validate(); err != nil {
+			invalidParams.AddNested("TeletextDestinationSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetBurninDestinationSettings sets the BurninDestinationSettings field's value.
@@ -2944,9 +3347,18 @@ func (s *CaptionDestinationSettings) SetTtmlDestinationSettings(v *TtmlDestinati
 	return s
 }
 
-// Caption inputs to be mapped to caption outputs.
+// Set up captions in your outputs by first selecting them from your input here.
 type CaptionSelector struct {
 	_ struct{} `type:"structure"`
+
+	// The specific language to extract from source, using the ISO 639-2 or ISO
+	// 639-3 three-letter language code. If input is SCTE-27, complete this field
+	// and/or PID to select the caption language to extract. If input is DVB-Sub
+	// and output is Burn-in or SMPTE-TT, complete this field and/or PID to select
+	// the caption language to extract. If input is DVB-Sub that is being passed
+	// through, omit this field (and PID field); there is no way to extract a specific
+	// language with pass-through captions.
+	CustomLanguageCode *string `locationName:"customLanguageCode" min:"3" type:"string"`
 
 	// The specific language to extract from source. If input is SCTE-27, complete
 	// this field and/or PID to select the caption language to extract. If input
@@ -2958,7 +3370,9 @@ type CaptionSelector struct {
 
 	// Source settings (SourceSettings) contains the group of settings for captions
 	// in the input.
-	SourceSettings *CaptionSourceSettings `locationName:"sourceSettings" type:"structure"`
+	//
+	// SourceSettings is a required field
+	SourceSettings *CaptionSourceSettings `locationName:"sourceSettings" type:"structure" required:"true"`
 }
 
 // String returns the string representation
@@ -2969,6 +3383,33 @@ func (s CaptionSelector) String() string {
 // GoString returns the string representation
 func (s CaptionSelector) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CaptionSelector) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CaptionSelector"}
+	if s.CustomLanguageCode != nil && len(*s.CustomLanguageCode) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("CustomLanguageCode", 3))
+	}
+	if s.SourceSettings == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceSettings"))
+	}
+	if s.SourceSettings != nil {
+		if err := s.SourceSettings.Validate(); err != nil {
+			invalidParams.AddNested("SourceSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCustomLanguageCode sets the CustomLanguageCode field's value.
+func (s *CaptionSelector) SetCustomLanguageCode(v string) *CaptionSelector {
+	s.CustomLanguageCode = &v
+	return s
 }
 
 // SetLanguageCode sets the LanguageCode field's value.
@@ -3002,7 +3443,9 @@ type CaptionSourceSettings struct {
 
 	// Use Source (SourceType) to identify the format of your input captions. The
 	// service cannot auto-detect caption format.
-	SourceType *string `locationName:"sourceType" type:"string" enum:"CaptionSourceType"`
+	//
+	// SourceType is a required field
+	SourceType *string `locationName:"sourceType" type:"string" required:"true" enum:"CaptionSourceType"`
 
 	// Settings specific to Teletext caption sources, including Page number.
 	TeletextSourceSettings *TeletextSourceSettings `locationName:"teletextSourceSettings" type:"structure"`
@@ -3016,6 +3459,44 @@ func (s CaptionSourceSettings) String() string {
 // GoString returns the string representation
 func (s CaptionSourceSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CaptionSourceSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CaptionSourceSettings"}
+	if s.SourceType == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceType"))
+	}
+	if s.AncillarySourceSettings != nil {
+		if err := s.AncillarySourceSettings.Validate(); err != nil {
+			invalidParams.AddNested("AncillarySourceSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DvbSubSourceSettings != nil {
+		if err := s.DvbSubSourceSettings.Validate(); err != nil {
+			invalidParams.AddNested("DvbSubSourceSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.EmbeddedSourceSettings != nil {
+		if err := s.EmbeddedSourceSettings.Validate(); err != nil {
+			invalidParams.AddNested("EmbeddedSourceSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.FileSourceSettings != nil {
+		if err := s.FileSourceSettings.Validate(); err != nil {
+			invalidParams.AddNested("FileSourceSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.TeletextSourceSettings != nil {
+		if err := s.TeletextSourceSettings.Validate(); err != nil {
+			invalidParams.AddNested("TeletextSourceSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAncillarySourceSettings sets the AncillarySourceSettings field's value.
@@ -3062,7 +3543,9 @@ type ChannelMapping struct {
 	_ struct{} `type:"structure"`
 
 	// List of output channels
-	OutputChannels []*OutputChannelMapping `locationName:"outputChannels" type:"list"`
+	//
+	// OutputChannels is a required field
+	OutputChannels []*OutputChannelMapping `locationName:"outputChannels" type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -3075,9 +3558,319 @@ func (s ChannelMapping) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ChannelMapping) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ChannelMapping"}
+	if s.OutputChannels == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutputChannels"))
+	}
+	if s.OutputChannels != nil {
+		for i, v := range s.OutputChannels {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputChannels", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetOutputChannels sets the OutputChannels field's value.
 func (s *ChannelMapping) SetOutputChannels(v []*OutputChannelMapping) *ChannelMapping {
 	s.OutputChannels = v
+	return s
+}
+
+// Settings for CMAF encryption
+type CmafEncryptionSettings struct {
+	_ struct{} `type:"structure"`
+
+	// This is a 128-bit, 16-byte hex value represented by a 32-character text string.
+	// If this parameter is not set then the Initialization Vector will follow the
+	// segment number by default.
+	ConstantInitializationVector *string `locationName:"constantInitializationVector" min:"32" type:"string"`
+
+	// Encrypts the segments with the given encryption scheme. Leave blank to disable.
+	// Selecting 'Disabled' in the web interface also disables encryption.
+	EncryptionMethod *string `locationName:"encryptionMethod" type:"string" enum:"CmafEncryptionType"`
+
+	// The Initialization Vector is a 128-bit number used in conjunction with the
+	// key for encrypting blocks. If set to INCLUDE, Initialization Vector is listed
+	// in the manifest. Otherwise Initialization Vector is not in the manifest.
+	InitializationVectorInManifest *string `locationName:"initializationVectorInManifest" type:"string" enum:"CmafInitializationVectorInManifest"`
+
+	// Settings for use with a SPEKE key provider.
+	StaticKeyProvider *StaticKeyProvider `locationName:"staticKeyProvider" type:"structure"`
+
+	// Indicates which type of key provider is used for encryption.
+	//
+	// Type is a required field
+	Type *string `locationName:"type" type:"string" required:"true" enum:"CmafKeyProviderType"`
+}
+
+// String returns the string representation
+func (s CmafEncryptionSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CmafEncryptionSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CmafEncryptionSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CmafEncryptionSettings"}
+	if s.ConstantInitializationVector != nil && len(*s.ConstantInitializationVector) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("ConstantInitializationVector", 32))
+	}
+	if s.Type == nil {
+		invalidParams.Add(request.NewErrParamRequired("Type"))
+	}
+	if s.StaticKeyProvider != nil {
+		if err := s.StaticKeyProvider.Validate(); err != nil {
+			invalidParams.AddNested("StaticKeyProvider", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConstantInitializationVector sets the ConstantInitializationVector field's value.
+func (s *CmafEncryptionSettings) SetConstantInitializationVector(v string) *CmafEncryptionSettings {
+	s.ConstantInitializationVector = &v
+	return s
+}
+
+// SetEncryptionMethod sets the EncryptionMethod field's value.
+func (s *CmafEncryptionSettings) SetEncryptionMethod(v string) *CmafEncryptionSettings {
+	s.EncryptionMethod = &v
+	return s
+}
+
+// SetInitializationVectorInManifest sets the InitializationVectorInManifest field's value.
+func (s *CmafEncryptionSettings) SetInitializationVectorInManifest(v string) *CmafEncryptionSettings {
+	s.InitializationVectorInManifest = &v
+	return s
+}
+
+// SetStaticKeyProvider sets the StaticKeyProvider field's value.
+func (s *CmafEncryptionSettings) SetStaticKeyProvider(v *StaticKeyProvider) *CmafEncryptionSettings {
+	s.StaticKeyProvider = v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *CmafEncryptionSettings) SetType(v string) *CmafEncryptionSettings {
+	s.Type = &v
+	return s
+}
+
+// Required when you set (Type) under (OutputGroups)>(OutputGroupSettings) to
+// CMAF_GROUP_SETTINGS. Each output in a CMAF Output Group may only contain
+// a single video, audio, or caption output.
+type CmafGroupSettings struct {
+	_ struct{} `type:"structure"`
+
+	// A partial URI prefix that will be put in the manifest file at the top level
+	// BaseURL element. Can be used if streams are delivered from a different URL
+	// than the manifest file.
+	BaseUrl *string `locationName:"baseUrl" type:"string"`
+
+	// When set to ENABLED, sets #EXT-X-ALLOW-CACHE:no tag, which prevents client
+	// from saving media segments for later replay.
+	ClientCache *string `locationName:"clientCache" type:"string" enum:"CmafClientCache"`
+
+	// Specification to use (RFC-6381 or the default RFC-4281) during m3u8 playlist
+	// generation.
+	CodecSpecification *string `locationName:"codecSpecification" type:"string" enum:"CmafCodecSpecification"`
+
+	// Use Destination (Destination) to specify the S3 output location and the output
+	// filename base. Destination accepts format identifiers. If you do not specify
+	// the base filename in the URI, the service will use the filename of the input
+	// file. If your job has multiple inputs, the service uses the filename of the
+	// first input file.
+	Destination *string `locationName:"destination" type:"string"`
+
+	// DRM settings.
+	Encryption *CmafEncryptionSettings `locationName:"encryption" type:"structure"`
+
+	// Length of fragments to generate (in seconds). Fragment length must be compatible
+	// with GOP size and Framerate. Note that fragments will end on the next keyframe
+	// after this number of seconds, so actual fragment length may be longer. When
+	// Emit Single File is checked, the fragmentation is internal to a single output
+	// file and it does not cause the creation of many output files as in other
+	// output types.
+	//
+	// FragmentLength is a required field
+	FragmentLength *int64 `locationName:"fragmentLength" min:"1" type:"integer" required:"true"`
+
+	// When set to GZIP, compresses HLS playlist.
+	ManifestCompression *string `locationName:"manifestCompression" type:"string" enum:"CmafManifestCompression"`
+
+	// Indicates whether the output manifest should use floating point values for
+	// segment duration.
+	ManifestDurationFormat *string `locationName:"manifestDurationFormat" type:"string" enum:"CmafManifestDurationFormat"`
+
+	// Minimum time of initially buffered media that is needed to ensure smooth
+	// playout.
+	MinBufferTime *int64 `locationName:"minBufferTime" type:"integer"`
+
+	// When set to SINGLE_FILE, a single output file is generated, which is internally
+	// segmented using the Fragment Length and Segment Length. When set to SEGMENTED_FILES,
+	// separate segment files will be created.
+	SegmentControl *string `locationName:"segmentControl" type:"string" enum:"CmafSegmentControl"`
+
+	// Use this setting to specify the length, in seconds, of each individual CMAF
+	// segment. This value applies to the whole package; that is, to every output
+	// in the output group. Note that segments end on the first keyframe after this
+	// number of seconds, so the actual segment length might be slightly longer.
+	// If you set Segment control (CmafSegmentControl) to single file, the service
+	// puts the content of each output in a single file that has metadata that marks
+	// these segments. If you set it to segmented files, the service creates multiple
+	// files for each output, each with the content of one segment.
+	//
+	// SegmentLength is a required field
+	SegmentLength *int64 `locationName:"segmentLength" min:"1" type:"integer" required:"true"`
+
+	// Include or exclude RESOLUTION attribute for video in EXT-X-STREAM-INF tag
+	// of variant manifest.
+	StreamInfResolution *string `locationName:"streamInfResolution" type:"string" enum:"CmafStreamInfResolution"`
+
+	// When set to ENABLED, a DASH MPD manifest will be generated for this output.
+	WriteDashManifest *string `locationName:"writeDashManifest" type:"string" enum:"CmafWriteDASHManifest"`
+
+	// When set to ENABLED, an Apple HLS manifest will be generated for this output.
+	WriteHlsManifest *string `locationName:"writeHlsManifest" type:"string" enum:"CmafWriteHLSManifest"`
+}
+
+// String returns the string representation
+func (s CmafGroupSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CmafGroupSettings) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CmafGroupSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CmafGroupSettings"}
+	if s.FragmentLength == nil {
+		invalidParams.Add(request.NewErrParamRequired("FragmentLength"))
+	}
+	if s.FragmentLength != nil && *s.FragmentLength < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FragmentLength", 1))
+	}
+	if s.SegmentLength == nil {
+		invalidParams.Add(request.NewErrParamRequired("SegmentLength"))
+	}
+	if s.SegmentLength != nil && *s.SegmentLength < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("SegmentLength", 1))
+	}
+	if s.Encryption != nil {
+		if err := s.Encryption.Validate(); err != nil {
+			invalidParams.AddNested("Encryption", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBaseUrl sets the BaseUrl field's value.
+func (s *CmafGroupSettings) SetBaseUrl(v string) *CmafGroupSettings {
+	s.BaseUrl = &v
+	return s
+}
+
+// SetClientCache sets the ClientCache field's value.
+func (s *CmafGroupSettings) SetClientCache(v string) *CmafGroupSettings {
+	s.ClientCache = &v
+	return s
+}
+
+// SetCodecSpecification sets the CodecSpecification field's value.
+func (s *CmafGroupSettings) SetCodecSpecification(v string) *CmafGroupSettings {
+	s.CodecSpecification = &v
+	return s
+}
+
+// SetDestination sets the Destination field's value.
+func (s *CmafGroupSettings) SetDestination(v string) *CmafGroupSettings {
+	s.Destination = &v
+	return s
+}
+
+// SetEncryption sets the Encryption field's value.
+func (s *CmafGroupSettings) SetEncryption(v *CmafEncryptionSettings) *CmafGroupSettings {
+	s.Encryption = v
+	return s
+}
+
+// SetFragmentLength sets the FragmentLength field's value.
+func (s *CmafGroupSettings) SetFragmentLength(v int64) *CmafGroupSettings {
+	s.FragmentLength = &v
+	return s
+}
+
+// SetManifestCompression sets the ManifestCompression field's value.
+func (s *CmafGroupSettings) SetManifestCompression(v string) *CmafGroupSettings {
+	s.ManifestCompression = &v
+	return s
+}
+
+// SetManifestDurationFormat sets the ManifestDurationFormat field's value.
+func (s *CmafGroupSettings) SetManifestDurationFormat(v string) *CmafGroupSettings {
+	s.ManifestDurationFormat = &v
+	return s
+}
+
+// SetMinBufferTime sets the MinBufferTime field's value.
+func (s *CmafGroupSettings) SetMinBufferTime(v int64) *CmafGroupSettings {
+	s.MinBufferTime = &v
+	return s
+}
+
+// SetSegmentControl sets the SegmentControl field's value.
+func (s *CmafGroupSettings) SetSegmentControl(v string) *CmafGroupSettings {
+	s.SegmentControl = &v
+	return s
+}
+
+// SetSegmentLength sets the SegmentLength field's value.
+func (s *CmafGroupSettings) SetSegmentLength(v int64) *CmafGroupSettings {
+	s.SegmentLength = &v
+	return s
+}
+
+// SetStreamInfResolution sets the StreamInfResolution field's value.
+func (s *CmafGroupSettings) SetStreamInfResolution(v string) *CmafGroupSettings {
+	s.StreamInfResolution = &v
+	return s
+}
+
+// SetWriteDashManifest sets the WriteDashManifest field's value.
+func (s *CmafGroupSettings) SetWriteDashManifest(v string) *CmafGroupSettings {
+	s.WriteDashManifest = &v
+	return s
+}
+
+// SetWriteHlsManifest sets the WriteHlsManifest field's value.
+func (s *CmafGroupSettings) SetWriteHlsManifest(v string) *CmafGroupSettings {
+	s.WriteHlsManifest = &v
 	return s
 }
 
@@ -3086,7 +3879,7 @@ type ColorCorrector struct {
 	_ struct{} `type:"structure"`
 
 	// Brightness level.
-	Brightness *int64 `locationName:"brightness" type:"integer"`
+	Brightness *int64 `locationName:"brightness" min:"1" type:"integer"`
 
 	// Determines if colorspace conversion will be performed. If set to _None_,
 	// no conversion will be performed. If _Force 601_ or _Force 709_ are selected,
@@ -3096,19 +3889,22 @@ type ColorCorrector struct {
 	ColorSpaceConversion *string `locationName:"colorSpaceConversion" type:"string" enum:"ColorSpaceConversion"`
 
 	// Contrast level.
-	Contrast *int64 `locationName:"contrast" type:"integer"`
+	Contrast *int64 `locationName:"contrast" min:"1" type:"integer"`
 
-	// Use the HDR master display (Hdr10Metadata) settings to provide values for
-	// HDR color. These values vary depending on the input video and must be provided
-	// by a color grader. Range is 0 to 50,000, each increment represents 0.00002
-	// in CIE1931 color coordinate.
+	// Use the HDR master display (Hdr10Metadata) settings to correct HDR metadata
+	// or to provide missing metadata. These values vary depending on the input
+	// video and must be provided by a color grader. Range is 0 to 50,000, each
+	// increment represents 0.00002 in CIE1931 color coordinate. Note that these
+	// settings are not color correction. Note that if you are creating HDR outputs
+	// inside of an HLS CMAF package, to comply with the Apple specification, you
+	// must use the HVC1 for H.265 setting.
 	Hdr10Metadata *Hdr10Metadata `locationName:"hdr10Metadata" type:"structure"`
 
 	// Hue in degrees.
 	Hue *int64 `locationName:"hue" type:"integer"`
 
 	// Saturation level.
-	Saturation *int64 `locationName:"saturation" type:"integer"`
+	Saturation *int64 `locationName:"saturation" min:"1" type:"integer"`
 }
 
 // String returns the string representation
@@ -3119,6 +3915,33 @@ func (s ColorCorrector) String() string {
 // GoString returns the string representation
 func (s ColorCorrector) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ColorCorrector) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ColorCorrector"}
+	if s.Brightness != nil && *s.Brightness < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Brightness", 1))
+	}
+	if s.Contrast != nil && *s.Contrast < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Contrast", 1))
+	}
+	if s.Hue != nil && *s.Hue < -180 {
+		invalidParams.Add(request.NewErrParamMinValue("Hue", -180))
+	}
+	if s.Saturation != nil && *s.Saturation < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Saturation", 1))
+	}
+	if s.Hdr10Metadata != nil {
+		if err := s.Hdr10Metadata.Validate(); err != nil {
+			invalidParams.AddNested("Hdr10Metadata", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetBrightness sets the Brightness field's value.
@@ -3163,7 +3986,9 @@ type ContainerSettings struct {
 
 	// Container for this output. Some containers require a container settings object.
 	// If not specified, the default object will be created.
-	Container *string `locationName:"container" type:"string" enum:"ContainerType"`
+	//
+	// Container is a required field
+	Container *string `locationName:"container" type:"string" required:"true" enum:"ContainerType"`
 
 	// Settings for F4v container
 	F4vSettings *F4vSettings `locationName:"f4vSettings" type:"structure"`
@@ -3189,6 +4014,29 @@ func (s ContainerSettings) String() string {
 // GoString returns the string representation
 func (s ContainerSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ContainerSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ContainerSettings"}
+	if s.Container == nil {
+		invalidParams.Add(request.NewErrParamRequired("Container"))
+	}
+	if s.M2tsSettings != nil {
+		if err := s.M2tsSettings.Validate(); err != nil {
+			invalidParams.AddNested("M2tsSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.M3u8Settings != nil {
+		if err := s.M3u8Settings.Validate(); err != nil {
+			invalidParams.AddNested("M3u8Settings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetContainer sets the Container field's value.
@@ -3246,10 +4094,14 @@ type CreateJobInput struct {
 
 	// Required. The IAM role you use for creating this job. For details about permissions,
 	// see the User Guide topic at the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html.
-	Role *string `locationName:"role" type:"string"`
+	//
+	// Role is a required field
+	Role *string `locationName:"role" type:"string" required:"true"`
 
 	// JobSettings contains all the transcode settings for a job.
-	Settings *JobSettings `locationName:"settings" type:"structure"`
+	//
+	// Settings is a required field
+	Settings *JobSettings `locationName:"settings" type:"structure" required:"true"`
 
 	// User-defined metadata that you want to associate with an MediaConvert job.
 	// You specify metadata in key/value pairs.
@@ -3264,6 +4116,27 @@ func (s CreateJobInput) String() string {
 // GoString returns the string representation
 func (s CreateJobInput) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateJobInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateJobInput"}
+	if s.Role == nil {
+		invalidParams.Add(request.NewErrParamRequired("Role"))
+	}
+	if s.Settings == nil {
+		invalidParams.Add(request.NewErrParamRequired("Settings"))
+	}
+	if s.Settings != nil {
+		if err := s.Settings.Validate(); err != nil {
+			invalidParams.AddNested("Settings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetClientRequestToken sets the ClientRequestToken field's value.
@@ -3340,7 +4213,9 @@ type CreateJobTemplateInput struct {
 	Description *string `locationName:"description" type:"string"`
 
 	// The name of the job template you are creating.
-	Name *string `locationName:"name" type:"string"`
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
 
 	// Optional. The queue that jobs created from this template are assigned to.
 	// If you don't specify this, jobs will go to the default queue.
@@ -3348,7 +4223,9 @@ type CreateJobTemplateInput struct {
 
 	// JobTemplateSettings contains all the transcode settings saved in the template
 	// that will be applied to jobs created from it.
-	Settings *JobTemplateSettings `locationName:"settings" type:"structure"`
+	//
+	// Settings is a required field
+	Settings *JobTemplateSettings `locationName:"settings" type:"structure" required:"true"`
 }
 
 // String returns the string representation
@@ -3359,6 +4236,27 @@ func (s CreateJobTemplateInput) String() string {
 // GoString returns the string representation
 func (s CreateJobTemplateInput) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateJobTemplateInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateJobTemplateInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Settings == nil {
+		invalidParams.Add(request.NewErrParamRequired("Settings"))
+	}
+	if s.Settings != nil {
+		if err := s.Settings.Validate(); err != nil {
+			invalidParams.AddNested("Settings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetCategory sets the Category field's value.
@@ -3428,10 +4326,14 @@ type CreatePresetInput struct {
 	Description *string `locationName:"description" type:"string"`
 
 	// The name of the preset you are creating.
-	Name *string `locationName:"name" type:"string"`
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
 
 	// Settings for preset
-	Settings *PresetSettings `locationName:"settings" type:"structure"`
+	//
+	// Settings is a required field
+	Settings *PresetSettings `locationName:"settings" type:"structure" required:"true"`
 }
 
 // String returns the string representation
@@ -3442,6 +4344,27 @@ func (s CreatePresetInput) String() string {
 // GoString returns the string representation
 func (s CreatePresetInput) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreatePresetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreatePresetInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Settings == nil {
+		invalidParams.Add(request.NewErrParamRequired("Settings"))
+	}
+	if s.Settings != nil {
+		if err := s.Settings.Validate(); err != nil {
+			invalidParams.AddNested("Settings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetCategory sets the Category field's value.
@@ -3501,7 +4424,9 @@ type CreateQueueInput struct {
 	Description *string `locationName:"description" type:"string"`
 
 	// The name of the queue you are creating.
-	Name *string `locationName:"name" type:"string"`
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -3512,6 +4437,19 @@ func (s CreateQueueInput) String() string {
 // GoString returns the string representation
 func (s CreateQueueInput) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateQueueInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateQueueInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetDescription sets the Description field's value.
@@ -3558,7 +4496,9 @@ type DashIsoEncryptionSettings struct {
 	_ struct{} `type:"structure"`
 
 	// Settings for use with a SPEKE key provider
-	SpekeKeyProvider *SpekeKeyProvider `locationName:"spekeKeyProvider" type:"structure"`
+	//
+	// SpekeKeyProvider is a required field
+	SpekeKeyProvider *SpekeKeyProvider `locationName:"spekeKeyProvider" type:"structure" required:"true"`
 }
 
 // String returns the string representation
@@ -3569,6 +4509,24 @@ func (s DashIsoEncryptionSettings) String() string {
 // GoString returns the string representation
 func (s DashIsoEncryptionSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DashIsoEncryptionSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DashIsoEncryptionSettings"}
+	if s.SpekeKeyProvider == nil {
+		invalidParams.Add(request.NewErrParamRequired("SpekeKeyProvider"))
+	}
+	if s.SpekeKeyProvider != nil {
+		if err := s.SpekeKeyProvider.Validate(); err != nil {
+			invalidParams.AddNested("SpekeKeyProvider", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetSpekeKeyProvider sets the SpekeKeyProvider field's value.
@@ -3603,7 +4561,9 @@ type DashIsoGroupSettings struct {
 	// Emit Single File is checked, the fragmentation is internal to a single output
 	// file and it does not cause the creation of many output files as in other
 	// output types.
-	FragmentLength *int64 `locationName:"fragmentLength" type:"integer"`
+	//
+	// FragmentLength is a required field
+	FragmentLength *int64 `locationName:"fragmentLength" min:"1" type:"integer" required:"true"`
 
 	// Supports HbbTV specification as indicated
 	HbbtvCompliance *string `locationName:"hbbtvCompliance" type:"string" enum:"DashIsoHbbtvCompliance"`
@@ -3622,7 +4582,9 @@ type DashIsoGroupSettings struct {
 	// may be longer. When Emit Single File is checked, the segmentation is internal
 	// to a single output file and it does not cause the creation of many output
 	// files as in other output types.
-	SegmentLength *int64 `locationName:"segmentLength" type:"integer"`
+	//
+	// SegmentLength is a required field
+	SegmentLength *int64 `locationName:"segmentLength" min:"1" type:"integer" required:"true"`
 }
 
 // String returns the string representation
@@ -3633,6 +4595,33 @@ func (s DashIsoGroupSettings) String() string {
 // GoString returns the string representation
 func (s DashIsoGroupSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DashIsoGroupSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DashIsoGroupSettings"}
+	if s.FragmentLength == nil {
+		invalidParams.Add(request.NewErrParamRequired("FragmentLength"))
+	}
+	if s.FragmentLength != nil && *s.FragmentLength < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FragmentLength", 1))
+	}
+	if s.SegmentLength == nil {
+		invalidParams.Add(request.NewErrParamRequired("SegmentLength"))
+	}
+	if s.SegmentLength != nil && *s.SegmentLength < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("SegmentLength", 1))
+	}
+	if s.Encryption != nil {
+		if err := s.Encryption.Validate(); err != nil {
+			invalidParams.AddNested("Encryption", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetBaseUrl sets the BaseUrl field's value.
@@ -3979,15 +4968,21 @@ type DvbNitSettings struct {
 	_ struct{} `type:"structure"`
 
 	// The numeric value placed in the Network Information Table (NIT).
-	NetworkId *int64 `locationName:"networkId" type:"integer"`
+	//
+	// NetworkId is a required field
+	NetworkId *int64 `locationName:"networkId" type:"integer" required:"true"`
 
 	// The network name text placed in the network_name_descriptor inside the Network
 	// Information Table. Maximum length is 256 characters.
-	NetworkName *string `locationName:"networkName" type:"string"`
+	//
+	// NetworkName is a required field
+	NetworkName *string `locationName:"networkName" min:"1" type:"string" required:"true"`
 
 	// The number of milliseconds between instances of this table in the output
 	// transport stream.
-	NitInterval *int64 `locationName:"nitInterval" type:"integer"`
+	//
+	// NitInterval is a required field
+	NitInterval *int64 `locationName:"nitInterval" min:"25" type:"integer" required:"true"`
 }
 
 // String returns the string representation
@@ -3998,6 +4993,31 @@ func (s DvbNitSettings) String() string {
 // GoString returns the string representation
 func (s DvbNitSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DvbNitSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DvbNitSettings"}
+	if s.NetworkId == nil {
+		invalidParams.Add(request.NewErrParamRequired("NetworkId"))
+	}
+	if s.NetworkName == nil {
+		invalidParams.Add(request.NewErrParamRequired("NetworkName"))
+	}
+	if s.NetworkName != nil && len(*s.NetworkName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NetworkName", 1))
+	}
+	if s.NitInterval == nil {
+		invalidParams.Add(request.NewErrParamRequired("NitInterval"))
+	}
+	if s.NitInterval != nil && *s.NitInterval < 25 {
+		invalidParams.Add(request.NewErrParamMinValue("NitInterval", 25))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetNetworkId sets the NetworkId field's value.
@@ -4033,15 +5053,15 @@ type DvbSdtSettings struct {
 
 	// The number of milliseconds between instances of this table in the output
 	// transport stream.
-	SdtInterval *int64 `locationName:"sdtInterval" type:"integer"`
+	SdtInterval *int64 `locationName:"sdtInterval" min:"25" type:"integer"`
 
 	// The service name placed in the service_descriptor in the Service Description
 	// Table. Maximum length is 256 characters.
-	ServiceName *string `locationName:"serviceName" type:"string"`
+	ServiceName *string `locationName:"serviceName" min:"1" type:"string"`
 
 	// The service provider name placed in the service_descriptor in the Service
 	// Description Table. Maximum length is 256 characters.
-	ServiceProviderName *string `locationName:"serviceProviderName" type:"string"`
+	ServiceProviderName *string `locationName:"serviceProviderName" min:"1" type:"string"`
 }
 
 // String returns the string representation
@@ -4052,6 +5072,25 @@ func (s DvbSdtSettings) String() string {
 // GoString returns the string representation
 func (s DvbSdtSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DvbSdtSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DvbSdtSettings"}
+	if s.SdtInterval != nil && *s.SdtInterval < 25 {
+		invalidParams.Add(request.NewErrParamMinValue("SdtInterval", 25))
+	}
+	if s.ServiceName != nil && len(*s.ServiceName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ServiceName", 1))
+	}
+	if s.ServiceProviderName != nil && len(*s.ServiceProviderName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ServiceProviderName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetOutputSdt sets the OutputSdt field's value.
@@ -4090,7 +5129,9 @@ type DvbSubDestinationSettings struct {
 	// This option is not valid for source captions that are STL, 608/embedded or
 	// teletext. These source settings are already pre-defined by the caption stream.
 	// All burn-in and DVB-Sub font settings must match.
-	Alignment *string `locationName:"alignment" type:"string" enum:"DvbSubtitleAlignment"`
+	//
+	// Alignment is a required field
+	Alignment *string `locationName:"alignment" type:"string" required:"true" enum:"DvbSubtitleAlignment"`
 
 	// Specifies the color of the rectangle behind the captions.All burn-in and
 	// DVB-Sub font settings must match.
@@ -4109,11 +5150,13 @@ type DvbSubDestinationSettings struct {
 
 	// Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.All
 	// burn-in and DVB-Sub font settings must match.
-	FontOpacity *int64 `locationName:"fontOpacity" type:"integer"`
+	//
+	// FontOpacity is a required field
+	FontOpacity *int64 `locationName:"fontOpacity" type:"integer" required:"true"`
 
 	// Font resolution in DPI (dots per inch); default is 96 dpi.All burn-in and
 	// DVB-Sub font settings must match.
-	FontResolution *int64 `locationName:"fontResolution" type:"integer"`
+	FontResolution *int64 `locationName:"fontResolution" min:"96" type:"integer"`
 
 	// A positive integer indicates the exact font size in points. Set to 0 for
 	// automatic font size selection. All burn-in and DVB-Sub font settings must
@@ -4124,13 +5167,17 @@ type DvbSubDestinationSettings struct {
 	// that are either 608/embedded or teletext. These source settings are already
 	// pre-defined by the caption stream. All burn-in and DVB-Sub font settings
 	// must match.
-	OutlineColor *string `locationName:"outlineColor" type:"string" enum:"DvbSubtitleOutlineColor"`
+	//
+	// OutlineColor is a required field
+	OutlineColor *string `locationName:"outlineColor" type:"string" required:"true" enum:"DvbSubtitleOutlineColor"`
 
 	// Specifies font outline size in pixels. This option is not valid for source
 	// captions that are either 608/embedded or teletext. These source settings
 	// are already pre-defined by the caption stream. All burn-in and DVB-Sub font
 	// settings must match.
-	OutlineSize *int64 `locationName:"outlineSize" type:"integer"`
+	//
+	// OutlineSize is a required field
+	OutlineSize *int64 `locationName:"outlineSize" type:"integer" required:"true"`
 
 	// Specifies the color of the shadow cast by the captions.All burn-in and DVB-Sub
 	// font settings must match.
@@ -4151,9 +5198,11 @@ type DvbSubDestinationSettings struct {
 	// burn-in and DVB-Sub font settings must match.
 	ShadowYOffset *int64 `locationName:"shadowYOffset" type:"integer"`
 
-	// Controls whether a fixed grid size or proportional font spacing will be used
-	// to generate the output subtitles bitmap. Only applicable for Teletext inputs
-	// and DVB-Sub/Burn-in outputs.
+	// Only applies to jobs with input captions in Teletext or STL formats. Specify
+	// whether the spacing between letters in your captions is set by the captions
+	// grid or varies depending on letter width. Choose fixed grid to conform to
+	// the spacing specified in the captions file more accurately. Choose proportional
+	// to make the text easier to read if the captions are closed caption.
 	TeletextSpacing *string `locationName:"teletextSpacing" type:"string" enum:"DvbSubtitleTeletextSpacing"`
 
 	// Specifies the horizontal position of the caption relative to the left side
@@ -4183,6 +5232,37 @@ func (s DvbSubDestinationSettings) String() string {
 // GoString returns the string representation
 func (s DvbSubDestinationSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DvbSubDestinationSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DvbSubDestinationSettings"}
+	if s.Alignment == nil {
+		invalidParams.Add(request.NewErrParamRequired("Alignment"))
+	}
+	if s.FontOpacity == nil {
+		invalidParams.Add(request.NewErrParamRequired("FontOpacity"))
+	}
+	if s.FontResolution != nil && *s.FontResolution < 96 {
+		invalidParams.Add(request.NewErrParamMinValue("FontResolution", 96))
+	}
+	if s.OutlineColor == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutlineColor"))
+	}
+	if s.OutlineSize == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutlineSize"))
+	}
+	if s.ShadowXOffset != nil && *s.ShadowXOffset < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("ShadowXOffset", -2.147483648e+09))
+	}
+	if s.ShadowYOffset != nil && *s.ShadowYOffset < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("ShadowYOffset", -2.147483648e+09))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAlignment sets the Alignment field's value.
@@ -4288,7 +5368,7 @@ type DvbSubSourceSettings struct {
 	// When using DVB-Sub with Burn-In or SMPTE-TT, use this PID for the source
 	// content. Unused for DVB-Sub passthrough. All DVB-Sub content is passed through,
 	// regardless of selectors.
-	Pid *int64 `locationName:"pid" type:"integer"`
+	Pid *int64 `locationName:"pid" min:"1" type:"integer"`
 }
 
 // String returns the string representation
@@ -4299,6 +5379,19 @@ func (s DvbSubSourceSettings) String() string {
 // GoString returns the string representation
 func (s DvbSubSourceSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DvbSubSourceSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DvbSubSourceSettings"}
+	if s.Pid != nil && *s.Pid < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Pid", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetPid sets the Pid field's value.
@@ -4313,7 +5406,9 @@ type DvbTdtSettings struct {
 
 	// The number of milliseconds between instances of this table in the output
 	// transport stream.
-	TdtInterval *int64 `locationName:"tdtInterval" type:"integer"`
+	//
+	// TdtInterval is a required field
+	TdtInterval *int64 `locationName:"tdtInterval" min:"1000" type:"integer" required:"true"`
 }
 
 // String returns the string representation
@@ -4324,6 +5419,22 @@ func (s DvbTdtSettings) String() string {
 // GoString returns the string representation
 func (s DvbTdtSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DvbTdtSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DvbTdtSettings"}
+	if s.TdtInterval == nil {
+		invalidParams.Add(request.NewErrParamRequired("TdtInterval"))
+	}
+	if s.TdtInterval != nil && *s.TdtInterval < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("TdtInterval", 1000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetTdtInterval sets the TdtInterval field's value.
@@ -4342,7 +5453,7 @@ type Eac3Settings struct {
 	AttenuationControl *string `locationName:"attenuationControl" type:"string" enum:"Eac3AttenuationControl"`
 
 	// Average bitrate in bits/second. Valid bitrates depend on the coding mode.
-	Bitrate *int64 `locationName:"bitrate" type:"integer"`
+	Bitrate *int64 `locationName:"bitrate" min:"64000" type:"integer"`
 
 	// Specifies the "Bitstream Mode" (bsmod) for the emitted E-AC-3 stream. See
 	// ATSC A/52-2012 (Annex E) for background on these values.
@@ -4356,7 +5467,7 @@ type Eac3Settings struct {
 
 	// Sets the dialnorm for the output. If blank and input audio is Dolby Digital
 	// Plus, dialnorm will be passed through.
-	Dialnorm *int64 `locationName:"dialnorm" type:"integer"`
+	Dialnorm *int64 `locationName:"dialnorm" min:"1" type:"integer"`
 
 	// Enables Dynamic Range Compression that restricts the absolute peak level
 	// for a signal.
@@ -4405,7 +5516,7 @@ type Eac3Settings struct {
 	PhaseControl *string `locationName:"phaseControl" type:"string" enum:"Eac3PhaseControl"`
 
 	// Sample rate in hz. Sample rate is always 48000.
-	SampleRate *int64 `locationName:"sampleRate" type:"integer"`
+	SampleRate *int64 `locationName:"sampleRate" min:"48000" type:"integer"`
 
 	// Stereo downmix preference. Only used for 3/2 coding mode.
 	StereoDownmix *string `locationName:"stereoDownmix" type:"string" enum:"Eac3StereoDownmix"`
@@ -4427,6 +5538,25 @@ func (s Eac3Settings) String() string {
 // GoString returns the string representation
 func (s Eac3Settings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Eac3Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Eac3Settings"}
+	if s.Bitrate != nil && *s.Bitrate < 64000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 64000))
+	}
+	if s.Dialnorm != nil && *s.Dialnorm < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Dialnorm", 1))
+	}
+	if s.SampleRate != nil && *s.SampleRate < 48000 {
+		invalidParams.Add(request.NewErrParamMinValue("SampleRate", 48000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAttenuationControl sets the AttenuationControl field's value.
@@ -4566,11 +5696,11 @@ type EmbeddedSourceSettings struct {
 
 	// Specifies the 608/708 channel number within the video track from which to
 	// extract captions. Unused for passthrough.
-	Source608ChannelNumber *int64 `locationName:"source608ChannelNumber" type:"integer"`
+	Source608ChannelNumber *int64 `locationName:"source608ChannelNumber" min:"1" type:"integer"`
 
 	// Specifies the video track index used for extracting captions. The system
 	// only supports one input video track, so this should always be set to '1'.
-	Source608TrackNumber *int64 `locationName:"source608TrackNumber" type:"integer"`
+	Source608TrackNumber *int64 `locationName:"source608TrackNumber" min:"1" type:"integer"`
 }
 
 // String returns the string representation
@@ -4581,6 +5711,22 @@ func (s EmbeddedSourceSettings) String() string {
 // GoString returns the string representation
 func (s EmbeddedSourceSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EmbeddedSourceSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EmbeddedSourceSettings"}
+	if s.Source608ChannelNumber != nil && *s.Source608ChannelNumber < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Source608ChannelNumber", 1))
+	}
+	if s.Source608TrackNumber != nil && *s.Source608TrackNumber < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Source608TrackNumber", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetConvert608To708 sets the Convert608To708 field's value.
@@ -4691,7 +5837,9 @@ type FileSourceSettings struct {
 
 	// External caption file used for loading captions. Accepted file extensions
 	// are 'scc', 'ttml', 'dfxp', 'stl', 'srt', and 'smi'.
-	SourceFile *string `locationName:"sourceFile" type:"string"`
+	//
+	// SourceFile is a required field
+	SourceFile *string `locationName:"sourceFile" min:"14" type:"string" required:"true"`
 
 	// Specifies a time delta in seconds to offset the captions from the source
 	// file.
@@ -4706,6 +5854,25 @@ func (s FileSourceSettings) String() string {
 // GoString returns the string representation
 func (s FileSourceSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FileSourceSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FileSourceSettings"}
+	if s.SourceFile == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceFile"))
+	}
+	if s.SourceFile != nil && len(*s.SourceFile) < 14 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceFile", 14))
+	}
+	if s.TimeDelta != nil && *s.TimeDelta < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("TimeDelta", -2.147483648e+09))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetConvert608To708 sets the Convert608To708 field's value.
@@ -4737,7 +5904,7 @@ type FrameCaptureSettings struct {
 	// 1/3 frame per second) will capture the first frame, then 1 frame every 3s.
 	// Files will be named as filename.n.jpg where n is the 0-based sequence number
 	// of each Capture.
-	FramerateDenominator *int64 `locationName:"framerateDenominator" type:"integer"`
+	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
 	// Frame capture will encode the first frame of the output stream, then one
 	// frame every framerateDenominator/framerateNumerator seconds. For example,
@@ -4745,13 +5912,13 @@ type FrameCaptureSettings struct {
 	// 1/3 frame per second) will capture the first frame, then 1 frame every 3s.
 	// Files will be named as filename.NNNNNNN.jpg where N is the 0-based frame
 	// sequence number zero padded to 7 decimal places.
-	FramerateNumerator *int64 `locationName:"framerateNumerator" type:"integer"`
+	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
 	// Maximum number of captures (encoded jpg output files).
-	MaxCaptures *int64 `locationName:"maxCaptures" type:"integer"`
+	MaxCaptures *int64 `locationName:"maxCaptures" min:"1" type:"integer"`
 
 	// JPEG Quality - a higher value equals higher quality.
-	Quality *int64 `locationName:"quality" type:"integer"`
+	Quality *int64 `locationName:"quality" min:"1" type:"integer"`
 }
 
 // String returns the string representation
@@ -4762,6 +5929,28 @@ func (s FrameCaptureSettings) String() string {
 // GoString returns the string representation
 func (s FrameCaptureSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FrameCaptureSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FrameCaptureSettings"}
+	if s.FramerateDenominator != nil && *s.FramerateDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateDenominator", 1))
+	}
+	if s.FramerateNumerator != nil && *s.FramerateNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateNumerator", 1))
+	}
+	if s.MaxCaptures != nil && *s.MaxCaptures < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxCaptures", 1))
+	}
+	if s.Quality != nil && *s.Quality < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Quality", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetFramerateDenominator sets the FramerateDenominator field's value.
@@ -5055,11 +6244,9 @@ type H264Settings struct {
 	// quality.
 	AdaptiveQuantization *string `locationName:"adaptiveQuantization" type:"string" enum:"H264AdaptiveQuantization"`
 
-	// Average bitrate in bits/second. Required for VBR, CBR, and ABR. Five megabits
-	// can be entered as 5000000 or 5m. Five hundred kilobits can be entered as
-	// 500000 or 0.5m. For MS Smooth outputs, bitrates must be unique when rounded
-	// down to the nearest multiple of 1000.
-	Bitrate *int64 `locationName:"bitrate" type:"integer"`
+	// Average bitrate in bits/second. Required for VBR and CBR. For MS Smooth outputs,
+	// bitrates must be unique when rounded down to the nearest multiple of 1000.
+	Bitrate *int64 `locationName:"bitrate" min:"1000" type:"integer"`
 
 	// H.264 Level.
 	CodecLevel *string `locationName:"codecLevel" type:"string" enum:"H264CodecLevel"`
@@ -5077,9 +6264,17 @@ type H264Settings struct {
 	// Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.
 	FlickerAdaptiveQuantization *string `locationName:"flickerAdaptiveQuantization" type:"string" enum:"H264FlickerAdaptiveQuantization"`
 
-	// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-	// the service to use the framerate from the input. Using the console, do this
-	// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+	// If you are using the console, use the Framerate setting to specify the framerate
+	// for this output. If you want to keep the same framerate as the input video,
+	// choose Follow source. If you want to do framerate conversion, choose a framerate
+	// from the dropdown list or choose Custom. The framerates shown in the dropdown
+	// list are decimal approximations of fractions. If you choose Custom, specify
+	// your framerate as a fraction. If you are creating your transcoding job specification
+	// as a JSON file without the console, use FramerateControl to specify which
+	// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+	// if you want the service to use the framerate from the input. Choose SPECIFIED
+	// if you want the service to use the framerate you specify in the settings
+	// FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"H264FramerateControl"`
 
 	// When set to INTERPOLATE, produces smoother motion during framerate conversion.
@@ -5091,11 +6286,11 @@ type H264Settings struct {
 	// example, use 1001 for the value of FramerateDenominator. When you use the
 	// console for transcode jobs that use framerate conversion, provide the value
 	// as a decimal number for Framerate. In this example, specify 23.976.
-	FramerateDenominator *int64 `locationName:"framerateDenominator" type:"integer"`
+	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
 	// Framerate numerator - framerate is a fraction, e.g. 24000 / 1001 = 23.976
 	// fps.
-	FramerateNumerator *int64 `locationName:"framerateNumerator" type:"integer"`
+	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
 	// If enable, use reference B frames for GOP structures that have B frames >
 	// 1.
@@ -5117,27 +6312,26 @@ type H264Settings struct {
 	// Percentage of the buffer that should initially be filled (HRD buffer model).
 	HrdBufferInitialFillPercentage *int64 `locationName:"hrdBufferInitialFillPercentage" type:"integer"`
 
-	// Size of buffer (HRD buffer model). Five megabits can be entered as 5000000
-	// or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.
+	// Size of buffer (HRD buffer model) in bits. For example, enter five megabits
+	// as 5000000.
 	HrdBufferSize *int64 `locationName:"hrdBufferSize" type:"integer"`
 
 	// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 	// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 	// interlaced output with the entire output having the same field polarity (top
-	// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+	// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 	// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-	// behavior depends on the input scan type. - If the source is interlaced, the
-	// output will be interlaced with the same polarity as the source (it will follow
-	// the source). The output could therefore be a mix of "top field first" and
-	// "bottom field first". - If the source is progressive, the output will be
-	// interlaced with "top field first" or "bottom field first" polarity, depending
+	// behavior depends on the input scan type, as follows. - If the source is interlaced,
+	// the output will be interlaced with the same polarity as the source (it will
+	// follow the source). The output could therefore be a mix of "top field first"
+	// and "bottom field first". - If the source is progressive, the output will
+	// be interlaced with "top field first" or "bottom field first" polarity, depending
 	// on which of the Follow options you chose.
 	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"H264InterlaceMode"`
 
-	// Maximum bitrate in bits/second (for VBR mode only). Five megabits can be
-	// entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000
-	// or 0.5m.
-	MaxBitrate *int64 `locationName:"maxBitrate" type:"integer"`
+	// Maximum bitrate in bits/second. For example, enter five megabits per second
+	// as 5000000.
+	MaxBitrate *int64 `locationName:"maxBitrate" min:"1000" type:"integer"`
 
 	// Enforces separation between repeated (cadence) I-frames and I-frames inserted
 	// by Scene Change Detection. If a scene change I-frame is within I-interval
@@ -5153,7 +6347,7 @@ type H264Settings struct {
 
 	// Number of reference frames to use. The encoder may use more than requested
 	// if using B-frames and/or interlaced encoding.
-	NumberReferenceFrames *int64 `locationName:"numberReferenceFrames" type:"integer"`
+	NumberReferenceFrames *int64 `locationName:"numberReferenceFrames" min:"1" type:"integer"`
 
 	// Using the API, enable ParFollowSource if you want the service to use the
 	// pixel aspect ratio from the input. Using the console, do this by choosing
@@ -5161,18 +6355,18 @@ type H264Settings struct {
 	ParControl *string `locationName:"parControl" type:"string" enum:"H264ParControl"`
 
 	// Pixel Aspect Ratio denominator.
-	ParDenominator *int64 `locationName:"parDenominator" type:"integer"`
+	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
 	// Pixel Aspect Ratio numerator.
-	ParNumerator *int64 `locationName:"parNumerator" type:"integer"`
+	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
 	// Use Quality tuning level (H264QualityTuningLevel) to specifiy whether to
 	// use fast single-pass, high-quality singlepass, or high-quality multipass
 	// video encoding.
 	QualityTuningLevel *string `locationName:"qualityTuningLevel" type:"string" enum:"H264QualityTuningLevel"`
 
-	// Rate control mode. CQ uses constant quantizer (qp), ABR (average bitrate)
-	// does not write HRD parameters.
+	// Use this setting to specify whether this output has a variable bitrate (VBR)
+	// or constant bitrate (CBR).
 	RateControlMode *string `locationName:"rateControlMode" type:"string" enum:"H264RateControlMode"`
 
 	// Places a PPS header on each encoded picture, even if repeated.
@@ -5184,7 +6378,7 @@ type H264Settings struct {
 	// Number of slices per picture. Must be less than or equal to the number of
 	// macroblock rows for progressive pictures, and less than or equal to half
 	// the number of macroblock rows for interlaced pictures.
-	Slices *int64 `locationName:"slices" type:"integer"`
+	Slices *int64 `locationName:"slices" min:"1" type:"integer"`
 
 	// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
 	// as 25fps, and audio is sped up correspondingly.
@@ -5226,6 +6420,40 @@ func (s H264Settings) String() string {
 // GoString returns the string representation
 func (s H264Settings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *H264Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "H264Settings"}
+	if s.Bitrate != nil && *s.Bitrate < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 1000))
+	}
+	if s.FramerateDenominator != nil && *s.FramerateDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateDenominator", 1))
+	}
+	if s.FramerateNumerator != nil && *s.FramerateNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateNumerator", 1))
+	}
+	if s.MaxBitrate != nil && *s.MaxBitrate < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxBitrate", 1000))
+	}
+	if s.NumberReferenceFrames != nil && *s.NumberReferenceFrames < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("NumberReferenceFrames", 1))
+	}
+	if s.ParDenominator != nil && *s.ParDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParDenominator", 1))
+	}
+	if s.ParNumerator != nil && *s.ParNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParNumerator", 1))
+	}
+	if s.Slices != nil && *s.Slices < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Slices", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAdaptiveQuantization sets the AdaptiveQuantization field's value.
@@ -5462,11 +6690,9 @@ type H265Settings struct {
 	// Log Gamma (HLG) Electro-Optical Transfer Function (EOTF).
 	AlternateTransferFunctionSei *string `locationName:"alternateTransferFunctionSei" type:"string" enum:"H265AlternateTransferFunctionSei"`
 
-	// Average bitrate in bits/second. Required for VBR, CBR, and ABR. Five megabits
-	// can be entered as 5000000 or 5m. Five hundred kilobits can be entered as
-	// 500000 or 0.5m. For MS Smooth outputs, bitrates must be unique when rounded
-	// down to the nearest multiple of 1000.
-	Bitrate *int64 `locationName:"bitrate" type:"integer"`
+	// Average bitrate in bits/second. Required for VBR and CBR. For MS Smooth outputs,
+	// bitrates must be unique when rounded down to the nearest multiple of 1000.
+	Bitrate *int64 `locationName:"bitrate" min:"1000" type:"integer"`
 
 	// H.265 Level.
 	CodecLevel *string `locationName:"codecLevel" type:"string" enum:"H265CodecLevel"`
@@ -5479,20 +6705,28 @@ type H265Settings struct {
 	// Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.
 	FlickerAdaptiveQuantization *string `locationName:"flickerAdaptiveQuantization" type:"string" enum:"H265FlickerAdaptiveQuantization"`
 
-	// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-	// the service to use the framerate from the input. Using the console, do this
-	// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+	// If you are using the console, use the Framerate setting to specify the framerate
+	// for this output. If you want to keep the same framerate as the input video,
+	// choose Follow source. If you want to do framerate conversion, choose a framerate
+	// from the dropdown list or choose Custom. The framerates shown in the dropdown
+	// list are decimal approximations of fractions. If you choose Custom, specify
+	// your framerate as a fraction. If you are creating your transcoding job sepecification
+	// as a JSON file without the console, use FramerateControl to specify which
+	// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+	// if you want the service to use the framerate from the input. Choose SPECIFIED
+	// if you want the service to use the framerate you specify in the settings
+	// FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"H265FramerateControl"`
 
 	// When set to INTERPOLATE, produces smoother motion during framerate conversion.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"H265FramerateConversionAlgorithm"`
 
 	// Framerate denominator.
-	FramerateDenominator *int64 `locationName:"framerateDenominator" type:"integer"`
+	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
 	// Framerate numerator - framerate is a fraction, e.g. 24000 / 1001 = 23.976
 	// fps.
-	FramerateNumerator *int64 `locationName:"framerateNumerator" type:"integer"`
+	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
 	// If enable, use reference B frames for GOP structures that have B frames >
 	// 1.
@@ -5514,14 +6748,14 @@ type H265Settings struct {
 	// Percentage of the buffer that should initially be filled (HRD buffer model).
 	HrdBufferInitialFillPercentage *int64 `locationName:"hrdBufferInitialFillPercentage" type:"integer"`
 
-	// Size of buffer (HRD buffer model). Five megabits can be entered as 5000000
-	// or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.
+	// Size of buffer (HRD buffer model) in bits. For example, enter five megabits
+	// as 5000000.
 	HrdBufferSize *int64 `locationName:"hrdBufferSize" type:"integer"`
 
 	// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 	// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 	// interlaced output with the entire output having the same field polarity (top
-	// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+	// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 	// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
 	// behavior depends on the input scan type. - If the source is interlaced, the
 	// output will be interlaced with the same polarity as the source (it will follow
@@ -5531,10 +6765,8 @@ type H265Settings struct {
 	// on which of the Follow options you chose.
 	InterlaceMode *string `locationName:"interlaceMode" type:"string" enum:"H265InterlaceMode"`
 
-	// Maximum bitrate in bits/second (for VBR mode only). Five megabits can be
-	// entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000
-	// or 0.5m.
-	MaxBitrate *int64 `locationName:"maxBitrate" type:"integer"`
+	// Maximum bitrate in bits/second.
+	MaxBitrate *int64 `locationName:"maxBitrate" min:"1000" type:"integer"`
 
 	// Enforces separation between repeated (cadence) I-frames and I-frames inserted
 	// by Scene Change Detection. If a scene change I-frame is within I-interval
@@ -5550,7 +6782,7 @@ type H265Settings struct {
 
 	// Number of reference frames to use. The encoder may use more than requested
 	// if using B-frames and/or interlaced encoding.
-	NumberReferenceFrames *int64 `locationName:"numberReferenceFrames" type:"integer"`
+	NumberReferenceFrames *int64 `locationName:"numberReferenceFrames" min:"1" type:"integer"`
 
 	// Using the API, enable ParFollowSource if you want the service to use the
 	// pixel aspect ratio from the input. Using the console, do this by choosing
@@ -5558,18 +6790,18 @@ type H265Settings struct {
 	ParControl *string `locationName:"parControl" type:"string" enum:"H265ParControl"`
 
 	// Pixel Aspect Ratio denominator.
-	ParDenominator *int64 `locationName:"parDenominator" type:"integer"`
+	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
 	// Pixel Aspect Ratio numerator.
-	ParNumerator *int64 `locationName:"parNumerator" type:"integer"`
+	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
 	// Use Quality tuning level (H265QualityTuningLevel) to specifiy whether to
 	// use fast single-pass, high-quality singlepass, or high-quality multipass
 	// video encoding.
 	QualityTuningLevel *string `locationName:"qualityTuningLevel" type:"string" enum:"H265QualityTuningLevel"`
 
-	// Rate control mode. CQ uses constant quantizer (qp), ABR (average bitrate)
-	// does not write HRD parameters.
+	// Use this setting to specify whether this output has a variable bitrate (VBR)
+	// or constant bitrate (CBR).
 	RateControlMode *string `locationName:"rateControlMode" type:"string" enum:"H265RateControlMode"`
 
 	// Specify Sample Adaptive Offset (SAO) filter strength. Adaptive mode dynamically
@@ -5582,7 +6814,7 @@ type H265Settings struct {
 	// Number of slices per picture. Must be less than or equal to the number of
 	// macroblock rows for progressive pictures, and less than or equal to half
 	// the number of macroblock rows for interlaced pictures.
-	Slices *int64 `locationName:"slices" type:"integer"`
+	Slices *int64 `locationName:"slices" min:"1" type:"integer"`
 
 	// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
 	// as 25fps, and audio is sped up correspondingly.
@@ -5621,6 +6853,12 @@ type H265Settings struct {
 
 	// Inserts timecode for each frame as 4 bytes of an unregistered SEI message.
 	UnregisteredSeiTimecode *string `locationName:"unregisteredSeiTimecode" type:"string" enum:"H265UnregisteredSeiTimecode"`
+
+	// If HVC1, output that is H.265 will be marked as HVC1 and adhere to the ISO-IECJTC1-SC29_N13798_Text_ISOIEC_FDIS_14496-15_3rd_E
+	// spec which states that parameter set NAL units will be stored in the sample
+	// headers but not in the samples directly. If HEV1, then H.265 will be marked
+	// as HEV1 and parameter set NAL units will be written into the samples.
+	WriteMp4PackagingType *string `locationName:"writeMp4PackagingType" type:"string" enum:"H265WriteMp4PackagingType"`
 }
 
 // String returns the string representation
@@ -5631,6 +6869,40 @@ func (s H265Settings) String() string {
 // GoString returns the string representation
 func (s H265Settings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *H265Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "H265Settings"}
+	if s.Bitrate != nil && *s.Bitrate < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 1000))
+	}
+	if s.FramerateDenominator != nil && *s.FramerateDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateDenominator", 1))
+	}
+	if s.FramerateNumerator != nil && *s.FramerateNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateNumerator", 1))
+	}
+	if s.MaxBitrate != nil && *s.MaxBitrate < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxBitrate", 1000))
+	}
+	if s.NumberReferenceFrames != nil && *s.NumberReferenceFrames < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("NumberReferenceFrames", 1))
+	}
+	if s.ParDenominator != nil && *s.ParDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParDenominator", 1))
+	}
+	if s.ParNumerator != nil && *s.ParNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParNumerator", 1))
+	}
+	if s.Slices != nil && *s.Slices < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Slices", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAdaptiveQuantization sets the AdaptiveQuantization field's value.
@@ -5849,40 +7121,53 @@ func (s *H265Settings) SetUnregisteredSeiTimecode(v string) *H265Settings {
 	return s
 }
 
-// Use the HDR master display (Hdr10Metadata) settings to provide values for
-// HDR color. These values vary depending on the input video and must be provided
-// by a color grader. Range is 0 to 50,000, each increment represents 0.00002
-// in CIE1931 color coordinate.
+// SetWriteMp4PackagingType sets the WriteMp4PackagingType field's value.
+func (s *H265Settings) SetWriteMp4PackagingType(v string) *H265Settings {
+	s.WriteMp4PackagingType = &v
+	return s
+}
+
+// Use the HDR master display (Hdr10Metadata) settings to correct HDR metadata
+// or to provide missing metadata. These values vary depending on the input
+// video and must be provided by a color grader. Range is 0 to 50,000, each
+// increment represents 0.00002 in CIE1931 color coordinate. Note that these
+// settings are not color correction. Note that if you are creating HDR outputs
+// inside of an HLS CMAF package, to comply with the Apple specification, you
+// must use the HVC1 for H.265 setting.
 type Hdr10Metadata struct {
 	_ struct{} `type:"structure"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	BluePrimaryX *int64 `locationName:"bluePrimaryX" type:"integer"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	BluePrimaryY *int64 `locationName:"bluePrimaryY" type:"integer"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	GreenPrimaryX *int64 `locationName:"greenPrimaryX" type:"integer"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	GreenPrimaryY *int64 `locationName:"greenPrimaryY" type:"integer"`
 
 	// Maximum light level among all samples in the coded video sequence, in units
 	// of candelas per square meter.
-	MaxContentLightLevel *int64 `locationName:"maxContentLightLevel" type:"integer"`
+	//
+	// MaxContentLightLevel is a required field
+	MaxContentLightLevel *int64 `locationName:"maxContentLightLevel" type:"integer" required:"true"`
 
 	// Maximum average light level of any frame in the coded video sequence, in
 	// units of candelas per square meter.
-	MaxFrameAverageLightLevel *int64 `locationName:"maxFrameAverageLightLevel" type:"integer"`
+	//
+	// MaxFrameAverageLightLevel is a required field
+	MaxFrameAverageLightLevel *int64 `locationName:"maxFrameAverageLightLevel" type:"integer" required:"true"`
 
 	// Nominal maximum mastering display luminance in units of of 0.0001 candelas
 	// per square meter.
@@ -5892,24 +7177,24 @@ type Hdr10Metadata struct {
 	// per square meter
 	MinLuminance *int64 `locationName:"minLuminance" type:"integer"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	RedPrimaryX *int64 `locationName:"redPrimaryX" type:"integer"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	RedPrimaryY *int64 `locationName:"redPrimaryY" type:"integer"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	WhitePointX *int64 `locationName:"whitePointX" type:"integer"`
 
-	// HDR Master Display Information comes from the color grader and the color
-	// grading tools. Range is 0 to 50,000, each increment represents 0.00002 in
-	// CIE1931 color coordinate.
+	// HDR Master Display Information must be provided by a color grader, using
+	// color grading tools. Range is 0 to 50,000, each increment represents 0.00002
+	// in CIE1931 color coordinate. Note that this setting is not for color correction.
 	WhitePointY *int64 `locationName:"whitePointY" type:"integer"`
 }
 
@@ -5921,6 +7206,22 @@ func (s Hdr10Metadata) String() string {
 // GoString returns the string representation
 func (s Hdr10Metadata) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Hdr10Metadata) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Hdr10Metadata"}
+	if s.MaxContentLightLevel == nil {
+		invalidParams.Add(request.NewErrParamRequired("MaxContentLightLevel"))
+	}
+	if s.MaxFrameAverageLightLevel == nil {
+		invalidParams.Add(request.NewErrParamRequired("MaxFrameAverageLightLevel"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetBluePrimaryX sets the BluePrimaryX field's value.
@@ -6002,8 +7303,11 @@ type HlsCaptionLanguageMapping struct {
 	// Caption channel.
 	CaptionChannel *int64 `locationName:"captionChannel" type:"integer"`
 
-	// Code to specify the language, following the specification "ISO 639-2 three-digit
-	// code":http://www.loc.gov/standards/iso639-2/
+	// Specify the language for this caption channel, using the ISO 639-2 or ISO
+	// 639-3 three-letter language code
+	CustomLanguageCode *string `locationName:"customLanguageCode" min:"3" type:"string"`
+
+	// Specify the language, using the ISO 639-2 three-letter code listed at https://www.loc.gov/standards/iso639-2/php/code_list.php.
 	LanguageCode *string `locationName:"languageCode" type:"string" enum:"LanguageCode"`
 
 	// Caption language description.
@@ -6020,9 +7324,31 @@ func (s HlsCaptionLanguageMapping) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HlsCaptionLanguageMapping) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HlsCaptionLanguageMapping"}
+	if s.CaptionChannel != nil && *s.CaptionChannel < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("CaptionChannel", -2.147483648e+09))
+	}
+	if s.CustomLanguageCode != nil && len(*s.CustomLanguageCode) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("CustomLanguageCode", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetCaptionChannel sets the CaptionChannel field's value.
 func (s *HlsCaptionLanguageMapping) SetCaptionChannel(v int64) *HlsCaptionLanguageMapping {
 	s.CaptionChannel = &v
+	return s
+}
+
+// SetCustomLanguageCode sets the CustomLanguageCode field's value.
+func (s *HlsCaptionLanguageMapping) SetCustomLanguageCode(v string) *HlsCaptionLanguageMapping {
+	s.CustomLanguageCode = &v
 	return s
 }
 
@@ -6045,7 +7371,7 @@ type HlsEncryptionSettings struct {
 	// This is a 128-bit, 16-byte hex value represented by a 32-character text string.
 	// If this parameter is not set then the Initialization Vector will follow the
 	// segment number by default.
-	ConstantInitializationVector *string `locationName:"constantInitializationVector" type:"string"`
+	ConstantInitializationVector *string `locationName:"constantInitializationVector" min:"32" type:"string"`
 
 	// Encrypts the segments with the given encryption scheme. Leave blank to disable.
 	// Selecting 'Disabled' in the web interface also disables encryption.
@@ -6063,7 +7389,9 @@ type HlsEncryptionSettings struct {
 	StaticKeyProvider *StaticKeyProvider `locationName:"staticKeyProvider" type:"structure"`
 
 	// Indicates which type of key provider is used for encryption.
-	Type *string `locationName:"type" type:"string" enum:"HlsKeyProviderType"`
+	//
+	// Type is a required field
+	Type *string `locationName:"type" type:"string" required:"true" enum:"HlsKeyProviderType"`
 }
 
 // String returns the string representation
@@ -6074,6 +7402,32 @@ func (s HlsEncryptionSettings) String() string {
 // GoString returns the string representation
 func (s HlsEncryptionSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HlsEncryptionSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HlsEncryptionSettings"}
+	if s.ConstantInitializationVector != nil && len(*s.ConstantInitializationVector) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("ConstantInitializationVector", 32))
+	}
+	if s.Type == nil {
+		invalidParams.Add(request.NewErrParamRequired("Type"))
+	}
+	if s.SpekeKeyProvider != nil {
+		if err := s.SpekeKeyProvider.Validate(); err != nil {
+			invalidParams.AddNested("SpekeKeyProvider", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.StaticKeyProvider != nil {
+		if err := s.StaticKeyProvider.Validate(); err != nil {
+			invalidParams.AddNested("StaticKeyProvider", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetConstantInitializationVector sets the ConstantInitializationVector field's value.
@@ -6171,7 +7525,9 @@ type HlsGroupSettings struct {
 	// When set, Minimum Segment Size is enforced by looking ahead and back within
 	// the specified range for a nearby avail and extending the segment size if
 	// needed.
-	MinSegmentLength *int64 `locationName:"minSegmentLength" type:"integer"`
+	//
+	// MinSegmentLength is a required field
+	MinSegmentLength *int64 `locationName:"minSegmentLength" type:"integer" required:"true"`
 
 	// Indicates whether the .m3u8 manifest file should be generated for this HLS
 	// output group.
@@ -6193,11 +7549,13 @@ type HlsGroupSettings struct {
 	// Length of MPEG-2 Transport Stream segments to create (in seconds). Note that
 	// segments will end on the next keyframe after this number of seconds, so actual
 	// segment length may be longer.
-	SegmentLength *int64 `locationName:"segmentLength" type:"integer"`
+	//
+	// SegmentLength is a required field
+	SegmentLength *int64 `locationName:"segmentLength" min:"1" type:"integer" required:"true"`
 
 	// Number of segments to write to a subdirectory before starting a new one.
 	// directoryStructure must be SINGLE_DIRECTORY for this setting to have an effect.
-	SegmentsPerSubdirectory *int64 `locationName:"segmentsPerSubdirectory" type:"integer"`
+	SegmentsPerSubdirectory *int64 `locationName:"segmentsPerSubdirectory" min:"1" type:"integer"`
 
 	// Include or exclude RESOLUTION attribute for video in EXT-X-STREAM-INF tag
 	// of variant manifest.
@@ -6221,6 +7579,49 @@ func (s HlsGroupSettings) String() string {
 // GoString returns the string representation
 func (s HlsGroupSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *HlsGroupSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "HlsGroupSettings"}
+	if s.MinSegmentLength == nil {
+		invalidParams.Add(request.NewErrParamRequired("MinSegmentLength"))
+	}
+	if s.SegmentLength == nil {
+		invalidParams.Add(request.NewErrParamRequired("SegmentLength"))
+	}
+	if s.SegmentLength != nil && *s.SegmentLength < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("SegmentLength", 1))
+	}
+	if s.SegmentsPerSubdirectory != nil && *s.SegmentsPerSubdirectory < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("SegmentsPerSubdirectory", 1))
+	}
+	if s.TimedMetadataId3Period != nil && *s.TimedMetadataId3Period < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("TimedMetadataId3Period", -2.147483648e+09))
+	}
+	if s.TimestampDeltaMilliseconds != nil && *s.TimestampDeltaMilliseconds < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("TimestampDeltaMilliseconds", -2.147483648e+09))
+	}
+	if s.CaptionLanguageMappings != nil {
+		for i, v := range s.CaptionLanguageMappings {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "CaptionLanguageMappings", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.Encryption != nil {
+		if err := s.Encryption.Validate(); err != nil {
+			invalidParams.AddNested("Encryption", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAdMarkers sets the AdMarkers field's value.
@@ -6430,15 +7831,19 @@ func (s *HlsSettings) SetSegmentModifier(v string) *HlsSettings {
 // To insert ID3 tags in your output, specify two values. Use ID3 tag (Id3)
 // to specify the base 64 encoded string and use Timecode (TimeCode) to specify
 // the time when the tag should be inserted. To insert multiple ID3 tags in
-// your output, create mulitple instances of ID3 insertion (Id3Insertion).
+// your output, create multiple instances of ID3 insertion (Id3Insertion).
 type Id3Insertion struct {
 	_ struct{} `type:"structure"`
 
 	// Use ID3 tag (Id3) to provide a tag value in base64-encode format.
-	Id3 *string `locationName:"id3" type:"string"`
+	//
+	// Id3 is a required field
+	Id3 *string `locationName:"id3" type:"string" required:"true"`
 
 	// Provide a Timecode (TimeCode) in HH:MM:SS:FF or HH:MM:SS;FF format.
-	Timecode *string `locationName:"timecode" type:"string"`
+	//
+	// Timecode is a required field
+	Timecode *string `locationName:"timecode" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -6449,6 +7854,22 @@ func (s Id3Insertion) String() string {
 // GoString returns the string representation
 func (s Id3Insertion) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Id3Insertion) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Id3Insertion"}
+	if s.Id3 == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id3"))
+	}
+	if s.Timecode == nil {
+		invalidParams.Add(request.NewErrParamRequired("Timecode"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetId3 sets the Id3 field's value.
@@ -6471,7 +7892,9 @@ type ImageInserter struct {
 
 	// Image to insert. Must be 32 bit windows BMP, PNG, or TGA file. Must not be
 	// larger than the output frames.
-	InsertableImages []*InsertableImage `locationName:"insertableImages" type:"list"`
+	//
+	// InsertableImages is a required field
+	InsertableImages []*InsertableImage `locationName:"insertableImages" type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -6482,6 +7905,29 @@ func (s ImageInserter) String() string {
 // GoString returns the string representation
 func (s ImageInserter) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ImageInserter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ImageInserter"}
+	if s.InsertableImages == nil {
+		invalidParams.Add(request.NewErrParamRequired("InsertableImages"))
+	}
+	if s.InsertableImages != nil {
+		for i, v := range s.InsertableImages {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "InsertableImages", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetInsertableImages sets the InsertableImages field's value.
@@ -6522,7 +7968,9 @@ type Input struct {
 	// Use Input (fileInput) to define the source file used in the transcode job.
 	// There can be multiple inputs in a job. These inputs are concantenated, in
 	// the order they are specified in the job, to create the output.
-	FileInput *string `locationName:"fileInput" type:"string"`
+	//
+	// FileInput is a required field
+	FileInput *string `locationName:"fileInput" type:"string" required:"true"`
 
 	// Use Filter enable (InputFilterEnable) to specify how the transcoding service
 	// applies the denoise and deblock filters. You must also enable the filters
@@ -6549,20 +7997,20 @@ type Input struct {
 	// transport stream. Note that Quad 4K is not currently supported. Default is
 	// the first program within the transport stream. If the program you specify
 	// doesn't exist, the transcoding service will use this default.
-	ProgramNumber *int64 `locationName:"programNumber" type:"integer"`
+	ProgramNumber *int64 `locationName:"programNumber" min:"1" type:"integer"`
 
 	// Set PSI control (InputPsiControl) for transport stream inputs to specify
 	// which data the demux process to scans. * Ignore PSI - Scan all PIDs for audio
 	// and video. * Use PSI - Scan only PSI data.
 	PsiControl *string `locationName:"psiControl" type:"string" enum:"InputPsiControl"`
 
-	// Use Timecode source (InputTimecodeSource) to specify how timecode information
-	// from your input is adjusted and encoded in all outputs for the job. Default
-	// is embedded. Set to Embedded (EMBEDDED) to use the timecode that is in the
-	// input video. If no embedded timecode is in the source, will set the timecode
-	// for the first frame to 00:00:00:00. Set to Start at 0 (ZEROBASED) to set
-	// the timecode of the initial frame to 00:00:00:00. Set to Specified start
-	// (SPECIFIEDSTART) to provide the initial timecode yourself the setting (Start).
+	// Timecode source under input settings (InputTimecodeSource) only affects the
+	// behavior of features that apply to a single input at a time, such as input
+	// clipping and synchronizing some captions formats. Use this setting to specify
+	// whether the service counts frames by timecodes embedded in the video (EMBEDDED)
+	// or by starting the first frame at zero (ZEROBASED). In both cases, the timecode
+	// format is HH:MM:SS:FF or HH:MM:SS;FF, where FF is the frame number. Only
+	// set this to EMBEDDED if your source video has embedded timecodes.
 	TimecodeSource *string `locationName:"timecodeSource" type:"string" enum:"InputTimecodeSource"`
 
 	// Selector for video.
@@ -6577,6 +8025,60 @@ func (s Input) String() string {
 // GoString returns the string representation
 func (s Input) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Input) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Input"}
+	if s.FileInput == nil {
+		invalidParams.Add(request.NewErrParamRequired("FileInput"))
+	}
+	if s.FilterStrength != nil && *s.FilterStrength < -5 {
+		invalidParams.Add(request.NewErrParamMinValue("FilterStrength", -5))
+	}
+	if s.ProgramNumber != nil && *s.ProgramNumber < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ProgramNumber", 1))
+	}
+	if s.AudioSelectorGroups != nil {
+		for i, v := range s.AudioSelectorGroups {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AudioSelectorGroups", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.AudioSelectors != nil {
+		for i, v := range s.AudioSelectors {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AudioSelectors", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.CaptionSelectors != nil {
+		for i, v := range s.CaptionSelectors {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "CaptionSelectors", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.VideoSelector != nil {
+		if err := s.VideoSelector.Validate(); err != nil {
+			invalidParams.AddNested("VideoSelector", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioSelectorGroups sets the AudioSelectorGroups field's value.
@@ -6657,25 +8159,31 @@ func (s *Input) SetVideoSelector(v *VideoSelector) *Input {
 	return s
 }
 
-// Include one instance of (InputClipping) for each input clip.
+// To transcode only portions of your input (clips), include one Input clipping
+// (one instance of InputClipping in the JSON job file) for each input clip.
+// All input clips you specify will be included in every output of the job.
 type InputClipping struct {
 	_ struct{} `type:"structure"`
 
 	// Set End timecode (EndTimecode) to the end of the portion of the input you
 	// are clipping. The frame corresponding to the End timecode value is included
 	// in the clip. Start timecode or End timecode may be left blank, but not both.
-	// When choosing this value, take into account your setting for Input timecode
-	// source. For example, if you have embedded timecodes that start at 01:00:00:00
-	// and you want your clip to begin five minutes into the video, use 01:00:05:00.
+	// Use the format HH:MM:SS:FF or HH:MM:SS;FF, where HH is the hour, MM is the
+	// minute, SS is the second, and FF is the frame number. When choosing this
+	// value, take into account your setting for timecode source under input settings
+	// (InputTimecodeSource). For example, if you have embedded timecodes that start
+	// at 01:00:00:00 and you want your clip to end six minutes into the video,
+	// use 01:06:00:00.
 	EndTimecode *string `locationName:"endTimecode" type:"string"`
 
 	// Set Start timecode (StartTimecode) to the beginning of the portion of the
 	// input you are clipping. The frame corresponding to the Start timecode value
 	// is included in the clip. Start timecode or End timecode may be left blank,
-	// but not both. When choosing this value, take into account your setting for
-	// Input timecode source. For example, if you have embedded timecodes that start
-	// at 01:00:00:00 and you want your clip to begin five minutes into the video,
-	// use 01:00:05:00.
+	// but not both. Use the format HH:MM:SS:FF or HH:MM:SS;FF, where HH is the
+	// hour, MM is the minute, SS is the second, and FF is the frame number. When
+	// choosing this value, take into account your setting for Input timecode source.
+	// For example, if you have embedded timecodes that start at 01:00:00:00 and
+	// you want your clip to begin five minutes into the video, use 01:05:00:00.
 	StartTimecode *string `locationName:"startTimecode" type:"string"`
 }
 
@@ -6755,20 +8263,20 @@ type InputTemplate struct {
 	// transport stream. Note that Quad 4K is not currently supported. Default is
 	// the first program within the transport stream. If the program you specify
 	// doesn't exist, the transcoding service will use this default.
-	ProgramNumber *int64 `locationName:"programNumber" type:"integer"`
+	ProgramNumber *int64 `locationName:"programNumber" min:"1" type:"integer"`
 
 	// Set PSI control (InputPsiControl) for transport stream inputs to specify
 	// which data the demux process to scans. * Ignore PSI - Scan all PIDs for audio
 	// and video. * Use PSI - Scan only PSI data.
 	PsiControl *string `locationName:"psiControl" type:"string" enum:"InputPsiControl"`
 
-	// Use Timecode source (InputTimecodeSource) to specify how timecode information
-	// from your input is adjusted and encoded in all outputs for the job. Default
-	// is embedded. Set to Embedded (EMBEDDED) to use the timecode that is in the
-	// input video. If no embedded timecode is in the source, will set the timecode
-	// for the first frame to 00:00:00:00. Set to Start at 0 (ZEROBASED) to set
-	// the timecode of the initial frame to 00:00:00:00. Set to Specified start
-	// (SPECIFIEDSTART) to provide the initial timecode yourself the setting (Start).
+	// Timecode source under input settings (InputTimecodeSource) only affects the
+	// behavior of features that apply to a single input at a time, such as input
+	// clipping and synchronizing some captions formats. Use this setting to specify
+	// whether the service counts frames by timecodes embedded in the video (EMBEDDED)
+	// or by starting the first frame at zero (ZEROBASED). In both cases, the timecode
+	// format is HH:MM:SS:FF or HH:MM:SS;FF, where FF is the frame number. Only
+	// set this to EMBEDDED if your source video has embedded timecodes.
 	TimecodeSource *string `locationName:"timecodeSource" type:"string" enum:"InputTimecodeSource"`
 
 	// Selector for video.
@@ -6783,6 +8291,57 @@ func (s InputTemplate) String() string {
 // GoString returns the string representation
 func (s InputTemplate) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InputTemplate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InputTemplate"}
+	if s.FilterStrength != nil && *s.FilterStrength < -5 {
+		invalidParams.Add(request.NewErrParamMinValue("FilterStrength", -5))
+	}
+	if s.ProgramNumber != nil && *s.ProgramNumber < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ProgramNumber", 1))
+	}
+	if s.AudioSelectorGroups != nil {
+		for i, v := range s.AudioSelectorGroups {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AudioSelectorGroups", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.AudioSelectors != nil {
+		for i, v := range s.AudioSelectors {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AudioSelectors", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.CaptionSelectors != nil {
+		for i, v := range s.CaptionSelectors {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "CaptionSelectors", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.VideoSelector != nil {
+		if err := s.VideoSelector.Validate(); err != nil {
+			invalidParams.AddNested("VideoSelector", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioSelectorGroups sets the AudioSelectorGroups field's value.
@@ -6883,28 +8442,39 @@ type InsertableImage struct {
 	// Use Image location (imageInserterInput) to specify the Amazon S3 location
 	// of the image to be inserted into the output. Use a 32 bit BMP, PNG, or TGA
 	// file that fits inside the video frame.
-	ImageInserterInput *string `locationName:"imageInserterInput" type:"string"`
+	//
+	// ImageInserterInput is a required field
+	ImageInserterInput *string `locationName:"imageInserterInput" min:"14" type:"string" required:"true"`
 
 	// Use Left (ImageX) to set the distance, in pixels, between the inserted image
 	// and the left edge of the frame. Required for BMP, PNG and TGA input.
-	ImageX *int64 `locationName:"imageX" type:"integer"`
+	//
+	// ImageX is a required field
+	ImageX *int64 `locationName:"imageX" type:"integer" required:"true"`
 
 	// Use Top (ImageY) to set the distance, in pixels, between the inserted image
 	// and the top edge of the video frame. Required for BMP, PNG and TGA input.
-	ImageY *int64 `locationName:"imageY" type:"integer"`
+	//
+	// ImageY is a required field
+	ImageY *int64 `locationName:"imageY" type:"integer" required:"true"`
 
 	// Use Layer (Layer) to specify how overlapping inserted images appear. Images
 	// with higher values of layer appear on top of images with lower values of
 	// layer.
-	Layer *int64 `locationName:"layer" type:"integer"`
+	//
+	// Layer is a required field
+	Layer *int64 `locationName:"layer" type:"integer" required:"true"`
 
 	// Use Opacity (Opacity) to specify how much of the underlying video shows through
 	// the inserted image. 0 is transparent and 100 is fully opaque. Default is
 	// 50.
-	Opacity *int64 `locationName:"opacity" type:"integer"`
+	//
+	// Opacity is a required field
+	Opacity *int64 `locationName:"opacity" type:"integer" required:"true"`
 
 	// Use Start time (StartTime) to specify the video timecode when the image is
-	// inserted in the output. This must be in timecode format (HH:MM:SS:FF)
+	// inserted in the output. This must be in timecode (HH:MM:SS:FF or HH:MM:SS;FF)
+	// format.
 	StartTime *string `locationName:"startTime" type:"string"`
 
 	// Specify the Width (Width) of the inserted image. Use a value that is less
@@ -6921,6 +8491,55 @@ func (s InsertableImage) String() string {
 // GoString returns the string representation
 func (s InsertableImage) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InsertableImage) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InsertableImage"}
+	if s.Duration != nil && *s.Duration < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("Duration", -2.147483648e+09))
+	}
+	if s.FadeIn != nil && *s.FadeIn < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("FadeIn", -2.147483648e+09))
+	}
+	if s.FadeOut != nil && *s.FadeOut < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("FadeOut", -2.147483648e+09))
+	}
+	if s.Height != nil && *s.Height < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("Height", -2.147483648e+09))
+	}
+	if s.ImageInserterInput == nil {
+		invalidParams.Add(request.NewErrParamRequired("ImageInserterInput"))
+	}
+	if s.ImageInserterInput != nil && len(*s.ImageInserterInput) < 14 {
+		invalidParams.Add(request.NewErrParamMinLen("ImageInserterInput", 14))
+	}
+	if s.ImageX == nil {
+		invalidParams.Add(request.NewErrParamRequired("ImageX"))
+	}
+	if s.ImageX != nil && *s.ImageX < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("ImageX", -2.147483648e+09))
+	}
+	if s.ImageY == nil {
+		invalidParams.Add(request.NewErrParamRequired("ImageY"))
+	}
+	if s.ImageY != nil && *s.ImageY < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("ImageY", -2.147483648e+09))
+	}
+	if s.Layer == nil {
+		invalidParams.Add(request.NewErrParamRequired("Layer"))
+	}
+	if s.Opacity == nil {
+		invalidParams.Add(request.NewErrParamRequired("Opacity"))
+	}
+	if s.Width != nil && *s.Width < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("Width", -2.147483648e+09))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetDuration sets the Duration field's value.
@@ -7024,10 +8643,14 @@ type Job struct {
 
 	// The IAM role you use for creating this job. For details about permissions,
 	// see the User Guide topic at the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html
-	Role *string `locationName:"role" type:"string"`
+	//
+	// Role is a required field
+	Role *string `locationName:"role" type:"string" required:"true"`
 
 	// JobSettings contains all the transcode settings for a job.
-	Settings *JobSettings `locationName:"settings" type:"structure"`
+	//
+	// Settings is a required field
+	Settings *JobSettings `locationName:"settings" type:"structure" required:"true"`
 
 	// A job's status can be SUBMITTED, PROGRESSING, COMPLETE, CANCELED, or ERROR.
 	Status *string `locationName:"status" type:"string" enum:"JobStatus"`
@@ -7144,21 +8767,25 @@ type JobSettings struct {
 	// Use Inputs (inputs) to define source file used in the transcode job. There
 	// can be multiple inputs add in a job. These inputs will be concantenated together
 	// to create the output.
-	Inputs []*Input `locationName:"inputs" type:"list"`
+	//
+	// Inputs is a required field
+	Inputs []*Input `locationName:"inputs" type:"list" required:"true"`
 
 	// Settings for Nielsen Configuration
 	NielsenConfiguration *NielsenConfiguration `locationName:"nielsenConfiguration" type:"structure"`
 
-	// **!!**(OutputGroups) contains one group of settings for each set of outputs
-	// that share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS,
-	// Quicktime, MXF, and no container) are grouped in a single output group as
-	// well. Required in (OutputGroups) is a group of settings that apply to the
-	// whole group. This required object depends on the value you set for (Type)
-	// under (OutputGroups)>(OutputGroupSettings). Type, settings object pairs are
-	// as follows. * FILE_GROUP_SETTINGS, FileGroupSettings * HLS_GROUP_SETTINGS,
-	// HlsGroupSettings * DASH_ISO_GROUP_SETTINGS, DashIsoGroupSettings * MS_SMOOTH_GROUP_SETTINGS,
-	// MsSmoothGroupSettings
-	OutputGroups []*OutputGroup `locationName:"outputGroups" type:"list"`
+	// (OutputGroups) contains one group of settings for each set of outputs that
+	// share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS, Quicktime,
+	// MXF, and no container) are grouped in a single output group as well. Required
+	// in (OutputGroups) is a group of settings that apply to the whole group. This
+	// required object depends on the value you set for (Type) under (OutputGroups)>(OutputGroupSettings).
+	// Type, settings object pairs are as follows. * FILE_GROUP_SETTINGS, FileGroupSettings
+	// * HLS_GROUP_SETTINGS, HlsGroupSettings * DASH_ISO_GROUP_SETTINGS, DashIsoGroupSettings
+	// * MS_SMOOTH_GROUP_SETTINGS, MsSmoothGroupSettings * CMAF_GROUP_SETTINGS,
+	// CmafGroupSettings
+	//
+	// OutputGroups is a required field
+	OutputGroups []*OutputGroup `locationName:"outputGroups" type:"list" required:"true"`
 
 	// Contains settings used to acquire and adjust timecode information from inputs.
 	TimecodeConfig *TimecodeConfig `locationName:"timecodeConfig" type:"structure"`
@@ -7178,6 +8805,55 @@ func (s JobSettings) String() string {
 // GoString returns the string representation
 func (s JobSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *JobSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "JobSettings"}
+	if s.AdAvailOffset != nil && *s.AdAvailOffset < -1000 {
+		invalidParams.Add(request.NewErrParamMinValue("AdAvailOffset", -1000))
+	}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.OutputGroups == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutputGroups"))
+	}
+	if s.AvailBlanking != nil {
+		if err := s.AvailBlanking.Validate(); err != nil {
+			invalidParams.AddNested("AvailBlanking", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Inputs != nil {
+		for i, v := range s.Inputs {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Inputs", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.OutputGroups != nil {
+		for i, v := range s.OutputGroups {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputGroups", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TimedMetadataInsertion != nil {
+		if err := s.TimedMetadataInsertion.Validate(); err != nil {
+			invalidParams.AddNested("TimedMetadataInsertion", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAdAvailOffset sets the AdAvailOffset field's value.
@@ -7244,7 +8920,9 @@ type JobTemplate struct {
 
 	// A name you create for each job template. Each name must be unique within
 	// your account.
-	Name *string `locationName:"name" type:"string"`
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
 
 	// Optional. The queue that jobs created from this template are assigned to.
 	// If you don't specify this, jobs will go to the default queue.
@@ -7252,7 +8930,9 @@ type JobTemplate struct {
 
 	// JobTemplateSettings contains all the transcode settings saved in the template
 	// that will be applied to jobs created from it.
-	Settings *JobTemplateSettings `locationName:"settings" type:"structure"`
+	//
+	// Settings is a required field
+	Settings *JobTemplateSettings `locationName:"settings" type:"structure" required:"true"`
 
 	// A job template can be of two types: system or custom. System or built-in
 	// job templates can't be modified or deleted by the user.
@@ -7344,16 +9024,18 @@ type JobTemplateSettings struct {
 	// Settings for Nielsen Configuration
 	NielsenConfiguration *NielsenConfiguration `locationName:"nielsenConfiguration" type:"structure"`
 
-	// **!!**(OutputGroups) contains one group of settings for each set of outputs
-	// that share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS,
-	// Quicktime, MXF, and no container) are grouped in a single output group as
-	// well. Required in (OutputGroups) is a group of settings that apply to the
-	// whole group. This required object depends on the value you set for (Type)
-	// under (OutputGroups)>(OutputGroupSettings). Type, settings object pairs are
-	// as follows. * FILE_GROUP_SETTINGS, FileGroupSettings * HLS_GROUP_SETTINGS,
-	// HlsGroupSettings * DASH_ISO_GROUP_SETTINGS, DashIsoGroupSettings * MS_SMOOTH_GROUP_SETTINGS,
-	// MsSmoothGroupSettings
-	OutputGroups []*OutputGroup `locationName:"outputGroups" type:"list"`
+	// (OutputGroups) contains one group of settings for each set of outputs that
+	// share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS, Quicktime,
+	// MXF, and no container) are grouped in a single output group as well. Required
+	// in (OutputGroups) is a group of settings that apply to the whole group. This
+	// required object depends on the value you set for (Type) under (OutputGroups)>(OutputGroupSettings).
+	// Type, settings object pairs are as follows. * FILE_GROUP_SETTINGS, FileGroupSettings
+	// * HLS_GROUP_SETTINGS, HlsGroupSettings * DASH_ISO_GROUP_SETTINGS, DashIsoGroupSettings
+	// * MS_SMOOTH_GROUP_SETTINGS, MsSmoothGroupSettings * CMAF_GROUP_SETTINGS,
+	// CmafGroupSettings
+	//
+	// OutputGroups is a required field
+	OutputGroups []*OutputGroup `locationName:"outputGroups" type:"list" required:"true"`
 
 	// Contains settings used to acquire and adjust timecode information from inputs.
 	TimecodeConfig *TimecodeConfig `locationName:"timecodeConfig" type:"structure"`
@@ -7373,6 +9055,52 @@ func (s JobTemplateSettings) String() string {
 // GoString returns the string representation
 func (s JobTemplateSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *JobTemplateSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "JobTemplateSettings"}
+	if s.AdAvailOffset != nil && *s.AdAvailOffset < -1000 {
+		invalidParams.Add(request.NewErrParamMinValue("AdAvailOffset", -1000))
+	}
+	if s.OutputGroups == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutputGroups"))
+	}
+	if s.AvailBlanking != nil {
+		if err := s.AvailBlanking.Validate(); err != nil {
+			invalidParams.AddNested("AvailBlanking", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Inputs != nil {
+		for i, v := range s.Inputs {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Inputs", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.OutputGroups != nil {
+		for i, v := range s.OutputGroups {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputGroups", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TimedMetadataInsertion != nil {
+		if err := s.TimedMetadataInsertion.Validate(); err != nil {
+			invalidParams.AddNested("TimedMetadataInsertion", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAdAvailOffset sets the AdAvailOffset field's value.
@@ -7856,7 +9584,7 @@ type M2tsSettings struct {
 	DvbTdtSettings *DvbTdtSettings `locationName:"dvbTdtSettings" type:"structure"`
 
 	// Packet Identifier (PID) for input source DVB Teletext data to this output.
-	DvbTeletextPid *int64 `locationName:"dvbTeletextPid" type:"integer"`
+	DvbTeletextPid *int64 `locationName:"dvbTeletextPid" min:"32" type:"integer"`
 
 	// When set to VIDEO_AND_FIXED_INTERVALS, audio EBP markers will be added to
 	// partitions 3 and 4. The interval between these additional markers will be
@@ -7911,7 +9639,7 @@ type M2tsSettings struct {
 	// Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport
 	// stream. When no value is given, the encoder will assign the same value as
 	// the Video PID.
-	PcrPid *int64 `locationName:"pcrPid" type:"integer"`
+	PcrPid *int64 `locationName:"pcrPid" min:"32" type:"integer"`
 
 	// The number of milliseconds between instances of this table in the output
 	// transport stream.
@@ -7919,10 +9647,10 @@ type M2tsSettings struct {
 
 	// Packet Identifier (PID) for the Program Map Table (PMT) in the transport
 	// stream.
-	PmtPid *int64 `locationName:"pmtPid" type:"integer"`
+	PmtPid *int64 `locationName:"pmtPid" min:"32" type:"integer"`
 
 	// Packet Identifier (PID) of the private metadata stream in the transport stream.
-	PrivateMetadataPid *int64 `locationName:"privateMetadataPid" type:"integer"`
+	PrivateMetadataPid *int64 `locationName:"privateMetadataPid" min:"32" type:"integer"`
 
 	// The value of the program number field in the Program Map Table.
 	ProgramNumber *int64 `locationName:"programNumber" type:"integer"`
@@ -7933,7 +9661,7 @@ type M2tsSettings struct {
 	RateMode *string `locationName:"rateMode" type:"string" enum:"M2tsRateMode"`
 
 	// Packet Identifier (PID) of the SCTE-35 stream in the transport stream.
-	Scte35Pid *int64 `locationName:"scte35Pid" type:"integer"`
+	Scte35Pid *int64 `locationName:"scte35Pid" min:"32" type:"integer"`
 
 	// Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from
 	// input to output.
@@ -7966,13 +9694,13 @@ type M2tsSettings struct {
 	SegmentationTime *float64 `locationName:"segmentationTime" type:"double"`
 
 	// Packet Identifier (PID) of the timed metadata stream in the transport stream.
-	TimedMetadataPid *int64 `locationName:"timedMetadataPid" type:"integer"`
+	TimedMetadataPid *int64 `locationName:"timedMetadataPid" min:"32" type:"integer"`
 
 	// The value of the transport stream ID field in the Program Map Table.
 	TransportStreamId *int64 `locationName:"transportStreamId" type:"integer"`
 
 	// Packet Identifier (PID) of the elementary video stream in the transport stream.
-	VideoPid *int64 `locationName:"videoPid" type:"integer"`
+	VideoPid *int64 `locationName:"videoPid" min:"32" type:"integer"`
 }
 
 // String returns the string representation
@@ -7983,6 +9711,52 @@ func (s M2tsSettings) String() string {
 // GoString returns the string representation
 func (s M2tsSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *M2tsSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "M2tsSettings"}
+	if s.DvbTeletextPid != nil && *s.DvbTeletextPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("DvbTeletextPid", 32))
+	}
+	if s.PcrPid != nil && *s.PcrPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("PcrPid", 32))
+	}
+	if s.PmtPid != nil && *s.PmtPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("PmtPid", 32))
+	}
+	if s.PrivateMetadataPid != nil && *s.PrivateMetadataPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("PrivateMetadataPid", 32))
+	}
+	if s.Scte35Pid != nil && *s.Scte35Pid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Scte35Pid", 32))
+	}
+	if s.TimedMetadataPid != nil && *s.TimedMetadataPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("TimedMetadataPid", 32))
+	}
+	if s.VideoPid != nil && *s.VideoPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("VideoPid", 32))
+	}
+	if s.DvbNitSettings != nil {
+		if err := s.DvbNitSettings.Validate(); err != nil {
+			invalidParams.AddNested("DvbNitSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DvbSdtSettings != nil {
+		if err := s.DvbSdtSettings.Validate(); err != nil {
+			invalidParams.AddNested("DvbSdtSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DvbTdtSettings != nil {
+		if err := s.DvbTdtSettings.Validate(); err != nil {
+			invalidParams.AddNested("DvbTdtSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioBufferModel sets the AudioBufferModel field's value.
@@ -8217,7 +9991,7 @@ type M3u8Settings struct {
 	// Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport
 	// stream. When no value is given, the encoder will assign the same value as
 	// the Video PID.
-	PcrPid *int64 `locationName:"pcrPid" type:"integer"`
+	PcrPid *int64 `locationName:"pcrPid" min:"32" type:"integer"`
 
 	// The number of milliseconds between instances of this table in the output
 	// transport stream.
@@ -8225,33 +9999,33 @@ type M3u8Settings struct {
 
 	// Packet Identifier (PID) for the Program Map Table (PMT) in the transport
 	// stream.
-	PmtPid *int64 `locationName:"pmtPid" type:"integer"`
+	PmtPid *int64 `locationName:"pmtPid" min:"32" type:"integer"`
 
 	// Packet Identifier (PID) of the private metadata stream in the transport stream.
-	PrivateMetadataPid *int64 `locationName:"privateMetadataPid" type:"integer"`
+	PrivateMetadataPid *int64 `locationName:"privateMetadataPid" min:"32" type:"integer"`
 
 	// The value of the program number field in the Program Map Table.
 	ProgramNumber *int64 `locationName:"programNumber" type:"integer"`
 
 	// Packet Identifier (PID) of the SCTE-35 stream in the transport stream.
-	Scte35Pid *int64 `locationName:"scte35Pid" type:"integer"`
+	Scte35Pid *int64 `locationName:"scte35Pid" min:"32" type:"integer"`
 
 	// Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from
 	// input to output.
 	Scte35Source *string `locationName:"scte35Source" type:"string" enum:"M3u8Scte35Source"`
 
-	// If PASSTHROUGH, inserts ID3 timed metadata from the timed_metadata REST command
-	// into this output.
+	// Applies only to HLS outputs. Use this setting to specify whether the service
+	// inserts the ID3 timed metadata from the input in this output.
 	TimedMetadata *string `locationName:"timedMetadata" type:"string" enum:"TimedMetadata"`
 
 	// Packet Identifier (PID) of the timed metadata stream in the transport stream.
-	TimedMetadataPid *int64 `locationName:"timedMetadataPid" type:"integer"`
+	TimedMetadataPid *int64 `locationName:"timedMetadataPid" min:"32" type:"integer"`
 
 	// The value of the transport stream ID field in the Program Map Table.
 	TransportStreamId *int64 `locationName:"transportStreamId" type:"integer"`
 
 	// Packet Identifier (PID) of the elementary video stream in the transport stream.
-	VideoPid *int64 `locationName:"videoPid" type:"integer"`
+	VideoPid *int64 `locationName:"videoPid" min:"32" type:"integer"`
 }
 
 // String returns the string representation
@@ -8262,6 +10036,34 @@ func (s M3u8Settings) String() string {
 // GoString returns the string representation
 func (s M3u8Settings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *M3u8Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "M3u8Settings"}
+	if s.PcrPid != nil && *s.PcrPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("PcrPid", 32))
+	}
+	if s.PmtPid != nil && *s.PmtPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("PmtPid", 32))
+	}
+	if s.PrivateMetadataPid != nil && *s.PrivateMetadataPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("PrivateMetadataPid", 32))
+	}
+	if s.Scte35Pid != nil && *s.Scte35Pid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Scte35Pid", 32))
+	}
+	if s.TimedMetadataPid != nil && *s.TimedMetadataPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("TimedMetadataPid", 32))
+	}
+	if s.VideoPid != nil && *s.VideoPid < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("VideoPid", 32))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioFramesPerPes sets the AudioFramesPerPes field's value.
@@ -8434,15 +10236,15 @@ type Mp2Settings struct {
 	_ struct{} `type:"structure"`
 
 	// Average bitrate in bits/second.
-	Bitrate *int64 `locationName:"bitrate" type:"integer"`
+	Bitrate *int64 `locationName:"bitrate" min:"32000" type:"integer"`
 
 	// Set Channels to specify the number of channels in this output audio track.
 	// Choosing Mono in the console will give you 1 output channel; choosing Stereo
 	// will give you 2. In the API, valid values are 1 and 2.
-	Channels *int64 `locationName:"channels" type:"integer"`
+	Channels *int64 `locationName:"channels" min:"1" type:"integer"`
 
 	// Sample rate in hz.
-	SampleRate *int64 `locationName:"sampleRate" type:"integer"`
+	SampleRate *int64 `locationName:"sampleRate" min:"32000" type:"integer"`
 }
 
 // String returns the string representation
@@ -8453,6 +10255,25 @@ func (s Mp2Settings) String() string {
 // GoString returns the string representation
 func (s Mp2Settings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Mp2Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Mp2Settings"}
+	if s.Bitrate != nil && *s.Bitrate < 32000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 32000))
+	}
+	if s.Channels != nil && *s.Channels < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Channels", 1))
+	}
+	if s.SampleRate != nil && *s.SampleRate < 32000 {
+		invalidParams.Add(request.NewErrParamMinValue("SampleRate", 32000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetBitrate sets the Bitrate field's value.
@@ -8539,11 +10360,9 @@ type Mpeg2Settings struct {
 	// quality.
 	AdaptiveQuantization *string `locationName:"adaptiveQuantization" type:"string" enum:"Mpeg2AdaptiveQuantization"`
 
-	// Average bitrate in bits/second. Required for VBR, CBR, and ABR. Five megabits
-	// can be entered as 5000000 or 5m. Five hundred kilobits can be entered as
-	// 500000 or 0.5m. For MS Smooth outputs, bitrates must be unique when rounded
-	// down to the nearest multiple of 1000.
-	Bitrate *int64 `locationName:"bitrate" type:"integer"`
+	// Average bitrate in bits/second. Required for VBR and CBR. For MS Smooth outputs,
+	// bitrates must be unique when rounded down to the nearest multiple of 1000.
+	Bitrate *int64 `locationName:"bitrate" min:"1000" type:"integer"`
 
 	// Use Level (Mpeg2CodecLevel) to set the MPEG-2 level for the video output.
 	CodecLevel *string `locationName:"codecLevel" type:"string" enum:"Mpeg2CodecLevel"`
@@ -8551,20 +10370,28 @@ type Mpeg2Settings struct {
 	// Use Profile (Mpeg2CodecProfile) to set the MPEG-2 profile for the video output.
 	CodecProfile *string `locationName:"codecProfile" type:"string" enum:"Mpeg2CodecProfile"`
 
-	// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-	// the service to use the framerate from the input. Using the console, do this
-	// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+	// If you are using the console, use the Framerate setting to specify the framerate
+	// for this output. If you want to keep the same framerate as the input video,
+	// choose Follow source. If you want to do framerate conversion, choose a framerate
+	// from the dropdown list or choose Custom. The framerates shown in the dropdown
+	// list are decimal approximations of fractions. If you choose Custom, specify
+	// your framerate as a fraction. If you are creating your transcoding job sepecification
+	// as a JSON file without the console, use FramerateControl to specify which
+	// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+	// if you want the service to use the framerate from the input. Choose SPECIFIED
+	// if you want the service to use the framerate you specify in the settings
+	// FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Mpeg2FramerateControl"`
 
 	// When set to INTERPOLATE, produces smoother motion during framerate conversion.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Mpeg2FramerateConversionAlgorithm"`
 
 	// Framerate denominator.
-	FramerateDenominator *int64 `locationName:"framerateDenominator" type:"integer"`
+	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
 	// Framerate numerator - framerate is a fraction, e.g. 24000 / 1001 = 23.976
 	// fps.
-	FramerateNumerator *int64 `locationName:"framerateNumerator" type:"integer"`
+	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"24" type:"integer"`
 
 	// Frequency of closed GOPs. In streaming applications, it is recommended that
 	// this be set to 1 so a decoder joining mid-stream will receive an IDR frame
@@ -8582,14 +10409,14 @@ type Mpeg2Settings struct {
 	// Percentage of the buffer that should initially be filled (HRD buffer model).
 	HrdBufferInitialFillPercentage *int64 `locationName:"hrdBufferInitialFillPercentage" type:"integer"`
 
-	// Size of buffer (HRD buffer model). Five megabits can be entered as 5000000
-	// or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.
+	// Size of buffer (HRD buffer model) in bits. For example, enter five megabits
+	// as 5000000.
 	HrdBufferSize *int64 `locationName:"hrdBufferSize" type:"integer"`
 
 	// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 	// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 	// interlaced output with the entire output having the same field polarity (top
-	// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+	// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 	// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
 	// behavior depends on the input scan type. - If the source is interlaced, the
 	// output will be interlaced with the same polarity as the source (it will follow
@@ -8605,10 +10432,9 @@ type Mpeg2Settings struct {
 	// ratio.
 	IntraDcPrecision *string `locationName:"intraDcPrecision" type:"string" enum:"Mpeg2IntraDcPrecision"`
 
-	// Maximum bitrate in bits/second (for VBR mode only). Five megabits can be
-	// entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000
-	// or 0.5m.
-	MaxBitrate *int64 `locationName:"maxBitrate" type:"integer"`
+	// Maximum bitrate in bits/second. For example, enter five megabits per second
+	// as 5000000.
+	MaxBitrate *int64 `locationName:"maxBitrate" min:"1000" type:"integer"`
 
 	// Enforces separation between repeated (cadence) I-frames and I-frames inserted
 	// by Scene Change Detection. If a scene change I-frame is within I-interval
@@ -8628,10 +10454,10 @@ type Mpeg2Settings struct {
 	ParControl *string `locationName:"parControl" type:"string" enum:"Mpeg2ParControl"`
 
 	// Pixel Aspect Ratio denominator.
-	ParDenominator *int64 `locationName:"parDenominator" type:"integer"`
+	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
 	// Pixel Aspect Ratio numerator.
-	ParNumerator *int64 `locationName:"parNumerator" type:"integer"`
+	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
 	// Use Quality tuning level (Mpeg2QualityTuningLevel) to specifiy whether to
 	// use single-pass or multipass video encoding.
@@ -8678,6 +10504,34 @@ func (s Mpeg2Settings) String() string {
 // GoString returns the string representation
 func (s Mpeg2Settings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Mpeg2Settings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Mpeg2Settings"}
+	if s.Bitrate != nil && *s.Bitrate < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 1000))
+	}
+	if s.FramerateDenominator != nil && *s.FramerateDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateDenominator", 1))
+	}
+	if s.FramerateNumerator != nil && *s.FramerateNumerator < 24 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateNumerator", 24))
+	}
+	if s.MaxBitrate != nil && *s.MaxBitrate < 1000 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxBitrate", 1000))
+	}
+	if s.ParDenominator != nil && *s.ParDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParDenominator", 1))
+	}
+	if s.ParNumerator != nil && *s.ParNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParNumerator", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAdaptiveQuantization sets the AdaptiveQuantization field's value.
@@ -8866,7 +10720,9 @@ type MsSmoothEncryptionSettings struct {
 	_ struct{} `type:"structure"`
 
 	// Settings for use with a SPEKE key provider
-	SpekeKeyProvider *SpekeKeyProvider `locationName:"spekeKeyProvider" type:"structure"`
+	//
+	// SpekeKeyProvider is a required field
+	SpekeKeyProvider *SpekeKeyProvider `locationName:"spekeKeyProvider" type:"structure" required:"true"`
 }
 
 // String returns the string representation
@@ -8877,6 +10733,24 @@ func (s MsSmoothEncryptionSettings) String() string {
 // GoString returns the string representation
 func (s MsSmoothEncryptionSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MsSmoothEncryptionSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MsSmoothEncryptionSettings"}
+	if s.SpekeKeyProvider == nil {
+		invalidParams.Add(request.NewErrParamRequired("SpekeKeyProvider"))
+	}
+	if s.SpekeKeyProvider != nil {
+		if err := s.SpekeKeyProvider.Validate(); err != nil {
+			invalidParams.AddNested("SpekeKeyProvider", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetSpekeKeyProvider sets the SpekeKeyProvider field's value.
@@ -8907,7 +10781,9 @@ type MsSmoothGroupSettings struct {
 
 	// Use Fragment length (FragmentLength) to specify the mp4 fragment sizes in
 	// seconds. Fragment length must be compatible with GOP size and framerate.
-	FragmentLength *int64 `locationName:"fragmentLength" type:"integer"`
+	//
+	// FragmentLength is a required field
+	FragmentLength *int64 `locationName:"fragmentLength" min:"1" type:"integer" required:"true"`
 
 	// Use Manifest encoding (MsSmoothManifestEncoding) to specify the encoding
 	// format for the server and client manifest. Valid options are utf8 and utf16.
@@ -8922,6 +10798,27 @@ func (s MsSmoothGroupSettings) String() string {
 // GoString returns the string representation
 func (s MsSmoothGroupSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MsSmoothGroupSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MsSmoothGroupSettings"}
+	if s.FragmentLength == nil {
+		invalidParams.Add(request.NewErrParamRequired("FragmentLength"))
+	}
+	if s.FragmentLength != nil && *s.FragmentLength < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FragmentLength", 1))
+	}
+	if s.Encryption != nil {
+		if err := s.Encryption.Validate(); err != nil {
+			invalidParams.AddNested("Encryption", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioDeduplication sets the AudioDeduplication field's value.
@@ -9000,10 +10897,12 @@ type NoiseReducer struct {
 	// Use Noise reducer filter (NoiseReducerFilter) to select one of the following
 	// spatial image filtering functions. To use this setting, you must also enable
 	// Noise reducer (NoiseReducer). * Bilateral is an edge preserving noise reduction
-	// filter * Mean (softest), Gaussian, Lanczos, and Sharpen (sharpest) are convolution
-	// filters * Conserve is a min/max noise reduction filter * Spatial is frequency-domain
+	// filter. * Mean (softest), Gaussian, Lanczos, and Sharpen (sharpest) are convolution
+	// filters. * Conserve is a min/max noise reduction filter. * Spatial is a frequency-domain
 	// filter based on JND principles.
-	Filter *string `locationName:"filter" type:"string" enum:"NoiseReducerFilter"`
+	//
+	// Filter is a required field
+	Filter *string `locationName:"filter" type:"string" required:"true" enum:"NoiseReducerFilter"`
 
 	// Settings for a noise reducer filter
 	FilterSettings *NoiseReducerFilterSettings `locationName:"filterSettings" type:"structure"`
@@ -9020,6 +10919,24 @@ func (s NoiseReducer) String() string {
 // GoString returns the string representation
 func (s NoiseReducer) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *NoiseReducer) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "NoiseReducer"}
+	if s.Filter == nil {
+		invalidParams.Add(request.NewErrParamRequired("Filter"))
+	}
+	if s.SpatialFilterSettings != nil {
+		if err := s.SpatialFilterSettings.Validate(); err != nil {
+			invalidParams.AddNested("SpatialFilterSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetFilter sets the Filter field's value.
@@ -9092,6 +11009,19 @@ func (s NoiseReducerSpatialFilterSettings) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *NoiseReducerSpatialFilterSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "NoiseReducerSpatialFilterSettings"}
+	if s.Speed != nil && *s.Speed < -2 {
+		invalidParams.Add(request.NewErrParamMinValue("Speed", -2))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetPostFilterSharpenStrength sets the PostFilterSharpenStrength field's value.
 func (s *NoiseReducerSpatialFilterSettings) SetPostFilterSharpenStrength(v int64) *NoiseReducerSpatialFilterSettings {
 	s.PostFilterSharpenStrength = &v
@@ -9142,7 +11072,7 @@ type Output struct {
 	// identifiers. For DASH ISO outputs, if you use the format identifiers $Number$
 	// or $Time$ in one output, you must use them in the same way in all outputs
 	// of the output group.
-	NameModifier *string `locationName:"nameModifier" type:"string"`
+	NameModifier *string `locationName:"nameModifier" min:"1" type:"string"`
 
 	// Specific settings for this type of output.
 	OutputSettings *OutputSettings `locationName:"outputSettings" type:"structure"`
@@ -9166,6 +11096,49 @@ func (s Output) String() string {
 // GoString returns the string representation
 func (s Output) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Output) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Output"}
+	if s.NameModifier != nil && len(*s.NameModifier) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NameModifier", 1))
+	}
+	if s.AudioDescriptions != nil {
+		for i, v := range s.AudioDescriptions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AudioDescriptions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.CaptionDescriptions != nil {
+		for i, v := range s.CaptionDescriptions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "CaptionDescriptions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.ContainerSettings != nil {
+		if err := s.ContainerSettings.Validate(); err != nil {
+			invalidParams.AddNested("ContainerSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.VideoDescription != nil {
+		if err := s.VideoDescription.Validate(); err != nil {
+			invalidParams.AddNested("VideoDescription", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAudioDescriptions sets the AudioDescriptions field's value.
@@ -9221,7 +11194,9 @@ type OutputChannelMapping struct {
 	_ struct{} `type:"structure"`
 
 	// List of input channels
-	InputChannels []*int64 `locationName:"inputChannels" type:"list"`
+	//
+	// InputChannels is a required field
+	InputChannels []*int64 `locationName:"inputChannels" type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -9232,6 +11207,19 @@ func (s OutputChannelMapping) String() string {
 // GoString returns the string representation
 func (s OutputChannelMapping) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OutputChannelMapping) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OutputChannelMapping"}
+	if s.InputChannels == nil {
+		invalidParams.Add(request.NewErrParamRequired("InputChannels"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetInputChannels sets the InputChannels field's value.
@@ -9287,11 +11275,15 @@ type OutputGroup struct {
 	Name *string `locationName:"name" type:"string"`
 
 	// Output Group settings, including type
-	OutputGroupSettings *OutputGroupSettings `locationName:"outputGroupSettings" type:"structure"`
+	//
+	// OutputGroupSettings is a required field
+	OutputGroupSettings *OutputGroupSettings `locationName:"outputGroupSettings" type:"structure" required:"true"`
 
 	// This object holds groups of encoding settings, one group of settings per
 	// output.
-	Outputs []*Output `locationName:"outputs" type:"list"`
+	//
+	// Outputs is a required field
+	Outputs []*Output `locationName:"outputs" type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -9302,6 +11294,37 @@ func (s OutputGroup) String() string {
 // GoString returns the string representation
 func (s OutputGroup) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OutputGroup) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OutputGroup"}
+	if s.OutputGroupSettings == nil {
+		invalidParams.Add(request.NewErrParamRequired("OutputGroupSettings"))
+	}
+	if s.Outputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Outputs"))
+	}
+	if s.OutputGroupSettings != nil {
+		if err := s.OutputGroupSettings.Validate(); err != nil {
+			invalidParams.AddNested("OutputGroupSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Outputs != nil {
+		for i, v := range s.Outputs {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Outputs", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetCustomName sets the CustomName field's value.
@@ -9357,6 +11380,11 @@ type OutputGroupSettings struct {
 	_ struct{} `type:"structure"`
 
 	// Required when you set (Type) under (OutputGroups)>(OutputGroupSettings) to
+	// CMAF_GROUP_SETTINGS. Each output in a CMAF Output Group may only contain
+	// a single video, audio, or caption output.
+	CmafGroupSettings *CmafGroupSettings `locationName:"cmafGroupSettings" type:"structure"`
+
+	// Required when you set (Type) under (OutputGroups)>(OutputGroupSettings) to
 	// DASH_ISO_GROUP_SETTINGS.
 	DashIsoGroupSettings *DashIsoGroupSettings `locationName:"dashIsoGroupSettings" type:"structure"`
 
@@ -9372,8 +11400,11 @@ type OutputGroupSettings struct {
 	// MS_SMOOTH_GROUP_SETTINGS.
 	MsSmoothGroupSettings *MsSmoothGroupSettings `locationName:"msSmoothGroupSettings" type:"structure"`
 
-	// Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming)
-	Type *string `locationName:"type" type:"string" enum:"OutputGroupType"`
+	// Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming,
+	// CMAF)
+	//
+	// Type is a required field
+	Type *string `locationName:"type" type:"string" required:"true" enum:"OutputGroupType"`
 }
 
 // String returns the string representation
@@ -9384,6 +11415,45 @@ func (s OutputGroupSettings) String() string {
 // GoString returns the string representation
 func (s OutputGroupSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OutputGroupSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OutputGroupSettings"}
+	if s.Type == nil {
+		invalidParams.Add(request.NewErrParamRequired("Type"))
+	}
+	if s.CmafGroupSettings != nil {
+		if err := s.CmafGroupSettings.Validate(); err != nil {
+			invalidParams.AddNested("CmafGroupSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DashIsoGroupSettings != nil {
+		if err := s.DashIsoGroupSettings.Validate(); err != nil {
+			invalidParams.AddNested("DashIsoGroupSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.HlsGroupSettings != nil {
+		if err := s.HlsGroupSettings.Validate(); err != nil {
+			invalidParams.AddNested("HlsGroupSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.MsSmoothGroupSettings != nil {
+		if err := s.MsSmoothGroupSettings.Validate(); err != nil {
+			invalidParams.AddNested("MsSmoothGroupSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCmafGroupSettings sets the CmafGroupSettings field's value.
+func (s *OutputGroupSettings) SetCmafGroupSettings(v *CmafGroupSettings) *OutputGroupSettings {
+	s.CmafGroupSettings = v
+	return s
 }
 
 // SetDashIsoGroupSettings sets the DashIsoGroupSettings field's value.
@@ -9461,10 +11531,14 @@ type Preset struct {
 	LastUpdated *time.Time `locationName:"lastUpdated" type:"timestamp" timestampFormat:"unix"`
 
 	// A name you create for each preset. Each name must be unique within your account.
-	Name *string `locationName:"name" type:"string"`
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
 
 	// Settings for preset
-	Settings *PresetSettings `locationName:"settings" type:"structure"`
+	//
+	// Settings is a required field
+	Settings *PresetSettings `locationName:"settings" type:"structure" required:"true"`
 
 	// A preset can be of two types: system or custom. System or built-in preset
 	// can't be modified or deleted by the user.
@@ -9561,6 +11635,46 @@ func (s PresetSettings) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PresetSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PresetSettings"}
+	if s.AudioDescriptions != nil {
+		for i, v := range s.AudioDescriptions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AudioDescriptions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.CaptionDescriptions != nil {
+		for i, v := range s.CaptionDescriptions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "CaptionDescriptions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.ContainerSettings != nil {
+		if err := s.ContainerSettings.Validate(); err != nil {
+			invalidParams.AddNested("ContainerSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.VideoDescription != nil {
+		if err := s.VideoDescription.Validate(); err != nil {
+			invalidParams.AddNested("VideoDescription", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetAudioDescriptions sets the AudioDescriptions field's value.
 func (s *PresetSettings) SetAudioDescriptions(v []*AudioDescription) *PresetSettings {
 	s.AudioDescriptions = v
@@ -9594,27 +11708,35 @@ type ProresSettings struct {
 	// to use for this output.
 	CodecProfile *string `locationName:"codecProfile" type:"string" enum:"ProresCodecProfile"`
 
-	// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-	// the service to use the framerate from the input. Using the console, do this
-	// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+	// If you are using the console, use the Framerate setting to specify the framerate
+	// for this output. If you want to keep the same framerate as the input video,
+	// choose Follow source. If you want to do framerate conversion, choose a framerate
+	// from the dropdown list or choose Custom. The framerates shown in the dropdown
+	// list are decimal approximations of fractions. If you choose Custom, specify
+	// your framerate as a fraction. If you are creating your transcoding job sepecification
+	// as a JSON file without the console, use FramerateControl to specify which
+	// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+	// if you want the service to use the framerate from the input. Choose SPECIFIED
+	// if you want the service to use the framerate you specify in the settings
+	// FramerateNumerator and FramerateDenominator.
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"ProresFramerateControl"`
 
 	// When set to INTERPOLATE, produces smoother motion during framerate conversion.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"ProresFramerateConversionAlgorithm"`
 
 	// Framerate denominator.
-	FramerateDenominator *int64 `locationName:"framerateDenominator" type:"integer"`
+	FramerateDenominator *int64 `locationName:"framerateDenominator" min:"1" type:"integer"`
 
 	// When you use the API for transcode jobs that use framerate conversion, specify
 	// the framerate as a fraction. For example, 24000 / 1001 = 23.976 fps. Use
 	// FramerateNumerator to specify the numerator of this fraction. In this example,
 	// use 24000 for the value of FramerateNumerator.
-	FramerateNumerator *int64 `locationName:"framerateNumerator" type:"integer"`
+	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
 	// Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 	// * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 	// interlaced output with the entire output having the same field polarity (top
-	// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+	// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 	// Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
 	// behavior depends on the input scan type. - If the source is interlaced, the
 	// output will be interlaced with the same polarity as the source (it will follow
@@ -9632,10 +11754,10 @@ type ProresSettings struct {
 	ParControl *string `locationName:"parControl" type:"string" enum:"ProresParControl"`
 
 	// Pixel Aspect Ratio denominator.
-	ParDenominator *int64 `locationName:"parDenominator" type:"integer"`
+	ParDenominator *int64 `locationName:"parDenominator" min:"1" type:"integer"`
 
 	// Pixel Aspect Ratio numerator.
-	ParNumerator *int64 `locationName:"parNumerator" type:"integer"`
+	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
 	// Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled
 	// as 25fps, and audio is sped up correspondingly.
@@ -9656,6 +11778,28 @@ func (s ProresSettings) String() string {
 // GoString returns the string representation
 func (s ProresSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ProresSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ProresSettings"}
+	if s.FramerateDenominator != nil && *s.FramerateDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateDenominator", 1))
+	}
+	if s.FramerateNumerator != nil && *s.FramerateNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FramerateNumerator", 1))
+	}
+	if s.ParDenominator != nil && *s.ParDenominator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParDenominator", 1))
+	}
+	if s.ParNumerator != nil && *s.ParNumerator < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ParNumerator", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetCodecProfile sets the CodecProfile field's value.
@@ -9743,7 +11887,9 @@ type Queue struct {
 	LastUpdated *time.Time `locationName:"lastUpdated" type:"timestamp" timestampFormat:"unix"`
 
 	// A name you create for each queue. Each name must be unique within your account.
-	Name *string `locationName:"name" type:"string"`
+	//
+	// Name is a required field
+	Name *string `locationName:"name" type:"string" required:"true"`
 
 	// Queues can be ACTIVE or PAUSED. If you pause a queue, jobs in that queue
 	// will not begin. Jobs running when a queue is paused continue to run until
@@ -9812,18 +11958,26 @@ type Rectangle struct {
 	_ struct{} `type:"structure"`
 
 	// Height of rectangle in pixels.
-	Height *int64 `locationName:"height" type:"integer"`
+	//
+	// Height is a required field
+	Height *int64 `locationName:"height" type:"integer" required:"true"`
 
 	// Width of rectangle in pixels.
-	Width *int64 `locationName:"width" type:"integer"`
+	//
+	// Width is a required field
+	Width *int64 `locationName:"width" type:"integer" required:"true"`
 
 	// The distance, in pixels, between the rectangle and the left edge of the video
 	// frame.
-	X *int64 `locationName:"x" type:"integer"`
+	//
+	// X is a required field
+	X *int64 `locationName:"x" type:"integer" required:"true"`
 
 	// The distance, in pixels, between the rectangle and the top edge of the video
 	// frame.
-	Y *int64 `locationName:"y" type:"integer"`
+	//
+	// Y is a required field
+	Y *int64 `locationName:"y" type:"integer" required:"true"`
 }
 
 // String returns the string representation
@@ -9834,6 +11988,40 @@ func (s Rectangle) String() string {
 // GoString returns the string representation
 func (s Rectangle) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *Rectangle) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "Rectangle"}
+	if s.Height == nil {
+		invalidParams.Add(request.NewErrParamRequired("Height"))
+	}
+	if s.Height != nil && *s.Height < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("Height", -2.147483648e+09))
+	}
+	if s.Width == nil {
+		invalidParams.Add(request.NewErrParamRequired("Width"))
+	}
+	if s.Width != nil && *s.Width < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("Width", -2.147483648e+09))
+	}
+	if s.X == nil {
+		invalidParams.Add(request.NewErrParamRequired("X"))
+	}
+	if s.X != nil && *s.X < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("X", -2.147483648e+09))
+	}
+	if s.Y == nil {
+		invalidParams.Add(request.NewErrParamRequired("Y"))
+	}
+	if s.Y != nil && *s.Y < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("Y", -2.147483648e+09))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetHeight sets the Height field's value.
@@ -9861,8 +12049,8 @@ func (s *Rectangle) SetY(v int64) *Rectangle {
 }
 
 // Use Manual audio remixing (RemixSettings) to adjust audio levels for each
-// output channel. With audio remixing, you can output more or fewer audio channels
-// than your input audio source provides.
+// audio channel in each output of your job. With audio remixing, you can output
+// more or fewer audio channels than your input audio source provides.
 type RemixSettings struct {
 	_ struct{} `type:"structure"`
 
@@ -9870,16 +12058,22 @@ type RemixSettings struct {
 	// remixing value for each channel. Units are in dB. Acceptable values are within
 	// the range from -60 (mute) through 6. A setting of 0 passes the input channel
 	// unchanged to the output channel (no attenuation or amplification).
-	ChannelMapping *ChannelMapping `locationName:"channelMapping" type:"structure"`
+	//
+	// ChannelMapping is a required field
+	ChannelMapping *ChannelMapping `locationName:"channelMapping" type:"structure" required:"true"`
 
 	// Specify the number of audio channels from your input that you want to use
 	// in your output. With remixing, you might combine or split the data in these
 	// channels, so the number of channels in your final output might be different.
-	ChannelsIn *int64 `locationName:"channelsIn" type:"integer"`
+	//
+	// ChannelsIn is a required field
+	ChannelsIn *int64 `locationName:"channelsIn" min:"1" type:"integer" required:"true"`
 
 	// Specify the number of channels in this output after remixing. Valid values:
 	// 1, 2, 4, 6, 8
-	ChannelsOut *int64 `locationName:"channelsOut" type:"integer"`
+	//
+	// ChannelsOut is a required field
+	ChannelsOut *int64 `locationName:"channelsOut" min:"1" type:"integer" required:"true"`
 }
 
 // String returns the string representation
@@ -9890,6 +12084,36 @@ func (s RemixSettings) String() string {
 // GoString returns the string representation
 func (s RemixSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *RemixSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "RemixSettings"}
+	if s.ChannelMapping == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChannelMapping"))
+	}
+	if s.ChannelsIn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChannelsIn"))
+	}
+	if s.ChannelsIn != nil && *s.ChannelsIn < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ChannelsIn", 1))
+	}
+	if s.ChannelsOut == nil {
+		invalidParams.Add(request.NewErrParamRequired("ChannelsOut"))
+	}
+	if s.ChannelsOut != nil && *s.ChannelsOut < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("ChannelsOut", 1))
+	}
+	if s.ChannelMapping != nil {
+		if err := s.ChannelMapping.Validate(); err != nil {
+			invalidParams.AddNested("ChannelMapping", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetChannelMapping sets the ChannelMapping field's value.
@@ -9943,15 +12167,21 @@ type SpekeKeyProvider struct {
 	_ struct{} `type:"structure"`
 
 	// The SPEKE-compliant server uses Resource ID (ResourceId) to identify content.
-	ResourceId *string `locationName:"resourceId" type:"string"`
+	//
+	// ResourceId is a required field
+	ResourceId *string `locationName:"resourceId" type:"string" required:"true"`
 
 	// Relates to SPEKE implementation. DRM system identifiers. DASH output groups
 	// support a max of two system ids. Other group types support one system id.
-	SystemIds []*string `locationName:"systemIds" type:"list"`
+	//
+	// SystemIds is a required field
+	SystemIds []*string `locationName:"systemIds" type:"list" required:"true"`
 
 	// Use URL (Url) to specify the SPEKE-compliant server that will provide keys
 	// for content.
-	Url *string `locationName:"url" type:"string"`
+	//
+	// Url is a required field
+	Url *string `locationName:"url" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -9962,6 +12192,25 @@ func (s SpekeKeyProvider) String() string {
 // GoString returns the string representation
 func (s SpekeKeyProvider) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SpekeKeyProvider) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SpekeKeyProvider"}
+	if s.ResourceId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceId"))
+	}
+	if s.SystemIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("SystemIds"))
+	}
+	if s.Url == nil {
+		invalidParams.Add(request.NewErrParamRequired("Url"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetResourceId sets the ResourceId field's value.
@@ -9997,11 +12246,15 @@ type StaticKeyProvider struct {
 
 	// Relates to DRM implementation. Use a 32-character hexidecimal string to specify
 	// Key Value (StaticKeyValue).
-	StaticKeyValue *string `locationName:"staticKeyValue" type:"string"`
+	//
+	// StaticKeyValue is a required field
+	StaticKeyValue *string `locationName:"staticKeyValue" type:"string" required:"true"`
 
 	// Relates to DRM implementation. The location of the license server used for
 	// protecting content.
-	Url *string `locationName:"url" type:"string"`
+	//
+	// Url is a required field
+	Url *string `locationName:"url" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -10012,6 +12265,22 @@ func (s StaticKeyProvider) String() string {
 // GoString returns the string representation
 func (s StaticKeyProvider) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StaticKeyProvider) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StaticKeyProvider"}
+	if s.StaticKeyValue == nil {
+		invalidParams.Add(request.NewErrParamRequired("StaticKeyValue"))
+	}
+	if s.Url == nil {
+		invalidParams.Add(request.NewErrParamRequired("Url"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetKeyFormat sets the KeyFormat field's value.
@@ -10046,7 +12315,7 @@ type TeletextDestinationSettings struct {
 	// this output. This value must be a three-digit hexadecimal string; strings
 	// ending in -FF are invalid. If you are passing through the entire set of Teletext
 	// data, do not use this field.
-	PageNumber *string `locationName:"pageNumber" type:"string"`
+	PageNumber *string `locationName:"pageNumber" min:"3" type:"string"`
 }
 
 // String returns the string representation
@@ -10057,6 +12326,19 @@ func (s TeletextDestinationSettings) String() string {
 // GoString returns the string representation
 func (s TeletextDestinationSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TeletextDestinationSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TeletextDestinationSettings"}
+	if s.PageNumber != nil && len(*s.PageNumber) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("PageNumber", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetPageNumber sets the PageNumber field's value.
@@ -10072,7 +12354,7 @@ type TeletextSourceSettings struct {
 	// Use Page Number (PageNumber) to specify the three-digit hexadecimal page
 	// number that will be used for Teletext captions. Do not use this setting if
 	// you are passing through teletext from the input source to output.
-	PageNumber *string `locationName:"pageNumber" type:"string"`
+	PageNumber *string `locationName:"pageNumber" min:"3" type:"string"`
 }
 
 // String returns the string representation
@@ -10083,6 +12365,19 @@ func (s TeletextSourceSettings) String() string {
 // GoString returns the string representation
 func (s TeletextSourceSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TeletextSourceSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TeletextSourceSettings"}
+	if s.PageNumber != nil && len(*s.PageNumber) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("PageNumber", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetPageNumber sets the PageNumber field's value.
@@ -10098,7 +12393,7 @@ type TimecodeBurnin struct {
 
 	// Use Font Size (FontSize) to set the font size of any burned-in timecode.
 	// Valid values are 10, 16, 32, 48.
-	FontSize *int64 `locationName:"fontSize" type:"integer"`
+	FontSize *int64 `locationName:"fontSize" min:"10" type:"integer"`
 
 	// Use Position (Position) under under Timecode burn-in (TimecodeBurnIn) to
 	// specify the location the burned-in timecode on output video.
@@ -10122,6 +12417,19 @@ func (s TimecodeBurnin) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TimecodeBurnin) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TimecodeBurnin"}
+	if s.FontSize != nil && *s.FontSize < 10 {
+		invalidParams.Add(request.NewErrParamMinValue("FontSize", 10))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetFontSize sets the FontSize field's value.
 func (s *TimecodeBurnin) SetFontSize(v int64) *TimecodeBurnin {
 	s.FontSize = &v
@@ -10140,7 +12448,8 @@ func (s *TimecodeBurnin) SetPrefix(v string) *TimecodeBurnin {
 	return s
 }
 
-// Contains settings used to acquire and adjust timecode information from inputs.
+// These settings control how the service handles timecodes throughout the job.
+// These settings don't affect input clipping.
 type TimecodeConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -10148,40 +12457,40 @@ type TimecodeConfig struct {
 	// Timecode (Anchor) to specify a timecode that will match the input video frame
 	// to the output video frame. Use 24-hour format with frame number, (HH:MM:SS:FF)
 	// or (HH:MM:SS;FF). This setting ignores framerate conversion. System behavior
-	// for Anchor Timecode varies depending on your setting for Timecode source
-	// (TimecodeSource). * If Timecode source (TimecodeSource) is set to Specified
-	// Start (specifiedstart), the first input frame is the specified value in Start
-	// Timecode (Start). Anchor Timecode (Anchor) and Start Timecode (Start) are
-	// used calculate output timecode. * If Timecode source (TimecodeSource) is
-	// set to Start at 0 (zerobased) the first frame is 00:00:00:00. * If Timecode
-	// source (TimecodeSource) is set to Embedded (embedded), the first frame is
-	// the timecode value on the first input frame of the input.
+	// for Anchor Timecode varies depending on your setting for Source (TimecodeSource).
+	// * If Source (TimecodeSource) is set to Specified Start (SPECIFIEDSTART),
+	// the first input frame is the specified value in Start Timecode (Start). Anchor
+	// Timecode (Anchor) and Start Timecode (Start) are used calculate output timecode.
+	// * If Source (TimecodeSource) is set to Start at 0 (ZEROBASED) the first frame
+	// is 00:00:00:00. * If Source (TimecodeSource) is set to Embedded (EMBEDDED),
+	// the first frame is the timecode value on the first input frame of the input.
 	Anchor *string `locationName:"anchor" type:"string"`
 
-	// Use Timecode source (TimecodeSource) to set how timecodes are handled within
-	// this input. To make sure that your video, audio, captions, and markers are
-	// synchronized and that time-based features, such as image inserter, work correctly,
-	// choose the Timecode source option that matches your assets. All timecodes
-	// are in a 24-hour format with frame number (HH:MM:SS:FF). * Embedded (EMBEDDED)
-	// - Use the timecode that is in the input video. If no embedded timecode is
-	// in the source, the service will use Start at 0 (ZEROBASED) instead. * Start
+	// Use Source (TimecodeSource) to set how timecodes are handled within this
+	// job. To make sure that your video, audio, captions, and markers are synchronized
+	// and that time-based features, such as image inserter, work correctly, choose
+	// the Timecode source option that matches your assets. All timecodes are in
+	// a 24-hour format with frame number (HH:MM:SS:FF). * Embedded (EMBEDDED) -
+	// Use the timecode that is in the input video. If no embedded timecode is in
+	// the source, the service will use Start at 0 (ZEROBASED) instead. * Start
 	// at 0 (ZEROBASED) - Set the timecode of the initial frame to 00:00:00:00.
 	// * Specified Start (SPECIFIEDSTART) - Set the timecode of the initial frame
 	// to a value other than zero. You use Start timecode (Start) to provide this
 	// value.
 	Source *string `locationName:"source" type:"string" enum:"TimecodeSource"`
 
-	// Only use when you set Timecode Source (TimecodeSource) to Specified Start
-	// (SPECIFIEDSTART). Use Start timecode (Start) to specify the timecode for
-	// the initial frame. Use 24-hour format with frame number, (HH:MM:SS:FF) or
-	// (HH:MM:SS;FF).
+	// Only use when you set Source (TimecodeSource) to Specified start (SPECIFIEDSTART).
+	// Use Start timecode (Start) to specify the timecode for the initial frame.
+	// Use 24-hour format with frame number, (HH:MM:SS:FF) or (HH:MM:SS;FF).
 	Start *string `locationName:"start" type:"string"`
 
-	// Only applies to outputs that support program-date-time stamp. Use Time stamp
+	// Only applies to outputs that support program-date-time stamp. Use Timestamp
 	// offset (TimestampOffset) to overwrite the timecode date without affecting
 	// the time and frame number. Provide the new date as a string in the format
 	// "yyyy-mm-dd". To use Time stamp offset, you must also enable Insert program-date-time
-	// (InsertProgramDateTime) in the output settings.
+	// (InsertProgramDateTime) in the output settings. For example, if the date
+	// part of your timecodes is 2002-1-25 and you want to change it to one year
+	// later, set Timestamp offset (TimestampOffset) to 2003-1-25.
 	TimestampOffset *string `locationName:"timestampOffset" type:"string"`
 }
 
@@ -10227,7 +12536,9 @@ type TimedMetadataInsertion struct {
 	_ struct{} `type:"structure"`
 
 	// Id3Insertions contains the array of Id3Insertion instances.
-	Id3Insertions []*Id3Insertion `locationName:"id3Insertions" type:"list"`
+	//
+	// Id3Insertions is a required field
+	Id3Insertions []*Id3Insertion `locationName:"id3Insertions" type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -10238,6 +12549,29 @@ func (s TimedMetadataInsertion) String() string {
 // GoString returns the string representation
 func (s TimedMetadataInsertion) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TimedMetadataInsertion) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TimedMetadataInsertion"}
+	if s.Id3Insertions == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id3Insertions"))
+	}
+	if s.Id3Insertions != nil {
+		for i, v := range s.Id3Insertions {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Id3Insertions", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetId3Insertions sets the Id3Insertions field's value.
@@ -10356,6 +12690,11 @@ func (s *UpdateJobTemplateInput) Validate() error {
 	if s.Name == nil {
 		invalidParams.Add(request.NewErrParamRequired("Name"))
 	}
+	if s.Settings != nil {
+		if err := s.Settings.Validate(); err != nil {
+			invalidParams.AddNested("Settings", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -10455,6 +12794,11 @@ func (s *UpdatePresetInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "UpdatePresetInput"}
 	if s.Name == nil {
 		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Settings != nil {
+		if err := s.Settings.Validate(); err != nil {
+			invalidParams.AddNested("Settings", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -10610,7 +12954,9 @@ type VideoCodecSettings struct {
 	_ struct{} `type:"structure"`
 
 	// Type of video codec
-	Codec *string `locationName:"codec" type:"string" enum:"VideoCodec"`
+	//
+	// Codec is a required field
+	Codec *string `locationName:"codec" type:"string" required:"true" enum:"VideoCodec"`
 
 	// Required when you set (Codec) under (VideoDescription)>(CodecSettings) to
 	// the value FRAME_CAPTURE.
@@ -10640,6 +12986,44 @@ func (s VideoCodecSettings) String() string {
 // GoString returns the string representation
 func (s VideoCodecSettings) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *VideoCodecSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "VideoCodecSettings"}
+	if s.Codec == nil {
+		invalidParams.Add(request.NewErrParamRequired("Codec"))
+	}
+	if s.FrameCaptureSettings != nil {
+		if err := s.FrameCaptureSettings.Validate(); err != nil {
+			invalidParams.AddNested("FrameCaptureSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.H264Settings != nil {
+		if err := s.H264Settings.Validate(); err != nil {
+			invalidParams.AddNested("H264Settings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.H265Settings != nil {
+		if err := s.H265Settings.Validate(); err != nil {
+			invalidParams.AddNested("H265Settings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Mpeg2Settings != nil {
+		if err := s.Mpeg2Settings.Validate(); err != nil {
+			invalidParams.AddNested("Mpeg2Settings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ProresSettings != nil {
+		if err := s.ProresSettings.Validate(); err != nil {
+			invalidParams.AddNested("ProresSettings", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetCodec sets the Codec field's value.
@@ -10683,11 +13067,11 @@ type VideoDescription struct {
 	_ struct{} `type:"structure"`
 
 	// This setting only applies to H.264 and MPEG2 outputs. Use Insert AFD signaling
-	// (AfdSignaling) to whether there are AFD values in the output video data and
-	// what those values are. * Choose None to remove all AFD values from this output.
-	// * Choose Fixed to ignore input AFD values and instead encode the value specified
-	// in the job. * Choose Auto to calculate output AFD values based on the input
-	// AFD scaler data.
+	// (AfdSignaling) to specify whether the service includes AFD values in the
+	// output video data and what those values are. * Choose None to remove all
+	// AFD values from this output. * Choose Fixed to ignore input AFD values and
+	// instead encode the value specified in the job. * Choose Auto to calculate
+	// output AFD values based on the input AFD scaler data.
 	AfdSignaling *string `locationName:"afdSignaling" type:"string" enum:"AfdSignaling"`
 
 	// Enable Anti-alias (AntiAlias) to enhance sharp edges in video output when
@@ -10702,7 +13086,9 @@ type VideoDescription struct {
 	// lists the codec enum, settings object pairs. * H_264, H264Settings * H_265,
 	// H265Settings * MPEG2, Mpeg2Settings * PRORES, ProresSettings * FRAME_CAPTURE,
 	// FrameCaptureSettings
-	CodecSettings *VideoCodecSettings `locationName:"codecSettings" type:"structure"`
+	//
+	// CodecSettings is a required field
+	CodecSettings *VideoCodecSettings `locationName:"codecSettings" type:"structure" required:"true"`
 
 	// Enable Insert color metadata (ColorMetadata) to include color metadata in
 	// this output. This setting is enabled by default.
@@ -10729,7 +13115,7 @@ type VideoDescription struct {
 	// Use the Height (Height) setting to define the video resolution height for
 	// this output. Specify in pixels. If you don't provide a value here, the service
 	// will use the input height.
-	Height *int64 `locationName:"height" type:"integer"`
+	Height *int64 `locationName:"height" min:"32" type:"integer"`
 
 	// Use Position (Position) to point to a rectangle object to define your position.
 	// This setting overrides any other aspect ratio.
@@ -10759,12 +13145,18 @@ type VideoDescription struct {
 	// setting, 100 the sharpest, and 50 recommended for most content.
 	Sharpness *int64 `locationName:"sharpness" type:"integer"`
 
-	// Enable Timecode insertion to include timecode information in this output.
-	// Do this in the API by setting (VideoTimecodeInsertion) to (PIC_TIMING_SEI).
-	// To get timecodes to appear correctly in your output, also set up the timecode
-	// configuration for your job in the input settings. Only enable Timecode insertion
-	// when the input framerate is identical to output framerate. Disable this setting
-	// to remove the timecode from the output. Default is disabled.
+	// Applies only to H.264, H.265, MPEG2, and ProRes outputs. Only enable Timecode
+	// insertion when the input framerate is identical to the output framerate.
+	// To include timecodes in this output, set Timecode insertion (VideoTimecodeInsertion)
+	// to PIC_TIMING_SEI. To leave them out, set it to DISABLED. Default is DISABLED.
+	// When the service inserts timecodes in an output, by default, it uses any
+	// embedded timecodes from the input. If none are present, the service will
+	// set the timecode for the first output frame to zero. To change this default
+	// behavior, adjust the settings under Timecode configuration (TimecodeConfig).
+	// In the console, these settings are located under Job > Job settings > Timecode
+	// configuration. Note - Timecode source under input settings (InputTimecodeSource)
+	// does not affect the timecodes that are inserted in the output. Source under
+	// Job settings > Timecode configuration (TimecodeSource) does.
 	TimecodeInsertion *string `locationName:"timecodeInsertion" type:"string" enum:"VideoTimecodeInsertion"`
 
 	// Find additional transcoding features under Preprocessors (VideoPreprocessors).
@@ -10775,7 +13167,7 @@ type VideoDescription struct {
 	// Use Width (Width) to define the video resolution width, in pixels, for this
 	// output. If you don't provide a value here, the service will use the input
 	// width.
-	Width *int64 `locationName:"width" type:"integer"`
+	Width *int64 `locationName:"width" min:"32" type:"integer"`
 }
 
 // String returns the string representation
@@ -10786,6 +13178,45 @@ func (s VideoDescription) String() string {
 // GoString returns the string representation
 func (s VideoDescription) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *VideoDescription) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "VideoDescription"}
+	if s.CodecSettings == nil {
+		invalidParams.Add(request.NewErrParamRequired("CodecSettings"))
+	}
+	if s.Height != nil && *s.Height < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Height", 32))
+	}
+	if s.Width != nil && *s.Width < 32 {
+		invalidParams.Add(request.NewErrParamMinValue("Width", 32))
+	}
+	if s.CodecSettings != nil {
+		if err := s.CodecSettings.Validate(); err != nil {
+			invalidParams.AddNested("CodecSettings", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Crop != nil {
+		if err := s.Crop.Validate(); err != nil {
+			invalidParams.AddNested("Crop", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.Position != nil {
+		if err := s.Position.Validate(); err != nil {
+			invalidParams.AddNested("Position", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.VideoPreprocessors != nil {
+		if err := s.VideoPreprocessors.Validate(); err != nil {
+			invalidParams.AddNested("VideoPreprocessors", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetAfdSignaling sets the AfdSignaling field's value.
@@ -10951,6 +13382,36 @@ func (s VideoPreprocessor) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *VideoPreprocessor) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "VideoPreprocessor"}
+	if s.ColorCorrector != nil {
+		if err := s.ColorCorrector.Validate(); err != nil {
+			invalidParams.AddNested("ColorCorrector", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ImageInserter != nil {
+		if err := s.ImageInserter.Validate(); err != nil {
+			invalidParams.AddNested("ImageInserter", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.NoiseReducer != nil {
+		if err := s.NoiseReducer.Validate(); err != nil {
+			invalidParams.AddNested("NoiseReducer", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.TimecodeBurnin != nil {
+		if err := s.TimecodeBurnin.Validate(); err != nil {
+			invalidParams.AddNested("TimecodeBurnin", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetColorCorrector sets the ColorCorrector field's value.
 func (s *VideoPreprocessor) SetColorCorrector(v *ColorCorrector) *VideoPreprocessor {
 	s.ColorCorrector = v
@@ -10985,30 +13446,39 @@ func (s *VideoPreprocessor) SetTimecodeBurnin(v *TimecodeBurnin) *VideoPreproces
 type VideoSelector struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the colorspace of an input. This setting works in tandem with "Color
-	// Corrector":#color_corrector > color_space_conversion to determine if any
-	// conversion will be performed.
+	// If your input video has accurate color space metadata, or if you don't know
+	// about color space, leave this set to the default value FOLLOW. The service
+	// will automatically detect your input color space. If your input video has
+	// metadata indicating the wrong color space, or if your input video is missing
+	// color space metadata that should be there, specify the accurate color space
+	// here. If you choose HDR10, you can also correct inaccurate color space coefficients,
+	// using the HDR master display information controls. You must also set Color
+	// space usage (ColorSpaceUsage) to FORCE for the service to use these values.
 	ColorSpace *string `locationName:"colorSpace" type:"string" enum:"ColorSpace"`
 
-	// There are two sources for color metadata, the input file and the job configuration.
-	// This enum controls which takes precedence. FORCE: System will use color metadata
-	// supplied by user, if any. If the user does not supply color metadata the
-	// system will use data from the source. FALLBACK: System will use color metadata
-	// from the source. If source has no color metadata, the system will use user-supplied
-	// color metadata values if available.
+	// There are two sources for color metadata, the input file and the job configuration
+	// (in the Color space and HDR master display informaiton settings). The Color
+	// space usage setting controls which takes precedence. FORCE: The system will
+	// use color metadata supplied by user, if any. If the user does not supply
+	// color metadata, the system will use data from the source. FALLBACK: The system
+	// will use color metadata from the source. If source has no color metadata,
+	// the system will use user-supplied color metadata values if available.
 	ColorSpaceUsage *string `locationName:"colorSpaceUsage" type:"string" enum:"ColorSpaceUsage"`
 
-	// Use the HDR master display (Hdr10Metadata) settings to provide values for
-	// HDR color. These values vary depending on the input video and must be provided
-	// by a color grader. Range is 0 to 50,000, each increment represents 0.00002
-	// in CIE1931 color coordinate.
+	// Use the HDR master display (Hdr10Metadata) settings to correct HDR metadata
+	// or to provide missing metadata. These values vary depending on the input
+	// video and must be provided by a color grader. Range is 0 to 50,000, each
+	// increment represents 0.00002 in CIE1931 color coordinate. Note that these
+	// settings are not color correction. Note that if you are creating HDR outputs
+	// inside of an HLS CMAF package, to comply with the Apple specification, you
+	// must use the HVC1 for H.265 setting.
 	Hdr10Metadata *Hdr10Metadata `locationName:"hdr10Metadata" type:"structure"`
 
 	// Use PID (Pid) to select specific video data from an input file. Specify this
 	// value as an integer; the system automatically converts it to the hexidecimal
 	// value. For example, 257 selects PID 0x101. A PID, or packet identifier, is
 	// an identifier for a set of data in an MPEG-2 transport stream container.
-	Pid *int64 `locationName:"pid" type:"integer"`
+	Pid *int64 `locationName:"pid" min:"1" type:"integer"`
 
 	// Selects a specific program from within a multi-program transport stream.
 	// Note that Quad 4K is not currently supported.
@@ -11023,6 +13493,27 @@ func (s VideoSelector) String() string {
 // GoString returns the string representation
 func (s VideoSelector) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *VideoSelector) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "VideoSelector"}
+	if s.Pid != nil && *s.Pid < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Pid", 1))
+	}
+	if s.ProgramNumber != nil && *s.ProgramNumber < -2.147483648e+09 {
+		invalidParams.Add(request.NewErrParamMinValue("ProgramNumber", -2.147483648e+09))
+	}
+	if s.Hdr10Metadata != nil {
+		if err := s.Hdr10Metadata.Validate(); err != nil {
+			invalidParams.AddNested("Hdr10Metadata", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetColorSpace sets the ColorSpace field's value.
@@ -11062,15 +13553,20 @@ type WavSettings struct {
 
 	// Specify Bit depth (BitDepth), in bits per sample, to choose the encoding
 	// quality for this audio track.
-	BitDepth *int64 `locationName:"bitDepth" type:"integer"`
+	BitDepth *int64 `locationName:"bitDepth" min:"16" type:"integer"`
 
 	// Set Channels to specify the number of channels in this output audio track.
 	// With WAV, valid values 1, 2, 4, and 8. In the console, these values are Mono,
 	// Stereo, 4-Channel, and 8-Channel, respectively.
-	Channels *int64 `locationName:"channels" type:"integer"`
+	Channels *int64 `locationName:"channels" min:"1" type:"integer"`
+
+	// The service defaults to using RIFF for WAV outputs. If your output audio
+	// is likely to exceed 4 GB in file size, or if you otherwise need the extended
+	// support of the RF64 format, set your output WAV file format to RF64.
+	Format *string `locationName:"format" type:"string" enum:"WavFormat"`
 
 	// Sample rate in Hz.
-	SampleRate *int64 `locationName:"sampleRate" type:"integer"`
+	SampleRate *int64 `locationName:"sampleRate" min:"8000" type:"integer"`
 }
 
 // String returns the string representation
@@ -11083,6 +13579,25 @@ func (s WavSettings) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *WavSettings) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "WavSettings"}
+	if s.BitDepth != nil && *s.BitDepth < 16 {
+		invalidParams.Add(request.NewErrParamMinValue("BitDepth", 16))
+	}
+	if s.Channels != nil && *s.Channels < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Channels", 1))
+	}
+	if s.SampleRate != nil && *s.SampleRate < 8000 {
+		invalidParams.Add(request.NewErrParamMinValue("SampleRate", 8000))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetBitDepth sets the BitDepth field's value.
 func (s *WavSettings) SetBitDepth(v int64) *WavSettings {
 	s.BitDepth = &v
@@ -11092,6 +13607,12 @@ func (s *WavSettings) SetBitDepth(v int64) *WavSettings {
 // SetChannels sets the Channels field's value.
 func (s *WavSettings) SetChannels(v int64) *WavSettings {
 	s.Channels = &v
+	return s
+}
+
+// SetFormat sets the Format field's value.
+func (s *WavSettings) SetFormat(v string) *WavSettings {
+	s.Format = &v
 	return s
 }
 
@@ -11271,11 +13792,11 @@ const (
 )
 
 // This setting only applies to H.264 and MPEG2 outputs. Use Insert AFD signaling
-// (AfdSignaling) to whether there are AFD values in the output video data and
-// what those values are. * Choose None to remove all AFD values from this output.
-// * Choose Fixed to ignore input AFD values and instead encode the value specified
-// in the job. * Choose Auto to calculate output AFD values based on the input
-// AFD scaler data.
+// (AfdSignaling) to specify whether the service includes AFD values in the
+// output video data and what those values are. * Choose None to remove all
+// AFD values from this output. * Choose Fixed to ignore input AFD values and
+// instead encode the value specified in the job. * Choose Auto to calculate
+// output AFD values based on the input AFD scaler data.
 const (
 	// AfdSignalingNone is a AfdSignaling enum value
 	AfdSignalingNone = "NONE"
@@ -11322,10 +13843,9 @@ const (
 	AudioCodecPassthrough = "PASSTHROUGH"
 )
 
-// When an "Audio Description":#audio_description specifies an AudioSelector
-// or AudioSelectorGroup for which no matching source is found in the input,
-// then the audio selector marked as DEFAULT will be used. If none are marked
-// as default, silence will be inserted for the duration of the input.
+// Enable this setting on one audio selector to set it as the default for the
+// job. The service uses this default for outputs where it can't find the specified
+// input audio. If you don't set a default, those outputs have no audio.
 const (
 	// AudioDefaultSelectionDefault is a AudioDefaultSelection enum value
 	AudioDefaultSelectionDefault = "DEFAULT"
@@ -11500,9 +14020,11 @@ const (
 	BurninSubtitleShadowColorWhite = "WHITE"
 )
 
-// Controls whether a fixed grid size or proportional font spacing will be used
-// to generate the output subtitles bitmap. Only applicable for Teletext inputs
-// and DVB-Sub/Burn-in outputs.
+// Only applies to jobs with input captions in Teletext or STL formats. Specify
+// whether the spacing between letters in your captions is set by the captions
+// grid or varies depending on letter width. Choose fixed grid to conform to
+// the spacing specified in the captions file more accurately. Choose proportional
+// to make the text easier to read if the captions are closed caption.
 const (
 	// BurninSubtitleTeletextSpacingFixedGrid is a BurninSubtitleTeletextSpacing enum value
 	BurninSubtitleTeletextSpacingFixedGrid = "FIXED_GRID"
@@ -11570,6 +14092,108 @@ const (
 	CaptionSourceTypeNullSource = "NULL_SOURCE"
 )
 
+// When set to ENABLED, sets #EXT-X-ALLOW-CACHE:no tag, which prevents client
+// from saving media segments for later replay.
+const (
+	// CmafClientCacheDisabled is a CmafClientCache enum value
+	CmafClientCacheDisabled = "DISABLED"
+
+	// CmafClientCacheEnabled is a CmafClientCache enum value
+	CmafClientCacheEnabled = "ENABLED"
+)
+
+// Specification to use (RFC-6381 or the default RFC-4281) during m3u8 playlist
+// generation.
+const (
+	// CmafCodecSpecificationRfc6381 is a CmafCodecSpecification enum value
+	CmafCodecSpecificationRfc6381 = "RFC_6381"
+
+	// CmafCodecSpecificationRfc4281 is a CmafCodecSpecification enum value
+	CmafCodecSpecificationRfc4281 = "RFC_4281"
+)
+
+// Encrypts the segments with the given encryption scheme. Leave blank to disable.
+// Selecting 'Disabled' in the web interface also disables encryption.
+const (
+	// CmafEncryptionTypeSampleAes is a CmafEncryptionType enum value
+	CmafEncryptionTypeSampleAes = "SAMPLE_AES"
+)
+
+// The Initialization Vector is a 128-bit number used in conjunction with the
+// key for encrypting blocks. If set to INCLUDE, Initialization Vector is listed
+// in the manifest. Otherwise Initialization Vector is not in the manifest.
+const (
+	// CmafInitializationVectorInManifestInclude is a CmafInitializationVectorInManifest enum value
+	CmafInitializationVectorInManifestInclude = "INCLUDE"
+
+	// CmafInitializationVectorInManifestExclude is a CmafInitializationVectorInManifest enum value
+	CmafInitializationVectorInManifestExclude = "EXCLUDE"
+)
+
+// Indicates which type of key provider is used for encryption.
+const (
+	// CmafKeyProviderTypeStaticKey is a CmafKeyProviderType enum value
+	CmafKeyProviderTypeStaticKey = "STATIC_KEY"
+)
+
+// When set to GZIP, compresses HLS playlist.
+const (
+	// CmafManifestCompressionGzip is a CmafManifestCompression enum value
+	CmafManifestCompressionGzip = "GZIP"
+
+	// CmafManifestCompressionNone is a CmafManifestCompression enum value
+	CmafManifestCompressionNone = "NONE"
+)
+
+// Indicates whether the output manifest should use floating point values for
+// segment duration.
+const (
+	// CmafManifestDurationFormatFloatingPoint is a CmafManifestDurationFormat enum value
+	CmafManifestDurationFormatFloatingPoint = "FLOATING_POINT"
+
+	// CmafManifestDurationFormatInteger is a CmafManifestDurationFormat enum value
+	CmafManifestDurationFormatInteger = "INTEGER"
+)
+
+// When set to SINGLE_FILE, a single output file is generated, which is internally
+// segmented using the Fragment Length and Segment Length. When set to SEGMENTED_FILES,
+// separate segment files will be created.
+const (
+	// CmafSegmentControlSingleFile is a CmafSegmentControl enum value
+	CmafSegmentControlSingleFile = "SINGLE_FILE"
+
+	// CmafSegmentControlSegmentedFiles is a CmafSegmentControl enum value
+	CmafSegmentControlSegmentedFiles = "SEGMENTED_FILES"
+)
+
+// Include or exclude RESOLUTION attribute for video in EXT-X-STREAM-INF tag
+// of variant manifest.
+const (
+	// CmafStreamInfResolutionInclude is a CmafStreamInfResolution enum value
+	CmafStreamInfResolutionInclude = "INCLUDE"
+
+	// CmafStreamInfResolutionExclude is a CmafStreamInfResolution enum value
+	CmafStreamInfResolutionExclude = "EXCLUDE"
+)
+
+// When set to ENABLED, a DASH MPD manifest will be generated for this output.
+const (
+	// CmafWriteDASHManifestDisabled is a CmafWriteDASHManifest enum value
+	CmafWriteDASHManifestDisabled = "DISABLED"
+
+	// CmafWriteDASHManifestEnabled is a CmafWriteDASHManifest enum value
+	CmafWriteDASHManifestEnabled = "ENABLED"
+)
+
+// When set to ENABLED, an Apple HLS manifest will be generated for this output.
+const (
+	// CmafWriteHLSManifestDisabled is a CmafWriteHLSManifest enum value
+	CmafWriteHLSManifestDisabled = "DISABLED"
+
+	// CmafWriteHLSManifestEnabled is a CmafWriteHLSManifest enum value
+	CmafWriteHLSManifestEnabled = "ENABLED"
+)
+
 // Enable Insert color metadata (ColorMetadata) to include color metadata in
 // this output. This setting is enabled by default.
 const (
@@ -11580,9 +14204,14 @@ const (
 	ColorMetadataInsert = "INSERT"
 )
 
-// Specifies the colorspace of an input. This setting works in tandem with "Color
-// Corrector":#color_corrector > color_space_conversion to determine if any
-// conversion will be performed.
+// If your input video has accurate color space metadata, or if you don't know
+// about color space, leave this set to the default value FOLLOW. The service
+// will automatically detect your input color space. If your input video has
+// metadata indicating the wrong color space, or if your input video is missing
+// color space metadata that should be there, specify the accurate color space
+// here. If you choose HDR10, you can also correct inaccurate color space coefficients,
+// using the HDR master display information controls. You must also set Color
+// space usage (ColorSpaceUsage) to FORCE for the service to use these values.
 const (
 	// ColorSpaceFollow is a ColorSpace enum value
 	ColorSpaceFollow = "FOLLOW"
@@ -11622,12 +14251,13 @@ const (
 	ColorSpaceConversionForceHlg2020 = "FORCE_HLG_2020"
 )
 
-// There are two sources for color metadata, the input file and the job configuration.
-// This enum controls which takes precedence. FORCE: System will use color metadata
-// supplied by user, if any. If the user does not supply color metadata the
-// system will use data from the source. FALLBACK: System will use color metadata
-// from the source. If source has no color metadata, the system will use user-supplied
-// color metadata values if available.
+// There are two sources for color metadata, the input file and the job configuration
+// (in the Color space and HDR master display informaiton settings). The Color
+// space usage setting controls which takes precedence. FORCE: The system will
+// use color metadata supplied by user, if any. If the user does not supply
+// color metadata, the system will use data from the source. FALLBACK: The system
+// will use color metadata from the source. If source has no color metadata,
+// the system will use user-supplied color metadata values if available.
 const (
 	// ColorSpaceUsageForce is a ColorSpaceUsage enum value
 	ColorSpaceUsageForce = "FORCE"
@@ -11650,6 +14280,9 @@ const (
 
 	// ContainerTypeM3u8 is a ContainerType enum value
 	ContainerTypeM3u8 = "M3U8"
+
+	// ContainerTypeCmfc is a ContainerType enum value
+	ContainerTypeCmfc = "CMFC"
 
 	// ContainerTypeMov is a ContainerType enum value
 	ContainerTypeMov = "MOV"
@@ -11839,9 +14472,11 @@ const (
 	DvbSubtitleShadowColorWhite = "WHITE"
 )
 
-// Controls whether a fixed grid size or proportional font spacing will be used
-// to generate the output subtitles bitmap. Only applicable for Teletext inputs
-// and DVB-Sub/Burn-in outputs.
+// Only applies to jobs with input captions in Teletext or STL formats. Specify
+// whether the spacing between letters in your captions is set by the captions
+// grid or varies depending on letter width. Choose fixed grid to conform to
+// the spacing specified in the captions file more accurately. Choose proportional
+// to make the text easier to read if the captions are closed caption.
 const (
 	// DvbSubtitleTeletextSpacingFixedGrid is a DvbSubtitleTeletextSpacing enum value
 	DvbSubtitleTeletextSpacingFixedGrid = "FIXED_GRID"
@@ -12195,9 +14830,17 @@ const (
 	H264FlickerAdaptiveQuantizationEnabled = "ENABLED"
 )
 
-// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-// the service to use the framerate from the input. Using the console, do this
-// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+// If you are using the console, use the Framerate setting to specify the framerate
+// for this output. If you want to keep the same framerate as the input video,
+// choose Follow source. If you want to do framerate conversion, choose a framerate
+// from the dropdown list or choose Custom. The framerates shown in the dropdown
+// list are decimal approximations of fractions. If you choose Custom, specify
+// your framerate as a fraction. If you are creating your transcoding job specification
+// as a JSON file without the console, use FramerateControl to specify which
+// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+// if you want the service to use the framerate from the input. Choose SPECIFIED
+// if you want the service to use the framerate you specify in the settings
+// FramerateNumerator and FramerateDenominator.
 const (
 	// H264FramerateControlInitializeFromSource is a H264FramerateControl enum value
 	H264FramerateControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -12238,13 +14881,13 @@ const (
 // Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 // * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 // interlaced output with the entire output having the same field polarity (top
-// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 // Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
-// behavior depends on the input scan type. - If the source is interlaced, the
-// output will be interlaced with the same polarity as the source (it will follow
-// the source). The output could therefore be a mix of "top field first" and
-// "bottom field first". - If the source is progressive, the output will be
-// interlaced with "top field first" or "bottom field first" polarity, depending
+// behavior depends on the input scan type, as follows. - If the source is interlaced,
+// the output will be interlaced with the same polarity as the source (it will
+// follow the source). The output could therefore be a mix of "top field first"
+// and "bottom field first". - If the source is progressive, the output will
+// be interlaced with "top field first" or "bottom field first" polarity, depending
 // on which of the Follow options you chose.
 const (
 	// H264InterlaceModeProgressive is a H264InterlaceMode enum value
@@ -12288,8 +14931,8 @@ const (
 	H264QualityTuningLevelMultiPassHq = "MULTI_PASS_HQ"
 )
 
-// Rate control mode. CQ uses constant quantizer (qp), ABR (average bitrate)
-// does not write HRD parameters.
+// Use this setting to specify whether this output has a variable bitrate (VBR)
+// or constant bitrate (CBR).
 const (
 	// H264RateControlModeVbr is a H264RateControlMode enum value
 	H264RateControlModeVbr = "VBR"
@@ -12497,9 +15140,17 @@ const (
 	H265FlickerAdaptiveQuantizationEnabled = "ENABLED"
 )
 
-// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-// the service to use the framerate from the input. Using the console, do this
-// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+// If you are using the console, use the Framerate setting to specify the framerate
+// for this output. If you want to keep the same framerate as the input video,
+// choose Follow source. If you want to do framerate conversion, choose a framerate
+// from the dropdown list or choose Custom. The framerates shown in the dropdown
+// list are decimal approximations of fractions. If you choose Custom, specify
+// your framerate as a fraction. If you are creating your transcoding job sepecification
+// as a JSON file without the console, use FramerateControl to specify which
+// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+// if you want the service to use the framerate from the input. Choose SPECIFIED
+// if you want the service to use the framerate you specify in the settings
+// FramerateNumerator and FramerateDenominator.
 const (
 	// H265FramerateControlInitializeFromSource is a H265FramerateControl enum value
 	H265FramerateControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -12540,7 +15191,7 @@ const (
 // Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 // * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 // interlaced output with the entire output having the same field polarity (top
-// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 // Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
 // behavior depends on the input scan type. - If the source is interlaced, the
 // output will be interlaced with the same polarity as the source (it will follow
@@ -12590,8 +15241,8 @@ const (
 	H265QualityTuningLevelMultiPassHq = "MULTI_PASS_HQ"
 )
 
-// Rate control mode. CQ uses constant quantizer (qp), ABR (average bitrate)
-// does not write HRD parameters.
+// Use this setting to specify whether this output has a variable bitrate (VBR)
+// or constant bitrate (CBR).
 const (
 	// H265RateControlModeVbr is a H265RateControlMode enum value
 	H265RateControlModeVbr = "VBR"
@@ -12703,6 +15354,18 @@ const (
 
 	// H265UnregisteredSeiTimecodeEnabled is a H265UnregisteredSeiTimecode enum value
 	H265UnregisteredSeiTimecodeEnabled = "ENABLED"
+)
+
+// If HVC1, output that is H.265 will be marked as HVC1 and adhere to the ISO-IECJTC1-SC29_N13798_Text_ISOIEC_FDIS_14496-15_3rd_E
+// spec which states that parameter set NAL units will be stored in the sample
+// headers but not in the samples directly. If HEV1, then H.265 will be marked
+// as HEV1 and parameter set NAL units will be written into the samples.
+const (
+	// H265WriteMp4PackagingTypeHvc1 is a H265WriteMp4PackagingType enum value
+	H265WriteMp4PackagingTypeHvc1 = "HVC1"
+
+	// H265WriteMp4PackagingTypeHev1 is a H265WriteMp4PackagingType enum value
+	H265WriteMp4PackagingTypeHev1 = "HEV1"
 )
 
 const (
@@ -12951,13 +15614,13 @@ const (
 	InputPsiControlUsePsi = "USE_PSI"
 )
 
-// Use Timecode source (InputTimecodeSource) to specify how timecode information
-// from your input is adjusted and encoded in all outputs for the job. Default
-// is embedded. Set to Embedded (EMBEDDED) to use the timecode that is in the
-// input video. If no embedded timecode is in the source, will set the timecode
-// for the first frame to 00:00:00:00. Set to Start at 0 (ZEROBASED) to set
-// the timecode of the initial frame to 00:00:00:00. Set to Specified start
-// (SPECIFIEDSTART) to provide the initial timecode yourself the setting (Start).
+// Timecode source under input settings (InputTimecodeSource) only affects the
+// behavior of features that apply to a single input at a time, such as input
+// clipping and synchronizing some captions formats. Use this setting to specify
+// whether the service counts frames by timecodes embedded in the video (EMBEDDED)
+// or by starting the first frame at zero (ZEROBASED). In both cases, the timecode
+// format is HH:MM:SS:FF or HH:MM:SS;FF, where FF is the frame number. Only
+// set this to EMBEDDED if your source video has embedded timecodes.
 const (
 	// InputTimecodeSourceEmbedded is a InputTimecodeSource enum value
 	InputTimecodeSourceEmbedded = "EMBEDDED"
@@ -13001,8 +15664,7 @@ const (
 	JobTemplateListBySystem = "SYSTEM"
 )
 
-// Code to specify the language, following the specification "ISO 639-2 three-digit
-// code":http://www.loc.gov/standards/iso639-2/
+// Specify the language, using the ISO 639-2 three-letter code listed at https://www.loc.gov/standards/iso639-2/php/code_list.php.
 const (
 	// LanguageCodeEng is a LanguageCode enum value
 	LanguageCodeEng = "ENG"
@@ -13880,9 +16542,17 @@ const (
 	Mpeg2CodecProfileProfile422 = "PROFILE_422"
 )
 
-// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-// the service to use the framerate from the input. Using the console, do this
-// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+// If you are using the console, use the Framerate setting to specify the framerate
+// for this output. If you want to keep the same framerate as the input video,
+// choose Follow source. If you want to do framerate conversion, choose a framerate
+// from the dropdown list or choose Custom. The framerates shown in the dropdown
+// list are decimal approximations of fractions. If you choose Custom, specify
+// your framerate as a fraction. If you are creating your transcoding job sepecification
+// as a JSON file without the console, use FramerateControl to specify which
+// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+// if you want the service to use the framerate from the input. Choose SPECIFIED
+// if you want the service to use the framerate you specify in the settings
+// FramerateNumerator and FramerateDenominator.
 const (
 	// Mpeg2FramerateControlInitializeFromSource is a Mpeg2FramerateControl enum value
 	Mpeg2FramerateControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -13913,7 +16583,7 @@ const (
 // Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 // * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 // interlaced output with the entire output having the same field polarity (top
-// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 // Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
 // behavior depends on the input scan type. - If the source is interlaced, the
 // output will be interlaced with the same polarity as the source (it will follow
@@ -14076,8 +16746,8 @@ const (
 // Use Noise reducer filter (NoiseReducerFilter) to select one of the following
 // spatial image filtering functions. To use this setting, you must also enable
 // Noise reducer (NoiseReducer). * Bilateral is an edge preserving noise reduction
-// filter * Mean (softest), Gaussian, Lanczos, and Sharpen (sharpest) are convolution
-// filters * Conserve is a min/max noise reduction filter * Spatial is frequency-domain
+// filter. * Mean (softest), Gaussian, Lanczos, and Sharpen (sharpest) are convolution
+// filters. * Conserve is a min/max noise reduction filter. * Spatial is a frequency-domain
 // filter based on JND principles.
 const (
 	// NoiseReducerFilterBilateral is a NoiseReducerFilter enum value
@@ -14112,7 +16782,8 @@ const (
 	OrderDescending = "DESCENDING"
 )
 
-// Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming)
+// Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming,
+// CMAF)
 const (
 	// OutputGroupTypeHlsGroupSettings is a OutputGroupType enum value
 	OutputGroupTypeHlsGroupSettings = "HLS_GROUP_SETTINGS"
@@ -14125,6 +16796,9 @@ const (
 
 	// OutputGroupTypeMsSmoothGroupSettings is a OutputGroupType enum value
 	OutputGroupTypeMsSmoothGroupSettings = "MS_SMOOTH_GROUP_SETTINGS"
+
+	// OutputGroupTypeCmafGroupSettings is a OutputGroupType enum value
+	OutputGroupTypeCmafGroupSettings = "CMAF_GROUP_SETTINGS"
 )
 
 // Selects method of inserting SDT information into output stream. "Follow input
@@ -14177,9 +16851,17 @@ const (
 	ProresCodecProfileAppleProres422Proxy = "APPLE_PRORES_422_PROXY"
 )
 
-// Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want
-// the service to use the framerate from the input. Using the console, do this
-// by choosing INITIALIZE_FROM_SOURCE for Framerate.
+// If you are using the console, use the Framerate setting to specify the framerate
+// for this output. If you want to keep the same framerate as the input video,
+// choose Follow source. If you want to do framerate conversion, choose a framerate
+// from the dropdown list or choose Custom. The framerates shown in the dropdown
+// list are decimal approximations of fractions. If you choose Custom, specify
+// your framerate as a fraction. If you are creating your transcoding job sepecification
+// as a JSON file without the console, use FramerateControl to specify which
+// value the service uses for the framerate for this output. Choose INITIALIZE_FROM_SOURCE
+// if you want the service to use the framerate from the input. Choose SPECIFIED
+// if you want the service to use the framerate you specify in the settings
+// FramerateNumerator and FramerateDenominator.
 const (
 	// ProresFramerateControlInitializeFromSource is a ProresFramerateControl enum value
 	ProresFramerateControlInitializeFromSource = "INITIALIZE_FROM_SOURCE"
@@ -14200,7 +16882,7 @@ const (
 // Use Interlace mode (InterlaceMode) to choose the scan line type for the output.
 // * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce
 // interlaced output with the entire output having the same field polarity (top
-// or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default
+// or bottom first). * Follow, Default Top (FOLLOW_TOP_FIELD) and Follow, Default
 // Bottom (FOLLOW_BOTTOM_FIELD) use the same field polarity as the source. Therefore,
 // behavior depends on the input scan type. - If the source is interlaced, the
 // output will be interlaced with the same polarity as the source (it will follow
@@ -14364,13 +17046,13 @@ const (
 	TimecodeBurninPositionBottomRight = "BOTTOM_RIGHT"
 )
 
-// Use Timecode source (TimecodeSource) to set how timecodes are handled within
-// this input. To make sure that your video, audio, captions, and markers are
-// synchronized and that time-based features, such as image inserter, work correctly,
-// choose the Timecode source option that matches your assets. All timecodes
-// are in a 24-hour format with frame number (HH:MM:SS:FF). * Embedded (EMBEDDED)
-// - Use the timecode that is in the input video. If no embedded timecode is
-// in the source, the service will use Start at 0 (ZEROBASED) instead. * Start
+// Use Source (TimecodeSource) to set how timecodes are handled within this
+// job. To make sure that your video, audio, captions, and markers are synchronized
+// and that time-based features, such as image inserter, work correctly, choose
+// the Timecode source option that matches your assets. All timecodes are in
+// a 24-hour format with frame number (HH:MM:SS:FF). * Embedded (EMBEDDED) -
+// Use the timecode that is in the input video. If no embedded timecode is in
+// the source, the service will use Start at 0 (ZEROBASED) instead. * Start
 // at 0 (ZEROBASED) - Set the timecode of the initial frame to 00:00:00:00.
 // * Specified Start (SPECIFIEDSTART) - Set the timecode of the initial frame
 // to a value other than zero. You use Start timecode (Start) to provide this
@@ -14386,8 +17068,8 @@ const (
 	TimecodeSourceSpecifiedstart = "SPECIFIEDSTART"
 )
 
-// If PASSTHROUGH, inserts ID3 timed metadata from the timed_metadata REST command
-// into this output.
+// Applies only to HLS outputs. Use this setting to specify whether the service
+// inserts the ID3 timed metadata from the input in this output.
 const (
 	// TimedMetadataPassthrough is a TimedMetadata enum value
 	TimedMetadataPassthrough = "PASSTHROUGH"
@@ -14432,16 +17114,33 @@ const (
 	VideoCodecProres = "PRORES"
 )
 
-// Enable Timecode insertion to include timecode information in this output.
-// Do this in the API by setting (VideoTimecodeInsertion) to (PIC_TIMING_SEI).
-// To get timecodes to appear correctly in your output, also set up the timecode
-// configuration for your job in the input settings. Only enable Timecode insertion
-// when the input framerate is identical to output framerate. Disable this setting
-// to remove the timecode from the output. Default is disabled.
+// Applies only to H.264, H.265, MPEG2, and ProRes outputs. Only enable Timecode
+// insertion when the input framerate is identical to the output framerate.
+// To include timecodes in this output, set Timecode insertion (VideoTimecodeInsertion)
+// to PIC_TIMING_SEI. To leave them out, set it to DISABLED. Default is DISABLED.
+// When the service inserts timecodes in an output, by default, it uses any
+// embedded timecodes from the input. If none are present, the service will
+// set the timecode for the first output frame to zero. To change this default
+// behavior, adjust the settings under Timecode configuration (TimecodeConfig).
+// In the console, these settings are located under Job > Job settings > Timecode
+// configuration. Note - Timecode source under input settings (InputTimecodeSource)
+// does not affect the timecodes that are inserted in the output. Source under
+// Job settings > Timecode configuration (TimecodeSource) does.
 const (
 	// VideoTimecodeInsertionDisabled is a VideoTimecodeInsertion enum value
 	VideoTimecodeInsertionDisabled = "DISABLED"
 
 	// VideoTimecodeInsertionPicTimingSei is a VideoTimecodeInsertion enum value
 	VideoTimecodeInsertionPicTimingSei = "PIC_TIMING_SEI"
+)
+
+// The service defaults to using RIFF for WAV outputs. If your output audio
+// is likely to exceed 4 GB in file size, or if you otherwise need the extended
+// support of the RF64 format, set your output WAV file format to RF64.
+const (
+	// WavFormatRiff is a WavFormat enum value
+	WavFormatRiff = "RIFF"
+
+	// WavFormatRf64 is a WavFormat enum value
+	WavFormatRf64 = "RF64"
 )

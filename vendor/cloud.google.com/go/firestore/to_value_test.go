@@ -64,10 +64,10 @@ var (
 		"I":  intval(1),
 		"U":  intval(2),
 		"F":  floatval(3),
-		"S":  &pb.Value{&pb.Value_StringValue{"four"}},
+		"S":  &pb.Value{ValueType: &pb.Value_StringValue{"four"}},
 		"Y":  bytesval([]byte{5}),
 		"T":  tsval(tm),
-		"Ts": &pb.Value{&pb.Value_TimestampValue{ptm}},
+		"Ts": &pb.Value{ValueType: &pb.Value_TimestampValue{ptm}},
 		"G":  geoval(ll),
 		"L":  arrayval(intval(6)),
 		"M":  mapval(map[string]*pb.Value{"a": intval(7)}),
@@ -95,7 +95,7 @@ func TestToProtoValue(t *testing.T) {
 		{"str", strval("str")},
 		{[]byte{1, 2}, bytesval([]byte{1, 2})},
 		{tm, tsval(tm)},
-		{ptm, &pb.Value{&pb.Value_TimestampValue{ptm}}},
+		{ptm, &pb.Value{ValueType: &pb.Value_TimestampValue{ptm}}},
 		{ll, geoval(ll)},
 		{[]int{1, 2}, arrayval(intval(1), intval(2))},
 		{&[]int{1, 2}, arrayval(intval(1), intval(2))},
@@ -254,7 +254,7 @@ func TestToProtoValueEmbedded(t *testing.T) {
 	want := mapval(map[string]*pb.Value{
 		"Time":      tsval(tm),
 		"LatLng":    geoval(ll),
-		"Timestamp": &pb.Value{&pb.Value_TimestampValue{ptm}},
+		"Timestamp": &pb.Value{ValueType: &pb.Value_TimestampValue{ptm}},
 	})
 	if !testEqual(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)

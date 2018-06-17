@@ -85,10 +85,11 @@ const (
 	xGoogAPIMetadata = "x-goog-api-client"
 	zoneNameLabel    = "zone"
 	versionLabel     = "version"
+	languageLabel    = "language"
 	instanceLabel    = "instance"
 	scope            = "https://www.googleapis.com/auth/monitoring.write"
 
-	initialBackoff = time.Second
+	initialBackoff = time.Minute
 	// Ensure the agent will recover within 1 hour.
 	maxBackoff        = time.Hour
 	backoffMultiplier = 1.3 // Backoff envelope increases by this factor on each retry.
@@ -401,7 +402,7 @@ func withXGoogHeader(ctx context.Context, keyval ...string) context.Context {
 }
 
 func initializeAgent(c pb.ProfilerServiceClient) *agent {
-	labels := map[string]string{}
+	labels := map[string]string{languageLabel: "go"}
 	if config.zone != "" {
 		labels[zoneNameLabel] = config.zone
 	}

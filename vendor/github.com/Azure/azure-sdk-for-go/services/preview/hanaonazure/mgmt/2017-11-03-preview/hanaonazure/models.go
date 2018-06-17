@@ -30,11 +30,13 @@ type HanaHardwareTypeNamesEnum string
 const (
 	// CiscoUCS ...
 	CiscoUCS HanaHardwareTypeNamesEnum = "Cisco_UCS"
+	// HPE ...
+	HPE HanaHardwareTypeNamesEnum = "HPE"
 )
 
 // PossibleHanaHardwareTypeNamesEnumValues returns an array of possible values for the HanaHardwareTypeNamesEnum const type.
 func PossibleHanaHardwareTypeNamesEnumValues() []HanaHardwareTypeNamesEnum {
-	return []HanaHardwareTypeNamesEnum{CiscoUCS}
+	return []HanaHardwareTypeNamesEnum{CiscoUCS, HPE}
 }
 
 // HanaInstanceSizeNamesEnum enumerates the values for hana instance size names enum.
@@ -49,15 +51,37 @@ const (
 	S192 HanaInstanceSizeNamesEnum = "S192"
 	// S192m ...
 	S192m HanaInstanceSizeNamesEnum = "S192m"
+	// S192xm ...
+	S192xm HanaInstanceSizeNamesEnum = "S192xm"
+	// S384 ...
+	S384 HanaInstanceSizeNamesEnum = "S384"
+	// S384m ...
+	S384m HanaInstanceSizeNamesEnum = "S384m"
+	// S384xm ...
+	S384xm HanaInstanceSizeNamesEnum = "S384xm"
+	// S384xxm ...
+	S384xxm HanaInstanceSizeNamesEnum = "S384xxm"
+	// S576m ...
+	S576m HanaInstanceSizeNamesEnum = "S576m"
+	// S576xm ...
+	S576xm HanaInstanceSizeNamesEnum = "S576xm"
 	// S72 ...
 	S72 HanaInstanceSizeNamesEnum = "S72"
 	// S72m ...
 	S72m HanaInstanceSizeNamesEnum = "S72m"
+	// S768 ...
+	S768 HanaInstanceSizeNamesEnum = "S768"
+	// S768m ...
+	S768m HanaInstanceSizeNamesEnum = "S768m"
+	// S768xm ...
+	S768xm HanaInstanceSizeNamesEnum = "S768xm"
+	// S960m ...
+	S960m HanaInstanceSizeNamesEnum = "S960m"
 )
 
 // PossibleHanaInstanceSizeNamesEnumValues returns an array of possible values for the HanaInstanceSizeNamesEnum const type.
 func PossibleHanaInstanceSizeNamesEnumValues() []HanaInstanceSizeNamesEnum {
-	return []HanaInstanceSizeNamesEnum{S144, S144m, S192, S192m, S72, S72m}
+	return []HanaInstanceSizeNamesEnum{S144, S144m, S192, S192m, S192xm, S384, S384m, S384xm, S384xxm, S576m, S576xm, S72, S72m, S768, S768m, S768xm, S960m}
 }
 
 // Disk specifies the disk information fo the HANA instance
@@ -320,9 +344,9 @@ func (page HanaInstancesListResultPage) Values() []HanaInstance {
 
 // HardwareProfile specifies the hardware settings for the HANA instance.
 type HardwareProfile struct {
-	// HardwareType - Name of the hardware type (vendor and/or thrie product name). Possible values include: 'CiscoUCS'
+	// HardwareType - Name of the hardware type (vendor and/or their product name). Possible values include: 'CiscoUCS', 'HPE'
 	HardwareType HanaHardwareTypeNamesEnum `json:"hardwareType,omitempty"`
-	// HanaInstanceSize - Specifies the HANA instance SKU. Possible values include: 'S72m', 'S144m', 'S72', 'S144', 'S192', 'S192m'
+	// HanaInstanceSize - Specifies the HANA instance SKU. Possible values include: 'S72m', 'S144m', 'S72', 'S144', 'S192', 'S192m', 'S192xm', 'S384', 'S384m', 'S384xm', 'S384xxm', 'S576m', 'S576xm', 'S768', 'S768m', 'S768xm', 'S960m'
 	HanaInstanceSize HanaInstanceSizeNamesEnum `json:"hanaInstanceSize,omitempty"`
 }
 

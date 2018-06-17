@@ -126,6 +126,13 @@ const (
 	// You have reached the limit of the number of delivery channels you can create.
 	ErrCodeMaxNumberOfDeliveryChannelsExceededException = "MaxNumberOfDeliveryChannelsExceededException"
 
+	// ErrCodeMaxNumberOfRetentionConfigurationsExceededException for service response error code
+	// "MaxNumberOfRetentionConfigurationsExceededException".
+	//
+	// Failed to add the retention configuration because a retention configuration
+	// with that name already exists.
+	ErrCodeMaxNumberOfRetentionConfigurationsExceededException = "MaxNumberOfRetentionConfigurationsExceededException"
+
 	// ErrCodeNoAvailableConfigurationRecorderException for service response error code
 	// "NoAvailableConfigurationRecorderException".
 	//
@@ -181,6 +188,12 @@ const (
 	//
 	// You have specified a delivery channel that does not exist.
 	ErrCodeNoSuchDeliveryChannelException = "NoSuchDeliveryChannelException"
+
+	// ErrCodeNoSuchRetentionConfigurationException for service response error code
+	// "NoSuchRetentionConfigurationException".
+	//
+	// You have specified a retention configuration that does not exist.
+	ErrCodeNoSuchRetentionConfigurationException = "NoSuchRetentionConfigurationException"
 
 	// ErrCodeOrganizationAccessDeniedException for service response error code
 	// "OrganizationAccessDeniedException".

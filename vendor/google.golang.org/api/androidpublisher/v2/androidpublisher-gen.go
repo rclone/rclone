@@ -58,6 +58,7 @@ func New(client *http.Client) (*Service, error) {
 	s := &Service{client: client, BasePath: basePath}
 	s.Edits = NewEditsService(s)
 	s.Inappproducts = NewInappproductsService(s)
+	s.Orders = NewOrdersService(s)
 	s.Purchases = NewPurchasesService(s)
 	s.Reviews = NewReviewsService(s)
 	return s, nil
@@ -71,6 +72,8 @@ type Service struct {
 	Edits *EditsService
 
 	Inappproducts *InappproductsService
+
+	Orders *OrdersService
 
 	Purchases *PurchasesService
 
@@ -88,6 +91,7 @@ func NewEditsService(s *Service) *EditsService {
 	rs := &EditsService{s: s}
 	rs.Apklistings = NewEditsApklistingsService(s)
 	rs.Apks = NewEditsApksService(s)
+	rs.Bundles = NewEditsBundlesService(s)
 	rs.Deobfuscationfiles = NewEditsDeobfuscationfilesService(s)
 	rs.Details = NewEditsDetailsService(s)
 	rs.Expansionfiles = NewEditsExpansionfilesService(s)
@@ -104,6 +108,8 @@ type EditsService struct {
 	Apklistings *EditsApklistingsService
 
 	Apks *EditsApksService
+
+	Bundles *EditsBundlesService
 
 	Deobfuscationfiles *EditsDeobfuscationfilesService
 
@@ -135,6 +141,15 @@ func NewEditsApksService(s *Service) *EditsApksService {
 }
 
 type EditsApksService struct {
+	s *Service
+}
+
+func NewEditsBundlesService(s *Service) *EditsBundlesService {
+	rs := &EditsBundlesService{s: s}
+	return rs
+}
+
+type EditsBundlesService struct {
 	s *Service
 }
 
@@ -207,6 +222,15 @@ func NewInappproductsService(s *Service) *InappproductsService {
 }
 
 type InappproductsService struct {
+	s *Service
+}
+
+func NewOrdersService(s *Service) *OrdersService {
+	rs := &OrdersService{s: s}
+	return rs
+}
+
+type OrdersService struct {
 	s *Service
 }
 
@@ -572,6 +596,80 @@ type AppEdit struct {
 
 func (s *AppEdit) MarshalJSON() ([]byte, error) {
 	type NoMethod AppEdit
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type Bundle struct {
+	// Sha1: A sha1 hash of the upload payload, encoded as a hex string and
+	// matching the output of the sha1sum command.
+	Sha1 string `json:"sha1,omitempty"`
+
+	// Sha256: A sha256 hash of the upload payload, encoded as a hex string
+	// and matching the output of the sha256sum command.
+	Sha256 string `json:"sha256,omitempty"`
+
+	// VersionCode: The version code of the Android App Bundle. As specified
+	// in the Android App Bundle's base module APK manifest file.
+	VersionCode int64 `json:"versionCode,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Sha1") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Sha1") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Bundle) MarshalJSON() ([]byte, error) {
+	type NoMethod Bundle
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type BundlesListResponse struct {
+	Bundles []*Bundle `json:"bundles,omitempty"`
+
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "androidpublisher#bundlesListResponse".
+	Kind string `json:"kind,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Bundles") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Bundles") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BundlesListResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod BundlesListResponse
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1068,6 +1166,12 @@ type InAppProduct struct {
 	// be free. Default price is always in the developer's Checkout merchant
 	// currency.
 	DefaultPrice *Price `json:"defaultPrice,omitempty"`
+
+	// GracePeriod: Grace period of the subscription, specified in ISO 8601
+	// format. It will allow developers to give their subscribers a grace
+	// period when the payment for the new recurrence period is declined.
+	// Acceptable values = "P3D" (three days) and "P7D" (seven days)
+	GracePeriod string `json:"gracePeriod,omitempty"`
 
 	// Listings: List of localized title and description data.
 	Listings map[string]InAppProductListing `json:"listings,omitempty"`
@@ -2034,12 +2138,14 @@ func (s *TokenPagination) MarshalJSON() ([]byte, error) {
 }
 
 type Track struct {
-	// Track: Identifier for this track. One of "alpha", "beta",
-	// "production", "rollout" or "internal".
+	// Track: Identifier for this track.
 	Track string `json:"track,omitempty"`
 
 	UserFraction float64 `json:"userFraction,omitempty"`
 
+	// VersionCodes: Version codes to make active on this track. Note that
+	// this list should contain all versions you wish to be active,
+	// including those you wish to retain from previous releases.
 	VersionCodes []int64 `json:"versionCodes,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -4332,6 +4438,375 @@ func (c *EditsApksUploadCall) Do(opts ...googleapi.CallOption) (*Apk, error) {
 	//   "path": "{packageName}/edits/{editId}/apks",
 	//   "response": {
 	//     "$ref": "Apk"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/androidpublisher"
+	//   ],
+	//   "supportsMediaUpload": true
+	// }
+
+}
+
+// method id "androidpublisher.edits.bundles.list":
+
+type EditsBundlesListCall struct {
+	s             *Service
+	packageNameid string
+	editId        string
+	urlParams_    gensupport.URLParams
+	ifNoneMatch_  string
+	ctx_          context.Context
+	header_       http.Header
+}
+
+// List:
+func (r *EditsBundlesService) List(packageNameid string, editId string) *EditsBundlesListCall {
+	c := &EditsBundlesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.packageNameid = packageNameid
+	c.editId = editId
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *EditsBundlesListCall) Fields(s ...googleapi.Field) *EditsBundlesListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *EditsBundlesListCall) IfNoneMatch(entityTag string) *EditsBundlesListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *EditsBundlesListCall) Context(ctx context.Context) *EditsBundlesListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *EditsBundlesListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *EditsBundlesListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{packageName}/edits/{editId}/bundles")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"packageName": c.packageNameid,
+		"editId":      c.editId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "androidpublisher.edits.bundles.list" call.
+// Exactly one of *BundlesListResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *BundlesListResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *EditsBundlesListCall) Do(opts ...googleapi.CallOption) (*BundlesListResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &BundlesListResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "httpMethod": "GET",
+	//   "id": "androidpublisher.edits.bundles.list",
+	//   "parameterOrder": [
+	//     "packageName",
+	//     "editId"
+	//   ],
+	//   "parameters": {
+	//     "editId": {
+	//       "description": "Unique identifier for this edit.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "packageName": {
+	//       "description": "Unique identifier for the Android app that is being updated; for example, \"com.spiffygame\".",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{packageName}/edits/{editId}/bundles",
+	//   "response": {
+	//     "$ref": "BundlesListResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/androidpublisher"
+	//   ]
+	// }
+
+}
+
+// method id "androidpublisher.edits.bundles.upload":
+
+type EditsBundlesUploadCall struct {
+	s             *Service
+	packageNameid string
+	editId        string
+	urlParams_    gensupport.URLParams
+	mediaInfo_    *gensupport.MediaInfo
+	ctx_          context.Context
+	header_       http.Header
+}
+
+// Upload: Uploads a new Android App Bundle to this edit. If you are
+// using the Google API client libraries, please increase the timeout of
+// the http request before calling this endpoint (a timeout of 2 minutes
+// is recommended). See:
+// https://developers.google.com/api-client-library/java/google-api-java-client/errors for an example in
+// java.
+func (r *EditsBundlesService) Upload(packageNameid string, editId string) *EditsBundlesUploadCall {
+	c := &EditsBundlesUploadCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.packageNameid = packageNameid
+	c.editId = editId
+	return c
+}
+
+// Media specifies the media to upload in one or more chunks. The chunk
+// size may be controlled by supplying a MediaOption generated by
+// googleapi.ChunkSize. The chunk size defaults to
+// googleapi.DefaultUploadChunkSize.The Content-Type header used in the
+// upload request will be determined by sniffing the contents of r,
+// unless a MediaOption generated by googleapi.ContentType is
+// supplied.
+// At most one of Media and ResumableMedia may be set.
+func (c *EditsBundlesUploadCall) Media(r io.Reader, options ...googleapi.MediaOption) *EditsBundlesUploadCall {
+	c.mediaInfo_ = gensupport.NewInfoFromMedia(r, options)
+	return c
+}
+
+// ResumableMedia specifies the media to upload in chunks and can be
+// canceled with ctx.
+//
+// Deprecated: use Media instead.
+//
+// At most one of Media and ResumableMedia may be set. mediaType
+// identifies the MIME media type of the upload, such as "image/png". If
+// mediaType is "", it will be auto-detected. The provided ctx will
+// supersede any context previously provided to the Context method.
+func (c *EditsBundlesUploadCall) ResumableMedia(ctx context.Context, r io.ReaderAt, size int64, mediaType string) *EditsBundlesUploadCall {
+	c.ctx_ = ctx
+	c.mediaInfo_ = gensupport.NewInfoFromResumableMedia(r, size, mediaType)
+	return c
+}
+
+// ProgressUpdater provides a callback function that will be called
+// after every chunk. It should be a low-latency function in order to
+// not slow down the upload operation. This should only be called when
+// using ResumableMedia (as opposed to Media).
+func (c *EditsBundlesUploadCall) ProgressUpdater(pu googleapi.ProgressUpdater) *EditsBundlesUploadCall {
+	c.mediaInfo_.SetProgressUpdater(pu)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *EditsBundlesUploadCall) Fields(s ...googleapi.Field) *EditsBundlesUploadCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+// This context will supersede any context previously provided to the
+// ResumableMedia method.
+func (c *EditsBundlesUploadCall) Context(ctx context.Context) *EditsBundlesUploadCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *EditsBundlesUploadCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *EditsBundlesUploadCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{packageName}/edits/{editId}/bundles")
+	if c.mediaInfo_ != nil {
+		urls = strings.Replace(urls, "https://www.googleapis.com/", "https://www.googleapis.com/upload/", 1)
+		c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())
+	}
+	if body == nil {
+		body = new(bytes.Buffer)
+		reqHeaders.Set("Content-Type", "application/json")
+	}
+	body, getBody, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
+	defer cleanup()
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	gensupport.SetGetBody(req, getBody)
+	googleapi.Expand(req.URL, map[string]string{
+		"packageName": c.packageNameid,
+		"editId":      c.editId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "androidpublisher.edits.bundles.upload" call.
+// Exactly one of *Bundle or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Bundle.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *EditsBundlesUploadCall) Do(opts ...googleapi.CallOption) (*Bundle, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	rx := c.mediaInfo_.ResumableUpload(res.Header.Get("Location"))
+	if rx != nil {
+		rx.Client = c.s.client
+		rx.UserAgent = c.s.userAgent()
+		ctx := c.ctx_
+		if ctx == nil {
+			ctx = context.TODO()
+		}
+		res, err = rx.Upload(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+		if err := googleapi.CheckResponse(res); err != nil {
+			return nil, err
+		}
+	}
+	ret := &Bundle{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Uploads a new Android App Bundle to this edit. If you are using the Google API client libraries, please increase the timeout of the http request before calling this endpoint (a timeout of 2 minutes is recommended). See: https://developers.google.com/api-client-library/java/google-api-java-client/errors for an example in java.",
+	//   "httpMethod": "POST",
+	//   "id": "androidpublisher.edits.bundles.upload",
+	//   "mediaUpload": {
+	//     "accept": [
+	//       "application/octet-stream"
+	//     ],
+	//     "maxSize": "2GB",
+	//     "protocols": {
+	//       "resumable": {
+	//         "multipart": true,
+	//         "path": "/resumable/upload/androidpublisher/v2/applications/{packageName}/edits/{editId}/bundles"
+	//       },
+	//       "simple": {
+	//         "multipart": true,
+	//         "path": "/upload/androidpublisher/v2/applications/{packageName}/edits/{editId}/bundles"
+	//       }
+	//     }
+	//   },
+	//   "parameterOrder": [
+	//     "packageName",
+	//     "editId"
+	//   ],
+	//   "parameters": {
+	//     "editId": {
+	//       "description": "Unique identifier for this edit.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "packageName": {
+	//       "description": "Unique identifier for the Android app that is being updated; for example, \"com.spiffygame\".",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{packageName}/edits/{editId}/bundles",
+	//   "response": {
+	//     "$ref": "Bundle"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/androidpublisher"
@@ -9358,6 +9833,126 @@ func (c *InappproductsUpdateCall) Do(opts ...googleapi.CallOption) (*InAppProduc
 	//   "response": {
 	//     "$ref": "InAppProduct"
 	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/androidpublisher"
+	//   ]
+	// }
+
+}
+
+// method id "androidpublisher.orders.refund":
+
+type OrdersRefundCall struct {
+	s           *Service
+	packageName string
+	orderId     string
+	urlParams_  gensupport.URLParams
+	ctx_        context.Context
+	header_     http.Header
+}
+
+// Refund: Refund a user's subscription or in-app purchase order.
+func (r *OrdersService) Refund(packageName string, orderId string) *OrdersRefundCall {
+	c := &OrdersRefundCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.packageName = packageName
+	c.orderId = orderId
+	return c
+}
+
+// Revoke sets the optional parameter "revoke": Whether to revoke the
+// purchased item. If set to true, access to the subscription or in-app
+// item will be terminated immediately. If the item is a recurring
+// subscription, all future payments will also be terminated. Consumed
+// in-app items need to be handled by developer's app. (optional)
+func (c *OrdersRefundCall) Revoke(revoke bool) *OrdersRefundCall {
+	c.urlParams_.Set("revoke", fmt.Sprint(revoke))
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *OrdersRefundCall) Fields(s ...googleapi.Field) *OrdersRefundCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *OrdersRefundCall) Context(ctx context.Context) *OrdersRefundCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *OrdersRefundCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *OrdersRefundCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{packageName}/orders/{orderId}:refund")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"packageName": c.packageName,
+		"orderId":     c.orderId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "androidpublisher.orders.refund" call.
+func (c *OrdersRefundCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if err != nil {
+		return err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return err
+	}
+	return nil
+	// {
+	//   "description": "Refund a user's subscription or in-app purchase order.",
+	//   "httpMethod": "POST",
+	//   "id": "androidpublisher.orders.refund",
+	//   "parameterOrder": [
+	//     "packageName",
+	//     "orderId"
+	//   ],
+	//   "parameters": {
+	//     "orderId": {
+	//       "description": "The order ID provided to the user when the subscription or in-app order was purchased.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "packageName": {
+	//       "description": "The package name of the application for which this subscription or in-app item was purchased (for example, 'com.some.thing').",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "revoke": {
+	//       "description": "Whether to revoke the purchased item. If set to true, access to the subscription or in-app item will be terminated immediately. If the item is a recurring subscription, all future payments will also be terminated. Consumed in-app items need to be handled by developer's app. (optional)",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     }
+	//   },
+	//   "path": "{packageName}/orders/{orderId}:refund",
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/androidpublisher"
 	//   ]

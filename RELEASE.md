@@ -31,6 +31,7 @@ Making a release
   * # announce with forum post, twitter post, G+ post
 
 Early in the next release cycle update the vendored dependencies
+  * Review any pinned packages in Gopkg.toml and remove if possible
   * make update
   * git status
   * git add new files

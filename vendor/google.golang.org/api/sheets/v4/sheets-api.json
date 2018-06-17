@@ -71,11 +71,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -95,12 +90,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -766,7 +755,7 @@
                   "type": "string"
                 },
                 "responseDateTimeRenderOption": {
-                  "description": "Determines how dates, times, and durations in the response should be\nrendered. This is ignored if response_value_render_option is\nFORMATTED_VALUE.\nThe default dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].",
+                  "description": "Determines how dates, times, and durations in the response should be\nrendered. This is ignored if response_value_render_option is\nFORMATTED_VALUE.\nThe default dateTime render option is\nDateTimeRenderOption.SERIAL_NUMBER.",
                   "enum": [
                     "SERIAL_NUMBER",
                     "FORMATTED_STRING"
@@ -819,7 +808,7 @@
       }
     }
   },
-  "revision": "20180405",
+  "revision": "20180611",
   "rootUrl": "https://sheets.googleapis.com/",
   "schemas": {
     "AddBandingRequest": {
@@ -878,6 +867,31 @@
         "rule": {
           "$ref": "ConditionalFormatRule",
           "description": "The rule to add."
+        }
+      },
+      "type": "object"
+    },
+    "AddDimensionGroupRequest": {
+      "description": "Creates a group over the specified range.\n\nIf the requested range is a superset of the range of an existing group G,\nthen the depth of G is incremented and this new group G' has the\ndepth of that group. For example, a group [C:D, depth 1] + [B:E] results in\ngroups [B:E, depth 1] and [C:D, depth 2].\nIf the requested range is a subset of the range of an existing group G,\nthen the depth of the new group G' becomes one greater than the depth of G.\nFor example, a group [B:E, depth 1] + [C:D] results in groups [B:E, depth 1]\nand [C:D, depth 2].\nIf the requested range starts before and ends within, or starts within and\nends after, the range of an existing group G, then the range of the existing\ngroup G becomes the union of the ranges, and the new group G' has\ndepth one greater than the depth of G and range as the intersection of the\nranges. For example, a group [B:D, depth 1] + [C:E] results in groups [B:E,\ndepth 1] and [C:D, depth 2].",
+      "id": "AddDimensionGroupRequest",
+      "properties": {
+        "range": {
+          "$ref": "DimensionRange",
+          "description": "The range over which to create a group."
+        }
+      },
+      "type": "object"
+    },
+    "AddDimensionGroupResponse": {
+      "description": "The result of adding a group.",
+      "id": "AddDimensionGroupResponse",
+      "properties": {
+        "dimensionGroups": {
+          "description": "All groups of a dimension after adding a group to that dimension.",
+          "items": {
+            "$ref": "DimensionGroup"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -1085,7 +1099,7 @@
         },
         "columnProperties": {
           "$ref": "BandingProperties",
-          "description": "Properties for column bands. These properties will be applied on a column-\nby-column basis throughout all the columns in the range. At least one of\nrow_properties or column_properties must be specified."
+          "description": "Properties for column bands. These properties are applied on a column-\nby-column basis throughout all the columns in the range. At least one of\nrow_properties or column_properties must be specified."
         },
         "range": {
           "$ref": "GridRange",
@@ -1093,7 +1107,7 @@
         },
         "rowProperties": {
           "$ref": "BandingProperties",
-          "description": "Properties for row bands. These properties will be applied on a row-by-row\nbasis throughout all the rows in the range. At least one of\nrow_properties or column_properties must be specified."
+          "description": "Properties for row bands. These properties are applied on a row-by-row\nbasis throughout all the rows in the range. At least one of\nrow_properties or column_properties must be specified."
         }
       },
       "type": "object"
@@ -1177,7 +1191,7 @@
       "properties": {
         "color": {
           "$ref": "Color",
-          "description": "The color for elements (i.e. bars, lines, points) associated with this\nseries.  If empty, a default color will be used."
+          "description": "The color for elements (i.e. bars, lines, points) associated with this\nseries.  If empty, a default color is used."
         },
         "lineStyle": {
           "$ref": "LineStyle",
@@ -1806,7 +1820,8 @@
             "ONE_OF_LIST",
             "BLANK",
             "NOT_BLANK",
-            "CUSTOM_FORMULA"
+            "CUSTOM_FORMULA",
+            "BOOLEAN"
           ],
           "enumDescriptions": [
             "The default value, do not use.",
@@ -1837,7 +1852,8 @@
             "The cell's value must be in the list of condition values.\nSupported by data validation.\nSupports any number of condition values,\none per item in the list.\nFormulas are not supported in the values.",
             "The cell's value must be empty.\nSupported by conditional formatting and filters.\nRequires no ConditionValues.",
             "The cell's value must not be empty.\nSupported by conditional formatting and filters.\nRequires no ConditionValues.",
-            "The condition's formula must evaluate to true.\nSupported by data validation, conditional formatting and filters.\nRequires a single ConditionValue."
+            "The condition's formula must evaluate to true.\nSupported by data validation, conditional formatting and filters.\nRequires a single ConditionValue.",
+            "The cell's value must be TRUE/FALSE or in the list of condition values.\nSupported by data validation.\nRenders as a cell checkbox.\nSupports zero, one or two ConditionValues.  No\nvalues indicates the cell must be TRUE or FALSE, where TRUE renders as\nchecked and FALSE renders as unchecked.  One value indicates the cell\nwill render as checked when it contains that value and unchecked when it\nis blank.  Two values indicate that the cell will render as checked when\nit contains the first value and unchecked when it contains the second\nvalue.  For example, [\"Yes\",\"No\"] indicates that the cell will render a\nchecked box when it has the value \"Yes\" and an unchecked box when it has\nthe value \"No\"."
           ],
           "type": "string"
         },
@@ -1857,7 +1873,7 @@
       "properties": {
         "condition": {
           "$ref": "BooleanCondition",
-          "description": "The condition of the rule. If the condition evaluates to true,\nthe format will be applied."
+          "description": "The condition of the rule. If the condition evaluates to true,\nthe format is applied."
         },
         "format": {
           "$ref": "CellFormat",
@@ -1970,7 +1986,7 @@
         },
         "groupIds": {
           "$ref": "ChartData",
-          "description": "The data containing the bubble group IDs. All bubbles with the same group\nID will be drawn in the same color. If bubble_sizes is specified then\nthis field must also be specified but may contain blank values.\nThis field is optional."
+          "description": "The data containing the bubble group IDs. All bubbles with the same group\nID are drawn in the same color. If bubble_sizes is specified then\nthis field must also be specified but may contain blank values.\nThis field is optional."
         },
         "legendPosition": {
           "description": "Where the legend of the chart should be drawn.",
@@ -2082,7 +2098,7 @@
         },
         "effectiveValue": {
           "$ref": "ExtendedValue",
-          "description": "The effective value of the cell. For cells with formulas, this will be\nthe calculated value.  For cells with literals, this will be\nthe same as the user_entered_value.\nThis field is read-only."
+          "description": "The effective value of the cell. For cells with formulas, this is\nthe calculated value.  For cells with literals, this is\nthe same as the user_entered_value.\nThis field is read-only."
         },
         "formattedValue": {
           "description": "The formatted value of the cell.\nThis is the value as it's shown to the user.\nThis field is read-only.",
@@ -2101,7 +2117,7 @@
           "description": "A pivot table anchored at this cell. The size of pivot table itself\nis computed dynamically based on its data, grouping, filters, values,\netc. Only the top-left cell of the pivot table contains the pivot table\ndefinition. The other cells will contain the calculated values of the\nresults of the pivot in their effective_value fields."
         },
         "textFormatRuns": {
-          "description": "Runs of rich text applied to subsections of the cell.  Runs are only valid\non user entered strings, not formulas, bools, or numbers.\nRuns start at specific indexes in the text and continue until the next\nrun. Properties of a run will continue unless explicitly changed\nin a subsequent run (and properties of the first run will continue\nthe properties of the cell unless explicitly changed).\n\nWhen writing, the new runs will overwrite any prior runs.  When writing a\nnew user_entered_value, previous runs will be erased.",
+          "description": "Runs of rich text applied to subsections of the cell.  Runs are only valid\non user entered strings, not formulas, bools, or numbers.\nRuns start at specific indexes in the text and continue until the next\nrun. Properties of a run will continue unless explicitly changed\nin a subsequent run (and properties of the first run will continue\nthe properties of the cell unless explicitly changed).\n\nWhen writing, the new runs will overwrite any prior runs.  When writing a\nnew user_entered_value, previous runs are erased.",
           "items": {
             "$ref": "TextFormatRun"
           },
@@ -2436,7 +2452,7 @@
           "type": "string"
         },
         "userEnteredValue": {
-          "description": "A value the condition is based on.\nThe value will be parsed as if the user typed into a cell.\nFormulas are supported (and must begin with an `=` or a '+').",
+          "description": "A value the condition is based on.\nThe value is parsed as if the user typed into a cell.\nFormulas are supported (and must begin with an `=` or a '+').",
           "type": "string"
         }
       },
@@ -2455,7 +2471,7 @@
           "description": "The formatting will vary based on the gradients in the rule."
         },
         "ranges": {
-          "description": "The ranges that will be formatted if the condition is true.\nAll the ranges must be on the same grid.",
+          "description": "The ranges that are formatted if the condition is true.\nAll the ranges must be on the same grid.",
           "items": {
             "$ref": "GridRange"
           },
@@ -2660,6 +2676,53 @@
       },
       "type": "object"
     },
+    "DateTimeRule": {
+      "description": "Allows you to organize the date-time values in a source data column into\nbuckets based on selected parts of their date or time values. For example,\nconsider a pivot table showing sales transactions by date:\n\n    +----------+--------------+\n    | Date     | SUM of Sales |\n    +----------+--------------+\n    | 1/1/2017 |      $621.14 |\n    | 2/3/2017 |      $708.84 |\n    | 5/8/2017 |      $326.84 |\n    ...\n    +----------+--------------+\nApplying a date-time group rule with a DateTimeRuleType of YEAR_MONTH\nresults in the following pivot table.\n\n    +--------------+--------------+\n    | Grouped Date | SUM of Sales |\n    +--------------+--------------+\n    | 2017-Jan     |   $53,731.78 |\n    | 2017-Feb     |   $83,475.32 |\n    | 2017-Mar     |   $94,385.05 |\n    ...\n    +--------------+--------------+",
+      "id": "DateTimeRule",
+      "properties": {
+        "type": {
+          "description": "The type of date-time grouping to apply.",
+          "enum": [
+            "DATE_TIME_RULE_TYPE_UNSPECIFIED",
+            "SECOND",
+            "MINUTE",
+            "HOUR",
+            "HOUR_MINUTE",
+            "HOUR_MINUTE_AMPM",
+            "DAY_OF_WEEK",
+            "DAY_OF_YEAR",
+            "DAY_OF_MONTH",
+            "DAY_MONTH",
+            "MONTH",
+            "QUARTER",
+            "YEAR",
+            "YEAR_MONTH",
+            "YEAR_QUARTER",
+            "YEAR_MONTH_DAY"
+          ],
+          "enumDescriptions": [
+            "The default type, do not use.",
+            "Group dates by second, from 0 to 59.",
+            "Group dates by minute, from 0 to 59.",
+            "Group dates by hour using a 24-hour system, from 0 to 23.",
+            "Group dates by hour and minute using a 24-hour system, for example 19:45.",
+            "Group dates by hour and minute using a 12-hour system, for example 7:45\nPM. The AM/PM designation is translated based on the spreadsheet\nlocale.",
+            "Group dates by day of week, for example Sunday. The days of the week will\nbe translated based on the spreadsheet locale.",
+            "Group dates by day of year, from 1 to 366. Note that dates after Feb. 29\nfall in different buckets in leap years than in non-leap years.",
+            "Group dates by day of month, from 1 to 31.",
+            "Group dates by day and month, for example 22-Nov. The month is\ntranslated based on the spreadsheet locale.",
+            "Group dates by month, for example Nov. The month is translated based\non the spreadsheet locale.",
+            "Group dates by quarter, for example Q1 (which represents Jan-Mar).",
+            "Group dates by year, for example 2008.",
+            "Group dates by year and month, for example 2008-Nov. The month is\ntranslated based on the spreadsheet locale.",
+            "Group dates by year and quarter, for example 2008 Q4.",
+            "Group dates by year, month, and day, for example 2008-11-22."
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "DeleteBandingRequest": {
       "description": "Removes the banded range with the given ID from the spreadsheet.",
       "id": "DeleteBandingRequest",
@@ -2719,6 +2782,31 @@
           "description": "The metadata that was deleted.",
           "items": {
             "$ref": "DeveloperMetadata"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "DeleteDimensionGroupRequest": {
+      "description": "Deletes a group over the specified range by decrementing the depth of the\ndimensions in the range.\n\nFor example, assume the sheet has a depth-1 group over B:E and a depth-2\ngroup over C:D. Deleting a group over D:E leaves the sheet with a\ndepth-1 group over B:D and a depth-2 group over C:C.",
+      "id": "DeleteDimensionGroupRequest",
+      "properties": {
+        "range": {
+          "$ref": "DimensionRange",
+          "description": "The range of the group to be deleted."
+        }
+      },
+      "type": "object"
+    },
+    "DeleteDimensionGroupResponse": {
+      "description": "The result of deleting a group.",
+      "id": "DeleteDimensionGroupResponse",
+      "properties": {
+        "dimensionGroups": {
+          "description": "All groups of a dimension after deleting a group from that dimension.",
+          "items": {
+            "$ref": "DimensionGroup"
           },
           "type": "array"
         }
@@ -2821,7 +2909,7 @@
       "type": "object"
     },
     "DeveloperMetadata": {
-      "description": "Developer metadata associated with a location or object in a spreadsheet.\nDeveloper metadata may be used to associate arbitrary data with various\nparts of a spreadsheet and will remain associated at those locations as they\nmove around and the spreadsheet is edited.  For example, if developer\nmetadata is associated with row 5 and another row is then subsequently\ninserted above row 5, that original metadata will still be associated with\nthe row it was first associated with (what is now row 6). If the associated\nobject is deleted its metadata will be deleted too.",
+      "description": "Developer metadata associated with a location or object in a spreadsheet.\nDeveloper metadata may be used to associate arbitrary data with various\nparts of a spreadsheet and will remain associated at those locations as they\nmove around and the spreadsheet is edited.  For example, if developer\nmetadata is associated with row 5 and another row is then subsequently\ninserted above row 5, that original metadata will still be associated with\nthe row it was first associated with (what is now row 6). If the associated\nobject is deleted its metadata is deleted too.",
       "id": "DeveloperMetadata",
       "properties": {
         "location": {
@@ -2962,6 +3050,26 @@
             "Project-visible metadata is only visible to and accessible by the developer\nproject that created the metadata."
           ],
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DimensionGroup": {
+      "description": "A group over an interval of rows or columns on a sheet, which can contain or\nbe contained within other groups. A group can be collapsed or expanded as a\nunit on the sheet.",
+      "id": "DimensionGroup",
+      "properties": {
+        "collapsed": {
+          "description": "This field is true if this group is collapsed. A collapsed group remains\ncollapsed if an overlapping group at a shallower depth is expanded.\n\nA true value does not imply that all dimensions within the group are\nhidden, since a dimension's visibility can change independently from this\ngroup property. However, when this property is updated, all dimensions\nwithin it are set to hidden if this field is true, or set to visible if\nthis field is false.",
+          "type": "boolean"
+        },
+        "depth": {
+          "description": "The depth of the group, representing how many groups have a range that\nwholly contains the range of this group.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "range": {
+          "$ref": "DimensionRange",
+          "description": "The range over which this group exists."
         }
       },
       "type": "object"
@@ -3139,7 +3247,7 @@
       "id": "EmbeddedObjectPosition",
       "properties": {
         "newSheet": {
-          "description": "If true, the embedded object will be put on a new sheet whose ID\nis chosen for you. Used only when writing.",
+          "description": "If true, the embedded object is put on a new sheet whose ID\nis chosen for you. Used only when writing.",
           "type": "boolean"
         },
         "overlayPosition": {
@@ -3459,6 +3567,10 @@
           "format": "int32",
           "type": "integer"
         },
+        "columnGroupControlAfter": {
+          "description": "True if the column grouping control toggle is shown after the group.",
+          "type": "boolean"
+        },
         "frozenColumnCount": {
           "description": "The number of columns that are frozen in the grid.",
           "format": "int32",
@@ -3477,6 +3589,10 @@
           "description": "The number of rows in the grid.",
           "format": "int32",
           "type": "integer"
+        },
+        "rowGroupControlAfter": {
+          "description": "True if the row grouping control toggle is shown after the group.",
+          "type": "boolean"
         }
       },
       "type": "object"
@@ -3564,21 +3680,21 @@
       "type": "object"
     },
     "HistogramRule": {
-      "description": "Allows you to organize the numeric values in a source data column into\nbuckets of a constant size. All values from HistogramRule.start to\nHistogramRule.end will be placed into groups of size\nHistogramRule.interval. In addition, all values below\nHistogramRule.start will be placed in one group, and all values above\nHistogramRule.end will be placed in another. Only\nHistogramRule.interval is required, though if HistogramRule.start\nand HistogramRule.end are both provided, HistogramRule.start must\nbe less than HistogramRule.end. For example, a pivot table showing\naverage purchase amount by age that has 50+ rows:\n\n    +-----+-------------------+\n    | Age | AVERAGE of Amount |\n    +-----+-------------------+\n    | 16  |            $27.13 |\n    | 17  |             $5.24 |\n    | 18  |            $20.15 |\n    ...\n    +-----+-------------------+\ncould be turned into a pivot table that looks like the one below by\napplying a histogram group rule with a HistogramRule.start of 25,\nan HistogramRule.interval of 20, and an HistogramRule.end\nof 65.\n\n    +-------------+-------------------+\n    | Grouped Age | AVERAGE of Amount |\n    +-------------+-------------------+\n    | \u003c 25        |            $19.34 |\n    | 25-45       |            $31.43 |\n    | 45-65       |            $35.87 |\n    | \u003e 65        |            $27.55 |\n    +-------------+-------------------+\n    | Grand Total |            $29.12 |\n    +-------------+-------------------+",
+      "description": "Allows you to organize the numeric values in a source data column into\nbuckets of a constant size. All values from HistogramRule.start to\nHistogramRule.end are placed into groups of size\nHistogramRule.interval. In addition, all values below\nHistogramRule.start are placed in one group, and all values above\nHistogramRule.end are placed in another. Only\nHistogramRule.interval is required, though if HistogramRule.start\nand HistogramRule.end are both provided, HistogramRule.start must\nbe less than HistogramRule.end. For example, a pivot table showing\naverage purchase amount by age that has 50+ rows:\n\n    +-----+-------------------+\n    | Age | AVERAGE of Amount |\n    +-----+-------------------+\n    | 16  |            $27.13 |\n    | 17  |             $5.24 |\n    | 18  |            $20.15 |\n    ...\n    +-----+-------------------+\ncould be turned into a pivot table that looks like the one below by\napplying a histogram group rule with a HistogramRule.start of 25,\nan HistogramRule.interval of 20, and an HistogramRule.end\nof 65.\n\n    +-------------+-------------------+\n    | Grouped Age | AVERAGE of Amount |\n    +-------------+-------------------+\n    | \u003c 25        |            $19.34 |\n    | 25-45       |            $31.43 |\n    | 45-65       |            $35.87 |\n    | \u003e 65        |            $27.55 |\n    +-------------+-------------------+\n    | Grand Total |            $29.12 |\n    +-------------+-------------------+",
       "id": "HistogramRule",
       "properties": {
         "end": {
-          "description": "The maximum value at which items will be placed into buckets\nof constant size. Values above end will be lumped into a single bucket.\nThis field is optional.",
+          "description": "The maximum value at which items are placed into buckets\nof constant size. Values above end are lumped into a single bucket.\nThis field is optional.",
           "format": "double",
           "type": "number"
         },
         "interval": {
-          "description": "The size of the buckets that will be created. Must be positive.",
+          "description": "The size of the buckets that are created. Must be positive.",
           "format": "double",
           "type": "number"
         },
         "start": {
-          "description": "The minimum value at which items will be placed into buckets\nof constant size. Values below start will be lumped into a single bucket.\nThis field is optional.",
+          "description": "The minimum value at which items are placed into buckets\nof constant size. Values below start are lumped into a single bucket.\nThis field is optional.",
           "format": "double",
           "type": "number"
         }
@@ -3660,11 +3776,11 @@
           ],
           "enumDescriptions": [
             "The default value, do not use.",
-            "The interpolation point will use the minimum value in the\ncells over the range of the conditional format.",
-            "The interpolation point will use the maximum value in the\ncells over the range of the conditional format.",
-            "The interpolation point will use exactly the value in\nInterpolationPoint.value.",
-            "The interpolation point will be the given percentage over\nall the cells in the range of the conditional format.\nThis is equivalent to NUMBER if the value was:\n`=(MAX(FLATTEN(range)) * (value / 100))\n  + (MIN(FLATTEN(range)) * (1 - (value / 100)))`\n(where errors in the range are ignored when flattening).",
-            "The interpolation point will be the given percentile\nover all the cells in the range of the conditional format.\nThis is equivalent to NUMBER if the value was:\n`=PERCENTILE(FLATTEN(range), value / 100)`\n(where errors in the range are ignored when flattening)."
+            "The interpolation point uses the minimum value in the\ncells over the range of the conditional format.",
+            "The interpolation point uses the maximum value in the\ncells over the range of the conditional format.",
+            "The interpolation point uses exactly the value in\nInterpolationPoint.value.",
+            "The interpolation point is the given percentage over\nall the cells in the range of the conditional format.\nThis is equivalent to NUMBER if the value was:\n`=(MAX(FLATTEN(range)) * (value / 100))\n  + (MIN(FLATTEN(range)) * (1 - (value / 100)))`\n(where errors in the range are ignored when flattening).",
+            "The interpolation point is the given percentile\nover all the cells in the range of the conditional format.\nThis is equivalent to NUMBER if the value was:\n`=PERCENTILE(FLATTEN(range), value / 100)`\n(where errors in the range are ignored when flattening)."
           ],
           "type": "string"
         },
@@ -3731,7 +3847,7 @@
       "type": "object"
     },
     "ManualRule": {
-      "description": "Allows you to manually organize the values in a source data column into\nbuckets with names of your choosing. For example, a pivot table that\naggregates population by state:\n\n    +-------+-------------------+\n    | State | SUM of Population |\n    +-------+-------------------+\n    | AK    |               0.7 |\n    | AL    |               4.8 |\n    | AR    |               2.9 |\n    ...\n    +-------+-------------------+\ncould be turned into a pivot table that aggregates population by time zone\nby providing a list of groups (e.g. groupName = 'Central',\nitems = ['AL', 'AR', 'IA', ...]) to a manual group rule.\nNote that a similar effect could be achieved by adding a time zone column\nto the source data and adjusting the pivot table.\n\n    +-----------+-------------------+\n    | Time Zone | SUM of Population |\n    +-----------+-------------------+\n    | Central   |             106.3 |\n    | Eastern   |             151.9 |\n    | Mountain  |              17.4 |\n    ...\n    +-----------+-------------------+",
+      "description": "Allows you to manually organize the values in a source data column into\nbuckets with names of your choosing. For example, a pivot table that\naggregates population by state:\n\n    +-------+-------------------+\n    | State | SUM of Population |\n    +-------+-------------------+\n    | AK    |               0.7 |\n    | AL    |               4.8 |\n    | AR    |               2.9 |\n    ...\n    +-------+-------------------+\ncould be turned into a pivot table that aggregates population by time zone\nby providing a list of groups (for example, groupName = 'Central',\nitems = ['AL', 'AR', 'IA', ...]) to a manual group rule.\nNote that a similar effect could be achieved by adding a time zone column\nto the source data and adjusting the pivot table.\n\n    +-----------+-------------------+\n    | Time Zone | SUM of Population |\n    +-----------+-------------------+\n    | Central   |             106.3 |\n    | Eastern   |             151.9 |\n    | Mountain  |              17.4 |\n    ...\n    +-----------+-------------------+",
       "id": "ManualRule",
       "properties": {
         "groups": {
@@ -4114,7 +4230,7 @@
           "type": "string"
         },
         "repeatHeadings": {
-          "description": "True if the headings in this pivot group should be repeated.\nThis is only valid for row groupings and will be ignored by columns.\n\nBy default, we minimize repitition of headings by not showing higher\nlevel headings where they are the same. For example, even though the\nthird row below corresponds to \"Q1 Mar\", \"Q1\" is not shown because\nit is redundant with previous rows. Setting repeat_headings to true\nwould cause \"Q1\" to be repeated for \"Feb\" and \"Mar\".\n\n    +--------------+\n    | Q1     | Jan |\n    |        | Feb |\n    |        | Mar |\n    +--------+-----+\n    | Q1 Total     |\n    +--------------+",
+          "description": "True if the headings in this pivot group should be repeated.\nThis is only valid for row groupings and is ignored by columns.\n\nBy default, we minimize repitition of headings by not showing higher\nlevel headings where they are the same. For example, even though the\nthird row below corresponds to \"Q1 Mar\", \"Q1\" is not shown because\nit is redundant with previous rows. Setting repeat_headings to true\nwould cause \"Q1\" to be repeated for \"Feb\" and \"Mar\".\n\n    +--------------+\n    | Q1     | Jan |\n    |        | Feb |\n    |        | Mar |\n    +--------+-----+\n    | Q1 Total     |\n    +--------------+",
           "type": "boolean"
         },
         "showTotals": {
@@ -4158,6 +4274,10 @@
       "description": "An optional setting on a PivotGroup that defines buckets for the values\nin the source data column rather than breaking out each individual value.\nOnly one PivotGroup with a group rule may be added for each column in\nthe source data, though on any given column you may add both a\nPivotGroup that has a rule and a PivotGroup that does not.",
       "id": "PivotGroupRule",
       "properties": {
+        "dateTimeRule": {
+          "$ref": "DateTimeRule",
+          "description": "A DateTimeRule."
+        },
         "histogramRule": {
           "$ref": "HistogramRule",
           "description": "A HistogramRule."
@@ -4218,7 +4338,7 @@
           "additionalProperties": {
             "$ref": "PivotFilterCriteria"
           },
-          "description": "An optional mapping of filters per source column offset.\n\nThe filters will be applied before aggregating data into the pivot table.\nThe map's key is the column offset of the source range that you want to\nfilter, and the value is the criteria for that column.\n\nFor example, if the source was `C10:E15`, a key of `0` will have the filter\nfor column `C`, whereas the key `1` is for column `D`.",
+          "description": "An optional mapping of filters per source column offset.\n\nThe filters are applied before aggregating data into the pivot table.\nThe map's key is the column offset of the source range that you want to\nfilter, and the value is the criteria for that column.\n\nFor example, if the source was `C10:E15`, a key of `0` will have the filter\nfor column `C`, whereas the key `1` is for column `D`.",
           "type": "object"
         },
         "rows": {
@@ -4259,7 +4379,7 @@
       "id": "PivotValue",
       "properties": {
         "calculatedDisplayType": {
-          "description": "If specified, indicates that pivot values should be displayed as\nthe result of a calculation with another pivot value. For example, if\ncalculated_display_type is specified as PERCENT_OF_GRAND_TOTAL, all the\npivot values will be displayed as the percentage of the grand total. In\nthe Sheets UI, this is referred to as \"Show As\" in the value section of a\npivot table.",
+          "description": "If specified, indicates that pivot values should be displayed as\nthe result of a calculation with another pivot value. For example, if\ncalculated_display_type is specified as PERCENT_OF_GRAND_TOTAL, all the\npivot values are displayed as the percentage of the grand total. In\nthe Sheets UI, this is referred to as \"Show As\" in the value section of a\npivot table.",
           "enum": [
             "PIVOT_VALUE_CALCULATED_DISPLAY_TYPE_UNSPECIFIED",
             "PERCENT_OF_ROW_TOTAL",
@@ -4418,6 +4538,10 @@
           "$ref": "AddConditionalFormatRuleRequest",
           "description": "Adds a new conditional format rule."
         },
+        "addDimensionGroup": {
+          "$ref": "AddDimensionGroupRequest",
+          "description": "Creates a group over the specified range."
+        },
         "addFilterView": {
           "$ref": "AddFilterViewRequest",
           "description": "Adds a filter view."
@@ -4481,6 +4605,10 @@
         "deleteDimension": {
           "$ref": "DeleteDimensionRequest",
           "description": "Deletes rows or columns in a sheet."
+        },
+        "deleteDimensionGroup": {
+          "$ref": "DeleteDimensionGroupRequest",
+          "description": "Deletes a group over the specified range."
         },
         "deleteEmbeddedObject": {
           "$ref": "DeleteEmbeddedObjectRequest",
@@ -4590,6 +4718,10 @@
           "$ref": "UpdateDeveloperMetadataRequest",
           "description": "Updates an existing developer metadata entry"
         },
+        "updateDimensionGroup": {
+          "$ref": "UpdateDimensionGroupRequest",
+          "description": "Updates the state of the specified group."
+        },
         "updateDimensionProperties": {
           "$ref": "UpdateDimensionPropertiesRequest",
           "description": "Updates dimensions' properties."
@@ -4633,6 +4765,10 @@
           "$ref": "AddChartResponse",
           "description": "A reply from adding a chart."
         },
+        "addDimensionGroup": {
+          "$ref": "AddDimensionGroupResponse",
+          "description": "A reply from adding a dimension group."
+        },
         "addFilterView": {
           "$ref": "AddFilterViewResponse",
           "description": "A reply from adding a filter view."
@@ -4660,6 +4796,10 @@
         "deleteDeveloperMetadata": {
           "$ref": "DeleteDeveloperMetadataResponse",
           "description": "A reply from deleting a developer metadata entry."
+        },
+        "deleteDimensionGroup": {
+          "$ref": "DeleteDimensionGroupResponse",
+          "description": "A reply from deleting a dimension group."
         },
         "duplicateFilterView": {
           "$ref": "DuplicateFilterViewResponse",
@@ -4761,7 +4901,7 @@
       "id": "Sheet",
       "properties": {
         "bandedRanges": {
-          "description": "The banded (i.e. alternating colors) ranges on this sheet.",
+          "description": "The banded (alternating colors) ranges on this sheet.",
           "items": {
             "$ref": "BandedRange"
           },
@@ -4775,6 +4915,13 @@
           "description": "The specifications of every chart on this sheet.",
           "items": {
             "$ref": "EmbeddedChart"
+          },
+          "type": "array"
+        },
+        "columnGroups": {
+          "description": "All column groups on this sheet, ordered by increasing range start index,\nthen by group depth.",
+          "items": {
+            "$ref": "DimensionGroup"
           },
           "type": "array"
         },
@@ -4823,6 +4970,13 @@
             "$ref": "ProtectedRange"
           },
           "type": "array"
+        },
+        "rowGroups": {
+          "description": "All row groups on this sheet, ordered by increasing range start index, then\nby group depth.",
+          "items": {
+            "$ref": "DimensionGroup"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -4840,7 +4994,7 @@
           "type": "boolean"
         },
         "index": {
-          "description": "The index of the sheet within the spreadsheet.\nWhen adding or updating sheet properties, if this field\nis excluded then the sheet will be added or moved to the end\nof the sheet list. When updating sheet indices or inserting\nsheets, movement is considered in \"before the move\" indexes.\nFor example, if there were 3 sheets (S1, S2, S3) in order to\nmove S1 ahead of S2 the index would have to be set to 2. A sheet\nindex update request will be ignored if the requested index is\nidentical to the sheets current index or if the requested new\nindex is equal to the current sheet index + 1.",
+          "description": "The index of the sheet within the spreadsheet.\nWhen adding or updating sheet properties, if this field\nis excluded then the sheet is added or moved to the end\nof the sheet list. When updating sheet indices or inserting\nsheets, movement is considered in \"before the move\" indexes.\nFor example, if there were 3 sheets (S1, S2, S3) in order to\nmove S1 ahead of S2 the index would have to be set to 2. A sheet\nindex update request is ignored if the requested index is\nidentical to the sheets current index or if the requested new\nindex is equal to the current sheet index + 1.",
           "format": "int32",
           "type": "integer"
         },
@@ -5192,7 +5346,7 @@
       "properties": {
         "colorData": {
           "$ref": "ChartData",
-          "description": "The data that determines the background color of each treemap data cell.\nThis field is optional. If not specified, size_data will be used to\ndetermine background colors. If specified, the data is expected to be\nnumeric. color_scale will determine how the values in this data map to\ndata cell background colors."
+          "description": "The data that determines the background color of each treemap data cell.\nThis field is optional. If not specified, size_data is used to\ndetermine background colors. If specified, the data is expected to be\nnumeric. color_scale will determine how the values in this data map to\ndata cell background colors."
         },
         "colorScale": {
           "$ref": "TreemapChartColorScale",
@@ -5236,7 +5390,7 @@
         },
         "sizeData": {
           "$ref": "ChartData",
-          "description": "The data that determines the size of each treemap data cell. This data is\nexpected to be numeric. The cells corresponding to non-numeric or missing\ndata will not be rendered. If color_data is not specified, this data\nwill be used to determine data cell background colors as well."
+          "description": "The data that determines the size of each treemap data cell. This data is\nexpected to be numeric. The cells corresponding to non-numeric or missing\ndata will not be rendered. If color_data is not specified, this data\nis used to determine data cell background colors as well."
         },
         "textFormat": {
           "$ref": "TextFormat",
@@ -5434,6 +5588,22 @@
             "$ref": "DeveloperMetadata"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "UpdateDimensionGroupRequest": {
+      "description": "Updates the state of the specified group.",
+      "id": "UpdateDimensionGroupRequest",
+      "properties": {
+        "dimensionGroup": {
+          "$ref": "DimensionGroup",
+          "description": "The group whose state should be updated. The range and depth of the group\nshould specify a valid group on the sheet, and all other fields updated."
+        },
+        "fields": {
+          "description": "The fields that should be updated.  At least one field must be specified.\nThe root `dimensionGroup` is implied and should not be specified.\nA single `\"*\"` can be used as short-hand for listing every field.",
+          "format": "google-fieldmask",
+          "type": "string"
         }
       },
       "type": "object"

@@ -207,7 +207,7 @@ func (client WorkflowVersionsClient) ListComplete(ctx context.Context, resourceG
 	return
 }
 
-// ListCallbackURL lists the callback URL for a trigger of a workflow version.
+// ListCallbackURL get the callback url for a trigger of a workflow version.
 // Parameters:
 // resourceGroupName - the resource group name.
 // workflowName - the workflow name.

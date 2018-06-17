@@ -57,6 +57,13 @@ const (
 	Upload AzureSearchIndexWriteBehaviorType = original.Upload
 )
 
+type BlobEventTypes = original.BlobEventTypes
+
+const (
+	MicrosoftStorageBlobCreated BlobEventTypes = original.MicrosoftStorageBlobCreated
+	MicrosoftStorageBlobDeleted BlobEventTypes = original.MicrosoftStorageBlobDeleted
+)
+
 type CassandraSourceReadConsistencyLevels = original.CassandraSourceReadConsistencyLevels
 
 const (
@@ -809,6 +816,7 @@ const (
 type TypeBasicTrigger = original.TypeBasicTrigger
 
 const (
+	TypeBlobEventsTrigger       TypeBasicTrigger = original.TypeBlobEventsTrigger
 	TypeBlobTrigger             TypeBasicTrigger = original.TypeBlobTrigger
 	TypeMultiplePipelineTrigger TypeBasicTrigger = original.TypeMultiplePipelineTrigger
 	TypeScheduleTrigger         TypeBasicTrigger = original.TypeScheduleTrigger
@@ -898,6 +906,8 @@ type AzureTableDataset = original.AzureTableDataset
 type AzureTableDatasetTypeProperties = original.AzureTableDatasetTypeProperties
 type AzureTableSink = original.AzureTableSink
 type AzureTableSource = original.AzureTableSource
+type BlobEventsTrigger = original.BlobEventsTrigger
+type BlobEventsTriggerTypeProperties = original.BlobEventsTriggerTypeProperties
 type BlobSink = original.BlobSink
 type BlobSource = original.BlobSource
 type BlobTrigger = original.BlobTrigger
@@ -987,7 +997,9 @@ type FactoryListResponse = original.FactoryListResponse
 type FactoryListResponseIterator = original.FactoryListResponseIterator
 type FactoryListResponsePage = original.FactoryListResponsePage
 type FactoryProperties = original.FactoryProperties
+type FactoryRepoUpdate = original.FactoryRepoUpdate
 type FactoryUpdateParameters = original.FactoryUpdateParameters
+type FactoryVSTSConfiguration = original.FactoryVSTSConfiguration
 type FileServerLinkedService = original.FileServerLinkedService
 type FileServerLinkedServiceTypeProperties = original.FileServerLinkedServiceTypeProperties
 type FileShareDataset = original.FileShareDataset
@@ -1370,6 +1382,9 @@ func PossibleAuthorizationTypeValues() []AuthorizationType {
 }
 func PossibleAzureSearchIndexWriteBehaviorTypeValues() []AzureSearchIndexWriteBehaviorType {
 	return original.PossibleAzureSearchIndexWriteBehaviorTypeValues()
+}
+func PossibleBlobEventTypesValues() []BlobEventTypes {
+	return original.PossibleBlobEventTypesValues()
 }
 func PossibleCassandraSourceReadConsistencyLevelsValues() []CassandraSourceReadConsistencyLevels {
 	return original.PossibleCassandraSourceReadConsistencyLevelsValues()

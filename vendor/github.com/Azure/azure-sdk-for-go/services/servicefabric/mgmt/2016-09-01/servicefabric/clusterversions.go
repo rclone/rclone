@@ -24,7 +24,7 @@ import (
 	"net/http"
 )
 
-// ClusterVersionsClient is the client for the ClusterVersions methods of the Servicefabric service.
+// ClusterVersionsClient is the service Fabric Management Client
 type ClusterVersionsClient struct {
 	BaseClient
 }

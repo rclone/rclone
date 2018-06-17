@@ -9911,7 +9911,8 @@ func (c *CognitoIdentityProvider) VerifySoftwareTokenRequest(input *VerifySoftwa
 // VerifySoftwareToken API operation for Amazon Cognito Identity Provider.
 //
 // Use this API to register a user's entered TOTP code and mark the user's software
-// token MFA status as "verified" if successful,
+// token MFA status as "verified" if successful. The request takes an access
+// token or a session string, but not both.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -11751,6 +11752,13 @@ type AdminInitiateAuthOutput struct {
 	// is returned to you in the AdminInitiateAuth response if you need to pass
 	// another challenge.
 	//
+	//    * MFA_SETUP: If MFA is required, users who do not have at least one of
+	//    the MFA methods set up are presented with an MFA_SETUP challenge. The
+	//    user must set up at least one MFA type to continue to authenticate.
+	//
+	//    * SELECT_MFA_TYPE: Selects the MFA type. Valid MFA options are SMS_MFA
+	//    for text SMS MFA, and SOFTWARE_TOKEN_MFA for TOTP software token MFA.
+	//
 	//    * SMS_MFA: Next challenge is to supply an SMS_MFA_CODE, delivered via
 	//    SMS.
 	//
@@ -13555,7 +13563,7 @@ type AuthenticationResultType struct {
 	// The access token.
 	AccessToken *string `type:"string"`
 
-	// The expiration period of the authentication result.
+	// The expiration period of the authentication result in seconds.
 	ExpiresIn *int64 `type:"integer"`
 
 	// The ID token.
@@ -14851,7 +14859,19 @@ type CreateUserPoolClientInput struct {
 	// user pool.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
-	// A list of allowed callback URLs for the identity providers.
+	// A list of allowed redirect (callback) URLs for the identity providers.
+	//
+	// A redirect URI must:
+	//
+	//    * Be an absolute URI.
+	//
+	//    * Be registered with the authorization server.
+	//
+	//    * Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).
+	//
+	//    * Not include a fragment component.
+	//
+	// See OAuth 2.0 - Redirection Endpoint (https://tools.ietf.org/html/rfc6749#section-3.1.2).
 	CallbackURLs []*string `type:"list"`
 
 	// The client name for the user pool client you would like to create.
@@ -14860,6 +14880,18 @@ type CreateUserPoolClientInput struct {
 	ClientName *string `min:"1" type:"string" required:"true"`
 
 	// The default redirect URI. Must be in the CallbackURLs list.
+	//
+	// A redirect URI must:
+	//
+	//    * Be an absolute URI.
+	//
+	//    * Be registered with the authorization server.
+	//
+	//    * Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).
+	//
+	//    * Not include a fragment component.
+	//
+	// See OAuth 2.0 - Redirection Endpoint (https://tools.ietf.org/html/rfc6749#section-3.1.2).
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
 	// The explicit authentication flows.
@@ -20488,7 +20520,7 @@ type SchemaAttributeType struct {
 	// Specifies whether the attribute type is developer only.
 	DeveloperOnlyAttribute *bool `type:"boolean"`
 
-	// Specifies whether the attribute can be changed once it has been created.
+	// Specifies whether the value of the attribute can be changed.
 	Mutable *bool `type:"boolean"`
 
 	// A schema attribute of the name type.
@@ -22344,7 +22376,19 @@ type UpdateUserPoolClientInput struct {
 	// user pool.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
-	// A list of allowed callback URLs for the identity providers.
+	// A list of allowed redirect (callback) URLs for the identity providers.
+	//
+	// A redirect URI must:
+	//
+	//    * Be an absolute URI.
+	//
+	//    * Be registered with the authorization server.
+	//
+	//    * Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).
+	//
+	//    * Not include a fragment component.
+	//
+	// See OAuth 2.0 - Redirection Endpoint (https://tools.ietf.org/html/rfc6749#section-3.1.2).
 	CallbackURLs []*string `type:"list"`
 
 	// The ID of the client associated with the user pool.
@@ -22356,6 +22400,18 @@ type UpdateUserPoolClientInput struct {
 	ClientName *string `min:"1" type:"string"`
 
 	// The default redirect URI. Must be in the CallbackURLs list.
+	//
+	// A redirect URI must:
+	//
+	//    * Be an absolute URI.
+	//
+	//    * Be registered with the authorization server.
+	//
+	//    * Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).
+	//
+	//    * Not include a fragment component.
+	//
+	// See OAuth 2.0 - Redirection Endpoint (https://tools.ietf.org/html/rfc6749#section-3.1.2).
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
 	// Explicit authentication flows.
@@ -23084,7 +23140,19 @@ type UserPoolClientType struct {
 	// The Amazon Pinpoint analytics configuration for the user pool client.
 	AnalyticsConfiguration *AnalyticsConfigurationType `type:"structure"`
 
-	// A list of allowed callback URLs for the identity providers.
+	// A list of allowed redirect (callback) URLs for the identity providers.
+	//
+	// A redirect URI must:
+	//
+	//    * Be an absolute URI.
+	//
+	//    * Be registered with the authorization server.
+	//
+	//    * Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).
+	//
+	//    * Not include a fragment component.
+	//
+	// See OAuth 2.0 - Redirection Endpoint (https://tools.ietf.org/html/rfc6749#section-3.1.2).
 	CallbackURLs []*string `type:"list"`
 
 	// The ID of the client associated with the user pool.
@@ -23100,6 +23168,18 @@ type UserPoolClientType struct {
 	CreationDate *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// The default redirect URI. Must be in the CallbackURLs list.
+	//
+	// A redirect URI must:
+	//
+	//    * Be an absolute URI.
+	//
+	//    * Be registered with the authorization server.
+	//
+	//    * Not use HTTP without TLS (i.e. use HTTPS instead of HTTP).
+	//
+	//    * Not include a fragment component.
+	//
+	// See OAuth 2.0 - Redirection Endpoint (https://tools.ietf.org/html/rfc6749#section-3.1.2).
 	DefaultRedirectURI *string `min:"1" type:"string"`
 
 	// The explicit authentication flows.
@@ -23365,6 +23445,9 @@ type UserPoolType struct {
 	// Specifies the attributes that are aliased in a user pool.
 	AliasAttributes []*string `type:"list"`
 
+	// The Amazon Resource Name (ARN) for the user pool.
+	Arn *string `min:"20" type:"string"`
+
 	// Specifies the attributes that are auto-verified in a user pool.
 	AutoVerifiedAttributes []*string `type:"list"`
 
@@ -23395,7 +23478,7 @@ type UserPoolType struct {
 	// The ID of the user pool.
 	Id *string `min:"1" type:"string"`
 
-	// The AWS Lambda triggers associated with tue user pool.
+	// The AWS Lambda triggers associated with the user pool.
 	LambdaConfig *LambdaConfigType `type:"structure"`
 
 	// The date the user pool was last modified.
@@ -23470,6 +23553,12 @@ func (s *UserPoolType) SetAdminCreateUserConfig(v *AdminCreateUserConfigType) *U
 // SetAliasAttributes sets the AliasAttributes field's value.
 func (s *UserPoolType) SetAliasAttributes(v []*string) *UserPoolType {
 	s.AliasAttributes = v
+	return s
+}
+
+// SetArn sets the Arn field's value.
+func (s *UserPoolType) SetArn(v string) *UserPoolType {
+	s.Arn = &v
 	return s
 }
 
@@ -24228,6 +24317,9 @@ const (
 
 	// IdentityProviderTypeTypeLoginWithAmazon is a IdentityProviderTypeType enum value
 	IdentityProviderTypeTypeLoginWithAmazon = "LoginWithAmazon"
+
+	// IdentityProviderTypeTypeOidc is a IdentityProviderTypeType enum value
+	IdentityProviderTypeTypeOidc = "OIDC"
 )
 
 const (

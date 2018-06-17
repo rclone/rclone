@@ -17,7 +17,7 @@
   "canonicalName": "Cloud Debugger",
   "description": "Examines the call stack and variables of a running application without stopping or slowing it down.\n",
   "discoveryVersion": "v1",
-  "documentationLink": "http://cloud.google.com/debugger",
+  "documentationLink": "https://cloud.google.com/debugger",
   "icons": {
     "x16": "http://www.google.com/images/icons/product/search-16.gif",
     "x32": "http://www.google.com/images/icons/product/search-32.gif"
@@ -62,11 +62,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -86,12 +81,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -433,7 +422,7 @@
       }
     }
   },
-  "revision": "20180131",
+  "revision": "20180604",
   "rootUrl": "https://clouddebugger.googleapis.com/",
   "schemas": {
     "AliasContext": {
@@ -545,7 +534,7 @@
           "type": "string"
         },
         "stackFrames": {
-          "description": "The stack at breakpoint time.",
+          "description": "The stack at breakpoint time, where stack_frames[0] represents the most\nrecently entered function.",
           "items": {
             "$ref": "StackFrame"
           },

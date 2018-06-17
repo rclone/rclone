@@ -720,3 +720,22 @@ func TestSaveBufLimit(t *testing.T) {
 		t.Fatalf("Write error = %v; want ErrStringLength", err)
 	}
 }
+
+func TestDynamicSizeUpdate(t *testing.T) {
+	var buf bytes.Buffer
+	enc := NewEncoder(&buf)
+	enc.SetMaxDynamicTableSize(255)
+	enc.WriteField(HeaderField{Name: "foo", Value: "bar"})
+
+	d := NewDecoder(4096, nil)
+	_, err := d.DecodeFull(buf.Bytes())
+	if err != nil {
+		t.Fatalf("unexpected error: got = %v", err)
+	}
+
+	// must fail since the dynamic table update must be at the beginning
+	_, err = d.DecodeFull(buf.Bytes())
+	if err == nil {
+		t.Fatalf("dynamic table size update not at the beginning of a header block")
+	}
+}

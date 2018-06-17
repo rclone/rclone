@@ -1191,7 +1191,8 @@
       "members":{
         "JobName":{"shape":"NameString"},
         "Arguments":{"shape":"GenericMap"},
-        "Timeout":{"shape":"Timeout"}
+        "Timeout":{"shape":"Timeout"},
+        "NotificationProperty":{"shape":"NotificationProperty"}
       }
     },
     "ActionList":{
@@ -1844,7 +1845,8 @@
         "Connections":{"shape":"ConnectionsList"},
         "MaxRetries":{"shape":"MaxRetries"},
         "AllocatedCapacity":{"shape":"IntegerValue"},
-        "Timeout":{"shape":"Timeout"}
+        "Timeout":{"shape":"Timeout"},
+        "NotificationProperty":{"shape":"NotificationProperty"}
       }
     },
     "CreateJobResponse":{
@@ -2255,6 +2257,7 @@
         "MaxConcurrentRuns":{"shape":"MaxConcurrentRuns"}
       }
     },
+    "ExecutionTime":{"type":"integer"},
     "FieldType":{"type":"string"},
     "FilterString":{
       "type":"string",
@@ -2845,7 +2848,8 @@
         "Connections":{"shape":"ConnectionsList"},
         "MaxRetries":{"shape":"MaxRetries"},
         "AllocatedCapacity":{"shape":"IntegerValue"},
-        "Timeout":{"shape":"Timeout"}
+        "Timeout":{"shape":"Timeout"},
+        "NotificationProperty":{"shape":"NotificationProperty"}
       }
     },
     "JobBookmarkEntry":{
@@ -2886,8 +2890,9 @@
         "ErrorMessage":{"shape":"ErrorString"},
         "PredecessorRuns":{"shape":"PredecessorList"},
         "AllocatedCapacity":{"shape":"IntegerValue"},
-        "ExecutionTime":{"shape":"IntegerValue"},
-        "Timeout":{"shape":"Timeout"}
+        "ExecutionTime":{"shape":"ExecutionTime"},
+        "Timeout":{"shape":"Timeout"},
+        "NotificationProperty":{"shape":"NotificationProperty"}
       }
     },
     "JobRunList":{
@@ -2918,7 +2923,8 @@
         "Connections":{"shape":"ConnectionsList"},
         "MaxRetries":{"shape":"MaxRetries"},
         "AllocatedCapacity":{"shape":"IntegerValue"},
-        "Timeout":{"shape":"Timeout"}
+        "Timeout":{"shape":"Timeout"},
+        "NotificationProperty":{"shape":"NotificationProperty"}
       }
     },
     "JsonClassifier":{
@@ -3064,6 +3070,17 @@
     "NonNegativeInteger":{
       "type":"integer",
       "min":0
+    },
+    "NotificationProperty":{
+      "type":"structure",
+      "members":{
+        "NotifyDelayAfter":{"shape":"NotifyDelayAfter"}
+      }
+    },
+    "NotifyDelayAfter":{
+      "type":"integer",
+      "box":true,
+      "min":1
     },
     "OperationTimeoutException":{
       "type":"structure",
@@ -3369,7 +3386,8 @@
         "JobRunId":{"shape":"IdString"},
         "Arguments":{"shape":"GenericMap"},
         "AllocatedCapacity":{"shape":"IntegerValue"},
-        "Timeout":{"shape":"Timeout"}
+        "Timeout":{"shape":"Timeout"},
+        "NotificationProperty":{"shape":"NotificationProperty"}
       }
     },
     "StartJobRunResponse":{

@@ -5,10 +5,10 @@ This is an example using the AWS SDK for Go to list ec2 instances that match pro
 
 # Usage
 
-The example uses the bucket name provided, and lists all object keys in a bucket.
+The example uses the tag name provided, and lists all matching ec2 instances.
 
 ```sh
-go run -tags example filter_ec2_by_tag.go <name_filter>
+go run filter_ec2_by_tag.go <name_filter>
 ```
 
 Output:

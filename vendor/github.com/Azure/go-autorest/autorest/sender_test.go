@@ -851,10 +851,44 @@ func TestDoRetryForStatusCodes_NilResponseTemporaryError(t *testing.T) {
 	}
 }
 
-func TestDoRetryForStatusCodes_NilResponseFatalError(t *testing.T) {
+func TestDoRetryForStatusCodes_NilResponseTemporaryError2(t *testing.T) {
 	client := mocks.NewSender()
 	client.AppendResponse(nil)
 	client.SetError(fmt.Errorf("faux error"))
+
+	r, err := SendWithSender(client, mocks.NewRequest(),
+		DoRetryForStatusCodes(3, time.Duration(1*time.Second), StatusCodesForRetry...),
+	)
+
+	Respond(r,
+		ByDiscardingBody(),
+		ByClosing())
+
+	if err != nil || client.Attempts() != 2 {
+		t.Fatalf("autorest: Sender#TestDoRetryForStatusCodes_NilResponseTemporaryError2 -- Got: nil error or wrong number of attempts - %v", err)
+	}
+}
+
+type fatalError struct {
+	message string
+}
+
+func (fe fatalError) Error() string {
+	return fe.message
+}
+
+func (fe fatalError) Timeout() bool {
+	return false
+}
+
+func (fe fatalError) Temporary() bool {
+	return false
+}
+
+func TestDoRetryForStatusCodes_NilResponseFatalError(t *testing.T) {
+	client := mocks.NewSender()
+	client.AppendResponse(nil)
+	client.SetError(fatalError{"fatal error"})
 
 	r, err := SendWithSender(client, mocks.NewRequest(),
 		DoRetryForStatusCodes(3, time.Duration(1*time.Second), StatusCodesForRetry...),

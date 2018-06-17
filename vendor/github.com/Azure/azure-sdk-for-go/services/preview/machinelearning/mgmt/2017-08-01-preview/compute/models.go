@@ -546,12 +546,11 @@ type OperationalizationClusterProperties struct {
 // long-running operation.
 type OperationalizationClustersCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future OperationalizationClustersCreateOrUpdateFuture) Result(client OperationalizationClustersClient) (oc OperationalizationCluster, err error) {
+func (future *OperationalizationClustersCreateOrUpdateFuture) Result(client OperationalizationClustersClient) (oc OperationalizationCluster, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -559,34 +558,15 @@ func (future OperationalizationClustersCreateOrUpdateFuture) Result(client Opera
 		return
 	}
 	if !done {
-		return oc, azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		oc, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if oc.Response.Response, err = future.GetResult(sender); err == nil && oc.Response.Response.StatusCode != http.StatusNoContent {
+		oc, err = client.CreateOrUpdateResponder(oc.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", oc.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	oc, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -595,12 +575,11 @@ func (future OperationalizationClustersCreateOrUpdateFuture) Result(client Opera
 // long-running operation.
 type OperationalizationClustersDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future OperationalizationClustersDeleteFuture) Result(client OperationalizationClustersClient) (ar autorest.Response, err error) {
+func (future *OperationalizationClustersDeleteFuture) Result(client OperationalizationClustersClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -608,35 +587,10 @@ func (future OperationalizationClustersDeleteFuture) Result(client Operationaliz
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -644,12 +598,11 @@ func (future OperationalizationClustersDeleteFuture) Result(client Operationaliz
 // a long-running operation.
 type OperationalizationClustersUpdateSystemServicesFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future OperationalizationClustersUpdateSystemServicesFuture) Result(client OperationalizationClustersClient) (ussr UpdateSystemServicesResponse, err error) {
+func (future *OperationalizationClustersUpdateSystemServicesFuture) Result(client OperationalizationClustersClient) (ussr UpdateSystemServicesResponse, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -657,34 +610,15 @@ func (future OperationalizationClustersUpdateSystemServicesFuture) Result(client
 		return
 	}
 	if !done {
-		return ussr, azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersUpdateSystemServicesFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ussr, err = client.UpdateSystemServicesResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("compute.OperationalizationClustersUpdateSystemServicesFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ussr.Response.Response, err = future.GetResult(sender); err == nil && ussr.Response.Response.StatusCode != http.StatusNoContent {
+		ussr, err = client.UpdateSystemServicesResponder(ussr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", ussr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ussr, err = client.UpdateSystemServicesResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "compute.OperationalizationClustersUpdateSystemServicesFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

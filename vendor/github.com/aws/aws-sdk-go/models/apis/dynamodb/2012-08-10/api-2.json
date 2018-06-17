@@ -1290,6 +1290,7 @@
       "type":"list",
       "member":{"shape":"AttributeMap"}
     },
+    "KMSMasterKeyArn":{"type":"string"},
     "Key":{
       "type":"map",
       "key":{"shape":"AttributeName"},
@@ -1855,7 +1856,9 @@
     "SSEDescription":{
       "type":"structure",
       "members":{
-        "Status":{"shape":"SSEStatus"}
+        "Status":{"shape":"SSEStatus"},
+        "SSEType":{"shape":"SSEType"},
+        "KMSMasterKeyArn":{"shape":"KMSMasterKeyArn"}
       }
     },
     "SSEEnabled":{"type":"boolean"},
@@ -1873,6 +1876,13 @@
         "ENABLED",
         "DISABLING",
         "DISABLED"
+      ]
+    },
+    "SSEType":{
+      "type":"string",
+      "enum":[
+        "AES256",
+        "KMS"
       ]
     },
     "ScalarAttributeType":{

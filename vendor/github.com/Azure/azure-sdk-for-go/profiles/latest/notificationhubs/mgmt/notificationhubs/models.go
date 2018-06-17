@@ -26,7 +26,6 @@ const (
 )
 
 type BaseClient = original.BaseClient
-type HubsClient = original.HubsClient
 type AccessRights = original.AccessRights
 
 const (
@@ -58,9 +57,8 @@ type BaiduCredential = original.BaiduCredential
 type BaiduCredentialProperties = original.BaiduCredentialProperties
 type CheckAvailabilityParameters = original.CheckAvailabilityParameters
 type CheckAvailabilityResult = original.CheckAvailabilityResult
-type CheckNameAvailabilityRequestParameters = original.CheckNameAvailabilityRequestParameters
-type CheckNameAvailabilityResponse = original.CheckNameAvailabilityResponse
 type CreateOrUpdateParameters = original.CreateOrUpdateParameters
+type ErrorResponse = original.ErrorResponse
 type GcmCredential = original.GcmCredential
 type GcmCredentialProperties = original.GcmCredentialProperties
 type ListResult = original.ListResult
@@ -76,6 +74,11 @@ type NamespacePatchParameters = original.NamespacePatchParameters
 type NamespaceProperties = original.NamespaceProperties
 type NamespaceResource = original.NamespaceResource
 type NamespacesDeleteFuture = original.NamespacesDeleteFuture
+type Operation = original.Operation
+type OperationDisplay = original.OperationDisplay
+type OperationListResult = original.OperationListResult
+type OperationListResultIterator = original.OperationListResultIterator
+type OperationListResultPage = original.OperationListResultPage
 type PnsCredentialsProperties = original.PnsCredentialsProperties
 type PnsCredentialsResource = original.PnsCredentialsResource
 type PolicykeyResource = original.PolicykeyResource
@@ -93,21 +96,15 @@ type Sku = original.Sku
 type SubResource = original.SubResource
 type WnsCredential = original.WnsCredential
 type WnsCredentialProperties = original.WnsCredentialProperties
-type NameClient = original.NameClient
 type NamespacesClient = original.NamespacesClient
 type Client = original.Client
+type OperationsClient = original.OperationsClient
 
 func New(subscriptionID string) BaseClient {
 	return original.New(subscriptionID)
 }
 func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 	return original.NewWithBaseURI(baseURI, subscriptionID)
-}
-func NewHubsClient(subscriptionID string) HubsClient {
-	return original.NewHubsClient(subscriptionID)
-}
-func NewHubsClientWithBaseURI(baseURI string, subscriptionID string) HubsClient {
-	return original.NewHubsClientWithBaseURI(baseURI, subscriptionID)
 }
 func PossibleAccessRightsValues() []AccessRights {
 	return original.PossibleAccessRightsValues()
@@ -117,12 +114,6 @@ func PossibleNamespaceTypeValues() []NamespaceType {
 }
 func PossibleSkuNameValues() []SkuName {
 	return original.PossibleSkuNameValues()
-}
-func NewNameClient(subscriptionID string) NameClient {
-	return original.NewNameClient(subscriptionID)
-}
-func NewNameClientWithBaseURI(baseURI string, subscriptionID string) NameClient {
-	return original.NewNameClientWithBaseURI(baseURI, subscriptionID)
 }
 func NewNamespacesClient(subscriptionID string) NamespacesClient {
 	return original.NewNamespacesClient(subscriptionID)
@@ -135,6 +126,12 @@ func NewClient(subscriptionID string) Client {
 }
 func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 	return original.NewClientWithBaseURI(baseURI, subscriptionID)
+}
+func NewOperationsClient(subscriptionID string) OperationsClient {
+	return original.NewOperationsClient(subscriptionID)
+}
+func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
+	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
 func UserAgent() string {
 	return original.UserAgent() + " profiles/latest"

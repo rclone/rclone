@@ -80,9 +80,9 @@ const (
 	//
 	// Note: deleted and closed accounts still count toward your limit.
 	//
-	// If you get an exception that indicates that you exceeded your account limits
-	// for the organization or that you can"t add an account because your organization
-	// is still initializing, please contact  AWS Customer Support (https://console.aws.amazon.com/support/home#/).
+	// If you get receive this exception when running a command immediately after
+	// creating the organization, wait one hour and try again. If after an hour
+	// it continues to fail with this error, contact AWS Customer Support (https://console.aws.amazon.com/support/home#/).
 	//
 	//    * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 	//    handshakes you can send in one day.
@@ -92,6 +92,11 @@ const (
 	//
 	//    * OU_DEPTH_LIMIT_EXCEEDED: You attempted to create an organizational unit
 	//    tree that is too many levels deep.
+	//
+	//    * ORGANIZATION_NOT_IN_ALL_FEATURES_MODE: You attempted to perform an operation
+	//    that requires the organization to be configured to support all features.
+	//    An organization that supports consolidated billing features only cannot
+	//    perform this operation.
 	//
 	//    * POLICY_NUMBER_LIMIT_EXCEEDED. You attempted to exceed the number of
 	//    policies that you can have in an organization.
@@ -197,8 +202,10 @@ const (
 	// ErrCodeFinalizingOrganizationException for service response error code
 	// "FinalizingOrganizationException".
 	//
-	// AWS Organizations could not finalize the creation of your organization. Try
-	// again later. If this persists, contact AWS customer support.
+	// AWS Organizations could not perform the operation because your organization
+	// has not finished initializing. This can take up to an hour. Try again later.
+	// If after one hour you continue to receive this error, contact  AWS Customer
+	// Support (https://console.aws.amazon.com/support/home#/).
 	ErrCodeFinalizingOrganizationException = "FinalizingOrganizationException"
 
 	// ErrCodeHandshakeAlreadyInStateException for service response error code
@@ -221,9 +228,9 @@ const (
 	//    the number of accounts in an organization. Note: deleted and closed accounts
 	//    still count toward your limit.
 	//
-	// If you get an exception that indicates that you exceeded your account limits
-	//    for the organization or that you can"t add an account because your organization
-	//    is still initializing, please contact  AWS Customer Support (https://console.aws.amazon.com/support/home#/).
+	// If you get this exception immediately after creating the organization, wait
+	//    one hour and try again. If after an hour it continues to fail with this
+	//    error, contact AWS Customer Support (https://console.aws.amazon.com/support/home#/).
 	//
 	//    * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 	//    handshakes you can send in one day.

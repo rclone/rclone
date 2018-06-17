@@ -12,6 +12,19 @@ import (
 	"text/template"
 )
 
+// ErrorInfo represents the error block of a shape's structure
+type ErrorInfo struct {
+	Type           string
+	Code           string
+	HTTPStatusCode int
+}
+
+// A XMLInfo defines URL and prefix for Shapes when rendered as XML
+type XMLInfo struct {
+	Prefix string
+	URI    string
+}
+
 // A ShapeRef defines the usage of a shape within the API.
 type ShapeRef struct {
 	API           *API   `json:"-"`
@@ -35,18 +48,9 @@ type ShapeRef struct {
 	OrigShapeName string `json:"-"`
 
 	GenerateGetter bool
-}
 
-// ErrorInfo represents the error block of a shape's structure
-type ErrorInfo struct {
-	Code           string
-	HTTPStatusCode int
-}
-
-// A XMLInfo defines URL and prefix for Shapes when rendered as XML
-type XMLInfo struct {
-	Prefix string
-	URI    string
+	IsEventPayload bool `json:"eventpayload"`
+	IsEventHeader  bool `json:"eventheader"`
 }
 
 // A Shape defines the definition of a shape type
@@ -73,7 +77,12 @@ type Shape struct {
 	Min              float64 // optional Minimum length (string, list) or value (number)
 	Max              float64 // optional Maximum length (string, list) or value (number)
 
+	EventStreamsMemberName string          `json:"-"`
+	EventStreamAPI         *EventStreamAPI `json:"-"`
+	EventFor               []*EventStream  `json:"-"`
+
 	IsEventStream bool `json:"eventstream"`
+	IsEvent       bool `json:"event"`
 
 	refs       []*ShapeRef // References to this shape
 	resolvePkg string      // use this package in the goType() if present
@@ -101,7 +110,7 @@ func (s *Shape) ErrorCodeName() string {
 // ErrorName will return the shape's name or error code if available based
 // on the API's protocol. This is the error code string returned by the service.
 func (s *Shape) ErrorName() string {
-	name := s.ShapeName
+	name := s.ErrorInfo.Type
 	switch s.API.Metadata.Protocol {
 	case "query", "ec2query", "rest-xml":
 		if len(s.ErrorInfo.Code) > 0 {
@@ -110,6 +119,23 @@ func (s *Shape) ErrorName() string {
 	}
 
 	return name
+}
+
+// PayloadRefName returns the payload member of the shape if there is one
+// modeled. If no payload is modeled, empty string will be returned.
+func (s *Shape) PayloadRefName() string {
+	if name := s.Payload; len(name) != 0 {
+		// Root shape
+		return name
+	}
+
+	for name, ref := range s.MemberRefs {
+		if ref.IsEventPayload {
+			return name
+		}
+	}
+
+	return ""
 }
 
 // GoTags returns the struct tags for a shape.
@@ -149,6 +175,8 @@ func (s *Shape) GoTypeWithPkgName() string {
 	return goType(s, true)
 }
 
+// GoTypeWithPkgNameElem returns the shapes type as a string with the "*"
+// removed if there was one preset.
 func (s *Shape) GoTypeWithPkgNameElem() string {
 	t := goType(s, true)
 	if strings.HasPrefix(t, "*") {
@@ -157,7 +185,7 @@ func (s *Shape) GoTypeWithPkgNameElem() string {
 	return t
 }
 
-// GenAccessors returns if the shape's reference should have setters generated.
+// UseIndirection returns if the shape's reference should use indirection or not.
 func (s *ShapeRef) UseIndirection() bool {
 	switch s.Shape.Type {
 	case "map", "list", "blob", "structure", "jsonvalue":
@@ -401,8 +429,8 @@ func (ref *ShapeRef) GoTags(toplevel bool, isRequired bool) string {
 	}
 
 	if toplevel {
-		if ref.Shape.Payload != "" {
-			tags = append(tags, ShapeTag{"payload", ref.Shape.Payload})
+		if name := ref.Shape.PayloadRefName(); len(name) > 0 {
+			tags = append(tags, ShapeTag{"payload", name})
 		}
 	}
 
@@ -514,9 +542,29 @@ func (s *Shape) NestedShape() *Shape {
 	return nestedShape
 }
 
-var structShapeTmpl = template.Must(template.New("StructShape").Funcs(template.FuncMap{
-	"GetCrosslinkURL": GetCrosslinkURL,
-}).Parse(`
+var structShapeTmpl = func() *template.Template {
+	shapeTmpl := template.Must(
+		template.New("structShapeTmpl").
+			Funcs(template.FuncMap{
+				"GetCrosslinkURL": GetCrosslinkURL,
+			}).
+			Parse(structShapeTmplDef),
+	)
+
+	template.Must(
+		shapeTmpl.AddParseTree(
+			"eventStreamAPILoopMethodTmpl", eventStreamAPILoopMethodTmpl.Tree),
+	)
+
+	template.Must(
+		shapeTmpl.AddParseTree(
+			"eventStreamEventShapeTmpl", eventStreamEventShapeTmpl.Tree),
+	)
+
+	return shapeTmpl
+}()
+
+const structShapeTmplDef = `
 {{ .Docstring }}
 {{ $context := . -}}
 type {{ .ShapeName }} struct {
@@ -557,38 +605,43 @@ type {{ .ShapeName }} struct {
 {{ end }}
 
 {{ if not .API.NoGenStructFieldAccessors }}
+	{{ $builderShapeName := print .ShapeName -}}
+	{{ range $_, $name := $context.MemberNames -}}
+		{{ $elem := index $context.MemberRefs $name -}}
 
-{{ $builderShapeName := print .ShapeName -}}
-
-{{ range $_, $name := $context.MemberNames -}}
-	{{ $elem := index $context.MemberRefs $name -}}
-
-// Set{{ $name }} sets the {{ $name }} field's value.
-func (s *{{ $builderShapeName }}) Set{{ $name }}(v {{ $context.GoStructValueType $name $elem }}) *{{ $builderShapeName }} {
-	{{ if $elem.UseIndirection -}}
-	s.{{ $name }} = &v
-	{{ else -}}
-	s.{{ $name }} = v
-	{{ end -}}
-	return s
-}
-
-{{ if $elem.GenerateGetter -}}
-func (s *{{ $builderShapeName }}) get{{ $name }}() (v {{ $context.GoStructValueType $name $elem }}) {
-	{{ if $elem.UseIndirection -}}
-		if s.{{ $name }} == nil {
-			return v
+		// Set{{ $name }} sets the {{ $name }} field's value.
+		func (s *{{ $builderShapeName }}) Set{{ $name }}(v {{ $context.GoStructValueType $name $elem }}) *{{ $builderShapeName }} {
+			{{ if $elem.UseIndirection -}}
+				s.{{ $name }} = &v
+			{{ else -}}
+				s.{{ $name }} = v
+			{{ end -}}
+			return s
 		}
-		return *s.{{ $name }}
-	{{ else -}}
-		return s.{{ $name }}
-	{{ end -}}
-}
-{{- end }}
 
+		{{ if $elem.GenerateGetter -}}
+			func (s *{{ $builderShapeName }}) get{{ $name }}() (v {{ $context.GoStructValueType $name $elem }}) {
+				{{ if $elem.UseIndirection -}}
+					if s.{{ $name }} == nil {
+						return v
+					}
+					return *s.{{ $name }}
+				{{ else -}}
+					return s.{{ $name }}
+				{{ end -}}
+			}
+		{{- end }}
+	{{ end }}
 {{ end }}
+
+{{ if $.EventStreamsMemberName }}
+	{{ template "eventStreamAPILoopMethodTmpl" $ }}
 {{ end }}
-`))
+
+{{ if $.IsEvent }}
+	{{ template "eventStreamEventShapeTmpl" $ }}
+{{ end }}
+`
 
 var enumShapeTmpl = template.Must(template.New("EnumShape").Parse(`
 {{ .Docstring }}
@@ -605,22 +658,38 @@ const (
 
 // GoCode returns the rendered Go code for the Shape.
 func (s *Shape) GoCode() string {
-	b := &bytes.Buffer{}
+	w := &bytes.Buffer{}
 
 	switch {
+	case s.EventStreamAPI != nil:
+		if err := renderEventStreamAPIShape(w, s); err != nil {
+			panic(
+				fmt.Sprintf(
+					"failed to generate eventstream API shape, %s, %v",
+					s.ShapeName, err),
+			)
+		}
 	case s.Type == "structure":
-		if err := structShapeTmpl.Execute(b, s); err != nil {
-			panic(fmt.Sprintf("Failed to generate struct shape %s, %v\n", s.ShapeName, err))
+		if err := structShapeTmpl.Execute(w, s); err != nil {
+			panic(
+				fmt.Sprintf(
+					"Failed to generate struct shape %s, %v",
+					s.ShapeName, err),
+			)
 		}
 	case s.IsEnum():
-		if err := enumShapeTmpl.Execute(b, s); err != nil {
-			panic(fmt.Sprintf("Failed to generate enum shape %s, %v\n", s.ShapeName, err))
+		if err := enumShapeTmpl.Execute(w, s); err != nil {
+			panic(
+				fmt.Sprintf(
+					"Failed to generate enum shape %s, %v",
+					s.ShapeName, err),
+			)
 		}
 	default:
 		panic(fmt.Sprintln("Cannot generate toplevel shape for", s.Type))
 	}
 
-	return b.String()
+	return w.String()
 }
 
 // IsEnum returns whether this shape is an enum list

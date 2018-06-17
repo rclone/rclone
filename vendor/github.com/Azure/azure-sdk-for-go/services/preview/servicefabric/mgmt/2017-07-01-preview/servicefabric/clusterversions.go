@@ -24,7 +24,7 @@ import (
 	"net/http"
 )
 
-// ClusterVersionsClient is the azure Service Fabric Resource Provider API Client
+// ClusterVersionsClient is the service Fabric Management Client
 type ClusterVersionsClient struct {
 	BaseClient
 }

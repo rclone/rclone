@@ -158,8 +158,8 @@ const (
 	// ErrCodeInvalidTemplateException for service response error code
 	// "InvalidTemplate".
 	//
-	// Indicates that a template could not be created because it contained invalid
-	// JSON.
+	// Indicates that the template that you specified could not be rendered. This
+	// issue may occur when a template refers to a partial that does not exist.
 	ErrCodeInvalidTemplateException = "InvalidTemplate"
 
 	// ErrCodeInvalidTrackingOptionsException for service response error code

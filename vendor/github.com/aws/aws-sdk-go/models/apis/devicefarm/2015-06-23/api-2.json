@@ -1159,7 +1159,8 @@
     "CreateRemoteAccessSessionConfiguration":{
       "type":"structure",
       "members":{
-        "billingMethod":{"shape":"BillingMethod"}
+        "billingMethod":{"shape":"BillingMethod"},
+        "vpceConfigurationArns":{"shape":"AmazonResourceNames"}
       }
     },
     "CreateRemoteAccessSessionRequest":{

@@ -122,6 +122,7 @@ type USQLTablePartition = original.USQLTablePartition
 type USQLTablePartitionList = original.USQLTablePartitionList
 type USQLTablePartitionListIterator = original.USQLTablePartitionListIterator
 type USQLTablePartitionListPage = original.USQLTablePartitionListPage
+type USQLTablePreview = original.USQLTablePreview
 type USQLTableStatistics = original.USQLTableStatistics
 type USQLTableStatisticsList = original.USQLTableStatisticsList
 type USQLTableStatisticsListIterator = original.USQLTableStatisticsListIterator

@@ -29,6 +29,7 @@ import (
 
 	"cloud.google.com/go/internal/pretty"
 	"cloud.google.com/go/internal/testutil"
+	"cloud.google.com/go/internal/uid"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
@@ -55,7 +56,7 @@ const (
 var (
 	iClient       *Client
 	iColl         *CollectionRef
-	collectionIDs = testutil.NewUIDSpace("go-integration-test")
+	collectionIDs = uid.NewSpace("go-integration-test", nil)
 )
 
 func initIntegrationTest() {
@@ -388,6 +389,18 @@ func TestIntegration_Set(t *testing.T) {
 	}
 	if !wr3.UpdateTime.Before(wr4.UpdateTime) {
 		t.Errorf("update time did not increase: old=%s, new=%s", wr3.UpdateTime, wr4.UpdateTime)
+	}
+
+	// Writing an empty doc with MergeAll should create the doc.
+	doc2 := coll.NewDoc()
+	want = map[string]interface{}{}
+	_, err = doc2.Set(ctx, want, MergeAll)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ds = h.mustGet(doc2)
+	if got := ds.Data(); !testEqual(got, want) {
+		t.Errorf("got %v, want %v", got, want)
 	}
 }
 

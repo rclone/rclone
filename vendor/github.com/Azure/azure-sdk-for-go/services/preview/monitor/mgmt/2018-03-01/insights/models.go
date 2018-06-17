@@ -509,17 +509,14 @@ func PossibleUnitValues() []Unit {
 	return []Unit{UnitBytes, UnitByteSeconds, UnitBytesPerSecond, UnitCount, UnitCountPerSecond, UnitMilliSeconds, UnitPercent, UnitSeconds, UnitUnspecified}
 }
 
-// BasicAction an alert action.
+// BasicAction ...
 type BasicAction interface {
 	AsAlertingAction() (*AlertingAction, bool)
 	AsAction() (*Action, bool)
 }
 
-// Action an alert action.
+// Action ...
 type Action struct {
-	// ActionGroupID - the id of the action group to use.
-	ActionGroupID     *string            `json:"actionGroupId,omitempty"`
-	WebhookProperties map[string]*string `json:"webhookProperties"`
 	// OdataType - Possible values include: 'OdataTypeAction', 'OdataTypeMicrosoftWindowsAzureManagementMonitoringAlertsModelsMicrosoftAppInsightsNexusDataContractsResourcesScheduledQueryRulesAlertingAction'
 	OdataType OdataTypeBasicAction `json:"odata.type,omitempty"`
 }
@@ -565,12 +562,6 @@ func unmarshalBasicActionArray(body []byte) ([]BasicAction, error) {
 func (a Action) MarshalJSON() ([]byte, error) {
 	a.OdataType = OdataTypeAction
 	objectMap := make(map[string]interface{})
-	if a.ActionGroupID != nil {
-		objectMap["actionGroupId"] = a.ActionGroupID
-	}
-	if a.WebhookProperties != nil {
-		objectMap["webhookProperties"] = a.WebhookProperties
-	}
 	if a.OdataType != "" {
 		objectMap["odata.type"] = a.OdataType
 	}
@@ -1034,15 +1025,12 @@ func (alar *ActivityLogAlertResource) UnmarshalJSON(body []byte) error {
 type AlertingAction struct {
 	// Severity - Severity of the alert. Possible values include: 'Zero', 'One', 'Two', 'Three', 'Four'
 	Severity AlertSeverity `json:"severity,omitempty"`
-	// AznsAction - azns notification group reference.
+	// AznsAction - Azure action group reference.
 	AznsAction *AzNsActionGroup `json:"aznsAction,omitempty"`
-	// ThrottlingInMin - time (in minutes) for which Alerts should be throttled
+	// ThrottlingInMin - time (in minutes) for which Alerts should be throttled or suppressed.
 	ThrottlingInMin *int32 `json:"throttlingInMin,omitempty"`
 	// Trigger - The trigger condition that results in the alert rule being.
 	Trigger *TriggerCondition `json:"trigger,omitempty"`
-	// ActionGroupID - the id of the action group to use.
-	ActionGroupID     *string            `json:"actionGroupId,omitempty"`
-	WebhookProperties map[string]*string `json:"webhookProperties"`
 	// OdataType - Possible values include: 'OdataTypeAction', 'OdataTypeMicrosoftWindowsAzureManagementMonitoringAlertsModelsMicrosoftAppInsightsNexusDataContractsResourcesScheduledQueryRulesAlertingAction'
 	OdataType OdataTypeBasicAction `json:"odata.type,omitempty"`
 }
@@ -1062,12 +1050,6 @@ func (aa AlertingAction) MarshalJSON() ([]byte, error) {
 	}
 	if aa.Trigger != nil {
 		objectMap["trigger"] = aa.Trigger
-	}
-	if aa.ActionGroupID != nil {
-		objectMap["actionGroupId"] = aa.ActionGroupID
-	}
-	if aa.WebhookProperties != nil {
-		objectMap["webhookProperties"] = aa.WebhookProperties
 	}
 	if aa.OdataType != "" {
 		objectMap["odata.type"] = aa.OdataType
@@ -1663,13 +1645,13 @@ func (asrp *AutoscaleSettingResourcePatch) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// AzNsActionGroup azns notification group
+// AzNsActionGroup azure action group
 type AzNsActionGroup struct {
-	// ActionGroup - Azure Group reference.
+	// ActionGroup - Azure Action Group reference.
 	ActionGroup *[]string `json:"actionGroup,omitempty"`
-	// EmailSubject - Custom subject for Azns email
+	// EmailSubject - Custom subject override for all email ids in Azure action group
 	EmailSubject *string `json:"emailSubject,omitempty"`
-	// CustomWebhookPayload - Custom webhook payload to be send to azns action group
+	// CustomWebhookPayload - Custom payload to be sent for all webook URI in Azure action group
 	CustomWebhookPayload *string `json:"customWebhookPayload,omitempty"`
 }
 
@@ -2989,6 +2971,25 @@ type Metric struct {
 	Timeseries *[]TimeSeriesElement `json:"timeseries,omitempty"`
 }
 
+// MetricAlertAction an alert action.
+type MetricAlertAction struct {
+	// ActionGroupID - the id of the action group to use.
+	ActionGroupID     *string            `json:"actionGroupId,omitempty"`
+	WebhookProperties map[string]*string `json:"webhookProperties"`
+}
+
+// MarshalJSON is the custom marshaler for MetricAlertAction.
+func (maa MetricAlertAction) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if maa.ActionGroupID != nil {
+		objectMap["actionGroupId"] = maa.ActionGroupID
+	}
+	if maa.WebhookProperties != nil {
+		objectMap["webhookProperties"] = maa.WebhookProperties
+	}
+	return json.Marshal(objectMap)
+}
+
 // BasicMetricAlertCriteria the rule criteria that defines the conditions of the alert rule.
 type BasicMetricAlertCriteria interface {
 	AsMetricAlertSingleResourceMultipleMetricCriteria() (*MetricAlertSingleResourceMultipleMetricCriteria, bool)
@@ -3084,8 +3085,10 @@ type MetricAlertProperties struct {
 	WindowSize *string `json:"windowSize,omitempty"`
 	// Criteria - defines the specific alert criteria information.
 	Criteria BasicMetricAlertCriteria `json:"criteria,omitempty"`
+	// AutoMitigate - the flag that indicates whether the alert should be auto resolved or not.
+	AutoMitigate *bool `json:"autoMitigate,omitempty"`
 	// Actions - the array of actions that are performed when the alert rule becomes active, and when an alert condition is resolved.
-	Actions *[]BasicAction `json:"actions,omitempty"`
+	Actions *[]MetricAlertAction `json:"actions,omitempty"`
 	// LastUpdatedTime - Last time the rule was updated in ISO8601 format.
 	LastUpdatedTime *date.Time `json:"lastUpdatedTime,omitempty"`
 }
@@ -3161,9 +3164,19 @@ func (mapVar *MetricAlertProperties) UnmarshalJSON(body []byte) error {
 				}
 				mapVar.Criteria = criteria
 			}
+		case "autoMitigate":
+			if v != nil {
+				var autoMitigate bool
+				err = json.Unmarshal(*v, &autoMitigate)
+				if err != nil {
+					return err
+				}
+				mapVar.AutoMitigate = &autoMitigate
+			}
 		case "actions":
 			if v != nil {
-				actions, err := unmarshalBasicActionArray(*v)
+				var actions []MetricAlertAction
+				err = json.Unmarshal(*v, &actions)
 				if err != nil {
 					return err
 				}
@@ -4285,8 +4298,8 @@ type Source struct {
 	Query *string `json:"query,omitempty"`
 	// AuthorizedResources - List of  Resource referred into query
 	AuthorizedResources *[]string `json:"authorizedResources,omitempty"`
-	// DatasourceID - The resource uri over which log search query is to be run.
-	DatasourceID *string `json:"datasourceId,omitempty"`
+	// DataSourceID - The resource uri over which log search query is to be run.
+	DataSourceID *string `json:"dataSourceId,omitempty"`
 	// QueryType - Set value to ResultCount if query should be returning search result count. Set it to Number if its a metric query. Possible values include: 'ResultCount'
 	QueryType QueryType `json:"queryType,omitempty"`
 }

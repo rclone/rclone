@@ -76,6 +76,7 @@ func newInputService1ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice1protocoltest",
+				ServiceID:     "InputService1ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -214,6 +215,7 @@ func newInputService2ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice2protocoltest",
+				ServiceID:     "InputService2ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -360,6 +362,7 @@ func newInputService3ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice3protocoltest",
+				ServiceID:     "InputService3ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -506,6 +509,7 @@ func newInputService4ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice4protocoltest",
+				ServiceID:     "InputService4ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -652,6 +656,7 @@ func newInputService5ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice5protocoltest",
+				ServiceID:     "InputService5ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -806,6 +811,7 @@ func newInputService6ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice6protocoltest",
+				ServiceID:     "InputService6ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -960,6 +966,7 @@ func newInputService7ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice7protocoltest",
+				ServiceID:     "InputService7ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1181,6 +1188,7 @@ func newInputService8ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice8protocoltest",
+				ServiceID:     "InputService8ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1343,6 +1351,7 @@ func newInputService9ProtocolTestClient(cfg aws.Config, handlers request.Handler
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice9protocoltest",
+				ServiceID:     "InputService9ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1533,6 +1542,7 @@ func newInputService10ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice10protocoltest",
+				ServiceID:     "InputService10ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1731,6 +1741,7 @@ func newInputService11ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice11protocoltest",
+				ServiceID:     "InputService11ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -1907,6 +1918,7 @@ func newInputService12ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice12protocoltest",
+				ServiceID:     "InputService12ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -2076,6 +2088,7 @@ func newInputService13ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice13protocoltest",
+				ServiceID:     "InputService13ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -2297,6 +2310,7 @@ func newInputService14ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice14protocoltest",
+				ServiceID:     "InputService14ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -2530,6 +2544,7 @@ func newInputService15ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice15protocoltest",
+				ServiceID:     "InputService15ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -2751,6 +2766,7 @@ func newInputService16ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice16protocoltest",
+				ServiceID:     "InputService16ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -3308,6 +3324,7 @@ func newInputService17ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice17protocoltest",
+				ServiceID:     "InputService17ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -3537,6 +3554,7 @@ func newInputService18ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice18protocoltest",
+				ServiceID:     "InputService18ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -3683,6 +3701,7 @@ func newInputService19ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice19protocoltest",
+				ServiceID:     "InputService19ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -3829,6 +3848,7 @@ func newInputService20ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice20protocoltest",
+				ServiceID:     "InputService20ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -4050,6 +4070,7 @@ func newInputService21ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice21protocoltest",
+				ServiceID:     "InputService21ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,
@@ -4382,6 +4403,7 @@ func newInputService22ProtocolTestClient(cfg aws.Config, handlers request.Handle
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   "inputservice22protocoltest",
+				ServiceID:     "InputService22ProtocolTest",
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,

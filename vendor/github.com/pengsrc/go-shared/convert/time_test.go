@@ -51,17 +51,7 @@ func TestStringToTime(t *testing.T) {
 	assert.Equal(t, someTime.UTC(), parsedTime.UTC())
 }
 
-func TestStringToUnixString(t *testing.T) {
-	assert.Equal(t, int64(1472715000), StringToUnixTimestamp("Thu, 01 Sep 2016 07:30:00 GMT", RFC822))
-	assert.Equal(t, int64(-1), StringToUnixTimestamp("2016-09-01T07:30:00.000Z", RFC822))
-	assert.Equal(t, int64(1472715000), StringToUnixTimestamp("2016-09-01T07:30:00Z", ISO8601))
-	assert.Equal(t, int64(1472715000), StringToUnixTimestamp("2016-09-01T07:30:00.000Z", ISO8601Milli))
-	assert.Equal(t, int64(1472715000), StringToUnixTimestamp("2016-09-01T07:30:00.500Z", ISO8601Milli))
-	assert.Equal(t, int64(1472715000), StringToUnixTimestamp("01/Sep/2016:15:30:00 +0800", NGINXTime))
-	assert.Equal(t, int64(1472715000), StringToUnixTimestamp("01/Sep/2016:07:30:00 +0000", NGINXTime))
-}
-
-func TestTimeToUnixInt(t *testing.T) {
+func TestTimeToTimestamp(t *testing.T) {
 	tz, err := time.LoadLocation("Asia/Shanghai")
 	assert.NoError(t, err)
 	someTime := time.Date(2016, 9, 1, 15, 30, 0, 0, tz)
@@ -69,10 +59,49 @@ func TestTimeToUnixInt(t *testing.T) {
 	assert.Equal(t, int64(1472715000), TimeToTimestamp(someTime))
 }
 
-func TestUnixIntToTime(t *testing.T) {
+func TestTimestampToTime(t *testing.T) {
 	tz, err := time.LoadLocation("Asia/Shanghai")
 	assert.NoError(t, err)
 	someTime := time.Date(2016, 9, 1, 15, 30, 0, 0, tz)
 
 	assert.Equal(t, someTime.UTC(), TimestampToTime(1472715000))
+}
+
+func TestTimestampToTimePointer(t *testing.T) {
+	tz, err := time.LoadLocation("Asia/Shanghai")
+	assert.NoError(t, err)
+	someTime := time.Date(2016, 9, 1, 15, 30, 0, 0, tz).UTC()
+
+	assert.Equal(t, &someTime, TimestampToTimePointer(1472715000))
+	assert.Nil(t, TimestampToTimePointer(0))
+}
+
+func TestTimePointerToTimestamp(t *testing.T) {
+	tz, err := time.LoadLocation("Asia/Shanghai")
+	assert.NoError(t, err)
+	unixTime := int64(1472715000)
+	someTime := time.Date(2016, 9, 1, 15, 30, 0, 0, tz)
+
+	assert.Equal(t, unixTime, TimePointerToTimestamp(&someTime))
+	assert.Equal(t, int64(0), TimePointerToTimestamp(nil))
+}
+
+func TestStringToTimestamp(t *testing.T) {
+	assert.Equal(t, int64(1472715000), StringToTimestamp("Thu, 01 Sep 2016 07:30:00 GMT", RFC822))
+	assert.Equal(t, int64(-1), StringToTimestamp("2016-09-01T07:30:00.000Z", RFC822))
+	assert.Equal(t, int64(1472715000), StringToTimestamp("2016-09-01T07:30:00Z", ISO8601))
+	assert.Equal(t, int64(1472715000), StringToTimestamp("2016-09-01T07:30:00.000Z", ISO8601Milli))
+	assert.Equal(t, int64(1472715000), StringToTimestamp("2016-09-01T07:30:00.500Z", ISO8601Milli))
+	assert.Equal(t, int64(1472715000), StringToTimestamp("01/Sep/2016:15:30:00 +0800", NGINXTime))
+	assert.Equal(t, int64(1472715000), StringToTimestamp("01/Sep/2016:07:30:00 +0000", NGINXTime))
+}
+
+func TestTimestampToString(t *testing.T) {
+	assert.Equal(t, StringToTimestamp("Thu, 01 Sep 2016 07:30:00 GMT", RFC822), int64(1472715000))
+	assert.Equal(t, StringToTimestamp("2016-09-01T07:30:00.000Z", RFC822), int64(-1))
+	assert.Equal(t, StringToTimestamp("2016-09-01T07:30:00Z", ISO8601), int64(1472715000))
+	assert.Equal(t, StringToTimestamp("2016-09-01T07:30:00.000Z", ISO8601Milli), int64(1472715000))
+	assert.Equal(t, StringToTimestamp("2016-09-01T07:30:00.500Z", ISO8601Milli), int64(1472715000))
+	assert.Equal(t, StringToTimestamp("01/Sep/2016:15:30:00 +0800", NGINXTime), int64(1472715000))
+	assert.Equal(t, StringToTimestamp("01/Sep/2016:07:30:00 +0000", NGINXTime), int64(1472715000))
 }

@@ -47,6 +47,42 @@ func TestGenManDoc(t *testing.T) {
 	checkStringContains(t, output, translate("Auto generated"))
 }
 
+func TestGenManNoHiddenParents(t *testing.T) {
+	header := &GenManHeader{
+		Title:   "Project",
+		Section: "2",
+	}
+
+	// We generate on a subcommand so we have both subcommands and parents
+	for _, name := range []string{"rootflag", "strtwo"} {
+		f := rootCmd.PersistentFlags().Lookup(name)
+		f.Hidden = true
+		defer func() { f.Hidden = false }()
+	}
+	buf := new(bytes.Buffer)
+	if err := GenMan(echoCmd, header, buf); err != nil {
+		t.Fatal(err)
+	}
+	output := buf.String()
+
+	// Make sure parent has - in CommandPath() in SEE ALSO:
+	parentPath := echoCmd.Parent().CommandPath()
+	dashParentPath := strings.Replace(parentPath, " ", "-", -1)
+	expected := translate(dashParentPath)
+	expected = expected + "(" + header.Section + ")"
+	checkStringContains(t, output, expected)
+
+	checkStringContains(t, output, translate(echoCmd.Name()))
+	checkStringContains(t, output, translate(echoCmd.Name()))
+	checkStringContains(t, output, "boolone")
+	checkStringOmits(t, output, "rootflag")
+	checkStringContains(t, output, translate(rootCmd.Name()))
+	checkStringContains(t, output, translate(echoSubCmd.Name()))
+	checkStringOmits(t, output, translate(deprecatedCmd.Name()))
+	checkStringContains(t, output, translate("Auto generated"))
+	checkStringOmits(t, output, "OPTIONS INHERITED FROM PARENT COMMANDS")
+}
+
 func TestGenManNoGenTag(t *testing.T) {
 	echoCmd.DisableAutoGenTag = true
 	defer func() { echoCmd.DisableAutoGenTag = false }()

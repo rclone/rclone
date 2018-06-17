@@ -41,11 +41,11 @@ const (
 	ErrCodeIncorrectKeyMaterialException = "IncorrectKeyMaterialException"
 
 	// ErrCodeInternalException for service response error code
-	// "InternalException".
+	// "KMSInternalException".
 	//
 	// The request was rejected because an internal exception occurred. The request
 	// can be retried.
-	ErrCodeInternalException = "InternalException"
+	ErrCodeInternalException = "KMSInternalException"
 
 	// ErrCodeInvalidAliasNameException for service response error code
 	// "InvalidAliasNameException".
@@ -100,7 +100,7 @@ const (
 	ErrCodeInvalidMarkerException = "InvalidMarkerException"
 
 	// ErrCodeInvalidStateException for service response error code
-	// "InvalidStateException".
+	// "KMSInvalidStateException".
 	//
 	// The request was rejected because the state of the specified resource is not
 	// valid for this request.
@@ -108,7 +108,7 @@ const (
 	// For more information about how key state affects the use of a CMK, see How
 	// Key State Affects Use of a Customer Master Key (http://docs.aws.amazon.com/kms/latest/developerguide/key-state.html)
 	// in the AWS Key Management Service Developer Guide.
-	ErrCodeInvalidStateException = "InvalidStateException"
+	ErrCodeInvalidStateException = "KMSInvalidStateException"
 
 	// ErrCodeKeyUnavailableException for service response error code
 	// "KeyUnavailableException".

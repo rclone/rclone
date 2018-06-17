@@ -197,6 +197,12 @@ type GoogleCloudServicebrokerV1beta1__Binding struct {
 	// Timestamp for when the binding was created.
 	CreateTime string `json:"createTime,omitempty"`
 
+	// DeploymentName: Output only.
+	// String containing the Deployment Manager deployment name that was
+	// created
+	// for this binding,
+	DeploymentName string `json:"deploymentName,omitempty"`
+
 	// Parameters: Configuration options for the service binding.
 	Parameters googleapi.RawMessage `json:"parameters,omitempty"`
 
@@ -205,6 +211,13 @@ type GoogleCloudServicebrokerV1beta1__Binding struct {
 	// Maximum length is 64, GUID recommended.
 	// Required.
 	PlanId string `json:"plan_id,omitempty"`
+
+	// ResourceName: Output only.
+	// The resource name of the binding,
+	// e.g.
+	// projects/project_id/brokers/broker_id/service_instances/instance_
+	// id/bindings/binding_id.
+	ResourceName string `json:"resourceName,omitempty"`
 
 	// ServiceId: The id of the service. Must be a valid identifier of a
 	// service
@@ -523,6 +536,11 @@ type GoogleCloudServicebrokerV1beta1__GetBindingResponse struct {
 	// Credentials: Credentials to use the binding.
 	Credentials googleapi.RawMessage `json:"credentials,omitempty"`
 
+	// DeploymentName: String containing the Deployment Manager deployment
+	// name that was created
+	// for this binding,
+	DeploymentName string `json:"deploymentName,omitempty"`
+
 	// Description: Used to communicate description of the response. Usually
 	// for non-standard
 	// error
@@ -530,6 +548,13 @@ type GoogleCloudServicebrokerV1beta1__GetBindingResponse struct {
 	// https://github.com/openservicebrokerapi/servicebroker/blob/mast
 	// er/spec.md#service-broker-errors
 	Description string `json:"description,omitempty"`
+
+	// ResourceName: Output only.
+	// The resource name of the binding,
+	// e.g.
+	// projects/project_id/brokers/broker_id/service_instances/instance_
+	// id/bindings/binding_id.
+	ResourceName string `json:"resourceName,omitempty"`
 
 	// RouteServiceUrl: A URL to which the platform may proxy requests for
 	// the address sent with
@@ -962,6 +987,12 @@ type GoogleCloudServicebrokerV1beta1__ServiceInstance struct {
 	// CreateTime: Output only.
 	// Timestamp for when the instance was created.
 	CreateTime string `json:"createTime,omitempty"`
+
+	// DeploymentName: Output only.
+	// String containing the Deployment Manager deployment name that was
+	// created
+	// for this instance,
+	DeploymentName string `json:"deploymentName,omitempty"`
 
 	// Description: To return errors when GetInstance call is done via HTTP
 	// to be unified with

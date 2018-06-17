@@ -367,6 +367,23 @@
         {"shape":"ThrottlingException"}
       ]
     },
+    "ListTagsForResource":{
+      "name":"ListTagsForResource",
+      "http":{
+        "method":"GET",
+        "requestUri":"/tags"
+      },
+      "input":{"shape":"ListTagsForResourceRequest"},
+      "output":{"shape":"ListTagsForResourceResponse"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
     "PutLoggingOptions":{
       "name":"PutLoggingOptions",
       "http":{
@@ -427,6 +444,42 @@
         {"shape":"InternalFailureException"},
         {"shape":"ServiceUnavailableException"},
         {"shape":"ThrottlingException"}
+      ]
+    },
+    "TagResource":{
+      "name":"TagResource",
+      "http":{
+        "method":"POST",
+        "requestUri":"/tags",
+        "responseCode":204
+      },
+      "input":{"shape":"TagResourceRequest"},
+      "output":{"shape":"TagResourceResponse"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
+    "UntagResource":{
+      "name":"UntagResource",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/tags",
+        "responseCode":204
+      },
+      "input":{"shape":"UntagResourceRequest"},
+      "output":{"shape":"UntagResourceResponse"},
+      "errors":[
+        {"shape":"InvalidRequestException"},
+        {"shape":"InternalFailureException"},
+        {"shape":"ServiceUnavailableException"},
+        {"shape":"ThrottlingException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "UpdateChannel":{
@@ -641,7 +694,8 @@
       "required":["channelName"],
       "members":{
         "channelName":{"shape":"ChannelName"},
-        "retentionPeriod":{"shape":"RetentionPeriod"}
+        "retentionPeriod":{"shape":"RetentionPeriod"},
+        "tags":{"shape":"TagList"}
       }
     },
     "CreateChannelResponse":{
@@ -672,7 +726,8 @@
       "members":{
         "datasetName":{"shape":"DatasetName"},
         "actions":{"shape":"DatasetActions"},
-        "triggers":{"shape":"DatasetTriggers"}
+        "triggers":{"shape":"DatasetTriggers"},
+        "tags":{"shape":"TagList"}
       }
     },
     "CreateDatasetResponse":{
@@ -687,7 +742,8 @@
       "required":["datastoreName"],
       "members":{
         "datastoreName":{"shape":"DatastoreName"},
-        "retentionPeriod":{"shape":"RetentionPeriod"}
+        "retentionPeriod":{"shape":"RetentionPeriod"},
+        "tags":{"shape":"TagList"}
       }
     },
     "CreateDatastoreResponse":{
@@ -706,7 +762,8 @@
       ],
       "members":{
         "pipelineName":{"shape":"PipelineName"},
-        "pipelineActivities":{"shape":"PipelineActivities"}
+        "pipelineActivities":{"shape":"PipelineActivities"},
+        "tags":{"shape":"TagList"}
       }
     },
     "CreatePipelineResponse":{
@@ -1213,6 +1270,23 @@
         "nextToken":{"shape":"NextToken"}
       }
     },
+    "ListTagsForResourceRequest":{
+      "type":"structure",
+      "required":["resourceArn"],
+      "members":{
+        "resourceArn":{
+          "shape":"ResourceArn",
+          "location":"querystring",
+          "locationName":"resourceArn"
+        }
+      }
+    },
+    "ListTagsForResourceResponse":{
+      "type":"structure",
+      "members":{
+        "tags":{"shape":"TagList"}
+      }
+    },
     "LogResult":{"type":"string"},
     "LoggingEnabled":{"type":"boolean"},
     "LoggingLevel":{
@@ -1394,6 +1468,11 @@
       "error":{"httpStatusCode":409},
       "exception":true
     },
+    "ResourceArn":{
+      "type":"string",
+      "max":2048,
+      "min":20
+    },
     "ResourceNotFoundException":{
       "type":"structure",
       "members":{
@@ -1524,6 +1603,59 @@
       }
     },
     "StartTime":{"type":"timestamp"},
+    "Tag":{
+      "type":"structure",
+      "required":[
+        "key",
+        "value"
+      ],
+      "members":{
+        "key":{"shape":"TagKey"},
+        "value":{"shape":"TagValue"}
+      }
+    },
+    "TagKey":{
+      "type":"string",
+      "max":256,
+      "min":1
+    },
+    "TagKeyList":{
+      "type":"list",
+      "member":{"shape":"TagKey"},
+      "max":50,
+      "min":1
+    },
+    "TagList":{
+      "type":"list",
+      "member":{"shape":"Tag"},
+      "max":50,
+      "min":1
+    },
+    "TagResourceRequest":{
+      "type":"structure",
+      "required":[
+        "resourceArn",
+        "tags"
+      ],
+      "members":{
+        "resourceArn":{
+          "shape":"ResourceArn",
+          "location":"querystring",
+          "locationName":"resourceArn"
+        },
+        "tags":{"shape":"TagList"}
+      }
+    },
+    "TagResourceResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "TagValue":{
+      "type":"string",
+      "max":256,
+      "min":1
+    },
     "ThrottlingException":{
       "type":"structure",
       "members":{
@@ -1534,6 +1666,30 @@
     },
     "Timestamp":{"type":"timestamp"},
     "UnlimitedRetentionPeriod":{"type":"boolean"},
+    "UntagResourceRequest":{
+      "type":"structure",
+      "required":[
+        "resourceArn",
+        "tagKeys"
+      ],
+      "members":{
+        "resourceArn":{
+          "shape":"ResourceArn",
+          "location":"querystring",
+          "locationName":"resourceArn"
+        },
+        "tagKeys":{
+          "shape":"TagKeyList",
+          "location":"querystring",
+          "locationName":"tagKeys"
+        }
+      }
+    },
+    "UntagResourceResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "UpdateChannelRequest":{
       "type":"structure",
       "required":["channelName"],

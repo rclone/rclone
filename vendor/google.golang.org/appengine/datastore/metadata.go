@@ -64,7 +64,7 @@ func KindProperties(ctx context.Context, kind string) (map[string][]string, erro
 
 	propMap := map[string][]string{}
 	props := []struct {
-		Repr []string `datastore:property_representation`
+		Repr []string `datastore:"property_representation"`
 	}{}
 
 	keys, err := q.GetAll(ctx, &props)

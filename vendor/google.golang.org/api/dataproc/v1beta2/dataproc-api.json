@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -1630,7 +1619,7 @@
       }
     }
   },
-  "revision": "20180502",
+  "revision": "20180601",
   "rootUrl": "https://dataproc.googleapis.com/",
   "schemas": {
     "AcceleratorConfig": {
@@ -1725,6 +1714,10 @@
         "configBucket": {
           "description": "Optional. A Cloud Storage staging bucket used for sharing generated SSH keys and config. If you do not specify a staging bucket, Cloud Dataproc will determine an appropriate Cloud Storage location (US, ASIA, or EU) for your cluster's staging bucket according to the Google Compute Engine zone where your cluster is deployed, and then it will create and manage this project-level, per-location bucket for you.",
           "type": "string"
+        },
+        "encryptionConfig": {
+          "$ref": "EncryptionConfig",
+          "description": "Optional. Encryption settings for the cluster."
         },
         "gceClusterConfig": {
           "$ref": "GceClusterConfig",
@@ -1998,6 +1991,17 @@
       "properties": {},
       "type": "object"
     },
+    "EncryptionConfig": {
+      "description": "Encryption settings for the cluster.",
+      "id": "EncryptionConfig",
+      "properties": {
+        "gcePdKmsKeyName": {
+          "description": "Optional. The Cloud KMS key name to use for PD disk encryption for all instances in the cluster.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "GceClusterConfig": {
       "description": "Common config settings for resources of Compute Engine cluster instances, applicable to all instances in the cluster.",
       "id": "GceClusterConfig",
@@ -2203,6 +2207,13 @@
         "instanceId": {
           "description": "Optional. A tag that prevents multiple concurrent workflow instances with the same tag from running. This mitigates risk of concurrent instances started due to retries.It is recommended to always set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The tag must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
           "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional. Map from parameter names to values that should be used for those parameters.",
+          "type": "object"
         },
         "version": {
           "description": "Optional. The version of workflow template to instantiate. If specified, the workflow will be instantiated only if the current version of the workflow template has the supplied version.This option cannot be used to instantiate a previous version of workflow template.",
@@ -2650,6 +2661,21 @@
       },
       "type": "object"
     },
+    "ParameterValidation": {
+      "description": "Configuration for parameter validation.",
+      "id": "ParameterValidation",
+      "properties": {
+        "regex": {
+          "$ref": "RegexValidation",
+          "description": "Validation based on regular expressions."
+        },
+        "values": {
+          "$ref": "ValueValidation",
+          "description": "Validation based on a list of allowed values."
+        }
+      },
+      "type": "object"
+    },
     "PigJob": {
       "description": "A Cloud Dataproc job for running Apache Pig (https://pig.apache.org/) queries on YARN.",
       "id": "PigJob",
@@ -2781,6 +2807,20 @@
       "properties": {
         "queries": {
           "description": "Required. The queries to execute. You do not need to terminate a query with a semicolon. Multiple queries can be specified in one string by separating each with a semicolon. Here is an example of an Cloud Dataproc API snippet that uses a QueryList to specify a HiveJob:\n\"hiveJob\": {\n  \"queryList\": {\n    \"queries\": [\n      \"query1\",\n      \"query2\",\n      \"query3;query4\",\n    ]\n  }\n}\n",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "RegexValidation": {
+      "description": "Validation based on regular expressions.",
+      "id": "RegexValidation",
+      "properties": {
+        "regexes": {
+          "description": "Required. RE2 regular expressions used to validate the parameter's value. The provided value must match the regexes in its entirety, e.g. substring matches are not enough.",
           "items": {
             "type": "string"
           },
@@ -2954,6 +2994,32 @@
       },
       "type": "object"
     },
+    "TemplateParameter": {
+      "description": "A configurable parameter that replaces one or more fields in the template.",
+      "id": "TemplateParameter",
+      "properties": {
+        "description": {
+          "description": "Optional. User-friendly description of the parameter. Must not exceed 1024 characters.",
+          "type": "string"
+        },
+        "fields": {
+          "description": "Required. Paths to all fields that this parameter replaces. Each field may appear in at most one Parameter's fields list.Field path syntax:A field path is similar to a FieldMask. For example, a field path that references the zone field of the template's cluster selector would look like:placement.clusterSelector.zoneThe only differences between field paths and standard field masks are that:\nValues in maps can be referenced by key.Example: placement.clusterSelector.clusterLabels'key'\nJobs in the jobs list can be referenced by step id.Example: jobs'step-id'.hadoopJob.mainJarFileUri\nItems in repeated fields can be referenced by zero-based index.Example: jobs'step-id'.sparkJob.args0NOTE: Maps and repeated fields may not be parameterized in their entirety. Only individual map values and items in repeated fields may be referenced. For example, the following field paths are invalid: - placement.clusterSelector.clusterLabels - jobs'step-id'.sparkJob.argsParameterizable fields:Only certain types of fields may be parameterized, specifically: - Labels - File uris - Job properties - Job arguments - Script variables - Main class (in HadoopJob and SparkJob) - Zone (in ClusterSelector)Examples of parameterizable fields:Labels:labels'key' placement.managedCluster.labels'key' placement.clusterSelector.clusterLabels'key' jobs'step-id'.labels'key'File uris:jobs'step-id'.hadoopJob.mainJarFileUri jobs'step-id'.hiveJob.queryFileUri jobs'step-id'.pySparkJob.mainPythonFileUri jobs'step-id'.hadoopJob.jarFileUris0 jobs'step-id'.hadoopJob.archiveUris0 jobs'step-id'.hadoopJob.fileUris0 jobs'step-id'.pySparkJob.pythonFileUris0Other:jobs'step-id'.hadoopJob.properties'key' jobs'step-id'.hadoopJob.args0 jobs'step-id'.hiveJob.scriptVariables'key' jobs'step-id'.hadoopJob.mainJarFileUri placement.clusterSelector.zone",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "Required. User-friendly parameter name. This name is used as a key when providing a value for this parameter when the template is instantiated. Must contain only capital letters (A-Z), numbers (0-9), and underscores (_), and must not start with a number. The maximum length is 40 characters.",
+          "type": "string"
+        },
+        "validation": {
+          "$ref": "ParameterValidation",
+          "description": "Optional. Validation rules to be applied to this parameter's value."
+        }
+      },
+      "type": "object"
+    },
     "TestIamPermissionsRequest": {
       "description": "Request message for TestIamPermissions method.",
       "id": "TestIamPermissionsRequest",
@@ -2974,6 +3040,20 @@
       "properties": {
         "permissions": {
           "description": "A subset of TestPermissionsRequest.permissions that the caller is allowed.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ValueValidation": {
+      "description": "Validation based on a list of allowed values.",
+      "id": "ValueValidation",
+      "properties": {
+        "values": {
+          "description": "Required. List of allowed values for this parameter.",
           "items": {
             "type": "string"
           },
@@ -3127,6 +3207,13 @@
         "name": {
           "description": "Output only. The \"resource name\" of the template, as described in https://cloud.google.com/apis/design/resource_names of the form projects/{project_id}/regions/{region}/workflowTemplates/{template_id}",
           "type": "string"
+        },
+        "parameters": {
+          "description": "Optional. Template parameters whose values are substituted into the template. Values for these parameters must be provided when the template is instantiated.",
+          "items": {
+            "$ref": "TemplateParameter"
+          },
+          "type": "array"
         },
         "placement": {
           "$ref": "WorkflowTemplatePlacement",

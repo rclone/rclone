@@ -231,12 +231,11 @@ func PossibleTrustedIDProviderStateValues() []TrustedIDProviderState {
 // AccountsCreateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsCreateFutureType struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountsCreateFutureType) Result(client AccountsClient) (dlsa DataLakeStoreAccount, err error) {
+func (future *AccountsCreateFutureType) Result(client AccountsClient) (dlsa DataLakeStoreAccount, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -244,34 +243,15 @@ func (future AccountsCreateFutureType) Result(client AccountsClient) (dlsa DataL
 		return
 	}
 	if !done {
-		return dlsa, azure.NewAsyncOpIncompleteError("account.AccountsCreateFutureType")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		dlsa, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("account.AccountsCreateFutureType")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if dlsa.Response.Response, err = future.GetResult(sender); err == nil && dlsa.Response.Response.StatusCode != http.StatusNoContent {
+		dlsa, err = client.CreateResponder(dlsa.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", dlsa.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", resp, "Failure sending request")
-		return
-	}
-	dlsa, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -279,12 +259,11 @@ func (future AccountsCreateFutureType) Result(client AccountsClient) (dlsa DataL
 // AccountsDeleteFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsDeleteFutureType struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountsDeleteFutureType) Result(client AccountsClient) (ar autorest.Response, err error) {
+func (future *AccountsDeleteFutureType) Result(client AccountsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -292,47 +271,21 @@ func (future AccountsDeleteFutureType) Result(client AccountsClient) (ar autores
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("account.AccountsDeleteFutureType")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("account.AccountsDeleteFutureType")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // AccountsUpdateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
 type AccountsUpdateFutureType struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountsUpdateFutureType) Result(client AccountsClient) (dlsa DataLakeStoreAccount, err error) {
+func (future *AccountsUpdateFutureType) Result(client AccountsClient) (dlsa DataLakeStoreAccount, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -340,34 +293,15 @@ func (future AccountsUpdateFutureType) Result(client AccountsClient) (dlsa DataL
 		return
 	}
 	if !done {
-		return dlsa, azure.NewAsyncOpIncompleteError("account.AccountsUpdateFutureType")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		dlsa, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("account.AccountsUpdateFutureType")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if dlsa.Response.Response, err = future.GetResult(sender); err == nil && dlsa.Response.Response.StatusCode != http.StatusNoContent {
+		dlsa, err = client.UpdateResponder(dlsa.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", dlsa.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", resp, "Failure sending request")
-		return
-	}
-	dlsa, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -486,6 +420,8 @@ type CreateDataLakeStoreAccountProperties struct {
 	EncryptionState EncryptionState `json:"encryptionState,omitempty"`
 	// FirewallRules - The list of firewall rules associated with this Data Lake Store account.
 	FirewallRules *[]CreateFirewallRuleWithAccountParameters `json:"firewallRules,omitempty"`
+	// VirtualNetworkRules - The list of virtual network rules associated with this Data Lake Store account.
+	VirtualNetworkRules *[]CreateVirtualNetworkRuleWithAccountParameters `json:"virtualNetworkRules,omitempty"`
 	// FirewallState - The current state of the IP address firewall for this Data Lake Store account. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
 	FirewallState FirewallState `json:"firewallState,omitempty"`
 	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'FirewallAllowAzureIpsStateEnabled', 'FirewallAllowAzureIpsStateDisabled'
@@ -645,6 +581,52 @@ type CreateOrUpdateTrustedIDProviderProperties struct {
 	IDProvider *string `json:"idProvider,omitempty"`
 }
 
+// CreateOrUpdateVirtualNetworkRuleParameters the parameters used to create a new virtual network rule.
+type CreateOrUpdateVirtualNetworkRuleParameters struct {
+	// CreateOrUpdateVirtualNetworkRuleProperties - The virtual network rule properties to use when creating a new virtual network rule.
+	*CreateOrUpdateVirtualNetworkRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateOrUpdateVirtualNetworkRuleParameters.
+func (couvnrp CreateOrUpdateVirtualNetworkRuleParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if couvnrp.CreateOrUpdateVirtualNetworkRuleProperties != nil {
+		objectMap["properties"] = couvnrp.CreateOrUpdateVirtualNetworkRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for CreateOrUpdateVirtualNetworkRuleParameters struct.
+func (couvnrp *CreateOrUpdateVirtualNetworkRuleParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var createOrUpdateVirtualNetworkRuleProperties CreateOrUpdateVirtualNetworkRuleProperties
+				err = json.Unmarshal(*v, &createOrUpdateVirtualNetworkRuleProperties)
+				if err != nil {
+					return err
+				}
+				couvnrp.CreateOrUpdateVirtualNetworkRuleProperties = &createOrUpdateVirtualNetworkRuleProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// CreateOrUpdateVirtualNetworkRuleProperties the virtual network rule properties to use when creating a new
+// virtual network rule.
+type CreateOrUpdateVirtualNetworkRuleProperties struct {
+	// SubnetID - The resource identifier for the subnet.
+	SubnetID *string `json:"subnetId,omitempty"`
+}
+
 // CreateTrustedIDProviderWithAccountParameters the parameters used to create a new trusted identity provider while
 // creating a new Data Lake Store account.
 type CreateTrustedIDProviderWithAccountParameters struct {
@@ -692,6 +674,60 @@ func (ctipwap *CreateTrustedIDProviderWithAccountParameters) UnmarshalJSON(body 
 					return err
 				}
 				ctipwap.CreateOrUpdateTrustedIDProviderProperties = &createOrUpdateTrustedIDProviderProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// CreateVirtualNetworkRuleWithAccountParameters the parameters used to create a new virtual network rule while
+// creating a new Data Lake Store account.
+type CreateVirtualNetworkRuleWithAccountParameters struct {
+	// Name - The unique name of the virtual network rule to create.
+	Name *string `json:"name,omitempty"`
+	// CreateOrUpdateVirtualNetworkRuleProperties - The virtual network rule properties to use when creating a new virtual network rule.
+	*CreateOrUpdateVirtualNetworkRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateVirtualNetworkRuleWithAccountParameters.
+func (cvnrwap CreateVirtualNetworkRuleWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cvnrwap.Name != nil {
+		objectMap["name"] = cvnrwap.Name
+	}
+	if cvnrwap.CreateOrUpdateVirtualNetworkRuleProperties != nil {
+		objectMap["properties"] = cvnrwap.CreateOrUpdateVirtualNetworkRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for CreateVirtualNetworkRuleWithAccountParameters struct.
+func (cvnrwap *CreateVirtualNetworkRuleWithAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cvnrwap.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var createOrUpdateVirtualNetworkRuleProperties CreateOrUpdateVirtualNetworkRuleProperties
+				err = json.Unmarshal(*v, &createOrUpdateVirtualNetworkRuleProperties)
+				if err != nil {
+					return err
+				}
+				cvnrwap.CreateOrUpdateVirtualNetworkRuleProperties = &createOrUpdateVirtualNetworkRuleProperties
 			}
 		}
 	}
@@ -1047,6 +1083,8 @@ type DataLakeStoreAccountProperties struct {
 	EncryptionProvisioningState EncryptionProvisioningState `json:"encryptionProvisioningState,omitempty"`
 	// FirewallRules - The list of firewall rules associated with this Data Lake Store account.
 	FirewallRules *[]FirewallRule `json:"firewallRules,omitempty"`
+	// VirtualNetworkRules - The list of virtual network rules associated with this Data Lake Store account.
+	VirtualNetworkRules *[]VirtualNetworkRule `json:"virtualNetworkRules,omitempty"`
 	// FirewallState - The current state of the IP address firewall for this Data Lake Store account. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
 	FirewallState FirewallState `json:"firewallState,omitempty"`
 	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'FirewallAllowAzureIpsStateEnabled', 'FirewallAllowAzureIpsStateDisabled'
@@ -1648,6 +1686,8 @@ type UpdateDataLakeStoreAccountProperties struct {
 	EncryptionConfig *UpdateEncryptionConfig `json:"encryptionConfig,omitempty"`
 	// FirewallRules - The list of firewall rules associated with this Data Lake Store account.
 	FirewallRules *[]UpdateFirewallRuleWithAccountParameters `json:"firewallRules,omitempty"`
+	// VirtualNetworkRules - The list of virtual network rules associated with this Data Lake Store account.
+	VirtualNetworkRules *[]UpdateVirtualNetworkRuleWithAccountParameters `json:"virtualNetworkRules,omitempty"`
 	// FirewallState - The current state of the IP address firewall for this Data Lake Store account. Disabling the firewall does not remove existing rules, they will just be ignored until the firewall is re-enabled. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
 	FirewallState FirewallState `json:"firewallState,omitempty"`
 	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'FirewallAllowAzureIpsStateEnabled', 'FirewallAllowAzureIpsStateDisabled'
@@ -1871,4 +1911,294 @@ func (utipwap *UpdateTrustedIDProviderWithAccountParameters) UnmarshalJSON(body 
 	}
 
 	return nil
+}
+
+// UpdateVirtualNetworkRuleParameters the parameters used to update a virtual network rule.
+type UpdateVirtualNetworkRuleParameters struct {
+	// UpdateVirtualNetworkRuleProperties - The virtual network rule properties to use when updating a virtual network rule.
+	*UpdateVirtualNetworkRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateVirtualNetworkRuleParameters.
+func (uvnrp UpdateVirtualNetworkRuleParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if uvnrp.UpdateVirtualNetworkRuleProperties != nil {
+		objectMap["properties"] = uvnrp.UpdateVirtualNetworkRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for UpdateVirtualNetworkRuleParameters struct.
+func (uvnrp *UpdateVirtualNetworkRuleParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var updateVirtualNetworkRuleProperties UpdateVirtualNetworkRuleProperties
+				err = json.Unmarshal(*v, &updateVirtualNetworkRuleProperties)
+				if err != nil {
+					return err
+				}
+				uvnrp.UpdateVirtualNetworkRuleProperties = &updateVirtualNetworkRuleProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// UpdateVirtualNetworkRuleProperties the virtual network rule properties to use when updating a virtual network
+// rule.
+type UpdateVirtualNetworkRuleProperties struct {
+	// SubnetID - The resource identifier for the subnet.
+	SubnetID *string `json:"subnetId,omitempty"`
+}
+
+// UpdateVirtualNetworkRuleWithAccountParameters the parameters used to update a virtual network rule while
+// updating a Data Lake Store account.
+type UpdateVirtualNetworkRuleWithAccountParameters struct {
+	// Name - The unique name of the virtual network rule to update.
+	Name *string `json:"name,omitempty"`
+	// UpdateVirtualNetworkRuleProperties - The virtual network rule properties to use when updating a virtual network rule.
+	*UpdateVirtualNetworkRuleProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateVirtualNetworkRuleWithAccountParameters.
+func (uvnrwap UpdateVirtualNetworkRuleWithAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if uvnrwap.Name != nil {
+		objectMap["name"] = uvnrwap.Name
+	}
+	if uvnrwap.UpdateVirtualNetworkRuleProperties != nil {
+		objectMap["properties"] = uvnrwap.UpdateVirtualNetworkRuleProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for UpdateVirtualNetworkRuleWithAccountParameters struct.
+func (uvnrwap *UpdateVirtualNetworkRuleWithAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				uvnrwap.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var updateVirtualNetworkRuleProperties UpdateVirtualNetworkRuleProperties
+				err = json.Unmarshal(*v, &updateVirtualNetworkRuleProperties)
+				if err != nil {
+					return err
+				}
+				uvnrwap.UpdateVirtualNetworkRuleProperties = &updateVirtualNetworkRuleProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// VirtualNetworkRule data Lake Store virtual network rule information.
+type VirtualNetworkRule struct {
+	autorest.Response `json:"-"`
+	// VirtualNetworkRuleProperties - The virtual network rule properties.
+	*VirtualNetworkRuleProperties `json:"properties,omitempty"`
+	// ID - The resource identifier.
+	ID *string `json:"id,omitempty"`
+	// Name - The resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - The resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for VirtualNetworkRule.
+func (vnr VirtualNetworkRule) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if vnr.VirtualNetworkRuleProperties != nil {
+		objectMap["properties"] = vnr.VirtualNetworkRuleProperties
+	}
+	if vnr.ID != nil {
+		objectMap["id"] = vnr.ID
+	}
+	if vnr.Name != nil {
+		objectMap["name"] = vnr.Name
+	}
+	if vnr.Type != nil {
+		objectMap["type"] = vnr.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for VirtualNetworkRule struct.
+func (vnr *VirtualNetworkRule) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var virtualNetworkRuleProperties VirtualNetworkRuleProperties
+				err = json.Unmarshal(*v, &virtualNetworkRuleProperties)
+				if err != nil {
+					return err
+				}
+				vnr.VirtualNetworkRuleProperties = &virtualNetworkRuleProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				vnr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				vnr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				vnr.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// VirtualNetworkRuleListResult data Lake Store virtual network rule list information.
+type VirtualNetworkRuleListResult struct {
+	autorest.Response `json:"-"`
+	// Value - The results of the list operation.
+	Value *[]VirtualNetworkRule `json:"value,omitempty"`
+	// NextLink - The link (url) to the next page of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// VirtualNetworkRuleListResultIterator provides access to a complete listing of VirtualNetworkRule values.
+type VirtualNetworkRuleListResultIterator struct {
+	i    int
+	page VirtualNetworkRuleListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *VirtualNetworkRuleListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter VirtualNetworkRuleListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter VirtualNetworkRuleListResultIterator) Response() VirtualNetworkRuleListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter VirtualNetworkRuleListResultIterator) Value() VirtualNetworkRule {
+	if !iter.page.NotDone() {
+		return VirtualNetworkRule{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (vnrlr VirtualNetworkRuleListResult) IsEmpty() bool {
+	return vnrlr.Value == nil || len(*vnrlr.Value) == 0
+}
+
+// virtualNetworkRuleListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (vnrlr VirtualNetworkRuleListResult) virtualNetworkRuleListResultPreparer() (*http.Request, error) {
+	if vnrlr.NextLink == nil || len(to.String(vnrlr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(vnrlr.NextLink)))
+}
+
+// VirtualNetworkRuleListResultPage contains a page of VirtualNetworkRule values.
+type VirtualNetworkRuleListResultPage struct {
+	fn    func(VirtualNetworkRuleListResult) (VirtualNetworkRuleListResult, error)
+	vnrlr VirtualNetworkRuleListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *VirtualNetworkRuleListResultPage) Next() error {
+	next, err := page.fn(page.vnrlr)
+	if err != nil {
+		return err
+	}
+	page.vnrlr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page VirtualNetworkRuleListResultPage) NotDone() bool {
+	return !page.vnrlr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page VirtualNetworkRuleListResultPage) Response() VirtualNetworkRuleListResult {
+	return page.vnrlr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page VirtualNetworkRuleListResultPage) Values() []VirtualNetworkRule {
+	if page.vnrlr.IsEmpty() {
+		return nil
+	}
+	return *page.vnrlr.Value
+}
+
+// VirtualNetworkRuleProperties the virtual network rule properties.
+type VirtualNetworkRuleProperties struct {
+	// SubnetID - The resource identifier for the subnet.
+	SubnetID *string `json:"subnetId,omitempty"`
 }

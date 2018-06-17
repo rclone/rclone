@@ -525,6 +525,33 @@ func (s *subscription) stop() {
 	close(s.done)
 }
 
+func (s *gServer) Acknowledge(_ context.Context, req *pb.AcknowledgeRequest) (*emptypb.Empty, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if req.Subscription == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "missing subscription")
+	}
+	sub := s.subs[req.Subscription]
+	for _, id := range req.AckIds {
+		sub.ack(id)
+	}
+	return &emptypb.Empty{}, nil
+}
+
+func (s *gServer) ModifyAckDeadline(_ context.Context, req *pb.ModifyAckDeadlineRequest) (*emptypb.Empty, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if req.Subscription == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "missing subscription")
+	}
+	sub := s.subs[req.Subscription]
+	dur := secsToDur(req.AckDeadlineSeconds)
+	for _, id := range req.AckIds {
+		sub.modifyAckDeadline(id, dur)
+	}
+	return &emptypb.Empty{}, nil
+}
+
 func (s *gServer) StreamingPull(sps pb.Subscriber_StreamingPullServer) error {
 	// Receive initial message configuring the pull.
 	req, err := sps.Recv()

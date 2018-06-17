@@ -19,6 +19,9 @@
         },
         "https://www.googleapis.com/auth/analytics.readonly": {
           "description": "View your Google Analytics data"
+        },
+        "https://www.googleapis.com/auth/analytics.user.deletion": {
+          "description": "Manage Google Analytics user deletion requests"
         }
       }
     }
@@ -29,7 +32,7 @@
   "description": "Views and manages your Google Analytics data.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/analytics/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/6p-mtXtqM7RLWG_i-dRwl-jH568\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/AHLSBPz3If26VBakaAZdjeRmPvY\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/analytics-16.png",
     "x32": "https://www.google.com/images/icons/product/analytics-32.png"
@@ -3757,9 +3760,32 @@
           ]
         }
       }
+    },
+    "userDeletion": {
+      "resources": {
+        "userDeletionRequest": {
+          "methods": {
+            "upsert": {
+              "description": "Insert or update a user deletion requests.",
+              "httpMethod": "POST",
+              "id": "analytics.userDeletion.userDeletionRequest.upsert",
+              "path": "userDeletion/userDeletionRequests:upsert",
+              "request": {
+                "$ref": "UserDeletionRequest"
+              },
+              "response": {
+                "$ref": "UserDeletionRequest"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/analytics.user.deletion"
+              ]
+            }
+          }
+        }
+      }
     }
   },
-  "revision": "20180417",
+  "revision": "20180514",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Account": {
@@ -7092,6 +7118,45 @@
       },
       "type": "object"
     },
+    "UserDeletionRequest": {
+      "description": "JSON template for a user deletion request resource.",
+      "id": "UserDeletionRequest",
+      "properties": {
+        "deletionRequestTime": {
+          "description": "This marks the point in time for which all user data before should be deleted",
+          "format": "date-time",
+          "type": "string"
+        },
+        "firebaseProjectId": {
+          "description": "Firebase Project Id",
+          "type": "string"
+        },
+        "id": {
+          "description": "User ID.",
+          "properties": {
+            "type": {
+              "description": "Type of user",
+              "type": "string"
+            },
+            "userId": {
+              "description": "The User's id",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "kind": {
+          "default": "analytics#userDeletionRequest",
+          "description": "Value is \"analytics#userDeletionRequest\".",
+          "type": "string"
+        },
+        "webPropertyId": {
+          "description": "Web property ID of the form UA-XXXXX-YY.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "UserRef": {
       "description": "JSON template for a user reference.",
       "id": "UserRef",
@@ -7259,6 +7324,14 @@
           "description": "Time this web property was created.",
           "format": "date-time",
           "readOnly": true,
+          "type": "string"
+        },
+        "dataRetentionResetOnNewActivity": {
+          "description": "Set to true to reset the retention period of the user identifier with each new event from that user (thus setting the expiration date to current time plus retention period).\nSet to false to delete data associated with the user identifer automatically after the rentention period.\nThis property cannot be set on insert.",
+          "type": "boolean"
+        },
+        "dataRetentionTtl": {
+          "description": "The length of time for which user and event data is retained.\nThis property cannot be set on insert.",
           "type": "string"
         },
         "defaultProfileId": {

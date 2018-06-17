@@ -36,6 +36,7 @@
     "RegisterEventTopic": "<p>Associates a directory with an SNS topic. This establishes the directory as a publisher to the specified SNS topic. You can then receive email or text (SMS) messages when the status of your directory changes. You get notified if your directory goes from an Active status to an Impaired or Inoperable status. You also receive a notification when the directory returns to an Active status.</p>",
     "RemoveIpRoutes": "<p>Removes IP address blocks from a directory.</p>",
     "RemoveTagsFromResource": "<p>Removes tags from a directory.</p>",
+    "ResetUserPassword": "<p>Resets the password for any user in your AWS Managed Microsoft AD or Simple AD directory.</p>",
     "RestoreFromSnapshot": "<p>Restores a directory using an existing directory snapshot.</p> <p>When you restore a directory from a snapshot, any changes made to the directory after the snapshot date are overwritten.</p> <p>This action returns as soon as the restore operation is initiated. You can monitor the progress of the restore operation by calling the <a>DescribeDirectories</a> operation with the directory identifier. When the <b>DirectoryDescription.Stage</b> value changes to <code>Active</code>, the restore operation is complete.</p>",
     "StartSchemaExtension": "<p>Applies a schema extension to a Microsoft AD directory.</p>",
     "UpdateConditionalForwarder": "<p>Updates a conditional forwarder that has been set up for your AWS directory.</p>",
@@ -302,6 +303,12 @@
         "Trust$CreatedDateTime": "<p>The date and time that the trust relationship was created.</p>"
       }
     },
+    "CustomerUserName": {
+      "base": null,
+      "refs": {
+        "ResetUserPasswordRequest$UserName": "<p>The username of the user whose password will be reset.</p>"
+      }
+    },
     "DeleteAssociatedConditionalForwarder": {
       "base": null,
       "refs": {
@@ -506,6 +513,7 @@
         "ListSchemaExtensionsRequest$DirectoryId": "<p>The identifier of the directory from which to retrieve the schema extension information.</p>",
         "RegisterEventTopicRequest$DirectoryId": "<p>The Directory ID that will publish status messages to the SNS topic.</p>",
         "RemoveIpRoutesRequest$DirectoryId": "<p>Identifier (ID) of the directory from which you want to remove the IP addresses.</p>",
+        "ResetUserPasswordRequest$DirectoryId": "<p>Identifier of the AWS Managed Microsoft AD or Simple AD directory in which the user resides.</p>",
         "SchemaExtensionInfo$DirectoryId": "<p>The identifier of the directory to which the schema extension is applied.</p>",
         "Snapshot$DirectoryId": "<p>The directory identifier.</p>",
         "StartSchemaExtensionRequest$DirectoryId": "<p>The identifier of the directory for which the schema extension will be applied to.</p>",
@@ -722,11 +730,13 @@
         "InsufficientPermissionsException$Message": null,
         "InvalidNextTokenException$Message": null,
         "InvalidParameterException$Message": null,
+        "InvalidPasswordException$Message": null,
         "IpRouteLimitExceededException$Message": null,
         "ServiceException$Message": null,
         "SnapshotLimitExceededException$Message": null,
         "TagLimitExceededException$Message": null,
-        "UnsupportedOperationException$Message": null
+        "UnsupportedOperationException$Message": null,
+        "UserDoesNotExistException$Message": null
       }
     },
     "GetDirectoryLimitsRequest": {
@@ -761,6 +771,11 @@
     },
     "InvalidParameterException": {
       "base": "<p>One or more parameters are not valid.</p>",
+      "refs": {
+      }
+    },
+    "InvalidPasswordException": {
+      "base": "<p>The new password provided by the user does not meet the password complexity requirements defined in your directory.</p>",
       "refs": {
       }
     },
@@ -1045,11 +1060,23 @@
         "InsufficientPermissionsException$RequestId": null,
         "InvalidNextTokenException$RequestId": null,
         "InvalidParameterException$RequestId": null,
+        "InvalidPasswordException$RequestId": null,
         "IpRouteLimitExceededException$RequestId": null,
         "ServiceException$RequestId": null,
         "SnapshotLimitExceededException$RequestId": null,
         "TagLimitExceededException$RequestId": null,
-        "UnsupportedOperationException$RequestId": null
+        "UnsupportedOperationException$RequestId": null,
+        "UserDoesNotExistException$RequestId": null
+      }
+    },
+    "ResetUserPasswordRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ResetUserPasswordResult": {
+      "base": null,
+      "refs": {
       }
     },
     "ResourceId": {
@@ -1420,6 +1447,11 @@
         "RadiusSettings$UseSameUsername": "<p>Not currently used.</p>"
       }
     },
+    "UserDoesNotExistException": {
+      "base": "<p>The user provided a username that does not exist in your directory.</p>",
+      "refs": {
+      }
+    },
     "UserName": {
       "base": null,
       "refs": {
@@ -1427,6 +1459,12 @@
         "DirectoryConnectSettingsDescription$CustomerUserName": "<p>The username of the service account in the on-premises directory.</p>",
         "DisableSsoRequest$UserName": "<p>The username of an alternate account to use to disable single-sign on. This is only used for AD Connector directories. This account must have privileges to remove a service principal name.</p> <p>If the AD Connector service account does not have privileges to remove a service principal name, you can specify an alternate account with the <i>UserName</i> and <i>Password</i> parameters. These credentials are only used to disable single sign-on and are not stored by the service. The AD Connector service account is not changed.</p>",
         "EnableSsoRequest$UserName": "<p>The username of an alternate account to use to enable single-sign on. This is only used for AD Connector directories. This account must have privileges to add a service principal name.</p> <p>If the AD Connector service account does not have privileges to add a service principal name, you can specify an alternate account with the <i>UserName</i> and <i>Password</i> parameters. These credentials are only used to enable single sign-on and are not stored by the service. The AD Connector service account is not changed.</p>"
+      }
+    },
+    "UserPassword": {
+      "base": null,
+      "refs": {
+        "ResetUserPasswordRequest$NewPassword": "<p>The new password that will be reset.</p>"
       }
     },
     "VerifyTrustRequest": {

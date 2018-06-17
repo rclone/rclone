@@ -58,12 +58,18 @@ func RunInTransaction(c context.Context, f func(tc context.Context) error, opts 
 	if opts != nil {
 		xg = opts.XG
 	}
+	readOnly := false
+	if opts != nil {
+		readOnly = opts.ReadOnly
+	}
 	attempts := 3
 	if opts != nil && opts.Attempts > 0 {
 		attempts = opts.Attempts
 	}
+	var t *pb.Transaction
+	var err error
 	for i := 0; i < attempts; i++ {
-		if err := internal.RunTransactionOnce(c, f, xg); err != internal.ErrConcurrentTransaction {
+		if t, err = internal.RunTransactionOnce(c, f, xg, readOnly, t); err != internal.ErrConcurrentTransaction {
 			return err
 		}
 	}
@@ -84,4 +90,7 @@ type TransactionOptions struct {
 	// Attempts controls the number of retries to perform when commits fail
 	// due to a conflicting transaction. If omitted, it defaults to 3.
 	Attempts int
+	// ReadOnly controls whether the transaction is a read only transaction.
+	// Read only transactions are potentially more efficient.
+	ReadOnly bool
 }

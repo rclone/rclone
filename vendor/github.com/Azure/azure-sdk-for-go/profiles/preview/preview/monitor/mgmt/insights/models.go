@@ -343,6 +343,7 @@ type ManagementEventAggregationCondition = original.ManagementEventAggregationCo
 type ManagementEventRuleCondition = original.ManagementEventRuleCondition
 type MetadataValue = original.MetadataValue
 type Metric = original.Metric
+type MetricAlertAction = original.MetricAlertAction
 type BasicMetricAlertCriteria = original.BasicMetricAlertCriteria
 type MetricAlertCriteria = original.MetricAlertCriteria
 type MetricAlertProperties = original.MetricAlertProperties

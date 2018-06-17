@@ -60,10 +60,10 @@ func TestSingleCell(t *testing.T) {
 func TestMultipleCells(t *testing.T) {
 	cr := newChunkReader()
 
-	cr.Process(cc("rs", "fm1", "col1", 0, "val1", 0, false))
-	cr.Process(cc("rs", "fm1", "col1", 1, "val2", 0, false))
-	cr.Process(cc("rs", "fm1", "col2", 0, "val3", 0, false))
-	cr.Process(cc("rs", "fm2", "col1", 0, "val4", 0, false))
+	mustProcess(t, cr, cc("rs", "fm1", "col1", 0, "val1", 0, false))
+	mustProcess(t, cr, cc("rs", "fm1", "col1", 1, "val2", 0, false))
+	mustProcess(t, cr, cc("rs", "fm1", "col2", 0, "val3", 0, false))
+	mustProcess(t, cr, cc("rs", "fm2", "col1", 0, "val4", 0, false))
 	row, err := cr.Process(cc("rs", "fm2", "col2", 1, "extralongval5", 0, true))
 	if err != nil {
 		t.Fatalf("Processing chunk: %v", err)
@@ -95,8 +95,8 @@ func TestMultipleCells(t *testing.T) {
 func TestSplitCells(t *testing.T) {
 	cr := newChunkReader()
 
-	cr.Process(cc("rs", "fm1", "col1", 0, "hello ", 11, false))
-	cr.Process(ccData("world", 0, false))
+	mustProcess(t, cr, cc("rs", "fm1", "col1", 0, "hello ", 11, false))
+	mustProcess(t, cr, ccData("world", 0, false))
 	row, err := cr.Process(cc("rs", "fm1", "col2", 0, "val2", 0, true))
 	if err != nil {
 		t.Fatalf("Processing chunk: %v", err)
@@ -171,12 +171,11 @@ func TestBlankQualifier(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	cr := newChunkReader()
-
-	cr.Process(cc("rs", "fm1", "col1", 0, "val1", 0, false))
-	cr.Process(cc("rs", "fm1", "col1", 1, "val2", 0, false))
-	cr.Process(cc("rs", "fm1", "col2", 0, "val3", 0, false))
-	cr.Process(ccReset())
-	row, _ := cr.Process(cc("rs1", "fm1", "col1", 1, "val1", 0, true))
+	mustProcess(t, cr, cc("rs", "fm1", "col1", 0, "val1", 0, false))
+	mustProcess(t, cr, cc("rs", "fm1", "col1", 1, "val2", 0, false))
+	mustProcess(t, cr, cc("rs", "fm1", "col2", 0, "val3", 0, false))
+	mustProcess(t, cr, ccReset())
+	row := mustProcess(t, cr, cc("rs1", "fm1", "col1", 1, "val1", 0, true))
 	want := []ReadItem{ri("rs1", "fm1", "col1", 1, "val1")}
 	if !testutil.Equal(row["fm1"], want) {
 		t.Fatalf("Reset: got: %v\nwant: %v\n", row["fm1"], want)
@@ -189,11 +188,19 @@ func TestReset(t *testing.T) {
 func TestNewFamEmptyQualifier(t *testing.T) {
 	cr := newChunkReader()
 
-	cr.Process(cc("rs", "fm1", "col1", 0, "val1", 0, false))
+	mustProcess(t, cr, cc("rs", "fm1", "col1", 0, "val1", 0, false))
 	_, err := cr.Process(cc(nilStr, "fm2", nilStr, 0, "val2", 0, true))
 	if err == nil {
 		t.Fatalf("Expected error on second chunk with no qualifier set")
 	}
+}
+
+func mustProcess(t *testing.T, cr *chunkReader, cc *btspb.ReadRowsResponse_CellChunk) Row {
+	row, err := cr.Process(cc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return row
 }
 
 // The read rows acceptance test reads a json file specifying a number of tests,

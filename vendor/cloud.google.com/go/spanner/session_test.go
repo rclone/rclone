@@ -54,6 +54,35 @@ func setup(t *testing.T, spc SessionPoolConfig) (sp *sessionPool, sc *testutil.M
 	return
 }
 
+// TestSessionPoolConfigValidation tests session pool config validation.
+func TestSessionPoolConfigValidation(t *testing.T) {
+	t.Parallel()
+	sc := testutil.NewMockCloudSpannerClient(t)
+	for _, test := range []struct {
+		spc SessionPoolConfig
+		err error
+	}{
+		{
+			SessionPoolConfig{},
+			errNoRPCGetter(),
+		},
+		{
+			SessionPoolConfig{
+				getRPCClient: func() (sppb.SpannerClient, error) {
+					return sc, nil
+				},
+				MinOpened: 10,
+				MaxOpened: 5,
+			},
+			errMinOpenedGTMaxOpened(5, 10),
+		},
+	} {
+		if _, err := newSessionPool("mockdb", test.spc, nil); !testEqual(err, test.err) {
+			t.Errorf("want %v, got %v", test.err, err)
+		}
+	}
+}
+
 // TestSessionCreation tests session creation during sessionPool.Take().
 func TestSessionCreation(t *testing.T) {
 	t.Parallel()

@@ -26,32 +26,32 @@ import (
 	"net/http"
 )
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ActivityRunsClient is the the Azure Data Factory V2 management API provides a RESTful set of web services that
 // interact with Azure Data Factory V2 services.
 type ActivityRunsClient struct {
 	BaseClient
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewActivityRunsClient creates an instance of the ActivityRunsClient client.
 func NewActivityRunsClient(subscriptionID string) ActivityRunsClient {
 	return NewActivityRunsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // NewActivityRunsClientWithBaseURI creates an instance of the ActivityRunsClient client.
 func NewActivityRunsClientWithBaseURI(baseURI string, subscriptionID string) ActivityRunsClient {
 	return ActivityRunsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByPipelineRun list activity runs based on input filter conditions.
-//
-// resourceGroupName is the resource group name. factoryName is the factory name. runID is the pipeline run
-// identifier. startTime is the start time of activity runs in ISO8601 format. endTime is the end time of activity
-// runs in ISO8601 format. status is the status of the pipeline run. activityName is the name of the activity.
-// linkedServiceName is the linked service name.
+// Parameters:
+// resourceGroupName - the resource group name.
+// factoryName - the factory name.
+// runID - the pipeline run identifier.
+// startTime - the start time of activity runs in ISO8601 format.
+// endTime - the end time of activity runs in ISO8601 format.
+// status - the status of the pipeline run.
+// activityName - the name of the activity.
+// linkedServiceName - the linked service name.
 func (client ActivityRunsClient) ListByPipelineRun(ctx context.Context, resourceGroupName string, factoryName string, runID string, startTime date.Time, endTime date.Time, status string, activityName string, linkedServiceName string) (result ActivityRunsListResponsePage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -91,7 +91,6 @@ func (client ActivityRunsClient) ListByPipelineRun(ctx context.Context, resource
 	return
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByPipelineRunPreparer prepares the ListByPipelineRun request.
 func (client ActivityRunsClient) ListByPipelineRunPreparer(ctx context.Context, resourceGroupName string, factoryName string, runID string, startTime date.Time, endTime date.Time, status string, activityName string, linkedServiceName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
@@ -125,7 +124,6 @@ func (client ActivityRunsClient) ListByPipelineRunPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByPipelineRunSender sends the ListByPipelineRun request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActivityRunsClient) ListByPipelineRunSender(req *http.Request) (*http.Response, error) {
@@ -133,7 +131,6 @@ func (client ActivityRunsClient) ListByPipelineRunSender(req *http.Request) (*ht
 		azure.DoRetryWithRegistration(client.Client))
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByPipelineRunResponder handles the response to the ListByPipelineRun request. The method always
 // closes the http.Response Body.
 func (client ActivityRunsClient) ListByPipelineRunResponder(resp *http.Response) (result ActivityRunsListResponse, err error) {
@@ -168,7 +165,6 @@ func (client ActivityRunsClient) listByPipelineRunNextResults(lastResults Activi
 	return
 }
 
-// Deprecated: Please use package github.com/Azure/azure-sdk-for-go/services/preview/datafactory/mgmt/2017-09-01-preview/datafactory instead.
 // ListByPipelineRunComplete enumerates all values, automatically crossing page boundaries as required.
 func (client ActivityRunsClient) ListByPipelineRunComplete(ctx context.Context, resourceGroupName string, factoryName string, runID string, startTime date.Time, endTime date.Time, status string, activityName string, linkedServiceName string) (result ActivityRunsListResponseIterator, err error) {
 	result.page, err = client.ListByPipelineRun(ctx, resourceGroupName, factoryName, runID, startTime, endTime, status, activityName, linkedServiceName)

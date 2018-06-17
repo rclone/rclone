@@ -69,10 +69,10 @@ func NewWithoutDefaults(azureRegion AzureRegions) BaseClient {
 // details - a string indicating which domain-specific details to return. Multiple values should be
 // comma-separated. Valid visual feature types include:Celebrities - identifies celebrities if detected in the
 // image.
-// language - a string indicating which language to return. The service will return recognition results in
-// specified language. If this parameter is not specified, the default value is &quot;en&quot;.Supported
-// languages:en - English, Default.zh - Simplified Chinese.
-func (client BaseClient) AnalyzeImage(ctx context.Context, imageURL ImageURL, visualFeatures []VisualFeatureTypes, details []Details, language Language1) (result ImageAnalysis, err error) {
+// language - the desired language for output generation. If this parameter is not specified, the default value
+// is &quot;en&quot;.Supported languages:en - English, Default.ja - Japanese pt - Portuguese zh - Simplified
+// Chinese.
+func (client BaseClient) AnalyzeImage(ctx context.Context, imageURL ImageURL, visualFeatures []VisualFeatureTypes, details []Details, language string) (result ImageAnalysis, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: imageURL,
 			Constraints: []validation.Constraint{{Target: "imageURL.URL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
@@ -101,7 +101,7 @@ func (client BaseClient) AnalyzeImage(ctx context.Context, imageURL ImageURL, vi
 }
 
 // AnalyzeImagePreparer prepares the AnalyzeImage request.
-func (client BaseClient) AnalyzeImagePreparer(ctx context.Context, imageURL ImageURL, visualFeatures []VisualFeatureTypes, details []Details, language Language1) (*http.Request, error) {
+func (client BaseClient) AnalyzeImagePreparer(ctx context.Context, imageURL ImageURL, visualFeatures []VisualFeatureTypes, details []Details, language string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}
@@ -307,9 +307,9 @@ func (client BaseClient) AnalyzeImageByDomainInStreamResponder(resp *http.Respon
 // details - a string indicating which domain-specific details to return. Multiple values should be
 // comma-separated. Valid visual feature types include:Celebrities - identifies celebrities if detected in the
 // image.
-// language - a string indicating which language to return. The service will return recognition results in
-// specified language. If this parameter is not specified, the default value is &quot;en&quot;.Supported
-// languages:en - English, Default.zh - Simplified Chinese.
+// language - the desired language for output generation. If this parameter is not specified, the default value
+// is &quot;en&quot;.Supported languages:en - English, Default.ja - Japanese pt - Portuguese zh - Simplified
+// Chinese.
 func (client BaseClient) AnalyzeImageInStream(ctx context.Context, imageParameter io.ReadCloser, visualFeatures []VisualFeatureTypes, details string, language string) (result ImageAnalysis, err error) {
 	req, err := client.AnalyzeImageInStreamPreparer(ctx, imageParameter, visualFeatures, details, language)
 	if err != nil {
@@ -390,14 +390,17 @@ func (client BaseClient) AnalyzeImageInStreamResponder(resp *http.Response) (res
 // Parameters:
 // imageURL - a JSON document with a URL pointing to the image that is to be analyzed.
 // maxCandidates - maximum number of candidate descriptions to be returned.  The default is 1.
-func (client BaseClient) DescribeImage(ctx context.Context, imageURL ImageURL, maxCandidates string) (result ImageDescription, err error) {
+// language - the desired language for output generation. If this parameter is not specified, the default value
+// is &quot;en&quot;.Supported languages:en - English, Default.ja - Japanese pt - Portuguese zh - Simplified
+// Chinese.
+func (client BaseClient) DescribeImage(ctx context.Context, imageURL ImageURL, maxCandidates string, language string) (result ImageDescription, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: imageURL,
 			Constraints: []validation.Constraint{{Target: "imageURL.URL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("computervision.BaseClient", "DescribeImage", err.Error())
 	}
 
-	req, err := client.DescribeImagePreparer(ctx, imageURL, maxCandidates)
+	req, err := client.DescribeImagePreparer(ctx, imageURL, maxCandidates, language)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "computervision.BaseClient", "DescribeImage", nil, "Failure preparing request")
 		return
@@ -419,7 +422,7 @@ func (client BaseClient) DescribeImage(ctx context.Context, imageURL ImageURL, m
 }
 
 // DescribeImagePreparer prepares the DescribeImage request.
-func (client BaseClient) DescribeImagePreparer(ctx context.Context, imageURL ImageURL, maxCandidates string) (*http.Request, error) {
+func (client BaseClient) DescribeImagePreparer(ctx context.Context, imageURL ImageURL, maxCandidates string, language string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}
@@ -429,6 +432,11 @@ func (client BaseClient) DescribeImagePreparer(ctx context.Context, imageURL Ima
 		queryParameters["maxCandidates"] = autorest.Encode("query", maxCandidates)
 	} else {
 		queryParameters["maxCandidates"] = autorest.Encode("query", "1")
+	}
+	if len(string(language)) > 0 {
+		queryParameters["language"] = autorest.Encode("query", language)
+	} else {
+		queryParameters["language"] = autorest.Encode("query", "en")
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -470,8 +478,11 @@ func (client BaseClient) DescribeImageResponder(resp *http.Response) (result Ima
 // Parameters:
 // imageParameter - an image stream.
 // maxCandidates - maximum number of candidate descriptions to be returned.  The default is 1.
-func (client BaseClient) DescribeImageInStream(ctx context.Context, imageParameter io.ReadCloser, maxCandidates string) (result ImageDescription, err error) {
-	req, err := client.DescribeImageInStreamPreparer(ctx, imageParameter, maxCandidates)
+// language - the desired language for output generation. If this parameter is not specified, the default value
+// is &quot;en&quot;.Supported languages:en - English, Default.ja - Japanese pt - Portuguese zh - Simplified
+// Chinese.
+func (client BaseClient) DescribeImageInStream(ctx context.Context, imageParameter io.ReadCloser, maxCandidates string, language string) (result ImageDescription, err error) {
+	req, err := client.DescribeImageInStreamPreparer(ctx, imageParameter, maxCandidates, language)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "computervision.BaseClient", "DescribeImageInStream", nil, "Failure preparing request")
 		return
@@ -493,7 +504,7 @@ func (client BaseClient) DescribeImageInStream(ctx context.Context, imageParamet
 }
 
 // DescribeImageInStreamPreparer prepares the DescribeImageInStream request.
-func (client BaseClient) DescribeImageInStreamPreparer(ctx context.Context, imageParameter io.ReadCloser, maxCandidates string) (*http.Request, error) {
+func (client BaseClient) DescribeImageInStreamPreparer(ctx context.Context, imageParameter io.ReadCloser, maxCandidates string, language string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}
@@ -503,6 +514,11 @@ func (client BaseClient) DescribeImageInStreamPreparer(ctx context.Context, imag
 		queryParameters["maxCandidates"] = autorest.Encode("query", maxCandidates)
 	} else {
 		queryParameters["maxCandidates"] = autorest.Encode("query", "1")
+	}
+	if len(string(language)) > 0 {
+		queryParameters["language"] = autorest.Encode("query", language)
+	} else {
+		queryParameters["language"] = autorest.Encode("query", "en")
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -996,12 +1012,12 @@ func (client BaseClient) RecognizePrintedTextInStreamResponder(resp *http.Respon
 }
 
 // RecognizeText recognize Text operation. When you use the Recognize Text interface, the response contains a field
-// called “Operation-Location”. The “Operation-Location” field contains the URL that you must use for your Get
+// called 'Operation-Location'. The 'Operation-Location' field contains the URL that you must use for your Get
 // Handwritten Text Operation Result operation.
 // Parameters:
 // imageURL - a JSON document with a URL pointing to the image that is to be analyzed.
-// detectHandwriting - if “true” is specified, handwriting recognition is performed. If this parameter is set
-// to “false” or is not specified, printed text recognition is performed.
+// detectHandwriting - if 'true' is specified, handwriting recognition is performed. If this parameter is set
+// to 'false' or is not specified, printed text recognition is performed.
 func (client BaseClient) RecognizeText(ctx context.Context, imageURL ImageURL, detectHandwriting *bool) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: imageURL,
@@ -1073,12 +1089,12 @@ func (client BaseClient) RecognizeTextResponder(resp *http.Response) (result aut
 }
 
 // RecognizeTextInStream recognize Text operation. When you use the Recognize Text interface, the response contains a
-// field called “Operation-Location”. The “Operation-Location” field contains the URL that you must use for your Get
+// field called 'Operation-Location'. The 'Operation-Location' field contains the URL that you must use for your Get
 // Handwritten Text Operation Result operation.
 // Parameters:
 // imageParameter - an image stream.
-// detectHandwriting - if “true” is specified, handwriting recognition is performed. If this parameter is set
-// to “false” or is not specified, printed text recognition is performed.
+// detectHandwriting - if 'true' is specified, handwriting recognition is performed. If this parameter is set
+// to 'false' or is not specified, printed text recognition is performed.
 func (client BaseClient) RecognizeTextInStream(ctx context.Context, imageParameter io.ReadCloser, detectHandwriting *bool) (result autorest.Response, err error) {
 	req, err := client.RecognizeTextInStreamPreparer(ctx, imageParameter, detectHandwriting)
 	if err != nil {
@@ -1146,18 +1162,21 @@ func (client BaseClient) RecognizeTextInStreamResponder(resp *http.Response) (re
 // TagImage this operation generates a list of words, or tags, that are relevant to the content of the supplied image.
 // The Computer Vision API can return tags based on objects, living beings, scenery or actions found in images. Unlike
 // categories, tags are not organized according to a hierarchical classification system, but correspond to image
-// content. Tags may contain hints to avoid ambiguity or provide context, for example the tag “cello” may be
-// accompanied by the hint “musical instrument”. All tags are in English.
+// content. Tags may contain hints to avoid ambiguity or provide context, for example the tag 'cello' may be
+// accompanied by the hint 'musical instrument'. All tags are in English.
 // Parameters:
 // imageURL - a JSON document with a URL pointing to the image that is to be analyzed.
-func (client BaseClient) TagImage(ctx context.Context, imageURL ImageURL) (result TagResult, err error) {
+// language - the desired language for output generation. If this parameter is not specified, the default value
+// is &quot;en&quot;.Supported languages:en - English, Default.ja - Japanese pt - Portuguese zh - Simplified
+// Chinese.
+func (client BaseClient) TagImage(ctx context.Context, imageURL ImageURL, language string) (result TagResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: imageURL,
 			Constraints: []validation.Constraint{{Target: "imageURL.URL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("computervision.BaseClient", "TagImage", err.Error())
 	}
 
-	req, err := client.TagImagePreparer(ctx, imageURL)
+	req, err := client.TagImagePreparer(ctx, imageURL, language)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "computervision.BaseClient", "TagImage", nil, "Failure preparing request")
 		return
@@ -1179,9 +1198,16 @@ func (client BaseClient) TagImage(ctx context.Context, imageURL ImageURL) (resul
 }
 
 // TagImagePreparer prepares the TagImage request.
-func (client BaseClient) TagImagePreparer(ctx context.Context, imageURL ImageURL) (*http.Request, error) {
+func (client BaseClient) TagImagePreparer(ctx context.Context, imageURL ImageURL, language string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
+	}
+
+	queryParameters := map[string]interface{}{}
+	if len(string(language)) > 0 {
+		queryParameters["language"] = autorest.Encode("query", language)
+	} else {
+		queryParameters["language"] = autorest.Encode("query", "en")
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1189,7 +1215,8 @@ func (client BaseClient) TagImagePreparer(ctx context.Context, imageURL ImageURL
 		autorest.AsPost(),
 		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/vision/v1.0", urlParameters),
 		autorest.WithPath("/tag"),
-		autorest.WithJSON(imageURL))
+		autorest.WithJSON(imageURL),
+		autorest.WithQueryParameters(queryParameters))
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
@@ -1216,8 +1243,8 @@ func (client BaseClient) TagImageResponder(resp *http.Response) (result TagResul
 // TagImageInStream this operation generates a list of words, or tags, that are relevant to the content of the supplied
 // image. The Computer Vision API can return tags based on objects, living beings, scenery or actions found in images.
 // Unlike categories, tags are not organized according to a hierarchical classification system, but correspond to image
-// content. Tags may contain hints to avoid ambiguity or provide context, for example the tag “cello” may be
-// accompanied by the hint “musical instrument”. All tags are in English.
+// content. Tags may contain hints to avoid ambiguity or provide context, for example the tag 'cello' may be
+// accompanied by the hint 'musical instrument'. All tags are in English.
 // Parameters:
 // imageParameter - an image stream.
 func (client BaseClient) TagImageInStream(ctx context.Context, imageParameter io.ReadCloser) (result TagResult, err error) {

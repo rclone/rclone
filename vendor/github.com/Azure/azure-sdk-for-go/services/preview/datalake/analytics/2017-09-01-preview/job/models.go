@@ -287,12 +287,11 @@ func (bjp *BuildJobParameters) UnmarshalJSON(body []byte) error {
 // CancelFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CancelFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CancelFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future *CancelFuture) Result(client Client) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -300,35 +299,10 @@ func (future CancelFuture) Result(client Client) (ar autorest.Response, err erro
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("job.CancelFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.CancelResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "job.CancelFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("job.CancelFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "job.CancelFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.CancelResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "job.CancelFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -2003,12 +1977,11 @@ type StatisticsVertexStage struct {
 // UpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type UpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future UpdateFuture) Result(client Client) (i Information, err error) {
+func (future *UpdateFuture) Result(client Client) (i Information, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2016,34 +1989,15 @@ func (future UpdateFuture) Result(client Client) (i Information, err error) {
 		return
 	}
 	if !done {
-		return i, azure.NewAsyncOpIncompleteError("job.UpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		i, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "job.UpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("job.UpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if i.Response.Response, err = future.GetResult(sender); err == nil && i.Response.Response.StatusCode != http.StatusNoContent {
+		i, err = client.UpdateResponder(i.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "job.UpdateFuture", "Result", i.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "job.UpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	i, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "job.UpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -2193,12 +2147,11 @@ func (usjp USQLJobProperties) AsBasicProperties() (BasicProperties, bool) {
 // YieldFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type YieldFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future YieldFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future *YieldFuture) Result(client Client) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -2206,34 +2159,9 @@ func (future YieldFuture) Result(client Client) (ar autorest.Response, err error
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("job.YieldFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.YieldResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "job.YieldFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("job.YieldFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "job.YieldFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.YieldResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "job.YieldFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }

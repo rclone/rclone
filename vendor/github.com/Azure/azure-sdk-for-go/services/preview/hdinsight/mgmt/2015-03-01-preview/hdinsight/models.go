@@ -341,12 +341,11 @@ func (page ApplicationListResultPage) Values() []Application {
 // ApplicationsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ApplicationsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ApplicationsDeleteFuture) Result(client ApplicationsClient) (ar autorest.Response, err error) {
+func (future *ApplicationsDeleteFuture) Result(client ApplicationsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -354,35 +353,10 @@ func (future ApplicationsDeleteFuture) Result(client ApplicationsClient) (ar aut
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("hdinsight.ApplicationsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ApplicationsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -731,12 +705,11 @@ type ClusterResizeParameters struct {
 // ClustersCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersCreateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err error) {
+func (future *ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -744,34 +717,15 @@ func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err
 		return
 	}
 	if !done {
-		return c, azure.NewAsyncOpIncompleteError("hdinsight.ClustersCreateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		c, err = client.CreateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ClustersCreateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ClustersCreateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if c.Response.Response, err = future.GetResult(sender); err == nil && c.Response.Response.StatusCode != http.StatusNoContent {
+		c, err = client.CreateResponder(c.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "hdinsight.ClustersCreateFuture", "Result", c.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersCreateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	c, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersCreateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -779,12 +733,11 @@ func (future ClustersCreateFuture) Result(client ClustersClient) (c Cluster, err
 // ClustersDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
+func (future *ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -792,35 +745,10 @@ func (future ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Re
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("hdinsight.ClustersDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ClustersDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ClustersDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -828,12 +756,11 @@ func (future ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.Re
 // operation.
 type ClustersExecuteScriptActionsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ClustersExecuteScriptActionsFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
+func (future *ClustersExecuteScriptActionsFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -841,47 +768,21 @@ func (future ClustersExecuteScriptActionsFuture) Result(client ClustersClient) (
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("hdinsight.ClustersExecuteScriptActionsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ExecuteScriptActionsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ClustersExecuteScriptActionsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ClustersExecuteScriptActionsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersExecuteScriptActionsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ExecuteScriptActionsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersExecuteScriptActionsFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // ClustersResizeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ClustersResizeFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ClustersResizeFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
+func (future *ClustersResizeFuture) Result(client ClustersClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -889,35 +790,10 @@ func (future ClustersResizeFuture) Result(client ClustersClient) (ar autorest.Re
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("hdinsight.ClustersResizeFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ResizeResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ClustersResizeFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ClustersResizeFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersResizeFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ResizeResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ClustersResizeFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -931,12 +807,11 @@ type ComputeProfile struct {
 // long-running operation.
 type ConfigurationsUpdateHTTPSettingsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ConfigurationsUpdateHTTPSettingsFuture) Result(client ConfigurationsClient) (ar autorest.Response, err error) {
+func (future *ConfigurationsUpdateHTTPSettingsFuture) Result(client ConfigurationsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -944,35 +819,10 @@ func (future ConfigurationsUpdateHTTPSettingsFuture) Result(client Configuration
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("hdinsight.ConfigurationsUpdateHTTPSettingsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.UpdateHTTPSettingsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ConfigurationsUpdateHTTPSettingsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ConfigurationsUpdateHTTPSettingsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ConfigurationsUpdateHTTPSettingsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.UpdateHTTPSettingsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ConfigurationsUpdateHTTPSettingsFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1027,12 +877,11 @@ type Extension struct {
 // operation.
 type ExtensionDisableMonitoringFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ExtensionDisableMonitoringFuture) Result(client ExtensionClient) (ar autorest.Response, err error) {
+func (future *ExtensionDisableMonitoringFuture) Result(client ExtensionClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1040,35 +889,10 @@ func (future ExtensionDisableMonitoringFuture) Result(client ExtensionClient) (a
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("hdinsight.ExtensionDisableMonitoringFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DisableMonitoringResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ExtensionDisableMonitoringFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ExtensionDisableMonitoringFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ExtensionDisableMonitoringFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DisableMonitoringResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ExtensionDisableMonitoringFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1076,12 +900,11 @@ func (future ExtensionDisableMonitoringFuture) Result(client ExtensionClient) (a
 // operation.
 type ExtensionEnableMonitoringFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ExtensionEnableMonitoringFuture) Result(client ExtensionClient) (ar autorest.Response, err error) {
+func (future *ExtensionEnableMonitoringFuture) Result(client ExtensionClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1089,35 +912,10 @@ func (future ExtensionEnableMonitoringFuture) Result(client ExtensionClient) (ar
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("hdinsight.ExtensionEnableMonitoringFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.EnableMonitoringResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "hdinsight.ExtensionEnableMonitoringFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ExtensionEnableMonitoringFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ExtensionEnableMonitoringFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.EnableMonitoringResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ExtensionEnableMonitoringFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

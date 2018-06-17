@@ -260,6 +260,27 @@ func TestClientMkdir(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+func TestClientMkdirAll(t *testing.T) {
+	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
+	defer cmd.Wait()
+	defer sftp.Close()
+
+	dir, err := ioutil.TempDir("", "sftptest")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sub := path.Join(dir, "mkdir1", "mkdir2", "mkdir3")
+	if err := sftp.MkdirAll(sub); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Lstat(sub)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.IsDir() {
+		t.Fatalf("Expected mkdirall to create dir at: %s", sub)
+	}
+}
 
 func TestClientOpen(t *testing.T) {
 	sftp, cmd := testClient(t, READONLY, NO_DELAY)

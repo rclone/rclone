@@ -31,6 +31,7 @@ var initRequest func(*request.Request)
 const (
 	ServiceName = "kinesis"   // Service endpoint prefix API calls made to.
 	EndpointsID = ServiceName // Service ID for Regions and Endpoints metadata.
+	ServiceID   = "Kinesis"   // ServiceID is a unique identifer of a specific service
 )
 
 // New creates a new instance of the Kinesis client with a session.
@@ -55,6 +56,7 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 			cfg,
 			metadata.ClientInfo{
 				ServiceName:   ServiceName,
+				ServiceID:     ServiceID,
 				SigningName:   signingName,
 				SigningRegion: signingRegion,
 				Endpoint:      endpoint,

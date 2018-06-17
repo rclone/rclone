@@ -49,12 +49,34 @@ func TimestampToTime(unix int64) time.Time {
 	return time.Unix(unix, 0).UTC()
 }
 
-// StringToUnixTimestamp transforms given string to unix time int64. It will
+// TimestampToTimePointer transforms given unix time int64 to time pointer in UTC.
+func TimestampToTimePointer(unix int64) *time.Time {
+	if unix == 0 {
+		return nil
+	}
+	t := time.Unix(unix, 0).UTC()
+	return &t
+}
+
+// TimePointerToTimestamp transforms given time pointer to unix time int64.
+func TimePointerToTimestamp(t *time.Time) int64 {
+	if t == nil {
+		return 0
+	}
+	return t.Unix()
+}
+
+// StringToTimestamp transforms given string to unix time int64. It will
 // return -1 when time string parse error.
-func StringToUnixTimestamp(timeString string, format string) int64 {
+func StringToTimestamp(timeString string, format string) int64 {
 	t, err := StringToTime(timeString, format)
 	if err != nil {
 		return -1
 	}
 	return t.Unix()
+}
+
+// TimestampToString converts unix timestamp to formatted string.
+func TimestampToString(unix int64, format string) string {
+	return TimeToString(time.Unix(unix, 0).UTC(), format)
 }

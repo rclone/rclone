@@ -26,9 +26,10 @@ const (
 )
 
 type BaseClient = original.BaseClient
-type ImagePredictionResultModel = original.ImagePredictionResultModel
-type ImageTagPredictionModel = original.ImageTagPredictionModel
+type BoundingBox = original.BoundingBox
+type ImagePrediction = original.ImagePrediction
 type ImageURL = original.ImageURL
+type Model = original.Model
 
 func New(aPIKey string) BaseClient {
 	return original.New(aPIKey)

@@ -81,6 +81,13 @@ const (
 	Weighted    TrafficRoutingMethod = original.Weighted
 )
 
+type TrafficViewEnrollmentStatus = original.TrafficViewEnrollmentStatus
+
+const (
+	TrafficViewEnrollmentStatusDisabled TrafficViewEnrollmentStatus = original.TrafficViewEnrollmentStatusDisabled
+	TrafficViewEnrollmentStatusEnabled  TrafficViewEnrollmentStatus = original.TrafficViewEnrollmentStatusEnabled
+)
+
 type CheckTrafficManagerRelativeDNSNameAvailabilityParameters = original.CheckTrafficManagerRelativeDNSNameAvailabilityParameters
 type CloudError = original.CloudError
 type CloudErrorBody = original.CloudErrorBody
@@ -150,6 +157,9 @@ func PossibleProfileStatusValues() []ProfileStatus {
 }
 func PossibleTrafficRoutingMethodValues() []TrafficRoutingMethod {
 	return original.PossibleTrafficRoutingMethodValues()
+}
+func PossibleTrafficViewEnrollmentStatusValues() []TrafficViewEnrollmentStatus {
+	return original.PossibleTrafficViewEnrollmentStatusValues()
 }
 func NewProfilesClient(subscriptionID string) ProfilesClient {
 	return original.NewProfilesClient(subscriptionID)

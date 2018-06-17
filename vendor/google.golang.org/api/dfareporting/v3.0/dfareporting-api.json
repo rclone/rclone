@@ -20,7 +20,7 @@
   "description": "Manages your DoubleClick Campaign Manager ad campaigns and reports.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/doubleclick-advertisers/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/T5ck1Y0rLQnWaaxq6rdZwGe6z4M\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/y77xRILjlSdl2_MjDK7JC1BJie8\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/doubleclick-16.gif",
     "x32": "https://www.google.com/images/icons/product/doubleclick-32.gif"
@@ -740,9 +740,11 @@
                 "APP_INTERSTITIAL",
                 "DISPLAY",
                 "DISPLAY_INTERSTITIAL",
+                "IN_STREAM_AUDIO",
                 "IN_STREAM_VIDEO"
               ],
               "enumDescriptions": [
+                "",
                 "",
                 "",
                 "",
@@ -3734,6 +3736,7 @@
                 "FLASH_INPAGE",
                 "HTML5_BANNER",
                 "IMAGE",
+                "INSTREAM_AUDIO",
                 "INSTREAM_VIDEO",
                 "INSTREAM_VIDEO_REDIRECT",
                 "INTERNAL_REDIRECT",
@@ -3751,6 +3754,7 @@
                 "VPAID_NON_LINEAR_VIDEO"
               ],
               "enumDescriptions": [
+                "",
                 "",
                 "",
                 "",
@@ -6785,9 +6789,11 @@
                 "APP_INTERSTITIAL",
                 "DISPLAY",
                 "DISPLAY_INTERSTITIAL",
+                "IN_STREAM_AUDIO",
                 "IN_STREAM_VIDEO"
               ],
               "enumDescriptions": [
+                "",
                 "",
                 "",
                 "",
@@ -8359,7 +8365,7 @@
           ]
         },
         "list": {
-          "description": "Retrieves a list of sizes, possibly filtered.",
+          "description": "Retrieves a list of sizes, possibly filtered. Retrieved sizes are globally unique and may include values not currently in use by your account. Due to this, the list of sizes returned by this method may differ from the list seen in the Trafficking UI.",
           "httpMethod": "GET",
           "id": "dfareporting.sizes.list",
           "parameterOrder": [
@@ -9417,7 +9423,7 @@
       }
     }
   },
-  "revision": "20171109",
+  "revision": "20180514",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Account": {
@@ -9766,7 +9772,7 @@
           "type": "string"
         },
         "traffickerType": {
-          "description": "Trafficker type of this user profile.",
+          "description": "Trafficker type of this user profile. This is a read-only field.",
           "enum": [
             "EXTERNAL_TRAFFICKER",
             "INTERNAL_NON_TRAFFICKER",
@@ -9938,9 +9944,11 @@
             "APP_INTERSTITIAL",
             "DISPLAY",
             "DISPLAY_INTERSTITIAL",
+            "IN_STREAM_AUDIO",
             "IN_STREAM_VIDEO"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             "",
@@ -10126,9 +10134,11 @@
             "APP_INTERSTITIAL",
             "DISPLAY",
             "DISPLAY_INTERSTITIAL",
+            "IN_STREAM_AUDIO",
             "IN_STREAM_VIDEO"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             "",
@@ -11591,7 +11601,7 @@
           "type": "string"
         },
         "companionCreatives": {
-          "description": "List of companion creatives assigned to an in-Stream videocreative. Acceptable values include IDs of existing flash and image creatives. Applicable to the following creative types: all VPAID and all INSTREAM_VIDEO with dynamicAssetSelection set to false.",
+          "description": "List of companion creatives assigned to an in-Stream video creative. Acceptable values include IDs of existing flash and image creatives. Applicable to the following creative types: all VPAID and all INSTREAM_VIDEO with dynamicAssetSelection set to false.",
           "items": {
             "format": "int64",
             "type": "string"
@@ -11606,9 +11616,11 @@
               "APP_INTERSTITIAL",
               "DISPLAY",
               "DISPLAY_INTERSTITIAL",
+              "IN_STREAM_AUDIO",
               "IN_STREAM_VIDEO"
             ],
             "enumDescriptions": [
+              "",
               "",
               "",
               "",
@@ -11819,6 +11831,7 @@
             "FLASH_INPAGE",
             "HTML5_BANNER",
             "IMAGE",
+            "INSTREAM_AUDIO",
             "INSTREAM_VIDEO",
             "INSTREAM_VIDEO_REDIRECT",
             "INTERNAL_REDIRECT",
@@ -11836,6 +11849,7 @@
             "VPAID_NON_LINEAR_VIDEO"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             "",
@@ -14156,9 +14170,11 @@
             "DBM_PARTNER",
             "DCM_ACCOUNT",
             "DCM_ADVERTISER",
+            "DFP_NETWORK_CODE",
             "ENCRYPTION_ENTITY_TYPE_UNKNOWN"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             "",
@@ -16386,9 +16402,11 @@
             "APP_INTERSTITIAL",
             "DISPLAY",
             "DISPLAY_INTERSTITIAL",
+            "IN_STREAM_AUDIO",
             "IN_STREAM_VIDEO"
           ],
           "enumDescriptions": [
+            "",
             "",
             "",
             "",

@@ -264,44 +264,6 @@ func dummyKey(kind string) []byte {
 	return slurp
 }
 
-func TestCopyToMissingFields(t *testing.T) {
-	t.Parallel()
-	var tests = []struct {
-		srcBucket, srcName, destBucket, destName string
-		errMsg                                   string
-	}{
-		{
-			"mybucket", "", "mybucket", "destname",
-			"name is empty",
-		},
-		{
-			"mybucket", "srcname", "mybucket", "",
-			"name is empty",
-		},
-		{
-			"", "srcfile", "mybucket", "destname",
-			"name is empty",
-		},
-		{
-			"mybucket", "srcfile", "", "destname",
-			"name is empty",
-		},
-	}
-	ctx := context.Background()
-	client, err := NewClient(ctx, option.WithHTTPClient(&http.Client{Transport: &fakeTransport{}}))
-	if err != nil {
-		panic(err)
-	}
-	for i, test := range tests {
-		src := client.Bucket(test.srcBucket).Object(test.srcName)
-		dst := client.Bucket(test.destBucket).Object(test.destName)
-		_, err := dst.CopierFrom(src).Run(ctx)
-		if !strings.Contains(err.Error(), test.errMsg) {
-			t.Errorf("CopyTo test #%v:\ngot err  %q\nwant err %q", i, err, test.errMsg)
-		}
-	}
-}
-
 func TestObjectNames(t *testing.T) {
 	t.Parallel()
 	// Naming requirements: https://cloud.google.com/storage/docs/bucket-naming

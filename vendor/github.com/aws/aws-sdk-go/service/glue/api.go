@@ -7626,6 +7626,9 @@ type Action struct {
 	// The name of a job to be executed.
 	JobName *string `min:"1" type:"string"`
 
+	// Specifies configuration properties of a job run notification.
+	NotificationProperty *NotificationProperty `type:"structure"`
+
 	// The job run timeout in minutes. It overrides the timeout value of the job.
 	Timeout *int64 `min:"1" type:"integer"`
 }
@@ -7649,6 +7652,11 @@ func (s *Action) Validate() error {
 	if s.Timeout != nil && *s.Timeout < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Timeout", 1))
 	}
+	if s.NotificationProperty != nil {
+		if err := s.NotificationProperty.Validate(); err != nil {
+			invalidParams.AddNested("NotificationProperty", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -7665,6 +7673,12 @@ func (s *Action) SetArguments(v map[string]*string) *Action {
 // SetJobName sets the JobName field's value.
 func (s *Action) SetJobName(v string) *Action {
 	s.JobName = &v
+	return s
+}
+
+// SetNotificationProperty sets the NotificationProperty field's value.
+func (s *Action) SetNotificationProperty(v *NotificationProperty) *Action {
+	s.NotificationProperty = v
 	return s
 }
 
@@ -10269,6 +10283,9 @@ type CreateJobInput struct {
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
+	// Specifies configuration properties of a job notification.
+	NotificationProperty *NotificationProperty `type:"structure"`
+
 	// The name or ARN of the IAM role associated with this job.
 	//
 	// Role is a required field
@@ -10305,6 +10322,11 @@ func (s *CreateJobInput) Validate() error {
 	}
 	if s.Timeout != nil && *s.Timeout < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Timeout", 1))
+	}
+	if s.NotificationProperty != nil {
+		if err := s.NotificationProperty.Validate(); err != nil {
+			invalidParams.AddNested("NotificationProperty", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -10364,6 +10386,12 @@ func (s *CreateJobInput) SetMaxRetries(v int64) *CreateJobInput {
 // SetName sets the Name field's value.
 func (s *CreateJobInput) SetName(v string) *CreateJobInput {
 	s.Name = &v
+	return s
+}
+
+// SetNotificationProperty sets the NotificationProperty field's value.
+func (s *CreateJobInput) SetNotificationProperty(v *NotificationProperty) *CreateJobInput {
+	s.NotificationProperty = v
 	return s
 }
 
@@ -15173,6 +15201,9 @@ type Job struct {
 	// The name you assign to this job definition.
 	Name *string `min:"1" type:"string"`
 
+	// Specifies configuration properties of a job notification.
+	NotificationProperty *NotificationProperty `type:"structure"`
+
 	// The name or ARN of the IAM role associated with this job.
 	Role *string `type:"string"`
 
@@ -15253,6 +15284,12 @@ func (s *Job) SetMaxRetries(v int64) *Job {
 // SetName sets the Name field's value.
 func (s *Job) SetName(v string) *Job {
 	s.Name = &v
+	return s
+}
+
+// SetNotificationProperty sets the NotificationProperty field's value.
+func (s *Job) SetNotificationProperty(v *NotificationProperty) *Job {
+	s.NotificationProperty = v
 	return s
 }
 
@@ -15411,6 +15448,9 @@ type JobRun struct {
 	// The last time this job run was modified.
 	LastModifiedOn *time.Time `type:"timestamp" timestampFormat:"unix"`
 
+	// Specifies configuration properties of a job run notification.
+	NotificationProperty *NotificationProperty `type:"structure"`
+
 	// A list of predecessors to this job run.
 	PredecessorRuns []*Predecessor `type:"list"`
 
@@ -15498,6 +15538,12 @@ func (s *JobRun) SetLastModifiedOn(v time.Time) *JobRun {
 	return s
 }
 
+// SetNotificationProperty sets the NotificationProperty field's value.
+func (s *JobRun) SetNotificationProperty(v *NotificationProperty) *JobRun {
+	s.NotificationProperty = v
+	return s
+}
+
 // SetPredecessorRuns sets the PredecessorRuns field's value.
 func (s *JobRun) SetPredecessorRuns(v []*Predecessor) *JobRun {
 	s.PredecessorRuns = v
@@ -15573,6 +15619,9 @@ type JobUpdate struct {
 	// The maximum number of times to retry this job if it fails.
 	MaxRetries *int64 `type:"integer"`
 
+	// Specifies configuration properties of a job notification.
+	NotificationProperty *NotificationProperty `type:"structure"`
+
 	// The name or ARN of the IAM role associated with this job (required).
 	Role *string `type:"string"`
 
@@ -15595,6 +15644,11 @@ func (s *JobUpdate) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "JobUpdate"}
 	if s.Timeout != nil && *s.Timeout < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Timeout", 1))
+	}
+	if s.NotificationProperty != nil {
+		if err := s.NotificationProperty.Validate(); err != nil {
+			invalidParams.AddNested("NotificationProperty", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
@@ -15648,6 +15702,12 @@ func (s *JobUpdate) SetLogUri(v string) *JobUpdate {
 // SetMaxRetries sets the MaxRetries field's value.
 func (s *JobUpdate) SetMaxRetries(v int64) *JobUpdate {
 	s.MaxRetries = &v
+	return s
+}
+
+// SetNotificationProperty sets the NotificationProperty field's value.
+func (s *JobUpdate) SetNotificationProperty(v *NotificationProperty) *JobUpdate {
+	s.NotificationProperty = v
 	return s
 }
 
@@ -15927,6 +15987,44 @@ func (s *MappingEntry) SetTargetTable(v string) *MappingEntry {
 // SetTargetType sets the TargetType field's value.
 func (s *MappingEntry) SetTargetType(v string) *MappingEntry {
 	s.TargetType = &v
+	return s
+}
+
+// Specifies configuration properties of a notification.
+type NotificationProperty struct {
+	_ struct{} `type:"structure"`
+
+	// After a job run starts, the number of minutes to wait before sending a job
+	// run delay notification.
+	NotifyDelayAfter *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation
+func (s NotificationProperty) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s NotificationProperty) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *NotificationProperty) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "NotificationProperty"}
+	if s.NotifyDelayAfter != nil && *s.NotifyDelayAfter < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("NotifyDelayAfter", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetNotifyDelayAfter sets the NotifyDelayAfter field's value.
+func (s *NotificationProperty) SetNotifyDelayAfter(v int64) *NotificationProperty {
+	s.NotifyDelayAfter = &v
 	return s
 }
 
@@ -16881,6 +16979,9 @@ type StartJobRunInput struct {
 	// The ID of a previous JobRun to retry.
 	JobRunId *string `min:"1" type:"string"`
 
+	// Specifies configuration properties of a job run notification.
+	NotificationProperty *NotificationProperty `type:"structure"`
+
 	// The job run timeout in minutes. It overrides the timeout value of the job.
 	Timeout *int64 `min:"1" type:"integer"`
 }
@@ -16910,6 +17011,11 @@ func (s *StartJobRunInput) Validate() error {
 	if s.Timeout != nil && *s.Timeout < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Timeout", 1))
 	}
+	if s.NotificationProperty != nil {
+		if err := s.NotificationProperty.Validate(); err != nil {
+			invalidParams.AddNested("NotificationProperty", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -16938,6 +17044,12 @@ func (s *StartJobRunInput) SetJobName(v string) *StartJobRunInput {
 // SetJobRunId sets the JobRunId field's value.
 func (s *StartJobRunInput) SetJobRunId(v string) *StartJobRunInput {
 	s.JobRunId = &v
+	return s
+}
+
+// SetNotificationProperty sets the NotificationProperty field's value.
+func (s *StartJobRunInput) SetNotificationProperty(v *NotificationProperty) *StartJobRunInput {
+	s.NotificationProperty = v
 	return s
 }
 

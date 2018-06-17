@@ -1090,7 +1090,7 @@ func TestValidateInt_inclusiveMaximumConstraintValid(t *testing.T) {
 	c := Constraint{
 		Target: "str",
 		Name:   InclusiveMaximum,
-		Rule:   2,
+		Rule:   int64(2),
 		Chain:  nil,
 	}
 	require.Nil(t, validateInt(reflect.ValueOf(1), c))
@@ -1101,7 +1101,7 @@ func TestValidateInt_inclusiveMaximumConstraintInvalid(t *testing.T) {
 	c := Constraint{
 		Target: "str",
 		Name:   InclusiveMaximum,
-		Rule:   1,
+		Rule:   int64(1),
 		Chain:  nil,
 	}
 	require.Equal(t, validateInt(reflect.ValueOf(x), c).Error(),
@@ -1112,7 +1112,7 @@ func TestValidateInt_inclusiveMaximumConstraintBoundary(t *testing.T) {
 	c := Constraint{
 		Target: "str",
 		Name:   InclusiveMaximum,
-		Rule:   1,
+		Rule:   int64(1),
 		Chain:  nil,
 	}
 	require.Nil(t, validateInt(reflect.ValueOf(1), c))

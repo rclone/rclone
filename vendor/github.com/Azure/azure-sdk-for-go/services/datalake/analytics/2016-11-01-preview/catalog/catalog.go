@@ -4637,6 +4637,174 @@ func (client Client) ListViewsByDatabaseComplete(ctx context.Context, accountNam
 	return
 }
 
+// PreviewTable retrieves a preview set of rows in given table.
+// Parameters:
+// accountName - the Azure Data Lake Analytics account upon which to execute catalog operations.
+// databaseName - the name of the database containing the table.
+// schemaName - the name of the schema containing the table.
+// tableName - the name of the table.
+// maxRows - the maximum number of preview rows to be retrieved. Rows returned may be less than or equal to
+// this number depending on row sizes and number of rows in the table.
+// maxColumns - the maximum number of columns to be retrieved.
+func (client Client) PreviewTable(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, maxRows *int64, maxColumns *int64) (result USQLTablePreview, err error) {
+	req, err := client.PreviewTablePreparer(ctx, accountName, databaseName, schemaName, tableName, maxRows, maxColumns)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "catalog.Client", "PreviewTable", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.PreviewTableSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "catalog.Client", "PreviewTable", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.PreviewTableResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "catalog.Client", "PreviewTable", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// PreviewTablePreparer prepares the PreviewTable request.
+func (client Client) PreviewTablePreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, maxRows *int64, maxColumns *int64) (*http.Request, error) {
+	urlParameters := map[string]interface{}{
+		"accountName":          accountName,
+		"adlaCatalogDnsSuffix": client.AdlaCatalogDNSSuffix,
+	}
+
+	pathParameters := map[string]interface{}{
+		"databaseName": autorest.Encode("path", databaseName),
+		"schemaName":   autorest.Encode("path", schemaName),
+		"tableName":    autorest.Encode("path", tableName),
+	}
+
+	const APIVersion = "2016-11-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+	if maxRows != nil {
+		queryParameters["maxRows"] = autorest.Encode("query", *maxRows)
+	}
+	if maxColumns != nil {
+		queryParameters["maxColumns"] = autorest.Encode("query", *maxColumns)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithCustomBaseURL("https://{accountName}.{adlaCatalogDnsSuffix}", urlParameters),
+		autorest.WithPathParameters("/catalog/usql/databases/{databaseName}/schemas/{schemaName}/tables/{tableName}/previewrows", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// PreviewTableSender sends the PreviewTable request. The method will close the
+// http.Response Body if it receives an error.
+func (client Client) PreviewTableSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// PreviewTableResponder handles the response to the PreviewTable request. The method always
+// closes the http.Response Body.
+func (client Client) PreviewTableResponder(resp *http.Response) (result USQLTablePreview, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// PreviewTablePartition retrieves a preview set of rows in given partition.
+// Parameters:
+// accountName - the Azure Data Lake Analytics account upon which to execute catalog operations.
+// databaseName - the name of the database containing the partition.
+// schemaName - the name of the schema containing the partition.
+// tableName - the name of the table containing the partition.
+// partitionName - the name of the table partition.
+// maxRows - the maximum number of preview rows to be retrieved.Rows returned may be less than or equal to this
+// number depending on row sizes and number of rows in the partition.
+// maxColumns - the maximum number of columns to be retrieved.
+func (client Client) PreviewTablePartition(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, partitionName string, maxRows *int64, maxColumns *int64) (result USQLTablePreview, err error) {
+	req, err := client.PreviewTablePartitionPreparer(ctx, accountName, databaseName, schemaName, tableName, partitionName, maxRows, maxColumns)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "catalog.Client", "PreviewTablePartition", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.PreviewTablePartitionSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "catalog.Client", "PreviewTablePartition", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.PreviewTablePartitionResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "catalog.Client", "PreviewTablePartition", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// PreviewTablePartitionPreparer prepares the PreviewTablePartition request.
+func (client Client) PreviewTablePartitionPreparer(ctx context.Context, accountName string, databaseName string, schemaName string, tableName string, partitionName string, maxRows *int64, maxColumns *int64) (*http.Request, error) {
+	urlParameters := map[string]interface{}{
+		"accountName":          accountName,
+		"adlaCatalogDnsSuffix": client.AdlaCatalogDNSSuffix,
+	}
+
+	pathParameters := map[string]interface{}{
+		"databaseName":  autorest.Encode("path", databaseName),
+		"partitionName": autorest.Encode("path", partitionName),
+		"schemaName":    autorest.Encode("path", schemaName),
+		"tableName":     autorest.Encode("path", tableName),
+	}
+
+	const APIVersion = "2016-11-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+	if maxRows != nil {
+		queryParameters["maxRows"] = autorest.Encode("query", *maxRows)
+	}
+	if maxColumns != nil {
+		queryParameters["maxColumns"] = autorest.Encode("query", *maxColumns)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithCustomBaseURL("https://{accountName}.{adlaCatalogDnsSuffix}", urlParameters),
+		autorest.WithPathParameters("/catalog/usql/databases/{databaseName}/schemas/{schemaName}/tables/{tableName}/partitions/{partitionName}/previewrows", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// PreviewTablePartitionSender sends the PreviewTablePartition request. The method will close the
+// http.Response Body if it receives an error.
+func (client Client) PreviewTablePartitionSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// PreviewTablePartitionResponder handles the response to the PreviewTablePartition request. The method always
+// closes the http.Response Body.
+func (client Client) PreviewTablePartitionResponder(resp *http.Response) (result USQLTablePreview, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // RevokeACL revokes an access control list (ACL) entry from the Data Lake Analytics catalog.
 // Parameters:
 // accountName - the Azure Data Lake Analytics account upon which to execute catalog operations.

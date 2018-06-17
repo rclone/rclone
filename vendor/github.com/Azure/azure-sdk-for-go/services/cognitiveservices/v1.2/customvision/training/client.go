@@ -1,4 +1,4 @@
-// Package training implements the Azure ARM Training service API version 1.2.
+// Package training implements the Azure ARM Training service API version 2.0.
 //
 //
 package training
@@ -32,7 +32,7 @@ import (
 
 const (
 	// DefaultBaseURI is the default URI used for the service Training
-	DefaultBaseURI = "https://southcentralus.api.cognitive.microsoft.com/customvision/v1.2/Training"
+	DefaultBaseURI = "https://southcentralus.api.cognitive.microsoft.com/customvision/v2.0/Training"
 )
 
 // BaseClient is the base client for Training.
@@ -54,6 +54,70 @@ func NewWithBaseURI(baseURI string, aPIKey string) BaseClient {
 		BaseURI: baseURI,
 		APIKey:  aPIKey,
 	}
+}
+
+// CreateImageRegions this API accepts a batch of image regions, and optionally tags, to update existing images with
+// region information.
+// There is a limit of 64 entries in the batch.
+// Parameters:
+// projectID - the project id
+// batch - batch of image regions which include a tag and bounding box. Limited to 64
+func (client BaseClient) CreateImageRegions(ctx context.Context, projectID uuid.UUID, batch ImageRegionCreateBatch) (result ImageRegionCreateSummary, err error) {
+	req, err := client.CreateImageRegionsPreparer(ctx, projectID, batch)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "CreateImageRegions", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.CreateImageRegionsSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "CreateImageRegions", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.CreateImageRegionsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "CreateImageRegions", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// CreateImageRegionsPreparer prepares the CreateImageRegions request.
+func (client BaseClient) CreateImageRegionsPreparer(ctx context.Context, projectID uuid.UUID, batch ImageRegionCreateBatch) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"projectId": autorest.Encode("path", projectID),
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/images/regions", pathParameters),
+		autorest.WithJSON(batch),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// CreateImageRegionsSender sends the CreateImageRegions request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) CreateImageRegionsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// CreateImageRegionsResponder handles the response to the CreateImageRegions request. The method always
+// closes the http.Response Body.
+func (client BaseClient) CreateImageRegionsResponder(resp *http.Response) (result ImageRegionCreateSummary, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
 }
 
 // CreateImagesFromData this API accepts body content as multipart/form-data and application/octet-stream. When using
@@ -129,7 +193,8 @@ func (client BaseClient) CreateImagesFromDataResponder(resp *http.Response) (res
 	return
 }
 
-// CreateImagesFromFiles sends the create images from files request.
+// CreateImagesFromFiles this API accepts a batch of files, and optionally tags, to create images. There is a limit of
+// 64 images and 20 tags.
 // Parameters:
 // projectID - the project id
 // batch - the batch of image files to add. Limited to 64 images and 20 tags per batch
@@ -191,7 +256,8 @@ func (client BaseClient) CreateImagesFromFilesResponder(resp *http.Response) (re
 	return
 }
 
-// CreateImagesFromPredictions sends the create images from predictions request.
+// CreateImagesFromPredictions this API creates a batch of images from predicted images specified. There is a limit of
+// 64 images and 20 tags.
 // Parameters:
 // projectID - the project id
 // batch - image and tag ids. Limted to 64 images and 20 tags per batch
@@ -253,7 +319,8 @@ func (client BaseClient) CreateImagesFromPredictionsResponder(resp *http.Respons
 	return
 }
 
-// CreateImagesFromUrls sends the create images from urls request.
+// CreateImagesFromUrls this API accepts a batch of urls, and optionally tags, to create images. There is a limit of 64
+// images and 20 tags.
 // Parameters:
 // projectID - the project id
 // batch - image urls and tag ids. Limited to 64 images and 20 tags per batch
@@ -305,6 +372,68 @@ func (client BaseClient) CreateImagesFromUrlsSender(req *http.Request) (*http.Re
 // CreateImagesFromUrlsResponder handles the response to the CreateImagesFromUrls request. The method always
 // closes the http.Response Body.
 func (client BaseClient) CreateImagesFromUrlsResponder(resp *http.Response) (result ImageCreateSummary, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// CreateImageTags sends the create image tags request.
+// Parameters:
+// projectID - the project id
+// batch - batch of image tags. Limited to 128 tags per batch
+func (client BaseClient) CreateImageTags(ctx context.Context, projectID uuid.UUID, batch ImageTagCreateBatch) (result ImageTagCreateSummary, err error) {
+	req, err := client.CreateImageTagsPreparer(ctx, projectID, batch)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "CreateImageTags", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.CreateImageTagsSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "CreateImageTags", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.CreateImageTagsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "CreateImageTags", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// CreateImageTagsPreparer prepares the CreateImageTags request.
+func (client BaseClient) CreateImageTagsPreparer(ctx context.Context, projectID uuid.UUID, batch ImageTagCreateBatch) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"projectId": autorest.Encode("path", projectID),
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/images/tags", pathParameters),
+		autorest.WithJSON(batch),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// CreateImageTagsSender sends the CreateImageTags request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) CreateImageTagsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// CreateImageTagsResponder handles the response to the CreateImageTags request. The method always
+// closes the http.Response Body.
+func (client BaseClient) CreateImageTagsResponder(resp *http.Response) (result ImageTagCreateSummary, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -449,6 +578,76 @@ func (client BaseClient) CreateTagResponder(resp *http.Response) (result Tag, er
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// DeleteImageRegions sends the delete image regions request.
+// Parameters:
+// projectID - the project id
+// regionIds - regions to delete. Limited to 64
+func (client BaseClient) DeleteImageRegions(ctx context.Context, projectID uuid.UUID, regionIds []string) (result autorest.Response, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: regionIds,
+			Constraints: []validation.Constraint{{Target: "regionIds", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("training.BaseClient", "DeleteImageRegions", err.Error())
+	}
+
+	req, err := client.DeleteImageRegionsPreparer(ctx, projectID, regionIds)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "DeleteImageRegions", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.DeleteImageRegionsSender(req)
+	if err != nil {
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "DeleteImageRegions", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.DeleteImageRegionsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "DeleteImageRegions", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// DeleteImageRegionsPreparer prepares the DeleteImageRegions request.
+func (client BaseClient) DeleteImageRegionsPreparer(ctx context.Context, projectID uuid.UUID, regionIds []string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"projectId": autorest.Encode("path", projectID),
+	}
+
+	queryParameters := map[string]interface{}{
+		"regionIds": autorest.Encode("query", regionIds, ","),
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsDelete(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/images/regions", pathParameters),
+		autorest.WithQueryParameters(queryParameters),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// DeleteImageRegionsSender sends the DeleteImageRegions request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) DeleteImageRegionsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// DeleteImageRegionsResponder handles the response to the DeleteImageRegions request. The method always
+// closes the http.Response Body.
+func (client BaseClient) DeleteImageRegionsResponder(resp *http.Response) (result autorest.Response, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusNoContent),
+		autorest.ByClosing())
+	result.Response = resp
 	return
 }
 
@@ -849,8 +1048,9 @@ func (client BaseClient) DeleteTagResponder(resp *http.Response) (result autores
 // projectID - the project id
 // iterationID - the iteration id
 // platform - the target platform (coreml or tensorflow)
-func (client BaseClient) ExportIteration(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, platform string) (result Export, err error) {
-	req, err := client.ExportIterationPreparer(ctx, projectID, iterationID, platform)
+// flavor - the flavor of the target platform (Windows, Linux, ARM, or GPU)
+func (client BaseClient) ExportIteration(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, platform string, flavor string) (result Export, err error) {
+	req, err := client.ExportIterationPreparer(ctx, projectID, iterationID, platform, flavor)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "training.BaseClient", "ExportIteration", nil, "Failure preparing request")
 		return
@@ -872,7 +1072,7 @@ func (client BaseClient) ExportIteration(ctx context.Context, projectID uuid.UUI
 }
 
 // ExportIterationPreparer prepares the ExportIteration request.
-func (client BaseClient) ExportIterationPreparer(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, platform string) (*http.Request, error) {
+func (client BaseClient) ExportIterationPreparer(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, platform string, flavor string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"iterationId": autorest.Encode("path", iterationID),
 		"projectId":   autorest.Encode("path", projectID),
@@ -880,6 +1080,9 @@ func (client BaseClient) ExportIterationPreparer(ctx context.Context, projectID 
 
 	queryParameters := map[string]interface{}{
 		"platform": autorest.Encode("query", platform),
+	}
+	if len(flavor) > 0 {
+		queryParameters["flavor"] = autorest.Encode("query", flavor)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -901,59 +1104,6 @@ func (client BaseClient) ExportIterationSender(req *http.Request) (*http.Respons
 // ExportIterationResponder handles the response to the ExportIteration request. The method always
 // closes the http.Response Body.
 func (client BaseClient) ExportIterationResponder(resp *http.Response) (result Export, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// GetAccountInfo sends the get account info request.
-func (client BaseClient) GetAccountInfo(ctx context.Context) (result Account, err error) {
-	req, err := client.GetAccountInfoPreparer(ctx)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetAccountInfo", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.GetAccountInfoSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetAccountInfo", resp, "Failure sending request")
-		return
-	}
-
-	result, err = client.GetAccountInfoResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetAccountInfo", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// GetAccountInfoPreparer prepares the GetAccountInfo request.
-func (client BaseClient) GetAccountInfoPreparer(ctx context.Context) (*http.Request, error) {
-	preparer := autorest.CreatePreparer(
-		autorest.AsGet(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPath("/account"),
-		autorest.WithHeader("Training-Key", client.APIKey))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// GetAccountInfoSender sends the GetAccountInfo request. The method will close the
-// http.Response Body if it receives an error.
-func (client BaseClient) GetAccountInfoSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-}
-
-// GetAccountInfoResponder handles the response to the GetAccountInfo request. The method always
-// closes the http.Response Body.
-func (client BaseClient) GetAccountInfoResponder(resp *http.Response) (result Account, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -1137,6 +1287,298 @@ func (client BaseClient) GetExportsResponder(resp *http.Response) (result ListEx
 	return
 }
 
+// GetImagePerformanceCount the filtering is on an and/or relationship. For example, if the provided tag ids are for
+// the "Dog" and
+// "Cat" tags, then only images tagged with Dog and/or Cat will be returned
+// Parameters:
+// projectID - the project id
+// iterationID - the iteration id. Defaults to workspace
+// tagIds - a list of tags ids to filter the images to count. Defaults to all tags when null.
+func (client BaseClient) GetImagePerformanceCount(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, tagIds []string) (result Int32, err error) {
+	req, err := client.GetImagePerformanceCountPreparer(ctx, projectID, iterationID, tagIds)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagePerformanceCount", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetImagePerformanceCountSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagePerformanceCount", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetImagePerformanceCountResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagePerformanceCount", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetImagePerformanceCountPreparer prepares the GetImagePerformanceCount request.
+func (client BaseClient) GetImagePerformanceCountPreparer(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, tagIds []string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"iterationId": autorest.Encode("path", iterationID),
+		"projectId":   autorest.Encode("path", projectID),
+	}
+
+	queryParameters := map[string]interface{}{}
+	if tagIds != nil && len(tagIds) > 0 {
+		queryParameters["tagIds"] = autorest.Encode("query", tagIds, ",")
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/iterations/{iterationId}/performance/images/count", pathParameters),
+		autorest.WithQueryParameters(queryParameters),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetImagePerformanceCountSender sends the GetImagePerformanceCount request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) GetImagePerformanceCountSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetImagePerformanceCountResponder handles the response to the GetImagePerformanceCount request. The method always
+// closes the http.Response Body.
+func (client BaseClient) GetImagePerformanceCountResponder(resp *http.Response) (result Int32, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetImagePerformances this API supports batching and range selection. By default it will only return first 50 images
+// matching images.
+// Use the {take} and {skip} parameters to control how many images to return in a given batch.
+// The filtering is on an and/or relationship. For example, if the provided tag ids are for the "Dog" and
+// "Cat" tags, then only images tagged with Dog and/or Cat will be returned
+// Parameters:
+// projectID - the project id
+// iterationID - the iteration id. Defaults to workspace
+// tagIds - a list of tags ids to filter the images. Defaults to all tagged images when null. Limited to 20
+// orderBy - the ordering. Defaults to newest
+// take - maximum number of images to return. Defaults to 50, limited to 256
+// skip - number of images to skip before beginning the image batch. Defaults to 0
+func (client BaseClient) GetImagePerformances(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, tagIds []string, orderBy string, take *int32, skip *int32) (result ListImagePerformance, err error) {
+	req, err := client.GetImagePerformancesPreparer(ctx, projectID, iterationID, tagIds, orderBy, take, skip)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagePerformances", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetImagePerformancesSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagePerformances", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetImagePerformancesResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagePerformances", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetImagePerformancesPreparer prepares the GetImagePerformances request.
+func (client BaseClient) GetImagePerformancesPreparer(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, tagIds []string, orderBy string, take *int32, skip *int32) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"iterationId": autorest.Encode("path", iterationID),
+		"projectId":   autorest.Encode("path", projectID),
+	}
+
+	queryParameters := map[string]interface{}{}
+	if tagIds != nil && len(tagIds) > 0 {
+		queryParameters["tagIds"] = autorest.Encode("query", tagIds, ",")
+	}
+	if len(string(orderBy)) > 0 {
+		queryParameters["orderBy"] = autorest.Encode("query", orderBy)
+	}
+	if take != nil {
+		queryParameters["take"] = autorest.Encode("query", *take)
+	} else {
+		queryParameters["take"] = autorest.Encode("query", 50)
+	}
+	if skip != nil {
+		queryParameters["skip"] = autorest.Encode("query", *skip)
+	} else {
+		queryParameters["skip"] = autorest.Encode("query", 0)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/iterations/{iterationId}/performance/images", pathParameters),
+		autorest.WithQueryParameters(queryParameters),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetImagePerformancesSender sends the GetImagePerformances request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) GetImagePerformancesSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetImagePerformancesResponder handles the response to the GetImagePerformances request. The method always
+// closes the http.Response Body.
+func (client BaseClient) GetImagePerformancesResponder(resp *http.Response) (result ListImagePerformance, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetImageRegionProposals this API will get region proposals for an image along with confidences for the region. It
+// returns an empty array if no proposals are found.
+// Parameters:
+// projectID - the project id
+// imageID - the image id
+func (client BaseClient) GetImageRegionProposals(ctx context.Context, projectID uuid.UUID, imageID uuid.UUID) (result ImageRegionProposal, err error) {
+	req, err := client.GetImageRegionProposalsPreparer(ctx, projectID, imageID)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImageRegionProposals", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetImageRegionProposalsSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImageRegionProposals", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetImageRegionProposalsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImageRegionProposals", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetImageRegionProposalsPreparer prepares the GetImageRegionProposals request.
+func (client BaseClient) GetImageRegionProposalsPreparer(ctx context.Context, projectID uuid.UUID, imageID uuid.UUID) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"imageId":   autorest.Encode("path", imageID),
+		"projectId": autorest.Encode("path", projectID),
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/{projectId}/images/{imageId}/regionproposals", pathParameters),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetImageRegionProposalsSender sends the GetImageRegionProposals request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) GetImageRegionProposalsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetImageRegionProposalsResponder handles the response to the GetImageRegionProposals request. The method always
+// closes the http.Response Body.
+func (client BaseClient) GetImageRegionProposalsResponder(resp *http.Response) (result ImageRegionProposal, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetImagesByIds this API will return a set of Images for the specified tags and optionally iteration. If no iteration
+// is specified the
+// current workspace is used.
+// Parameters:
+// projectID - the project id
+// imageIds - the list of image ids to retrieve. Limited to 256
+// iterationID - the iteration id. Defaults to workspace
+func (client BaseClient) GetImagesByIds(ctx context.Context, projectID uuid.UUID, imageIds []string, iterationID *uuid.UUID) (result ListImage, err error) {
+	req, err := client.GetImagesByIdsPreparer(ctx, projectID, imageIds, iterationID)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagesByIds", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetImagesByIdsSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagesByIds", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetImagesByIdsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetImagesByIds", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetImagesByIdsPreparer prepares the GetImagesByIds request.
+func (client BaseClient) GetImagesByIdsPreparer(ctx context.Context, projectID uuid.UUID, imageIds []string, iterationID *uuid.UUID) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"projectId": autorest.Encode("path", projectID),
+	}
+
+	queryParameters := map[string]interface{}{}
+	if imageIds != nil && len(imageIds) > 0 {
+		queryParameters["imageIds"] = autorest.Encode("query", imageIds, ",")
+	}
+	if iterationID != nil {
+		queryParameters["iterationId"] = autorest.Encode("query", *iterationID)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/images/id", pathParameters),
+		autorest.WithQueryParameters(queryParameters),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetImagesByIdsSender sends the GetImagesByIds request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) GetImagesByIdsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetImagesByIdsResponder handles the response to the GetImagesByIds request. The method always
+// closes the http.Response Body.
+func (client BaseClient) GetImagesByIdsResponder(resp *http.Response) (result ListImage, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // GetIteration sends the get iteration request.
 // Parameters:
 // projectID - the id of the project the iteration belongs to
@@ -1200,11 +1642,12 @@ func (client BaseClient) GetIterationResponder(resp *http.Response) (result Iter
 
 // GetIterationPerformance sends the get iteration performance request.
 // Parameters:
-// projectID - the project id
-// iterationID - the id of the trained iteration
-// threshold - the 0 to 1 threshold to determine positive prediction
-func (client BaseClient) GetIterationPerformance(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, threshold float64) (result IterationPerformance, err error) {
-	req, err := client.GetIterationPerformancePreparer(ctx, projectID, iterationID, threshold)
+// projectID - the id of the project the iteration belongs to
+// iterationID - the id of the iteration to get
+// threshold - the threshold used to determine true predictions
+// overlapThreshold - if applicable, the bounding box overlap threshold used to determine true predictions
+func (client BaseClient) GetIterationPerformance(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, threshold *float64, overlapThreshold *float64) (result IterationPerformance, err error) {
+	req, err := client.GetIterationPerformancePreparer(ctx, projectID, iterationID, threshold, overlapThreshold)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetIterationPerformance", nil, "Failure preparing request")
 		return
@@ -1226,14 +1669,18 @@ func (client BaseClient) GetIterationPerformance(ctx context.Context, projectID 
 }
 
 // GetIterationPerformancePreparer prepares the GetIterationPerformance request.
-func (client BaseClient) GetIterationPerformancePreparer(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, threshold float64) (*http.Request, error) {
+func (client BaseClient) GetIterationPerformancePreparer(ctx context.Context, projectID uuid.UUID, iterationID uuid.UUID, threshold *float64, overlapThreshold *float64) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"iterationId": autorest.Encode("path", iterationID),
 		"projectId":   autorest.Encode("path", projectID),
 	}
 
-	queryParameters := map[string]interface{}{
-		"threshold": autorest.Encode("query", threshold),
+	queryParameters := map[string]interface{}{}
+	if threshold != nil {
+		queryParameters["threshold"] = autorest.Encode("query", *threshold)
+	}
+	if overlapThreshold != nil {
+		queryParameters["overlapThreshold"] = autorest.Encode("query", *overlapThreshold)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1504,6 +1951,78 @@ func (client BaseClient) GetTagResponder(resp *http.Response) (result Tag, err e
 	return
 }
 
+// GetTaggedImageCount the filtering is on an and/or relationship. For example, if the provided tag ids are for the
+// "Dog" and
+// "Cat" tags, then only images tagged with Dog and/or Cat will be returned
+// Parameters:
+// projectID - the project id
+// iterationID - the iteration id. Defaults to workspace
+// tagIds - a list of tags ids to filter the images to count. Defaults to all tags when null.
+func (client BaseClient) GetTaggedImageCount(ctx context.Context, projectID uuid.UUID, iterationID *uuid.UUID, tagIds []string) (result Int32, err error) {
+	req, err := client.GetTaggedImageCountPreparer(ctx, projectID, iterationID, tagIds)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetTaggedImageCount", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetTaggedImageCountSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetTaggedImageCount", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetTaggedImageCountResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetTaggedImageCount", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetTaggedImageCountPreparer prepares the GetTaggedImageCount request.
+func (client BaseClient) GetTaggedImageCountPreparer(ctx context.Context, projectID uuid.UUID, iterationID *uuid.UUID, tagIds []string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"projectId": autorest.Encode("path", projectID),
+	}
+
+	queryParameters := map[string]interface{}{}
+	if iterationID != nil {
+		queryParameters["iterationId"] = autorest.Encode("query", *iterationID)
+	}
+	if tagIds != nil && len(tagIds) > 0 {
+		queryParameters["tagIds"] = autorest.Encode("query", tagIds, ",")
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/images/tagged/count", pathParameters),
+		autorest.WithQueryParameters(queryParameters),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetTaggedImageCountSender sends the GetTaggedImageCount request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) GetTaggedImageCountSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetTaggedImageCountResponder handles the response to the GetTaggedImageCount request. The method always
+// closes the http.Response Body.
+func (client BaseClient) GetTaggedImageCountResponder(resp *http.Response) (result Int32, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // GetTaggedImages this API supports batching and range selection. By default it will only return first 50 images
 // matching images.
 // Use the {take} and {skip} parameters to control how many images to return in a given batch.
@@ -1512,7 +2031,7 @@ func (client BaseClient) GetTagResponder(resp *http.Response) (result Tag, err e
 // Parameters:
 // projectID - the project id
 // iterationID - the iteration id. Defaults to workspace
-// tagIds - an list of tags ids to filter the images. Defaults to all tagged images when null. Limited to 20
+// tagIds - a list of tags ids to filter the images. Defaults to all tagged images when null. Limited to 20
 // orderBy - the ordering. Defaults to newest
 // take - maximum number of images to return. Defaults to 50, limited to 256
 // skip - number of images to skip before beginning the image batch. Defaults to 0
@@ -1598,7 +2117,7 @@ func (client BaseClient) GetTaggedImagesResponder(resp *http.Response) (result L
 // Parameters:
 // projectID - the project id
 // iterationID - the iteration id. Defaults to workspace
-func (client BaseClient) GetTags(ctx context.Context, projectID uuid.UUID, iterationID *uuid.UUID) (result TagList, err error) {
+func (client BaseClient) GetTags(ctx context.Context, projectID uuid.UUID, iterationID *uuid.UUID) (result ListTag, err error) {
 	req, err := client.GetTagsPreparer(ctx, projectID, iterationID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetTags", nil, "Failure preparing request")
@@ -1649,12 +2168,80 @@ func (client BaseClient) GetTagsSender(req *http.Request) (*http.Response, error
 
 // GetTagsResponder handles the response to the GetTags request. The method always
 // closes the http.Response Body.
-func (client BaseClient) GetTagsResponder(resp *http.Response) (result TagList, err error) {
+func (client BaseClient) GetTagsResponder(resp *http.Response) (result ListTag, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// GetUntaggedImageCount this API returns the images which have no tags for a given project and optionally an
+// iteration. If no iteration is specified the
+// current workspace is used.
+// Parameters:
+// projectID - the project id
+// iterationID - the iteration id. Defaults to workspace
+func (client BaseClient) GetUntaggedImageCount(ctx context.Context, projectID uuid.UUID, iterationID *uuid.UUID) (result Int32, err error) {
+	req, err := client.GetUntaggedImageCountPreparer(ctx, projectID, iterationID)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetUntaggedImageCount", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetUntaggedImageCountSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetUntaggedImageCount", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetUntaggedImageCountResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "GetUntaggedImageCount", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetUntaggedImageCountPreparer prepares the GetUntaggedImageCount request.
+func (client BaseClient) GetUntaggedImageCountPreparer(ctx context.Context, projectID uuid.UUID, iterationID *uuid.UUID) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"projectId": autorest.Encode("path", projectID),
+	}
+
+	queryParameters := map[string]interface{}{}
+	if iterationID != nil {
+		queryParameters["iterationId"] = autorest.Encode("query", *iterationID)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/projects/{projectId}/images/untagged/count", pathParameters),
+		autorest.WithQueryParameters(queryParameters),
+		autorest.WithHeader("Training-Key", client.APIKey))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetUntaggedImageCountSender sends the GetUntaggedImageCount request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) GetUntaggedImageCountSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetUntaggedImageCountResponder handles the response to the GetUntaggedImageCount request. The method always
+// closes the http.Response Body.
+func (client BaseClient) GetUntaggedImageCountResponder(resp *http.Response) (result Int32, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
 	return
@@ -1744,96 +2331,34 @@ func (client BaseClient) GetUntaggedImagesResponder(resp *http.Response) (result
 	return
 }
 
-// PostImageTags sends the post image tags request.
-// Parameters:
-// projectID - the project id
-// batch - batch of image tags. Limited to 128 tags per batch
-func (client BaseClient) PostImageTags(ctx context.Context, projectID uuid.UUID, batch ImageTagCreateBatch) (result ImageTagCreateSummary, err error) {
-	req, err := client.PostImageTagsPreparer(ctx, projectID, batch)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "PostImageTags", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.PostImageTagsSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "PostImageTags", resp, "Failure sending request")
-		return
-	}
-
-	result, err = client.PostImageTagsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "PostImageTags", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// PostImageTagsPreparer prepares the PostImageTags request.
-func (client BaseClient) PostImageTagsPreparer(ctx context.Context, projectID uuid.UUID, batch ImageTagCreateBatch) (*http.Request, error) {
-	pathParameters := map[string]interface{}{
-		"projectId": autorest.Encode("path", projectID),
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsContentType("application/json; charset=utf-8"),
-		autorest.AsPost(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/projects/{projectId}/images/tags", pathParameters),
-		autorest.WithJSON(batch),
-		autorest.WithHeader("Training-Key", client.APIKey))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// PostImageTagsSender sends the PostImageTags request. The method will close the
-// http.Response Body if it receives an error.
-func (client BaseClient) PostImageTagsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-}
-
-// PostImageTagsResponder handles the response to the PostImageTags request. The method always
-// closes the http.Response Body.
-func (client BaseClient) PostImageTagsResponder(resp *http.Response) (result ImageTagCreateSummary, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// QueryPredictionResults sends the query prediction results request.
+// QueryPredictions sends the query predictions request.
 // Parameters:
 // projectID - the project id
 // query - parameters used to query the predictions. Limited to combining 2 tags
-func (client BaseClient) QueryPredictionResults(ctx context.Context, projectID uuid.UUID, query PredictionQueryToken) (result PredictionQuery, err error) {
-	req, err := client.QueryPredictionResultsPreparer(ctx, projectID, query)
+func (client BaseClient) QueryPredictions(ctx context.Context, projectID uuid.UUID, query PredictionQueryToken) (result PredictionQueryResult, err error) {
+	req, err := client.QueryPredictionsPreparer(ctx, projectID, query)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "QueryPredictionResults", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "QueryPredictions", nil, "Failure preparing request")
 		return
 	}
 
-	resp, err := client.QueryPredictionResultsSender(req)
+	resp, err := client.QueryPredictionsSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "QueryPredictionResults", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "QueryPredictions", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.QueryPredictionResultsResponder(resp)
+	result, err = client.QueryPredictionsResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "training.BaseClient", "QueryPredictionResults", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "training.BaseClient", "QueryPredictions", resp, "Failure responding to request")
 	}
 
 	return
 }
 
-// QueryPredictionResultsPreparer prepares the QueryPredictionResults request.
-func (client BaseClient) QueryPredictionResultsPreparer(ctx context.Context, projectID uuid.UUID, query PredictionQueryToken) (*http.Request, error) {
+// QueryPredictionsPreparer prepares the QueryPredictions request.
+func (client BaseClient) QueryPredictionsPreparer(ctx context.Context, projectID uuid.UUID, query PredictionQueryToken) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"projectId": autorest.Encode("path", projectID),
 	}
@@ -1848,16 +2373,16 @@ func (client BaseClient) QueryPredictionResultsPreparer(ctx context.Context, pro
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// QueryPredictionResultsSender sends the QueryPredictionResults request. The method will close the
+// QueryPredictionsSender sends the QueryPredictions request. The method will close the
 // http.Response Body if it receives an error.
-func (client BaseClient) QueryPredictionResultsSender(req *http.Request) (*http.Response, error) {
+func (client BaseClient) QueryPredictionsSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
-// QueryPredictionResultsResponder handles the response to the QueryPredictionResults request. The method always
+// QueryPredictionsResponder handles the response to the QueryPredictions request. The method always
 // closes the http.Response Body.
-func (client BaseClient) QueryPredictionResultsResponder(resp *http.Response) (result PredictionQuery, err error) {
+func (client BaseClient) QueryPredictionsResponder(resp *http.Response) (result PredictionQueryResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -1873,7 +2398,7 @@ func (client BaseClient) QueryPredictionResultsResponder(resp *http.Response) (r
 // projectID - the project id
 // iterationID - optional. Specifies the id of a particular iteration to evaluate against.
 // The default iteration for the project will be used when not specified.
-func (client BaseClient) QuickTestImage(ctx context.Context, projectID uuid.UUID, imageData io.ReadCloser, iterationID *uuid.UUID) (result ImagePredictionResult, err error) {
+func (client BaseClient) QuickTestImage(ctx context.Context, projectID uuid.UUID, imageData io.ReadCloser, iterationID *uuid.UUID) (result ImagePrediction, err error) {
 	req, err := client.QuickTestImagePreparer(ctx, projectID, imageData, iterationID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "training.BaseClient", "QuickTestImage", nil, "Failure preparing request")
@@ -1929,7 +2454,7 @@ func (client BaseClient) QuickTestImageSender(req *http.Request) (*http.Response
 
 // QuickTestImageResponder handles the response to the QuickTestImage request. The method always
 // closes the http.Response Body.
-func (client BaseClient) QuickTestImageResponder(resp *http.Response) (result ImagePredictionResult, err error) {
+func (client BaseClient) QuickTestImageResponder(resp *http.Response) (result ImagePrediction, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -1946,7 +2471,7 @@ func (client BaseClient) QuickTestImageResponder(resp *http.Response) (result Im
 // imageURL - an {Iris.Web.Api.Models.ImageUrl} that contains the url of the image to be evaluated
 // iterationID - optional. Specifies the id of a particular iteration to evaluate against.
 // The default iteration for the project will be used when not specified.
-func (client BaseClient) QuickTestImageURL(ctx context.Context, projectID uuid.UUID, imageURL ImageURL, iterationID *uuid.UUID) (result ImagePredictionResult, err error) {
+func (client BaseClient) QuickTestImageURL(ctx context.Context, projectID uuid.UUID, imageURL ImageURL, iterationID *uuid.UUID) (result ImagePrediction, err error) {
 	req, err := client.QuickTestImageURLPreparer(ctx, projectID, imageURL, iterationID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "training.BaseClient", "QuickTestImageURL", nil, "Failure preparing request")
@@ -1999,7 +2524,7 @@ func (client BaseClient) QuickTestImageURLSender(req *http.Request) (*http.Respo
 
 // QuickTestImageURLResponder handles the response to the QuickTestImageURL request. The method always
 // closes the http.Response Body.
-func (client BaseClient) QuickTestImageURLResponder(resp *http.Response) (result ImagePredictionResult, err error) {
+func (client BaseClient) QuickTestImageURLResponder(resp *http.Response) (result ImagePrediction, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

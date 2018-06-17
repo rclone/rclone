@@ -211,7 +211,7 @@
       }
     }
   },
-  "revision": "20180502",
+  "revision": "20180524",
   "rootUrl": "https://firebasedynamiclinks.googleapis.com/",
   "schemas": {
     "AnalyticsInfo": {
@@ -682,6 +682,20 @@
         },
         "matchMessage": {
           "description": "Describes why match failed, ie: \"discarded due to low confidence\".\nThis message will be publicly visible.",
+          "type": "string"
+        },
+        "requestIpVersion": {
+          "description": "Which IP version the request was made from.",
+          "enum": [
+            "UNKNOWN_IP_VERSION",
+            "IP_V4",
+            "IP_V6"
+          ],
+          "enumDescriptions": [
+            "Unset.",
+            "Request made from an IPv4 IP address.",
+            "Request made from an IPv6 IP address."
+          ],
           "type": "string"
         },
         "requestedLink": {

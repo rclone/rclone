@@ -55,7 +55,6 @@ const (
 type VMSizeTypes = original.VMSizeTypes
 
 const (
-	StandardA0          VMSizeTypes = original.StandardA0
 	StandardA1          VMSizeTypes = original.StandardA1
 	StandardA10         VMSizeTypes = original.StandardA10
 	StandardA11         VMSizeTypes = original.StandardA11
@@ -74,8 +73,6 @@ const (
 	StandardA8mV2       VMSizeTypes = original.StandardA8mV2
 	StandardA8V2        VMSizeTypes = original.StandardA8V2
 	StandardA9          VMSizeTypes = original.StandardA9
-	StandardB1ms        VMSizeTypes = original.StandardB1ms
-	StandardB1s         VMSizeTypes = original.StandardB1s
 	StandardB2ms        VMSizeTypes = original.StandardB2ms
 	StandardB2s         VMSizeTypes = original.StandardB2s
 	StandardB4ms        VMSizeTypes = original.StandardB4ms

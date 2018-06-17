@@ -1207,6 +1207,15 @@
       "refs": {
       }
     },
+    "LogLevel": {
+      "base": null,
+      "refs": {
+        "Channel$LogLevel": "The log level being written to CloudWatch Logs.",
+        "ChannelSummary$LogLevel": "The log level being written to CloudWatch Logs.",
+        "CreateChannel$LogLevel": "The log level to write to CloudWatch Logs.",
+        "UpdateChannel$LogLevel": "The log level to write to CloudWatch Logs."
+      }
+    },
     "M2tsAbsentInputAudioBehavior": {
       "base": null,
       "refs": {

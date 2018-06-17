@@ -1673,6 +1673,7 @@ func (c *MigrationHub) PutResourceAttributesRequest(input *PutResourceAttributes
 // address.
 //
 // Note the instructions regarding the special use case of the ResourceAttributeList
+// (https://docs.aws.amazon.com/migrationhub/latest/ug/API_PutResourceAttributes.html#migrationhub-PutResourceAttributes-request-ResourceAttributeList)
 // parameter when specifying any "VM" related value.
 //
 // Because this is an asynchronous call, it will always return 200, whether
@@ -3399,17 +3400,22 @@ type PutResourceAttributesInput struct {
 	// used to map the task to a resource in the Application Discovery Service (ADS)'s
 	// repository.
 	//
-	// In the ResourceAttribute object array, the Type field is reserved for the
-	// following values: IPV4_ADDRESS | IPV6_ADDRESS | MAC_ADDRESS | FQDN | VM_MANAGER_ID
-	// | VM_MANAGED_OBJECT_REFERENCE | VM_NAME | VM_PATH | BIOS_ID | MOTHERBOARD_SERIAL_NUMBER,
-	// and the identifying value can be a string up to 256 characters.
+	// Takes the object array of ResourceAttribute where the Type field is reserved
+	// for the following values: IPV4_ADDRESS | IPV6_ADDRESS | MAC_ADDRESS | FQDN
+	// | VM_MANAGER_ID | VM_MANAGED_OBJECT_REFERENCE | VM_NAME | VM_PATH | BIOS_ID
+	// | MOTHERBOARD_SERIAL_NUMBER where the identifying value can be a string up
+	// to 256 characters.
 	//
-	// If any "VM" related value is used for a ResourceAttribute object, it is required
-	// that VM_MANAGER_ID, as a minimum, is always used. If it is not used, the
-	// server will not be associated in the Application Discovery Service (ADS)'s
-	// repository using any of the other "VM" related values, and you will experience
-	// data loss. See the Example section below for a use case of specifying "VM"
-	// related values.
+	// If any "VM" related value is set for a ResourceAttribute object, it is required
+	// that VM_MANAGER_ID, as a minimum, is always set. If VM_MANAGER_ID is not
+	// set, then all "VM" fields will be discarded and "VM" fields will not be used
+	// for matching the migration task to a server in Application Discovery Service
+	// (ADS)'s repository. See the Example (https://docs.aws.amazon.com/migrationhub/latest/ug/API_PutResourceAttributes.html#API_PutResourceAttributes_Examples)
+	// section below for a use case of specifying "VM" related values.
+	//
+	//  If a server you are trying to match has multiple IP or MAC addresses, you
+	// should provide as many as you know in separate type/value pairs passed to
+	// the ResourceAttributeList parameter to maximize the chances of matching.
 	//
 	// ResourceAttributeList is a required field
 	ResourceAttributeList []*ResourceAttribute `min:"1" type:"list" required:"true"`

@@ -30,6 +30,7 @@
     "GetAppliedSchemaVersion": "<p>Returns current applied schema version ARN, including the minor version in use.</p>",
     "GetDirectory": "<p>Retrieves metadata about a directory.</p>",
     "GetFacet": "<p>Gets details of the <a>Facet</a>, such as facet name, attributes, <a>Rule</a>s, or <code>ObjectType</code>. You can call this on all kinds of schema facets -- published, development, or applied.</p>",
+    "GetLinkAttributes": "<p>Retrieves attributes that are associated with a typed link.</p>",
     "GetObjectAttributes": "<p>Retrieves attributes within a facet that are associated with an object.</p>",
     "GetObjectInformation": "<p>Retrieves metadata about an object.</p>",
     "GetSchemaAsJson": "<p>Retrieves a JSON representation of the schema. See <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_schemas.html#jsonformat\">JSON Schema Format</a> for more information.</p>",
@@ -60,6 +61,7 @@
     "TagResource": "<p>An API operation for adding tags to a resource.</p>",
     "UntagResource": "<p>An API operation for removing tags from a resource.</p>",
     "UpdateFacet": "<p>Does the following:</p> <ol> <li> <p>Adds new <code>Attributes</code>, <code>Rules</code>, or <code>ObjectTypes</code>.</p> </li> <li> <p>Updates existing <code>Attributes</code>, <code>Rules</code>, or <code>ObjectTypes</code>.</p> </li> <li> <p>Deletes existing <code>Attributes</code>, <code>Rules</code>, or <code>ObjectTypes</code>.</p> </li> </ol>",
+    "UpdateLinkAttributes": "<p>Updates a given typed link’s attributes. Attributes to be updated must not contribute to the typed link’s identity, as defined by its <code>IdentityAttributeOrder</code>.</p>",
     "UpdateObjectAttributes": "<p>Updates a given object's attributes.</p>",
     "UpdateSchema": "<p>Updates the schema name with a new name. Only development schema names can be updated.</p>",
     "UpdateTypedLinkFacet": "<p>Updates a <a>TypedLinkFacet</a>. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
@@ -133,6 +135,7 @@
         "GetAppliedSchemaVersionRequest$SchemaArn": "<p>The ARN of the applied schema.</p>",
         "GetAppliedSchemaVersionResponse$AppliedSchemaArn": "<p>Current applied schema ARN, including the minor version in use if one was provided.</p>",
         "GetFacetRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Facet</a>. For more information, see <a>arns</a>.</p>",
+        "GetLinkAttributesRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the Directory where the typed link resides. For more information, see <a>arns</a> or <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
         "GetObjectAttributesRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Directory</a> where the object resides.</p>",
         "GetObjectInformationRequest$DirectoryArn": "<p>The ARN of the directory being retrieved.</p>",
         "GetSchemaAsJsonRequest$SchemaArn": "<p>The ARN of the schema to retrieve.</p>",
@@ -166,6 +169,7 @@
         "TypedLinkSchemaAndFacetName$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the schema. For more information, see <a>arns</a>.</p>",
         "UntagResourceRequest$ResourceArn": "<p>The Amazon Resource Name (ARN) of the resource. Tagging is only supported for directories.</p>",
         "UpdateFacetRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Facet</a>. For more information, see <a>arns</a>.</p>",
+        "UpdateLinkAttributesRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the Directory where the updated typed link resides. For more information, see <a>arns</a> or <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
         "UpdateObjectAttributesRequest$DirectoryArn": "<p>The Amazon Resource Name (ARN) that is associated with the <a>Directory</a> where the object resides. For more information, see <a>arns</a>.</p>",
         "UpdateSchemaRequest$SchemaArn": "<p>The Amazon Resource Name (ARN) of the development schema. For more information, see <a>arns</a>.</p>",
         "UpdateSchemaResponse$SchemaArn": "<p>The ARN that is associated with the updated schema. For more information, see <a>arns</a>.</p>",
@@ -232,6 +236,7 @@
       "refs": {
         "AttributeKeyAndValue$Key": "<p>The key of the attribute.</p>",
         "AttributeKeyList$member": null,
+        "LinkAttributeUpdate$AttributeKey": "<p>The key of the attribute being updated.</p>",
         "ObjectAttributeRange$AttributeKey": "<p>The key of the attribute that the attribute range covers.</p>",
         "ObjectAttributeUpdate$ObjectAttributeKey": "<p>The key of the attribute being updated.</p>"
       }
@@ -248,9 +253,11 @@
         "AddFacetToObjectRequest$ObjectAttributeList": "<p>Attributes on the facet that you are adding to the object.</p>",
         "BatchAddFacetToObject$ObjectAttributeList": "<p>The attributes to set on the object.</p>",
         "BatchCreateObject$ObjectAttributeList": "<p>An attribute map, which contains an attribute ARN as the key and attribute value as the map value.</p>",
+        "BatchGetLinkAttributesResponse$Attributes": "<p>The attributes that are associated with the typed link.</p>",
         "BatchGetObjectAttributesResponse$Attributes": "<p>The attribute values that are associated with an object.</p>",
         "BatchListObjectAttributesResponse$Attributes": "<p>The attributes map that is associated with the object. <code>AttributeArn</code> is the key; attribute value is the value.</p>",
         "CreateObjectRequest$ObjectAttributeList": "<p>The attribute map whose attribute ARN contains the key and attribute value as the map value.</p>",
+        "GetLinkAttributesResponse$Attributes": "<p>The attributes that are associated with the typed link.</p>",
         "GetObjectAttributesResponse$Attributes": "<p>The attributes that are associated with the object.</p>",
         "IndexAttachment$IndexedAttributes": "<p>The indexed attribute values.</p>",
         "ListObjectAttributesResponse$Attributes": "<p>Attributes map that is associated with the object. <code>AttributeArn</code> is the key, and attribute value is the value.</p>"
@@ -292,7 +299,9 @@
     "AttributeNameList": {
       "base": null,
       "refs": {
+        "BatchGetLinkAttributes$AttributeNames": "<p>A list of attribute names whose values will be retrieved.</p>",
         "BatchGetObjectAttributes$AttributeNames": "<p>List of attribute names whose values will be retrieved.</p>",
+        "GetLinkAttributesRequest$AttributeNames": "<p>A list of attribute names whose values will be retrieved.</p>",
         "GetObjectAttributesRequest$AttributeNames": "<p>List of attribute names whose values will be retrieved.</p>",
         "GetTypedLinkFacetInformationResponse$IdentityAttributeOrder": "<p>The order of identity attributes for the facet, from most significant to least significant. The ability to filter typed links considers the order that the attributes are defined on the typed link facet. When providing ranges to typed link selection, any inexact ranges must be specified at the end. Any attributes that do not have a range specified are presumed to match the entire range. Filters are interpreted in the order of the attributes on the typed link facet, not the order in which they are supplied to any API calls. For more information about identity attributes, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>",
         "TypedLinkFacet$IdentityAttributeOrder": "<p>The set of attributes that distinguish links made from this facet from each other, in the order of significance. Listing typed links can filter on the values of these attributes. See <a>ListOutgoingTypedLinks</a> and <a>ListIncomingTypedLinks</a> for details.</p>",
@@ -441,6 +450,18 @@
       "base": "<p>Represents the output of a <a>DetachTypedLink</a> response operation.</p>",
       "refs": {
         "BatchWriteOperationResponse$DetachTypedLink": "<p>Detaches a typed link from a specified source and target object. For more information, see <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink\">Typed link</a>.</p>"
+      }
+    },
+    "BatchGetLinkAttributes": {
+      "base": "<p>Retrieves attributes that are associated with a typed link inside a <a>BatchRead</a> operation. For more information, see <a>GetLinkAttributes</a> and <a>BatchReadRequest$Operations</a>.</p>",
+      "refs": {
+        "BatchReadOperation$GetLinkAttributes": "<p>Retrieves attributes that are associated with a typed link.</p>"
+      }
+    },
+    "BatchGetLinkAttributesResponse": {
+      "base": "<p>Represents the output of a <a>GetLinkAttributes</a> response operation.</p>",
+      "refs": {
+        "BatchReadSuccessfulResponse$GetLinkAttributes": "<p>The list of attributes to retrieve from the typed link.</p>"
       }
     },
     "BatchGetObjectAttributes": {
@@ -665,6 +686,18 @@
         "BatchWriteOperationResponse$RemoveFacetFromObject": "<p>The result of a batch remove facet from object operation.</p>"
       }
     },
+    "BatchUpdateLinkAttributes": {
+      "base": "<p>Updates a given typed link’s attributes inside a <a>BatchRead</a> operation. Attributes to be updated must not contribute to the typed link’s identity, as defined by its <code>IdentityAttributeOrder</code>. For more information, see <a>UpdateLinkAttributes</a> and <a>BatchReadRequest$Operations</a>.</p>",
+      "refs": {
+        "BatchWriteOperation$UpdateLinkAttributes": "<p>Updates a given object's attributes.</p>"
+      }
+    },
+    "BatchUpdateLinkAttributesResponse": {
+      "base": "<p>Represents the output of a <a>UpdateLinkAttributes</a> response operation.</p>",
+      "refs": {
+        "BatchWriteOperationResponse$UpdateLinkAttributes": "<p>Represents the output of a <code>BatchWrite</code> response operation.</p>"
+      }
+    },
     "BatchUpdateObjectAttributes": {
       "base": "<p>Represents the output of a <code>BatchUpdate</code> operation. </p>",
       "refs": {
@@ -754,6 +787,7 @@
       "base": null,
       "refs": {
         "BatchReadRequest$ConsistencyLevel": "<p>Represents the manner and timing in which the successful write or update of an object is reflected in a subsequent read operation of that same object.</p>",
+        "GetLinkAttributesRequest$ConsistencyLevel": "<p>The consistency level at which to retrieve the attributes on a typed link.</p>",
         "GetObjectAttributesRequest$ConsistencyLevel": "<p>The consistency level at which to retrieve the attributes on an object.</p>",
         "GetObjectInformationRequest$ConsistencyLevel": "<p>The consistency level at which to retrieve the object information.</p>",
         "ListAttachedIndicesRequest$ConsistencyLevel": "<p>The consistency level to use for this operation.</p>",
@@ -1163,6 +1197,16 @@
       "refs": {
       }
     },
+    "GetLinkAttributesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetLinkAttributesResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "GetObjectAttributesRequest": {
       "base": null,
       "refs": {
@@ -1271,6 +1315,25 @@
     "LimitExceededException": {
       "base": "<p>Indicates that limits are exceeded. See <a href=\"http://docs.aws.amazon.com/directoryservice/latest/admin-guide/limits.html\">Limits</a> for more information.</p>",
       "refs": {
+      }
+    },
+    "LinkAttributeAction": {
+      "base": "<p>The action to take on a typed link attribute value. Updates are only supported for attributes which don’t contribute to link identity.</p>",
+      "refs": {
+        "LinkAttributeUpdate$AttributeAction": "<p>The action to perform as part of the attribute update.</p>"
+      }
+    },
+    "LinkAttributeUpdate": {
+      "base": "<p>Structure that contains attribute update information.</p>",
+      "refs": {
+        "LinkAttributeUpdateList$member": null
+      }
+    },
+    "LinkAttributeUpdateList": {
+      "base": null,
+      "refs": {
+        "BatchUpdateLinkAttributes$AttributeUpdates": "<p>The attributes update structure.</p>",
+        "UpdateLinkAttributesRequest$AttributeUpdates": "<p>The attributes update structure.</p>"
       }
     },
     "LinkName": {
@@ -2052,6 +2115,7 @@
         "AttributeKeyAndValue$Value": "<p>The value of the attribute.</p>",
         "AttributeNameAndValue$Value": "<p>The value for the typed link.</p>",
         "FacetAttributeDefinition$DefaultValue": "<p>The default value of the attribute (if configured).</p>",
+        "LinkAttributeAction$AttributeUpdateValue": "<p>The value that you want to update to.</p>",
         "ObjectAttributeAction$ObjectAttributeUpdateValue": "<p>The value that you want to update to.</p>",
         "TypedAttributeValueRange$StartValue": "<p>The value to start the range at.</p>",
         "TypedAttributeValueRange$EndValue": "<p>The attribute value to terminate the range at.</p>",
@@ -2148,8 +2212,12 @@
         "AttachTypedLinkResponse$TypedLinkSpecifier": "<p>Returns a typed link specifier as output.</p>",
         "BatchAttachTypedLinkResponse$TypedLinkSpecifier": "<p>Returns a typed link specifier as output.</p>",
         "BatchDetachTypedLink$TypedLinkSpecifier": "<p>Used to accept a typed link specifier as input.</p>",
+        "BatchGetLinkAttributes$TypedLinkSpecifier": "<p>Allows a typed link specifier to be accepted as input.</p>",
+        "BatchUpdateLinkAttributes$TypedLinkSpecifier": "<p>Allows a typed link specifier to be accepted as input.</p>",
         "DetachTypedLinkRequest$TypedLinkSpecifier": "<p>Used to accept a typed link specifier as input.</p>",
-        "TypedLinkSpecifierList$member": null
+        "GetLinkAttributesRequest$TypedLinkSpecifier": "<p>Allows a typed link specifier to be accepted as input.</p>",
+        "TypedLinkSpecifierList$member": null,
+        "UpdateLinkAttributesRequest$TypedLinkSpecifier": "<p>Allows a typed link specifier to be accepted as input.</p>"
       }
     },
     "TypedLinkSpecifierList": {
@@ -2180,6 +2248,7 @@
       "base": null,
       "refs": {
         "FacetAttributeUpdate$Action": "<p>The action to perform when updating the attribute.</p>",
+        "LinkAttributeAction$AttributeActionType": "<p>A type that can be either <code>UPDATE_OR_CREATE</code> or <code>DELETE</code>.</p>",
         "ObjectAttributeAction$ObjectAttributeActionType": "<p>A type that can be either <code>Update</code> or <code>Delete</code>.</p>",
         "TypedLinkFacetAttributeUpdate$Action": "<p>The action to perform when updating the attribute.</p>"
       }
@@ -2190,6 +2259,16 @@
       }
     },
     "UpdateFacetResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateLinkAttributesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateLinkAttributesResponse": {
       "base": null,
       "refs": {
       }

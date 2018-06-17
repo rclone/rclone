@@ -958,7 +958,8 @@
         "SourceSnapshotId":{"shape":"SnapshotId"},
         "VolumeiSCSIAttributes":{"shape":"VolumeiSCSIAttributes"},
         "CreatedDate":{"shape":"CreatedDate"},
-        "VolumeUsedInBytes":{"shape":"VolumeUsedInBytes"}
+        "VolumeUsedInBytes":{"shape":"VolumeUsedInBytes"},
+        "KMSKey":{"shape":"KMSKey"}
       }
     },
     "CachediSCSIVolumes":{
@@ -1038,7 +1039,9 @@
         "TargetName":{"shape":"TargetName"},
         "SourceVolumeARN":{"shape":"VolumeARN"},
         "NetworkInterfaceId":{"shape":"NetworkInterfaceId"},
-        "ClientToken":{"shape":"ClientToken"}
+        "ClientToken":{"shape":"ClientToken"},
+        "KMSEncrypted":{"shape":"Boolean"},
+        "KMSKey":{"shape":"KMSKey"}
       }
     },
     "CreateCachediSCSIVolumeOutput":{
@@ -1152,7 +1155,9 @@
       "members":{
         "GatewayARN":{"shape":"GatewayARN"},
         "TapeSizeInBytes":{"shape":"TapeSize"},
-        "TapeBarcode":{"shape":"TapeBarcode"}
+        "TapeBarcode":{"shape":"TapeBarcode"},
+        "KMSEncrypted":{"shape":"Boolean"},
+        "KMSKey":{"shape":"KMSKey"}
       }
     },
     "CreateTapeWithBarcodeOutput":{
@@ -1175,7 +1180,9 @@
         "TapeSizeInBytes":{"shape":"TapeSize"},
         "ClientToken":{"shape":"ClientToken"},
         "NumTapesToCreate":{"shape":"NumTapesToCreate"},
-        "TapeBarcodePrefix":{"shape":"TapeBarcodePrefix"}
+        "TapeBarcodePrefix":{"shape":"TapeBarcodePrefix"},
+        "KMSEncrypted":{"shape":"Boolean"},
+        "KMSKey":{"shape":"KMSKey"}
       }
     },
     "CreateTapesOutput":{
@@ -2305,14 +2312,15 @@
         "TapeStatus":{"shape":"TapeStatus"},
         "VTLDevice":{"shape":"VTLDeviceARN"},
         "Progress":{"shape":"DoubleObject"},
-        "TapeUsedInBytes":{"shape":"TapeUsage"}
+        "TapeUsedInBytes":{"shape":"TapeUsage"},
+        "KMSKey":{"shape":"KMSKey"}
       }
     },
     "TapeARN":{
       "type":"string",
       "max":500,
       "min":50,
-      "pattern":"^arn:(aws|aws-cn):storagegateway:[a-z\\-0-9]+:[0-9]+:tape\\/[0-9A-Z]{7,16}$"
+      "pattern":"^arn:(aws|aws-cn|aws-us-gov):storagegateway:[a-z\\-0-9]+:[0-9]+:tape\\/[0-9A-Z]{7,16}$"
     },
     "TapeARNs":{
       "type":"list",
@@ -2328,7 +2336,8 @@
         "CompletionTime":{"shape":"Time"},
         "RetrievedTo":{"shape":"GatewayARN"},
         "TapeStatus":{"shape":"TapeArchiveStatus"},
-        "TapeUsedInBytes":{"shape":"TapeUsage"}
+        "TapeUsedInBytes":{"shape":"TapeUsage"},
+        "KMSKey":{"shape":"KMSKey"}
       }
     },
     "TapeArchiveStatus":{"type":"string"},

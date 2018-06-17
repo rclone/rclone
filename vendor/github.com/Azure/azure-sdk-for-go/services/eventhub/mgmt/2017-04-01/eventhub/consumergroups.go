@@ -306,7 +306,11 @@ func (client ConsumerGroupsClient) GetResponder(resp *http.Response) (result Con
 // resourceGroupName - name of the resource group within the azure subscription.
 // namespaceName - the Namespace name
 // eventHubName - the Event Hub name
-func (client ConsumerGroupsClient) ListByEventHub(ctx context.Context, resourceGroupName string, namespaceName string, eventHubName string) (result ConsumerGroupListResultPage, err error) {
+// skip - skip is only used if a previous operation returned a partial result. If a previous response contains
+// a nextLink element, the value of the nextLink element will include a skip parameter that specifies a
+// starting point to use for subsequent calls.
+// top - may be used to limit the number of results to the most recent N usageDetails.
+func (client ConsumerGroupsClient) ListByEventHub(ctx context.Context, resourceGroupName string, namespaceName string, eventHubName string, skip *int32, top *int32) (result ConsumerGroupListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
@@ -315,12 +319,22 @@ func (client ConsumerGroupsClient) ListByEventHub(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "namespaceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "namespaceName", Name: validation.MinLength, Rule: 6, Chain: nil}}},
 		{TargetValue: eventHubName,
-			Constraints: []validation.Constraint{{Target: "eventHubName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "eventHubName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
+		{TargetValue: skip,
+			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
+				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+					{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
+				}}}},
+		{TargetValue: top,
+			Constraints: []validation.Constraint{{Target: "top", Name: validation.Null, Rule: false,
+				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
+				}}}}}); err != nil {
 		return result, validation.NewError("eventhub.ConsumerGroupsClient", "ListByEventHub", err.Error())
 	}
 
 	result.fn = client.listByEventHubNextResults
-	req, err := client.ListByEventHubPreparer(ctx, resourceGroupName, namespaceName, eventHubName)
+	req, err := client.ListByEventHubPreparer(ctx, resourceGroupName, namespaceName, eventHubName, skip, top)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "eventhub.ConsumerGroupsClient", "ListByEventHub", nil, "Failure preparing request")
 		return
@@ -342,7 +356,7 @@ func (client ConsumerGroupsClient) ListByEventHub(ctx context.Context, resourceG
 }
 
 // ListByEventHubPreparer prepares the ListByEventHub request.
-func (client ConsumerGroupsClient) ListByEventHubPreparer(ctx context.Context, resourceGroupName string, namespaceName string, eventHubName string) (*http.Request, error) {
+func (client ConsumerGroupsClient) ListByEventHubPreparer(ctx context.Context, resourceGroupName string, namespaceName string, eventHubName string, skip *int32, top *int32) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"eventHubName":      autorest.Encode("path", eventHubName),
 		"namespaceName":     autorest.Encode("path", namespaceName),
@@ -353,6 +367,12 @@ func (client ConsumerGroupsClient) ListByEventHubPreparer(ctx context.Context, r
 	const APIVersion = "2017-04-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
+	}
+	if skip != nil {
+		queryParameters["$skip"] = autorest.Encode("query", *skip)
+	}
+	if top != nil {
+		queryParameters["$top"] = autorest.Encode("query", *top)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -405,7 +425,7 @@ func (client ConsumerGroupsClient) listByEventHubNextResults(lastResults Consume
 }
 
 // ListByEventHubComplete enumerates all values, automatically crossing page boundaries as required.
-func (client ConsumerGroupsClient) ListByEventHubComplete(ctx context.Context, resourceGroupName string, namespaceName string, eventHubName string) (result ConsumerGroupListResultIterator, err error) {
-	result.page, err = client.ListByEventHub(ctx, resourceGroupName, namespaceName, eventHubName)
+func (client ConsumerGroupsClient) ListByEventHubComplete(ctx context.Context, resourceGroupName string, namespaceName string, eventHubName string, skip *int32, top *int32) (result ConsumerGroupListResultIterator, err error) {
+	result.page, err = client.ListByEventHub(ctx, resourceGroupName, namespaceName, eventHubName, skip, top)
 	return
 }

@@ -17,19 +17,11 @@ import (
 	"golang.org/x/net/internal/sockstest"
 )
 
-const (
-	targetNetwork  = "tcp6"
-	targetHostname = "fqdn.doesnotexist"
-	targetHostIP   = "2001:db8::1"
-	targetPort     = "5963"
-)
-
 func TestDial(t *testing.T) {
 	t.Run("Connect", func(t *testing.T) {
 		ss, err := sockstest.NewServer(sockstest.NoAuthRequired, sockstest.NoProxyRequired)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 		defer ss.Close()
 		d := socks.NewDialer(ss.Addr().Network(), ss.Addr().String())
@@ -41,21 +33,45 @@ func TestDial(t *testing.T) {
 			Username: "username",
 			Password: "password",
 		}).Authenticate
-		c, err := d.Dial(targetNetwork, net.JoinHostPort(targetHostIP, targetPort))
-		if err == nil {
-			c.(*socks.Conn).BoundAddr()
-			c.Close()
-		}
+		c, err := d.DialContext(context.Background(), ss.TargetAddr().Network(), ss.TargetAddr().String())
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
+		}
+		c.(*socks.Conn).BoundAddr()
+		c.Close()
+	})
+	t.Run("ConnectWithConn", func(t *testing.T) {
+		ss, err := sockstest.NewServer(sockstest.NoAuthRequired, sockstest.NoProxyRequired)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer ss.Close()
+		c, err := net.Dial(ss.Addr().Network(), ss.Addr().String())
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer c.Close()
+		d := socks.NewDialer(ss.Addr().Network(), ss.Addr().String())
+		d.AuthMethods = []socks.AuthMethod{
+			socks.AuthMethodNotRequired,
+			socks.AuthMethodUsernamePassword,
+		}
+		d.Authenticate = (&socks.UsernamePassword{
+			Username: "username",
+			Password: "password",
+		}).Authenticate
+		a, err := d.DialWithConn(context.Background(), c, ss.TargetAddr().Network(), ss.TargetAddr().String())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := a.(*socks.Addr); !ok {
+			t.Fatalf("got %+v; want socks.Addr", a)
 		}
 	})
 	t.Run("Cancel", func(t *testing.T) {
 		ss, err := sockstest.NewServer(sockstest.NoAuthRequired, blackholeCmdFunc)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 		defer ss.Close()
 		d := socks.NewDialer(ss.Addr().Network(), ss.Addr().String())
@@ -63,7 +79,7 @@ func TestDial(t *testing.T) {
 		defer cancel()
 		dialErr := make(chan error)
 		go func() {
-			c, err := d.DialContext(ctx, ss.TargetAddr().Network(), net.JoinHostPort(targetHostname, targetPort))
+			c, err := d.DialContext(ctx, ss.TargetAddr().Network(), ss.TargetAddr().String())
 			if err == nil {
 				c.Close()
 			}
@@ -73,41 +89,37 @@ func TestDial(t *testing.T) {
 		cancel()
 		err = <-dialErr
 		if perr, nerr := parseDialError(err); perr != context.Canceled && nerr == nil {
-			t.Errorf("got %v; want context.Canceled or equivalent", err)
-			return
+			t.Fatalf("got %v; want context.Canceled or equivalent", err)
 		}
 	})
 	t.Run("Deadline", func(t *testing.T) {
 		ss, err := sockstest.NewServer(sockstest.NoAuthRequired, blackholeCmdFunc)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 		defer ss.Close()
 		d := socks.NewDialer(ss.Addr().Network(), ss.Addr().String())
 		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(100*time.Millisecond))
 		defer cancel()
-		c, err := d.DialContext(ctx, ss.TargetAddr().Network(), net.JoinHostPort(targetHostname, targetPort))
+		c, err := d.DialContext(ctx, ss.TargetAddr().Network(), ss.TargetAddr().String())
 		if err == nil {
 			c.Close()
 		}
 		if perr, nerr := parseDialError(err); perr != context.DeadlineExceeded && nerr == nil {
-			t.Errorf("got %v; want context.DeadlineExceeded or equivalent", err)
-			return
+			t.Fatalf("got %v; want context.DeadlineExceeded or equivalent", err)
 		}
 	})
 	t.Run("WithRogueServer", func(t *testing.T) {
 		ss, err := sockstest.NewServer(sockstest.NoAuthRequired, rogueCmdFunc)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 		defer ss.Close()
 		d := socks.NewDialer(ss.Addr().Network(), ss.Addr().String())
 		for i := 0; i < 2*len(rogueCmdList); i++ {
 			ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(100*time.Millisecond))
 			defer cancel()
-			c, err := d.DialContext(ctx, targetNetwork, net.JoinHostPort(targetHostIP, targetPort))
+			c, err := d.DialContext(ctx, ss.TargetAddr().Network(), ss.TargetAddr().String())
 			if err == nil {
 				t.Log(c.(*socks.Conn).BoundAddr())
 				c.Close()

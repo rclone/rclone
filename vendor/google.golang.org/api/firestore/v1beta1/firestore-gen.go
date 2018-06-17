@@ -1133,6 +1133,9 @@ type IndexField struct {
 	//   "DESCENDING" - The field's values are indexed so as to support
 	// sequencing in
 	// descending order and also query by <, >, <=, >=, and =.
+	//   "ARRAY_CONTAINS" - The field's array values are indexed so as to
+	// support membership using
+	// ARRAY_CONTAINS queries.
 	Mode string `json:"mode,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "FieldPath") to

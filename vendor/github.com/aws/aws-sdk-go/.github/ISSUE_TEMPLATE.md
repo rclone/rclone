@@ -10,5 +10,5 @@ Please fill out the sections below to help us address your issue.
 
 ### Steps to reproduce
 
-If you have have an runnable example, please include it.
+If you have an runnable example, please include it.
 

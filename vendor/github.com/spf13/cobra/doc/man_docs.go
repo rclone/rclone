@@ -176,13 +176,13 @@ func manPrintFlags(buf *bytes.Buffer, flags *pflag.FlagSet) {
 
 func manPrintOptions(buf *bytes.Buffer, command *cobra.Command) {
 	flags := command.NonInheritedFlags()
-	if flags.HasFlags() {
+	if flags.HasAvailableFlags() {
 		buf.WriteString("# OPTIONS\n")
 		manPrintFlags(buf, flags)
 		buf.WriteString("\n")
 	}
 	flags = command.InheritedFlags()
-	if flags.HasFlags() {
+	if flags.HasAvailableFlags() {
 		buf.WriteString("# OPTIONS INHERITED FROM PARENT COMMANDS\n")
 		manPrintFlags(buf, flags)
 		buf.WriteString("\n")

@@ -1045,7 +1045,7 @@ func (c *PagespeedapiRunpagespeedCall) Do(opts ...googleapi.CallOption) (*Pagesp
 	//     "url": {
 	//       "description": "The URL to fetch and analyze",
 	//       "location": "query",
-	//       "pattern": "(?i)http(s)?://.*",
+	//       "pattern": "(?i)(site:|origin:)?http(s)?://.*",
 	//       "required": true,
 	//       "type": "string"
 	//     },

@@ -1,7 +1,10 @@
 package s3_test
 
 import (
+	"encoding/json"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -123,5 +126,54 @@ func TestHostStyleBucketGetBucketLocation(t *testing.T) {
 	}
 	if e, a := "bucket", u.Path; !strings.Contains(a, e) {
 		t.Errorf("expect %s to be in %s", e, a)
+	}
+}
+
+func TestVirtualHostStyleSuite(t *testing.T) {
+	f, err := os.Open(filepath.Join("testdata", "virtual_host.json"))
+	if err != nil {
+		t.Fatalf("expect no error, %v", err)
+	}
+
+	cases := []struct {
+		Bucket                    string
+		Region                    string
+		UseDualStack              bool
+		UseS3Accelerate           bool
+		ConfiguredAddressingStyle string
+
+		ExpectedURI string
+	}{}
+
+	decoder := json.NewDecoder(f)
+	if err := decoder.Decode(&cases); err != nil {
+		t.Fatalf("expect no error, %v", err)
+	}
+
+	const testPathStyle = "path"
+	for i, c := range cases {
+		svc := s3.New(unit.Session, &aws.Config{
+			Region:           &c.Region,
+			UseDualStack:     &c.UseDualStack,
+			S3UseAccelerate:  &c.UseS3Accelerate,
+			S3ForcePathStyle: aws.Bool(c.ConfiguredAddressingStyle == testPathStyle),
+		})
+
+		req, _ := svc.HeadBucketRequest(&s3.HeadBucketInput{
+			Bucket: &c.Bucket,
+		})
+		req.Build()
+		if req.Error != nil {
+			t.Fatalf("expect no error, got %v", req.Error)
+		}
+
+		// Trim trailing '/' that are added by the SDK but not in the tests.
+		actualURI := strings.TrimRightFunc(
+			req.HTTPRequest.URL.String(),
+			func(r rune) bool { return r == '/' },
+		)
+		if e, a := c.ExpectedURI, actualURI; e != a {
+			t.Errorf("%d, expect\n%s\nurl to be\n%s", i, e, a)
+		}
 	}
 }

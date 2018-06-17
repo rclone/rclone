@@ -39,7 +39,8 @@
         {"shape":"InvalidInputException"},
         {"shape":"LimitExceededException"},
         {"shape":"AccessDeniedException"},
-        {"shape":"NoSuchEntityException"}
+        {"shape":"NoSuchEntityException"},
+        {"shape":"InvalidCrossAccountRoleException"}
       ]
     },
     "CreateAssessmentTemplate":{
@@ -864,7 +865,6 @@
       "required":[
         "arn",
         "name",
-        "resourceGroupArn",
         "createdAt",
         "updatedAt"
       ],
@@ -1002,10 +1002,7 @@
     "Bool":{"type":"boolean"},
     "CreateAssessmentTargetRequest":{
       "type":"structure",
-      "required":[
-        "assessmentTargetName",
-        "resourceGroupArn"
-      ],
+      "required":["assessmentTargetName"],
       "members":{
         "assessmentTargetName":{"shape":"AssessmentTargetName"},
         "resourceGroupArn":{"shape":"Arn"}
@@ -2052,8 +2049,7 @@
       "type":"structure",
       "required":[
         "assessmentTargetArn",
-        "assessmentTargetName",
-        "resourceGroupArn"
+        "assessmentTargetName"
       ],
       "members":{
         "assessmentTargetArn":{"shape":"Arn"},

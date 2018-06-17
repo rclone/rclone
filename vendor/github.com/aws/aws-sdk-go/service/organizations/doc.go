@@ -109,7 +109,7 @@
 // requests were successfully made to Organizations, who made the request, when
 // it was made, and so on. For more about AWS Organizations and its support
 // for AWS CloudTrail, see Logging AWS Organizations Events with AWS CloudTrail
-// (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_cloudtrail-integration.html)
+// (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_monitoring.html#orgs_cloudtrail-integration)
 // in the AWS Organizations User Guide. To learn more about CloudTrail, including
 // how to turn it on and find your log files, see the AWS CloudTrail User Guide
 // (http://docs.aws.amazon.com/awscloudtrail/latest/userguide/what_is_cloud_trail_top_level.html).

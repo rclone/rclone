@@ -282,9 +282,9 @@ func (s *GoogleCloudMlV1HyperparameterOutputHyperparameterMetric) UnmarshalJSON(
 type GoogleCloudMlV1__AutoScaling struct {
 	// MinNodes: Optional. The minimum number of nodes to allocate for this
 	// model. These
-	// nodes are always up, starting from the time the model is deployed, so
-	// the
-	// cost of operating this model will be at least
+	// nodes are always up, starting from the time the model is
+	// deployed.
+	// Therefore, the cost of operating this model will be at least
 	// `rate` * `min_nodes` * number of hours since last billing
 	// cycle,
 	// where `rate` is the cost per node-hour as documented in the
@@ -306,7 +306,27 @@ type GoogleCloudMlV1__AutoScaling struct {
 	// traffic
 	// to a model stops (and after a cool-down period), nodes will be shut
 	// down
-	// and no charges will be incurred until traffic to the model resumes.
+	// and no charges will be incurred until traffic to the model
+	// resumes.
+	//
+	// You can set `min_nodes` when creating the model version, and you can
+	// also
+	// update `min_nodes` for an existing
+	// version:
+	// <pre>
+	// update_body.json:
+	// {
+	//   'autoScaling': {
+	//     'minNodes': 5
+	//   }
+	// }
+	// </pre>
+	// HTTP request:
+	// <pre>
+	// PATCH
+	// https://ml.googleapis.com/v1/{name=projects/*/models/*/versions/*}?update_mask=autoScaling.minNodes -d
+	// @./update_body.json
+	// </pre>
 	MinNodes int64 `json:"minNodes,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "MinNodes") to
@@ -345,6 +365,7 @@ type GoogleCloudMlV1__Capability struct {
 	// Default to no GPU.
 	//   "NVIDIA_TESLA_K80" - Nvidia tesla k80 GPU.
 	//   "NVIDIA_TESLA_P100" - Nvidia tesla P100 GPU.
+	//   "NVIDIA_TESLA_V100" - Nvidia tesla V100 GPU.
 	AvailableAccelerators []string `json:"availableAccelerators,omitempty"`
 
 	// Possible values:
@@ -1408,53 +1429,45 @@ type GoogleCloudMlV1__TrainingInput struct {
 	//   <dd>
 	//   A machine with roughly twice the number of cores and roughly double
 	// the
-	//   memory of <code suppresswarning="true">complex_model_s</code>.
+	//   memory of <i>complex_model_s</i>.
 	//   </dd>
 	//   <dt>complex_model_l</dt>
 	//   <dd>
 	//   A machine with roughly twice the number of cores and roughly double
 	// the
-	//   memory of <code suppresswarning="true">complex_model_m</code>.
+	//   memory of <i>complex_model_m</i>.
 	//   </dd>
 	//   <dt>standard_gpu</dt>
 	//   <dd>
-	//   A machine equivalent to <code
-	// suppresswarning="true">standard</code> that
+	//   A machine equivalent to <i>standard</i> that
 	//   also includes a single NVIDIA Tesla K80 GPU. See more about
 	//   <a href="/ml-engine/docs/tensorflow/using-gpus">using GPUs to
 	//   train your model</a>.
 	//   </dd>
 	//   <dt>complex_model_m_gpu</dt>
 	//   <dd>
-	//   A machine equivalent to
-	//   <code suppresswarning="true">complex_model_m</code> that also
-	// includes
+	//   A machine equivalent to <i>complex_model_m</i> that also includes
 	//   four NVIDIA Tesla K80 GPUs.
 	//   </dd>
 	//   <dt>complex_model_l_gpu</dt>
 	//   <dd>
-	//   A machine equivalent to
-	//   <code suppresswarning="true">complex_model_l</code> that also
-	// includes
+	//   A machine equivalent to <i>complex_model_l</i> that also includes
 	//   eight NVIDIA Tesla K80 GPUs.
 	//   </dd>
 	//   <dt>standard_p100</dt>
 	//   <dd>
-	//   A machine equivalent to <code
-	// suppresswarning="true">standard</code> that
+	//   A machine equivalent to <i>standard</i> that
 	//   also includes a single NVIDIA Tesla P100 GPU. The availability of
 	// these
-	//   GPUs is in the Beta launch stage.
+	//   GPUs is in the <i>Beta</i> launch stage.
 	//   </dd>
 	//   <dt>complex_model_m_p100</dt>
 	//   <dd>
-	//   A machine equivalent to
-	//   <code suppresswarning="true">complex_model_m</code> that also
-	// includes
+	//   A machine equivalent to <i>complex_model_m</i> that also includes
 	//   four NVIDIA Tesla P100 GPUs. The availability of these GPUs is in
-	//   the Beta launch stage.
+	//   the <i>Beta</i> launch stage.
 	//   </dd>
-	//   <dt>standard_tpu</dt>
+	//   <dt>cloud_tpu</dt>
 	//   <dd>
 	//   A TPU VM including one Cloud TPU. The availability of Cloud TPU is
 	// in
@@ -1741,10 +1754,11 @@ type GoogleCloudMlV1__Version struct {
 	// the runtime version of the model to 1.4 or greater.
 	//
 	// Possible values:
-	//   "FRAMEWORK_UNSPECIFIED"
-	//   "TENSORFLOW"
-	//   "SCIKIT_LEARN"
-	//   "XGBOOST"
+	//   "FRAMEWORK_UNSPECIFIED" - Unspecified framework. Defaults to
+	// TensorFlow.
+	//   "TENSORFLOW" - Tensorflow framework.
+	//   "SCIKIT_LEARN" - Scikit-learn framework.
+	//   "XGBOOST" - XGBoost framework.
 	Framework string `json:"framework,omitempty"`
 
 	// IsDefault: Output only. If true, this version will be used to handle

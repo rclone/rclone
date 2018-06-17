@@ -3885,10 +3885,6 @@
     },
     "ConversionTask":{
       "type":"structure",
-      "required":[
-        "ConversionTaskId",
-        "State"
-      ],
       "members":{
         "ConversionTaskId":{
           "shape":"String",
@@ -4028,6 +4024,26 @@
           "shape":"String",
           "locationName":"snapshotId"
         }
+      }
+    },
+    "CpuOptions":{
+      "type":"structure",
+      "members":{
+        "CoreCount":{
+          "shape":"Integer",
+          "locationName":"coreCount"
+        },
+        "ThreadsPerCore":{
+          "shape":"Integer",
+          "locationName":"threadsPerCore"
+        }
+      }
+    },
+    "CpuOptionsRequest":{
+      "type":"structure",
+      "members":{
+        "CoreCount":{"shape":"Integer"},
+        "ThreadsPerCore":{"shape":"Integer"}
       }
     },
     "CreateCustomerGatewayRequest":{
@@ -8543,11 +8559,6 @@
     },
     "DiskImageDescription":{
       "type":"structure",
-      "required":[
-        "Format",
-        "ImportManifestUrl",
-        "Size"
-      ],
       "members":{
         "Checksum":{
           "shape":"String",
@@ -8603,7 +8614,6 @@
     },
     "DiskImageVolumeDescription":{
       "type":"structure",
-      "required":["Id"],
       "members":{
         "Id":{
           "shape":"String",
@@ -9532,7 +9542,8 @@
         "DryRun":{
           "shape":"Boolean",
           "locationName":"dryRun"
-        }
+        },
+        "Latest":{"shape":"Boolean"}
       }
     },
     "GetConsoleOutputResult":{
@@ -10545,7 +10556,6 @@
     },
     "ImportInstanceTaskDetails":{
       "type":"structure",
-      "required":["Volumes"],
       "members":{
         "Description":{
           "shape":"String",
@@ -10746,12 +10756,6 @@
     },
     "ImportVolumeTaskDetails":{
       "type":"structure",
-      "required":[
-        "AvailabilityZone",
-        "BytesConverted",
-        "Image",
-        "Volume"
-      ],
       "members":{
         "AvailabilityZone":{
           "shape":"String",
@@ -10933,6 +10937,10 @@
         "VirtualizationType":{
           "shape":"VirtualizationType",
           "locationName":"virtualizationType"
+        },
+        "CpuOptions":{
+          "shape":"CpuOptions",
+          "locationName":"cpuOptions"
         }
       }
     },
@@ -11662,6 +11670,7 @@
         "i3.4xlarge",
         "i3.8xlarge",
         "i3.16xlarge",
+        "i3.metal",
         "hi1.4xlarge",
         "hs1.8xlarge",
         "c1.medium",
@@ -11682,6 +11691,12 @@
         "c5.4xlarge",
         "c5.9xlarge",
         "c5.18xlarge",
+        "c5d.large",
+        "c5d.xlarge",
+        "c5d.2xlarge",
+        "c5d.4xlarge",
+        "c5d.9xlarge",
+        "c5d.18xlarge",
         "cc1.4xlarge",
         "cc2.8xlarge",
         "g2.2xlarge",
@@ -11708,6 +11723,12 @@
         "m5.4xlarge",
         "m5.12xlarge",
         "m5.24xlarge",
+        "m5d.large",
+        "m5d.xlarge",
+        "m5d.2xlarge",
+        "m5d.4xlarge",
+        "m5d.12xlarge",
+        "m5d.24xlarge",
         "h1.2xlarge",
         "h1.4xlarge",
         "h1.8xlarge",
@@ -16148,7 +16169,8 @@
         },
         "LaunchTemplate":{"shape":"LaunchTemplateSpecification"},
         "InstanceMarketOptions":{"shape":"InstanceMarketOptionsRequest"},
-        "CreditSpecification":{"shape":"CreditSpecificationRequest"}
+        "CreditSpecification":{"shape":"CreditSpecificationRequest"},
+        "CpuOptions":{"shape":"CpuOptionsRequest"}
       }
     },
     "RunScheduledInstancesRequest":{

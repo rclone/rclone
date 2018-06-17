@@ -64,9 +64,9 @@ func (c *MediaLive) CreateChannelRequest(input *CreateChannelInput) (req *reques
 // API operation CreateChannel for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeUnprocessableEntityException "UnprocessableEntityException"
-//
 //   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeUnprocessableEntityException "UnprocessableEntityException"
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
 //
@@ -1492,9 +1492,9 @@ func (c *MediaLive) UpdateChannelRequest(input *UpdateChannelInput) (req *reques
 // API operation UpdateChannel for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeUnprocessableEntityException "UnprocessableEntityException"
-//
 //   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeUnprocessableEntityException "UnprocessableEntityException"
 //
 //   * ErrCodeInternalServerErrorException "InternalServerErrorException"
 //
@@ -3625,6 +3625,9 @@ type Channel struct {
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
 
+	// The log level being written to CloudWatch Logs.
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
+
 	// The name of the channel. (user-mutable)
 	Name *string `locationName:"name" type:"string"`
 
@@ -3686,6 +3689,12 @@ func (s *Channel) SetInputAttachments(v []*InputAttachment) *Channel {
 // SetInputSpecification sets the InputSpecification field's value.
 func (s *Channel) SetInputSpecification(v *InputSpecification) *Channel {
 	s.InputSpecification = v
+	return s
+}
+
+// SetLogLevel sets the LogLevel field's value.
+func (s *Channel) SetLogLevel(v string) *Channel {
+	s.LogLevel = &v
 	return s
 }
 
@@ -3758,6 +3767,9 @@ type ChannelSummary struct {
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
 
+	// The log level being written to CloudWatch Logs.
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
+
 	// The name of the channel. (user-mutable)
 	Name *string `locationName:"name" type:"string"`
 
@@ -3816,6 +3828,12 @@ func (s *ChannelSummary) SetInputSpecification(v *InputSpecification) *ChannelSu
 	return s
 }
 
+// SetLogLevel sets the LogLevel field's value.
+func (s *ChannelSummary) SetLogLevel(v string) *ChannelSummary {
+	s.LogLevel = &v
+	return s
+}
+
 // SetName sets the Name field's value.
 func (s *ChannelSummary) SetName(v string) *ChannelSummary {
 	s.Name = &v
@@ -3850,6 +3868,8 @@ type CreateChannelInput struct {
 	InputAttachments []*InputAttachment `locationName:"inputAttachments" type:"list"`
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
+
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
 
 	Name *string `locationName:"name" type:"string"`
 
@@ -3916,6 +3936,12 @@ func (s *CreateChannelInput) SetInputAttachments(v []*InputAttachment) *CreateCh
 // SetInputSpecification sets the InputSpecification field's value.
 func (s *CreateChannelInput) SetInputSpecification(v *InputSpecification) *CreateChannelInput {
 	s.InputSpecification = v
+	return s
+}
+
+// SetLogLevel sets the LogLevel field's value.
+func (s *CreateChannelInput) SetLogLevel(v string) *CreateChannelInput {
+	s.LogLevel = &v
 	return s
 }
 
@@ -4147,6 +4173,8 @@ type DeleteChannelOutput struct {
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
 
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
+
 	Name *string `locationName:"name" type:"string"`
 
 	PipelinesRunningCount *int64 `locationName:"pipelinesRunningCount" type:"integer"`
@@ -4205,6 +4233,12 @@ func (s *DeleteChannelOutput) SetInputAttachments(v []*InputAttachment) *DeleteC
 // SetInputSpecification sets the InputSpecification field's value.
 func (s *DeleteChannelOutput) SetInputSpecification(v *InputSpecification) *DeleteChannelOutput {
 	s.InputSpecification = v
+	return s
+}
+
+// SetLogLevel sets the LogLevel field's value.
+func (s *DeleteChannelOutput) SetLogLevel(v string) *DeleteChannelOutput {
+	s.LogLevel = &v
 	return s
 }
 
@@ -4385,6 +4419,8 @@ type DescribeChannelOutput struct {
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
 
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
+
 	Name *string `locationName:"name" type:"string"`
 
 	PipelinesRunningCount *int64 `locationName:"pipelinesRunningCount" type:"integer"`
@@ -4443,6 +4479,12 @@ func (s *DescribeChannelOutput) SetInputAttachments(v []*InputAttachment) *Descr
 // SetInputSpecification sets the InputSpecification field's value.
 func (s *DescribeChannelOutput) SetInputSpecification(v *InputSpecification) *DescribeChannelOutput {
 	s.InputSpecification = v
+	return s
+}
+
+// SetLogLevel sets the LogLevel field's value.
+func (s *DescribeChannelOutput) SetLogLevel(v string) *DescribeChannelOutput {
+	s.LogLevel = &v
 	return s
 }
 
@@ -10208,6 +10250,8 @@ type StartChannelOutput struct {
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
 
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
+
 	Name *string `locationName:"name" type:"string"`
 
 	PipelinesRunningCount *int64 `locationName:"pipelinesRunningCount" type:"integer"`
@@ -10269,6 +10313,12 @@ func (s *StartChannelOutput) SetInputSpecification(v *InputSpecification) *Start
 	return s
 }
 
+// SetLogLevel sets the LogLevel field's value.
+func (s *StartChannelOutput) SetLogLevel(v string) *StartChannelOutput {
+	s.LogLevel = &v
+	return s
+}
+
 // SetName sets the Name field's value.
 func (s *StartChannelOutput) SetName(v string) *StartChannelOutput {
 	s.Name = &v
@@ -10297,7 +10347,9 @@ type StaticKeySettings struct {
 	_ struct{} `type:"structure"`
 
 	// The URL of the license server used for protecting content.
-	KeyProviderServer *InputLocation `locationName:"keyProviderServer" type:"structure"`
+	//
+	// KeyProviderServer is a required field
+	KeyProviderServer *InputLocation `locationName:"keyProviderServer" type:"structure" required:"true"`
 
 	// Static key value as a 32 character hexadecimal string.
 	//
@@ -10318,6 +10370,9 @@ func (s StaticKeySettings) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *StaticKeySettings) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "StaticKeySettings"}
+	if s.KeyProviderServer == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeyProviderServer"))
+	}
 	if s.StaticKeyValue == nil {
 		invalidParams.Add(request.NewErrParamRequired("StaticKeyValue"))
 	}
@@ -10401,6 +10456,8 @@ type StopChannelOutput struct {
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
 
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
+
 	Name *string `locationName:"name" type:"string"`
 
 	PipelinesRunningCount *int64 `locationName:"pipelinesRunningCount" type:"integer"`
@@ -10459,6 +10516,12 @@ func (s *StopChannelOutput) SetInputAttachments(v []*InputAttachment) *StopChann
 // SetInputSpecification sets the InputSpecification field's value.
 func (s *StopChannelOutput) SetInputSpecification(v *InputSpecification) *StopChannelOutput {
 	s.InputSpecification = v
+	return s
+}
+
+// SetLogLevel sets the LogLevel field's value.
+func (s *StopChannelOutput) SetLogLevel(v string) *StopChannelOutput {
+	s.LogLevel = &v
 	return s
 }
 
@@ -10788,6 +10851,8 @@ type UpdateChannelInput struct {
 
 	InputSpecification *InputSpecification `locationName:"inputSpecification" type:"structure"`
 
+	LogLevel *string `locationName:"logLevel" type:"string" enum:"LogLevel"`
+
 	Name *string `locationName:"name" type:"string"`
 
 	RoleArn *string `locationName:"roleArn" type:"string"`
@@ -10858,6 +10923,12 @@ func (s *UpdateChannelInput) SetInputAttachments(v []*InputAttachment) *UpdateCh
 // SetInputSpecification sets the InputSpecification field's value.
 func (s *UpdateChannelInput) SetInputSpecification(v *InputSpecification) *UpdateChannelInput {
 	s.InputSpecification = v
+	return s
+}
+
+// SetLogLevel sets the LogLevel field's value.
+func (s *UpdateChannelInput) SetLogLevel(v string) *UpdateChannelInput {
+	s.LogLevel = &v
 	return s
 }
 
@@ -12601,6 +12672,23 @@ const (
 
 	// InputTypeUrlPull is a InputType enum value
 	InputTypeUrlPull = "URL_PULL"
+)
+
+const (
+	// LogLevelError is a LogLevel enum value
+	LogLevelError = "ERROR"
+
+	// LogLevelWarning is a LogLevel enum value
+	LogLevelWarning = "WARNING"
+
+	// LogLevelInfo is a LogLevel enum value
+	LogLevelInfo = "INFO"
+
+	// LogLevelDebug is a LogLevel enum value
+	LogLevelDebug = "DEBUG"
+
+	// LogLevelDisabled is a LogLevel enum value
+	LogLevelDisabled = "DISABLED"
 )
 
 const (

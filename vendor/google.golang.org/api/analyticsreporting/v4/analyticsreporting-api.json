@@ -141,7 +141,7 @@
       }
     }
   },
-  "revision": "20180124",
+  "revision": "20180515",
   "rootUrl": "https://analyticsreporting.googleapis.com/",
   "schemas": {
     "Cohort": {
@@ -862,7 +862,7 @@
           "type": "array"
         },
         "pageSize": {
-          "description": "Page size is for paging and specifies the maximum number of returned rows.\nPage size should be \u003e= 0. A query returns the default of 1,000 rows.\nThe Analytics Core Reporting API returns a maximum of 10,000 rows per\nrequest, no matter how many you ask for. It can also return fewer rows\nthan requested, if there aren't as many dimension segments as you expect.\nFor instance, there are fewer than 300 possible values for `ga:country`,\nso when segmenting only by country, you can't get more than 300 rows,\neven if you set `pageSize` to a higher value.",
+          "description": "Page size is for paging and specifies the maximum number of returned rows.\nPage size should be \u003e= 0. A query returns the default of 1,000 rows.\nThe Analytics Core Reporting API returns a maximum of 100,000 rows per\nrequest, no matter how many you ask for. It can also return fewer rows\nthan requested, if there aren't as many dimension segments as you expect.\nFor instance, there are fewer than 300 possible values for `ga:country`,\nso when segmenting only by country, you can't get more than 300 rows,\neven if you set `pageSize` to a higher value.",
           "format": "int32",
           "type": "integer"
         },
@@ -1187,7 +1187,7 @@
     }
   },
   "servicePath": "",
-  "title": "Google Analytics Reporting API",
+  "title": "Analytics Reporting API",
   "version": "v4",
   "version_module": true
 }

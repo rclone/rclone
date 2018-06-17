@@ -256,7 +256,7 @@
       }
     }
   },
-  "revision": "20180330",
+  "revision": "20180525",
   "rootUrl": "https://serviceuser.googleapis.com/",
   "schemas": {
     "Api": {
@@ -381,10 +381,6 @@
         "allowWithoutCredential": {
           "description": "If true, the service accepts API keys without any other credential.",
           "type": "boolean"
-        },
-        "customAuth": {
-          "$ref": "CustomAuthRequirements",
-          "description": "Configuration for custom authentication."
         },
         "oauth": {
           "$ref": "OAuthRequirements",
@@ -545,17 +541,6 @@
       "properties": {
         "environment": {
           "description": "The service control environment to use. If empty, no control plane\nfeature (like quota and billing) will be enabled.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "CustomAuthRequirements": {
-      "description": "Configuration for a custom authentication provider.",
-      "id": "CustomAuthRequirements",
-      "properties": {
-        "provider": {
-          "description": "A configuration string containing connection information for the\nauthentication provider, typically formatted as a SmartService string\n(go/smartservice).",
           "type": "string"
         }
       },

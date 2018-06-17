@@ -73,7 +73,7 @@ func (c *CloudTrail) AddTagsRequest(input *AddTagsInput) (req *request.Request, 
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   This exception is thrown when the specified resource is not found.
 //
-//   * ErrCodeARNInvalidException "ARNInvalidException"
+//   * ErrCodeARNInvalidException "CloudTrailARNInvalidException"
 //   This exception is thrown when an operation is called with an invalid trail
 //   ARN. The format of a trail ARN is:
 //
@@ -842,7 +842,7 @@ func (c *CloudTrail) ListTagsRequest(input *ListTagsInput) (req *request.Request
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   This exception is thrown when the specified resource is not found.
 //
-//   * ErrCodeARNInvalidException "ARNInvalidException"
+//   * ErrCodeARNInvalidException "CloudTrailARNInvalidException"
 //   This exception is thrown when an operation is called with an invalid trail
 //   ARN. The format of a trail ARN is:
 //
@@ -1271,7 +1271,7 @@ func (c *CloudTrail) RemoveTagsRequest(input *RemoveTagsInput) (req *request.Req
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   This exception is thrown when the specified resource is not found.
 //
-//   * ErrCodeARNInvalidException "ARNInvalidException"
+//   * ErrCodeARNInvalidException "CloudTrailARNInvalidException"
 //   This exception is thrown when an operation is called with an invalid trail
 //   ARN. The format of a trail ARN is:
 //

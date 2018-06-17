@@ -1,4 +1,4 @@
-// Package cloudfunctions provides access to the Google Cloud Functions API.
+// Package cloudfunctions provides access to the Cloud Functions API.
 //
 // See https://cloud.google.com/functions
 //
@@ -231,6 +231,11 @@ type CloudFunction struct {
 	// unique
 	// globally and match pattern `projects/*/locations/*/functions/*`
 	Name string `json:"name,omitempty"`
+
+	// Runtime: The runtime in which the function is going to run. If empty,
+	// defaults to
+	// Node.js 6.
+	Runtime string `json:"runtime,omitempty"`
 
 	// ServiceAccountEmail: Output only. The email of the function's service
 	// account.

@@ -109,15 +109,20 @@ func (sg SecurityGroupClient) GetNetworkSecurityGroup(name string) (SecurityGrou
 //
 // https://msdn.microsoft.com/en-us/library/azure/dn913815.aspx
 func (sg SecurityGroupClient) ListNetworkSecurityGroups() (SecurityGroupList, error) {
-	var securityGroups SecurityGroupList
+	// the list of NetworkSecurityGroup items is wrapped in a NetworkSecurityGroups
+	// element so we need an outer struct representing this element.
+	type NetworkSecurityGroups struct {
+		SecurityGroupList SecurityGroupList `xml:"http://schemas.microsoft.com/windowsazure NetworkSecurityGroup"`
+	}
+	var securityGroups NetworkSecurityGroups
 
 	response, err := sg.client.SendAzureGetRequest(listSecurityGroupsURL)
 	if err != nil {
-		return securityGroups, err
+		return securityGroups.SecurityGroupList, err
 	}
 
 	err = xml.Unmarshal(response, &securityGroups)
-	return securityGroups, err
+	return securityGroups.SecurityGroupList, err
 }
 
 // AddNetworkSecurityToSubnet associates the network security group with

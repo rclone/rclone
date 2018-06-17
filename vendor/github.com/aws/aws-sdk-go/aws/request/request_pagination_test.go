@@ -466,20 +466,48 @@ func TestPagination_Standalone(t *testing.T) {
 		Value, PrevToken, NextToken *string
 	}
 
-	cases := [][]testCase{
+	type testCaseList struct {
+		StopOnSameToken bool
+		Cases           []testCase
+	}
+
+	cases := []testCaseList{
 		{
-			testCase{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
-			testCase{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
-			testCase{aws.String("ThirdValue"), aws.String("SecondToken"), nil},
+			Cases: []testCase{
+				testCase{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				testCase{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				testCase{aws.String("ThirdValue"), aws.String("SecondToken"), nil},
+			},
+			StopOnSameToken: false,
 		},
 		{
-			testCase{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
-			testCase{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
-			testCase{aws.String("ThirdValue"), aws.String("SecondToken"), aws.String("")},
+			Cases: []testCase{
+				testCase{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				testCase{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				testCase{aws.String("ThirdValue"), aws.String("SecondToken"), aws.String("")},
+			},
+			StopOnSameToken: false,
+		},
+		{
+			Cases: []testCase{
+				testCase{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				testCase{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				testCase{nil, aws.String("SecondToken"), aws.String("SecondToken")},
+			},
+			StopOnSameToken: true,
+		},
+		{
+			Cases: []testCase{
+				testCase{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				testCase{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				testCase{aws.String("SecondValue"), aws.String("SecondToken"), aws.String("SecondToken")},
+			},
+			StopOnSameToken: true,
 		},
 	}
 
-	for _, c := range cases {
+	for _, testcase := range cases {
+		c := testcase.Cases
 		input := testPageInput{
 			NextToken: c[0].PrevToken,
 		}
@@ -487,6 +515,7 @@ func TestPagination_Standalone(t *testing.T) {
 		svc := awstesting.NewClient()
 		i := 0
 		p := request.Pagination{
+			EndPageOnSameToken: testcase.StopOnSameToken,
 			NewRequest: func() (*request.Request, error) {
 				r := svc.NewRequest(
 					&request.Operation{

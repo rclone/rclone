@@ -137,7 +137,10 @@ type CreateOrUpdateFirewallRuleParameters = original.CreateOrUpdateFirewallRuleP
 type CreateOrUpdateFirewallRuleProperties = original.CreateOrUpdateFirewallRuleProperties
 type CreateOrUpdateTrustedIDProviderParameters = original.CreateOrUpdateTrustedIDProviderParameters
 type CreateOrUpdateTrustedIDProviderProperties = original.CreateOrUpdateTrustedIDProviderProperties
+type CreateOrUpdateVirtualNetworkRuleParameters = original.CreateOrUpdateVirtualNetworkRuleParameters
+type CreateOrUpdateVirtualNetworkRuleProperties = original.CreateOrUpdateVirtualNetworkRuleProperties
 type CreateTrustedIDProviderWithAccountParameters = original.CreateTrustedIDProviderWithAccountParameters
+type CreateVirtualNetworkRuleWithAccountParameters = original.CreateVirtualNetworkRuleWithAccountParameters
 type DataLakeStoreAccount = original.DataLakeStoreAccount
 type DataLakeStoreAccountBasic = original.DataLakeStoreAccountBasic
 type DataLakeStoreAccountListResult = original.DataLakeStoreAccountListResult
@@ -174,8 +177,17 @@ type UpdateKeyVaultMetaInfo = original.UpdateKeyVaultMetaInfo
 type UpdateTrustedIDProviderParameters = original.UpdateTrustedIDProviderParameters
 type UpdateTrustedIDProviderProperties = original.UpdateTrustedIDProviderProperties
 type UpdateTrustedIDProviderWithAccountParameters = original.UpdateTrustedIDProviderWithAccountParameters
+type UpdateVirtualNetworkRuleParameters = original.UpdateVirtualNetworkRuleParameters
+type UpdateVirtualNetworkRuleProperties = original.UpdateVirtualNetworkRuleProperties
+type UpdateVirtualNetworkRuleWithAccountParameters = original.UpdateVirtualNetworkRuleWithAccountParameters
+type VirtualNetworkRule = original.VirtualNetworkRule
+type VirtualNetworkRuleListResult = original.VirtualNetworkRuleListResult
+type VirtualNetworkRuleListResultIterator = original.VirtualNetworkRuleListResultIterator
+type VirtualNetworkRuleListResultPage = original.VirtualNetworkRuleListResultPage
+type VirtualNetworkRuleProperties = original.VirtualNetworkRuleProperties
 type OperationsClient = original.OperationsClient
 type TrustedIDProvidersClient = original.TrustedIDProvidersClient
+type VirtualNetworkRulesClient = original.VirtualNetworkRulesClient
 
 func NewAccountsClient(subscriptionID string) AccountsClient {
 	return original.NewAccountsClient(subscriptionID)
@@ -251,4 +263,10 @@ func UserAgent() string {
 }
 func Version() string {
 	return original.Version()
+}
+func NewVirtualNetworkRulesClient(subscriptionID string) VirtualNetworkRulesClient {
+	return original.NewVirtualNetworkRulesClient(subscriptionID)
+}
+func NewVirtualNetworkRulesClientWithBaseURI(baseURI string, subscriptionID string) VirtualNetworkRulesClient {
+	return original.NewVirtualNetworkRulesClientWithBaseURI(baseURI, subscriptionID)
 }

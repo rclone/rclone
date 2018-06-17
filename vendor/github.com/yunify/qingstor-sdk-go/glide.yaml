@@ -8,4 +8,4 @@ import:
 
 # Shared packages
 - package: github.com/pengsrc/go-shared
-  version: v0.1.1
+  version: db9bcfc423552eef790d989bb81ef055d0d26286

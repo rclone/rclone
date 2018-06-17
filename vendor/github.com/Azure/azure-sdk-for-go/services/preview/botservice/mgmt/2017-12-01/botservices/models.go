@@ -759,6 +759,195 @@ type CheckNameAvailabilityResponseBody struct {
 	Message *string `json:"message,omitempty"`
 }
 
+// ConnectionItemName the display name of a connection Item Setting registered with the Bot
+type ConnectionItemName struct {
+	// Name - Connection Item name that has been added in the API
+	Name *string `json:"name,omitempty"`
+}
+
+// ConnectionSetting bot channel resource definition
+type ConnectionSetting struct {
+	autorest.Response `json:"-"`
+	// Properties - The set of properties specific to bot channel resource
+	Properties *ConnectionSettingProperties `json:"properties,omitempty"`
+	// ID - Specifies the resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Specifies the name of the resource.
+	Name *string `json:"name,omitempty"`
+	// Location - Specifies the location of the resource.
+	Location *string `json:"location,omitempty"`
+	// Type - Specifies the type of the resource.
+	Type *string `json:"type,omitempty"`
+	// Tags - Contains resource tags defined as key/value pairs.
+	Tags map[string]*string `json:"tags"`
+	// Sku - Gets or sets the SKU of the resource.
+	Sku *Sku `json:"sku,omitempty"`
+	// Kind - Required. Gets or sets the Kind of the resource. Possible values include: 'KindSdk', 'KindDesigner', 'KindBot', 'KindFunction'
+	Kind Kind `json:"kind,omitempty"`
+	// Etag - Entity Tag
+	Etag *string `json:"etag,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ConnectionSetting.
+func (cs ConnectionSetting) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cs.Properties != nil {
+		objectMap["properties"] = cs.Properties
+	}
+	if cs.ID != nil {
+		objectMap["id"] = cs.ID
+	}
+	if cs.Name != nil {
+		objectMap["name"] = cs.Name
+	}
+	if cs.Location != nil {
+		objectMap["location"] = cs.Location
+	}
+	if cs.Type != nil {
+		objectMap["type"] = cs.Type
+	}
+	if cs.Tags != nil {
+		objectMap["tags"] = cs.Tags
+	}
+	if cs.Sku != nil {
+		objectMap["sku"] = cs.Sku
+	}
+	if cs.Kind != "" {
+		objectMap["kind"] = cs.Kind
+	}
+	if cs.Etag != nil {
+		objectMap["etag"] = cs.Etag
+	}
+	return json.Marshal(objectMap)
+}
+
+// ConnectionSettingParameter extra Parameter in a Connection Setting Properties to indicate service provider
+// specific properties
+type ConnectionSettingParameter struct {
+	// Key - Key for the Connection Setting Parameter.
+	Key *string `json:"key,omitempty"`
+	// Value - Value associated with the Connection Setting Parameter.
+	Value *string `json:"value,omitempty"`
+}
+
+// ConnectionSettingProperties properties for a Connection Setting Item
+type ConnectionSettingProperties struct {
+	// ClientID - Client Id associated with the Connection Setting.
+	ClientID *string `json:"clientId,omitempty"`
+	// ClientSecret - Client Secret associated with the Connection Setting
+	ClientSecret *string `json:"clientSecret,omitempty"`
+	// Scopes - Scopes associated with the Connection Setting
+	Scopes *string `json:"scopes,omitempty"`
+	// ServiceProviderID - Service Provider Id associated with the Connection Setting
+	ServiceProviderID *string `json:"serviceProviderId,omitempty"`
+	// ServiceProviderDisplayName - Service Provider Display Name associated with the Connection Setting
+	ServiceProviderDisplayName *string `json:"serviceProviderDisplayName,omitempty"`
+	// Parameters - Service Provider Parameters associated with the Connection Setting
+	Parameters *[]ConnectionSettingParameter `json:"parameters,omitempty"`
+}
+
+// ConnectionSettingResponseList the list of bot service connection settings response.
+type ConnectionSettingResponseList struct {
+	autorest.Response `json:"-"`
+	// NextLink - The link used to get the next page of bot service connection setting resources.
+	NextLink *string `json:"nextLink,omitempty"`
+	// Value - Gets the list of bot service connection settings and their properties.
+	Value *[]ConnectionSetting `json:"value,omitempty"`
+}
+
+// ConnectionSettingResponseListIterator provides access to a complete listing of ConnectionSetting values.
+type ConnectionSettingResponseListIterator struct {
+	i    int
+	page ConnectionSettingResponseListPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *ConnectionSettingResponseListIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter ConnectionSettingResponseListIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter ConnectionSettingResponseListIterator) Response() ConnectionSettingResponseList {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter ConnectionSettingResponseListIterator) Value() ConnectionSetting {
+	if !iter.page.NotDone() {
+		return ConnectionSetting{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (csrl ConnectionSettingResponseList) IsEmpty() bool {
+	return csrl.Value == nil || len(*csrl.Value) == 0
+}
+
+// connectionSettingResponseListPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (csrl ConnectionSettingResponseList) connectionSettingResponseListPreparer() (*http.Request, error) {
+	if csrl.NextLink == nil || len(to.String(csrl.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(csrl.NextLink)))
+}
+
+// ConnectionSettingResponseListPage contains a page of ConnectionSetting values.
+type ConnectionSettingResponseListPage struct {
+	fn   func(ConnectionSettingResponseList) (ConnectionSettingResponseList, error)
+	csrl ConnectionSettingResponseList
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *ConnectionSettingResponseListPage) Next() error {
+	next, err := page.fn(page.csrl)
+	if err != nil {
+		return err
+	}
+	page.csrl = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page ConnectionSettingResponseListPage) NotDone() bool {
+	return !page.csrl.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page ConnectionSettingResponseListPage) Response() ConnectionSettingResponseList {
+	return page.csrl
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page ConnectionSettingResponseListPage) Values() []ConnectionSetting {
+	if page.csrl.IsEmpty() {
+		return nil
+	}
+	return *page.csrl.Value
+}
+
 // DirectLineChannel direct Line channel definition
 type DirectLineChannel struct {
 	// Properties - The set of properties specific to Direct Line channel resource
@@ -1438,6 +1627,53 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 		objectMap["etag"] = r.Etag
 	}
 	return json.Marshal(objectMap)
+}
+
+// ServiceProvider service Provider Definition
+type ServiceProvider struct {
+	// Properties - The Properties of a Service Provider Object
+	Properties *ServiceProviderProperties `json:"properties,omitempty"`
+}
+
+// ServiceProviderParameter extra Parameters specific to each Service Provider
+type ServiceProviderParameter struct {
+	// Name - Name of the Service Provider
+	Name *string `json:"name,omitempty"`
+	// Type - Type of the Service Provider
+	Type *string `json:"type,omitempty"`
+	// DisplayName - Display Name of the Service Provider
+	DisplayName *string `json:"displayName,omitempty"`
+	// Description - Description of the Service Provider
+	Description *string `json:"description,omitempty"`
+	// HelpURL - Help Url for the  Service Provider
+	HelpURL *string `json:"helpUrl,omitempty"`
+	// Default - Default Name for the Service Provider
+	Default *string `json:"default,omitempty"`
+}
+
+// ServiceProviderProperties the Object used to describe a Service Provider supported by Bot Service
+type ServiceProviderProperties struct {
+	// ID - Id for Service Provider
+	ID *string `json:"id,omitempty"`
+	// DisplayName - Diplay Name of the Service Provider
+	DisplayName *string `json:"displayName,omitempty"`
+	// ServiceProviderName - Diplay Name of the Service Provider
+	ServiceProviderName *string `json:"serviceProviderName,omitempty"`
+	// DevPortalURL - Diplay Name of the Service Provider
+	DevPortalURL *string `json:"devPortalUrl,omitempty"`
+	// IconURL - Diplay Name of the Service Provider
+	IconURL *string `json:"iconUrl,omitempty"`
+	// Parameters - The list of parameters for the Service Provider
+	Parameters *[]ServiceProviderParameter `json:"parameters,omitempty"`
+}
+
+// ServiceProviderResponseList the list of bot service service providers response.
+type ServiceProviderResponseList struct {
+	autorest.Response `json:"-"`
+	// NextLink - The link used to get the next page of bot service service providers.
+	NextLink *string `json:"nextLink,omitempty"`
+	// Value - Gets the list of bot service service providers and their properties.
+	Value *[]ServiceProvider `json:"value,omitempty"`
 }
 
 // Sku the SKU of the cognitive services account.

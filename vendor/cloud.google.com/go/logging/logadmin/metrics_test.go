@@ -20,11 +20,12 @@ import (
 	"time"
 
 	"cloud.google.com/go/internal/testutil"
+	"cloud.google.com/go/internal/uid"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 )
 
-var metricIDs = testutil.NewUIDSpace("GO-CLIENT-TEST-METRIC")
+var metricIDs = uid.NewSpace("GO-CLIENT-TEST-METRIC", nil)
 
 // Initializes the tests before they run.
 func initMetrics(ctx context.Context) {

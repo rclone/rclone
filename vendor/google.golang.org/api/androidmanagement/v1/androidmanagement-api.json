@@ -60,11 +60,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -84,12 +79,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -766,7 +755,7 @@
       }
     }
   },
-  "revision": "20180423",
+  "revision": "20180604",
   "rootUrl": "https://androidmanagement.googleapis.com/",
   "schemas": {
     "AlwaysOnVpnPackage": {
@@ -820,6 +809,44 @@
         },
         "title": {
           "description": "The title of the app. Localized.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ApplicationEvent": {
+      "description": "An app-related event.",
+      "id": "ApplicationEvent",
+      "properties": {
+        "createTime": {
+          "description": "The creation time of the event.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "eventType": {
+          "description": "App event type.",
+          "enum": [
+            "APPLICATION_EVENT_TYPE_UNSPECIFIED",
+            "INSTALLED",
+            "CHANGED",
+            "DATA_CLEARED",
+            "REMOVED",
+            "REPLACED",
+            "RESTARTED",
+            "PINNED",
+            "UNPINNED"
+          ],
+          "enumDescriptions": [
+            "This value is disallowed.",
+            "The app was installed.",
+            "The app was changed, for example, a component was enabled or disabled.",
+            "The app data was cleared.",
+            "The app was removed.",
+            "A new version of the app has been installed, replacing the old version.",
+            "The app was restarted.",
+            "The app was pinned to the foreground.",
+            "The app was unpinned."
+          ],
           "type": "string"
         }
       },
@@ -889,17 +916,23 @@
           },
           "type": "array"
         },
+        "disabled": {
+          "description": "Whether the app is disabled. When disabled, the app data is still preserved.",
+          "type": "boolean"
+        },
         "installType": {
           "description": "The type of installation to perform.",
           "enum": [
             "INSTALL_TYPE_UNSPECIFIED",
             "PREINSTALLED",
-            "FORCE_INSTALLED"
+            "FORCE_INSTALLED",
+            "AVAILABLE"
           ],
           "enumDescriptions": [
-            "No automatic installation is performed. Any other app policies will be applied if the user installs the app.",
+            "Unspecified. Defaults to AVAILABLE.",
             "The app is automatically installed and can be removed by the user.",
-            "The app is automatically installed and can't be removed by the user."
+            "The app is automatically installed and can't be removed by the user.",
+            "The app is available to install."
           ],
           "type": "string"
         },
@@ -930,6 +963,102 @@
             "$ref": "PermissionGrant"
           },
           "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "ApplicationReport": {
+      "description": "Information reported about an installed app.",
+      "id": "ApplicationReport",
+      "properties": {
+        "applicationSource": {
+          "description": "The source of the package.",
+          "enum": [
+            "APPLICATION_SOURCE_UNSPECIFIED",
+            "SYSTEM_APP_FACTORY_VERSION",
+            "SYSTEM_APP_UPDATED_VERSION",
+            "INSTALLED_FROM_PLAY_STORE"
+          ],
+          "enumDescriptions": [
+            "The app was sideloaded from an unspecified source.",
+            "This is a system app from the device's factory image.",
+            "This is an updated system app.",
+            "The app was installed from the Google Play Store."
+          ],
+          "type": "string"
+        },
+        "displayName": {
+          "description": "The display name of the app.",
+          "type": "string"
+        },
+        "events": {
+          "description": "List of app events. The most recent 20 events are stored in the list.",
+          "items": {
+            "$ref": "ApplicationEvent"
+          },
+          "type": "array"
+        },
+        "installerPackageName": {
+          "description": "The package name of the app that installed this app.",
+          "type": "string"
+        },
+        "packageName": {
+          "description": "Package name of the app.",
+          "type": "string"
+        },
+        "packageSha256Hash": {
+          "description": "The SHA-256 hash of the app's APK file, which can be used to verify the app hasn't been modified. Each byte of the hash value is represented as a two-digit hexadecimal number.",
+          "type": "string"
+        },
+        "signingKeyCertFingerprints": {
+          "description": "The SHA-1 hash of each android.content.pm.Signature (https://developer.android.com/reference/android/content/pm/Signature.html) associated with the app package. Each byte of each hash value is represented as a two-digit hexadecimal number.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "state": {
+          "description": "Application state.",
+          "enum": [
+            "INSTALLED",
+            "REMOVED"
+          ],
+          "enumDescriptions": [
+            "App is installed on the device",
+            "App was removed from the device"
+          ],
+          "type": "string"
+        },
+        "versionCode": {
+          "description": "The app version code, which can be used to determine whether one version is more recent than another.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "versionName": {
+          "description": "The app version as displayed to the user.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ChoosePrivateKeyRule": {
+      "description": "A rule for automatically choosing a private key and certificate to authenticate the device to a server.",
+      "id": "ChoosePrivateKeyRule",
+      "properties": {
+        "packageNames": {
+          "description": "The package names for which outgoing requests are subject to this rule. If no package names are specified, then the rule applies to all packages. For each package name listed, the rule applies to that package and all other packages that shared the same Android UID. The SHA256 hash of the signing key signatures of each package_name will be verified against those provided by Play",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "privateKeyAlias": {
+          "description": "The alias of the private key to be used.",
+          "type": "string"
+        },
+        "urlPattern": {
+          "description": "The URL pattern to match against the URL of the outgoing request. The pattern may contain asterisk (*) wildcards. Any URL is matched if unspecified.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -1042,6 +1171,13 @@
           "format": "int32",
           "type": "integer"
         },
+        "applicationReports": {
+          "description": "Reports for apps installed on the device. This information is only available when application_reports_enabled is true in the device's policy.",
+          "items": {
+            "$ref": "ApplicationReport"
+          },
+          "type": "array"
+        },
         "appliedPolicyName": {
           "description": "The name of the policy currently applied to the device.",
           "type": "string"
@@ -1109,7 +1245,7 @@
           "type": "array"
         },
         "lastPolicyComplianceReportTime": {
-          "description": "The last time the device sent a policy compliance report.",
+          "description": "The last time the device sent a policy compliance report. Important: This field is deprecated. The timestamp will be on last_status_report_time field, and last_status_report_time will be used for both status report and compliance report.",
           "format": "google-datetime",
           "type": "string"
         },
@@ -1363,7 +1499,7 @@
           "enumDescriptions": [
             "This value is ignored.",
             "A notification sent when a device enrolls.",
-            "A notification sent when a device issues a policy compliance report.",
+            "A notification sent when a device issues a policy compliance report. Important: This enum value is deprecated. The notification will be sent as STATUS_REPORT.",
             "A notification sent when a device issues a status report.",
             "A notification sent when a device command has completed."
           ],
@@ -2050,7 +2186,7 @@
       "id": "PermissionGrant",
       "properties": {
         "permission": {
-          "description": "The android permission, e.g. android.permission.READ_CALENDAR.",
+          "description": "The android permission or group, e.g. android.permission.READ_CALENDAR or android.permission_group.CALENDAR.",
           "type": "string"
         },
         "policy": {
@@ -2189,6 +2325,13 @@
         "cellBroadcastsConfigDisabled": {
           "description": "Whether configuring cell broadcast is disabled.",
           "type": "boolean"
+        },
+        "choosePrivateKeyRules": {
+          "description": "Rules for automatically choosing a private key and certificate to authenticate the device to a server. The rules are ordered by increasing precedence, so if an outgoing request matches more than one rule, the last rule defines which private key to use.",
+          "items": {
+            "$ref": "ChoosePrivateKeyRule"
+          },
+          "type": "array"
         },
         "complianceRules": {
           "description": "Rules declaring which mitigating actions to take when a device is not compliant with its policy. When the conditions for multiple rules are satisfied, all of the mitigating actions for the rules are taken. There is a maximum limit of 100 rules.",
@@ -2391,6 +2534,10 @@
           },
           "type": "array"
         },
+        "privateKeySelectionEnabled": {
+          "description": "Allows showing UI on a device for a user to choose a private key alias if there are no matching rules in ChoosePrivateKeyRules. For devices below Android P, setting this may leave enterprise keys vulnerable.",
+          "type": "boolean"
+        },
         "recommendedGlobalProxy": {
           "$ref": "ProxyInfo",
           "description": "The network-independent global HTTP proxy. Typically proxies should be configured per-network in open_network_configuration. However for unusual configurations like general internal filtering a global HTTP proxy may be useful. If the proxy is not accessible, network access may break. The global proxy is only a recommendation and some apps may ignore it."
@@ -2479,7 +2626,7 @@
           "type": "boolean"
         },
         "usbMassStorageEnabled": {
-          "description": "Allows admins to toggle whether USB storge is enabled or disabled on user's devices.",
+          "description": "Whether USB storage is enabled.",
           "type": "boolean"
         },
         "version": {
@@ -2661,6 +2808,10 @@
       "description": "Settings controlling the behavior of status reports.",
       "id": "StatusReportingSettings",
       "properties": {
+        "applicationReportsEnabled": {
+          "description": "Whether app reports are enabled.",
+          "type": "boolean"
+        },
         "deviceSettingsEnabled": {
           "description": "Whether device settings reporting is enabled.",
           "type": "boolean"

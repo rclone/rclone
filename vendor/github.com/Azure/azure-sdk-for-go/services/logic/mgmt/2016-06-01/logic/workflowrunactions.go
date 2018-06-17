@@ -214,3 +214,74 @@ func (client WorkflowRunActionsClient) ListComplete(ctx context.Context, resourc
 	result.page, err = client.List(ctx, resourceGroupName, workflowName, runName, top, filter)
 	return
 }
+
+// ListExpressionTraces lists a workflow run expression trace.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// runName - the workflow run name.
+// actionName - the workflow action name.
+func (client WorkflowRunActionsClient) ListExpressionTraces(ctx context.Context, resourceGroupName string, workflowName string, runName string, actionName string) (result ExpressionTraces, err error) {
+	req, err := client.ListExpressionTracesPreparer(ctx, resourceGroupName, workflowName, runName, actionName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowRunActionsClient", "ListExpressionTraces", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListExpressionTracesSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "logic.WorkflowRunActionsClient", "ListExpressionTraces", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ListExpressionTracesResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowRunActionsClient", "ListExpressionTraces", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListExpressionTracesPreparer prepares the ListExpressionTraces request.
+func (client WorkflowRunActionsClient) ListExpressionTracesPreparer(ctx context.Context, resourceGroupName string, workflowName string, runName string, actionName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"actionName":        autorest.Encode("path", actionName),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"runName":           autorest.Encode("path", runName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"workflowName":      autorest.Encode("path", workflowName),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/runs/{runName}/actions/{actionName}/listExpressionTraces", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListExpressionTracesSender sends the ListExpressionTraces request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkflowRunActionsClient) ListExpressionTracesSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListExpressionTracesResponder handles the response to the ListExpressionTraces request. The method always
+// closes the http.Response Body.
+func (client WorkflowRunActionsClient) ListExpressionTracesResponder(resp *http.Response) (result ExpressionTraces, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}

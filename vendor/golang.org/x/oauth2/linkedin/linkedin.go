@@ -11,6 +11,6 @@ import (
 
 // Endpoint is LinkedIn's OAuth 2.0 endpoint.
 var Endpoint = oauth2.Endpoint{
-	AuthURL:  "https://www.linkedin.com/uas/oauth2/authorization",
-	TokenURL: "https://www.linkedin.com/uas/oauth2/accessToken",
+	AuthURL:  "https://www.linkedin.com/oauth/v2/authorization",
+	TokenURL: "https://www.linkedin.com/oauth/v2/accessToken",
 }

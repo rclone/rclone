@@ -989,6 +989,12 @@
         "JobUpdate$ExecutionProperty": "<p>An ExecutionProperty specifying the maximum number of concurrent runs allowed for this job.</p>"
       }
     },
+    "ExecutionTime": {
+      "base": null,
+      "refs": {
+        "JobRun$ExecutionTime": "<p>The amount of time (in seconds) that the job run consumed resources.</p>"
+      }
+    },
     "FieldType": {
       "base": null,
       "refs": {
@@ -1446,7 +1452,6 @@
         "JobBookmarkEntry$Run": "<p>The run ID number.</p>",
         "JobBookmarkEntry$Attempt": "<p>The attempt ID number.</p>",
         "JobRun$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) allocated to this JobRun. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>",
-        "JobRun$ExecutionTime": "<p>The amount of time (in seconds) that the job run consumed resources.</p>",
         "JobUpdate$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) to allocate to this Job. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>",
         "StartJobRunRequest$AllocatedCapacity": "<p>The number of AWS Glue data processing units (DPUs) to allocate to this JobRun. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory. For more information, see the <a href=\"https://aws.amazon.com/glue/pricing/\">AWS Glue pricing page</a>.</p>"
       }
@@ -1867,6 +1872,23 @@
         "Segment$SegmentNumber": "<p>The zero-based index number of the this segment. For example, if the total number of segments is 4, SegmentNumber values will range from zero through three.</p>",
         "Table$Retention": "<p>Retention time for this table.</p>",
         "TableInput$Retention": "<p>Retention time for this table.</p>"
+      }
+    },
+    "NotificationProperty": {
+      "base": "<p>Specifies configuration properties of a notification.</p>",
+      "refs": {
+        "Action$NotificationProperty": "<p>Specifies configuration properties of a job run notification.</p>",
+        "CreateJobRequest$NotificationProperty": "<p>Specifies configuration properties of a job notification.</p>",
+        "Job$NotificationProperty": "<p>Specifies configuration properties of a job notification.</p>",
+        "JobRun$NotificationProperty": "<p>Specifies configuration properties of a job run notification.</p>",
+        "JobUpdate$NotificationProperty": "<p>Specifies configuration properties of a job notification.</p>",
+        "StartJobRunRequest$NotificationProperty": "<p>Specifies configuration properties of a job run notification.</p>"
+      }
+    },
+    "NotifyDelayAfter": {
+      "base": null,
+      "refs": {
+        "NotificationProperty$NotifyDelayAfter": "<p>After a job run starts, the number of minutes to wait before sending a job run delay notification.</p>"
       }
     },
     "OperationTimeoutException": {

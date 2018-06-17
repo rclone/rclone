@@ -259,7 +259,7 @@ func (c *Client) ListInfoTypes(ctx context.Context, req *dlppb.ListInfoTypesRequ
 	return resp, nil
 }
 
-// CreateInspectTemplate creates an inspect template for re-using frequently used configuration
+// CreateInspectTemplate creates an InspectTemplate for re-using frequently used configuration
 // for inspecting content, images, and storage.
 func (c *Client) CreateInspectTemplate(ctx context.Context, req *dlppb.CreateInspectTemplateRequest, opts ...gax.CallOption) (*dlppb.InspectTemplate, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
@@ -276,7 +276,7 @@ func (c *Client) CreateInspectTemplate(ctx context.Context, req *dlppb.CreateIns
 	return resp, nil
 }
 
-// UpdateInspectTemplate updates the inspect template.
+// UpdateInspectTemplate updates the InspectTemplate.
 func (c *Client) UpdateInspectTemplate(ctx context.Context, req *dlppb.UpdateInspectTemplateRequest, opts ...gax.CallOption) (*dlppb.InspectTemplate, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.UpdateInspectTemplate[0:len(c.CallOptions.UpdateInspectTemplate):len(c.CallOptions.UpdateInspectTemplate)], opts...)
@@ -292,7 +292,7 @@ func (c *Client) UpdateInspectTemplate(ctx context.Context, req *dlppb.UpdateIns
 	return resp, nil
 }
 
-// GetInspectTemplate gets an inspect template.
+// GetInspectTemplate gets an InspectTemplate.
 func (c *Client) GetInspectTemplate(ctx context.Context, req *dlppb.GetInspectTemplateRequest, opts ...gax.CallOption) (*dlppb.InspectTemplate, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.GetInspectTemplate[0:len(c.CallOptions.GetInspectTemplate):len(c.CallOptions.GetInspectTemplate)], opts...)
@@ -308,7 +308,7 @@ func (c *Client) GetInspectTemplate(ctx context.Context, req *dlppb.GetInspectTe
 	return resp, nil
 }
 
-// ListInspectTemplates lists inspect templates.
+// ListInspectTemplates lists InspectTemplates.
 func (c *Client) ListInspectTemplates(ctx context.Context, req *dlppb.ListInspectTemplatesRequest, opts ...gax.CallOption) *InspectTemplateIterator {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ListInspectTemplates[0:len(c.CallOptions.ListInspectTemplates):len(c.CallOptions.ListInspectTemplates)], opts...)
@@ -343,7 +343,7 @@ func (c *Client) ListInspectTemplates(ctx context.Context, req *dlppb.ListInspec
 	return it
 }
 
-// DeleteInspectTemplate deletes an inspect template.
+// DeleteInspectTemplate deletes an InspectTemplate.
 func (c *Client) DeleteInspectTemplate(ctx context.Context, req *dlppb.DeleteInspectTemplateRequest, opts ...gax.CallOption) error {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.DeleteInspectTemplate[0:len(c.CallOptions.DeleteInspectTemplate):len(c.CallOptions.DeleteInspectTemplate)], opts...)
@@ -355,8 +355,8 @@ func (c *Client) DeleteInspectTemplate(ctx context.Context, req *dlppb.DeleteIns
 	return err
 }
 
-// CreateDeidentifyTemplate creates a de-identify template for re-using frequently used configuration
-// for Deidentifying content, images, and storage.
+// CreateDeidentifyTemplate creates a DeidentifyTemplate for re-using frequently used configuration
+// for de-identifying content, images, and storage.
 func (c *Client) CreateDeidentifyTemplate(ctx context.Context, req *dlppb.CreateDeidentifyTemplateRequest, opts ...gax.CallOption) (*dlppb.DeidentifyTemplate, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.CreateDeidentifyTemplate[0:len(c.CallOptions.CreateDeidentifyTemplate):len(c.CallOptions.CreateDeidentifyTemplate)], opts...)
@@ -372,7 +372,7 @@ func (c *Client) CreateDeidentifyTemplate(ctx context.Context, req *dlppb.Create
 	return resp, nil
 }
 
-// UpdateDeidentifyTemplate updates the de-identify template.
+// UpdateDeidentifyTemplate updates the DeidentifyTemplate.
 func (c *Client) UpdateDeidentifyTemplate(ctx context.Context, req *dlppb.UpdateDeidentifyTemplateRequest, opts ...gax.CallOption) (*dlppb.DeidentifyTemplate, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.UpdateDeidentifyTemplate[0:len(c.CallOptions.UpdateDeidentifyTemplate):len(c.CallOptions.UpdateDeidentifyTemplate)], opts...)
@@ -388,7 +388,7 @@ func (c *Client) UpdateDeidentifyTemplate(ctx context.Context, req *dlppb.Update
 	return resp, nil
 }
 
-// GetDeidentifyTemplate gets a de-identify template.
+// GetDeidentifyTemplate gets a DeidentifyTemplate.
 func (c *Client) GetDeidentifyTemplate(ctx context.Context, req *dlppb.GetDeidentifyTemplateRequest, opts ...gax.CallOption) (*dlppb.DeidentifyTemplate, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.GetDeidentifyTemplate[0:len(c.CallOptions.GetDeidentifyTemplate):len(c.CallOptions.GetDeidentifyTemplate)], opts...)
@@ -404,7 +404,7 @@ func (c *Client) GetDeidentifyTemplate(ctx context.Context, req *dlppb.GetDeiden
 	return resp, nil
 }
 
-// ListDeidentifyTemplates lists de-identify templates.
+// ListDeidentifyTemplates lists DeidentifyTemplates.
 func (c *Client) ListDeidentifyTemplates(ctx context.Context, req *dlppb.ListDeidentifyTemplatesRequest, opts ...gax.CallOption) *DeidentifyTemplateIterator {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ListDeidentifyTemplates[0:len(c.CallOptions.ListDeidentifyTemplates):len(c.CallOptions.ListDeidentifyTemplates)], opts...)
@@ -439,7 +439,7 @@ func (c *Client) ListDeidentifyTemplates(ctx context.Context, req *dlppb.ListDei
 	return it
 }
 
-// DeleteDeidentifyTemplate deletes a de-identify template.
+// DeleteDeidentifyTemplate deletes a DeidentifyTemplate.
 func (c *Client) DeleteDeidentifyTemplate(ctx context.Context, req *dlppb.DeleteDeidentifyTemplateRequest, opts ...gax.CallOption) error {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.DeleteDeidentifyTemplate[0:len(c.CallOptions.DeleteDeidentifyTemplate):len(c.CallOptions.DeleteDeidentifyTemplate)], opts...)
@@ -451,8 +451,8 @@ func (c *Client) DeleteDeidentifyTemplate(ctx context.Context, req *dlppb.Delete
 	return err
 }
 
-// CreateDlpJob creates a new job to inspect storage or calculate risk metrics How-to
-// guide (at /dlp/docs/compute-risk-analysis).
+// CreateDlpJob creates a new job to inspect storage or calculate risk metrics.
+// How-to guide (at /dlp/docs/compute-risk-analysis).
 func (c *Client) CreateDlpJob(ctx context.Context, req *dlppb.CreateDlpJobRequest, opts ...gax.CallOption) (*dlppb.DlpJob, error) {
 	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.CreateDlpJob[0:len(c.CallOptions.CreateDlpJob):len(c.CallOptions.CreateDlpJob)], opts...)

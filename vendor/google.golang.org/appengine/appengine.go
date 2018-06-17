@@ -28,7 +28,8 @@ import (
 // See https://cloud.google.com/appengine/docs/flexible/custom-runtimes#health_check_requests
 // for details on how to do your own health checking.
 //
-// Main is not yet supported on App Engine Standard.
+// On App Engine Standard it ensures the server has started and is prepared to
+// receive requests.
 //
 // Main never returns.
 //
@@ -62,7 +63,7 @@ func IsDevAppServer() bool {
 // NewContext returns a context for an in-flight HTTP request.
 // This function is cheap.
 func NewContext(req *http.Request) context.Context {
-	return WithContext(context.Background(), req)
+	return internal.ReqContext(req)
 }
 
 // WithContext returns a copy of the parent context

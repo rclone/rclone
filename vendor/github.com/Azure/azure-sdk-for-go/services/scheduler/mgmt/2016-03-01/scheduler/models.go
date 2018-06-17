@@ -760,12 +760,11 @@ type JobCollectionQuota struct {
 // JobCollectionsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobCollectionsDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future JobCollectionsDeleteFuture) Result(client JobCollectionsClient) (ar autorest.Response, err error) {
+func (future *JobCollectionsDeleteFuture) Result(client JobCollectionsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -773,35 +772,10 @@ func (future JobCollectionsDeleteFuture) Result(client JobCollectionsClient) (ar
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("scheduler.JobCollectionsDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("scheduler.JobCollectionsDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsDeleteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -809,12 +783,11 @@ func (future JobCollectionsDeleteFuture) Result(client JobCollectionsClient) (ar
 // operation.
 type JobCollectionsDisableFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future JobCollectionsDisableFuture) Result(client JobCollectionsClient) (ar autorest.Response, err error) {
+func (future *JobCollectionsDisableFuture) Result(client JobCollectionsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -822,47 +795,21 @@ func (future JobCollectionsDisableFuture) Result(client JobCollectionsClient) (a
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("scheduler.JobCollectionsDisableFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DisableResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsDisableFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("scheduler.JobCollectionsDisableFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsDisableFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DisableResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsDisableFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // JobCollectionsEnableFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type JobCollectionsEnableFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future JobCollectionsEnableFuture) Result(client JobCollectionsClient) (ar autorest.Response, err error) {
+func (future *JobCollectionsEnableFuture) Result(client JobCollectionsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -870,35 +817,10 @@ func (future JobCollectionsEnableFuture) Result(client JobCollectionsClient) (ar
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("scheduler.JobCollectionsEnableFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.EnableResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsEnableFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("scheduler.JobCollectionsEnableFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsEnableFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.EnableResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "scheduler.JobCollectionsEnableFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

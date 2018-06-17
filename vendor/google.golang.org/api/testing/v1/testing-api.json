@@ -61,11 +61,6 @@
       "location": "query",
       "type": "string"
     },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "location": "query",
-      "type": "string"
-    },
     "callback": {
       "description": "JSONP",
       "location": "query",
@@ -85,12 +80,6 @@
       "description": "OAuth 2.0 token for the current user.",
       "location": "query",
       "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "description": "Pretty-print response.",
-      "location": "query",
-      "type": "boolean"
     },
     "prettyPrint": {
       "default": "true",
@@ -257,7 +246,8 @@
               "enum": [
                 "ENVIRONMENT_TYPE_UNSPECIFIED",
                 "ANDROID",
-                "NETWORK_CONFIGURATION"
+                "NETWORK_CONFIGURATION",
+                "PROVIDED_SOFTWARE"
               ],
               "location": "path",
               "required": true,
@@ -281,7 +271,7 @@
       }
     }
   },
-  "revision": "20180406",
+  "revision": "20180606",
   "rootUrl": "https://testing.googleapis.com/",
   "schemas": {
     "Account": {
@@ -1042,6 +1032,17 @@
       },
       "type": "object"
     },
+    "ProvidedSoftwareCatalog": {
+      "description": "The currently provided software environment on the devices under test.",
+      "id": "ProvidedSoftwareCatalog",
+      "properties": {
+        "orchestratorVersion": {
+          "description": "A string representing the current version of Android Test Orchestrator that\nis provided by TestExecutionService. Example: \"1.0.2 beta\"",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "RegularFile": {
       "description": "A file or directory to install on the device before the test starts",
       "id": "RegularFile",
@@ -1173,6 +1174,10 @@
         "networkConfigurationCatalog": {
           "$ref": "NetworkConfigurationCatalog",
           "description": "Supported network configurations"
+        },
+        "softwareCatalog": {
+          "$ref": "ProvidedSoftwareCatalog",
+          "description": "The software test environment provided by TestExecutionService."
         }
       },
       "type": "object"
@@ -1282,7 +1287,9 @@
             "SCENARIO_NOT_DECLARED",
             "DEVICE_ADMIN_RECEIVER",
             "TEST_ONLY_APK",
-            "NO_CODE_APK"
+            "MALFORMED_IPA",
+            "NO_CODE_APK",
+            "INVALID_INPUT_APK"
           ],
           "enumDescriptions": [
             "Do not use. For proto versioning only.",
@@ -1305,7 +1312,9 @@
             "The request contains a scenario number that was not declared in the\nmanifest.",
             "Device administrator applications are not allowed.",
             "The APK is marked as \"testOnly\".\nNOT USED",
-            "APK contains no code.\nSee also\nhttps://developer.android.com/guide/topics/manifest/application-element.html#code"
+            "The input IPA could not be parsed.\nNOT USED",
+            "APK contains no code.\nSee also\nhttps://developer.android.com/guide/topics/manifest/application-element.html#code",
+            "Either the provided input APK path was malformed,\nthe APK file does not exist, or the user does not have permission to\naccess the APK file."
           ],
           "type": "string"
         },

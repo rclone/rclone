@@ -334,7 +334,7 @@ take a callback function that will be called for each page of the API's response
 ```
 
 Waiter helper methods provide the functionality to wait for an AWS resource
-state. These methods abstract the logic needed to to check the state of an
+state. These methods abstract the logic needed to check the state of an
 AWS resource, and wait until that resource is in a desired state. The waiter
 will block until the resource is in the state that is desired, an error occurs,
 or the waiter times out. If a resource times out the error code returned will

@@ -3,7 +3,7 @@
 		"Pattern":          "/sdk-for-go/api/",
 		"StripPrefix":     "/sdk-for-go/api",
 		"Include":         ["/src/github.com/aws/aws-sdk-go/aws", "/src/github.com/aws/aws-sdk-go/service"],
-		"Exclude":         ["/src/cmd", "/src/github.com/aws/aws-sdk-go/awstesting", "/src/github.com/aws/aws-sdk-go/awsmigrate"],
+		"Exclude":         ["/src/cmd", "/src/github.com/aws/aws-sdk-go/awstesting", "/src/github.com/aws/aws-sdk-go/awsmigrate", "/src/github.com/aws/aws-sdk-go/private"],
 		"IgnoredSuffixes": ["iface"]
 	},
 	"Github": {

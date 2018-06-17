@@ -160,6 +160,10 @@ type IoTAnalyticsAPI interface {
 	ListPipelinesPages(*iotanalytics.ListPipelinesInput, func(*iotanalytics.ListPipelinesOutput, bool) bool) error
 	ListPipelinesPagesWithContext(aws.Context, *iotanalytics.ListPipelinesInput, func(*iotanalytics.ListPipelinesOutput, bool) bool, ...request.Option) error
 
+	ListTagsForResource(*iotanalytics.ListTagsForResourceInput) (*iotanalytics.ListTagsForResourceOutput, error)
+	ListTagsForResourceWithContext(aws.Context, *iotanalytics.ListTagsForResourceInput, ...request.Option) (*iotanalytics.ListTagsForResourceOutput, error)
+	ListTagsForResourceRequest(*iotanalytics.ListTagsForResourceInput) (*request.Request, *iotanalytics.ListTagsForResourceOutput)
+
 	PutLoggingOptions(*iotanalytics.PutLoggingOptionsInput) (*iotanalytics.PutLoggingOptionsOutput, error)
 	PutLoggingOptionsWithContext(aws.Context, *iotanalytics.PutLoggingOptionsInput, ...request.Option) (*iotanalytics.PutLoggingOptionsOutput, error)
 	PutLoggingOptionsRequest(*iotanalytics.PutLoggingOptionsInput) (*request.Request, *iotanalytics.PutLoggingOptionsOutput)
@@ -175,6 +179,14 @@ type IoTAnalyticsAPI interface {
 	StartPipelineReprocessing(*iotanalytics.StartPipelineReprocessingInput) (*iotanalytics.StartPipelineReprocessingOutput, error)
 	StartPipelineReprocessingWithContext(aws.Context, *iotanalytics.StartPipelineReprocessingInput, ...request.Option) (*iotanalytics.StartPipelineReprocessingOutput, error)
 	StartPipelineReprocessingRequest(*iotanalytics.StartPipelineReprocessingInput) (*request.Request, *iotanalytics.StartPipelineReprocessingOutput)
+
+	TagResource(*iotanalytics.TagResourceInput) (*iotanalytics.TagResourceOutput, error)
+	TagResourceWithContext(aws.Context, *iotanalytics.TagResourceInput, ...request.Option) (*iotanalytics.TagResourceOutput, error)
+	TagResourceRequest(*iotanalytics.TagResourceInput) (*request.Request, *iotanalytics.TagResourceOutput)
+
+	UntagResource(*iotanalytics.UntagResourceInput) (*iotanalytics.UntagResourceOutput, error)
+	UntagResourceWithContext(aws.Context, *iotanalytics.UntagResourceInput, ...request.Option) (*iotanalytics.UntagResourceOutput, error)
+	UntagResourceRequest(*iotanalytics.UntagResourceInput) (*request.Request, *iotanalytics.UntagResourceOutput)
 
 	UpdateChannel(*iotanalytics.UpdateChannelInput) (*iotanalytics.UpdateChannelOutput, error)
 	UpdateChannelWithContext(aws.Context, *iotanalytics.UpdateChannelInput, ...request.Option) (*iotanalytics.UpdateChannelOutput, error)

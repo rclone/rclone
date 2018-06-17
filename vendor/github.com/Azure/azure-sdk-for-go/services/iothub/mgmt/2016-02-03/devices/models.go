@@ -794,12 +794,11 @@ func (page IotHubQuotaMetricInfoListResultPage) Values() []IotHubQuotaMetricInfo
 // operation.
 type IotHubResourceCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceClient) (ihd IotHubDescription, err error) {
+func (future *IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceClient) (ihd IotHubDescription, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -807,34 +806,15 @@ func (future IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceCli
 		return
 	}
 	if !done {
-		return ihd, azure.NewAsyncOpIncompleteError("devices.IotHubResourceCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ihd, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("devices.IotHubResourceCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ihd.Response.Response, err = future.GetResult(sender); err == nil && ihd.Response.Response.StatusCode != http.StatusNoContent {
+		ihd, err = client.CreateOrUpdateResponder(ihd.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", ihd.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ihd, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -842,12 +822,11 @@ func (future IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceCli
 // IotHubResourceDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type IotHubResourceDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future IotHubResourceDeleteFuture) Result(client IotHubResourceClient) (so SetObject, err error) {
+func (future *IotHubResourceDeleteFuture) Result(client IotHubResourceClient) (so SetObject, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -855,34 +834,15 @@ func (future IotHubResourceDeleteFuture) Result(client IotHubResourceClient) (so
 		return
 	}
 	if !done {
-		return so, azure.NewAsyncOpIncompleteError("devices.IotHubResourceDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		so, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("devices.IotHubResourceDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if so.Response.Response, err = future.GetResult(sender); err == nil && so.Response.Response.StatusCode != http.StatusNoContent {
+		so, err = client.DeleteResponder(so.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", so.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	so, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

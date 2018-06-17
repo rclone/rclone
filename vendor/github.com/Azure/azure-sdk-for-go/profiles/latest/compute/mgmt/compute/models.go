@@ -486,12 +486,11 @@ const (
 )
 
 type AccessURI = original.AccessURI
-type AccessURIOutput = original.AccessURIOutput
-type AccessURIRaw = original.AccessURIRaw
 type AdditionalUnattendContent = original.AdditionalUnattendContent
 type APIEntityReference = original.APIEntityReference
 type APIError = original.APIError
 type APIErrorBase = original.APIErrorBase
+type AutoOSUpgradePolicy = original.AutoOSUpgradePolicy
 type AvailabilitySet = original.AvailabilitySet
 type AvailabilitySetListResult = original.AvailabilitySetListResult
 type AvailabilitySetProperties = original.AvailabilitySetProperties
@@ -597,7 +596,6 @@ type ResourceSkuRestrictions = original.ResourceSkuRestrictions
 type ResourceSkusResult = original.ResourceSkusResult
 type ResourceSkusResultIterator = original.ResourceSkusResultIterator
 type ResourceSkusResultPage = original.ResourceSkusResultPage
-type ResourceUpdate = original.ResourceUpdate
 type RollbackStatusInfo = original.RollbackStatusInfo
 type RollingUpgradePolicy = original.RollingUpgradePolicy
 type RollingUpgradeProgressInfo = original.RollingUpgradeProgressInfo

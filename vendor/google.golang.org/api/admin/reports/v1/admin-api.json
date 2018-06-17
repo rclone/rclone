@@ -18,7 +18,7 @@
   "description": "Fetches reports for the administrators of G Suite customers about the usage, collaboration, security, and risk for their users.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/admin-sdk/reports/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/yidQnSpgj1IFF7QC_UWo1i1Etx0\"",
+  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/qLYAvJFGLfyQS5NN2Ycs-uWKdaw\"",
   "icons": {
     "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
     "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
@@ -95,7 +95,7 @@
             "applicationName": {
               "description": "Application name for which the events are to be retrieved.",
               "location": "path",
-              "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)",
+              "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)|(meet)",
               "required": true,
               "type": "string"
             },
@@ -174,7 +174,7 @@
             "applicationName": {
               "description": "Application name for which the events are to be retrieved.",
               "location": "path",
-              "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)",
+              "pattern": "(admin)|(calendar)|(drive)|(login)|(mobile)|(token)|(groups)|(saml)|(chat)|(gplus)|(rules)|(jamboard)|(meet)",
               "required": true,
               "type": "string"
             },
@@ -443,7 +443,7 @@
       }
     }
   },
-  "revision": "20180430",
+  "revision": "20180514",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Activities": {

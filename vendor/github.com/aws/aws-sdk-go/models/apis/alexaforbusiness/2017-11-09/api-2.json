@@ -966,7 +966,10 @@
     },
     "DeviceEventType":{
       "type":"string",
-      "enum":["CONNECTION_STATUS"]
+      "enum":[
+        "CONNECTION_STATUS",
+        "DEVICE_STATUS"
+      ]
     },
     "DeviceEventValue":{"type":"string"},
     "DeviceName":{
@@ -984,7 +987,8 @@
       "enum":[
         "READY",
         "PENDING",
-        "WAS_OFFLINE"
+        "WAS_OFFLINE",
+        "DEREGISTERED"
       ]
     },
     "DeviceStatusDetail":{

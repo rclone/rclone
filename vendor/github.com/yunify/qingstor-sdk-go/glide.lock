@@ -1,5 +1,5 @@
-hash: 08f9d9c9c14c4e5927e38688e6bab5bc44b5cb920d05b2523de680a115f5a6b7
-updated: 2017-11-25T11:24:10.452444+08:00
+hash: 6e1d4e547cdd58944ef920192480d29edd118cac0e8269d793315066d1249b4e
+updated: 2018-05-10T11:43:20.637418+08:00
 imports:
 - name: github.com/DATA-DOG/godog
   version: 272624afcc2fc5f818ce069e2e417e7b4fa8bb6c
@@ -7,7 +7,7 @@ imports:
   - colors
   - gherkin
 - name: github.com/pengsrc/go-shared
-  version: b98065a377794d577e2a0e32869378b9ce4b8952
+  version: db9bcfc423552eef790d989bb81ef055d0d26286
   subpackages:
   - buffer
   - check

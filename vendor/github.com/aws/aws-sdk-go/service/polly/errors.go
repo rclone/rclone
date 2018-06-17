@@ -83,8 +83,8 @@ const (
 	// "TextLengthExceededException".
 	//
 	// The value of the "Text" parameter is longer than the accepted limits. The
-	// limit for input text is a maximum of 3000 characters total, of which no more
-	// than 1500 can be billed characters. SSML tags are not counted as billed characters.
+	// limit for input text is a maximum of 6000 characters total, of which no more
+	// than 3000 can be billed characters. SSML tags are not counted as billed characters.
 	ErrCodeTextLengthExceededException = "TextLengthExceededException"
 
 	// ErrCodeUnsupportedPlsAlphabetException for service response error code

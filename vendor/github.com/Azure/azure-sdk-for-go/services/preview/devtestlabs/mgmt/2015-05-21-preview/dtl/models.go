@@ -789,12 +789,11 @@ type CostInsightProperties struct {
 // operation.
 type CostInsightRefreshDataFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CostInsightRefreshDataFuture) Result(client CostInsightClient) (ar autorest.Response, err error) {
+func (future *CostInsightRefreshDataFuture) Result(client CostInsightClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -802,35 +801,10 @@ func (future CostInsightRefreshDataFuture) Result(client CostInsightClient) (ar 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.CostInsightRefreshDataFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.RefreshDataResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.CostInsightRefreshDataFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.CostInsightRefreshDataFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CostInsightRefreshDataFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.RefreshDataResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CostInsightRefreshDataFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -855,12 +829,11 @@ type CostProperties struct {
 // CostRefreshDataFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type CostRefreshDataFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CostRefreshDataFuture) Result(client CostClient) (ar autorest.Response, err error) {
+func (future *CostRefreshDataFuture) Result(client CostClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -868,35 +841,10 @@ func (future CostRefreshDataFuture) Result(client CostClient) (ar autorest.Respo
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.CostRefreshDataFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.RefreshDataResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.CostRefreshDataFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.CostRefreshDataFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CostRefreshDataFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.RefreshDataResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CostRefreshDataFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1014,12 +962,11 @@ func (ci *CustomImage) UnmarshalJSON(body []byte) error {
 // long-running operation.
 type CustomImageCreateOrUpdateResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CustomImageCreateOrUpdateResourceFuture) Result(client CustomImageClient) (ci CustomImage, err error) {
+func (future *CustomImageCreateOrUpdateResourceFuture) Result(client CustomImageClient) (ci CustomImage, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1027,34 +974,15 @@ func (future CustomImageCreateOrUpdateResourceFuture) Result(client CustomImageC
 		return
 	}
 	if !done {
-		return ci, azure.NewAsyncOpIncompleteError("dtl.CustomImageCreateOrUpdateResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ci, err = client.CreateOrUpdateResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.CustomImageCreateOrUpdateResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.CustomImageCreateOrUpdateResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ci.Response.Response, err = future.GetResult(sender); err == nil && ci.Response.Response.StatusCode != http.StatusNoContent {
+		ci, err = client.CreateOrUpdateResourceResponder(ci.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "dtl.CustomImageCreateOrUpdateResourceFuture", "Result", ci.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CustomImageCreateOrUpdateResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ci, err = client.CreateOrUpdateResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CustomImageCreateOrUpdateResourceFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1063,12 +991,11 @@ func (future CustomImageCreateOrUpdateResourceFuture) Result(client CustomImageC
 // operation.
 type CustomImageDeleteResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future CustomImageDeleteResourceFuture) Result(client CustomImageClient) (ar autorest.Response, err error) {
+func (future *CustomImageDeleteResourceFuture) Result(client CustomImageClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1076,35 +1003,10 @@ func (future CustomImageDeleteResourceFuture) Result(client CustomImageClient) (
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.CustomImageDeleteResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.CustomImageDeleteResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.CustomImageDeleteResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CustomImageDeleteResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.CustomImageDeleteResourceFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1287,12 +1189,11 @@ func (f *Formula) UnmarshalJSON(body []byte) error {
 // operation.
 type FormulaCreateOrUpdateResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future FormulaCreateOrUpdateResourceFuture) Result(client FormulaClient) (f Formula, err error) {
+func (future *FormulaCreateOrUpdateResourceFuture) Result(client FormulaClient) (f Formula, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1300,34 +1201,15 @@ func (future FormulaCreateOrUpdateResourceFuture) Result(client FormulaClient) (
 		return
 	}
 	if !done {
-		return f, azure.NewAsyncOpIncompleteError("dtl.FormulaCreateOrUpdateResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		f, err = client.CreateOrUpdateResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.FormulaCreateOrUpdateResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.FormulaCreateOrUpdateResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if f.Response.Response, err = future.GetResult(sender); err == nil && f.Response.Response.StatusCode != http.StatusNoContent {
+		f, err = client.CreateOrUpdateResourceResponder(f.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "dtl.FormulaCreateOrUpdateResourceFuture", "Result", f.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.FormulaCreateOrUpdateResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	f, err = client.CreateOrUpdateResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.FormulaCreateOrUpdateResourceFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1637,12 +1519,11 @@ func (l *Lab) UnmarshalJSON(body []byte) error {
 // LabCreateEnvironmentFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type LabCreateEnvironmentFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future LabCreateEnvironmentFuture) Result(client LabClient) (ar autorest.Response, err error) {
+func (future *LabCreateEnvironmentFuture) Result(client LabClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1650,35 +1531,10 @@ func (future LabCreateEnvironmentFuture) Result(client LabClient) (ar autorest.R
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.LabCreateEnvironmentFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.CreateEnvironmentResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.LabCreateEnvironmentFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.LabCreateEnvironmentFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.LabCreateEnvironmentFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.CreateEnvironmentResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.LabCreateEnvironmentFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -1686,12 +1542,11 @@ func (future LabCreateEnvironmentFuture) Result(client LabClient) (ar autorest.R
 // operation.
 type LabCreateOrUpdateResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future LabCreateOrUpdateResourceFuture) Result(client LabClient) (l Lab, err error) {
+func (future *LabCreateOrUpdateResourceFuture) Result(client LabClient) (l Lab, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1699,34 +1554,15 @@ func (future LabCreateOrUpdateResourceFuture) Result(client LabClient) (l Lab, e
 		return
 	}
 	if !done {
-		return l, azure.NewAsyncOpIncompleteError("dtl.LabCreateOrUpdateResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		l, err = client.CreateOrUpdateResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.LabCreateOrUpdateResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.LabCreateOrUpdateResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if l.Response.Response, err = future.GetResult(sender); err == nil && l.Response.Response.StatusCode != http.StatusNoContent {
+		l, err = client.CreateOrUpdateResourceResponder(l.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "dtl.LabCreateOrUpdateResourceFuture", "Result", l.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.LabCreateOrUpdateResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	l, err = client.CreateOrUpdateResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.LabCreateOrUpdateResourceFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1734,12 +1570,11 @@ func (future LabCreateOrUpdateResourceFuture) Result(client LabClient) (l Lab, e
 // LabDeleteResourceFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type LabDeleteResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future LabDeleteResourceFuture) Result(client LabClient) (ar autorest.Response, err error) {
+func (future *LabDeleteResourceFuture) Result(client LabClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1747,35 +1582,10 @@ func (future LabDeleteResourceFuture) Result(client LabClient) (ar autorest.Resp
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.LabDeleteResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.LabDeleteResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.LabDeleteResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.LabDeleteResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.LabDeleteResourceFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3556,12 +3366,11 @@ func (s *Schedule) UnmarshalJSON(body []byte) error {
 // operation.
 type ScheduleCreateOrUpdateResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ScheduleCreateOrUpdateResourceFuture) Result(client ScheduleClient) (s Schedule, err error) {
+func (future *ScheduleCreateOrUpdateResourceFuture) Result(client ScheduleClient) (s Schedule, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3569,34 +3378,15 @@ func (future ScheduleCreateOrUpdateResourceFuture) Result(client ScheduleClient)
 		return
 	}
 	if !done {
-		return s, azure.NewAsyncOpIncompleteError("dtl.ScheduleCreateOrUpdateResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		s, err = client.CreateOrUpdateResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.ScheduleCreateOrUpdateResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.ScheduleCreateOrUpdateResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if s.Response.Response, err = future.GetResult(sender); err == nil && s.Response.Response.StatusCode != http.StatusNoContent {
+		s, err = client.CreateOrUpdateResourceResponder(s.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "dtl.ScheduleCreateOrUpdateResourceFuture", "Result", s.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.ScheduleCreateOrUpdateResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	s, err = client.CreateOrUpdateResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.ScheduleCreateOrUpdateResourceFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3605,12 +3395,11 @@ func (future ScheduleCreateOrUpdateResourceFuture) Result(client ScheduleClient)
 // operation.
 type ScheduleDeleteResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ScheduleDeleteResourceFuture) Result(client ScheduleClient) (ar autorest.Response, err error) {
+func (future *ScheduleDeleteResourceFuture) Result(client ScheduleClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3618,47 +3407,21 @@ func (future ScheduleDeleteResourceFuture) Result(client ScheduleClient) (ar aut
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.ScheduleDeleteResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.ScheduleDeleteResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.ScheduleDeleteResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.ScheduleDeleteResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.ScheduleDeleteResourceFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // ScheduleExecuteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type ScheduleExecuteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future ScheduleExecuteFuture) Result(client ScheduleClient) (ar autorest.Response, err error) {
+func (future *ScheduleExecuteFuture) Result(client ScheduleClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3666,35 +3429,10 @@ func (future ScheduleExecuteFuture) Result(client ScheduleClient) (ar autorest.R
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.ScheduleExecuteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ExecuteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.ScheduleExecuteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.ScheduleExecuteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.ScheduleExecuteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ExecuteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.ScheduleExecuteFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3753,12 +3491,11 @@ type SubscriptionNotificationProperties struct {
 // operation.
 type VirtualMachineApplyArtifactsFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VirtualMachineApplyArtifactsFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
+func (future *VirtualMachineApplyArtifactsFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3766,35 +3503,10 @@ func (future VirtualMachineApplyArtifactsFuture) Result(client VirtualMachineCli
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.VirtualMachineApplyArtifactsFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.ApplyArtifactsResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.VirtualMachineApplyArtifactsFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.VirtualMachineApplyArtifactsFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineApplyArtifactsFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.ApplyArtifactsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineApplyArtifactsFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -3802,12 +3514,11 @@ func (future VirtualMachineApplyArtifactsFuture) Result(client VirtualMachineCli
 // long-running operation.
 type VirtualMachineCreateOrUpdateResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VirtualMachineCreateOrUpdateResourceFuture) Result(client VirtualMachineClient) (lvm LabVirtualMachine, err error) {
+func (future *VirtualMachineCreateOrUpdateResourceFuture) Result(client VirtualMachineClient) (lvm LabVirtualMachine, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3815,34 +3526,15 @@ func (future VirtualMachineCreateOrUpdateResourceFuture) Result(client VirtualMa
 		return
 	}
 	if !done {
-		return lvm, azure.NewAsyncOpIncompleteError("dtl.VirtualMachineCreateOrUpdateResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		lvm, err = client.CreateOrUpdateResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.VirtualMachineCreateOrUpdateResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.VirtualMachineCreateOrUpdateResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if lvm.Response.Response, err = future.GetResult(sender); err == nil && lvm.Response.Response.StatusCode != http.StatusNoContent {
+		lvm, err = client.CreateOrUpdateResourceResponder(lvm.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "dtl.VirtualMachineCreateOrUpdateResourceFuture", "Result", lvm.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineCreateOrUpdateResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	lvm, err = client.CreateOrUpdateResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineCreateOrUpdateResourceFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -3851,12 +3543,11 @@ func (future VirtualMachineCreateOrUpdateResourceFuture) Result(client VirtualMa
 // operation.
 type VirtualMachineDeleteResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VirtualMachineDeleteResourceFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
+func (future *VirtualMachineDeleteResourceFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3864,47 +3555,21 @@ func (future VirtualMachineDeleteResourceFuture) Result(client VirtualMachineCli
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.VirtualMachineDeleteResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.VirtualMachineDeleteResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.VirtualMachineDeleteResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineDeleteResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineDeleteResourceFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // VirtualMachineStartFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type VirtualMachineStartFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VirtualMachineStartFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
+func (future *VirtualMachineStartFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3912,47 +3577,21 @@ func (future VirtualMachineStartFuture) Result(client VirtualMachineClient) (ar 
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.VirtualMachineStartFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.StartResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.VirtualMachineStartFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.VirtualMachineStartFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineStartFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.StartResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineStartFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // VirtualMachineStopFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type VirtualMachineStopFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VirtualMachineStopFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
+func (future *VirtualMachineStopFuture) Result(client VirtualMachineClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -3960,35 +3599,10 @@ func (future VirtualMachineStopFuture) Result(client VirtualMachineClient) (ar a
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.VirtualMachineStopFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.StopResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.VirtualMachineStopFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.VirtualMachineStopFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineStopFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.StopResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualMachineStopFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -4106,12 +3720,11 @@ func (vn *VirtualNetwork) UnmarshalJSON(body []byte) error {
 // long-running operation.
 type VirtualNetworkCreateOrUpdateResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VirtualNetworkCreateOrUpdateResourceFuture) Result(client VirtualNetworkClient) (vn VirtualNetwork, err error) {
+func (future *VirtualNetworkCreateOrUpdateResourceFuture) Result(client VirtualNetworkClient) (vn VirtualNetwork, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4119,34 +3732,15 @@ func (future VirtualNetworkCreateOrUpdateResourceFuture) Result(client VirtualNe
 		return
 	}
 	if !done {
-		return vn, azure.NewAsyncOpIncompleteError("dtl.VirtualNetworkCreateOrUpdateResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		vn, err = client.CreateOrUpdateResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.VirtualNetworkCreateOrUpdateResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.VirtualNetworkCreateOrUpdateResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if vn.Response.Response, err = future.GetResult(sender); err == nil && vn.Response.Response.StatusCode != http.StatusNoContent {
+		vn, err = client.CreateOrUpdateResourceResponder(vn.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "dtl.VirtualNetworkCreateOrUpdateResourceFuture", "Result", vn.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualNetworkCreateOrUpdateResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	vn, err = client.CreateOrUpdateResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualNetworkCreateOrUpdateResourceFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -4155,12 +3749,11 @@ func (future VirtualNetworkCreateOrUpdateResourceFuture) Result(client VirtualNe
 // operation.
 type VirtualNetworkDeleteResourceFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VirtualNetworkDeleteResourceFuture) Result(client VirtualNetworkClient) (ar autorest.Response, err error) {
+func (future *VirtualNetworkDeleteResourceFuture) Result(client VirtualNetworkClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -4168,35 +3761,10 @@ func (future VirtualNetworkDeleteResourceFuture) Result(client VirtualNetworkCli
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("dtl.VirtualNetworkDeleteResourceFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResourceResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "dtl.VirtualNetworkDeleteResourceFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("dtl.VirtualNetworkDeleteResourceFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualNetworkDeleteResourceFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.DeleteResourceResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "dtl.VirtualNetworkDeleteResourceFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 

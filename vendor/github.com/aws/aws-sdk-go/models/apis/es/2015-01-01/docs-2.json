@@ -10,10 +10,13 @@
     "DescribeElasticsearchDomainConfig": "<p>Provides cluster configuration information about the specified Elasticsearch domain, such as the state, creation date, update version, and update date for cluster options.</p>",
     "DescribeElasticsearchDomains": "<p>Returns domain configuration information about the specified Elasticsearch domains, including the domain ID, domain endpoint, and domain ARN.</p>",
     "DescribeElasticsearchInstanceTypeLimits": "<p> Describe Elasticsearch Limits for a given InstanceType and ElasticsearchVersion. When modifying existing Domain, specify the <code> <a>DomainName</a> </code> to know what Limits are supported for modifying. </p>",
+    "DescribeReservedElasticsearchInstanceOfferings": "<p>Lists available reserved Elasticsearch instance offerings.</p>",
+    "DescribeReservedElasticsearchInstances": "<p>Returns information about reserved Elasticsearch instances for this account.</p>",
     "ListDomainNames": "<p>Returns the name of all Elasticsearch domains owned by the current user's account. </p>",
     "ListElasticsearchInstanceTypes": "<p>List all Elasticsearch instance types that are supported for given ElasticsearchVersion</p>",
     "ListElasticsearchVersions": "<p>List all supported Elasticsearch versions</p>",
     "ListTags": "<p>Returns all tags for the given Elasticsearch domain.</p>",
+    "PurchaseReservedElasticsearchInstanceOffering": "<p>Allows you to purchase reserved Elasticsearch instances.</p>",
     "RemoveTags": "<p>Removes the specified set of tags from the specified Elasticsearch domain.</p>",
     "UpdateElasticsearchDomainConfig": "<p>Modifies the cluster configuration of the specified Elasticsearch domain, setting as setting the instance type and the number of instances. </p>"
   },
@@ -166,6 +169,26 @@
       "refs": {
       }
     },
+    "DescribeReservedElasticsearchInstanceOfferingsRequest": {
+      "base": "<p>Container for parameters to <code>DescribeReservedElasticsearchInstanceOfferings</code></p>",
+      "refs": {
+      }
+    },
+    "DescribeReservedElasticsearchInstanceOfferingsResponse": {
+      "base": "<p>Container for results from <code>DescribeReservedElasticsearchInstanceOfferings</code></p>",
+      "refs": {
+      }
+    },
+    "DescribeReservedElasticsearchInstancesRequest": {
+      "base": "<p>Container for parameters to <code>DescribeReservedElasticsearchInstances</code></p>",
+      "refs": {
+      }
+    },
+    "DescribeReservedElasticsearchInstancesResponse": {
+      "base": "<p>Container for results from <code>DescribeReservedElasticsearchInstances</code></p>",
+      "refs": {
+      }
+    },
     "DisabledOperationException": {
       "base": "<p>An error occured because the client wanted to access a not supported operation. Gives http status code of 409.</p>",
       "refs": {
@@ -210,6 +233,16 @@
         "DescribeElasticsearchDomainsRequest$DomainNames": "<p>The Elasticsearch domains for which you want information.</p>"
       }
     },
+    "Double": {
+      "base": null,
+      "refs": {
+        "RecurringCharge$RecurringChargeAmount": "<p>The monetary amount of the recurring charge.</p>",
+        "ReservedElasticsearchInstance$FixedPrice": "<p>The upfront fixed charge you will paid to purchase the specific reserved Elasticsearch instance offering. </p>",
+        "ReservedElasticsearchInstance$UsagePrice": "<p>The rate you are charged for each hour for the domain that is using this reserved instance.</p>",
+        "ReservedElasticsearchInstanceOffering$FixedPrice": "<p>The upfront fixed charge you will pay to purchase the specific reserved Elasticsearch instance offering. </p>",
+        "ReservedElasticsearchInstanceOffering$UsagePrice": "<p>The rate you are charged for each hour the domain that is using the offering is running.</p>"
+      }
+    },
     "EBSOptions": {
       "base": "<p>Options to enable, disable, and specify the properties of EBS storage volumes. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html#es-createdomain-configure-ebs\" target=\"_blank\"> Configuring EBS-based Storage</a>.</p>",
       "refs": {
@@ -231,7 +264,9 @@
         "DescribeElasticsearchInstanceTypeLimitsRequest$InstanceType": "<p> The instance type for an Elasticsearch cluster for which Elasticsearch <code> <a>Limits</a> </code> are needed. </p>",
         "ElasticsearchClusterConfig$InstanceType": "<p>The instance type for an Elasticsearch cluster.</p>",
         "ElasticsearchClusterConfig$DedicatedMasterType": "<p>The instance type for a dedicated master node.</p>",
-        "ElasticsearchInstanceTypeList$member": null
+        "ElasticsearchInstanceTypeList$member": null,
+        "ReservedElasticsearchInstance$ElasticsearchInstanceType": "<p>The Elasticsearch instance type offered by the reserved instance offering.</p>",
+        "ReservedElasticsearchInstanceOffering$ElasticsearchInstanceType": "<p>The Elasticsearch instance type offered by the reserved instance offering.</p>"
       }
     },
     "ElasticsearchClusterConfig": {
@@ -326,10 +361,27 @@
         "BaseException$message": "<p>A description of the error.</p>"
       }
     },
+    "GUID": {
+      "base": null,
+      "refs": {
+        "DescribeReservedElasticsearchInstanceOfferingsRequest$ReservedElasticsearchInstanceOfferingId": "<p>The offering identifier filter value. Use this parameter to show only the available offering that matches the specified reservation identifier.</p>",
+        "DescribeReservedElasticsearchInstancesRequest$ReservedElasticsearchInstanceId": "<p>The reserved instance identifier filter value. Use this parameter to show only the reservation that matches the specified reserved Elasticsearch instance ID.</p>",
+        "PurchaseReservedElasticsearchInstanceOfferingRequest$ReservedElasticsearchInstanceOfferingId": "<p>The ID of the reserved Elasticsearch instance offering to purchase.</p>",
+        "PurchaseReservedElasticsearchInstanceOfferingResponse$ReservedElasticsearchInstanceId": "<p>Details of the reserved Elasticsearch instance which was purchased.</p>",
+        "ReservedElasticsearchInstance$ReservedElasticsearchInstanceId": "<p>The unique identifier for the reservation.</p>",
+        "ReservedElasticsearchInstanceOffering$ReservedElasticsearchInstanceOfferingId": "<p>The Elasticsearch reserved instance offering identifier.</p>"
+      }
+    },
     "IdentityPoolId": {
       "base": null,
       "refs": {
         "CognitoOptions$IdentityPoolId": "<p>Specifies the Cognito identity pool ID for Kibana authentication.</p>"
+      }
+    },
+    "InstanceCount": {
+      "base": "<p>Specifies the number of EC2 instances in the Elasticsearch domain.</p>",
+      "refs": {
+        "PurchaseReservedElasticsearchInstanceOfferingRequest$InstanceCount": "<p>The number of Elasticsearch instances to reserve.</p>"
       }
     },
     "InstanceCountLimits": {
@@ -348,6 +400,14 @@
       "base": null,
       "refs": {
         "LimitsByRole$key": null
+      }
+    },
+    "Integer": {
+      "base": null,
+      "refs": {
+        "ReservedElasticsearchInstance$Duration": "<p>The duration, in seconds, for which the Elasticsearch instance is reserved.</p>",
+        "ReservedElasticsearchInstance$ElasticsearchInstanceCount": "<p>The number of Elasticsearch instances that have been reserved.</p>",
+        "ReservedElasticsearchInstanceOffering$Duration": "<p>The duration, in seconds, for which the offering will reserve the Elasticsearch instance.</p>"
       }
     },
     "IntegerClass": {
@@ -478,6 +538,8 @@
     "MaxResults": {
       "base": "<p> Set this value to limit the number of results returned. </p>",
       "refs": {
+        "DescribeReservedElasticsearchInstanceOfferingsRequest$MaxResults": "<p>Set this value to limit the number of results returned. If not specified, defaults to 100.</p>",
+        "DescribeReservedElasticsearchInstancesRequest$MaxResults": "<p>Set this value to limit the number of results returned. If not specified, defaults to 100.</p>",
         "ListElasticsearchInstanceTypesRequest$MaxResults": "<p> Set this value to limit the number of results returned. Value provided must be greater than 30 else it wont be honored. </p>",
         "ListElasticsearchVersionsRequest$MaxResults": "<p> Set this value to limit the number of results returned. Value provided must be greater than 10 else it wont be honored. </p>"
       }
@@ -497,6 +559,9 @@
     "NextToken": {
       "base": "<p> Paginated APIs accepts NextToken input to returns next page results and provides a NextToken output in the response which can be used by the client to retrieve more results. </p>",
       "refs": {
+        "DescribeReservedElasticsearchInstanceOfferingsRequest$NextToken": "<p>NextToken should be sent in case if earlier API call produced result containing NextToken. It is used for pagination.</p>",
+        "DescribeReservedElasticsearchInstanceOfferingsResponse$NextToken": "<p>Provides an identifier to allow retrieval of paginated results.</p>",
+        "DescribeReservedElasticsearchInstancesRequest$NextToken": "<p>NextToken should be sent in case if earlier API call produced result containing NextToken. It is used for pagination.</p>",
         "ListElasticsearchInstanceTypesRequest$NextToken": "<p>NextToken should be sent in case if earlier API call produced result containing NextToken. It is used for pagination. </p>",
         "ListElasticsearchInstanceTypesResponse$NextToken": "<p>In case if there are more results available NextToken would be present, make further request to the same API with received NextToken to paginate remaining results. </p>",
         "ListElasticsearchVersionsRequest$NextToken": null,
@@ -533,9 +598,71 @@
         "UpdateElasticsearchDomainConfigRequest$AccessPolicies": "<p>IAM access policy as a JSON-formatted string.</p>"
       }
     },
+    "PurchaseReservedElasticsearchInstanceOfferingRequest": {
+      "base": "<p>Container for parameters to <code>PurchaseReservedElasticsearchInstanceOffering</code></p>",
+      "refs": {
+      }
+    },
+    "PurchaseReservedElasticsearchInstanceOfferingResponse": {
+      "base": "<p>Represents the output of a <code>PurchaseReservedElasticsearchInstanceOffering</code> operation.</p>",
+      "refs": {
+      }
+    },
+    "RecurringCharge": {
+      "base": "<p>Contains the specific price and frequency of a recurring charges for a reserved Elasticsearch instance, or for a reserved Elasticsearch instance offering.</p>",
+      "refs": {
+        "RecurringChargeList$member": null
+      }
+    },
+    "RecurringChargeList": {
+      "base": null,
+      "refs": {
+        "ReservedElasticsearchInstance$RecurringCharges": "<p>The charge to your account regardless of whether you are creating any domains using the instance offering.</p>",
+        "ReservedElasticsearchInstanceOffering$RecurringCharges": "<p>The charge to your account regardless of whether you are creating any domains using the instance offering.</p>"
+      }
+    },
     "RemoveTagsRequest": {
       "base": "<p>Container for the parameters to the <code><a>RemoveTags</a></code> operation. Specify the <code>ARN</code> for the Elasticsearch domain from which you want to remove the specified <code>TagKey</code>.</p>",
       "refs": {
+      }
+    },
+    "ReservationToken": {
+      "base": null,
+      "refs": {
+        "PurchaseReservedElasticsearchInstanceOfferingRequest$ReservationName": "<p>A customer-specified identifier to track this reservation.</p>",
+        "PurchaseReservedElasticsearchInstanceOfferingResponse$ReservationName": "<p>The customer-specified identifier used to track this reservation.</p>",
+        "ReservedElasticsearchInstance$ReservationName": "<p>The customer-specified identifier to track this reservation.</p>"
+      }
+    },
+    "ReservedElasticsearchInstance": {
+      "base": "<p>Details of a reserved Elasticsearch instance.</p>",
+      "refs": {
+        "ReservedElasticsearchInstanceList$member": null
+      }
+    },
+    "ReservedElasticsearchInstanceList": {
+      "base": null,
+      "refs": {
+        "DescribeReservedElasticsearchInstancesResponse$ReservedElasticsearchInstances": "<p>List of reserved Elasticsearch instances.</p>"
+      }
+    },
+    "ReservedElasticsearchInstanceOffering": {
+      "base": "<p>Details of a reserved Elasticsearch instance offering.</p>",
+      "refs": {
+        "ReservedElasticsearchInstanceOfferingList$member": null
+      }
+    },
+    "ReservedElasticsearchInstanceOfferingList": {
+      "base": null,
+      "refs": {
+        "DescribeReservedElasticsearchInstanceOfferingsResponse$ReservedElasticsearchInstanceOfferings": "<p>List of reserved Elasticsearch instance offerings</p>"
+      }
+    },
+    "ReservedElasticsearchInstancePaymentOption": {
+      "base": null,
+      "refs": {
+        "ReservedElasticsearchInstance$PaymentOption": "<p>The payment option as defined in the reserved Elasticsearch instance offering.</p>",
+        "ReservedElasticsearchInstanceOffering$PaymentOption": "<p>Payment option for the reserved Elasticsearch instance offering</p>"
       }
     },
     "ResourceAlreadyExistsException": {
@@ -617,7 +744,13 @@
       "refs": {
         "AdvancedOptions$key": null,
         "AdvancedOptions$value": null,
+        "DescribeReservedElasticsearchInstancesResponse$NextToken": "<p>Provides an identifier to allow retrieval of paginated results.</p>",
         "EndpointsMap$key": null,
+        "RecurringCharge$RecurringChargeFrequency": "<p>The frequency of the recurring charge.</p>",
+        "ReservedElasticsearchInstance$ReservedElasticsearchInstanceOfferingId": "<p>The offering identifier.</p>",
+        "ReservedElasticsearchInstance$CurrencyCode": "<p>The currency code for the reserved Elasticsearch instance offering.</p>",
+        "ReservedElasticsearchInstance$State": "<p>The state of the reserved Elasticsearch instance.</p>",
+        "ReservedElasticsearchInstanceOffering$CurrencyCode": "<p>The currency code for the reserved Elasticsearch instance offering.</p>",
         "StringList$member": null,
         "VPCDerivedInfo$VPCId": "<p>The VPC Id for the Elasticsearch domain. Exists only if the domain was created with VPCOptions.</p>"
       }
@@ -678,7 +811,8 @@
       "base": null,
       "refs": {
         "OptionStatus$CreationDate": "<p>Timestamp which tells the creation date for the entity.</p>",
-        "OptionStatus$UpdateDate": "<p>Timestamp which tells the last updated time for the entity.</p>"
+        "OptionStatus$UpdateDate": "<p>Timestamp which tells the last updated time for the entity.</p>",
+        "ReservedElasticsearchInstance$StartTime": "<p>The time the reservation started.</p>"
       }
     },
     "UserPoolId": {

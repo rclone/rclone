@@ -62,7 +62,7 @@ func TestWriteBatch(t *testing.T) {
 							Fields: map[string]*pb.Value{"*": intval(3)},
 						},
 					},
-					UpdateMask: &pb.DocumentMask{[]string{"`*`"}},
+					UpdateMask: &pb.DocumentMask{FieldPaths: []string{"`*`"}},
 					CurrentDocument: &pb.Precondition{
 						ConditionType: &pb.Precondition_Exists{true},
 					},

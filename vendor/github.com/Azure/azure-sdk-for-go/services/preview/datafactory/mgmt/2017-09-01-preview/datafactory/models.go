@@ -78,6 +78,21 @@ func PossibleAzureSearchIndexWriteBehaviorTypeValues() []AzureSearchIndexWriteBe
 	return []AzureSearchIndexWriteBehaviorType{Merge, Upload}
 }
 
+// BlobEventTypes enumerates the values for blob event types.
+type BlobEventTypes string
+
+const (
+	// MicrosoftStorageBlobCreated ...
+	MicrosoftStorageBlobCreated BlobEventTypes = "Microsoft.Storage.BlobCreated"
+	// MicrosoftStorageBlobDeleted ...
+	MicrosoftStorageBlobDeleted BlobEventTypes = "Microsoft.Storage.BlobDeleted"
+)
+
+// PossibleBlobEventTypesValues returns an array of possible values for the BlobEventTypes const type.
+func PossibleBlobEventTypesValues() []BlobEventTypes {
+	return []BlobEventTypes{MicrosoftStorageBlobCreated, MicrosoftStorageBlobDeleted}
+}
+
 // CassandraSourceReadConsistencyLevels enumerates the values for cassandra source read consistency levels.
 type CassandraSourceReadConsistencyLevels string
 
@@ -1649,6 +1664,8 @@ func PossibleTypeBasicLinkedServiceValues() []TypeBasicLinkedService {
 type TypeBasicTrigger string
 
 const (
+	// TypeBlobEventsTrigger ...
+	TypeBlobEventsTrigger TypeBasicTrigger = "BlobEventsTrigger"
 	// TypeBlobTrigger ...
 	TypeBlobTrigger TypeBasicTrigger = "BlobTrigger"
 	// TypeMultiplePipelineTrigger ...
@@ -1663,7 +1680,7 @@ const (
 
 // PossibleTypeBasicTriggerValues returns an array of possible values for the TypeBasicTrigger const type.
 func PossibleTypeBasicTriggerValues() []TypeBasicTrigger {
-	return []TypeBasicTrigger{TypeBlobTrigger, TypeMultiplePipelineTrigger, TypeScheduleTrigger, TypeTrigger, TypeTumblingWindowTrigger}
+	return []TypeBasicTrigger{TypeBlobEventsTrigger, TypeBlobTrigger, TypeMultiplePipelineTrigger, TypeScheduleTrigger, TypeTrigger, TypeTumblingWindowTrigger}
 }
 
 // WebActivityMethod enumerates the values for web activity method.
@@ -17734,6 +17751,171 @@ func (ats AzureTableSource) AsBasicCopySource() (BasicCopySource, bool) {
 	return &ats, true
 }
 
+// BlobEventsTrigger trigger that runs everytime a Blob event occurs.
+type BlobEventsTrigger struct {
+	// BlobEventsTriggerTypeProperties - Blob Events Trigger properties.
+	*BlobEventsTriggerTypeProperties `json:"typeProperties,omitempty"`
+	// Pipelines - Pipelines that need to be started.
+	Pipelines *[]TriggerPipelineReference `json:"pipelines,omitempty"`
+	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
+	AdditionalProperties map[string]interface{} `json:""`
+	// Description - Trigger description.
+	Description *string `json:"description,omitempty"`
+	// RuntimeState - Indicates if trigger is running or not. Updated when Start/Stop APIs are called on the Trigger. Possible values include: 'TriggerRuntimeStateStarted', 'TriggerRuntimeStateStopped', 'TriggerRuntimeStateDisabled'
+	RuntimeState TriggerRuntimeState `json:"runtimeState,omitempty"`
+	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobEventsTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
+	Type TypeBasicTrigger `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for BlobEventsTrigger.
+func (bet BlobEventsTrigger) MarshalJSON() ([]byte, error) {
+	bet.Type = TypeBlobEventsTrigger
+	objectMap := make(map[string]interface{})
+	if bet.BlobEventsTriggerTypeProperties != nil {
+		objectMap["typeProperties"] = bet.BlobEventsTriggerTypeProperties
+	}
+	if bet.Pipelines != nil {
+		objectMap["pipelines"] = bet.Pipelines
+	}
+	if bet.Description != nil {
+		objectMap["description"] = bet.Description
+	}
+	if bet.RuntimeState != "" {
+		objectMap["runtimeState"] = bet.RuntimeState
+	}
+	if bet.Type != "" {
+		objectMap["type"] = bet.Type
+	}
+	for k, v := range bet.AdditionalProperties {
+		objectMap[k] = v
+	}
+	return json.Marshal(objectMap)
+}
+
+// AsTumblingWindowTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsTumblingWindowTrigger() (*TumblingWindowTrigger, bool) {
+	return nil, false
+}
+
+// AsBlobEventsTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsBlobEventsTrigger() (*BlobEventsTrigger, bool) {
+	return &bet, true
+}
+
+// AsBlobTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsBlobTrigger() (*BlobTrigger, bool) {
+	return nil, false
+}
+
+// AsScheduleTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsScheduleTrigger() (*ScheduleTrigger, bool) {
+	return nil, false
+}
+
+// AsMultiplePipelineTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsMultiplePipelineTrigger() (*MultiplePipelineTrigger, bool) {
+	return nil, false
+}
+
+// AsBasicMultiplePipelineTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsBasicMultiplePipelineTrigger() (BasicMultiplePipelineTrigger, bool) {
+	return &bet, true
+}
+
+// AsTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsTrigger() (*Trigger, bool) {
+	return nil, false
+}
+
+// AsBasicTrigger is the BasicTrigger implementation for BlobEventsTrigger.
+func (bet BlobEventsTrigger) AsBasicTrigger() (BasicTrigger, bool) {
+	return &bet, true
+}
+
+// UnmarshalJSON is the custom unmarshaler for BlobEventsTrigger struct.
+func (bet *BlobEventsTrigger) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "typeProperties":
+			if v != nil {
+				var blobEventsTriggerTypeProperties BlobEventsTriggerTypeProperties
+				err = json.Unmarshal(*v, &blobEventsTriggerTypeProperties)
+				if err != nil {
+					return err
+				}
+				bet.BlobEventsTriggerTypeProperties = &blobEventsTriggerTypeProperties
+			}
+		case "pipelines":
+			if v != nil {
+				var pipelines []TriggerPipelineReference
+				err = json.Unmarshal(*v, &pipelines)
+				if err != nil {
+					return err
+				}
+				bet.Pipelines = &pipelines
+			}
+		default:
+			if v != nil {
+				var additionalProperties interface{}
+				err = json.Unmarshal(*v, &additionalProperties)
+				if err != nil {
+					return err
+				}
+				if bet.AdditionalProperties == nil {
+					bet.AdditionalProperties = make(map[string]interface{})
+				}
+				bet.AdditionalProperties[k] = additionalProperties
+			}
+		case "description":
+			if v != nil {
+				var description string
+				err = json.Unmarshal(*v, &description)
+				if err != nil {
+					return err
+				}
+				bet.Description = &description
+			}
+		case "runtimeState":
+			if v != nil {
+				var runtimeState TriggerRuntimeState
+				err = json.Unmarshal(*v, &runtimeState)
+				if err != nil {
+					return err
+				}
+				bet.RuntimeState = runtimeState
+			}
+		case "type":
+			if v != nil {
+				var typeVar TypeBasicTrigger
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				bet.Type = typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// BlobEventsTriggerTypeProperties blob Events Trigger properties.
+type BlobEventsTriggerTypeProperties struct {
+	// BlobPathBeginsWith - The blob path must begin with the pattern provided for trigger to fire. For example, '/records/blobs/december/' will only fire the trigger for blobs in the december folder under the records container. At least one of these must be provided: blobPathBeginsWith, blobPathEndsWith.
+	BlobPathBeginsWith *string `json:"blobPathBeginsWith,omitempty"`
+	// BlobPathEndsWith - The blob path must end with the pattern provided for trigger to fire. For example, 'december/boxes.csv' will only fire the trigger for blobs named boxes in a december folder. At least one of these must be provided: blobPathBeginsWith, blobPathEndsWith.
+	BlobPathEndsWith *string `json:"blobPathEndsWith,omitempty"`
+	// Events - The type of events that cause this trigger to fire.
+	Events *[]BlobEventTypes `json:"events,omitempty"`
+	// Scope - The ARM resource ID of the Storage Account.
+	Scope *string `json:"scope,omitempty"`
+}
+
 // BlobSink a copy activity Azure Blob sink.
 type BlobSink struct {
 	// BlobWriterOverwriteFiles - Blob writer overwrite files. Type: boolean (or Expression with resultType boolean).
@@ -18169,7 +18351,7 @@ type BlobTrigger struct {
 	Description *string `json:"description,omitempty"`
 	// RuntimeState - Indicates if trigger is running or not. Updated when Start/Stop APIs are called on the Trigger. Possible values include: 'TriggerRuntimeStateStarted', 'TriggerRuntimeStateStopped', 'TriggerRuntimeStateDisabled'
 	RuntimeState TriggerRuntimeState `json:"runtimeState,omitempty"`
-	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
+	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobEventsTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
 	Type TypeBasicTrigger `json:"type,omitempty"`
 }
 
@@ -18200,6 +18382,11 @@ func (bt BlobTrigger) MarshalJSON() ([]byte, error) {
 
 // AsTumblingWindowTrigger is the BasicTrigger implementation for BlobTrigger.
 func (bt BlobTrigger) AsTumblingWindowTrigger() (*TumblingWindowTrigger, bool) {
+	return nil, false
+}
+
+// AsBlobEventsTrigger is the BasicTrigger implementation for BlobTrigger.
+func (bt BlobTrigger) AsBlobEventsTrigger() (*BlobEventsTrigger, bool) {
 	return nil, false
 }
 
@@ -33226,6 +33413,18 @@ type FactoryProperties struct {
 	CreateTime *date.Time `json:"createTime,omitempty"`
 	// Version - Version of the factory.
 	Version *string `json:"version,omitempty"`
+	// VstsConfiguration - VSTS repo information of the factory.
+	VstsConfiguration *FactoryVSTSConfiguration `json:"vstsConfiguration,omitempty"`
+}
+
+// FactoryRepoUpdate factory's VSTS repo information.
+type FactoryRepoUpdate struct {
+	// FactoryResourceID - The factory resource id.
+	FactoryResourceID *string `json:"factoryResourceId,omitempty"`
+	// ResourceGroupName - The resource group name.
+	ResourceGroupName *string `json:"resourceGroupName,omitempty"`
+	// VstsConfiguration - VSTS repo information of the factory.
+	VstsConfiguration *FactoryVSTSConfiguration `json:"vstsConfiguration,omitempty"`
 }
 
 // FactoryUpdateParameters parameters for updating a factory resource.
@@ -33246,6 +33445,24 @@ func (fup FactoryUpdateParameters) MarshalJSON() ([]byte, error) {
 		objectMap["identity"] = fup.Identity
 	}
 	return json.Marshal(objectMap)
+}
+
+// FactoryVSTSConfiguration factory's VSTS repo information.
+type FactoryVSTSConfiguration struct {
+	// AccountName - VSTS account name.
+	AccountName *string `json:"accountName,omitempty"`
+	// ProjectName - VSTS project name.
+	ProjectName *string `json:"projectName,omitempty"`
+	// RepositoryName - VSTS repository name.
+	RepositoryName *string `json:"repositoryName,omitempty"`
+	// CollaborationBranch - VSTS collaboration branch.
+	CollaborationBranch *string `json:"collaborationBranch,omitempty"`
+	// RootFolder - VSTS root folder.
+	RootFolder *string `json:"rootFolder,omitempty"`
+	// LastCommitID - VSTS last commit id.
+	LastCommitID *string `json:"lastCommitId,omitempty"`
+	// TenantID - VSTS tenant id.
+	TenantID *string `json:"tenantId,omitempty"`
 }
 
 // FileServerLinkedService file system linked service.
@@ -49615,12 +49832,11 @@ func (irsp IntegrationRuntimeSsisProperties) MarshalJSON() ([]byte, error) {
 // operation.
 type IntegrationRuntimesStartFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future IntegrationRuntimesStartFuture) Result(client IntegrationRuntimesClient) (irsr IntegrationRuntimeStatusResponse, err error) {
+func (future *IntegrationRuntimesStartFuture) Result(client IntegrationRuntimesClient) (irsr IntegrationRuntimeStatusResponse, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -49628,34 +49844,15 @@ func (future IntegrationRuntimesStartFuture) Result(client IntegrationRuntimesCl
 		return
 	}
 	if !done {
-		return irsr, azure.NewAsyncOpIncompleteError("datafactory.IntegrationRuntimesStartFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		irsr, err = client.StartResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "datafactory.IntegrationRuntimesStartFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("datafactory.IntegrationRuntimesStartFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if irsr.Response.Response, err = future.GetResult(sender); err == nil && irsr.Response.Response.StatusCode != http.StatusNoContent {
+		irsr, err = client.StartResponder(irsr.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "datafactory.IntegrationRuntimesStartFuture", "Result", irsr.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.IntegrationRuntimesStartFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	irsr, err = client.StartResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.IntegrationRuntimesStartFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -49664,12 +49861,11 @@ func (future IntegrationRuntimesStartFuture) Result(client IntegrationRuntimesCl
 // operation.
 type IntegrationRuntimesStopFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future IntegrationRuntimesStopFuture) Result(client IntegrationRuntimesClient) (ar autorest.Response, err error) {
+func (future *IntegrationRuntimesStopFuture) Result(client IntegrationRuntimesClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -49677,35 +49873,10 @@ func (future IntegrationRuntimesStopFuture) Result(client IntegrationRuntimesCli
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("datafactory.IntegrationRuntimesStopFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.StopResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "datafactory.IntegrationRuntimesStopFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("datafactory.IntegrationRuntimesStopFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.IntegrationRuntimesStopFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.StopResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.IntegrationRuntimesStopFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -57794,6 +57965,7 @@ func (mds MongoDbSource) AsBasicCopySource() (BasicCopySource, bool) {
 
 // BasicMultiplePipelineTrigger base class for all triggers that support one to many model for trigger to pipeline.
 type BasicMultiplePipelineTrigger interface {
+	AsBlobEventsTrigger() (*BlobEventsTrigger, bool)
 	AsBlobTrigger() (*BlobTrigger, bool)
 	AsScheduleTrigger() (*ScheduleTrigger, bool)
 	AsMultiplePipelineTrigger() (*MultiplePipelineTrigger, bool)
@@ -57809,7 +57981,7 @@ type MultiplePipelineTrigger struct {
 	Description *string `json:"description,omitempty"`
 	// RuntimeState - Indicates if trigger is running or not. Updated when Start/Stop APIs are called on the Trigger. Possible values include: 'TriggerRuntimeStateStarted', 'TriggerRuntimeStateStopped', 'TriggerRuntimeStateDisabled'
 	RuntimeState TriggerRuntimeState `json:"runtimeState,omitempty"`
-	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
+	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobEventsTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
 	Type TypeBasicTrigger `json:"type,omitempty"`
 }
 
@@ -57821,6 +57993,10 @@ func unmarshalBasicMultiplePipelineTrigger(body []byte) (BasicMultiplePipelineTr
 	}
 
 	switch m["type"] {
+	case string(TypeBlobEventsTrigger):
+		var bet BlobEventsTrigger
+		err := json.Unmarshal(body, &bet)
+		return bet, err
 	case string(TypeBlobTrigger):
 		var bt BlobTrigger
 		err := json.Unmarshal(body, &bt)
@@ -57878,6 +58054,11 @@ func (mpt MultiplePipelineTrigger) MarshalJSON() ([]byte, error) {
 
 // AsTumblingWindowTrigger is the BasicTrigger implementation for MultiplePipelineTrigger.
 func (mpt MultiplePipelineTrigger) AsTumblingWindowTrigger() (*TumblingWindowTrigger, bool) {
+	return nil, false
+}
+
+// AsBlobEventsTrigger is the BasicTrigger implementation for MultiplePipelineTrigger.
+func (mpt MultiplePipelineTrigger) AsBlobEventsTrigger() (*BlobEventsTrigger, bool) {
 	return nil, false
 }
 
@@ -68008,6 +68189,10 @@ type QuickBooksLinkedServiceTypeProperties struct {
 	Endpoint interface{} `json:"endpoint,omitempty"`
 	// CompanyID - The company ID of the QuickBooks company to authorize.
 	CompanyID interface{} `json:"companyId,omitempty"`
+	// ConsumerKey - The consumer key for OAuth 1.0 authentication.
+	ConsumerKey interface{} `json:"consumerKey,omitempty"`
+	// ConsumerSecret - The consumer secret for OAuth 1.0 authentication.
+	ConsumerSecret BasicSecretBase `json:"consumerSecret,omitempty"`
 	// AccessToken - The access token for OAuth 1.0 authentication.
 	AccessToken BasicSecretBase `json:"accessToken,omitempty"`
 	// AccessTokenSecret - The access token secret for OAuth 1.0 authentication.
@@ -68044,6 +68229,23 @@ func (qblstp *QuickBooksLinkedServiceTypeProperties) UnmarshalJSON(body []byte) 
 					return err
 				}
 				qblstp.CompanyID = companyID
+			}
+		case "consumerKey":
+			if v != nil {
+				var consumerKey interface{}
+				err = json.Unmarshal(*v, &consumerKey)
+				if err != nil {
+					return err
+				}
+				qblstp.ConsumerKey = consumerKey
+			}
+		case "consumerSecret":
+			if v != nil {
+				consumerSecret, err := unmarshalBasicSecretBase(*v)
+				if err != nil {
+					return err
+				}
+				qblstp.ConsumerSecret = consumerSecret
 			}
 		case "accessToken":
 			if v != nil {
@@ -77093,7 +77295,7 @@ type ScheduleTrigger struct {
 	Description *string `json:"description,omitempty"`
 	// RuntimeState - Indicates if trigger is running or not. Updated when Start/Stop APIs are called on the Trigger. Possible values include: 'TriggerRuntimeStateStarted', 'TriggerRuntimeStateStopped', 'TriggerRuntimeStateDisabled'
 	RuntimeState TriggerRuntimeState `json:"runtimeState,omitempty"`
-	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
+	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobEventsTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
 	Type TypeBasicTrigger `json:"type,omitempty"`
 }
 
@@ -77124,6 +77326,11 @@ func (st ScheduleTrigger) MarshalJSON() ([]byte, error) {
 
 // AsTumblingWindowTrigger is the BasicTrigger implementation for ScheduleTrigger.
 func (st ScheduleTrigger) AsTumblingWindowTrigger() (*TumblingWindowTrigger, bool) {
+	return nil, false
+}
+
+// AsBlobEventsTrigger is the BasicTrigger implementation for ScheduleTrigger.
+func (st ScheduleTrigger) AsBlobEventsTrigger() (*BlobEventsTrigger, bool) {
 	return nil, false
 }
 
@@ -78295,7 +78502,7 @@ func (snls *ServiceNowLinkedService) UnmarshalJSON(body []byte) error {
 
 // ServiceNowLinkedServiceTypeProperties serviceNow server linked service properties.
 type ServiceNowLinkedServiceTypeProperties struct {
-	// Endpoint - The endpoint of the ServiceNow server. (i.e. ServiceNowData.com)
+	// Endpoint - The endpoint of the ServiceNow server. (i.e. <instance>.service-now.com)
 	Endpoint interface{} `json:"endpoint,omitempty"`
 	// AuthenticationType - The authentication type to use. Possible values include: 'ServiceNowAuthenticationTypeBasic', 'ServiceNowAuthenticationTypeOAuth2'
 	AuthenticationType ServiceNowAuthenticationType `json:"authenticationType,omitempty"`
@@ -86066,8 +86273,10 @@ func (slstp *SybaseLinkedServiceTypeProperties) UnmarshalJSON(body []byte) error
 
 // TabularTranslator a copy activity tabular translator.
 type TabularTranslator struct {
-	// ColumnMappings - Column mappings. Type: string (or Expression with resultType string).
+	// ColumnMappings - Column mappings. Example: "UserId: MyUserId, Group: MyGroup, Name: MyName" Type: string (or Expression with resultType string).
 	ColumnMappings interface{} `json:"columnMappings,omitempty"`
+	// SchemaMapping - The schema mapping to map between tabular data and hierarchical data. Example: {"Column1": "$.Column1", "Column2": "$.Column2.Property1", "Column3": "$.Column2.Property2"}. Type: object (or Expression with resultType object).
+	SchemaMapping interface{} `json:"schemaMapping,omitempty"`
 	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
 	AdditionalProperties map[string]interface{} `json:""`
 	// Type - Possible values include: 'TypeCopyTranslator', 'TypeTabularTranslator'
@@ -86079,6 +86288,7 @@ func (tt TabularTranslator) MarshalJSON() ([]byte, error) {
 	tt.Type = TypeTabularTranslator
 	objectMap := make(map[string]interface{})
 	objectMap["columnMappings"] = tt.ColumnMappings
+	objectMap["schemaMapping"] = tt.SchemaMapping
 	if tt.Type != "" {
 		objectMap["type"] = tt.Type
 	}
@@ -86755,6 +86965,7 @@ func (tf TextFormat) AsBasicDatasetStorageFormat() (BasicDatasetStorageFormat, b
 // BasicTrigger azure data factory nested object which contains information about creating pipeline run
 type BasicTrigger interface {
 	AsTumblingWindowTrigger() (*TumblingWindowTrigger, bool)
+	AsBlobEventsTrigger() (*BlobEventsTrigger, bool)
 	AsBlobTrigger() (*BlobTrigger, bool)
 	AsScheduleTrigger() (*ScheduleTrigger, bool)
 	AsMultiplePipelineTrigger() (*MultiplePipelineTrigger, bool)
@@ -86770,7 +86981,7 @@ type Trigger struct {
 	Description *string `json:"description,omitempty"`
 	// RuntimeState - Indicates if trigger is running or not. Updated when Start/Stop APIs are called on the Trigger. Possible values include: 'TriggerRuntimeStateStarted', 'TriggerRuntimeStateStopped', 'TriggerRuntimeStateDisabled'
 	RuntimeState TriggerRuntimeState `json:"runtimeState,omitempty"`
-	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
+	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobEventsTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
 	Type TypeBasicTrigger `json:"type,omitempty"`
 }
 
@@ -86786,6 +86997,10 @@ func unmarshalBasicTrigger(body []byte) (BasicTrigger, error) {
 		var twt TumblingWindowTrigger
 		err := json.Unmarshal(body, &twt)
 		return twt, err
+	case string(TypeBlobEventsTrigger):
+		var bet BlobEventsTrigger
+		err := json.Unmarshal(body, &bet)
+		return bet, err
 	case string(TypeBlobTrigger):
 		var bt BlobTrigger
 		err := json.Unmarshal(body, &bt)
@@ -86844,6 +87059,11 @@ func (t Trigger) MarshalJSON() ([]byte, error) {
 
 // AsTumblingWindowTrigger is the BasicTrigger implementation for Trigger.
 func (t Trigger) AsTumblingWindowTrigger() (*TumblingWindowTrigger, bool) {
+	return nil, false
+}
+
+// AsBlobEventsTrigger is the BasicTrigger implementation for Trigger.
+func (t Trigger) AsBlobEventsTrigger() (*BlobEventsTrigger, bool) {
 	return nil, false
 }
 
@@ -87233,12 +87453,11 @@ func (page TriggerRunListResponsePage) Values() []TriggerRun {
 // TriggersStartFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type TriggersStartFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future TriggersStartFuture) Result(client TriggersClient) (ar autorest.Response, err error) {
+func (future *TriggersStartFuture) Result(client TriggersClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -87246,47 +87465,21 @@ func (future TriggersStartFuture) Result(client TriggersClient) (ar autorest.Res
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("datafactory.TriggersStartFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.StartResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "datafactory.TriggersStartFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("datafactory.TriggersStartFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.TriggersStartFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.StartResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.TriggersStartFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
 // TriggersStopFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type TriggersStopFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future TriggersStopFuture) Result(client TriggersClient) (ar autorest.Response, err error) {
+func (future *TriggersStopFuture) Result(client TriggersClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -87294,35 +87487,10 @@ func (future TriggersStopFuture) Result(client TriggersClient) (ar autorest.Resp
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("datafactory.TriggersStopFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.StopResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "datafactory.TriggersStopFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("datafactory.TriggersStopFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.TriggersStopFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.StopResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "datafactory.TriggersStopFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }
 
@@ -87339,7 +87507,7 @@ type TumblingWindowTrigger struct {
 	Description *string `json:"description,omitempty"`
 	// RuntimeState - Indicates if trigger is running or not. Updated when Start/Stop APIs are called on the Trigger. Possible values include: 'TriggerRuntimeStateStarted', 'TriggerRuntimeStateStopped', 'TriggerRuntimeStateDisabled'
 	RuntimeState TriggerRuntimeState `json:"runtimeState,omitempty"`
-	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
+	// Type - Possible values include: 'TypeTrigger', 'TypeTumblingWindowTrigger', 'TypeBlobEventsTrigger', 'TypeBlobTrigger', 'TypeScheduleTrigger', 'TypeMultiplePipelineTrigger'
 	Type TypeBasicTrigger `json:"type,omitempty"`
 }
 
@@ -87371,6 +87539,11 @@ func (twt TumblingWindowTrigger) MarshalJSON() ([]byte, error) {
 // AsTumblingWindowTrigger is the BasicTrigger implementation for TumblingWindowTrigger.
 func (twt TumblingWindowTrigger) AsTumblingWindowTrigger() (*TumblingWindowTrigger, bool) {
 	return &twt, true
+}
+
+// AsBlobEventsTrigger is the BasicTrigger implementation for TumblingWindowTrigger.
+func (twt TumblingWindowTrigger) AsBlobEventsTrigger() (*BlobEventsTrigger, bool) {
+	return nil, false
 }
 
 // AsBlobTrigger is the BasicTrigger implementation for TumblingWindowTrigger.

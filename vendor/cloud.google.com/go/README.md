@@ -33,6 +33,73 @@ make backwards-incompatible changes.
 
 ## News
 
+_May 18, 2018_
+
+*v0.23.0*
+
+- bigquery: Add DDL stats to query statistics.
+- bigtable:
+  - cbt: Add cells-per-column limit for row lookup.
+  - cbt: Make it possible to combine read filters.
+- dlp: v2beta2 client removed. Use the v2 client instead.
+- firestore, spanner: Fix compilation errors due to protobuf changes.
+
+_May 8, 2018_
+
+*v0.22.0*
+
+- bigtable:
+  - cbt: Support cells per column limit for row read.
+  - bttest: Correctly handle empty RowSet.
+  - Fix ReadModifyWrite operation in emulator.
+  - Fix API path in GetCluster.
+
+- bigquery:
+  - BEHAVIOR CHANGE: Retry on 503 status code.
+  - Add dataset.DeleteWithContents.
+  - Add SchemaUpdateOptions for query jobs.
+  - Add Timeline to QueryStatistics.
+  - Add more stats to ExplainQueryStage.
+  - Support Parquet data format.
+
+- datastore:
+  - Support omitempty for times.
+
+- dlp:
+  - **BREAKING CHANGE:** Remove v1beta1 client. Please migrate to the v2 client,
+  which is now out of beta.
+  - Add v2 client.
+
+- firestore:
+  - BEHAVIOR CHANGE: Treat set({}, MergeAll) as valid.
+
+- iam:
+  - Support JWT signing via SignJwt callopt.
+
+- profiler:
+  - BEHAVIOR CHANGE: PollForSerialOutput returns an error when context.Done.
+  - BEHAVIOR CHANGE: Increase the initial backoff to 1 minute.
+  - Avoid returning empty serial port output.
+
+- pubsub:
+  - BEHAVIOR CHANGE: Don't backoff during next retryable error once stream is healthy.
+  - BEHAVIOR CHANGE: Don't backoff on EOF.
+  - pstest: Support Acknowledge and ModifyAckDeadline RPCs.
+
+- redis:
+  - Add v1 beta Redis client.
+
+- spanner:
+  - Support SessionLabels.
+
+- speech:
+  - Add api v1 beta1 client.
+
+- storage:
+  - BEHAVIOR CHANGE: Retry reads when retryable error occurs.
+  - Fix delete of object in requester-pays bucket.
+  - Support KMS integration.
+
 _April 9, 2018_
 
 *v0.21.0*

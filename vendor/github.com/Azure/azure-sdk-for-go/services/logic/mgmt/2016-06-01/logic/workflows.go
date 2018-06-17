@@ -644,6 +644,76 @@ func (client WorkflowsClient) ListBySubscriptionComplete(ctx context.Context, to
 	return
 }
 
+// ListCallbackURL get the workflow callback Url.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// listCallbackURL - which callback url to list.
+func (client WorkflowsClient) ListCallbackURL(ctx context.Context, resourceGroupName string, workflowName string, listCallbackURL GetCallbackURLParameters) (result WorkflowTriggerCallbackURL, err error) {
+	req, err := client.ListCallbackURLPreparer(ctx, resourceGroupName, workflowName, listCallbackURL)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "ListCallbackURL", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListCallbackURLSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "ListCallbackURL", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ListCallbackURLResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "ListCallbackURL", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListCallbackURLPreparer prepares the ListCallbackURL request.
+func (client WorkflowsClient) ListCallbackURLPreparer(ctx context.Context, resourceGroupName string, workflowName string, listCallbackURL GetCallbackURLParameters) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"workflowName":      autorest.Encode("path", workflowName),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/listCallbackUrl", pathParameters),
+		autorest.WithJSON(listCallbackURL),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListCallbackURLSender sends the ListCallbackURL request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkflowsClient) ListCallbackURLSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListCallbackURLResponder handles the response to the ListCallbackURL request. The method always
+// closes the http.Response Body.
+func (client WorkflowsClient) ListCallbackURLResponder(resp *http.Response) (result WorkflowTriggerCallbackURL, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // ListSwagger gets an OpenAPI definition for the workflow.
 // Parameters:
 // resourceGroupName - the resource group name.
@@ -708,6 +778,75 @@ func (client WorkflowsClient) ListSwaggerResponder(resp *http.Response) (result 
 		autorest.ByUnmarshallingJSON(&result.Value),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// Move moves an existing workflow.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// move - the workflow to move.
+func (client WorkflowsClient) Move(ctx context.Context, resourceGroupName string, workflowName string, move Workflow) (result autorest.Response, err error) {
+	req, err := client.MovePreparer(ctx, resourceGroupName, workflowName, move)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "Move", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.MoveSender(req)
+	if err != nil {
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "Move", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.MoveResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "Move", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// MovePreparer prepares the Move request.
+func (client WorkflowsClient) MovePreparer(ctx context.Context, resourceGroupName string, workflowName string, move Workflow) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"workflowName":      autorest.Encode("path", workflowName),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/move", pathParameters),
+		autorest.WithJSON(move),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// MoveSender sends the Move request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkflowsClient) MoveSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// MoveResponder handles the response to the Move request. The method always
+// closes the http.Response Body.
+func (client WorkflowsClient) MoveResponder(resp *http.Response) (result autorest.Response, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted),
+		autorest.ByClosing())
+	result.Response = resp
 	return
 }
 
@@ -912,6 +1051,75 @@ func (client WorkflowsClient) ValidateSender(req *http.Request) (*http.Response,
 // ValidateResponder handles the response to the Validate request. The method always
 // closes the http.Response Body.
 func (client WorkflowsClient) ValidateResponder(resp *http.Response) (result autorest.Response, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByClosing())
+	result.Response = resp
+	return
+}
+
+// ValidateWorkflow validates the workflow.
+// Parameters:
+// resourceGroupName - the resource group name.
+// workflowName - the workflow name.
+// validate - the workflow.
+func (client WorkflowsClient) ValidateWorkflow(ctx context.Context, resourceGroupName string, workflowName string, validate Workflow) (result autorest.Response, err error) {
+	req, err := client.ValidateWorkflowPreparer(ctx, resourceGroupName, workflowName, validate)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "ValidateWorkflow", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ValidateWorkflowSender(req)
+	if err != nil {
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "ValidateWorkflow", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ValidateWorkflowResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "logic.WorkflowsClient", "ValidateWorkflow", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ValidateWorkflowPreparer prepares the ValidateWorkflow request.
+func (client WorkflowsClient) ValidateWorkflowPreparer(ctx context.Context, resourceGroupName string, workflowName string, validate Workflow) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+		"workflowName":      autorest.Encode("path", workflowName),
+	}
+
+	const APIVersion = "2016-06-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Logic/workflows/{workflowName}/validate", pathParameters),
+		autorest.WithJSON(validate),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ValidateWorkflowSender sends the ValidateWorkflow request. The method will close the
+// http.Response Body if it receives an error.
+func (client WorkflowsClient) ValidateWorkflowSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ValidateWorkflowResponder handles the response to the ValidateWorkflow request. The method always
+// closes the http.Response Body.
+func (client WorkflowsClient) ValidateWorkflowResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

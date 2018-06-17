@@ -19,7 +19,7 @@
 
 package reservations
 
-import original "github.com/Azure/azure-sdk-for-go/services/reservations/mgmt/2017-11-01/reservations"
+import original "github.com/Azure/azure-sdk-for-go/services/reservations/mgmt/2018-06-01/reservations"
 
 const (
 	DefaultBaseURI = original.DefaultBaseURI
@@ -45,7 +45,6 @@ type Code = original.Code
 const (
 	ActivateQuoteFailed                           Code = original.ActivateQuoteFailed
 	AppliedScopesNotAssociatedWithCommerceAccount Code = original.AppliedScopesNotAssociatedWithCommerceAccount
-	AppliedScopesSameAsExisting                   Code = original.AppliedScopesSameAsExisting
 	AuthorizationFailed                           Code = original.AuthorizationFailed
 	BadRequest                                    Code = original.BadRequest
 	BillingCustomerInputError                     Code = original.BillingCustomerInputError
@@ -85,6 +84,7 @@ const (
 	NoValidReservationsToReRate                   Code = original.NoValidReservationsToReRate
 	OperationCannotBePerformedInCurrentState      Code = original.OperationCannotBePerformedInCurrentState
 	OperationFailed                               Code = original.OperationFailed
+	PatchValuesSameAsExisting                     Code = original.PatchValuesSameAsExisting
 	PaymentInstrumentNotFound                     Code = original.PaymentInstrumentNotFound
 	PurchaseError                                 Code = original.PurchaseError
 	ReRateOnlyAllowedForEA                        Code = original.ReRateOnlyAllowedForEA
@@ -100,15 +100,27 @@ const (
 	UnsupportedReservationTerm                    Code = original.UnsupportedReservationTerm
 )
 
-type Kind = original.Kind
+type InstanceFlexibility = original.InstanceFlexibility
 
 const (
-	MicrosoftCompute Kind = original.MicrosoftCompute
+	NotSupported InstanceFlexibility = original.NotSupported
+	Off          InstanceFlexibility = original.Off
+	On           InstanceFlexibility = original.On
+)
+
+type InstanceFlexibility1 = original.InstanceFlexibility1
+
+const (
+	InstanceFlexibility1NotSupported InstanceFlexibility1 = original.InstanceFlexibility1NotSupported
+	InstanceFlexibility1Off          InstanceFlexibility1 = original.InstanceFlexibility1Off
+	InstanceFlexibility1On           InstanceFlexibility1 = original.InstanceFlexibility1On
 )
 
 type Location = original.Location
 
 const (
+	Australiac         Location = original.Australiac
+	Australiac2        Location = original.Australiac2
 	Australiaeast      Location = original.Australiaeast
 	Australiasoutheast Location = original.Australiasoutheast
 	Brazilsouth        Location = original.Brazilsouth
@@ -119,6 +131,8 @@ const (
 	Eastasia           Location = original.Eastasia
 	Eastus             Location = original.Eastus
 	Eastus2            Location = original.Eastus2
+	Francecentral      Location = original.Francecentral
+	Francesouth        Location = original.Francesouth
 	Japaneast          Location = original.Japaneast
 	Japanwest          Location = original.Japanwest
 	Northcentralus     Location = original.Northcentralus
@@ -169,6 +183,14 @@ const (
 	ProvisioningState1PendingResourceHold   ProvisioningState1 = original.ProvisioningState1PendingResourceHold
 	ProvisioningState1Split                 ProvisioningState1 = original.ProvisioningState1Split
 	ProvisioningState1Succeeded             ProvisioningState1 = original.ProvisioningState1Succeeded
+)
+
+type ReservedResourceType = original.ReservedResourceType
+
+const (
+	SQLDatabases    ReservedResourceType = original.SQLDatabases
+	SuseLinux       ReservedResourceType = original.SuseLinux
+	VirtualMachines ReservedResourceType = original.VirtualMachines
 )
 
 type StatusCode = original.StatusCode
@@ -223,8 +245,8 @@ type Properties = original.Properties
 type ReservationMergeFuture = original.ReservationMergeFuture
 type ReservationUpdateFuture = original.ReservationUpdateFuture
 type Response = original.Response
-type SkuCapability = original.SkuCapability
 type SkuName = original.SkuName
+type SkuProperty = original.SkuProperty
 type SkuRestriction = original.SkuRestriction
 type SplitFuture = original.SplitFuture
 type SplitProperties = original.SplitProperties
@@ -249,8 +271,11 @@ func PossibleAppliedScopeType1Values() []AppliedScopeType1 {
 func PossibleCodeValues() []Code {
 	return original.PossibleCodeValues()
 }
-func PossibleKindValues() []Kind {
-	return original.PossibleKindValues()
+func PossibleInstanceFlexibilityValues() []InstanceFlexibility {
+	return original.PossibleInstanceFlexibilityValues()
+}
+func PossibleInstanceFlexibility1Values() []InstanceFlexibility1 {
+	return original.PossibleInstanceFlexibility1Values()
 }
 func PossibleLocationValues() []Location {
 	return original.PossibleLocationValues()
@@ -260,6 +285,9 @@ func PossibleProvisioningStateValues() []ProvisioningState {
 }
 func PossibleProvisioningState1Values() []ProvisioningState1 {
 	return original.PossibleProvisioningState1Values()
+}
+func PossibleReservedResourceTypeValues() []ReservedResourceType {
+	return original.PossibleReservedResourceTypeValues()
 }
 func PossibleStatusCodeValues() []StatusCode {
 	return original.PossibleStatusCodeValues()

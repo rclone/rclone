@@ -33,7 +33,7 @@ import (
 var (
 	tm  = time.Date(2016, 12, 25, 0, 0, 0, 123456789, time.UTC)
 	ll  = &latlng.LatLng{Latitude: 20, Longitude: 30}
-	ptm = &ts.Timestamp{12345, 67890}
+	ptm = &ts.Timestamp{Seconds: 12345, Nanos: 67890}
 )
 
 func TestCreateFromProtoValue(t *testing.T) {
@@ -52,7 +52,7 @@ func TestCreateFromProtoValue(t *testing.T) {
 			want: []byte{1, 2},
 		},
 		{
-			in:   &pb.Value{&pb.Value_GeoPointValue{ll}},
+			in:   &pb.Value{ValueType: &pb.Value_GeoPointValue{ll}},
 			want: ll,
 		},
 		{
@@ -200,7 +200,7 @@ func TestSetFromProtoValueNoJSON(t *testing.T) {
 	}{
 		{&bs, bytesval(bytes), bytes},
 		{&tmi, tsval(tm), tm},
-		{&tmp, &pb.Value{&pb.Value_TimestampValue{ptm}}, ptm},
+		{&tmp, &pb.Value{ValueType: &pb.Value_TimestampValue{ptm}}, ptm},
 		{&lli, geoval(ll), ll},
 	} {
 		if err := setFromProtoValue(test.in, test.val, &Client{}); err != nil {
@@ -247,7 +247,7 @@ func TestSetFromProtoValueErrors(t *testing.T) {
 		{new(int16), floatval(math.MaxFloat32)},  // doesn't fit
 		{new(uint16), floatval(math.MaxFloat32)}, // doesn't fit
 		{new(float32),
-			&pb.Value{&pb.Value_IntegerValue{math.MaxInt64}}}, // overflow
+			&pb.Value{ValueType: &pb.Value_IntegerValue{math.MaxInt64}}}, // overflow
 	} {
 		err := setFromProtoValue(test.in, test.val, c)
 		if err == nil {

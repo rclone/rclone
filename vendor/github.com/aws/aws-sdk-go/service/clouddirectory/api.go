@@ -3248,6 +3248,120 @@ func (c *CloudDirectory) GetFacetWithContext(ctx aws.Context, input *GetFacetInp
 	return out, req.Send()
 }
 
+const opGetLinkAttributes = "GetLinkAttributes"
+
+// GetLinkAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the GetLinkAttributes operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetLinkAttributes for more information on using the GetLinkAttributes
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetLinkAttributesRequest method.
+//    req, resp := client.GetLinkAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/GetLinkAttributes
+func (c *CloudDirectory) GetLinkAttributesRequest(input *GetLinkAttributesInput) (req *request.Request, output *GetLinkAttributesOutput) {
+	op := &request.Operation{
+		Name:       opGetLinkAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/amazonclouddirectory/2017-01-11/typedlink/attributes/get",
+	}
+
+	if input == nil {
+		input = &GetLinkAttributesInput{}
+	}
+
+	output = &GetLinkAttributesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetLinkAttributes API operation for Amazon CloudDirectory.
+//
+// Retrieves attributes that are associated with a typed link.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudDirectory's
+// API operation GetLinkAttributes for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalServiceException "InternalServiceException"
+//   Indicates a problem that must be resolved by Amazon Web Services. This might
+//   be a transient error in which case you can retry your request until it succeeds.
+//   Otherwise, go to the AWS Service Health Dashboard (http://status.aws.amazon.com/)
+//   site to see if there are any operational issues with the service.
+//
+//   * ErrCodeInvalidArnException "InvalidArnException"
+//   Indicates that the provided ARN value is not valid.
+//
+//   * ErrCodeRetryableConflictException "RetryableConflictException"
+//   Occurs when a conflict with a previous successful write is detected. For
+//   example, if a write operation occurs on an object and then an attempt is
+//   made to read the object using “SERIALIZABLE” consistency, this exception
+//   may result. This generally occurs when the previous write did not have time
+//   to propagate to the host serving the current request. A retry (with appropriate
+//   backoff logic) is the recommended response to this exception.
+//
+//   * ErrCodeValidationException "ValidationException"
+//   Indicates that your request is malformed in some manner. See the exception
+//   message.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   Indicates that limits are exceeded. See Limits (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/limits.html)
+//   for more information.
+//
+//   * ErrCodeAccessDeniedException "AccessDeniedException"
+//   Access denied. Check your permissions.
+//
+//   * ErrCodeDirectoryNotEnabledException "DirectoryNotEnabledException"
+//   Operations are only permitted on enabled directories.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The specified resource could not be found.
+//
+//   * ErrCodeFacetValidationException "FacetValidationException"
+//   The Facet that you provided was not well formed or could not be validated
+//   with the schema.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/GetLinkAttributes
+func (c *CloudDirectory) GetLinkAttributes(input *GetLinkAttributesInput) (*GetLinkAttributesOutput, error) {
+	req, out := c.GetLinkAttributesRequest(input)
+	return out, req.Send()
+}
+
+// GetLinkAttributesWithContext is the same as GetLinkAttributes with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetLinkAttributes for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudDirectory) GetLinkAttributesWithContext(ctx aws.Context, input *GetLinkAttributesInput, opts ...request.Option) (*GetLinkAttributesOutput, error) {
+	req, out := c.GetLinkAttributesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetObjectAttributes = "GetObjectAttributes"
 
 // GetObjectAttributesRequest generates a "aws/request.Request" representing the
@@ -7682,6 +7796,121 @@ func (c *CloudDirectory) UpdateFacetWithContext(ctx aws.Context, input *UpdateFa
 	return out, req.Send()
 }
 
+const opUpdateLinkAttributes = "UpdateLinkAttributes"
+
+// UpdateLinkAttributesRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateLinkAttributes operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateLinkAttributes for more information on using the UpdateLinkAttributes
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateLinkAttributesRequest method.
+//    req, resp := client.UpdateLinkAttributesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/UpdateLinkAttributes
+func (c *CloudDirectory) UpdateLinkAttributesRequest(input *UpdateLinkAttributesInput) (req *request.Request, output *UpdateLinkAttributesOutput) {
+	op := &request.Operation{
+		Name:       opUpdateLinkAttributes,
+		HTTPMethod: "POST",
+		HTTPPath:   "/amazonclouddirectory/2017-01-11/typedlink/attributes/update",
+	}
+
+	if input == nil {
+		input = &UpdateLinkAttributesInput{}
+	}
+
+	output = &UpdateLinkAttributesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateLinkAttributes API operation for Amazon CloudDirectory.
+//
+// Updates a given typed link’s attributes. Attributes to be updated must not
+// contribute to the typed link’s identity, as defined by its IdentityAttributeOrder.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudDirectory's
+// API operation UpdateLinkAttributes for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInternalServiceException "InternalServiceException"
+//   Indicates a problem that must be resolved by Amazon Web Services. This might
+//   be a transient error in which case you can retry your request until it succeeds.
+//   Otherwise, go to the AWS Service Health Dashboard (http://status.aws.amazon.com/)
+//   site to see if there are any operational issues with the service.
+//
+//   * ErrCodeInvalidArnException "InvalidArnException"
+//   Indicates that the provided ARN value is not valid.
+//
+//   * ErrCodeRetryableConflictException "RetryableConflictException"
+//   Occurs when a conflict with a previous successful write is detected. For
+//   example, if a write operation occurs on an object and then an attempt is
+//   made to read the object using “SERIALIZABLE” consistency, this exception
+//   may result. This generally occurs when the previous write did not have time
+//   to propagate to the host serving the current request. A retry (with appropriate
+//   backoff logic) is the recommended response to this exception.
+//
+//   * ErrCodeValidationException "ValidationException"
+//   Indicates that your request is malformed in some manner. See the exception
+//   message.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   Indicates that limits are exceeded. See Limits (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/limits.html)
+//   for more information.
+//
+//   * ErrCodeAccessDeniedException "AccessDeniedException"
+//   Access denied. Check your permissions.
+//
+//   * ErrCodeDirectoryNotEnabledException "DirectoryNotEnabledException"
+//   Operations are only permitted on enabled directories.
+//
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The specified resource could not be found.
+//
+//   * ErrCodeFacetValidationException "FacetValidationException"
+//   The Facet that you provided was not well formed or could not be validated
+//   with the schema.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/UpdateLinkAttributes
+func (c *CloudDirectory) UpdateLinkAttributes(input *UpdateLinkAttributesInput) (*UpdateLinkAttributesOutput, error) {
+	req, out := c.UpdateLinkAttributesRequest(input)
+	return out, req.Send()
+}
+
+// UpdateLinkAttributesWithContext is the same as UpdateLinkAttributes with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateLinkAttributes for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudDirectory) UpdateLinkAttributesWithContext(ctx aws.Context, input *UpdateLinkAttributesInput, opts ...request.Option) (*UpdateLinkAttributesOutput, error) {
+	req, out := c.UpdateLinkAttributesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateObjectAttributes = "UpdateObjectAttributes"
 
 // UpdateObjectAttributesRequest generates a "aws/request.Request" representing the
@@ -7769,6 +7998,10 @@ func (c *CloudDirectory) UpdateObjectAttributesRequest(input *UpdateObjectAttrib
 //
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The specified resource could not be found.
+//
+//   * ErrCodeLinkNameAlreadyInUseException "LinkNameAlreadyInUseException"
+//   Indicates that a link could not be created due to a naming conflict. Choose
+//   a different name and then try again.
 //
 //   * ErrCodeFacetValidationException "FacetValidationException"
 //   The Facet that you provided was not well formed or could not be validated
@@ -10115,6 +10348,89 @@ func (s BatchDetachTypedLinkResponse) GoString() string {
 	return s.String()
 }
 
+// Retrieves attributes that are associated with a typed link inside a BatchRead
+// operation. For more information, see GetLinkAttributes and BatchReadRequest$Operations.
+type BatchGetLinkAttributes struct {
+	_ struct{} `type:"structure"`
+
+	// A list of attribute names whose values will be retrieved.
+	//
+	// AttributeNames is a required field
+	AttributeNames []*string `type:"list" required:"true"`
+
+	// Allows a typed link specifier to be accepted as input.
+	//
+	// TypedLinkSpecifier is a required field
+	TypedLinkSpecifier *TypedLinkSpecifier `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchGetLinkAttributes) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchGetLinkAttributes) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchGetLinkAttributes) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchGetLinkAttributes"}
+	if s.AttributeNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("AttributeNames"))
+	}
+	if s.TypedLinkSpecifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("TypedLinkSpecifier"))
+	}
+	if s.TypedLinkSpecifier != nil {
+		if err := s.TypedLinkSpecifier.Validate(); err != nil {
+			invalidParams.AddNested("TypedLinkSpecifier", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAttributeNames sets the AttributeNames field's value.
+func (s *BatchGetLinkAttributes) SetAttributeNames(v []*string) *BatchGetLinkAttributes {
+	s.AttributeNames = v
+	return s
+}
+
+// SetTypedLinkSpecifier sets the TypedLinkSpecifier field's value.
+func (s *BatchGetLinkAttributes) SetTypedLinkSpecifier(v *TypedLinkSpecifier) *BatchGetLinkAttributes {
+	s.TypedLinkSpecifier = v
+	return s
+}
+
+// Represents the output of a GetLinkAttributes response operation.
+type BatchGetLinkAttributesResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The attributes that are associated with the typed link.
+	Attributes []*AttributeKeyAndValue `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchGetLinkAttributesResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchGetLinkAttributesResponse) GoString() string {
+	return s.String()
+}
+
+// SetAttributes sets the Attributes field's value.
+func (s *BatchGetLinkAttributesResponse) SetAttributes(v []*AttributeKeyAndValue) *BatchGetLinkAttributesResponse {
+	s.Attributes = v
+	return s
+}
+
 // Retrieves attributes within a facet that are associated with an object inside
 // an BatchRead operation. For more information, see GetObjectAttributes and
 // BatchReadRequest$Operations.
@@ -11454,6 +11770,9 @@ func (s *BatchReadInput) SetOperations(v []*BatchReadOperation) *BatchReadInput 
 type BatchReadOperation struct {
 	_ struct{} `type:"structure"`
 
+	// Retrieves attributes that are associated with a typed link.
+	GetLinkAttributes *BatchGetLinkAttributes `type:"structure"`
+
 	// Retrieves attributes within a facet that are associated with an object.
 	GetObjectAttributes *BatchGetObjectAttributes `type:"structure"`
 
@@ -11517,6 +11836,11 @@ func (s BatchReadOperation) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *BatchReadOperation) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "BatchReadOperation"}
+	if s.GetLinkAttributes != nil {
+		if err := s.GetLinkAttributes.Validate(); err != nil {
+			invalidParams.AddNested("GetLinkAttributes", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.GetObjectAttributes != nil {
 		if err := s.GetObjectAttributes.Validate(); err != nil {
 			invalidParams.AddNested("GetObjectAttributes", err.(request.ErrInvalidParams))
@@ -11582,6 +11906,12 @@ func (s *BatchReadOperation) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetGetLinkAttributes sets the GetLinkAttributes field's value.
+func (s *BatchReadOperation) SetGetLinkAttributes(v *BatchGetLinkAttributes) *BatchReadOperation {
+	s.GetLinkAttributes = v
+	return s
 }
 
 // SetGetObjectAttributes sets the GetObjectAttributes field's value.
@@ -11716,6 +12046,9 @@ func (s *BatchReadOutput) SetResponses(v []*BatchReadOperationResponse) *BatchRe
 type BatchReadSuccessfulResponse struct {
 	_ struct{} `type:"structure"`
 
+	// The list of attributes to retrieve from the typed link.
+	GetLinkAttributes *BatchGetLinkAttributesResponse `type:"structure"`
+
 	// Retrieves attributes within a facet that are associated with an object.
 	GetObjectAttributes *BatchGetObjectAttributesResponse `type:"structure"`
 
@@ -11774,6 +12107,12 @@ func (s BatchReadSuccessfulResponse) String() string {
 // GoString returns the string representation
 func (s BatchReadSuccessfulResponse) GoString() string {
 	return s.String()
+}
+
+// SetGetLinkAttributes sets the GetLinkAttributes field's value.
+func (s *BatchReadSuccessfulResponse) SetGetLinkAttributes(v *BatchGetLinkAttributesResponse) *BatchReadSuccessfulResponse {
+	s.GetLinkAttributes = v
+	return s
 }
 
 // SetGetObjectAttributes sets the GetObjectAttributes field's value.
@@ -11918,6 +12257,92 @@ func (s BatchRemoveFacetFromObjectResponse) String() string {
 
 // GoString returns the string representation
 func (s BatchRemoveFacetFromObjectResponse) GoString() string {
+	return s.String()
+}
+
+// Updates a given typed link’s attributes inside a BatchRead operation. Attributes
+// to be updated must not contribute to the typed link’s identity, as defined
+// by its IdentityAttributeOrder. For more information, see UpdateLinkAttributes
+// and BatchReadRequest$Operations.
+type BatchUpdateLinkAttributes struct {
+	_ struct{} `type:"structure"`
+
+	// The attributes update structure.
+	//
+	// AttributeUpdates is a required field
+	AttributeUpdates []*LinkAttributeUpdate `type:"list" required:"true"`
+
+	// Allows a typed link specifier to be accepted as input.
+	//
+	// TypedLinkSpecifier is a required field
+	TypedLinkSpecifier *TypedLinkSpecifier `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchUpdateLinkAttributes) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchUpdateLinkAttributes) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchUpdateLinkAttributes) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchUpdateLinkAttributes"}
+	if s.AttributeUpdates == nil {
+		invalidParams.Add(request.NewErrParamRequired("AttributeUpdates"))
+	}
+	if s.TypedLinkSpecifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("TypedLinkSpecifier"))
+	}
+	if s.AttributeUpdates != nil {
+		for i, v := range s.AttributeUpdates {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AttributeUpdates", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TypedLinkSpecifier != nil {
+		if err := s.TypedLinkSpecifier.Validate(); err != nil {
+			invalidParams.AddNested("TypedLinkSpecifier", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAttributeUpdates sets the AttributeUpdates field's value.
+func (s *BatchUpdateLinkAttributes) SetAttributeUpdates(v []*LinkAttributeUpdate) *BatchUpdateLinkAttributes {
+	s.AttributeUpdates = v
+	return s
+}
+
+// SetTypedLinkSpecifier sets the TypedLinkSpecifier field's value.
+func (s *BatchUpdateLinkAttributes) SetTypedLinkSpecifier(v *TypedLinkSpecifier) *BatchUpdateLinkAttributes {
+	s.TypedLinkSpecifier = v
+	return s
+}
+
+// Represents the output of a UpdateLinkAttributes response operation.
+type BatchUpdateLinkAttributesResponse struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s BatchUpdateLinkAttributesResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchUpdateLinkAttributesResponse) GoString() string {
 	return s.String()
 }
 
@@ -12119,6 +12544,9 @@ type BatchWriteOperation struct {
 	RemoveFacetFromObject *BatchRemoveFacetFromObject `type:"structure"`
 
 	// Updates a given object's attributes.
+	UpdateLinkAttributes *BatchUpdateLinkAttributes `type:"structure"`
+
+	// Updates a given object's attributes.
 	UpdateObjectAttributes *BatchUpdateObjectAttributes `type:"structure"`
 }
 
@@ -12198,6 +12626,11 @@ func (s *BatchWriteOperation) Validate() error {
 	if s.RemoveFacetFromObject != nil {
 		if err := s.RemoveFacetFromObject.Validate(); err != nil {
 			invalidParams.AddNested("RemoveFacetFromObject", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.UpdateLinkAttributes != nil {
+		if err := s.UpdateLinkAttributes.Validate(); err != nil {
+			invalidParams.AddNested("UpdateLinkAttributes", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.UpdateObjectAttributes != nil {
@@ -12290,6 +12723,12 @@ func (s *BatchWriteOperation) SetRemoveFacetFromObject(v *BatchRemoveFacetFromOb
 	return s
 }
 
+// SetUpdateLinkAttributes sets the UpdateLinkAttributes field's value.
+func (s *BatchWriteOperation) SetUpdateLinkAttributes(v *BatchUpdateLinkAttributes) *BatchWriteOperation {
+	s.UpdateLinkAttributes = v
+	return s
+}
+
 // SetUpdateObjectAttributes sets the UpdateObjectAttributes field's value.
 func (s *BatchWriteOperation) SetUpdateObjectAttributes(v *BatchUpdateObjectAttributes) *BatchWriteOperation {
 	s.UpdateObjectAttributes = v
@@ -12342,6 +12781,9 @@ type BatchWriteOperationResponse struct {
 
 	// The result of a batch remove facet from object operation.
 	RemoveFacetFromObject *BatchRemoveFacetFromObjectResponse `type:"structure"`
+
+	// Represents the output of a BatchWrite response operation.
+	UpdateLinkAttributes *BatchUpdateLinkAttributesResponse `type:"structure"`
 
 	// Updates a given object’s attributes.
 	UpdateObjectAttributes *BatchUpdateObjectAttributesResponse `type:"structure"`
@@ -12432,6 +12874,12 @@ func (s *BatchWriteOperationResponse) SetDetachTypedLink(v *BatchDetachTypedLink
 // SetRemoveFacetFromObject sets the RemoveFacetFromObject field's value.
 func (s *BatchWriteOperationResponse) SetRemoveFacetFromObject(v *BatchRemoveFacetFromObjectResponse) *BatchWriteOperationResponse {
 	s.RemoveFacetFromObject = v
+	return s
+}
+
+// SetUpdateLinkAttributes sets the UpdateLinkAttributes field's value.
+func (s *BatchWriteOperationResponse) SetUpdateLinkAttributes(v *BatchUpdateLinkAttributesResponse) *BatchWriteOperationResponse {
+	s.UpdateLinkAttributes = v
 	return s
 }
 
@@ -14429,6 +14877,110 @@ func (s *GetFacetOutput) SetFacet(v *Facet) *GetFacetOutput {
 	return s
 }
 
+type GetLinkAttributesInput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of attribute names whose values will be retrieved.
+	//
+	// AttributeNames is a required field
+	AttributeNames []*string `type:"list" required:"true"`
+
+	// The consistency level at which to retrieve the attributes on a typed link.
+	ConsistencyLevel *string `type:"string" enum:"ConsistencyLevel"`
+
+	// The Amazon Resource Name (ARN) that is associated with the Directory where
+	// the typed link resides. For more information, see arns or Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	//
+	// DirectoryArn is a required field
+	DirectoryArn *string `location:"header" locationName:"x-amz-data-partition" type:"string" required:"true"`
+
+	// Allows a typed link specifier to be accepted as input.
+	//
+	// TypedLinkSpecifier is a required field
+	TypedLinkSpecifier *TypedLinkSpecifier `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetLinkAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetLinkAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetLinkAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetLinkAttributesInput"}
+	if s.AttributeNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("AttributeNames"))
+	}
+	if s.DirectoryArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectoryArn"))
+	}
+	if s.TypedLinkSpecifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("TypedLinkSpecifier"))
+	}
+	if s.TypedLinkSpecifier != nil {
+		if err := s.TypedLinkSpecifier.Validate(); err != nil {
+			invalidParams.AddNested("TypedLinkSpecifier", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAttributeNames sets the AttributeNames field's value.
+func (s *GetLinkAttributesInput) SetAttributeNames(v []*string) *GetLinkAttributesInput {
+	s.AttributeNames = v
+	return s
+}
+
+// SetConsistencyLevel sets the ConsistencyLevel field's value.
+func (s *GetLinkAttributesInput) SetConsistencyLevel(v string) *GetLinkAttributesInput {
+	s.ConsistencyLevel = &v
+	return s
+}
+
+// SetDirectoryArn sets the DirectoryArn field's value.
+func (s *GetLinkAttributesInput) SetDirectoryArn(v string) *GetLinkAttributesInput {
+	s.DirectoryArn = &v
+	return s
+}
+
+// SetTypedLinkSpecifier sets the TypedLinkSpecifier field's value.
+func (s *GetLinkAttributesInput) SetTypedLinkSpecifier(v *TypedLinkSpecifier) *GetLinkAttributesInput {
+	s.TypedLinkSpecifier = v
+	return s
+}
+
+type GetLinkAttributesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The attributes that are associated with the typed link.
+	Attributes []*AttributeKeyAndValue `type:"list"`
+}
+
+// String returns the string representation
+func (s GetLinkAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetLinkAttributesOutput) GoString() string {
+	return s.String()
+}
+
+// SetAttributes sets the Attributes field's value.
+func (s *GetLinkAttributesOutput) SetAttributes(v []*AttributeKeyAndValue) *GetLinkAttributesOutput {
+	s.Attributes = v
+	return s
+}
+
 type GetObjectAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14829,6 +15381,88 @@ func (s *IndexAttachment) SetIndexedAttributes(v []*AttributeKeyAndValue) *Index
 // SetObjectIdentifier sets the ObjectIdentifier field's value.
 func (s *IndexAttachment) SetObjectIdentifier(v string) *IndexAttachment {
 	s.ObjectIdentifier = &v
+	return s
+}
+
+// The action to take on a typed link attribute value. Updates are only supported
+// for attributes which don’t contribute to link identity.
+type LinkAttributeAction struct {
+	_ struct{} `type:"structure"`
+
+	// A type that can be either UPDATE_OR_CREATE or DELETE.
+	AttributeActionType *string `type:"string" enum:"UpdateActionType"`
+
+	// The value that you want to update to.
+	AttributeUpdateValue *TypedAttributeValue `type:"structure"`
+}
+
+// String returns the string representation
+func (s LinkAttributeAction) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LinkAttributeAction) GoString() string {
+	return s.String()
+}
+
+// SetAttributeActionType sets the AttributeActionType field's value.
+func (s *LinkAttributeAction) SetAttributeActionType(v string) *LinkAttributeAction {
+	s.AttributeActionType = &v
+	return s
+}
+
+// SetAttributeUpdateValue sets the AttributeUpdateValue field's value.
+func (s *LinkAttributeAction) SetAttributeUpdateValue(v *TypedAttributeValue) *LinkAttributeAction {
+	s.AttributeUpdateValue = v
+	return s
+}
+
+// Structure that contains attribute update information.
+type LinkAttributeUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// The action to perform as part of the attribute update.
+	AttributeAction *LinkAttributeAction `type:"structure"`
+
+	// The key of the attribute being updated.
+	AttributeKey *AttributeKey `type:"structure"`
+}
+
+// String returns the string representation
+func (s LinkAttributeUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LinkAttributeUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *LinkAttributeUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "LinkAttributeUpdate"}
+	if s.AttributeKey != nil {
+		if err := s.AttributeKey.Validate(); err != nil {
+			invalidParams.AddNested("AttributeKey", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAttributeAction sets the AttributeAction field's value.
+func (s *LinkAttributeUpdate) SetAttributeAction(v *LinkAttributeAction) *LinkAttributeUpdate {
+	s.AttributeAction = v
+	return s
+}
+
+// SetAttributeKey sets the AttributeKey field's value.
+func (s *LinkAttributeUpdate) SetAttributeKey(v *AttributeKey) *LinkAttributeUpdate {
+	s.AttributeKey = v
 	return s
 }
 
@@ -18536,6 +19170,103 @@ func (s UpdateFacetOutput) String() string {
 
 // GoString returns the string representation
 func (s UpdateFacetOutput) GoString() string {
+	return s.String()
+}
+
+type UpdateLinkAttributesInput struct {
+	_ struct{} `type:"structure"`
+
+	// The attributes update structure.
+	//
+	// AttributeUpdates is a required field
+	AttributeUpdates []*LinkAttributeUpdate `type:"list" required:"true"`
+
+	// The Amazon Resource Name (ARN) that is associated with the Directory where
+	// the updated typed link resides. For more information, see arns or Typed link
+	// (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	//
+	// DirectoryArn is a required field
+	DirectoryArn *string `location:"header" locationName:"x-amz-data-partition" type:"string" required:"true"`
+
+	// Allows a typed link specifier to be accepted as input.
+	//
+	// TypedLinkSpecifier is a required field
+	TypedLinkSpecifier *TypedLinkSpecifier `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateLinkAttributesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateLinkAttributesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateLinkAttributesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateLinkAttributesInput"}
+	if s.AttributeUpdates == nil {
+		invalidParams.Add(request.NewErrParamRequired("AttributeUpdates"))
+	}
+	if s.DirectoryArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("DirectoryArn"))
+	}
+	if s.TypedLinkSpecifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("TypedLinkSpecifier"))
+	}
+	if s.AttributeUpdates != nil {
+		for i, v := range s.AttributeUpdates {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AttributeUpdates", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TypedLinkSpecifier != nil {
+		if err := s.TypedLinkSpecifier.Validate(); err != nil {
+			invalidParams.AddNested("TypedLinkSpecifier", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAttributeUpdates sets the AttributeUpdates field's value.
+func (s *UpdateLinkAttributesInput) SetAttributeUpdates(v []*LinkAttributeUpdate) *UpdateLinkAttributesInput {
+	s.AttributeUpdates = v
+	return s
+}
+
+// SetDirectoryArn sets the DirectoryArn field's value.
+func (s *UpdateLinkAttributesInput) SetDirectoryArn(v string) *UpdateLinkAttributesInput {
+	s.DirectoryArn = &v
+	return s
+}
+
+// SetTypedLinkSpecifier sets the TypedLinkSpecifier field's value.
+func (s *UpdateLinkAttributesInput) SetTypedLinkSpecifier(v *TypedLinkSpecifier) *UpdateLinkAttributesInput {
+	s.TypedLinkSpecifier = v
+	return s
+}
+
+type UpdateLinkAttributesOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UpdateLinkAttributesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateLinkAttributesOutput) GoString() string {
 	return s.String()
 }
 

@@ -216,12 +216,11 @@ type DomainServiceProperties struct {
 // operation.
 type DomainServicesCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DomainServicesCreateOrUpdateFuture) Result(client DomainServicesClient) (ds DomainService, err error) {
+func (future *DomainServicesCreateOrUpdateFuture) Result(client DomainServicesClient) (ds DomainService, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -229,34 +228,15 @@ func (future DomainServicesCreateOrUpdateFuture) Result(client DomainServicesCli
 		return
 	}
 	if !done {
-		return ds, azure.NewAsyncOpIncompleteError("aad.DomainServicesCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ds, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "aad.DomainServicesCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("aad.DomainServicesCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ds.Response.Response, err = future.GetResult(sender); err == nil && ds.Response.Response.StatusCode != http.StatusNoContent {
+		ds, err = client.CreateOrUpdateResponder(ds.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "aad.DomainServicesCreateOrUpdateFuture", "Result", ds.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "aad.DomainServicesCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ds, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "aad.DomainServicesCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -264,12 +244,11 @@ func (future DomainServicesCreateOrUpdateFuture) Result(client DomainServicesCli
 // DomainServicesDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DomainServicesDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DomainServicesDeleteFuture) Result(client DomainServicesClient) (ds DomainService, err error) {
+func (future *DomainServicesDeleteFuture) Result(client DomainServicesClient) (ds DomainService, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -277,34 +256,15 @@ func (future DomainServicesDeleteFuture) Result(client DomainServicesClient) (ds
 		return
 	}
 	if !done {
-		return ds, azure.NewAsyncOpIncompleteError("aad.DomainServicesDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ds, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "aad.DomainServicesDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("aad.DomainServicesDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ds.Response.Response, err = future.GetResult(sender); err == nil && ds.Response.Response.StatusCode != http.StatusNoContent {
+		ds, err = client.DeleteResponder(ds.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "aad.DomainServicesDeleteFuture", "Result", ds.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "aad.DomainServicesDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ds, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "aad.DomainServicesDeleteFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -312,12 +272,11 @@ func (future DomainServicesDeleteFuture) Result(client DomainServicesClient) (ds
 // DomainServicesUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type DomainServicesUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future DomainServicesUpdateFuture) Result(client DomainServicesClient) (ds DomainService, err error) {
+func (future *DomainServicesUpdateFuture) Result(client DomainServicesClient) (ds DomainService, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -325,34 +284,15 @@ func (future DomainServicesUpdateFuture) Result(client DomainServicesClient) (ds
 		return
 	}
 	if !done {
-		return ds, azure.NewAsyncOpIncompleteError("aad.DomainServicesUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ds, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "aad.DomainServicesUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("aad.DomainServicesUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ds.Response.Response, err = future.GetResult(sender); err == nil && ds.Response.Response.StatusCode != http.StatusNoContent {
+		ds, err = client.UpdateResponder(ds.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "aad.DomainServicesUpdateFuture", "Result", ds.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "aad.DomainServicesUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ds, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "aad.DomainServicesUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }

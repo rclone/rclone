@@ -6,7 +6,7 @@ package icmp
 
 import "encoding/binary"
 
-// A MPLSLabel represents a MPLS label stack entry.
+// MPLSLabel represents an MPLS label stack entry.
 type MPLSLabel struct {
 	Label int  // label value
 	TC    int  // traffic class; formerly experimental use
@@ -19,7 +19,7 @@ const (
 	typeIncomingMPLSLabelStack = 1
 )
 
-// A MPLSLabelStack represents a MPLS label stack.
+// MPLSLabelStack represents an MPLS label stack.
 type MPLSLabelStack struct {
 	Class  int // extension object class number
 	Type   int // extension object sub-type

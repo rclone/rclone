@@ -19,7 +19,7 @@
 
 package managedapplications
 
-import original "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2017-09-01/managedapplications"
+import original "github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-06-01/managedapplications"
 
 type ApplicationDefinitionsClient = original.ApplicationDefinitionsClient
 type ApplicationsClient = original.ApplicationsClient

@@ -826,6 +826,7 @@ func (s *DependencyEdge) MarshalJSON() ([]byte, error) {
 // Represents the input to API methods.
 type Document struct {
 	// Content: The content of the input in string format.
+	// Cloud audit logging exempt since it is based on user data.
 	Content string `json:"content,omitempty"`
 
 	// GcsContentUri: The Google Cloud Storage URI where the file content is

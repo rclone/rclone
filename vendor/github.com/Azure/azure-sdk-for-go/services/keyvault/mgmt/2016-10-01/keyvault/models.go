@@ -1052,12 +1052,11 @@ type VaultProperties struct {
 // VaultsPurgeDeletedFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type VaultsPurgeDeletedFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future VaultsPurgeDeletedFuture) Result(client VaultsClient) (ar autorest.Response, err error) {
+func (future *VaultsPurgeDeletedFuture) Result(client VaultsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1065,34 +1064,9 @@ func (future VaultsPurgeDeletedFuture) Result(client VaultsClient) (ar autorest.
 		return
 	}
 	if !done {
-		return ar, azure.NewAsyncOpIncompleteError("keyvault.VaultsPurgeDeletedFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.PurgeDeletedResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "keyvault.VaultsPurgeDeletedFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("keyvault.VaultsPurgeDeletedFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
-		if err != nil {
-			return
-		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "keyvault.VaultsPurgeDeletedFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ar, err = client.PurgeDeletedResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "keyvault.VaultsPurgeDeletedFuture", "Result", resp, "Failure responding to request")
-	}
+	ar.Response = future.Response()
 	return
 }

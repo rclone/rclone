@@ -5,11 +5,20 @@
 package blobstore
 
 import (
+	"bytes"
+	"encoding/base64"
+	"fmt"
 	"io"
+	"mime/multipart"
+	"mime/quotedprintable"
+	"net/http"
+	"net/textproto"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
+
+	"golang.org/x/text/encoding/htmlindex"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/internal/aetesting"
@@ -18,6 +27,10 @@ import (
 )
 
 const rbs = readBufferSize
+
+const charsetUTF8 = "utf-8"
+const charsetISO2022JP = "iso-2022-jp"
+const nonASCIIStr = "Hello, 世界"
 
 func min(x, y int) int {
 	if x < y {
@@ -180,4 +193,97 @@ func TestReader(t *testing.T) {
 			}
 		}
 	}
+}
+
+// doPlainTextParseUploadTest tests ParseUpload's decoding of non-file form fields.
+// It ensures that MIME multipart parts with Content-Type not equal to
+// "message/external-body" (i.e. form fields that are not file uploads) are decoded
+// correctly according to the value of their Content-Transfer-Encoding header field.
+// If charset is not the empty string it will be set in the request's Content-Type
+// header field, and if encoding is not the empty string then the Content-Transfer-Encoding
+// header field will be set.
+func doPlainTextParseUploadTest(t *testing.T, charset string, encoding string,
+	rawContent string, encodedContent string) {
+	bodyBuf := &bytes.Buffer{}
+	w := multipart.NewWriter(bodyBuf)
+
+	fieldName := "foo"
+	hdr := textproto.MIMEHeader{}
+	hdr.Set("Content-Disposition", fmt.Sprintf("form-data; name=%q", fieldName))
+
+	if charset != "" {
+		hdr.Set("Content-Type", fmt.Sprintf("text/plain; charset=%q", charset))
+	} else {
+		hdr.Set("Content-Type", "text/plain")
+	}
+
+	if encoding != "" {
+		hdr.Set("Content-Transfer-Encoding", encoding)
+	}
+
+	pw, err := w.CreatePart(hdr)
+	if err != nil {
+		t.Fatalf("error creating part: %v", err)
+	}
+	pw.Write([]byte(encodedContent))
+
+	if err := w.Close(); err != nil {
+		t.Fatalf("error closing multipart writer: %v\n", err)
+	}
+
+	req, err := http.NewRequest("POST", "/upload", bodyBuf)
+	if err != nil {
+		t.Fatalf("error creating request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	_, other, err := ParseUpload(req)
+	if err != nil {
+		t.Fatalf("error parsing upload: %v", err)
+	}
+
+	if other[fieldName][0] != rawContent {
+		t.Errorf("got %q expected %q", other[fieldName][0], rawContent)
+	}
+}
+
+func TestParseUploadUTF8Base64Encoding(t *testing.T) {
+	encoded := base64.StdEncoding.EncodeToString([]byte(nonASCIIStr))
+	doPlainTextParseUploadTest(t, charsetUTF8, "base64", nonASCIIStr, encoded)
+}
+
+func TestParseUploadUTF8Base64EncodingMultiline(t *testing.T) {
+	testStr := "words words words words words words words words words words words words"
+	encoded := "d29yZHMgd29yZHMgd29yZHMgd29yZHMgd29yZHMgd29yZHMgd29yZHMgd29yZHMgd29yZHMgd29y\r\nZHMgd29yZHMgd29yZHM="
+	doPlainTextParseUploadTest(t, charsetUTF8, "base64", testStr, encoded)
+}
+
+func TestParseUploadUTF8QuotedPrintableEncoding(t *testing.T) {
+	var encoded bytes.Buffer
+	writer := quotedprintable.NewWriter(&encoded)
+	writer.Write([]byte(nonASCIIStr))
+	writer.Close()
+
+	doPlainTextParseUploadTest(t, charsetUTF8, "quoted-printable", nonASCIIStr,
+		encoded.String())
+}
+
+func TestParseUploadISO2022JPBase64Encoding(t *testing.T) {
+	testStr := "こんにちは"
+	encoding, err := htmlindex.Get(charsetISO2022JP)
+	if err != nil {
+		t.Fatalf("error getting encoding: %v", err)
+	}
+
+	charsetEncoded, err := encoding.NewEncoder().String(testStr)
+	if err != nil {
+		t.Fatalf("error encoding string: %v", err)
+	}
+
+	base64Encoded := base64.StdEncoding.EncodeToString([]byte(charsetEncoded))
+	doPlainTextParseUploadTest(t, charsetISO2022JP, "base64", testStr, base64Encoded)
+}
+
+func TestParseUploadNoEncoding(t *testing.T) {
+	doPlainTextParseUploadTest(t, "", "", "Hello", "Hello")
 }

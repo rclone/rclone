@@ -110,6 +110,8 @@
       "type":"string",
       "enum":["PAYER"]
     },
+    "AmortizedRecurringFee":{"type":"string"},
+    "AmortizedUpfrontFee":{"type":"string"},
     "AttributeType":{"type":"string"},
     "AttributeValue":{"type":"string"},
     "Attributes":{
@@ -482,6 +484,7 @@
       "key":{"shape":"MetricName"},
       "value":{"shape":"MetricValue"}
     },
+    "NetRISavings":{"type":"string"},
     "NextPageToken":{"type":"string"},
     "NonNegativeInteger":{
       "type":"integer",
@@ -494,6 +497,7 @@
         "CONVERTIBLE"
       ]
     },
+    "OnDemandCostOfRIHoursUsed":{"type":"string"},
     "OnDemandHours":{"type":"string"},
     "PageSize":{"type":"integer"},
     "PaymentOption":{
@@ -531,7 +535,13 @@
         "UtilizationPercentage":{"shape":"UtilizationPercentage"},
         "PurchasedHours":{"shape":"PurchasedHours"},
         "TotalActualHours":{"shape":"TotalActualHours"},
-        "UnusedHours":{"shape":"UnusedHours"}
+        "UnusedHours":{"shape":"UnusedHours"},
+        "OnDemandCostOfRIHoursUsed":{"shape":"OnDemandCostOfRIHoursUsed"},
+        "NetRISavings":{"shape":"NetRISavings"},
+        "TotalPotentialRISavings":{"shape":"TotalPotentialRISavings"},
+        "AmortizedUpfrontFee":{"shape":"AmortizedUpfrontFee"},
+        "AmortizedRecurringFee":{"shape":"AmortizedRecurringFee"},
+        "TotalAmortizedFee":{"shape":"TotalAmortizedFee"}
       }
     },
     "ReservationCoverageGroup":{
@@ -659,6 +669,8 @@
       ]
     },
     "TotalActualHours":{"type":"string"},
+    "TotalAmortizedFee":{"type":"string"},
+    "TotalPotentialRISavings":{"type":"string"},
     "TotalRunningHours":{"type":"string"},
     "UnusedHours":{"type":"string"},
     "UtilizationByTime":{

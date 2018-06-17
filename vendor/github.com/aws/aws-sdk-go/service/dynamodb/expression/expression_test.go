@@ -978,6 +978,39 @@ func TestBuildExpressionString(t *testing.T) {
 	}
 }
 
+func TestReturnExpression(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    Expression
+		expected *string
+	}{
+		{
+			name: "projection exists",
+			input: Expression{
+				expressionMap: map[expressionType]string{
+					projection: "#0, #1, #2",
+				},
+			},
+			expected: aws.String("#0, #1, #2"),
+		},
+		{
+			name: "projection not exists",
+			input: Expression{
+				expressionMap: map[expressionType]string{},
+			},
+			expected: nil,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			actual := c.input.returnExpression(projection)
+			if e, a := c.expected, actual; !reflect.DeepEqual(a, e) {
+				t.Errorf("expect %v, got %v", e, a)
+			}
+		})
+	}
+}
+
 func TestAliasValue(t *testing.T) {
 	cases := []struct {
 		name     string

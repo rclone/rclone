@@ -1,3 +1,278 @@
+Release v1.14.8 (2018-06-15)
+===
+
+### Service Client Updates
+* `service/mediaconvert`: Updates service API and documentation
+  * This release adds language code support according to the ISO-639-3 standard. Custom 3-character language codes are now supported on input and output for both audio and captions.
+
+Release v1.14.7 (2018-06-14)
+===
+
+### Service Client Updates
+* `service/apigateway`: Updates service API and documentation
+  * Support for PRIVATE endpoint configuration type
+* `service/dynamodb`: Updates service API and documentation
+  * Added two new fields SSEType and KMSMasterKeyArn to SSEDescription block in describe-table output.
+* `service/iotanalytics`: Updates service API and documentation
+
+Release v1.14.6 (2018-06-13)
+===
+
+### Service Client Updates
+* `service/servicecatalog`: Updates service API
+  * Introduced new length limitations for few of the product fields.
+* `service/ssm`: Updates service API and documentation
+  * Added support for new parameter, CloudWatchOutputConfig, for SendCommand API. Users can now have RunCommand output sent to CloudWatchLogs.
+
+Release v1.14.5 (2018-06-12)
+===
+
+### Service Client Updates
+* `service/devicefarm`: Updates service API and documentation
+  * Adding VPCEndpoint support for Remote access. Allows customers to be able to access their private endpoints/services running in their VPC during remote access.
+* `service/ecs`: Updates service API and documentation
+  * Introduces daemon scheduling capability to deploy one task per instance on selected instances in a cluster.  Adds a "force" flag to the DeleteService API to delete a service without requiring to scale down the number of tasks to zero.
+
+### SDK Enhancements
+* `service/rds/rdsutils`: Clean up the rdsutils package and adds a new builder to construct connection strings ([#1985](https://github.com/aws/aws-sdk-go/pull/1985))
+    * Rewords documentation to be more useful and provides links to prior setup needed to support authentication tokens. Introduces a builder that allows for building connection strings
+
+### SDK Bugs
+* `aws/signer/v4`: Fix X-Amz-Content-Sha256 being in to query for presign ([#1976](https://github.com/aws/aws-sdk-go/pull/1976))
+    * Fixes the bug which would allow the X-Amz-Content-Sha256 header to be promoted to the query string when presigning a S3 request. This bug also was preventing users from setting their own sha256 value for a presigned URL. Presigned requests generated with the custom sha256 would of always failed with invalid signature.
+    * Fixes [#1974](https://github.com/aws/aws-sdk-go/pull/1974)
+Release v1.14.4 (2018-06-11)
+===
+
+### Service Client Updates
+* `service/clouddirectory`: Updates service API and documentation
+  * Amazon Cloud Directory now supports optional attributes on Typed Links, giving users the ability to associate and manage data on Typed Links.
+* `service/rds`: Updates service documentation
+  * Changed lists of valid EngineVersion values to links to the RDS User Guide.
+* `service/storagegateway`: Updates service API and documentation
+  * AWS Storage Gateway now enables you to create cached volumes and tapes with AWS KMS support.
+
+Release v1.14.3 (2018-06-08)
+===
+
+### Service Client Updates
+* `service/mediatailor`: Updates service API
+
+Release v1.14.2 (2018-06-07)
+===
+
+### Service Client Updates
+* `service/medialive`: Updates service API, documentation, and paginators
+  * AWS Elemental MediaLive now makes channel log information available through Amazon CloudWatch Logs. You can set up each MediaLive channel with a logging level; when the channel is run, logs will automatically be published to your account on Amazon CloudWatch Logs
+
+Release v1.14.1 (2018-06-05)
+===
+
+### Service Client Updates
+* `service/ce`: Updates service API and documentation
+* `service/polly`: Updates service API and documentation
+  * Amazon Polly adds new French voice - "Lea"
+* `service/rds`: Updates service API and documentation
+  * This release adds customizable processor features for RDS instances.
+* `service/secretsmanager`: Updates service documentation
+  * Documentation updates for secretsmanager
+* `service/shield`: Updates service API and documentation
+  * DDoS Response Team access management for AWS Shield
+
+Release v1.14.0 (2018-06-04)
+===
+
+### Service Client Updates
+* `service/AWSMigrationHub`: Updates service documentation
+* `service/appstream`: Updates service API and documentation
+  * Amazon AppStream 2.0 adds support for Google Drive for G Suite. With this feature, customers will be able to connect their G Suite accounts with AppStream 2.0 and enable Google Drive access for an AppStream 2.0 stack. Users of the stack can then link their Google Drive using their G Suite login credentials and use their existing files stored in Drive with their AppStream 2.0 applications. File changes will be synced automatically to Google cloud.
+* `service/ec2`: Updates service API and documentation
+  * You are now able to use instance storage (up to 3600 GB of NVMe based SSD) on M5 instances, the next generation of EC2's General Purpose instances in us-east-1, us-west-2, us-east-2, eu-west-1 and ca-central-1. M5 instances offer up to 96 vCPUs, 384 GiB of DDR4 instance memory, 25 Gbps in Network bandwidth and improved EBS and Networking bandwidth on smaller instance sizes and provide a balance of compute, memory and network resources for many applications.
+* `service/eks`: Adds new service
+* `service/mediaconvert`: Updates service API and documentation
+  * This release adds the support for Common Media Application Format (CMAF) fragmented outputs, RF64 WAV audio output format, and HEV1 or HEVC1 MP4 packaging types when using HEVC in DASH or CMAF outputs.
+* `service/sagemaker`: Updates service API, documentation, and paginators
+  * Amazon SageMaker has added the ability to run hyperparameter tuning jobs. A hyperparameter tuning job will create and evaluate multiple training jobs while tuning algorithm hyperparameters, to optimize a customer specified objective metric.
+
+### SDK Features
+* Add support for EventStream based APIs (S3 SelectObjectContent) ([#1941](https://github.com/aws/aws-sdk-go/pull/1941))
+  * Adds support for EventStream asynchronous APIs such as S3 SelectObjectContents API. This API allows your application to receiving multiple events asynchronously from the API response. Your application recieves these events from a channel on the API response.
+  * See PR [#1941](https://github.com/aws/aws-sdk-go/pull/1941) for example.
+  * Fixes [#1895](https://github.com/aws/aws-sdk-go/issues/1895)
+
+Release v1.13.60 (2018-06-01)
+===
+
+### Service Client Updates
+* `service/ds`: Updates service API and documentation
+  * Added ResetUserPassword API. Customers can now reset their users' passwords without providing the old passwords in Simple AD and Microsoft AD.
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/iot`: Updates service API and documentation
+  * We are releasing force CancelJob and CancelJobExecution functionalities to customers.
+* `service/mediatailor`: Adds new service
+* `service/redshift`: Updates service documentation
+  * Documentation updates for redshift
+* `service/sns`: Updates service API, documentation, and paginators
+  * The SNS Subscribe API has been updated with two new optional parameters: Attributes and ReturnSubscriptionArn. Attributes is a map of subscription attributes which can be one or more of: FilterPolicy, DeliveryPolicy, and RawMessageDelivery. ReturnSubscriptionArn is a boolean parameter that overrides the default behavior of returning "pending confirmation" for subscriptions that require confirmation instead of returning the subscription ARN.
+
+### SDK Bugs
+* `private/mode/api`: Fix error code constants being generated incorrectly.([#1958](https://github.com/aws/aws-sdk-go/issues/1958))
+    * Fixes the SDK's code generation to not modify the error code text value when generating error code constants. This prevents generating error code values which are invalid and will never be sent by the service. This change does not change the error code constant variable name generated by the SDK, only the value of the error code.
+    * Fixes [#1856](https://github.com/aws/aws-sdk-go/issues/1856)
+Release v1.13.59 (2018-05-31)
+===
+
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+Release v1.13.58 (2018-05-30)
+===
+
+### Service Client Updates
+* `service/elasticloadbalancingv2`: Updates service API and documentation
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/neptune`: Adds new service
+  * Amazon Neptune is a fast, reliable graph database service that makes it easy to build and run applications that work with highly connected datasets. Neptune supports popular graph models Property Graph and W3C's Resource Description Frame (RDF), and their respective query languages Apache TinkerPop Gremlin 3.3.2 and SPARQL 1.1.
+
+Release v1.13.57 (2018-05-29)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/pi`: Adds new service
+
+Release v1.13.56 (2018-05-25)
+===
+
+### Service Client Updates
+* `service/appstream`: Updates service API and documentation
+  * This API update enables customers to control whether users can transfer data between their local devices and their streaming applications through file uploads and downloads, clipboard operations, or printing to local devices
+* `service/config`: Updates service API and documentation
+* `service/glue`: Updates service API and documentation
+  * AWS Glue now sends a delay notification to Amazon CloudWatch Events when an ETL job runs longer than the specified delay notification threshold.
+* `service/iot`: Updates service API
+  * We are exposing DELETION_IN_PROGRESS as a new job status in regards to the release of DeleteJob API.
+
+Release v1.13.55 (2018-05-24)
+===
+
+### Service Client Updates
+* `service/codebuild`: Updates service API
+  * AWS CodeBuild Adds Support for Windows Builds.
+* `service/elasticloadbalancingv2`: Updates service documentation
+* `service/rds`: Updates service API and documentation
+  * This release adds CloudWatch Logs integration capabilities to RDS Aurora MySQL clusters
+* `service/secretsmanager`: Updates service documentation
+  * Documentation updates for secretsmanager
+
+Release v1.13.54 (2018-05-22)
+===
+
+### Service Client Updates
+* `service/ecs`: Updates service API and documentation
+  * Amazon Elastic Container Service (ECS) adds service discovery for services that use host or bridged network mode. ECS can now also register instance IPs for active tasks using bridged and host networking with Route 53, making them available via DNS.
+* `service/inspector`: Updates service API
+  * We are launching the ability to target all EC2 instances. With this launch, resourceGroupArn is now optional for CreateAssessmentTarget and UpdateAssessmentTarget. If resourceGroupArn is not specified, all EC2 instances in the account in the AWS region are included in the assessment target.
+
+Release v1.13.53 (2018-05-21)
+===
+
+### Service Client Updates
+* `service/cloudformation`: Updates service API and documentation
+  * 1) Filtered Update for StackSet based on Accounts and Regions: This feature will allow flexibility for the customers to roll out updates on a StackSet based on specific Accounts and Regions.   2) Support for customized ExecutionRoleName: This feature will allow customers to attach ExecutionRoleName to the StackSet thus ensuring more security and controlling the behavior of any AWS resources in the target accounts.
+
+Release v1.13.52 (2018-05-18)
+===
+
+### Service Client Updates
+* `service/email`: Updates service documentation
+  * Fixed a broken link in the documentation for S3Action.
+* `service/iot`: Updates service API and documentation
+  * We are releasing DeleteJob and DeleteJobExecution APIs to allow customer to delete resources created using AWS IoT Jobs.
+
+Release v1.13.51 (2018-05-17)
+===
+
+### Service Client Updates
+* `service/codedeploy`: Updates service documentation
+  * Documentation updates for codedeploy
+* `service/cognito-idp`: Updates service API and documentation
+* `service/ec2`: Updates service API and documentation
+  * You are now able to use instance storage (up to 1800 GB of NVMe based SSD) on C5 instances, the next generation of EC2's compute optimized instances in us-east-1, us-west-2, us-east-2, eu-west-1 and ca-central-1. C5 instances offer up to 72 vCPUs, 144 GiB of DDR4 instance memory, 25 Gbps in Network bandwidth and improved EBS and Networking bandwidth on smaller instance sizes to deliver improved performance for compute-intensive workloads.You can now run bare metal workloads on EC2 with i3.metal instances. As a new instance size belonging to the I3 instance family, i3.metal instances have the same characteristics as other instances in the family, including NVMe SSD-backed instance storage optimized for low latency, very high random I/O performance, and high sequential read throughput. I3.metal instances are powered by 2.3 GHz Intel Xeon processors, offering 36 hyper-threaded cores (72 logical processors), 512 GiB of memory, and 15.2 TB of NVMe SSD-backed instance storage. These instances deliver high networking throughput and lower latency with up to 25 Gbps of aggregate network bandwidth using Elastic Network Adapter (ENA)-based Enhanced Networking.
+
+Release v1.13.50 (2018-05-16)
+===
+
+### Service Client Updates
+* `service/secretsmanager`: Updates service documentation
+  * Documentation updates for secretsmanager
+* `service/servicecatalog`: Updates service API and documentation
+  * Users can now pass a new option to ListAcceptedPortfolioShares called portfolio-share-type with a value of AWS_SERVICECATALOG in order to access Getting Started Portfolios that contain selected products representing common customer use cases.
+
+Release v1.13.49 (2018-05-15)
+===
+
+### Service Client Updates
+* `service/config`: Updates service API
+
+Release v1.13.48 (2018-05-14)
+===
+
+### Service Client Updates
+* `service/codebuild`: Updates service API and documentation
+  * Adding support for more override fields for StartBuild API, add support for idempotency token field  for StartBuild API in AWS CodeBuild.
+* `service/iot1click-devices`: Adds new service
+* `service/iot1click-projects`: Adds new service
+* `service/organizations`: Updates service documentation
+  * Documentation updates for organizations
+
+Release v1.13.47 (2018-05-10)
+===
+
+### Service Client Updates
+* `service/firehose`: Updates service API and documentation
+  * With this release, Amazon Kinesis Data Firehose can convert the format of your input data from JSON to Apache Parquet or Apache ORC before storing the data in Amazon S3. Parquet and ORC are columnar data formats that save space and enable faster queries compared to row-oriented formats like JSON.
+
+Release v1.13.46 (2018-05-10)
+===
+
+### Service Client Updates
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/gamelift`: Updates service API and documentation
+  * AutoScaling Target Tracking scaling simplification along with StartFleetActions and StopFleetActions APIs to suspend and resume automatic scaling at will.
+
+Release v1.13.45 (2018-05-10)
+===
+
+### Service Client Updates
+* `service/budgets`: Updates service API and documentation
+  * Updating the regex for the NumericValue fields.
+* `service/ec2`: Updates service API and documentation
+  * Enable support for latest flag with Get Console Output
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/rds`: Updates service API and documentation
+  * Changes to support the Aurora MySQL Backtrack feature.
+
+Release v1.13.44 (2018-05-08)
+===
+
+### Service Client Updates
+* `service/ec2`: Updates service API and documentation
+  * Enable support for specifying CPU options during instance launch.
+* `service/rds`: Updates service documentation
+  * Correction to the documentation about copying unencrypted snapshots.
+
+Release v1.13.43 (2018-05-07)
+===
+
+### Service Client Updates
+* `service/alexaforbusiness`: Updates service API
+* `service/budgets`: Updates service API and documentation
+  * "With this release, customers can use AWS Budgets to monitor how much of their Amazon EC2, Amazon RDS, Amazon Redshift, and Amazon ElastiCache instance usage is covered by reservations, and receive alerts when their coverage falls below the threshold they define."
+* `aws/endpoints`: Updated Regions and Endpoints metadata.
+* `service/es`: Updates service API, documentation, and paginators
+  * This change brings support for Reserved Instances to AWS Elasticsearch.
+* `service/s3`: Updates service API and documentation
+  * Added BytesReturned details for Progress and Stats Events for Amazon S3 Select .
+
 Release v1.13.42 (2018-05-04)
 ===
 
@@ -266,7 +541,7 @@ Release v1.13.19 (2018-03-22)
 
 ### SDK Bugs
 * `aws/endpoints`: Use service metadata for fallback signing name ([#1854](https://github.com/aws/aws-sdk-go/pull/1854))
-  * Updates the SDK's endpoint resolution to fallback deriving the service's signing name from the service's modeled metadata in addition the the endpoints modeled data.
+  * Updates the SDK's endpoint resolution to fallback deriving the service's signing name from the service's modeled metadata in addition the endpoints modeled data.
   * Fixes [#1850](https://github.com/aws/aws-sdk-go/issues/1850)
 Release v1.13.18 (2018-03-21)
 ===
@@ -1003,7 +1278,7 @@ Release v1.12.31 (2017-11-20)
   * DescribeGroups API and miscellaneous enhancements
 
 ### SDK Bugs
-* `aws/client`: Retry delays for throttled exception were not limited to 5 mintues [#1654](https://github.com/aws/aws-sdk-go/pull/1654)
+* `aws/client`: Retry delays for throttled exception were not limited to 5 minutes [#1654](https://github.com/aws/aws-sdk-go/pull/1654)
   * Fixes [#1653](https://github.com/aws/aws-sdk-go/issues/1653)
 Release v1.12.30 (2017-11-17)
 ===
@@ -1135,7 +1410,7 @@ Release v1.12.21 (2017-11-02)
 * `aws/endpoints`: Updated Regions and Endpoints metadata.
 
 ### SDK Bugs
-* `aws/request`: Fix bug in request presign creating invalide URL ([#1624](https://github.com/aws/aws-sdk-go/pull/1624))
+* `aws/request`: Fix bug in request presign creating invalid URL ([#1624](https://github.com/aws/aws-sdk-go/pull/1624))
   * Fixes a bug the Request Presign and PresignRequest methods that would allow a invalid expire duration as input. A expire time of 0 would be interpreted by the SDK to generate a normal request signature, not a presigned URL. This caused the returned URL unusable.
   * Fixes [#1617](https://github.com/aws/aws-sdk-go/issues/1617)
 Release v1.12.20 (2017-11-01)

@@ -146,10 +146,13 @@
     "Boolean": {
       "base": null,
       "refs": {
+        "CreateCachediSCSIVolumeInput$KMSEncrypted": "<p>True to use Amazon S3 server side encryption with your own AWS KMS key, or false to use a key managed by Amazon S3. Optional.</p>",
         "CreateNFSFileShareInput$KMSEncrypted": "<p>True to use Amazon S3 server side encryption with your own AWS KMS key, or false to use a key managed by Amazon S3. Optional.</p>",
         "CreateNFSFileShareInput$ReadOnly": "<p>Sets the write status of a file share. This value is true if the write status is read-only, and otherwise false.</p>",
         "CreateNFSFileShareInput$GuessMIMETypeEnabled": "<p>Enables guessing of the MIME type for uploaded objects based on file extensions. Set this value to true to enable MIME type guessing, and otherwise to false. The default value is true.</p>",
         "CreateNFSFileShareInput$RequesterPays": "<p>Sets who pays the cost of the request and the data download from the Amazon S3 bucket. Set this value to true if you want the requester to pay instead of the bucket owner, and otherwise to false.</p>",
+        "CreateTapeWithBarcodeInput$KMSEncrypted": "<p>True to use Amazon S3 server side encryption with your own AWS KMS key, or false to use a key managed by Amazon S3. Optional.</p>",
+        "CreateTapesInput$KMSEncrypted": "<p>True to use Amazon S3 server side encryption with your own AWS KMS key, or false to use a key managed by Amazon S3. Optional.</p>",
         "NFSFileShareInfo$ReadOnly": "<p>Sets the write status of a file share. This value is true if the write status is read-only, and otherwise false.</p>",
         "NFSFileShareInfo$GuessMIMETypeEnabled": "<p>Enables guessing of the MIME type for uploaded objects based on file extensions. Set this value to true to enable MIME type guessing, and otherwise to false. The default value is true.</p>",
         "NFSFileShareInfo$RequesterPays": "<p>Sets who pays the cost of the request and the data download from the Amazon S3 bucket. Set this value to true if you want the requester to pay instead of the bucket owner, and otherwise to false.</p>",
@@ -857,11 +860,17 @@
       }
     },
     "KMSKey": {
-      "base": "<p>The ARN of the KMS key used for Amazon S3 server side encryption. </p>",
+      "base": "<p>The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side encryption. This value can only be set when KMSEncrypted is true. Optional.</p>",
       "refs": {
-        "CreateNFSFileShareInput$KMSKey": "<p>The KMS key used for Amazon S3 server side encryption. This value can only be set when KmsEncrypted is true. Optional.</p>",
+        "CachediSCSIVolume$KMSKey": null,
+        "CreateCachediSCSIVolumeInput$KMSKey": "<p>The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side encryption. This value can only be set when KMSEncrypted is true. Optional.</p>",
+        "CreateNFSFileShareInput$KMSKey": "<p>The Amazon Resource Name (ARN) KMS key used for Amazon S3 server side encryption. This value can only be set when KMSEncrypted is true. Optional.</p>",
+        "CreateTapeWithBarcodeInput$KMSKey": "<p>The Amazon Resource Name (ARN) of the KMS Key used for Amazon S3 server side encryption. This value can only be set when KMSEncrypted is true. Optional.</p>",
+        "CreateTapesInput$KMSKey": "<p>The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side encryption. This value can only be set when KMSEncrypted is true. Optional.</p>",
         "NFSFileShareInfo$KMSKey": null,
-        "UpdateNFSFileShareInput$KMSKey": "<p>The KMS key used for Amazon S3 server side encryption. This value can only be set when KmsEncrypted is true. Optional. </p>"
+        "Tape$KMSKey": null,
+        "TapeArchive$KMSKey": null,
+        "UpdateNFSFileShareInput$KMSKey": "<p>The Amazon Resource Name (ARN) of the KMS key used for Amazon S3 server side encryption. This value can only be set when KMSEncrypted is true. Optional. </p>"
       }
     },
     "LastSoftwareUpdate": {
@@ -1251,9 +1260,9 @@
     "StorageClass": {
       "base": "<p/>",
       "refs": {
-        "CreateNFSFileShareInput$DefaultStorageClass": "<p>The default storage class for objects put into an Amazon S3 bucket by file gateway. Possible values are S3_STANDARD or S3_STANDARD_IA. If this field is not populated, the default value S3_STANDARD is used. Optional.</p>",
-        "NFSFileShareInfo$DefaultStorageClass": "<p>The default storage class for objects put into an Amazon S3 bucket by file gateway. Possible values are S3_STANDARD or S3_STANDARD_IA. If this field is not populated, the default value S3_STANDARD is used. Optional.</p>",
-        "UpdateNFSFileShareInput$DefaultStorageClass": "<p>The default storage class for objects put into an Amazon S3 bucket by a file gateway. Possible values are S3_STANDARD or S3_STANDARD_IA. If this field is not populated, the default value S3_STANDARD is used. Optional.</p>"
+        "CreateNFSFileShareInput$DefaultStorageClass": "<p>The default storage class for objects put into an Amazon S3 bucket by file gateway. Possible values are S3_STANDARD, S3_STANDARD_IA or S3_ONEZONE_IA. If this field is not populated, the default value S3_STANDARD is used. Optional.</p>",
+        "NFSFileShareInfo$DefaultStorageClass": "<p>The default storage class for objects put into an Amazon S3 bucket by file gateway. Possible values are S3_STANDARD, S3_STANDARD_IA or S3_ONEZONE_IA. If this field is not populated, the default value S3_STANDARD is used. Optional.</p>",
+        "UpdateNFSFileShareInput$DefaultStorageClass": "<p>The default storage class for objects put into an Amazon S3 bucket by a file gateway. Possible values are S3_STANDARD, S3_STANDARD_IA or S3_ONEZONE_IA. If this field is not populated, the default value S3_STANDARD is used. Optional.</p>"
       }
     },
     "StorageGatewayError": {
@@ -1472,9 +1481,9 @@
       "base": null,
       "refs": {
         "Tape$TapeCreatedDate": "<p>The date the virtual tape was created.</p>",
-        "TapeArchive$TapeCreatedDate": null,
-        "TapeArchive$CompletionTime": "<p>The time that the archiving of the virtual tape was completed.</p> <p>The string format of the completion time is in the ISO8601 extended YYYY-MM-DD'T'HH:MM:SS'Z' format.</p>",
-        "TapeRecoveryPointInfo$TapeRecoveryPointTime": "<p>The time when the point-in-time view of the virtual tape was replicated for later recovery.</p> <p>The string format of the tape recovery point time is in the ISO8601 extended YYYY-MM-DD'T'HH:MM:SS'Z' format.</p>"
+        "TapeArchive$TapeCreatedDate": "<p>The date the virtual tape was created.</p>",
+        "TapeArchive$CompletionTime": "<p>The time that the archiving of the virtual tape was completed.</p> <p>The default time stamp format is in the ISO8601 extended YYYY-MM-DD'T'HH:MM:SS'Z' format.</p>",
+        "TapeRecoveryPointInfo$TapeRecoveryPointTime": "<p>The time when the point-in-time view of the virtual tape was replicated for later recovery.</p> <p>The default time stamp format of the tape recovery point time is in the ISO8601 extended YYYY-MM-DD'T'HH:MM:SS'Z' format.</p>"
       }
     },
     "UpdateBandwidthRateLimitInput": {

@@ -864,6 +864,14 @@ type GetIosPostInstallAttributionResponse struct {
 	// This message will be publicly visible.
 	MatchMessage string `json:"matchMessage,omitempty"`
 
+	// RequestIpVersion: Which IP version the request was made from.
+	//
+	// Possible values:
+	//   "UNKNOWN_IP_VERSION" - Unset.
+	//   "IP_V4" - Request made from an IPv4 IP address.
+	//   "IP_V6" - Request made from an IPv6 IP address.
+	RequestIpVersion string `json:"requestIpVersion,omitempty"`
+
 	// RequestedLink: Entire FDL (short or long) attributed post-install via
 	// one of several
 	// techniques (fingerprint, copy unique).

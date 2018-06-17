@@ -82,6 +82,25 @@ func PossibleCapabilitiesValues() []Capabilities {
 	return []Capabilities{DeviceManagement, None}
 }
 
+// EndpointHealthStatus enumerates the values for endpoint health status.
+type EndpointHealthStatus string
+
+const (
+	// Dead ...
+	Dead EndpointHealthStatus = "dead"
+	// Healthy ...
+	Healthy EndpointHealthStatus = "healthy"
+	// Unhealthy ...
+	Unhealthy EndpointHealthStatus = "unhealthy"
+	// Unknown ...
+	Unknown EndpointHealthStatus = "unknown"
+)
+
+// PossibleEndpointHealthStatusValues returns an array of possible values for the EndpointHealthStatus const type.
+func PossibleEndpointHealthStatusValues() []EndpointHealthStatus {
+	return []EndpointHealthStatus{Dead, Healthy, Unhealthy, Unknown}
+}
+
 // IotHubNameUnavailabilityReason enumerates the values for iot hub name unavailability reason.
 type IotHubNameUnavailabilityReason string
 
@@ -175,23 +194,23 @@ func PossibleIPFilterActionTypeValues() []IPFilterActionType {
 type JobStatus string
 
 const (
-	// Cancelled ...
-	Cancelled JobStatus = "cancelled"
-	// Completed ...
-	Completed JobStatus = "completed"
-	// Enqueued ...
-	Enqueued JobStatus = "enqueued"
-	// Failed ...
-	Failed JobStatus = "failed"
-	// Running ...
-	Running JobStatus = "running"
-	// Unknown ...
-	Unknown JobStatus = "unknown"
+	// JobStatusCancelled ...
+	JobStatusCancelled JobStatus = "cancelled"
+	// JobStatusCompleted ...
+	JobStatusCompleted JobStatus = "completed"
+	// JobStatusEnqueued ...
+	JobStatusEnqueued JobStatus = "enqueued"
+	// JobStatusFailed ...
+	JobStatusFailed JobStatus = "failed"
+	// JobStatusRunning ...
+	JobStatusRunning JobStatus = "running"
+	// JobStatusUnknown ...
+	JobStatusUnknown JobStatus = "unknown"
 )
 
 // PossibleJobStatusValues returns an array of possible values for the JobStatus const type.
 func PossibleJobStatusValues() []JobStatus {
-	return []JobStatus{Cancelled, Completed, Enqueued, Failed, Running, Unknown}
+	return []JobStatus{JobStatusCancelled, JobStatusCompleted, JobStatusEnqueued, JobStatusFailed, JobStatusRunning, JobStatusUnknown}
 }
 
 // JobType enumerates the values for job type.
@@ -244,23 +263,57 @@ func PossibleOperationMonitoringLevelValues() []OperationMonitoringLevel {
 	return []OperationMonitoringLevel{OperationMonitoringLevelError, OperationMonitoringLevelErrorInformation, OperationMonitoringLevelInformation, OperationMonitoringLevelNone}
 }
 
+// RouteErrorSeverity enumerates the values for route error severity.
+type RouteErrorSeverity string
+
+const (
+	// Error ...
+	Error RouteErrorSeverity = "error"
+	// Warning ...
+	Warning RouteErrorSeverity = "warning"
+)
+
+// PossibleRouteErrorSeverityValues returns an array of possible values for the RouteErrorSeverity const type.
+func PossibleRouteErrorSeverityValues() []RouteErrorSeverity {
+	return []RouteErrorSeverity{Error, Warning}
+}
+
 // RoutingSource enumerates the values for routing source.
 type RoutingSource string
 
 const (
-	// DeviceJobLifecycleEvents ...
-	DeviceJobLifecycleEvents RoutingSource = "DeviceJobLifecycleEvents"
-	// DeviceLifecycleEvents ...
-	DeviceLifecycleEvents RoutingSource = "DeviceLifecycleEvents"
-	// DeviceMessages ...
-	DeviceMessages RoutingSource = "DeviceMessages"
-	// TwinChangeEvents ...
-	TwinChangeEvents RoutingSource = "TwinChangeEvents"
+	// RoutingSourceDeviceJobLifecycleEvents ...
+	RoutingSourceDeviceJobLifecycleEvents RoutingSource = "DeviceJobLifecycleEvents"
+	// RoutingSourceDeviceLifecycleEvents ...
+	RoutingSourceDeviceLifecycleEvents RoutingSource = "DeviceLifecycleEvents"
+	// RoutingSourceDeviceMessages ...
+	RoutingSourceDeviceMessages RoutingSource = "DeviceMessages"
+	// RoutingSourceInvalid ...
+	RoutingSourceInvalid RoutingSource = "Invalid"
+	// RoutingSourceTwinChangeEvents ...
+	RoutingSourceTwinChangeEvents RoutingSource = "TwinChangeEvents"
 )
 
 // PossibleRoutingSourceValues returns an array of possible values for the RoutingSource const type.
 func PossibleRoutingSourceValues() []RoutingSource {
-	return []RoutingSource{DeviceJobLifecycleEvents, DeviceLifecycleEvents, DeviceMessages, TwinChangeEvents}
+	return []RoutingSource{RoutingSourceDeviceJobLifecycleEvents, RoutingSourceDeviceLifecycleEvents, RoutingSourceDeviceMessages, RoutingSourceInvalid, RoutingSourceTwinChangeEvents}
+}
+
+// TestResultStatus enumerates the values for test result status.
+type TestResultStatus string
+
+const (
+	// False ...
+	False TestResultStatus = "false"
+	// True ...
+	True TestResultStatus = "true"
+	// Undefined ...
+	Undefined TestResultStatus = "undefined"
+)
+
+// PossibleTestResultStatusValues returns an array of possible values for the TestResultStatus const type.
+func PossibleTestResultStatusValues() []TestResultStatus {
+	return []TestResultStatus{False, True, Undefined}
 }
 
 // CertificateBodyDescription the JSON-serialized X509 Certificate.
@@ -304,6 +357,8 @@ type CertificateProperties struct {
 	Created *date.TimeRFC1123 `json:"created,omitempty"`
 	// Updated - The certificate's last update date and time.
 	Updated *date.TimeRFC1123 `json:"updated,omitempty"`
+	// Certificate - The certificate content
+	Certificate *string `json:"certificate,omitempty"`
 }
 
 // CertificatePropertiesWithNonce the description of an X509 CA Certificate including the challenge nonce issued
@@ -323,6 +378,8 @@ type CertificatePropertiesWithNonce struct {
 	Updated *date.TimeRFC1123 `json:"updated,omitempty"`
 	// VerificationCode - The certificate's verification code that will be used for proof of possession.
 	VerificationCode *string `json:"verificationCode,omitempty"`
+	// Certificate - The certificate content
+	Certificate *string `json:"certificate,omitempty"`
 }
 
 // CertificateVerificationDescription the JSON-serialized leaf certificate
@@ -352,6 +409,116 @@ type CloudToDeviceProperties struct {
 	// DefaultTTLAsIso8601 - The default time to live for cloud-to-device messages in the device queue. See: https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages.
 	DefaultTTLAsIso8601 *string             `json:"defaultTtlAsIso8601,omitempty"`
 	Feedback            *FeedbackProperties `json:"feedback,omitempty"`
+}
+
+// EndpointHealthData the health data for an endpoint
+type EndpointHealthData struct {
+	// EndpointID - Id of the endpoint
+	EndpointID *string `json:"endpointId,omitempty"`
+	// HealthStatus - Health status. Possible values include: 'Unknown', 'Healthy', 'Unhealthy', 'Dead'
+	HealthStatus EndpointHealthStatus `json:"healthStatus,omitempty"`
+}
+
+// EndpointHealthDataListResult the JSON-serialized array of EndpointHealthData objects with a next link.
+type EndpointHealthDataListResult struct {
+	autorest.Response `json:"-"`
+	// Value - JSON-serialized array of Endpoint health data
+	Value *[]EndpointHealthData `json:"value,omitempty"`
+	// NextLink - Link to more results
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// EndpointHealthDataListResultIterator provides access to a complete listing of EndpointHealthData values.
+type EndpointHealthDataListResultIterator struct {
+	i    int
+	page EndpointHealthDataListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *EndpointHealthDataListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter EndpointHealthDataListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter EndpointHealthDataListResultIterator) Response() EndpointHealthDataListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter EndpointHealthDataListResultIterator) Value() EndpointHealthData {
+	if !iter.page.NotDone() {
+		return EndpointHealthData{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (ehdlr EndpointHealthDataListResult) IsEmpty() bool {
+	return ehdlr.Value == nil || len(*ehdlr.Value) == 0
+}
+
+// endpointHealthDataListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (ehdlr EndpointHealthDataListResult) endpointHealthDataListResultPreparer() (*http.Request, error) {
+	if ehdlr.NextLink == nil || len(to.String(ehdlr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(ehdlr.NextLink)))
+}
+
+// EndpointHealthDataListResultPage contains a page of EndpointHealthData values.
+type EndpointHealthDataListResultPage struct {
+	fn    func(EndpointHealthDataListResult) (EndpointHealthDataListResult, error)
+	ehdlr EndpointHealthDataListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *EndpointHealthDataListResultPage) Next() error {
+	next, err := page.fn(page.ehdlr)
+	if err != nil {
+		return err
+	}
+	page.ehdlr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page EndpointHealthDataListResultPage) NotDone() bool {
+	return !page.ehdlr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page EndpointHealthDataListResultPage) Response() EndpointHealthDataListResult {
+	return page.ehdlr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page EndpointHealthDataListResultPage) Values() []EndpointHealthData {
+	if page.ehdlr.IsEmpty() {
+		return nil
+	}
+	return *page.ehdlr.Value
 }
 
 // ErrorDetails error details.
@@ -577,9 +744,11 @@ type IotHubCapacity struct {
 type IotHubDescription struct {
 	autorest.Response `json:"-"`
 	// Etag - The Etag field is *not* required. If it is provided in the response body, it must also be provided as a header per the normal ETag convention.
-	Etag       *string           `json:"etag,omitempty"`
+	Etag *string `json:"etag,omitempty"`
+	// Properties - IotHub properties
 	Properties *IotHubProperties `json:"properties,omitempty"`
-	Sku        *IotHubSkuInfo    `json:"sku,omitempty"`
+	// Sku - IotHub SKU info
+	Sku *IotHubSkuInfo `json:"sku,omitempty"`
 	// ID - The resource identifier.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -928,12 +1097,11 @@ func (page IotHubQuotaMetricInfoListResultPage) Values() []IotHubQuotaMetricInfo
 // operation.
 type IotHubResourceCreateOrUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceClient) (ihd IotHubDescription, err error) {
+func (future *IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceClient) (ihd IotHubDescription, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -941,34 +1109,15 @@ func (future IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceCli
 		return
 	}
 	if !done {
-		return ihd, azure.NewAsyncOpIncompleteError("devices.IotHubResourceCreateOrUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ihd, err = client.CreateOrUpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("devices.IotHubResourceCreateOrUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ihd.Response.Response, err = future.GetResult(sender); err == nil && ihd.Response.Response.StatusCode != http.StatusNoContent {
+		ihd, err = client.CreateOrUpdateResponder(ihd.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", ihd.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ihd, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceCreateOrUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -976,12 +1125,11 @@ func (future IotHubResourceCreateOrUpdateFuture) Result(client IotHubResourceCli
 // IotHubResourceDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type IotHubResourceDeleteFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future IotHubResourceDeleteFuture) Result(client IotHubResourceClient) (so SetObject, err error) {
+func (future *IotHubResourceDeleteFuture) Result(client IotHubResourceClient) (so SetObject, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -989,34 +1137,15 @@ func (future IotHubResourceDeleteFuture) Result(client IotHubResourceClient) (so
 		return
 	}
 	if !done {
-		return so, azure.NewAsyncOpIncompleteError("devices.IotHubResourceDeleteFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		so, err = client.DeleteResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("devices.IotHubResourceDeleteFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if so.Response.Response, err = future.GetResult(sender); err == nil && so.Response.Response.StatusCode != http.StatusNoContent {
+		so, err = client.DeleteResponder(so.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", so.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	so, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceDeleteFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1024,12 +1153,11 @@ func (future IotHubResourceDeleteFuture) Result(client IotHubResourceClient) (so
 // IotHubResourceUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
 type IotHubResourceUpdateFuture struct {
 	azure.Future
-	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future IotHubResourceUpdateFuture) Result(client IotHubResourceClient) (ihd IotHubDescription, err error) {
+func (future *IotHubResourceUpdateFuture) Result(client IotHubResourceClient) (ihd IotHubDescription, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
@@ -1037,34 +1165,15 @@ func (future IotHubResourceUpdateFuture) Result(client IotHubResourceClient) (ih
 		return
 	}
 	if !done {
-		return ihd, azure.NewAsyncOpIncompleteError("devices.IotHubResourceUpdateFuture")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ihd, err = client.UpdateResponder(future.Response())
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "devices.IotHubResourceUpdateFuture", "Result", future.Response(), "Failure responding to request")
-		}
+		err = azure.NewAsyncOpIncompleteError("devices.IotHubResourceUpdateFuture")
 		return
 	}
-	var req *http.Request
-	var resp *http.Response
-	if future.PollingURL() != "" {
-		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ihd.Response.Response, err = future.GetResult(sender); err == nil && ihd.Response.Response.StatusCode != http.StatusNoContent {
+		ihd, err = client.UpdateResponder(ihd.Response.Response)
 		if err != nil {
-			return
+			err = autorest.NewErrorWithError(err, "devices.IotHubResourceUpdateFuture", "Result", ihd.Response.Response, "Failure responding to request")
 		}
-	} else {
-		req = autorest.ChangeToGet(future.req)
-	}
-	resp, err = autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceUpdateFuture", "Result", resp, "Failure sending request")
-		return
-	}
-	ihd, err = client.UpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "devices.IotHubResourceUpdateFuture", "Result", resp, "Failure responding to request")
 	}
 	return
 }
@@ -1074,7 +1183,8 @@ type IotHubSkuDescription struct {
 	// ResourceType - The type of the resource.
 	ResourceType *string `json:"resourceType,omitempty"`
 	// Sku - The type of the resource.
-	Sku      *IotHubSkuInfo  `json:"sku,omitempty"`
+	Sku *IotHubSkuInfo `json:"sku,omitempty"`
+	// Capacity - IotHub capacity
 	Capacity *IotHubCapacity `json:"capacity,omitempty"`
 }
 
@@ -1211,7 +1321,7 @@ type JobResponse struct {
 	EndTimeUtc *date.TimeRFC1123 `json:"endTimeUtc,omitempty"`
 	// Type - The type of the job. Possible values include: 'JobTypeUnknown', 'JobTypeExport', 'JobTypeImport', 'JobTypeBackup', 'JobTypeReadDeviceProperties', 'JobTypeWriteDeviceProperties', 'JobTypeUpdateDeviceConfiguration', 'JobTypeRebootDevice', 'JobTypeFactoryResetDevice', 'JobTypeFirmwareUpdate'
 	Type JobType `json:"type,omitempty"`
-	// Status - The status of the job. Possible values include: 'Unknown', 'Enqueued', 'Running', 'Completed', 'Failed', 'Cancelled'
+	// Status - The status of the job. Possible values include: 'JobStatusUnknown', 'JobStatusEnqueued', 'JobStatusRunning', 'JobStatusCompleted', 'JobStatusFailed', 'JobStatusCancelled'
 	Status JobStatus `json:"status,omitempty"`
 	// FailureReason - If status == failed, this string containing the reason for the failure.
 	FailureReason *string `json:"failureReason,omitempty"`
@@ -1323,6 +1433,12 @@ func (page JobResponseListResultPage) Values() []JobResponse {
 	return *page.jrlr.Value
 }
 
+// MatchedRoute routes that matched
+type MatchedRoute struct {
+	// Properties - Properties of routes that matched
+	Properties *RouteProperties `json:"properties,omitempty"`
+}
+
 // MessagingEndpointProperties the properties of the messaging endpoints used by this IoT hub.
 type MessagingEndpointProperties struct {
 	// LockDurationAsIso8601 - The lock duration. See: https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-file-upload.
@@ -1331,6 +1447,14 @@ type MessagingEndpointProperties struct {
 	TTLAsIso8601 *string `json:"ttlAsIso8601,omitempty"`
 	// MaxDeliveryCount - The number of times the IoT hub attempts to deliver a message. See: https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-file-upload.
 	MaxDeliveryCount *int32 `json:"maxDeliveryCount,omitempty"`
+}
+
+// Name name of Iot Hub type
+type Name struct {
+	// Value - IotHub type
+	Value *string `json:"value,omitempty"`
+	// LocalizedValue - Localized value of name
+	LocalizedValue *string `json:"localizedValue,omitempty"`
 }
 
 // Operation ioT Hub REST API operation
@@ -1522,11 +1646,37 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
+// RouteCompilationError compilation error when evaluating route
+type RouteCompilationError struct {
+	// Message - Route error message
+	Message *string `json:"message,omitempty"`
+	// Severity - Severity of the route error. Possible values include: 'Error', 'Warning'
+	Severity RouteErrorSeverity `json:"severity,omitempty"`
+	// Location - Location where the route error happened
+	Location *RouteErrorRange `json:"location,omitempty"`
+}
+
+// RouteErrorPosition position where the route error happened
+type RouteErrorPosition struct {
+	// Line - Line where the route error happened
+	Line *int32 `json:"line,omitempty"`
+	// Column - Column where the route error happened
+	Column *int32 `json:"column,omitempty"`
+}
+
+// RouteErrorRange range of route errors
+type RouteErrorRange struct {
+	// Start - Start where the route error happened
+	Start *RouteErrorPosition `json:"start,omitempty"`
+	// End - End where the route error happened
+	End *RouteErrorPosition `json:"end,omitempty"`
+}
+
 // RouteProperties the properties of a routing rule that your IoT hub uses to route messages to endpoints.
 type RouteProperties struct {
 	// Name - The name of the route. The name can only include alphanumeric characters, periods, underscores, hyphens, has a maximum length of 64 characters, and must be unique.
 	Name *string `json:"name,omitempty"`
-	// Source - The source that the routing rule is to be applied to, such as DeviceMessages. Possible values include: 'DeviceMessages', 'TwinChangeEvents', 'DeviceLifecycleEvents', 'DeviceJobLifecycleEvents'
+	// Source - The source that the routing rule is to be applied to, such as DeviceMessages. Possible values include: 'RoutingSourceInvalid', 'RoutingSourceDeviceMessages', 'RoutingSourceTwinChangeEvents', 'RoutingSourceDeviceLifecycleEvents', 'RoutingSourceDeviceJobLifecycleEvents'
 	Source RoutingSource `json:"source,omitempty"`
 	// Condition - The condition that is evaluated to apply the routing rule. If no condition is provided, it evaluates to true by default. For grammar, see: https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-query-language
 	Condition *string `json:"condition,omitempty"`
@@ -1560,6 +1710,31 @@ type RoutingEventHubProperties struct {
 	SubscriptionID *string `json:"subscriptionId,omitempty"`
 	// ResourceGroup - The name of the resource group of the event hub endpoint.
 	ResourceGroup *string `json:"resourceGroup,omitempty"`
+}
+
+// RoutingMessage routing message
+type RoutingMessage struct {
+	// Body - Body of routing message
+	Body *string `json:"body,omitempty"`
+	// AppProperties - App properties
+	AppProperties map[string]*string `json:"appProperties"`
+	// SystemProperties - System properties
+	SystemProperties map[string]*string `json:"systemProperties"`
+}
+
+// MarshalJSON is the custom marshaler for RoutingMessage.
+func (rm RoutingMessage) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rm.Body != nil {
+		objectMap["body"] = rm.Body
+	}
+	if rm.AppProperties != nil {
+		objectMap["appProperties"] = rm.AppProperties
+	}
+	if rm.SystemProperties != nil {
+		objectMap["systemProperties"] = rm.SystemProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // RoutingProperties the routing related properties of the IoT hub. See:
@@ -1765,4 +1940,65 @@ func (tr TagsResource) MarshalJSON() ([]byte, error) {
 		objectMap["tags"] = tr.Tags
 	}
 	return json.Marshal(objectMap)
+}
+
+// TestAllRoutesInput input for testing all routes
+type TestAllRoutesInput struct {
+	// RoutingSource - Routing source. Possible values include: 'RoutingSourceInvalid', 'RoutingSourceDeviceMessages', 'RoutingSourceTwinChangeEvents', 'RoutingSourceDeviceLifecycleEvents', 'RoutingSourceDeviceJobLifecycleEvents'
+	RoutingSource RoutingSource `json:"routingSource,omitempty"`
+	// Message - Routing message
+	Message *RoutingMessage `json:"message,omitempty"`
+}
+
+// TestAllRoutesResult result of testing all routes
+type TestAllRoutesResult struct {
+	autorest.Response `json:"-"`
+	// Routes - JSON-serialized array of matched routes
+	Routes *[]MatchedRoute `json:"routes,omitempty"`
+}
+
+// TestRouteInput input for testing route
+type TestRouteInput struct {
+	// Message - Routing message
+	Message *RoutingMessage `json:"message,omitempty"`
+	// Route - Route properties
+	Route *RouteProperties `json:"route,omitempty"`
+}
+
+// TestRouteResult result of testing one route
+type TestRouteResult struct {
+	autorest.Response `json:"-"`
+	// Result - Result of testing route. Possible values include: 'Undefined', 'False', 'True'
+	Result TestResultStatus `json:"result,omitempty"`
+	// Details - Detailed result of testing route
+	Details *TestRouteResultDetails `json:"details,omitempty"`
+}
+
+// TestRouteResultDetails detailed result of testing a route
+type TestRouteResultDetails struct {
+	// CompilationErrors - JSON-serialized list of route compilation errors
+	CompilationErrors *[]RouteCompilationError `json:"compilationErrors,omitempty"`
+}
+
+// UserSubscriptionQuota user subscription quota response
+type UserSubscriptionQuota struct {
+	// ID - IotHub type id
+	ID *string `json:"id,omitempty"`
+	// Type - Response type
+	Type *string `json:"type,omitempty"`
+	// Unit - Unit of IotHub type
+	Unit *string `json:"unit,omitempty"`
+	// CurrentValue - Current number of IotHub type
+	CurrentValue *int32 `json:"currentValue,omitempty"`
+	// Limit - Numerical limit on IotHub type
+	Limit *int32 `json:"limit,omitempty"`
+	// Name - IotHub type
+	Name *Name `json:"name,omitempty"`
+}
+
+// UserSubscriptionQuotaListResult json-serialized array of User subscription quota response
+type UserSubscriptionQuotaListResult struct {
+	autorest.Response `json:"-"`
+	Value             *[]UserSubscriptionQuota `json:"value,omitempty"`
+	NextLink          *string                  `json:"nextLink,omitempty"`
 }

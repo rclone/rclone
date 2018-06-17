@@ -39,11 +39,7 @@ These are auto-generated Go libraries from the Google Discovery Service's JSON d
 Due to the auto-generated nature of this collection of libraries, complete APIs or specific versions can appear or go away without notice.
 As a result, you should always locally vendor any API(s) that your code relies upon.
 
-This client library is supported, but in maintenance mode only.
-We are fixing necessary bugs and adding essential features to ensure this
-library continues to meet your needs for accessing Google APIs.
-Non-critical issues will be closed.
-Any issue may be reopened if it is causing ongoing problems.
+These client libraries are officially supported by Google.  However, the libraries are considered complete and are in maintenance mode. This means that we will address critical bugs and security issues but will not add any new features.
 
 If you're working with Google Cloud Platform APIs such as Datastore or Pub/Sub,
 consider using the

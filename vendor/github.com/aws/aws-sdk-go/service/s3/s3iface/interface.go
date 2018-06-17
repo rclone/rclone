@@ -375,6 +375,10 @@ type S3API interface {
 	RestoreObjectWithContext(aws.Context, *s3.RestoreObjectInput, ...request.Option) (*s3.RestoreObjectOutput, error)
 	RestoreObjectRequest(*s3.RestoreObjectInput) (*request.Request, *s3.RestoreObjectOutput)
 
+	SelectObjectContent(*s3.SelectObjectContentInput) (*s3.SelectObjectContentOutput, error)
+	SelectObjectContentWithContext(aws.Context, *s3.SelectObjectContentInput, ...request.Option) (*s3.SelectObjectContentOutput, error)
+	SelectObjectContentRequest(*s3.SelectObjectContentInput) (*request.Request, *s3.SelectObjectContentOutput)
+
 	UploadPart(*s3.UploadPartInput) (*s3.UploadPartOutput, error)
 	UploadPartWithContext(aws.Context, *s3.UploadPartInput, ...request.Option) (*s3.UploadPartOutput, error)
 	UploadPartRequest(*s3.UploadPartInput) (*request.Request, *s3.UploadPartOutput)

@@ -27,10 +27,10 @@
       },
       "errors": [
         {
-          "shape": "UnprocessableEntityException"
+          "shape": "BadRequestException"
         },
         {
-          "shape": "BadRequestException"
+          "shape": "UnprocessableEntityException"
         },
         {
           "shape": "InternalServerErrorException"
@@ -545,10 +545,10 @@
       },
       "errors": [
         {
-          "shape": "UnprocessableEntityException"
+          "shape": "BadRequestException"
         },
         {
-          "shape": "BadRequestException"
+          "shape": "UnprocessableEntityException"
         },
         {
           "shape": "InternalServerErrorException"
@@ -1545,6 +1545,10 @@
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
         },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
+        },
         "Name": {
           "shape": "__string",
           "locationName": "name"
@@ -1626,6 +1630,10 @@
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
         },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
+        },
         "Name": {
           "shape": "__string",
           "locationName": "name"
@@ -1676,6 +1684,10 @@
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
         },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
+        },
         "Name": {
           "shape": "__string",
           "locationName": "name"
@@ -1714,6 +1726,10 @@
         "InputSpecification": {
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
+        },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
         },
         "Name": {
           "shape": "__string",
@@ -1902,6 +1918,10 @@
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
         },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
+        },
         "Name": {
           "shape": "__string",
           "locationName": "name"
@@ -1999,6 +2019,10 @@
         "InputSpecification": {
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
+        },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
         },
         "Name": {
           "shape": "__string",
@@ -4046,6 +4070,16 @@
         }
       }
     },
+    "LogLevel": {
+      "type": "string",
+      "enum": [
+        "ERROR",
+        "WARNING",
+        "INFO",
+        "DEBUG",
+        "DISABLED"
+      ]
+    },
     "M2tsAbsentInputAudioBehavior": {
       "type": "string",
       "enum": [
@@ -5094,6 +5128,10 @@
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
         },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
+        },
         "Name": {
           "shape": "__string",
           "locationName": "name"
@@ -5125,6 +5163,7 @@
         }
       },
       "required": [
+        "KeyProviderServer",
         "StaticKeyValue"
       ]
     },
@@ -5171,6 +5210,10 @@
         "InputSpecification": {
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
+        },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
         },
         "Name": {
           "shape": "__string",
@@ -5352,6 +5395,10 @@
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
         },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
+        },
         "Name": {
           "shape": "__string",
           "locationName": "name"
@@ -5385,6 +5432,10 @@
         "InputSpecification": {
           "shape": "InputSpecification",
           "locationName": "inputSpecification"
+        },
+        "LogLevel": {
+          "shape": "LogLevel",
+          "locationName": "logLevel"
         },
         "Name": {
           "shape": "__string",

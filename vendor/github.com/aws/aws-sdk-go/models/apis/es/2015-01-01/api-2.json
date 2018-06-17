@@ -130,6 +130,36 @@
         {"shape":"ValidationException"}
       ]
     },
+    "DescribeReservedElasticsearchInstanceOfferings":{
+      "name":"DescribeReservedElasticsearchInstanceOfferings",
+      "http":{
+        "method":"GET",
+        "requestUri":"/2015-01-01/es/reservedInstanceOfferings"
+      },
+      "input":{"shape":"DescribeReservedElasticsearchInstanceOfferingsRequest"},
+      "output":{"shape":"DescribeReservedElasticsearchInstanceOfferingsResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ValidationException"},
+        {"shape":"DisabledOperationException"},
+        {"shape":"InternalException"}
+      ]
+    },
+    "DescribeReservedElasticsearchInstances":{
+      "name":"DescribeReservedElasticsearchInstances",
+      "http":{
+        "method":"GET",
+        "requestUri":"/2015-01-01/es/reservedInstances"
+      },
+      "input":{"shape":"DescribeReservedElasticsearchInstancesRequest"},
+      "output":{"shape":"DescribeReservedElasticsearchInstancesResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InternalException"},
+        {"shape":"ValidationException"},
+        {"shape":"DisabledOperationException"}
+      ]
+    },
     "ListDomainNames":{
       "name":"ListDomainNames",
       "http":{
@@ -183,6 +213,23 @@
       "errors":[
         {"shape":"BaseException"},
         {"shape":"ResourceNotFoundException"},
+        {"shape":"ValidationException"},
+        {"shape":"InternalException"}
+      ]
+    },
+    "PurchaseReservedElasticsearchInstanceOffering":{
+      "name":"PurchaseReservedElasticsearchInstanceOffering",
+      "http":{
+        "method":"POST",
+        "requestUri":"/2015-01-01/es/purchaseReservedInstanceOffering"
+      },
+      "input":{"shape":"PurchaseReservedElasticsearchInstanceOfferingRequest"},
+      "output":{"shape":"PurchaseReservedElasticsearchInstanceOfferingResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ResourceAlreadyExistsException"},
+        {"shape":"LimitExceededException"},
+        {"shape":"DisabledOperationException"},
         {"shape":"ValidationException"},
         {"shape":"InternalException"}
       ]
@@ -418,6 +465,60 @@
         "LimitsByRole":{"shape":"LimitsByRole"}
       }
     },
+    "DescribeReservedElasticsearchInstanceOfferingsRequest":{
+      "type":"structure",
+      "members":{
+        "ReservedElasticsearchInstanceOfferingId":{
+          "shape":"GUID",
+          "location":"querystring",
+          "locationName":"offeringId"
+        },
+        "MaxResults":{
+          "shape":"MaxResults",
+          "location":"querystring",
+          "locationName":"maxResults"
+        },
+        "NextToken":{
+          "shape":"NextToken",
+          "location":"querystring",
+          "locationName":"nextToken"
+        }
+      }
+    },
+    "DescribeReservedElasticsearchInstanceOfferingsResponse":{
+      "type":"structure",
+      "members":{
+        "NextToken":{"shape":"NextToken"},
+        "ReservedElasticsearchInstanceOfferings":{"shape":"ReservedElasticsearchInstanceOfferingList"}
+      }
+    },
+    "DescribeReservedElasticsearchInstancesRequest":{
+      "type":"structure",
+      "members":{
+        "ReservedElasticsearchInstanceId":{
+          "shape":"GUID",
+          "location":"querystring",
+          "locationName":"reservationId"
+        },
+        "MaxResults":{
+          "shape":"MaxResults",
+          "location":"querystring",
+          "locationName":"maxResults"
+        },
+        "NextToken":{
+          "shape":"NextToken",
+          "location":"querystring",
+          "locationName":"nextToken"
+        }
+      }
+    },
+    "DescribeReservedElasticsearchInstancesResponse":{
+      "type":"structure",
+      "members":{
+        "NextToken":{"shape":"String"},
+        "ReservedElasticsearchInstances":{"shape":"ReservedElasticsearchInstanceList"}
+      }
+    },
     "DisabledOperationException":{
       "type":"structure",
       "members":{
@@ -450,6 +551,7 @@
       "type":"list",
       "member":{"shape":"DomainName"}
     },
+    "Double":{"type":"double"},
     "EBSOptions":{
       "type":"structure",
       "members":{
@@ -629,11 +731,19 @@
       "value":{"shape":"ServiceUrl"}
     },
     "ErrorMessage":{"type":"string"},
+    "GUID":{
+      "type":"string",
+      "pattern":"\\p{XDigit}{8}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{4}-\\p{XDigit}{12}"
+    },
     "IdentityPoolId":{
       "type":"string",
       "max":55,
       "min":1,
       "pattern":"[\\w-]+:[0-9a-f-]+"
+    },
+    "InstanceCount":{
+      "type":"integer",
+      "min":1
     },
     "InstanceCountLimits":{
       "type":"structure",
@@ -649,6 +759,7 @@
       }
     },
     "InstanceRole":{"type":"string"},
+    "Integer":{"type":"integer"},
     "IntegerClass":{"type":"integer"},
     "InternalException":{
       "type":"structure",
@@ -830,6 +941,36 @@
       }
     },
     "PolicyDocument":{"type":"string"},
+    "PurchaseReservedElasticsearchInstanceOfferingRequest":{
+      "type":"structure",
+      "required":[
+        "ReservedElasticsearchInstanceOfferingId",
+        "ReservationName"
+      ],
+      "members":{
+        "ReservedElasticsearchInstanceOfferingId":{"shape":"GUID"},
+        "ReservationName":{"shape":"ReservationToken"},
+        "InstanceCount":{"shape":"InstanceCount"}
+      }
+    },
+    "PurchaseReservedElasticsearchInstanceOfferingResponse":{
+      "type":"structure",
+      "members":{
+        "ReservedElasticsearchInstanceId":{"shape":"GUID"},
+        "ReservationName":{"shape":"ReservationToken"}
+      }
+    },
+    "RecurringCharge":{
+      "type":"structure",
+      "members":{
+        "RecurringChargeAmount":{"shape":"Double"},
+        "RecurringChargeFrequency":{"shape":"String"}
+      }
+    },
+    "RecurringChargeList":{
+      "type":"list",
+      "member":{"shape":"RecurringCharge"}
+    },
     "RemoveTagsRequest":{
       "type":"structure",
       "required":[
@@ -840,6 +981,58 @@
         "ARN":{"shape":"ARN"},
         "TagKeys":{"shape":"StringList"}
       }
+    },
+    "ReservationToken":{
+      "type":"string",
+      "max":64,
+      "min":5
+    },
+    "ReservedElasticsearchInstance":{
+      "type":"structure",
+      "members":{
+        "ReservationName":{"shape":"ReservationToken"},
+        "ReservedElasticsearchInstanceId":{"shape":"GUID"},
+        "ReservedElasticsearchInstanceOfferingId":{"shape":"String"},
+        "ElasticsearchInstanceType":{"shape":"ESPartitionInstanceType"},
+        "StartTime":{"shape":"UpdateTimestamp"},
+        "Duration":{"shape":"Integer"},
+        "FixedPrice":{"shape":"Double"},
+        "UsagePrice":{"shape":"Double"},
+        "CurrencyCode":{"shape":"String"},
+        "ElasticsearchInstanceCount":{"shape":"Integer"},
+        "State":{"shape":"String"},
+        "PaymentOption":{"shape":"ReservedElasticsearchInstancePaymentOption"},
+        "RecurringCharges":{"shape":"RecurringChargeList"}
+      }
+    },
+    "ReservedElasticsearchInstanceList":{
+      "type":"list",
+      "member":{"shape":"ReservedElasticsearchInstance"}
+    },
+    "ReservedElasticsearchInstanceOffering":{
+      "type":"structure",
+      "members":{
+        "ReservedElasticsearchInstanceOfferingId":{"shape":"GUID"},
+        "ElasticsearchInstanceType":{"shape":"ESPartitionInstanceType"},
+        "Duration":{"shape":"Integer"},
+        "FixedPrice":{"shape":"Double"},
+        "UsagePrice":{"shape":"Double"},
+        "CurrencyCode":{"shape":"String"},
+        "PaymentOption":{"shape":"ReservedElasticsearchInstancePaymentOption"},
+        "RecurringCharges":{"shape":"RecurringChargeList"}
+      }
+    },
+    "ReservedElasticsearchInstanceOfferingList":{
+      "type":"list",
+      "member":{"shape":"ReservedElasticsearchInstanceOffering"}
+    },
+    "ReservedElasticsearchInstancePaymentOption":{
+      "type":"string",
+      "enum":[
+        "ALL_UPFRONT",
+        "PARTIAL_UPFRONT",
+        "NO_UPFRONT"
+      ]
     },
     "ResourceAlreadyExistsException":{
       "type":"structure",

@@ -156,6 +156,10 @@
       "min":1,
       "pattern":"arn:.*"
     },
+    "BlockSizeBytes":{
+      "type":"integer",
+      "min":67108864
+    },
     "BooleanObject":{"type":"boolean"},
     "BucketARN":{
       "type":"string",
@@ -182,6 +186,11 @@
       "type":"string",
       "min":1,
       "pattern":"jdbc:(redshift|postgresql)://((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)+redshift\\.amazonaws\\.com:\\d{1,5}/[a-zA-Z0-9_$]+"
+    },
+    "ColumnToJsonKeyMappings":{
+      "type":"map",
+      "key":{"shape":"NonEmptyStringWithoutWhitespace"},
+      "value":{"shape":"NonEmptyString"}
     },
     "CompressionFormat":{
       "type":"string",
@@ -236,6 +245,15 @@
       "type":"blob",
       "max":1024000,
       "min":0
+    },
+    "DataFormatConversionConfiguration":{
+      "type":"structure",
+      "members":{
+        "SchemaConfiguration":{"shape":"SchemaConfiguration"},
+        "InputFormatConfiguration":{"shape":"InputFormatConfiguration"},
+        "OutputFormatConfiguration":{"shape":"OutputFormatConfiguration"},
+        "Enabled":{"shape":"BooleanObject"}
+      }
     },
     "DataTableColumns":{"type":"string"},
     "DataTableName":{
@@ -335,6 +353,13 @@
       "required":["DeliveryStreamDescription"],
       "members":{
         "DeliveryStreamDescription":{"shape":"DeliveryStreamDescription"}
+      }
+    },
+    "Deserializer":{
+      "type":"structure",
+      "members":{
+        "OpenXJsonSerDe":{"shape":"OpenXJsonSerDe"},
+        "HiveJsonSerDe":{"shape":"HiveJsonSerDe"}
       }
     },
     "DestinationDescription":{
@@ -498,7 +523,8 @@
         "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"},
         "ProcessingConfiguration":{"shape":"ProcessingConfiguration"},
         "S3BackupMode":{"shape":"S3BackupMode"},
-        "S3BackupConfiguration":{"shape":"S3DestinationConfiguration"}
+        "S3BackupConfiguration":{"shape":"S3DestinationConfiguration"},
+        "DataFormatConversionConfiguration":{"shape":"DataFormatConversionConfiguration"}
       }
     },
     "ExtendedS3DestinationDescription":{
@@ -520,7 +546,8 @@
         "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"},
         "ProcessingConfiguration":{"shape":"ProcessingConfiguration"},
         "S3BackupMode":{"shape":"S3BackupMode"},
-        "S3BackupDescription":{"shape":"S3DestinationDescription"}
+        "S3BackupDescription":{"shape":"S3DestinationDescription"},
+        "DataFormatConversionConfiguration":{"shape":"DataFormatConversionConfiguration"}
       }
     },
     "ExtendedS3DestinationUpdate":{
@@ -535,7 +562,8 @@
         "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"},
         "ProcessingConfiguration":{"shape":"ProcessingConfiguration"},
         "S3BackupMode":{"shape":"S3BackupMode"},
-        "S3BackupUpdate":{"shape":"S3DestinationUpdate"}
+        "S3BackupUpdate":{"shape":"S3DestinationUpdate"},
+        "DataFormatConversionConfiguration":{"shape":"DataFormatConversionConfiguration"}
       }
     },
     "HECAcknowledgmentTimeoutInSeconds":{
@@ -552,6 +580,18 @@
       ]
     },
     "HECToken":{"type":"string"},
+    "HiveJsonSerDe":{
+      "type":"structure",
+      "members":{
+        "TimestampFormats":{"shape":"ListOfNonEmptyStrings"}
+      }
+    },
+    "InputFormatConfiguration":{
+      "type":"structure",
+      "members":{
+        "Deserializer":{"shape":"Deserializer"}
+      }
+    },
     "IntervalInSeconds":{
       "type":"integer",
       "max":900,
@@ -627,6 +667,14 @@
         "HasMoreDeliveryStreams":{"shape":"BooleanObject"}
       }
     },
+    "ListOfNonEmptyStrings":{
+      "type":"list",
+      "member":{"shape":"NonEmptyString"}
+    },
+    "ListOfNonEmptyStringsWithoutWhitespace":{
+      "type":"list",
+      "member":{"shape":"NonEmptyStringWithoutWhitespace"}
+    },
     "ListTagsForDeliveryStreamInput":{
       "type":"structure",
       "required":["DeliveryStreamName"],
@@ -664,9 +712,99 @@
       "type":"string",
       "enum":["NoEncryption"]
     },
+    "NonEmptyString":{
+      "type":"string",
+      "pattern":"^(?!\\s*$).+"
+    },
+    "NonEmptyStringWithoutWhitespace":{
+      "type":"string",
+      "pattern":"^\\S+$"
+    },
     "NonNegativeIntegerObject":{
       "type":"integer",
       "min":0
+    },
+    "OpenXJsonSerDe":{
+      "type":"structure",
+      "members":{
+        "ConvertDotsInJsonKeysToUnderscores":{"shape":"BooleanObject"},
+        "CaseInsensitive":{"shape":"BooleanObject"},
+        "ColumnToJsonKeyMappings":{"shape":"ColumnToJsonKeyMappings"}
+      }
+    },
+    "OrcCompression":{
+      "type":"string",
+      "enum":[
+        "NONE",
+        "ZLIB",
+        "SNAPPY"
+      ]
+    },
+    "OrcFormatVersion":{
+      "type":"string",
+      "enum":[
+        "V0_11",
+        "V0_12"
+      ]
+    },
+    "OrcRowIndexStride":{
+      "type":"integer",
+      "min":1000
+    },
+    "OrcSerDe":{
+      "type":"structure",
+      "members":{
+        "StripeSizeBytes":{"shape":"OrcStripeSizeBytes"},
+        "BlockSizeBytes":{"shape":"BlockSizeBytes"},
+        "RowIndexStride":{"shape":"OrcRowIndexStride"},
+        "EnablePadding":{"shape":"BooleanObject"},
+        "PaddingTolerance":{"shape":"Proportion"},
+        "Compression":{"shape":"OrcCompression"},
+        "BloomFilterColumns":{"shape":"ListOfNonEmptyStringsWithoutWhitespace"},
+        "BloomFilterFalsePositiveProbability":{"shape":"Proportion"},
+        "DictionaryKeyThreshold":{"shape":"Proportion"},
+        "FormatVersion":{"shape":"OrcFormatVersion"}
+      }
+    },
+    "OrcStripeSizeBytes":{
+      "type":"integer",
+      "min":8388608
+    },
+    "OutputFormatConfiguration":{
+      "type":"structure",
+      "members":{
+        "Serializer":{"shape":"Serializer"}
+      }
+    },
+    "ParquetCompression":{
+      "type":"string",
+      "enum":[
+        "UNCOMPRESSED",
+        "GZIP",
+        "SNAPPY"
+      ]
+    },
+    "ParquetPageSizeBytes":{
+      "type":"integer",
+      "min":65536
+    },
+    "ParquetSerDe":{
+      "type":"structure",
+      "members":{
+        "BlockSizeBytes":{"shape":"BlockSizeBytes"},
+        "PageSizeBytes":{"shape":"ParquetPageSizeBytes"},
+        "Compression":{"shape":"ParquetCompression"},
+        "EnableDictionaryCompression":{"shape":"BooleanObject"},
+        "MaxPaddingBytes":{"shape":"NonNegativeIntegerObject"},
+        "WriterVersion":{"shape":"ParquetWriterVersion"}
+      }
+    },
+    "ParquetWriterVersion":{
+      "type":"string",
+      "enum":[
+        "V1",
+        "V2"
+      ]
     },
     "Password":{
       "type":"string",
@@ -726,6 +864,11 @@
     "ProcessorType":{
       "type":"string",
       "enum":["Lambda"]
+    },
+    "Proportion":{
+      "type":"double",
+      "max":1,
+      "min":0
     },
     "PutRecordBatchInput":{
       "type":"structure",
@@ -950,6 +1093,24 @@
         "CompressionFormat":{"shape":"CompressionFormat"},
         "EncryptionConfiguration":{"shape":"EncryptionConfiguration"},
         "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"}
+      }
+    },
+    "SchemaConfiguration":{
+      "type":"structure",
+      "members":{
+        "RoleARN":{"shape":"NonEmptyStringWithoutWhitespace"},
+        "CatalogId":{"shape":"NonEmptyStringWithoutWhitespace"},
+        "DatabaseName":{"shape":"NonEmptyStringWithoutWhitespace"},
+        "TableName":{"shape":"NonEmptyStringWithoutWhitespace"},
+        "Region":{"shape":"NonEmptyStringWithoutWhitespace"},
+        "VersionId":{"shape":"NonEmptyStringWithoutWhitespace"}
+      }
+    },
+    "Serializer":{
+      "type":"structure",
+      "members":{
+        "ParquetSerDe":{"shape":"ParquetSerDe"},
+        "OrcSerDe":{"shape":"OrcSerDe"}
       }
     },
     "ServiceUnavailableException":{

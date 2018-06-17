@@ -1,6 +1,6 @@
 // Package youtubeanalytics provides access to the YouTube Analytics API.
 //
-// See http://developers.google.com/youtube/analytics
+// See https://developers.google.com/youtube/analytics
 //
 // Usage example:
 //

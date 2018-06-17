@@ -6,7 +6,7 @@
     "AddTags": "<p>Adds the specified tags to the specified Elastic Load Balancing resource. You can tag your Application Load Balancers, Network Load Balancers, and your target groups.</p> <p>Each tag consists of a key and an optional value. If a resource already has a tag with the same key, <code>AddTags</code> updates its value.</p> <p>To list the current tags for your resources, use <a>DescribeTags</a>. To remove tags from your resources, use <a>RemoveTags</a>.</p>",
     "CreateListener": "<p>Creates a listener for the specified Application Load Balancer or Network Load Balancer.</p> <p>To update a listener, use <a>ModifyListener</a>. When you are finished with a listener, you can delete it using <a>DeleteListener</a>. If you are finished with both the listener and the load balancer, you can delete them both using <a>DeleteLoadBalancer</a>.</p> <p>This operation is idempotent, which means that it completes at most one time. If you attempt to create multiple listeners with the same settings, each call succeeds.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html\">Listeners for Your Application Load Balancers</a> in the <i>Application Load Balancers Guide</i> and <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html\">Listeners for Your Network Load Balancers</a> in the <i>Network Load Balancers Guide</i>.</p>",
     "CreateLoadBalancer": "<p>Creates an Application Load Balancer or a Network Load Balancer.</p> <p>When you create a load balancer, you can specify security groups, public subnets, IP address type, and tags. Otherwise, you could do so later using <a>SetSecurityGroups</a>, <a>SetSubnets</a>, <a>SetIpAddressType</a>, and <a>AddTags</a>.</p> <p>To create listeners for your load balancer, use <a>CreateListener</a>. To describe your current load balancers, see <a>DescribeLoadBalancers</a>. When you are finished with a load balancer, you can delete it using <a>DeleteLoadBalancer</a>.</p> <p>For limit information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-limits.html\">Limits for Your Application Load Balancer</a> in the <i>Application Load Balancers Guide</i> and <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-limits.html\">Limits for Your Network Load Balancer</a> in the <i>Network Load Balancers Guide</i>.</p> <p>This operation is idempotent, which means that it completes at most one time. If you attempt to create multiple load balancers with the same settings, each call succeeds.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html\">Application Load Balancers</a> in the <i>Application Load Balancers Guide</i> and <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html\">Network Load Balancers</a> in the <i>Network Load Balancers Guide</i>.</p>",
-    "CreateRule": "<p>Creates a rule for the specified listener. The listener must be associated with an Application Load Balancer.</p> <p>Rules are evaluated in priority order, from the lowest value to the highest value. When the condition for a rule is met, the specified action is taken. If no conditions are met, the action for the default rule is taken. For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#listener-rules\">Listener Rules</a> in the <i>Application Load Balancers Guide</i>.</p> <p>To view your current rules, use <a>DescribeRules</a>. To update a rule, use <a>ModifyRule</a>. To set the priorities of your rules, use <a>SetRulePriorities</a>. To delete a rule, use <a>DeleteRule</a>.</p>",
+    "CreateRule": "<p>Creates a rule for the specified listener. The listener must be associated with an Application Load Balancer.</p> <p>Rules are evaluated in priority order, from the lowest value to the highest value. When the conditions for a rule are met, its actions are performed. If the conditions for no rules are met, the actions for the default rule are performed. For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#listener-rules\">Listener Rules</a> in the <i>Application Load Balancers Guide</i>.</p> <p>To view your current rules, use <a>DescribeRules</a>. To update a rule, use <a>ModifyRule</a>. To set the priorities of your rules, use <a>SetRulePriorities</a>. To delete a rule, use <a>DeleteRule</a>.</p>",
     "CreateTargetGroup": "<p>Creates a target group.</p> <p>To register targets with the target group, use <a>RegisterTargets</a>. To update the health check settings for the target group, use <a>ModifyTargetGroup</a>. To monitor the health of targets in the target group, use <a>DescribeTargetHealth</a>.</p> <p>To route traffic to the targets in a target group, specify the target group in an action using <a>CreateListener</a> or <a>CreateRule</a>.</p> <p>To delete a target group, use <a>DeleteTargetGroup</a>.</p> <p>This operation is idempotent, which means that it completes at most one time. If you attempt to create multiple target groups with the same settings, each call succeeds.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html\">Target Groups for Your Application Load Balancers</a> in the <i>Application Load Balancers Guide</i> or <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html\">Target Groups for Your Network Load Balancers</a> in the <i>Network Load Balancers Guide</i>.</p>",
     "DeleteListener": "<p>Deletes the specified listener.</p> <p>Alternatively, your listener is deleted when you delete the load balancer it is attached to using <a>DeleteLoadBalancer</a>.</p>",
     "DeleteLoadBalancer": "<p>Deletes the specified Application Load Balancer or Network Load Balancer and its attached listeners.</p> <p>You can't delete a load balancer if deletion protection is enabled. If the load balancer does not exist or has already been deleted, the call succeeds.</p> <p>Deleting a load balancer does not affect its registered targets. For example, your EC2 instances continue to run and are still registered to their target groups. If you no longer need these EC2 instances, you can stop or terminate them.</p>",
@@ -16,17 +16,17 @@
     "DescribeAccountLimits": "<p>Describes the current Elastic Load Balancing resource limits for your AWS account.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-limits.html\">Limits for Your Application Load Balancers</a> in the <i>Application Load Balancer Guide</i> or <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-limits.html\">Limits for Your Network Load Balancers</a> in the <i>Network Load Balancers Guide</i>.</p>",
     "DescribeListenerCertificates": "<p>Describes the certificates for the specified secure listener.</p>",
     "DescribeListeners": "<p>Describes the specified listeners or the listeners for the specified Application Load Balancer or Network Load Balancer. You must specify either a load balancer or one or more listeners.</p>",
-    "DescribeLoadBalancerAttributes": "<p>Describes the attributes for the specified Application Load Balancer or Network Load Balancer.</p>",
+    "DescribeLoadBalancerAttributes": "<p>Describes the attributes for the specified Application Load Balancer or Network Load Balancer.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#load-balancer-attributes\">Load Balancer Attributes</a> in the <i>Application Load Balancers Guide</i> or <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#load-balancer-attributes\">Load Balancer Attributes</a> in the <i>Network Load Balancers Guide</i>.</p>",
     "DescribeLoadBalancers": "<p>Describes the specified load balancers or all of your load balancers.</p> <p>To describe the listeners for a load balancer, use <a>DescribeListeners</a>. To describe the attributes for a load balancer, use <a>DescribeLoadBalancerAttributes</a>.</p>",
     "DescribeRules": "<p>Describes the specified rules or the rules for the specified listener. You must specify either a listener or one or more rules.</p>",
     "DescribeSSLPolicies": "<p>Describes the specified policies or all policies used for SSL negotiation.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies\">Security Policies</a> in the <i>Application Load Balancers Guide</i>.</p>",
     "DescribeTags": "<p>Describes the tags for the specified resources. You can describe the tags for one or more Application Load Balancers, Network Load Balancers, and target groups.</p>",
-    "DescribeTargetGroupAttributes": "<p>Describes the attributes for the specified target group.</p>",
+    "DescribeTargetGroupAttributes": "<p>Describes the attributes for the specified target group.</p> <p>For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-attributes\">Target Group Attributes</a> in the <i>Application Load Balancers Guide</i> or <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html#target-group-attributes\">Target Group Attributes</a> in the <i>Network Load Balancers Guide</i>.</p>",
     "DescribeTargetGroups": "<p>Describes the specified target groups or all of your target groups. By default, all target groups are described. Alternatively, you can specify one of the following to filter the results: the ARN of the load balancer, the names of one or more target groups, or the ARNs of one or more target groups.</p> <p>To describe the targets for a target group, use <a>DescribeTargetHealth</a>. To describe the attributes of a target group, use <a>DescribeTargetGroupAttributes</a>.</p>",
     "DescribeTargetHealth": "<p>Describes the health of the specified targets or all of your targets.</p>",
     "ModifyListener": "<p>Modifies the specified properties of the specified listener.</p> <p>Any properties that you do not specify retain their current values. However, changing the protocol from HTTPS to HTTP removes the security policy and SSL certificate properties. If you change the protocol from HTTP to HTTPS, you must add the security policy and server certificate.</p>",
     "ModifyLoadBalancerAttributes": "<p>Modifies the specified attributes of the specified Application Load Balancer or Network Load Balancer.</p> <p>If any of the specified attributes can't be modified as requested, the call fails. Any existing attributes that you do not modify retain their current values.</p>",
-    "ModifyRule": "<p>Modifies the specified rule.</p> <p>Any existing properties that you do not modify retain their current values.</p> <p>To modify the default action, use <a>ModifyListener</a>.</p>",
+    "ModifyRule": "<p>Modifies the specified rule.</p> <p>Any existing properties that you do not modify retain their current values.</p> <p>To modify the actions for the default rule, use <a>ModifyListener</a>.</p>",
     "ModifyTargetGroup": "<p>Modifies the health checks used when evaluating the health state of the targets in the specified target group.</p> <p>To monitor the health of the targets, use <a>DescribeTargetHealth</a>.</p>",
     "ModifyTargetGroupAttributes": "<p>Modifies the specified attributes of the specified target group.</p>",
     "RegisterTargets": "<p>Registers the specified targets with the specified target group.</p> <p>You can register targets by instance ID or by IP address. If the target is an EC2 instance, it must be in the <code>running</code> state when you register it.</p> <p>By default, the load balancer routes requests to registered targets using the protocol and port for the target group. Alternatively, you can override the port for a target when you register it. You can register each EC2 instance or IP address with the same target group multiple times using different ports.</p> <p>With a Network Load Balancer, you cannot register instances by instance ID if they have the following instance types: C1, CC1, CC2, CG1, CG2, CR1, CS1, G1, G2, HI1, HS1, M1, M2, M3, and T1. You can register instances of these types by IP address.</p> <p>To remove a target from a target group, use <a>DeregisterTargets</a>.</p>",
@@ -44,20 +44,26 @@
         "Actions$member": null
       }
     },
+    "ActionOrder": {
+      "base": null,
+      "refs": {
+        "Action$Order": "<p>The order for the action. This value is required for rules with multiple actions. The action with the lowest value for order is performed first. The forward action must be performed last.</p>"
+      }
+    },
     "ActionTypeEnum": {
       "base": null,
       "refs": {
-        "Action$Type": "<p>The type of action.</p>"
+        "Action$Type": "<p>The type of action. Each rule must include one forward action.</p>"
       }
     },
     "Actions": {
       "base": null,
       "refs": {
-        "CreateListenerInput$DefaultActions": "<p>The default action for the listener. For Application Load Balancers, the protocol of the specified target group must be HTTP or HTTPS. For Network Load Balancers, the protocol of the specified target group must be TCP.</p>",
-        "CreateRuleInput$Actions": "<p>An action. Each action has the type <code>forward</code> and specifies a target group.</p>",
+        "CreateListenerInput$DefaultActions": "<p>The actions for the default rule. The rule must include one forward action.</p> <p>If the action type is <code>forward</code>, you can specify a single target group. The protocol of the target group must be HTTP or HTTPS for an Application Load Balancer or TCP for a Network Load Balancer.</p> <p>If the action type is <code>authenticate-oidc</code>, you can use an identity provider that is OpenID Connect (OIDC) compliant to authenticate users as they access your application.</p> <p>If the action type is <code>authenticate-cognito</code>, you can use Amazon Cognito to authenticate users as they access your application.</p>",
+        "CreateRuleInput$Actions": "<p>The actions. Each rule must include one forward action.</p> <p>If the action type is <code>forward</code>, you can specify a single target group.</p> <p>If the action type is <code>authenticate-oidc</code>, you can use an identity provider that is OpenID Connect (OIDC) compliant to authenticate users as they access your application.</p> <p>If the action type is <code>authenticate-cognito</code>, you can use Amazon Cognito to authenticate users as they access your application.</p>",
         "Listener$DefaultActions": "<p>The default actions for the listener.</p>",
-        "ModifyListenerInput$DefaultActions": "<p>The default action. For Application Load Balancers, the protocol of the specified target group must be HTTP or HTTPS. For Network Load Balancers, the protocol of the specified target group must be TCP.</p>",
-        "ModifyRuleInput$Actions": "<p>The actions. The target group must use the HTTP or HTTPS protocol.</p>",
+        "ModifyListenerInput$DefaultActions": "<p>The actions for the default rule. The rule must include one forward action.</p> <p>If the action type is <code>forward</code>, you can specify a single target group. The protocol of the target group must be HTTP or HTTPS for an Application Load Balancer or TCP for a Network Load Balancer.</p> <p>If the action type is <code>authenticate-oidc</code>, you can use an identity provider that is OpenID Connect (OIDC) compliant to authenticate users as they access your application.</p> <p>If the action type is <code>authenticate-cognito</code>, you can use Amazon Cognito to authenticate users as they access your application.</p>",
+        "ModifyRuleInput$Actions": "<p>The actions.</p> <p>If the action type is <code>forward</code>, you can specify a single target group.</p> <p>If the action type is <code>authenticate-oidc</code>, you can use an identity provider that is OpenID Connect (OIDC) compliant to authenticate users as they access your application.</p> <p>If the action type is <code>authenticate-cognito</code>, you can use Amazon Cognito to authenticate users as they access your application.</p>",
         "Rule$Actions": "<p>The actions.</p>"
       }
     },
@@ -91,6 +97,156 @@
     "AllocationIdNotFoundException": {
       "base": "<p>The specified allocation ID does not exist.</p>",
       "refs": {
+      }
+    },
+    "AuthenticateCognitoActionAuthenticationRequestExtraParams": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$AuthenticationRequestExtraParams": "<p>The query parameters (up to 10) to include in the redirect request to the authorization endpoint.</p>"
+      }
+    },
+    "AuthenticateCognitoActionAuthenticationRequestParamName": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionAuthenticationRequestExtraParams$key": null
+      }
+    },
+    "AuthenticateCognitoActionAuthenticationRequestParamValue": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionAuthenticationRequestExtraParams$value": null
+      }
+    },
+    "AuthenticateCognitoActionConditionalBehaviorEnum": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$OnUnauthenticatedRequest": "<p>The behavior if the user is not authenticated. The following are possible values:</p> <ul> <li> <p>deny<code/> - Return an HTTP 401 Unauthorized error.</p> </li> <li> <p>allow<code/> - Allow the request to be forwarded to the target.</p> </li> <li> <p>authenticate<code/> - Redirect the request to the IdP authorization endpoint. This is the default value.</p> </li> </ul>"
+      }
+    },
+    "AuthenticateCognitoActionConfig": {
+      "base": "<p>Request parameters to use when integrating with Amazon Cognito to authenticate users.</p>",
+      "refs": {
+        "Action$AuthenticateCognitoConfig": "<p>[HTTPS listener] Information for using Amazon Cognito to authenticate users. Specify only when <code>Type</code> is <code>authenticate-cognito</code>.</p>"
+      }
+    },
+    "AuthenticateCognitoActionScope": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$Scope": "<p>The set of user claims to be requested from the IdP. The default is <code>openid</code>.</p> <p>To verify which scope values your IdP supports and how to separate multiple values, see the documentation for your IdP.</p>"
+      }
+    },
+    "AuthenticateCognitoActionSessionCookieName": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$SessionCookieName": "<p>The name of the cookie used to maintain session information. The default is AWSELBAuthSessionCookie.</p>"
+      }
+    },
+    "AuthenticateCognitoActionSessionTimeout": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$SessionTimeout": "<p>The maximum duration of the authentication session, in seconds. The default is 604800 seconds (7 days).</p>"
+      }
+    },
+    "AuthenticateCognitoActionUserPoolArn": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$UserPoolArn": "<p>The Amazon Resource Name (ARN) of the Amazon Cognito user pool.</p>"
+      }
+    },
+    "AuthenticateCognitoActionUserPoolClientId": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$UserPoolClientId": "<p>The ID of the Amazon Cognito user pool client.</p>"
+      }
+    },
+    "AuthenticateCognitoActionUserPoolDomain": {
+      "base": null,
+      "refs": {
+        "AuthenticateCognitoActionConfig$UserPoolDomain": "<p>The domain prefix or fully-qualified domain name of the Amazon Cognito user pool.</p>"
+      }
+    },
+    "AuthenticateOidcActionAuthenticationRequestExtraParams": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$AuthenticationRequestExtraParams": "<p>The query parameters (up to 10) to include in the redirect request to the authorization endpoint.</p>"
+      }
+    },
+    "AuthenticateOidcActionAuthenticationRequestParamName": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionAuthenticationRequestExtraParams$key": null
+      }
+    },
+    "AuthenticateOidcActionAuthenticationRequestParamValue": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionAuthenticationRequestExtraParams$value": null
+      }
+    },
+    "AuthenticateOidcActionAuthorizationEndpoint": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$AuthorizationEndpoint": "<p>The authorization endpoint of the IdP. This must be a full URL, including the HTTPS protocol, the domain, and the path.</p>"
+      }
+    },
+    "AuthenticateOidcActionClientId": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$ClientId": "<p>The OAuth 2.0 client identifier.</p>"
+      }
+    },
+    "AuthenticateOidcActionClientSecret": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$ClientSecret": "<p>The OAuth 2.0 client secret.</p>"
+      }
+    },
+    "AuthenticateOidcActionConditionalBehaviorEnum": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$OnUnauthenticatedRequest": "<p>The behavior if the user is not authenticated. The following are possible values:</p> <ul> <li> <p>deny<code/> - Return an HTTP 401 Unauthorized error.</p> </li> <li> <p>allow<code/> - Allow the request to be forwarded to the target.</p> </li> <li> <p>authenticate<code/> - Redirect the request to the IdP authorization endpoint. This is the default value.</p> </li> </ul>"
+      }
+    },
+    "AuthenticateOidcActionConfig": {
+      "base": "<p>Request parameters when using an identity provider (IdP) that is compliant with OpenID Connect (OIDC) to authenticate users.</p>",
+      "refs": {
+        "Action$AuthenticateOidcConfig": "<p>[HTTPS listener] Information about an identity provider that is compliant with OpenID Connect (OIDC). Specify only when <code>Type</code> is <code>authenticate-oidc</code>.</p>"
+      }
+    },
+    "AuthenticateOidcActionIssuer": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$Issuer": "<p>The OIDC issuer identifier of the IdP. This must be a full URL, including the HTTPS protocol, the domain, and the path.</p>"
+      }
+    },
+    "AuthenticateOidcActionScope": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$Scope": "<p>The set of user claims to be requested from the IdP. The default is <code>openid</code>.</p> <p>To verify which scope values your IdP supports and how to separate multiple values, see the documentation for your IdP.</p>"
+      }
+    },
+    "AuthenticateOidcActionSessionCookieName": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$SessionCookieName": "<p>The name of the cookie used to maintain session information. The default is AWSELBAuthSessionCookie.</p>"
+      }
+    },
+    "AuthenticateOidcActionSessionTimeout": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$SessionTimeout": "<p>The maximum duration of the authentication session, in seconds. The default is 604800 seconds (7 days).</p>"
+      }
+    },
+    "AuthenticateOidcActionTokenEndpoint": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$TokenEndpoint": "<p>The token endpoint of the IdP. This must be a full URL, including the HTTPS protocol, the domain, and the path.</p>"
+      }
+    },
+    "AuthenticateOidcActionUserInfoEndpoint": {
+      "base": null,
+      "refs": {
+        "AuthenticateOidcActionConfig$UserInfoEndpoint": "<p>The user info endpoint of the IdP. This must be a full URL, including the HTTPS protocol, the domain, and the path.</p>"
       }
     },
     "AvailabilityZone": {
@@ -134,10 +290,10 @@
       "refs": {
         "AddListenerCertificatesInput$Certificates": "<p>The certificate to add. You can specify one certificate per call.</p>",
         "AddListenerCertificatesOutput$Certificates": "<p>Information about the certificates.</p>",
-        "CreateListenerInput$Certificates": "<p>[HTTPS listeners] The SSL server certificate. You must provide exactly one certificate.</p>",
+        "CreateListenerInput$Certificates": "<p>[HTTPS listeners] The default SSL server certificate. You must provide exactly one certificate. To create a certificate list, use <a>AddListenerCertificates</a>.</p>",
         "DescribeListenerCertificatesOutput$Certificates": "<p>Information about the certificates.</p>",
         "Listener$Certificates": "<p>The SSL server certificate. You must provide a certificate if the protocol is HTTPS.</p>",
-        "ModifyListenerInput$Certificates": "<p>The default SSL server certificate.</p>",
+        "ModifyListenerInput$Certificates": "<p>[HTTPS listeners] The default SSL server certificate. You must provide exactly one certificate. To create a certificate list, use <a>AddListenerCertificates</a>.</p>",
         "RemoveListenerCertificatesInput$Certificates": "<p>The certificate to remove. You can specify one certificate per call.</p>"
       }
     },
@@ -477,6 +633,11 @@
       "refs": {
       }
     },
+    "InvalidLoadBalancerActionException": {
+      "base": "<p>The requested action is not valid.</p>",
+      "refs": {
+      }
+    },
     "InvalidSchemeException": {
       "base": "<p>The requested scheme is not valid.</p>",
       "refs": {
@@ -572,7 +733,7 @@
       "refs": {
         "CreateListenerOutput$Listeners": "<p>Information about the listener.</p>",
         "DescribeListenersOutput$Listeners": "<p>Information about the listeners.</p>",
-        "ModifyListenerOutput$Listeners": "<p>Information about the modified listeners.</p>"
+        "ModifyListenerOutput$Listeners": "<p>Information about the modified listener.</p>"
       }
     },
     "LoadBalancer": {
@@ -626,7 +787,7 @@
     "LoadBalancerAttributeKey": {
       "base": null,
       "refs": {
-        "LoadBalancerAttribute$Key": "<p>The name of the attribute.</p> <ul> <li> <p> <code>access_logs.s3.enabled</code> - [Application Load Balancers] Indicates whether access logs stored in Amazon S3 are enabled. The value is <code>true</code> or <code>false</code>.</p> </li> <li> <p> <code>access_logs.s3.bucket</code> - [Application Load Balancers] The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.</p> </li> <li> <p> <code>access_logs.s3.prefix</code> - [Application Load Balancers] The prefix for the location in the S3 bucket. If you don't specify a prefix, the access logs are stored in the root of the bucket.</p> </li> <li> <p> <code>deletion_protection.enabled</code> - Indicates whether deletion protection is enabled. The value is <code>true</code> or <code>false</code>.</p> </li> <li> <p> <code>idle_timeout.timeout_seconds</code> - [Application Load Balancers] The idle timeout value, in seconds. The valid range is 1-4000. The default is 60 seconds.</p> </li> <li> <p> <code>load_balancing.cross_zone.enabled</code> - [Network Load Balancers] Indicates whether cross-zone load balancing is enabled. The value is <code>true</code> or <code>false</code>. The default is <code>false</code>.</p> </li> <li> <p> <code>routing.http2.enabled</code> - [Application Load Balancers] Indicates whether HTTP/2 is enabled. The value is <code>true</code> or <code>false</code>. The default is <code>true</code>.</p> </li> </ul>"
+        "LoadBalancerAttribute$Key": "<p>The name of the attribute.</p> <p>The following attributes are supported by both Application Load Balancers and Network Load Balancers:</p> <ul> <li> <p> <code>deletion_protection.enabled</code> - Indicates whether deletion protection is enabled. The value is <code>true</code> or <code>false</code>. The default is <code>false</code>.</p> </li> </ul> <p>The following attributes are supported by only Application Load Balancers:</p> <ul> <li> <p> <code>access_logs.s3.enabled</code> - Indicates whether access logs are enabled. The value is <code>true</code> or <code>false</code>. The default is <code>false</code>.</p> </li> <li> <p> <code>access_logs.s3.bucket</code> - The name of the S3 bucket for the access logs. This attribute is required if access logs are enabled. The bucket must exist in the same region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.</p> </li> <li> <p> <code>access_logs.s3.prefix</code> - The prefix for the location in the S3 bucket for the access logs.</p> </li> <li> <p> <code>idle_timeout.timeout_seconds</code> - The idle timeout value, in seconds. The valid range is 1-4000 seconds. The default is 60 seconds.</p> </li> <li> <p> <code>routing.http2.enabled</code> - Indicates whether HTTP/2 is enabled. The value is <code>true</code> or <code>false</code>. The default is <code>true</code>.</p> </li> </ul> <p>The following attributes are supported by only Network Load Balancers:</p> <ul> <li> <p> <code>load_balancing.cross_zone.enabled</code> - Indicates whether cross-zone load balancing is enabled. The value is <code>true</code> or <code>false</code>. The default is <code>false</code>.</p> </li> </ul>"
       }
     },
     "LoadBalancerAttributeValue": {
@@ -646,7 +807,7 @@
     "LoadBalancerName": {
       "base": null,
       "refs": {
-        "CreateLoadBalancerInput$Name": "<p>The name of the load balancer.</p> <p>This name must be unique per region per account, can have a maximum of 32 characters, must contain only alphanumeric characters or hyphens, and must not begin or end with a hyphen.</p>",
+        "CreateLoadBalancerInput$Name": "<p>The name of the load balancer.</p> <p>This name must be unique per region per account, can have a maximum of 32 characters, must contain only alphanumeric characters or hyphens, must not begin or end with a hyphen, and must not begin with \"internal-\".</p>",
         "LoadBalancer$LoadBalancerName": "<p>The name of the load balancer.</p>",
         "LoadBalancerNames$member": null
       }
@@ -920,7 +1081,7 @@
       "base": null,
       "refs": {
         "CreateRuleInput$Conditions": "<p>The conditions. Each condition specifies a field name and a single value.</p> <p>If the field name is <code>host-header</code>, you can specify a single host name (for example, my.example.com). A host name is case insensitive, can be up to 128 characters in length, and can contain any of the following characters. Note that you can include up to three wildcard characters.</p> <ul> <li> <p>A-Z, a-z, 0-9</p> </li> <li> <p>- .</p> </li> <li> <p>* (matches 0 or more characters)</p> </li> <li> <p>? (matches exactly 1 character)</p> </li> </ul> <p>If the field name is <code>path-pattern</code>, you can specify a single path pattern. A path pattern is case sensitive, can be up to 128 characters in length, and can contain any of the following characters. Note that you can include up to three wildcard characters.</p> <ul> <li> <p>A-Z, a-z, 0-9</p> </li> <li> <p>_ - . $ / ~ \" ' @ : +</p> </li> <li> <p>&amp; (using &amp;amp;)</p> </li> <li> <p>* (matches 0 or more characters)</p> </li> <li> <p>? (matches exactly 1 character)</p> </li> </ul>",
-        "ModifyRuleInput$Conditions": "<p>The conditions.</p>",
+        "ModifyRuleInput$Conditions": "<p>The conditions. Each condition specifies a field name and a single value.</p> <p>If the field name is <code>host-header</code>, you can specify a single host name (for example, my.example.com). A host name is case insensitive, can be up to 128 characters in length, and can contain any of the following characters. Note that you can include up to three wildcard characters.</p> <ul> <li> <p>A-Z, a-z, 0-9</p> </li> <li> <p>- .</p> </li> <li> <p>* (matches 0 or more characters)</p> </li> <li> <p>? (matches exactly 1 character)</p> </li> </ul> <p>If the field name is <code>path-pattern</code>, you can specify a single path pattern. A path pattern is case sensitive, can be up to 128 characters in length, and can contain any of the following characters. Note that you can include up to three wildcard characters.</p> <ul> <li> <p>A-Z, a-z, 0-9</p> </li> <li> <p>_ - . $ / ~ \" ' @ : +</p> </li> <li> <p>&amp; (using &amp;amp;)</p> </li> <li> <p>* (matches 0 or more characters)</p> </li> <li> <p>? (matches exactly 1 character)</p> </li> </ul>",
         "Rule$Conditions": "<p>The conditions.</p>"
       }
     },
@@ -932,7 +1093,7 @@
     "RulePriority": {
       "base": null,
       "refs": {
-        "CreateRuleInput$Priority": "<p>The priority for the rule. A listener can't have multiple rules with the same priority.</p>",
+        "CreateRuleInput$Priority": "<p>The rule priority. A listener can't have multiple rules with the same priority.</p>",
         "RulePriorityPair$Priority": "<p>The rule priority.</p>"
       }
     },
@@ -953,7 +1114,7 @@
       "refs": {
         "CreateRuleOutput$Rules": "<p>Information about the rule.</p>",
         "DescribeRulesOutput$Rules": "<p>Information about the rules.</p>",
-        "ModifyRuleOutput$Rules": "<p>Information about the rule.</p>",
+        "ModifyRuleOutput$Rules": "<p>Information about the modified rule.</p>",
         "SetRulePrioritiesOutput$Rules": "<p>Information about the rules.</p>"
       }
     },
@@ -1034,7 +1195,7 @@
       "refs": {
         "CreateListenerInput$SslPolicy": "<p>[HTTPS listeners] The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.</p>",
         "Listener$SslPolicy": "<p>The security policy that defines which ciphers and protocols are supported. The default is the current predefined security policy.</p>",
-        "ModifyListenerInput$SslPolicy": "<p>The security policy that defines which protocols and ciphers are supported. For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies\">Security Policies</a> in the <i>Application Load Balancers Guide</i>.</p>",
+        "ModifyListenerInput$SslPolicy": "<p>[HTTPS listeners] The security policy that defines which protocols and ciphers are supported. For more information, see <a href=\"http://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies\">Security Policies</a> in the <i>Application Load Balancers Guide</i>.</p>",
         "SslPolicy$Name": "<p>The name of the policy.</p>",
         "SslPolicyNames$member": null
       }
@@ -1177,7 +1338,7 @@
     "TargetGroupArn": {
       "base": null,
       "refs": {
-        "Action$TargetGroupArn": "<p>The Amazon Resource Name (ARN) of the target group.</p>",
+        "Action$TargetGroupArn": "<p>The Amazon Resource Name (ARN) of the target group. Specify only when <code>Type</code> is <code>forward</code>.</p> <p>For a default rule, the protocol of the target group must be HTTP or HTTPS for an Application Load Balancer or TCP for a Network Load Balancer.</p>",
         "DeleteTargetGroupInput$TargetGroupArn": "<p>The Amazon Resource Name (ARN) of the target group.</p>",
         "DeregisterTargetsInput$TargetGroupArn": "<p>The Amazon Resource Name (ARN) of the target group.</p>",
         "DescribeTargetGroupAttributesInput$TargetGroupArn": "<p>The Amazon Resource Name (ARN) of the target group.</p>",
@@ -1209,7 +1370,7 @@
     "TargetGroupAttributeKey": {
       "base": null,
       "refs": {
-        "TargetGroupAttribute$Key": "<p>The name of the attribute.</p> <ul> <li> <p> <code>deregistration_delay.timeout_seconds</code> - The amount time for Elastic Load Balancing to wait before changing the state of a deregistering target from <code>draining</code> to <code>unused</code>. The range is 0-3600 seconds. The default value is 300 seconds.</p> </li> <li> <p> <code>proxy_protocol_v2.enabled</code> - [Network Load Balancers] Indicates whether Proxy Protocol version 2 is enabled.</p> </li> <li> <p> <code>stickiness.enabled</code> - [Application Load Balancers] Indicates whether sticky sessions are enabled. The value is <code>true</code> or <code>false</code>.</p> </li> <li> <p> <code>stickiness.type</code> - [Application Load Balancers] The type of sticky sessions. The possible value is <code>lb_cookie</code>.</p> </li> <li> <p> <code>stickiness.lb_cookie.duration_seconds</code> - [Application Load Balancers] The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds). The default value is 1 day (86400 seconds).</p> </li> </ul>"
+        "TargetGroupAttribute$Key": "<p>The name of the attribute.</p> <p>The following attributes are supported by both Application Load Balancers and Network Load Balancers:</p> <ul> <li> <p> <code>deregistration_delay.timeout_seconds</code> - The amount of time, in seconds, for Elastic Load Balancing to wait before changing the state of a deregistering target from <code>draining</code> to <code>unused</code>. The range is 0-3600 seconds. The default value is 300 seconds.</p> </li> </ul> <p>The following attributes are supported by only Application Load Balancers:</p> <ul> <li> <p> <code>slow_start.duration_seconds</code> - The time period, in seconds, during which a newly registered target receives a linearly increasing share of the traffic to the target group. After this time period ends, the target receives its full share of traffic. The range is 30-900 seconds (15 minutes). Slow start mode is disabled by default.</p> </li> <li> <p> <code>stickiness.enabled</code> - Indicates whether sticky sessions are enabled. The value is <code>true</code> or <code>false</code>. The default is <code>false</code>.</p> </li> <li> <p> <code>stickiness.type</code> - The type of sticky sessions. The possible value is <code>lb_cookie</code>.</p> </li> <li> <p> <code>stickiness.lb_cookie.duration_seconds</code> - The time period, in seconds, during which requests from a client should be routed to the same target. After this time period expires, the load balancer-generated cookie is considered stale. The range is 1 second to 1 week (604800 seconds). The default value is 1 day (86400 seconds).</p> </li> </ul> <p>The following attributes are supported by only Network Load Balancers:</p> <ul> <li> <p> <code>proxy_protocol_v2.enabled</code> - Indicates whether Proxy Protocol version 2 is enabled. The value is <code>true</code> or <code>false</code>. The default is <code>false</code>.</p> </li> </ul>"
       }
     },
     "TargetGroupAttributeValue": {
@@ -1250,7 +1411,7 @@
       "refs": {
         "CreateTargetGroupOutput$TargetGroups": "<p>Information about the target group.</p>",
         "DescribeTargetGroupsOutput$TargetGroups": "<p>Information about the target groups.</p>",
-        "ModifyTargetGroupOutput$TargetGroups": "<p>Information about the target group.</p>"
+        "ModifyTargetGroupOutput$TargetGroups": "<p>Information about the modified target group.</p>"
       }
     },
     "TargetHealth": {
@@ -1294,6 +1455,11 @@
       "refs": {
         "CreateTargetGroupInput$TargetType": "<p>The type of target that you must specify when registering targets with this target group. The possible values are <code>instance</code> (targets are specified by instance ID) or <code>ip</code> (targets are specified by IP address). The default is <code>instance</code>. Note that you can't specify targets for a target group using both instance IDs and IP addresses.</p> <p>If the target type is <code>ip</code>, specify IP addresses from the subnets of the virtual private cloud (VPC) for the target group, the RFC 1918 range (10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16), and the RFC 6598 range (100.64.0.0/10). You can't specify publicly routable IP addresses.</p>",
         "TargetGroup$TargetType": "<p>The type of target that you must specify when registering targets with this target group. The possible values are <code>instance</code> (targets are specified by instance ID) or <code>ip</code> (targets are specified by IP address).</p>"
+      }
+    },
+    "TooManyActionsException": {
+      "base": "<p>You've reached the limit on the number of actions per rule.</p>",
+      "refs": {
       }
     },
     "TooManyCertificatesException": {

@@ -1,6 +1,6 @@
 // Package clouddebugger provides access to the Stackdriver Debugger API.
 //
-// See http://cloud.google.com/debugger
+// See https://cloud.google.com/debugger
 //
 // Usage example:
 //
@@ -280,7 +280,9 @@ type Breakpoint struct {
 	// `expressions` = `[ message.id, message.count ]`.
 	LogMessageFormat string `json:"logMessageFormat,omitempty"`
 
-	// StackFrames: The stack at breakpoint time.
+	// StackFrames: The stack at breakpoint time, where stack_frames[0]
+	// represents the most
+	// recently entered function.
 	StackFrames []*StackFrame `json:"stackFrames,omitempty"`
 
 	// Status: Breakpoint status.

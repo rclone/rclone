@@ -2,12 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build darwin dragonfly freebsd linux,!appengine netbsd openbsd windows plan9 solaris
+
 package terminal
 
 import (
 	"bytes"
 	"io"
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -324,6 +327,11 @@ func TestMakeRawState(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get terminal state from GetState: %s", err)
 	}
+
+	if runtime.GOOS == "darwin" && (runtime.GOARCH == "arm" || runtime.GOARCH == "arm64") {
+		t.Skip("MakeRaw not allowed on iOS; skipping test")
+	}
+
 	defer Restore(fd, st)
 	raw, err := MakeRaw(fd)
 	if err != nil {

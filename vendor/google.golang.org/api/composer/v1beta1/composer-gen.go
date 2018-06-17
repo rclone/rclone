@@ -161,8 +161,8 @@ type Environment struct {
 
 	// Name: The resource name of the environment, in the
 	// form:
-	// `projects/{projectId}/locations/{locationId}/environments/{envir
-	// onmentId}`
+	// "projects/{projectId}/locations/{locationId}/environments/{envir
+	// onmentId}"
 	Name string `json:"name,omitempty"`
 
 	// State: The current state of the environment.
@@ -241,15 +241,15 @@ type EnvironmentConfig struct {
 	// The Kubernetes Engine cluster used to run this environment.
 	GkeCluster string `json:"gkeCluster,omitempty"`
 
-	// NodeConfig: The configuration used for the Container Engine cluster.
+	// NodeConfig: The configuration used for the Kubernetes Engine cluster.
 	NodeConfig *NodeConfig `json:"nodeConfig,omitempty"`
 
-	// NodeCount: The number of nodes in the Container Engine cluster that
+	// NodeCount: The number of nodes in the Kubernetes Engine cluster that
 	// will be
 	// used to run this environment.
 	NodeCount int64 `json:"nodeCount,omitempty"`
 
-	// SoftwareConfig: The config settings for software inside the
+	// SoftwareConfig: The configuration settings for software inside the
 	// environment.
 	SoftwareConfig *SoftwareConfig `json:"softwareConfig,omitempty"`
 
@@ -350,12 +350,12 @@ func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// NodeConfig: The configuration information for the Container Engine
+// NodeConfig: The configuration information for the Kubernetes Engine
 // nodes running
 // the Apache Airflow software.
 type NodeConfig struct {
 	// DiskSizeGb: Optional. The disk size in GB used for node VMs. Minimum
-	// is 10GB.
+	// size is 10GB.
 	// If unspecified, defaults to 100GB. Cannot be updated.
 	DiskSizeGb int64 `json:"diskSizeGb,omitempty"`
 
@@ -363,10 +363,9 @@ type NodeConfig struct {
 	// [zone](/compute/docs/regions-zones) in which
 	// to deploy the VMs used to run the Apache Airflow software, specified
 	// as a
-	// relative resource
-	// name](https://cloud.google.com/apis/design/resource_names#relative_res
-	// ource_name).
-	// For example: `projects/{projectId}/zones/{zoneId}`.
+	// [relative resource
+	// name](/apis/design/resource_names#relative_resource_name).
+	// For example: "projects/{projectId}/zones/{zoneId}".
 	//
 	// This `location` must belong to the enclosing environment's project
 	// and
@@ -376,27 +375,25 @@ type NodeConfig struct {
 	// are
 	// unspecified, the service will pick a zone in the Compute Engine
 	// region
-	// corresponding to the Cloud Composer location and propagate that
+	// corresponding to the Cloud Composer location, and propagate that
 	// choice to
-	// both fields. If exactly one of this field and
-	// `nodeConfig.machineType` is
+	// both fields. If only one field (`location` or
+	// `nodeConfig.machineType`) is
 	// specified, the location information from the specified field will
 	// be
 	// propagated to the unspecified field.
 	Location string `json:"location,omitempty"`
 
-	// MachineType: Optional. The Google Compute Engine [machine
-	// type](
-	// /compute/docs/machine-types) used for cluster instances, specified as
-	// a
+	// MachineType: Optional. The Compute Engine
+	// [machine type](/compute/docs/machine-types) used for cluster
+	// instances,
+	// specified as a
 	// [relative resource
-	// name](
-	// https://cloud.google.com/apis/design/resource_names#relative_re
-	// source_name).
+	// name](/apis/design/resource_names#relative_resource_name).
 	// For
 	// example:
-	// `projects/{projectId}/zones/{zoneId}/machineTypes/{machineTyp
-	// eId}`.
+	// "projects/{projectId}/zones/{zoneId}/machineTypes/{machineTyp
+	// eId}".
 	//
 	// The `machineType` must belong to the enclosing environment's project
 	// and
@@ -406,7 +403,7 @@ type NodeConfig struct {
 	// are
 	// unspecified, the service will pick a zone in the Compute Engine
 	// region
-	// corresponding to the Cloud Composer location and propagate that
+	// corresponding to the Cloud Composer location, and propagate that
 	// choice to
 	// both fields. If exactly one of this field and `nodeConfig.location`
 	// is
@@ -414,34 +411,30 @@ type NodeConfig struct {
 	// be
 	// propagated to the unspecified field.
 	//
-	// Furthermore, if this field is unspecified, the `machineTypeId`
-	// defaults
-	// to `n1-standard-1`.
+	// If this field is unspecified, the `machineTypeId` defaults
+	// to "n1-standard-1".
 	MachineType string `json:"machineType,omitempty"`
 
 	// Network: Optional. The Compute Engine network to be used for
 	// machine
-	// communications, specified as a [relative resource
-	// name](
-	// https://cloud.google.com/apis/design/resource_names#relative_re
-	// source_name).
+	// communications, specified as a
+	// [relative resource
+	// name](/apis/design/resource_names#relative_resource_name).
 	// For example:
-	// `projects/{projectId}/global/networks/{networkId}`.
+	// "projects/{projectId}/global/networks/{networkId}".
 	//
 	// [Shared VPC](/vpc/docs/shared-vpc) is not currently supported.
 	// The
 	// network must belong to the environment's project. If unspecified,
 	// the
-	// "default" network ID in the environment's project is used.  If a
-	// "Custom
-	// Subnet Network" (see [Using Subnetworks](/compute/docs/subnetworks)
-	// for
-	// more information) is provided, `nodeConfig.subnetwork` must also be
-	// provided.
+	// "default" network ID in the environment's project is used.  If
+	// a
+	// [Custom Subnet Network]((/vpc/docs/vpc#vpc_networks_and_subnets)
+	// is provided, `nodeConfig.subnetwork` must also be provided.
 	Network string `json:"network,omitempty"`
 
 	// OauthScopes: Optional. The set of Google API scopes to be made
-	// available on all of the
+	// available on all
 	// node VMs. If `oauth_scopes` is empty, defaults
 	// to
 	// ["https://www.googleapis.com/auth/cloud-platform"]. Cannot be
@@ -457,14 +450,13 @@ type NodeConfig struct {
 
 	// Subnetwork: Optional. The Compute Engine subnetwork to be used for
 	// machine
-	// communications, specified as a [relative resource
-	// name](
-	// https://cloud.google.com/apis/design/resource_names#relative_re
-	// source_name).
+	// communications, specified as a
+	// [relative resource
+	// name](/apis/design/resource_names#relative_resource_name).
 	// For
 	// example:
-	// `projects/{projectId}/regions/{regionId}/subnetworks/{subnetw
-	// orkId}`
+	// "projects/{projectId}/regions/{regionId}/subnetworks/{subnetw
+	// orkId}"
 	//
 	// If a subnetwork is provided, `nodeConfig.network` must also be
 	// provided,
@@ -646,37 +638,35 @@ func (s *OperationMetadata) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// SoftwareConfig: Specifies the selection and config of software inside
-// the environment.
+// SoftwareConfig: Specifies the selection and configuration of software
+// inside the environment.
 type SoftwareConfig struct {
 	// AirflowConfigOverrides: Optional. Apache Airflow configuration
 	// properties to override.
 	//
-	// Property keys contain the section and property name, separated by a
+	// Property keys contain the section and property names, separated by a
 	// hyphen,
-	// for example `core-dags_are_paused_at_creation`. Sections must
+	// for example "core-dags_are_paused_at_creation". Section names must
 	// not
 	// contain hyphens ("-"), opening square brackets ("["),  or closing
 	// square
-	// brackets ("]"). The name must be non-empty and must not contain an
-	// equals
-	// sign ("=") or semicolon (";"). The section as well as the name must
-	// not
-	// contain a period ("."). Apache Airflow configuration property names
-	// must be
-	// written
-	// in
-	// [snake_case](https://www.google.com/url?sa=D&q=https%3A%2F%2Fen.wik
-	// ipedia.org%2Fwiki%2FSnake_case).
-	// Property values can contain any character and be written in any
-	// lower/upper
-	// case format.
+	// brackets ("]"). The property name must not be empty and must not
+	// contain
+	// an equals sign ("=") or semicolon (";"). Section and property names
+	// must
+	// not contain a period ("."). Apache Airflow configuration property
+	// names
+	// must be written in
+	// [snake_case](https://en.wikipedia.org/wiki/Snake_case).
+	// Property values can contain any character, and can be written in
+	// any
+	// lower/upper case format.
 	//
 	// Certain Apache Airflow configuration property values
 	// are
 	// [blacklisted](/composer/docs/how-to/managing/setting-airflow-confi
-	// gurations#airflow_configuration_blacklists) and
-	// cannot be overridden.
+	// gurations#airflow_configuration_blacklists),
+	// and cannot be overridden.
 	AirflowConfigOverrides map[string]string `json:"airflowConfigOverrides,omitempty"`
 
 	// EnvVariables: Optional. Additional environment variables to provide
@@ -685,12 +675,12 @@ type SoftwareConfig struct {
 	//
 	// Environment variable names must match the regular
 	// expression
-	// `a-zA-Z_*`. Furthermore, they cannot specify Apache Airflow
-	// software configuration overrides (i.e., match the regular
+	// `a-zA-Z_*`. They cannot specify Apache Airflow
+	// software configuration overrides (they cannot match the regular
 	// expression
-	// `AIRFLOW__[A-Z0-9_]+__[A-Z0-9_]+`); nor can they take any of the
-	// following
-	// reserved values:
+	// `AIRFLOW__[A-Z0-9_]+__[A-Z0-9_]+`), and they cannot match any of
+	// the
+	// following reserved names:
 	//
 	// * `AIRFLOW_HOME`
 	// * `C_FORCE_ROOT`
@@ -717,13 +707,12 @@ type SoftwareConfig struct {
 	// \.[0-9]+.*)?`.
 	//
 	// The Cloud Composer portion of the version is a
-	// [semantic
-	// version](https://semver.org). The portion of the image version
-	// following
-	// <em>airflow-</em> is an official Apache Airflow repository
+	// [semantic version](https://semver.org). The portion of the image
+	// version
+	// following <em>airflow-</em> is an official Apache Airflow
+	// repository
 	// [release
 	// name](https://github.com/apache/incubator-airflow/releases).
-	//
 	//
 	// See also [Release Notes](/composer/docs/release-notes).
 	ImageVersion string `json:"imageVersion,omitempty"`
@@ -732,10 +721,10 @@ type SoftwareConfig struct {
 	// to be installed in
 	// the environment.
 	//
-	// Keys refer to the lowercase package name such as `numpy`
+	// Keys refer to the lowercase package name such as "numpy"
 	// and values are the lowercase extras and version specifier such
 	// as
-	// `==1.12.0`, `[devel,gcp_api]`, or `[devel]>=1.8.2, <1.9.2`. To
+	// "==1.12.0", "[devel,gcp_api]", or "[devel]>=1.8.2, <1.9.2". To
 	// specify a
 	// package without pinning it to a version specifier, use the empty
 	// string as
@@ -1000,7 +989,7 @@ func (c *ProjectsLocationsEnvironmentsCreateCall) Do(opts ...googleapi.CallOptio
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The parent must be of the form `projects/{projectId}/locations/{locationId}`.",
+	//       "description": "The parent must be of the form \"projects/{projectId}/locations/{locationId}\".",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+$",
 	//       "required": true,
@@ -1128,7 +1117,7 @@ func (c *ProjectsLocationsEnvironmentsDeleteCall) Do(opts ...googleapi.CallOptio
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The environment to delete, in the form:\n`projects/{projectId}/locations/{locationId}/environments/{environmentId}`",
+	//       "description": "The environment to delete, in the form:\n\"projects/{projectId}/locations/{locationId}/environments/{environmentId}\"",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/environments/[^/]+$",
 	//       "required": true,
@@ -1267,7 +1256,7 @@ func (c *ProjectsLocationsEnvironmentsGetCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The resource name of the environment to get, in the form:\n`projects/{projectId}/locations/{locationId}/environments/{environmentId}`",
+	//       "description": "The resource name of the environment to get, in the form:\n\"projects/{projectId}/locations/{locationId}/environments/{environmentId}\"",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/environments/[^/]+$",
 	//       "required": true,
@@ -1431,7 +1420,7 @@ func (c *ProjectsLocationsEnvironmentsListCall) Do(opts ...googleapi.CallOption)
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "List environments in the given project and location, in the form:\n`projects/{projectId}/locations/{locationId}`",
+	//       "description": "List environments in the given project and location, in the form:\n\"projects/{projectId}/locations/{locationId}\"",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+$",
 	//       "required": true,
@@ -1751,7 +1740,7 @@ func (c *ProjectsLocationsEnvironmentsPatchCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The relative resource name of the environment to update, in the form:\n`projects/{projectId}/locations/{locationId}/environments/{environmentId}`",
+	//       "description": "The relative resource name of the environment to update, in the form:\n\"projects/{projectId}/locations/{locationId}/environments/{environmentId}\"",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/environments/[^/]+$",
 	//       "required": true,

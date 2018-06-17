@@ -15,18 +15,17 @@
 package bigtable
 
 import (
+	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"cloud.google.com/go/internal/testutil"
-
-	"fmt"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 	btapb "google.golang.org/genproto/googleapis/bigtable/admin/v2"
-	"strings"
 )
 
 func TestAdminIntegration(t *testing.T) {
@@ -102,7 +101,7 @@ func TestAdminIntegration(t *testing.T) {
 		t.Errorf("adminClient.Tables returned %#v, want %#v", got, want)
 	}
 
-	adminClient.WaitForReplication(ctx, "mytable")
+	must(adminClient.WaitForReplication(ctx, "mytable"))
 
 	if err := adminClient.DeleteTable(ctx, "myothertable"); err != nil {
 		t.Fatalf("Deleting table: %v", err)
@@ -172,13 +171,13 @@ func TestAdminIntegration(t *testing.T) {
 	}
 
 	var gotRowCount int
-	tbl.ReadRows(ctx, RowRange{}, func(row Row) bool {
+	must(tbl.ReadRows(ctx, RowRange{}, func(row Row) bool {
 		gotRowCount += 1
 		if !strings.HasPrefix(row.Key(), "b") {
 			t.Errorf("Invalid row after dropping range: %v", row)
 		}
 		return true
-	})
+	}))
 	if gotRowCount != 5 {
 		t.Errorf("Invalid row count after dropping range: got %v, want %v", gotRowCount, 5)
 	}

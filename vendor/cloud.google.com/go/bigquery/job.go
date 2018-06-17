@@ -404,6 +404,9 @@ type QueryStatistics struct {
 	// statements INSERT, UPDATE or DELETE.
 	NumDMLAffectedRows int64
 
+	// Describes a timeline of job execution.
+	Timeline []*QueryTimelineSample
+
 	// ReferencedTables: [Output-only, Experimental] Referenced tables for
 	// the job. Queries that reference more than 50 tables will not have a
 	// complete list.
@@ -413,24 +416,58 @@ type QueryStatistics struct {
 	// non-legacy SQL queries.
 	Schema Schema
 
+	// Slot-milliseconds consumed by this query job.
+	SlotMillis int64
+
 	// Standard SQL: list of undeclared query parameter names detected during a
 	// dry run validation.
 	UndeclaredQueryParameterNames []string
+
+	// DDL target table.
+	DDLTargetTable *Table
+
+	// DDL Operation performed on the target table.  Used to report how the
+	// query impacted the DDL target table.
+	DDLOperationPerformed string
 }
 
 // ExplainQueryStage describes one stage of a query.
 type ExplainQueryStage struct {
+	// CompletedParallelInputs: Number of parallel input segments completed.
+	CompletedParallelInputs int64
+
+	// ComputeAvg: Duration the average shard spent on CPU-bound tasks.
+	ComputeAvg time.Duration
+
+	// ComputeMax: Duration the slowest shard spent on CPU-bound tasks.
+	ComputeMax time.Duration
+
 	// Relative amount of the total time the average shard spent on CPU-bound tasks.
 	ComputeRatioAvg float64
 
 	// Relative amount of the total time the slowest shard spent on CPU-bound tasks.
 	ComputeRatioMax float64
 
+	// EndTime: Stage end time.
+	EndTime time.Time
+
 	// Unique ID for stage within plan.
 	ID int64
 
+	// InputStages: IDs for stages that are inputs to this stage.
+	InputStages []int64
+
 	// Human-readable name for stage.
 	Name string
+
+	// ParallelInputs: Number of parallel input segments to be processed.
+	ParallelInputs int64
+
+	// ReadAvg: Duration the average shard spent reading input.
+	ReadAvg time.Duration
+
+	// ReadMax: Duration the slowest shard spent reading input.
+	ReadMax time.Duration
 
 	// Relative amount of the total time the average shard spent reading input.
 	ReadRatioAvg float64
@@ -444,6 +481,16 @@ type ExplainQueryStage struct {
 	// Number of records written by the stage.
 	RecordsWritten int64
 
+	// ShuffleOutputBytes: Total number of bytes written to shuffle.
+	ShuffleOutputBytes int64
+
+	// ShuffleOutputBytesSpilled: Total number of bytes written to shuffle
+	// and spilled to disk.
+	ShuffleOutputBytesSpilled int64
+
+	// StartTime: Stage start time.
+	StartTime time.Time
+
 	// Current status for the stage.
 	Status string
 
@@ -451,11 +498,23 @@ type ExplainQueryStage struct {
 	// chronological).
 	Steps []*ExplainQueryStep
 
+	// WaitAvg: Duration the average shard spent waiting to be scheduled.
+	WaitAvg time.Duration
+
+	// WaitMax: Duration the slowest shard spent waiting to be scheduled.
+	WaitMax time.Duration
+
 	// Relative amount of the total time the average shard spent waiting to be scheduled.
 	WaitRatioAvg float64
 
 	// Relative amount of the total time the slowest shard spent waiting to be scheduled.
 	WaitRatioMax float64
+
+	// WriteAvg: Duration the average shard spent on writing output.
+	WriteAvg time.Duration
+
+	// WriteMax: Duration the slowest shard spent on writing output.
+	WriteMax time.Duration
 
 	// Relative amount of the total time the average shard spent on writing output.
 	WriteRatioAvg float64
@@ -471,6 +530,25 @@ type ExplainQueryStep struct {
 
 	// Human-readable stage descriptions.
 	Substeps []string
+}
+
+// QueryTimelineSample represents a sample of execution statistics at a point in time.
+type QueryTimelineSample struct {
+
+	// Total number of units currently being processed by workers, represented as largest value since last sample.
+	ActiveUnits int64
+
+	// Total parallel units of work completed by this query.
+	CompletedUnits int64
+
+	// Time elapsed since start of query execution.
+	Elapsed time.Duration
+
+	// Total parallel units of work remaining for the active stages.
+	PendingUnits int64
+
+	// Cumulative slot-milliseconds consumed by the query.
+	SlotMillis int64
 }
 
 func (*ExtractStatistics) implementsStatistics() {}
@@ -667,12 +745,16 @@ func (j *Job) setStatistics(s *bq.JobStatistics, c *Client) {
 		js.Details = &QueryStatistics{
 			BillingTier:                   s.Query.BillingTier,
 			CacheHit:                      s.Query.CacheHit,
+			DDLTargetTable:                bqToTable(s.Query.DdlTargetTable, c),
+			DDLOperationPerformed:         s.Query.DdlOperationPerformed,
 			StatementType:                 s.Query.StatementType,
 			TotalBytesBilled:              s.Query.TotalBytesBilled,
 			TotalBytesProcessed:           s.Query.TotalBytesProcessed,
 			NumDMLAffectedRows:            s.Query.NumDmlAffectedRows,
 			QueryPlan:                     queryPlanFromProto(s.Query.QueryPlan),
 			Schema:                        bqToSchema(s.Query.Schema),
+			SlotMillis:                    s.Query.TotalSlotMs,
+			Timeline:                      timelineFromProto(s.Query.Timeline),
 			ReferencedTables:              tables,
 			UndeclaredQueryParameterNames: names,
 		}
@@ -691,20 +773,49 @@ func queryPlanFromProto(stages []*bq.ExplainQueryStage) []*ExplainQueryStage {
 			})
 		}
 		res = append(res, &ExplainQueryStage{
-			ComputeRatioAvg: s.ComputeRatioAvg,
-			ComputeRatioMax: s.ComputeRatioMax,
-			ID:              s.Id,
-			Name:            s.Name,
-			ReadRatioAvg:    s.ReadRatioAvg,
-			ReadRatioMax:    s.ReadRatioMax,
-			RecordsRead:     s.RecordsRead,
-			RecordsWritten:  s.RecordsWritten,
-			Status:          s.Status,
-			Steps:           steps,
-			WaitRatioAvg:    s.WaitRatioAvg,
-			WaitRatioMax:    s.WaitRatioMax,
-			WriteRatioAvg:   s.WriteRatioAvg,
-			WriteRatioMax:   s.WriteRatioMax,
+			CompletedParallelInputs:   s.CompletedParallelInputs,
+			ComputeAvg:                time.Duration(s.ComputeMsAvg) * time.Millisecond,
+			ComputeMax:                time.Duration(s.ComputeMsMax) * time.Millisecond,
+			ComputeRatioAvg:           s.ComputeRatioAvg,
+			ComputeRatioMax:           s.ComputeRatioMax,
+			EndTime:                   time.Unix(0, s.EndMs*1e6),
+			ID:                        s.Id,
+			InputStages:               s.InputStages,
+			Name:                      s.Name,
+			ParallelInputs:            s.ParallelInputs,
+			ReadAvg:                   time.Duration(s.ReadMsAvg) * time.Millisecond,
+			ReadMax:                   time.Duration(s.ReadMsMax) * time.Millisecond,
+			ReadRatioAvg:              s.ReadRatioAvg,
+			ReadRatioMax:              s.ReadRatioMax,
+			RecordsRead:               s.RecordsRead,
+			RecordsWritten:            s.RecordsWritten,
+			ShuffleOutputBytes:        s.ShuffleOutputBytes,
+			ShuffleOutputBytesSpilled: s.ShuffleOutputBytesSpilled,
+			StartTime:                 time.Unix(0, s.StartMs*1e6),
+			Status:                    s.Status,
+			Steps:                     steps,
+			WaitAvg:                   time.Duration(s.WaitMsAvg) * time.Millisecond,
+			WaitMax:                   time.Duration(s.WaitMsMax) * time.Millisecond,
+			WaitRatioAvg:              s.WaitRatioAvg,
+			WaitRatioMax:              s.WaitRatioMax,
+			WriteAvg:                  time.Duration(s.WriteMsAvg) * time.Millisecond,
+			WriteMax:                  time.Duration(s.WriteMsMax) * time.Millisecond,
+			WriteRatioAvg:             s.WriteRatioAvg,
+			WriteRatioMax:             s.WriteRatioMax,
+		})
+	}
+	return res
+}
+
+func timelineFromProto(timeline []*bq.QueryTimelineSample) []*QueryTimelineSample {
+	var res []*QueryTimelineSample
+	for _, s := range timeline {
+		res = append(res, &QueryTimelineSample{
+			ActiveUnits:    s.ActiveUnits,
+			CompletedUnits: s.CompletedUnits,
+			Elapsed:        time.Duration(s.ElapsedMs) * time.Millisecond,
+			PendingUnits:   s.PendingUnits,
+			SlotMillis:     s.TotalSlotMs,
 		})
 	}
 	return res
