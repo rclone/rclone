@@ -58,6 +58,9 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, fileID string,
 	if f.isTeamDrive {
 		params.Set("supportsTeamDrives", "true")
 	}
+	if *driveKeepRevisionForever {
+		params.Set("keepRevisionForever", "true")
+	}
 	urls := "https://www.googleapis.com/upload/drive/v3/files"
 	method := "POST"
 	if fileID != "" {
