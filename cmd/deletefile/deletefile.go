@@ -14,9 +14,9 @@ func init() {
 
 var commandDefintion = &cobra.Command{
 	Use:   "deletefile remote:path",
-	Short: `Remove a single file path from remote.`,
+	Short: `Remove a single file from remote.`,
 	Long: `
-Remove a single file path from remote.  Unlike ` + "`" + `delete` + "`" + ` it cannot be used to
+Remove a single file from remote.  Unlike ` + "`" + `delete` + "`" + ` it cannot be used to
 remove a directory and it doesn't obey include/exclude filters - if the specified file exists,
 it will always be removed.
 `,
