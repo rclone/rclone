@@ -279,18 +279,39 @@ For example, to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
 
 It is also possible to specify a "timetable" of limits, which will cause
 certain limits to be applied at certain times. To specify a timetable, format your
-entries as "HH:MM,BANDWIDTH HH:MM,BANDWIDTH...".
+entries as "WEEKDAY-HH:MM,BANDWIDTH WEEKDAY-HH:MM,BANDWIDTH..." where:
+WEEKDAY is optional element.
+It could be writen as whole world or only using 3 first characters.
+HH:MM is an hour from 00:00 to 23:59.
 
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
 
 `--bwlimit "08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off"`
 
-In this example, the transfer bandwidth will be set to 512kBytes/sec at 8am.
+In this example, the transfer bandwidth will be every day set to 512kBytes/sec at 8am.
 At noon, it will raise to 10Mbytes/s, and drop back to 512kBytes/sec at 1pm.
 At 6pm, the bandwidth limit will be set to 30MBytes/s, and at 11pm it will be
 completely disabled (full speed). Anything between 11pm and 8am will remain
 unlimited.
+
+An example of timetable with WEEKDAY could be:
+
+`--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
+
+It mean that, the transfer bandwidh will be set to 512kBytes/sec on Monday.
+It will raise to 10Mbytes/s before the end of Friday. 
+At 10:00 on Sunday it will be set to 1Mbyte/s.
+From 20:00 at Sunday will be unlimited.
+
+Timeslots without weekday are extended to whole week.
+So this one example:
+
+`--bwlimit "Mon-00:00,512 12:00,1M Sun-20:00,off"`
+
+Is equal to this:
+
+`--bwlimit "Mon-00:00,512Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"`
 
 Bandwidth limits only apply to the data transfer. They don't apply to the
 bandwidth of the directory listings etc.
