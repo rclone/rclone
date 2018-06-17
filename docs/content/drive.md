@@ -437,6 +437,10 @@ See rclone issue [#2243](https://github.com/ncw/rclone/issues/2243) for backgrou
 
 When using a service account, this instructs rclone to impersonate the user passed in.
 
+#### --drive-keep-revision-forever ####
+
+Keeps new head revision of the file forever.
+
 #### --drive-list-chunk int ####
 
 Size of listing chunk 100-1000. 0 to disable. (default 1000)
