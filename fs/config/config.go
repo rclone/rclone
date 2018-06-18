@@ -30,6 +30,7 @@ import (
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/driveletter"
 	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/fspath"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
@@ -865,12 +866,12 @@ func NewRemoteName() (name string) {
 	for {
 		fmt.Printf("name> ")
 		name = ReadLine()
-		parts := fs.Matcher.FindStringSubmatch(name + ":")
+		parts := fspath.Matcher.FindStringSubmatch(name + ":")
 		switch {
 		case name == "":
 			fmt.Printf("Can't use empty name.\n")
 		case driveletter.IsDriveLetter(name):
-			fmt.Printf("Can't use %q as it can be confused a drive letter.\n", name)
+			fmt.Printf("Can't use %q as it can be confused with a drive letter.\n", name)
 		case parts == nil:
 			fmt.Printf("Can't use %q as it has invalid characters in it.\n", name)
 		default:

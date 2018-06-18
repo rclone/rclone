@@ -9,12 +9,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/fs/driveletter"
+	"github.com/ncw/rclone/fs/fspath"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
@@ -786,24 +785,20 @@ func MustFind(name string) *RegInfo {
 	return fs
 }
 
-// Matcher is a pattern to match an rclone URL
-var Matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
-
 // ParseRemote deconstructs a path into configName, fsPath, looking up
 // the fsName in the config file (returning NotFoundInConfigFile if not found)
 func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err error) {
-	parts := Matcher.FindStringSubmatch(path)
+	configName, fsPath = fspath.Parse(path)
 	var fsName string
-	fsName, configName, fsPath = "local", "local", path
-	if parts != nil && !driveletter.IsDriveLetter(parts[1]) {
-		configName, fsPath = parts[1], parts[2]
+	if configName != "" {
 		fsName = ConfigFileGet(configName, "type")
 		if fsName == "" {
 			return nil, "", "", ErrorNotFoundInConfigFile
 		}
+	} else {
+		fsName = "local"
+		configName = "local"
 	}
-	// change native directory separators to / if there are any
-	fsPath = filepath.ToSlash(fsPath)
 	fsInfo, err = Find(fsName)
 	return fsInfo, configName, fsPath, err
 }
