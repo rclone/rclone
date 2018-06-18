@@ -182,6 +182,7 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
 		ExtraHeaders: map[string]string{
 			"Depth": "1",
 		},
+		NoRedirect: true,
 	}
 	var result api.Multistatus
 	var resp *http.Response
@@ -191,7 +192,13 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
 	})
 	if apiErr, ok := err.(*api.Error); ok {
 		// does not exist
-		if apiErr.StatusCode == http.StatusNotFound {
+		switch apiErr.StatusCode {
+		case http.StatusNotFound:
+			return nil, fs.ErrorObjectNotFound
+		case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther:
+			// Some sort of redirect - go doesn't deal with these properly (it resets
+			// the method to GET).  However we can assume that if it was redirected the
+			// object was not found.
 			return nil, fs.ErrorObjectNotFound
 		}
 	}
