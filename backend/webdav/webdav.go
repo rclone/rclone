@@ -258,6 +258,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if !strings.HasSuffix(endpoint, "/") {
 		endpoint += "/"
 	}
+	rootIsDir := strings.HasSuffix(root, "/")
 	root = strings.Trim(root, "/")
 
 	user := config.FileGet(name, "user")
@@ -297,7 +298,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 
-	if root != "" {
+	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file
 		remote := path.Base(root)
 		f.root = path.Dir(root)
