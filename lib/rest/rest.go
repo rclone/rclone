@@ -143,6 +143,7 @@ type Opts struct {
 	Parameters            url.Values // any parameters for the final URL
 	TransferEncoding      []string   // transfer encoding, set to "identity" to disable chunked encoding
 	Close                 bool       // set to close the connection after this transaction
+	NoRedirect            bool       // if this is set then the client won't follow redirects
 }
 
 // Copy creates a copy of the options
@@ -185,6 +186,15 @@ func ClientWithHeaderReset(c *http.Client, headers map[string]string) *http.Clie
 			}
 		}
 		return nil
+	}
+	return &clientCopy
+}
+
+// ClientWithNoRedirects makes a new http client which won't follow redirects
+func ClientWithNoRedirects(c *http.Client) *http.Client {
+	clientCopy := *c
+	clientCopy.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
 	}
 	return &clientCopy
 }
@@ -252,7 +262,12 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.UserName != "" || opts.Password != "" {
 		req.SetBasicAuth(opts.UserName, opts.Password)
 	}
-	c := ClientWithHeaderReset(api.c, headers)
+	var c *http.Client
+	if opts.NoRedirect {
+		c = ClientWithNoRedirects(api.c)
+	} else {
+		c = ClientWithHeaderReset(api.c, headers)
+	}
 	if api.signer != nil {
 		err = api.signer(req)
 		if err != nil {
