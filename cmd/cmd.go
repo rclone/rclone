@@ -245,7 +245,7 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 	// If file exists then srcFileName != "", however if the file
 	// doesn't exist then we assume it is a directory...
 	if srcFileName != "" {
-		dstRemote, dstFileName = fspath.RemoteSplit(dstRemote)
+		dstRemote, dstFileName = fspath.Split(dstRemote)
 		if dstRemote == "" {
 			dstRemote = "."
 		}
@@ -268,7 +268,7 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 
 // NewFsDstFile creates a new dst fs with a destination file name from the arguments
 func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
-	dstRemote, dstFileName := fspath.RemoteSplit(args[0])
+	dstRemote, dstFileName := fspath.Split(args[0])
 	if dstRemote == "" {
 		dstRemote = "."
 	}

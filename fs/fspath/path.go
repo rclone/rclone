@@ -3,27 +3,46 @@ package fspath
 
 import (
 	"path"
-	"strings"
+	"path/filepath"
+	"regexp"
+
+	"github.com/ncw/rclone/fs/driveletter"
 )
 
-// RemoteSplit splits a remote into a parent and a leaf
+// Matcher is a pattern to match an rclone URL
+var Matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
+
+// Parse deconstructs a remote path into configName and fsPath
+//
+// If the path is a local path then configName will be returned as "".
+//
+// So "remote:path/to/dir" will return "remote", "path/to/dir"
+// and "/path/to/local" will return ("", "/path/to/local")
+//
+// Note that this will turn \ into / in the fsPath on Windows
+func Parse(path string) (configName, fsPath string) {
+	parts := Matcher.FindStringSubmatch(path)
+	configName, fsPath = "", path
+	if parts != nil && !driveletter.IsDriveLetter(parts[1]) {
+		configName, fsPath = parts[1], parts[2]
+	}
+	// change native directory separators to / if there are any
+	fsPath = filepath.ToSlash(fsPath)
+	return configName, fsPath
+}
+
+// Split splits a remote into a parent and a leaf
 //
 // if it returns leaf as an empty string then remote is a directory
 //
 // if it returns parent as an empty string then that means the current directory
 //
 // The returned values have the property that parent + leaf == remote
-func RemoteSplit(remote string) (parent string, leaf string) {
-	// Split remote on :
-	i := strings.Index(remote, ":")
-	remoteName := ""
-	remotePath := remote
-	if i >= 0 {
-		remoteName = remote[:i+1]
-		remotePath = remote[i+1:]
-	} else if strings.HasSuffix(remotePath, "/") {
-		// if no : and ends with / must be directory
-		return remotePath, ""
+// (except under Windows where \ will be translated into /)
+func Split(remote string) (parent string, leaf string) {
+	remoteName, remotePath := Parse(remote)
+	if remoteName != "" {
+		remoteName += ":"
 	}
 	// Construct new remote name without last segment
 	parent, leaf = path.Split(remotePath)
