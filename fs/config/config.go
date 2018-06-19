@@ -27,6 +27,7 @@ import (
 	"github.com/Unknwon/goconfig"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/driveletter"
 	"github.com/ncw/rclone/fs/fshttp"
@@ -781,19 +782,48 @@ func ChooseOption(o *fs.Option, name string) string {
 		}
 		return obscure.MustObscure(password)
 	}
-	if len(o.Examples) > 0 {
-		var values []string
-		var help []string
-		for _, example := range o.Examples {
-			if matchProvider(example.Provider, subProvider) {
-				values = append(values, example.Value)
-				help = append(help, example.Help)
-			}
-		}
-		return Choose(o.Name, values, help, true)
+	what := fmt.Sprintf("%T value", o.Default)
+	switch o.Default.(type) {
+	case bool:
+		what = "boolean value (true or false)"
+	case fs.SizeSuffix:
+		what = "size with suffix k,M,G,T"
+	case fs.Duration:
+		what = "duration s,m,h,d,w,M,y"
+	case int, int8, int16, int32, int64:
+		what = "signed integer"
+	case uint, byte, uint16, uint32, uint64:
+		what = "unsigned integer"
 	}
-	fmt.Printf("%s> ", o.Name)
-	return ReadLine()
+	var in string
+	for {
+		fmt.Printf("Enter a %s. Press Enter for the default (%q).\n", what, fmt.Sprint(o.Default))
+		if len(o.Examples) > 0 {
+			var values []string
+			var help []string
+			for _, example := range o.Examples {
+				if matchProvider(example.Provider, subProvider) {
+					values = append(values, example.Value)
+					help = append(help, example.Help)
+				}
+			}
+			in = Choose(o.Name, values, help, true)
+		} else {
+			fmt.Printf("%s> ", o.Name)
+			in = ReadLine()
+		}
+		if in == "" {
+			break
+		}
+		newIn, err := configstruct.StringToInterface(o.Default, in)
+		if err != nil {
+			fmt.Printf("Failed to parse %q: %v\n", in, err)
+			continue
+		}
+		in = fmt.Sprint(newIn) // canonicalise
+		break
+	}
+	return in
 }
 
 // UpdateRemote adds the keyValues passed in to the remote of name.
@@ -862,8 +892,9 @@ func JSONListProviders() error {
 // fsOption returns an Option describing the possible remotes
 func fsOption() *fs.Option {
 	o := &fs.Option{
-		Name: "Storage",
-		Help: "Type of storage to configure.",
+		Name:    "Storage",
+		Help:    "Type of storage to configure.",
+		Default: "",
 	}
 	for _, item := range fs.Registry {
 		example := fs.OptionExample{
@@ -897,13 +928,25 @@ func NewRemoteName() (name string) {
 
 // NewRemote make a new remote from its name
 func NewRemote(name string) {
-	newType := ChooseOption(fsOption(), name)
+	var (
+		newType string
+		ri      *fs.RegInfo
+		err     error
+	)
+	for {
+		newType = ChooseOption(fsOption(), name)
+		ri, err = fs.Find(newType)
+		if err != nil {
+			fmt.Printf("Bad remote %q: %v\n", newType, err)
+			continue
+		}
+		break
+	}
 	getConfigData().SetValue(name, "type", newType)
-	ri := fs.MustFind(newType)
 	for _, option := range ri.Options {
 		subProvider := getConfigData().MustValue(name, fs.ConfigProvider, "")
 		if matchProvider(option.Provider, subProvider) {
-			getConfigData().SetValue(name, option.Name, ChooseOption(&option, name))
+			FileSet(name, option.Name, ChooseOption(&option, name))
 		}
 	}
 	RemoteConfig(name)
