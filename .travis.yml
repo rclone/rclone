@@ -47,4 +47,4 @@ deploy:
   on:
     all_branches: true
     go: "1.10.1"
-    condition: $TRAVIS_OS_NAME == linux && $TRAVIS_PULL_REQUEST == false
+    condition: $TRAVIS_PULL_REQUEST == false
