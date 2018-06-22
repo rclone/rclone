@@ -173,7 +173,7 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 	}
 
 	if addImplicitExclude && foundExcludeRule {
-		fs.Infof(nil, "Using --filter is recommended instead of both --include and --exclude as the order they are parsed in is indeterminate")
+		fs.Errorf(nil, "Using --filter is recommended instead of both --include and --exclude as the order they are parsed in is indeterminate")
 	}
 
 	for _, rule := range f.Opt.FilterRule {
