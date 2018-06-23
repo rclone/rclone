@@ -1,12 +1,22 @@
 SHELL = bash
-TAG := $(shell echo $$(git describe --abbrev=8 --tags)-$${APPVEYOR_REPO_BRANCH:-$${TRAVIS_BRANCH:-$$(git rev-parse --abbrev-ref HEAD)}} | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/; s/-\(HEAD\|master\)$$//')
+BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
+TAG_BRANCH := -$(BRANCH)
+BRANCH_PATH := branch/
+ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
+	TAG_BRANCH :=
+	BRANCH_PATH :=
+endif
+TAG := $(shell echo $$(git describe --abbrev=8 --tags | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/'))$(TAG_BRANCH)
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 # Run full tests if go >= go1.9
 FULL_TESTS := $(shell go version | perl -lne 'print "go$$1.$$2" if /go(\d+)\.(\d+)/ && ($$1 > 1 || $$2 >= 9)')
-BETA_URL := https://beta.rclone.org/$(TAG)/
+BETA_PATH := $(BRANCH_PATH)$(TAG)
+BETA_URL := https://beta.rclone.org/$(BETA_PATH)/
+BETA_UPLOAD_ROOT := memstore:beta-rclone-org
+BETA_UPLOAD := $(BETA_UPLOAD_ROOT)/$(BETA_PATH)
 # Pass in GOTAGS=xyz on the make command line to set build tags
 ifdef GOTAGS
 BUILDTAGS=-tags "$(GOTAGS)"
@@ -21,6 +31,7 @@ rclone:
 
 vars:
 	@echo SHELL="'$(SHELL)'"
+	@echo BRANCH="'$(BRANCH)'"
 	@echo TAG="'$(TAG)'"
 	@echo LAST_TAG="'$(LAST_TAG)'"
 	@echo NEW_TAG="'$(NEW_TAG)'"
@@ -160,9 +171,9 @@ else
 endif
 
 appveyor_upload:
-	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
-ifeq ($(APPVEYOR_REPO_BRANCH),master)
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ memstore:beta-rclone-org
+	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
+ifndef BRANCH_PATH
+	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
 endif
 	@echo Beta release ready at $(BETA_URL)
 
@@ -170,15 +181,15 @@ travis_beta:
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*_Linux_x86_64.tar.gz'
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt -exclude "^windows/" -parallel 8 $(BUILDTAGS) $(TAG)β
-	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
-ifeq ($(TRAVIS_BRANCH),master)
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ memstore:beta-rclone-org
+	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
+ifndef BRANCH_PATH
+	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
 endif
 	@echo Beta release ready at $(BETA_URL)
 
 # Fetch the windows builds from appveyor
 fetch_windows:
-	rclone -v copy --include 'rclone-v*-windows-*.zip' memstore:beta-rclone-org/$(TAG) build/
+	rclone -v copy --include 'rclone-v*-windows-*.zip' $(BETA_UPLOAD) build/
 	-#cp -av build/rclone-v*-windows-386.zip build/rclone-current-windows-386.zip
 	-#cp -av build/rclone-v*-windows-amd64.zip build/rclone-current-windows-amd64.zip
 	md5sum build/rclone-*-windows-*.zip | sort
