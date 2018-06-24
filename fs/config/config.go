@@ -813,6 +813,10 @@ func ChooseOption(o *fs.Option, name string) string {
 			in = ReadLine()
 		}
 		if in == "" {
+			if o.Required && fmt.Sprint(o.Default) == "" {
+				fmt.Printf("This value is required and it has no default.\n")
+				continue
+			}
 			break
 		}
 		newIn, err := configstruct.StringToInterface(o.Default, in)
