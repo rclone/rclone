@@ -573,10 +573,19 @@ func (f *Fs) Mkdir(dir string) error {
 	if f.containerOK {
 		return nil
 	}
+	// List the container to see if it exists
+	err := f.list("", false, 1, func(remote string, object *storage.Blob, isDirectory bool) error {
+		return nil
+	})
+	if err == nil {
+		f.markContainerOK()
+		return nil
+	}
+	// now try to create the container
 	options := storage.CreateContainerOptions{
 		Access: storage.ContainerAccessTypePrivate,
 	}
-	err := f.pacer.Call(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		err := f.cc.Create(&options)
 		if err != nil {
 			if storageErr, ok := err.(storage.AzureStorageServiceError); ok {
