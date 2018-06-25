@@ -87,6 +87,10 @@ func init() {
 			Help:       "Password.",
 			Optional:   true,
 			IsPassword: true,
+		}, {
+			Name:     "bearer_token",
+			Help:     "Bearer token instead of user/pass (eg a Macaroon)",
+			Optional: true,
 		}},
 	})
 }
@@ -270,6 +274,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	user := config.FileGet(name, "user")
 	pass := config.FileGet(name, "pass")
+	bearerToken := config.FileGet(name, "bearer_token")
 	if pass != "" {
 		var err error
 		pass, err = obscure.Reveal(pass)
@@ -290,7 +295,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		root:        root,
 		endpoint:    u,
 		endpointURL: u.String(),
-		srv:         rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(u.String()).SetUserPass(user, pass),
+		srv:         rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(u.String()),
 		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		user:        user,
 		pass:        pass,
@@ -299,6 +304,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(f)
+	if user != "" || pass != "" {
+		f.srv.SetUserPass(user, pass)
+	} else if bearerToken != "" {
+		f.srv.SetHeader("Authorization", "BEARER "+bearerToken)
+	}
 	f.srv.SetErrorHandler(errorHandler)
 	err = f.setQuirks(vendor)
 	if err != nil {

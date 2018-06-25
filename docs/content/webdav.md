@@ -30,53 +30,17 @@ n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Drive
-   \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 3 / Backblaze B2
-   \ "b2"
- 4 / Box
-   \ "box"
- 5 / Dropbox
-   \ "dropbox"
- 6 / Encrypt/Decrypt a remote
-   \ "crypt"
- 7 / FTP Connection
-   \ "ftp"
- 8 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
- 9 / Google Drive
-   \ "drive"
-10 / Hubic
-   \ "hubic"
-11 / Local Disk
-   \ "local"
-12 / Microsoft Azure Blob Storage
-   \ "azureblob"
-13 / Microsoft OneDrive
-   \ "onedrive"
-14 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-   \ "swift"
-15 / Pcloud
-   \ "pcloud"
-16 / QingCloud Object Storage
-   \ "qingstor"
-17 / SSH/SFTP Connection
-   \ "sftp"
-18 / WebDAV
+[snip]
+22 / Webdav
    \ "webdav"
-19 / Yandex Disk
-   \ "yandex"
-20 / http Connection
-   \ "http"
+[snip]
 Storage> webdav
 URL of http host to connect to
 Choose a number from below, or type in your own value
  1 / Connect to example.com
    \ "https://example.com"
 url> https://example.com/remote.php/webdav/
-Name of the WebDAV site/service/software you are using
+Name of the Webdav site/service/software you are using
 Choose a number from below, or type in your own value
  1 / Nextcloud
    \ "nextcloud"
@@ -98,13 +62,17 @@ Enter the password:
 password:
 Confirm the password:
 password:
+Bearer token instead of user/pass (eg a Macaroon)
+bearer_token> 
 Remote config
 --------------------
 [remote]
+type = webdav
 url = https://example.com/remote.php/webdav/
 vendor = nextcloud
 user = user
 pass = *** ENCRYPTED ***
+bearer_token = 
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -133,6 +101,10 @@ Owncloud or Nextcloud rclone will support modified times.
 
 Hashes are not supported.
 
+## Provider notes ##
+
+See below for notes on specific providers.
+
 ### Owncloud ###
 
 Click on the settings cog in the bottom right of the page and this
@@ -149,7 +121,7 @@ Owncloud does. This [may be
 fixed](https://github.com/nextcloud/nextcloud-snap/issues/365) in the
 future.
 
-## Put.io ##
+### Put.io ###
 
 put.io can be accessed in a read only way using webdav.
 
@@ -174,9 +146,9 @@ mount.
 
 For more help see [the put.io webdav docs](http://help.put.io/apps-and-integrations/ftp-and-webdav).
 
-## Sharepoint ##
+### Sharepoint ###
 
-Can be used with Sharepoint provided by OneDrive for Business
+Rclone can be used with Sharepoint provided by OneDrive for Business
 or Office365 Education Accounts.
 This feature is only needed for a few of these Accounts,
 mostly Office365 Education ones. These accounts are sometimes not
@@ -213,4 +185,21 @@ url = https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/Documents
 vendor = other
 user = YourEmailAddress
 pass = encryptedpassword
+```
+
+### dCache ###
+
+Configure as normal using the `other` type.  Don't enter a username or
+password, instead enter your Macaroon as the `bearer_token`.
+
+The config will end up looking something like this.
+
+```
+[dcache]
+type = webdav
+url = https://dcache...
+vendor = other
+user =
+pass =
+bearer_token = your-macaroon
 ```
