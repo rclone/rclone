@@ -480,6 +480,8 @@ func (f *Fs) mkdir(abspath string) error {
 		switch errX.Code {
 		case ftp.StatusFileUnavailable: // dir already exists: see issue #2181
 			err = nil
+		case 521: // dir already exists: error number according to RFC 959: issue #2363
+			err = nil
 		}
 	}
 	return err
