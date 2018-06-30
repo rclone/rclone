@@ -83,6 +83,7 @@ type ConfigInfo struct {
 	MaxTransfer           SizeSuffix
 	MaxBacklog            int
 	StatsOneLine          bool
+	Progress              bool
 }
 
 // NewConfig creates a new config with everything set to the default

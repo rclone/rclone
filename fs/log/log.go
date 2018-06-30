@@ -88,3 +88,8 @@ func InitLogging() {
 		startSysLog()
 	}
 }
+
+// Redirected returns true if the log has been redirected from stdout
+func Redirected() bool {
+	return *useSyslog || *logFile != ""
+}
