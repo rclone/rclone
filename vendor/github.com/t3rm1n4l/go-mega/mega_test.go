@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sync"
 	"testing"
 	"time"
 )
@@ -359,4 +360,44 @@ func TestExportLink(t *testing.T) {
 		_, err := session.Link(node, true)
 		return err
 	})
+}
+
+func TestWaitEvents(t *testing.T) {
+	m := &Mega{}
+	m.SetLogger(t.Logf)
+	m.SetDebugger(t.Logf)
+	var wg sync.WaitGroup
+	// in the background fire the event timer after 100mS
+	wg.Add(1)
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		m.waitEventsFire()
+		wg.Done()
+	}()
+	wait := func(d time.Duration, pb *bool) {
+		e := m.WaitEventsStart()
+		*pb = m.WaitEvents(e, d)
+		wg.Done()
+	}
+	// wait for each event in a separate goroutine
+	var b1, b2, b3 bool
+	wg.Add(3)
+	go wait(10*time.Second, &b1)
+	go wait(2*time.Second, &b2)
+	go wait(1*time.Millisecond, &b3)
+	wg.Wait()
+	if b1 != false {
+		t.Errorf("Unexpected timeout for b1")
+	}
+	if b2 != false {
+		t.Errorf("Unexpected timeout for b2")
+	}
+	if b3 != true {
+		t.Errorf("Unexpected event for b3")
+	}
+	if m.waitEvents != nil {
+		t.Errorf("Expecting waitEvents to be empty")
+	}
+	// Check nothing happens if we fire the event with no listeners
+	m.waitEventsFire()
 }

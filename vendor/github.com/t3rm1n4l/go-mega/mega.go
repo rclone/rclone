@@ -112,6 +112,10 @@ type Mega struct {
 	debugf func(format string, v ...interface{})
 	// serialize the API requests
 	apiMu sync.Mutex
+	// mutex to protext waitEvents
+	waitEventsMu sync.Mutex
+	// Outstanding channels to close to indicate events all received
+	waitEvents []chan struct{}
 }
 
 // Filesystem node types
@@ -489,9 +493,61 @@ func (m *Mega) Login(email string, passwd string) error {
 		return err
 	}
 
-	err = m.getFileSystem()
+	waitEvent := m.WaitEventsStart()
 
-	return err
+	err = m.getFileSystem()
+	if err != nil {
+		return err
+	}
+
+	// Wait until the all the pending events have been received
+	m.WaitEvents(waitEvent, 5*time.Second)
+
+	return nil
+}
+
+// WaitEventsStart - call this before you do the action which might
+// generate events then use the returned channel as a parameter to
+// WaitEvents to wait for the event(s) to be received.
+func (m *Mega) WaitEventsStart() <-chan struct{} {
+	ch := make(chan struct{})
+	m.waitEventsMu.Lock()
+	m.waitEvents = append(m.waitEvents, ch)
+	m.waitEventsMu.Unlock()
+	return ch
+}
+
+// WaitEvents waits for all outstanding events to be received for a
+// maximum of duration.  eventChan should be a channel as returned
+// from WaitEventStart.
+//
+// If the timeout elapsed then it returns true otherwise false.
+func (m *Mega) WaitEvents(eventChan <-chan struct{}, duration time.Duration) (timedout bool) {
+	m.debugf("Waiting for events to be finished for %v", duration)
+	timer := time.NewTimer(duration)
+	select {
+	case <-eventChan:
+		m.debugf("Events received")
+		timedout = false
+	case <-timer.C:
+		m.debugf("Timeout waiting for events")
+		timedout = true
+	}
+	timer.Stop()
+	return timedout
+}
+
+// waitEventsFire - fire the wait event
+func (m *Mega) waitEventsFire() {
+	m.waitEventsMu.Lock()
+	if len(m.waitEvents) > 0 {
+		m.debugf("Signalling events received")
+		for _, ch := range m.waitEvents {
+			close(ch)
+		}
+		m.waitEvents = nil
+	}
+	m.waitEventsMu.Unlock()
 }
 
 // Get user information
@@ -1616,6 +1672,7 @@ func (m *Mega) pollEvents() {
 		// if wait URL is set, then fetch it and continue - we
 		// don't expect anything else if we have a wait URL.
 		if events.W != "" {
+			m.waitEventsFire()
 			if len(events.E) > 0 {
 				m.logf("pollEvents: Unexpected event with w set: %s", buf)
 			}
