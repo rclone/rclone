@@ -38,6 +38,7 @@ import (
 const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
+	eventWaitTime = 500 * time.Millisecond
 	decayConstant = 2    // bigger for slower decay, exponential
 	useTrash      = true // FIXME make configurable - rclone global
 )
@@ -570,6 +571,8 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 		}
 	}
 
+	waitEvent := f.srv.WaitEventsStart()
+
 	err = f.deleteNode(dirNode)
 	if err != nil {
 		return errors.Wrap(err, "delete directory node failed")
@@ -579,7 +582,8 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 	if dirNode == rootNode {
 		f.clearRoot()
 	}
-	time.Sleep(100 * time.Millisecond) // FIXME give the callback a chance
+
+	f.srv.WaitEvents(waitEvent, eventWaitTime)
 	return nil
 }
 
@@ -653,6 +657,8 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 		}
 	}
 
+	waitEvent := f.srv.WaitEventsStart()
+
 	// rename the object if required
 	if srcLeaf != dstLeaf {
 		//log.Printf("rename %q to %q", srcLeaf, dstLeaf)
@@ -665,7 +671,8 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 		}
 	}
 
-	time.Sleep(100 * time.Millisecond) // FIXME give events a chance...
+	f.srv.WaitEvents(waitEvent, eventWaitTime)
+
 	return nil
 }
 
