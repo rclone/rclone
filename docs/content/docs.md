@@ -619,6 +619,21 @@ files if they are incorrect as it would normally.
 This can be used if the remote is being synced with another tool also
 (eg the Google Drive client).
 
+### --P, --progress ###
+
+This flag makes rclone update the stats in a static block in the
+terminal providing a realtime overview of the transfer.
+
+Any log messages will scroll above the static block.  Log messages
+will push the static block down to the bottom of the terminal where it
+will stay.
+
+Normally this is updated every 500mS but this period can be overridden
+with the `--stats` flag.
+
+This can be used with the `--stats-one-line` flag for a simpler
+display.
+
 ### -q, --quiet ###
 
 Normally rclone outputs stats and a completion message.  If you set
