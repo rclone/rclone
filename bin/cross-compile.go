@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"text/template"
@@ -66,28 +67,33 @@ var archFlags = map[string][]string{
 }
 
 // runEnv - run a shell command with env
-func runEnv(args, env []string) {
+func runEnv(args, env []string) error {
 	if *debug {
 		args = append([]string{"echo"}, args...)
 	}
 	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	if env != nil {
 		cmd.Env = append(os.Environ(), env...)
 	}
 	if *debug {
 		log.Printf("args = %v, env = %v\n", args, cmd.Env)
 	}
-	err := cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatalf("Failed to run %v: %v", args, err)
+		log.Print("----------------------------")
+		log.Printf("Failed to run %v: %v", args, err)
+		log.Printf("Command output was:\n%s", out)
+		log.Print("----------------------------")
 	}
+	return err
 }
 
 // run a shell command
 func run(args ...string) {
-	runEnv(args, nil)
+	err := runEnv(args, nil)
+	if err != nil {
+		log.Fatalf("Exiting after error: %v", err)
+	}
 }
 
 // chdir or die
@@ -160,8 +166,8 @@ func buildDebAndRpm(dir, version, goarch string) []string {
 	return artifacts
 }
 
-// build the binary in dir
-func compileArch(version, goos, goarch, dir string) {
+// build the binary in dir returning success or failure
+func compileArch(version, goos, goarch, dir string) bool {
 	log.Printf("Compiling %s/%s", goos, goarch)
 	output := filepath.Join(dir, "rclone")
 	if goos == "windows" {
@@ -191,7 +197,11 @@ func compileArch(version, goos, goarch, dir string) {
 	if flags, ok := archFlags[goarch]; ok {
 		env = append(env, flags...)
 	}
-	runEnv(args, env)
+	err = runEnv(args, env)
+	if err != nil {
+		log.Printf("Error compiling %s/%s: %v", goos, goarch, err)
+		return false
+	}
 	if !*compileOnly {
 		artifacts := []string{buildZip(dir)}
 		// build a .deb and .rpm if appropriate
@@ -207,6 +217,7 @@ func compileArch(version, goos, goarch, dir string) {
 		run("rm", "-rf", dir)
 	}
 	log.Printf("Done compiling %s/%s", goos, goarch)
+	return true
 }
 
 func compile(version string) {
@@ -231,6 +242,8 @@ func compile(version string) {
 		log.Fatalf("Bad -exclude regexp: %v", err)
 	}
 	compiled := 0
+	var failuresMu sync.Mutex
+	var failures []string
 	for _, osarch := range osarches {
 		if excludeRe.MatchString(osarch) || !includeRe.MatchString(osarch) {
 			continue
@@ -246,13 +259,22 @@ func compile(version string) {
 		}
 		dir := filepath.Join("rclone-" + version + "-" + userGoos + "-" + goarch)
 		run <- func() {
-			compileArch(version, goos, goarch, dir)
+			if !compileArch(version, goos, goarch, dir) {
+				failuresMu.Lock()
+				failures = append(failures, goos+"/"+goarch)
+				failuresMu.Unlock()
+			}
 		}
 		compiled++
 	}
 	close(run)
 	wg.Wait()
 	log.Printf("Compiled %d arches in %v", compiled, time.Since(start))
+	if len(failures) > 0 {
+		sort.Strings(failures)
+		log.Printf("%d compile failures:\n  %s\n", len(failures), strings.Join(failures, "\n  "))
+		os.Exit(1)
+	}
 }
 
 func main() {
