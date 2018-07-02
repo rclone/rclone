@@ -252,6 +252,10 @@ func ShouldRetry(err error) bool {
 		return true
 	}
 
+	// FIXME Handle this correctly, perhaps Cause should not ever return nil?
+	if err == nil {
+		return false
+	}
 	// Check if it is a retriable error
 	for _, retriableErr := range retriableErrors {
 		if err == retriableErr {
