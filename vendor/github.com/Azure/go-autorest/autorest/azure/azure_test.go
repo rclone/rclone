@@ -333,6 +333,9 @@ func TestWithErrorUnlessStatusCode_NoAzureError(t *testing.T) {
 	expected := &ServiceError{
 		Code:    "Unknown",
 		Message: "Unknown service error",
+		Details: []map[string]interface{}{
+			{"Status": "NotFound"},
+		},
 	}
 
 	if !reflect.DeepEqual(expected, azErr.ServiceError) {

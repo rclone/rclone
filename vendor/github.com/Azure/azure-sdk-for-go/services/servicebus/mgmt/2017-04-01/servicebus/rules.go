@@ -340,12 +340,12 @@ func (client RulesClient) ListBySubscriptions(ctx context.Context, resourceGroup
 				{Target: "subscriptionName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 					{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}},
 		{TargetValue: top,
 			Constraints: []validation.Constraint{{Target: "top", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicebus.RulesClient", "ListBySubscriptions", err.Error())

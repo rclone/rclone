@@ -191,6 +191,104 @@ func (client BackupShortTermRetentionPoliciesClient) GetResponder(resp *http.Res
 	return
 }
 
+// ListByDatabase gets a database's short term retention policy.
+// Parameters:
+// resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
+// from the Azure Resource Manager API or the portal.
+// serverName - the name of the server.
+// databaseName - the name of the database.
+func (client BackupShortTermRetentionPoliciesClient) ListByDatabase(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result BackupShortTermRetentionPolicyListResultPage, err error) {
+	result.fn = client.listByDatabaseNextResults
+	req, err := client.ListByDatabasePreparer(ctx, resourceGroupName, serverName, databaseName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.BackupShortTermRetentionPoliciesClient", "ListByDatabase", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListByDatabaseSender(req)
+	if err != nil {
+		result.bstrplr.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "sql.BackupShortTermRetentionPoliciesClient", "ListByDatabase", resp, "Failure sending request")
+		return
+	}
+
+	result.bstrplr, err = client.ListByDatabaseResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.BackupShortTermRetentionPoliciesClient", "ListByDatabase", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListByDatabasePreparer prepares the ListByDatabase request.
+func (client BackupShortTermRetentionPoliciesClient) ListByDatabasePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"databaseName":      autorest.Encode("path", databaseName),
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"serverName":        autorest.Encode("path", serverName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-10-01-preview"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}/backupShortTermRetentionPolicies", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListByDatabaseSender sends the ListByDatabase request. The method will close the
+// http.Response Body if it receives an error.
+func (client BackupShortTermRetentionPoliciesClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
+// closes the http.Response Body.
+func (client BackupShortTermRetentionPoliciesClient) ListByDatabaseResponder(resp *http.Response) (result BackupShortTermRetentionPolicyListResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// listByDatabaseNextResults retrieves the next set of results, if any.
+func (client BackupShortTermRetentionPoliciesClient) listByDatabaseNextResults(lastResults BackupShortTermRetentionPolicyListResult) (result BackupShortTermRetentionPolicyListResult, err error) {
+	req, err := lastResults.backupShortTermRetentionPolicyListResultPreparer()
+	if err != nil {
+		return result, autorest.NewErrorWithError(err, "sql.BackupShortTermRetentionPoliciesClient", "listByDatabaseNextResults", nil, "Failure preparing next results request")
+	}
+	if req == nil {
+		return
+	}
+	resp, err := client.ListByDatabaseSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		return result, autorest.NewErrorWithError(err, "sql.BackupShortTermRetentionPoliciesClient", "listByDatabaseNextResults", resp, "Failure sending next results request")
+	}
+	result, err = client.ListByDatabaseResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.BackupShortTermRetentionPoliciesClient", "listByDatabaseNextResults", resp, "Failure responding to next results request")
+	}
+	return
+}
+
+// ListByDatabaseComplete enumerates all values, automatically crossing page boundaries as required.
+func (client BackupShortTermRetentionPoliciesClient) ListByDatabaseComplete(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result BackupShortTermRetentionPolicyListResultIterator, err error) {
+	result.page, err = client.ListByDatabase(ctx, resourceGroupName, serverName, databaseName)
+	return
+}
+
 // Update updates a database's short term retention policy.
 // Parameters:
 // resourceGroupName - the name of the resource group that contains the resource. You can obtain this value

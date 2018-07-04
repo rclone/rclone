@@ -129,7 +129,7 @@ func (client ApplicationGatewaysClient) CreateOrUpdate(ctx context.Context, reso
 						{Target: "parameters.ApplicationGatewayPropertiesFormat.WebApplicationFirewallConfiguration.RuleSetType", Name: validation.Null, Rule: true, Chain: nil},
 						{Target: "parameters.ApplicationGatewayPropertiesFormat.WebApplicationFirewallConfiguration.RuleSetVersion", Name: validation.Null, Rule: true, Chain: nil},
 						{Target: "parameters.ApplicationGatewayPropertiesFormat.WebApplicationFirewallConfiguration.MaxRequestBodySize", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.ApplicationGatewayPropertiesFormat.WebApplicationFirewallConfiguration.MaxRequestBodySize", Name: validation.InclusiveMaximum, Rule: 128, Chain: nil},
+							Chain: []validation.Constraint{{Target: "parameters.ApplicationGatewayPropertiesFormat.WebApplicationFirewallConfiguration.MaxRequestBodySize", Name: validation.InclusiveMaximum, Rule: int64(128), Chain: nil},
 								{Target: "parameters.ApplicationGatewayPropertiesFormat.WebApplicationFirewallConfiguration.MaxRequestBodySize", Name: validation.InclusiveMinimum, Rule: 8, Chain: nil},
 							}},
 					}},

@@ -114,7 +114,8 @@ func (m *Message) Update(options *UpdateMessageOptions) error {
 		return err
 	}
 	headers["Content-Length"] = strconv.Itoa(nn)
-
+	// visibilitytimeout is required for Update (zero or greater) so set the default here
+	query.Set("visibilitytimeout", "0")
 	if options != nil {
 		if options.VisibilityTimeout != 0 {
 			query.Set("visibilitytimeout", strconv.Itoa(options.VisibilityTimeout))

@@ -76,21 +76,6 @@ func PossibleDirectoryTypeValues() []DirectoryType {
 	return []DirectoryType{ActiveDirectory}
 }
 
-// EnabledCredential enumerates the values for enabled credential.
-type EnabledCredential string
-
-const (
-	// False ...
-	False EnabledCredential = "false"
-	// True ...
-	True EnabledCredential = "true"
-)
-
-// PossibleEnabledCredentialValues returns an array of possible values for the EnabledCredential const type.
-func PossibleEnabledCredentialValues() []EnabledCredential {
-	return []EnabledCredential{False, True}
-}
-
 // OSType enumerates the values for os type.
 type OSType string
 
@@ -129,7 +114,7 @@ type Application struct {
 	// Tags - The tags for the application.
 	Tags map[string]*string `json:"tags"`
 	// Properties - The properties of the application.
-	Properties *ApplicationGetProperties `json:"properties,omitempty"`
+	Properties *ApplicationProperties `json:"properties,omitempty"`
 	// ID - Fully qualified resource Id for the resource.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource
@@ -205,34 +190,6 @@ func (aghe ApplicationGetHTTPSEndpoint) MarshalJSON() ([]byte, error) {
 		objectMap[k] = v
 	}
 	return json.Marshal(objectMap)
-}
-
-// ApplicationGetProperties the HDInsight cluster application GET response.
-type ApplicationGetProperties struct {
-	// ComputeProfile - The list of roles in the cluster.
-	ComputeProfile *ComputeProfile `json:"computeProfile,omitempty"`
-	// InstallScriptActions - The list of install script actions.
-	InstallScriptActions *[]RuntimeScriptAction `json:"installScriptActions,omitempty"`
-	// UninstallScriptActions - The list of uninstall script actions.
-	UninstallScriptActions *[]RuntimeScriptAction `json:"uninstallScriptActions,omitempty"`
-	// HTTPSEndpoints - The list of application HTTPS endpoints.
-	HTTPSEndpoints *[]ApplicationGetHTTPSEndpoint `json:"httpsEndpoints,omitempty"`
-	// SSHEndpoints - The list of application SSH endpoints.
-	SSHEndpoints *[]ApplicationGetEndpoint `json:"sshEndpoints,omitempty"`
-	// ProvisioningState - The provisioning state of the application.
-	ProvisioningState *string `json:"provisioningState,omitempty"`
-	// ApplicationType - The application type.
-	ApplicationType *string `json:"applicationType,omitempty"`
-	// ApplicationState - The application state.
-	ApplicationState *string `json:"applicationState,omitempty"`
-	// Errors - The list of errors.
-	Errors *[]Errors `json:"errors,omitempty"`
-	// CreatedDate - The application create date time.
-	CreatedDate *string `json:"createdDate,omitempty"`
-	// MarketplaceIdentifier - The marketplace identifier.
-	MarketplaceIdentifier *string `json:"marketplaceIdentifier,omitempty"`
-	// AdditionalProperties - The additional properties for application.
-	AdditionalProperties *string `json:"additionalProperties,omitempty"`
 }
 
 // ApplicationListResult result of the request to list cluster Applications. It contains a list of operations and a
@@ -336,6 +293,62 @@ func (page ApplicationListResultPage) Values() []Application {
 		return nil
 	}
 	return *page.alr.Value
+}
+
+// ApplicationProperties the HDInsight cluster application GET response.
+type ApplicationProperties struct {
+	// ComputeProfile - The list of roles in the cluster.
+	ComputeProfile *ComputeProfile `json:"computeProfile,omitempty"`
+	// InstallScriptActions - The list of install script actions.
+	InstallScriptActions *[]RuntimeScriptAction `json:"installScriptActions,omitempty"`
+	// UninstallScriptActions - The list of uninstall script actions.
+	UninstallScriptActions *[]RuntimeScriptAction `json:"uninstallScriptActions,omitempty"`
+	// HTTPSEndpoints - The list of application HTTPS endpoints.
+	HTTPSEndpoints *[]ApplicationGetHTTPSEndpoint `json:"httpsEndpoints,omitempty"`
+	// SSHEndpoints - The list of application SSH endpoints.
+	SSHEndpoints *[]ApplicationGetEndpoint `json:"sshEndpoints,omitempty"`
+	// ProvisioningState - The provisioning state of the application.
+	ProvisioningState *string `json:"provisioningState,omitempty"`
+	// ApplicationType - The application type.
+	ApplicationType *string `json:"applicationType,omitempty"`
+	// ApplicationState - The application state.
+	ApplicationState *string `json:"applicationState,omitempty"`
+	// Errors - The list of errors.
+	Errors *[]Errors `json:"errors,omitempty"`
+	// CreatedDate - The application create date time.
+	CreatedDate *string `json:"createdDate,omitempty"`
+	// MarketplaceIdentifier - The marketplace identifier.
+	MarketplaceIdentifier *string `json:"marketplaceIdentifier,omitempty"`
+	// AdditionalProperties - The additional properties for application.
+	AdditionalProperties *string `json:"additionalProperties,omitempty"`
+}
+
+// ApplicationsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type ApplicationsCreateFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *ApplicationsCreateFuture) Result(client ApplicationsClient) (a Application, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsCreateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("hdinsight.ApplicationsCreateFuture")
+		return
+	}
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if a.Response.Response, err = future.GetResult(sender); err == nil && a.Response.Response.StatusCode != http.StatusNoContent {
+		a, err = client.CreateResponder(a.Response.Response)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsCreateFuture", "Result", a.Response.Response, "Failure responding to request")
+		}
+	}
+	return
 }
 
 // ApplicationsDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -676,9 +689,9 @@ type ClusterMonitoringRequest struct {
 type ClusterMonitoringResponse struct {
 	autorest.Response `json:"-"`
 	// ClusterMonitoringEnabled - The status of the Operations Management Suite (OMS) on the HDInsight cluster.
-	ClusterMonitoringEnabled *bool `json:"ClusterMonitoringEnabled,omitempty"`
+	ClusterMonitoringEnabled *bool `json:"clusterMonitoringEnabled,omitempty"`
 	// WorkspaceID - The workspace ID of the Operations Management Suite (OMS) on the HDInsight cluster.
-	WorkspaceID *string `json:"WorkspaceId,omitempty"`
+	WorkspaceID *string `json:"workspaceId,omitempty"`
 }
 
 // ClusterPatchParameters the PatchCluster request parameters
@@ -848,6 +861,14 @@ type DataDisksGroups struct {
 	DiskSizeGB *int32 `json:"diskSizeGB,omitempty"`
 }
 
+// ErrorResponse describes the format of Error response.
+type ErrorResponse struct {
+	// Code - Error code
+	Code *string `json:"code,omitempty"`
+	// Message - Error message indicating why the operation failed.
+	Message *string `json:"message,omitempty"`
+}
+
 // Errors the error message associated with the cluster creation.
 type Errors struct {
 	// Code - The error code.
@@ -925,16 +946,6 @@ type HardwareProfile struct {
 	VMSize *string `json:"vmSize,omitempty"`
 }
 
-// HTTPConnectivitySettings the payload for a Configure HTTP settings request.
-type HTTPConnectivitySettings struct {
-	// EnabledCredential - Whether or not the HTTP based authorization is enabled. Possible values include: 'True', 'False'
-	EnabledCredential EnabledCredential `json:"restAuthCredential.isEnabled,omitempty"`
-	// Username - The HTTP username.
-	Username *string `json:"restAuthCredential.username,omitempty"`
-	// Password - The HTTP user password.
-	Password *string `json:"restAuthCredential.password,omitempty"`
-}
-
 // LinuxOperatingSystemProfile the ssh username, password, and ssh public key.
 type LinuxOperatingSystemProfile struct {
 	// Username - The username.
@@ -943,6 +954,14 @@ type LinuxOperatingSystemProfile struct {
 	Password *string `json:"password,omitempty"`
 	// SSHProfile - The SSH profile.
 	SSHProfile *SSHProfile `json:"sshProfile,omitempty"`
+}
+
+// LocalizedName the details about the localizable name of a type of usage.
+type LocalizedName struct {
+	// Value - The name of the used resource.
+	Value *string `json:"value,omitempty"`
+	// LocalizedValue - The localized name of the used resource.
+	LocalizedValue *string `json:"localizedValue,omitempty"`
 }
 
 // Operation the HDInsight REST API operation.
@@ -957,7 +976,7 @@ type Operation struct {
 type OperationDisplay struct {
 	// Provider - The service provider: Microsoft.HDInsight
 	Provider *string `json:"provider,omitempty"`
-	// Resource - The resource on which the operation is performed: Cluster, Capabilities, etc.
+	// Resource - The resource on which the operation is performed: Cluster, Applications, etc.
 	Resource *string `json:"resource,omitempty"`
 	// Operation - The operation type: read, write, delete, etc.
 	Operation *string `json:"operation,omitempty"`
@@ -1525,6 +1544,25 @@ func (tr TrackedResource) MarshalJSON() ([]byte, error) {
 		objectMap["type"] = tr.Type
 	}
 	return json.Marshal(objectMap)
+}
+
+// Usage the details about the usage of a particular limited resource.
+type Usage struct {
+	// Unit - The type of measurement for usage.
+	Unit *string `json:"unit,omitempty"`
+	// CurrentValue - The current usage.
+	CurrentValue *int32 `json:"currentValue,omitempty"`
+	// Limit - The maximum allowed usage.
+	Limit *int32 `json:"limit,omitempty"`
+	// Name - The details about the localizable name of the used resource.
+	Name *LocalizedName `json:"name,omitempty"`
+}
+
+// UsagesListResult the response for the operation to get regional usages for a subscription.
+type UsagesListResult struct {
+	autorest.Response `json:"-"`
+	// Value - The list of usages.
+	Value *[]Usage `json:"value,omitempty"`
 }
 
 // VersionsCapability the version capability.

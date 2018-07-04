@@ -19,7 +19,7 @@
 
 package media
 
-import original "github.com/Azure/azure-sdk-for-go/services/preview/mediaservices/mgmt/2018-03-30-preview/media"
+import original "github.com/Azure/azure-sdk-for-go/services/preview/mediaservices/mgmt/2018-06-01-preview/media"
 
 type AssetsClient = original.AssetsClient
 
@@ -607,7 +607,6 @@ type StreamingLocatorCollectionIterator = original.StreamingLocatorCollectionIte
 type StreamingLocatorCollectionPage = original.StreamingLocatorCollectionPage
 type StreamingLocatorContentKey = original.StreamingLocatorContentKey
 type StreamingLocatorProperties = original.StreamingLocatorProperties
-type StreamingLocatorUserDefinedContentKey = original.StreamingLocatorUserDefinedContentKey
 type StreamingPath = original.StreamingPath
 type StreamingPolicy = original.StreamingPolicy
 type StreamingPolicyCollection = original.StreamingPolicyCollection

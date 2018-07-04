@@ -62,46 +62,45 @@ func (client ClustersClient) Create(ctx context.Context, resourceGroupName strin
 				{Target: "clusterName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "clusterName", Name: validation.Pattern, Rule: `^[-\w_]+$`, Chain: nil}}},
 		{TargetValue: parameters,
-			Constraints: []validation.Constraint{{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil},
-				{Target: "parameters.ClusterBaseProperties", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.VMSize", Name: validation.Null, Rule: true, Chain: nil},
-						{Target: "parameters.ClusterBaseProperties.ScaleSettings", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.ScaleSettings.Manual", Name: validation.Null, Rule: false,
-								Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.ScaleSettings.Manual.TargetNodeCount", Name: validation.Null, Rule: true, Chain: nil}}},
-								{Target: "parameters.ClusterBaseProperties.ScaleSettings.AutoScale", Name: validation.Null, Rule: false,
-									Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.ScaleSettings.AutoScale.MinimumNodeCount", Name: validation.Null, Rule: true, Chain: nil},
-										{Target: "parameters.ClusterBaseProperties.ScaleSettings.AutoScale.MaximumNodeCount", Name: validation.Null, Rule: true, Chain: nil},
-									}},
-							}},
-						{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference", Name: validation.Null, Rule: false,
-								Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference.Publisher", Name: validation.Null, Rule: true, Chain: nil},
-									{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference.Offer", Name: validation.Null, Rule: true, Chain: nil},
-									{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference.Sku", Name: validation.Null, Rule: true, Chain: nil},
+			Constraints: []validation.Constraint{{Target: "parameters.ClusterBaseProperties", Name: validation.Null, Rule: false,
+				Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.VMSize", Name: validation.Null, Rule: true, Chain: nil},
+					{Target: "parameters.ClusterBaseProperties.ScaleSettings", Name: validation.Null, Rule: false,
+						Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.ScaleSettings.Manual", Name: validation.Null, Rule: false,
+							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.ScaleSettings.Manual.TargetNodeCount", Name: validation.Null, Rule: true, Chain: nil}}},
+							{Target: "parameters.ClusterBaseProperties.ScaleSettings.AutoScale", Name: validation.Null, Rule: false,
+								Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.ScaleSettings.AutoScale.MinimumNodeCount", Name: validation.Null, Rule: true, Chain: nil},
+									{Target: "parameters.ClusterBaseProperties.ScaleSettings.AutoScale.MaximumNodeCount", Name: validation.Null, Rule: true, Chain: nil},
 								}},
+						}},
+					{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration", Name: validation.Null, Rule: false,
+						Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference", Name: validation.Null, Rule: false,
+							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference.Publisher", Name: validation.Null, Rule: true, Chain: nil},
+								{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference.Offer", Name: validation.Null, Rule: true, Chain: nil},
+								{Target: "parameters.ClusterBaseProperties.VirtualMachineConfiguration.ImageReference.Sku", Name: validation.Null, Rule: true, Chain: nil},
 							}},
-						{Target: "parameters.ClusterBaseProperties.NodeSetup", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.SetupTask", Name: validation.Null, Rule: false,
-								Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.SetupTask.CommandLine", Name: validation.Null, Rule: true, Chain: nil},
-									{Target: "parameters.ClusterBaseProperties.NodeSetup.SetupTask.StdOutErrPathPrefix", Name: validation.Null, Rule: true, Chain: nil},
-								}},
-								{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings", Name: validation.Null, Rule: false,
-									Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference", Name: validation.Null, Rule: true,
-										Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.Component", Name: validation.Null, Rule: true,
-											Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.Component.ID", Name: validation.Null, Rule: true, Chain: nil}}},
-											{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference", Name: validation.Null, Rule: false,
-												Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference.SourceVault", Name: validation.Null, Rule: true,
-													Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference.SourceVault.ID", Name: validation.Null, Rule: true, Chain: nil}}},
-													{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference.SecretURL", Name: validation.Null, Rule: true, Chain: nil},
-												}},
-										}},
+						}},
+					{Target: "parameters.ClusterBaseProperties.NodeSetup", Name: validation.Null, Rule: false,
+						Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.SetupTask", Name: validation.Null, Rule: false,
+							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.SetupTask.CommandLine", Name: validation.Null, Rule: true, Chain: nil},
+								{Target: "parameters.ClusterBaseProperties.NodeSetup.SetupTask.StdOutErrPathPrefix", Name: validation.Null, Rule: true, Chain: nil},
+							}},
+							{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings", Name: validation.Null, Rule: false,
+								Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference", Name: validation.Null, Rule: true,
+									Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.Component", Name: validation.Null, Rule: true,
+										Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.Component.ID", Name: validation.Null, Rule: true, Chain: nil}}},
+										{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference", Name: validation.Null, Rule: false,
+											Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference.SourceVault", Name: validation.Null, Rule: true,
+												Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference.SourceVault.ID", Name: validation.Null, Rule: true, Chain: nil}}},
+												{Target: "parameters.ClusterBaseProperties.NodeSetup.PerformanceCountersSettings.AppInsightsReference.InstrumentationKeySecretReference.SecretURL", Name: validation.Null, Rule: true, Chain: nil},
+											}},
 									}},
-							}},
-						{Target: "parameters.ClusterBaseProperties.UserAccountSettings", Name: validation.Null, Rule: true,
-							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.UserAccountSettings.AdminUserName", Name: validation.Null, Rule: true, Chain: nil}}},
-						{Target: "parameters.ClusterBaseProperties.Subnet", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.Subnet.ID", Name: validation.Null, Rule: true, Chain: nil}}},
-					}}}}}); err != nil {
+								}},
+						}},
+					{Target: "parameters.ClusterBaseProperties.UserAccountSettings", Name: validation.Null, Rule: true,
+						Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.UserAccountSettings.AdminUserName", Name: validation.Null, Rule: true, Chain: nil}}},
+					{Target: "parameters.ClusterBaseProperties.Subnet", Name: validation.Null, Rule: false,
+						Chain: []validation.Constraint{{Target: "parameters.ClusterBaseProperties.Subnet.ID", Name: validation.Null, Rule: true, Chain: nil}}},
+				}}}}}); err != nil {
 		return result, validation.NewError("batchai.ClustersClient", "Create", err.Error())
 	}
 
@@ -349,222 +348,6 @@ func (client ClustersClient) GetResponder(resp *http.Response) (result Cluster, 
 	return
 }
 
-// List gets a list of Clusters associated with the given subscription.
-// Parameters:
-// maxResults - the maximum number of items to return in the response. A maximum of 1000 files can be returned.
-func (client ClustersClient) List(ctx context.Context, maxResults *int32) (result ClusterListResultPage, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: maxResults,
-			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
-					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
-				}}}}}); err != nil {
-		return result, validation.NewError("batchai.ClustersClient", "List", err.Error())
-	}
-
-	result.fn = client.listNextResults
-	req, err := client.ListPreparer(ctx, maxResults)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "List", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.ListSender(req)
-	if err != nil {
-		result.clr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "List", resp, "Failure sending request")
-		return
-	}
-
-	result.clr, err = client.ListResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "List", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// ListPreparer prepares the List request.
-func (client ClustersClient) ListPreparer(ctx context.Context, maxResults *int32) (*http.Request, error) {
-	pathParameters := map[string]interface{}{
-		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
-	}
-
-	const APIVersion = "2018-05-01"
-	queryParameters := map[string]interface{}{
-		"api-version": APIVersion,
-	}
-	if maxResults != nil {
-		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
-	} else {
-		queryParameters["maxresults"] = autorest.Encode("query", 1000)
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsGet(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.BatchAI/clusters", pathParameters),
-		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// ListSender sends the List request. The method will close the
-// http.Response Body if it receives an error.
-func (client ClustersClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		azure.DoRetryWithRegistration(client.Client))
-}
-
-// ListResponder handles the response to the List request. The method always
-// closes the http.Response Body.
-func (client ClustersClient) ListResponder(resp *http.Response) (result ClusterListResult, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// listNextResults retrieves the next set of results, if any.
-func (client ClustersClient) listNextResults(lastResults ClusterListResult) (result ClusterListResult, err error) {
-	req, err := lastResults.clusterListResultPreparer()
-	if err != nil {
-		return result, autorest.NewErrorWithError(err, "batchai.ClustersClient", "listNextResults", nil, "Failure preparing next results request")
-	}
-	if req == nil {
-		return
-	}
-	resp, err := client.ListSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "batchai.ClustersClient", "listNextResults", resp, "Failure sending next results request")
-	}
-	result, err = client.ListResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "listNextResults", resp, "Failure responding to next results request")
-	}
-	return
-}
-
-// ListComplete enumerates all values, automatically crossing page boundaries as required.
-func (client ClustersClient) ListComplete(ctx context.Context, maxResults *int32) (result ClusterListResultIterator, err error) {
-	result.page, err = client.List(ctx, maxResults)
-	return
-}
-
-// ListByResourceGroup gets a list of Clusters within the specified resource group.
-// Parameters:
-// resourceGroupName - name of the resource group to which the resource belongs.
-// maxResults - the maximum number of items to return in the response. A maximum of 1000 files can be returned.
-func (client ClustersClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, maxResults *int32) (result ClusterListResultPage, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}},
-		{TargetValue: maxResults,
-			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
-					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
-				}}}}}); err != nil {
-		return result, validation.NewError("batchai.ClustersClient", "ListByResourceGroup", err.Error())
-	}
-
-	result.fn = client.listByResourceGroupNextResults
-	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, maxResults)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "ListByResourceGroup", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.ListByResourceGroupSender(req)
-	if err != nil {
-		result.clr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "ListByResourceGroup", resp, "Failure sending request")
-		return
-	}
-
-	result.clr, err = client.ListByResourceGroupResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "ListByResourceGroup", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// ListByResourceGroupPreparer prepares the ListByResourceGroup request.
-func (client ClustersClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, maxResults *int32) (*http.Request, error) {
-	pathParameters := map[string]interface{}{
-		"resourceGroupName": autorest.Encode("path", resourceGroupName),
-		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
-	}
-
-	const APIVersion = "2018-05-01"
-	queryParameters := map[string]interface{}{
-		"api-version": APIVersion,
-	}
-	if maxResults != nil {
-		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
-	} else {
-		queryParameters["maxresults"] = autorest.Encode("query", 1000)
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsGet(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.BatchAI/clusters", pathParameters),
-		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
-// http.Response Body if it receives an error.
-func (client ClustersClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		azure.DoRetryWithRegistration(client.Client))
-}
-
-// ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
-// closes the http.Response Body.
-func (client ClustersClient) ListByResourceGroupResponder(resp *http.Response) (result ClusterListResult, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// listByResourceGroupNextResults retrieves the next set of results, if any.
-func (client ClustersClient) listByResourceGroupNextResults(lastResults ClusterListResult) (result ClusterListResult, err error) {
-	req, err := lastResults.clusterListResultPreparer()
-	if err != nil {
-		return result, autorest.NewErrorWithError(err, "batchai.ClustersClient", "listByResourceGroupNextResults", nil, "Failure preparing next results request")
-	}
-	if req == nil {
-		return
-	}
-	resp, err := client.ListByResourceGroupSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "batchai.ClustersClient", "listByResourceGroupNextResults", resp, "Failure sending next results request")
-	}
-	result, err = client.ListByResourceGroupResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.ClustersClient", "listByResourceGroupNextResults", resp, "Failure responding to next results request")
-	}
-	return
-}
-
-// ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
-func (client ClustersClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, maxResults *int32) (result ClusterListResultIterator, err error) {
-	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, maxResults)
-	return
-}
-
 // ListByWorkspace gets information about Clusters associated with the given Workspace.
 // Parameters:
 // resourceGroupName - name of the resource group to which the resource belongs.
@@ -581,7 +364,7 @@ func (client ClustersClient) ListByWorkspace(ctx context.Context, resourceGroupN
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `^[-\w_]+$`, Chain: nil}}},
 		{TargetValue: maxResults,
 			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("batchai.ClustersClient", "ListByWorkspace", err.Error())

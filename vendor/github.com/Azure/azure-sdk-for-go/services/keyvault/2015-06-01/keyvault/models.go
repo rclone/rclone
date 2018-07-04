@@ -188,7 +188,7 @@ type Attributes struct {
 // BackupKeyResult the backup key result, containing the backup blob
 type BackupKeyResult struct {
 	autorest.Response `json:"-"`
-	// Value - The backup blob containing the backed up key
+	// Value - The backup blob containing the backed up key (a URL-encoded base64 string)
 	Value *string `json:"value,omitempty"`
 }
 
@@ -215,7 +215,7 @@ type CertificateBundle struct {
 	Kid *string `json:"kid,omitempty"`
 	// Sid - The secret id
 	Sid *string `json:"sid,omitempty"`
-	// X509Thumbprint - Thumbprint of the certificate.
+	// X509Thumbprint - Thumbprint of the certificate. (a URL-encoded base64 string)
 	X509Thumbprint *string `json:"x5t,omitempty"`
 	// Policy - The management policy.
 	Policy *CertificatePolicy `json:"policy,omitempty"`
@@ -464,7 +464,7 @@ type CertificateItem struct {
 	Attributes *CertificateAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
 	Tags map[string]*string `json:"tags"`
-	// X509Thumbprint - Thumbprint of the certificate.
+	// X509Thumbprint - Thumbprint of the certificate. (a URL-encoded base64 string)
 	X509Thumbprint *string `json:"x5t,omitempty"`
 }
 
@@ -766,25 +766,25 @@ type JSONWebKey struct {
 	// Kty - Supported JsonWebKey key types (kty) for Elliptic Curve, RSA, HSM, Octet, usually RSA. Possible values include: 'EC', 'RSA', 'RSAHSM', 'Oct'
 	Kty    JSONWebKeyType `json:"kty,omitempty"`
 	KeyOps *[]string      `json:"key_ops,omitempty"`
-	// N - RSA modulus
+	// N - RSA modulus (a URL-encoded base64 string)
 	N *string `json:"n,omitempty"`
-	// E - RSA public exponent
+	// E - RSA public exponent (a URL-encoded base64 string)
 	E *string `json:"e,omitempty"`
-	// D - RSA private exponent
+	// D - RSA private exponent (a URL-encoded base64 string)
 	D *string `json:"d,omitempty"`
-	// DP - RSA Private Key Parameter
+	// DP - RSA Private Key Parameter (a URL-encoded base64 string)
 	DP *string `json:"dp,omitempty"`
-	// DQ - RSA Private Key Parameter
+	// DQ - RSA Private Key Parameter (a URL-encoded base64 string)
 	DQ *string `json:"dq,omitempty"`
-	// QI - RSA Private Key Parameter
+	// QI - RSA Private Key Parameter (a URL-encoded base64 string)
 	QI *string `json:"qi,omitempty"`
-	// P - RSA secret prime
+	// P - RSA secret prime (a URL-encoded base64 string)
 	P *string `json:"p,omitempty"`
-	// Q - RSA secret prime, with p < q
+	// Q - RSA secret prime, with p < q (a URL-encoded base64 string)
 	Q *string `json:"q,omitempty"`
-	// K - Symmetric key
+	// K - Symmetric key (a URL-encoded base64 string)
 	K *string `json:"k,omitempty"`
-	// T - HSM Token, used with Bring Your Own Key
+	// T - HSM Token, used with Bring Your Own Key (a URL-encoded base64 string)
 	T *string `json:"key_hsm,omitempty"`
 }
 
@@ -837,7 +837,7 @@ func (kb KeyBundle) MarshalJSON() ([]byte, error) {
 type KeyCreateParameters struct {
 	// Kty - The type of key to create. Valid key types, see JsonWebKeyType. Supported JsonWebKey key types (kty) for Elliptic Curve, RSA, HSM, Octet. Possible values include: 'EC', 'RSA', 'RSAHSM', 'Oct'
 	Kty JSONWebKeyType `json:"kty,omitempty"`
-	// KeySize - The key size in bytes. e.g. 1024 or 2048.
+	// KeySize - The key size in bits. e.g. 1024 or 2048.
 	KeySize       *int32                 `json:"key_size,omitempty"`
 	KeyOps        *[]JSONWebKeyOperation `json:"key_ops,omitempty"`
 	KeyAttributes *KeyAttributes         `json:"attributes,omitempty"`
@@ -1032,7 +1032,8 @@ func (page KeyListResultPage) Values() []KeyItem {
 type KeyOperationResult struct {
 	autorest.Response `json:"-"`
 	// Kid - Key identifier
-	Kid    *string `json:"kid,omitempty"`
+	Kid *string `json:"kid,omitempty"`
+	// Result - a URL-encoded base64 string
 	Result *string `json:"value,omitempty"`
 }
 
@@ -1040,7 +1041,8 @@ type KeyOperationResult struct {
 type KeyOperationsParameters struct {
 	// Algorithm - algorithm identifier. Possible values include: 'RSAOAEP', 'RSAOAEP256', 'RSA15'
 	Algorithm JSONWebKeyEncryptionAlgorithm `json:"alg,omitempty"`
-	Value     *string                       `json:"value,omitempty"`
+	// Value - a URL-encoded base64 string
+	Value *string `json:"value,omitempty"`
 }
 
 // KeyProperties properties of the key pair backing a certificate.
@@ -1049,7 +1051,7 @@ type KeyProperties struct {
 	Exportable *bool `json:"exportable,omitempty"`
 	// KeyType - The key type.
 	KeyType *string `json:"kty,omitempty"`
-	// KeySize - The key size in bytes. e.g. 2048.
+	// KeySize - The key size in bits. e.g. 2048.
 	KeySize *int32 `json:"key_size,omitempty"`
 	// ReuseKey - Indicates if the same key pair will be used on certificate renewal.
 	ReuseKey *bool `json:"reuse_key,omitempty"`
@@ -1057,7 +1059,7 @@ type KeyProperties struct {
 
 // KeyRestoreParameters the key restore parameters
 type KeyRestoreParameters struct {
-	// KeyBundleBackup - the backup blob associated with a key bundle
+	// KeyBundleBackup - the backup blob associated with a key bundle (a URL-encoded base64 string)
 	KeyBundleBackup *string `json:"value,omitempty"`
 }
 
@@ -1065,7 +1067,8 @@ type KeyRestoreParameters struct {
 type KeySignParameters struct {
 	// Algorithm - The signing/verification algorithm identifier. For more information on possible algorithm types, see JsonWebKeySignatureAlgorithm. Possible values include: 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'RSNULL'
 	Algorithm JSONWebKeySignatureAlgorithm `json:"alg,omitempty"`
-	Value     *string                      `json:"value,omitempty"`
+	// Value - a URL-encoded base64 string
+	Value *string `json:"value,omitempty"`
 }
 
 // KeyUpdateParameters the key update parameters
@@ -1096,9 +1099,9 @@ func (kup KeyUpdateParameters) MarshalJSON() ([]byte, error) {
 type KeyVerifyParameters struct {
 	// Algorithm - The signing/verification algorithm. For more information on possible algorithm types, see JsonWebKeySignatureAlgorithm. Possible values include: 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'RSNULL'
 	Algorithm JSONWebKeySignatureAlgorithm `json:"alg,omitempty"`
-	// Digest - The digest used for signing
+	// Digest - The digest used for signing (a URL-encoded base64 string)
 	Digest *string `json:"digest,omitempty"`
-	// Signature - The signature to be verified
+	// Signature - The signature to be verified (a URL-encoded base64 string)
 	Signature *string `json:"value,omitempty"`
 }
 

@@ -45,6 +45,76 @@ func NewWithoutDefaults() BaseClient {
 	}
 }
 
+// BackupCertificate requests that a backup of the specified certificate be downloaded to the client. All versions of
+// the certificate will be downloaded. This operation requires the certificates/backup permission.
+// Parameters:
+// vaultBaseURL - the vault name, for example https://myvault.vault.azure.net.
+// certificateName - the name of the certificate.
+func (client BaseClient) BackupCertificate(ctx context.Context, vaultBaseURL string, certificateName string) (result BackupCertificateResult, err error) {
+	req, err := client.BackupCertificatePreparer(ctx, vaultBaseURL, certificateName)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "BackupCertificate", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.BackupCertificateSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "BackupCertificate", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.BackupCertificateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "BackupCertificate", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// BackupCertificatePreparer prepares the BackupCertificate request.
+func (client BaseClient) BackupCertificatePreparer(ctx context.Context, vaultBaseURL string, certificateName string) (*http.Request, error) {
+	urlParameters := map[string]interface{}{
+		"vaultBaseUrl": vaultBaseURL,
+	}
+
+	pathParameters := map[string]interface{}{
+		"certificate-name": autorest.Encode("path", certificateName),
+	}
+
+	const APIVersion = "7.0-preview"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsPost(),
+		autorest.WithCustomBaseURL("{vaultBaseUrl}", urlParameters),
+		autorest.WithPathParameters("/certificates/{certificate-name}/backup", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// BackupCertificateSender sends the BackupCertificate request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) BackupCertificateSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// BackupCertificateResponder handles the response to the BackupCertificate request. The method always
+// closes the http.Response Body.
+func (client BaseClient) BackupCertificateResponder(resp *http.Response) (result BackupCertificateResult, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // BackupKey the Key Backup operation exports a key from Azure Key Vault in a protected form. Note that this operation
 // does NOT return key material in a form that can be used outside the Azure Key Vault system, the returned key
 // material is either protected to a Azure Key Vault HSM or to Azure Key Vault itself. The intent of this operation is
@@ -1629,7 +1699,8 @@ func (client BaseClient) GetCertificatePolicyResponder(resp *http.Response) (res
 // vaultBaseURL - the vault name, for example https://myvault.vault.azure.net.
 // maxresults - maximum number of results to return in a page. If not specified the service will return up to
 // 25 results.
-func (client BaseClient) GetCertificates(ctx context.Context, vaultBaseURL string, maxresults *int32) (result CertificateListResultPage, err error) {
+// includePending - specifies whether to include certificates which are not completely provisioned.
+func (client BaseClient) GetCertificates(ctx context.Context, vaultBaseURL string, maxresults *int32, includePending *bool) (result CertificateListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxresults,
 			Constraints: []validation.Constraint{{Target: "maxresults", Name: validation.Null, Rule: false,
@@ -1640,7 +1711,7 @@ func (client BaseClient) GetCertificates(ctx context.Context, vaultBaseURL strin
 	}
 
 	result.fn = client.getCertificatesNextResults
-	req, err := client.GetCertificatesPreparer(ctx, vaultBaseURL, maxresults)
+	req, err := client.GetCertificatesPreparer(ctx, vaultBaseURL, maxresults, includePending)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "GetCertificates", nil, "Failure preparing request")
 		return
@@ -1662,7 +1733,7 @@ func (client BaseClient) GetCertificates(ctx context.Context, vaultBaseURL strin
 }
 
 // GetCertificatesPreparer prepares the GetCertificates request.
-func (client BaseClient) GetCertificatesPreparer(ctx context.Context, vaultBaseURL string, maxresults *int32) (*http.Request, error) {
+func (client BaseClient) GetCertificatesPreparer(ctx context.Context, vaultBaseURL string, maxresults *int32, includePending *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"vaultBaseUrl": vaultBaseURL,
 	}
@@ -1673,6 +1744,9 @@ func (client BaseClient) GetCertificatesPreparer(ctx context.Context, vaultBaseU
 	}
 	if maxresults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxresults)
+	}
+	if includePending != nil {
+		queryParameters["includePending"] = autorest.Encode("query", *includePending)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1725,8 +1799,8 @@ func (client BaseClient) getCertificatesNextResults(lastResults CertificateListR
 }
 
 // GetCertificatesComplete enumerates all values, automatically crossing page boundaries as required.
-func (client BaseClient) GetCertificatesComplete(ctx context.Context, vaultBaseURL string, maxresults *int32) (result CertificateListResultIterator, err error) {
-	result.page, err = client.GetCertificates(ctx, vaultBaseURL, maxresults)
+func (client BaseClient) GetCertificatesComplete(ctx context.Context, vaultBaseURL string, maxresults *int32, includePending *bool) (result CertificateListResultIterator, err error) {
+	result.page, err = client.GetCertificates(ctx, vaultBaseURL, maxresults, includePending)
 	return
 }
 
@@ -1921,7 +1995,8 @@ func (client BaseClient) GetDeletedCertificateResponder(resp *http.Response) (re
 // vaultBaseURL - the vault name, for example https://myvault.vault.azure.net.
 // maxresults - maximum number of results to return in a page. If not specified the service will return up to
 // 25 results.
-func (client BaseClient) GetDeletedCertificates(ctx context.Context, vaultBaseURL string, maxresults *int32) (result DeletedCertificateListResultPage, err error) {
+// includePending - specifies whether to include certificates which are not completely provisioned.
+func (client BaseClient) GetDeletedCertificates(ctx context.Context, vaultBaseURL string, maxresults *int32, includePending *bool) (result DeletedCertificateListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxresults,
 			Constraints: []validation.Constraint{{Target: "maxresults", Name: validation.Null, Rule: false,
@@ -1932,7 +2007,7 @@ func (client BaseClient) GetDeletedCertificates(ctx context.Context, vaultBaseUR
 	}
 
 	result.fn = client.getDeletedCertificatesNextResults
-	req, err := client.GetDeletedCertificatesPreparer(ctx, vaultBaseURL, maxresults)
+	req, err := client.GetDeletedCertificatesPreparer(ctx, vaultBaseURL, maxresults, includePending)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "GetDeletedCertificates", nil, "Failure preparing request")
 		return
@@ -1954,7 +2029,7 @@ func (client BaseClient) GetDeletedCertificates(ctx context.Context, vaultBaseUR
 }
 
 // GetDeletedCertificatesPreparer prepares the GetDeletedCertificates request.
-func (client BaseClient) GetDeletedCertificatesPreparer(ctx context.Context, vaultBaseURL string, maxresults *int32) (*http.Request, error) {
+func (client BaseClient) GetDeletedCertificatesPreparer(ctx context.Context, vaultBaseURL string, maxresults *int32, includePending *bool) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"vaultBaseUrl": vaultBaseURL,
 	}
@@ -1965,6 +2040,9 @@ func (client BaseClient) GetDeletedCertificatesPreparer(ctx context.Context, vau
 	}
 	if maxresults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxresults)
+	}
+	if includePending != nil {
+		queryParameters["includePending"] = autorest.Encode("query", *includePending)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -2017,8 +2095,8 @@ func (client BaseClient) getDeletedCertificatesNextResults(lastResults DeletedCe
 }
 
 // GetDeletedCertificatesComplete enumerates all values, automatically crossing page boundaries as required.
-func (client BaseClient) GetDeletedCertificatesComplete(ctx context.Context, vaultBaseURL string, maxresults *int32) (result DeletedCertificateListResultIterator, err error) {
-	result.page, err = client.GetDeletedCertificates(ctx, vaultBaseURL, maxresults)
+func (client BaseClient) GetDeletedCertificatesComplete(ctx context.Context, vaultBaseURL string, maxresults *int32, includePending *bool) (result DeletedCertificateListResultIterator, err error) {
+	result.page, err = client.GetDeletedCertificates(ctx, vaultBaseURL, maxresults, includePending)
 	return
 }
 
@@ -4177,42 +4255,42 @@ func (client BaseClient) PurgeDeletedSecretResponder(resp *http.Response) (resul
 	return
 }
 
-// PurgeDeletedStorgeAccount the purge deleted storage account operation removes the secret permanently, without the
+// PurgeDeletedStorageAccount the purge deleted storage account operation removes the secret permanently, without the
 // possibility of recovery. This operation can only be performed on a soft-delete enabled vault. This operation
 // requires the storage/purge permission.
 // Parameters:
 // vaultBaseURL - the vault name, for example https://myvault.vault.azure.net.
 // storageAccountName - the name of the storage account.
-func (client BaseClient) PurgeDeletedStorgeAccount(ctx context.Context, vaultBaseURL string, storageAccountName string) (result autorest.Response, err error) {
+func (client BaseClient) PurgeDeletedStorageAccount(ctx context.Context, vaultBaseURL string, storageAccountName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: storageAccountName,
 			Constraints: []validation.Constraint{{Target: "storageAccountName", Name: validation.Pattern, Rule: `^[0-9a-zA-Z]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewError("keyvault.BaseClient", "PurgeDeletedStorgeAccount", err.Error())
+		return result, validation.NewError("keyvault.BaseClient", "PurgeDeletedStorageAccount", err.Error())
 	}
 
-	req, err := client.PurgeDeletedStorgeAccountPreparer(ctx, vaultBaseURL, storageAccountName)
+	req, err := client.PurgeDeletedStorageAccountPreparer(ctx, vaultBaseURL, storageAccountName)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "PurgeDeletedStorgeAccount", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "PurgeDeletedStorageAccount", nil, "Failure preparing request")
 		return
 	}
 
-	resp, err := client.PurgeDeletedStorgeAccountSender(req)
+	resp, err := client.PurgeDeletedStorageAccountSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "PurgeDeletedStorgeAccount", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "PurgeDeletedStorageAccount", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.PurgeDeletedStorgeAccountResponder(resp)
+	result, err = client.PurgeDeletedStorageAccountResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "PurgeDeletedStorgeAccount", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "PurgeDeletedStorageAccount", resp, "Failure responding to request")
 	}
 
 	return
 }
 
-// PurgeDeletedStorgeAccountPreparer prepares the PurgeDeletedStorgeAccount request.
-func (client BaseClient) PurgeDeletedStorgeAccountPreparer(ctx context.Context, vaultBaseURL string, storageAccountName string) (*http.Request, error) {
+// PurgeDeletedStorageAccountPreparer prepares the PurgeDeletedStorageAccount request.
+func (client BaseClient) PurgeDeletedStorageAccountPreparer(ctx context.Context, vaultBaseURL string, storageAccountName string) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"vaultBaseUrl": vaultBaseURL,
 	}
@@ -4234,16 +4312,16 @@ func (client BaseClient) PurgeDeletedStorgeAccountPreparer(ctx context.Context, 
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// PurgeDeletedStorgeAccountSender sends the PurgeDeletedStorgeAccount request. The method will close the
+// PurgeDeletedStorageAccountSender sends the PurgeDeletedStorageAccount request. The method will close the
 // http.Response Body if it receives an error.
-func (client BaseClient) PurgeDeletedStorgeAccountSender(req *http.Request) (*http.Response, error) {
+func (client BaseClient) PurgeDeletedStorageAccountSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
-// PurgeDeletedStorgeAccountResponder handles the response to the PurgeDeletedStorgeAccount request. The method always
+// PurgeDeletedStorageAccountResponder handles the response to the PurgeDeletedStorageAccount request. The method always
 // closes the http.Response Body.
-func (client BaseClient) PurgeDeletedStorgeAccountResponder(resp *http.Response) (result autorest.Response, err error) {
+func (client BaseClient) PurgeDeletedStorageAccountResponder(resp *http.Response) (result autorest.Response, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -4693,6 +4771,80 @@ func (client BaseClient) RegenerateStorageAccountKeySender(req *http.Request) (*
 // RegenerateStorageAccountKeyResponder handles the response to the RegenerateStorageAccountKey request. The method always
 // closes the http.Response Body.
 func (client BaseClient) RegenerateStorageAccountKeyResponder(resp *http.Response) (result StorageBundle, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// RestoreCertificate restores a backed up certificate, and all its versions, to a vault. This operation requires the
+// certificates/restore permission.
+// Parameters:
+// vaultBaseURL - the vault name, for example https://myvault.vault.azure.net.
+// parameters - the parameters to restore the certificate.
+func (client BaseClient) RestoreCertificate(ctx context.Context, vaultBaseURL string, parameters CertificateRestoreParameters) (result CertificateBundle, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: parameters,
+			Constraints: []validation.Constraint{{Target: "parameters.CertificateBundleBackup", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("keyvault.BaseClient", "RestoreCertificate", err.Error())
+	}
+
+	req, err := client.RestoreCertificatePreparer(ctx, vaultBaseURL, parameters)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "RestoreCertificate", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.RestoreCertificateSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "RestoreCertificate", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.RestoreCertificateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "keyvault.BaseClient", "RestoreCertificate", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// RestoreCertificatePreparer prepares the RestoreCertificate request.
+func (client BaseClient) RestoreCertificatePreparer(ctx context.Context, vaultBaseURL string, parameters CertificateRestoreParameters) (*http.Request, error) {
+	urlParameters := map[string]interface{}{
+		"vaultBaseUrl": vaultBaseURL,
+	}
+
+	const APIVersion = "7.0-preview"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithCustomBaseURL("{vaultBaseUrl}", urlParameters),
+		autorest.WithPath("/certificates/restore"),
+		autorest.WithJSON(parameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// RestoreCertificateSender sends the RestoreCertificate request. The method will close the
+// http.Response Body if it receives an error.
+func (client BaseClient) RestoreCertificateSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// RestoreCertificateResponder handles the response to the RestoreCertificate request. The method always
+// closes the http.Response Body.
+func (client BaseClient) RestoreCertificateResponder(resp *http.Response) (result CertificateBundle, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

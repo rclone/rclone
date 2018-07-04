@@ -112,8 +112,8 @@ const (
 	Chainer    ToolType = original.Chainer
 	Cntk       ToolType = original.Cntk
 	Custom     ToolType = original.Custom
+	Custommpi  ToolType = original.Custommpi
 	Horovod    ToolType = original.Horovod
-	Mpi        ToolType = original.Mpi
 	Tensorflow ToolType = original.Tensorflow
 )
 
@@ -242,6 +242,7 @@ type WorkspaceListResultPage = original.WorkspaceListResultPage
 type WorkspaceProperties = original.WorkspaceProperties
 type WorkspacesCreateFuture = original.WorkspacesCreateFuture
 type WorkspacesDeleteFuture = original.WorkspacesDeleteFuture
+type WorkspaceUpdateParameters = original.WorkspaceUpdateParameters
 type OperationsClient = original.OperationsClient
 type UsagesClient = original.UsagesClient
 type WorkspacesClient = original.WorkspacesClient

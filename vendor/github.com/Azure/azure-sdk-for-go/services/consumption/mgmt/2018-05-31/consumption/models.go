@@ -19,10 +19,13 @@ package consumption
 
 import (
 	"encoding/json"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/to"
-	"github.com/shopspring/decimal"
 	"net/http"
+
+	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/date"
+	"github.com/Azure/go-autorest/autorest/to"
+	"github.com/satori/go.uuid"
+	"github.com/shopspring/decimal"
 )
 
 // Bound enumerates the values for bound.
@@ -214,6 +217,24 @@ type ForecastsListResult struct {
 	Value *[]Forecast `json:"value,omitempty"`
 }
 
+// MeterDetails the properties of the meter detail.
+type MeterDetails struct {
+	// MeterName - The name of the meter, within the given meter category
+	MeterName *string `json:"meterName,omitempty"`
+	// MeterCategory - The category of the meter, for example, 'Cloud services', 'Networking', etc..
+	MeterCategory *string `json:"meterCategory,omitempty"`
+	// MeterSubCategory - The subcategory of the meter, for example, 'A6 Cloud services', 'ExpressRoute (IXP)', etc..
+	MeterSubCategory *string `json:"meterSubCategory,omitempty"`
+	// Unit - The unit in which the meter consumption is charged, for example, 'Hours', 'GB', etc.
+	Unit *string `json:"unit,omitempty"`
+	// MeterLocation - The location in which the Azure service is available.
+	MeterLocation *string `json:"meterLocation,omitempty"`
+	// TotalIncludedQuantity - The total included quantity associated with the offer.
+	TotalIncludedQuantity *decimal.Decimal `json:"totalIncludedQuantity,omitempty"`
+	// PretaxStandardRate - The pretax listing price.
+	PretaxStandardRate *decimal.Decimal `json:"pretaxStandardRate,omitempty"`
+}
+
 // Operation a Consumption REST API operation.
 type Operation struct {
 	// Name - Operation name: {provider}/{resource}/{operation}.
@@ -335,6 +356,131 @@ func (page OperationListResultPage) Values() []Operation {
 	return *page.olr.Value
 }
 
+// PriceSheetModel price sheet result. It contains the pricesheet associated with billing period
+type PriceSheetModel struct {
+	// Pricesheets - Price sheet
+	Pricesheets *[]PriceSheetProperties `json:"pricesheets,omitempty"`
+	// NextLink - The link (url) to the next page of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// PriceSheetProperties the properties of the price sheet.
+type PriceSheetProperties struct {
+	// BillingPeriodID - The id of the billing period resource that the usage belongs to.
+	BillingPeriodID *string `json:"billingPeriodId,omitempty"`
+	// MeterID - The meter id (GUID)
+	MeterID *uuid.UUID `json:"meterId,omitempty"`
+	// MeterDetails - The details about the meter. By default this is not populated, unless it's specified in $expand.
+	MeterDetails *MeterDetails `json:"meterDetails,omitempty"`
+	// UnitOfMeasure - Unit of measure
+	UnitOfMeasure *string `json:"unitOfMeasure,omitempty"`
+	// IncludedQuantity - Included quality for an offer
+	IncludedQuantity *decimal.Decimal `json:"includedQuantity,omitempty"`
+	// PartNumber - Part Number
+	PartNumber *string `json:"partNumber,omitempty"`
+	// UnitPrice - Unit Price
+	UnitPrice *decimal.Decimal `json:"unitPrice,omitempty"`
+	// CurrencyCode - Currency Code
+	CurrencyCode *string `json:"currencyCode,omitempty"`
+	// OfferID - Offer Id
+	OfferID *string `json:"offerId,omitempty"`
+}
+
+// PriceSheetResult an pricesheet resource.
+type PriceSheetResult struct {
+	autorest.Response `json:"-"`
+	*PriceSheetModel  `json:"properties,omitempty"`
+	// ID - Resource Id.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+	// Tags - Resource tags.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for PriceSheetResult.
+func (psr PriceSheetResult) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if psr.PriceSheetModel != nil {
+		objectMap["properties"] = psr.PriceSheetModel
+	}
+	if psr.ID != nil {
+		objectMap["id"] = psr.ID
+	}
+	if psr.Name != nil {
+		objectMap["name"] = psr.Name
+	}
+	if psr.Type != nil {
+		objectMap["type"] = psr.Type
+	}
+	if psr.Tags != nil {
+		objectMap["tags"] = psr.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for PriceSheetResult struct.
+func (psr *PriceSheetResult) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var priceSheetModel PriceSheetModel
+				err = json.Unmarshal(*v, &priceSheetModel)
+				if err != nil {
+					return err
+				}
+				psr.PriceSheetModel = &priceSheetModel
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				psr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				psr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				psr.Type = &typeVar
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				psr.Tags = tags
+			}
+		}
+	}
+
+	return nil
+}
+
 // Resource the Resource model definition.
 type Resource struct {
 	// ID - Resource Id.
@@ -363,4 +509,257 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 		objectMap["tags"] = r.Tags
 	}
 	return json.Marshal(objectMap)
+}
+
+// UsageDetail an usage detail resource.
+type UsageDetail struct {
+	*UsageDetailProperties `json:"properties,omitempty"`
+	// ID - Resource Id.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+	// Tags - Resource tags.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for UsageDetail.
+func (ud UsageDetail) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ud.UsageDetailProperties != nil {
+		objectMap["properties"] = ud.UsageDetailProperties
+	}
+	if ud.ID != nil {
+		objectMap["id"] = ud.ID
+	}
+	if ud.Name != nil {
+		objectMap["name"] = ud.Name
+	}
+	if ud.Type != nil {
+		objectMap["type"] = ud.Type
+	}
+	if ud.Tags != nil {
+		objectMap["tags"] = ud.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for UsageDetail struct.
+func (ud *UsageDetail) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var usageDetailProperties UsageDetailProperties
+				err = json.Unmarshal(*v, &usageDetailProperties)
+				if err != nil {
+					return err
+				}
+				ud.UsageDetailProperties = &usageDetailProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ud.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ud.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ud.Type = &typeVar
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ud.Tags = tags
+			}
+		}
+	}
+
+	return nil
+}
+
+// UsageDetailProperties the properties of the usage detail.
+type UsageDetailProperties struct {
+	// BillingPeriodID - The id of the billing period resource that the usage belongs to.
+	BillingPeriodID *string `json:"billingPeriodId,omitempty"`
+	// InvoiceID - The id of the invoice resource that the usage belongs to.
+	InvoiceID *string `json:"invoiceId,omitempty"`
+	// UsageStart - The start of the date time range covered by the usage detail.
+	UsageStart *date.Time `json:"usageStart,omitempty"`
+	// UsageEnd - The end of the date time range covered by the usage detail.
+	UsageEnd *date.Time `json:"usageEnd,omitempty"`
+	// InstanceName - The name of the resource instance that the usage is about.
+	InstanceName *string `json:"instanceName,omitempty"`
+	// InstanceID - The uri of the resource instance that the usage is about.
+	InstanceID *string `json:"instanceId,omitempty"`
+	// InstanceLocation - The location of the resource instance that the usage is about.
+	InstanceLocation *string `json:"instanceLocation,omitempty"`
+	// Currency - The ISO currency in which the meter is charged, for example, USD.
+	Currency *string `json:"currency,omitempty"`
+	// UsageQuantity - The quantity of usage.
+	UsageQuantity *decimal.Decimal `json:"usageQuantity,omitempty"`
+	// BillableQuantity - The billable usage quantity.
+	BillableQuantity *decimal.Decimal `json:"billableQuantity,omitempty"`
+	// PretaxCost - The amount of cost before tax.
+	PretaxCost *decimal.Decimal `json:"pretaxCost,omitempty"`
+	// IsEstimated - The estimated usage is subject to change.
+	IsEstimated *bool `json:"isEstimated,omitempty"`
+	// MeterID - The meter id (GUID).
+	MeterID *uuid.UUID `json:"meterId,omitempty"`
+	// MeterDetails - The details about the meter. By default this is not populated, unless it's specified in $expand.
+	MeterDetails *MeterDetails `json:"meterDetails,omitempty"`
+	// SubscriptionGUID - Subscription guid.
+	SubscriptionGUID *uuid.UUID `json:"subscriptionGuid,omitempty"`
+	// SubscriptionName - Subscription name.
+	SubscriptionName *string `json:"subscriptionName,omitempty"`
+	// AccountName - Account name.
+	AccountName *string `json:"accountName,omitempty"`
+	// DepartmentName - Department name.
+	DepartmentName *string `json:"departmentName,omitempty"`
+	// Product - Product name.
+	Product *string `json:"product,omitempty"`
+	// ConsumedService - Consumed service name.
+	ConsumedService *string `json:"consumedService,omitempty"`
+	// CostCenter - The cost center of this department if it is a department and a costcenter exists
+	CostCenter *string `json:"costCenter,omitempty"`
+	// PartNumber - Part Number
+	PartNumber *string `json:"partNumber,omitempty"`
+	// ResourceGUID - Resource Guid
+	ResourceGUID *string `json:"resourceGuid,omitempty"`
+	// OfferID - Offer Id
+	OfferID *string `json:"offerId,omitempty"`
+	// ChargesBilledSeparately - Charges billed separately
+	ChargesBilledSeparately *bool `json:"chargesBilledSeparately,omitempty"`
+	// AdditionalProperties - Additional details of this usage item. By default this is not populated, unless it's specified in $expand.
+	AdditionalProperties *string `json:"additionalProperties,omitempty"`
+}
+
+// UsageDetailsListResult result of listing usage details. It contains a list of available usage details in reverse
+// chronological order by billing period.
+type UsageDetailsListResult struct {
+	autorest.Response `json:"-"`
+	// Value - The list of usage details.
+	Value *[]UsageDetail `json:"value,omitempty"`
+	// NextLink - The link (url) to the next page of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// UsageDetailsListResultIterator provides access to a complete listing of UsageDetail values.
+type UsageDetailsListResultIterator struct {
+	i    int
+	page UsageDetailsListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *UsageDetailsListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter UsageDetailsListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter UsageDetailsListResultIterator) Response() UsageDetailsListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter UsageDetailsListResultIterator) Value() UsageDetail {
+	if !iter.page.NotDone() {
+		return UsageDetail{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (udlr UsageDetailsListResult) IsEmpty() bool {
+	return udlr.Value == nil || len(*udlr.Value) == 0
+}
+
+// usageDetailsListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (udlr UsageDetailsListResult) usageDetailsListResultPreparer() (*http.Request, error) {
+	if udlr.NextLink == nil || len(to.String(udlr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(udlr.NextLink)))
+}
+
+// UsageDetailsListResultPage contains a page of UsageDetail values.
+type UsageDetailsListResultPage struct {
+	fn   func(UsageDetailsListResult) (UsageDetailsListResult, error)
+	udlr UsageDetailsListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *UsageDetailsListResultPage) Next() error {
+	next, err := page.fn(page.udlr)
+	if err != nil {
+		return err
+	}
+	page.udlr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page UsageDetailsListResultPage) NotDone() bool {
+	return !page.udlr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page UsageDetailsListResultPage) Response() UsageDetailsListResult {
+	return page.udlr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page UsageDetailsListResultPage) Values() []UsageDetail {
+	if page.udlr.IsEmpty() {
+		return nil
+	}
+	return *page.udlr.Value
 }

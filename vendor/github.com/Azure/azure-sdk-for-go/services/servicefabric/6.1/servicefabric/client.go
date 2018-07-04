@@ -85,7 +85,7 @@ func (client BaseClient) CancelOperation(ctx context.Context, operationID uuid.U
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CancelOperation", err.Error())
@@ -234,7 +234,7 @@ func (client BaseClient) CommitImageStoreUploadSession(ctx context.Context, sess
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CommitImageStoreUploadSession", err.Error())
@@ -315,7 +315,7 @@ func (client BaseClient) CopyImageStoreContent(ctx context.Context, imageStoreCo
 				{Target: "imageStoreCopyDescription.RemoteDestination", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CopyImageStoreContent", err.Error())
@@ -403,7 +403,7 @@ func (client BaseClient) CreateApplication(ctx context.Context, applicationDescr
 					}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CreateApplication", err.Error())
@@ -486,7 +486,7 @@ func (client BaseClient) CreateComposeDeployment(ctx context.Context, createComp
 				{Target: "createComposeDeploymentDescription.ComposeFileContent", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CreateComposeDeployment", err.Error())
@@ -566,7 +566,7 @@ func (client BaseClient) CreateName(ctx context.Context, nameDescription NameDes
 			Constraints: []validation.Constraint{{Target: "nameDescription.Name", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CreateName", err.Error())
@@ -734,7 +734,7 @@ func (client BaseClient) CreateService(ctx context.Context, applicationID string
 				{Target: "serviceDescription.PartitionDescription", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CreateService", err.Error())
@@ -828,7 +828,7 @@ func (client BaseClient) CreateServiceFromTemplate(ctx context.Context, applicat
 				{Target: "serviceFromTemplateDescription.ServiceTypeName", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "CreateServiceFromTemplate", err.Error())
@@ -922,7 +922,7 @@ func (client BaseClient) DeleteApplication(ctx context.Context, applicationID st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DeleteApplication", err.Error())
@@ -1006,7 +1006,7 @@ func (client BaseClient) DeleteImageStoreContent(ctx context.Context, contentPat
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DeleteImageStoreContent", err.Error())
@@ -1088,7 +1088,7 @@ func (client BaseClient) DeleteImageStoreUploadSession(ctx context.Context, sess
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DeleteImageStoreUploadSession", err.Error())
@@ -1166,7 +1166,7 @@ func (client BaseClient) DeleteName(ctx context.Context, nameID string, timeout 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DeleteName", err.Error())
@@ -1248,7 +1248,7 @@ func (client BaseClient) DeleteProperty(ctx context.Context, nameID string, prop
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DeleteProperty", err.Error())
@@ -1406,7 +1406,7 @@ func (client BaseClient) DeleteService(ctx context.Context, serviceID string, fo
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DeleteService", err.Error())
@@ -1499,7 +1499,7 @@ func (client BaseClient) DeployedServicePackageToNode(ctx context.Context, nodeN
 				{Target: "deployServicePackageToNodeDescription.NodeName", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DeployedServicePackageToNode", err.Error())
@@ -1587,7 +1587,7 @@ func (client BaseClient) DisableNode(ctx context.Context, nodeName string, deact
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "DisableNode", err.Error())
@@ -1671,7 +1671,7 @@ func (client BaseClient) EnableNode(ctx context.Context, nodeName string, timeou
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "EnableNode", err.Error())
@@ -1821,7 +1821,7 @@ func (client BaseClient) GetAadMetadata(ctx context.Context, timeout *int64) (re
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetAadMetadata", err.Error())
@@ -1956,7 +1956,7 @@ func (client BaseClient) GetApplicationHealth(ctx context.Context, applicationID
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationHealth", err.Error())
@@ -2120,7 +2120,7 @@ func (client BaseClient) GetApplicationHealthUsingPolicy(ctx context.Context, ap
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationHealthUsingPolicy", err.Error())
@@ -2234,7 +2234,7 @@ func (client BaseClient) GetApplicationInfo(ctx context.Context, applicationID s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationInfo", err.Error())
@@ -2347,7 +2347,7 @@ func (client BaseClient) GetApplicationInfoList(ctx context.Context, application
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationInfoList", err.Error())
@@ -2452,7 +2452,7 @@ func (client BaseClient) GetApplicationLoadInfo(ctx context.Context, application
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationLoadInfo", err.Error())
@@ -2535,7 +2535,7 @@ func (client BaseClient) GetApplicationManifest(ctx context.Context, application
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationManifest", err.Error())
@@ -2622,7 +2622,7 @@ func (client BaseClient) GetApplicationNameInfo(ctx context.Context, serviceID s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationNameInfo", err.Error())
@@ -2731,7 +2731,7 @@ func (client BaseClient) GetApplicationTypeInfoList(ctx context.Context, applica
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationTypeInfoList", err.Error())
@@ -2851,7 +2851,7 @@ func (client BaseClient) GetApplicationTypeInfoListByName(ctx context.Context, a
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationTypeInfoListByName", err.Error())
@@ -2953,7 +2953,7 @@ func (client BaseClient) GetApplicationUpgrade(ctx context.Context, applicationI
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetApplicationUpgrade", err.Error())
@@ -3049,7 +3049,7 @@ func (client BaseClient) GetChaosReport(ctx context.Context, continuationToken s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetChaosReport", err.Error())
@@ -3137,7 +3137,7 @@ func (client BaseClient) GetClusterConfiguration(ctx context.Context, configurat
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterConfiguration", err.Error())
@@ -3215,7 +3215,7 @@ func (client BaseClient) GetClusterConfigurationUpgradeStatus(ctx context.Contex
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterConfigurationUpgradeStatus", err.Error())
@@ -3356,7 +3356,7 @@ func (client BaseClient) GetClusterHealth(ctx context.Context, nodesHealthStateF
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterHealth", err.Error())
@@ -3460,7 +3460,7 @@ func (client BaseClient) GetClusterHealthChunk(ctx context.Context, timeout *int
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterHealthChunk", err.Error())
@@ -3558,7 +3558,7 @@ func (client BaseClient) GetClusterHealthChunkUsingPolicyAndAdvancedFilters(ctx 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterHealthChunkUsingPolicyAndAdvancedFilters", err.Error())
@@ -3713,7 +3713,7 @@ func (client BaseClient) GetClusterHealthUsingPolicy(ctx context.Context, nodesH
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterHealthUsingPolicy", err.Error())
@@ -3829,7 +3829,7 @@ func (client BaseClient) GetClusterManifest(ctx context.Context, timeout *int64)
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterManifest", err.Error())
@@ -3906,7 +3906,7 @@ func (client BaseClient) GetClusterUpgradeProgress(ctx context.Context, timeout 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetClusterUpgradeProgress", err.Error())
@@ -3985,7 +3985,7 @@ func (client BaseClient) GetComposeDeploymentStatus(ctx context.Context, deploym
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetComposeDeploymentStatus", err.Error())
@@ -4081,7 +4081,7 @@ func (client BaseClient) GetComposeDeploymentStatusList(ctx context.Context, con
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetComposeDeploymentStatusList", err.Error())
@@ -4167,7 +4167,7 @@ func (client BaseClient) GetComposeDeploymentUpgradeProgress(ctx context.Context
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetComposeDeploymentUpgradeProgress", err.Error())
@@ -4259,7 +4259,7 @@ func (client BaseClient) GetContainerLogsDeployedOnNode(ctx context.Context, nod
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetContainerLogsDeployedOnNode", err.Error())
@@ -4353,7 +4353,7 @@ func (client BaseClient) GetDataLossProgress(ctx context.Context, serviceID stri
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDataLossProgress", err.Error())
@@ -4480,7 +4480,7 @@ func (client BaseClient) GetDeployedApplicationHealth(ctx context.Context, nodeN
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedApplicationHealth", err.Error())
@@ -4628,7 +4628,7 @@ func (client BaseClient) GetDeployedApplicationHealthUsingPolicy(ctx context.Con
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedApplicationHealthUsingPolicy", err.Error())
@@ -4744,7 +4744,7 @@ func (client BaseClient) GetDeployedApplicationInfo(ctx context.Context, nodeNam
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedApplicationInfo", err.Error())
@@ -4850,7 +4850,7 @@ func (client BaseClient) GetDeployedApplicationInfoList(ctx context.Context, nod
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}},
 		{TargetValue: maxResults,
@@ -4957,7 +4957,7 @@ func (client BaseClient) GetDeployedCodePackageInfoList(ctx context.Context, nod
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedCodePackageInfoList", err.Error())
@@ -5068,7 +5068,7 @@ func (client BaseClient) GetDeployedServicePackageHealth(ctx context.Context, no
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServicePackageHealth", err.Error())
@@ -5186,7 +5186,7 @@ func (client BaseClient) GetDeployedServicePackageHealthUsingPolicy(ctx context.
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServicePackageHealthUsingPolicy", err.Error())
@@ -5285,7 +5285,7 @@ func (client BaseClient) GetDeployedServicePackageInfoList(ctx context.Context, 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServicePackageInfoList", err.Error())
@@ -5375,7 +5375,7 @@ func (client BaseClient) GetDeployedServicePackageInfoListByName(ctx context.Con
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServicePackageInfoListByName", err.Error())
@@ -5462,7 +5462,7 @@ func (client BaseClient) GetDeployedServiceReplicaDetailInfo(ctx context.Context
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServiceReplicaDetailInfo", err.Error())
@@ -5548,7 +5548,7 @@ func (client BaseClient) GetDeployedServiceReplicaDetailInfoByPartitionID(ctx co
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServiceReplicaDetailInfoByPartitionID", err.Error())
@@ -5641,7 +5641,7 @@ func (client BaseClient) GetDeployedServiceReplicaInfoList(ctx context.Context, 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServiceReplicaInfoList", err.Error())
@@ -5741,7 +5741,7 @@ func (client BaseClient) GetDeployedServiceTypeInfoByName(ctx context.Context, n
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServiceTypeInfoByName", err.Error())
@@ -5837,7 +5837,7 @@ func (client BaseClient) GetDeployedServiceTypeInfoList(ctx context.Context, nod
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetDeployedServiceTypeInfoList", err.Error())
@@ -5935,7 +5935,7 @@ func (client BaseClient) GetFaultOperationList(ctx context.Context, typeFilter i
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetFaultOperationList", err.Error())
@@ -6015,7 +6015,7 @@ func (client BaseClient) GetImageStoreContent(ctx context.Context, contentPath s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetImageStoreContent", err.Error())
@@ -6095,7 +6095,7 @@ func (client BaseClient) GetImageStoreRootContent(ctx context.Context, timeout *
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetImageStoreRootContent", err.Error())
@@ -6174,7 +6174,7 @@ func (client BaseClient) GetImageStoreUploadSessionByID(ctx context.Context, ses
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetImageStoreUploadSessionByID", err.Error())
@@ -6253,7 +6253,7 @@ func (client BaseClient) GetImageStoreUploadSessionByPath(ctx context.Context, c
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetImageStoreUploadSessionByPath", err.Error())
@@ -6334,7 +6334,7 @@ func (client BaseClient) GetNameExistsInfo(ctx context.Context, nameID string, t
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetNameExistsInfo", err.Error())
@@ -6431,7 +6431,7 @@ func (client BaseClient) GetNodeHealth(ctx context.Context, nodeName string, eve
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetNodeHealth", err.Error())
@@ -6537,7 +6537,7 @@ func (client BaseClient) GetNodeHealthUsingPolicy(ctx context.Context, nodeName 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetNodeHealthUsingPolicy", err.Error())
@@ -6629,7 +6629,7 @@ func (client BaseClient) GetNodeInfo(ctx context.Context, nodeName string, timeo
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetNodeInfo", err.Error())
@@ -6717,7 +6717,7 @@ func (client BaseClient) GetNodeInfoList(ctx context.Context, continuationToken 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetNodeInfoList", err.Error())
@@ -6803,7 +6803,7 @@ func (client BaseClient) GetNodeLoadInfo(ctx context.Context, nodeName string, t
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetNodeLoadInfo", err.Error())
@@ -6887,7 +6887,7 @@ func (client BaseClient) GetNodeTransitionProgress(ctx context.Context, nodeName
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetNodeTransitionProgress", err.Error())
@@ -7006,7 +7006,7 @@ func (client BaseClient) GetPartitionHealth(ctx context.Context, partitionID uui
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPartitionHealth", err.Error())
@@ -7147,7 +7147,7 @@ func (client BaseClient) GetPartitionHealthUsingPolicy(ctx context.Context, part
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPartitionHealthUsingPolicy", err.Error())
@@ -7250,7 +7250,7 @@ func (client BaseClient) GetPartitionInfo(ctx context.Context, partitionID uuid.
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPartitionInfo", err.Error())
@@ -7342,7 +7342,7 @@ func (client BaseClient) GetPartitionInfoList(ctx context.Context, serviceID str
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPartitionInfoList", err.Error())
@@ -7428,7 +7428,7 @@ func (client BaseClient) GetPartitionLoadInformation(ctx context.Context, partit
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPartitionLoadInformation", err.Error())
@@ -7517,7 +7517,7 @@ func (client BaseClient) GetPartitionRestartProgress(ctx context.Context, servic
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPartitionRestartProgress", err.Error())
@@ -7602,7 +7602,7 @@ func (client BaseClient) GetPropertyInfo(ctx context.Context, nameID string, pro
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPropertyInfo", err.Error())
@@ -7693,7 +7693,7 @@ func (client BaseClient) GetPropertyInfoList(ctx context.Context, nameID string,
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetPropertyInfoList", err.Error())
@@ -7784,7 +7784,7 @@ func (client BaseClient) GetProvisionedFabricCodeVersionInfoList(ctx context.Con
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetProvisionedFabricCodeVersionInfoList", err.Error())
@@ -7866,7 +7866,7 @@ func (client BaseClient) GetProvisionedFabricConfigVersionInfoList(ctx context.C
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetProvisionedFabricConfigVersionInfoList", err.Error())
@@ -7954,7 +7954,7 @@ func (client BaseClient) GetQuorumLossProgress(ctx context.Context, serviceID st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetQuorumLossProgress", err.Error())
@@ -8134,7 +8134,7 @@ func (client BaseClient) GetReplicaHealth(ctx context.Context, partitionID uuid.
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetReplicaHealth", err.Error())
@@ -8247,7 +8247,7 @@ func (client BaseClient) GetReplicaHealthUsingPolicy(ctx context.Context, partit
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetReplicaHealthUsingPolicy", err.Error())
@@ -8346,7 +8346,7 @@ func (client BaseClient) GetReplicaInfo(ctx context.Context, partitionID uuid.UU
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetReplicaInfo", err.Error())
@@ -8437,7 +8437,7 @@ func (client BaseClient) GetReplicaInfoList(ctx context.Context, partitionID uui
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetReplicaInfoList", err.Error())
@@ -8526,7 +8526,7 @@ func (client BaseClient) GetServiceDescription(ctx context.Context, serviceID st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceDescription", err.Error())
@@ -8650,7 +8650,7 @@ func (client BaseClient) GetServiceHealth(ctx context.Context, serviceID string,
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceHealth", err.Error())
@@ -8796,7 +8796,7 @@ func (client BaseClient) GetServiceHealthUsingPolicy(ctx context.Context, servic
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceHealthUsingPolicy", err.Error())
@@ -8907,7 +8907,7 @@ func (client BaseClient) GetServiceInfo(ctx context.Context, applicationID strin
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceInfo", err.Error())
@@ -9000,7 +9000,7 @@ func (client BaseClient) GetServiceInfoList(ctx context.Context, applicationID s
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceInfoList", err.Error())
@@ -9091,7 +9091,7 @@ func (client BaseClient) GetServiceManifest(ctx context.Context, applicationType
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceManifest", err.Error())
@@ -9174,7 +9174,7 @@ func (client BaseClient) GetServiceNameInfo(ctx context.Context, partitionID uui
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceNameInfo", err.Error())
@@ -9259,7 +9259,7 @@ func (client BaseClient) GetServiceTypeInfoList(ctx context.Context, application
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetServiceTypeInfoList", err.Error())
@@ -9349,7 +9349,7 @@ func (client BaseClient) GetSubNameInfoList(ctx context.Context, nameID string, 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetSubNameInfoList", err.Error())
@@ -9438,7 +9438,7 @@ func (client BaseClient) GetUpgradeOrchestrationServiceState(ctx context.Context
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "GetUpgradeOrchestrationServiceState", err.Error())
@@ -9525,7 +9525,7 @@ func (client BaseClient) InvokeInfrastructureCommand(ctx context.Context, comman
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "InvokeInfrastructureCommand", err.Error())
@@ -9616,7 +9616,7 @@ func (client BaseClient) InvokeInfrastructureQuery(ctx context.Context, command 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "InvokeInfrastructureQuery", err.Error())
@@ -9703,7 +9703,7 @@ func (client BaseClient) ProvisionApplicationType(ctx context.Context, provision
 			Constraints: []validation.Constraint{{Target: "provisionApplicationTypeDescriptionBaseRequiredBodyParam.Async", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ProvisionApplicationType", err.Error())
@@ -9781,7 +9781,7 @@ func (client BaseClient) ProvisionCluster(ctx context.Context, provisionFabricDe
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ProvisionCluster", err.Error())
@@ -9863,7 +9863,7 @@ func (client BaseClient) PutProperty(ctx context.Context, nameID string, propert
 				{Target: "propertyDescription.Value", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "PutProperty", err.Error())
@@ -9947,7 +9947,7 @@ func (client BaseClient) RecoverAllPartitions(ctx context.Context, timeout *int6
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RecoverAllPartitions", err.Error())
@@ -10025,7 +10025,7 @@ func (client BaseClient) RecoverPartition(ctx context.Context, partitionID uuid.
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RecoverPartition", err.Error())
@@ -10111,7 +10111,7 @@ func (client BaseClient) RecoverServicePartitions(ctx context.Context, serviceID
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RecoverServicePartitions", err.Error())
@@ -10192,7 +10192,7 @@ func (client BaseClient) RecoverSystemPartitions(ctx context.Context, timeout *i
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RecoverSystemPartitions", err.Error())
@@ -10268,7 +10268,7 @@ func (client BaseClient) RemoveComposeDeployment(ctx context.Context, deployment
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RemoveComposeDeployment", err.Error())
@@ -10353,7 +10353,7 @@ func (client BaseClient) RemoveNodeState(ctx context.Context, nodeName string, t
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RemoveNodeState", err.Error())
@@ -10443,7 +10443,7 @@ func (client BaseClient) RemoveReplica(ctx context.Context, nodeName string, par
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RemoveReplica", err.Error())
@@ -10555,7 +10555,7 @@ func (client BaseClient) ReportApplicationHealth(ctx context.Context, applicatio
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportApplicationHealth", err.Error())
@@ -10664,7 +10664,7 @@ func (client BaseClient) ReportClusterHealth(ctx context.Context, healthInformat
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportClusterHealth", err.Error())
@@ -10775,7 +10775,7 @@ func (client BaseClient) ReportDeployedApplicationHealth(ctx context.Context, no
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportDeployedApplicationHealth", err.Error())
@@ -10893,7 +10893,7 @@ func (client BaseClient) ReportDeployedServicePackageHealth(ctx context.Context,
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportDeployedServicePackageHealth", err.Error())
@@ -11005,7 +11005,7 @@ func (client BaseClient) ReportNodeHealth(ctx context.Context, nodeName string, 
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportNodeHealth", err.Error())
@@ -11115,7 +11115,7 @@ func (client BaseClient) ReportPartitionHealth(ctx context.Context, partitionID 
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportPartitionHealth", err.Error())
@@ -11228,7 +11228,7 @@ func (client BaseClient) ReportReplicaHealth(ctx context.Context, partitionID uu
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportReplicaHealth", err.Error())
@@ -11344,7 +11344,7 @@ func (client BaseClient) ReportServiceHealth(ctx context.Context, serviceID stri
 				{Target: "healthInformation.Property", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ReportServiceHealth", err.Error())
@@ -11431,7 +11431,7 @@ func (client BaseClient) ResetPartitionLoad(ctx context.Context, partitionID uui
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ResetPartitionLoad", err.Error())
@@ -11527,7 +11527,7 @@ func (client BaseClient) ResolveService(ctx context.Context, serviceID string, p
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ResolveService", err.Error())
@@ -11629,7 +11629,7 @@ func (client BaseClient) RestartDeployedCodePackage(ctx context.Context, nodeNam
 				{Target: "restartDeployedCodePackageDescription.CodePackageInstanceID", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RestartDeployedCodePackage", err.Error())
@@ -11716,7 +11716,7 @@ func (client BaseClient) RestartNode(ctx context.Context, nodeName string, resta
 			Constraints: []validation.Constraint{{Target: "restartNodeDescription.NodeInstanceID", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RestartNode", err.Error())
@@ -11802,7 +11802,7 @@ func (client BaseClient) RestartReplica(ctx context.Context, nodeName string, pa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RestartReplica", err.Error())
@@ -11893,7 +11893,7 @@ func (client BaseClient) ResumeApplicationUpgrade(ctx context.Context, applicati
 			Constraints: []validation.Constraint{{Target: "resumeApplicationUpgradeDescription.UpgradeDomainName", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ResumeApplicationUpgrade", err.Error())
@@ -11978,7 +11978,7 @@ func (client BaseClient) ResumeClusterUpgrade(ctx context.Context, resumeCluster
 			Constraints: []validation.Constraint{{Target: "resumeClusterUpgradeDescription.UpgradeDomain", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "ResumeClusterUpgrade", err.Error())
@@ -12063,7 +12063,7 @@ func (client BaseClient) RollbackApplicationUpgrade(ctx context.Context, applica
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RollbackApplicationUpgrade", err.Error())
@@ -12142,7 +12142,7 @@ func (client BaseClient) RollbackClusterUpgrade(ctx context.Context, timeout *in
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "RollbackClusterUpgrade", err.Error())
@@ -12219,7 +12219,7 @@ func (client BaseClient) SetUpgradeOrchestrationServiceState(ctx context.Context
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "SetUpgradeOrchestrationServiceState", err.Error())
@@ -12308,7 +12308,7 @@ func (client BaseClient) StartApplicationUpgrade(ctx context.Context, applicatio
 				{Target: "applicationUpgradeDescription.Parameters", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartApplicationUpgrade", err.Error())
@@ -12394,24 +12394,24 @@ func (client BaseClient) StartChaos(ctx context.Context, chaosParameters ChaosPa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: chaosParameters,
 			Constraints: []validation.Constraint{{Target: "chaosParameters.MaxClusterStabilizationTimeoutInSeconds", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "chaosParameters.MaxClusterStabilizationTimeoutInSeconds", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "chaosParameters.MaxClusterStabilizationTimeoutInSeconds", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "chaosParameters.MaxClusterStabilizationTimeoutInSeconds", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}},
 				{Target: "chaosParameters.MaxConcurrentFaults", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "chaosParameters.MaxConcurrentFaults", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+					Chain: []validation.Constraint{{Target: "chaosParameters.MaxConcurrentFaults", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 						{Target: "chaosParameters.MaxConcurrentFaults", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 					}},
 				{Target: "chaosParameters.WaitTimeBetweenFaultsInSeconds", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "chaosParameters.WaitTimeBetweenFaultsInSeconds", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+					Chain: []validation.Constraint{{Target: "chaosParameters.WaitTimeBetweenFaultsInSeconds", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 						{Target: "chaosParameters.WaitTimeBetweenFaultsInSeconds", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 					}},
 				{Target: "chaosParameters.WaitTimeBetweenIterationsInSeconds", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "chaosParameters.WaitTimeBetweenIterationsInSeconds", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+					Chain: []validation.Constraint{{Target: "chaosParameters.WaitTimeBetweenIterationsInSeconds", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 						{Target: "chaosParameters.WaitTimeBetweenIterationsInSeconds", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 					}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartChaos", err.Error())
@@ -12492,7 +12492,7 @@ func (client BaseClient) StartClusterConfigurationUpgrade(ctx context.Context, c
 			Constraints: []validation.Constraint{{Target: "clusterConfigurationUpgradeDescription.ClusterConfig", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartClusterConfigurationUpgrade", err.Error())
@@ -12572,17 +12572,17 @@ func (client BaseClient) StartClusterUpgrade(ctx context.Context, startClusterUp
 		{TargetValue: startClusterUpgradeDescription,
 			Constraints: []validation.Constraint{{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
+					Chain: []validation.Constraint{{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: int64(100), Chain: nil},
 						{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 					}},
 					{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.Null, Rule: false,
-						Chain: []validation.Constraint{{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
+						Chain: []validation.Constraint{{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: int64(100), Chain: nil},
 							{Target: "startClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 						}},
 				}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartClusterUpgrade", err.Error())
@@ -12665,7 +12665,7 @@ func (client BaseClient) StartComposeDeploymentUpgrade(ctx context.Context, depl
 				{Target: "composeDeploymentUpgradeDescription.ComposeFileContent", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartComposeDeploymentUpgrade", err.Error())
@@ -12771,7 +12771,7 @@ func (client BaseClient) StartDataLoss(ctx context.Context, serviceID string, pa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartDataLoss", err.Error())
@@ -12867,7 +12867,7 @@ func (client BaseClient) StartNodeTransition(ctx context.Context, nodeName strin
 			Constraints: []validation.Constraint{{Target: "stopDurationInSeconds", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartNodeTransition", err.Error())
@@ -12963,7 +12963,7 @@ func (client BaseClient) StartPartitionRestart(ctx context.Context, serviceID st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartPartitionRestart", err.Error())
@@ -13064,7 +13064,7 @@ func (client BaseClient) StartQuorumLoss(ctx context.Context, serviceID string, 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StartQuorumLoss", err.Error())
@@ -13147,7 +13147,7 @@ func (client BaseClient) StopChaos(ctx context.Context, timeout *int64) (result 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "StopChaos", err.Error())
@@ -13224,7 +13224,7 @@ func (client BaseClient) SubmitPropertyBatch(ctx context.Context, nameID string,
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "SubmitPropertyBatch", err.Error())
@@ -13313,7 +13313,7 @@ func (client BaseClient) UnprovisionApplicationType(ctx context.Context, applica
 			Constraints: []validation.Constraint{{Target: "unprovisionApplicationTypeDescriptionInfo.ApplicationTypeVersion", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "UnprovisionApplicationType", err.Error())
@@ -13396,7 +13396,7 @@ func (client BaseClient) UnprovisionCluster(ctx context.Context, unprovisionFabr
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "UnprovisionCluster", err.Error())
@@ -13483,7 +13483,7 @@ func (client BaseClient) UpdateApplicationUpgrade(ctx context.Context, applicati
 			Constraints: []validation.Constraint{{Target: "applicationUpgradeUpdateDescription.Name", Name: validation.Null, Rule: true, Chain: nil}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "UpdateApplicationUpgrade", err.Error())
@@ -13566,17 +13566,17 @@ func (client BaseClient) UpdateClusterUpgrade(ctx context.Context, updateCluster
 		{TargetValue: updateClusterUpgradeDescription,
 			Constraints: []validation.Constraint{{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
+					Chain: []validation.Constraint{{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: int64(100), Chain: nil},
 						{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentDeltaUnhealthyNodes", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 					}},
 					{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.Null, Rule: false,
-						Chain: []validation.Constraint{{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: 100, Chain: nil},
+						Chain: []validation.Constraint{{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.InclusiveMaximum, Rule: int64(100), Chain: nil},
 							{Target: "updateClusterUpgradeDescription.ClusterUpgradeHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 						}},
 				}}}},
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "UpdateClusterUpgrade", err.Error())
@@ -13803,7 +13803,7 @@ func (client BaseClient) UpdateService(ctx context.Context, serviceID string, se
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "UpdateService", err.Error())
@@ -13891,7 +13891,7 @@ func (client BaseClient) UploadFile(ctx context.Context, contentPath string, tim
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "UploadFile", err.Error())
@@ -13983,7 +13983,7 @@ func (client BaseClient) UploadFileChunk(ctx context.Context, contentPath string
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: timeout,
 			Constraints: []validation.Constraint{{Target: "timeout", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+				Chain: []validation.Constraint{{Target: "timeout", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 					{Target: "timeout", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("servicefabric.BaseClient", "UploadFileChunk", err.Error())

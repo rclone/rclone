@@ -138,8 +138,8 @@ func (client ScriptExecutionHistoryClient) ListComplete(ctx context.Context, res
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // clusterName - the name of the cluster.
-// scriptExecutionID - the script execution ID.
-func (client ScriptExecutionHistoryClient) Promote(ctx context.Context, resourceGroupName string, clusterName string, scriptExecutionID int64) (result autorest.Response, err error) {
+// scriptExecutionID - the script execution Id
+func (client ScriptExecutionHistoryClient) Promote(ctx context.Context, resourceGroupName string, clusterName string, scriptExecutionID string) (result autorest.Response, err error) {
 	req, err := client.PromotePreparer(ctx, resourceGroupName, clusterName, scriptExecutionID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "hdinsight.ScriptExecutionHistoryClient", "Promote", nil, "Failure preparing request")
@@ -162,7 +162,7 @@ func (client ScriptExecutionHistoryClient) Promote(ctx context.Context, resource
 }
 
 // PromotePreparer prepares the Promote request.
-func (client ScriptExecutionHistoryClient) PromotePreparer(ctx context.Context, resourceGroupName string, clusterName string, scriptExecutionID int64) (*http.Request, error) {
+func (client ScriptExecutionHistoryClient) PromotePreparer(ctx context.Context, resourceGroupName string, clusterName string, scriptExecutionID string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"clusterName":       autorest.Encode("path", clusterName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),

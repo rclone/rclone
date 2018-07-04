@@ -69,7 +69,7 @@ type Assignment struct {
 	Type *string `json:"type,omitempty"`
 	// Name - The name of the policy assignment.
 	Name *string `json:"name,omitempty"`
-	// Sku - The policy sku.
+	// Sku - The policy sku. This property is optional, obsolete, and will be ignored.
 	Sku *Sku `json:"sku,omitempty"`
 }
 
@@ -260,7 +260,7 @@ func (page AssignmentListResultPage) Values() []Assignment {
 type AssignmentProperties struct {
 	// DisplayName - The display name of the policy assignment.
 	DisplayName *string `json:"displayName,omitempty"`
-	// PolicyDefinitionID - The ID of the policy definition.
+	// PolicyDefinitionID - The ID of the policy definition or policy set definition being assigned.
 	PolicyDefinitionID *string `json:"policyDefinitionId,omitempty"`
 	// Scope - The scope for the policy assignment.
 	Scope *string `json:"scope,omitempty"`
@@ -484,8 +484,8 @@ type DefinitionReference struct {
 	Parameters interface{} `json:"parameters,omitempty"`
 }
 
-// ErrorResponse error reponse indicates ARM is not able to process the incoming request. The reason is provided in
-// the error message.
+// ErrorResponse error reponse indicates Azure Resource Manager is not able to process the incoming request. The
+// reason is provided in the error message.
 type ErrorResponse struct {
 	// HTTPStatus - Http status code.
 	HTTPStatus *string `json:"httpStatus,omitempty"`
@@ -695,7 +695,7 @@ type SetDefinitionProperties struct {
 	PolicyDefinitions *[]DefinitionReference `json:"policyDefinitions,omitempty"`
 }
 
-// Sku the policy sku.
+// Sku the policy sku. This property is optional, obsolete, and will be ignored.
 type Sku struct {
 	// Name - The name of the policy sku. Possible values are A0 and A1.
 	Name *string `json:"name,omitempty"`

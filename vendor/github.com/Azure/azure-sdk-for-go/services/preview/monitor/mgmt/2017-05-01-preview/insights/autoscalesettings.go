@@ -345,6 +345,96 @@ func (client AutoscaleSettingsClient) ListByResourceGroupComplete(ctx context.Co
 	return
 }
 
+// ListBySubscription lists the autoscale settings for a subscription
+func (client AutoscaleSettingsClient) ListBySubscription(ctx context.Context) (result AutoscaleSettingResourceCollectionPage, err error) {
+	result.fn = client.listBySubscriptionNextResults
+	req, err := client.ListBySubscriptionPreparer(ctx)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.AutoscaleSettingsClient", "ListBySubscription", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListBySubscriptionSender(req)
+	if err != nil {
+		result.asrc.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "insights.AutoscaleSettingsClient", "ListBySubscription", resp, "Failure sending request")
+		return
+	}
+
+	result.asrc, err = client.ListBySubscriptionResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.AutoscaleSettingsClient", "ListBySubscription", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListBySubscriptionPreparer prepares the ListBySubscription request.
+func (client AutoscaleSettingsClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2015-04-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/microsoft.insights/autoscalesettings", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListBySubscriptionSender sends the ListBySubscription request. The method will close the
+// http.Response Body if it receives an error.
+func (client AutoscaleSettingsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
+// closes the http.Response Body.
+func (client AutoscaleSettingsClient) ListBySubscriptionResponder(resp *http.Response) (result AutoscaleSettingResourceCollection, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// listBySubscriptionNextResults retrieves the next set of results, if any.
+func (client AutoscaleSettingsClient) listBySubscriptionNextResults(lastResults AutoscaleSettingResourceCollection) (result AutoscaleSettingResourceCollection, err error) {
+	req, err := lastResults.autoscaleSettingResourceCollectionPreparer()
+	if err != nil {
+		return result, autorest.NewErrorWithError(err, "insights.AutoscaleSettingsClient", "listBySubscriptionNextResults", nil, "Failure preparing next results request")
+	}
+	if req == nil {
+		return
+	}
+	resp, err := client.ListBySubscriptionSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		return result, autorest.NewErrorWithError(err, "insights.AutoscaleSettingsClient", "listBySubscriptionNextResults", resp, "Failure sending next results request")
+	}
+	result, err = client.ListBySubscriptionResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.AutoscaleSettingsClient", "listBySubscriptionNextResults", resp, "Failure responding to next results request")
+	}
+	return
+}
+
+// ListBySubscriptionComplete enumerates all values, automatically crossing page boundaries as required.
+func (client AutoscaleSettingsClient) ListBySubscriptionComplete(ctx context.Context) (result AutoscaleSettingResourceCollectionIterator, err error) {
+	result.page, err = client.ListBySubscription(ctx)
+	return
+}
+
 // Update updates an existing AutoscaleSettingsResource. To update other fields use the CreateOrUpdate method.
 // Parameters:
 // resourceGroupName - the name of the resource group.

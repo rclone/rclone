@@ -1,6 +1,6 @@
 // Package eventhub implements the Azure ARM Eventhub service API version 2018-01-01-preview.
 //
-// Azure Event Hubs Cluster client for managing Event Hubs Cluster resources.
+// Azure Event Hubs client for managing Event Hubs Cluster, IPFilter Rules and VirtualNetworkRules resources.
 package eventhub
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -21,7 +21,7 @@ package insights
 
 import original "github.com/Azure/azure-sdk-for-go/services/appinsights/mgmt/2015-05-01/insights"
 
-type AnalyticsItemClient = original.AnalyticsItemClient
+type AnalyticsItemsClient = original.AnalyticsItemsClient
 type AnnotationsClient = original.AnnotationsClient
 type APIKeysClient = original.APIKeysClient
 
@@ -36,7 +36,6 @@ type ComponentFeatureCapabilitiesClient = original.ComponentFeatureCapabilitiesC
 type ComponentQuotaStatusClient = original.ComponentQuotaStatusClient
 type ComponentsClient = original.ComponentsClient
 type ExportConfigurationsClient = original.ExportConfigurationsClient
-type FavoriteClient = original.FavoriteClient
 type FavoritesClient = original.FavoritesClient
 type ApplicationType = original.ApplicationType
 
@@ -142,6 +141,7 @@ const (
 
 type Annotation = original.Annotation
 type AnnotationError = original.AnnotationError
+type AnnotationsListResult = original.AnnotationsListResult
 type APIKeyRequest = original.APIKeyRequest
 type ApplicationInsightsComponent = original.ApplicationInsightsComponent
 type ApplicationInsightsComponentAnalyticsItem = original.ApplicationInsightsComponentAnalyticsItem
@@ -170,7 +170,7 @@ type ComponentPurgeBody = original.ComponentPurgeBody
 type ComponentPurgeBodyFilters = original.ComponentPurgeBodyFilters
 type ComponentPurgeResponse = original.ComponentPurgeResponse
 type ComponentPurgeStatusResponse = original.ComponentPurgeStatusResponse
-type ComponentsPurgeFuture = original.ComponentsPurgeFuture
+type ComponentsResource = original.ComponentsResource
 type ErrorFieldContract = original.ErrorFieldContract
 type ErrorResponse = original.ErrorResponse
 type InnerError = original.InnerError
@@ -180,13 +180,11 @@ type ListApplicationInsightsComponentAnalyticsItem = original.ListApplicationIns
 type ListApplicationInsightsComponentExportConfiguration = original.ListApplicationInsightsComponentExportConfiguration
 type ListApplicationInsightsComponentFavorite = original.ListApplicationInsightsComponentFavorite
 type ListApplicationInsightsComponentProactiveDetectionConfiguration = original.ListApplicationInsightsComponentProactiveDetectionConfiguration
-type ListWorkItemConfiguration = original.ListWorkItemConfiguration
 type Operation = original.Operation
 type OperationDisplay = original.OperationDisplay
 type OperationListResult = original.OperationListResult
 type OperationListResultIterator = original.OperationListResultIterator
 type OperationListResultPage = original.OperationListResultPage
-type Resource = original.Resource
 type SetObject = original.SetObject
 type TagsResource = original.TagsResource
 type WebTest = original.WebTest
@@ -196,26 +194,28 @@ type WebTestListResultIterator = original.WebTestListResultIterator
 type WebTestListResultPage = original.WebTestListResultPage
 type WebTestProperties = original.WebTestProperties
 type WebTestPropertiesConfiguration = original.WebTestPropertiesConfiguration
+type WebtestsResource = original.WebtestsResource
 type Workbook = original.Workbook
 type WorkbookError = original.WorkbookError
 type WorkbookProperties = original.WorkbookProperties
-type Workbooks = original.Workbooks
+type WorkbookResource = original.WorkbookResource
+type WorkbooksListResult = original.WorkbooksListResult
 type WorkItemConfiguration = original.WorkItemConfiguration
 type WorkItemConfigurationError = original.WorkItemConfigurationError
+type WorkItemConfigurationsListResult = original.WorkItemConfigurationsListResult
 type WorkItemCreateConfiguration = original.WorkItemCreateConfiguration
 type OperationsClient = original.OperationsClient
 type ProactiveDetectionConfigurationsClient = original.ProactiveDetectionConfigurationsClient
 type WebTestLocationsClient = original.WebTestLocationsClient
 type WebTestsClient = original.WebTestsClient
-type WorkbookClient = original.WorkbookClient
 type WorkbooksClient = original.WorkbooksClient
 type WorkItemConfigurationsClient = original.WorkItemConfigurationsClient
 
-func NewAnalyticsItemClient(subscriptionID string) AnalyticsItemClient {
-	return original.NewAnalyticsItemClient(subscriptionID)
+func NewAnalyticsItemsClient(subscriptionID string) AnalyticsItemsClient {
+	return original.NewAnalyticsItemsClient(subscriptionID)
 }
-func NewAnalyticsItemClientWithBaseURI(baseURI string, subscriptionID string) AnalyticsItemClient {
-	return original.NewAnalyticsItemClientWithBaseURI(baseURI, subscriptionID)
+func NewAnalyticsItemsClientWithBaseURI(baseURI string, subscriptionID string) AnalyticsItemsClient {
+	return original.NewAnalyticsItemsClientWithBaseURI(baseURI, subscriptionID)
 }
 func NewAnnotationsClient(subscriptionID string) AnnotationsClient {
 	return original.NewAnnotationsClient(subscriptionID)
@@ -270,12 +270,6 @@ func NewExportConfigurationsClient(subscriptionID string) ExportConfigurationsCl
 }
 func NewExportConfigurationsClientWithBaseURI(baseURI string, subscriptionID string) ExportConfigurationsClient {
 	return original.NewExportConfigurationsClientWithBaseURI(baseURI, subscriptionID)
-}
-func NewFavoriteClient(subscriptionID string) FavoriteClient {
-	return original.NewFavoriteClient(subscriptionID)
-}
-func NewFavoriteClientWithBaseURI(baseURI string, subscriptionID string) FavoriteClient {
-	return original.NewFavoriteClientWithBaseURI(baseURI, subscriptionID)
 }
 func NewFavoritesClient(subscriptionID string) FavoritesClient {
 	return original.NewFavoritesClient(subscriptionID)
@@ -351,12 +345,6 @@ func NewWebTestsClient(subscriptionID string) WebTestsClient {
 }
 func NewWebTestsClientWithBaseURI(baseURI string, subscriptionID string) WebTestsClient {
 	return original.NewWebTestsClientWithBaseURI(baseURI, subscriptionID)
-}
-func NewWorkbookClient(subscriptionID string) WorkbookClient {
-	return original.NewWorkbookClient(subscriptionID)
-}
-func NewWorkbookClientWithBaseURI(baseURI string, subscriptionID string) WorkbookClient {
-	return original.NewWorkbookClientWithBaseURI(baseURI, subscriptionID)
 }
 func NewWorkbooksClient(subscriptionID string) WorkbooksClient {
 	return original.NewWorkbooksClient(subscriptionID)

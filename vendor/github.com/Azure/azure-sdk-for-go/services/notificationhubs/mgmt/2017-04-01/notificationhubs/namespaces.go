@@ -47,8 +47,7 @@ func NewNamespacesClientWithBaseURI(baseURI string, subscriptionID string) Names
 func (client NamespacesClient) CheckAvailability(ctx context.Context, parameters CheckAvailabilityParameters) (result CheckAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
-			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
-				{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("notificationhubs.NamespacesClient", "CheckAvailability", err.Error())
 	}
 

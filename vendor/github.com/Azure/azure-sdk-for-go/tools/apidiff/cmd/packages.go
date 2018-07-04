@@ -63,15 +63,16 @@ func thePackagesCmd(args []string) (rpt CommitPkgsReport, err error) {
 
 	rpt.CommitsReports = map[string]pkgsReport{}
 	worker := func(rootDir string, cloneRepo repo.WorkingTree, baseCommit, targetCommit string) error {
+		vprintf("generating diff between %s and %s\n", baseCommit, targetCommit)
 		// get for lhs
-		vprintf("checking out base commit %s and gathering exports\n", baseCommit)
+		dprintf("checking out base commit %s and gathering exports\n", baseCommit)
 		lhs, err := getRepoContentForCommit(cloneRepo, rootDir, baseCommit)
 		if err != nil {
 			return err
 		}
 
 		// get for rhs
-		vprintf("checking out target commit %s and gathering exports\n", targetCommit)
+		dprintf("checking out target commit %s and gathering exports\n", targetCommit)
 		var rhs repoContent
 		rhs, err = getRepoContentForCommit(cloneRepo, rootDir, targetCommit)
 		if err != nil {
@@ -129,59 +130,53 @@ func getRepoContentForCommit(wt repo.WorkingTree, dir, commit string) (r repoCon
 	if err != nil {
 		return
 	}
-	if verboseFlag {
+	if debugFlag {
 		fmt.Println("found the following package directories")
 		for _, d := range pkgDirs {
 			fmt.Printf("\t%s\n", d)
 		}
 	}
 
-	r, err = getExportsForPackages(pkgDirs)
+	r, err = getExportsForPackages(wt.Root(), pkgDirs)
 	if err != nil {
 		err = fmt.Errorf("failed to get exports for commit '%s': %s", commit, err)
 	}
 	return
 }
 
-// contains repo content, it's structured as "package":"apiversion":content
-type repoContent map[string]map[string]exports.Content
+// contains repo content, it's structured as "package path":content
+type repoContent map[string]exports.Content
 
 // returns repoContent based on the provided slice of package directories
-func getExportsForPackages(pkgDirs []string) (repoContent, error) {
+func getExportsForPackages(root string, pkgDirs []string) (repoContent, error) {
 	exps := repoContent{}
 	for _, pkgDir := range pkgDirs {
-		vprintf("getting exports for %s\n", pkgDir)
-		// pkgDir = "D:\work\src\github.com\Azure\azure-sdk-for-go\services\analysisservices\mgmt\2016-05-16\analysisservices"
-		// we want ver = "2016-05-16", pkg = "analysisservices"
-		i := strings.LastIndexByte(pkgDir, os.PathSeparator)
-		j := strings.LastIndexByte(pkgDir[:i], os.PathSeparator)
-		ver := pkgDir[j+1 : j+(i-j)]
-		pkg := pkgDir[i+1:]
-
-		if _, ok := exps[pkg]; !ok {
-			exps[pkg] = map[string]exports.Content{}
+		dprintf("getting exports for %s\n", pkgDir)
+		// pkgDir = "C:\Users\somebody\AppData\Local\Temp\apidiff-1529437978\services\addons\mgmt\2017-05-15\addons"
+		// convert to package path "github.com/Azure/azure-sdk-for-go/services/analysisservices/mgmt/2016-05-16/analysisservices"
+		pkgPath := strings.Replace(pkgDir, root, "github.com/Azure/azure-sdk-for-go", -1)
+		pkgPath = strings.Replace(pkgPath, string(os.PathSeparator), "/", -1)
+		if _, ok := exps[pkgPath]; ok {
+			return nil, fmt.Errorf("duplicate package: %s", pkgPath)
 		}
-
-		if _, ok := exps[pkg][ver]; !ok {
-			exp, err := exports.Get(pkgDir)
-			if err != nil {
-				return nil, err
-			}
-			exps[pkg][ver] = exp
+		exp, err := exports.Get(pkgDir)
+		if err != nil {
+			return nil, err
 		}
+		exps[pkgPath] = exp
 	}
 	return exps, nil
 }
 
-// contains a collection of packages, it's structured as "package":{"apiver1", "apiver2",...}
-type pkgsList map[string][]string
+// contains a collection of packages
+type pkgsList []string
 
-// contains a collection of package reports, it's structured as "package":"apiversion":pkgReport
-type modifiedPackages map[string]map[string]pkgReport
+// contains a collection of package reports, it's structured as "package path":pkgReport
+type modifiedPackages map[string]pkgReport
 
 // CommitPkgsReport represents a collection of reports, one for each commit hash.
 type CommitPkgsReport struct {
-	AffectedPackages pkgsList              `json:"affectedPackages"`
+	AffectedPackages map[string]pkgsList   `json:"affectedPackages"`
 	BreakingChanges  []string              `json:"breakingChanges,omitempty"`
 	CommitsReports   map[string]pkgsReport `json:"deltas"`
 }
@@ -219,25 +214,19 @@ func (c CommitPkgsReport) hasAdditiveChanges() bool {
 // updates the collection of affected packages with the packages that were touched in the specified commit
 func (c *CommitPkgsReport) updateAffectedPackages(commit string, r pkgsReport) {
 	if c.AffectedPackages == nil {
-		c.AffectedPackages = map[string][]string{}
+		c.AffectedPackages = map[string]pkgsList{}
 	}
 
-	for pkgName, apiVers := range r.AddedPackages {
-		for _, apiVer := range apiVers {
-			c.AffectedPackages[commit] = append(c.AffectedPackages[commit], fmt.Sprintf("%s/%s", pkgName, apiVer))
-		}
+	for _, pkg := range r.AddedPackages {
+		c.AffectedPackages[commit] = append(c.AffectedPackages[commit], pkg)
 	}
 
-	for pkgName, apiVers := range r.ModifiedPackages {
-		for apiVer := range apiVers {
-			c.AffectedPackages[commit] = append(c.AffectedPackages[commit], fmt.Sprintf("%s/%s", pkgName, apiVer))
-		}
+	for pkgName := range r.ModifiedPackages {
+		c.AffectedPackages[commit] = append(c.AffectedPackages[commit], pkgName)
 	}
 
-	for pkgName, apiVers := range r.RemovedPackages {
-		for _, apiVer := range apiVers {
-			c.AffectedPackages[commit] = append(c.AffectedPackages[commit], fmt.Sprintf("%s/%s", pkgName, apiVer))
-		}
+	for _, pkg := range r.RemovedPackages {
+		c.AffectedPackages[commit] = append(c.AffectedPackages[commit], pkg)
 	}
 }
 
@@ -277,30 +266,22 @@ func getPkgsReport(lhs, rhs repoContent) pkgsReport {
 	}
 
 	// diff packages
-	for rhsK, rhsV := range rhs {
-		if _, ok := lhs[rhsK]; !ok {
+	for rhsPkg, rhsCnt := range rhs {
+		if _, ok := lhs[rhsPkg]; !ok {
 			continue
 		}
-		for rhsAPI, rhsCnt := range rhsV {
-			if _, ok := lhs[rhsK][rhsAPI]; !ok {
-				continue
+		if r := getPkgReport(lhs[rhsPkg], rhsCnt); !r.isEmpty() {
+			if r.hasBreakingChanges() {
+				report.modPkgHasBreaking = true
 			}
-			if r := getPkgReport(lhs[rhsK][rhsAPI], rhsCnt); !r.isEmpty() {
-				if r.hasBreakingChanges() {
-					report.modPkgHasBreaking = true
-				}
-				if r.hasAdditiveChanges() {
-					report.modPkgHasAdditions = true
-				}
-				// only add an entry if the report contains data
-				if report.ModifiedPackages == nil {
-					report.ModifiedPackages = modifiedPackages{}
-				}
-				if _, ok := report.ModifiedPackages[rhsK]; !ok {
-					report.ModifiedPackages[rhsK] = map[string]pkgReport{}
-				}
-				report.ModifiedPackages[rhsK][rhsAPI] = r
+			if r.hasAdditiveChanges() {
+				report.modPkgHasAdditions = true
 			}
+			// only add an entry if the report contains data
+			if report.ModifiedPackages == nil {
+				report.ModifiedPackages = modifiedPackages{}
+			}
+			report.ModifiedPackages[rhsPkg] = r
 		}
 	}
 
@@ -310,26 +291,9 @@ func getPkgsReport(lhs, rhs repoContent) pkgsReport {
 // returns a list of packages in rhs that aren't in lhs
 func getPkgsList(lhs, rhs repoContent) pkgsList {
 	list := pkgsList{}
-	for rhsK, rhsV := range rhs {
-		if lhsV, ok := lhs[rhsK]; !ok {
-			// package doesn't exist, add all API versions
-			apis := []string{}
-			for rhsAPI := range rhsV {
-				apis = append(apis, rhsAPI)
-			}
-			list[rhsK] = apis
-		} else {
-			// package exists, check for any new API versions
-			for rhsAPI := range rhsV {
-				apis := []string{}
-				if _, ok := lhsV[rhsAPI]; !ok {
-					// API version is new, add to slice
-					apis = append(apis, rhsAPI)
-				}
-				if len(apis) > 0 {
-					list[rhsK] = apis
-				}
-			}
+	for rhsPkg := range rhs {
+		if _, ok := lhs[rhsPkg]; !ok {
+			list = append(list, rhsPkg)
 		}
 	}
 	return list

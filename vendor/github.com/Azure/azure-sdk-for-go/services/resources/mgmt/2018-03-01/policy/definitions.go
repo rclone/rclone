@@ -680,7 +680,7 @@ func (client DefinitionsClient) ListBuiltInComplete(ctx context.Context) (result
 	return
 }
 
-// ListByManagementGroup gets all the policy definitions in a management group.
+// ListByManagementGroup this operation retrieves a list of all the policy definitions in a given management group.
 // Parameters:
 // managementGroupID - the ID of the management group.
 func (client DefinitionsClient) ListByManagementGroup(ctx context.Context, managementGroupID string) (result DefinitionListResultPage, err error) {

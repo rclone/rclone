@@ -197,17 +197,17 @@ const (
 	Cntk ToolType = "cntk"
 	// Custom ...
 	Custom ToolType = "custom"
+	// Custommpi ...
+	Custommpi ToolType = "custommpi"
 	// Horovod ...
 	Horovod ToolType = "horovod"
-	// Mpi ...
-	Mpi ToolType = "mpi"
 	// Tensorflow ...
 	Tensorflow ToolType = "tensorflow"
 )
 
 // PossibleToolTypeValues returns an array of possible values for the ToolType const type.
 func PossibleToolTypeValues() []ToolType {
-	return []ToolType{Caffe, Caffe2, Chainer, Cntk, Custom, Horovod, Mpi, Tensorflow}
+	return []ToolType{Caffe, Caffe2, Chainer, Cntk, Custom, Custommpi, Horovod, Tensorflow}
 }
 
 // UsageUnit enumerates the values for usage unit.
@@ -238,80 +238,99 @@ func PossibleVMPriorityValues() []VMPriority {
 	return []VMPriority{Dedicated, Lowpriority}
 }
 
-// AppInsightsReference specifies Azure Application Insights information for performance counters reporting.
+// AppInsightsReference azure Application Insights information for performance counters reporting.
 type AppInsightsReference struct {
-	Component          *ResourceID `json:"component,omitempty"`
-	InstrumentationKey *string     `json:"instrumentationKey,omitempty"`
-	// InstrumentationKeySecretReference - Specifies KeyVault Store and Secret which contains Azure Application Insights instrumentation key. One of instumentationKey or instrumentationKeySecretReference must be specified.
+	// Component - Azure Application Insights component resource ID.
+	Component *ResourceID `json:"component,omitempty"`
+	// InstrumentationKey - Value of the Azure Application Insights instrumentation key.
+	InstrumentationKey *string `json:"instrumentationKey,omitempty"`
+	// InstrumentationKeySecretReference - KeyVault Store and Secret which contains Azure Application Insights instrumentation key. One of instrumentationKey or instrumentationKeySecretReference must be specified.
 	InstrumentationKeySecretReference *KeyVaultSecretReference `json:"instrumentationKeySecretReference,omitempty"`
 }
 
-// AutoScaleSettings the system automatically scales the cluster up and down (within minimumNodeCount and
-// maximumNodeCount) based on the pending and running jobs on the cluster.
+// AutoScaleSettings auto-scale settings for the cluster. The system automatically scales the cluster up and down
+// (within minimumNodeCount and maximumNodeCount) based on the number of queued and running jobs assigned to the
+// cluster.
 type AutoScaleSettings struct {
+	// MinimumNodeCount - The minimum number of compute nodes the Batch AI service will try to allocate for the cluster. Note, the actual number of nodes can be less than the specified value if the subscription has not enough quota to fulfill the request.
 	MinimumNodeCount *int32 `json:"minimumNodeCount,omitempty"`
+	// MaximumNodeCount - The maximum number of compute nodes the cluster can have.
 	MaximumNodeCount *int32 `json:"maximumNodeCount,omitempty"`
+	// InitialNodeCount - The number of compute nodes to allocate on cluster creation. Note that this value is used only during cluster creation. Default: 0.
 	InitialNodeCount *int32 `json:"initialNodeCount,omitempty"`
 }
 
-// AzureBlobFileSystemReference provides required information, for the service to be able to mount Azure Blob
-// Storage container on the cluster nodes.
+// AzureBlobFileSystemReference azure Blob Storage Container mounting configuration.
 type AzureBlobFileSystemReference struct {
-	AccountName   *string                      `json:"accountName,omitempty"`
-	ContainerName *string                      `json:"containerName,omitempty"`
-	Credentials   *AzureStorageCredentialsInfo `json:"credentials,omitempty"`
-	// RelativeMountPath - Note that all cluster level blob file systems will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and all job level blob file systems will be mounted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
+	// AccountName - Name of the Azure storage account.
+	AccountName *string `json:"accountName,omitempty"`
+	// ContainerName - Name of the Azure Blob Storage container to mount on the cluster.
+	ContainerName *string `json:"containerName,omitempty"`
+	// Credentials - Information about the Azure storage credentials.
+	Credentials *AzureStorageCredentialsInfo `json:"credentials,omitempty"`
+	// RelativeMountPath - The relative path on the compute node where the Azure File container will be mounted. Note that all cluster level containers will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and all job level containers will be mounted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
 	RelativeMountPath *string `json:"relativeMountPath,omitempty"`
-	MountOptions      *string `json:"mountOptions,omitempty"`
+	// MountOptions - Mount options for mounting blobfuse file system.
+	MountOptions *string `json:"mountOptions,omitempty"`
 }
 
-// AzureFileShareReference details of the Azure File Share to mount on the cluster.
+// AzureFileShareReference azure File Share mounting configuration.
 type AzureFileShareReference struct {
-	AccountName  *string                      `json:"accountName,omitempty"`
-	AzureFileURL *string                      `json:"azureFileUrl,omitempty"`
-	Credentials  *AzureStorageCredentialsInfo `json:"credentials,omitempty"`
-	// RelativeMountPath - Note that all cluster level file shares will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and all job level file shares will be mounted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
+	// AccountName - Name of the Azure storage account.
+	AccountName *string `json:"accountName,omitempty"`
+	// AzureFileURL - URL to access the Azure File.
+	AzureFileURL *string `json:"azureFileUrl,omitempty"`
+	// Credentials - Information about the Azure storage credentials.
+	Credentials *AzureStorageCredentialsInfo `json:"credentials,omitempty"`
+	// RelativeMountPath - The relative path on the compute node where the Azure File share will be mounted. Note that all cluster level file shares will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and all job level file shares will be mounted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
 	RelativeMountPath *string `json:"relativeMountPath,omitempty"`
-	// FileMode - Default value is 0777. Valid only if OS is linux.
+	// FileMode - File mode for files on the mounted file share. Default value: 0777.
 	FileMode *string `json:"fileMode,omitempty"`
-	// DirectoryMode - Default value is 0777. Valid only if OS is linux.
+	// DirectoryMode - File mode for directories on the mounted file share. Default value: 0777.
 	DirectoryMode *string `json:"directoryMode,omitempty"`
 }
 
-// AzureStorageCredentialsInfo credentials to access Azure File Share.
+// AzureStorageCredentialsInfo azure storage account credentials.
 type AzureStorageCredentialsInfo struct {
-	// AccountKey - One of accountKey or accountKeySecretReference must be specified.
+	// AccountKey - Storage account key. One of accountKey or accountKeySecretReference must be specified.
 	AccountKey *string `json:"accountKey,omitempty"`
-	// AccountKeySecretReference - Users can store their secrets in Azure KeyVault and pass it to the Batch AI Service to integrate with KeyVault. One of accountKey or accountKeySecretReference must be specified.
+	// AccountKeySecretReference - Information about KeyVault secret storing the storage account key. One of accountKey or accountKeySecretReference must be specified.
 	AccountKeySecretReference *KeyVaultSecretReference `json:"accountKeySecretReference,omitempty"`
 }
 
-// Caffe2Settings specifies the settings for Caffe2 job.
+// Caffe2Settings caffe2 job settings.
 type Caffe2Settings struct {
-	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonScriptFilePath - The python script to execute.
+	PythonScriptFilePath *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonInterpreterPath - The path to the Python interpreter.
 	PythonInterpreterPath *string `json:"pythonInterpreterPath,omitempty"`
-	CommandLineArgs       *string `json:"commandLineArgs,omitempty"`
+	// CommandLineArgs - Command line arguments that need to be passed to the python script.
+	CommandLineArgs *string `json:"commandLineArgs,omitempty"`
 }
 
-// CaffeSettings specifies the settings for Caffe job.
+// CaffeSettings caffe job settings.
 type CaffeSettings struct {
-	// ConfigFilePath - This property cannot be specified if pythonScriptFilePath is specified.
+	// ConfigFilePath - Path of the config file for the job. This property cannot be specified if pythonScriptFilePath is specified.
 	ConfigFilePath *string `json:"configFilePath,omitempty"`
-	// PythonScriptFilePath - This property cannot be specified if configFilePath is specified.
+	// PythonScriptFilePath - Python script to execute. This property cannot be specified if configFilePath is specified.
 	PythonScriptFilePath *string `json:"pythonScriptFilePath,omitempty"`
-	// PythonInterpreterPath - This property can be specified only if the pythonScriptFilePath is specified.
+	// PythonInterpreterPath - The path to the Python interpreter. The property can be specified only if the pythonScriptFilePath is specified.
 	PythonInterpreterPath *string `json:"pythonInterpreterPath,omitempty"`
-	CommandLineArgs       *string `json:"commandLineArgs,omitempty"`
-	// ProcessCount - The default value for this property is equal to nodeCount property
+	// CommandLineArgs - Command line arguments that need to be passed to the Caffe job.
+	CommandLineArgs *string `json:"commandLineArgs,omitempty"`
+	// ProcessCount - Number of processes to launch for the job execution. The default value for this property is equal to nodeCount property
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
-// ChainerSettings specifies the settings for Chainer job.
+// ChainerSettings chainer job settings.
 type ChainerSettings struct {
-	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonScriptFilePath - The python script to execute.
+	PythonScriptFilePath *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonInterpreterPath - The path to the Python interpreter.
 	PythonInterpreterPath *string `json:"pythonInterpreterPath,omitempty"`
-	CommandLineArgs       *string `json:"commandLineArgs,omitempty"`
-	// ProcessCount - The default value for this property is equal to nodeCount property
+	// CommandLineArgs - Command line arguments that need to be passed to the python script.
+	CommandLineArgs *string `json:"commandLineArgs,omitempty"`
+	// ProcessCount - Number of processes to launch for the job execution. The default value for this property is equal to nodeCount property
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
@@ -333,21 +352,17 @@ type CloudErrorBody struct {
 	Details *[]CloudErrorBody `json:"details,omitempty"`
 }
 
-// Cluster contains information about a Cluster.
+// Cluster information about a Cluster.
 type Cluster struct {
 	autorest.Response `json:"-"`
 	// ClusterProperties - The properties associated with the Cluster.
 	*ClusterProperties `json:"properties,omitempty"`
-	// ID - The ID of the resource
+	// ID - The ID of the resource.
 	ID *string `json:"id,omitempty"`
-	// Name - The name of the resource
+	// Name - The name of the resource.
 	Name *string `json:"name,omitempty"`
-	// Type - The type of the resource
+	// Type - The type of the resource.
 	Type *string `json:"type,omitempty"`
-	// Location - The location of the resource
-	Location *string `json:"location,omitempty"`
-	// Tags - The tags of the resource
-	Tags map[string]*string `json:"tags"`
 }
 
 // MarshalJSON is the custom marshaler for Cluster.
@@ -364,12 +379,6 @@ func (c Cluster) MarshalJSON() ([]byte, error) {
 	}
 	if c.Type != nil {
 		objectMap["type"] = c.Type
-	}
-	if c.Location != nil {
-		objectMap["location"] = c.Location
-	}
-	if c.Tags != nil {
-		objectMap["tags"] = c.Tags
 	}
 	return json.Marshal(objectMap)
 }
@@ -419,24 +428,6 @@ func (c *Cluster) UnmarshalJSON(body []byte) error {
 				}
 				c.Type = &typeVar
 			}
-		case "location":
-			if v != nil {
-				var location string
-				err = json.Unmarshal(*v, &location)
-				if err != nil {
-					return err
-				}
-				c.Location = &location
-			}
-		case "tags":
-			if v != nil {
-				var tags map[string]*string
-				err = json.Unmarshal(*v, &tags)
-				if err != nil {
-					return err
-				}
-				c.Tags = tags
-			}
 		}
 	}
 
@@ -445,23 +436,24 @@ func (c *Cluster) UnmarshalJSON(body []byte) error {
 
 // ClusterBaseProperties the properties of a Cluster.
 type ClusterBaseProperties struct {
-	// VMSize - All virtual machines in a cluster are the same size. For information about available VM sizes for clusters using images from the Virtual Machines Marketplace (see Sizes for Virtual Machines (Linux) or Sizes for Virtual Machines (Windows). Batch AI service supports all Azure VM sizes except STANDARD_A0 and those with premium storage (STANDARD_GS, STANDARD_DS, and STANDARD_DSV2 series).
+	// VMSize - The size of the virtual machines in the cluster. All nodes in a cluster have the same VM size. For information about available VM sizes for clusters using images from the Virtual Machines Marketplace see Sizes for Virtual Machines (Linux). Batch AI service supports all Azure VM sizes except STANDARD_A0 and those with premium storage (STANDARD_GS, STANDARD_DS, and STANDARD_DSV2 series).
 	VMSize *string `json:"vmSize,omitempty"`
-	// VMPriority - Default is dedicated. Possible values include: 'Dedicated', 'Lowpriority'
-	VMPriority                  VMPriority                   `json:"vmPriority,omitempty"`
-	ScaleSettings               *ScaleSettings               `json:"scaleSettings,omitempty"`
+	// VMPriority - VM priority. Allowed values are: dedicated (default) and lowpriority. Possible values include: 'Dedicated', 'Lowpriority'
+	VMPriority VMPriority `json:"vmPriority,omitempty"`
+	// ScaleSettings - Scale settings for the cluster. Batch AI service supports manual and auto scale clusters.
+	ScaleSettings *ScaleSettings `json:"scaleSettings,omitempty"`
+	// VirtualMachineConfiguration - OS image configuration for cluster nodes. All nodes in a cluster have the same OS image.
 	VirtualMachineConfiguration *VirtualMachineConfiguration `json:"virtualMachineConfiguration,omitempty"`
-	NodeSetup                   *NodeSetup                   `json:"nodeSetup,omitempty"`
-	UserAccountSettings         *UserAccountSettings         `json:"userAccountSettings,omitempty"`
-	Subnet                      *ResourceID                  `json:"subnet,omitempty"`
+	// NodeSetup - Setup to be performed on each compute node in the cluster.
+	NodeSetup *NodeSetup `json:"nodeSetup,omitempty"`
+	// UserAccountSettings - Settings for an administrator user account that will be created on each compute node in the cluster.
+	UserAccountSettings *UserAccountSettings `json:"userAccountSettings,omitempty"`
+	// Subnet - Existing virtual network subnet to put the cluster nodes in. Note, if a File Server mount configured in node setup, the File Server's subnet will be used automatically.
+	Subnet *ResourceID `json:"subnet,omitempty"`
 }
 
-// ClusterCreateParameters parameters supplied to the Create operation.
+// ClusterCreateParameters cluster creation operation.
 type ClusterCreateParameters struct {
-	// Location - The region in which to create the cluster.
-	Location *string `json:"location,omitempty"`
-	// Tags - The user specified tags associated with the Cluster.
-	Tags map[string]*string `json:"tags"`
 	// ClusterBaseProperties - The properties of the Cluster.
 	*ClusterBaseProperties `json:"properties,omitempty"`
 }
@@ -469,12 +461,6 @@ type ClusterCreateParameters struct {
 // MarshalJSON is the custom marshaler for ClusterCreateParameters.
 func (ccp ClusterCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	if ccp.Location != nil {
-		objectMap["location"] = ccp.Location
-	}
-	if ccp.Tags != nil {
-		objectMap["tags"] = ccp.Tags
-	}
 	if ccp.ClusterBaseProperties != nil {
 		objectMap["properties"] = ccp.ClusterBaseProperties
 	}
@@ -490,24 +476,6 @@ func (ccp *ClusterCreateParameters) UnmarshalJSON(body []byte) error {
 	}
 	for k, v := range m {
 		switch k {
-		case "location":
-			if v != nil {
-				var location string
-				err = json.Unmarshal(*v, &location)
-				if err != nil {
-					return err
-				}
-				ccp.Location = &location
-			}
-		case "tags":
-			if v != nil {
-				var tags map[string]*string
-				err = json.Unmarshal(*v, &tags)
-				if err != nil {
-					return err
-				}
-				ccp.Tags = tags
-			}
 		case "properties":
 			if v != nil {
 				var clusterBaseProperties ClusterBaseProperties
@@ -625,28 +593,38 @@ func (page ClusterListResultPage) Values() []Cluster {
 	return *page.clr.Value
 }
 
-// ClusterProperties job specific properties.
+// ClusterProperties cluster properties.
 type ClusterProperties struct {
-	// VMSize - All virtual machines in a cluster are the same size. For information about available VM sizes for clusters using images from the Virtual Machines Marketplace (see Sizes for Virtual Machines (Linux) or Sizes for Virtual Machines (Windows). Batch AI service supports all Azure VM sizes except STANDARD_A0 and those with premium storage (STANDARD_GS, STANDARD_DS, and STANDARD_DSV2 series).
+	// VMSize - The size of the virtual machines in the cluster. All nodes in a cluster have the same VM size.
 	VMSize *string `json:"vmSize,omitempty"`
-	// VMPriority - The default value is dedicated. The node can get preempted while the task is running if lowpriority is choosen. This is best suited if the workload is checkpointing and can be restarted. Possible values include: 'Dedicated', 'Lowpriority'
-	VMPriority                  VMPriority                   `json:"vmPriority,omitempty"`
-	ScaleSettings               *ScaleSettings               `json:"scaleSettings,omitempty"`
+	// VMPriority - VM priority of cluster nodes. Possible values include: 'Dedicated', 'Lowpriority'
+	VMPriority VMPriority `json:"vmPriority,omitempty"`
+	// ScaleSettings - Scale settings of the cluster.
+	ScaleSettings *ScaleSettings `json:"scaleSettings,omitempty"`
+	// VirtualMachineConfiguration - Virtual machine configuration (OS image) of the compute nodes. All nodes in a cluster have the same OS image configuration.
 	VirtualMachineConfiguration *VirtualMachineConfiguration `json:"virtualMachineConfiguration,omitempty"`
-	NodeSetup                   *NodeSetup                   `json:"nodeSetup,omitempty"`
-	UserAccountSettings         *UserAccountSettings         `json:"userAccountSettings,omitempty"`
-	Subnet                      *ResourceID                  `json:"subnet,omitempty"`
-	CreationTime                *date.Time                   `json:"creationTime,omitempty"`
-	// ProvisioningState - Possible value are: creating - Specifies that the cluster is being created. succeeded - Specifies that the cluster has been created successfully. failed - Specifies that the cluster creation has failed. deleting - Specifies that the cluster is being deleted. Possible values include: 'ProvisioningStateCreating', 'ProvisioningStateSucceeded', 'ProvisioningStateFailed', 'ProvisioningStateDeleting'
-	ProvisioningState               ProvisioningState `json:"provisioningState,omitempty"`
-	ProvisioningStateTransitionTime *date.Time        `json:"provisioningStateTransitionTime,omitempty"`
-	// AllocationState - Possible values are: steady and resizing. steady state indicates that the cluster is not resizing. There are no changes to the number of compute nodes in the cluster in progress. A cluster enters this state when it is created and when no operations are being performed on the cluster to change the number of compute nodes. resizing state indicates that the cluster is resizing; that is, compute nodes are being added to or removed from the cluster. Possible values include: 'Steady', 'Resizing'
-	AllocationState               AllocationState `json:"allocationState,omitempty"`
-	AllocationStateTransitionTime *date.Time      `json:"allocationStateTransitionTime,omitempty"`
-	// Errors - This element contains all the errors encountered by various compute nodes during node setup.
-	Errors           *[]Error         `json:"errors,omitempty"`
-	CurrentNodeCount *int32           `json:"currentNodeCount,omitempty"`
-	NodeStateCounts  *NodeStateCounts `json:"nodeStateCounts,omitempty"`
+	// NodeSetup - Setup (mount file systems, performance counters settings and custom setup task) to be performed on each compute node in the cluster.
+	NodeSetup *NodeSetup `json:"nodeSetup,omitempty"`
+	// UserAccountSettings - Administrator user account settings which can be used to SSH to compute nodes.
+	UserAccountSettings *UserAccountSettings `json:"userAccountSettings,omitempty"`
+	// Subnet - Virtual network subnet resource ID the cluster nodes belong to.
+	Subnet *ResourceID `json:"subnet,omitempty"`
+	// CreationTime - The time when the cluster was created.
+	CreationTime *date.Time `json:"creationTime,omitempty"`
+	// ProvisioningState - Provisioning state of the cluster. Possible value are: creating - Specifies that the cluster is being created. succeeded - Specifies that the cluster has been created successfully. failed - Specifies that the cluster creation has failed. deleting - Specifies that the cluster is being deleted. Possible values include: 'ProvisioningStateCreating', 'ProvisioningStateSucceeded', 'ProvisioningStateFailed', 'ProvisioningStateDeleting'
+	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
+	// ProvisioningStateTransitionTime - Time when the provisioning state was changed.
+	ProvisioningStateTransitionTime *date.Time `json:"provisioningStateTransitionTime,omitempty"`
+	// AllocationState - Allocation state of the cluster. Possible values are: steady - Indicates that the cluster is not resizing. There are no changes to the number of compute nodes in the cluster in progress. A cluster enters this state when it is created and when no operations are being performed on the cluster to change the number of compute nodes. resizing - Indicates that the cluster is resizing; that is, compute nodes are being added to or removed from the cluster. Possible values include: 'Steady', 'Resizing'
+	AllocationState AllocationState `json:"allocationState,omitempty"`
+	// AllocationStateTransitionTime - The time at which the cluster entered its current allocation state.
+	AllocationStateTransitionTime *date.Time `json:"allocationStateTransitionTime,omitempty"`
+	// Errors - Collection of errors encountered by various compute nodes during node setup.
+	Errors *[]Error `json:"errors,omitempty"`
+	// CurrentNodeCount - The number of compute nodes currently assigned to the cluster.
+	CurrentNodeCount *int32 `json:"currentNodeCount,omitempty"`
+	// NodeStateCounts - Counts of various node states on the cluster.
+	NodeStateCounts *NodeStateCounts `json:"nodeStateCounts,omitempty"`
 }
 
 // ClustersCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -699,10 +677,8 @@ func (future *ClustersDeleteFuture) Result(client ClustersClient) (ar autorest.R
 	return
 }
 
-// ClusterUpdateParameters parameters supplied to the Update operation.
+// ClusterUpdateParameters cluster update parameters.
 type ClusterUpdateParameters struct {
-	// Tags - The user specified tags associated with the Cluster.
-	Tags map[string]*string `json:"tags"`
 	// ClusterUpdateProperties - The properties of the Cluster.
 	*ClusterUpdateProperties `json:"properties,omitempty"`
 }
@@ -710,9 +686,6 @@ type ClusterUpdateParameters struct {
 // MarshalJSON is the custom marshaler for ClusterUpdateParameters.
 func (cup ClusterUpdateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	if cup.Tags != nil {
-		objectMap["tags"] = cup.Tags
-	}
 	if cup.ClusterUpdateProperties != nil {
 		objectMap["properties"] = cup.ClusterUpdateProperties
 	}
@@ -728,15 +701,6 @@ func (cup *ClusterUpdateParameters) UnmarshalJSON(body []byte) error {
 	}
 	for k, v := range m {
 		switch k {
-		case "tags":
-			if v != nil {
-				var tags map[string]*string
-				err = json.Unmarshal(*v, &tags)
-				if err != nil {
-					return err
-				}
-				cup.Tags = tags
-			}
 		case "properties":
 			if v != nil {
 				var clusterUpdateProperties ClusterUpdateProperties
@@ -754,68 +718,81 @@ func (cup *ClusterUpdateParameters) UnmarshalJSON(body []byte) error {
 
 // ClusterUpdateProperties the properties of a Cluster that need to be updated.
 type ClusterUpdateProperties struct {
+	// ScaleSettings - Desired scale settings for the cluster. Batch AI service supports manual and auto scale clusters.
 	ScaleSettings *ScaleSettings `json:"scaleSettings,omitempty"`
 }
 
-// CNTKsettings specifies the settings for CNTK (aka Microsoft Cognitive Toolkit) job.
+// CNTKsettings CNTK (aka Microsoft Cognitive Toolkit) job settings.
 type CNTKsettings struct {
-	// LanguageType - Valid values are 'BrainScript' or 'Python'.
+	// LanguageType - The language to use for launching CNTK (aka Microsoft Cognitive Toolkit) job. Valid values are 'BrainScript' or 'Python'.
 	LanguageType *string `json:"languageType,omitempty"`
-	// ConfigFilePath - This property can be specified only if the languageType is 'BrainScript'.
+	// ConfigFilePath - Specifies the path of the BrainScript config file. This property can be specified only if the languageType is 'BrainScript'.
 	ConfigFilePath *string `json:"configFilePath,omitempty"`
-	// PythonScriptFilePath - This property can be specified only if the languageType is 'Python'.
+	// PythonScriptFilePath - Python script to execute. This property can be specified only if the languageType is 'Python'.
 	PythonScriptFilePath *string `json:"pythonScriptFilePath,omitempty"`
-	// PythonInterpreterPath - This property can be specified only if the languageType is 'Python'.
+	// PythonInterpreterPath - The path to the Python interpreter. This property can be specified only if the languageType is 'Python'.
 	PythonInterpreterPath *string `json:"pythonInterpreterPath,omitempty"`
-	CommandLineArgs       *string `json:"commandLineArgs,omitempty"`
-	// ProcessCount - The default value for this property is equal to nodeCount property
+	// CommandLineArgs - Command line arguments that need to be passed to the python script or cntk executable.
+	CommandLineArgs *string `json:"commandLineArgs,omitempty"`
+	// ProcessCount - Number of processes to launch for the job execution. The default value for this property is equal to nodeCount property
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
-// ContainerSettings settings for the container to be downloaded.
+// ContainerSettings docker container settings.
 type ContainerSettings struct {
+	// ImageSourceRegistry - Information about docker image and docker registry to download the container from.
 	ImageSourceRegistry *ImageSourceRegistry `json:"imageSourceRegistry,omitempty"`
+	// ShmSize - Size of /dev/shm. Please refer to docker documentation for supported argument formats.
+	ShmSize *string `json:"shmSize,omitempty"`
 }
 
-// CustomMpiSettings specifies the settings for a custom tool kit job.
+// CustomMpiSettings custom MPI job settings.
 type CustomMpiSettings struct {
+	// CommandLine - The command line to be executed by mpi runtime on each compute node.
 	CommandLine *string `json:"commandLine,omitempty"`
-	// ProcessCount - The default value for this property is equal to nodeCount property
+	// ProcessCount - Number of processes to launch for the job execution. The default value for this property is equal to nodeCount property
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
-// CustomToolkitSettings specifies the settings for a custom tool kit job.
+// CustomToolkitSettings custom tool kit job settings.
 type CustomToolkitSettings struct {
+	// CommandLine - The command line to execute on the master node.
 	CommandLine *string `json:"commandLine,omitempty"`
 }
 
-// DataDisks settings for the data disk which would be created for the File Server.
+// DataDisks data disks settings.
 type DataDisks struct {
+	// DiskSizeInGB - Disk size in GB for the blank data disks.
 	DiskSizeInGB *int32 `json:"diskSizeInGB,omitempty"`
-	// CachingType - Possible values include: 'None', 'Readonly', 'Readwrite'
+	// CachingType - Caching type for the disks. Available values are none (default), readonly, readwrite. Caching type can be set only for VM sizes supporting premium storage. Possible values include: 'None', 'Readonly', 'Readwrite'
 	CachingType CachingType `json:"cachingType,omitempty"`
-	DiskCount   *int32      `json:"diskCount,omitempty"`
-	// StorageAccountType - Possible values include: 'StandardLRS', 'PremiumLRS'
+	// DiskCount - Number of data disks attached to the File Server. If multiple disks attached, they will be configured in RAID level 0.
+	DiskCount *int32 `json:"diskCount,omitempty"`
+	// StorageAccountType - Type of storage account to be used on the disk. Possible values are: Standard_LRS or Premium_LRS. Premium storage account type can only be used with VM sizes supporting premium storage. Possible values include: 'StandardLRS', 'PremiumLRS'
 	StorageAccountType StorageAccountType `json:"storageAccountType,omitempty"`
 }
 
-// EnvironmentVariable a collection of environment variables to set.
+// EnvironmentVariable an environment variable definition.
 type EnvironmentVariable struct {
-	Name  *string `json:"name,omitempty"`
+	// Name - The name of the environment variable.
+	Name *string `json:"name,omitempty"`
+	// Value - The value of the environment variable.
 	Value *string `json:"value,omitempty"`
 }
 
-// EnvironmentVariableWithSecretValue a collection of environment variables with secret values to set.
+// EnvironmentVariableWithSecretValue an environment variable with secret value definition.
 type EnvironmentVariableWithSecretValue struct {
-	Name  *string `json:"name,omitempty"`
+	// Name - The name of the environment variable to store the secret value.
+	Name *string `json:"name,omitempty"`
+	// Value - The value of the environment variable. This value will never be reported back by Batch AI.
 	Value *string `json:"value,omitempty"`
-	// ValueSecretReference - Specifies KeyVault Store and Secret which contains the value for the environment variable. One of value or valueSecretReference must be provided.
+	// ValueSecretReference - KeyVault store and secret which contains the value for the environment variable. One of value or valueSecretReference must be provided.
 	ValueSecretReference *KeyVaultSecretReference `json:"valueSecretReference,omitempty"`
 }
 
 // Error an error response from the Batch AI service.
 type Error struct {
-	// Code - An identifier for the error. Codes are invariant and are intended to be consumed programmatically.
+	// Code - An identifier of the error. Codes are invariant and are intended to be consumed programmatically.
 	Code *string `json:"code,omitempty"`
 	// Message - A message describing the error, intended to be suitable for display in a user interface.
 	Message *string `json:"message,omitempty"`
@@ -823,7 +800,7 @@ type Error struct {
 	Details *[]NameValuePair `json:"details,omitempty"`
 }
 
-// Experiment contains information about the experiment.
+// Experiment experiment information.
 type Experiment struct {
 	autorest.Response `json:"-"`
 	// ExperimentProperties - The properties associated with the experiment.
@@ -1007,8 +984,9 @@ func (page ExperimentListResultPage) Values() []Experiment {
 	return *page.elr.Value
 }
 
-// ExperimentProperties experiment specific properties.
+// ExperimentProperties experiment properties.
 type ExperimentProperties struct {
+	// CreationTime - Time when the Experiment was created.
 	CreationTime *date.Time `json:"creationTime,omitempty"`
 	// ProvisioningState - The provisioned state of the experiment. Possible values include: 'ProvisioningStateCreating', 'ProvisioningStateSucceeded', 'ProvisioningStateFailed', 'ProvisioningStateDeleting'
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
@@ -1070,9 +1048,10 @@ func (future *ExperimentsDeleteFuture) Result(client ExperimentsClient) (ar auto
 type File struct {
 	// Name - Name of the file.
 	Name *string `json:"name,omitempty"`
-	// FileType - Contains information about file type. Possible values include: 'FileTypeFile', 'FileTypeDirectory'
-	FileType    FileType `json:"fileType,omitempty"`
-	DownloadURL *string  `json:"downloadUrl,omitempty"`
+	// FileType - Type of the file. Possible values are file and directory. Possible values include: 'FileTypeFile', 'FileTypeDirectory'
+	FileType FileType `json:"fileType,omitempty"`
+	// DownloadURL - URL to download the corresponding file. The downloadUrl is not returned for directories.
+	DownloadURL *string `json:"downloadUrl,omitempty"`
 	// FileProperties - The properties associated with the file. The properties are not returned for directories.
 	*FileProperties `json:"properties,omitempty"`
 }
@@ -1248,29 +1227,25 @@ func (page FileListResultPage) Values() []File {
 	return *page.flr.Value
 }
 
-// FileProperties file specific properties.
+// FileProperties file properties.
 type FileProperties struct {
 	// LastModified - The time at which the file was last modified.
 	LastModified *date.Time `json:"lastModified,omitempty"`
-	// ContentLength - The file size.
+	// ContentLength - The file of the size.
 	ContentLength *int64 `json:"contentLength,omitempty"`
 }
 
-// FileServer contains information about the File Server.
+// FileServer file Server information.
 type FileServer struct {
 	autorest.Response `json:"-"`
-	// FileServerProperties - The properties associated with the File Server.
+	// FileServerProperties - File Server properties.
 	*FileServerProperties `json:"properties,omitempty"`
-	// ID - The ID of the resource
+	// ID - The ID of the resource.
 	ID *string `json:"id,omitempty"`
-	// Name - The name of the resource
+	// Name - The name of the resource.
 	Name *string `json:"name,omitempty"`
-	// Type - The type of the resource
+	// Type - The type of the resource.
 	Type *string `json:"type,omitempty"`
-	// Location - The location of the resource
-	Location *string `json:"location,omitempty"`
-	// Tags - The tags of the resource
-	Tags map[string]*string `json:"tags"`
 }
 
 // MarshalJSON is the custom marshaler for FileServer.
@@ -1287,12 +1262,6 @@ func (fs FileServer) MarshalJSON() ([]byte, error) {
 	}
 	if fs.Type != nil {
 		objectMap["type"] = fs.Type
-	}
-	if fs.Location != nil {
-		objectMap["location"] = fs.Location
-	}
-	if fs.Tags != nil {
-		objectMap["tags"] = fs.Tags
 	}
 	return json.Marshal(objectMap)
 }
@@ -1342,24 +1311,6 @@ func (fs *FileServer) UnmarshalJSON(body []byte) error {
 				}
 				fs.Type = &typeVar
 			}
-		case "location":
-			if v != nil {
-				var location string
-				err = json.Unmarshal(*v, &location)
-				if err != nil {
-					return err
-				}
-				fs.Location = &location
-			}
-		case "tags":
-			if v != nil {
-				var tags map[string]*string
-				err = json.Unmarshal(*v, &tags)
-				if err != nil {
-					return err
-				}
-				fs.Tags = tags
-			}
 		}
 	}
 
@@ -1368,19 +1319,18 @@ func (fs *FileServer) UnmarshalJSON(body []byte) error {
 
 // FileServerBaseProperties the properties of a file server.
 type FileServerBaseProperties struct {
-	// VMSize - For information about available VM sizes for fileservers from the Virtual Machines Marketplace, see Sizes for Virtual Machines (Linux).
-	VMSize           *string           `json:"vmSize,omitempty"`
+	// VMSize - The size of the virtual machine for the File Server. For information about available VM sizes from the Virtual Machines Marketplace, see Sizes for Virtual Machines (Linux).
+	VMSize *string `json:"vmSize,omitempty"`
+	// SSHConfiguration - SSH configuration for the File Server node.
 	SSHConfiguration *SSHConfiguration `json:"sshConfiguration,omitempty"`
-	DataDisks        *DataDisks        `json:"dataDisks,omitempty"`
-	Subnet           *ResourceID       `json:"subnet,omitempty"`
+	// DataDisks - Settings for the data disks which will be created for the File Server.
+	DataDisks *DataDisks `json:"dataDisks,omitempty"`
+	// Subnet - Identifier of an existing virtual network subnet to put the File Server in. If not provided, a new virtual network and subnet will be created.
+	Subnet *ResourceID `json:"subnet,omitempty"`
 }
 
-// FileServerCreateParameters parameters supplied to the Create operation.
+// FileServerCreateParameters file Server creation parameters.
 type FileServerCreateParameters struct {
-	// Location - The region in which to create the File Server.
-	Location *string `json:"location,omitempty"`
-	// Tags - The user specified tags associated with the File Server.
-	Tags map[string]*string `json:"tags"`
 	// FileServerBaseProperties - The properties of the File Server.
 	*FileServerBaseProperties `json:"properties,omitempty"`
 }
@@ -1388,12 +1338,6 @@ type FileServerCreateParameters struct {
 // MarshalJSON is the custom marshaler for FileServerCreateParameters.
 func (fscp FileServerCreateParameters) MarshalJSON() ([]byte, error) {
 	objectMap := make(map[string]interface{})
-	if fscp.Location != nil {
-		objectMap["location"] = fscp.Location
-	}
-	if fscp.Tags != nil {
-		objectMap["tags"] = fscp.Tags
-	}
 	if fscp.FileServerBaseProperties != nil {
 		objectMap["properties"] = fscp.FileServerBaseProperties
 	}
@@ -1409,24 +1353,6 @@ func (fscp *FileServerCreateParameters) UnmarshalJSON(body []byte) error {
 	}
 	for k, v := range m {
 		switch k {
-		case "location":
-			if v != nil {
-				var location string
-				err = json.Unmarshal(*v, &location)
-				if err != nil {
-					return err
-				}
-				fscp.Location = &location
-			}
-		case "tags":
-			if v != nil {
-				var tags map[string]*string
-				err = json.Unmarshal(*v, &tags)
-				if err != nil {
-					return err
-				}
-				fscp.Tags = tags
-			}
 		case "properties":
 			if v != nil {
 				var fileServerBaseProperties FileServerBaseProperties
@@ -1442,7 +1368,7 @@ func (fscp *FileServerCreateParameters) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// FileServerListResult values returned by the List operation.
+// FileServerListResult values returned by the File Server List operation.
 type FileServerListResult struct {
 	autorest.Response `json:"-"`
 	// Value - The collection of File Servers.
@@ -1544,29 +1470,36 @@ func (page FileServerListResultPage) Values() []FileServer {
 	return *page.fslr.Value
 }
 
-// FileServerProperties file server specific properties.
+// FileServerProperties file Server properties.
 type FileServerProperties struct {
-	// VMSize - For information about available VM sizes for File Server from the Virtual Machines Marketplace, see Sizes for Virtual Machines (Linux).
-	VMSize                          *string           `json:"vmSize,omitempty"`
-	SSHConfiguration                *SSHConfiguration `json:"sshConfiguration,omitempty"`
-	DataDisks                       *DataDisks        `json:"dataDisks,omitempty"`
-	Subnet                          *ResourceID       `json:"subnet,omitempty"`
-	MountSettings                   *MountSettings    `json:"mountSettings,omitempty"`
-	ProvisioningStateTransitionTime *date.Time        `json:"provisioningStateTransitionTime,omitempty"`
-	CreationTime                    *date.Time        `json:"creationTime,omitempty"`
-	// ProvisioningState - Possible values: creating - The File Server is getting created. updating - The File Server creation has been accepted and it is getting updated. deleting - The user has requested that the File Server be deleted, and it is in the process of being deleted. failed - The File Server creation has failed with the specified errorCode. Details about the error code are specified in the message field. succeeded - The File Server creation has succeeded. Possible values include: 'FileServerProvisioningStateCreating', 'FileServerProvisioningStateUpdating', 'FileServerProvisioningStateDeleting', 'FileServerProvisioningStateSucceeded', 'FileServerProvisioningStateFailed'
+	// VMSize - VM size of the File Server.
+	VMSize *string `json:"vmSize,omitempty"`
+	// SSHConfiguration - SSH configuration for accessing the File Server node.
+	SSHConfiguration *SSHConfiguration `json:"sshConfiguration,omitempty"`
+	// DataDisks - Information about disks attached to File Server VM.
+	DataDisks *DataDisks `json:"dataDisks,omitempty"`
+	// Subnet - File Server virtual network subnet resource ID.
+	Subnet *ResourceID `json:"subnet,omitempty"`
+	// MountSettings - File Server mount settings.
+	MountSettings *MountSettings `json:"mountSettings,omitempty"`
+	// ProvisioningStateTransitionTime - Time when the provisioning state was changed.
+	ProvisioningStateTransitionTime *date.Time `json:"provisioningStateTransitionTime,omitempty"`
+	// CreationTime - Time when the FileServer was created.
+	CreationTime *date.Time `json:"creationTime,omitempty"`
+	// ProvisioningState - Provisioning state of the File Server. Possible values: creating - The File Server is getting created; updating - The File Server creation has been accepted and it is getting updated; deleting - The user has requested that the File Server be deleted, and it is in the process of being deleted; failed - The File Server creation has failed with the specified error code. Details about the error code are specified in the message field; succeeded - The File Server creation has succeeded. Possible values include: 'FileServerProvisioningStateCreating', 'FileServerProvisioningStateUpdating', 'FileServerProvisioningStateDeleting', 'FileServerProvisioningStateSucceeded', 'FileServerProvisioningStateFailed'
 	ProvisioningState FileServerProvisioningState `json:"provisioningState,omitempty"`
 }
 
-// FileServerReference provides required information, for the service to be able to mount Azure FileShare on the
-// cluster nodes.
+// FileServerReference file Server mounting configuration.
 type FileServerReference struct {
+	// FileServer - Resource ID of the existing File Server to be mounted.
 	FileServer *ResourceID `json:"fileServer,omitempty"`
-	// SourceDirectory - If this property is not specified, the entire File Server will be mounted.
+	// SourceDirectory - File Server directory that needs to be mounted. If this property is not specified, the entire File Server will be mounted.
 	SourceDirectory *string `json:"sourceDirectory,omitempty"`
-	// RelativeMountPath - Note that all cluster level file servers will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and job level file servers will be mouted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
+	// RelativeMountPath - The relative path on the compute node where the File Server will be mounted. Note that all cluster level file servers will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and all job level file servers will be mounted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
 	RelativeMountPath *string `json:"relativeMountPath,omitempty"`
-	MountOptions      *string `json:"mountOptions,omitempty"`
+	// MountOptions - Mount options to be passed to mount command.
+	MountOptions *string `json:"mountOptions,omitempty"`
 }
 
 // FileServersCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -1619,40 +1552,51 @@ func (future *FileServersDeleteFuture) Result(client FileServersClient) (ar auto
 	return
 }
 
-// HorovodSettings specifies the settings for Chainer job.
+// HorovodSettings specifies the settings for Horovod job.
 type HorovodSettings struct {
-	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonScriptFilePath - The python script to execute.
+	PythonScriptFilePath *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonInterpreterPath - The path to the Python interpreter.
 	PythonInterpreterPath *string `json:"pythonInterpreterPath,omitempty"`
-	CommandLineArgs       *string `json:"commandLineArgs,omitempty"`
-	// ProcessCount - The default value for this property is equal to nodeCount property
+	// CommandLineArgs - Command line arguments that need to be passed to the python script.
+	CommandLineArgs *string `json:"commandLineArgs,omitempty"`
+	// ProcessCount - Number of processes to launch for the job execution. The default value for this property is equal to nodeCount property
 	ProcessCount *int32 `json:"processCount,omitempty"`
 }
 
-// ImageReference the image reference.
+// ImageReference the OS image reference.
 type ImageReference struct {
+	// Publisher - Publisher of the image.
 	Publisher *string `json:"publisher,omitempty"`
-	Offer     *string `json:"offer,omitempty"`
-	Sku       *string `json:"sku,omitempty"`
-	Version   *string `json:"version,omitempty"`
-	// VirtualMachineImageID - The virtual machine image must be in the same region and subscription as the cluster. For information about the firewall settings for the Batch node agent to communicate with the Batch service see https://docs.microsoft.com/en-us/azure/batch/batch-api-basics#virtual-network-vnet-and-firewall-configuration. Note, you need to provide publisher, offer and sku of the base OS image of which the custom image has been derived from.
+	// Offer - Offer of the image.
+	Offer *string `json:"offer,omitempty"`
+	// Sku - SKU of the image.
+	Sku *string `json:"sku,omitempty"`
+	// Version - Version of the image.
+	Version *string `json:"version,omitempty"`
+	// VirtualMachineImageID - The ARM resource identifier of the virtual machine image for the compute nodes. This is of the form /subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Compute/images/{imageName}. The virtual machine image must be in the same region and subscription as the cluster. For information about the firewall settings for the Batch node agent to communicate with the Batch service see https://docs.microsoft.com/en-us/azure/batch/batch-api-basics#virtual-network-vnet-and-firewall-configuration. Note, you need to provide publisher, offer and sku of the base OS image of which the custom image has been derived from.
 	VirtualMachineImageID *string `json:"virtualMachineImageId,omitempty"`
 }
 
-// ImageSourceRegistry details of the container image such as name, URL and credentials.
+// ImageSourceRegistry information about docker image for the job.
 type ImageSourceRegistry struct {
-	ServerURL   *string                     `json:"serverUrl,omitempty"`
-	Image       *string                     `json:"image,omitempty"`
+	// ServerURL - URL for image repository.
+	ServerURL *string `json:"serverUrl,omitempty"`
+	// Image - The name of the image in the image repository.
+	Image *string `json:"image,omitempty"`
+	// Credentials - Credentials to access the private docker repository.
 	Credentials *PrivateRegistryCredentials `json:"credentials,omitempty"`
 }
 
 // InputDirectory input directory for the job.
 type InputDirectory struct {
-	// ID - The path of the input directory will be available as a value of an environment variable with AZ_BATCHAI_INPUT_<id> name, where <id> is the value of id attribute.
-	ID   *string `json:"id,omitempty"`
+	// ID - The ID for the input directory. The job can use AZ_BATCHAI_INPUT_<id> environment variable to find the directory path, where <id> is the value of id attribute.
+	ID *string `json:"id,omitempty"`
+	// Path - The path to the input directory.
 	Path *string `json:"path,omitempty"`
 }
 
-// Job contains information about a Job.
+// Job information about a Job.
 type Job struct {
 	autorest.Response `json:"-"`
 	// JobProperties - The properties associated with the Job.
@@ -1736,33 +1680,45 @@ func (j *Job) UnmarshalJSON(body []byte) error {
 
 // JobBaseProperties the properties of a Batch AI Job.
 type JobBaseProperties struct {
-	// SchedulingPriority - Scheduling priority associated with the job. Possible values include: 'Low', 'Normal', 'High'
+	// SchedulingPriority - Scheduling priority associated with the job. Possible values: low, normal, high. Possible values include: 'Low', 'Normal', 'High'
 	SchedulingPriority JobPriority `json:"schedulingPriority,omitempty"`
-	Cluster            *ResourceID `json:"cluster,omitempty"`
-	// MountVolumes - These volumes will be mounted before the job execution and will be unmouted after the job completion. The volumes will be mounted at location specified by $AZ_BATCHAI_JOB_MOUNT_ROOT environment variable.
+	// Cluster - Resource ID of the cluster on which this job will run.
+	Cluster *ResourceID `json:"cluster,omitempty"`
+	// MountVolumes - Information on mount volumes to be used by the job. These volumes will be mounted before the job execution and will be unmouted after the job completion. The volumes will be mounted at location specified by $AZ_BATCHAI_JOB_MOUNT_ROOT environment variable.
 	MountVolumes *MountVolumes `json:"mountVolumes,omitempty"`
-	// NodeCount - The job will be gang scheduled on that many compute nodes
+	// NodeCount - Number of compute nodes to run the job on. The job will be gang scheduled on that many compute nodes.
 	NodeCount *int32 `json:"nodeCount,omitempty"`
-	// ContainerSettings - If the container was downloaded as part of cluster setup then the same container image will be used. If not provided, the job will run on the VM.
-	ContainerSettings     *ContainerSettings     `json:"containerSettings,omitempty"`
-	CntkSettings          *CNTKsettings          `json:"cntkSettings,omitempty"`
-	PyTorchSettings       *PyTorchSettings       `json:"pyTorchSettings,omitempty"`
-	TensorFlowSettings    *TensorFlowSettings    `json:"tensorFlowSettings,omitempty"`
-	CaffeSettings         *CaffeSettings         `json:"caffeSettings,omitempty"`
-	Caffe2Settings        *Caffe2Settings        `json:"caffe2Settings,omitempty"`
-	ChainerSettings       *ChainerSettings       `json:"chainerSettings,omitempty"`
+	// ContainerSettings - Docker container settings for the job. If not provided, the job will run directly on the node.
+	ContainerSettings *ContainerSettings `json:"containerSettings,omitempty"`
+	// CntkSettings - Settings for CNTK (aka Microsoft Cognitive Toolkit) job.
+	CntkSettings *CNTKsettings `json:"cntkSettings,omitempty"`
+	// PyTorchSettings - Settings for pyTorch job.
+	PyTorchSettings *PyTorchSettings `json:"pyTorchSettings,omitempty"`
+	// TensorFlowSettings - Settings for Tensor Flow job.
+	TensorFlowSettings *TensorFlowSettings `json:"tensorFlowSettings,omitempty"`
+	// CaffeSettings - Settings for Caffe job.
+	CaffeSettings *CaffeSettings `json:"caffeSettings,omitempty"`
+	// Caffe2Settings - Settings for Caffe2 job.
+	Caffe2Settings *Caffe2Settings `json:"caffe2Settings,omitempty"`
+	// ChainerSettings - Settings for Chainer job.
+	ChainerSettings *ChainerSettings `json:"chainerSettings,omitempty"`
+	// CustomToolkitSettings - Settings for custom tool kit job.
 	CustomToolkitSettings *CustomToolkitSettings `json:"customToolkitSettings,omitempty"`
-	CustomMpiSettings     *CustomMpiSettings     `json:"customMpiSettings,omitempty"`
-	HorovodSettings       *HorovodSettings       `json:"horovodSettings,omitempty"`
-	// JobPreparation - The specified actions will run on all the nodes that are part of the job
+	// CustomMpiSettings - Settings for custom MPI job.
+	CustomMpiSettings *CustomMpiSettings `json:"customMpiSettings,omitempty"`
+	// HorovodSettings - Settings for Horovod job.
+	HorovodSettings *HorovodSettings `json:"horovodSettings,omitempty"`
+	// JobPreparation - A command line to be executed on each node allocated for the job before tool kit is launched.
 	JobPreparation *JobPreparation `json:"jobPreparation,omitempty"`
-	// StdOutErrPathPrefix - The path where the Batch AI service will upload stdout and stderror of the job.
-	StdOutErrPathPrefix *string            `json:"stdOutErrPathPrefix,omitempty"`
-	InputDirectories    *[]InputDirectory  `json:"inputDirectories,omitempty"`
-	OutputDirectories   *[]OutputDirectory `json:"outputDirectories,omitempty"`
-	// EnvironmentVariables - Batch AI will setup these additional environment variables for the job.
+	// StdOutErrPathPrefix - The path where the Batch AI service will store stdout, stderror and execution log of the job.
+	StdOutErrPathPrefix *string `json:"stdOutErrPathPrefix,omitempty"`
+	// InputDirectories - A list of input directories for the job.
+	InputDirectories *[]InputDirectory `json:"inputDirectories,omitempty"`
+	// OutputDirectories - A list of output directories for the job.
+	OutputDirectories *[]OutputDirectory `json:"outputDirectories,omitempty"`
+	// EnvironmentVariables - A list of user defined environment variables which will be setup for the job.
 	EnvironmentVariables *[]EnvironmentVariable `json:"environmentVariables,omitempty"`
-	// Secrets - Batch AI will setup these additional environment variables for the job. Server will never report values of these variables back.
+	// Secrets - A list of user defined environment variables with secret values which will be setup for the job. Server will never report values of these variables back.
 	Secrets *[]EnvironmentVariableWithSecretValue `json:"secrets,omitempty"`
 	// Constraints - Constraints associated with the Job.
 	Constraints *JobBasePropertiesConstraints `json:"constraints,omitempty"`
@@ -1770,11 +1726,11 @@ type JobBaseProperties struct {
 
 // JobBasePropertiesConstraints constraints associated with the Job.
 type JobBasePropertiesConstraints struct {
-	// MaxWallClockTime - Default Value = 1 week.
+	// MaxWallClockTime - Max time the job can run. Default value: 1 week.
 	MaxWallClockTime *string `json:"maxWallClockTime,omitempty"`
 }
 
-// JobCreateParameters parameters supplied to the Create operation.
+// JobCreateParameters job creation parameters.
 type JobCreateParameters struct {
 	// JobBaseProperties - The properties of the Job.
 	*JobBaseProperties `json:"properties,omitempty"`
@@ -1915,44 +1871,48 @@ func (page JobListResultPage) Values() []Job {
 	return *page.jlr.Value
 }
 
-// JobPreparation specifies the settings for job preparation.
+// JobPreparation job preparation settings.
 type JobPreparation struct {
-	// CommandLine - If containerSettings is specified on the job, this commandLine will be executed in the same container as job. Otherwise it will be executed on the node.
+	// CommandLine - The command line to execute. If containerSettings is specified on the job, this commandLine will be executed in the same container as job. Otherwise it will be executed on the node.
 	CommandLine *string `json:"commandLine,omitempty"`
 }
 
-// JobProperties job specific properties.
+// JobProperties job properties.
 type JobProperties struct {
-	// Priority - Priority associated with the job. Possible values include: 'Low', 'Normal', 'High'
-	Priority JobPriority `json:"priority,omitempty"`
-	Cluster  *ResourceID `json:"cluster,omitempty"`
-	// MountVolumes - These volumes will be mounted before the job execution and will be unmouted after the job completion. The volumes will be mounted at location specified by $AZ_BATCHAI_JOB_MOUNT_ROOT environment variable.
+	// SchedulingPriority - Scheduling priority associated with the job. Possible values include: 'Low', 'Normal', 'High'
+	SchedulingPriority JobPriority `json:"schedulingPriority,omitempty"`
+	// Cluster - Resource ID of the cluster associated with the job.
+	Cluster *ResourceID `json:"cluster,omitempty"`
+	// MountVolumes - Collection of mount volumes available to the job during execution. These volumes are mounted before the job execution and unmouted after the job completion. The volumes are mounted at location specified by $AZ_BATCHAI_JOB_MOUNT_ROOT environment variable.
 	MountVolumes *MountVolumes `json:"mountVolumes,omitempty"`
-	// JobOutputDirectoryPathSegment - Batch AI creates job's output directories under an unique path to avoid conflicts between jobs. This value contains a path segment generated by Batch AI to make the path unique and can be used to find the output directory on the node or mounted filesystem.
-	JobOutputDirectoryPathSegment *string `json:"jobOutputDirectoryPathSegment,omitempty"`
 	// NodeCount - The job will be gang scheduled on that many compute nodes
 	NodeCount *int32 `json:"nodeCount,omitempty"`
 	// ContainerSettings - If the container was downloaded as part of cluster setup then the same container image will be used. If not provided, the job will run on the VM.
 	ContainerSettings *ContainerSettings `json:"containerSettings,omitempty"`
-	// ToolType - Possible values are: cntk, tensorflow, caffe, caffe2, chainer, pytorch, custom, mpi, horovod. Possible values include: 'Cntk', 'Tensorflow', 'Caffe', 'Caffe2', 'Chainer', 'Horovod', 'Mpi', 'Custom'
+	// ToolType - Possible values are: cntk, tensorflow, caffe, caffe2, chainer, pytorch, custom, custommpi, horovod. Possible values include: 'Cntk', 'Tensorflow', 'Caffe', 'Caffe2', 'Chainer', 'Horovod', 'Custommpi', 'Custom'
 	ToolType              ToolType               `json:"toolType,omitempty"`
 	CntkSettings          *CNTKsettings          `json:"cntkSettings,omitempty"`
 	PyTorchSettings       *PyTorchSettings       `json:"pyTorchSettings,omitempty"`
 	TensorFlowSettings    *TensorFlowSettings    `json:"tensorFlowSettings,omitempty"`
 	CaffeSettings         *CaffeSettings         `json:"caffeSettings,omitempty"`
+	Caffe2Settings        *Caffe2Settings        `json:"caffe2Settings,omitempty"`
 	ChainerSettings       *ChainerSettings       `json:"chainerSettings,omitempty"`
 	CustomToolkitSettings *CustomToolkitSettings `json:"customToolkitSettings,omitempty"`
 	CustomMpiSettings     *CustomMpiSettings     `json:"customMpiSettings,omitempty"`
 	HorovodSettings       *HorovodSettings       `json:"horovodSettings,omitempty"`
 	// JobPreparation - The specified actions will run on all the nodes that are part of the job
 	JobPreparation *JobPreparation `json:"jobPreparation,omitempty"`
-	// StdOutErrPathPrefix - The path where the Batch AI service will upload stdout and stderror of the job.
-	StdOutErrPathPrefix *string            `json:"stdOutErrPathPrefix,omitempty"`
-	InputDirectories    *[]InputDirectory  `json:"inputDirectories,omitempty"`
-	OutputDirectories   *[]OutputDirectory `json:"outputDirectories,omitempty"`
-	// EnvironmentVariables - Batch AI will setup these additional environment variables for the job.
+	// JobOutputDirectoryPathSegment - A segment of job's output directories path created by Batch AI. Batch AI creates job's output directories under an unique path to avoid conflicts between jobs. This value contains a path segment generated by Batch AI to make the path unique and can be used to find the output directory on the node or mounted filesystem.
+	JobOutputDirectoryPathSegment *string `json:"jobOutputDirectoryPathSegment,omitempty"`
+	// StdOutErrPathPrefix - The path where the Batch AI service stores stdout, stderror and execution log of the job.
+	StdOutErrPathPrefix *string `json:"stdOutErrPathPrefix,omitempty"`
+	// InputDirectories - A list of input directories for the job.
+	InputDirectories *[]InputDirectory `json:"inputDirectories,omitempty"`
+	// OutputDirectories - A list of output directories for the job.
+	OutputDirectories *[]OutputDirectory `json:"outputDirectories,omitempty"`
+	// EnvironmentVariables - A collection of user defined environment variables to be setup for the job.
 	EnvironmentVariables *[]EnvironmentVariable `json:"environmentVariables,omitempty"`
-	// Secrets - Batch AI will setup these additional environment variables for the job. Server will never report values of these variables back.
+	// Secrets - A collection of user defined environment variables with secret values to be setup for the job. Server will never report values of these variables back.
 	Secrets *[]EnvironmentVariableWithSecretValue `json:"secrets,omitempty"`
 	// Constraints - Constraints associated with the Job.
 	Constraints *JobPropertiesConstraints `json:"constraints,omitempty"`
@@ -1966,25 +1926,26 @@ type JobProperties struct {
 	ExecutionState ExecutionState `json:"executionState,omitempty"`
 	// ExecutionStateTransitionTime - The time at which the job entered its current execution state.
 	ExecutionStateTransitionTime *date.Time `json:"executionStateTransitionTime,omitempty"`
-	// ExecutionInfo - Contains information about the execution of a job in the Azure Batch service.
+	// ExecutionInfo - Information about the execution of a job.
 	ExecutionInfo *JobPropertiesExecutionInfo `json:"executionInfo,omitempty"`
 }
 
 // JobPropertiesConstraints constraints associated with the Job.
 type JobPropertiesConstraints struct {
-	// MaxWallClockTime - Default Value = 1 week.
+	// MaxWallClockTime - Max time the job can run. Default value: 1 week.
 	MaxWallClockTime *string `json:"maxWallClockTime,omitempty"`
 }
 
-// JobPropertiesExecutionInfo contains information about the execution of a job in the Azure Batch service.
+// JobPropertiesExecutionInfo information about the execution of a job.
 type JobPropertiesExecutionInfo struct {
-	// StartTime - 'Running' corresponds to the running state. If the job has been restarted or retried, this is the most recent time at which the job started running. This property is present only for job that are in the running or completed state.
+	// StartTime - The time at which the job started running. 'Running' corresponds to the running state. If the job has been restarted or retried, this is the most recent time at which the job started running. This property is present only for job that are in the running or completed state.
 	StartTime *date.Time `json:"startTime,omitempty"`
-	// EndTime - This property is only returned if the job is in completed state.
+	// EndTime - The time at which the job completed. This property is only returned if the job is in completed state.
 	EndTime *date.Time `json:"endTime,omitempty"`
-	// ExitCode - This property is only returned if the job is in completed state.
-	ExitCode *int32   `json:"exitCode,omitempty"`
-	Errors   *[]Error `json:"errors,omitempty"`
+	// ExitCode - The exit code of the job. This property is only returned if the job is in completed state.
+	ExitCode *int32 `json:"exitCode,omitempty"`
+	// Errors - A collection of errors encountered by the service during job execution.
+	Errors *[]Error `json:"errors,omitempty"`
 }
 
 // JobsCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -2059,10 +2020,12 @@ func (future *JobsTerminateFuture) Result(client JobsClient) (ar autorest.Respon
 	return
 }
 
-// KeyVaultSecretReference describes a reference to Key Vault Secret.
+// KeyVaultSecretReference key Vault Secret reference.
 type KeyVaultSecretReference struct {
+	// SourceVault - Fully qualified resource indentifier of the Key Vault.
 	SourceVault *ResourceID `json:"sourceVault,omitempty"`
-	SecretURL   *string     `json:"secretUrl,omitempty"`
+	// SecretURL - The URL referencing a secret in the Key Vault.
+	SecretURL *string `json:"secretUrl,omitempty"`
 }
 
 // ListUsagesResult the List Usages operation response.
@@ -2169,51 +2132,64 @@ func (page ListUsagesResultPage) Values() []Usage {
 
 // ManualScaleSettings manual scale settings for the cluster.
 type ManualScaleSettings struct {
-	// TargetNodeCount - Default is 0. If autoScaleSettings are not specified, then the Cluster starts with this target.
+	// TargetNodeCount - The desired number of compute nodes in the Cluster. Default is 0.
 	TargetNodeCount *int32 `json:"targetNodeCount,omitempty"`
-	// NodeDeallocationOption - The default value is requeue. Possible values include: 'Requeue', 'Terminate', 'Waitforjobcompletion'
+	// NodeDeallocationOption - An action to be performed when the cluster size is decreasing. The default value is requeue. Possible values include: 'Requeue', 'Terminate', 'Waitforjobcompletion'
 	NodeDeallocationOption DeallocationOption `json:"nodeDeallocationOption,omitempty"`
 }
 
-// MountSettings details of the File Server.
+// MountSettings file Server mount Information.
 type MountSettings struct {
-	MountPoint           *string `json:"mountPoint,omitempty"`
-	FileServerPublicIP   *string `json:"fileServerPublicIP,omitempty"`
+	// MountPoint - Path where the data disks are mounted on the File Server.
+	MountPoint *string `json:"mountPoint,omitempty"`
+	// FileServerPublicIP - Public IP address of the File Server which can be used to SSH to the node from outside of the subnet.
+	FileServerPublicIP *string `json:"fileServerPublicIP,omitempty"`
+	// FileServerInternalIP - Internal IP address of the File Server which can be used to access the File Server from within the subnet.
 	FileServerInternalIP *string `json:"fileServerInternalIP,omitempty"`
 }
 
 // MountVolumes details of volumes to mount on the cluster.
 type MountVolumes struct {
-	// AzureFileShares - References to Azure File Shares that are to be mounted to the cluster nodes.
+	// AzureFileShares - A collection of Azure File Shares that are to be mounted to the cluster nodes.
 	AzureFileShares *[]AzureFileShareReference `json:"azureFileShares,omitempty"`
-	// AzureBlobFileSystems - References to Azure Blob FUSE that are to be mounted to the cluster nodes.
+	// AzureBlobFileSystems - A collection of Azure Blob Containers that are to be mounted to the cluster nodes.
 	AzureBlobFileSystems *[]AzureBlobFileSystemReference `json:"azureBlobFileSystems,omitempty"`
-	FileServers          *[]FileServerReference          `json:"fileServers,omitempty"`
+	// FileServers - A collection of Batch AI File Servers that are to be mounted to the cluster nodes.
+	FileServers *[]FileServerReference `json:"fileServers,omitempty"`
+	// UnmanagedFileSystems - A collection of unmanaged file systems that are to be mounted to the cluster nodes.
 	UnmanagedFileSystems *[]UnmanagedFileSystemReference `json:"unmanagedFileSystems,omitempty"`
 }
 
-// NameValuePair represents a name-value pair.
+// NameValuePair name-value pair.
 type NameValuePair struct {
-	Name  *string `json:"name,omitempty"`
+	// Name - The name in the name-value pair.
+	Name *string `json:"name,omitempty"`
+	// Value - The value in the name-value pair.
 	Value *string `json:"value,omitempty"`
 }
 
-// NodeSetup use this to prepare the VM. NOTE: The volumes specified in mountVolumes are mounted first and then the
-// setupTask is run. Therefore the setup task can use local mountPaths in its execution.
+// NodeSetup node setup settings.
 type NodeSetup struct {
+	// SetupTask - Setup task to run on cluster nodes when nodes got created or rebooted. The setup task code needs to be idempotent. Generally the setup task is used to download static data that is required for all jobs that run on the cluster VMs and/or to download/install software.
 	SetupTask *SetupTask `json:"setupTask,omitempty"`
-	// MountVolumes - Specified mount volumes will be available to all jobs executing on the cluster. The volumes will be mounted at location specified by $AZ_BATCHAI_MOUNT_ROOT environment variable.
-	MountVolumes                *MountVolumes                `json:"mountVolumes,omitempty"`
+	// MountVolumes - Mount volumes to be available to setup task and all jobs executing on the cluster. The volumes will be mounted at location specified by $AZ_BATCHAI_MOUNT_ROOT environment variable.
+	MountVolumes *MountVolumes `json:"mountVolumes,omitempty"`
+	// PerformanceCountersSettings - Settings for performance counters collecting and uploading.
 	PerformanceCountersSettings *PerformanceCountersSettings `json:"performanceCountersSettings,omitempty"`
 }
 
 // NodeStateCounts counts of various compute node states on the cluster.
 type NodeStateCounts struct {
-	IdleNodeCount      *int32 `json:"idleNodeCount,omitempty"`
-	RunningNodeCount   *int32 `json:"runningNodeCount,omitempty"`
+	// IdleNodeCount - Number of compute nodes in idle state.
+	IdleNodeCount *int32 `json:"idleNodeCount,omitempty"`
+	// RunningNodeCount - Number of compute nodes which are running jobs.
+	RunningNodeCount *int32 `json:"runningNodeCount,omitempty"`
+	// PreparingNodeCount - Number of compute nodes which are being prepared.
 	PreparingNodeCount *int32 `json:"preparingNodeCount,omitempty"`
-	UnusableNodeCount  *int32 `json:"unusableNodeCount,omitempty"`
-	LeavingNodeCount   *int32 `json:"leavingNodeCount,omitempty"`
+	// UnusableNodeCount - Number of compute nodes which are in unusable state.
+	UnusableNodeCount *int32 `json:"unusableNodeCount,omitempty"`
+	// LeavingNodeCount - Number of compute nodes which are leaving the cluster.
+	LeavingNodeCount *int32 `json:"leavingNodeCount,omitempty"`
 }
 
 // Operation details of a REST API operation
@@ -2337,9 +2313,9 @@ func (page OperationListResultPage) Values() []Operation {
 
 // OutputDirectory output directory for the job.
 type OutputDirectory struct {
-	// ID - The path of the output directory will be available as a value of an environment variable with AZ_BATCHAI_OUTPUT_<id> name, where <id> is the value of id attribute.
+	// ID - The ID of the output directory. The job can use AZ_BATCHAI_OUTPUT_<id> environment variale to find the directory path, where <id> is the value of id attribute.
 	ID *string `json:"id,omitempty"`
-	// PathPrefix - NOTE: This is an absolute path to prefix. E.g. $AZ_BATCHAI_MOUNT_ROOT/MyNFS/MyLogs. You can find the full path to the output directory by combining pathPrefix, jobOutputDirectoryPathSegment (reported by get job) and pathSuffix.
+	// PathPrefix - The prefix path where the output directory will be created. Note, this is an absolute path to prefix. E.g. $AZ_BATCHAI_MOUNT_ROOT/MyNFS/MyLogs. The full path to the output directory by combining pathPrefix, jobOutputDirectoryPathSegment (reported by get job) and pathSuffix.
 	PathPrefix *string `json:"pathPrefix,omitempty"`
 	// PathSuffix - The suffix path where the output directory will be created. E.g. models. You can find the full path to the output directory by combining pathPrefix, jobOutputDirectoryPathSegment (reported by get job) and pathSuffix.
 	PathSuffix *string `json:"pathSuffix,omitempty"`
@@ -2347,16 +2323,17 @@ type OutputDirectory struct {
 
 // PerformanceCountersSettings performance counters reporting settings.
 type PerformanceCountersSettings struct {
-	// AppInsightsReference - If provided, Batch AI will upload node performance counters to the corresponding Azure Application Insights account.
+	// AppInsightsReference - Azure Application Insights information for performance counters reporting. If provided, Batch AI will upload node performance counters to the corresponding Azure Application Insights account.
 	AppInsightsReference *AppInsightsReference `json:"appInsightsReference,omitempty"`
 }
 
 // PrivateRegistryCredentials credentials to access a container image in a private repository.
 type PrivateRegistryCredentials struct {
+	// Username - User name to login to the repository.
 	Username *string `json:"username,omitempty"`
-	// Password - One of password or passwordSecretReference must be specified.
+	// Password - User password to login to the docker repository. One of password or passwordSecretReference must be specified.
 	Password *string `json:"password,omitempty"`
-	// PasswordSecretReference - Users can store their secrets in Azure KeyVault and pass it to the Batch AI Service to integrate with KeyVault. One of password or passwordSecretReference must be specified.
+	// PasswordSecretReference - KeyVault Secret storing the password. Users can store their secrets in Azure KeyVault and pass it to the Batch AI service to integrate with KeyVault. One of password or passwordSecretReference must be specified.
 	PasswordSecretReference *KeyVaultSecretReference `json:"passwordSecretReference,omitempty"`
 }
 
@@ -2370,24 +2347,28 @@ type ProxyResource struct {
 	Type *string `json:"type,omitempty"`
 }
 
-// PyTorchSettings specifies the settings for pyTorch job.
+// PyTorchSettings pyTorch job settings.
 type PyTorchSettings struct {
-	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonScriptFilePath - The python script to execute.
+	PythonScriptFilePath *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonInterpreterPath - The path to the Python interpreter.
 	PythonInterpreterPath *string `json:"pythonInterpreterPath,omitempty"`
-	CommandLineArgs       *string `json:"commandLineArgs,omitempty"`
-	// ProcessCount - The default value for this property is equal to nodeCount property.
+	// CommandLineArgs - Command line arguments that need to be passed to the python script.
+	CommandLineArgs *string `json:"commandLineArgs,omitempty"`
+	// ProcessCount - Number of processes to launch for the job execution. The default value for this property is equal to nodeCount property
 	ProcessCount *int32 `json:"processCount,omitempty"`
-	// CommunicationBackend - Valid values are 'TCP', 'Gloo' or 'MPI'. Not required for non-distributed jobs.
+	// CommunicationBackend - Type of the communication backend for distributed jobs. Valid values are 'TCP', 'Gloo' or 'MPI'. Not required for non-distributed jobs.
 	CommunicationBackend *string `json:"communicationBackend,omitempty"`
 }
 
-// RemoteLoginInformation contains remote login details to SSH/RDP to a compute node in cluster.
+// RemoteLoginInformation login details to SSH to a compute node in cluster.
 type RemoteLoginInformation struct {
-	// NodeID - Id of the compute node
+	// NodeID - ID of the compute node.
 	NodeID *string `json:"nodeId,omitempty"`
-	// IPAddress - ip address
-	IPAddress *string  `json:"ipAddress,omitempty"`
-	Port      *float64 `json:"port,omitempty"`
+	// IPAddress - Public IP address of the compute node.
+	IPAddress *string `json:"ipAddress,omitempty"`
+	// Port - SSH port number of the node.
+	Port *float64 `json:"port,omitempty"`
 }
 
 // RemoteLoginInformationListResult values returned by the List operation.
@@ -2537,49 +2518,57 @@ type ResourceID struct {
 // settings can be specified. If autoScale settings are specified, the system automatically scales the cluster up
 // and down (within the supplied limits) based on the pending jobs on the cluster.
 type ScaleSettings struct {
-	Manual    *ManualScaleSettings `json:"manual,omitempty"`
-	AutoScale *AutoScaleSettings   `json:"autoScale,omitempty"`
+	// Manual - Manual scale settings for the cluster.
+	Manual *ManualScaleSettings `json:"manual,omitempty"`
+	// AutoScale - Auto-scale settings for the cluster.
+	AutoScale *AutoScaleSettings `json:"autoScale,omitempty"`
 }
 
 // SetupTask specifies a setup task which can be used to customize the compute nodes of the cluster.
 type SetupTask struct {
-	// CommandLine - Command line to be executed on each cluster's node after it being allocated or rebooted. The command is executed in a bash subshell as a root.
-	CommandLine          *string                `json:"commandLine,omitempty"`
+	// CommandLine - The command line to be executed on each cluster's node after it being allocated or rebooted. The command is executed in a bash subshell as a root.
+	CommandLine *string `json:"commandLine,omitempty"`
+	// EnvironmentVariables - A collection of user defined environment variables to be set for setup task.
 	EnvironmentVariables *[]EnvironmentVariable `json:"environmentVariables,omitempty"`
-	// Secrets - Server will never report values of these variables back.
+	// Secrets - A collection of user defined environment variables with secret values to be set for the setup task. Server will never report values of these variables back.
 	Secrets *[]EnvironmentVariableWithSecretValue `json:"secrets,omitempty"`
-	// StdOutErrPathPrefix - The prefix of a path where the Batch AI service will upload the stdout and stderr of the setup task.
+	// StdOutErrPathPrefix - The prefix of a path where the Batch AI service will upload the stdout, stderr and execution log of the setup task.
 	StdOutErrPathPrefix *string `json:"stdOutErrPathPrefix,omitempty"`
-	// StdOutErrPathSuffix - Batch AI creates the setup task output directories under an unique path to avoid conflicts between different clusters. You can concatinate stdOutErrPathPrefix and stdOutErrPathSuffix to get the full path to the output directory.
+	// StdOutErrPathSuffix - A path segment appended by Batch AI to stdOutErrPathPrefix to form a path where stdout, stderr and execution log of the setup task will be uploaded. Batch AI creates the setup task output directories under an unique path to avoid conflicts between different clusters. The full path can be obtained by concatenation of stdOutErrPathPrefix and stdOutErrPathSuffix.
 	StdOutErrPathSuffix *string `json:"stdOutErrPathSuffix,omitempty"`
 }
 
-// SSHConfiguration SSH configuration settings for the VM
+// SSHConfiguration SSH configuration.
 type SSHConfiguration struct {
-	// PublicIPsToAllow - Default value is '*' can be used to match all source IPs. Maximum number of IP ranges that can be specified are 400.
-	PublicIPsToAllow    *[]string            `json:"publicIPsToAllow,omitempty"`
+	// PublicIPsToAllow - List of source IP ranges to allow SSH connection from. The default value is '*' (all source IPs are allowed). Maximum number of IP ranges that can be specified is 400.
+	PublicIPsToAllow *[]string `json:"publicIPsToAllow,omitempty"`
+	// UserAccountSettings - Settings for administrator user account to be created on a node. The account can be used to establish SSH connection to the node.
 	UserAccountSettings *UserAccountSettings `json:"userAccountSettings,omitempty"`
 }
 
-// TensorFlowSettings specifies the settings for TensorFlow job.
+// TensorFlowSettings tensorFlow job settings.
 type TensorFlowSettings struct {
-	PythonScriptFilePath  *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonScriptFilePath - The python script to execute.
+	PythonScriptFilePath *string `json:"pythonScriptFilePath,omitempty"`
+	// PythonInterpreterPath - The path to the Python interpreter.
 	PythonInterpreterPath *string `json:"pythonInterpreterPath,omitempty"`
+	// MasterCommandLineArgs - Command line arguments that need to be passed to the python script for the master task.
 	MasterCommandLineArgs *string `json:"masterCommandLineArgs,omitempty"`
-	// WorkerCommandLineArgs - This property is optional for single machine training.
+	// WorkerCommandLineArgs - Command line arguments that need to be passed to the python script for the worker task. Optional for single process jobs.
 	WorkerCommandLineArgs *string `json:"workerCommandLineArgs,omitempty"`
-	// ParameterServerCommandLineArgs - This property is optional for single machine training.
+	// ParameterServerCommandLineArgs - Command line arguments that need to be passed to the python script for the parameter server. Optional for single process jobs.
 	ParameterServerCommandLineArgs *string `json:"parameterServerCommandLineArgs,omitempty"`
-	// WorkerCount - If specified, the value must be less than or equal to (nodeCount * numberOfGPUs per VM). If not specified, the default value is equal to nodeCount. This property can be specified only for distributed TensorFlow training
+	// WorkerCount - The number of worker tasks. If specified, the value must be less than or equal to (nodeCount * numberOfGPUs per VM). If not specified, the default value is equal to nodeCount. This property can be specified only for distributed TensorFlow training.
 	WorkerCount *int32 `json:"workerCount,omitempty"`
-	// ParameterServerCount - If specified, the value must be less than or equal to nodeCount. If not specified, the default value is equal to 1 for distributed TensorFlow training (This property is not applicable for single machine training). This property can be specified only for distributed TensorFlow training.
+	// ParameterServerCount - The number of parameter server tasks. If specified, the value must be less than or equal to nodeCount. If not specified, the default value is equal to 1 for distributed TensorFlow training. This property can be specified only for distributed TensorFlow training.
 	ParameterServerCount *int32 `json:"parameterServerCount,omitempty"`
 }
 
-// UnmanagedFileSystemReference details of the file system to mount on the compute cluster nodes.
+// UnmanagedFileSystemReference unmananged file system mounting configuration.
 type UnmanagedFileSystemReference struct {
+	// MountCommand - Mount command line. Note, Batch AI will append mount path to the command on its own.
 	MountCommand *string `json:"mountCommand,omitempty"`
-	// RelativeMountPath - Note that all cluster level unmanaged file system will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and job level unmanaged file system will be mounted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
+	// RelativeMountPath - The relative path on the compute node where the unmanaged file system will be mounted. Note that all cluster level unmanaged file systems will be mounted under $AZ_BATCHAI_MOUNT_ROOT location and all job level unmanaged file systems will be mounted under $AZ_BATCHAI_JOB_MOUNT_ROOT.
 	RelativeMountPath *string `json:"relativeMountPath,omitempty"`
 }
 
@@ -2605,17 +2594,21 @@ type UsageName struct {
 
 // UserAccountSettings settings for user account that gets created on each on the nodes of a cluster.
 type UserAccountSettings struct {
-	AdminUserName         *string `json:"adminUserName,omitempty"`
+	// AdminUserName - Name of the administrator user account which can be used to SSH to nodes.
+	AdminUserName *string `json:"adminUserName,omitempty"`
+	// AdminUserSSHPublicKey - SSH public key of the administrator user account.
 	AdminUserSSHPublicKey *string `json:"adminUserSshPublicKey,omitempty"`
-	AdminUserPassword     *string `json:"adminUserPassword,omitempty"`
+	// AdminUserPassword - Password of the administrator user account.
+	AdminUserPassword *string `json:"adminUserPassword,omitempty"`
 }
 
-// VirtualMachineConfiguration settings for OS image.
+// VirtualMachineConfiguration VM configuration.
 type VirtualMachineConfiguration struct {
+	// ImageReference - OS image reference for cluster nodes.
 	ImageReference *ImageReference `json:"imageReference,omitempty"`
 }
 
-// Workspace describes Batch AI Workspace.
+// Workspace batch AI Workspace information.
 type Workspace struct {
 	autorest.Response `json:"-"`
 	// WorkspaceProperties - The properties associated with the workspace.
@@ -2725,7 +2718,7 @@ func (w *Workspace) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// WorkspaceCreateParameters parameters supplied to the Create operation.
+// WorkspaceCreateParameters workspace creation parameters.
 type WorkspaceCreateParameters struct {
 	// Location - The region in which to create the Workspace.
 	Location *string `json:"location,omitempty"`
@@ -2849,8 +2842,9 @@ func (page WorkspaceListResultPage) Values() []Workspace {
 
 // WorkspaceProperties workspace specific properties.
 type WorkspaceProperties struct {
+	// CreationTime - Time when the Workspace was created.
 	CreationTime *date.Time `json:"creationTime,omitempty"`
-	// ProvisioningState - The provisioned state of the workspace. Possible values include: 'ProvisioningStateCreating', 'ProvisioningStateSucceeded', 'ProvisioningStateFailed', 'ProvisioningStateDeleting'
+	// ProvisioningState - The provisioned state of the Workspace. Possible values include: 'ProvisioningStateCreating', 'ProvisioningStateSucceeded', 'ProvisioningStateFailed', 'ProvisioningStateDeleting'
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 	// ProvisioningStateTransitionTime - The time at which the workspace entered its current provisioning state.
 	ProvisioningStateTransitionTime *date.Time `json:"provisioningStateTransitionTime,omitempty"`
@@ -2904,4 +2898,19 @@ func (future *WorkspacesDeleteFuture) Result(client WorkspacesClient) (ar autore
 	}
 	ar.Response = future.Response()
 	return
+}
+
+// WorkspaceUpdateParameters workspace update parameters.
+type WorkspaceUpdateParameters struct {
+	// Tags - The user specified tags associated with the Workspace.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for WorkspaceUpdateParameters.
+func (wup WorkspaceUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if wup.Tags != nil {
+		objectMap["tags"] = wup.Tags
+	}
+	return json.Marshal(objectMap)
 }

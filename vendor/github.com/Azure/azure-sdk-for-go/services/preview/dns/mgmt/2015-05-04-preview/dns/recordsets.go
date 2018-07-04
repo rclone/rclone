@@ -21,6 +21,7 @@ import (
 	"context"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/validation"
 	"net/http"
 )
 
@@ -41,7 +42,7 @@ func NewRecordSetsClientWithBaseURI(baseURI string, subscriptionID string) Recor
 
 // CreateOrUpdate creates a RecordSet within a DNS zone.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the zone without a terminating dot.
 // recordType - the type of DNS record.
 // relativeRecordSetName - the name of the RecordSet, relative to the name of the zone.
@@ -50,6 +51,14 @@ func NewRecordSetsClientWithBaseURI(baseURI string, subscriptionID string) Recor
 // ifNoneMatch - defines the If-None-Match condition. Set to '*' to force Create-If-Not-Exist. Other values
 // will be ignored.
 func (client RecordSetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, relativeRecordSetName string, parameters RecordSet, ifMatch string, ifNoneMatch string) (result RecordSet, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.RecordSetsClient", "CreateOrUpdate", err.Error())
+	}
+
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, zoneName, recordType, relativeRecordSetName, parameters, ifMatch, ifNoneMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "CreateOrUpdate", nil, "Failure preparing request")
@@ -126,13 +135,21 @@ func (client RecordSetsClient) CreateOrUpdateResponder(resp *http.Response) (res
 
 // Delete removes a RecordSet from a DNS zone.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the zone without a terminating dot.
 // recordType - the type of DNS record.
 // relativeRecordSetName - the name of the RecordSet, relative to the name of the zone.
 // ifMatch - defines the If-Match condition. The delete operation will be performed only if the ETag of the
 // zone on the server matches this value.
 func (client RecordSetsClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, relativeRecordSetName string, ifMatch string) (result autorest.Response, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.RecordSetsClient", "Delete", err.Error())
+	}
+
 	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, recordType, relativeRecordSetName, ifMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "Delete", nil, "Failure preparing request")
@@ -202,11 +219,19 @@ func (client RecordSetsClient) DeleteResponder(resp *http.Response) (result auto
 
 // Get gets a RecordSet.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the zone without a terminating dot.
 // recordType - the type of DNS record.
 // relativeRecordSetName - the name of the RecordSet, relative to the name of the zone.
 func (client RecordSetsClient) Get(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, relativeRecordSetName string) (result RecordSet, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.RecordSetsClient", "Get", err.Error())
+	}
+
 	req, err := client.GetPreparer(ctx, resourceGroupName, zoneName, recordType, relativeRecordSetName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.RecordSetsClient", "Get", nil, "Failure preparing request")
@@ -273,12 +298,20 @@ func (client RecordSetsClient) GetResponder(resp *http.Response) (result RecordS
 
 // List lists the RecordSets of a specified type in a DNS zone.
 // Parameters:
-// resourceGroupName - the name of the resource group that contains the zone.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the zone from which to enumerate RecordsSets.
 // recordType - the type of record sets to enumerate.
 // top - query parameters. If null is passed returns the default number of zones.
 // filter - the filter to apply on the operation.
 func (client RecordSetsClient) List(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, top string, filter string) (result RecordSetListResultPage, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.RecordSetsClient", "List", err.Error())
+	}
+
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, zoneName, recordType, top, filter)
 	if err != nil {
@@ -378,11 +411,19 @@ func (client RecordSetsClient) ListComplete(ctx context.Context, resourceGroupNa
 
 // ListAll lists all RecordSets in a DNS zone.
 // Parameters:
-// resourceGroupName - the name of the resource group that contains the zone.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the zone from which to enumerate RecordSets.
 // top - query parameters. If null is passed returns the default number of zones.
 // filter - the filter to apply on the operation.
 func (client RecordSetsClient) ListAll(ctx context.Context, resourceGroupName string, zoneName string, top string, filter string) (result RecordSetListResultPage, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.RecordSetsClient", "ListAll", err.Error())
+	}
+
 	result.fn = client.listAllNextResults
 	req, err := client.ListAllPreparer(ctx, resourceGroupName, zoneName, top, filter)
 	if err != nil {

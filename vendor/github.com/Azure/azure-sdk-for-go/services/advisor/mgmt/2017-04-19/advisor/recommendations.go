@@ -175,17 +175,23 @@ func (client RecommendationsClient) GetResponder(resp *http.Response) (result Re
 // Parameters:
 // operationID - the operation ID, which can be found from the Location field in the generate recommendation
 // response header.
-func (client RecommendationsClient) GetGenerateStatus(ctx context.Context, operationID uuid.UUID) (result RecommendationsGetGenerateStatusFuture, err error) {
+func (client RecommendationsClient) GetGenerateStatus(ctx context.Context, operationID uuid.UUID) (result autorest.Response, err error) {
 	req, err := client.GetGenerateStatusPreparer(ctx, operationID)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "advisor.RecommendationsClient", "GetGenerateStatus", nil, "Failure preparing request")
 		return
 	}
 
-	result, err = client.GetGenerateStatusSender(req)
+	resp, err := client.GetGenerateStatusSender(req)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "advisor.RecommendationsClient", "GetGenerateStatus", result.Response(), "Failure sending request")
+		result.Response = resp
+		err = autorest.NewErrorWithError(err, "advisor.RecommendationsClient", "GetGenerateStatus", resp, "Failure sending request")
 		return
+	}
+
+	result, err = client.GetGenerateStatusResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "advisor.RecommendationsClient", "GetGenerateStatus", resp, "Failure responding to request")
 	}
 
 	return
@@ -213,19 +219,9 @@ func (client RecommendationsClient) GetGenerateStatusPreparer(ctx context.Contex
 
 // GetGenerateStatusSender sends the GetGenerateStatus request. The method will close the
 // http.Response Body if it receives an error.
-func (client RecommendationsClient) GetGenerateStatusSender(req *http.Request) (future RecommendationsGetGenerateStatusFuture, err error) {
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, req,
+func (client RecommendationsClient) GetGenerateStatusSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
 		azure.DoRetryWithRegistration(client.Client))
-	if err != nil {
-		return
-	}
-	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted, http.StatusNoContent))
-	if err != nil {
-		return
-	}
-	future.Future, err = azure.NewFutureFromResponse(resp)
-	return
 }
 
 // GetGenerateStatusResponder handles the response to the GetGenerateStatus request. The method always

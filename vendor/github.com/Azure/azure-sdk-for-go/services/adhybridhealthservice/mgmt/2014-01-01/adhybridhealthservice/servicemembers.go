@@ -311,6 +311,88 @@ func (client ServiceMembersClient) GetResponder(resp *http.Response) (result Ser
 	return
 }
 
+// GetMetrics gets the server related metrics for a given metric and group combination.
+// Parameters:
+// serviceName - the name of the service.
+// metricName - the metric name
+// groupName - the group name
+// serviceMemberID - the server id.
+// groupKey - the group key
+// fromDate - the start date.
+// toDate - the end date.
+func (client ServiceMembersClient) GetMetrics(ctx context.Context, serviceName string, metricName string, groupName string, serviceMemberID uuid.UUID, groupKey string, fromDate *date.Time, toDate *date.Time) (result MetricSets, err error) {
+	req, err := client.GetMetricsPreparer(ctx, serviceName, metricName, groupName, serviceMemberID, groupKey, fromDate, toDate)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "adhybridhealthservice.ServiceMembersClient", "GetMetrics", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.GetMetricsSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "adhybridhealthservice.ServiceMembersClient", "GetMetrics", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.GetMetricsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "adhybridhealthservice.ServiceMembersClient", "GetMetrics", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// GetMetricsPreparer prepares the GetMetrics request.
+func (client ServiceMembersClient) GetMetricsPreparer(ctx context.Context, serviceName string, metricName string, groupName string, serviceMemberID uuid.UUID, groupKey string, fromDate *date.Time, toDate *date.Time) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"groupName":       autorest.Encode("path", groupName),
+		"metricName":      autorest.Encode("path", metricName),
+		"serviceMemberId": autorest.Encode("path", serviceMemberID),
+		"serviceName":     autorest.Encode("path", serviceName),
+	}
+
+	const APIVersion = "2014-01-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+	if len(groupKey) > 0 {
+		queryParameters["groupKey"] = autorest.Encode("query", groupKey)
+	}
+	if fromDate != nil {
+		queryParameters["fromDate"] = autorest.Encode("query", *fromDate)
+	}
+	if toDate != nil {
+		queryParameters["toDate"] = autorest.Encode("query", *toDate)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/providers/Microsoft.ADHybridHealthService/services/{serviceName}/servicemembers/{serviceMemberId}/metrics/{metricName}/groups/{groupName}", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// GetMetricsSender sends the GetMetrics request. The method will close the
+// http.Response Body if it receives an error.
+func (client ServiceMembersClient) GetMetricsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// GetMetricsResponder handles the response to the GetMetrics request. The method always
+// closes the http.Response Body.
+func (client ServiceMembersClient) GetMetricsResponder(resp *http.Response) (result MetricSets, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // GetServiceConfiguration gets the service configuration.
 // Parameters:
 // serviceName - the name of the service.
@@ -945,88 +1027,6 @@ func (client ServiceMembersClient) ListGlobalConfigurationSender(req *http.Reque
 // ListGlobalConfigurationResponder handles the response to the ListGlobalConfiguration request. The method always
 // closes the http.Response Body.
 func (client ServiceMembersClient) ListGlobalConfigurationResponder(resp *http.Response) (result GlobalConfigurations, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// ListMetrics gets the server related metrics for a given metric and group combination.
-// Parameters:
-// serviceName - the name of the service.
-// metricName - the metric name
-// groupName - the group name
-// serviceMemberID - the server id.
-// groupKey - the group key
-// fromDate - the start date.
-// toDate - the end date.
-func (client ServiceMembersClient) ListMetrics(ctx context.Context, serviceName string, metricName string, groupName string, serviceMemberID uuid.UUID, groupKey string, fromDate *date.Time, toDate *date.Time) (result MetricSets, err error) {
-	req, err := client.ListMetricsPreparer(ctx, serviceName, metricName, groupName, serviceMemberID, groupKey, fromDate, toDate)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "adhybridhealthservice.ServiceMembersClient", "ListMetrics", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.ListMetricsSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "adhybridhealthservice.ServiceMembersClient", "ListMetrics", resp, "Failure sending request")
-		return
-	}
-
-	result, err = client.ListMetricsResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "adhybridhealthservice.ServiceMembersClient", "ListMetrics", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// ListMetricsPreparer prepares the ListMetrics request.
-func (client ServiceMembersClient) ListMetricsPreparer(ctx context.Context, serviceName string, metricName string, groupName string, serviceMemberID uuid.UUID, groupKey string, fromDate *date.Time, toDate *date.Time) (*http.Request, error) {
-	pathParameters := map[string]interface{}{
-		"groupName":       autorest.Encode("path", groupName),
-		"metricName":      autorest.Encode("path", metricName),
-		"serviceMemberId": autorest.Encode("path", serviceMemberID),
-		"serviceName":     autorest.Encode("path", serviceName),
-	}
-
-	const APIVersion = "2014-01-01"
-	queryParameters := map[string]interface{}{
-		"api-version": APIVersion,
-	}
-	if len(groupKey) > 0 {
-		queryParameters["groupKey"] = autorest.Encode("query", groupKey)
-	}
-	if fromDate != nil {
-		queryParameters["fromDate"] = autorest.Encode("query", *fromDate)
-	}
-	if toDate != nil {
-		queryParameters["toDate"] = autorest.Encode("query", *toDate)
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsGet(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/providers/Microsoft.ADHybridHealthService/services/{serviceName}/servicemembers/{serviceMemberId}/metrics/{metricName}/groups/{groupName}", pathParameters),
-		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// ListMetricsSender sends the ListMetrics request. The method will close the
-// http.Response Body if it receives an error.
-func (client ServiceMembersClient) ListMetricsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-}
-
-// ListMetricsResponder handles the response to the ListMetrics request. The method always
-// closes the http.Response Body.
-func (client ServiceMembersClient) ListMetricsResponder(resp *http.Response) (result MetricSets, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

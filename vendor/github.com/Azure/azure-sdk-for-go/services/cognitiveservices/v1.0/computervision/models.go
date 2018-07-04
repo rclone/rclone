@@ -73,21 +73,6 @@ func PossibleDetailsValues() []Details {
 	return []Details{Celebrities, Landmarks}
 }
 
-// DomainModels enumerates the values for domain models.
-type DomainModels string
-
-const (
-	// DomainModelsCelebrities ...
-	DomainModelsCelebrities DomainModels = "Celebrities"
-	// DomainModelsLandmarks ...
-	DomainModelsLandmarks DomainModels = "Landmarks"
-)
-
-// PossibleDomainModelsValues returns an array of possible values for the DomainModels const type.
-func PossibleDomainModelsValues() []DomainModels {
-	return []DomainModels{DomainModelsCelebrities, DomainModelsLandmarks}
-}
-
 // ErrorCodes enumerates the values for error codes.
 type ErrorCodes string
 
@@ -285,6 +270,14 @@ type CelebritiesModel struct {
 	FaceRectangle *FaceRectangle `json:"faceRectangle,omitempty"`
 }
 
+// CelebrityResults list of celebrities recognized in the image.
+type CelebrityResults struct {
+	Celebrities *[]CelebritiesModel `json:"celebrities,omitempty"`
+	// RequestID - Id of the REST API request.
+	RequestID *string        `json:"requestId,omitempty"`
+	Metadata  *ImageMetadata `json:"metadata,omitempty"`
+}
+
 // ColorInfo an object providing additional metadata describing color attributes.
 type ColorInfo struct {
 	// DominantColorForeground - Possible dominant foreground color.
@@ -299,76 +292,14 @@ type ColorInfo struct {
 	IsBWImg *bool `json:"isBWImg,omitempty"`
 }
 
-// DomainModelResult ...
-type DomainModelResult struct {
-	// Celebrities - An array of possible celebritied identified in the image.
-	Celebrities *[]CelebritiesModel `json:"celebrities,omitempty"`
-}
-
 // DomainModelResults result of image analysis using a specific domain model including additional metadata.
 type DomainModelResults struct {
-	autorest.Response  `json:"-"`
-	*DomainModelResult `json:"result,omitempty"`
+	autorest.Response `json:"-"`
+	// Result - Model-specific response
+	Result interface{} `json:"result,omitempty"`
 	// RequestID - Id of the REST API request.
 	RequestID *string        `json:"requestId,omitempty"`
 	Metadata  *ImageMetadata `json:"metadata,omitempty"`
-}
-
-// MarshalJSON is the custom marshaler for DomainModelResults.
-func (dmr DomainModelResults) MarshalJSON() ([]byte, error) {
-	objectMap := make(map[string]interface{})
-	if dmr.DomainModelResult != nil {
-		objectMap["result"] = dmr.DomainModelResult
-	}
-	if dmr.RequestID != nil {
-		objectMap["requestId"] = dmr.RequestID
-	}
-	if dmr.Metadata != nil {
-		objectMap["metadata"] = dmr.Metadata
-	}
-	return json.Marshal(objectMap)
-}
-
-// UnmarshalJSON is the custom unmarshaler for DomainModelResults struct.
-func (dmr *DomainModelResults) UnmarshalJSON(body []byte) error {
-	var m map[string]*json.RawMessage
-	err := json.Unmarshal(body, &m)
-	if err != nil {
-		return err
-	}
-	for k, v := range m {
-		switch k {
-		case "result":
-			if v != nil {
-				var domainModelResult DomainModelResult
-				err = json.Unmarshal(*v, &domainModelResult)
-				if err != nil {
-					return err
-				}
-				dmr.DomainModelResult = &domainModelResult
-			}
-		case "requestId":
-			if v != nil {
-				var requestID string
-				err = json.Unmarshal(*v, &requestID)
-				if err != nil {
-					return err
-				}
-				dmr.RequestID = &requestID
-			}
-		case "metadata":
-			if v != nil {
-				var metadata ImageMetadata
-				err = json.Unmarshal(*v, &metadata)
-				if err != nil {
-					return err
-				}
-				dmr.Metadata = &metadata
-			}
-		}
-	}
-
-	return nil
 }
 
 // Error ...
@@ -512,6 +443,22 @@ type ImageURL struct {
 	URL *string `json:"url,omitempty"`
 }
 
+// LandmarkResults list of landmarks recognized in the image.
+type LandmarkResults struct {
+	Landmarks *[]LandmarkResultsLandmarksItem `json:"landmarks,omitempty"`
+	// RequestID - Id of the REST API request.
+	RequestID *string        `json:"requestId,omitempty"`
+	Metadata  *ImageMetadata `json:"metadata,omitempty"`
+}
+
+// LandmarkResultsLandmarksItem a landmark recognized in the image
+type LandmarkResultsLandmarksItem struct {
+	// Name - Name of the landmark.
+	Name *string `json:"name,omitempty"`
+	// Confidence - Confidence level for the landmark recognition.
+	Confidence *float64 `json:"confidence,omitempty"`
+}
+
 // Line ...
 type Line struct {
 	BoundingBox *[]int32 `json:"boundingBox,omitempty"`
@@ -550,7 +497,8 @@ type OcrRegion struct {
 // OcrResult ...
 type OcrResult struct {
 	autorest.Response `json:"-"`
-	Language          *OcrResult `json:"language,omitempty"`
+	// Language - The BCP-47 language code of the text in the image.
+	Language *string `json:"language,omitempty"`
 	// TextAngle - The angle, in degrees, of the detected text with respect to the closest horizontal or vertical direction. After rotating the input image clockwise by this angle, the recognized text lines become horizontal or vertical. In combination with the orientation property it can be used to overlay recognition results correctly on the original image, by rotating either the original image or recognition results by a suitable angle around the center of the original image. If the angle cannot be confidently detected, this property is not present. If the image contains text at different angles, only part of the text will be recognized correctly.
 	TextAngle *float64 `json:"textAngle,omitempty"`
 	// Orientation - Orientation of the text recognized in the image. The value (up,down,left, or right) refers to the direction that the top of the recognized text is facing, after the image has been rotated around its center according to the detected text angle (see textAngle property).

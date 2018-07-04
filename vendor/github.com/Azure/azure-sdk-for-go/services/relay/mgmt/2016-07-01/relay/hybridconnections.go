@@ -60,7 +60,7 @@ func (client HybridConnectionsClient) CreateOrUpdate(ctx context.Context, resour
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.HybridConnectionProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.HybridConnectionProperties.ListenerCount", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "parameters.HybridConnectionProperties.ListenerCount", Name: validation.InclusiveMaximum, Rule: 25, Chain: nil},
+					Chain: []validation.Constraint{{Target: "parameters.HybridConnectionProperties.ListenerCount", Name: validation.InclusiveMaximum, Rule: int64(25), Chain: nil},
 						{Target: "parameters.HybridConnectionProperties.ListenerCount", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {

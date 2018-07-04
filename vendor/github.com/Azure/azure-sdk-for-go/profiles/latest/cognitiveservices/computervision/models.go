@@ -46,13 +46,6 @@ const (
 	Landmarks   Details = original.Landmarks
 )
 
-type DomainModels = original.DomainModels
-
-const (
-	DomainModelsCelebrities DomainModels = original.DomainModelsCelebrities
-	DomainModelsLandmarks   DomainModels = original.DomainModelsLandmarks
-)
-
 type ErrorCodes = original.ErrorCodes
 
 const (
@@ -135,8 +128,8 @@ type AdultInfo = original.AdultInfo
 type Category = original.Category
 type CategoryDetail = original.CategoryDetail
 type CelebritiesModel = original.CelebritiesModel
+type CelebrityResults = original.CelebrityResults
 type ColorInfo = original.ColorInfo
-type DomainModelResult = original.DomainModelResult
 type DomainModelResults = original.DomainModelResults
 type Error = original.Error
 type FaceDescription = original.FaceDescription
@@ -149,6 +142,8 @@ type ImageMetadata = original.ImageMetadata
 type ImageTag = original.ImageTag
 type ImageType = original.ImageType
 type ImageURL = original.ImageURL
+type LandmarkResults = original.LandmarkResults
+type LandmarkResultsLandmarksItem = original.LandmarkResultsLandmarksItem
 type Line = original.Line
 type ListModelsResult = original.ListModelsResult
 type ModelDescription = original.ModelDescription
@@ -173,9 +168,6 @@ func PossibleAzureRegionsValues() []AzureRegions {
 }
 func PossibleDetailsValues() []Details {
 	return original.PossibleDetailsValues()
-}
-func PossibleDomainModelsValues() []DomainModels {
-	return original.PossibleDomainModelsValues()
 }
 func PossibleErrorCodesValues() []ErrorCodes {
 	return original.PossibleErrorCodesValues()

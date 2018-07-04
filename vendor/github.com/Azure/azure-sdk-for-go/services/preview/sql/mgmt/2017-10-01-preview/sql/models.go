@@ -532,6 +532,109 @@ func (bstrp *BackupShortTermRetentionPolicy) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// BackupShortTermRetentionPolicyListResult a list of short term retention policies.
+type BackupShortTermRetentionPolicyListResult struct {
+	autorest.Response `json:"-"`
+	// Value - Array of results.
+	Value *[]BackupShortTermRetentionPolicy `json:"value,omitempty"`
+	// NextLink - Link to retrieve next page of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// BackupShortTermRetentionPolicyListResultIterator provides access to a complete listing of
+// BackupShortTermRetentionPolicy values.
+type BackupShortTermRetentionPolicyListResultIterator struct {
+	i    int
+	page BackupShortTermRetentionPolicyListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *BackupShortTermRetentionPolicyListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter BackupShortTermRetentionPolicyListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter BackupShortTermRetentionPolicyListResultIterator) Response() BackupShortTermRetentionPolicyListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter BackupShortTermRetentionPolicyListResultIterator) Value() BackupShortTermRetentionPolicy {
+	if !iter.page.NotDone() {
+		return BackupShortTermRetentionPolicy{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (bstrplr BackupShortTermRetentionPolicyListResult) IsEmpty() bool {
+	return bstrplr.Value == nil || len(*bstrplr.Value) == 0
+}
+
+// backupShortTermRetentionPolicyListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (bstrplr BackupShortTermRetentionPolicyListResult) backupShortTermRetentionPolicyListResultPreparer() (*http.Request, error) {
+	if bstrplr.NextLink == nil || len(to.String(bstrplr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(bstrplr.NextLink)))
+}
+
+// BackupShortTermRetentionPolicyListResultPage contains a page of BackupShortTermRetentionPolicy values.
+type BackupShortTermRetentionPolicyListResultPage struct {
+	fn      func(BackupShortTermRetentionPolicyListResult) (BackupShortTermRetentionPolicyListResult, error)
+	bstrplr BackupShortTermRetentionPolicyListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *BackupShortTermRetentionPolicyListResultPage) Next() error {
+	next, err := page.fn(page.bstrplr)
+	if err != nil {
+		return err
+	}
+	page.bstrplr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page BackupShortTermRetentionPolicyListResultPage) NotDone() bool {
+	return !page.bstrplr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page BackupShortTermRetentionPolicyListResultPage) Response() BackupShortTermRetentionPolicyListResult {
+	return page.bstrplr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page BackupShortTermRetentionPolicyListResultPage) Values() []BackupShortTermRetentionPolicy {
+	if page.bstrplr.IsEmpty() {
+		return nil
+	}
+	return *page.bstrplr.Value
+}
+
 // BackupShortTermRetentionPolicyProperties properties of a short term retention policy
 type BackupShortTermRetentionPolicyProperties struct {
 	// RetentionDays - The backup retention period in days. This is how many days Point-in-Time Restore will be supported.
@@ -2616,6 +2719,29 @@ type ManagedInstancePairInfo struct {
 	PartnerManagedInstanceID *string `json:"partnerManagedInstanceId,omitempty"`
 }
 
+// ManagedInstanceTdeCertificatesCreateFuture an abstraction for monitoring and retrieving the results of a
+// long-running operation.
+type ManagedInstanceTdeCertificatesCreateFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *ManagedInstanceTdeCertificatesCreateFuture) Result(client ManagedInstanceTdeCertificatesClient) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.ManagedInstanceTdeCertificatesCreateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("sql.ManagedInstanceTdeCertificatesCreateFuture")
+		return
+	}
+	ar.Response = future.Response()
+	return
+}
+
 // ManagedInstanceVcoresCapability the managed instance virtual cores capability.
 type ManagedInstanceVcoresCapability struct {
 	// Name - The virtual cores identifier.
@@ -2754,6 +2880,118 @@ type Sku struct {
 	Family *string `json:"family,omitempty"`
 	// Capacity - If the SKU supports scale out/in then the capacity integer should be included. If scale out/in is not possible for the resource this may be omitted.
 	Capacity *int32 `json:"capacity,omitempty"`
+}
+
+// TdeCertificate a TDE certificate that can be uploaded into a server.
+type TdeCertificate struct {
+	// TdeCertificateProperties - Resource properties.
+	*TdeCertificateProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for TdeCertificate.
+func (tc TdeCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if tc.TdeCertificateProperties != nil {
+		objectMap["properties"] = tc.TdeCertificateProperties
+	}
+	if tc.ID != nil {
+		objectMap["id"] = tc.ID
+	}
+	if tc.Name != nil {
+		objectMap["name"] = tc.Name
+	}
+	if tc.Type != nil {
+		objectMap["type"] = tc.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for TdeCertificate struct.
+func (tc *TdeCertificate) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var tdeCertificateProperties TdeCertificateProperties
+				err = json.Unmarshal(*v, &tdeCertificateProperties)
+				if err != nil {
+					return err
+				}
+				tc.TdeCertificateProperties = &tdeCertificateProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				tc.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				tc.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				tc.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// TdeCertificateProperties properties of a TDE certificate.
+type TdeCertificateProperties struct {
+	// PrivateBlob - The base64 encoded certificate private blob.
+	PrivateBlob *string `json:"privateBlob,omitempty"`
+	// CertPassword - The certificate password.
+	CertPassword *string `json:"certPassword,omitempty"`
+}
+
+// TdeCertificatesCreateFuture an abstraction for monitoring and retrieving the results of a long-running
+// operation.
+type TdeCertificatesCreateFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *TdeCertificatesCreateFuture) Result(client TdeCertificatesClient) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.TdeCertificatesCreateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("sql.TdeCertificatesCreateFuture")
+		return
+	}
+	ar.Response = future.Response()
+	return
 }
 
 // TrackedResource ARM tracked top level resource.

@@ -131,6 +131,72 @@ func PossibleMetricIDValues() []MetricID {
 	return []MetricID{AvailabilityResultsavailabilityPercentage, AvailabilityResultsduration, BillingtelemetryCount, ClientnetworkDuration, ClientprocessingDuration, ClientreceiveDuration, ClientsendDuration, ClienttotalDuration, CustomEventscount, Dependenciescount, Dependenciesduration, Dependenciesfailed, Exceptionsbrowser, Exceptionscount, Exceptionsserver, PageViewscount, PageViewsduration, PerformanceCountersexceptionsPerSecond, PerformanceCountersmemoryAvailableBytes, PerformanceCountersprocessCPUPercentage, PerformanceCountersprocessIOBytesPerSecond, PerformanceCountersprocessorCPUPercentage, PerformanceCountersprocessPrivateBytes, PerformanceCountersrequestExecutionTime, PerformanceCountersrequestsInQueue, PerformanceCountersrequestsPerSecond, Requestscount, Requestsduration, Requestsfailed, Sessionscount, Usersauthenticated, Userscount}
 }
 
+// MetricsAggregation enumerates the values for metrics aggregation.
+type MetricsAggregation string
+
+const (
+	// Avg ...
+	Avg MetricsAggregation = "avg"
+	// Count ...
+	Count MetricsAggregation = "count"
+	// Max ...
+	Max MetricsAggregation = "max"
+	// Min ...
+	Min MetricsAggregation = "min"
+	// Sum ...
+	Sum MetricsAggregation = "sum"
+	// Unique ...
+	Unique MetricsAggregation = "unique"
+)
+
+// PossibleMetricsAggregationValues returns an array of possible values for the MetricsAggregation const type.
+func PossibleMetricsAggregationValues() []MetricsAggregation {
+	return []MetricsAggregation{Avg, Count, Max, Min, Sum, Unique}
+}
+
+// MetricsSegment enumerates the values for metrics segment.
+type MetricsSegment string
+
+const (
+	// ApplicationBuild ...
+	ApplicationBuild MetricsSegment = "applicationBuild"
+	// ApplicationVersion ...
+	ApplicationVersion MetricsSegment = "applicationVersion"
+	// AuthenticatedOrAnonymousTraffic ...
+	AuthenticatedOrAnonymousTraffic MetricsSegment = "authenticatedOrAnonymousTraffic"
+	// Browser ...
+	Browser MetricsSegment = "browser"
+	// BrowserVersion ...
+	BrowserVersion MetricsSegment = "browserVersion"
+	// City ...
+	City MetricsSegment = "city"
+	// CloudRoleName ...
+	CloudRoleName MetricsSegment = "cloudRoleName"
+	// CloudServiceName ...
+	CloudServiceName MetricsSegment = "cloudServiceName"
+	// Continent ...
+	Continent MetricsSegment = "continent"
+	// CountryOrRegion ...
+	CountryOrRegion MetricsSegment = "countryOrRegion"
+	// DeploymentID ...
+	DeploymentID MetricsSegment = "deploymentId"
+	// DeploymentUnit ...
+	DeploymentUnit MetricsSegment = "deploymentUnit"
+	// DeviceType ...
+	DeviceType MetricsSegment = "deviceType"
+	// Environment ...
+	Environment MetricsSegment = "environment"
+	// HostingLocation ...
+	HostingLocation MetricsSegment = "hostingLocation"
+	// InstanceName ...
+	InstanceName MetricsSegment = "instanceName"
+)
+
+// PossibleMetricsSegmentValues returns an array of possible values for the MetricsSegment const type.
+func PossibleMetricsSegmentValues() []MetricsSegment {
+	return []MetricsSegment{ApplicationBuild, ApplicationVersion, AuthenticatedOrAnonymousTraffic, Browser, BrowserVersion, City, CloudRoleName, CloudServiceName, Continent, CountryOrRegion, DeploymentID, DeploymentUnit, DeviceType, Environment, HostingLocation, InstanceName}
+}
+
 // Type enumerates the values for type.
 type Type string
 
@@ -741,7 +807,7 @@ type EventsCustomMetricInfo struct {
 	// ValueSum - The sum of the custom metric
 	ValueSum *float64 `json:"valueSum,omitempty"`
 	// ValueCount - The count of the custom metric
-	ValueCount *float64 `json:"valueCount,omitempty"`
+	ValueCount *int32 `json:"valueCount,omitempty"`
 	// ValueMin - The minimum value of the custom metric
 	ValueMin *float64 `json:"valueMin,omitempty"`
 	// ValueMax - The maximum value of the custom metric
@@ -1423,7 +1489,7 @@ func (epvr EventsPageViewResult) AsBasicEventsResultData() (BasicEventsResultDat
 // EventsPerformanceCounterInfo the performance counter info
 type EventsPerformanceCounterInfo struct {
 	// Value - The value of the performance counter
-	Value *int64 `json:"value,omitempty"`
+	Value *float64 `json:"value,omitempty"`
 	// Name - The name of the performance counter
 	Name *string `json:"name,omitempty"`
 	// Category - The category of the performance counter
@@ -2242,14 +2308,14 @@ type MetricsPostBodySchema struct {
 // MetricsPostBodySchemaParameters the parameters for a single metrics query
 type MetricsPostBodySchemaParameters struct {
 	// MetricID - Possible values include: 'Requestscount', 'Requestsduration', 'Requestsfailed', 'Userscount', 'Usersauthenticated', 'PageViewscount', 'PageViewsduration', 'ClientprocessingDuration', 'ClientreceiveDuration', 'ClientnetworkDuration', 'ClientsendDuration', 'ClienttotalDuration', 'Dependenciescount', 'Dependenciesfailed', 'Dependenciesduration', 'Exceptionscount', 'Exceptionsbrowser', 'Exceptionsserver', 'Sessionscount', 'PerformanceCountersrequestExecutionTime', 'PerformanceCountersrequestsPerSecond', 'PerformanceCountersrequestsInQueue', 'PerformanceCountersmemoryAvailableBytes', 'PerformanceCountersexceptionsPerSecond', 'PerformanceCountersprocessCPUPercentage', 'PerformanceCountersprocessIOBytesPerSecond', 'PerformanceCountersprocessPrivateBytes', 'PerformanceCountersprocessorCPUPercentage', 'AvailabilityResultsavailabilityPercentage', 'AvailabilityResultsduration', 'BillingtelemetryCount', 'CustomEventscount'
-	MetricID    MetricID  `json:"metricId,omitempty"`
-	Timespan    *string   `json:"timespan,omitempty"`
-	Aggregation *[]string `json:"aggregation,omitempty"`
-	Interval    *string   `json:"interval,omitempty"`
-	Segment     *[]string `json:"segment,omitempty"`
-	Top         *int32    `json:"top,omitempty"`
-	Orderby     *string   `json:"orderby,omitempty"`
-	Filter      *string   `json:"filter,omitempty"`
+	MetricID    MetricID              `json:"metricId,omitempty"`
+	Timespan    *string               `json:"timespan,omitempty"`
+	Aggregation *[]MetricsAggregation `json:"aggregation,omitempty"`
+	Interval    *string               `json:"interval,omitempty"`
+	Segment     *[]MetricsSegment     `json:"segment,omitempty"`
+	Top         *int32                `json:"top,omitempty"`
+	Orderby     *string               `json:"orderby,omitempty"`
+	Filter      *string               `json:"filter,omitempty"`
 }
 
 // MetricsResult a metric result.
@@ -2333,13 +2399,14 @@ func (msi MetricsSegmentInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(objectMap)
 }
 
-// QueryBody query request body
+// QueryBody the Analytics query. Learn more about the [Analytics query
+// syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/)
 type QueryBody struct {
 	// Query - The query to execute.
 	Query *string `json:"query,omitempty"`
 	// Timespan - Optional. The timespan over which to query data. This is an ISO8601 time period value.  This timespan is applied in addition to any that are specified in the query expression.
 	Timespan *string `json:"timespan,omitempty"`
-	// Applications - A list of applications that are included in the query.
+	// Applications - A list of Application IDs for cross-application queries.
 	Applications *[]string `json:"applications,omitempty"`
 }
 

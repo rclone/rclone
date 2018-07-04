@@ -2110,6 +2110,19 @@ type PasswordManagementSettings struct {
 	UnlockAccount *bool `json:"unlockAccount,omitempty"`
 }
 
+// ReplicationDetailsList the list of replication details.
+type ReplicationDetailsList struct {
+	autorest.Response `json:"-"`
+	// Value - The value returned by the operation.
+	Value *[]ReplicationSummary `json:"value,omitempty"`
+	// TotalCount - The total count of replication detail elements.
+	TotalCount *int32 `json:"totalCount,omitempty"`
+	// ContinuationToken - The continuation token for paginated calls.
+	ContinuationToken *string `json:"continuationToken,omitempty"`
+	// NextLink - The link used to get the next page of operations.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
 // ReplicationStatus replication summary for a domain controller.
 type ReplicationStatus struct {
 	autorest.Response `json:"-"`
@@ -2611,6 +2624,13 @@ type TenantOnboardingDetails struct {
 	TenantOnboarded *bool `json:"tenantOnboarded,omitempty"`
 	// OnboardingDisplayURL - The display url, to help tenant navigate or onboard to Azure Active Directory Connect Health blade, based on tenant onboarding status.
 	OnboardingDisplayURL *string `json:"onboardingDisplayUrl,omitempty"`
+}
+
+// UserPreference the user preference for a given feature.
+type UserPreference struct {
+	autorest.Response `json:"-"`
+	// MetricNames - The name of the metric.
+	MetricNames *[]string `json:"metricNames,omitempty"`
 }
 
 // ValueDelta the value of the delta.

@@ -82,6 +82,13 @@ const (
 	DscConfigurationStatePublished DscConfigurationState = original.DscConfigurationStatePublished
 )
 
+type GroupTypeEnum = original.GroupTypeEnum
+
+const (
+	System GroupTypeEnum = original.System
+	User   GroupTypeEnum = original.User
+)
+
 type HTTPStatusCode = original.HTTPStatusCode
 
 const (
@@ -184,6 +191,7 @@ type KeyPermissions = original.KeyPermissions
 
 const (
 	Full KeyPermissions = original.Full
+	Read KeyPermissions = original.Read
 )
 
 type ModuleProvisioningState = original.ModuleProvisioningState
@@ -277,6 +285,7 @@ type ActivityListResultPage = original.ActivityListResultPage
 type ActivityOutputType = original.ActivityOutputType
 type ActivityParameter = original.ActivityParameter
 type ActivityParameterSet = original.ActivityParameterSet
+type ActivityParameterValidationSet = original.ActivityParameterValidationSet
 type ActivityProperties = original.ActivityProperties
 type AdvancedSchedule = original.AdvancedSchedule
 type AdvancedScheduleMonthlyOccurrence = original.AdvancedScheduleMonthlyOccurrence
@@ -373,7 +382,6 @@ type JobListResult = original.JobListResult
 type JobListResultIterator = original.JobListResultIterator
 type JobListResultPage = original.JobListResultPage
 type JobProperties = original.JobProperties
-type JobProvisioningStateProperty = original.JobProvisioningStateProperty
 type JobSchedule = original.JobSchedule
 type JobScheduleCreateParameters = original.JobScheduleCreateParameters
 type JobScheduleCreateProperties = original.JobScheduleCreateProperties
@@ -438,9 +446,9 @@ type Sku = original.Sku
 type Statistics = original.Statistics
 type StatisticsListResult = original.StatisticsListResult
 type String = original.String
-type SubResource = original.SubResource
 type TestJob = original.TestJob
 type TestJobCreateParameters = original.TestJobCreateParameters
+type TrackedResource = original.TrackedResource
 type TypeField = original.TypeField
 type TypeFieldListResult = original.TypeFieldListResult
 type Usage = original.Usage
@@ -612,6 +620,9 @@ func PossibleDscConfigurationProvisioningStateValues() []DscConfigurationProvisi
 }
 func PossibleDscConfigurationStateValues() []DscConfigurationState {
 	return original.PossibleDscConfigurationStateValues()
+}
+func PossibleGroupTypeEnumValues() []GroupTypeEnum {
+	return original.PossibleGroupTypeEnumValues()
 }
 func PossibleHTTPStatusCodeValues() []HTTPStatusCode {
 	return original.PossibleHTTPStatusCodeValues()

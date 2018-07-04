@@ -54,7 +54,7 @@ func (client AppServiceCertificateOrdersClient) CreateOrUpdate(ctx context.Conte
 		{TargetValue: certificateDistinguishedName,
 			Constraints: []validation.Constraint{{Target: "certificateDistinguishedName.AppServiceCertificateOrderProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "certificateDistinguishedName.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "certificateDistinguishedName.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMaximum, Rule: 3, Chain: nil},
+					Chain: []validation.Constraint{{Target: "certificateDistinguishedName.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMaximum, Rule: int64(3), Chain: nil},
 						{Target: "certificateDistinguishedName.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {
@@ -1508,7 +1508,7 @@ func (client AppServiceCertificateOrdersClient) ValidatePurchaseInformation(ctx 
 		{TargetValue: appServiceCertificateOrder,
 			Constraints: []validation.Constraint{{Target: "appServiceCertificateOrder.AppServiceCertificateOrderProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "appServiceCertificateOrder.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "appServiceCertificateOrder.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMaximum, Rule: 3, Chain: nil},
+					Chain: []validation.Constraint{{Target: "appServiceCertificateOrder.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMaximum, Rule: int64(3), Chain: nil},
 						{Target: "appServiceCertificateOrder.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {

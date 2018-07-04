@@ -48,8 +48,7 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 func (client Client) CheckNotificationHubAvailability(ctx context.Context, resourceGroupName string, namespaceName string, parameters CheckAvailabilityParameters) (result CheckAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
-			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
-				{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("notificationhubs.Client", "CheckNotificationHubAvailability", err.Error())
 	}
 
@@ -269,6 +268,81 @@ func (client Client) CreateOrUpdateAuthorizationRuleResponder(resp *http.Respons
 		resp,
 		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// DebugSend test send a push notification
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
+// notificationHubName - the notification hub name.
+// parameters - debug send parameters
+func (client Client) DebugSend(ctx context.Context, resourceGroupName string, namespaceName string, notificationHubName string, parameters *interface{}) (result DebugSendResponse, err error) {
+	req, err := client.DebugSendPreparer(ctx, resourceGroupName, namespaceName, notificationHubName, parameters)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "DebugSend", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.DebugSendSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "DebugSend", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.DebugSendResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "DebugSend", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// DebugSendPreparer prepares the DebugSend request.
+func (client Client) DebugSendPreparer(ctx context.Context, resourceGroupName string, namespaceName string, notificationHubName string, parameters *interface{}) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"namespaceName":       autorest.Encode("path", namespaceName),
+		"notificationHubName": autorest.Encode("path", notificationHubName),
+		"resourceGroupName":   autorest.Encode("path", resourceGroupName),
+		"subscriptionId":      autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-04-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPost(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}/notificationHubs/{notificationHubName}/debugsend", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	if parameters != nil {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithJSON(parameters))
+	}
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// DebugSendSender sends the DebugSend request. The method will close the
+// http.Response Body if it receives an error.
+func (client Client) DebugSendSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// DebugSendResponder handles the response to the DebugSend request. The method always
+// closes the http.Response Body.
+func (client Client) DebugSendResponder(resp *http.Response) (result DebugSendResponse, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
@@ -875,6 +949,81 @@ func (client Client) ListKeysSender(req *http.Request) (*http.Response, error) {
 // ListKeysResponder handles the response to the ListKeys request. The method always
 // closes the http.Response Body.
 func (client Client) ListKeysResponder(resp *http.Response) (result ResourceListKeys, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// Patch patch a NotificationHub in a namespace.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// namespaceName - the namespace name.
+// notificationHubName - the notification hub name.
+// parameters - parameters supplied to patch a NotificationHub Resource.
+func (client Client) Patch(ctx context.Context, resourceGroupName string, namespaceName string, notificationHubName string, parameters *PatchParameters) (result ResourceType, err error) {
+	req, err := client.PatchPreparer(ctx, resourceGroupName, namespaceName, notificationHubName, parameters)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "Patch", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.PatchSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "Patch", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.PatchResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "notificationhubs.Client", "Patch", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// PatchPreparer prepares the Patch request.
+func (client Client) PatchPreparer(ctx context.Context, resourceGroupName string, namespaceName string, notificationHubName string, parameters *PatchParameters) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"namespaceName":       autorest.Encode("path", namespaceName),
+		"notificationHubName": autorest.Encode("path", notificationHubName),
+		"resourceGroupName":   autorest.Encode("path", resourceGroupName),
+		"subscriptionId":      autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2017-04-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPatch(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.NotificationHubs/namespaces/{namespaceName}/notificationHubs/{notificationHubName}", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	if parameters != nil {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithJSON(parameters))
+	}
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// PatchSender sends the Patch request. The method will close the
+// http.Response Body if it receives an error.
+func (client Client) PatchSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// PatchResponder handles the response to the Patch request. The method always
+// closes the http.Response Body.
+func (client Client) PatchResponder(resp *http.Response) (result ResourceType, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

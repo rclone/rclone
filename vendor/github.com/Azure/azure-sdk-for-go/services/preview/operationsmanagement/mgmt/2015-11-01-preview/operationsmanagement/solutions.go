@@ -45,7 +45,7 @@ func NewSolutionsClientWithBaseURI(baseURI string, subscriptionID string, provid
 // resourceGroupName - the name of the resource group to get. The name is case insensitive.
 // solutionName - user Solution Name.
 // parameters - the parameters required to create OMS Solution.
-func (client SolutionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, solutionName string, parameters Solution) (result Solution, err error) {
+func (client SolutionsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, solutionName string, parameters Solution) (result SolutionsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
@@ -63,16 +63,10 @@ func (client SolutionsClient) CreateOrUpdate(ctx context.Context, resourceGroupN
 		return
 	}
 
-	resp, err := client.CreateOrUpdateSender(req)
+	result, err = client.CreateOrUpdateSender(req)
 	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "operationsmanagement.SolutionsClient", "CreateOrUpdate", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "operationsmanagement.SolutionsClient", "CreateOrUpdate", result.Response(), "Failure sending request")
 		return
-	}
-
-	result, err = client.CreateOrUpdateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationsmanagement.SolutionsClient", "CreateOrUpdate", resp, "Failure responding to request")
 	}
 
 	return
@@ -103,9 +97,19 @@ func (client SolutionsClient) CreateOrUpdatePreparer(ctx context.Context, resour
 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
-func (client SolutionsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
+func (client SolutionsClient) CreateOrUpdateSender(req *http.Request) (future SolutionsCreateOrUpdateFuture, err error) {
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
 		azure.DoRetryWithRegistration(client.Client))
+	if err != nil {
+		return
+	}
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
+	return
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -114,7 +118,7 @@ func (client SolutionsClient) CreateOrUpdateResponder(resp *http.Response) (resu
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusCreated),
 		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
@@ -125,7 +129,7 @@ func (client SolutionsClient) CreateOrUpdateResponder(resp *http.Response) (resu
 // Parameters:
 // resourceGroupName - the name of the resource group to get. The name is case insensitive.
 // solutionName - user Solution Name.
-func (client SolutionsClient) Delete(ctx context.Context, resourceGroupName string, solutionName string) (result autorest.Response, err error) {
+func (client SolutionsClient) Delete(ctx context.Context, resourceGroupName string, solutionName string) (result SolutionsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
@@ -140,16 +144,10 @@ func (client SolutionsClient) Delete(ctx context.Context, resourceGroupName stri
 		return
 	}
 
-	resp, err := client.DeleteSender(req)
+	result, err = client.DeleteSender(req)
 	if err != nil {
-		result.Response = resp
-		err = autorest.NewErrorWithError(err, "operationsmanagement.SolutionsClient", "Delete", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "operationsmanagement.SolutionsClient", "Delete", result.Response(), "Failure sending request")
 		return
-	}
-
-	result, err = client.DeleteResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationsmanagement.SolutionsClient", "Delete", resp, "Failure responding to request")
 	}
 
 	return
@@ -178,9 +176,19 @@ func (client SolutionsClient) DeletePreparer(ctx context.Context, resourceGroupN
 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
-func (client SolutionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
+func (client SolutionsClient) DeleteSender(req *http.Request) (future SolutionsDeleteFuture, err error) {
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
 		azure.DoRetryWithRegistration(client.Client))
+	if err != nil {
+		return
+	}
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
+	return
 }
 
 // DeleteResponder handles the response to the Delete request. The method always

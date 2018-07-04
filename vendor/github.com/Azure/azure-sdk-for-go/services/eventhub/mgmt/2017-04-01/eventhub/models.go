@@ -403,6 +403,8 @@ type ArmDisasterRecoveryProperties struct {
 	AlternateName *string `json:"alternateName,omitempty"`
 	// Role - role of namespace in GEO DR - possible values 'Primary' or 'PrimaryNotReplicating' or 'Secondary'. Possible values include: 'Primary', 'PrimaryNotReplicating', 'Secondary'
 	Role RoleDisasterRecovery `json:"role,omitempty"`
+	// PendingReplicationOperationsCount - Number of entities pending to be replicated.
+	PendingReplicationOperationsCount *int64 `json:"pendingReplicationOperationsCount,omitempty"`
 }
 
 // AuthorizationRule single item in a List or Get AuthorizationRule operation

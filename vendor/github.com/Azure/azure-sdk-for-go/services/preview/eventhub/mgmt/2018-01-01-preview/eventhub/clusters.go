@@ -25,7 +25,8 @@ import (
 	"net/http"
 )
 
-// ClustersClient is the azure Event Hubs Cluster client for managing Event Hubs Cluster resources.
+// ClustersClient is the azure Event Hubs client for managing Event Hubs Cluster, IPFilter Rules and
+// VirtualNetworkRules resources.
 type ClustersClient struct {
 	BaseClient
 }

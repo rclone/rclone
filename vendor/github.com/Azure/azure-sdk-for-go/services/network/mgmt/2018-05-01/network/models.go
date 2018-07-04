@@ -1021,13 +1021,15 @@ type ProbeProtocol string
 const (
 	// ProbeProtocolHTTP ...
 	ProbeProtocolHTTP ProbeProtocol = "Http"
+	// ProbeProtocolHTTPS ...
+	ProbeProtocolHTTPS ProbeProtocol = "Https"
 	// ProbeProtocolTCP ...
 	ProbeProtocolTCP ProbeProtocol = "Tcp"
 )
 
 // PossibleProbeProtocolValues returns an array of possible values for the ProbeProtocol const type.
 func PossibleProbeProtocolValues() []ProbeProtocol {
-	return []ProbeProtocol{ProbeProtocolHTTP, ProbeProtocolTCP}
+	return []ProbeProtocol{ProbeProtocolHTTP, ProbeProtocolHTTPS, ProbeProtocolTCP}
 }
 
 // ProcessorArchitecture enumerates the values for processor architecture.
@@ -11340,7 +11342,7 @@ func (p *Probe) UnmarshalJSON(body []byte) error {
 type ProbePropertiesFormat struct {
 	// LoadBalancingRules - The load balancer rules that use this probe.
 	LoadBalancingRules *[]SubResource `json:"loadBalancingRules,omitempty"`
-	// Protocol - The protocol of the end point. Possible values are: 'Http' or 'Tcp'. If 'Tcp' is specified, a received ACK is required for the probe to be successful. If 'Http' is specified, a 200 OK response from the specifies URI is required for the probe to be successful. Possible values include: 'ProbeProtocolHTTP', 'ProbeProtocolTCP'
+	// Protocol - The protocol of the end point. Possible values are: 'Http', 'Tcp' or 'Https'. If 'Tcp' is specified, a received ACK is required for the probe to be successful. If 'Http' or 'Https' is specified, a 200 OK response from the specifies URI is required for the probe to be successful. Possible values include: 'ProbeProtocolHTTP', 'ProbeProtocolTCP', 'ProbeProtocolHTTPS'
 	Protocol ProbeProtocol `json:"protocol,omitempty"`
 	// Port - The port for communicating the probe. Possible values range from 1 to 65535, inclusive.
 	Port *int32 `json:"port,omitempty"`

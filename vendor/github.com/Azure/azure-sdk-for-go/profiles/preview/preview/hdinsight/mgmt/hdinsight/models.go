@@ -19,7 +19,7 @@
 
 package hdinsight
 
-import original "github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2015-03-01-preview/hdinsight"
+import original "github.com/Azure/azure-sdk-for-go/services/preview/hdinsight/mgmt/2018-06-01-preview/hdinsight"
 
 type ApplicationsClient = original.ApplicationsClient
 
@@ -30,8 +30,8 @@ const (
 type BaseClient = original.BaseClient
 type ClustersClient = original.ClustersClient
 type ConfigurationsClient = original.ConfigurationsClient
-type ExtensionClient = original.ExtensionClient
-type LocationClient = original.LocationClient
+type ExtensionsClient = original.ExtensionsClient
+type LocationsClient = original.LocationsClient
 type AsyncOperationState = original.AsyncOperationState
 
 const (
@@ -56,13 +56,6 @@ const (
 	ActiveDirectory DirectoryType = original.ActiveDirectory
 )
 
-type EnabledCredential = original.EnabledCredential
-
-const (
-	False EnabledCredential = original.False
-	True  EnabledCredential = original.True
-)
-
 type OSType = original.OSType
 
 const (
@@ -80,12 +73,12 @@ const (
 type Application = original.Application
 type ApplicationGetEndpoint = original.ApplicationGetEndpoint
 type ApplicationGetHTTPSEndpoint = original.ApplicationGetHTTPSEndpoint
-type ApplicationGetProperties = original.ApplicationGetProperties
 type ApplicationListResult = original.ApplicationListResult
 type ApplicationListResultIterator = original.ApplicationListResultIterator
 type ApplicationListResultPage = original.ApplicationListResultPage
+type ApplicationProperties = original.ApplicationProperties
+type ApplicationsCreateFuture = original.ApplicationsCreateFuture
 type ApplicationsDeleteFuture = original.ApplicationsDeleteFuture
-type CapabilitiesResult = original.CapabilitiesResult
 type Cluster = original.Cluster
 type ClusterCreateParametersExtended = original.ClusterCreateParametersExtended
 type ClusterCreateProperties = original.ClusterCreateProperties
@@ -108,14 +101,17 @@ type ComputeProfile = original.ComputeProfile
 type ConfigurationsUpdateHTTPSettingsFuture = original.ConfigurationsUpdateHTTPSettingsFuture
 type ConnectivityEndpoint = original.ConnectivityEndpoint
 type DataDisksGroups = original.DataDisksGroups
+type ErrorResponse = original.ErrorResponse
 type Errors = original.Errors
 type ExecuteScriptActionParameters = original.ExecuteScriptActionParameters
 type Extension = original.Extension
-type ExtensionDisableMonitoringFuture = original.ExtensionDisableMonitoringFuture
-type ExtensionEnableMonitoringFuture = original.ExtensionEnableMonitoringFuture
+type ExtensionsCreateFuture = original.ExtensionsCreateFuture
+type ExtensionsDeleteFuture = original.ExtensionsDeleteFuture
+type ExtensionsDisableMonitoringFuture = original.ExtensionsDisableMonitoringFuture
+type ExtensionsEnableMonitoringFuture = original.ExtensionsEnableMonitoringFuture
 type HardwareProfile = original.HardwareProfile
-type HTTPConnectivitySettings = original.HTTPConnectivitySettings
 type LinuxOperatingSystemProfile = original.LinuxOperatingSystemProfile
+type LocalizedName = original.LocalizedName
 type Operation = original.Operation
 type OperationDisplay = original.OperationDisplay
 type OperationListResult = original.OperationListResult
@@ -124,10 +120,7 @@ type OperationListResultPage = original.OperationListResultPage
 type OperationResource = original.OperationResource
 type OsProfile = original.OsProfile
 type ProxyResource = original.ProxyResource
-type QuotaCapability = original.QuotaCapability
 type QuotaInfo = original.QuotaInfo
-type RegionalQuotaCapability = original.RegionalQuotaCapability
-type RegionsCapability = original.RegionsCapability
 type Resource = original.Resource
 type Role = original.Role
 type RuntimeScriptAction = original.RuntimeScriptAction
@@ -148,11 +141,9 @@ type SSHPublicKey = original.SSHPublicKey
 type StorageAccount = original.StorageAccount
 type StorageProfile = original.StorageProfile
 type TrackedResource = original.TrackedResource
-type VersionsCapability = original.VersionsCapability
-type VersionSpec = original.VersionSpec
+type Usage = original.Usage
+type UsagesListResult = original.UsagesListResult
 type VirtualNetworkProfile = original.VirtualNetworkProfile
-type VMSizeCompatibilityFilter = original.VMSizeCompatibilityFilter
-type VMSizesCapability = original.VMSizesCapability
 type OperationsClient = original.OperationsClient
 type ScriptActionsClient = original.ScriptActionsClient
 type ScriptExecutionHistoryClient = original.ScriptExecutionHistoryClient
@@ -181,17 +172,17 @@ func NewConfigurationsClient(subscriptionID string) ConfigurationsClient {
 func NewConfigurationsClientWithBaseURI(baseURI string, subscriptionID string) ConfigurationsClient {
 	return original.NewConfigurationsClientWithBaseURI(baseURI, subscriptionID)
 }
-func NewExtensionClient(subscriptionID string) ExtensionClient {
-	return original.NewExtensionClient(subscriptionID)
+func NewExtensionsClient(subscriptionID string) ExtensionsClient {
+	return original.NewExtensionsClient(subscriptionID)
 }
-func NewExtensionClientWithBaseURI(baseURI string, subscriptionID string) ExtensionClient {
-	return original.NewExtensionClientWithBaseURI(baseURI, subscriptionID)
+func NewExtensionsClientWithBaseURI(baseURI string, subscriptionID string) ExtensionsClient {
+	return original.NewExtensionsClientWithBaseURI(baseURI, subscriptionID)
 }
-func NewLocationClient(subscriptionID string) LocationClient {
-	return original.NewLocationClient(subscriptionID)
+func NewLocationsClient(subscriptionID string) LocationsClient {
+	return original.NewLocationsClient(subscriptionID)
 }
-func NewLocationClientWithBaseURI(baseURI string, subscriptionID string) LocationClient {
-	return original.NewLocationClientWithBaseURI(baseURI, subscriptionID)
+func NewLocationsClientWithBaseURI(baseURI string, subscriptionID string) LocationsClient {
+	return original.NewLocationsClientWithBaseURI(baseURI, subscriptionID)
 }
 func PossibleAsyncOperationStateValues() []AsyncOperationState {
 	return original.PossibleAsyncOperationStateValues()
@@ -201,9 +192,6 @@ func PossibleClusterProvisioningStateValues() []ClusterProvisioningState {
 }
 func PossibleDirectoryTypeValues() []DirectoryType {
 	return original.PossibleDirectoryTypeValues()
-}
-func PossibleEnabledCredentialValues() []EnabledCredential {
-	return original.PossibleEnabledCredentialValues()
 }
 func PossibleOSTypeValues() []OSType {
 	return original.PossibleOSTypeValues()

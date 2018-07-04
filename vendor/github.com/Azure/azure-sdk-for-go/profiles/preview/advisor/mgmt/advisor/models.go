@@ -64,7 +64,6 @@ type OperationEntityListResult = original.OperationEntityListResult
 type OperationEntityListResultIterator = original.OperationEntityListResultIterator
 type OperationEntityListResultPage = original.OperationEntityListResultPage
 type RecommendationProperties = original.RecommendationProperties
-type RecommendationsGetGenerateStatusFuture = original.RecommendationsGetGenerateStatusFuture
 type Resource = original.Resource
 type ResourceRecommendationBase = original.ResourceRecommendationBase
 type ResourceRecommendationBaseListResult = original.ResourceRecommendationBaseListResult

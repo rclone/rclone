@@ -27,12 +27,16 @@ type AzureRegions = original.AzureRegions
 const (
 	Australiaeast  AzureRegions = original.Australiaeast
 	Brazilsouth    AzureRegions = original.Brazilsouth
+	Canadacentral  AzureRegions = original.Canadacentral
+	Centralindia   AzureRegions = original.Centralindia
 	Eastasia       AzureRegions = original.Eastasia
 	Eastus         AzureRegions = original.Eastus
 	Eastus2        AzureRegions = original.Eastus2
+	Japaneast      AzureRegions = original.Japaneast
 	Northeurope    AzureRegions = original.Northeurope
 	Southcentralus AzureRegions = original.Southcentralus
 	Southeastasia  AzureRegions = original.Southeastasia
+	Uksouth        AzureRegions = original.Uksouth
 	Westcentralus  AzureRegions = original.Westcentralus
 	Westeurope     AzureRegions = original.Westeurope
 	Westus         AzureRegions = original.Westus

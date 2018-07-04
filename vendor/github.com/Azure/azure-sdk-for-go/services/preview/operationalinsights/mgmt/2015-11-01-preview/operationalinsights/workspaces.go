@@ -54,7 +54,7 @@ func (client WorkspacesClient) CreateOrUpdate(ctx context.Context, resourceGroup
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.WorkspaceProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.WorkspaceProperties.RetentionInDays", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "parameters.WorkspaceProperties.RetentionInDays", Name: validation.InclusiveMaximum, Rule: 730, Chain: nil},
+					Chain: []validation.Constraint{{Target: "parameters.WorkspaceProperties.RetentionInDays", Name: validation.InclusiveMaximum, Rule: int64(730), Chain: nil},
 						{Target: "parameters.WorkspaceProperties.RetentionInDays", Name: validation.InclusiveMinimum, Rule: -1, Chain: nil},
 					}},
 				}}}}}); err != nil {

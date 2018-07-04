@@ -41,6 +41,18 @@ func println(a ...interface{}) {
 	}
 }
 
+func dprintf(format string, a ...interface{}) {
+	if debugFlag {
+		printf(format, a...)
+	}
+}
+
+func dprintln(a ...interface{}) {
+	if debugFlag {
+		println(a...)
+	}
+}
+
 func vprintf(format string, a ...interface{}) {
 	if verboseFlag {
 		printf(format, a...)
@@ -161,11 +173,13 @@ func printReport(r report) error {
 		return nil
 	}
 
-	b, err := json.MarshalIndent(r, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal report: %v", err)
+	if !suppressReport {
+		b, err := json.MarshalIndent(r, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal report: %v", err)
+		}
+		println(string(b))
 	}
-	println(string(b))
 	return nil
 }
 

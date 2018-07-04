@@ -26,6 +26,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var dryRunFlag bool
+
 var rootCmd = &cobra.Command{
 	Use:   "picker <from> <to>",
 	Short: "Cherry-picks commits with non-breaking changes between two branches.",
@@ -37,6 +39,10 @@ NOTE: running this tool will modify your working tree!`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return theCommand(args)
 	},
+}
+
+func init() {
+	rootCmd.PersistentFlags().BoolVarP(&dryRunFlag, "dryrun", "d", false, "reports what the tool would have done without actually doing it")
 }
 
 // Execute executes the specified command.
@@ -64,6 +70,16 @@ func theCommand(args []string) error {
 		return fmt.Errorf("failed to get the working tree: %v", err)
 	}
 
+	if dryRunFlag {
+		// dry run shouldn't modify state so ensure that the active branch matches from
+		branch, err := wt.Branch()
+		if err != nil {
+			return err
+		}
+		if branch != from {
+			return fmt.Errorf("dry run failed, current branch '%s' doesn't match from branch '%s'", branch, from)
+		}
+	}
 	// checkout "from" branch
 	fmt.Printf("checking out branch '%s' to get list of candidate commits for cherry-picking\n", from)
 	err = wt.Checkout(from)
@@ -76,32 +92,37 @@ func theCommand(args []string) error {
 		return fmt.Errorf("the command 'git cherry' failed: %v", err)
 	}
 
-	// for each commit, if it wasn't found in the "to" branch add it to the candidate list
-	candidates := []string{}
-	for _, commit := range commits {
-		if !commit.Found {
-			candidates = append(candidates, commit.Hash)
-		}
-	}
-
-	if len(candidates) == 0 {
-		fmt.Println("didn't find any candidate commits")
-		return nil
-	}
-
-	fmt.Printf("found %v candidate commits, looking for breaking changes...\n", len(candidates))
+	fmt.Printf("found %v commits, calculating breaking changes...\n", len(commits))
 
 	// generate report to find the breaking changes
 	report, err := apidiff.ExecPackagesCmd(filepath.Join(wt.Root(), "services"),
-		fmt.Sprintf("%s~1,%s", candidates[0], strings.Join(candidates, ",")),
-		apidiff.CommandFlags{Quiet: true})
+		fmt.Sprintf("%s~1,%s", commits[0].Hash, strings.Join(func() []string {
+			hashes := []string{}
+			for _, commit := range commits {
+				hashes = append(hashes, commit.Hash)
+			}
+			return hashes
+		}(), ",")),
+		apidiff.CommandFlags{
+			SuppressReport: true,
+			Verbose:        true,
+		})
 	if err != nil {
 		return fmt.Errorf("failed to obtain the breaking changes report: %v", err)
 	}
 
-	forPicking := pruneCandidates(candidates, report)
+	forPicking := pruneCommits(commits, report)
 	if len(forPicking) == 0 {
 		fmt.Println("didn't find any commits to cherry-pick")
+		return nil
+	}
+
+	fmt.Println("will cherry-pick the following commits:")
+	for _, commit := range forPicking {
+		fmt.Printf("\t%s\n", commit)
+	}
+
+	if dryRunFlag {
 		return nil
 	}
 
@@ -136,16 +157,21 @@ func contains(ss []string, s string) bool {
 }
 
 // removes commits and decendents thereof that contain breaking changes
-func pruneCandidates(candidates []string, report apidiff.CommitPkgsReport) []string {
+func pruneCommits(commits []repo.CherryCommit, report apidiff.CommitPkgsReport) []string {
 	pkgsToSkip := map[string]string{}
 	forPicking := []string{}
-	for _, commit := range candidates {
-		if contains(report.BreakingChanges, commit) {
-			fmt.Printf("omitting %s as it contains breaking changes\n", commit)
+	for _, commit := range commits {
+		if commit.Found {
+			// if this commit was found in the target branch skip it
+			fmt.Printf("skipping %s as it was found in the target branch\n", commit.Hash)
+			continue
+		}
+		if contains(report.BreakingChanges, commit.Hash) {
+			fmt.Printf("omitting %s as it contains breaking changes\n", commit.Hash)
 			// add the affected packages to the collection of packages to skip
-			for _, pkg := range report.AffectedPackages[commit] {
+			for _, pkg := range report.AffectedPackages[commit.Hash] {
 				if _, ok := pkgsToSkip[pkg]; !ok {
-					pkgsToSkip[pkg] = commit
+					pkgsToSkip[pkg] = commit.Hash
 				}
 			}
 			continue
@@ -154,16 +180,16 @@ func pruneCandidates(candidates []string, report apidiff.CommitPkgsReport) []str
 		// check the packages impacted by this commit, if any of them are in
 		// the list of packages to skip then this commit can't be cherry-picked
 		include := true
-		for _, pkg := range report.AffectedPackages[commit] {
+		for _, pkg := range report.AffectedPackages[commit.Hash] {
 			if _, ok := pkgsToSkip[pkg]; ok {
 				include = false
-				fmt.Printf("omitting %s as it's an aggregate of breaking changes commit %s\n", commit, pkgsToSkip[pkg])
+				fmt.Printf("omitting %s as it's an aggregate of commit %s that includes breaking changes\n", commit.Hash, pkgsToSkip[pkg])
 				break
 			}
 		}
 
 		if include {
-			forPicking = append(forPicking, commit)
+			forPicking = append(forPicking, commit.Hash)
 		}
 	}
 	return forPicking

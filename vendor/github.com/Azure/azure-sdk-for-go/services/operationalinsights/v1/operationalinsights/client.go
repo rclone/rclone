@@ -1,6 +1,6 @@
 // Package operationalinsights implements the Azure ARM Operationalinsights service API version v1.
 //
-// Operational Insights Data Client
+// Log Analytics Data Plane Client
 package operationalinsights
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
@@ -36,37 +36,36 @@ const (
 // BaseClient is the base client for Operationalinsights.
 type BaseClient struct {
 	autorest.Client
-	BaseURI     string
-	WorkspaceID string
+	BaseURI string
 }
 
 // New creates an instance of the BaseClient client.
-func New(workspaceID string) BaseClient {
-	return NewWithBaseURI(DefaultBaseURI, workspaceID)
+func New() BaseClient {
+	return NewWithBaseURI(DefaultBaseURI)
 }
 
 // NewWithBaseURI creates an instance of the BaseClient client.
-func NewWithBaseURI(baseURI string, workspaceID string) BaseClient {
+func NewWithBaseURI(baseURI string) BaseClient {
 	return BaseClient{
-		Client:      autorest.NewClientWithUserAgent(UserAgent()),
-		BaseURI:     baseURI,
-		WorkspaceID: workspaceID,
+		Client:  autorest.NewClientWithUserAgent(UserAgent()),
+		BaseURI: baseURI,
 	}
 }
 
-// Query executes an Analytics query for data. [Here](/documentation/2-Using-the-API/Query) is an example for using
-// POST with an Analytics query.
+// Query executes an Analytics query for data. [Here](https://dev.loganalytics.io/documentation/Using-the-API) is an
+// example for using POST with an Analytics query.
 // Parameters:
+// workspaceID - ID of the workspace. This is Workspace ID from the Properties blade in the Azure portal.
 // body - the Analytics query. Learn more about the [Analytics query
 // syntax](https://azure.microsoft.com/documentation/articles/app-insights-analytics-reference/)
-func (client BaseClient) Query(ctx context.Context, body QueryBody) (result QueryResults, err error) {
+func (client BaseClient) Query(ctx context.Context, workspaceID string, body QueryBody) (result QueryResults, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
 			Constraints: []validation.Constraint{{Target: "body.Query", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("operationalinsights.BaseClient", "Query", err.Error())
 	}
 
-	req, err := client.QueryPreparer(ctx, body)
+	req, err := client.QueryPreparer(ctx, workspaceID, body)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "operationalinsights.BaseClient", "Query", nil, "Failure preparing request")
 		return
@@ -88,9 +87,9 @@ func (client BaseClient) Query(ctx context.Context, body QueryBody) (result Quer
 }
 
 // QueryPreparer prepares the Query request.
-func (client BaseClient) QueryPreparer(ctx context.Context, body QueryBody) (*http.Request, error) {
+func (client BaseClient) QueryPreparer(ctx context.Context, workspaceID string, body QueryBody) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"workspaceId": autorest.Encode("path", client.WorkspaceID),
+		"workspaceId": autorest.Encode("path", workspaceID),
 	}
 
 	preparer := autorest.CreatePreparer(

@@ -31,9 +31,9 @@ type PurgeState string
 
 const (
 	// Completed ...
-	Completed PurgeState = "Completed"
+	Completed PurgeState = "completed"
 	// Pending ...
-	Pending PurgeState = "Pending"
+	Pending PurgeState = "pending"
 )
 
 // PossiblePurgeStateValues returns an array of possible values for the PurgeState const type.
@@ -430,12 +430,6 @@ type SearchSort struct {
 	Order SearchSortEnum `json:"order,omitempty"`
 }
 
-// SetObject ...
-type SetObject struct {
-	autorest.Response `json:"-"`
-	Value             interface{} `json:"value,omitempty"`
-}
-
 // StorageAccount describes a storage account connection.
 type StorageAccount struct {
 	// ID - The Azure Resource Manager ID of the storage account resource.
@@ -704,12 +698,14 @@ type WorkspacePurgeBodyFilters struct {
 
 // WorkspacePurgeResponse response containing operationId for a specific purge action.
 type WorkspacePurgeResponse struct {
+	autorest.Response `json:"-"`
 	// OperationID - Id to use when querying for status for a particular purge operation.
 	OperationID *string `json:"operationId,omitempty"`
 }
 
 // WorkspacePurgeStatusResponse response containing status for a specific purge operation.
 type WorkspacePurgeStatusResponse struct {
+	autorest.Response `json:"-"`
 	// Status - Status of the operation represented by the requested Id. Possible values include: 'Pending', 'Completed'
 	Status PurgeState `json:"status,omitempty"`
 }
@@ -738,34 +734,6 @@ func (future *WorkspacesGetSearchResultsFuture) Result(client WorkspacesClient) 
 		srr, err = client.GetSearchResultsResponder(srr.Response.Response)
 		if err != nil {
 			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesGetSearchResultsFuture", "Result", srr.Response.Response, "Failure responding to request")
-		}
-	}
-	return
-}
-
-// WorkspacesPurgeFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type WorkspacesPurgeFuture struct {
-	azure.Future
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future *WorkspacesPurgeFuture) Result(client WorkspacesClient) (so SetObject, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesPurgeFuture", "Result", future.Response(), "Polling failure")
-		return
-	}
-	if !done {
-		err = azure.NewAsyncOpIncompleteError("operationalinsights.WorkspacesPurgeFuture")
-		return
-	}
-	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if so.Response.Response, err = future.GetResult(sender); err == nil && so.Response.Response.StatusCode != http.StatusNoContent {
-		so, err = client.PurgeResponder(so.Response.Response)
-		if err != nil {
-			err = autorest.NewErrorWithError(err, "operationalinsights.WorkspacesPurgeFuture", "Result", so.Response.Response, "Failure responding to request")
 		}
 	}
 	return

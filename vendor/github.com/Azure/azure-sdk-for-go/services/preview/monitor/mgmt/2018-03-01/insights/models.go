@@ -509,13 +509,13 @@ func PossibleUnitValues() []Unit {
 	return []Unit{UnitBytes, UnitByteSeconds, UnitBytesPerSecond, UnitCount, UnitCountPerSecond, UnitMilliSeconds, UnitPercent, UnitSeconds, UnitUnspecified}
 }
 
-// BasicAction ...
+// BasicAction action descriptor.
 type BasicAction interface {
 	AsAlertingAction() (*AlertingAction, bool)
 	AsAction() (*Action, bool)
 }
 
-// Action ...
+// Action action descriptor.
 type Action struct {
 	// OdataType - Possible values include: 'OdataTypeAction', 'OdataTypeMicrosoftWindowsAzureManagementMonitoringAlertsModelsMicrosoftAppInsightsNexusDataContractsResourcesScheduledQueryRulesAlertingAction'
 	OdataType OdataTypeBasicAction `json:"odata.type,omitempty"`
@@ -1806,6 +1806,8 @@ type CalculateBaselineResponse struct {
 type DiagnosticSettings struct {
 	// StorageAccountID - The resource ID of the storage account to which you would like to send Diagnostic Logs.
 	StorageAccountID *string `json:"storageAccountId,omitempty"`
+	// ServiceBusRuleID - The service bus rule Id of the diagnostic setting. This is here to maintain backwards compatibility.
+	ServiceBusRuleID *string `json:"serviceBusRuleId,omitempty"`
 	// EventHubAuthorizationRuleID - The resource Id for the event hub authorization rule.
 	EventHubAuthorizationRuleID *string `json:"eventHubAuthorizationRuleId,omitempty"`
 	// EventHubName - The name of the event hub. If none is specified, the default event hub will be selected.
@@ -1826,7 +1828,8 @@ type DiagnosticSettingsCategory struct {
 
 // DiagnosticSettingsCategoryResource the diagnostic settings category resource.
 type DiagnosticSettingsCategoryResource struct {
-	autorest.Response           `json:"-"`
+	autorest.Response `json:"-"`
+	// DiagnosticSettingsCategory - The properties of a Diagnostic Settings Category.
 	*DiagnosticSettingsCategory `json:"properties,omitempty"`
 	// ID - Azure resource Id
 	ID *string `json:"id,omitempty"`
@@ -1914,7 +1917,8 @@ type DiagnosticSettingsCategoryResourceCollection struct {
 
 // DiagnosticSettingsResource the diagnostic setting resource.
 type DiagnosticSettingsResource struct {
-	autorest.Response   `json:"-"`
+	autorest.Response `json:"-"`
+	// DiagnosticSettings - Properties of a Diagnostic Settings Resource.
 	*DiagnosticSettings `json:"properties,omitempty"`
 	// ID - Azure resource Id
 	ID *string `json:"id,omitempty"`
@@ -2044,6 +2048,7 @@ type EventCategoryCollection struct {
 
 // EventData the Azure event log entries are of type EventData
 type EventData struct {
+	// Authorization - The sender authorization information.
 	Authorization *SenderAuthorization `json:"authorization,omitempty"`
 	// Claims - key value pairs to identify ARM permissions.
 	Claims map[string]*string `json:"claims"`
@@ -2443,6 +2448,18 @@ type LogicAppReceiver struct {
 	CallbackURL *string `json:"callbackUrl,omitempty"`
 }
 
+// LogMetricTrigger a log metrics trigger descriptor.
+type LogMetricTrigger struct {
+	// ThresholdOperator - Evaluation operation for Metric -'GreaterThan' or 'LessThan' or 'Equal'. Possible values include: 'ConditionalOperatorGreaterThan', 'ConditionalOperatorLessThan', 'ConditionalOperatorEqual'
+	ThresholdOperator ConditionalOperator `json:"thresholdOperator,omitempty"`
+	// Threshold - The threshold of the metric trigger.
+	Threshold *float64 `json:"threshold,omitempty"`
+	// MetricTriggerType - Metric Trigger Type - 'Consecutive' or 'Total'. Possible values include: 'MetricTriggerTypeConsecutive', 'MetricTriggerTypeTotal'
+	MetricTriggerType MetricTriggerType `json:"metricTriggerType,omitempty"`
+	// MetricColumn - Evaluation of metric on a particular column
+	MetricColumn *string `json:"metricColumn,omitempty"`
+}
+
 // LogProfileCollection represents a collection of log profiles.
 type LogProfileCollection struct {
 	autorest.Response `json:"-"`
@@ -2722,6 +2739,12 @@ func (lsr *LogSearchRule) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// LogSearchRulePatch log Search Rule Definition for Patching
+type LogSearchRulePatch struct {
+	// Enabled - The flag which indicates whether the Log Search rule is enabled. Value should be true or false. Possible values include: 'True', 'False'
+	Enabled Enabled `json:"enabled,omitempty"`
+}
+
 // LogSearchRuleResource the Log Search Rule resource.
 type LogSearchRuleResource struct {
 	autorest.Response `json:"-"`
@@ -2837,6 +2860,59 @@ type LogSearchRuleResourceCollection struct {
 	autorest.Response `json:"-"`
 	// Value - The values for the Log Search Rule resources.
 	Value *[]LogSearchRuleResource `json:"value,omitempty"`
+}
+
+// LogSearchRuleResourcePatch the log search rule resource for patch operations.
+type LogSearchRuleResourcePatch struct {
+	// Tags - Resource tags
+	Tags map[string]*string `json:"tags"`
+	// LogSearchRulePatch - The log search rule properties of the resource.
+	*LogSearchRulePatch `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for LogSearchRuleResourcePatch.
+func (lsrrp LogSearchRuleResourcePatch) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if lsrrp.Tags != nil {
+		objectMap["tags"] = lsrrp.Tags
+	}
+	if lsrrp.LogSearchRulePatch != nil {
+		objectMap["properties"] = lsrrp.LogSearchRulePatch
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for LogSearchRuleResourcePatch struct.
+func (lsrrp *LogSearchRuleResourcePatch) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				lsrrp.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var logSearchRulePatch LogSearchRulePatch
+				err = json.Unmarshal(*v, &logSearchRulePatch)
+				if err != nil {
+					return err
+				}
+				lsrrp.LogSearchRulePatch = &logSearchRulePatch
+			}
+		}
+	}
+
+	return nil
 }
 
 // LogSettings part of MultiTenantDiagnosticSettings. Specifies the settings for a particular log.
@@ -2974,7 +3050,8 @@ type Metric struct {
 // MetricAlertAction an alert action.
 type MetricAlertAction struct {
 	// ActionGroupID - the id of the action group to use.
-	ActionGroupID     *string            `json:"actionGroupId,omitempty"`
+	ActionGroupID *string `json:"actionGroupId,omitempty"`
+	// WebhookProperties - The properties of a webhook object.
 	WebhookProperties map[string]*string `json:"webhookProperties"`
 }
 
@@ -3430,6 +3507,7 @@ type MetricAlertStatusCollection struct {
 
 // MetricAlertStatusProperties an alert status properties.
 type MetricAlertStatusProperties struct {
+	// Dimensions - An object describing the type of the dimensions.
 	Dimensions map[string]*string `json:"dimensions"`
 	// Status - status value
 	Status *string `json:"status,omitempty"`
@@ -3461,7 +3539,7 @@ type MetricAvailability struct {
 	Retention *string `json:"retention,omitempty"`
 }
 
-// MetricCriteria ...
+// MetricCriteria criterion to filter metrics.
 type MetricCriteria struct {
 	// Name - Name of the criteria.
 	Name *string `json:"name,omitempty"`
@@ -3510,7 +3588,7 @@ type MetricDefinitionCollection struct {
 	Value *[]MetricDefinition `json:"value,omitempty"`
 }
 
-// MetricDimension ...
+// MetricDimension specifies a metric dimension.
 type MetricDimension struct {
 	// Name - Name of the dimension.
 	Name *string `json:"name,omitempty"`
@@ -3550,12 +3628,6 @@ type MetricTrigger struct {
 	Operator ComparisonOperationType `json:"operator,omitempty"`
 	// Threshold - the threshold of the metric that triggers the scale action.
 	Threshold *float64 `json:"threshold,omitempty"`
-	// ThresholdOperator - Evaluation operation for Metric -'GreaterThan' or 'LessThan' or 'Equal'. Possible values include: 'ConditionalOperatorGreaterThan', 'ConditionalOperatorLessThan', 'ConditionalOperatorEqual'
-	ThresholdOperator ConditionalOperator `json:"thresholdOperator,omitempty"`
-	// MetricTriggerType - Metric Trigger Type - 'Consecutive' or 'Total'. Possible values include: 'MetricTriggerTypeConsecutive', 'MetricTriggerTypeTotal'
-	MetricTriggerType MetricTriggerType `json:"metricTriggerType,omitempty"`
-	// MetricColumn - Evaluation of metric on a particular column
-	MetricColumn *string `json:"metricColumn,omitempty"`
 }
 
 // MetricValue represents a metric value.
@@ -4300,7 +4372,7 @@ type Source struct {
 	AuthorizedResources *[]string `json:"authorizedResources,omitempty"`
 	// DataSourceID - The resource uri over which log search query is to be run.
 	DataSourceID *string `json:"dataSourceId,omitempty"`
-	// QueryType - Set value to ResultCount if query should be returning search result count. Set it to Number if its a metric query. Possible values include: 'ResultCount'
+	// QueryType - Set value to 'ResultCount'. Possible values include: 'ResultCount'
 	QueryType QueryType `json:"queryType,omitempty"`
 }
 
@@ -4471,7 +4543,7 @@ type TriggerCondition struct {
 	// Threshold - Result or count threshold based on which rule should be triggered.
 	Threshold *float64 `json:"threshold,omitempty"`
 	// MetricTrigger - Trigger condition for metric query rule
-	MetricTrigger *MetricTrigger `json:"metricTrigger,omitempty"`
+	MetricTrigger *LogMetricTrigger `json:"metricTrigger,omitempty"`
 }
 
 // VoiceReceiver a voice receiver.

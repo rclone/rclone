@@ -3046,7 +3046,7 @@ func (client ModelClient) ExamplesMethod(ctx context.Context, appID uuid.UUID, v
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ExamplesMethod", err.Error())
@@ -3869,7 +3869,7 @@ func (client ModelClient) GetEntitySuggestions(ctx context.Context, appID uuid.U
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "GetEntitySuggestions", err.Error())
@@ -4421,7 +4421,7 @@ func (client ModelClient) GetIntentSuggestions(ctx context.Context, appID uuid.U
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "GetIntentSuggestions", err.Error())
@@ -4574,7 +4574,7 @@ func (client ModelClient) GetPatternAnyEntityInfos(ctx context.Context, appID uu
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "GetPatternAnyEntityInfos", err.Error())
@@ -5065,7 +5065,7 @@ func (client ModelClient) GetRegexEntityInfos(ctx context.Context, appID uuid.UU
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "GetRegexEntityInfos", err.Error())
@@ -5290,7 +5290,7 @@ func (client ModelClient) ListClosedLists(ctx context.Context, appID uuid.UUID, 
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ListClosedLists", err.Error())
@@ -5381,7 +5381,7 @@ func (client ModelClient) ListCompositeEntities(ctx context.Context, appID uuid.
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ListCompositeEntities", err.Error())
@@ -5664,7 +5664,7 @@ func (client ModelClient) ListEntities(ctx context.Context, appID uuid.UUID, ver
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ListEntities", err.Error())
@@ -5755,7 +5755,7 @@ func (client ModelClient) ListHierarchicalEntities(ctx context.Context, appID uu
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ListHierarchicalEntities", err.Error())
@@ -5846,7 +5846,7 @@ func (client ModelClient) ListIntents(ctx context.Context, appID uuid.UUID, vers
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ListIntents", err.Error())
@@ -5937,7 +5937,7 @@ func (client ModelClient) ListModels(ctx context.Context, appID uuid.UUID, versi
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ListModels", err.Error())
@@ -6092,7 +6092,7 @@ func (client ModelClient) ListPrebuilts(ctx context.Context, appID uuid.UUID, ve
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}},
 		{TargetValue: take,
 			Constraints: []validation.Constraint{{Target: "take", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: 500, Chain: nil},
+				Chain: []validation.Constraint{{Target: "take", Name: validation.InclusiveMaximum, Rule: int64(500), Chain: nil},
 					{Target: "take", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("authoring.ModelClient", "ListPrebuilts", err.Error())

@@ -22,7 +22,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/validation"
-	"github.com/satori/go.uuid"
 	"net/http"
 )
 
@@ -32,12 +31,12 @@ type AppsClient struct {
 }
 
 // NewAppsClient creates an instance of the AppsClient client.
-func NewAppsClient(subscriptionID uuid.UUID) AppsClient {
+func NewAppsClient(subscriptionID string) AppsClient {
 	return NewAppsClientWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
 // NewAppsClientWithBaseURI creates an instance of the AppsClient client.
-func NewAppsClientWithBaseURI(baseURI string, subscriptionID uuid.UUID) AppsClient {
+func NewAppsClientWithBaseURI(baseURI string, subscriptionID string) AppsClient {
 	return AppsClient{NewWithBaseURI(baseURI, subscriptionID)}
 }
 
@@ -123,12 +122,6 @@ func (client AppsClient) CheckNameAvailabilityResponder(resp *http.Response) (re
 // app - the IoT Central application metadata and security metadata.
 func (client AppsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, app App) (result AppsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
-		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
-				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
-		{TargetValue: resourceName,
-			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 100, Chain: nil},
-				{Target: "resourceName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
 		{TargetValue: app,
 			Constraints: []validation.Constraint{{Target: "app.AppProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "app.AppProperties.DisplayName", Name: validation.Null, Rule: false,
@@ -213,16 +206,6 @@ func (client AppsClient) CreateOrUpdateResponder(resp *http.Response) (result Ap
 // resourceGroupName - the name of the resource group that contains the IoT Central application.
 // resourceName - the ARM resource name of the IoT Central application.
 func (client AppsClient) Delete(ctx context.Context, resourceGroupName string, resourceName string) (result AppsDeleteFuture, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
-				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
-		{TargetValue: resourceName,
-			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 100, Chain: nil},
-				{Target: "resourceName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewError("iotcentral.AppsClient", "Delete", err.Error())
-	}
-
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "iotcentral.AppsClient", "Delete", nil, "Failure preparing request")
@@ -293,16 +276,6 @@ func (client AppsClient) DeleteResponder(resp *http.Response) (result autorest.R
 // resourceGroupName - the name of the resource group that contains the IoT Central application.
 // resourceName - the ARM resource name of the IoT Central application.
 func (client AppsClient) Get(ctx context.Context, resourceGroupName string, resourceName string) (result App, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
-				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
-		{TargetValue: resourceName,
-			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 100, Chain: nil},
-				{Target: "resourceName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewError("iotcentral.AppsClient", "Get", err.Error())
-	}
-
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "iotcentral.AppsClient", "Get", nil, "Failure preparing request")
@@ -369,13 +342,6 @@ func (client AppsClient) GetResponder(resp *http.Response) (result App, err erro
 // Parameters:
 // resourceGroupName - the name of the resource group that contains the IoT Central application.
 func (client AppsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result AppListResultPage, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
-				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewError("iotcentral.AppsClient", "ListByResourceGroup", err.Error())
-	}
-
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -561,16 +527,6 @@ func (client AppsClient) ListBySubscriptionComplete(ctx context.Context) (result
 // resourceName - the ARM resource name of the IoT Central application.
 // appPatch - the IoT Central application metadata and security metadata.
 func (client AppsClient) Update(ctx context.Context, resourceGroupName string, resourceName string, appPatch AppPatch) (result AppsUpdateFuture, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 64, Chain: nil},
-				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil}}},
-		{TargetValue: resourceName,
-			Constraints: []validation.Constraint{{Target: "resourceName", Name: validation.MaxLength, Rule: 100, Chain: nil},
-				{Target: "resourceName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewError("iotcentral.AppsClient", "Update", err.Error())
-	}
-
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, resourceName, appPatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "iotcentral.AppsClient", "Update", nil, "Failure preparing request")

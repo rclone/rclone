@@ -427,6 +427,8 @@ func (page ArmDisasterRecoveryListResultPage) Values() []ArmDisasterRecovery {
 type ArmDisasterRecoveryProperties struct {
 	// ProvisioningState - Provisioning state of the Alias(Disaster Recovery configuration) - possible values 'Accepted' or 'Succeeded' or 'Failed'. Possible values include: 'Accepted', 'Succeeded', 'Failed'
 	ProvisioningState ProvisioningStateDR `json:"provisioningState,omitempty"`
+	// PendingReplicationOperationsCount - Number of entities pending to be replicated.
+	PendingReplicationOperationsCount *int64 `json:"pendingReplicationOperationsCount,omitempty"`
 	// PartnerNamespace - ARM Id of the Primary/Secondary eventhub namespace name, which is part of GEO DR pairning
 	PartnerNamespace *string `json:"partnerNamespace,omitempty"`
 	// AlternateName - Primary/Secondary eventhub namespace name, which is part of GEO DR pairning
@@ -1008,6 +1010,8 @@ func (mcp *MigrationConfigProperties) UnmarshalJSON(body []byte) error {
 type MigrationConfigPropertiesProperties struct {
 	// ProvisioningState - Provisioning state of Migration Configuration
 	ProvisioningState *string `json:"provisioningState,omitempty"`
+	// PendingReplicationOperationsCount - Number of entities pending to be replicated.
+	PendingReplicationOperationsCount *int64 `json:"pendingReplicationOperationsCount,omitempty"`
 	// TargetNamespace - Existing premium Namespace ARM Id name which has no entities, will be used for migration
 	TargetNamespace *string `json:"targetNamespace,omitempty"`
 	// PostMigrationName - Name to access Standard Namespace after migration

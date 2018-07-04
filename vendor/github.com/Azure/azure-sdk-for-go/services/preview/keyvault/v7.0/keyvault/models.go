@@ -63,19 +63,19 @@ func PossibleDeletionRecoveryLevelValues() []DeletionRecoveryLevel {
 type JSONWebKeyCurveName string
 
 const (
-	// P256 ...
+	// P256 The NIST P-256 elliptic curve, AKA SECG curve SECP256R1.
 	P256 JSONWebKeyCurveName = "P-256"
-	// P384 ...
+	// P256K The SECG SECP256K1 elliptic curve.
+	P256K JSONWebKeyCurveName = "P-256K"
+	// P384 The NIST P-384 elliptic curve, AKA SECG curve SECP384R1.
 	P384 JSONWebKeyCurveName = "P-384"
-	// P521 ...
+	// P521 The NIST P-521 elliptic curve, AKA SECG curve SECP521R1.
 	P521 JSONWebKeyCurveName = "P-521"
-	// SECP256K1 ...
-	SECP256K1 JSONWebKeyCurveName = "SECP256K1"
 )
 
 // PossibleJSONWebKeyCurveNameValues returns an array of possible values for the JSONWebKeyCurveName const type.
 func PossibleJSONWebKeyCurveNameValues() []JSONWebKeyCurveName {
-	return []JSONWebKeyCurveName{P256, P384, P521, SECP256K1}
+	return []JSONWebKeyCurveName{P256, P256K, P384, P521}
 }
 
 // JSONWebKeyEncryptionAlgorithm enumerates the values for json web key encryption algorithm.
@@ -122,48 +122,51 @@ func PossibleJSONWebKeyOperationValues() []JSONWebKeyOperation {
 type JSONWebKeySignatureAlgorithm string
 
 const (
-	// ECDSA256 ...
-	ECDSA256 JSONWebKeySignatureAlgorithm = "ECDSA256"
-	// ES256 ...
+	// ES256 ECDSA using P-256 and SHA-256, as described in https://tools.ietf.org/html/rfc7518.
 	ES256 JSONWebKeySignatureAlgorithm = "ES256"
-	// ES384 ...
+	// ES256K ECDSA using P-256K and SHA-256, as described in https://tools.ietf.org/html/rfc7518
+	ES256K JSONWebKeySignatureAlgorithm = "ES256K"
+	// ES384 ECDSA using P-384 and SHA-384, as described in https://tools.ietf.org/html/rfc7518
 	ES384 JSONWebKeySignatureAlgorithm = "ES384"
-	// ES512 ...
+	// ES512 ECDSA using P-521 and SHA-512, as described in https://tools.ietf.org/html/rfc7518
 	ES512 JSONWebKeySignatureAlgorithm = "ES512"
-	// PS256 ...
+	// PS256 RSASSA-PSS using SHA-256 and MGF1 with SHA-256, as described in
+	// https://tools.ietf.org/html/rfc7518
 	PS256 JSONWebKeySignatureAlgorithm = "PS256"
-	// PS384 ...
+	// PS384 RSASSA-PSS using SHA-384 and MGF1 with SHA-384, as described in
+	// https://tools.ietf.org/html/rfc7518
 	PS384 JSONWebKeySignatureAlgorithm = "PS384"
-	// PS512 ...
+	// PS512 RSASSA-PSS using SHA-512 and MGF1 with SHA-512, as described in
+	// https://tools.ietf.org/html/rfc7518
 	PS512 JSONWebKeySignatureAlgorithm = "PS512"
-	// RS256 ...
+	// RS256 RSASSA-PKCS1-v1_5 using SHA-256, as described in https://tools.ietf.org/html/rfc7518
 	RS256 JSONWebKeySignatureAlgorithm = "RS256"
-	// RS384 ...
+	// RS384 RSASSA-PKCS1-v1_5 using SHA-384, as described in https://tools.ietf.org/html/rfc7518
 	RS384 JSONWebKeySignatureAlgorithm = "RS384"
-	// RS512 ...
+	// RS512 RSASSA-PKCS1-v1_5 using SHA-512, as described in https://tools.ietf.org/html/rfc7518
 	RS512 JSONWebKeySignatureAlgorithm = "RS512"
-	// RSNULL ...
+	// RSNULL Reserved
 	RSNULL JSONWebKeySignatureAlgorithm = "RSNULL"
 )
 
 // PossibleJSONWebKeySignatureAlgorithmValues returns an array of possible values for the JSONWebKeySignatureAlgorithm const type.
 func PossibleJSONWebKeySignatureAlgorithmValues() []JSONWebKeySignatureAlgorithm {
-	return []JSONWebKeySignatureAlgorithm{ECDSA256, ES256, ES384, ES512, PS256, PS384, PS512, RS256, RS384, RS512, RSNULL}
+	return []JSONWebKeySignatureAlgorithm{ES256, ES256K, ES384, ES512, PS256, PS384, PS512, RS256, RS384, RS512, RSNULL}
 }
 
 // JSONWebKeyType enumerates the values for json web key type.
 type JSONWebKeyType string
 
 const (
-	// EC ...
+	// EC Elliptic Curve.
 	EC JSONWebKeyType = "EC"
-	// ECHSM ...
+	// ECHSM Elliptic Curve with a private key which is not exportable from the HSM.
 	ECHSM JSONWebKeyType = "EC-HSM"
-	// Oct ...
+	// Oct Octet sequence (used to represent symmetric keys)
 	Oct JSONWebKeyType = "oct"
-	// RSA ...
+	// RSA RSA (https://tools.ietf.org/html/rfc3447)
 	RSA JSONWebKeyType = "RSA"
-	// RSAHSM ...
+	// RSAHSM RSA with a private key which is not exportable from the HSM.
 	RSAHSM JSONWebKeyType = "RSA-HSM"
 )
 
@@ -246,6 +249,13 @@ type Attributes struct {
 	Created *date.UnixTime `json:"created,omitempty"`
 	// Updated - Last updated time in UTC.
 	Updated *date.UnixTime `json:"updated,omitempty"`
+}
+
+// BackupCertificateResult the backup certificate result, containing the backup blob.
+type BackupCertificateResult struct {
+	autorest.Response `json:"-"`
+	// Value - The backup blob containing the backed up certificate.
+	Value *string `json:"value,omitempty"`
 }
 
 // BackupKeyResult the backup key result, containing the backup blob.
@@ -738,6 +748,12 @@ type CertificatePolicy struct {
 	IssuerParameters *IssuerParameters `json:"issuer,omitempty"`
 	// Attributes - The certificate attributes.
 	Attributes *CertificateAttributes `json:"attributes,omitempty"`
+}
+
+// CertificateRestoreParameters the certificate restore parameters.
+type CertificateRestoreParameters struct {
+	// CertificateBundleBackup - The backup blob associated with a certificate bundle.
+	CertificateBundleBackup *string `json:"value,omitempty"`
 }
 
 // CertificateUpdateParameters the certificate update parameters.
@@ -1882,13 +1898,15 @@ type IssuerParameters struct {
 	Name *string `json:"name,omitempty"`
 	// CertificateType - Type of certificate to be requested from the issuer provider.
 	CertificateType *string `json:"cty,omitempty"`
+	// CertificateTransparency - Indicates if the certificates generated under this policy should be published to certificate transparency logs.
+	CertificateTransparency *bool `json:"cert_transparency,omitempty"`
 }
 
 // JSONWebKey as of http://tools.ietf.org/html/draft-ietf-jose-json-web-key-18
 type JSONWebKey struct {
 	// Kid - Key identifier.
 	Kid *string `json:"kid,omitempty"`
-	// Kty - JsonWebKey key type (kty). Possible values include: 'EC', 'ECHSM', 'RSA', 'RSAHSM', 'Oct'
+	// Kty - JsonWebKey Key Type (kty), as defined in https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40. Possible values include: 'EC', 'ECHSM', 'RSA', 'RSAHSM', 'Oct'
 	Kty    JSONWebKeyType `json:"kty,omitempty"`
 	KeyOps *[]string      `json:"key_ops,omitempty"`
 	// N - RSA modulus.
@@ -1911,7 +1929,7 @@ type JSONWebKey struct {
 	K *string `json:"k,omitempty"`
 	// T - HSM Token, used with 'Bring Your Own Key'.
 	T *string `json:"key_hsm,omitempty"`
-	// Crv - Elliptic curve name. For valid values, see JsonWebKeyCurveName. Possible values include: 'P256', 'P384', 'P521', 'SECP256K1'
+	// Crv - Elliptic curve name. For valid values, see JsonWebKeyCurveName. Possible values include: 'P256', 'P384', 'P521', 'P256K'
 	Crv JSONWebKeyCurveName `json:"crv,omitempty"`
 	// X - X component of an EC public key.
 	X *string `json:"x,omitempty"`
@@ -1970,13 +1988,13 @@ func (kb KeyBundle) MarshalJSON() ([]byte, error) {
 type KeyCreateParameters struct {
 	// Kty - The type of key to create. For valid values, see JsonWebKeyType. Possible values include: 'EC', 'ECHSM', 'RSA', 'RSAHSM', 'Oct'
 	Kty JSONWebKeyType `json:"kty,omitempty"`
-	// KeySize - The key size in bytes. For example, 1024 or 2048.
+	// KeySize - The key size in bits. For example: 2048, 3072, or 4096 for RSA.
 	KeySize       *int32                 `json:"key_size,omitempty"`
 	KeyOps        *[]JSONWebKeyOperation `json:"key_ops,omitempty"`
 	KeyAttributes *KeyAttributes         `json:"attributes,omitempty"`
 	// Tags - Application specific metadata in the form of key-value pairs.
 	Tags map[string]*string `json:"tags"`
-	// Curve - Elliptic curve name. For valid values, see JsonWebKeyCurveName. Possible values include: 'P256', 'P384', 'P521', 'SECP256K1'
+	// Curve - Elliptic curve name. For valid values, see JsonWebKeyCurveName. Possible values include: 'P256', 'P384', 'P521', 'P256K'
 	Curve JSONWebKeyCurveName `json:"crv,omitempty"`
 }
 
@@ -2185,12 +2203,14 @@ type KeyOperationsParameters struct {
 type KeyProperties struct {
 	// Exportable - Indicates if the private key can be exported.
 	Exportable *bool `json:"exportable,omitempty"`
-	// KeyType - The key type.
-	KeyType *string `json:"kty,omitempty"`
-	// KeySize - The key size in bytes. For example;  1024 or 2048.
+	// Kty - The type of key pair to be used for the certificate. Possible values include: 'EC', 'ECHSM', 'RSA', 'RSAHSM', 'Oct'
+	Kty JSONWebKeyType `json:"kty,omitempty"`
+	// KeySize - The key size in bits. For example: 2048, 3072, or 4096 for RSA.
 	KeySize *int32 `json:"key_size,omitempty"`
 	// ReuseKey - Indicates if the same key pair will be used on certificate renewal.
 	ReuseKey *bool `json:"reuse_key,omitempty"`
+	// Curve - Elliptic curve name. For valid values, see JsonWebKeyCurveName. Possible values include: 'P256', 'P384', 'P521', 'P256K'
+	Curve JSONWebKeyCurveName `json:"crv,omitempty"`
 }
 
 // KeyRestoreParameters the key restore parameters.
@@ -2201,7 +2221,7 @@ type KeyRestoreParameters struct {
 
 // KeySignParameters the key operations parameters.
 type KeySignParameters struct {
-	// Algorithm - The signing/verification algorithm identifier. For more information on possible algorithm types, see JsonWebKeySignatureAlgorithm. Possible values include: 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'RSNULL', 'ES256', 'ES384', 'ES512', 'ECDSA256'
+	// Algorithm - The signing/verification algorithm identifier. For more information on possible algorithm types, see JsonWebKeySignatureAlgorithm. Possible values include: 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'RSNULL', 'ES256', 'ES384', 'ES512', 'ES256K'
 	Algorithm JSONWebKeySignatureAlgorithm `json:"alg,omitempty"`
 	Value     *string                      `json:"value,omitempty"`
 }
@@ -2232,7 +2252,7 @@ func (kup KeyUpdateParameters) MarshalJSON() ([]byte, error) {
 
 // KeyVerifyParameters the key verify parameters.
 type KeyVerifyParameters struct {
-	// Algorithm - The signing/verification algorithm. For more information on possible algorithm types, see JsonWebKeySignatureAlgorithm. Possible values include: 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'RSNULL', 'ES256', 'ES384', 'ES512', 'ECDSA256'
+	// Algorithm - The signing/verification algorithm. For more information on possible algorithm types, see JsonWebKeySignatureAlgorithm. Possible values include: 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'RSNULL', 'ES256', 'ES384', 'ES512', 'ES256K'
 	Algorithm JSONWebKeySignatureAlgorithm `json:"alg,omitempty"`
 	// Digest - The digest used for signing.
 	Digest *string `json:"digest,omitempty"`

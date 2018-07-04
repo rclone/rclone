@@ -19,10 +19,7 @@
 
 package iotcentral
 
-import (
-	original "github.com/Azure/azure-sdk-for-go/services/preview/iotcentral/mgmt/2017-07-01-privatepreview/iotcentral"
-	uuid "github.com/satori/go.uuid"
-)
+import original "github.com/Azure/azure-sdk-for-go/services/preview/iotcentral/mgmt/2017-07-01-privatepreview/iotcentral"
 
 type AppsClient = original.AppsClient
 
@@ -66,16 +63,16 @@ type OperationListResultPage = original.OperationListResultPage
 type Resource = original.Resource
 type OperationsClient = original.OperationsClient
 
-func NewAppsClient(subscriptionID uuid.UUID) AppsClient {
+func NewAppsClient(subscriptionID string) AppsClient {
 	return original.NewAppsClient(subscriptionID)
 }
-func NewAppsClientWithBaseURI(baseURI string, subscriptionID uuid.UUID) AppsClient {
+func NewAppsClientWithBaseURI(baseURI string, subscriptionID string) AppsClient {
 	return original.NewAppsClientWithBaseURI(baseURI, subscriptionID)
 }
-func New(subscriptionID uuid.UUID) BaseClient {
+func New(subscriptionID string) BaseClient {
 	return original.New(subscriptionID)
 }
-func NewWithBaseURI(baseURI string, subscriptionID uuid.UUID) BaseClient {
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 	return original.NewWithBaseURI(baseURI, subscriptionID)
 }
 func PossibleAppNameUnavailabilityReasonValues() []AppNameUnavailabilityReason {
@@ -84,10 +81,10 @@ func PossibleAppNameUnavailabilityReasonValues() []AppNameUnavailabilityReason {
 func PossibleAppSkuValues() []AppSku {
 	return original.PossibleAppSkuValues()
 }
-func NewOperationsClient(subscriptionID uuid.UUID) OperationsClient {
+func NewOperationsClient(subscriptionID string) OperationsClient {
 	return original.NewOperationsClient(subscriptionID)
 }
-func NewOperationsClientWithBaseURI(baseURI string, subscriptionID uuid.UUID) OperationsClient {
+func NewOperationsClientWithBaseURI(baseURI string, subscriptionID string) OperationsClient {
 	return original.NewOperationsClientWithBaseURI(baseURI, subscriptionID)
 }
 func UserAgent() string {

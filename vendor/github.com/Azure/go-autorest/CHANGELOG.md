@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## v10.12.0
+
+### New Features
+
+- Added field ServicePrincipalToken.MaxMSIRefreshAttempts to configure the maximun number of attempts to refresh an MSI token.
+
+## v10.11.4
+
+### Bug Fixes
+
+- If an LRO returns http.StatusOK on the initial response with no async headers return the response body from Future.GetResult().
+- If there is no "final GET URL" return an error from Future.GetResult().
+
+## v10.11.3
+
+### Bug Fixes
+
+- In IMDS retry logic, if we don't receive a response don't retry.
+  - Renamed the retry function so it's clear it's meant for IMDS only.
+- For error response bodies that aren't OData-v4 compliant stick the raw JSON in the ServiceError.Details field so the information isn't lost.
+  - Also add the raw HTTP response to the DetailedResponse.
+- Removed superfluous wrapping of response error in azure.DoRetryWithRegistration().
+
 ## v10.11.2
 
 ### Bug Fixes

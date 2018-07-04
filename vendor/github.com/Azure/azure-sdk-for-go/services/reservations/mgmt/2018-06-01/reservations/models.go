@@ -19,11 +19,12 @@ package reservations
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/to"
-	"net/http"
 )
 
 // AppliedScopeType enumerates the values for applied scope type.
@@ -41,140 +42,125 @@ func PossibleAppliedScopeTypeValues() []AppliedScopeType {
 	return []AppliedScopeType{Shared, Single}
 }
 
-// AppliedScopeType1 enumerates the values for applied scope type 1.
-type AppliedScopeType1 string
-
-const (
-	// AppliedScopeType1Shared ...
-	AppliedScopeType1Shared AppliedScopeType1 = "Shared"
-	// AppliedScopeType1Single ...
-	AppliedScopeType1Single AppliedScopeType1 = "Single"
-)
-
-// PossibleAppliedScopeType1Values returns an array of possible values for the AppliedScopeType1 const type.
-func PossibleAppliedScopeType1Values() []AppliedScopeType1 {
-	return []AppliedScopeType1{AppliedScopeType1Shared, AppliedScopeType1Single}
-}
-
-// Code enumerates the values for code.
-type Code string
+// ErrorResponseCode enumerates the values for error response code.
+type ErrorResponseCode string
 
 const (
 	// ActivateQuoteFailed ...
-	ActivateQuoteFailed Code = "ActivateQuoteFailed"
+	ActivateQuoteFailed ErrorResponseCode = "ActivateQuoteFailed"
 	// AppliedScopesNotAssociatedWithCommerceAccount ...
-	AppliedScopesNotAssociatedWithCommerceAccount Code = "AppliedScopesNotAssociatedWithCommerceAccount"
+	AppliedScopesNotAssociatedWithCommerceAccount ErrorResponseCode = "AppliedScopesNotAssociatedWithCommerceAccount"
 	// AuthorizationFailed ...
-	AuthorizationFailed Code = "AuthorizationFailed"
+	AuthorizationFailed ErrorResponseCode = "AuthorizationFailed"
 	// BadRequest ...
-	BadRequest Code = "BadRequest"
+	BadRequest ErrorResponseCode = "BadRequest"
 	// BillingCustomerInputError ...
-	BillingCustomerInputError Code = "BillingCustomerInputError"
+	BillingCustomerInputError ErrorResponseCode = "BillingCustomerInputError"
 	// BillingError ...
-	BillingError Code = "BillingError"
+	BillingError ErrorResponseCode = "BillingError"
 	// BillingPaymentInstrumentHardError ...
-	BillingPaymentInstrumentHardError Code = "BillingPaymentInstrumentHardError"
+	BillingPaymentInstrumentHardError ErrorResponseCode = "BillingPaymentInstrumentHardError"
 	// BillingPaymentInstrumentSoftError ...
-	BillingPaymentInstrumentSoftError Code = "BillingPaymentInstrumentSoftError"
+	BillingPaymentInstrumentSoftError ErrorResponseCode = "BillingPaymentInstrumentSoftError"
 	// BillingScopeIDCannotBeChanged ...
-	BillingScopeIDCannotBeChanged Code = "BillingScopeIdCannotBeChanged"
+	BillingScopeIDCannotBeChanged ErrorResponseCode = "BillingScopeIdCannotBeChanged"
 	// BillingTransientError ...
-	BillingTransientError Code = "BillingTransientError"
+	BillingTransientError ErrorResponseCode = "BillingTransientError"
 	// CalculatePriceFailed ...
-	CalculatePriceFailed Code = "CalculatePriceFailed"
+	CalculatePriceFailed ErrorResponseCode = "CalculatePriceFailed"
 	// CapacityUpdateScopesFailed ...
-	CapacityUpdateScopesFailed Code = "CapacityUpdateScopesFailed"
+	CapacityUpdateScopesFailed ErrorResponseCode = "CapacityUpdateScopesFailed"
 	// ClientCertificateThumbprintNotSet ...
-	ClientCertificateThumbprintNotSet Code = "ClientCertificateThumbprintNotSet"
+	ClientCertificateThumbprintNotSet ErrorResponseCode = "ClientCertificateThumbprintNotSet"
 	// CreateQuoteFailed ...
-	CreateQuoteFailed Code = "CreateQuoteFailed"
+	CreateQuoteFailed ErrorResponseCode = "CreateQuoteFailed"
 	// Forbidden ...
-	Forbidden Code = "Forbidden"
+	Forbidden ErrorResponseCode = "Forbidden"
 	// FulfillmentConfigurationError ...
-	FulfillmentConfigurationError Code = "FulfillmentConfigurationError"
+	FulfillmentConfigurationError ErrorResponseCode = "FulfillmentConfigurationError"
 	// FulfillmentError ...
-	FulfillmentError Code = "FulfillmentError"
+	FulfillmentError ErrorResponseCode = "FulfillmentError"
 	// FulfillmentOutOfStockError ...
-	FulfillmentOutOfStockError Code = "FulfillmentOutOfStockError"
+	FulfillmentOutOfStockError ErrorResponseCode = "FulfillmentOutOfStockError"
 	// FulfillmentTransientError ...
-	FulfillmentTransientError Code = "FulfillmentTransientError"
+	FulfillmentTransientError ErrorResponseCode = "FulfillmentTransientError"
 	// HTTPMethodNotSupported ...
-	HTTPMethodNotSupported Code = "HttpMethodNotSupported"
+	HTTPMethodNotSupported ErrorResponseCode = "HttpMethodNotSupported"
 	// InternalServerError ...
-	InternalServerError Code = "InternalServerError"
+	InternalServerError ErrorResponseCode = "InternalServerError"
 	// InvalidAccessToken ...
-	InvalidAccessToken Code = "InvalidAccessToken"
+	InvalidAccessToken ErrorResponseCode = "InvalidAccessToken"
 	// InvalidFulfillmentRequestParameters ...
-	InvalidFulfillmentRequestParameters Code = "InvalidFulfillmentRequestParameters"
+	InvalidFulfillmentRequestParameters ErrorResponseCode = "InvalidFulfillmentRequestParameters"
 	// InvalidHealthCheckType ...
-	InvalidHealthCheckType Code = "InvalidHealthCheckType"
+	InvalidHealthCheckType ErrorResponseCode = "InvalidHealthCheckType"
 	// InvalidLocationID ...
-	InvalidLocationID Code = "InvalidLocationId"
+	InvalidLocationID ErrorResponseCode = "InvalidLocationId"
 	// InvalidRefundQuantity ...
-	InvalidRefundQuantity Code = "InvalidRefundQuantity"
+	InvalidRefundQuantity ErrorResponseCode = "InvalidRefundQuantity"
 	// InvalidRequestContent ...
-	InvalidRequestContent Code = "InvalidRequestContent"
+	InvalidRequestContent ErrorResponseCode = "InvalidRequestContent"
 	// InvalidRequestURI ...
-	InvalidRequestURI Code = "InvalidRequestUri"
+	InvalidRequestURI ErrorResponseCode = "InvalidRequestUri"
 	// InvalidReservationID ...
-	InvalidReservationID Code = "InvalidReservationId"
+	InvalidReservationID ErrorResponseCode = "InvalidReservationId"
 	// InvalidReservationOrderID ...
-	InvalidReservationOrderID Code = "InvalidReservationOrderId"
+	InvalidReservationOrderID ErrorResponseCode = "InvalidReservationOrderId"
 	// InvalidSingleAppliedScopesCount ...
-	InvalidSingleAppliedScopesCount Code = "InvalidSingleAppliedScopesCount"
+	InvalidSingleAppliedScopesCount ErrorResponseCode = "InvalidSingleAppliedScopesCount"
 	// InvalidSubscriptionID ...
-	InvalidSubscriptionID Code = "InvalidSubscriptionId"
+	InvalidSubscriptionID ErrorResponseCode = "InvalidSubscriptionId"
 	// InvalidTenantID ...
-	InvalidTenantID Code = "InvalidTenantId"
+	InvalidTenantID ErrorResponseCode = "InvalidTenantId"
 	// MissingAppliedScopesForSingle ...
-	MissingAppliedScopesForSingle Code = "MissingAppliedScopesForSingle"
+	MissingAppliedScopesForSingle ErrorResponseCode = "MissingAppliedScopesForSingle"
 	// MissingTenantID ...
-	MissingTenantID Code = "MissingTenantId"
+	MissingTenantID ErrorResponseCode = "MissingTenantId"
 	// NonsupportedAccountID ...
-	NonsupportedAccountID Code = "NonsupportedAccountId"
+	NonsupportedAccountID ErrorResponseCode = "NonsupportedAccountId"
 	// NotSpecified ...
-	NotSpecified Code = "NotSpecified"
+	NotSpecified ErrorResponseCode = "NotSpecified"
 	// NotSupportedCountry ...
-	NotSupportedCountry Code = "NotSupportedCountry"
+	NotSupportedCountry ErrorResponseCode = "NotSupportedCountry"
 	// NoValidReservationsToReRate ...
-	NoValidReservationsToReRate Code = "NoValidReservationsToReRate"
+	NoValidReservationsToReRate ErrorResponseCode = "NoValidReservationsToReRate"
 	// OperationCannotBePerformedInCurrentState ...
-	OperationCannotBePerformedInCurrentState Code = "OperationCannotBePerformedInCurrentState"
+	OperationCannotBePerformedInCurrentState ErrorResponseCode = "OperationCannotBePerformedInCurrentState"
 	// OperationFailed ...
-	OperationFailed Code = "OperationFailed"
+	OperationFailed ErrorResponseCode = "OperationFailed"
 	// PatchValuesSameAsExisting ...
-	PatchValuesSameAsExisting Code = "PatchValuesSameAsExisting"
+	PatchValuesSameAsExisting ErrorResponseCode = "PatchValuesSameAsExisting"
 	// PaymentInstrumentNotFound ...
-	PaymentInstrumentNotFound Code = "PaymentInstrumentNotFound"
+	PaymentInstrumentNotFound ErrorResponseCode = "PaymentInstrumentNotFound"
 	// PurchaseError ...
-	PurchaseError Code = "PurchaseError"
+	PurchaseError ErrorResponseCode = "PurchaseError"
 	// ReRateOnlyAllowedForEA ...
-	ReRateOnlyAllowedForEA Code = "ReRateOnlyAllowedForEA"
+	ReRateOnlyAllowedForEA ErrorResponseCode = "ReRateOnlyAllowedForEA"
 	// ReservationIDNotInReservationOrder ...
-	ReservationIDNotInReservationOrder Code = "ReservationIdNotInReservationOrder"
+	ReservationIDNotInReservationOrder ErrorResponseCode = "ReservationIdNotInReservationOrder"
 	// ReservationOrderCreationFailed ...
-	ReservationOrderCreationFailed Code = "ReservationOrderCreationFailed"
+	ReservationOrderCreationFailed ErrorResponseCode = "ReservationOrderCreationFailed"
 	// ReservationOrderIDAlreadyExists ...
-	ReservationOrderIDAlreadyExists Code = "ReservationOrderIdAlreadyExists"
+	ReservationOrderIDAlreadyExists ErrorResponseCode = "ReservationOrderIdAlreadyExists"
 	// ReservationOrderNotEnabled ...
-	ReservationOrderNotEnabled Code = "ReservationOrderNotEnabled"
+	ReservationOrderNotEnabled ErrorResponseCode = "ReservationOrderNotEnabled"
 	// ReservationOrderNotFound ...
-	ReservationOrderNotFound Code = "ReservationOrderNotFound"
+	ReservationOrderNotFound ErrorResponseCode = "ReservationOrderNotFound"
 	// RiskCheckFailed ...
-	RiskCheckFailed Code = "RiskCheckFailed"
+	RiskCheckFailed ErrorResponseCode = "RiskCheckFailed"
 	// RoleAssignmentCreationFailed ...
-	RoleAssignmentCreationFailed Code = "RoleAssignmentCreationFailed"
+	RoleAssignmentCreationFailed ErrorResponseCode = "RoleAssignmentCreationFailed"
 	// ServerTimeout ...
-	ServerTimeout Code = "ServerTimeout"
+	ServerTimeout ErrorResponseCode = "ServerTimeout"
 	// UnauthenticatedRequestsThrottled ...
-	UnauthenticatedRequestsThrottled Code = "UnauthenticatedRequestsThrottled"
+	UnauthenticatedRequestsThrottled ErrorResponseCode = "UnauthenticatedRequestsThrottled"
 	// UnsupportedReservationTerm ...
-	UnsupportedReservationTerm Code = "UnsupportedReservationTerm"
+	UnsupportedReservationTerm ErrorResponseCode = "UnsupportedReservationTerm"
 )
 
-// PossibleCodeValues returns an array of possible values for the Code const type.
-func PossibleCodeValues() []Code {
-	return []Code{ActivateQuoteFailed, AppliedScopesNotAssociatedWithCommerceAccount, AuthorizationFailed, BadRequest, BillingCustomerInputError, BillingError, BillingPaymentInstrumentHardError, BillingPaymentInstrumentSoftError, BillingScopeIDCannotBeChanged, BillingTransientError, CalculatePriceFailed, CapacityUpdateScopesFailed, ClientCertificateThumbprintNotSet, CreateQuoteFailed, Forbidden, FulfillmentConfigurationError, FulfillmentError, FulfillmentOutOfStockError, FulfillmentTransientError, HTTPMethodNotSupported, InternalServerError, InvalidAccessToken, InvalidFulfillmentRequestParameters, InvalidHealthCheckType, InvalidLocationID, InvalidRefundQuantity, InvalidRequestContent, InvalidRequestURI, InvalidReservationID, InvalidReservationOrderID, InvalidSingleAppliedScopesCount, InvalidSubscriptionID, InvalidTenantID, MissingAppliedScopesForSingle, MissingTenantID, NonsupportedAccountID, NotSpecified, NotSupportedCountry, NoValidReservationsToReRate, OperationCannotBePerformedInCurrentState, OperationFailed, PatchValuesSameAsExisting, PaymentInstrumentNotFound, PurchaseError, ReRateOnlyAllowedForEA, ReservationIDNotInReservationOrder, ReservationOrderCreationFailed, ReservationOrderIDAlreadyExists, ReservationOrderNotEnabled, ReservationOrderNotFound, RiskCheckFailed, RoleAssignmentCreationFailed, ServerTimeout, UnauthenticatedRequestsThrottled, UnsupportedReservationTerm}
+// PossibleErrorResponseCodeValues returns an array of possible values for the ErrorResponseCode const type.
+func PossibleErrorResponseCodeValues() []ErrorResponseCode {
+	return []ErrorResponseCode{ActivateQuoteFailed, AppliedScopesNotAssociatedWithCommerceAccount, AuthorizationFailed, BadRequest, BillingCustomerInputError, BillingError, BillingPaymentInstrumentHardError, BillingPaymentInstrumentSoftError, BillingScopeIDCannotBeChanged, BillingTransientError, CalculatePriceFailed, CapacityUpdateScopesFailed, ClientCertificateThumbprintNotSet, CreateQuoteFailed, Forbidden, FulfillmentConfigurationError, FulfillmentError, FulfillmentOutOfStockError, FulfillmentTransientError, HTTPMethodNotSupported, InternalServerError, InvalidAccessToken, InvalidFulfillmentRequestParameters, InvalidHealthCheckType, InvalidLocationID, InvalidRefundQuantity, InvalidRequestContent, InvalidRequestURI, InvalidReservationID, InvalidReservationOrderID, InvalidSingleAppliedScopesCount, InvalidSubscriptionID, InvalidTenantID, MissingAppliedScopesForSingle, MissingTenantID, NonsupportedAccountID, NotSpecified, NotSupportedCountry, NoValidReservationsToReRate, OperationCannotBePerformedInCurrentState, OperationFailed, PatchValuesSameAsExisting, PaymentInstrumentNotFound, PurchaseError, ReRateOnlyAllowedForEA, ReservationIDNotInReservationOrder, ReservationOrderCreationFailed, ReservationOrderIDAlreadyExists, ReservationOrderNotEnabled, ReservationOrderNotFound, RiskCheckFailed, RoleAssignmentCreationFailed, ServerTimeout, UnauthenticatedRequestsThrottled, UnsupportedReservationTerm}
 }
 
 // InstanceFlexibility enumerates the values for instance flexibility.
@@ -194,162 +180,19 @@ func PossibleInstanceFlexibilityValues() []InstanceFlexibility {
 	return []InstanceFlexibility{NotSupported, Off, On}
 }
 
-// InstanceFlexibility1 enumerates the values for instance flexibility 1.
-type InstanceFlexibility1 string
+// ReservationTerm enumerates the values for reservation term.
+type ReservationTerm string
 
 const (
-	// InstanceFlexibility1NotSupported ...
-	InstanceFlexibility1NotSupported InstanceFlexibility1 = "NotSupported"
-	// InstanceFlexibility1Off ...
-	InstanceFlexibility1Off InstanceFlexibility1 = "Off"
-	// InstanceFlexibility1On ...
-	InstanceFlexibility1On InstanceFlexibility1 = "On"
+	// P1Y ...
+	P1Y ReservationTerm = "P1Y"
+	// P3Y ...
+	P3Y ReservationTerm = "P3Y"
 )
 
-// PossibleInstanceFlexibility1Values returns an array of possible values for the InstanceFlexibility1 const type.
-func PossibleInstanceFlexibility1Values() []InstanceFlexibility1 {
-	return []InstanceFlexibility1{InstanceFlexibility1NotSupported, InstanceFlexibility1Off, InstanceFlexibility1On}
-}
-
-// Location enumerates the values for location.
-type Location string
-
-const (
-	// Australiac ...
-	Australiac Location = "australiac"
-	// Australiac2 ...
-	Australiac2 Location = "australiac2"
-	// Australiaeast ...
-	Australiaeast Location = "australiaeast"
-	// Australiasoutheast ...
-	Australiasoutheast Location = "australiasoutheast"
-	// Brazilsouth ...
-	Brazilsouth Location = "brazilsouth"
-	// Canadacentral ...
-	Canadacentral Location = "canadacentral"
-	// Canadaeast ...
-	Canadaeast Location = "canadaeast"
-	// Centralindia ...
-	Centralindia Location = "centralindia"
-	// Centralus ...
-	Centralus Location = "centralus"
-	// Eastasia ...
-	Eastasia Location = "eastasia"
-	// Eastus ...
-	Eastus Location = "eastus"
-	// Eastus2 ...
-	Eastus2 Location = "eastus2"
-	// Francecentral ...
-	Francecentral Location = "francecentral"
-	// Francesouth ...
-	Francesouth Location = "francesouth"
-	// Japaneast ...
-	Japaneast Location = "japaneast"
-	// Japanwest ...
-	Japanwest Location = "japanwest"
-	// Northcentralus ...
-	Northcentralus Location = "northcentralus"
-	// Northeurope ...
-	Northeurope Location = "northeurope"
-	// Southcentralus ...
-	Southcentralus Location = "southcentralus"
-	// Southeastasia ...
-	Southeastasia Location = "southeastasia"
-	// Southindia ...
-	Southindia Location = "southindia"
-	// Uksouth ...
-	Uksouth Location = "uksouth"
-	// Ukwest ...
-	Ukwest Location = "ukwest"
-	// Westcentralus ...
-	Westcentralus Location = "westcentralus"
-	// Westeurope ...
-	Westeurope Location = "westeurope"
-	// Westindia ...
-	Westindia Location = "westindia"
-	// Westus ...
-	Westus Location = "westus"
-	// Westus2 ...
-	Westus2 Location = "westus2"
-)
-
-// PossibleLocationValues returns an array of possible values for the Location const type.
-func PossibleLocationValues() []Location {
-	return []Location{Australiac, Australiac2, Australiaeast, Australiasoutheast, Brazilsouth, Canadacentral, Canadaeast, Centralindia, Centralus, Eastasia, Eastus, Eastus2, Francecentral, Francesouth, Japaneast, Japanwest, Northcentralus, Northeurope, Southcentralus, Southeastasia, Southindia, Uksouth, Ukwest, Westcentralus, Westeurope, Westindia, Westus, Westus2}
-}
-
-// ProvisioningState enumerates the values for provisioning state.
-type ProvisioningState string
-
-const (
-	// BillingFailed ...
-	BillingFailed ProvisioningState = "BillingFailed"
-	// Cancelled ...
-	Cancelled ProvisioningState = "Cancelled"
-	// ConfirmedBilling ...
-	ConfirmedBilling ProvisioningState = "ConfirmedBilling"
-	// ConfirmedResourceHold ...
-	ConfirmedResourceHold ProvisioningState = "ConfirmedResourceHold"
-	// Created ...
-	Created ProvisioningState = "Created"
-	// Creating ...
-	Creating ProvisioningState = "Creating"
-	// Expired ...
-	Expired ProvisioningState = "Expired"
-	// Failed ...
-	Failed ProvisioningState = "Failed"
-	// Merged ...
-	Merged ProvisioningState = "Merged"
-	// PendingBilling ...
-	PendingBilling ProvisioningState = "PendingBilling"
-	// PendingResourceHold ...
-	PendingResourceHold ProvisioningState = "PendingResourceHold"
-	// Split ...
-	Split ProvisioningState = "Split"
-	// Succeeded ...
-	Succeeded ProvisioningState = "Succeeded"
-)
-
-// PossibleProvisioningStateValues returns an array of possible values for the ProvisioningState const type.
-func PossibleProvisioningStateValues() []ProvisioningState {
-	return []ProvisioningState{BillingFailed, Cancelled, ConfirmedBilling, ConfirmedResourceHold, Created, Creating, Expired, Failed, Merged, PendingBilling, PendingResourceHold, Split, Succeeded}
-}
-
-// ProvisioningState1 enumerates the values for provisioning state 1.
-type ProvisioningState1 string
-
-const (
-	// ProvisioningState1BillingFailed ...
-	ProvisioningState1BillingFailed ProvisioningState1 = "BillingFailed"
-	// ProvisioningState1Cancelled ...
-	ProvisioningState1Cancelled ProvisioningState1 = "Cancelled"
-	// ProvisioningState1ConfirmedBilling ...
-	ProvisioningState1ConfirmedBilling ProvisioningState1 = "ConfirmedBilling"
-	// ProvisioningState1ConfirmedResourceHold ...
-	ProvisioningState1ConfirmedResourceHold ProvisioningState1 = "ConfirmedResourceHold"
-	// ProvisioningState1Created ...
-	ProvisioningState1Created ProvisioningState1 = "Created"
-	// ProvisioningState1Creating ...
-	ProvisioningState1Creating ProvisioningState1 = "Creating"
-	// ProvisioningState1Expired ...
-	ProvisioningState1Expired ProvisioningState1 = "Expired"
-	// ProvisioningState1Failed ...
-	ProvisioningState1Failed ProvisioningState1 = "Failed"
-	// ProvisioningState1Merged ...
-	ProvisioningState1Merged ProvisioningState1 = "Merged"
-	// ProvisioningState1PendingBilling ...
-	ProvisioningState1PendingBilling ProvisioningState1 = "PendingBilling"
-	// ProvisioningState1PendingResourceHold ...
-	ProvisioningState1PendingResourceHold ProvisioningState1 = "PendingResourceHold"
-	// ProvisioningState1Split ...
-	ProvisioningState1Split ProvisioningState1 = "Split"
-	// ProvisioningState1Succeeded ...
-	ProvisioningState1Succeeded ProvisioningState1 = "Succeeded"
-)
-
-// PossibleProvisioningState1Values returns an array of possible values for the ProvisioningState1 const type.
-func PossibleProvisioningState1Values() []ProvisioningState1 {
-	return []ProvisioningState1{ProvisioningState1BillingFailed, ProvisioningState1Cancelled, ProvisioningState1ConfirmedBilling, ProvisioningState1ConfirmedResourceHold, ProvisioningState1Created, ProvisioningState1Creating, ProvisioningState1Expired, ProvisioningState1Failed, ProvisioningState1Merged, ProvisioningState1PendingBilling, ProvisioningState1PendingResourceHold, ProvisioningState1Split, ProvisioningState1Succeeded}
+// PossibleReservationTermValues returns an array of possible values for the ReservationTerm const type.
+func PossibleReservationTermValues() []ReservationTerm {
+	return []ReservationTerm{P1Y, P3Y}
 }
 
 // ReservedResourceType enumerates the values for reserved resource type.
@@ -396,21 +239,6 @@ const (
 // PossibleStatusCodeValues returns an array of possible values for the StatusCode const type.
 func PossibleStatusCodeValues() []StatusCode {
 	return []StatusCode{StatusCodeActive, StatusCodeExpired, StatusCodeMerged, StatusCodeNone, StatusCodePaymentInstrumentError, StatusCodePending, StatusCodePurchaseError, StatusCodeSplit, StatusCodeSucceeded}
-}
-
-// Term enumerates the values for term.
-type Term string
-
-const (
-	// P1Y ...
-	P1Y Term = "P1Y"
-	// P3Y ...
-	P3Y Term = "P3Y"
-)
-
-// PossibleTermValues returns an array of possible values for the Term const type.
-func PossibleTermValues() []Term {
-	return []Term{P1Y, P3Y}
 }
 
 // AppliedReservationList ...
@@ -513,10 +341,10 @@ type Catalog struct {
 	// Name - The name of SKU
 	Name *string `json:"name,omitempty"`
 	// Terms - Available reservation terms for this resource
-	Terms         *[]string         `json:"terms,omitempty"`
-	Locations     *[]string         `json:"locations,omitempty"`
-	SkuProperties *[]SkuProperty    `json:"skuProperties,omitempty"`
-	Restrictions  *[]SkuRestriction `json:"restrictions,omitempty"`
+	Terms         *[]ReservationTerm `json:"terms,omitempty"`
+	Locations     *[]string          `json:"locations,omitempty"`
+	SkuProperties *[]SkuProperty     `json:"skuProperties,omitempty"`
+	Restrictions  *[]SkuRestriction  `json:"restrictions,omitempty"`
 }
 
 // Error ...
@@ -527,8 +355,8 @@ type Error struct {
 // ExtendedErrorInfo ...
 type ExtendedErrorInfo struct {
 	// Code - Possible values include: 'NotSpecified', 'InternalServerError', 'ServerTimeout', 'AuthorizationFailed', 'BadRequest', 'ClientCertificateThumbprintNotSet', 'InvalidRequestContent', 'OperationFailed', 'HTTPMethodNotSupported', 'InvalidRequestURI', 'MissingTenantID', 'InvalidTenantID', 'InvalidReservationOrderID', 'InvalidReservationID', 'ReservationIDNotInReservationOrder', 'ReservationOrderNotFound', 'InvalidSubscriptionID', 'InvalidAccessToken', 'InvalidLocationID', 'UnauthenticatedRequestsThrottled', 'InvalidHealthCheckType', 'Forbidden', 'BillingScopeIDCannotBeChanged', 'AppliedScopesNotAssociatedWithCommerceAccount', 'PatchValuesSameAsExisting', 'RoleAssignmentCreationFailed', 'ReservationOrderCreationFailed', 'ReservationOrderNotEnabled', 'CapacityUpdateScopesFailed', 'UnsupportedReservationTerm', 'ReservationOrderIDAlreadyExists', 'RiskCheckFailed', 'CreateQuoteFailed', 'ActivateQuoteFailed', 'NonsupportedAccountID', 'PaymentInstrumentNotFound', 'MissingAppliedScopesForSingle', 'NoValidReservationsToReRate', 'ReRateOnlyAllowedForEA', 'OperationCannotBePerformedInCurrentState', 'InvalidSingleAppliedScopesCount', 'InvalidFulfillmentRequestParameters', 'NotSupportedCountry', 'InvalidRefundQuantity', 'PurchaseError', 'BillingCustomerInputError', 'BillingPaymentInstrumentSoftError', 'BillingPaymentInstrumentHardError', 'BillingTransientError', 'BillingError', 'FulfillmentConfigurationError', 'FulfillmentOutOfStockError', 'FulfillmentTransientError', 'FulfillmentError', 'CalculatePriceFailed'
-	Code    Code    `json:"code,omitempty"`
-	Message *string `json:"message,omitempty"`
+	Code    ErrorResponseCode `json:"code,omitempty"`
+	Message *string           `json:"message,omitempty"`
 }
 
 // ExtendedStatusInfo ...
@@ -934,10 +762,10 @@ type OrderProperties struct {
 	// OriginalQuantity - Total Quantity of the SKUs purchased in the Reservation.
 	OriginalQuantity *int32 `json:"originalQuantity,omitempty"`
 	// Term - Possible values include: 'P1Y', 'P3Y'
-	Term Term `json:"term,omitempty"`
-	// ProvisioningState - Possible values include: 'ProvisioningState1Creating', 'ProvisioningState1PendingResourceHold', 'ProvisioningState1ConfirmedResourceHold', 'ProvisioningState1PendingBilling', 'ProvisioningState1ConfirmedBilling', 'ProvisioningState1Created', 'ProvisioningState1Succeeded', 'ProvisioningState1Cancelled', 'ProvisioningState1Expired', 'ProvisioningState1BillingFailed', 'ProvisioningState1Failed', 'ProvisioningState1Split', 'ProvisioningState1Merged'
-	ProvisioningState    ProvisioningState1 `json:"provisioningState,omitempty"`
-	ReservationsProperty *[]Response        `json:"reservations,omitempty"`
+	Term ReservationTerm `json:"term,omitempty"`
+	// ProvisioningState - Current state of the reservation.
+	ProvisioningState    *string     `json:"provisioningState,omitempty"`
+	ReservationsProperty *[]Response `json:"reservations,omitempty"`
 }
 
 // OrderResponse ...
@@ -1074,11 +902,11 @@ func (p *Patch) UnmarshalJSON(body []byte) error {
 
 // PatchProperties ...
 type PatchProperties struct {
-	// AppliedScopeType - Possible values include: 'AppliedScopeType1Single', 'AppliedScopeType1Shared'
-	AppliedScopeType AppliedScopeType1 `json:"appliedScopeType,omitempty"`
-	AppliedScopes    *[]string         `json:"appliedScopes,omitempty"`
-	// InstanceFlexibility - Possible values include: 'InstanceFlexibility1On', 'InstanceFlexibility1Off', 'InstanceFlexibility1NotSupported'
-	InstanceFlexibility InstanceFlexibility1 `json:"instanceFlexibility,omitempty"`
+	// AppliedScopeType - Possible values include: 'Single', 'Shared'
+	AppliedScopeType AppliedScopeType `json:"appliedScopeType,omitempty"`
+	AppliedScopes    *[]string        `json:"appliedScopes,omitempty"`
+	// InstanceFlexibility - Possible values include: 'On', 'Off', 'NotSupported'
+	InstanceFlexibility InstanceFlexibility `json:"instanceFlexibility,omitempty"`
 }
 
 // Properties ...
@@ -1094,8 +922,8 @@ type Properties struct {
 	AppliedScopeType AppliedScopeType `json:"appliedScopeType,omitempty"`
 	// Quantity - Quantity of the SKUs that are part of the Reservation.
 	Quantity *int32 `json:"quantity,omitempty"`
-	// ProvisioningState - Possible values include: 'Creating', 'PendingResourceHold', 'ConfirmedResourceHold', 'PendingBilling', 'ConfirmedBilling', 'Created', 'Succeeded', 'Cancelled', 'Expired', 'BillingFailed', 'Failed', 'Split', 'Merged'
-	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
+	// ProvisioningState - Current state of the reservation.
+	ProvisioningState *string `json:"provisioningState,omitempty"`
 	// EffectiveDateTime - DateTime of the Reservation starting when this version is effective from.
 	EffectiveDateTime *date.Time `json:"effectiveDateTime,omitempty"`
 	// LastUpdatedDateTime - DateTime of the last time the Reservation was updated.
@@ -1168,9 +996,9 @@ func (future *ReservationUpdateFuture) Result(client Client) (r Response, err er
 // Response ...
 type Response struct {
 	autorest.Response `json:"-"`
-	// Location - Possible values include: 'Westus', 'Eastus', 'Eastus2', 'Northcentralus', 'Westus2', 'Southcentralus', 'Centralus', 'Westeurope', 'Northeurope', 'Eastasia', 'Southeastasia', 'Japaneast', 'Japanwest', 'Brazilsouth', 'Australiaeast', 'Australiasoutheast', 'Southindia', 'Westindia', 'Centralindia', 'Canadacentral', 'Canadaeast', 'Uksouth', 'Westcentralus', 'Ukwest', 'Francecentral', 'Francesouth', 'Australiac', 'Australiac2'
-	Location Location `json:"location,omitempty"`
-	Etag     *int32   `json:"etag,omitempty"`
+	// Location - The Azure Region where the reserved resource lives.
+	Location *string `json:"location,omitempty"`
+	Etag     *int32  `json:"etag,omitempty"`
 	// ID - Identifier of the reservation
 	ID *string `json:"id,omitempty"`
 	// Name - Name of the reservation

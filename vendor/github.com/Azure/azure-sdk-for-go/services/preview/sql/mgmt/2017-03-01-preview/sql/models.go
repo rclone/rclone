@@ -944,6 +944,21 @@ func PossibleSecurityAlertPolicyUseServerDefaultValues() []SecurityAlertPolicyUs
 	return []SecurityAlertPolicyUseServerDefault{SecurityAlertPolicyUseServerDefaultDisabled, SecurityAlertPolicyUseServerDefaultEnabled}
 }
 
+// SecurityAlertState enumerates the values for security alert state.
+type SecurityAlertState string
+
+const (
+	// SecurityAlertStateDisabled ...
+	SecurityAlertStateDisabled SecurityAlertState = "Disabled"
+	// SecurityAlertStateEnabled ...
+	SecurityAlertStateEnabled SecurityAlertState = "Enabled"
+)
+
+// PossibleSecurityAlertStateValues returns an array of possible values for the SecurityAlertState const type.
+func PossibleSecurityAlertStateValues() []SecurityAlertState {
+	return []SecurityAlertState{SecurityAlertStateDisabled, SecurityAlertStateEnabled}
+}
+
 // ServerConnectionType enumerates the values for server connection type.
 type ServerConnectionType string
 
@@ -2096,11 +2111,67 @@ type DatabaseBlobAuditingPolicyProperties struct {
 	StorageAccountAccessKey *string `json:"storageAccountAccessKey,omitempty"`
 	// RetentionDays - Specifies the number of days to keep in the audit logs.
 	RetentionDays *int32 `json:"retentionDays,omitempty"`
-	// AuditActionsAndGroups - Specifies the Actions and Actions-Groups to audit.
+	// AuditActionsAndGroups - Specifies the Actions-Groups and Actions to audit.
+	//
+	// The recommended set of action groups to use is the following combination - this will audit all the queries and stored procedures executed against the database, as well as successful and failed logins:
+	//
+	// BATCH_COMPLETED_GROUP,
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+	// FAILED_DATABASE_AUTHENTICATION_GROUP.
+	//
+	// This above combination is also the set that is configured by default when enabling auditing from the Azure portal.
+	//
+	// The supported action groups to audit are (note: choose only specific groups that cover your auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+	//
+	// APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+	// BACKUP_RESTORE_GROUP
+	// DATABASE_LOGOUT_GROUP
+	// DATABASE_OBJECT_CHANGE_GROUP
+	// DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+	// DATABASE_OPERATION_GROUP
+	// DATABASE_PERMISSION_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+	// DATABASE_ROLE_MEMBER_CHANGE_GROUP
+	// FAILED_DATABASE_AUTHENTICATION_GROUP
+	// SCHEMA_OBJECT_ACCESS_GROUP
+	// SCHEMA_OBJECT_CHANGE_GROUP
+	// SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+	// USER_CHANGE_PASSWORD_GROUP
+	// BATCH_STARTED_GROUP
+	// BATCH_COMPLETED_GROUP
+	//
+	// These are groups that cover all sql statements and stored procedures executed against the database, and should not be used in combination with other groups as this will result in duplicate audit logs.
+	//
+	// For more information, see [Database-Level Audit Action Groups](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups).
+	//
+	// For Database auditing policy, specific Actions can also be specified (note that Actions cannot be specified for Server auditing policy). The supported actions to audit are:
+	// SELECT
+	// UPDATE
+	// INSERT
+	// DELETE
+	// EXECUTE
+	// RECEIVE
+	// REFERENCES
+	//
+	// The general form for defining an action to be audited is:
+	// <action> ON <object> BY <principal>
+	//
+	// Note that <object> in the above format can refer to an object like a table, view, or stored procedure, or an entire database or schema. For the latter cases, the forms DATABASE::<db_name> and SCHEMA::<schema_name> are used, respectively.
+	//
+	// For example:
+	// SELECT on dbo.myTable by public
+	// SELECT on DATABASE::myDatabase by public
+	// SELECT on SCHEMA::mySchema by public
+	//
+	// For more information, see [Database-Level Audit Actions](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions)
 	AuditActionsAndGroups *[]string `json:"auditActionsAndGroups,omitempty"`
 	// StorageAccountSubscriptionID - Specifies the blob storage subscription Id.
 	StorageAccountSubscriptionID *uuid.UUID `json:"storageAccountSubscriptionId,omitempty"`
-	// IsStorageSecondaryKeyInUse - Specifies whether storageAccountAccessKey value is the storage’s secondary key.
+	// IsStorageSecondaryKeyInUse - Specifies whether storageAccountAccessKey value is the storage's secondary key.
 	IsStorageSecondaryKeyInUse *bool `json:"isStorageSecondaryKeyInUse,omitempty"`
 }
 
@@ -4285,6 +4356,351 @@ type ExportRequest struct {
 	AdministratorLoginPassword *string `json:"administratorLoginPassword,omitempty"`
 	// AuthenticationType - The authentication type. Possible values include: 'SQL', 'ADPassword'
 	AuthenticationType AuthenticationType `json:"authenticationType,omitempty"`
+}
+
+// ExtendedDatabaseBlobAuditingPolicy an extended database blob auditing policy.
+type ExtendedDatabaseBlobAuditingPolicy struct {
+	autorest.Response `json:"-"`
+	// ExtendedDatabaseBlobAuditingPolicyProperties - Resource properties.
+	*ExtendedDatabaseBlobAuditingPolicyProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ExtendedDatabaseBlobAuditingPolicy.
+func (edbap ExtendedDatabaseBlobAuditingPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if edbap.ExtendedDatabaseBlobAuditingPolicyProperties != nil {
+		objectMap["properties"] = edbap.ExtendedDatabaseBlobAuditingPolicyProperties
+	}
+	if edbap.ID != nil {
+		objectMap["id"] = edbap.ID
+	}
+	if edbap.Name != nil {
+		objectMap["name"] = edbap.Name
+	}
+	if edbap.Type != nil {
+		objectMap["type"] = edbap.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for ExtendedDatabaseBlobAuditingPolicy struct.
+func (edbap *ExtendedDatabaseBlobAuditingPolicy) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var extendedDatabaseBlobAuditingPolicyProperties ExtendedDatabaseBlobAuditingPolicyProperties
+				err = json.Unmarshal(*v, &extendedDatabaseBlobAuditingPolicyProperties)
+				if err != nil {
+					return err
+				}
+				edbap.ExtendedDatabaseBlobAuditingPolicyProperties = &extendedDatabaseBlobAuditingPolicyProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				edbap.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				edbap.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				edbap.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// ExtendedDatabaseBlobAuditingPolicyProperties properties of an extended database blob auditing policy.
+type ExtendedDatabaseBlobAuditingPolicyProperties struct {
+	// PredicateExpression - Specifies condition of where clause when creating an audit.
+	PredicateExpression *string `json:"predicateExpression,omitempty"`
+	// State - Specifies the state of the policy. If state is Enabled, storageEndpoint and storageAccountAccessKey are required. Possible values include: 'BlobAuditingPolicyStateEnabled', 'BlobAuditingPolicyStateDisabled'
+	State BlobAuditingPolicyState `json:"state,omitempty"`
+	// StorageEndpoint - Specifies the blob storage endpoint (e.g. https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint is required.
+	StorageEndpoint *string `json:"storageEndpoint,omitempty"`
+	// StorageAccountAccessKey - Specifies the identifier key of the auditing storage account. If state is Enabled, storageAccountAccessKey is required.
+	StorageAccountAccessKey *string `json:"storageAccountAccessKey,omitempty"`
+	// RetentionDays - Specifies the number of days to keep in the audit logs.
+	RetentionDays *int32 `json:"retentionDays,omitempty"`
+	// AuditActionsAndGroups - Specifies the Actions-Groups and Actions to audit.
+	//
+	// The recommended set of action groups to use is the following combination - this will audit all the queries and stored procedures executed against the database, as well as successful and failed logins:
+	//
+	// BATCH_COMPLETED_GROUP,
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+	// FAILED_DATABASE_AUTHENTICATION_GROUP.
+	//
+	// This above combination is also the set that is configured by default when enabling auditing from the Azure portal.
+	//
+	// The supported action groups to audit are (note: choose only specific groups that cover your auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+	//
+	// APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+	// BACKUP_RESTORE_GROUP
+	// DATABASE_LOGOUT_GROUP
+	// DATABASE_OBJECT_CHANGE_GROUP
+	// DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+	// DATABASE_OPERATION_GROUP
+	// DATABASE_PERMISSION_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+	// DATABASE_ROLE_MEMBER_CHANGE_GROUP
+	// FAILED_DATABASE_AUTHENTICATION_GROUP
+	// SCHEMA_OBJECT_ACCESS_GROUP
+	// SCHEMA_OBJECT_CHANGE_GROUP
+	// SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+	// USER_CHANGE_PASSWORD_GROUP
+	// BATCH_STARTED_GROUP
+	// BATCH_COMPLETED_GROUP
+	//
+	// These are groups that cover all sql statements and stored procedures executed against the database, and should not be used in combination with other groups as this will result in duplicate audit logs.
+	//
+	// For more information, see [Database-Level Audit Action Groups](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups).
+	//
+	// For Database auditing policy, specific Actions can also be specified (note that Actions cannot be specified for Server auditing policy). The supported actions to audit are:
+	// SELECT
+	// UPDATE
+	// INSERT
+	// DELETE
+	// EXECUTE
+	// RECEIVE
+	// REFERENCES
+	//
+	// The general form for defining an action to be audited is:
+	// <action> ON <object> BY <principal>
+	//
+	// Note that <object> in the above format can refer to an object like a table, view, or stored procedure, or an entire database or schema. For the latter cases, the forms DATABASE::<db_name> and SCHEMA::<schema_name> are used, respectively.
+	//
+	// For example:
+	// SELECT on dbo.myTable by public
+	// SELECT on DATABASE::myDatabase by public
+	// SELECT on SCHEMA::mySchema by public
+	//
+	// For more information, see [Database-Level Audit Actions](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions)
+	AuditActionsAndGroups *[]string `json:"auditActionsAndGroups,omitempty"`
+	// StorageAccountSubscriptionID - Specifies the blob storage subscription Id.
+	StorageAccountSubscriptionID *uuid.UUID `json:"storageAccountSubscriptionId,omitempty"`
+	// IsStorageSecondaryKeyInUse - Specifies whether storageAccountAccessKey value is the storage's secondary key.
+	IsStorageSecondaryKeyInUse *bool `json:"isStorageSecondaryKeyInUse,omitempty"`
+}
+
+// ExtendedServerBlobAuditingPoliciesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results
+// of a long-running operation.
+type ExtendedServerBlobAuditingPoliciesCreateOrUpdateFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *ExtendedServerBlobAuditingPoliciesCreateOrUpdateFuture) Result(client ExtendedServerBlobAuditingPoliciesClient) (esbap ExtendedServerBlobAuditingPolicy, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.ExtendedServerBlobAuditingPoliciesCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("sql.ExtendedServerBlobAuditingPoliciesCreateOrUpdateFuture")
+		return
+	}
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if esbap.Response.Response, err = future.GetResult(sender); err == nil && esbap.Response.Response.StatusCode != http.StatusNoContent {
+		esbap, err = client.CreateOrUpdateResponder(esbap.Response.Response)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "sql.ExtendedServerBlobAuditingPoliciesCreateOrUpdateFuture", "Result", esbap.Response.Response, "Failure responding to request")
+		}
+	}
+	return
+}
+
+// ExtendedServerBlobAuditingPolicy an extended server blob auditing policy.
+type ExtendedServerBlobAuditingPolicy struct {
+	autorest.Response `json:"-"`
+	// ExtendedServerBlobAuditingPolicyProperties - Resource properties.
+	*ExtendedServerBlobAuditingPolicyProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ExtendedServerBlobAuditingPolicy.
+func (esbap ExtendedServerBlobAuditingPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if esbap.ExtendedServerBlobAuditingPolicyProperties != nil {
+		objectMap["properties"] = esbap.ExtendedServerBlobAuditingPolicyProperties
+	}
+	if esbap.ID != nil {
+		objectMap["id"] = esbap.ID
+	}
+	if esbap.Name != nil {
+		objectMap["name"] = esbap.Name
+	}
+	if esbap.Type != nil {
+		objectMap["type"] = esbap.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for ExtendedServerBlobAuditingPolicy struct.
+func (esbap *ExtendedServerBlobAuditingPolicy) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var extendedServerBlobAuditingPolicyProperties ExtendedServerBlobAuditingPolicyProperties
+				err = json.Unmarshal(*v, &extendedServerBlobAuditingPolicyProperties)
+				if err != nil {
+					return err
+				}
+				esbap.ExtendedServerBlobAuditingPolicyProperties = &extendedServerBlobAuditingPolicyProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				esbap.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				esbap.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				esbap.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// ExtendedServerBlobAuditingPolicyProperties properties of an extended server blob auditing policy.
+type ExtendedServerBlobAuditingPolicyProperties struct {
+	// PredicateExpression - Specifies condition of where clause when creating an audit.
+	PredicateExpression *string `json:"predicateExpression,omitempty"`
+	// State - Specifies the state of the policy. If state is Enabled, storageEndpoint and storageAccountAccessKey are required. Possible values include: 'BlobAuditingPolicyStateEnabled', 'BlobAuditingPolicyStateDisabled'
+	State BlobAuditingPolicyState `json:"state,omitempty"`
+	// StorageEndpoint - Specifies the blob storage endpoint (e.g. https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint is required.
+	StorageEndpoint *string `json:"storageEndpoint,omitempty"`
+	// StorageAccountAccessKey - Specifies the identifier key of the auditing storage account. If state is Enabled, storageAccountAccessKey is required.
+	StorageAccountAccessKey *string `json:"storageAccountAccessKey,omitempty"`
+	// RetentionDays - Specifies the number of days to keep in the audit logs.
+	RetentionDays *int32 `json:"retentionDays,omitempty"`
+	// AuditActionsAndGroups - Specifies the Actions-Groups and Actions to audit.
+	//
+	// The recommended set of action groups to use is the following combination - this will audit all the queries and stored procedures executed against the database, as well as successful and failed logins:
+	//
+	// BATCH_COMPLETED_GROUP,
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+	// FAILED_DATABASE_AUTHENTICATION_GROUP.
+	//
+	// This above combination is also the set that is configured by default when enabling auditing from the Azure portal.
+	//
+	// The supported action groups to audit are (note: choose only specific groups that cover your auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+	//
+	// APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+	// BACKUP_RESTORE_GROUP
+	// DATABASE_LOGOUT_GROUP
+	// DATABASE_OBJECT_CHANGE_GROUP
+	// DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+	// DATABASE_OPERATION_GROUP
+	// DATABASE_PERMISSION_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+	// DATABASE_ROLE_MEMBER_CHANGE_GROUP
+	// FAILED_DATABASE_AUTHENTICATION_GROUP
+	// SCHEMA_OBJECT_ACCESS_GROUP
+	// SCHEMA_OBJECT_CHANGE_GROUP
+	// SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+	// USER_CHANGE_PASSWORD_GROUP
+	// BATCH_STARTED_GROUP
+	// BATCH_COMPLETED_GROUP
+	//
+	// These are groups that cover all sql statements and stored procedures executed against the database, and should not be used in combination with other groups as this will result in duplicate audit logs.
+	//
+	// For more information, see [Database-Level Audit Action Groups](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups).
+	//
+	// For Database auditing policy, specific Actions can also be specified (note that Actions cannot be specified for Server auditing policy). The supported actions to audit are:
+	// SELECT
+	// UPDATE
+	// INSERT
+	// DELETE
+	// EXECUTE
+	// RECEIVE
+	// REFERENCES
+	//
+	// The general form for defining an action to be audited is:
+	// <action> ON <object> BY <principal>
+	//
+	// Note that <object> in the above format can refer to an object like a table, view, or stored procedure, or an entire database or schema. For the latter cases, the forms DATABASE::<db_name> and SCHEMA::<schema_name> are used, respectively.
+	//
+	// For example:
+	// SELECT on dbo.myTable by public
+	// SELECT on DATABASE::myDatabase by public
+	// SELECT on SCHEMA::mySchema by public
+	//
+	// For more information, see [Database-Level Audit Actions](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions)
+	AuditActionsAndGroups *[]string `json:"auditActionsAndGroups,omitempty"`
+	// StorageAccountSubscriptionID - Specifies the blob storage subscription Id.
+	StorageAccountSubscriptionID *uuid.UUID `json:"storageAccountSubscriptionId,omitempty"`
+	// IsStorageSecondaryKeyInUse - Specifies whether storageAccountAccessKey value is the storage's secondary key.
+	IsStorageSecondaryKeyInUse *bool `json:"isStorageSecondaryKeyInUse,omitempty"`
 }
 
 // FailoverGroup a failover group.
@@ -8530,6 +8946,24 @@ func (future *RestorePointsCreateFuture) Result(client RestorePointsClient) (rp 
 	return
 }
 
+// SecurityAlertPolicyProperties properties of a security alert policy.
+type SecurityAlertPolicyProperties struct {
+	// State - Specifies the state of the policy, whether it is enabled or disabled. Possible values include: 'SecurityAlertPolicyStateNew', 'SecurityAlertPolicyStateEnabled', 'SecurityAlertPolicyStateDisabled'
+	State SecurityAlertPolicyState `json:"state,omitempty"`
+	// DisabledAlerts - Specifies an array of alerts that are disabled. Allowed values are: Sql_Injection, Sql_Injection_Vulnerability, Access_Anomaly
+	DisabledAlerts *[]string `json:"disabledAlerts,omitempty"`
+	// EmailAddresses - Specifies an array of e-mail addresses to which the alert is sent.
+	EmailAddresses *[]string `json:"emailAddresses,omitempty"`
+	// EmailAccountAdmins - Specifies that the alert is sent to the account administrators.
+	EmailAccountAdmins *bool `json:"emailAccountAdmins,omitempty"`
+	// StorageEndpoint - Specifies the blob storage endpoint (e.g. https://MyAccount.blob.core.windows.net). This blob storage will hold all Threat Detection audit logs.
+	StorageEndpoint *string `json:"storageEndpoint,omitempty"`
+	// StorageAccountAccessKey - Specifies the identifier key of the Threat Detection audit storage account.
+	StorageAccountAccessKey *string `json:"storageAccountAccessKey,omitempty"`
+	// RetentionDays - Specifies the number of days to keep in the Threat Detection audit logs.
+	RetentionDays *int32 `json:"retentionDays,omitempty"`
+}
+
 // Server an Azure SQL Database server.
 type Server struct {
 	autorest.Response `json:"-"`
@@ -8907,6 +9341,191 @@ func (future *ServerAzureADAdministratorsDeleteFuture) Result(client ServerAzure
 		}
 	}
 	return
+}
+
+// ServerBlobAuditingPoliciesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
+// long-running operation.
+type ServerBlobAuditingPoliciesCreateOrUpdateFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *ServerBlobAuditingPoliciesCreateOrUpdateFuture) Result(client ServerBlobAuditingPoliciesClient) (sbap ServerBlobAuditingPolicy, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.ServerBlobAuditingPoliciesCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("sql.ServerBlobAuditingPoliciesCreateOrUpdateFuture")
+		return
+	}
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if sbap.Response.Response, err = future.GetResult(sender); err == nil && sbap.Response.Response.StatusCode != http.StatusNoContent {
+		sbap, err = client.CreateOrUpdateResponder(sbap.Response.Response)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "sql.ServerBlobAuditingPoliciesCreateOrUpdateFuture", "Result", sbap.Response.Response, "Failure responding to request")
+		}
+	}
+	return
+}
+
+// ServerBlobAuditingPolicy a server blob auditing policy.
+type ServerBlobAuditingPolicy struct {
+	autorest.Response `json:"-"`
+	// ServerBlobAuditingPolicyProperties - Resource properties.
+	*ServerBlobAuditingPolicyProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServerBlobAuditingPolicy.
+func (sbap ServerBlobAuditingPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sbap.ServerBlobAuditingPolicyProperties != nil {
+		objectMap["properties"] = sbap.ServerBlobAuditingPolicyProperties
+	}
+	if sbap.ID != nil {
+		objectMap["id"] = sbap.ID
+	}
+	if sbap.Name != nil {
+		objectMap["name"] = sbap.Name
+	}
+	if sbap.Type != nil {
+		objectMap["type"] = sbap.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for ServerBlobAuditingPolicy struct.
+func (sbap *ServerBlobAuditingPolicy) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var serverBlobAuditingPolicyProperties ServerBlobAuditingPolicyProperties
+				err = json.Unmarshal(*v, &serverBlobAuditingPolicyProperties)
+				if err != nil {
+					return err
+				}
+				sbap.ServerBlobAuditingPolicyProperties = &serverBlobAuditingPolicyProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				sbap.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				sbap.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				sbap.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
+}
+
+// ServerBlobAuditingPolicyProperties properties of a server blob auditing policy.
+type ServerBlobAuditingPolicyProperties struct {
+	// State - Specifies the state of the policy. If state is Enabled, storageEndpoint and storageAccountAccessKey are required. Possible values include: 'BlobAuditingPolicyStateEnabled', 'BlobAuditingPolicyStateDisabled'
+	State BlobAuditingPolicyState `json:"state,omitempty"`
+	// StorageEndpoint - Specifies the blob storage endpoint (e.g. https://MyAccount.blob.core.windows.net). If state is Enabled, storageEndpoint is required.
+	StorageEndpoint *string `json:"storageEndpoint,omitempty"`
+	// StorageAccountAccessKey - Specifies the identifier key of the auditing storage account. If state is Enabled, storageAccountAccessKey is required.
+	StorageAccountAccessKey *string `json:"storageAccountAccessKey,omitempty"`
+	// RetentionDays - Specifies the number of days to keep in the audit logs.
+	RetentionDays *int32 `json:"retentionDays,omitempty"`
+	// AuditActionsAndGroups - Specifies the Actions-Groups and Actions to audit.
+	//
+	// The recommended set of action groups to use is the following combination - this will audit all the queries and stored procedures executed against the database, as well as successful and failed logins:
+	//
+	// BATCH_COMPLETED_GROUP,
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+	// FAILED_DATABASE_AUTHENTICATION_GROUP.
+	//
+	// This above combination is also the set that is configured by default when enabling auditing from the Azure portal.
+	//
+	// The supported action groups to audit are (note: choose only specific groups that cover your auditing needs. Using unnecessary groups could lead to very large quantities of audit records):
+	//
+	// APPLICATION_ROLE_CHANGE_PASSWORD_GROUP
+	// BACKUP_RESTORE_GROUP
+	// DATABASE_LOGOUT_GROUP
+	// DATABASE_OBJECT_CHANGE_GROUP
+	// DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// DATABASE_OBJECT_PERMISSION_CHANGE_GROUP
+	// DATABASE_OPERATION_GROUP
+	// DATABASE_PERMISSION_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_CHANGE_GROUP
+	// DATABASE_PRINCIPAL_IMPERSONATION_GROUP
+	// DATABASE_ROLE_MEMBER_CHANGE_GROUP
+	// FAILED_DATABASE_AUTHENTICATION_GROUP
+	// SCHEMA_OBJECT_ACCESS_GROUP
+	// SCHEMA_OBJECT_CHANGE_GROUP
+	// SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP
+	// SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP
+	// SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP
+	// USER_CHANGE_PASSWORD_GROUP
+	// BATCH_STARTED_GROUP
+	// BATCH_COMPLETED_GROUP
+	//
+	// These are groups that cover all sql statements and stored procedures executed against the database, and should not be used in combination with other groups as this will result in duplicate audit logs.
+	//
+	// For more information, see [Database-Level Audit Action Groups](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-action-groups).
+	//
+	// For Database auditing policy, specific Actions can also be specified (note that Actions cannot be specified for Server auditing policy). The supported actions to audit are:
+	// SELECT
+	// UPDATE
+	// INSERT
+	// DELETE
+	// EXECUTE
+	// RECEIVE
+	// REFERENCES
+	//
+	// The general form for defining an action to be audited is:
+	// <action> ON <object> BY <principal>
+	//
+	// Note that <object> in the above format can refer to an object like a table, view, or stored procedure, or an entire database or schema. For the latter cases, the forms DATABASE::<db_name> and SCHEMA::<schema_name> are used, respectively.
+	//
+	// For example:
+	// SELECT on dbo.myTable by public
+	// SELECT on DATABASE::myDatabase by public
+	// SELECT on SCHEMA::mySchema by public
+	//
+	// For more information, see [Database-Level Audit Actions](https://docs.microsoft.com/en-us/sql/relational-databases/security/auditing/sql-server-audit-action-groups-and-actions#database-level-audit-actions)
+	AuditActionsAndGroups *[]string `json:"auditActionsAndGroups,omitempty"`
+	// StorageAccountSubscriptionID - Specifies the blob storage subscription Id.
+	StorageAccountSubscriptionID *uuid.UUID `json:"storageAccountSubscriptionId,omitempty"`
+	// IsStorageSecondaryKeyInUse - Specifies whether storageAccountAccessKey value is the storage's secondary key.
+	IsStorageSecondaryKeyInUse *bool `json:"isStorageSecondaryKeyInUse,omitempty"`
 }
 
 // ServerCommunicationLink server communication link.
@@ -9892,6 +10511,117 @@ func (future *ServersDeleteFuture) Result(client ServersClient) (ar autorest.Res
 	}
 	ar.Response = future.Response()
 	return
+}
+
+// ServerSecurityAlertPoliciesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a
+// long-running operation.
+type ServerSecurityAlertPoliciesCreateOrUpdateFuture struct {
+	azure.Future
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future *ServerSecurityAlertPoliciesCreateOrUpdateFuture) Result(client ServerSecurityAlertPoliciesClient) (ssap ServerSecurityAlertPolicy, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "sql.ServerSecurityAlertPoliciesCreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		err = azure.NewAsyncOpIncompleteError("sql.ServerSecurityAlertPoliciesCreateOrUpdateFuture")
+		return
+	}
+	sender := autorest.DecorateSender(client, autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if ssap.Response.Response, err = future.GetResult(sender); err == nil && ssap.Response.Response.StatusCode != http.StatusNoContent {
+		ssap, err = client.CreateOrUpdateResponder(ssap.Response.Response)
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "sql.ServerSecurityAlertPoliciesCreateOrUpdateFuture", "Result", ssap.Response.Response, "Failure responding to request")
+		}
+	}
+	return
+}
+
+// ServerSecurityAlertPolicy a server security alert policy.
+type ServerSecurityAlertPolicy struct {
+	autorest.Response `json:"-"`
+	// SecurityAlertPolicyProperties - Resource properties.
+	*SecurityAlertPolicyProperties `json:"properties,omitempty"`
+	// ID - Resource ID.
+	ID *string `json:"id,omitempty"`
+	// Name - Resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - Resource type.
+	Type *string `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServerSecurityAlertPolicy.
+func (ssap ServerSecurityAlertPolicy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ssap.SecurityAlertPolicyProperties != nil {
+		objectMap["properties"] = ssap.SecurityAlertPolicyProperties
+	}
+	if ssap.ID != nil {
+		objectMap["id"] = ssap.ID
+	}
+	if ssap.Name != nil {
+		objectMap["name"] = ssap.Name
+	}
+	if ssap.Type != nil {
+		objectMap["type"] = ssap.Type
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for ServerSecurityAlertPolicy struct.
+func (ssap *ServerSecurityAlertPolicy) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var securityAlertPolicyProperties SecurityAlertPolicyProperties
+				err = json.Unmarshal(*v, &securityAlertPolicyProperties)
+				if err != nil {
+					return err
+				}
+				ssap.SecurityAlertPolicyProperties = &securityAlertPolicyProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ssap.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ssap.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ssap.Type = &typeVar
+			}
+		}
+	}
+
+	return nil
 }
 
 // ServersUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.

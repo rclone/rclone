@@ -44,6 +44,8 @@ type Solution = original.Solution
 type SolutionPlan = original.SolutionPlan
 type SolutionProperties = original.SolutionProperties
 type SolutionPropertiesList = original.SolutionPropertiesList
+type SolutionsCreateOrUpdateFuture = original.SolutionsCreateOrUpdateFuture
+type SolutionsDeleteFuture = original.SolutionsDeleteFuture
 type OperationsClient = original.OperationsClient
 type SolutionsClient = original.SolutionsClient
 
