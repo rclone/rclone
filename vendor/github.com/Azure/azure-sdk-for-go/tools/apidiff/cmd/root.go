@@ -21,9 +21,11 @@ import (
 )
 
 var copyRepoFlag bool
+var debugFlag bool
 var onlyAdditionsFlag bool
 var onlyBreakingChangesFlag bool
 var quietFlag bool
+var suppressReport bool
 var verboseFlag bool
 
 var rootCmd = &cobra.Command{
@@ -36,6 +38,7 @@ individual packages or a set of packages under a specified directory.`,
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&copyRepoFlag, "copyrepo", "c", false, "copy the repo instead of cloning it")
+	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "d", false, "debug output")
 	rootCmd.PersistentFlags().BoolVarP(&onlyAdditionsFlag, "additions", "a", false, "only include additive changes in the report")
 	rootCmd.PersistentFlags().BoolVarP(&onlyBreakingChangesFlag, "breakingchanges", "b", false, "only include breaking changes in the report")
 	rootCmd.PersistentFlags().BoolVarP(&quietFlag, "quiet", "q", false, "suppress console output")
@@ -52,17 +55,21 @@ func Execute() {
 // CommandFlags is used to specify flags when invoking commands programatically.
 type CommandFlags struct {
 	CopyRepo            bool
+	Debug               bool
 	OnlyAdditions       bool
 	OnlyBreakingChanges bool
 	Quiet               bool
+	SuppressReport      bool
 	Verbose             bool
 }
 
 // applies the specified flags to their global equivalents
 func (cf CommandFlags) apply() {
 	copyRepoFlag = cf.CopyRepo
+	debugFlag = cf.Debug
 	onlyAdditionsFlag = cf.OnlyAdditions
 	onlyBreakingChangesFlag = cf.OnlyBreakingChanges
 	quietFlag = cf.Quiet
+	suppressReport = cf.SuppressReport
 	verboseFlag = cf.Verbose
 }

@@ -23,8 +23,8 @@
     "storage",
     "version"
   ]
-  revision = "cd93ccfe0395e70031704ca68f14606588eec120"
-  version = "v17.3.0"
+  revision = "fbe7db0e3f9793ba3e5704efbab84f51436c136e"
+  version = "v18.0.0"
 
 [[projects]]
   name = "github.com/Azure/go-autorest"
@@ -34,8 +34,8 @@
     "autorest/azure",
     "autorest/date"
   ]
-  revision = "f04d503958a4fe854c1b41667c73f8813c9dd9c3"
-  version = "v10.11.2"
+  revision = "1f7cd6cfe0adea687ad44a512dfe76140f804318"
+  version = "v10.12.0"
 
 [[projects]]
   branch = "master"

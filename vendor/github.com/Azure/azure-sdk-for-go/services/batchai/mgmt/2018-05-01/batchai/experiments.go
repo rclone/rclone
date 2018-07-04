@@ -318,7 +318,7 @@ func (client ExperimentsClient) ListByWorkspace(ctx context.Context, resourceGro
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `^[-\w_]+$`, Chain: nil}}},
 		{TargetValue: maxResults,
 			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("batchai.ExperimentsClient", "ListByWorkspace", err.Error())

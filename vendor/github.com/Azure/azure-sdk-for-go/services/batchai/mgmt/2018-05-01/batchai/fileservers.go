@@ -62,20 +62,19 @@ func (client FileServersClient) Create(ctx context.Context, resourceGroupName st
 				{Target: "fileServerName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "fileServerName", Name: validation.Pattern, Rule: `^[-\w_]+$`, Chain: nil}}},
 		{TargetValue: parameters,
-			Constraints: []validation.Constraint{{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil},
-				{Target: "parameters.FileServerBaseProperties", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.VMSize", Name: validation.Null, Rule: true, Chain: nil},
-						{Target: "parameters.FileServerBaseProperties.SSHConfiguration", Name: validation.Null, Rule: true,
-							Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.SSHConfiguration.UserAccountSettings", Name: validation.Null, Rule: true,
-								Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.SSHConfiguration.UserAccountSettings.AdminUserName", Name: validation.Null, Rule: true, Chain: nil}}},
-							}},
-						{Target: "parameters.FileServerBaseProperties.DataDisks", Name: validation.Null, Rule: true,
-							Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.DataDisks.DiskSizeInGB", Name: validation.Null, Rule: true, Chain: nil},
-								{Target: "parameters.FileServerBaseProperties.DataDisks.DiskCount", Name: validation.Null, Rule: true, Chain: nil},
-							}},
-						{Target: "parameters.FileServerBaseProperties.Subnet", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.Subnet.ID", Name: validation.Null, Rule: true, Chain: nil}}},
-					}}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "parameters.FileServerBaseProperties", Name: validation.Null, Rule: false,
+				Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.VMSize", Name: validation.Null, Rule: true, Chain: nil},
+					{Target: "parameters.FileServerBaseProperties.SSHConfiguration", Name: validation.Null, Rule: true,
+						Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.SSHConfiguration.UserAccountSettings", Name: validation.Null, Rule: true,
+							Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.SSHConfiguration.UserAccountSettings.AdminUserName", Name: validation.Null, Rule: true, Chain: nil}}},
+						}},
+					{Target: "parameters.FileServerBaseProperties.DataDisks", Name: validation.Null, Rule: true,
+						Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.DataDisks.DiskSizeInGB", Name: validation.Null, Rule: true, Chain: nil},
+							{Target: "parameters.FileServerBaseProperties.DataDisks.DiskCount", Name: validation.Null, Rule: true, Chain: nil},
+						}},
+					{Target: "parameters.FileServerBaseProperties.Subnet", Name: validation.Null, Rule: false,
+						Chain: []validation.Constraint{{Target: "parameters.FileServerBaseProperties.Subnet.ID", Name: validation.Null, Rule: true, Chain: nil}}},
+				}}}}}); err != nil {
 		return result, validation.NewError("batchai.FileServersClient", "Create", err.Error())
 	}
 
@@ -323,222 +322,6 @@ func (client FileServersClient) GetResponder(resp *http.Response) (result FileSe
 	return
 }
 
-// List gets a list of File Servers associated with the given subscription.
-// Parameters:
-// maxResults - the maximum number of items to return in the response. A maximum of 1000 files can be returned.
-func (client FileServersClient) List(ctx context.Context, maxResults *int32) (result FileServerListResultPage, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: maxResults,
-			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
-					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
-				}}}}}); err != nil {
-		return result, validation.NewError("batchai.FileServersClient", "List", err.Error())
-	}
-
-	result.fn = client.listNextResults
-	req, err := client.ListPreparer(ctx, maxResults)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "List", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.ListSender(req)
-	if err != nil {
-		result.fslr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "List", resp, "Failure sending request")
-		return
-	}
-
-	result.fslr, err = client.ListResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "List", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// ListPreparer prepares the List request.
-func (client FileServersClient) ListPreparer(ctx context.Context, maxResults *int32) (*http.Request, error) {
-	pathParameters := map[string]interface{}{
-		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
-	}
-
-	const APIVersion = "2018-05-01"
-	queryParameters := map[string]interface{}{
-		"api-version": APIVersion,
-	}
-	if maxResults != nil {
-		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
-	} else {
-		queryParameters["maxresults"] = autorest.Encode("query", 1000)
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsGet(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/Microsoft.BatchAI/fileServers", pathParameters),
-		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// ListSender sends the List request. The method will close the
-// http.Response Body if it receives an error.
-func (client FileServersClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		azure.DoRetryWithRegistration(client.Client))
-}
-
-// ListResponder handles the response to the List request. The method always
-// closes the http.Response Body.
-func (client FileServersClient) ListResponder(resp *http.Response) (result FileServerListResult, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// listNextResults retrieves the next set of results, if any.
-func (client FileServersClient) listNextResults(lastResults FileServerListResult) (result FileServerListResult, err error) {
-	req, err := lastResults.fileServerListResultPreparer()
-	if err != nil {
-		return result, autorest.NewErrorWithError(err, "batchai.FileServersClient", "listNextResults", nil, "Failure preparing next results request")
-	}
-	if req == nil {
-		return
-	}
-	resp, err := client.ListSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "batchai.FileServersClient", "listNextResults", resp, "Failure sending next results request")
-	}
-	result, err = client.ListResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "listNextResults", resp, "Failure responding to next results request")
-	}
-	return
-}
-
-// ListComplete enumerates all values, automatically crossing page boundaries as required.
-func (client FileServersClient) ListComplete(ctx context.Context, maxResults *int32) (result FileServerListResultIterator, err error) {
-	result.page, err = client.List(ctx, maxResults)
-	return
-}
-
-// ListByResourceGroup gets a list of File Servers within the specified resource group.
-// Parameters:
-// resourceGroupName - name of the resource group to which the resource belongs.
-// maxResults - the maximum number of items to return in the response. A maximum of 1000 files can be returned.
-func (client FileServersClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, maxResults *int32) (result FileServerListResultPage, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}},
-		{TargetValue: maxResults,
-			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
-					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
-				}}}}}); err != nil {
-		return result, validation.NewError("batchai.FileServersClient", "ListByResourceGroup", err.Error())
-	}
-
-	result.fn = client.listByResourceGroupNextResults
-	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, maxResults)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "ListByResourceGroup", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.ListByResourceGroupSender(req)
-	if err != nil {
-		result.fslr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "ListByResourceGroup", resp, "Failure sending request")
-		return
-	}
-
-	result.fslr, err = client.ListByResourceGroupResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "ListByResourceGroup", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// ListByResourceGroupPreparer prepares the ListByResourceGroup request.
-func (client FileServersClient) ListByResourceGroupPreparer(ctx context.Context, resourceGroupName string, maxResults *int32) (*http.Request, error) {
-	pathParameters := map[string]interface{}{
-		"resourceGroupName": autorest.Encode("path", resourceGroupName),
-		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
-	}
-
-	const APIVersion = "2018-05-01"
-	queryParameters := map[string]interface{}{
-		"api-version": APIVersion,
-	}
-	if maxResults != nil {
-		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
-	} else {
-		queryParameters["maxresults"] = autorest.Encode("query", 1000)
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsGet(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.BatchAI/fileServers", pathParameters),
-		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
-// http.Response Body if it receives an error.
-func (client FileServersClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		azure.DoRetryWithRegistration(client.Client))
-}
-
-// ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
-// closes the http.Response Body.
-func (client FileServersClient) ListByResourceGroupResponder(resp *http.Response) (result FileServerListResult, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// listByResourceGroupNextResults retrieves the next set of results, if any.
-func (client FileServersClient) listByResourceGroupNextResults(lastResults FileServerListResult) (result FileServerListResult, err error) {
-	req, err := lastResults.fileServerListResultPreparer()
-	if err != nil {
-		return result, autorest.NewErrorWithError(err, "batchai.FileServersClient", "listByResourceGroupNextResults", nil, "Failure preparing next results request")
-	}
-	if req == nil {
-		return
-	}
-	resp, err := client.ListByResourceGroupSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "batchai.FileServersClient", "listByResourceGroupNextResults", resp, "Failure sending next results request")
-	}
-	result, err = client.ListByResourceGroupResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "batchai.FileServersClient", "listByResourceGroupNextResults", resp, "Failure responding to next results request")
-	}
-	return
-}
-
-// ListByResourceGroupComplete enumerates all values, automatically crossing page boundaries as required.
-func (client FileServersClient) ListByResourceGroupComplete(ctx context.Context, resourceGroupName string, maxResults *int32) (result FileServerListResultIterator, err error) {
-	result.page, err = client.ListByResourceGroup(ctx, resourceGroupName, maxResults)
-	return
-}
-
 // ListByWorkspace gets a list of File Servers associated with the specified workspace.
 // Parameters:
 // resourceGroupName - name of the resource group to which the resource belongs.
@@ -555,7 +338,7 @@ func (client FileServersClient) ListByWorkspace(ctx context.Context, resourceGro
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `^[-\w_]+$`, Chain: nil}}},
 		{TargetValue: maxResults,
 			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("batchai.FileServersClient", "ListByWorkspace", err.Error())

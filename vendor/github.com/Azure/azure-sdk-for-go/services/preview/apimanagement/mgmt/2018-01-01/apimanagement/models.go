@@ -5692,7 +5692,7 @@ type OperationResultContract struct {
 	// ResultInfo - Optional result info.
 	ResultInfo *string `json:"resultInfo,omitempty"`
 	// Error - Error Body Contract
-	Error *ErrorResponse `json:"error,omitempty"`
+	Error *ErrorResponseBody `json:"error,omitempty"`
 	// ActionLog - This property if only provided as part of the TenantConfiguration_Validate operation. It contains the log the entities which will be updated/created/deleted as part of the TenantConfiguration_Deploy operation.
 	ActionLog *[]OperationResultLogItemContract `json:"actionLog,omitempty"`
 }

@@ -137,7 +137,7 @@ func (client AccountsClient) Create(ctx context.Context, resourceGroupName strin
 						{Target: "parameters.CreateDataLakeAnalyticsAccountProperties.MinPriorityPerJob", Name: validation.Null, Rule: false,
 							Chain: []validation.Constraint{{Target: "parameters.CreateDataLakeAnalyticsAccountProperties.MinPriorityPerJob", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil}}},
 						{Target: "parameters.CreateDataLakeAnalyticsAccountProperties.QueryStoreRetention", Name: validation.Null, Rule: false,
-							Chain: []validation.Constraint{{Target: "parameters.CreateDataLakeAnalyticsAccountProperties.QueryStoreRetention", Name: validation.InclusiveMaximum, Rule: 180, Chain: nil},
+							Chain: []validation.Constraint{{Target: "parameters.CreateDataLakeAnalyticsAccountProperties.QueryStoreRetention", Name: validation.InclusiveMaximum, Rule: int64(180), Chain: nil},
 								{Target: "parameters.CreateDataLakeAnalyticsAccountProperties.QueryStoreRetention", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 							}},
 					}}}}}); err != nil {

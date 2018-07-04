@@ -12,6 +12,9 @@ env:
     - DEP_VERSION="0.4.1"
     - DEP_SHA=31144e465e52ffbc0035248a10ddea61a09bf28b00784fd3fdd9882c8cbb2315
     - IGNORE_BREAKING_CHANGES=true
+  matrix:
+    - GOARCH="amd64"
+    - GOARCH="386"
 
 matrix:
   allow_failures:

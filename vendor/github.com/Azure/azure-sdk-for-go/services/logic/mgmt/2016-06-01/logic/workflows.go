@@ -448,7 +448,8 @@ func (client WorkflowsClient) GetResponder(resp *http.Response) (result Workflow
 // Parameters:
 // resourceGroupName - the resource group name.
 // top - the number of items to be included in the result.
-// filter - the filter to apply on the operation.
+// filter - the filter to apply on the operation. Options for filters include: State, Trigger, and
+// ReferencedResourceId.
 func (client WorkflowsClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32, filter string) (result WorkflowListResultPage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top, filter)
@@ -548,7 +549,8 @@ func (client WorkflowsClient) ListByResourceGroupComplete(ctx context.Context, r
 // ListBySubscription gets a list of workflows by subscription.
 // Parameters:
 // top - the number of items to be included in the result.
-// filter - the filter to apply on the operation.
+// filter - the filter to apply on the operation. Options for filters include: State, Trigger, and
+// ReferencedResourceId.
 func (client WorkflowsClient) ListBySubscription(ctx context.Context, top *int32, filter string) (result WorkflowListResultPage, err error) {
 	result.fn = client.listBySubscriptionNextResults
 	req, err := client.ListBySubscriptionPreparer(ctx, top, filter)

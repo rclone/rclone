@@ -224,7 +224,7 @@ func (client Client) FindSimilar(ctx context.Context, body FindSimilarRequest) (
 				{Target: "body.FaceIds", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "body.FaceIds", Name: validation.MaxItems, Rule: 1000, Chain: nil}}},
 				{Target: "body.MaxNumOfCandidatesReturned", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+					Chain: []validation.Constraint{{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 						{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
 		return result, validation.NewError("face.Client", "FindSimilar", err.Error())
@@ -366,7 +366,7 @@ func (client Client) Identify(ctx context.Context, body IdentifyRequest) (result
 				{Target: "body.FaceIds", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "body.FaceIds", Name: validation.MaxItems, Rule: 10, Chain: nil}}},
 				{Target: "body.MaxNumOfCandidatesReturned", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMaximum, Rule: 5, Chain: nil},
+					Chain: []validation.Constraint{{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMaximum, Rule: int64(5), Chain: nil},
 						{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
 		return result, validation.NewError("face.Client", "Identify", err.Error())

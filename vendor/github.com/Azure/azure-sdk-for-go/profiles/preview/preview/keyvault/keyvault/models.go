@@ -41,10 +41,10 @@ const (
 type JSONWebKeyCurveName = original.JSONWebKeyCurveName
 
 const (
-	P256      JSONWebKeyCurveName = original.P256
-	P384      JSONWebKeyCurveName = original.P384
-	P521      JSONWebKeyCurveName = original.P521
-	SECP256K1 JSONWebKeyCurveName = original.SECP256K1
+	P256  JSONWebKeyCurveName = original.P256
+	P256K JSONWebKeyCurveName = original.P256K
+	P384  JSONWebKeyCurveName = original.P384
+	P521  JSONWebKeyCurveName = original.P521
 )
 
 type JSONWebKeyEncryptionAlgorithm = original.JSONWebKeyEncryptionAlgorithm
@@ -69,17 +69,17 @@ const (
 type JSONWebKeySignatureAlgorithm = original.JSONWebKeySignatureAlgorithm
 
 const (
-	ECDSA256 JSONWebKeySignatureAlgorithm = original.ECDSA256
-	ES256    JSONWebKeySignatureAlgorithm = original.ES256
-	ES384    JSONWebKeySignatureAlgorithm = original.ES384
-	ES512    JSONWebKeySignatureAlgorithm = original.ES512
-	PS256    JSONWebKeySignatureAlgorithm = original.PS256
-	PS384    JSONWebKeySignatureAlgorithm = original.PS384
-	PS512    JSONWebKeySignatureAlgorithm = original.PS512
-	RS256    JSONWebKeySignatureAlgorithm = original.RS256
-	RS384    JSONWebKeySignatureAlgorithm = original.RS384
-	RS512    JSONWebKeySignatureAlgorithm = original.RS512
-	RSNULL   JSONWebKeySignatureAlgorithm = original.RSNULL
+	ES256  JSONWebKeySignatureAlgorithm = original.ES256
+	ES256K JSONWebKeySignatureAlgorithm = original.ES256K
+	ES384  JSONWebKeySignatureAlgorithm = original.ES384
+	ES512  JSONWebKeySignatureAlgorithm = original.ES512
+	PS256  JSONWebKeySignatureAlgorithm = original.PS256
+	PS384  JSONWebKeySignatureAlgorithm = original.PS384
+	PS512  JSONWebKeySignatureAlgorithm = original.PS512
+	RS256  JSONWebKeySignatureAlgorithm = original.RS256
+	RS384  JSONWebKeySignatureAlgorithm = original.RS384
+	RS512  JSONWebKeySignatureAlgorithm = original.RS512
+	RSNULL JSONWebKeySignatureAlgorithm = original.RSNULL
 )
 
 type JSONWebKeyType = original.JSONWebKeyType
@@ -116,6 +116,7 @@ const (
 type Action = original.Action
 type AdministratorDetails = original.AdministratorDetails
 type Attributes = original.Attributes
+type BackupCertificateResult = original.BackupCertificateResult
 type BackupKeyResult = original.BackupKeyResult
 type BackupSecretResult = original.BackupSecretResult
 type BackupStorageResult = original.BackupStorageResult
@@ -137,6 +138,7 @@ type CertificateMergeParameters = original.CertificateMergeParameters
 type CertificateOperation = original.CertificateOperation
 type CertificateOperationUpdateParameter = original.CertificateOperationUpdateParameter
 type CertificatePolicy = original.CertificatePolicy
+type CertificateRestoreParameters = original.CertificateRestoreParameters
 type CertificateUpdateParameters = original.CertificateUpdateParameters
 type Contact = original.Contact
 type Contacts = original.Contacts

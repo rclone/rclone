@@ -261,7 +261,7 @@ func (client PartnersClient) GetResponder(resp *http.Response) (result Integrati
 // resourceGroupName - the resource group name.
 // integrationAccountName - the integration account name.
 // top - the number of items to be included in the result.
-// filter - the filter to apply on the operation.
+// filter - the filter to apply on the operation. Options for filters include: PartnerType.
 func (client PartnersClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32, filter string) (result IntegrationAccountPartnerListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top, filter)

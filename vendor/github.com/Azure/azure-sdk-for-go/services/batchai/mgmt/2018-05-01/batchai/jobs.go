@@ -385,7 +385,7 @@ func (client JobsClient) ListByExperiment(ctx context.Context, resourceGroupName
 				{Target: "experimentName", Name: validation.Pattern, Rule: `^[-\w_]+$`, Chain: nil}}},
 		{TargetValue: maxResults,
 			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("batchai.JobsClient", "ListByExperiment", err.Error())
@@ -521,12 +521,12 @@ func (client JobsClient) ListOutputFiles(ctx context.Context, resourceGroupName 
 				{Target: "jobName", Name: validation.Pattern, Rule: `^[-\w_]+$`, Chain: nil}}},
 		{TargetValue: linkexpiryinminutes,
 			Constraints: []validation.Constraint{{Target: "linkexpiryinminutes", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "linkexpiryinminutes", Name: validation.InclusiveMaximum, Rule: 600, Chain: nil},
+				Chain: []validation.Constraint{{Target: "linkexpiryinminutes", Name: validation.InclusiveMaximum, Rule: int64(600), Chain: nil},
 					{Target: "linkexpiryinminutes", Name: validation.InclusiveMinimum, Rule: 5, Chain: nil},
 				}}}},
 		{TargetValue: maxResults,
 			Constraints: []validation.Constraint{{Target: "maxResults", Name: validation.Null, Rule: false,
-				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: int64(1000), Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
 		return result, validation.NewError("batchai.JobsClient", "ListOutputFiles", err.Error())

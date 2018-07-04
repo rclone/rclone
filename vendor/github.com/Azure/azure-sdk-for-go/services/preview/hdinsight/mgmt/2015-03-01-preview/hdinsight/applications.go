@@ -43,33 +43,28 @@ func NewApplicationsClientWithBaseURI(baseURI string, subscriptionID string) App
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // clusterName - the name of the cluster.
+// applicationName - the constant value for the application name.
 // parameters - the application create request.
-func (client ApplicationsClient) Create(ctx context.Context, resourceGroupName string, clusterName string, parameters ApplicationGetProperties) (result Application, err error) {
-	req, err := client.CreatePreparer(ctx, resourceGroupName, clusterName, parameters)
+func (client ApplicationsClient) Create(ctx context.Context, resourceGroupName string, clusterName string, applicationName string, parameters ApplicationProperties) (result ApplicationsCreateFuture, err error) {
+	req, err := client.CreatePreparer(ctx, resourceGroupName, clusterName, applicationName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsClient", "Create", nil, "Failure preparing request")
 		return
 	}
 
-	resp, err := client.CreateSender(req)
+	result, err = client.CreateSender(req)
 	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsClient", "Create", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsClient", "Create", result.Response(), "Failure sending request")
 		return
-	}
-
-	result, err = client.CreateResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsClient", "Create", resp, "Failure responding to request")
 	}
 
 	return
 }
 
 // CreatePreparer prepares the Create request.
-func (client ApplicationsClient) CreatePreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters ApplicationGetProperties) (*http.Request, error) {
+func (client ApplicationsClient) CreatePreparer(ctx context.Context, resourceGroupName string, clusterName string, applicationName string, parameters ApplicationProperties) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"applicationName":   autorest.Encode("path", "hue"),
+		"applicationName":   autorest.Encode("path", applicationName),
 		"clusterName":       autorest.Encode("path", clusterName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
@@ -92,9 +87,19 @@ func (client ApplicationsClient) CreatePreparer(ctx context.Context, resourceGro
 
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
-func (client ApplicationsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
+func (client ApplicationsClient) CreateSender(req *http.Request) (future ApplicationsCreateFuture, err error) {
+	var resp *http.Response
+	resp, err = autorest.SendWithSender(client, req,
 		azure.DoRetryWithRegistration(client.Client))
+	if err != nil {
+		return
+	}
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	if err != nil {
+		return
+	}
+	future.Future, err = azure.NewFutureFromResponse(resp)
+	return
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -114,8 +119,9 @@ func (client ApplicationsClient) CreateResponder(resp *http.Response) (result Ap
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // clusterName - the name of the cluster.
-func (client ApplicationsClient) Delete(ctx context.Context, resourceGroupName string, clusterName string) (result ApplicationsDeleteFuture, err error) {
-	req, err := client.DeletePreparer(ctx, resourceGroupName, clusterName)
+// applicationName - the constant value for the application name.
+func (client ApplicationsClient) Delete(ctx context.Context, resourceGroupName string, clusterName string, applicationName string) (result ApplicationsDeleteFuture, err error) {
+	req, err := client.DeletePreparer(ctx, resourceGroupName, clusterName, applicationName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "hdinsight.ApplicationsClient", "Delete", nil, "Failure preparing request")
 		return
@@ -131,9 +137,9 @@ func (client ApplicationsClient) Delete(ctx context.Context, resourceGroupName s
 }
 
 // DeletePreparer prepares the Delete request.
-func (client ApplicationsClient) DeletePreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
+func (client ApplicationsClient) DeletePreparer(ctx context.Context, resourceGroupName string, clusterName string, applicationName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"applicationName":   autorest.Encode("path", "hue"),
+		"applicationName":   autorest.Encode("path", applicationName),
 		"clusterName":       autorest.Encode("path", clusterName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
@@ -161,7 +167,7 @@ func (client ApplicationsClient) DeleteSender(req *http.Request) (future Applica
 	if err != nil {
 		return
 	}
-	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK))
+	err = autorest.Respond(resp, azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted))
 	if err != nil {
 		return
 	}
@@ -175,7 +181,7 @@ func (client ApplicationsClient) DeleteResponder(resp *http.Response) (result au
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		azure.WithErrorUnlessStatusCode(http.StatusOK, http.StatusAccepted),
 		autorest.ByClosing())
 	result.Response = resp
 	return
@@ -250,7 +256,7 @@ func (client ApplicationsClient) GetResponder(resp *http.Response) (result Appli
 	return
 }
 
-// List lists all of the applications HDInsight cluster.
+// List lists all of the applications for the HDInsight cluster.
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // clusterName - the name of the cluster.

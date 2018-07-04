@@ -60,6 +60,22 @@ func Get(dir string) (wt WorkingTree, err error) {
 	return
 }
 
+// Branch calls "git branch" to determine the current branch.
+func (tw WorkingTree) Branch() (string, error) {
+	cmd := exec.Command("git", "branch")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", errors.New(string(output))
+	}
+	branches := strings.Split(string(output), "\n")
+	for _, branch := range branches {
+		if branch[0] == '*' {
+			return branch[2:], nil
+		}
+	}
+	return "", fmt.Errorf("failed to determine active branch: %s", strings.Join(branches, ","))
+}
+
 // Clone calls "git clone", cloning the working tree into the specified directory.
 // The returned WorkingTree points to the clone of the repository.
 func (wt WorkingTree) Clone(dest string) (result WorkingTree, err error) {

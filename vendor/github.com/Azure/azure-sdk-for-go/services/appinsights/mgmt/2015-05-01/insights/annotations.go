@@ -254,7 +254,7 @@ func (client AnnotationsClient) GetResponder(resp *http.Response) (result ListAn
 // resourceName - the name of the Application Insights component resource.
 // start - the start time to query from for annotations, cannot be older than 90 days from current date.
 // end - the end time to query for annotations.
-func (client AnnotationsClient) List(ctx context.Context, resourceGroupName string, resourceName string, start string, end string) (result ListAnnotation, err error) {
+func (client AnnotationsClient) List(ctx context.Context, resourceGroupName string, resourceName string, start string, end string) (result AnnotationsListResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, resourceName, start, end)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "insights.AnnotationsClient", "List", nil, "Failure preparing request")
@@ -308,12 +308,12 @@ func (client AnnotationsClient) ListSender(req *http.Request) (*http.Response, e
 
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
-func (client AnnotationsClient) ListResponder(resp *http.Response) (result ListAnnotation, err error) {
+func (client AnnotationsClient) ListResponder(resp *http.Response) (result AnnotationsListResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
 	return

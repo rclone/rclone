@@ -41,13 +41,17 @@ func NewJobStreamClientWithBaseURI(baseURI string, subscriptionID string) JobStr
 }
 
 // Get retrieve the job stream identified by job stream id.
-//
-// resourceGroupName is the resource group name. automationAccountName is the automation account name. jobID is the
-// job id. jobStreamID is the job stream id.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// automationAccountName - the name of the automation account.
+// jobID - the job id.
+// jobStreamID - the job stream id.
 func (client JobStreamClient) Get(ctx context.Context, resourceGroupName string, automationAccountName string, jobID string, jobStreamID string) (result JobStream, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("automation.JobStreamClient", "Get", err.Error())
 	}
 
@@ -116,13 +120,17 @@ func (client JobStreamClient) GetResponder(resp *http.Response) (result JobStrea
 }
 
 // ListByJob retrieve a list of jobs streams identified by job id.
-//
-// resourceGroupName is the resource group name. automationAccountName is the automation account name. jobID is the
-// job Id. filter is the filter to apply on the operation.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// automationAccountName - the name of the automation account.
+// jobID - the job Id.
+// filter - the filter to apply on the operation.
 func (client JobStreamClient) ListByJob(ctx context.Context, resourceGroupName string, automationAccountName string, jobID string, filter string) (result JobStreamListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("automation.JobStreamClient", "ListByJob", err.Error())
 	}
 

@@ -54,7 +54,7 @@ func (client ExpressRouteCrossConnectionPeeringsClient) CreateOrUpdate(ctx conte
 		{TargetValue: peeringParameters,
 			Constraints: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCrossConnectionPeeringProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCrossConnectionPeeringProperties.PeerASN", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCrossConnectionPeeringProperties.PeerASN", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+					Chain: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCrossConnectionPeeringProperties.PeerASN", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 						{Target: "peeringParameters.ExpressRouteCrossConnectionPeeringProperties.PeerASN", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {

@@ -21,6 +21,7 @@ import (
 	"context"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/validation"
 	"net/http"
 )
 
@@ -41,7 +42,7 @@ func NewZonesClientWithBaseURI(baseURI string, subscriptionID string) ZonesClien
 
 // CreateOrUpdate creates or updates a DNS zone. Does not modify DNS records within the zone.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the DNS zone (without a terminating dot).
 // parameters - parameters supplied to the CreateOrUpdate operation.
 // ifMatch - the etag of the DNS zone. Omit this value to always overwrite the current zone. Specify the
@@ -49,6 +50,14 @@ func NewZonesClientWithBaseURI(baseURI string, subscriptionID string) ZonesClien
 // ifNoneMatch - set to '*' to allow a new DNS zone to be created, but to prevent updating an existing zone.
 // Other values will be ignored.
 func (client ZonesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, parameters Zone, ifMatch string, ifNoneMatch string) (result Zone, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.ZonesClient", "CreateOrUpdate", err.Error())
+	}
+
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, zoneName, parameters, ifMatch, ifNoneMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.ZonesClient", "CreateOrUpdate", nil, "Failure preparing request")
@@ -124,11 +133,19 @@ func (client ZonesClient) CreateOrUpdateResponder(resp *http.Response) (result Z
 // Delete deletes a DNS zone. WARNING: All DNS records in the zone will also be deleted. This operation cannot be
 // undone.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the DNS zone (without a terminating dot).
 // ifMatch - the etag of the DNS zone. Omit this value to always delete the current zone. Specify the last-seen
 // etag value to prevent accidentally deleting any concurrent changes.
 func (client ZonesClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, ifMatch string) (result ZonesDeleteFuture, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.ZonesClient", "Delete", err.Error())
+	}
+
 	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, ifMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.ZonesClient", "Delete", nil, "Failure preparing request")
@@ -200,9 +217,17 @@ func (client ZonesClient) DeleteResponder(resp *http.Response) (result autorest.
 
 // Get gets a DNS zone. Retrieves the zone properties, but not the record sets within the zone.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the DNS zone (without a terminating dot).
 func (client ZonesClient) Get(ctx context.Context, resourceGroupName string, zoneName string) (result Zone, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.ZonesClient", "Get", err.Error())
+	}
+
 	req, err := client.GetPreparer(ctx, resourceGroupName, zoneName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.ZonesClient", "Get", nil, "Failure preparing request")
@@ -362,9 +387,17 @@ func (client ZonesClient) ListComplete(ctx context.Context, top *int32) (result 
 
 // ListByResourceGroup lists the DNS zones within a resource group.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // top - the maximum number of record sets to return. If not specified, returns up to 100 record sets.
 func (client ZonesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, top *int32) (result ZoneListResultPage, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.ZonesClient", "ListByResourceGroup", err.Error())
+	}
+
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, top)
 	if err != nil {
@@ -459,12 +492,20 @@ func (client ZonesClient) ListByResourceGroupComplete(ctx context.Context, resou
 
 // Update updates a DNS zone. Does not modify DNS records within the zone.
 // Parameters:
-// resourceGroupName - the name of the resource group.
+// resourceGroupName - the name of the resource group. The name is case insensitive.
 // zoneName - the name of the DNS zone (without a terminating dot).
 // parameters - parameters supplied to the Update operation.
 // ifMatch - the etag of the DNS zone. Omit this value to always overwrite the current zone. Specify the
 // last-seen etag value to prevent accidentally overwritting any concurrent changes.
 func (client ZonesClient) Update(ctx context.Context, resourceGroupName string, zoneName string, parameters ZoneUpdate, ifMatch string) (result Zone, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: resourceGroupName,
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("dns.ZonesClient", "Update", err.Error())
+	}
+
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, zoneName, parameters, ifMatch)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "dns.ZonesClient", "Update", nil, "Failure preparing request")

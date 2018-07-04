@@ -522,8 +522,9 @@ const (
 type ProbeProtocol = original.ProbeProtocol
 
 const (
-	ProbeProtocolHTTP ProbeProtocol = original.ProbeProtocolHTTP
-	ProbeProtocolTCP  ProbeProtocol = original.ProbeProtocolTCP
+	ProbeProtocolHTTP  ProbeProtocol = original.ProbeProtocolHTTP
+	ProbeProtocolHTTPS ProbeProtocol = original.ProbeProtocolHTTPS
+	ProbeProtocolTCP   ProbeProtocol = original.ProbeProtocolTCP
 )
 
 type ProcessorArchitecture = original.ProcessorArchitecture

@@ -19,11 +19,10 @@
 
 package apimanagement
 
-import original "github.com/Azure/azure-sdk-for-go/services/preview/apimanagement/mgmt/2018-01-01/apimanagement"
+import original "github.com/Azure/azure-sdk-for-go/services/preview/apimanagement/mgmt/2018-06-01-preview/apimanagement"
 
 type APIClient = original.APIClient
 type APIDiagnosticClient = original.APIDiagnosticClient
-type APIDiagnosticLoggerClient = original.APIDiagnosticLoggerClient
 type APIExportClient = original.APIExportClient
 type APIIssueClient = original.APIIssueClient
 type APIIssueAttachmentClient = original.APIIssueAttachmentClient
@@ -47,12 +46,17 @@ const (
 type BaseClient = original.BaseClient
 type DelegationSettingsClient = original.DelegationSettingsClient
 type DiagnosticClient = original.DiagnosticClient
-type DiagnosticLoggerClient = original.DiagnosticLoggerClient
 type EmailTemplateClient = original.EmailTemplateClient
 type GroupClient = original.GroupClient
 type GroupUserClient = original.GroupUserClient
 type IdentityProviderClient = original.IdentityProviderClient
 type LoggerClient = original.LoggerClient
+type AlwaysLog = original.AlwaysLog
+
+const (
+	AllErrors AlwaysLog = original.AllErrors
+)
+
 type APIType = original.APIType
 
 const (
@@ -241,6 +245,12 @@ const (
 	ProtocolHTTPS Protocol = original.ProtocolHTTPS
 )
 
+type SamplingType = original.SamplingType
+
+const (
+	Fixed SamplingType = original.Fixed
+)
+
 type SkuType = original.SkuType
 
 const (
@@ -398,6 +408,7 @@ type BackendServiceFabricClusterProperties = original.BackendServiceFabricCluste
 type BackendTLSProperties = original.BackendTLSProperties
 type BackendUpdateParameterProperties = original.BackendUpdateParameterProperties
 type BackendUpdateParameters = original.BackendUpdateParameters
+type BodyDiagnosticSettings = original.BodyDiagnosticSettings
 type CertificateCollection = original.CertificateCollection
 type CertificateCollectionIterator = original.CertificateCollectionIterator
 type CertificateCollectionPage = original.CertificateCollectionPage
@@ -437,6 +448,7 @@ type GroupUpdateParameters = original.GroupUpdateParameters
 type GroupUpdateParametersProperties = original.GroupUpdateParametersProperties
 type HostnameConfiguration = original.HostnameConfiguration
 type HostnameConfigurationOld = original.HostnameConfigurationOld
+type HTTPMessageDiagnostic = original.HTTPMessageDiagnostic
 type IdentityProviderBaseParameters = original.IdentityProviderBaseParameters
 type IdentityProviderContract = original.IdentityProviderContract
 type IdentityProviderContractProperties = original.IdentityProviderContractProperties
@@ -500,6 +512,7 @@ type OperationTagResourceContractProperties = original.OperationTagResourceContr
 type OperationUpdateContract = original.OperationUpdateContract
 type OperationUpdateContractProperties = original.OperationUpdateContractProperties
 type ParameterContract = original.ParameterContract
+type PipelineDiagnosticSettings = original.PipelineDiagnosticSettings
 type PolicyCollection = original.PolicyCollection
 type PolicyContract = original.PolicyContract
 type PolicyContractProperties = original.PolicyContractProperties
@@ -554,6 +567,7 @@ type RequestReportCollection = original.RequestReportCollection
 type RequestReportRecordContract = original.RequestReportRecordContract
 type Resource = original.Resource
 type ResponseContract = original.ResponseContract
+type SamplingSettings = original.SamplingSettings
 type SaveConfigurationParameter = original.SaveConfigurationParameter
 type SchemaCollection = original.SchemaCollection
 type SchemaCollectionIterator = original.SchemaCollectionIterator
@@ -683,12 +697,6 @@ func NewAPIDiagnosticClient(subscriptionID string) APIDiagnosticClient {
 func NewAPIDiagnosticClientWithBaseURI(baseURI string, subscriptionID string) APIDiagnosticClient {
 	return original.NewAPIDiagnosticClientWithBaseURI(baseURI, subscriptionID)
 }
-func NewAPIDiagnosticLoggerClient(subscriptionID string) APIDiagnosticLoggerClient {
-	return original.NewAPIDiagnosticLoggerClient(subscriptionID)
-}
-func NewAPIDiagnosticLoggerClientWithBaseURI(baseURI string, subscriptionID string) APIDiagnosticLoggerClient {
-	return original.NewAPIDiagnosticLoggerClientWithBaseURI(baseURI, subscriptionID)
-}
 func NewAPIExportClient(subscriptionID string) APIExportClient {
 	return original.NewAPIExportClient(subscriptionID)
 }
@@ -797,12 +805,6 @@ func NewDiagnosticClient(subscriptionID string) DiagnosticClient {
 func NewDiagnosticClientWithBaseURI(baseURI string, subscriptionID string) DiagnosticClient {
 	return original.NewDiagnosticClientWithBaseURI(baseURI, subscriptionID)
 }
-func NewDiagnosticLoggerClient(subscriptionID string) DiagnosticLoggerClient {
-	return original.NewDiagnosticLoggerClient(subscriptionID)
-}
-func NewDiagnosticLoggerClientWithBaseURI(baseURI string, subscriptionID string) DiagnosticLoggerClient {
-	return original.NewDiagnosticLoggerClientWithBaseURI(baseURI, subscriptionID)
-}
 func NewEmailTemplateClient(subscriptionID string) EmailTemplateClient {
 	return original.NewEmailTemplateClient(subscriptionID)
 }
@@ -832,6 +834,9 @@ func NewLoggerClient(subscriptionID string) LoggerClient {
 }
 func NewLoggerClientWithBaseURI(baseURI string, subscriptionID string) LoggerClient {
 	return original.NewLoggerClientWithBaseURI(baseURI, subscriptionID)
+}
+func PossibleAlwaysLogValues() []AlwaysLog {
+	return original.PossibleAlwaysLogValues()
 }
 func PossibleAPITypeValues() []APIType {
 	return original.PossibleAPITypeValues()
@@ -898,6 +903,9 @@ func PossibleProductStateValues() []ProductState {
 }
 func PossibleProtocolValues() []Protocol {
 	return original.PossibleProtocolValues()
+}
+func PossibleSamplingTypeValues() []SamplingType {
+	return original.PossibleSamplingTypeValues()
 }
 func PossibleSkuTypeValues() []SkuType {
 	return original.PossibleSkuTypeValues()

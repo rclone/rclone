@@ -19,7 +19,7 @@
 
 package computervision
 
-import original "github.com/Azure/azure-sdk-for-go/services/cognitiveservices/v1.0/computervision"
+import original "github.com/Azure/azure-sdk-for-go/services/cognitiveservices/v2.0/computervision"
 
 type BaseClient = original.BaseClient
 type AzureRegions = original.AzureRegions
@@ -44,13 +44,6 @@ type Details = original.Details
 const (
 	Celebrities Details = original.Celebrities
 	Landmarks   Details = original.Landmarks
-)
-
-type DomainModels = original.DomainModels
-
-const (
-	DomainModelsCelebrities DomainModels = original.DomainModelsCelebrities
-	DomainModelsLandmarks   DomainModels = original.DomainModelsLandmarks
 )
 
 type ErrorCodes = original.ErrorCodes
@@ -119,6 +112,13 @@ const (
 	Succeeded  TextOperationStatusCodes = original.Succeeded
 )
 
+type TextRecognitionMode = original.TextRecognitionMode
+
+const (
+	Handwritten TextRecognitionMode = original.Handwritten
+	Printed     TextRecognitionMode = original.Printed
+)
+
 type VisualFeatureTypes = original.VisualFeatureTypes
 
 const (
@@ -135,8 +135,8 @@ type AdultInfo = original.AdultInfo
 type Category = original.Category
 type CategoryDetail = original.CategoryDetail
 type CelebritiesModel = original.CelebritiesModel
+type CelebrityResults = original.CelebrityResults
 type ColorInfo = original.ColorInfo
-type DomainModelResult = original.DomainModelResult
 type DomainModelResults = original.DomainModelResults
 type Error = original.Error
 type FaceDescription = original.FaceDescription
@@ -149,6 +149,8 @@ type ImageMetadata = original.ImageMetadata
 type ImageTag = original.ImageTag
 type ImageType = original.ImageType
 type ImageURL = original.ImageURL
+type LandmarkResults = original.LandmarkResults
+type LandmarksModel = original.LandmarksModel
 type Line = original.Line
 type ListModelsResult = original.ListModelsResult
 type ModelDescription = original.ModelDescription
@@ -174,9 +176,6 @@ func PossibleAzureRegionsValues() []AzureRegions {
 func PossibleDetailsValues() []Details {
 	return original.PossibleDetailsValues()
 }
-func PossibleDomainModelsValues() []DomainModels {
-	return original.PossibleDomainModelsValues()
-}
 func PossibleErrorCodesValues() []ErrorCodes {
 	return original.PossibleErrorCodesValues()
 }
@@ -188,6 +187,9 @@ func PossibleOcrLanguagesValues() []OcrLanguages {
 }
 func PossibleTextOperationStatusCodesValues() []TextOperationStatusCodes {
 	return original.PossibleTextOperationStatusCodesValues()
+}
+func PossibleTextRecognitionModeValues() []TextRecognitionMode {
+	return original.PossibleTextRecognitionModeValues()
 }
 func PossibleVisualFeatureTypesValues() []VisualFeatureTypes {
 	return original.PossibleVisualFeatureTypesValues()

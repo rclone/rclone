@@ -318,6 +318,68 @@ func (client AlertRulesClient) ListByResourceGroupResponder(resp *http.Response)
 	return
 }
 
+// ListBySubscription list the alert rules within a subscription.
+func (client AlertRulesClient) ListBySubscription(ctx context.Context) (result AlertRuleResourceCollection, err error) {
+	req, err := client.ListBySubscriptionPreparer(ctx)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.AlertRulesClient", "ListBySubscription", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListBySubscriptionSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "insights.AlertRulesClient", "ListBySubscription", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ListBySubscriptionResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.AlertRulesClient", "ListBySubscription", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListBySubscriptionPreparer prepares the ListBySubscription request.
+func (client AlertRulesClient) ListBySubscriptionPreparer(ctx context.Context) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2016-03-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/providers/microsoft.insights/alertrules", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListBySubscriptionSender sends the ListBySubscription request. The method will close the
+// http.Response Body if it receives an error.
+func (client AlertRulesClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
+// closes the http.Response Body.
+func (client AlertRulesClient) ListBySubscriptionResponder(resp *http.Response) (result AlertRuleResourceCollection, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
 // Update updates an existing AlertRuleResource. To update other fields use the CreateOrUpdate method.
 // Parameters:
 // resourceGroupName - the name of the resource group.

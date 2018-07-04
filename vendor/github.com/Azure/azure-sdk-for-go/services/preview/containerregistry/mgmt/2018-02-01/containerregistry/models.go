@@ -573,8 +573,8 @@ type BuildFilter struct {
 	CreateTime *date.Time `json:"createTime,omitempty"`
 	// FinishTime - The time the build finished.
 	FinishTime *date.Time `json:"finishTime,omitempty"`
-	// OutputImageNames - The list of all images that were generated from the build.
-	OutputImageNames *[]string `json:"outputImageNames,omitempty"`
+	// OutputImageManifests - The list of comma-separated image manifests that were generated from the build.
+	OutputImageManifests *string `json:"outputImageManifests,omitempty"`
 	// IsArchiveEnabled - The value that indicates whether archiving is enabled or not.
 	IsArchiveEnabled *bool `json:"isArchiveEnabled,omitempty"`
 	// BuildTaskName - The name of the build task that the build corresponds to.

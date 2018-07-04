@@ -20,7 +20,6 @@ package advisor
 import (
 	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/satori/go.uuid"
@@ -408,29 +407,6 @@ func (rp RecommendationProperties) MarshalJSON() ([]byte, error) {
 		objectMap["suppressionIds"] = rp.SuppressionIds
 	}
 	return json.Marshal(objectMap)
-}
-
-// RecommendationsGetGenerateStatusFuture an abstraction for monitoring and retrieving the results of a
-// long-running operation.
-type RecommendationsGetGenerateStatusFuture struct {
-	azure.Future
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future *RecommendationsGetGenerateStatusFuture) Result(client RecommendationsClient) (ar autorest.Response, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "advisor.RecommendationsGetGenerateStatusFuture", "Result", future.Response(), "Polling failure")
-		return
-	}
-	if !done {
-		err = azure.NewAsyncOpIncompleteError("advisor.RecommendationsGetGenerateStatusFuture")
-		return
-	}
-	ar.Response = future.Response()
-	return
 }
 
 // Resource an Azure resource.

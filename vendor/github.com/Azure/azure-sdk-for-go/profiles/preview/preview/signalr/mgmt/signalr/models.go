@@ -50,9 +50,10 @@ const (
 type SkuTier = original.SkuTier
 
 const (
-	Basic   SkuTier = original.Basic
-	Free    SkuTier = original.Free
-	Premium SkuTier = original.Premium
+	Basic    SkuTier = original.Basic
+	Free     SkuTier = original.Free
+	Premium  SkuTier = original.Premium
+	Standard SkuTier = original.Standard
 )
 
 type CreateOrUpdateFuture = original.CreateOrUpdateFuture

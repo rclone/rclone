@@ -448,71 +448,6 @@ func (client AddsServicesClient) GetMetricMetadataForGroupResponder(resp *http.R
 	return
 }
 
-// GetReplicationStatus gets Replication status for a given Active Directory Domain Service, that is onboarded to Azure
-// Active Directory Connect Health.
-// Parameters:
-// serviceName - the name of the service.
-func (client AddsServicesClient) GetReplicationStatus(ctx context.Context, serviceName string) (result ReplicationStatus, err error) {
-	req, err := client.GetReplicationStatusPreparer(ctx, serviceName)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "adhybridhealthservice.AddsServicesClient", "GetReplicationStatus", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.GetReplicationStatusSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "adhybridhealthservice.AddsServicesClient", "GetReplicationStatus", resp, "Failure sending request")
-		return
-	}
-
-	result, err = client.GetReplicationStatusResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "adhybridhealthservice.AddsServicesClient", "GetReplicationStatus", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// GetReplicationStatusPreparer prepares the GetReplicationStatus request.
-func (client AddsServicesClient) GetReplicationStatusPreparer(ctx context.Context, serviceName string) (*http.Request, error) {
-	pathParameters := map[string]interface{}{
-		"serviceName": autorest.Encode("path", serviceName),
-	}
-
-	const APIVersion = "2014-01-01"
-	queryParameters := map[string]interface{}{
-		"api-version": APIVersion,
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsGet(),
-		autorest.WithBaseURL(client.BaseURI),
-		autorest.WithPathParameters("/providers/Microsoft.ADHybridHealthService/addsservices/{serviceName}/replicationstatus", pathParameters),
-		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// GetReplicationStatusSender sends the GetReplicationStatus request. The method will close the
-// http.Response Body if it receives an error.
-func (client AddsServicesClient) GetReplicationStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-}
-
-// GetReplicationStatusResponder handles the response to the GetReplicationStatus request. The method always
-// closes the http.Response Body.
-func (client AddsServicesClient) GetReplicationStatusResponder(resp *http.Response) (result ReplicationStatus, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
 // List gets the details of Active Directory Domain Service, for a tenant, that are onboarded to Azure Active Directory
 // Connect Health.
 // Parameters:
@@ -1016,6 +951,79 @@ func (client AddsServicesClient) listPremiumServicesNextResults(lastResults Serv
 // ListPremiumServicesComplete enumerates all values, automatically crossing page boundaries as required.
 func (client AddsServicesClient) ListPremiumServicesComplete(ctx context.Context, filter string, serviceType string, skipCount *int32, takeCount *int32) (result ServicesIterator, err error) {
 	result.page, err = client.ListPremiumServices(ctx, filter, serviceType, skipCount, takeCount)
+	return
+}
+
+// ListReplicationDetails gets complete domain controller list along with replication details for a given Active
+// Directory Domain Service, that is onboarded to Azure Active Directory Connect Health.
+// Parameters:
+// serviceName - the name of the service.
+// filter - the server property filter to apply.
+// withDetails - indicates if InboundReplicationNeighbor details are required or not.
+func (client AddsServicesClient) ListReplicationDetails(ctx context.Context, serviceName string, filter string, withDetails *bool) (result ReplicationDetailsList, err error) {
+	req, err := client.ListReplicationDetailsPreparer(ctx, serviceName, filter, withDetails)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "adhybridhealthservice.AddsServicesClient", "ListReplicationDetails", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.ListReplicationDetailsSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "adhybridhealthservice.AddsServicesClient", "ListReplicationDetails", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.ListReplicationDetailsResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "adhybridhealthservice.AddsServicesClient", "ListReplicationDetails", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// ListReplicationDetailsPreparer prepares the ListReplicationDetails request.
+func (client AddsServicesClient) ListReplicationDetailsPreparer(ctx context.Context, serviceName string, filter string, withDetails *bool) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"serviceName": autorest.Encode("path", serviceName),
+	}
+
+	const APIVersion = "2014-01-01"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+	if len(filter) > 0 {
+		queryParameters["$filter"] = autorest.Encode("query", filter)
+	}
+	if withDetails != nil {
+		queryParameters["withDetails"] = autorest.Encode("query", *withDetails)
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsGet(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/providers/Microsoft.ADHybridHealthService/addsservices/{serviceName}/replicationdetails", pathParameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// ListReplicationDetailsSender sends the ListReplicationDetails request. The method will close the
+// http.Response Body if it receives an error.
+func (client AddsServicesClient) ListReplicationDetailsSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// ListReplicationDetailsResponder handles the response to the ListReplicationDetails request. The method always
+// closes the http.Response Body.
+func (client AddsServicesClient) ListReplicationDetailsResponder(resp *http.Response) (result ReplicationDetailsList, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
 	return
 }
 

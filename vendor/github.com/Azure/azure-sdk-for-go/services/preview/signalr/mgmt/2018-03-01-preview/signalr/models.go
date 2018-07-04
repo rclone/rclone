@@ -79,11 +79,13 @@ const (
 	Free SkuTier = "Free"
 	// Premium ...
 	Premium SkuTier = "Premium"
+	// Standard ...
+	Standard SkuTier = "Standard"
 )
 
 // PossibleSkuTierValues returns an array of possible values for the SkuTier const type.
 func PossibleSkuTierValues() []SkuTier {
-	return []SkuTier{Basic, Free, Premium}
+	return []SkuTier{Basic, Free, Premium, Standard}
 }
 
 // CreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
@@ -527,7 +529,7 @@ func (page ResourceListPage) Values() []ResourceType {
 type ResourceSku struct {
 	// Name - The name of the SKU. This is typically a letter + number code, such as A0 or P3.  Required (if sku is specified)
 	Name *string `json:"name,omitempty"`
-	// Tier - The tier of this particular SKU. Optional. Possible values include: 'Free', 'Basic', 'Premium'
+	// Tier - Optional tier of this particular SKU. `Basic` is deprecated, use `Standard` instead for Basic tier. Possible values include: 'Free', 'Basic', 'Standard', 'Premium'
 	Tier SkuTier `json:"tier,omitempty"`
 	// Size - Optional, string. When the name field is the combination of tier and some other value, this would be the standalone code.
 	Size *string `json:"size,omitempty"`

@@ -689,7 +689,7 @@ func (client AgreementsClient) GetResponder(resp *http.Response) (result Integra
 // resourceGroupName - the resource group name.
 // integrationAccountName - the integration account name.
 // top - the number of items to be included in the result.
-// filter - the filter to apply on the operation.
+// filter - the filter to apply on the operation. Options for filters include: AgreementType.
 func (client AgreementsClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32, filter string) (result IntegrationAccountAgreementListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top, filter)

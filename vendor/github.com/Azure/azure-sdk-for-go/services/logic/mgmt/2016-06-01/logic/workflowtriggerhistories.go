@@ -117,7 +117,8 @@ func (client WorkflowTriggerHistoriesClient) GetResponder(resp *http.Response) (
 // workflowName - the workflow name.
 // triggerName - the workflow trigger name.
 // top - the number of items to be included in the result.
-// filter - the filter to apply on the operation.
+// filter - the filter to apply on the operation. Options for filters include: Status, StartTime, and
+// ClientTrackingId.
 func (client WorkflowTriggerHistoriesClient) List(ctx context.Context, resourceGroupName string, workflowName string, triggerName string, top *int32, filter string) (result WorkflowTriggerHistoryListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, workflowName, triggerName, top, filter)

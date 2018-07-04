@@ -43,14 +43,17 @@ func NewJobScheduleClientWithBaseURI(baseURI string, subscriptionID string) JobS
 }
 
 // Create create a job schedule.
-//
-// resourceGroupName is the resource group name. automationAccountName is the automation account name.
-// jobScheduleID is the job schedule name. parameters is the parameters supplied to the create job schedule
-// operation.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// automationAccountName - the name of the automation account.
+// jobScheduleID - the job schedule name.
+// parameters - the parameters supplied to the create job schedule operation.
 func (client JobScheduleClient) Create(ctx context.Context, resourceGroupName string, automationAccountName string, jobScheduleID uuid.UUID, parameters JobScheduleCreateParameters) (result JobSchedule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}},
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.JobScheduleCreateProperties", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.JobScheduleCreateProperties.Schedule", Name: validation.Null, Rule: true, Chain: nil},
@@ -125,13 +128,16 @@ func (client JobScheduleClient) CreateResponder(resp *http.Response) (result Job
 }
 
 // Delete delete the job schedule identified by job schedule name.
-//
-// resourceGroupName is the resource group name. automationAccountName is the automation account name.
-// jobScheduleID is the job schedule name.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// automationAccountName - the name of the automation account.
+// jobScheduleID - the job schedule name.
 func (client JobScheduleClient) Delete(ctx context.Context, resourceGroupName string, automationAccountName string, jobScheduleID uuid.UUID) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("automation.JobScheduleClient", "Delete", err.Error())
 	}
 
@@ -198,13 +204,16 @@ func (client JobScheduleClient) DeleteResponder(resp *http.Response) (result aut
 }
 
 // Get retrieve the job schedule identified by job schedule name.
-//
-// resourceGroupName is the resource group name. automationAccountName is the automation account name.
-// jobScheduleID is the job schedule name.
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// automationAccountName - the name of the automation account.
+// jobScheduleID - the job schedule name.
 func (client JobScheduleClient) Get(ctx context.Context, resourceGroupName string, automationAccountName string, jobScheduleID uuid.UUID) (result JobSchedule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("automation.JobScheduleClient", "Get", err.Error())
 	}
 
@@ -272,17 +281,21 @@ func (client JobScheduleClient) GetResponder(resp *http.Response) (result JobSch
 }
 
 // ListByAutomationAccount retrieve a list of job schedules.
-//
-// resourceGroupName is the resource group name. automationAccountName is the automation account name.
-func (client JobScheduleClient) ListByAutomationAccount(ctx context.Context, resourceGroupName string, automationAccountName string) (result JobScheduleListResultPage, err error) {
+// Parameters:
+// resourceGroupName - name of an Azure Resource group.
+// automationAccountName - the name of the automation account.
+// filter - the filter to apply on the operation.
+func (client JobScheduleClient) ListByAutomationAccount(ctx context.Context, resourceGroupName string, automationAccountName string, filter string) (result JobScheduleListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
-			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
+			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
+				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
 		return result, validation.NewError("automation.JobScheduleClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults
-	req, err := client.ListByAutomationAccountPreparer(ctx, resourceGroupName, automationAccountName)
+	req, err := client.ListByAutomationAccountPreparer(ctx, resourceGroupName, automationAccountName, filter)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "automation.JobScheduleClient", "ListByAutomationAccount", nil, "Failure preparing request")
 		return
@@ -304,7 +317,7 @@ func (client JobScheduleClient) ListByAutomationAccount(ctx context.Context, res
 }
 
 // ListByAutomationAccountPreparer prepares the ListByAutomationAccount request.
-func (client JobScheduleClient) ListByAutomationAccountPreparer(ctx context.Context, resourceGroupName string, automationAccountName string) (*http.Request, error) {
+func (client JobScheduleClient) ListByAutomationAccountPreparer(ctx context.Context, resourceGroupName string, automationAccountName string, filter string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"automationAccountName": autorest.Encode("path", automationAccountName),
 		"resourceGroupName":     autorest.Encode("path", resourceGroupName),
@@ -314,6 +327,9 @@ func (client JobScheduleClient) ListByAutomationAccountPreparer(ctx context.Cont
 	const APIVersion = "2015-10-31"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
+	}
+	if len(filter) > 0 {
+		queryParameters["$filter"] = autorest.Encode("query", filter)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -366,7 +382,7 @@ func (client JobScheduleClient) listByAutomationAccountNextResults(lastResults J
 }
 
 // ListByAutomationAccountComplete enumerates all values, automatically crossing page boundaries as required.
-func (client JobScheduleClient) ListByAutomationAccountComplete(ctx context.Context, resourceGroupName string, automationAccountName string) (result JobScheduleListResultIterator, err error) {
-	result.page, err = client.ListByAutomationAccount(ctx, resourceGroupName, automationAccountName)
+func (client JobScheduleClient) ListByAutomationAccountComplete(ctx context.Context, resourceGroupName string, automationAccountName string, filter string) (result JobScheduleListResultIterator, err error) {
+	result.page, err = client.ListByAutomationAccount(ctx, resourceGroupName, automationAccountName, filter)
 	return
 }

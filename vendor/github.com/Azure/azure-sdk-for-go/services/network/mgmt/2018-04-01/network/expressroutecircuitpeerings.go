@@ -51,7 +51,7 @@ func (client ExpressRouteCircuitPeeringsClient) CreateOrUpdate(ctx context.Conte
 		{TargetValue: peeringParameters,
 			Constraints: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCircuitPeeringPropertiesFormat", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCircuitPeeringPropertiesFormat.PeerASN", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCircuitPeeringPropertiesFormat.PeerASN", Name: validation.InclusiveMaximum, Rule: 4294967295, Chain: nil},
+					Chain: []validation.Constraint{{Target: "peeringParameters.ExpressRouteCircuitPeeringPropertiesFormat.PeerASN", Name: validation.InclusiveMaximum, Rule: int64(4294967295), Chain: nil},
 						{Target: "peeringParameters.ExpressRouteCircuitPeeringPropertiesFormat.PeerASN", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {
@@ -199,7 +199,7 @@ func (client ExpressRouteCircuitPeeringsClient) DeleteResponder(resp *http.Respo
 	return
 }
 
-// Get gets the specified authorization from the specified express route circuit.
+// Get gets the specified peering for the express route circuit.
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // circuitName - the name of the express route circuit.

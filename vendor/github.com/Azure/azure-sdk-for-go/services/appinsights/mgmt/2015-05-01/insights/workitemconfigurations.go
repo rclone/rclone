@@ -251,7 +251,7 @@ func (client WorkItemConfigurationsClient) GetDefaultResponder(resp *http.Respon
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // resourceName - the name of the Application Insights component resource.
-func (client WorkItemConfigurationsClient) List(ctx context.Context, resourceGroupName string, resourceName string) (result ListWorkItemConfiguration, err error) {
+func (client WorkItemConfigurationsClient) List(ctx context.Context, resourceGroupName string, resourceName string) (result WorkItemConfigurationsListResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "insights.WorkItemConfigurationsClient", "List", nil, "Failure preparing request")
@@ -303,12 +303,12 @@ func (client WorkItemConfigurationsClient) ListSender(req *http.Request) (*http.
 
 // ListResponder handles the response to the List request. The method always
 // closes the http.Response Body.
-func (client WorkItemConfigurationsClient) ListResponder(resp *http.Response) (result ListWorkItemConfiguration, err error) {
+func (client WorkItemConfigurationsClient) ListResponder(resp *http.Response) (result WorkItemConfigurationsListResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
 		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByUnmarshallingJSON(&result),
 		autorest.ByClosing())
 	result.Response = autorest.Response{Response: resp}
 	return

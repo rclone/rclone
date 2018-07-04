@@ -43,9 +43,10 @@ func NewExtensionClientWithBaseURI(baseURI string, subscriptionID string) Extens
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // clusterName - the name of the cluster.
+// extensionName - the name of the cluster extension.
 // parameters - the cluster extensions create request.
-func (client ExtensionClient) Create(ctx context.Context, resourceGroupName string, clusterName string, parameters Extension) (result autorest.Response, err error) {
-	req, err := client.CreatePreparer(ctx, resourceGroupName, clusterName, parameters)
+func (client ExtensionClient) Create(ctx context.Context, resourceGroupName string, clusterName string, extensionName string, parameters Extension) (result autorest.Response, err error) {
+	req, err := client.CreatePreparer(ctx, resourceGroupName, clusterName, extensionName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "hdinsight.ExtensionClient", "Create", nil, "Failure preparing request")
 		return
@@ -67,10 +68,10 @@ func (client ExtensionClient) Create(ctx context.Context, resourceGroupName stri
 }
 
 // CreatePreparer prepares the Create request.
-func (client ExtensionClient) CreatePreparer(ctx context.Context, resourceGroupName string, clusterName string, parameters Extension) (*http.Request, error) {
+func (client ExtensionClient) CreatePreparer(ctx context.Context, resourceGroupName string, clusterName string, extensionName string, parameters Extension) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"clusterName":       autorest.Encode("path", clusterName),
-		"extensionName":     autorest.Encode("path", "clustermonitoring"),
+		"extensionName":     autorest.Encode("path", extensionName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
@@ -113,8 +114,9 @@ func (client ExtensionClient) CreateResponder(resp *http.Response) (result autor
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // clusterName - the name of the cluster.
-func (client ExtensionClient) Delete(ctx context.Context, resourceGroupName string, clusterName string) (result autorest.Response, err error) {
-	req, err := client.DeletePreparer(ctx, resourceGroupName, clusterName)
+// extensionName - the name of the cluster extension.
+func (client ExtensionClient) Delete(ctx context.Context, resourceGroupName string, clusterName string, extensionName string) (result autorest.Response, err error) {
+	req, err := client.DeletePreparer(ctx, resourceGroupName, clusterName, extensionName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "hdinsight.ExtensionClient", "Delete", nil, "Failure preparing request")
 		return
@@ -136,10 +138,10 @@ func (client ExtensionClient) Delete(ctx context.Context, resourceGroupName stri
 }
 
 // DeletePreparer prepares the Delete request.
-func (client ExtensionClient) DeletePreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
+func (client ExtensionClient) DeletePreparer(ctx context.Context, resourceGroupName string, clusterName string, extensionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"clusterName":       autorest.Encode("path", clusterName),
-		"extensionName":     autorest.Encode("path", "clustermonitoring"),
+		"extensionName":     autorest.Encode("path", extensionName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
@@ -323,8 +325,9 @@ func (client ExtensionClient) EnableMonitoringResponder(resp *http.Response) (re
 // Parameters:
 // resourceGroupName - the name of the resource group.
 // clusterName - the name of the cluster.
-func (client ExtensionClient) Get(ctx context.Context, resourceGroupName string, clusterName string) (result Extension, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, clusterName)
+// extensionName - the name of the cluster extension.
+func (client ExtensionClient) Get(ctx context.Context, resourceGroupName string, clusterName string, extensionName string) (result Extension, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, clusterName, extensionName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "hdinsight.ExtensionClient", "Get", nil, "Failure preparing request")
 		return
@@ -346,10 +349,10 @@ func (client ExtensionClient) Get(ctx context.Context, resourceGroupName string,
 }
 
 // GetPreparer prepares the Get request.
-func (client ExtensionClient) GetPreparer(ctx context.Context, resourceGroupName string, clusterName string) (*http.Request, error) {
+func (client ExtensionClient) GetPreparer(ctx context.Context, resourceGroupName string, clusterName string, extensionName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"clusterName":       autorest.Encode("path", clusterName),
-		"extensionName":     autorest.Encode("path", "clustermonitoring"),
+		"extensionName":     autorest.Encode("path", extensionName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}

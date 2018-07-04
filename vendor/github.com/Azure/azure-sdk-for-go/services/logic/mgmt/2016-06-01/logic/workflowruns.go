@@ -181,7 +181,8 @@ func (client WorkflowRunsClient) GetResponder(resp *http.Response) (result Workf
 // resourceGroupName - the resource group name.
 // workflowName - the workflow name.
 // top - the number of items to be included in the result.
-// filter - the filter to apply on the operation.
+// filter - the filter to apply on the operation. Options for filters include: Status, StartTime, and
+// ClientTrackingId.
 func (client WorkflowRunsClient) List(ctx context.Context, resourceGroupName string, workflowName string, top *int32, filter string) (result WorkflowRunListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, workflowName, top, filter)

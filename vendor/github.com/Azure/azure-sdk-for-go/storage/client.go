@@ -336,15 +336,7 @@ func IsValidStorageAccount(account string) bool {
 // NewAccountSASClient contructs a client that uses accountSAS authorization
 // for its operations.
 func NewAccountSASClient(account string, token url.Values, env azure.Environment) Client {
-	c := newSASClient()
-	c.accountSASToken = token
-	c.accountName = account
-	c.baseURL = env.StorageEndpointSuffix
-
-	// Get API version and protocol from token
-	c.apiVersion = token.Get("sv")
-	c.useHTTPS = token.Get("spr") == "https"
-	return c
+	return newSASClient(account, env.StorageEndpointSuffix, token)
 }
 
 // NewAccountSASClientFromEndpointToken constructs a client that uses accountSAS authorization
@@ -354,12 +346,36 @@ func NewAccountSASClientFromEndpointToken(endpoint string, sasToken string) (Cli
 	if err != nil {
 		return Client{}, err
 	}
-
-	token, err := url.ParseQuery(sasToken)
+	_, err = url.ParseQuery(sasToken)
 	if err != nil {
 		return Client{}, err
 	}
+	u.RawQuery = sasToken
+	return newSASClientFromURL(u)
+}
 
+func newSASClient(accountName, baseURL string, sasToken url.Values) Client {
+	c := Client{
+		HTTPClient: http.DefaultClient,
+		apiVersion: DefaultAPIVersion,
+		sasClient:  true,
+		Sender: &DefaultSender{
+			RetryAttempts:    defaultRetryAttempts,
+			ValidStatusCodes: defaultValidStatusCodes,
+			RetryDuration:    defaultRetryDuration,
+		},
+		accountName:     accountName,
+		baseURL:         baseURL,
+		accountSASToken: sasToken,
+	}
+	c.userAgent = c.getDefaultUserAgent()
+	// Get API version and protocol from token
+	c.apiVersion = sasToken.Get("sv")
+	c.useHTTPS = sasToken.Get("spr") == "https"
+	return c
+}
+
+func newSASClientFromURL(u *url.URL) (Client, error) {
 	// the host name will look something like this
 	// - foo.blob.core.windows.net
 	// "foo" is the account name
@@ -377,30 +393,13 @@ func NewAccountSASClientFromEndpointToken(endpoint string, sasToken string) (Cli
 		return Client{}, fmt.Errorf("failed to find '.' in %s", u.Host[i1+1:])
 	}
 
-	c := newSASClient()
-	c.accountSASToken = token
-	c.accountName = u.Host[:i1]
-	c.baseURL = u.Host[i1+i2+2:]
-
-	// Get API version and protocol from token
-	c.apiVersion = token.Get("sv")
-	c.useHTTPS = token.Get("spr") == "https"
-	return c, nil
-}
-
-func newSASClient() Client {
-	c := Client{
-		HTTPClient: http.DefaultClient,
-		apiVersion: DefaultAPIVersion,
-		sasClient:  true,
-		Sender: &DefaultSender{
-			RetryAttempts:    defaultRetryAttempts,
-			ValidStatusCodes: defaultValidStatusCodes,
-			RetryDuration:    defaultRetryDuration,
-		},
+	sasToken := u.Query()
+	c := newSASClient(u.Host[:i1], u.Host[i1+i2+2:], sasToken)
+	if spr := sasToken.Get("spr"); spr == "" {
+		// infer from URL if not in the query params set
+		c.useHTTPS = u.Scheme == "https"
 	}
-	c.userAgent = c.getDefaultUserAgent()
-	return c
+	return c, nil
 }
 
 func (c Client) isServiceSASClient() bool {

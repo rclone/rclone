@@ -260,7 +260,7 @@ func (client MapsClient) GetResponder(resp *http.Response) (result IntegrationAc
 // resourceGroupName - the resource group name.
 // integrationAccountName - the integration account name.
 // top - the number of items to be included in the result.
-// filter - the filter to apply on the operation.
+// filter - the filter to apply on the operation. Options for filters include: MapType.
 func (client MapsClient) ListByIntegrationAccounts(ctx context.Context, resourceGroupName string, integrationAccountName string, top *int32, filter string) (result IntegrationAccountMapListResultPage, err error) {
 	result.fn = client.listByIntegrationAccountsNextResults
 	req, err := client.ListByIntegrationAccountsPreparer(ctx, resourceGroupName, integrationAccountName, top, filter)

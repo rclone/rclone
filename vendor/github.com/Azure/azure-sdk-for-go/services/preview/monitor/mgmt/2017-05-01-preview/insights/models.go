@@ -1291,6 +1291,8 @@ type AzureAppPushReceiver struct {
 type DiagnosticSettings struct {
 	// StorageAccountID - The resource ID of the storage account to which you would like to send Diagnostic Logs.
 	StorageAccountID *string `json:"storageAccountId,omitempty"`
+	// ServiceBusRuleID - The service bus rule Id of the diagnostic setting. This is here to maintain backwards compatibility.
+	ServiceBusRuleID *string `json:"serviceBusRuleId,omitempty"`
 	// EventHubAuthorizationRuleID - The resource Id for the event hub authorization rule.
 	EventHubAuthorizationRuleID *string `json:"eventHubAuthorizationRuleId,omitempty"`
 	// EventHubName - The name of the event hub. If none is specified, the default event hub will be selected.
@@ -1311,7 +1313,8 @@ type DiagnosticSettingsCategory struct {
 
 // DiagnosticSettingsCategoryResource the diagnostic settings category resource.
 type DiagnosticSettingsCategoryResource struct {
-	autorest.Response           `json:"-"`
+	autorest.Response `json:"-"`
+	// DiagnosticSettingsCategory - The properties of a Diagnostic Settings Category.
 	*DiagnosticSettingsCategory `json:"properties,omitempty"`
 	// ID - Azure resource Id
 	ID *string `json:"id,omitempty"`
@@ -1399,7 +1402,8 @@ type DiagnosticSettingsCategoryResourceCollection struct {
 
 // DiagnosticSettingsResource the diagnostic setting resource.
 type DiagnosticSettingsResource struct {
-	autorest.Response   `json:"-"`
+	autorest.Response `json:"-"`
+	// DiagnosticSettings - Properties of a Diagnostic Settings Resource.
 	*DiagnosticSettings `json:"properties,omitempty"`
 	// ID - Azure resource Id
 	ID *string `json:"id,omitempty"`

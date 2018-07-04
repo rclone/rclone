@@ -47,7 +47,7 @@ func NewDatabaseBlobAuditingPoliciesClientWithBaseURI(baseURI string, subscripti
 // resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
 // from the Azure Resource Manager API or the portal.
 // serverName - the name of the server.
-// databaseName - the name of the database for which the blob auditing policy will be defined.
+// databaseName - the name of the database.
 // parameters - the database blob auditing policy.
 func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DatabaseBlobAuditingPolicy) (result DatabaseBlobAuditingPolicy, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
@@ -121,7 +121,7 @@ func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdateResponder(resp *h
 // resourceGroupName - the name of the resource group that contains the resource. You can obtain this value
 // from the Azure Resource Manager API or the portal.
 // serverName - the name of the server.
-// databaseName - the name of the database for which the blob audit policy is defined.
+// databaseName - the name of the database.
 func (client DatabaseBlobAuditingPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabaseBlobAuditingPolicy, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {

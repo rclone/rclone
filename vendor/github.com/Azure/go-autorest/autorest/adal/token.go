@@ -61,6 +61,9 @@ const (
 
 	// msiEndpoint is the well known endpoint for getting MSI authentications tokens
 	msiEndpoint = "http://169.254.169.254/metadata/identity/oauth2/token"
+
+	// the default number of attempts to refresh an MSI authentication token
+	defaultMaxMSIRefreshAttempts = 5
 )
 
 // OAuthTokenProvider is an interface which should be implemented by an access token retriever
@@ -323,6 +326,8 @@ type ServicePrincipalToken struct {
 	refreshLock      *sync.RWMutex
 	sender           Sender
 	refreshCallbacks []TokenRefreshCallback
+	// MaxMSIRefreshAttempts is the maximum number of attempts to refresh an MSI token.
+	MaxMSIRefreshAttempts int
 }
 
 // MarshalTokenJSON returns the marshalled inner token.
@@ -655,9 +660,10 @@ func newServicePrincipalTokenFromMSI(msiEndpoint, resource string, userAssignedI
 			AutoRefresh:   true,
 			RefreshWithin: defaultRefresh,
 		},
-		refreshLock:      &sync.RWMutex{},
-		sender:           &http.Client{},
-		refreshCallbacks: callbacks,
+		refreshLock:           &sync.RWMutex{},
+		sender:                &http.Client{},
+		refreshCallbacks:      callbacks,
+		MaxMSIRefreshAttempts: defaultMaxMSIRefreshAttempts,
 	}
 
 	if userAssignedID != nil {
@@ -811,7 +817,7 @@ func (spt *ServicePrincipalToken) refreshInternal(ctx context.Context, resource 
 
 	var resp *http.Response
 	if isIMDS(spt.inner.OauthConfig.TokenEndpoint) {
-		resp, err = retry(spt.sender, req)
+		resp, err = retryForIMDS(spt.sender, req, spt.MaxMSIRefreshAttempts)
 	} else {
 		resp, err = spt.sender.Do(req)
 	}
@@ -850,7 +856,8 @@ func (spt *ServicePrincipalToken) refreshInternal(ctx context.Context, resource 
 	return spt.InvokeRefreshCallbacks(token)
 }
 
-func retry(sender Sender, req *http.Request) (resp *http.Response, err error) {
+// retry logic specific to retrieving a token from the IMDS endpoint
+func retryForIMDS(sender Sender, req *http.Request, maxAttempts int) (resp *http.Response, err error) {
 	// copied from client.go due to circular dependency
 	retries := []int{
 		http.StatusRequestTimeout,      // 408
@@ -875,7 +882,6 @@ func retry(sender Sender, req *http.Request) (resp *http.Response, err error) {
 
 	// see https://docs.microsoft.com/en-us/azure/active-directory/managed-service-identity/how-to-use-vm-token#retry-guidance
 
-	const maxAttempts int = 5
 	const maxDelay time.Duration = 60 * time.Second
 
 	attempt := 0
@@ -884,7 +890,9 @@ func retry(sender Sender, req *http.Request) (resp *http.Response, err error) {
 	for attempt < maxAttempts {
 		resp, err = sender.Do(req)
 		// retry on temporary network errors, e.g. transient network failures.
-		if (err != nil && !isTemporaryNetworkError(err)) || resp.StatusCode == http.StatusOK || !containsInt(retries, resp.StatusCode) {
+		// if we don't receive a response then assume we can't connect to the
+		// endpoint so we're likely not running on an Azure VM so don't retry.
+		if (err != nil && !isTemporaryNetworkError(err)) || resp == nil || resp.StatusCode == http.StatusOK || !containsInt(retries, resp.StatusCode) {
 			return
 		}
 

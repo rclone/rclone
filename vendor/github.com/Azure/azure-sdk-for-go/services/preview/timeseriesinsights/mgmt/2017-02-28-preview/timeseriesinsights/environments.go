@@ -54,7 +54,7 @@ func (client EnvironmentsClient) CreateOrUpdate(ctx context.Context, resourceGro
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Sku", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.Sku.Capacity", Name: validation.Null, Rule: true,
-					Chain: []validation.Constraint{{Target: "parameters.Sku.Capacity", Name: validation.InclusiveMaximum, Rule: 10, Chain: nil},
+					Chain: []validation.Constraint{{Target: "parameters.Sku.Capacity", Name: validation.InclusiveMaximum, Rule: int64(10), Chain: nil},
 						{Target: "parameters.Sku.Capacity", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}},

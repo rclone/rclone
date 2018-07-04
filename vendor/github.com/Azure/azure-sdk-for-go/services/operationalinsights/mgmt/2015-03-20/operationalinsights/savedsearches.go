@@ -58,7 +58,7 @@ func (client SavedSearchesClient) CreateOrUpdate(ctx context.Context, resourceGr
 					{Target: "parameters.SavedSearchProperties.DisplayName", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.SavedSearchProperties.Query", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.SavedSearchProperties.Version", Name: validation.Null, Rule: true,
-						Chain: []validation.Constraint{{Target: "parameters.SavedSearchProperties.Version", Name: validation.InclusiveMaximum, Rule: 1, Chain: nil},
+						Chain: []validation.Constraint{{Target: "parameters.SavedSearchProperties.Version", Name: validation.InclusiveMaximum, Rule: int64(1), Chain: nil},
 							{Target: "parameters.SavedSearchProperties.Version", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 						}},
 				}}}}}); err != nil {

@@ -25,7 +25,8 @@ import (
 	"net/http"
 )
 
-// ConfigurationClient is the azure Event Hubs Cluster client for managing Event Hubs Cluster resources.
+// ConfigurationClient is the azure Event Hubs client for managing Event Hubs Cluster, IPFilter Rules and
+// VirtualNetworkRules resources.
 type ConfigurationClient struct {
 	BaseClient
 }

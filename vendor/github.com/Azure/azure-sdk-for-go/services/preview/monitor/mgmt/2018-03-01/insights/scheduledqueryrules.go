@@ -396,3 +396,73 @@ func (client ScheduledQueryRulesClient) ListBySubscriptionResponder(resp *http.R
 	result.Response = autorest.Response{Response: resp}
 	return
 }
+
+// Update update log search Rule.
+// Parameters:
+// resourceGroupName - the name of the resource group.
+// ruleName - the name of the rule.
+// parameters - the parameters of the rule to update.
+func (client ScheduledQueryRulesClient) Update(ctx context.Context, resourceGroupName string, ruleName string, parameters LogSearchRuleResourcePatch) (result LogSearchRuleResource, err error) {
+	req, err := client.UpdatePreparer(ctx, resourceGroupName, ruleName, parameters)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.ScheduledQueryRulesClient", "Update", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.UpdateSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "insights.ScheduledQueryRulesClient", "Update", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "insights.ScheduledQueryRulesClient", "Update", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// UpdatePreparer prepares the Update request.
+func (client ScheduledQueryRulesClient) UpdatePreparer(ctx context.Context, resourceGroupName string, ruleName string, parameters LogSearchRuleResourcePatch) (*http.Request, error) {
+	pathParameters := map[string]interface{}{
+		"resourceGroupName": autorest.Encode("path", resourceGroupName),
+		"ruleName":          autorest.Encode("path", ruleName),
+		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
+	}
+
+	const APIVersion = "2018-04-16"
+	queryParameters := map[string]interface{}{
+		"api-version": APIVersion,
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsContentType("application/json; charset=utf-8"),
+		autorest.AsPatch(),
+		autorest.WithBaseURL(client.BaseURI),
+		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}/providers/microsoft.insights/scheduledQueryRules/{ruleName}", pathParameters),
+		autorest.WithJSON(parameters),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// UpdateSender sends the Update request. The method will close the
+// http.Response Body if it receives an error.
+func (client ScheduledQueryRulesClient) UpdateSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		azure.DoRetryWithRegistration(client.Client))
+}
+
+// UpdateResponder handles the response to the Update request. The method always
+// closes the http.Response Body.
+func (client ScheduledQueryRulesClient) UpdateResponder(resp *http.Response) (result LogSearchRuleResource, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
