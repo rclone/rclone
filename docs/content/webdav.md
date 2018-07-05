@@ -189,6 +189,9 @@ pass = encryptedpassword
 
 ### dCache ###
 
+dCache is a storage system with WebDAV doors that support, beside basic and x509, 
+authentication with [Macaroons](https://www.dcache.org/manuals/workshop-2017-05-29-Umea/000-Final/anupam_macaroons_v02.pdf) (bearer tokens).
+
 Configure as normal using the `other` type.  Don't enter a username or
 password, instead enter your Macaroon as the `bearer_token`.
 
@@ -203,3 +206,6 @@ user =
 pass =
 bearer_token = your-macaroon
 ```
+
+There is a [script](https://github.com/onnozweers/dcache-scripts/blob/master/get-share-link) that
+obtains a Macaroon from a dCache WebDAV endpoint, and creates an rclone config file.
