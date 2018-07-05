@@ -117,6 +117,39 @@ MD5 hashes are stored with blobs.  However blobs that were uploaded in
 chunks only have an MD5 if the source remote was capable of MD5
 hashes, eg the local disk.
 
+### Authenticating with Azure Blob Storage
+
+Rclone has 3 ways of authenticating with Azure Blob Storage:
+
+#### Account and Key
+
+This is the most straight forward and least flexible way.  Just fill in the `account` and `key` lines and leave the rest blank.
+
+#### Connection string
+
+This supports all the possible connection string variants.  Leave `account`, `key` and `sas_url` blank and put the connection string into the `connection_string` configuration parameter.
+
+Use this method if using an account level SAS; the Azure Portal shows connection strings you can cut and paste.
+
+#### SAS URL
+
+This only for a container level SAS URL - it does not work with an account level SAS URL. For account level SAS use the connection string method.
+
+To use it leave `account`, `key` and `connection_string` blank and fill in `sas_url`.
+
+To get a container level SAS URL right click on a container in the Azure Blob explorer in the Azure portal.
+
+You will only be able to use the container specified in the SAS URL with rclone, eg
+
+    rclone ls azureblob:container
+
+However these will not work
+
+    rclone lsd azureblob:
+    rclone ls azureblob:othercontainer
+
+This would be useful for temporarily allowing third parties access to a single container or putting credentials into an untrusted environment.
+
 ### Multipart uploads ###
 
 Rclone supports multipart uploads with Azure Blob storage.  Files
