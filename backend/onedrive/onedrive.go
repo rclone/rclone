@@ -817,11 +817,13 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	opts.ExtraHeaders = map[string]string{"Prefer": "respond-async"}
 	opts.NoResponse = true
 
+	id, _, _ := parseDirID(directoryID)
+
 	replacedLeaf := replaceReservedChars(leaf)
 	copy := api.CopyItemRequest{
 		Name: &replacedLeaf,
 		ParentReference: api.ItemReference{
-			ID: directoryID,
+			ID: id,
 		},
 	}
 	var resp *http.Response
@@ -890,10 +892,12 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	// Move the object
 	opts := newOptsCall(srcObj.id, "PATCH", "")
 
+	id, _, _ := parseDirID(directoryID)
+
 	move := api.MoveItemRequest{
 		Name: replaceReservedChars(leaf),
 		ParentReference: &api.ItemReference{
-			ID: directoryID,
+			ID: id,
 		},
 		// We set the mod time too as it gets reset otherwise
 		FileSystemInfo: &api.FileSystemInfoFacet{
@@ -1079,11 +1083,11 @@ func (o *Object) ModTime() time.Time {
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
 	var opts rest.Opts
 	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
-	_, drive, rootUrl := parseDirID(directoryID)
+	_, drive, rootURL := parseDirID(directoryID)
 	if drive != "" {
 		opts = rest.Opts{
 			Method:  "PATCH",
-			RootURL: rootUrl,
+			RootURL: rootURL,
 			Path:    "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()),
 		}
 	} else {
@@ -1148,12 +1152,12 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // createUploadSession creates an upload session for the object
 func (o *Object) createUploadSession(modTime time.Time) (response *api.CreateUploadResponse, err error) {
 	leaf, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
-	id, drive, rootUrl := parseDirID(directoryID)
+	id, drive, rootURL := parseDirID(directoryID)
 	var opts rest.Opts
 	if drive != "" {
 		opts = rest.Opts{
 			Method:  "POST",
-			RootURL: rootUrl,
+			RootURL: rootURL,
 			Path:    "/" + drive + "/items/" + id + ":/" + rest.URLPathEscape(leaf) + ":/upload.createSession",
 		}
 	} else {
@@ -1270,11 +1274,11 @@ func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (
 	var resp *http.Response
 	var opts rest.Opts
 	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
-	_, drive, rootUrl := parseDirID(directoryID)
+	_, drive, rootURL := parseDirID(directoryID)
 	if drive != "" {
 		opts = rest.Opts{
 			Method:        "PUT",
-			RootURL:       rootUrl,
+			RootURL:       rootURL,
 			Path:          "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
 			ContentLength: &size,
 			Body:          in,
