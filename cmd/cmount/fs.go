@@ -192,7 +192,7 @@ func (fsys *FS) Destroy() {
 
 // Getattr reads the attributes for path
 func (fsys *FS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
-	defer log.Trace(path, "fh=0x%X", fh)("errc=%v", &errc)
+	defer log.Trace(path, "fh=0x%X", fh)("stat=%+v, errc=%v", &stat, &errc)
 	node, _, errc := fsys.getNode(path, fh)
 	if errc == 0 {
 		errc = fsys.stat(node, stat)
