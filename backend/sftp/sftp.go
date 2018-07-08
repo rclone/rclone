@@ -76,7 +76,7 @@ func init() {
 			Optional: true,
 		}, {
 			Name:     "use_insecure_cipher",
-			Help:     "Enable the user of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.",
+			Help:     "Enable the use of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.",
 			Optional: true,
 			Examples: []fs.OptionExample{
 				{
