@@ -88,13 +88,19 @@ func init() {
 			Help:     "Cutoff for switching to multipart upload.",
 			Default:  fs.SizeSuffix(defaultUploadCutoff),
 			Advanced: true,
+		}, {
+			Name:     "commit_retries",
+			Help:     "Max number of times to try committing a multipart file.",
+			Default:  100,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
+	UploadCutoff  fs.SizeSuffix `config:"upload_cutoff"`
+	CommitRetries int           `config:"commit_retries"`
 }
 
 // Fs represents a remote box

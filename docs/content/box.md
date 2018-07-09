@@ -227,6 +227,10 @@ system.
 Cutoff for switching to chunked upload - must be >= 50MB. The default
 is 50MB.
 
+#### --box-commit-retries int ####
+
+Max number of times to try committing a multipart file. (default 100)
+
 ### Limitations ###
 
 Note that Box is case insensitive so you can't have a file called
