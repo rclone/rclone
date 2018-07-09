@@ -125,21 +125,16 @@ Rclone has 3 ways of authenticating with Azure Blob Storage:
 
 This is the most straight forward and least flexible way.  Just fill in the `account` and `key` lines and leave the rest blank.
 
-#### Connection string
-
-This supports all the possible connection string variants.  Leave `account`, `key` and `sas_url` blank and put the connection string into the `connection_string` configuration parameter.
-
-Use this method if using an account level SAS; the Azure Portal shows connection strings you can cut and paste.
-
 #### SAS URL
 
-This only for a container level SAS URL - it does not work with an account level SAS URL. For account level SAS use the connection string method.
+This can be an account level SAS URL or container level SAS URL
 
-To use it leave `account`, `key` and `connection_string` blank and fill in `sas_url`.
+To use it leave `account`, `key`  blank and fill in `sas_url`.
 
+Account level SAS URL or container level SAS URL can be obtained from Azure portal or Azure Storage Explorer.
 To get a container level SAS URL right click on a container in the Azure Blob explorer in the Azure portal.
 
-You will only be able to use the container specified in the SAS URL with rclone, eg
+If You use container level SAS URL, rclone operations are permitted only on particular container, eg
 
     rclone ls azureblob:container
 
