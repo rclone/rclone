@@ -7,9 +7,24 @@ date: "2017-06-10"
 <i class="fa fa-amazon"></i> Amazon Drive
 -----------------------------------------
 
-Paths are specified as `remote:path`
+Amazon Drive, formerly known as Amazon Cloud Drive, is a cloud storage
+service run by Amazon for consumers.
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+## Status
+
+**Important:** rclone supports Amazon Drive only if you have your own
+set of API keys. Unfortunately the [Amazon Drive developer
+program](https://developer.amazon.com/amazon-drive) is now closed to
+new entries so if you don't already have your own set of keys you will
+not be able to use rclone with Amazon Drive.
+
+For the history on why rclone no longer has a set of Amazon Drive API
+keys see [the forum](https://forum.rclone.org/t/rclone-has-been-banned-from-amazon-drive/2314).
+
+If you happen to know anyone who works at Amazon then please ask them
+to re-instate rclone into the Amazon Drive developer program - thanks!
+
+## Setup
 
 The initial setup for Amazon Drive involves getting a token from
 Amazon which you need to do in your browser.  `rclone config` walks
@@ -21,10 +36,8 @@ Amazon credentials out of the source code.  The proxy runs in Google's
 very secure App Engine environment and doesn't store any credentials
 which pass through it.
 
-**NB** rclone doesn't not currently have its own Amazon Drive
-credentials (see [the
-forum](https://forum.rclone.org/t/rclone-has-been-banned-from-amazon-drive/)
-for why) so you will either need to have your own `client_id` and
+Since rclone doesn't currently have its own Amazon Drive credentials
+so you will either need to have your own `client_id` and
 `client_secret` with Amazon Drive, or use a a third party ouath proxy
 in which case you will need to enter `client_id`, `client_secret`,
 `auth_url` and `token_url`.

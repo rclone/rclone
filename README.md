@@ -15,7 +15,7 @@
 
 Rclone is a command line program to sync files and directories to and from
 
-  * Amazon Drive
+  * Amazon Drive ([See note](https://rclone.org/amazonclouddrive/#status))
   * Amazon S3 / Dreamhost / Ceph / Minio / Wasabi
   * Backblaze B2
   * Box
