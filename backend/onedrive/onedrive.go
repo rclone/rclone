@@ -75,6 +75,7 @@ var (
 	oauthBusinessResource = oauth2.SetAuthURLParam("resource", discoveryServiceURL)
 
 	chunkSize = fs.SizeSuffix(10 * 1024 * 1024)
+	sharedURL = "https://api.onedrive.com/v1.0/drives" // root URL for remote shared resources
 )
 
 // Register with Fs
@@ -325,6 +326,7 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Respon
 		resp, err = f.srv.CallJSON(&opts, nil, &info)
 		return shouldRetry(resp, err)
 	})
+
 	return info, resp, err
 }
 
@@ -357,6 +359,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		// business account setup
 		oauthConfig = oauthBusinessConfig
 		rootURL = resourceURL + "_api/v2.0/drives/me"
+		sharedURL = resourceURL + "_api/v2.0/drives"
 
 		// update the URL in the AuthOptions
 		oauthBusinessResource = oauth2.SetAuthURLParam("resource", resourceURL)
@@ -482,21 +485,18 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 		}
 		return "", false, err
 	}
-	if info.Folder == nil {
+	if info.GetFolder() == nil {
 		return "", false, errors.New("found file when looking for folder")
 	}
-	return info.ID, true, nil
+	return info.GetID(), true, nil
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
-func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
+func (f *Fs) CreateDir(dirID, leaf string) (newID string, err error) {
+	// fs.Debugf(f, "CreateDir(%q, %q)\n", dirID, leaf)
 	var resp *http.Response
 	var info *api.Item
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/items/" + pathID + "/children",
-	}
+	opts := newOptsCall(dirID, "POST", "/children")
 	mkdir := api.CreateItemRequest{
 		Name:             replaceReservedChars(leaf),
 		ConflictBehavior: "fail",
@@ -509,8 +509,9 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 		//fmt.Printf("...Error %v\n", err)
 		return "", err
 	}
+
 	//fmt.Printf("...Id %q\n", *info.Id)
-	return info.ID, nil
+	return info.GetID(), nil
 }
 
 // list the objects into the function supplied
@@ -527,10 +528,8 @@ type listAllFn func(*api.Item) bool
 func (f *Fs) listAll(dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	// Top parameter asks for bigger pages of data
 	// https://dev.onedrive.com/odata/optional-query-parameters.htm
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/items/" + dirID + "/children?top=1000",
-	}
+	opts := newOptsCall(dirID, "GET", "/children?top=1000")
+
 OUTER:
 	for {
 		var result api.ListChildrenResponse
@@ -547,7 +546,7 @@ OUTER:
 		}
 		for i := range result.Value {
 			item := &result.Value[i]
-			isFolder := item.Folder != nil
+			isFolder := item.GetFolder() != nil
 			if isFolder {
 				if filesOnly {
 					continue
@@ -560,7 +559,7 @@ OUTER:
 			if item.Deleted != nil {
 				continue
 			}
-			item.Name = restoreReservedChars(item.Name)
+			item.Name = restoreReservedChars(item.GetName())
 			if fn(item) {
 				found = true
 				break OUTER
@@ -595,13 +594,15 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}
 	var iErr error
 	_, err = f.listAll(directoryID, false, false, func(info *api.Item) bool {
-		remote := path.Join(dir, info.Name)
-		if info.Folder != nil {
+		remote := path.Join(dir, info.GetName())
+		folder := info.GetFolder()
+		if folder != nil {
 			// cache the directory ID for later lookups
-			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, time.Time(info.LastModifiedDateTime)).SetID(info.ID)
-			if info.Folder != nil {
-				d.SetItems(info.Folder.ChildCount)
+			id := info.GetID()
+			f.dirCache.Put(remote, id)
+			d := fs.NewDir(remote, time.Time(info.GetLastModifiedDateTime())).SetID(id)
+			if folder != nil {
+				d.SetItems(folder.ChildCount)
 			}
 			entries = append(entries, d)
 		} else {
@@ -674,11 +675,9 @@ func (f *Fs) Mkdir(dir string) error {
 
 // deleteObject removes an object by ID
 func (f *Fs) deleteObject(id string) error {
-	opts := rest.Opts{
-		Method:     "DELETE",
-		Path:       "/items/" + id,
-		NoResponse: true,
-	}
+	opts := newOptsCall(id, "DELETE", "")
+	opts.NoResponse = true
+
 	return f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.Call(&opts)
 		return shouldRetry(resp, err)
@@ -814,17 +813,17 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Copy the object
-	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/items/" + srcObj.id + "/action.copy",
-		ExtraHeaders: map[string]string{"Prefer": "respond-async"},
-		NoResponse:   true,
-	}
+	opts := newOptsCall(srcObj.id, "POST", "/action.copy")
+	opts.ExtraHeaders = map[string]string{"Prefer": "respond-async"}
+	opts.NoResponse = true
+
+	id, _, _ := parseDirID(directoryID)
+
 	replacedLeaf := replaceReservedChars(leaf)
 	copy := api.CopyItemRequest{
 		Name: &replacedLeaf,
 		ParentReference: api.ItemReference{
-			ID: directoryID,
+			ID: id,
 		},
 	}
 	var resp *http.Response
@@ -891,14 +890,14 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Move the object
-	opts := rest.Opts{
-		Method: "PATCH",
-		Path:   "/items/" + srcObj.id,
-	}
+	opts := newOptsCall(srcObj.id, "PATCH", "")
+
+	id, _, _ := parseDirID(directoryID)
+
 	move := api.MoveItemRequest{
 		Name: replaceReservedChars(leaf),
 		ParentReference: &api.ItemReference{
-			ID: directoryID,
+			ID: id,
 		},
 		// We set the mod time too as it gets reset otherwise
 		FileSystemInfo: &api.FileSystemInfoFacet{
@@ -1013,35 +1012,37 @@ func (o *Object) Size() int64 {
 
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
-	if info.Folder != nil {
+	if info.GetFolder() != nil {
 		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
 	}
 	o.hasMetaData = true
-	o.size = info.Size
+	o.size = info.GetSize()
 
 	// Docs: https://docs.microsoft.com/en-us/onedrive/developer/rest-api/resources/hashes
 	//
 	// We use SHA1 for onedrive personal and QuickXorHash for onedrive for business
-	if info.File != nil {
-		o.mimeType = info.File.MimeType
-		if info.File.Hashes.Sha1Hash != "" {
-			o.sha1 = strings.ToLower(info.File.Hashes.Sha1Hash)
+	file := info.GetFile()
+	if file != nil {
+		o.mimeType = file.MimeType
+		if file.Hashes.Sha1Hash != "" {
+			o.sha1 = strings.ToLower(file.Hashes.Sha1Hash)
 		}
-		if info.File.Hashes.QuickXorHash != "" {
-			h, err := base64.StdEncoding.DecodeString(info.File.Hashes.QuickXorHash)
+		if file.Hashes.QuickXorHash != "" {
+			h, err := base64.StdEncoding.DecodeString(file.Hashes.QuickXorHash)
 			if err != nil {
-				fs.Errorf(o, "Failed to decode QuickXorHash %q: %v", info.File.Hashes.QuickXorHash, err)
+				fs.Errorf(o, "Failed to decode QuickXorHash %q: %v", file.Hashes.QuickXorHash, err)
 			} else {
 				o.quickxorhash = hex.EncodeToString(h)
 			}
 		}
 	}
-	if info.FileSystemInfo != nil {
-		o.modTime = time.Time(info.FileSystemInfo.LastModifiedDateTime)
+	fileSystemInfo := info.GetFileSystemInfo()
+	if fileSystemInfo != nil {
+		o.modTime = time.Time(fileSystemInfo.LastModifiedDateTime)
 	} else {
-		o.modTime = time.Time(info.LastModifiedDateTime)
+		o.modTime = time.Time(info.GetLastModifiedDateTime())
 	}
-	o.id = info.ID
+	o.id = info.GetID()
 	return nil
 }
 
@@ -1080,9 +1081,20 @@ func (o *Object) ModTime() time.Time {
 
 // setModTime sets the modification time of the local fs object
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
-	opts := rest.Opts{
-		Method: "PATCH",
-		Path:   "/root:/" + rest.URLPathEscape(o.srvPath()),
+	var opts rest.Opts
+	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
+	_, drive, rootURL := parseDirID(directoryID)
+	if drive != "" {
+		opts = rest.Opts{
+			Method:  "PATCH",
+			RootURL: rootURL,
+			Path:    "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()),
+		}
+	} else {
+		opts = rest.Opts{
+			Method: "PATCH",
+			Path:   "/root:/" + rest.URLPathEscape(o.srvPath()),
+		}
 	}
 	update := api.SetFileSystemInfo{
 		FileSystemInfo: api.FileSystemInfoFacet{
@@ -1119,11 +1131,9 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	}
 	fs.FixRangeOption(options, o.size)
 	var resp *http.Response
-	opts := rest.Opts{
-		Method:  "GET",
-		Path:    "/items/" + o.id + "/content",
-		Options: options,
-	}
+	opts := newOptsCall(o.id, "GET", "/content")
+	opts.Options = options
+
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(&opts)
 		return shouldRetry(resp, err)
@@ -1141,9 +1151,20 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 
 // createUploadSession creates an upload session for the object
 func (o *Object) createUploadSession(modTime time.Time) (response *api.CreateUploadResponse, err error) {
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/upload.createSession",
+	leaf, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
+	id, drive, rootURL := parseDirID(directoryID)
+	var opts rest.Opts
+	if drive != "" {
+		opts = rest.Opts{
+			Method:  "POST",
+			RootURL: rootURL,
+			Path:    "/" + drive + "/items/" + id + ":/" + rest.URLPathEscape(leaf) + ":/upload.createSession",
+		}
+	} else {
+		opts = rest.Opts{
+			Method: "POST",
+			Path:   "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/upload.createSession",
+		}
 	}
 	createRequest := api.CreateUploadRequest{}
 	createRequest.Item.FileSystemInfo.CreatedDateTime = api.Timestamp(modTime)
@@ -1251,11 +1272,24 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time) (i
 // uploadSinglepart uploads a file as a single part
 func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
 	var resp *http.Response
-	opts := rest.Opts{
-		Method:        "PUT",
-		Path:          "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
-		ContentLength: &size,
-		Body:          in,
+	var opts rest.Opts
+	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
+	_, drive, rootURL := parseDirID(directoryID)
+	if drive != "" {
+		opts = rest.Opts{
+			Method:        "PUT",
+			RootURL:       rootURL,
+			Path:          "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
+			ContentLength: &size,
+			Body:          in,
+		}
+	} else {
+		opts = rest.Opts{
+			Method:        "PUT",
+			Path:          "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
+			ContentLength: &size,
+			Body:          in,
+		}
 	}
 	// for go1.8 (see release notes) we must nil the Body if we want a
 	// "Content-Length: 0" header which onedrive requires for all files.
@@ -1269,6 +1303,7 @@ func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (
 	if err != nil {
 		return nil, err
 	}
+
 	err = o.setMetaData(info)
 	if err != nil {
 		return nil, err
@@ -1313,6 +1348,30 @@ func (o *Object) MimeType() string {
 // ID returns the ID of the Object if known, or "" if not
 func (o *Object) ID() string {
 	return o.id
+}
+
+func newOptsCall(id string, method string, route string) (opts rest.Opts) {
+	id, drive, rootURL := parseDirID(id)
+
+	if drive != "" {
+		return rest.Opts{
+			Method:  method,
+			RootURL: rootURL,
+			Path:    "/" + drive + "/items/" + id + route,
+		}
+	}
+	return rest.Opts{
+		Method: method,
+		Path:   "/items/" + id + route,
+	}
+}
+
+func parseDirID(ID string) (string, string, string) {
+	if strings.Index(ID, "#") >= 0 {
+		s := strings.Split(ID, "#")
+		return s[1], s[0], sharedURL
+	}
+	return ID, "", ""
 }
 
 // Check the interfaces are satisfied
