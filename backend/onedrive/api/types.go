@@ -2,7 +2,10 @@
 
 package api
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	timeFormat = `"` + time.RFC3339 + `"`
@@ -93,6 +96,22 @@ type ItemReference struct {
 	Path    string `json:"path"`    // Path that used to navigate to the item.	Read/Write.
 }
 
+// RemoteItemFacet groups data needed to reference a OneDrive remote item
+type RemoteItemFacet struct {
+	ID                   string               `json:"id"`                   // The unique identifier of the item within the remote Drive. Read-only.
+	Name                 string               `json:"name"`                 // The name of the item (filename and extension). Read-write.
+	CreatedBy            IdentitySet          `json:"createdBy"`            // Identity of the user, device, and application which created the item. Read-only.
+	LastModifiedBy       IdentitySet          `json:"lastModifiedBy"`       // Identity of the user, device, and application which last modified the item. Read-only.
+	CreatedDateTime      Timestamp            `json:"createdDateTime"`      // Date and time of item creation. Read-only.
+	LastModifiedDateTime Timestamp            `json:"lastModifiedDateTime"` // Date and time the item was last modified. Read-only.
+	Folder               *FolderFacet         `json:"folder"`               // Folder metadata, if the item is a folder. Read-only.
+	File                 *FileFacet           `json:"file"`                 // File metadata, if the item is a file. Read-only.
+	FileSystemInfo       *FileSystemInfoFacet `json:"fileSystemInfo"`       // File system information on client. Read-write.
+	ParentReference      *ItemReference       `json:"parentReference"`      // Parent information, if the item has a parent. Read-write.
+	Size                 int64                `json:"size"`                 // Size of the item in bytes. Read-only.
+	WebURL               string               `json:"webUrl"`               // URL that displays the resource in the browser. Read-only.
+}
+
 // FolderFacet groups folder-related data on OneDrive into a single structure
 type FolderFacet struct {
 	ChildCount int64 `json:"childCount"` // Number of children contained immediately within this container.
@@ -143,6 +162,7 @@ type Item struct {
 	Description          string               `json:"description"`          // Provide a user-visible description of the item. Read-write.
 	Folder               *FolderFacet         `json:"folder"`               // Folder metadata, if the item is a folder. Read-only.
 	File                 *FileFacet           `json:"file"`                 // File metadata, if the item is a file. Read-only.
+	RemoteItem           *RemoteItemFacet     `json:"remoteItem"`           // Remote Item metadata, if the item is a remote shared item. Read-only.
 	FileSystemInfo       *FileSystemInfoFacet `json:"fileSystemInfo"`       // File system information on client. Read-write.
 	//	Image                *ImageFacet          `json:"image"`                // Image metadata, if the item is an image. Read-only.
 	//	Photo                *PhotoFacet          `json:"photo"`                // Photo metadata, if the item is a photo. Read-only.
@@ -227,4 +247,113 @@ type AsyncOperationStatus struct {
 	Operation          string  `json:"operation"`          // The type of job being run.
 	PercentageComplete float64 `json:"percentageComplete"` // An float value between 0 and 100 that indicates the percentage complete.
 	Status             string  `json:"status"`             // A string value that maps to an enumeration of possible values about the status of the job. "notStarted | inProgress | completed | updating | failed | deletePending | deleteFailed | waiting"
+}
+
+// GetID returns a normalized ID of the item
+// If DriveID is known it will be prefixed to the ID with # seperator
+func (i *Item) GetID() string {
+	if i.IsRemote() && i.RemoteItem.ID != "" {
+		return i.RemoteItem.ParentReference.DriveID + "#" + i.RemoteItem.ID
+	} else if i.ParentReference != nil && strings.Index(i.ID, "#") == -1 {
+		return i.ParentReference.DriveID + "#" + i.ID
+	}
+	return i.ID
+}
+
+// GetDriveID returns a normalized ParentReferance of the item
+func (i *Item) GetDriveID() string {
+	return i.GetParentReferance().DriveID
+}
+
+// GetName returns a normalized Name of the item
+func (i *Item) GetName() string {
+	if i.IsRemote() && i.RemoteItem.Name != "" {
+		return i.RemoteItem.Name
+	}
+	return i.Name
+}
+
+// GetFolder returns a normalized Folder of the item
+func (i *Item) GetFolder() *FolderFacet {
+	if i.IsRemote() && i.RemoteItem.Folder != nil {
+		return i.RemoteItem.Folder
+	}
+	return i.Folder
+}
+
+// GetFile returns a normalized File of the item
+func (i *Item) GetFile() *FileFacet {
+	if i.IsRemote() && i.RemoteItem.File != nil {
+		return i.RemoteItem.File
+	}
+	return i.File
+}
+
+// GetFileSystemInfo returns a normalized FileSystemInfo of the item
+func (i *Item) GetFileSystemInfo() *FileSystemInfoFacet {
+	if i.IsRemote() && i.RemoteItem.FileSystemInfo != nil {
+		return i.RemoteItem.FileSystemInfo
+	}
+	return i.FileSystemInfo
+}
+
+// GetSize returns a normalized Size of the item
+func (i *Item) GetSize() int64 {
+	if i.IsRemote() && i.RemoteItem.Size != 0 {
+		return i.RemoteItem.Size
+	}
+	return i.Size
+}
+
+// GetWebURL returns a normalized WebURL of the item
+func (i *Item) GetWebURL() string {
+	if i.IsRemote() && i.RemoteItem.WebURL != "" {
+		return i.RemoteItem.WebURL
+	}
+	return i.WebURL
+}
+
+// GetCreatedBy returns a normalized CreatedBy of the item
+func (i *Item) GetCreatedBy() IdentitySet {
+	if i.IsRemote() && i.RemoteItem.CreatedBy != (IdentitySet{}) {
+		return i.RemoteItem.CreatedBy
+	}
+	return i.CreatedBy
+}
+
+// GetLastModifiedBy returns a normalized LastModifiedBy of the item
+func (i *Item) GetLastModifiedBy() IdentitySet {
+	if i.IsRemote() && i.RemoteItem.LastModifiedBy != (IdentitySet{}) {
+		return i.RemoteItem.LastModifiedBy
+	}
+	return i.LastModifiedBy
+}
+
+// GetCreatedDateTime returns a normalized CreatedDateTime of the item
+func (i *Item) GetCreatedDateTime() Timestamp {
+	if i.IsRemote() && i.RemoteItem.CreatedDateTime != (Timestamp{}) {
+		return i.RemoteItem.CreatedDateTime
+	}
+	return i.CreatedDateTime
+}
+
+// GetLastModifiedDateTime returns a normalized LastModifiedDateTime of the item
+func (i *Item) GetLastModifiedDateTime() Timestamp {
+	if i.IsRemote() && i.RemoteItem.LastModifiedDateTime != (Timestamp{}) {
+		return i.RemoteItem.LastModifiedDateTime
+	}
+	return i.LastModifiedDateTime
+}
+
+// GetParentReferance returns a normalized ParentReferance of the item
+func (i *Item) GetParentReferance() *ItemReference {
+	if i.IsRemote() && i.ParentReference == nil {
+		return i.RemoteItem.ParentReference
+	}
+	return i.ParentReference
+}
+
+// IsRemote checks if item is a remote item
+func (i *Item) IsRemote() bool {
+	return i.RemoteItem != nil
 }
