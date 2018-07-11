@@ -79,6 +79,9 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 		resp.Flags |= fuse.OpenNonSeekable
 	}
 
+	// Keep the file in the cache - equivalent of kernel_cache
+	resp.Flags |= fuse.OpenKeepCache
+
 	return &FileHandle{handle}, nil
 }
 
