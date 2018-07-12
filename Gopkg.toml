@@ -9,3 +9,7 @@
 [[override]]
   branch = "master"
   name = "github.com/coreos/bbolt"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/Azure/azure-storage-blob-go"
