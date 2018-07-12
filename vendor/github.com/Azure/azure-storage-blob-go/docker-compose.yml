@@ -1,0 +1,18 @@
+version: '3'
+services:
+  azure-storage-blob-go:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+    - .:${WORK_DIR}
+    working_dir: ${WORK_DIR}
+    environment:
+      - ACCOUNT_NAME
+      - ACCOUNT_KEY
+      - SECONDARY_ACCOUNT_NAME
+      - SECONDARY_ACCOUNT_KEY
+      - PREMIUM_ACCOUNT_NAME
+      - PREMIUM_ACCOUNT_KEY
+      - BLOB_STORAGE_ACCOUNT_NAME
+      - BLOB_STORAGE_ACCOUNT_KEY
