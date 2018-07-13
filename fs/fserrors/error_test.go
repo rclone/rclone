@@ -39,7 +39,15 @@ type myError2 struct {
 	Err error
 }
 
-func (e *myError2) Error() string { return e.Err.Error() }
+func (e *myError2) Error() string {
+	if e == nil {
+		return "myError2(nil)"
+	}
+	if e.Err == nil {
+		return "myError2{Err: nil}"
+	}
+	return e.Err.Error()
+}
 
 type myError3 struct {
 	Err int
@@ -53,11 +61,23 @@ type myError4 struct {
 
 func (e *myError4) Error() string { return e.e.Error() }
 
+type errorCause struct {
+	e error
+}
+
+func (e *errorCause) Error() string { return fmt.Sprintf("%#v", e) }
+
+func (e *errorCause) Cause() error { return e.e }
+
 func TestCause(t *testing.T) {
 	e3 := &myError3{3}
 	e4 := &myError4{io.EOF}
-
+	eNil1 := &myError2{nil}
+	eNil2 := &myError2{Err: (*myError2)(nil)}
 	errPotato := errors.New("potato")
+	nilCause1 := &errorCause{nil}
+	nilCause2 := &errorCause{(*myError2)(nil)}
+
 	for i, test := range []struct {
 		err           error
 		wantRetriable bool
@@ -70,10 +90,15 @@ func TestCause(t *testing.T) {
 		{errUseOfClosedNetworkConnection, false, errUseOfClosedNetworkConnection},
 		{makeNetErr(syscall.EAGAIN), true, syscall.EAGAIN},
 		{makeNetErr(syscall.Errno(123123123)), false, syscall.Errno(123123123)},
+		{eNil1, false, eNil1},
+		{eNil2, false, eNil2.Err},
 		{myError1{io.EOF}, false, io.EOF},
 		{&myError2{io.EOF}, false, io.EOF},
 		{e3, false, e3},
 		{e4, false, e4},
+		{&errorCause{errPotato}, false, errPotato},
+		{nilCause1, false, nilCause1},
+		{nilCause2, false, nilCause2.e},
 	} {
 		gotRetriable, gotErr := Cause(test.err)
 		what := fmt.Sprintf("test #%d: %v", i, test.err)

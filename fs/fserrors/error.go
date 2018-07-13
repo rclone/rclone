@@ -188,6 +188,12 @@ func Cause(cause error) (retriable bool, err error) {
 
 		// Unwrap 1 level if possible
 		err = errors.Cause(err)
+		if err == nil {
+			// errors.Cause can return nil which isn't
+			// desirable so pick the previous error in
+			// this case.
+			err = prev
+		}
 		if err == prev {
 			// Unpack any struct or *struct with a field
 			// of name Err which satisfies the error
@@ -196,11 +202,11 @@ func Cause(cause error) (retriable bool, err error) {
 			// others in the stdlib
 			errType := reflect.TypeOf(err)
 			errValue := reflect.ValueOf(err)
-			if errType.Kind() == reflect.Ptr {
+			if errValue.IsValid() && errType.Kind() == reflect.Ptr {
 				errType = errType.Elem()
 				errValue = errValue.Elem()
 			}
-			if errType.Kind() == reflect.Struct {
+			if errValue.IsValid() && errType.Kind() == reflect.Struct {
 				if errField := errValue.FieldByName("Err"); errField.IsValid() {
 					errFieldValue := errField.Interface()
 					if newErr, ok := errFieldValue.(error); ok {
