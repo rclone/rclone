@@ -152,11 +152,24 @@ func makeConfigPath() string {
 		return homeconf
 	}
 
+	// Check to see if user supplied a --config variable or environment
+	// variable.  We can't use pflag for this because it isn't initialised
+	// yet so we search the command line manually.
+	_, configSupplied := os.LookupEnv("RCLONE_CONFIG")
+	for _, item := range os.Args {
+		if item == "--config" || strings.HasPrefix(item, "--config=") {
+			configSupplied = true
+			break
+		}
+	}
+
 	// Default to ./.rclone.conf (current working directory)
-	fs.Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
-	fs.Errorf(nil, "Defaulting to storing config in current directory.")
-	fs.Errorf(nil, "Use --config flag to workaround.")
-	fs.Errorf(nil, "Error was: %v", err)
+	if !configSupplied {
+		fs.Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
+		fs.Errorf(nil, "Defaulting to storing config in current directory.")
+		fs.Errorf(nil, "Use --config flag to workaround.")
+		fs.Errorf(nil, "Error was: %v", err)
+	}
 	return hiddenConfigFileName
 }
 
