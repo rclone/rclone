@@ -363,7 +363,7 @@ func (f *Fs) list(dir string, recurse bool, maxResults uint, fn listFn) error {
 
 		if err != nil {
 			// Check http error code along with service code, current SDK doesn't populate service code correctly sometimes
-			if storageErr, ok := err.(azblob.StorageError); ok && storageErr.ServiceCode() == azblob.ServiceCodeContainerNotFound || storageErr.Response().StatusCode == http.StatusNotFound {
+			if storageErr, ok := err.(azblob.StorageError); ok && (storageErr.ServiceCode() == azblob.ServiceCodeContainerNotFound || storageErr.Response().StatusCode == http.StatusNotFound) {
 				return fs.ErrorDirNotFound
 			}
 			return err
@@ -632,7 +632,7 @@ func (f *Fs) deleteContainer() error {
 
 		if err != nil {
 			// Check http error code along with service code, current SDK doesn't populate service code correctly sometimes
-			if storageErr, ok := err.(azblob.StorageError); ok && storageErr.ServiceCode() == azblob.ServiceCodeContainerNotFound || storageErr.Response().StatusCode == http.StatusNotFound {
+			if storageErr, ok := err.(azblob.StorageError); ok && (storageErr.ServiceCode() == azblob.ServiceCodeContainerNotFound || storageErr.Response().StatusCode == http.StatusNotFound) {
 				return false, fs.ErrorDirNotFound
 			}
 
@@ -855,7 +855,7 @@ func (o *Object) readMetaData() (err error) {
 	})
 	if err != nil {
 		// On directories - GetProperties does not work and current SDK does not populate service code correctly hence check regular http response as well
-		if storageErr, ok := err.(azblob.StorageError); ok && storageErr.ServiceCode() == azblob.ServiceCodeBlobNotFound || storageErr.Response().StatusCode == http.StatusNotFound {
+		if storageErr, ok := err.(azblob.StorageError); ok && (storageErr.ServiceCode() == azblob.ServiceCodeBlobNotFound || storageErr.Response().StatusCode == http.StatusNotFound) {
 			return fs.ErrorObjectNotFound
 		}
 		return err
