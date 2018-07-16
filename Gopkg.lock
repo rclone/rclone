@@ -26,10 +26,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/Azure/azure-storage-blob-go"
-  packages = [
-    "2017-07-29/azblob",
-    "2018-03-28/azblob"
-  ]
+  packages = ["2018-03-28/azblob"]
   revision = "eaae161d9d5e07363f04ddb19d84d57efc66d1a1"
 
 [[projects]]
@@ -447,7 +444,6 @@
     "internal/modules",
     "internal/remote_api",
     "internal/urlfetch",
-    "log",
     "urlfetch"
   ]
   revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
@@ -462,6 +458,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d0f7f42d9f8e189dbc446007faef09e2560970e2fea4bfa853e01c03caf5cfcc"
+  inputs-digest = "670cdb55138aa1394b4c8f87345e9be9c8105248edda4be7176dddee2a4f5d26"
   solver-name = "gps-cdcl"
   solver-version = 1
