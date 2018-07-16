@@ -21,7 +21,6 @@ import (
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
-	"google.golang.org/appengine/log"
 )
 
 // Constants
@@ -125,7 +124,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	if opt.NoUTFNorm {
-		log.Errorf(nil, "The --local-no-unicode-normalization flag is deprecated and will be removed")
+		fs.Errorf(nil, "The --local-no-unicode-normalization flag is deprecated and will be removed")
 	}
 
 	f := &Fs{
