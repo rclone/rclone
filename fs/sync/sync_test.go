@@ -947,6 +947,52 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	}
 }
 
+// Test move
+func TestMoveWithDeleteEmptySrcDirs(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	file2 := r.WriteFile("nested/sub dir/file", "nested", t1)
+	r.Mkdir(r.Fremote)
+
+	// run move with --delete-empty-src-dirs
+	err := MoveDir(r.Fremote, r.Flocal, true)
+	require.NoError(t, err)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Flocal,
+		nil,
+		[]string{},
+		fs.GetModifyWindow(r.Flocal),
+	)
+	fstest.CheckItems(t, r.Fremote, file1, file2)
+}
+
+func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+	file2 := r.WriteFile("nested/sub dir/file", "nested", t1)
+	r.Mkdir(r.Fremote)
+
+	err := MoveDir(r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Flocal,
+		nil,
+		[]string{
+			"sub dir",
+			"nested",
+			"nested/sub dir",
+		},
+		fs.GetModifyWindow(r.Flocal),
+	)
+	fstest.CheckItems(t, r.Fremote, file1, file2)
+}
+
 // Test a server side move if possible, or the backup path if not
 func TestServerSideMove(t *testing.T) {
 	r := fstest.NewRun(t)
