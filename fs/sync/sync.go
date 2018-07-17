@@ -522,13 +522,18 @@ func copyEmptyDirectories(f fs.Fs, entries map[string]fs.DirEntry) error {
 	return nil
 }
 
-func parentDirCheck(entries map[string]fs.DirEntry, entry fs.DirEntry) {
+func (s *syncCopyMove) srcParentDirCheck(entry fs.DirEntry) {
+	// If we are moving files then we don't want to remove directories with files in them
+	// from the srcEmptyDirs as we are about to move them making the directory empty.
+	if s.DoMove {
+		return
+	}
 	parentDir := path.Dir(entry.Remote())
 	if parentDir == "." {
 		parentDir = ""
 	}
-	if _, ok := entries[parentDir]; ok {
-		delete(entries, parentDir)
+	if _, ok := s.srcEmptyDirs[parentDir]; ok {
+		delete(s.srcEmptyDirs, parentDir)
 	}
 }
 
@@ -771,10 +776,11 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 	}
 	switch x := src.(type) {
 	case fs.Object:
-		// Remove parent directory from srcEmptyDirs
+		// If it's a copy operation,
+		// remove parent directory from srcEmptyDirs
 		// since it's not really empty
 		s.srcEmptyDirsMu.Lock()
-		parentDirCheck(s.srcEmptyDirs, src)
+		s.srcParentDirCheck(src)
 		s.srcEmptyDirsMu.Unlock()
 
 		if s.trackRenames {
@@ -796,7 +802,7 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 		// Do the same thing to the entire contents of the directory
 		// Record the directory for deletion
 		s.srcEmptyDirsMu.Lock()
-		parentDirCheck(s.srcEmptyDirs, src)
+		s.srcParentDirCheck(src)
 		s.srcEmptyDirs[src.Remote()] = src
 		s.srcEmptyDirsMu.Unlock()
 		return true
@@ -811,7 +817,7 @@ func (s *syncCopyMove) Match(dst, src fs.DirEntry) (recurse bool) {
 	switch srcX := src.(type) {
 	case fs.Object:
 		s.srcEmptyDirsMu.Lock()
-		parentDirCheck(s.srcEmptyDirs, src)
+		s.srcParentDirCheck(src)
 		s.srcEmptyDirsMu.Unlock()
 
 		if s.deleteMode == fs.DeleteModeOnly {
@@ -836,7 +842,7 @@ func (s *syncCopyMove) Match(dst, src fs.DirEntry) (recurse bool) {
 		if ok {
 			// Record the src directory for deletion
 			s.srcEmptyDirsMu.Lock()
-			parentDirCheck(s.srcEmptyDirs, src)
+			s.srcParentDirCheck(src)
 			s.srcEmptyDirs[src.Remote()] = src
 			s.srcEmptyDirsMu.Unlock()
 			return true
