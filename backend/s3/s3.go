@@ -539,6 +539,11 @@ func init() {
 			Help:     "Concurrency for multipart uploads.",
 			Default:  2,
 			Advanced: true,
+		}, {
+			Name:     "force_path_style",
+			Help:     "If true use path style access if false use virtual hosted style.\nSome providers (eg Aliyun OSS or Netease COS) require this.",
+			Default:  true,
+			Advanced: true,
 		}},
 	})
 }
@@ -569,6 +574,7 @@ type Options struct {
 	DisableChecksum      bool          `config:"disable_checksum"`
 	SessionToken         string        `config:"session_token"`
 	UploadConcurrency    int           `config:"upload_concurrency"`
+	ForcePathStyle       bool          `config:"force_path_style"`
 }
 
 // Fs represents a remote s3 server
@@ -707,7 +713,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		WithCredentials(cred).
 		WithEndpoint(opt.Endpoint).
 		WithHTTPClient(fshttp.NewClient(fs.Config)).
-		WithS3ForcePathStyle(true)
+		WithS3ForcePathStyle(opt.ForcePathStyle)
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
 	ses := session.New()
 	c := s3.New(ses, awsConfig)
