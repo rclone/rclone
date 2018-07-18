@@ -5,6 +5,7 @@
 package mount
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -62,6 +63,9 @@ func mountOptions(device string) (options []fuse.MountOption) {
 	}
 	if mountlib.WritebackCache {
 		options = append(options, fuse.WritebackCache())
+	}
+	if mountlib.DaemonTimeout != 0 {
+		options = append(options, fuse.DaemonTimeout(fmt.Sprint(int(mountlib.DaemonTimeout.Seconds()))))
 	}
 	if len(mountlib.ExtraOptions) > 0 {
 		fs.Errorf(nil, "-o/--option not supported with this FUSE backend")

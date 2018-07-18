@@ -88,6 +88,9 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	if mountlib.WritebackCache {
 		// FIXME? options = append(options, "-o", WritebackCache())
 	}
+	if mountlib.DaemonTimeout != 0 {
+		options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(mountlib.DaemonTimeout.Seconds())))
+	}
 	for _, option := range mountlib.ExtraOptions {
 		options = append(options, "-o", option)
 	}
