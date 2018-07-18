@@ -523,7 +523,7 @@ func AddBackendFlags() {
 				}
 				help = strings.TrimSpace(help)
 				flag := pflag.CommandLine.VarPF(opt, name, string(opt.ShortOpt), help)
-				if _, isBool := opt.Value.(bool); isBool {
+				if _, isBool := opt.Default.(bool); isBool {
 					flag.NoOptDefVal = "true"
 				}
 				// Hide on the command line if requested
