@@ -241,6 +241,11 @@ func init() {
 			Default:  false,
 			Help:     "Keep new head revision forever.",
 			Advanced: true,
+		}, {
+			Name:     "untrash",
+			Default:  false,
+			Help:     "Untrash any trashed files - use with --drive-trashed-only.",
+			Advanced: true,
 		}},
 	})
 
@@ -272,6 +277,7 @@ type Options struct {
 	ChunkSize                 fs.SizeSuffix `config:"chunk_size"`
 	AcknowledgeAbuse          bool          `config:"acknowledge_abuse"`
 	KeepRevisionForever       bool          `config:"keep_revision_forever"`
+	Untrash                   bool          `config:"untrash"`
 }
 
 // Fs represents a remote drive server
@@ -819,6 +825,23 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	var iErr error
 	_, err = f.list(directoryID, "", false, false, false, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
+
+		// Untrash all trashed files if required
+		if f.opt.Untrash && item.Trashed {
+			fs.Infof(remote, "Untrashing")
+			err = f.pacer.Call(func() (bool, error) {
+				info := drive.File{
+					Trashed:         false,
+					ForceSendFields: []string{"Trashed"},
+				}
+				_, err = f.svc.Files.Update(item.Id, &info).Fields("").SupportsTeamDrives(f.isTeamDrive).Do()
+				return shouldRetry(err)
+			})
+			if err != nil {
+				fs.Errorf(remote, "Untrashing failed: %v", err)
+			}
+		}
+
 		switch {
 		case item.MimeType == driveFolderType:
 			// cache the directory ID for later lookups
