@@ -157,17 +157,46 @@ func (s *StatsInfo) String() string {
 		speed = speed * 8
 	}
 
+	percent := func(a int64, b int64) int {
+		if b <= 0 {
+			return 0
+		}
+		return int(float64(a)*100/float64(b) + 0.5)
+	}
+
+	totalChecks, totalTransfer, totalSize := int64(s.checkQueue)+s.checks, int64(s.transferQueue)+s.transfers, s.transferQueueSize+s.bytes
+	eta := time.Duration(0)
+	if speed > 0 {
+		eta = time.Second * time.Duration(float64(s.transferQueueSize)/float64(speed)+0.5)
+	}
+	etaString := "-"
+	if eta > 0 {
+		etaString = eta.String()
+	}
+	xfrchk := []string{}
+	if totalTransfer > 0 && s.transferQueue > 0 {
+		xfrchk = append(xfrchk, fmt.Sprintf("xfr#%d/%d", s.transfers, totalTransfer))
+	}
+	if totalChecks > 0 && s.checkQueue > 0 {
+		xfrchk = append(xfrchk, fmt.Sprintf("chk#%d/%d", s.checks, totalChecks))
+	}
+	xfrchkString := ""
+	if len(xfrchk) > 0 {
+		xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
+	}
+	// FIXME make a one line display too
+
 	_, _ = fmt.Fprintf(buf, `
-Transferred:   %10s (%s)
+Transferred:   %10s / %s, %d%%, %s, ETA %s%s
 Errors:        %10d
-Checks:        %10d
-Transferred:   %10d
+Checks:        %10d / %d, %d%%
+Transferred:   %10d / %d, %d%%
 Elapsed time:  %10v
 `,
-		fs.SizeSuffix(s.bytes).Unit("Bytes"), fs.SizeSuffix(speed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
+		fs.SizeSuffix(s.bytes), fs.SizeSuffix(totalSize).Unit("Bytes"), percent(s.bytes, totalSize), fs.SizeSuffix(speed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"), etaString, xfrchkString,
 		s.errors,
-		s.checks,
-		s.transfers,
+		s.checks, totalChecks, percent(s.checks, totalChecks),
+		s.transfers, totalTransfer, percent(s.transfers, totalTransfer),
 		dtRounded)
 
 	// checking and transferring have their own locking so unlock
