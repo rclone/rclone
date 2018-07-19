@@ -827,9 +827,6 @@ type ObjectPair struct {
 	Src, Dst Object
 }
 
-// ObjectPairChan is a channel of ObjectPair
-type ObjectPairChan chan ObjectPair
-
 // Find looks for an Info object for the name passed in
 //
 // Services are looked up in the config file

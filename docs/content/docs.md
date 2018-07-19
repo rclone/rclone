@@ -535,6 +535,22 @@ to reduce the value so rclone moves on to a high level retry (see the
 
 Disable low level retries with `--low-level-retries 1`.
 
+### --max-backlog=N ###
+
+This is the maximum allowable backlog of files in a sync/copy/move
+queued for being checked or transferred.
+
+This can be set arbitrarily large.  It will only use memory when the
+queue is in use.  Note that it will use in the order of N kB of memory
+when the backlog is in use.
+
+Setting this large allows rclone to calculate how many files are
+pending more accurately and give a more accurate estimated finish
+time.
+
+Setting this small will make rclone more synchronous to the listings
+of the remote which may be desirable.
+
 ### --max-delete=N ###
 
 This tells rclone not to delete more than N files.  If that limit is

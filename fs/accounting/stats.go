@@ -65,17 +65,23 @@ The value for "eta" is null if an eta cannot be determined.
 
 // StatsInfo accounts all transfers
 type StatsInfo struct {
-	mu           sync.RWMutex
-	bytes        int64
-	errors       int64
-	lastError    error
-	checks       int64
-	checking     *stringSet
-	transfers    int64
-	transferring *stringSet
-	deletes      int64
-	start        time.Time
-	inProgress   *inProgress
+	mu                sync.RWMutex
+	bytes             int64
+	errors            int64
+	lastError         error
+	checks            int64
+	checking          *stringSet
+	checkQueue        int
+	checkQueueSize    int64
+	transfers         int64
+	transferring      *stringSet
+	transferQueue     int
+	transferQueueSize int64
+	renameQueue       int
+	renameQueueSize   int64
+	deletes           int64
+	start             time.Time
+	inProgress        *inProgress
 }
 
 // NewStats cretates an initialised StatsInfo
@@ -293,4 +299,28 @@ func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
 		s.transfers++
 		s.mu.Unlock()
 	}
+}
+
+// SetCheckQueue sets the number of queued checks
+func (s *StatsInfo) SetCheckQueue(n int, size int64) {
+	s.mu.Lock()
+	s.checkQueue = n
+	s.checkQueueSize = size
+	s.mu.Unlock()
+}
+
+// SetTransferQueue sets the number of queued transfers
+func (s *StatsInfo) SetTransferQueue(n int, size int64) {
+	s.mu.Lock()
+	s.transferQueue = n
+	s.transferQueueSize = size
+	s.mu.Unlock()
+}
+
+// SetRenameQueue sets the number of queued transfers
+func (s *StatsInfo) SetRenameQueue(n int, size int64) {
+	s.mu.Lock()
+	s.renameQueue = n
+	s.renameQueueSize = size
+	s.mu.Unlock()
 }
