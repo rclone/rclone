@@ -81,6 +81,7 @@ type ConfigInfo struct {
 	AskPassword           bool
 	UseServerModTime      bool
 	MaxTransfer           SizeSuffix
+	MaxBacklog            int
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -109,6 +110,7 @@ func NewConfig() *ConfigInfo {
 	c.AskPassword = true
 	c.TPSLimitBurst = 1
 	c.MaxTransfer = -1
+	c.MaxBacklog = 10000
 
 	return c
 }
