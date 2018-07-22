@@ -48,6 +48,8 @@ var DefaultOpt = Options{
 	CacheMode:         CacheModeOff,
 	CacheMaxAge:       3600 * time.Second,
 	CachePollInterval: 60 * time.Second,
+	ChunkSize:         128 * fs.MebiByte,
+	ChunkSizeLimit:    -1,
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
