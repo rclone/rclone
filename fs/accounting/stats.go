@@ -102,8 +102,8 @@ func (s *StatsInfo) Bytes(bytes int64) {
 
 // GetBytes returns the number of bytes transferred so far
 func (s *StatsInfo) GetBytes() int64 {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.bytes
 }
 
@@ -138,8 +138,8 @@ func (s *StatsInfo) Deletes(deletes int64) int64 {
 
 // ResetCounters sets the counters (bytes, checks, errors, transfers) to 0
 func (s *StatsInfo) ResetCounters() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.bytes = 0
 	s.errors = 0
 	s.checks = 0
@@ -149,8 +149,8 @@ func (s *StatsInfo) ResetCounters() {
 
 // ResetErrors sets the errors count to 0
 func (s *StatsInfo) ResetErrors() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.errors = 0
 }
 
