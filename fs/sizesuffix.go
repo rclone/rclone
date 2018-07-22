@@ -13,6 +13,17 @@ import (
 // SizeSuffix is an int64 with a friendly way of printing setting
 type SizeSuffix int64
 
+// Common multipliers for SizeSuffix
+const (
+	Byte SizeSuffix = 1 << (iota * 10)
+	KibiByte
+	MebiByte
+	GibiByte
+	TebiByte
+	PebiByte
+	ExbiByte
+)
+
 // Turn SizeSuffix into a string and a suffix
 func (x SizeSuffix) string() (string, string) {
 	scaled := float64(0)
