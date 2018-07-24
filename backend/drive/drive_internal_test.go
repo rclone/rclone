@@ -53,11 +53,10 @@ const exampleExportFormats = `{
 	]
 }`
 
-var exportFormats map[string][]string
-
 // Load the example export formats into exportFormats for testing
 func TestInternalLoadExampleExportFormats(t *testing.T) {
-	assert.NoError(t, json.Unmarshal([]byte(exampleExportFormats), &exportFormats))
+	exportFormatsOnce.Do(func() {})
+	assert.NoError(t, json.Unmarshal([]byte(exampleExportFormats), &_exportFormats))
 }
 
 func TestInternalParseExtensions(t *testing.T) {
@@ -90,8 +89,10 @@ func TestInternalParseExtensions(t *testing.T) {
 }
 
 func TestInternalFindExportFormat(t *testing.T) {
-	item := new(drive.File)
-	item.MimeType = "application/vnd.google-apps.document"
+	item := &drive.File{
+		Name:     "file",
+		MimeType: "application/vnd.google-apps.document",
+	}
 	for _, test := range []struct {
 		extensions    []string
 		wantExtension string
@@ -105,8 +106,14 @@ func TestInternalFindExportFormat(t *testing.T) {
 	} {
 		f := new(Fs)
 		f.extensions = test.extensions
-		gotExtension, gotMimeType := f.findExportFormat("file", exportFormats[item.MimeType])
+		gotExtension, gotFilename, gotMimeType, gotIsDocument := f.findExportFormat(item)
 		assert.Equal(t, test.wantExtension, gotExtension)
+		if test.wantExtension != "" {
+			assert.Equal(t, item.Name+"."+gotExtension, gotFilename)
+		} else {
+			assert.Equal(t, "", gotFilename)
+		}
 		assert.Equal(t, test.wantMimeType, gotMimeType)
+		assert.Equal(t, true, gotIsDocument)
 	}
 }

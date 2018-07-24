@@ -359,6 +359,15 @@ func parseDrivePath(path string) (root string, err error) {
 // Should return true to finish processing
 type listFn func(*drive.File) bool
 
+func containsString(slice []string, s string) bool {
+	for _, e := range slice {
+		if e == s {
+			return true
+		}
+	}
+	return false
+}
+
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
@@ -382,13 +391,24 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 	if dirID != "" && !(f.opt.SharedWithMe && dirID == f.rootFolderID) {
 		query = append(query, fmt.Sprintf("'%s' in parents", dirID))
 	}
+	stem := ""
 	if title != "" {
 		// Escaping the backslash isn't documented but seems to work
 		searchTitle := strings.Replace(title, `\`, `\\`, -1)
 		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
 		// Convert ／ to / for search
 		searchTitle = strings.Replace(searchTitle, "／", "/", -1)
-		query = append(query, fmt.Sprintf("name='%s'", searchTitle))
+
+		handleGdocs := !directoriesOnly && !f.opt.SkipGdocs
+		// if the search title contains an extension and the extension is in the export extensions add a search
+		// for the filename without the extension.
+		// assume that export extensions don't contain escape sequences and only have one part (not .tar.gz)
+		if ext := path.Ext(searchTitle); handleGdocs && len(ext) > 0 && containsString(f.extensions, ext[1:]) {
+			stem = title[:len(title)-len(ext)]
+			query = append(query, fmt.Sprintf("(name='%s' or name='%s')", searchTitle, searchTitle[:len(title)-len(ext)]))
+		} else {
+			query = append(query, fmt.Sprintf("name='%s'", searchTitle))
+		}
 	}
 	if directoriesOnly {
 		query = append(query, fmt.Sprintf("mimeType='%s'", driveFolderType))
@@ -438,8 +458,15 @@ OUTER:
 			item.Name = strings.Replace(item.Name, "/", "／", -1)
 			// Check the case of items is correct since
 			// the `=` operator is case insensitive.
+
 			if title != "" && title != item.Name {
-				continue
+				if stem == "" || stem != item.Name {
+					continue
+				}
+				_, exportName, _, _ := f.findExportFormat(item)
+				if exportName == "" || exportName != title {
+					continue
+				}
 			}
 			if fn(item) {
 				found = true
@@ -665,23 +692,17 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		entries, err := tempF.List("")
+		_, err := tempF.NewObject(remote)
 		if err != nil {
 			// unable to list folder so return old f
 			return f, nil
 		}
-		for _, e := range entries {
-			if _, isObject := e.(fs.Object); isObject && e.Remote() == remote {
-				// XXX: update the old f here instead of returning tempF, since
-				// `features` were already filled with functions having *f as a receiver.
-				// See https://github.com/ncw/rclone/issues/2182
-				f.dirCache = tempF.dirCache
-				f.root = tempF.root
-				return f, fs.ErrorIsFile
-			}
-		}
-		// File doesn't exist so return old f
-		return f, nil
+		// XXX: update the old f here instead of returning tempF, since
+		// `features` were already filled with functions having *f as a receiver.
+		// See https://github.com/ncw/rclone/issues/2182
+		f.dirCache = tempF.dirCache
+		f.root = tempF.root
+		return f, fs.ErrorIsFile
 	}
 	// fmt.Printf("Root id %s", f.dirCache.RootID())
 	return f, nil
@@ -719,6 +740,13 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 		if item.Name == leaf {
 			pathIDOut = item.Id
 			return true
+		}
+		if !f.opt.SkipGdocs {
+			_, exportName, _, _ := f.findExportFormat(item)
+			if exportName == leaf {
+				pathIDOut = item.Id
+				return true
+			}
 		}
 		return false
 	})
@@ -783,18 +811,21 @@ func (f *Fs) exportFormats() map[string][]string {
 //
 // Look through the extensions and find the first format that can be
 // converted.  If none found then return "", ""
-func (f *Fs) findExportFormat(filepath string, exportMimeTypes []string) (extension, mimeType string) {
-	for _, extension := range f.extensions {
-		mimeType := extensionToMimeType[extension]
-		for _, emt := range exportMimeTypes {
-			if emt == mimeType {
-				return extension, mimeType
+func (f *Fs) findExportFormat(item *drive.File) (extension, filename, mimeType string, isDocument bool) {
+	exportMimeTypes, isDocument := f.exportFormats()[item.MimeType]
+	if isDocument {
+		for _, extension := range f.extensions {
+			mimeType := extensionToMimeType[extension]
+			for _, emt := range exportMimeTypes {
+				if emt == mimeType {
+					return extension, fmt.Sprintf("%s.%s", item.Name, extension), mimeType, true
+				}
 			}
 		}
 	}
 
 	// else return empty
-	return "", ""
+	return "", "", "", isDocument
 }
 
 // List the objects and directories in dir into entries.  The
@@ -839,40 +870,23 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		case f.opt.SkipGdocs:
 			fs.Debugf(remote, "Skipping google document type %q", item.MimeType)
 		default:
-			exportMimeTypes, isDocument := f.exportFormats()[item.MimeType]
+			// If item MimeType is in the ExportFormats then it is a google doc
+			extension, _, exportMimeType, isDocument := f.findExportFormat(item)
 			if !isDocument {
 				fs.Debugf(remote, "Ignoring unknown document type %q", item.MimeType)
 				break
 			}
-			// If item has export links then it is a google doc
-			extension, exportMimeType := f.findExportFormat(remote, exportMimeTypes)
 			if extension == "" {
 				fs.Debugf(remote, "No export formats found for %q", item.MimeType)
 				break
 			}
-			o, err := f.newObjectWithInfo(remote+"."+extension, item)
+			obj, err := f.newObjectWithInfo(remote+"."+extension, item)
 			if err != nil {
 				iErr = err
 				return true
 			}
-			obj := o.(*Object)
-			obj.url = fmt.Sprintf("%sfiles/%s/export?mimeType=%s", f.svc.BasePath, item.Id, url.QueryEscape(exportMimeType))
-			if f.opt.AlternateExport {
-				switch item.MimeType {
-				case "application/vnd.google-apps.drawing":
-					obj.url = fmt.Sprintf("https://docs.google.com/drawings/d/%s/export/%s", item.Id, extension)
-				case "application/vnd.google-apps.document":
-					obj.url = fmt.Sprintf("https://docs.google.com/document/d/%s/export?format=%s", item.Id, extension)
-				case "application/vnd.google-apps.spreadsheet":
-					obj.url = fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=%s", item.Id, extension)
-				case "application/vnd.google-apps.presentation":
-					obj.url = fmt.Sprintf("https://docs.google.com/presentation/d/%s/export/%s", item.Id, extension)
-				}
-			}
-			obj.isDocument = true
-			obj.mimeType = exportMimeType
-			obj.bytes = -1
-			entries = append(entries, o)
+			obj.(*Object).setGdocsMetaData(item, extension, exportMimeType)
+			entries = append(entries, obj)
 		}
 		return false
 	})
@@ -1549,6 +1563,26 @@ func (o *Object) setMetaData(info *drive.File) {
 	o.mimeType = info.MimeType
 }
 
+// setGdocsMetaData only sets the gdocs related fields
+func (o *Object) setGdocsMetaData(info *drive.File, extension, exportMimeType string) {
+	o.url = fmt.Sprintf("%sfiles/%s/export?mimeType=%s", o.fs.svc.BasePath, info.Id, url.QueryEscape(exportMimeType))
+	if o.fs.opt.AlternateExport {
+		switch info.MimeType {
+		case "application/vnd.google-apps.drawing":
+			o.url = fmt.Sprintf("https://docs.google.com/drawings/d/%s/export/%s", info.Id, extension)
+		case "application/vnd.google-apps.document":
+			o.url = fmt.Sprintf("https://docs.google.com/document/d/%s/export?format=%s", info.Id, extension)
+		case "application/vnd.google-apps.spreadsheet":
+			o.url = fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=%s", info.Id, extension)
+		case "application/vnd.google-apps.presentation":
+			o.url = fmt.Sprintf("https://docs.google.com/presentation/d/%s/export/%s", info.Id, extension)
+		}
+	}
+	o.isDocument = true
+	o.mimeType = exportMimeType
+	o.bytes = -1
+}
+
 // readMetaData gets the info if it hasn't already been fetched
 func (o *Object) readMetaData() (err error) {
 	if o.id != "" {
@@ -1567,6 +1601,14 @@ func (o *Object) readMetaData() (err error) {
 		if item.Name == leaf {
 			o.setMetaData(item)
 			return true
+		}
+		if !o.fs.opt.SkipGdocs {
+			extension, exportName, exportMimeType, _ := o.fs.findExportFormat(item)
+			if exportName == leaf {
+				o.setMetaData(item)
+				o.setGdocsMetaData(item, extension, exportMimeType)
+				return true
+			}
 		}
 		return false
 	})
