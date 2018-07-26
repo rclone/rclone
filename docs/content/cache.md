@@ -1,4 +1,4 @@
----
+-----
 title: "Cache"
 description: "Rclone docs for cache remote"
 date: "2017-09-03"
@@ -133,7 +133,8 @@ to the cloud provider without interrupting the reading (small blip can happen th
 
 Files are uploaded in sequence and only one file is uploaded at a time.
 Uploads will be stored in a queue and be processed based on the order they were added.
-The queue and the temporary storage is persistent across restarts and even purges of the cache.
+The queue and the temporary storage is persistent across restarts but
+can be cleared on startup with the `--cache-db-purge` flag.
 
 ### Write Support ###
 
@@ -281,7 +282,7 @@ then `--cache-chunk-path` will use the same path as `--cache-db-path`.
 
 #### --cache-db-purge ####
 
-Flag to clear all the cached data for this remote before.
+Flag to clear all the cached data for this remote on start.
 
 **Default**: not set
 
