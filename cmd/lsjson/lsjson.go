@@ -22,6 +22,7 @@ var (
 	recurse       bool
 	showHash      bool
 	showEncrypted bool
+	showOrigIDs   bool
 	noModTime     bool
 )
 
@@ -31,6 +32,7 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&showHash, "hash", "", false, "Include hashes in the output (may take longer).")
 	commandDefintion.Flags().BoolVarP(&noModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
 	commandDefintion.Flags().BoolVarP(&showEncrypted, "encrypted", "M", false, "Show the encrypted names.")
+	commandDefintion.Flags().BoolVarP(&showOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
 }
 
 // lsJSON in the struct which gets marshalled for each line
@@ -44,6 +46,7 @@ type lsJSON struct {
 	IsDir     bool
 	Hashes    map[string]string `json:",omitempty"`
 	ID        string            `json:",omitempty"`
+	OrigID    string            `json:",omitempty"`
 }
 
 // Timestamp a time in RFC3339 format with Nanosecond precision secongs
@@ -72,6 +75,7 @@ The output is an array of Items, where each Item looks like this
          "DropboxHash" : "ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc"
       },
       "ID": "y2djkhiujf83u33",
+      "OrigID": "UYOJVTUW00Q1RzTDA",
       "IsDir" : false,
       "MimeType" : "application/octet-stream",
       "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
@@ -145,6 +149,23 @@ can be processed line by line as each item is written one to a line.
 					}
 					if do, ok := entry.(fs.IDer); ok {
 						item.ID = do.ID()
+					}
+					if showOrigIDs {
+						cur := entry
+						for {
+							u, ok := cur.(fs.ObjectUnWrapper)
+							if !ok {
+								break // not a wrapped object, use current id
+							}
+							next := u.UnWrap()
+							if next == nil {
+								break // no base object found, use current id
+							}
+							cur = next
+						}
+						if do, ok := cur.(fs.IDer); ok {
+							item.OrigID = do.ID()
+						}
 					}
 					switch x := entry.(type) {
 					case fs.Directory:
