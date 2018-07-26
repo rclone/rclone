@@ -353,6 +353,13 @@ func (o *Object) tempFileStartedUpload() bool {
 	return started
 }
 
+// UnWrap returns the Object that this Object is wrapping or
+// nil if it isn't wrapping anything
+func (o *Object) UnWrap() fs.Object {
+	return o.Object
+}
+
 var (
-	_ fs.Object = (*Object)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.ObjectUnWrapper = (*Object)(nil)
 )
