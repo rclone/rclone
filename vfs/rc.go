@@ -86,9 +86,33 @@ starting with dir will forget that dir, eg
 				return nil, EINVAL
 			}
 
+			recursive := false
+			{
+				const k = "recursive"
+
+				if v, ok := in[k]; ok {
+					s, ok := v.(string)
+					if !ok {
+						return out, errors.Errorf("value must be string %q=%v", k, v)
+					}
+					switch strings.ToLower(s) {
+					case "true", "1":
+						recursive = true
+					case "false", "0":
+					default:
+						return out, errors.Errorf("invalid value %q=%v", k, v)
+					}
+					delete(in, k)
+				}
+			}
+
 			result := map[string]string{}
 			if len(in) == 0 {
-				err = root.readDirTree()
+				if recursive {
+					err = root.readDirTree()
+				} else {
+					err = root.readDir()
+				}
 				if err != nil {
 					result[""] = err.Error()
 				} else {
@@ -105,7 +129,11 @@ starting with dir will forget that dir, eg
 						if err != nil {
 							result[path] = err.Error()
 						} else {
-							err = dir.readDirTree()
+							if recursive {
+								err = dir.readDirTree()
+							} else {
+								err = dir.readDir()
+							}
 							if err != nil {
 								result[path] = err.Error()
 							} else {
