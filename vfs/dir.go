@@ -256,6 +256,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree walk.DirTree, w
 	return nil
 }
 
+// readDirTree forces a refresh of the complete directory tree
 func (d *Dir) readDirTree() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -273,6 +274,14 @@ func (d *Dir) readDirTree() error {
 	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
 	return nil
+}
+
+// readDir forces a refresh of the directory
+func (d *Dir) readDir() error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.read = time.Time{}
+	return d._readDir()
 }
 
 // stat a single item in the directory
