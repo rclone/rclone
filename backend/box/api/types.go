@@ -172,8 +172,8 @@ type UploadSessionResponse struct {
 // Part defines the return from upload part call which are passed to commit upload also
 type Part struct {
 	PartID string `json:"part_id"`
-	Offset int    `json:"offset"`
-	Size   int    `json:"size"`
+	Offset int64  `json:"offset"`
+	Size   int64  `json:"size"`
 	Sha1   string `json:"sha1"`
 }
 
