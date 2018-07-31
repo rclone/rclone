@@ -280,6 +280,36 @@ func (acc *Account) String() string {
 	)
 }
 
+// RemoteStats produces stats for this file
+func (acc *Account) RemoteStats() (out map[string]interface{}) {
+	out = make(map[string]interface{})
+	a, b := acc.progress()
+	out["bytes"] = a
+	out["size"] = b
+	spd, cur := acc.speed()
+	out["speed"] = spd
+	out["speedAvg"] = cur
+
+	eta, etaok := acc.eta()
+	out["eta"] = nil
+	if etaok {
+		if eta > 0 {
+			out["eta"] = eta.Seconds()
+		} else {
+			out["eta"] = 0
+		}
+	}
+	out["name"] = acc.name
+
+	percentageDone := 0
+	if b > 0 {
+		percentageDone = int(100 * float64(a) / float64(b))
+	}
+	out["percentage"] = percentageDone
+
+	return out
+}
+
 // OldStream returns the top io.Reader
 func (acc *Account) OldStream() io.Reader {
 	acc.mu.Lock()
