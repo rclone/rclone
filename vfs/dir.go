@@ -197,10 +197,14 @@ func (d *Dir) _readDir() error {
 	return nil
 }
 
+// update d.items for each dir in the DirTree below this one and
+// set the last read time - must be called with the lock held
 func (d *Dir) _readDirFromDirTree(dirTree walk.DirTree, when time.Time) error {
 	return d._readDirFromEntries(dirTree[d.path], dirTree, when)
 }
 
+// update d.items and if dirTree is not nil update each dir in the DirTree below this one and
+// set the last read time - must be called with the lock held
 func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree walk.DirTree, when time.Time) error {
 	var err error
 	// Cache the items by name
