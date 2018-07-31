@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/ncw/rclone/fs"
@@ -95,11 +96,8 @@ starting with dir will forget that dir, eg
 					if !ok {
 						return out, errors.Errorf("value must be string %q=%v", k, v)
 					}
-					switch strings.ToLower(s) {
-					case "true", "1":
-						recursive = true
-					case "false", "0":
-					default:
+					recursive, err = strconv.ParseBool(s)
+					if err != nil {
 						return out, errors.Errorf("invalid value %q=%v", k, v)
 					}
 					delete(in, k)
@@ -151,9 +149,9 @@ starting with dir will forget that dir, eg
 			}
 			return out, nil
 		},
-		Title: "Refresh the directory cache tree.",
+		Title: "Refresh the directory cache.",
 		Help: `
-This reads the full directory tree for the paths and freshens the
+This reads the directories for the specified paths and freshens the
 directory cache.
 
 If no paths are passed in then it will refresh the root directory.
@@ -165,7 +163,8 @@ starting with dir will refresh that directory, eg
 
     rclone rc vfs/refresh dir=home/junk dir2=data/misc
 
-This refresh will use --fast-list if enabled.
+If the parameter recursive=true is given the whole directory tree
+will get refreshed. This refresh will use --fast-list if enabled.
 
 `,
 	})
