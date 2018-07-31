@@ -12,7 +12,7 @@ import (
 
 // Directory is a generic dir that stores basic information about it
 type Directory struct {
-	fs.Directory `json:"-"`
+	Directory fs.Directory `json:"-"` // can be nil
 
 	CacheFs      *Fs    `json:"-"`       // cache fs
 	Name         string `json:"name"`    // name of the directory
@@ -123,6 +123,14 @@ func (d *Directory) Size() int64 {
 // Items returns the cached Items
 func (d *Directory) Items() int64 {
 	return d.CacheItems
+}
+
+// ID returns the ID of the cached directory if known
+func (d *Directory) ID() string {
+	if d.Directory == nil {
+		return ""
+	}
+	return d.Directory.ID()
 }
 
 var (
