@@ -15,6 +15,7 @@ import (
 	_ "github.com/ncw/rclone/backend/googlecloudstorage"
 	_ "github.com/ncw/rclone/backend/http"
 	_ "github.com/ncw/rclone/backend/hubic"
+	_ "github.com/ncw/rclone/backend/jottacloud"
 	_ "github.com/ncw/rclone/backend/local"
 	_ "github.com/ncw/rclone/backend/mega"
 	_ "github.com/ncw/rclone/backend/onedrive"
