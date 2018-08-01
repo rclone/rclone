@@ -39,8 +39,7 @@ const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
 	eventWaitTime = 500 * time.Millisecond
-	decayConstant = 2    // bigger for slower decay, exponential
-	useTrash      = true // FIXME make configurable - rclone global
+	decayConstant = 2 // bigger for slower decay, exponential
 )
 
 var (
@@ -65,7 +64,12 @@ func init() {
 			IsPassword: true,
 		}, {
 			Name:     "debug",
-			Help:     "If set then output more debug from mega.",
+			Help:     "Output more debug from Mega.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "hard_delete",
+			Help:     "Delete files permanently rather than putting them into the trash.",
 			Default:  false,
 			Advanced: true,
 		}},
@@ -74,9 +78,10 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	User  string `config:"user"`
-	Pass  string `config:"pass"`
-	Debug bool   `config:"debug"`
+	User       string `config:"user"`
+	Pass       string `config:"pass"`
+	Debug      bool   `config:"debug"`
+	HardDelete bool   `config:"hard_delete"`
 }
 
 // Fs represents a remote mega
@@ -557,7 +562,7 @@ func (f *Fs) Mkdir(dir string) error {
 // deleteNode removes a file or directory, observing useTrash
 func (f *Fs) deleteNode(node *mega.Node) (err error) {
 	err = f.pacer.Call(func() (bool, error) {
-		err = f.srv.Delete(node, !useTrash)
+		err = f.srv.Delete(node, f.opt.HardDelete)
 		return shouldRetry(err)
 	})
 	return err
