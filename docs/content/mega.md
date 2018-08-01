@@ -96,6 +96,23 @@ messages in the log about duplicates.
 
 Use `rclone dedupe` to fix duplicated files.
 
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --mega-debug ####
+
+If this flag is set (along with `-vv`) it will print further debugging
+information from the mega backend.
+
+#### --mega-hard-delete ####
+
+Normally the mega backend will put all deletions into the trash rather
+than permanently deleting them.  If you specify this flag (or set it
+in the advanced config) then rclone will permanently delete objects
+instead.
+
 ### Limitations ###
 
 This backend uses the [go-mega go
