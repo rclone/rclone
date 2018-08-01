@@ -73,6 +73,11 @@ var (
 			FastList: false,
 		},
 		{
+			Name:     "TestJottacloud:",
+			SubDir:   false,
+			FastList: false,
+		},
+		{
 			Name:     "TestOneDrive:",
 			SubDir:   false,
 			FastList: false,
