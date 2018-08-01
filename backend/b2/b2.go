@@ -66,7 +66,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "account",
-			Help:     "Account ID",
+			Help:     "Account ID or Application Key ID",
 			Required: true,
 		}, {
 			Name:     "key",
@@ -691,7 +691,11 @@ type listBucketFn func(*api.Bucket) error
 
 // listBucketsToFn lists the buckets to the function supplied
 func (f *Fs) listBucketsToFn(fn listBucketFn) error {
-	var account = api.Account{ID: f.info.AccountID}
+	var account = api.ListBucketsRequest{
+		AccountID: f.info.AccountID,
+		BucketID:  f.info.Allowed.BucketID,
+	}
+
 	var response api.ListBucketsResponse
 	opts := rest.Opts{
 		Method: "POST",
