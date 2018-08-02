@@ -259,6 +259,14 @@ Params:
 Here are the command line options specific to this cloud storage
 system.
 
+#### --cache-db-path=PATH ####
+
+Path to where the file structure metadata (DB) is stored locally. The remote
+name is used as the DB file name.
+
+**Default**: <rclone default cache path>/cache-backend/<remote name>
+**Example**: /.cache/cache-backend/test-cache
+
 #### --cache-chunk-path=PATH ####
 
 Path to where partial file data (chunks) is stored locally. The remote
@@ -267,14 +275,6 @@ name is appended to the final path.
 This config follows the `--cache-db-path`. If you specify a custom
 location for `--cache-db-path` and don't specify one for `--cache-chunk-path`
 then `--cache-chunk-path` will use the same path as `--cache-db-path`.
-
-**Default**: <rclone default cache path>/cache-backend/<remote name>
-**Example**: /.cache/cache-backend/test-cache
-
-#### --cache-db-path=PATH ####
-
-Path to where the file structure metadata (DB) is stored locally. The remote
-name is used as the DB file name.
 
 **Default**: <rclone default cache path>/cache-backend/<remote name>
 **Example**: /.cache/cache-backend/test-cache
