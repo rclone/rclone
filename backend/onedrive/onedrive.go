@@ -940,6 +940,110 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return dstObj, nil
 }
 
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	srcPath := path.Join(srcFs.root, srcRemote)
+	dstPath := path.Join(f.root, dstRemote)
+
+	// Refuse to move to or from the root
+	if srcPath == "" || dstPath == "" {
+		fs.Debugf(src, "DirMove error: Can't move root")
+		return errors.New("can't move root directory")
+	}
+
+	// find the root src directory
+	err := srcFs.dirCache.FindRoot(false)
+	if err != nil {
+		return err
+	}
+
+	// find the root dst directory
+	if dstRemote != "" {
+		err = f.dirCache.FindRoot(true)
+		if err != nil {
+			return err
+		}
+	} else {
+		if f.dirCache.FoundRoot() {
+			return fs.ErrorDirExists
+		}
+	}
+
+	// Find ID of dst parent, creating subdirs if necessary
+	var leaf, dstDirectoryID string
+	findPath := dstRemote
+	if dstRemote == "" {
+		findPath = f.root
+	}
+	leaf, dstDirectoryID, err = f.dirCache.FindPath(findPath, true)
+	if err != nil {
+		return err
+	}
+	parsedDstDirID, _, _ := parseDirID(dstDirectoryID)
+
+	// Check destination does not exist
+	if dstRemote != "" {
+		_, err = f.dirCache.FindDir(dstRemote, false)
+		if err == fs.ErrorDirNotFound {
+			// OK
+		} else if err != nil {
+			return err
+		} else {
+			return fs.ErrorDirExists
+		}
+	}
+
+	// Find ID of src
+	srcID, err := srcFs.dirCache.FindDir(srcRemote, false)
+	if err != nil {
+		return err
+	}
+
+	// Get timestamps of src so they can be preserved
+	srcInfo, _, err := srcFs.readMetaDataForPath(srcPath)
+	if err != nil {
+		return err
+	}
+
+	// Do the move
+	opts := newOptsCall(srcID, "PATCH", "")
+	move := api.MoveItemRequest{
+		Name: replaceReservedChars(leaf),
+		ParentReference: &api.ItemReference{
+			ID: parsedDstDirID,
+		},
+		// We set the mod time too as it gets reset otherwise
+		FileSystemInfo: &api.FileSystemInfoFacet{
+			CreatedDateTime:      srcInfo.CreatedDateTime,
+			LastModifiedDateTime: srcInfo.LastModifiedDateTime,
+		},
+	}
+	var resp *http.Response
+	var info api.Item
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(&opts, &move, &info)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	srcFs.dirCache.FlushDir(srcRemote)
+	return nil
+}
+
 // DirCacheFlush resets the directory cache - used in testing as an
 // optional interface
 func (f *Fs) DirCacheFlush() {
