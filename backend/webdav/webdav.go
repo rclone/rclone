@@ -46,7 +46,8 @@ import (
 const (
 	minSleep      = 10 * time.Millisecond
 	maxSleep      = 2 * time.Second
-	decayConstant = 2 // bigger for slower decay, exponential
+	decayConstant = 2   // bigger for slower decay, exponential
+	defaultDepth  = "1" // depth for PROPFIND
 )
 
 // Register with Fs
@@ -103,17 +104,18 @@ type Options struct {
 
 // Fs represents a remote webdav
 type Fs struct {
-	name        string        // name of this remote
-	root        string        // the path we are working on
-	opt         Options       // parsed options
-	features    *fs.Features  // optional features
-	endpoint    *url.URL      // URL of the host
-	endpointURL string        // endpoint as a string
-	srv         *rest.Client  // the connection to the one drive server
-	pacer       *pacer.Pacer  // pacer for API calls
-	precision   time.Duration // mod time precision
-	canStream   bool          // set if can stream
-	useOCMtime  bool          // set if can use X-OC-Mtime
+	name               string        // name of this remote
+	root               string        // the path we are working on
+	opt                Options       // parsed options
+	features           *fs.Features  // optional features
+	endpoint           *url.URL      // URL of the host
+	endpointURL        string        // endpoint as a string
+	srv                *rest.Client  // the connection to the one drive server
+	pacer              *pacer.Pacer  // pacer for API calls
+	precision          time.Duration // mod time precision
+	canStream          bool          // set if can stream
+	useOCMtime         bool          // set if can use X-OC-Mtime
+	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
 }
 
 // Object describes a webdav object
@@ -182,13 +184,13 @@ func itemIsDir(item *api.Response) bool {
 }
 
 // readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
+func (f *Fs) readMetaDataForPath(path string, depth string) (info *api.Prop, err error) {
 	// FIXME how do we read back additional properties?
 	opts := rest.Opts{
 		Method: "PROPFIND",
 		Path:   f.filePath(path),
 		ExtraHeaders: map[string]string{
-			"Depth": "1",
+			"Depth": depth,
 		},
 		NoRedirect: true,
 	}
@@ -202,6 +204,9 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
 		// does not exist
 		switch apiErr.StatusCode {
 		case http.StatusNotFound:
+			if f.retryWithZeroDepth && depth != "0" {
+				return f.readMetaDataForPath(path, "0")
+			}
 			return nil, fs.ErrorObjectNotFound
 		case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther:
 			// Some sort of redirect - go doesn't deal with these properly (it resets
@@ -368,6 +373,12 @@ func (f *Fs) setQuirks(vendor string) error {
 			return err
 		}
 		f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
+
+		// sharepoint, unlike the other vendors, only lists files if the depth header is set to 0
+		// however, rclone defaults to 1 since it provides recursive directory listing
+		// to determine if we may have found a file, the request has to be resent
+		// with the depth set to 0
+		f.retryWithZeroDepth = true
 	case "other":
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)
@@ -418,12 +429,12 @@ type listAllFn func(string, bool, *api.Prop) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, depth string, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method: "PROPFIND",
 		Path:   f.dirPath(dir), // FIXME Should not start with /
 		ExtraHeaders: map[string]string{
-			"Depth": "1",
+			"Depth": depth,
 		},
 	}
 	var result api.Multistatus
@@ -436,6 +447,9 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAl
 		if apiErr, ok := err.(*api.Error); ok {
 			// does not exist
 			if apiErr.StatusCode == http.StatusNotFound {
+				if f.retryWithZeroDepth && depth != "0" {
+					return f.listAll(dir, directoriesOnly, filesOnly, "0", fn)
+				}
 				return found, fs.ErrorDirNotFound
 			}
 		}
@@ -509,7 +523,7 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAl
 // found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	var iErr error
-	_, err = f.listAll(dir, false, false, func(remote string, isDir bool, info *api.Prop) bool {
+	_, err = f.listAll(dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
 		if isDir {
 			d := fs.NewDir(remote, time.Time(info.Modified))
 			// .SetID(info.ID)
@@ -625,7 +639,7 @@ func (f *Fs) Mkdir(dir string) error {
 //
 // if the directory does not exist then err will be ErrorDirNotFound
 func (f *Fs) dirNotEmpty(dir string) (found bool, err error) {
-	return f.listAll(dir, false, false, func(remote string, isDir bool, info *api.Prop) bool {
+	return f.listAll(dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
 		return true
 	})
 }
@@ -876,7 +890,7 @@ func (o *Object) readMetaData() (err error) {
 	if o.hasMetaData {
 		return nil
 	}
-	info, err := o.fs.readMetaDataForPath(o.remote)
+	info, err := o.fs.readMetaDataForPath(o.remote, defaultDepth)
 	if err != nil {
 		return err
 	}
