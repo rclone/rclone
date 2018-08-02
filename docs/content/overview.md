@@ -139,7 +139,7 @@ operations more efficient.
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | Yes |
 | Mega                         | Yes   | No   | Yes  | Yes     | No      | No    | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | Yes |
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#575](https://github.com/ncw/rclone/issues/575) | No | No | No [#2178](https://github.com/ncw/rclone/issues/2178) | Yes |
+| Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No | No | No [#2178](https://github.com/ncw/rclone/issues/2178) | Yes |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                                                    | No  |
 | Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | Yes |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | Yes |
