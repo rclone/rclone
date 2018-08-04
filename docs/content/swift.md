@@ -266,6 +266,11 @@ files whose local modtime is newer than the time it was last uploaded.
 Here are the command line options specific to this cloud storage
 system.
 
+#### --swift-storage-policy=STRING ####
+Apply the specified storage policy when creating a new container. The policy
+cannot be changed afterwards. The allowed configuration values and their
+meaning depend on your Swift storage provider.
+
 #### --swift-chunk-size=SIZE ####
 
 Above this size files will be chunked into a _segments container.  The
