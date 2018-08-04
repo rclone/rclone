@@ -121,6 +121,20 @@ func init() {
 				Value: "admin",
 			}},
 		}, {
+			Name:    "storage_policy",
+			Help:    "The storage policy to use when creating a new container",
+			Default: "",
+			Examples: []fs.OptionExample{{
+				Help:  "Default",
+				Value: "",
+			}, {
+				Help:  "OVH Public Cloud Storage",
+				Value: "pcs",
+			}, {
+				Help:  "OVH Public Cloud Archive",
+				Value: "pca",
+			}},
+		}, {
 			Name:     "chunk_size",
 			Help:     "Above this size files will be chunked into a _segments container.",
 			Default:  fs.SizeSuffix(5 * 1024 * 1024 * 1024),
@@ -131,21 +145,22 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	EnvAuth      bool          `config:"env_auth"`
-	User         string        `config:"user"`
-	Key          string        `config:"key"`
-	Auth         string        `config:"auth"`
-	UserID       string        `config:"user_id"`
-	Domain       string        `config:"domain"`
-	Tenant       string        `config:"tenant"`
-	TenantID     string        `config:"tenant_id"`
-	TenantDomain string        `config:"tenant_domain"`
-	Region       string        `config:"region"`
-	StorageURL   string        `config:"storage_url"`
-	AuthToken    string        `config:"auth_token"`
-	AuthVersion  int           `config:"auth_version"`
-	EndpointType string        `config:"endpoint_type"`
-	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
+	EnvAuth       bool          `config:"env_auth"`
+	User          string        `config:"user"`
+	Key           string        `config:"key"`
+	Auth          string        `config:"auth"`
+	UserID        string        `config:"user_id"`
+	Domain        string        `config:"domain"`
+	Tenant        string        `config:"tenant"`
+	TenantID      string        `config:"tenant_id"`
+	TenantDomain  string        `config:"tenant_domain"`
+	Region        string        `config:"region"`
+	StorageURL    string        `config:"storage_url"`
+	AuthToken     string        `config:"auth_token"`
+	AuthVersion   int           `config:"auth_version"`
+	StoragePolicy string        `config:"storage_policy"`
+	EndpointType  string        `config:"endpoint_type"`
+	ChunkSize     fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs represents a remote swift server
@@ -583,7 +598,11 @@ func (f *Fs) Mkdir(dir string) error {
 		_, _, err = f.c.Container(f.container)
 	}
 	if err == swift.ContainerNotFound {
-		err = f.c.ContainerCreate(f.container, nil)
+		headers := swift.Headers{}
+		if f.opt.StoragePolicy != "" {
+			headers["X-Storage-Policy"] = f.opt.StoragePolicy
+		}
+		err = f.c.ContainerCreate(f.container, headers)
 	}
 	if err == nil {
 		f.containerOK = true
@@ -880,7 +899,11 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 	var err error
 	_, _, err = o.fs.c.Container(o.fs.segmentsContainer)
 	if err == swift.ContainerNotFound {
-		err = o.fs.c.ContainerCreate(o.fs.segmentsContainer, nil)
+		headers := swift.Headers{}
+		if o.fs.opt.StoragePolicy != "" {
+			headers["X-Storage-Policy"] = o.fs.opt.StoragePolicy
+		}
+		err = o.fs.c.ContainerCreate(o.fs.segmentsContainer, headers)
 	}
 	if err != nil {
 		return "", err
