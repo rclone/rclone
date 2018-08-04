@@ -15,26 +15,26 @@ func ptr(p interface{}) string {
 
 func TestSetDefaults(t *testing.T) {
 	old := http.DefaultTransport.(*http.Transport)
-	new := new(http.Transport)
-	setDefaults(new, old)
+	newT := new(http.Transport)
+	setDefaults(newT, old)
 	// Can't use assert.Equal or reflect.DeepEqual for this as it has functions in
 	// Check functions by comparing the "%p" representations of them
-	assert.Equal(t, ptr(old.Proxy), ptr(new.Proxy), "when checking .Proxy")
-	assert.Equal(t, ptr(old.DialContext), ptr(new.DialContext), "when checking .DialContext")
+	assert.Equal(t, ptr(old.Proxy), ptr(newT.Proxy), "when checking .Proxy")
+	assert.Equal(t, ptr(old.DialContext), ptr(newT.DialContext), "when checking .DialContext")
 	// Check the other public fields
-	assert.Equal(t, ptr(old.Dial), ptr(new.Dial), "when checking .Dial")
-	assert.Equal(t, ptr(old.DialTLS), ptr(new.DialTLS), "when checking .DialTLS")
-	assert.Equal(t, old.TLSClientConfig, new.TLSClientConfig, "when checking .TLSClientConfig")
-	assert.Equal(t, old.TLSHandshakeTimeout, new.TLSHandshakeTimeout, "when checking .TLSHandshakeTimeout")
-	assert.Equal(t, old.DisableKeepAlives, new.DisableKeepAlives, "when checking .DisableKeepAlives")
-	assert.Equal(t, old.DisableCompression, new.DisableCompression, "when checking .DisableCompression")
-	assert.Equal(t, old.MaxIdleConns, new.MaxIdleConns, "when checking .MaxIdleConns")
-	assert.Equal(t, old.MaxIdleConnsPerHost, new.MaxIdleConnsPerHost, "when checking .MaxIdleConnsPerHost")
-	assert.Equal(t, old.IdleConnTimeout, new.IdleConnTimeout, "when checking .IdleConnTimeout")
-	assert.Equal(t, old.ResponseHeaderTimeout, new.ResponseHeaderTimeout, "when checking .ResponseHeaderTimeout")
-	assert.Equal(t, old.ExpectContinueTimeout, new.ExpectContinueTimeout, "when checking .ExpectContinueTimeout")
-	assert.Equal(t, old.TLSNextProto, new.TLSNextProto, "when checking .TLSNextProto")
-	assert.Equal(t, old.MaxResponseHeaderBytes, new.MaxResponseHeaderBytes, "when checking .MaxResponseHeaderBytes")
+	assert.Equal(t, ptr(old.Dial), ptr(newT.Dial), "when checking .Dial")
+	assert.Equal(t, ptr(old.DialTLS), ptr(newT.DialTLS), "when checking .DialTLS")
+	assert.Equal(t, old.TLSClientConfig, newT.TLSClientConfig, "when checking .TLSClientConfig")
+	assert.Equal(t, old.TLSHandshakeTimeout, newT.TLSHandshakeTimeout, "when checking .TLSHandshakeTimeout")
+	assert.Equal(t, old.DisableKeepAlives, newT.DisableKeepAlives, "when checking .DisableKeepAlives")
+	assert.Equal(t, old.DisableCompression, newT.DisableCompression, "when checking .DisableCompression")
+	assert.Equal(t, old.MaxIdleConns, newT.MaxIdleConns, "when checking .MaxIdleConns")
+	assert.Equal(t, old.MaxIdleConnsPerHost, newT.MaxIdleConnsPerHost, "when checking .MaxIdleConnsPerHost")
+	assert.Equal(t, old.IdleConnTimeout, newT.IdleConnTimeout, "when checking .IdleConnTimeout")
+	assert.Equal(t, old.ResponseHeaderTimeout, newT.ResponseHeaderTimeout, "when checking .ResponseHeaderTimeout")
+	assert.Equal(t, old.ExpectContinueTimeout, newT.ExpectContinueTimeout, "when checking .ExpectContinueTimeout")
+	assert.Equal(t, old.TLSNextProto, newT.TLSNextProto, "when checking .TLSNextProto")
+	assert.Equal(t, old.MaxResponseHeaderBytes, newT.MaxResponseHeaderBytes, "when checking .MaxResponseHeaderBytes")
 }
 
 func TestCleanAuth(t *testing.T) {

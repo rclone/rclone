@@ -932,7 +932,7 @@ func NewRemoteName() (name string) {
 
 // editOptions edits the options.  If new is true then it just allows
 // entry and doesn't show any old values.
-func editOptions(ri *fs.RegInfo, name string, new bool) {
+func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 	hasAdvanced := false
 	for _, advanced := range []bool{false, true} {
 		if advanced {
@@ -951,7 +951,7 @@ func editOptions(ri *fs.RegInfo, name string, new bool) {
 			}
 			subProvider := getConfigData().MustValue(name, fs.ConfigProvider, "")
 			if matchProvider(option.Provider, subProvider) {
-				if !new {
+				if !isNew {
 					fmt.Printf("Value %q = %q\n", option.Name, FileGet(name, option.Name))
 					fmt.Printf("Edit? (y/n)>\n")
 					if !Confirm() {

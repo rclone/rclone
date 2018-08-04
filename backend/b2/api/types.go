@@ -74,7 +74,7 @@ const versionFormat = "-v2006-01-02-150405.000"
 func (t Timestamp) AddVersion(remote string) string {
 	ext := path.Ext(remote)
 	base := remote[:len(remote)-len(ext)]
-	s := (time.Time)(t).Format(versionFormat)
+	s := time.Time(t).Format(versionFormat)
 	// Replace the '.' with a '-'
 	s = strings.Replace(s, ".", "-", -1)
 	return base + s + ext
@@ -107,20 +107,20 @@ func RemoveVersion(remote string) (t Timestamp, newRemote string) {
 
 // IsZero returns true if the timestamp is unitialised
 func (t Timestamp) IsZero() bool {
-	return (time.Time)(t).IsZero()
+	return time.Time(t).IsZero()
 }
 
 // Equal compares two timestamps
 //
 // If either are !IsZero then it returns false
 func (t Timestamp) Equal(s Timestamp) bool {
-	if (time.Time)(t).IsZero() {
+	if time.Time(t).IsZero() {
 		return false
 	}
-	if (time.Time)(s).IsZero() {
+	if time.Time(s).IsZero() {
 		return false
 	}
-	return (time.Time)(t).Equal((time.Time)(s))
+	return time.Time(t).Equal(time.Time(s))
 }
 
 // File is info about a file

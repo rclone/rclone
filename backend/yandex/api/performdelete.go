@@ -29,7 +29,7 @@ func (c *Client) PerformDelete(url string) error {
 		if err != nil {
 			return err
 		}
-		return errors.Errorf("delete error [%d]: %s", resp.StatusCode, string(body[:]))
+		return errors.Errorf("delete error [%d]: %s", resp.StatusCode, string(body))
 	}
 	return nil
 }
