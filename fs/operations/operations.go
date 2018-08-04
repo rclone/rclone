@@ -982,15 +982,15 @@ func Purge(f fs.Fs, dir string) error {
 // Delete removes all the contents of a container.  Unlike Purge, it
 // obeys includes and excludes.
 func Delete(f fs.Fs) error {
-	delete := make(fs.ObjectsChan, fs.Config.Transfers)
+	delChan := make(fs.ObjectsChan, fs.Config.Transfers)
 	delErr := make(chan error, 1)
 	go func() {
-		delErr <- DeleteFiles(delete)
+		delErr <- DeleteFiles(delChan)
 	}()
 	err := ListFn(f, func(o fs.Object) {
-		delete <- o
+		delChan <- o
 	})
-	close(delete)
+	close(delChan)
 	delError := <-delErr
 	if err == nil {
 		err = delError

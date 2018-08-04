@@ -32,7 +32,7 @@ func (c *Client) PerformUpload(url string, data io.Reader, contentType string) (
 			return err
 		}
 
-		return errors.Errorf("upload error [%d]: %s", resp.StatusCode, string(body[:]))
+		return errors.Errorf("upload error [%d]: %s", resp.StatusCode, string(body))
 	}
 	return nil
 }

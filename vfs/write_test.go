@@ -226,7 +226,7 @@ func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
 	defer r.Finalise()
 	vfs, fh := writeHandleCreate(t, r)
 
-	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
 
 	_, err := fh.Write([]byte{104, 105})
 	require.NoError(t, err)

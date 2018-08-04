@@ -16,7 +16,7 @@ func TestFileModTime(t *testing.T) {
 
 	run.createFile(t, "file", "123")
 
-	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
 	err := os.Chtimes(run.path("file"), mtime, mtime)
 	require.NoError(t, err)
 
@@ -41,7 +41,7 @@ func TestFileModTimeWithOpenWriters(t *testing.T) {
 		t.Skip("Skipping test on Windows")
 	}
 
-	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
 	filepath := run.path("cp-archive-test")
 
 	f, err := osCreate(filepath)

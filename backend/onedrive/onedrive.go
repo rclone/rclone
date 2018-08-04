@@ -838,7 +838,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	id, _, _ := parseDirID(directoryID)
 
 	replacedLeaf := replaceReservedChars(leaf)
-	copy := api.CopyItemRequest{
+	copyReq := api.CopyItemRequest{
 		Name: &replacedLeaf,
 		ParentReference: api.ItemReference{
 			ID: id,
@@ -846,7 +846,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, &copy, nil)
+		resp, err = f.srv.CallJSON(&opts, &copyReq, nil)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {

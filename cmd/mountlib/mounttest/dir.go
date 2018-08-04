@@ -143,7 +143,7 @@ func TestDirModTime(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
 	run.mkdir(t, "dir")
-	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
 	err := os.Chtimes(run.path("dir"), mtime, mtime)
 	require.NoError(t, err)
 

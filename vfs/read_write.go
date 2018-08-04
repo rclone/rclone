@@ -261,9 +261,9 @@ func (fh *RWFileHandle) close() (err error) {
 		return nil
 	}
 
-	copy := false
+	isCopied := false
 	if writer {
-		copy = fh.file.delWriter(fh, fh.modified())
+		isCopied = fh.file.delWriter(fh, fh.modified())
 		defer fh.file.finishWriterClose()
 	}
 
@@ -293,7 +293,7 @@ func (fh *RWFileHandle) close() (err error) {
 		}
 	}
 
-	if copy {
+	if isCopied {
 		// Transfer the temp file to the remote
 		cacheObj, err := fh.d.vfs.cache.f.NewObject(fh.remote)
 		if err != nil {

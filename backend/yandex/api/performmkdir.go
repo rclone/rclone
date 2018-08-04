@@ -28,7 +28,7 @@ func (c *Client) PerformMkdir(url string) (int, string, error) {
 			return 0, "", err
 		}
 		//third parameter is the json error response body
-		return resp.StatusCode, string(body[:]), errors.Errorf("create folder error [%d]: %s", resp.StatusCode, string(body[:]))
+		return resp.StatusCode, string(body), errors.Errorf("create folder error [%d]: %s", resp.StatusCode, string(body))
 	}
 	return resp.StatusCode, "", nil
 }

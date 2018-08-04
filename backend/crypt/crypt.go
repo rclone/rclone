@@ -704,15 +704,15 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 // newDir returns a dir with the Name decrypted
 func (f *Fs) newDir(dir fs.Directory) fs.Directory {
-	new := fs.NewDirCopy(dir)
+	newDir := fs.NewDirCopy(dir)
 	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
 		fs.Debugf(remote, "Undecryptable dir name: %v", err)
 	} else {
-		new.SetRemote(decryptedRemote)
+		newDir.SetRemote(decryptedRemote)
 	}
-	return new
+	return newDir
 }
 
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source

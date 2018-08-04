@@ -668,7 +668,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		Parameters: fieldsValue(),
 	}
 	replacedLeaf := replaceReservedChars(leaf)
-	copy := api.CopyFile{
+	copyFile := api.CopyFile{
 		Name: replacedLeaf,
 		Parent: api.Parent{
 			ID: directoryID,
@@ -677,7 +677,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	var resp *http.Response
 	var info *api.Item
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, &copy, &info)
+		resp, err = f.srv.CallJSON(&opts, &copyFile, &info)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {

@@ -831,7 +831,7 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *azblob.BlobGetProper
 }
 
 func (o *Object) decodeMetaDataFromBlob(info *azblob.BlobItem) (err error) {
-	o.md5 = string(info.Properties.ContentMD5[:])
+	o.md5 = string(info.Properties.ContentMD5)
 	o.mimeType = *info.Properties.ContentType
 	o.size = *info.Properties.ContentLength
 	o.modTime = info.Properties.LastModified

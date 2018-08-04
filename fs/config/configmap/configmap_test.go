@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	_ Mapper = (Simple)(nil)
-	_ Getter = (Simple)(nil)
-	_ Setter = (Simple)(nil)
+	_ Mapper = Simple(nil)
+	_ Getter = Simple(nil)
+	_ Setter = Simple(nil)
 )
 
 func TestConfigMapGet(t *testing.T) {
