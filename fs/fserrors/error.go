@@ -53,7 +53,7 @@ func (err wrappedRetryError) Retry() bool {
 }
 
 // Check interface
-var _ Retrier = wrappedRetryError{(error)(nil)}
+var _ Retrier = wrappedRetryError{error(nil)}
 
 // RetryError makes an error which indicates it would like to be retried
 func RetryError(err error) error {
@@ -97,7 +97,7 @@ func (err wrappedFatalError) Fatal() bool {
 }
 
 // Check interface
-var _ Fataler = wrappedFatalError{(error)(nil)}
+var _ Fataler = wrappedFatalError{error(nil)}
 
 // FatalError makes an error which indicates it is a fatal error and
 // the sync should stop.
@@ -145,7 +145,7 @@ func (err wrappedNoRetryError) NoRetry() bool {
 }
 
 // Check interface
-var _ NoRetrier = wrappedNoRetryError{(error)(nil)}
+var _ NoRetrier = wrappedNoRetryError{error(nil)}
 
 // NoRetryError makes an error which indicates the sync shouldn't be
 // retried.

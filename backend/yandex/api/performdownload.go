@@ -34,7 +34,7 @@ func (c *Client) PerformDownload(url string, headers map[string]string) (out io.
 		if err != nil {
 			return nil, err
 		}
-		return nil, errors.Errorf("download error [%d]: %s", resp.StatusCode, string(body[:]))
+		return nil, errors.Errorf("download error [%d]: %s", resp.StatusCode, string(body))
 	}
 	return resp.Body, err
 }

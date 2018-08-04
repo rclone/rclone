@@ -24,7 +24,7 @@ func TestNewNameEncryptionMode(t *testing.T) {
 		{"off", NameEncryptionOff, ""},
 		{"standard", NameEncryptionStandard, ""},
 		{"obfuscate", NameEncryptionObfuscated, ""},
-		{"potato", NameEncryptionMode(0), "Unknown file name encryption mode \"potato\""},
+		{"potato", NameEncryptionOff, "Unknown file name encryption mode \"potato\""},
 	} {
 		actual, actualErr := NewNameEncryptionMode(test.in)
 		assert.Equal(t, actual, test.expected)

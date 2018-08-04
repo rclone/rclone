@@ -628,16 +628,16 @@ func (ft *Features) Mask(f Fs) *Features {
 // Wrap makes a Copy of the features passed in, overriding the UnWrap/Wrap
 // method only if available in f.
 func (ft *Features) Wrap(f Fs) *Features {
-	copy := new(Features)
-	*copy = *ft
+	ftCopy := new(Features)
+	*ftCopy = *ft
 	if do, ok := f.(UnWrapper); ok {
-		copy.UnWrap = do.UnWrap
+		ftCopy.UnWrap = do.UnWrap
 	}
 	if do, ok := f.(Wrapper); ok {
-		copy.WrapFs = do.WrapFs
-		copy.SetWrapper = do.SetWrapper
+		ftCopy.WrapFs = do.WrapFs
+		ftCopy.SetWrapper = do.SetWrapper
 	}
-	return copy
+	return ftCopy
 }
 
 // WrapsFs adds extra information between `f` which wraps `w`

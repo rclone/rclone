@@ -140,7 +140,7 @@ func TestQuickXorHashByBlock(t *testing.T) {
 			got := h.Sum(nil)
 			want, err := base64.StdEncoding.DecodeString(test.out)
 			require.NoError(t, err, what)
-			assert.Equal(t, want, got[:], test.size, what)
+			assert.Equal(t, want, got, test.size, what)
 		}
 	}
 }
