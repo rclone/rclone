@@ -739,7 +739,7 @@ old file on the remote and upload a new copy.
 
 If you use this flag, and the remote supports server side copy or
 server side move, and the source and destination have a compatible
-hash, then this will track renames during `sync`, `copy`, and `move`
+hash, then this will track renames during `sync`
 operations and perform renaming server-side.
 
 Files will be matched by size and hash - if both match then a rename
