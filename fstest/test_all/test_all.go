@@ -45,7 +45,7 @@ var (
 		{
 			Name:     "TestCryptDrive:",
 			SubDir:   false,
-			FastList: false,
+			FastList: true,
 		},
 		{
 			Name:     "TestCryptSwift:",
@@ -55,7 +55,7 @@ var (
 		{
 			Name:     "TestDrive:",
 			SubDir:   false,
-			FastList: false,
+			FastList: true,
 		},
 		{
 			Name:     "TestDropbox:",
