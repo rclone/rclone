@@ -36,3 +36,25 @@ func TestObscure(t *testing.T) {
 
 	}
 }
+
+func TestReveal(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+		iv   string
+	}{
+		{"YWFhYWFhYWFhYWFhYWFhYQ", "", "aaaaaaaaaaaaaaaa"},
+		{"YWFhYWFhYWFhYWFhYWFhYXMaGgIlEQ", "potato", "aaaaaaaaaaaaaaaa"},
+		{"YmJiYmJiYmJiYmJiYmJiYp3gcEWbAw", "potato", "bbbbbbbbbbbbbbbb"},
+	} {
+		cryptRand = bytes.NewBufferString(test.iv)
+		got, err := Reveal(test.in)
+		assert.NoError(t, err)
+		assert.Equal(t, test.want, got)
+		// Now the Must variants
+		cryptRand = bytes.NewBufferString(test.iv)
+		got = MustReveal(test.in)
+		assert.Equal(t, test.want, got)
+
+	}
+}
