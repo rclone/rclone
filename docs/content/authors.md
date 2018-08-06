@@ -174,3 +174,4 @@ Contributors
   * sandeepkru <sandeep.ummadi@gmail.com>
   * HerrH <atomtigerzoo@users.noreply.github.com>
   * Andrew <4030760+sparkyman215@users.noreply.github.com>
+  * dan smith <XX1011@gmail.com>
