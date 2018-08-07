@@ -859,10 +859,14 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err e
 	var fsName string
 	var ok bool
 	if configName != "" {
-		m := ConfigMap(nil, configName)
-		fsName, ok = m.Get("type")
-		if !ok {
-			return nil, "", "", ErrorNotFoundInConfigFile
+		if strings.HasPrefix(configName, ":") {
+			fsName = configName[1:]
+		} else {
+			m := ConfigMap(nil, configName)
+			fsName, ok = m.Get("type")
+			if !ok {
+				return nil, "", "", ErrorNotFoundInConfigFile
+			}
 		}
 	} else {
 		fsName = "local"

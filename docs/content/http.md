@@ -121,17 +121,7 @@ No checksums are stored.
 
 ### Usage without a config file ###
 
-Note that since only two environment variable need to be set, it is
-easy to use without a config file like this.
+Since the http remote only has one config parameter it is easy to use
+without a config file:
 
-```
-RCLONE_CONFIG_ZZ_TYPE=http RCLONE_CONFIG_ZZ_URL=https://beta.rclone.org rclone lsd zz:
-```
-
-Or if you prefer
-
-```
-export RCLONE_CONFIG_ZZ_TYPE=http
-export RCLONE_CONFIG_ZZ_URL=https://beta.rclone.org
-rclone lsd zz:
-```
+    rclone lsd --http-url https://beta.rclone.org :http:
