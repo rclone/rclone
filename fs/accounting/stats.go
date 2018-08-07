@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/rc"
 )
 
 var (
@@ -18,6 +19,45 @@ var (
 func init() {
 	// Set the function pointer up in fs
 	fs.CountError = Stats.Error
+
+	rc.Add(rc.Call{
+		Path:  "core/stats",
+		Fn:    Stats.RemoteStats,
+		Title: "Returns stats about current transfers.",
+		Help: `
+This returns all available stats
+
+	rclone rc core/stats
+
+Returns following values:
+{
+	"speed": average speed in bytes/sec since start of the process,
+	"bytes": total transferred bytes since the start of the process,
+	"errors": number of errors,
+	"checks": number of checked files,
+	"transfers": number of transferred files,
+	"deletes" : number of deleted files,
+	"elapsedTime": time in seconds since the start of the process,
+	"lastError": last occurred error,
+	"transferring": an array of currently active file transfers:
+		[
+			{
+				"bytes": total transferred bytes for this file,
+				"eta": estimated time in seconds until file transfer completion
+				"name": name of the file,
+				"percentage": progress of the file transfer in percent,
+				"speed": speed in bytes/sec,
+				"speedAvg": speed in bytes/sec as an exponentially weighted moving average,
+				"size": size of the file in bytes
+			}
+		],
+	"checking": an array of names of currently active file checks
+		[]
+}
+Values for "transferring", "checking" and "lastError" are only assigned if data is available.
+The value for "eta" is null if an eta cannot be determined.
+`,
+	})
 }
 
 // StatsInfo accounts all transfers
@@ -43,6 +83,52 @@ func NewStats() *StatsInfo {
 		start:        time.Now(),
 		inProgress:   newInProgress(),
 	}
+}
+
+// RemoteStats returns stats for rc
+func (s *StatsInfo) RemoteStats(in rc.Params) (out rc.Params, err error) {
+	out = make(rc.Params)
+	s.mu.RLock()
+	dt := time.Now().Sub(s.start)
+	dtSeconds := dt.Seconds()
+	speed := 0.0
+	if dt > 0 {
+		speed = float64(s.bytes) / dtSeconds
+	}
+	out["speed"] = speed
+	out["bytes"] = s.bytes
+	out["errors"] = s.errors
+	out["checks"] = s.checks
+	out["transfers"] = s.transfers
+	out["deletes"] = s.deletes
+	out["elapsedTime"] = dtSeconds
+	s.mu.RUnlock()
+	if !s.checking.empty() {
+		var c []string
+		s.checking.mu.RLock()
+		defer s.checking.mu.RUnlock()
+		for name := range s.checking.items {
+			c = append(c, name)
+		}
+		out["checking"] = c
+	}
+	if !s.transferring.empty() {
+		var t []interface{}
+		s.transferring.mu.RLock()
+		defer s.transferring.mu.RUnlock()
+		for name := range s.transferring.items {
+			if acc := s.inProgress.get(name); acc != nil {
+				t = append(t, acc.RemoteStats())
+			} else {
+				t = append(t, name)
+			}
+		}
+		out["transferring"] = t
+	}
+	if s.errors > 0 {
+		out["lastError"] = s.lastError
+	}
+	return out, nil
 }
 
 // String convert the StatsInfo to a string for printing
