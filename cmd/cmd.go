@@ -84,6 +84,7 @@ from various cloud storage systems and using file transfer services, such as:
   * Google Drive
   * HTTP
   * Hubic
+  * Jottacloud
   * Mega
   * Microsoft Azure Blob Storage
   * Microsoft OneDrive
