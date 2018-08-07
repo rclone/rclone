@@ -29,7 +29,9 @@ This returns all available stats
 
 	rclone rc core/stats
 
-Returns following values:
+Returns the following values:
+
+` + "```" + `
 {
 	"speed": average speed in bytes/sec since start of the process,
 	"bytes": total transferred bytes since the start of the process,
@@ -54,6 +56,7 @@ Returns following values:
 	"checking": an array of names of currently active file checks
 		[]
 }
+` + "```" + `
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
 `,
