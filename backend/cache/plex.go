@@ -210,7 +210,9 @@ func (p *plexConnector) authenticate() error {
 	}
 	p.token = token
 	if p.token != "" {
-		p.saveToken(p.token)
+		if p.saveToken != nil {
+			p.saveToken(p.token)
+		}
 		fs.Infof(p.f.Name(), "Connected to Plex server: %v", p.url.String())
 	}
 	p.listenWebsocket()
