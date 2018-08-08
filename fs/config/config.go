@@ -770,7 +770,9 @@ func ChooseOption(o *fs.Option, name string) string {
 				}
 				password = base64.RawURLEncoding.EncodeToString(pw)
 				fmt.Printf("Your password is: %s\n", password)
-				fmt.Printf("Use this password?\n")
+				fmt.Printf("Use this password? Please note that an obscured version of this \npassword (and not the " +
+					"password itself) will be stored under your \nconfiguration file, so keep this generated password " +
+					"in a safe place.\n")
 				if Confirm() {
 					break
 				}
