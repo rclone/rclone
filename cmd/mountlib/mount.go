@@ -15,6 +15,7 @@ import (
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/ncw/rclone/fs/config"
 )
 
 // Options set by command line flags
@@ -216,6 +217,11 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 ` + vfs.Help,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
+
+			if Daemon {
+				config.SaveKeyToEnv = true
+			}
+
 			fdst := cmd.NewFsDir(args)
 
 			// Show stats if the user has specifically requested them

@@ -79,6 +79,12 @@ var (
 
 	// output of prompt for password
 	PasswordPromptOutput = os.Stderr
+
+	// Whether to set the environment variable `_RCLONE_CONFIG_KEY` to the configKey (base64 encoded) when
+	// it is calculated from the password. If `_RCLONE_CONFIG_KEY` is present, password prompt is skipped and `RCLONE_CONFIG_PASS` ignored.
+	// For security reasons, the `_RCLONE_CONFIG_KEY` is unset once the configKey is successfully loaded.
+	// This can be used to pass the configKey to a child process.
+	SaveKeyToEnv = false
 )
 
 func init() {
@@ -249,19 +255,28 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 
 	var out []byte
 	for {
-		if len(configKey) == 0 && envpw != "" {
-			err := setConfigPassword(envpw)
+		if envkey := os.Getenv("_RCLONE_CONFIG_KEY"); len(envkey) > 0 {
+			configKey, err = base64.StdEncoding.DecodeString(envkey)
 			if err != nil {
-				fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
-			} else {
-				fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
+				log.Fatalf("unable to decode configKey from environment variable _RCLONE_CONFIG_KEY: %v", err)
 			}
-		}
-		if len(configKey) == 0 {
-			if !fs.Config.AskPassword {
-				return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
+			fs.Debugf(nil, "decoded configKey from environment variable _RCLONE_CONFIG_KEY")
+			os.Unsetenv("_RCLONE_CONFIG_KEY")
+		} else {
+			if len(configKey) == 0 && envpw != "" {
+				err := setConfigPassword(envpw)
+				if err != nil {
+					fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
+				} else {
+					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
+				}
 			}
-			getConfigPassword("Enter configuration password:")
+			if len(configKey) == 0 {
+				if !fs.Config.AskPassword {
+					return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
+				}
+				getConfigPassword("Enter configuration password:")
+			}
 		}
 
 		// Nonce is first 24 bytes of the ciphertext
@@ -362,6 +377,10 @@ func setConfigPassword(password string) error {
 		return err
 	}
 	configKey = sha.Sum(nil)
+	if SaveKeyToEnv {
+		fs.Debugf(nil, "saving configKey to environment variable _RCLONE_CONFIG_KEY")
+		os.Setenv("_RCLONE_CONFIG_KEY", base64.StdEncoding.EncodeToString(configKey))
+	}
 	return nil
 }
 
