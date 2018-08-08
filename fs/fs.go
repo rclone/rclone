@@ -827,16 +827,17 @@ type ObjectPair struct {
 	Src, Dst Object
 }
 
-// Find looks for an Info object for the name passed in
+// Find looks for an RegInfo object for the name passed in.  The name
+// can be either the Name or the Prefix.
 //
 // Services are looked up in the config file
 func Find(name string) (*RegInfo, error) {
 	for _, item := range Registry {
-		if item.Name == name {
+		if item.Name == name || item.Prefix == name {
 			return item, nil
 		}
 	}
-	return nil, errors.Errorf("didn't find filing system for %q", name)
+	return nil, errors.Errorf("didn't find backend called %q", name)
 }
 
 // MustFind looks for an Info object for the type name passed in
