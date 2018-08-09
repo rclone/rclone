@@ -202,7 +202,7 @@ Box allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or
 not.
 
-One drive supports SHA1 type hashes, so you can use the `--checksum`
+Box supports SHA1 type hashes, so you can use the `--checksum`
 flag.
 
 ### Transfers ###
