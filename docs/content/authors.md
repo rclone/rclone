@@ -181,3 +181,4 @@ Contributors
   * Andres Alvarez <1671935+kir4h@users.noreply.github.com>
   * reddi1 <xreddi@gmail.com>
   * Matt Tucker <matthewtckr@gmail.com>
+  * Sebastian Bünger <buengese@gmail.com>
