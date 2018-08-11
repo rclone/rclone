@@ -96,6 +96,16 @@ func (acc *Account) GetReader() io.ReadCloser {
 	return acc.origIn
 }
 
+// GetAsyncReader returns the current AsyncReader or nil if Account is unbuffered
+func (acc *Account) GetAsyncReader() *asyncreader.AsyncReader {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	if asyncIn, ok := acc.in.(*asyncreader.AsyncReader); ok {
+		return asyncIn
+	}
+	return nil
+}
+
 // StopBuffering stops the async buffer doing any more buffering
 func (acc *Account) StopBuffering() {
 	if asyncIn, ok := acc.in.(*asyncreader.AsyncReader); ok {

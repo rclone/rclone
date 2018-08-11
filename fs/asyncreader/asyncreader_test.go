@@ -3,14 +3,17 @@ package asyncreader
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"strings"
 	"sync"
 	"testing"
 	"testing/iotest"
 	"time"
 
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -281,3 +284,78 @@ func testAsyncReaderClose(t *testing.T, writeto bool) {
 }
 func TestAsyncReaderCloseRead(t *testing.T)    { testAsyncReaderClose(t, false) }
 func TestAsyncReaderCloseWriteTo(t *testing.T) { testAsyncReaderClose(t, true) }
+
+func TestAsyncReaderSkipBytes(t *testing.T) {
+	t.Parallel()
+	data := make([]byte, 15000)
+	buf := make([]byte, len(data))
+	r := rand.New(rand.NewSource(42))
+
+	n, err := r.Read(data)
+	require.NoError(t, err)
+	require.Equal(t, len(data), n)
+
+	initialReads := []int{0, 1, 100, 2048,
+		softStartInitial - 1, softStartInitial, softStartInitial + 1,
+		8000, len(data)}
+	skips := []int{-1000, -101, -100, -99, 0, 1, 2048,
+		softStartInitial - 1, softStartInitial, softStartInitial + 1,
+		8000, len(data), BufferSize, 2 * BufferSize}
+
+	for buffers := 1; buffers <= 5; buffers++ {
+		t.Run(fmt.Sprintf("%d", buffers), func(t *testing.T) {
+			for _, initialRead := range initialReads {
+				t.Run(fmt.Sprintf("%d", initialRead), func(t *testing.T) {
+					for _, skip := range skips {
+						t.Run(fmt.Sprintf("%d", skip), func(t *testing.T) {
+							ar, err := New(ioutil.NopCloser(bytes.NewReader(data)), buffers)
+							require.NoError(t, err)
+
+							wantSkipFalse := false
+							buf = buf[:initialRead]
+							n, err := readers.ReadFill(ar, buf)
+							if initialRead >= len(data) {
+								wantSkipFalse = true
+								if initialRead > len(data) {
+									assert.Equal(t, err, io.EOF)
+								} else {
+									assert.True(t, err == nil || err == io.EOF)
+								}
+								assert.Equal(t, len(data), n)
+								assert.Equal(t, data, buf[:len(data)])
+							} else {
+								assert.NoError(t, err)
+								assert.Equal(t, initialRead, n)
+								assert.Equal(t, data[:initialRead], buf)
+							}
+
+							skipped := ar.SkipBytes(skip)
+							buf = buf[:1024]
+							n, err = readers.ReadFill(ar, buf)
+							offset := initialRead + skip
+							if skipped {
+								assert.False(t, wantSkipFalse)
+								l := len(buf)
+								if offset >= len(data) {
+									assert.Equal(t, err, io.EOF)
+								} else {
+									if offset+1024 >= len(data) {
+										l = len(data) - offset
+									}
+									assert.Equal(t, l, n)
+									assert.Equal(t, data[offset:offset+l], buf[:l])
+								}
+							} else {
+								if initialRead >= len(data) {
+									assert.Equal(t, err, io.EOF)
+								} else {
+									assert.True(t, err == errorStreamAbandoned || err == io.EOF)
+								}
+							}
+						})
+					}
+				})
+			}
+		})
+	}
+}
