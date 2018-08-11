@@ -180,6 +180,76 @@ func (a *AsyncReader) WriteTo(w io.Writer) (n int64, err error) {
 	}
 }
 
+// SkipBytes will try to seek 'skip' bytes relative to the current position.
+// On success it returns true. If 'skip' is outside the current buffer data or
+// an error occurs, Abandon is called and false is returned.
+func (a *AsyncReader) SkipBytes(skip int) (ok bool) {
+	a.mu.Lock()
+	defer func() {
+		a.mu.Unlock()
+		if !ok {
+			a.Abandon()
+		}
+	}()
+
+	if a.err != nil {
+		return false
+	}
+	if skip < 0 {
+		// seek backwards if skip is inside current buffer
+		if a.cur != nil && a.cur.offset+skip >= 0 {
+			a.cur.offset += skip
+			return true
+		}
+		return false
+	}
+	// early return if skip is past the maximum buffer capacity
+	if skip >= (len(a.ready)+1)*BufferSize {
+		return false
+	}
+
+	refillTokens := 0
+	for {
+		if a.cur.isEmpty() {
+			if a.cur != nil {
+				a.putBuffer(a.cur)
+				refillTokens++
+				a.cur = nil
+			}
+			select {
+			case b, ok := <-a.ready:
+				if !ok {
+					return false
+				}
+				a.cur = b
+			default:
+				return false
+			}
+		}
+
+		n := len(a.cur.buffer())
+		if n > skip {
+			n = skip
+		}
+		a.cur.increment(n)
+		skip -= n
+		if skip == 0 {
+			for ; refillTokens > 0; refillTokens-- {
+				a.token <- struct{}{}
+			}
+			// If at end of buffer, store any error, if present
+			if a.cur.isEmpty() && a.cur.err != nil {
+				a.err = a.cur.err
+			}
+			return true
+		}
+		if a.cur.err != nil {
+			a.err = a.cur.err
+			return false
+		}
+	}
+}
+
 // Abandon will ensure that the underlying async reader is shut down.
 // It will NOT close the input supplied on New.
 func (a *AsyncReader) Abandon() {
