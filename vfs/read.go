@@ -104,8 +104,16 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	if fh.noSeek {
 		return ESPIPE
 	}
-	fh.r.StopBuffering() // stop the background reading first
 	fh.hash = nil
+	if !reopen {
+		ar := fh.r.GetAsyncReader()
+		// try to fullfill the seek with buffer discard
+		if ar != nil && ar.SkipBytes(int(offset-fh.offset)) {
+			fh.offset = offset
+			return nil
+		}
+	}
+	fh.r.StopBuffering() // stop the background reading first
 	oldReader := fh.r.GetReader()
 	r, ok := oldReader.(*chunkedreader.ChunkedReader)
 	if !ok {
