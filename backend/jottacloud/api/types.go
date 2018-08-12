@@ -12,41 +12,35 @@ const (
 	timeFormat = "2006-01-02-T15:04:05Z0700"
 )
 
-// Time represents represents date and time information for the
-// Jottacloud API, by using a custom RFC3339 like format
+// Time represents time values in the Jottacloud API. It uses a custom RFC3339 like format.
 type Time time.Time
 
 // UnmarshalXML turns XML into a Time
 func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var v string
-	err := d.DecodeElement(&v, &start)
-	if err != nil {
+	if err := d.DecodeElement(&v, &start); err != nil {
 		return err
 	}
-	var newT time.Time
-	newT, err = time.Parse(timeFormat, v)
-	if err == nil {
-		*t = Time(newT)
+	if v == "" {
+		*t = Time(time.Time{})
+		return nil
 	}
-	//fmt.Printf("UnmarshalTime (in: %s, out: %s)\n", v, newT.String())
+	newTime, err := time.Parse(timeFormat, v)
+	if err == nil {
+		*t = Time(newTime)
+	}
 	return err
 }
 
 // MarshalXML turns a Time into XML
 func (t *Time) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	timeString := (*time.Time)(t).Format(timeFormat)
-	return e.EncodeElement(timeString, start)
+	return e.EncodeElement(t.String(), start)
 }
 
 // Return Time string in Jottacloud format
-func (t Time) String() string {
-	t1 := (time.Time)(t)
-	s := t1.Format(timeFormat)
-	//fmt.Printf("FormatTime: (in %s, out: %s)\n", t1.String(), s)
-	return s
-}
+func (t Time) String() string { return time.Time(t).Format(timeFormat) }
 
-// Flag is a Hacky type for checking if an attribute is present
+// Flag is a hacky type for checking if an attribute is present
 type Flag bool
 
 // UnmarshalXMLAttr sets Flag to true if the attribute is present
@@ -260,7 +254,7 @@ type Error struct {
 
 // Error returns a string for the error and statistifes the error interface
 func (e *Error) Error() string {
-	out := fmt.Sprintf("Error %d", e.StatusCode)
+	out := fmt.Sprintf("error %d", e.StatusCode)
 	if e.Message != "" {
 		out += ": " + e.Message
 	}
