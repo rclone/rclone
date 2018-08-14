@@ -80,7 +80,7 @@ var (
 	// output of prompt for password
 	PasswordPromptOutput = os.Stderr
 
-	// Whether to set the environment variable `_RCLONE_CONFIG_KEY` to the configKey (base64 encoded) when
+	// Whether to set the environment variable `_RCLONE_CONFIG_KEY` to the obsecured configKey when
 	// it is calculated from the password. If `_RCLONE_CONFIG_KEY` is present, password prompt is skipped and `RCLONE_CONFIG_PASS` ignored.
 	// For security reasons, the `_RCLONE_CONFIG_KEY` is unset once the configKey is successfully loaded.
 	// This can be used to pass the configKey to a child process.
@@ -256,11 +256,12 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	var out []byte
 	for {
 		if envkey := os.Getenv("_RCLONE_CONFIG_KEY"); len(envkey) > 0 {
-			configKey, err = base64.StdEncoding.DecodeString(envkey)
+			configKeyStr, err := obscure.Reveal(envkey)
 			if err != nil {
 				log.Fatalf("unable to decode configKey from environment variable _RCLONE_CONFIG_KEY: %v", err)
 			}
 			fs.Debugf(nil, "decoded configKey from environment variable _RCLONE_CONFIG_KEY")
+			configKey = []byte(configKeyStr)
 			os.Unsetenv("_RCLONE_CONFIG_KEY")
 		} else {
 			if len(configKey) == 0 && envpw != "" {
@@ -379,7 +380,7 @@ func setConfigPassword(password string) error {
 	configKey = sha.Sum(nil)
 	if SaveKeyToEnv {
 		fs.Debugf(nil, "saving configKey to environment variable _RCLONE_CONFIG_KEY")
-		os.Setenv("_RCLONE_CONFIG_KEY", base64.StdEncoding.EncodeToString(configKey))
+		os.Setenv("_RCLONE_CONFIG_KEY", obscure.MustObscure(string(configKey)))
 	}
 	return nil
 }
