@@ -751,8 +751,8 @@ func (o *ObjectInfo) Size() int64 {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *ObjectInfo) Hash(hash hash.Type) (string, error) {
-	return "", nil
+func (o *ObjectInfo) Hash(ht hash.Type) (string, error) {
+	return "", hash.ErrUnsupported
 }
 
 // Check the interfaces are satisfied
