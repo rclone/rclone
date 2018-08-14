@@ -104,6 +104,7 @@ type Object struct {
 	size        int64
 	modTime     time.Time
 	md5         string
+	mimeType    string
 }
 
 // ------------------------------------------------------------
@@ -688,11 +689,17 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	o.hasMetaData = true
 	o.size = int64(info.Size)
 	o.md5 = info.MD5
+	o.mimeType = info.MimeType
 	o.modTime = time.Time(info.ModifiedAt)
 	return nil
 }
@@ -891,10 +898,11 @@ func (o *Object) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
+	_ fs.Fs        = (*Fs)(nil)
+	_ fs.Purger    = (*Fs)(nil)
+	_ fs.Copier    = (*Fs)(nil)
+	_ fs.Mover     = (*Fs)(nil)
+	_ fs.DirMover  = (*Fs)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = (*Object)(nil)
 )

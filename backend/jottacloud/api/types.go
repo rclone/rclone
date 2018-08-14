@@ -241,6 +241,7 @@ type JottaFile struct {
 	ModifiedAt Time   `xml:"currentRevision>modified"`
 	Updated    Time   `xml:"currentRevision>updated"`
 	Size       int64  `xml:"currentRevision>size"`
+	MimeType   string `xml:"currentRevision>mime"`
 	MD5        string `xml:"currentRevision>md5"`
 }
 
