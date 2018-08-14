@@ -767,7 +767,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	md5String, err := src.Hash(hash.MD5)
-	if err != nil {
+	if err != nil || md5String == "" {
 		// if the source can't provide a MD5 hash we are screwed and need to calculate it ourselfs
 		// we read the entire file and cache it in the localdir and send it AFTERwards
 
