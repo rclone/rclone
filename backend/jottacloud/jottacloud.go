@@ -38,7 +38,7 @@ const (
 	defaultMountpoint = "Sync"
 	rootURL           = "https://www.jottacloud.com/jfs/"
 	apiURL            = "https://api.jottacloud.com"
-	//newUploadUrl	  = "https://up-no-001.jottacloud.com"
+	cachePrefix       = "rclone-jcmd5-"
 )
 
 // Register with Fs
@@ -772,17 +772,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		// don't cache small files on disk to reduce wear of the disk
 		if src.Size() > int64(o.fs.opt.MD5MemoryThreshold) {
 			// create the cache file
-			tempFile, err := ioutil.TempFile("", "rclone-jcmd5-")
+			tempFile, err := ioutil.TempFile("", cachePrefix)
 			if err != nil {
-				return err
-			}
-
-			// reade the ENTIRE file to disc and calculate the MD5 in the process
-			if _, err = io.Copy(tempFile, teeReader); err != nil {
-				return err
-			}
-			// jump to the start of the local file so we can pass it along
-			if _, err = tempFile.Seek(0, 0); err != nil {
 				return err
 			}
 
@@ -793,6 +784,15 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 				// delete the cache file after we are done
 				_ = os.Remove(tempFile.Name())
 			}()
+
+			// reade the ENTIRE file to disc and calculate the MD5 in the process
+			if _, err = io.Copy(tempFile, teeReader); err != nil {
+				return err
+			}
+			// jump to the start of the local file so we can pass it along
+			if _, err = tempFile.Seek(0, 0); err != nil {
+				return err
+			}
 
 			// replace the already read source with a reader of our cached file
 			in = tempFile
