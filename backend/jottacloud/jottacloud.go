@@ -1,18 +1,18 @@
 package jottacloud
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/ncw/rclone/backend/jottacloud/api"
@@ -55,9 +55,6 @@ func init() {
 			Help:       "Password.",
 			IsPassword: true,
 		}, {
-			Name: "localdir",
-			Help: "Local cache directory for MD5 calculations",
-		}, {
 			Name:     "mountpoint",
 			Help:     "The mountpoint to use.",
 			Required: true,
@@ -68,29 +65,32 @@ func init() {
 				Value: "Archive",
 				Help:  "Archive",
 			}},
+		}, {
+			Name:     "md5_memory_limit",
+			Help:     "Files with a size bigger than this value will be cached on disk otherwise they just read into memory ",
+			Default:  fs.SizeSuffix(10 * 1024 * 1024),
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	User       string `config:"user"`
-	Pass       string `config:"pass"`
-	LocalDir   string `config:"localdir"`
-	Mountpoint string `config:"mountpoint"`
+	User               string        `config:"user"`
+	Pass               string        `config:"pass"`
+	Mountpoint         string        `config:"mountpoint"`
+	MD5MemoryThreshold fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs represents a remote jottacloud
 type Fs struct {
-	name            string
-	root            string
-	localdir        string
-	localdirCounter uint64
-	opt             Options
-	features        *fs.Features
-	endpointURL     string
-	srv             *rest.Client
-	pacer           *pacer.Pacer
+	name        string
+	root        string
+	opt         Options
+	features    *fs.Features
+	endpointURL string
+	srv         *rest.Client
+	pacer       *pacer.Pacer
 }
 
 // Object describes a jottacloud object
@@ -266,13 +266,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.New("jottacloud needs user and password")
 	}
 
-	f.localdir = config.FileGet(name, "localdir")
-	if err = os.RemoveAll(f.localdir); err != nil {
-		return nil, fmt.Errorf("Cleaning local MD5 directory '%s' for Jottacloud failed, error: %s", f.localdir, err)
-	}
-	if err = os.MkdirAll(f.localdir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("Creating local MD5 directory '%s' for Jottacloud failed, error: %s", f.localdir, err)
-	}
 	f.srv.SetUserPass(opt.User, opt.Pass)
 	f.srv.SetErrorHandler(errorHandler)
 
@@ -771,45 +764,50 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		// if the source can't provide a MD5 hash we are screwed and need to calculate it ourselfs
 		// we read the entire file and cache it in the localdir and send it AFTERwards
 
-		// increase a counter to get unique ids for the cache files
-		atomic.AddUint64(&o.fs.localdirCounter, 1)
-
 		// we need a MD5
 		md5Hasher := md5.New()
-		// this is our cache file
-		localFilename := filepath.Join(o.fs.localdir, strconv.FormatUint(atomic.LoadUint64(&o.fs.localdirCounter), 16))
 		// use the teeReader to write to the local file AND caclulate the MD5 while doing so
 		teeReader := io.TeeReader(in, md5Hasher)
-		// create the cache file
-		localFile, err := os.Create(localFilename)
-		if err != nil {
-			return err
-		}
 
-		// reade the ENTIRE file to disc and calculate the MD5 in the process
-		if _, err = io.Copy(localFile, teeReader); err != nil {
-			return err
+		// don't cache small files on disk to reduce wear of the disk
+		if src.Size() > int64(o.fs.opt.MD5MemoryThreshold) {
+			// create the cache file
+			tempFile, err := ioutil.TempFile("", "rclone-jcmd5-")
+			if err != nil {
+				return err
+			}
+
+			// reade the ENTIRE file to disc and calculate the MD5 in the process
+			if _, err = io.Copy(tempFile, teeReader); err != nil {
+				return err
+			}
+			// jump to the start of the local file so we can pass it along
+			tempFile.Seek(0, 0)
+
+			// clean up the file after we are done downloading
+			defer func() {
+				// the file should normally already be close, but just to make sure
+				_ = tempFile.Close()
+				// delete the cache file after we are done
+				_ = os.Remove(tempFile.Name())
+			}()
+
+			// replace the already read source with a reader of our cached file
+			in = tempFile
+		} else {
+			// that's a small file, just read it into memory
+			var inData []byte
+			inData, err = ioutil.ReadAll(teeReader)
+			if err != nil {
+				return err
+			}
+
+			// set the reader to our read memory block
+			in = bytes.NewReader(inData)
 		}
-		// jump to the start of the local file so we can pass it along
-		localFile.Seek(0, 0)
 
 		// YEAH, the thing we need the MD5 string
 		md5String = hex.EncodeToString(md5Hasher.Sum(nil))
-
-		// clean up the file after we are done downloading
-		defer func() {
-			// the file should normally already be close, but just to make sure
-			localFile.Close()
-			// delete the cache file after we are done
-			err = os.Remove(localFilename)
-			if err != nil {
-				fs.Errorf(nil, "Failed to remove '%s', error: %s", localFilename, err)
-			}
-			fs.Infof(nil, "Removed '%s'", localFilename)
-		}()
-
-		// replace the already read source with a reader of our cached file
-		in = localFile
 	}
 
 	size := src.Size()
