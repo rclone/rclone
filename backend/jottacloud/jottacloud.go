@@ -79,7 +79,7 @@ type Options struct {
 	User               string        `config:"user"`
 	Pass               string        `config:"pass"`
 	Mountpoint         string        `config:"mountpoint"`
-	MD5MemoryThreshold fs.SizeSuffix `config:"chunk_size"`
+	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
 }
 
 // Fs represents a remote jottacloud
