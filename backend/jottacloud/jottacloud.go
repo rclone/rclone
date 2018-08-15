@@ -782,7 +782,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 				return err
 			}
 			// jump to the start of the local file so we can pass it along
-			tempFile.Seek(0, 0)
+			if _, err = tempFile.Seek(0, 0); err != nil {
+				return err
+			}
 
 			// clean up the file after we are done downloading
 			defer func() {
