@@ -341,6 +341,10 @@ change the bwlimit dynamically:
 Use this sized buffer to speed up file transfers.  Each `--transfer`
 will use this much memory for buffering.
 
+When using `mount` or `cmount` each open file descriptor will use this much
+memory for buffering.
+See the [mount](/commands/rclone_mount/#file-buffering) documentation for more details.
+
 Set to 0 to disable the buffering for the minimum memory usage.
 
 ### --checkers=N ###

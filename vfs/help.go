@@ -27,6 +27,23 @@ Or individual files or directories:
 
     rclone rc vfs/forget file=path/to/file dir=path/to/dir
 
+### File Buffering
+
+The ` + "`--buffer-size`" + ` flag determines the amount of memory,
+that will be used to buffer data in advance.
+
+Each open file descriptor will try to keep the specified amount of
+data in memory at all times. The buffered data is bound to one file
+descriptor and won't be shared between multiple open file descriptors
+of the same file.
+
+This flag is a upper limit for the used memory per file descriptor.
+The buffer will only use memory for data that is downloaded but not
+not yet read. If the buffer is empty, only a small amount of memory
+will be used.
+The maximum memory used by rclone for buffering can be up to
+` + "`--buffer-size * open files`" + `.
+
 ### File Caching
 
 **NB** File caching is **EXPERIMENTAL** - use with care!
