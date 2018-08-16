@@ -382,13 +382,14 @@ func Run(t *testing.T, opt *Opt) {
 	t.Run("TestFsPutError", func(t *testing.T) {
 		skipIfNotOk(t)
 
-		// Read 50 bytes then produce an error
-		contents := fstest.RandomString(50)
+		const N = 5 * 1024
+		// Read N bytes then produce an error
+		contents := fstest.RandomString(N)
 		buf := bytes.NewBufferString(contents)
 		er := &errorReader{errors.New("potato")}
 		in := io.MultiReader(buf, er)
 
-		obji := object.NewStaticObjectInfo(file2.Path, file2.ModTime, 100, true, nil, nil)
+		obji := object.NewStaticObjectInfo(file2.Path, file2.ModTime, 2*N, true, nil, nil)
 		_, err := remote.Put(in, obji)
 		// assert.Nil(t, obj) - FIXME some remotes return the object even on nil
 		assert.NotNil(t, err)
