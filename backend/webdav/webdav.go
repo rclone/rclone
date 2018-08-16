@@ -968,6 +968,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
+		// Remove failed upload
+		_ = o.Remove()
 		return err
 	}
 	// read metadata from remote
