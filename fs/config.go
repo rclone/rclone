@@ -82,6 +82,7 @@ type ConfigInfo struct {
 	UseServerModTime      bool
 	MaxTransfer           SizeSuffix
 	MaxBacklog            int
+	StatsOneLine          bool
 }
 
 // NewConfig creates a new config with everything set to the default
