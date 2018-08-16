@@ -681,6 +681,11 @@ default level of logging which is `NOTICE` the stats won't show - if
 you want them to then use `--stats-log-level NOTICE`.  See the [Logging
 section](#logging) for more info on log levels.
 
+### --stats-one-line ###
+
+When this is specified, rclone condenses the stats into a single line
+showing the most important stats only.
+
 ### --stats-unit=bits|bytes ###
 
 By default, data transfer rates will be printed in bytes/second.

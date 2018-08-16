@@ -173,41 +173,48 @@ func (s *StatsInfo) String() string {
 	if eta > 0 {
 		etaString = eta.String()
 	}
-	xfrchk := []string{}
-	if totalTransfer > 0 && s.transferQueue > 0 {
-		xfrchk = append(xfrchk, fmt.Sprintf("xfr#%d/%d", s.transfers, totalTransfer))
-	}
-	if totalChecks > 0 && s.checkQueue > 0 {
-		xfrchk = append(xfrchk, fmt.Sprintf("chk#%d/%d", s.checks, totalChecks))
+	if !fs.Config.StatsOneLine {
+		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
 	}
 	xfrchkString := ""
-	if len(xfrchk) > 0 {
-		xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
+	if fs.Config.StatsOneLine {
+		xfrchk := []string{}
+		if totalTransfer > 0 && s.transferQueue > 0 {
+			xfrchk = append(xfrchk, fmt.Sprintf("xfr#%d/%d", s.transfers, totalTransfer))
+		}
+		if totalChecks > 0 && s.checkQueue > 0 {
+			xfrchk = append(xfrchk, fmt.Sprintf("chk#%d/%d", s.checks, totalChecks))
+		}
+		if len(xfrchk) > 0 {
+			xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
+		}
 	}
-	// FIXME make a one line display too
-
-	_, _ = fmt.Fprintf(buf, `
-Transferred:   %10s / %s, %d%%, %s, ETA %s%s
+	_, _ = fmt.Fprintf(buf, "%10s / %s, %d%%, %s, ETA %s%s",
+		fs.SizeSuffix(s.bytes), fs.SizeSuffix(totalSize).Unit("Bytes"), percent(s.bytes, totalSize), fs.SizeSuffix(speed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"), etaString, xfrchkString)
+	if !fs.Config.StatsOneLine {
+		_, _ = fmt.Fprintf(buf, `
 Errors:        %10d
 Checks:        %10d / %d, %d%%
 Transferred:   %10d / %d, %d%%
 Elapsed time:  %10v
 `,
-		fs.SizeSuffix(s.bytes), fs.SizeSuffix(totalSize).Unit("Bytes"), percent(s.bytes, totalSize), fs.SizeSuffix(speed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"), etaString, xfrchkString,
-		s.errors,
-		s.checks, totalChecks, percent(s.checks, totalChecks),
-		s.transfers, totalTransfer, percent(s.transfers, totalTransfer),
-		dtRounded)
+			s.errors,
+			s.checks, totalChecks, percent(s.checks, totalChecks),
+			s.transfers, totalTransfer, percent(s.transfers, totalTransfer),
+			dtRounded)
+	}
 
 	// checking and transferring have their own locking so unlock
 	// here to prevent deadlock on GetBytes
 	s.mu.RUnlock()
 
-	if !s.checking.empty() {
-		_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
-	}
-	if !s.transferring.empty() {
-		_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
+	if !fs.Config.StatsOneLine {
+		if !s.checking.empty() {
+			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
+		}
+		if !s.transferring.empty() {
+			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
+		}
 	}
 	return buf.String()
 }
