@@ -182,3 +182,4 @@ Contributors
   * reddi1 <xreddi@gmail.com>
   * Matt Tucker <matthewtckr@gmail.com>
   * Sebastian Bünger <buengese@gmail.com>
+  * Martin Polden <mpolden@mpolden.no>
