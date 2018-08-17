@@ -305,7 +305,7 @@
   branch = "master"
   name = "github.com/t3rm1n4l/go-mega"
   packages = ["."]
-  revision = "57978a63bd3f91fa7e188b751a7e7e6dd4e33813"
+  revision = "854bf31d998b151cf5f94529c815bc4c67322949"
 
 [[projects]]
   branch = "master"

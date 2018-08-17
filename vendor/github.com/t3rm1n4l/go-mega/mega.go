@@ -464,6 +464,8 @@ func (m *Mega) Login(email string, passwd string) error {
 	var err error
 	var result []byte
 
+	email = strings.ToLower(email) // mega uses lowercased emails for login purposes
+
 	passkey := password_key(passwd)
 	uhandle := stringhash(email, passkey)
 	m.uh = make([]byte, len(uhandle))
