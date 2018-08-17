@@ -39,6 +39,17 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:6978a38432a017763a148afbc7ce6491734b54292af7d3e969d84d2e9dd242e2"
+  name = "github.com/Azure/go-ansiterm"
+  packages = [
+    ".",
+    "winterm",
+  ]
+  pruneopts = ""
+  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
+
+[[projects]]
+  branch = "master"
   digest = "1:f9282871e22332a39831bc53a3588fc04d763bf3f13312655580c7f4cb012b66"
   name = "github.com/Unknwon/goconfig"
   packages = ["."]
@@ -566,6 +577,8 @@
     "bazil.org/fuse",
     "bazil.org/fuse/fs",
     "github.com/Azure/azure-storage-blob-go/2018-03-28/azblob",
+    "github.com/Azure/go-ansiterm",
+    "github.com/Azure/go-ansiterm/winterm",
     "github.com/Unknwon/goconfig",
     "github.com/VividCortex/ewma",
     "github.com/a8m/tree",
