@@ -763,7 +763,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	md5, err := src.Hash(hash.MD5)
-	if err != nil {
+	if err == nil && md5 != "" {
 		opts.ExtraHeaders["JMd5"] = md5
 		opts.Parameters.Set("cphash", md5)
 	}
