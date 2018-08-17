@@ -114,5 +114,5 @@ func printProgress(logMessage string) {
 			out("\n")
 		}
 	}
-	os.Stdout.Write(buf.Bytes())
+	writeToTerminal(buf.Bytes())
 }
