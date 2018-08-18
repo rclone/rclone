@@ -1014,8 +1014,8 @@ func (o *Object) upload(in io.Reader, leaf, directoryID string, modTime time.Tim
 	var resp *http.Response
 	var result api.FolderItems
 	opts := rest.Opts{
-		Method: "POST",
-		Body:   in,
+		Method:                "POST",
+		Body:                  in,
 		MultipartMetadataName: "attributes",
 		MultipartContentName:  "contents",
 		MultipartFileName:     upload.Name,
