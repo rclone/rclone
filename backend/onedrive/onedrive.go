@@ -1470,14 +1470,14 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 
 				bodyBytes, err2 := ioutil.ReadAll(resp.Body)
 				if err2 != nil {
-					fs.Debugf(o, "Stream Read Error", err)
+					fs.Debugf(o, "Stream Read Error : %v", err)
 				}
 				info = &api.Item{}
 
 				m := &api.Item{}
 				err := json.Unmarshal(bodyBytes, &m)
 				if err != nil {
-					fs.Debugf(o, "Stream Read Error", err)
+					fs.Debugf(o, "Stream Read Error : %v", err)
 				}
 				if m.Size != totalSize {
 					var possibleOfficeMatchingProblem = false
