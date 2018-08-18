@@ -16,6 +16,7 @@ import (
 
 	"github.com/ncw/rclone/backend/onedrive/api"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
@@ -28,7 +29,6 @@ import (
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
-	"github.com/ncw/rclone/fs/config"
 )
 
 const (
@@ -372,7 +372,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:    name,
+		name:      name,
 		root:      root,
 		opt:       *opt,
 		driveID:   driveID,
@@ -1054,9 +1054,8 @@ func (f *Fs) About() (usage *fs.Usage, err error) {
 func (f *Fs) Hashes() hash.Set {
 	if f.driveType == driveTypePersonal {
 		return hash.Set(hash.SHA1)
-	} else {
-		return hash.Set(hash.QuickXorHash)
 	}
+	return hash.Set(hash.QuickXorHash)
 }
 
 // ------------------------------------------------------------
