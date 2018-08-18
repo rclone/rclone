@@ -165,7 +165,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		//return err
 	} else {
 		if ResourceInfoResponse.ResourceType == "file" {
-			f.setRoot(path.Dir(root))
+			rootDir := path.Dir(root)
+			if rootDir == "." {
+				rootDir = ""
+			}
+			f.setRoot(rootDir)
 			// return an error with an fs which points to the parent
 			return f, fs.ErrorIsFile
 		}
