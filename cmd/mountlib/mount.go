@@ -10,12 +10,12 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/ncw/rclone/fs/config"
 )
 
 // Options set by command line flags

@@ -409,7 +409,14 @@ func setConfigPassword(password string) error {
 			log.Fatalf("error closing temp file with configKey: %v", err)
 		}
 		fs.Debugf(nil, "saving configKey to temp file")
-		os.Setenv("_RCLONE_CONFIG_KEY_FILE", tempFile.Name())
+		err = os.Setenv("_RCLONE_CONFIG_KEY_FILE", tempFile.Name())
+		if err != nil {
+			errRemove := os.Remove(tempFile.Name())
+			if errRemove != nil {
+				log.Fatalf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE and unable to delete the temp file: %v", err)
+			}
+			log.Fatalf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE: %v", err)
+		}
 	}
 	return nil
 }
