@@ -219,7 +219,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 			cmd.CheckArgs(2, 2, command, args)
 
 			if Daemon {
-				config.SaveKeyToEnv = true
+				config.PassConfigKeyForDaemonization = true
 			}
 
 			fdst := cmd.NewFsDir(args)
