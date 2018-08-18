@@ -764,8 +764,8 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 				return errors.Errorf("%s: async operation returned %q", o.remote, status.Status)
 			}
 		case "completed":
-			o.readMetaData()
-			return nil
+			err = o.readMetaData()
+			return errors.Wrapf(err, "async operation completed but readMetaData failed")
 		}
 
 		time.Sleep(1 * time.Second)
