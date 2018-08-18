@@ -25,6 +25,7 @@ import (
 	_ "github.com/ncw/rclone/backend/s3"
 	_ "github.com/ncw/rclone/backend/sftp"
 	_ "github.com/ncw/rclone/backend/swift"
+	_ "github.com/ncw/rclone/backend/union"
 	_ "github.com/ncw/rclone/backend/webdav"
 	_ "github.com/ncw/rclone/backend/yandex"
 )

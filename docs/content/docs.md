@@ -42,6 +42,7 @@ See the following for detailed instructions for
   * [Pcloud](/pcloud/)
   * [QingStor](/qingstor/)
   * [SFTP](/sftp/)
+  * [Union](/union/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)
   * [The local filesystem](/local/)
