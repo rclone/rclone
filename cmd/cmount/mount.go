@@ -213,7 +213,7 @@ func Mount(f fs.Fs, mountpoint string) error {
 	sigHup := make(chan os.Signal, 1)
 	signal.Notify(sigHup, syscall.SIGHUP)
 
-	if err := sdnotify.SdNotifyReady(); err != nil && err != sdnotify.SdNotifyNoSocket {
+	if err := sdnotify.Ready(); err != nil && err != sdnotify.ErrSdNotifyNoSocket {
 		return errors.Wrap(err, "failed to notify systemd")
 	}
 
@@ -234,7 +234,7 @@ waitloop:
 		}
 	}
 
-	_ = sdnotify.SdNotifyStopping()
+	_ = sdnotify.Stopping()
 	if err != nil {
 		return errors.Wrap(err, "failed to umount FUSE fs")
 	}
