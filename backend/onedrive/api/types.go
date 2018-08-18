@@ -91,9 +91,10 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 // ItemReference groups data needed to reference a OneDrive item
 // across the service into a single structure.
 type ItemReference struct {
-	DriveID string `json:"driveId"` // Unique identifier for the Drive that contains the item.	Read-only.
-	ID      string `json:"id"`      // Unique identifier for the item.	Read/Write.
-	Path    string `json:"path"`    // Path that used to navigate to the item.	Read/Write.
+	DriveID   string `json:"driveId"`   // Unique identifier for the Drive that contains the item.	Read-only.
+	ID        string `json:"id"`        // Unique identifier for the item.	Read/Write.
+	Path      string `json:"path"`      // Path that used to navigate to the item.	Read/Write.
+	DriveType string `json:"driveType"` // Type of the drive,	Read-Only
 }
 
 // RemoteItemFacet groups data needed to reference a OneDrive remote item
@@ -244,7 +245,6 @@ type MoveItemRequest struct {
 // Copy Item
 // Upload From URL
 type AsyncOperationStatus struct {
-	Operation          string  `json:"operation"`          // The type of job being run.
 	PercentageComplete float64 `json:"percentageComplete"` // An float value between 0 and 100 that indicates the percentage complete.
 	Status             string  `json:"status"`             // A string value that maps to an enumeration of possible values about the status of the job. "notStarted | inProgress | completed | updating | failed | deletePending | deleteFailed | waiting"
 }
