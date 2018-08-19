@@ -131,7 +131,7 @@ operations more efficient.
 | Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | No  | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
-| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | Yes | No  |
 | Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | Yes | Yes |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
