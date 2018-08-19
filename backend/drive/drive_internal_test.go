@@ -1,64 +1,54 @@
 package drive
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"mime"
+	"path/filepath"
 	"testing"
 
-	"google.golang.org/api/drive/v3"
-
+	_ "github.com/ncw/rclone/backend/local"
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
+	"github.com/ncw/rclone/fstest/fstests"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/api/drive/v3"
 )
 
-const exampleExportFormats = `{
-	"application/vnd.google-apps.document": [
-		"application/rtf",
-		"application/vnd.oasis.opendocument.text",
-		"text/html",
-		"application/pdf",
-		"application/epub+zip",
-		"application/zip",
-		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-		"text/plain"
-	],
-	"application/vnd.google-apps.spreadsheet": [
-		"application/x-vnd.oasis.opendocument.spreadsheet",
-		"text/tab-separated-values",
-		"application/pdf",
-		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		"text/csv",
-		"application/zip",
-		"application/vnd.oasis.opendocument.spreadsheet"
-	],
-	"application/vnd.google-apps.jam": [
-		"application/pdf"
-	],
-	"application/vnd.google-apps.script": [
-		"application/vnd.google-apps.script+json"
-	],
-	"application/vnd.google-apps.presentation": [
-		"application/vnd.oasis.opendocument.presentation",
-		"application/pdf",
-		"application/vnd.openxmlformats-officedocument.presentationml.presentation",
-		"text/plain"
-	],
-	"application/vnd.google-apps.form": [
-		"application/zip"
-	],
-	"application/vnd.google-apps.drawing": [
-		"image/svg+xml",
-		"image/png",
-		"application/pdf",
-		"image/jpeg"
-	]
-}`
+/*
+var additionalMimeTypes = map[string]string{
+	"application/vnd.ms-excel.sheet.macroenabled.12":                          ".xlsm",
+	"application/vnd.ms-excel.template.macroenabled.12":                       ".xltm",
+	"application/vnd.ms-powerpoint.presentation.macroenabled.12":              ".pptm",
+	"application/vnd.ms-powerpoint.slideshow.macroenabled.12":                 ".ppsm",
+	"application/vnd.ms-powerpoint.template.macroenabled.12":                  ".potm",
+	"application/vnd.ms-powerpoint":                                           ".ppt",
+	"application/vnd.ms-word.document.macroenabled.12":                        ".docm",
+	"application/vnd.ms-word.template.macroenabled.12":                        ".dotm",
+	"application/vnd.openxmlformats-officedocument.presentationml.template":   ".potx",
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.template":    ".xltx",
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.template": ".dotx",
+	"application/vnd.sun.xml.writer":                                          ".sxw",
+	"text/richtext":                                                           ".rtf",
+}
+*/
 
 // Load the example export formats into exportFormats for testing
-func TestInternalLoadExampleExportFormats(t *testing.T) {
-	exportFormatsOnce.Do(func() {})
-	assert.NoError(t, json.Unmarshal([]byte(exampleExportFormats), &_exportFormats))
-	_exportFormats = fixMimeTypeMap(_exportFormats)
+func TestInternalLoadExampleFormats(t *testing.T) {
+	fetchFormatsOnce.Do(func() {})
+	buf, err := ioutil.ReadFile(filepath.FromSlash("test/about.json"))
+	var about struct {
+		ExportFormats map[string][]string `json:"exportFormats,omitempty"`
+		ImportFormats map[string][]string `json:"importFormats,omitempty"`
+	}
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(buf, &about))
+	_exportFormats = fixMimeTypeMap(about.ExportFormats)
+	_importFormats = fixMimeTypeMap(about.ImportFormats)
 }
 
 func TestInternalParseExtensions(t *testing.T) {
@@ -72,7 +62,7 @@ func TestInternalParseExtensions(t *testing.T) {
 		{"docx,svg,Docx", []string{".docx", ".svg"}, nil},
 		{"docx,potato,docx", []string{".docx"}, errors.New(`couldn't find MIME type for extension ".potato"`)},
 	} {
-		extensions, gotErr := parseExtensions(test.in)
+		extensions, _, gotErr := parseExtensions(test.in)
 		if test.wantErr == nil {
 			assert.NoError(t, gotErr)
 		} else {
@@ -82,7 +72,7 @@ func TestInternalParseExtensions(t *testing.T) {
 	}
 
 	// Test it is appending
-	extensions, gotErr := parseExtensions("docx,svg", "docx,svg,xlsx")
+	extensions, _, gotErr := parseExtensions("docx,svg", "docx,svg,xlsx")
 	assert.NoError(t, gotErr)
 	assert.Equal(t, []string{".docx", ".svg", ".xlsx"}, extensions)
 }
@@ -104,11 +94,11 @@ func TestInternalFindExportFormat(t *testing.T) {
 		{[]string{".xls", ".csv", ".svg"}, "", ""},
 	} {
 		f := new(Fs)
-		f.extensions = test.extensions
+		f.exportExtensions = test.extensions
 		gotExtension, gotFilename, gotMimeType, gotIsDocument := f.findExportFormat(item)
 		assert.Equal(t, test.wantExtension, gotExtension)
 		if test.wantExtension != "" {
-			assert.Equal(t, item.Name+"."+gotExtension, gotFilename)
+			assert.Equal(t, item.Name+gotExtension, gotFilename)
 		} else {
 			assert.Equal(t, "", gotFilename)
 		}
@@ -148,3 +138,85 @@ func TestExtensionsForExportFormats(t *testing.T) {
 		}
 	}
 }
+
+func TestExtensionsForImportFormats(t *testing.T) {
+	t.Skip()
+	if _importFormats == nil {
+		t.Error("_importFormats == nil")
+	}
+	for fromMT := range _importFormats {
+		if !isInternalMimeType(fromMT) {
+			extensions, err := mime.ExtensionsByType(fromMT)
+			assert.NoError(t, err, "invalid MIME type %q", fromMT)
+			assert.NotEmpty(t, extensions, "No extension found for %q", fromMT)
+		}
+	}
+}
+
+func (f *Fs) InternalTestDocumentImport(t *testing.T) {
+	oldAllow := f.opt.AllowImportNameChange
+	f.opt.AllowImportNameChange = true
+	defer func() {
+		f.opt.AllowImportNameChange = oldAllow
+	}()
+
+	testFilesPath, err := filepath.Abs(filepath.FromSlash("test/files"))
+	require.NoError(t, err)
+
+	testFilesFs, err := fs.NewFs(testFilesPath)
+	require.NoError(t, err)
+
+	_, f.importMimeTypes, err = parseExtensions("odt,ods,doc")
+	require.NoError(t, err)
+
+	err = operations.CopyFile(f, testFilesFs, "example2.doc", "example2.doc")
+	require.NoError(t, err)
+}
+
+func (f *Fs) InternalTestDocumentUpdate(t *testing.T) {
+	testFilesPath, err := filepath.Abs(filepath.FromSlash("test/files"))
+	require.NoError(t, err)
+
+	testFilesFs, err := fs.NewFs(testFilesPath)
+	require.NoError(t, err)
+
+	_, f.importMimeTypes, err = parseExtensions("odt,ods,doc")
+	require.NoError(t, err)
+
+	err = operations.CopyFile(f, testFilesFs, "example2.xlsx", "example1.ods")
+	require.NoError(t, err)
+}
+
+func (f *Fs) InternalTestDocumentExport(t *testing.T) {
+	var buf bytes.Buffer
+	var err error
+
+	f.exportExtensions, _, err = parseExtensions("txt")
+	require.NoError(t, err)
+
+	obj, err := f.NewObject("example2.txt")
+	require.NoError(t, err)
+
+	rc, err := obj.Open()
+	require.NoError(t, err)
+	defer func() { require.NoError(t, rc.Close()) }()
+
+	_, err = io.Copy(&buf, rc)
+	require.NoError(t, err)
+	text := buf.String()
+
+	for _, excerpt := range []string{
+		"Lorem ipsum dolor sit amet, consectetur",
+		"porta at ultrices in, consectetur at augue.",
+	} {
+		require.Contains(t, text, excerpt)
+	}
+}
+
+func (f *Fs) InternalTest(t *testing.T) {
+	t.Run("DocumentImport", f.InternalTestDocumentImport)
+	t.Run("DocumentUpdate", f.InternalTestDocumentUpdate)
+	t.Run("DocumentExport", f.InternalTestDocumentExport)
+}
+
+var _ fstests.InternalTester = (*Fs)(nil)
