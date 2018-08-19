@@ -51,7 +51,7 @@ const (
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
 	minSleep                    = 10 * time.Millisecond
-	defaultExtensions           = "docx,xlsx,pptx,svg"
+	defaultExportExtensions     = "docx,xlsx,pptx,svg"
 	scopePrefix                 = "https://www.googleapis.com/auth/"
 	defaultScope                = "drive"
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
@@ -103,10 +103,10 @@ var (
 		"text/plain":                ".txt",
 		"text/tab-separated-values": ".tsv",
 	}
-	extensionToMimeType map[string]string
-	partialFields       = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents"
-	exportFormatsOnce   sync.Once           // make sure we fetch the export formats only once
-	_exportFormats      map[string][]string // allowed export MIME type conversions
+	partialFields    = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents"
+	fetchFormatsOnce sync.Once           // make sure we fetch the export/import formats only once
+	_exportFormats   map[string][]string // allowed export MIME type conversions
+	_importFormats   map[string][]string // allowed import MIME type conversions
 )
 
 // Register with Fs
@@ -214,8 +214,24 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "formats",
-			Default:  defaultExtensions,
+			Default:  "",
+			Help:     "Deprecated: see export_formats",
+			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
+		}, {
+			Name:     "export_formats",
+			Default:  defaultExportExtensions,
 			Help:     "Comma separated list of preferred formats for downloading Google docs.",
+			Advanced: true,
+		}, {
+			Name:     "import_formats",
+			Default:  "",
+			Help:     "Comma separated list of preferred formats for uploading Google docs.",
+			Advanced: true,
+		}, {
+			Name:     "allow_import_name_change",
+			Default:  false,
+			Help:     "Allow the filetype to change when uploading Google docs (e.g. file.doc to file.docx). This will confuse sync and reupload every time.",
 			Advanced: true,
 		}, {
 			Name:     "use_created_date",
@@ -290,6 +306,9 @@ type Options struct {
 	SharedWithMe              bool          `config:"shared_with_me"`
 	TrashedOnly               bool          `config:"trashed_only"`
 	Extensions                string        `config:"formats"`
+	ExportExtensions          string        `config:"export_formats"`
+	ImportExtensions          string        `config:"import_formats"`
+	AllowImportNameChange     bool          `config:"allow_import_name_change"`
 	UseCreatedDate            bool          `config:"use_created_date"`
 	ListChunk                 int64         `config:"list_chunk"`
 	Impersonate               string        `config:"impersonate"`
@@ -303,32 +322,33 @@ type Options struct {
 
 // Fs represents a remote drive server
 type Fs struct {
-	name         string             // name of this remote
-	root         string             // the path we are working on
-	opt          Options            // parsed options
-	features     *fs.Features       // optional features
-	svc          *drive.Service     // the connection to the drive server
-	v2Svc        *drive_v2.Service  // used to create download links for the v2 api
-	client       *http.Client       // authorized client
-	rootFolderID string             // the id of the root folder
-	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *pacer.Pacer       // To pace the API calls
-	extensions   []string           // preferred extensions to download docs
-	isTeamDrive  bool               // true if this is a team drive
+	name             string             // name of this remote
+	root             string             // the path we are working on
+	opt              Options            // parsed options
+	features         *fs.Features       // optional features
+	svc              *drive.Service     // the connection to the drive server
+	v2Svc            *drive_v2.Service  // used to create download links for the v2 api
+	client           *http.Client       // authorized client
+	rootFolderID     string             // the id of the root folder
+	dirCache         *dircache.DirCache // Map of directory path to directory id
+	pacer            *pacer.Pacer       // To pace the API calls
+	exportExtensions []string           // preferred extensions to download docs
+	importMimeTypes  []string           // MIME types to convert to docs
+	isTeamDrive      bool               // true if this is a team drive
 }
 
 // Object describes a drive object
 type Object struct {
-	fs           *Fs    // what this object is part of
-	remote       string // The remote path
-	id           string // Drive Id of this object
-	url          string // Download URL of this object
-	md5sum       string // md5sum of the object
-	bytes        int64  // size of the object
-	modifiedDate string // RFC3339 time it was last modified
-	isDocument   bool   // if set this is a Google doc
-	v2Download   bool   // generate v2 download link ondemand
-	mimeType     string
+	fs               *Fs    // what this object is part of
+	remote           string // The remote path
+	id               string // Drive Id of this object
+	url              string // Download URL of this object
+	md5sum           string // md5sum of the object
+	bytes            int64  // size of the object
+	modifiedDate     string // RFC3339 time it was last modified
+	documentMimeType string // if set this is a Google doc
+	v2Download       bool   // generate v2 download link ondemand
+	mimeType         string
 }
 
 // ------------------------------------------------------------
@@ -444,7 +464,7 @@ func (f *Fs) list(dirIDs []string, title string, directoriesOnly bool, filesOnly
 		// if the search title contains an extension and the extension is in the export extensions add a search
 		// for the filename without the extension.
 		// assume that export extensions don't contain escape sequences and only have one part (not .tar.gz)
-		if ext := path.Ext(searchTitle); handleGdocs && len(ext) > 0 && containsString(f.extensions, ext) {
+		if ext := path.Ext(searchTitle); handleGdocs && len(ext) > 0 && containsString(f.exportExtensions, ext) {
 			stem = title[:len(title)-len(ext)]
 			query = append(query, fmt.Sprintf("(name='%s' or name='%s')", searchTitle, searchTitle[:len(searchTitle)-len(ext)]))
 		} else {
@@ -563,49 +583,35 @@ func isInternalMimeType(mimeType string) bool {
 }
 
 // parseExtensions parses a list of comma separated extensions
-// into a list of unique extensions with leading "."
-func parseExtensions(extensions ...string) ([]string, error) {
-	var result []string
-	for _, extensionText := range extensions {
+// into a list of unique extensions with leading "." and a list of associated MIME types
+func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, err error) {
+	for _, extensionText := range extensionsIn {
 		for _, extension := range strings.Split(extensionText, ",") {
 			extension = strings.ToLower(strings.TrimSpace(extension))
+			if extension == "" {
+				continue
+			}
 			if len(extension) > 0 && extension[0] != '.' {
 				extension = "." + extension
 			}
-			if mime.TypeByExtension(extension) == "" {
-				return result, errors.Errorf("couldn't find MIME type for extension %q", extension)
+			mt := mime.TypeByExtension(extension)
+			if mt == "" {
+				return extensions, mimeTypes, errors.Errorf("couldn't find MIME type for extension %q", extension)
 			}
 			found := false
-			for _, existingExtension := range result {
+			for _, existingExtension := range extensions {
 				if extension == existingExtension {
 					found = true
 					break
 				}
 			}
 			if !found {
-				result = append(result, extension)
+				extensions = append(extensions, extension)
+				mimeTypes = append(mimeTypes, mt)
 			}
 		}
 	}
-	return result, nil
-}
-
-// parseExtensionMimeTypes parses the given extensions using parseExtensions
-// and maps each resulting extension to its MIME type.
-func parseExtensionMimeTypes(extensions ...string) ([]string, error) {
-	parsedExtensions, err := parseExtensions(extensions...)
-	if err != nil {
-		return nil, err
-	}
-	mimeTypes := make([]string, 0, len(parsedExtensions))
-	for i, extension := range parsedExtensions {
-		mt := mime.TypeByExtension(extension)
-		if mt == "" {
-			return nil, errors.Errorf("couldn't find MIME type for extension %q", extension)
-		}
-		mimeTypes[i] = mt
-	}
-	return mimeTypes, nil
+	return
 }
 
 // Figure out if the user wants to use a team drive
@@ -770,7 +776,18 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	f.dirCache = dircache.New(root, f.rootFolderID, f)
 
 	// Parse extensions
-	f.extensions, err = parseExtensions(opt.Extensions, defaultExtensions)
+	if opt.Extensions != "" {
+		if opt.ExportExtensions != defaultExportExtensions {
+			return nil, errors.New("only one of 'formats' and 'export_formats' can be specified")
+		}
+		opt.Extensions, opt.ExportExtensions = "", opt.Extensions
+	}
+	f.exportExtensions, _, err = parseExtensions(opt.ExportExtensions, defaultExportExtensions)
+	if err != nil {
+		return nil, err
+	}
+
+	_, f.importMimeTypes, err = parseExtensions(opt.ImportExtensions)
 	if err != nil {
 		return nil, err
 	}
@@ -821,6 +838,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *drive.File) (fs.Object, erro
 			return nil, err
 		}
 	}
+	return o, nil
+}
+
+func (f *Fs) newDocumentObjectWithInfo(remote, extension, mimeType string, info *drive.File) (fs.Object, error) {
+	o, err := f.newObjectWithInfo(remote, info)
+	if err != nil {
+		return nil, err
+	}
+	o.(*Object).setGdocsMetaData(info, extension, mimeType)
 	return o, nil
 }
 
@@ -884,50 +910,101 @@ func isAuthOwned(item *drive.File) bool {
 	return false
 }
 
+func (f *Fs) fetchFormats() {
+	fetchFormatsOnce.Do(func() {
+		var about *drive.About
+		var err error
+		err = f.pacer.Call(func() (bool, error) {
+			about, err = f.svc.About.Get().
+				Fields("exportFormats,importFormats").
+				Do()
+			return shouldRetry(err)
+		})
+		if err != nil {
+			fs.Errorf(f, "Failed to get Drive exportFormats and importFormats: %v", err)
+			_exportFormats = map[string][]string{}
+			_importFormats = map[string][]string{}
+			return
+		}
+		_exportFormats = fixMimeTypeMap(about.ExportFormats)
+		_importFormats = fixMimeTypeMap(about.ImportFormats)
+	})
+}
+
 // exportFormats returns the export formats from drive, fetching them
 // if necessary.
 //
 // if the fetch fails then it will not export any drive formats
 func (f *Fs) exportFormats() map[string][]string {
-	exportFormatsOnce.Do(func() {
-		var about *drive.About
-		var err error
-		err = f.pacer.Call(func() (bool, error) {
-			about, err = f.svc.About.Get().
-				Fields("exportFormats").
-				Do()
-			return shouldRetry(err)
-		})
-		if err != nil {
-			fs.Errorf(f, "Failed to get Drive exportFormats: %v", err)
-			_exportFormats = map[string][]string{}
-			return
-		}
-		_exportFormats = fixMimeTypeMap(about.ExportFormats)
-	})
+	f.fetchFormats()
 	return _exportFormats
 }
 
-// findExportFormat works out the optimum extension and MIME type
-// for this item.
+// importFormats returns the import formats from drive, fetching them
+// if necessary.
 //
-// Look through the extensions and find the first format that can be
-// converted.  If none found then return "", ""
-func (f *Fs) findExportFormat(item *drive.File) (extension, filename, mimeType string, isDocument bool) {
-	exportMimeTypes, isDocument := f.exportFormats()[item.MimeType]
+// if the fetch fails then it will not import any drive formats
+func (f *Fs) importFormats() map[string][]string {
+	f.fetchFormats()
+	return _importFormats
+}
+
+// findExportFormatByMimeType works out the optimum export settings
+// for the given MIME type.
+//
+// Look through the exportExtensions and find the first format that can be
+// converted.  If none found then return ("", "", false)
+func (f *Fs) findExportFormatByMimeType(itemMimeType string) (
+	extension, mimeType string, isDocument bool) {
+	exportMimeTypes, isDocument := f.exportFormats()[itemMimeType]
 	if isDocument {
-		for _, _extension := range f.extensions {
+		for _, _extension := range f.exportExtensions {
 			_mimeType := mime.TypeByExtension(_extension)
 			for _, emt := range exportMimeTypes {
 				if emt == _mimeType {
-					return _extension, item.Name + _extension, _mimeType, true
+					return _extension, _mimeType, true
 				}
 			}
 		}
 	}
 
 	// else return empty
-	return "", "", "", isDocument
+	return "", "", isDocument
+}
+
+// findExportFormatByMimeType works out the optimum export settings
+// for the given drive.File.
+//
+// Look through the exportExtensions and find the first format that can be
+// converted.  If none found then return ("", "", "", false)
+func (f *Fs) findExportFormat(item *drive.File) (extension, filename, mimeType string, isDocument bool) {
+	extension, mimeType, isDocument = f.findExportFormatByMimeType(item.MimeType)
+	if extension != "" {
+		filename = item.Name + extension
+	}
+	return
+}
+
+// findImportFormat finds the matching upload MIME type for a file
+// If the given MIME type is in importMimeTypes, the matching upload
+// MIME type is returned
+//
+// When no match is found "" is returned.
+func (f *Fs) findImportFormat(mimeType string) string {
+	mimeType = fixMimeType(mimeType)
+	ifs := f.importFormats()
+	for _, mt := range f.importMimeTypes {
+		if mt == mimeType {
+			importMimeTypes := ifs[mimeType]
+			if l := len(importMimeTypes); l > 0 {
+				if l > 1 {
+					fs.Infof(f, "found %d import formats for %q: %q", l, mimeType, importMimeTypes)
+				}
+				return importMimeTypes[0]
+			}
+		}
+	}
+	return ""
 }
 
 // List the objects and directories in dir into entries.  The
@@ -1170,11 +1247,10 @@ func (f *Fs) itemToDirEntry(remote string, item *drive.File) (fs.DirEntry, error
 			fs.Debugf(remote, "No export formats found for %q", item.MimeType)
 			break
 		}
-		o, err := f.newObjectWithInfo(remote+extension, item)
+		o, err := f.newDocumentObjectWithInfo(remote, extension, exportMimeType, item)
 		if err != nil {
 			return nil, err
 		}
-		o.(*Object).setGdocsMetaData(item, extension, exportMimeType)
 		return o, nil
 	}
 	return nil, nil
@@ -1239,10 +1315,34 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 	remote := src.Remote()
 	size := src.Size()
 	modTime := src.ModTime()
+	srcMimeType := fs.MimeTypeFromName(remote)
+	srcExt := path.Ext(remote)
+	exportExt := ""
+	importMimeType := ""
+	exportMimeType := ""
+
+	if f.importMimeTypes != nil && !f.opt.SkipGdocs {
+		importMimeType = f.findImportFormat(srcMimeType)
+
+		if isInternalMimeType(importMimeType) {
+			remote = remote[:len(remote)-len(srcExt)]
+
+			exportExt, exportMimeType, _ = f.findExportFormatByMimeType(importMimeType)
+			if exportExt == "" {
+				return nil, errors.Errorf("No export format found for %q", importMimeType)
+			}
+			if exportExt != srcExt && !f.opt.AllowImportNameChange {
+				return nil, errors.Errorf("Can't convert %q to a document with a different export filetype (%q)", srcExt, exportExt)
+			}
+		}
+	}
 
 	o, createInfo, err := f.createFileInfo(remote, modTime, size)
 	if err != nil {
 		return nil, err
+	}
+	if importMimeType != "" {
+		createInfo.MimeType = importMimeType
 	}
 
 	var info *drive.File
@@ -1251,7 +1351,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 		// Don't retry, return a retry error instead
 		err = f.pacer.CallNoRetry(func() (bool, error) {
 			info, err = f.svc.Files.Create(createInfo).
-				Media(in, googleapi.ContentType("")).
+				Media(in, googleapi.ContentType(srcMimeType)).
 				Fields(googleapi.Field(partialFields)).
 				SupportsTeamDrives(f.isTeamDrive).
 				KeepRevisionForever(f.opt.KeepRevisionForever).
@@ -1263,10 +1363,13 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = f.Upload(in, size, createInfo.MimeType, "", createInfo, remote)
+		info, err = f.Upload(in, size, srcMimeType, "", createInfo, remote)
 		if err != nil {
 			return o, err
 		}
+	}
+	if isInternalMimeType(importMimeType) {
+		return f.newDocumentObjectWithInfo(remote, exportExt, exportMimeType, info)
 	}
 	o.setMetaData(info)
 	return o, nil
@@ -1412,7 +1515,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	if srcObj.isDocument {
+	if srcObj.documentMimeType != "" {
 		return nil, errors.New("can't copy a Google document")
 	}
 
@@ -1531,7 +1634,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
-	if srcObj.isDocument {
+	if srcObj.documentMimeType != "" {
 		return nil, errors.New("can't move a Google document")
 	}
 	_, srcParentID, err := srcObj.fs.dirCache.FindPath(src.Remote(), false)
@@ -1926,7 +2029,7 @@ func (o *Object) setGdocsMetaData(info *drive.File, extension, exportMimeType st
 			o.url = fmt.Sprintf("https://docs.google.com/presentation/d/%s/export/%s", info.Id, extension[1:])
 		}
 	}
-	o.isDocument = true
+	o.documentMimeType = o.mimeType
 	o.mimeType = exportMimeType
 	o.bytes = -1
 }
@@ -2026,7 +2129,7 @@ func (o *Object) httpResponse(method string, options []fs.OpenOption) (req *http
 	if o.url == "" {
 		return nil, nil, errors.New("forbidden to download - check sharing permission")
 	}
-	if o.isDocument {
+	if o.documentMimeType != "" {
 		for _, o := range options {
 			// https://developers.google.com/drive/v3/web/manage-downloads#partial_download
 			if _, ok := o.(*fs.RangeOption); ok {
@@ -2144,7 +2247,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// reading as it can change from the HEAD in the listing to
 	// this GET.  This stops rclone marking the transfer as
 	// corrupted.
-	if o.isDocument {
+	if o.documentMimeType != "" {
 		return &openFile{o: o, in: res.Body}, nil
 	}
 	return res.Body, nil
@@ -2158,12 +2261,22 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	size := src.Size()
 	modTime := src.ModTime()
-	if o.isDocument {
-		return errors.New("can't update a google document")
-	}
+	srcMimeType := fs.MimeType(src)
+	importMimeType := ""
 	updateInfo := &drive.File{
-		MimeType:     fs.MimeType(src),
+		MimeType:     srcMimeType,
 		ModifiedTime: modTime.Format(timeFormatOut),
+	}
+
+	if o.fs.importMimeTypes != nil && !o.fs.opt.SkipGdocs {
+		importMimeType = o.fs.findImportFormat(updateInfo.MimeType)
+		if importMimeType != "" {
+			// FIXME: check importMimeType against original object MIME type
+			// if importMimeType != o.mimeType {
+			// 	return errors.Errorf("can't change google document type (o: %q, src: %q, import: %q)", o.mimeType, srcMimeType, importMimeType)
+			// }
+			updateInfo.MimeType = importMimeType
+		}
 	}
 
 	// Make the API request to upload metadata and file data.
@@ -2173,7 +2286,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		// Don't retry, return a retry error instead
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			info, err = o.fs.svc.Files.Update(o.id, updateInfo).
-				Media(in, googleapi.ContentType("")).
+				Media(in, googleapi.ContentType(srcMimeType)).
 				Fields(googleapi.Field(partialFields)).
 				SupportsTeamDrives(o.fs.isTeamDrive).
 				KeepRevisionForever(o.fs.opt.KeepRevisionForever).
@@ -2185,20 +2298,22 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = o.fs.Upload(in, size, updateInfo.MimeType, o.id, updateInfo, o.remote)
+		info, err = o.fs.Upload(in, size, srcMimeType, o.id, updateInfo, o.remote)
 		if err != nil {
 			return err
 		}
 	}
 	o.setMetaData(info)
+	if importMimeType != "" {
+		extension, exportMimeType, _ := o.fs.findExportFormatByMimeType(importMimeType)
+		o.setGdocsMetaData(info, extension, exportMimeType)
+	}
+
 	return nil
 }
 
 // Remove an object
 func (o *Object) Remove() error {
-	if o.isDocument {
-		return errors.New("can't delete a google document")
-	}
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if o.fs.opt.UseTrash {
