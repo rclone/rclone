@@ -184,6 +184,17 @@ Upload chunk size.  Default 4MB.  Note that this is stored in memory
 and there may be up to `--transfers` chunks stored at once in memory.
 This can be at most 100MB.
 
+#### --azureblob-access-tier=Hot/Cool/Archive ####
+
+Azure storage supports blob tiering, you can configure tier in advanced
+settings or supply flag while performing data transfer operations.
+If there is no `access tier` specified, rclone doesn't apply any tier.
+rclone performs `Set Tier` operation on blobs while uploading, if objects
+are not modified, specifying `access tier` to new one will have no effect.
+If blobs are in `archive tier` at remote, trying to perform data transfer
+operations from remote will not be allowed. User should first restore by
+tiering blob to `Hot` or `Cool`.
+
 ### Limitations ###
 
 MD5 sums are only uploaded with chunked files if the source has an MD5

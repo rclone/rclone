@@ -48,6 +48,7 @@ const (
 	maxChunkSize        = 100 * 1024 * 1024
 	defaultUploadCutoff = 256 * 1024 * 1024
 	maxUploadCutoff     = 256 * 1024 * 1024
+	defaultAccessTier   = azblob.AccessTierNone
 )
 
 // Register with Fs
@@ -79,6 +80,11 @@ func init() {
 			Help:     "Upload chunk size. Must fit in memory.",
 			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
+		}, {
+			Name: "access_tier",
+			Help: "Access tier of blob, supports hot, cool and archive tiers.\nArchived blobs can be restored by setting access tier to hot or cool." +
+				" Leave blank if you intend to use default access tier, which is set at account level",
+			Advanced: true,
 		}},
 	})
 }
@@ -91,6 +97,7 @@ type Options struct {
 	SASURL       string        `config:"sas_url"`
 	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
 	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
+	AccessTier   string        `config:"access_tier"`
 }
 
 // Fs represents a remote azure server
@@ -210,6 +217,19 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	if opt.Endpoint == "" {
 		opt.Endpoint = storageDefaultBaseURL
+	}
+
+	if opt.AccessTier == "" {
+		opt.AccessTier = string(defaultAccessTier)
+	} else {
+		switch opt.AccessTier {
+		case string(azblob.AccessTierHot):
+		case string(azblob.AccessTierCool):
+		case string(azblob.AccessTierArchive):
+			// valid cases
+		default:
+			return nil, errors.Errorf("azure: Supported access tiers are %s, %s and %s", string(azblob.AccessTierHot), string(azblob.AccessTierCool), azblob.AccessTierArchive)
+		}
 	}
 
 	var (
@@ -946,6 +966,10 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// Offset and Count for range download
 	var offset int64
 	var count int64
+	if o.AccessTier() == azblob.AccessTierArchive {
+		return nil, errors.Errorf("Blob in archive tier, you need to set tier to hot or cool first")
+	}
+
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.RangeOption:
@@ -1199,8 +1223,29 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	if err != nil {
 		return err
 	}
+	// Refresh metadata on object
 	o.clearMetaData()
-	return o.readMetaData()
+	err = o.readMetaData()
+	if err != nil {
+		return err
+	}
+
+	// If tier is not changed or not specified, do not attempt to invoke `SetBlobTier` operation
+	if o.fs.opt.AccessTier == string(defaultAccessTier) || o.fs.opt.AccessTier == string(o.AccessTier()) {
+		return nil
+	}
+
+	// Now, set blob tier based on configured access tier
+	desiredAccessTier := azblob.AccessTierType(o.fs.opt.AccessTier)
+	err = o.fs.pacer.Call(func() (bool, error) {
+		_, err := blob.SetTier(ctx, desiredAccessTier)
+		return o.fs.shouldRetry(err)
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "Failed to set Blob Tier")
+	}
+	return nil
 }
 
 // Remove an object
@@ -1218,6 +1263,11 @@ func (o *Object) Remove() error {
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType() string {
 	return o.mimeType
+}
+
+// AccessTier of an object, default is of type none
+func (o *Object) AccessTier() azblob.AccessTierType {
+	return o.accessTier
 }
 
 // Check the interfaces are satisfied
