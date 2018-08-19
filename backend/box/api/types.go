@@ -61,7 +61,7 @@ func (e *Error) Error() string {
 var _ error = (*Error)(nil)
 
 // ItemFields are the fields needed for FileInfo
-var ItemFields = "type,id,sequence_id,etag,sha1,name,size,created_at,modified_at,content_created_at,content_modified_at,item_status"
+var ItemFields = "type,id,sequence_id,etag,sha1,name,size,created_at,modified_at,content_created_at,content_modified_at,item_status,shared_link"
 
 // Types of things in Item
 const (
@@ -86,6 +86,10 @@ type Item struct {
 	ContentCreatedAt  Time    `json:"content_created_at"`
 	ContentModifiedAt Time    `json:"content_modified_at"`
 	ItemStatus        string  `json:"item_status"` // active, trashed if the file has been moved to the trash, and deleted if the file has been permanently deleted
+	SharedLink        struct {
+		URL    string `json:"url,omitempty"`
+		Access string `json:"access,omitempty"`
+	} `json:"shared_link"`
 }
 
 // ModTime returns the modification time of the item
@@ -143,6 +147,14 @@ type UpdateFileMove struct {
 type CopyFile struct {
 	Name   string `json:"name"`
 	Parent Parent `json:"parent"`
+}
+
+// CreateSharedLink is the request for Public Link
+type CreateSharedLink struct {
+	SharedLink struct {
+		URL    string `json:"url,omitempty"`
+		Access string `json:"access,omitempty"`
+	} `json:"shared_link"`
 }
 
 // UploadSessionRequest is uses in Create Upload Session
