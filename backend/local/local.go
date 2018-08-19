@@ -817,6 +817,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 
+	// Pre-allocate the file for performance reasons
+	err = preAllocate(src.Size(), out)
+	if err != nil {
+		fs.Debugf(o, "Failed to pre-allocate: %v", err)
+	}
+
 	// Calculate the hash of the object we are reading as we go along
 	hash, err := hash.NewMultiHasherTypes(hashes)
 	if err != nil {
