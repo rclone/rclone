@@ -414,34 +414,69 @@ is buffered in memory one per transfer.
 
 Reducing this will reduce memory usage but decrease performance.
 
-#### --drive-formats ####
+#### --drive-export-formats / --drive-import-formats ####
 
-Google documents can only be exported from Google drive.  When rclone
-downloads a Google doc it chooses a format to download depending upon
-this setting.
+Google documents can be exported from and uploaded to Google Drive.
 
-By default the formats are `docx,xlsx,pptx,svg` which are a sensible
-default for an editable document.
+When rclone downloads a Google doc it chooses a format to download
+depending upon the `--drive-export-formats` setting.
+By default the export formats are `docx,xlsx,pptx,svg` which are a
+sensible default for an editable document.
 
 When choosing a format, rclone runs down the list provided in order
 and chooses the first file format the doc can be exported as from the
 list. If the file can't be exported to a format on the formats list,
 then rclone will choose a format from the default list.
 
-If you prefer an archive copy then you might use `--drive-formats
+If you prefer an archive copy then you might use `--drive-export-formats
 pdf`, or if you prefer openoffice/libreoffice formats you might use
-`--drive-formats ods,odt,odp`.
+`--drive-export-formats ods,odt,odp`.
 
 Note that rclone adds the extension to the google doc, so if it is
 calles `My Spreadsheet` on google docs, it will be exported as `My
 Spreadsheet.xlsx` or `My Spreadsheet.pdf` etc.
 
-Here are the possible extensions with their corresponding mime types.
+When importing files into Google Drive, rclone will conververt all
+files with an extension in `--drive-import-formats` to their
+associated document type.
+rclone will not convert any files by default, since the conversion
+is lossy process.
+
+The conversion must result in a file with the same extension when
+the `--drive-export-formats` rules are applied to the uploded document.
+
+Here are some examples for allowed and prohibited conversions.
+
+| export-formats | import-formats | Upload Ext | Document Ext | Allowed |
+| -------------- | -------------- | ---------- | ------------ | ------- |
+| odt | odt | odt | odt | Yes |
+| odt | docx,odt | odt | odt | Yes |
+|  | docx | docx | docx | Yes |
+|  | odt | odt | docx | No |
+| odt,docx | docx,odt | docx | odt | No |
+| docx,odt | docx,odt | docx | docx | Yes |
+| docx,odt | docx,odt | odt | docx | No |
+
+This limitation can be disabled by specifying `--drive-allow-import-name-change`.
+When using this flag, rclone can convert multiple files types resulting
+in the same document type at once, eg with `--drive-import-formats docx,odt,txt`,
+all files having these extension would result in a doument represented as a docx file.
+This brings the additional risk of overwriting a document, if multiple files
+have the same stem. Many rclone operations will not handle this name change
+in any way. They assume an equal name when copying files and might copy the
+file again or delete them when the name changes. 
+
+Here are the possible export extensions with their corresponding mime types.
+Most of these can also be used for importing, but there more that are not
+listed here. Some of these additional ones might only be available when
+the operating system provides the correct MIME type entries.
+
+This list can be changed by Google Drive at any time and might not
+represent the currently available converions.
 
 | Extension | Mime Type | Description |
 | --------- |-----------| ------------|
 | csv  | text/csv | Standard CSV format for Spreadsheets |
-| doc  | application/msword | Micosoft Office Document |
 | docx | application/vnd.openxmlformats-officedocument.wordprocessingml.document | Microsoft Office Document |
 | epub | application/epub+zip | E-book format |
 | html | text/html | An HTML Document |
@@ -457,7 +492,6 @@ Here are the possible extensions with their corresponding mime types.
 | svg  | image/svg+xml | Scalable Vector Graphics Format |
 | tsv  | text/tab-separated-values | Standard TSV format for spreadsheets |
 | txt  | text/plain | Plain Text |
-| xls  | application/vnd.ms-excel | Microsoft Office Spreadsheet |
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
