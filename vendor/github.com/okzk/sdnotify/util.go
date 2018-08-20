@@ -1,21 +1,39 @@
 package sdnotify
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
-var SdNotifyNoSocket = errors.New("No socket")
+// ErrSdNotifyNoSocket is the error returned when the NOTIFY_SOCKET does not exist.
+var ErrSdNotifyNoSocket = errors.New("No socket")
 
-func SdNotifyReady() error {
+// Ready sends READY=1 to the systemd notify socket.
+func Ready() error {
 	return SdNotify("READY=1")
 }
 
-func SdNotifyStopping() error {
+// Stopping sends STOPPING=1 to the systemd notify socket.
+func Stopping() error {
 	return SdNotify("STOPPING=1")
 }
 
-func SdNotifyReloading() error {
+// Reloading sends RELOADING=1 to the systemd notify socket.
+func Reloading() error {
 	return SdNotify("RELOADING=1")
 }
 
-func SdNotifyStatus(status string) error {
+// Errno sends ERRNO=? to the systemd notify socket.
+func Errno(errno int) error {
+	return SdNotify(fmt.Sprintf("ERRNO=%d", errno))
+}
+
+// Status sends STATUS=? to the systemd notify socket.
+func Status(status string) error {
 	return SdNotify("STATUS=" + status)
+}
+
+// Watchdog sends WATCHDOG=1 to the systemd notify socket.
+func Watchdog() error {
+	return SdNotify("WATCHDOG=1")
 }

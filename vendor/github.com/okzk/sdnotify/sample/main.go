@@ -1,24 +1,25 @@
 package main
 
 import (
-	"github.com/okzk/sdnotify"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/okzk/sdnotify"
 )
 
 func reload() {
 	// Tells the service manager that the service is reloading its configuration.
-	sdnotify.SdNotifyReloading()
+	sdnotify.Reloading()
 
 	log.Println("reloading...")
 	time.Sleep(time.Second)
 	log.Println("reloaded.")
 
 	// The service must also send a "READY" notification when it completed reloading its configuration.
-	sdnotify.SdNotifyReady()
+	sdnotify.Ready()
 }
 
 func main() {
@@ -27,7 +28,16 @@ func main() {
 	log.Println("started.")
 
 	// Tells the service manager that service startup is finished.
-	sdnotify.SdNotifyReady()
+	sdnotify.Ready()
+
+	go func() {
+		tick := time.Tick(30 * time.Second)
+		for {
+			<-tick
+			log.Println("watchdog reporting")
+			sdnotify.Watchdog()
+		}
+	}()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -40,7 +50,7 @@ func main() {
 	}
 
 	// Tells the service manager that the service is beginning its shutdown.
-	sdnotify.SdNotifyStopping()
+	sdnotify.Stopping()
 
 	log.Println("existing...")
 	time.Sleep(time.Second)
