@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
@@ -331,7 +332,13 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 		if err != nil {
 			return nil, err
 		}
+		// unwrap the accounting
+		var wrap accounting.WrapFn
+		wrappedIn, wrap = accounting.UnWrap(wrappedIn)
+		// add the hasher
 		wrappedIn = io.TeeReader(wrappedIn, hasher)
+		// wrap the accounting back on
+		wrappedIn = wrap(wrappedIn)
 	}
 
 	// Transfer the data
