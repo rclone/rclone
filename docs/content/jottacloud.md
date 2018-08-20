@@ -91,6 +91,12 @@ not.
 Jottacloud supports MD5 type hashes, so you can use the `--checksum`
 flag.
 
+Note that Jottacloud requires the MD5 hash before upload so if the
+source does not have an MD5 checksum then the file will be cached
+temporarily on disk (wherever the `TMPDIR` environment variable points
+to) before it is uploaded.  Small files will be cached in memory - see
+the `--jottacloud-md5-memory-limit` flag.
+
 ### Deleting files ###
 
 Any files you delete with rclone will end up in the trash. Due to a lack of API documentation emptying the trash is currently only possible via the Jottacloud website.
@@ -107,6 +113,16 @@ Note that Jottacloud is case insensitive so you can't have a file called
 There are quite a few characters that can't be in Jottacloud file names. Rclone will map these names to and from an identical looking unicode equivalent. For example if a file has a ? in it will be mapped to ？ instead.
 
 Jottacloud only supports filenames up to 255 characters in length.
+
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --jottacloud-md5-memory-limit SizeSuffix
+
+Files bigger than this will be cached on disk to calculate the MD5 if
+required. (default 10M)
 
 ### Troubleshooting ###
 
