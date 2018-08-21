@@ -495,6 +495,19 @@ represent the currently available converions.
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
+Google douments can also be exported as link files. These files will
+open a browser window for the Google Docs website of that dument
+when opened. The link file extension has to be specified as a
+`--drive-export-formats` parameter. They will match all available
+Google Documents.
+
+| Extension | Description | OS Support |
+| --------- | ----------- | ---------- |
+| desktop | freedesktop.org specified desktop entry | Linux |
+| link.html | An HTML Document with a redirect | All |
+| url | INI style link file | macOS, Windows |
+| webloc | macOS specific XML format | macOS |
+
 #### --drive-alternate-export ####
 
 If this option is set this instructs rclone to use an alternate set of
