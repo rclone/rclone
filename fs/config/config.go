@@ -79,6 +79,13 @@ var (
 
 	// output of prompt for password
 	PasswordPromptOutput = os.Stderr
+
+	// If set to true, the configKey is obscured with obscure.Obscure and saved to a temp file when it is
+	// calculated from the password. The path of that temp file is then written to the environment variable
+	// `_RCLONE_CONFIG_KEY_FILE`. If `_RCLONE_CONFIG_KEY_FILE` is present, password prompt is skipped and `RCLONE_CONFIG_PASS` ignored.
+	// For security reasons, the temp file is deleted once the configKey is successfully loaded.
+	// This can be used to pass the configKey to a child process.
+	PassConfigKeyForDaemonization = false
 )
 
 func init() {
@@ -249,19 +256,37 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 
 	var out []byte
 	for {
-		if len(configKey) == 0 && envpw != "" {
-			err := setConfigPassword(envpw)
+		if envKeyFile := os.Getenv("_RCLONE_CONFIG_KEY_FILE"); len(envKeyFile) > 0 {
+			fs.Debugf(nil, "attempting to obtain configKey from temp file %s", envKeyFile)
+			obscuredKey, err := ioutil.ReadFile(envKeyFile)
 			if err != nil {
-				fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
-			} else {
-				fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
+				errRemove := os.Remove(envKeyFile)
+				if errRemove != nil {
+					log.Fatalf("unable to read obscured config key and unable to delete the temp file: %v", err)
+				}
+				log.Fatalf("unable to read obscured config key: %v", err)
 			}
-		}
-		if len(configKey) == 0 {
-			if !fs.Config.AskPassword {
-				return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
+			errRemove := os.Remove(envKeyFile)
+			if errRemove != nil {
+				log.Fatalf("unable to delete temp file with configKey: %v", err)
 			}
-			getConfigPassword("Enter configuration password:")
+			configKey = []byte(obscure.MustReveal(string(obscuredKey)))
+			fs.Debugf(nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
+		} else {
+			if len(configKey) == 0 && envpw != "" {
+				err := setConfigPassword(envpw)
+				if err != nil {
+					fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
+				} else {
+					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
+				}
+			}
+			if len(configKey) == 0 {
+				if !fs.Config.AskPassword {
+					return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
+				}
+				getConfigPassword("Enter configuration password:")
+			}
 		}
 
 		// Nonce is first 24 bytes of the ciphertext
@@ -362,6 +387,37 @@ func setConfigPassword(password string) error {
 		return err
 	}
 	configKey = sha.Sum(nil)
+	if PassConfigKeyForDaemonization {
+		tempFile, err := ioutil.TempFile("", "rclone")
+		if err != nil {
+			log.Fatalf("cannot create temp file to store configKey: %v", err)
+		}
+		_, err = tempFile.WriteString(obscure.MustObscure(string(configKey)))
+		if err != nil {
+			errRemove := os.Remove(tempFile.Name())
+			if errRemove != nil {
+				log.Fatalf("error writing configKey to temp file and also error deleting it: %v", err)
+			}
+			log.Fatalf("error writing configKey to temp file: %v", err)
+		}
+		err = tempFile.Close()
+		if err != nil {
+			errRemove := os.Remove(tempFile.Name())
+			if errRemove != nil {
+				log.Fatalf("error closing temp file with configKey and also error deleting it: %v", err)
+			}
+			log.Fatalf("error closing temp file with configKey: %v", err)
+		}
+		fs.Debugf(nil, "saving configKey to temp file")
+		err = os.Setenv("_RCLONE_CONFIG_KEY_FILE", tempFile.Name())
+		if err != nil {
+			errRemove := os.Remove(tempFile.Name())
+			if errRemove != nil {
+				log.Fatalf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE and unable to delete the temp file: %v", err)
+			}
+			log.Fatalf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE: %v", err)
+		}
+	}
 	return nil
 }
 
