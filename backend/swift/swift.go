@@ -277,6 +277,15 @@ func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
 	// provided by wrapping the existing auth, so we can just
 	// override one or the other or both.
 	if StorageUrl != "" || AuthToken != "" {
+		// Re-write StorageURL and AuthToken if they are being
+		// overridden as c.Authenticate above will have
+		// overwritten them.
+		if StorageUrl != "" {
+			c.StorageUrl = StorageUrl
+		}
+		if AuthToken != "" {
+			c.AuthToken = AuthToken
+		}
 		c.Auth = newAuth(c.Auth, StorageUrl, AuthToken)
 	}
 	return c, nil
