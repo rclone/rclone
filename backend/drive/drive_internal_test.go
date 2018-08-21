@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "github.com/ncw/rclone/backend/local"
@@ -213,10 +214,39 @@ func (f *Fs) InternalTestDocumentExport(t *testing.T) {
 	}
 }
 
+func (f *Fs) InternalTestDocumentLink(t *testing.T) {
+	var buf bytes.Buffer
+	var err error
+
+	f.exportExtensions, _, err = parseExtensions("link.html")
+	require.NoError(t, err)
+
+	obj, err := f.NewObject("example2.link.html")
+	require.NoError(t, err)
+
+	rc, err := obj.Open()
+	require.NoError(t, err)
+	defer func() { require.NoError(t, rc.Close()) }()
+
+	_, err = io.Copy(&buf, rc)
+	require.NoError(t, err)
+	text := buf.String()
+
+	require.True(t, strings.HasPrefix(text, "<html>"))
+	require.True(t, strings.HasSuffix(text, "</html>\n"))
+	for _, excerpt := range []string{
+		`<meta http-equiv="refresh"`,
+		`Loading <a href="`,
+	} {
+		require.Contains(t, text, excerpt)
+	}
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("DocumentImport", f.InternalTestDocumentImport)
 	t.Run("DocumentUpdate", f.InternalTestDocumentUpdate)
 	t.Run("DocumentExport", f.InternalTestDocumentExport)
+	t.Run("DocumentLink", f.InternalTestDocumentLink)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
