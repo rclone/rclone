@@ -38,8 +38,8 @@ const (
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	graphURL                    = "https://graph.microsoft.com/v1.0"
-	configGraphID               = "graphID"
-	configDriveType             = "driveType"
+	configDriveID               = "drive_id"
+	configDriveType             = "drive_type"
 	driveTypePersonal           = "personal"
 	driveTypeBusiness           = "business"
 	driveTypeSharepoint         = "documentLibrary"
@@ -210,7 +210,7 @@ func init() {
 				log.Fatalf("Cancelled by user")
 			}
 
-			config.FileSet(name, configGraphID, finalDriveID)
+			config.FileSet(name, configDriveID, finalDriveID)
 			config.FileSet(name, configDriveType, rootItem.ParentReference.DriveType)
 		},
 		Options: []fs.Option{{
@@ -361,7 +361,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// get the graphID part from the config file
-	driveID := config.FileGet(name, configGraphID, "")
+	driveID := config.FileGet(name, configDriveID, "")
 	driveType := config.FileGet(name, configDriveType)
 
 	root = parsePath(root)
