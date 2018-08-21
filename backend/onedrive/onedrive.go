@@ -139,12 +139,9 @@ func init() {
 				}
 
 				sites := siteResponse{}
-				resp, err := srv.CallJSON(&opts, nil, &sites)
+				_, err := srv.CallJSON(&opts, nil, &sites)
 				if err != nil {
 					log.Fatalf("Failed to query available sites: %v", err)
-				}
-				if resp.StatusCode != 200 {
-					log.Fatalf("Failed to query available sites: Got HTTP error code %d", resp.StatusCode)
 				}
 
 				if len(sites.Sites) == 0 {
@@ -171,12 +168,9 @@ func init() {
 			// query Microsoft Graph
 			if finalDriveID == "" {
 				drives := drivesResponse{}
-				resp, err := srv.CallJSON(&opts, nil, &drives)
+				_, err := srv.CallJSON(&opts, nil, &drives)
 				if err != nil {
 					log.Fatalf("Failed to query available drives: %v", err)
-				}
-				if resp.StatusCode != 200 {
-					log.Fatalf("Failed to query available drives: Got HTTP error code %d", resp.StatusCode)
 				}
 
 				if len(drives.Drives) == 0 {
@@ -196,12 +190,9 @@ func init() {
 				RootURL: graphURL,
 				Path:    "/drives/" + finalDriveID + "/root"}
 			var rootItem api.Item
-			resp, err := srv.CallJSON(&opts, nil, &rootItem)
+			_, err = srv.CallJSON(&opts, nil, &rootItem)
 			if err != nil {
 				log.Fatalf("Failed to query root for drive %s: %v", finalDriveID, err)
-			}
-			if resp.StatusCode != 200 {
-				log.Fatalf("Failed to query root for drive %s: Got HTTP error code %d", finalDriveID, resp.StatusCode)
 			}
 
 			fmt.Printf("Found drive '%s' of type '%s', URL: %s\nIs that okay?\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL)
