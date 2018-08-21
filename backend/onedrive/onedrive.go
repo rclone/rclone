@@ -224,6 +224,16 @@ func init() {
 			Help:     "Chunk size to upload files with - must be multiple of 320k.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
+		}, {
+			Name:     "drive_id",
+			Help:     "The ID of the drive to use",
+			Default:  "",
+			Advanced: true,
+		}, {
+			Name:     "drive_type",
+			Help:     "The type of the drive ( personal | business | documentLibrary )",
+			Default:  "",
+			Advanced: true,
 		}},
 	})
 }
@@ -231,6 +241,8 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	ChunkSize fs.SizeSuffix `config:"chunk_size"`
+	DriveID   string        `config:"drive_id"`
+	DriveType string        `config:"drive_type"`
 }
 
 // Fs represents a remote one drive
@@ -360,9 +372,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.Errorf("chunk size %d is not a multiple of 320k", opt.ChunkSize)
 	}
 
-	// get the graphID part from the config file
-	driveID := config.FileGet(name, configDriveID, "")
-	driveType := config.FileGet(name, configDriveType)
+	if opt.DriveID == "" || opt.DriveType == "" {
+		log.Fatalf("Unable to get drive_id and drive_type. If you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend.")
+	}
 
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
@@ -374,9 +386,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		name:      name,
 		root:      root,
 		opt:       *opt,
-		driveID:   driveID,
-		driveType: driveType,
-		srv:       rest.NewClient(oAuthClient).SetRoot(graphURL + "/drives/" + driveID),
+		driveID:   opt.DriveID,
+		driveType: opt.DriveType,
+		srv:       rest.NewClient(oAuthClient).SetRoot(graphURL + "/drives/" + opt.DriveID),
 		pacer:     pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	f.features = (&fs.Features{
