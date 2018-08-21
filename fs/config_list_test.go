@@ -24,9 +24,9 @@ func ExampleSpaceSepList() {
 		fmt.Printf("%#v\n", l)
 	}
 	// Output:
-	// config.SpaceSepList{"remotea:test/dir", "remoteb:"}
-	// config.SpaceSepList{"remotea:test/space dir", "remoteb:"}
-	// config.SpaceSepList{"remotea:test/quote\"dir", "remoteb:"}
+	// fs.SpaceSepList{"remotea:test/dir", "remoteb:"}
+	// fs.SpaceSepList{"remotea:test/space dir", "remoteb:"}
+	// fs.SpaceSepList{"remotea:test/quote\"dir", "remoteb:"}
 }
 
 func ExampleCommaSepList() {
@@ -40,9 +40,9 @@ func ExampleCommaSepList() {
 		fmt.Printf("%#v\n", l)
 	}
 	// Output:
-	// config.CommaSepList{"remotea:test/dir", "remoteb:"}
-	// config.CommaSepList{"remotea:test/space dir", "remoteb:"}
-	// config.CommaSepList{"remotea:test/quote\"dir", "remoteb:"}
+	// fs.CommaSepList{"remotea:test/dir", "remoteb:"}
+	// fs.CommaSepList{"remotea:test/space dir", "remoteb:"}
+	// fs.CommaSepList{"remotea:test/quote\"dir", "remoteb:"}
 }
 
 func TestSpaceSepListSet(t *testing.T) {
