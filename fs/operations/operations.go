@@ -1315,6 +1315,48 @@ func NeedTransfer(dst, src fs.Object) bool {
 	return true
 }
 
+// upload an object from http to the repository
+func UploadHttpBody(fdst fs.Fs, body io.ReadCloser, contentLength int64, remote string) error {
+	if contentLength >= 0 {
+		// Size known use Put
+		accounting.Stats.Transferring(remote)
+		body := ioutil.NopCloser(body)                                   // we let the server close the body
+		in := accounting.NewAccountSizeName(body, contentLength, remote) // account the transfer (no buffering)
+		var err error
+		defer func() {
+			closeErr := in.Close()
+			if closeErr != nil {
+				fs.Errorf(remote, "Post request: close failed: %v", closeErr)
+				if err == nil {
+					err = closeErr
+				}
+			}
+			ok := err == nil
+			accounting.Stats.DoneTransferring(remote, err == nil)
+			if !ok {
+				accounting.Stats.Error(err)
+			}
+		}()
+		info := object.NewStaticObjectInfo(remote, time.Now(), contentLength, true, nil, fdst)
+		_, err = fdst.Put(in, info)
+		if err != nil {
+			fs.Errorf(remote, "Post request put error: %v", err)
+
+			return err
+		}
+	} else {
+		// Size unknown use Rcat
+		_, err := Rcat(fdst, remote, body, time.Now())
+		if err != nil {
+			fs.Errorf(remote, "Post request rcat error: %v", err)
+
+			return err
+		}
+	}
+
+	return nil
+}
+
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool) (err error) {
 	dstFilePath := path.Join(fdst.Root(), dstFileName)

@@ -40,6 +40,7 @@ import (
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net/http"
 )
 
 // Some times used in the tests
@@ -466,6 +467,20 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 		},
 		fs.GetModifyWindow(r.Fremote),
 	)
+}
+
+func TestUploadHTTPBody(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	const destFileName = "example.html"
+	const url = "https://example.com/"
+
+	resp, err := http.Get(url)
+	require.NoError(t, err)
+
+	err = operations.UploadHttpBody(r.Fremote, resp.Body, resp.ContentLength, destFileName)
+	require.NoError(t, err)
 }
 
 func TestMoveFile(t *testing.T) {

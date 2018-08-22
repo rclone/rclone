@@ -14,6 +14,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/config"
 	_ "github.com/ncw/rclone/cmd/copy"
 	_ "github.com/ncw/rclone/cmd/copyto"
+	_ "github.com/ncw/rclone/cmd/copyurl"
 	_ "github.com/ncw/rclone/cmd/cryptcheck"
 	_ "github.com/ncw/rclone/cmd/cryptdecode"
 	_ "github.com/ncw/rclone/cmd/dbhashsum"
