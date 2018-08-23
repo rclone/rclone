@@ -13,10 +13,11 @@ func init() {
 }
 
 var commandDefintion = &cobra.Command{
-	Use:   "copyurl remote:path",
-	Short: `Stream remote file content.`,
+	Use:   "copyurl https://example.com dest:path",
+	Short: `Copy url content to dest.`,
 	Long: `
-Download urls content and copy it to destination.
+Download urls content and copy it to destination 
+without saving it in tmp storage.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
