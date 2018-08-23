@@ -12,17 +12,18 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/http2"
-	"github.com/ncw/rclone/fs/operations"
 )
 
 var (

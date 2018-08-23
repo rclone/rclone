@@ -1,10 +1,11 @@
 package copyurl
 
 import (
+	"net/http"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 func init() {

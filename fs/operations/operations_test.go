@@ -30,6 +30,8 @@ import (
 	"testing"
 	"time"
 
+	"net/http"
+
 	_ "github.com/ncw/rclone/backend/all" // import all backends
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
@@ -40,7 +42,6 @@ import (
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
 )
 
 // Some times used in the tests
