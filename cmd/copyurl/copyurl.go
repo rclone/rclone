@@ -30,7 +30,7 @@ without saving it in tmp storage.
 				return err
 			}
 
-			return operations.UploadHttpBody(fsdst, resp.Body, resp.ContentLength, dstFileName)
+			return operations.UploadHTTPBody(fsdst, resp.Body, resp.ContentLength, dstFileName)
 		})
 	},
 }

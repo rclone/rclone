@@ -480,7 +480,7 @@ func TestUploadHTTPBody(t *testing.T) {
 	resp, err := http.Get(url)
 	require.NoError(t, err)
 
-	err = operations.UploadHttpBody(r.Fremote, resp.Body, resp.ContentLength, destFileName)
+	err = operations.UploadHTTPBody(r.Fremote, resp.Body, resp.ContentLength, destFileName)
 	require.NoError(t, err)
 }
 

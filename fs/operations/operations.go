@@ -1315,8 +1315,8 @@ func NeedTransfer(dst, src fs.Object) bool {
 	return true
 }
 
-// upload an object from http to the repository
-func UploadHttpBody(fdst fs.Fs, body io.ReadCloser, contentLength int64, remote string) error {
+// UploadHTTPBody upload an object from http to dst
+func UploadHTTPBody(fdst fs.Fs, body io.ReadCloser, contentLength int64, remote string) error {
 	if contentLength >= 0 {
 		// Size known use Put
 		accounting.Stats.Transferring(remote)

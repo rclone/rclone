@@ -328,7 +328,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 		}
 	}
 
-	err := operations.UploadHttpBody(s.f, r.Body, r.ContentLength, remote)
+	err := operations.UploadHTTPBody(s.f, r.Body, r.ContentLength, remote)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
