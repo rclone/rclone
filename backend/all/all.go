@@ -18,7 +18,6 @@ import (
 	_ "github.com/ncw/rclone/backend/jottacloud"
 	_ "github.com/ncw/rclone/backend/local"
 	_ "github.com/ncw/rclone/backend/mega"
-	_ "github.com/ncw/rclone/backend/merge"
 	_ "github.com/ncw/rclone/backend/onedrive"
 	_ "github.com/ncw/rclone/backend/opendrive"
 	_ "github.com/ncw/rclone/backend/pcloud"
@@ -26,6 +25,7 @@ import (
 	_ "github.com/ncw/rclone/backend/s3"
 	_ "github.com/ncw/rclone/backend/sftp"
 	_ "github.com/ncw/rclone/backend/swift"
+	_ "github.com/ncw/rclone/backend/union"
 	_ "github.com/ncw/rclone/backend/webdav"
 	_ "github.com/ncw/rclone/backend/yandex"
 )

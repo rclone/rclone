@@ -10,22 +10,23 @@ import (
 	"io"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 var (
-	errorReadOnly = errors.New("merge remotes are read only")
+	errorReadOnly = errors.New("union remotes are read only")
 )
 
 // Register with Fs
 func init() {
 	fsi := &fs.RegInfo{
-		Name:        "merge",
-		Description: "Merge multiple existing remotes into one",
+		Name:        "union",
+		Description: "Builds a stackable unification remote, which can appear to merge the contents of several remotes",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "remotes",
-			Help:     "List of comma seperated remotes.\nCan be \"myremote:/,mysecondremote:/\", \"myremote:/,mysecondremote:/,mythrirdremote:/\", etc.",
+			Help:     "List of space separated remotes.\nCan be 'remotea:test/dir remoteb:', '\"remotea:test/space dir\" remoteb:', etc.",
 			Required: true,
 		}},
 	}
@@ -34,7 +35,7 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Remotes fs.RemoteList `config:"remotes"`
+	Remotes fs.SpaceSepList `config:"remotes"`
 }
 
 // Fs represents a remote acd server
@@ -58,7 +59,7 @@ func (f *Fs) Root() string {
 
 // String converts this Fs to a string
 func (f *Fs) String() string {
-	return fmt.Sprintf("amazon drive root '%s'", f.root)
+	return fmt.Sprintf("union root '%s'", f.root)
 }
 
 // Features returns the optional features of this Fs
@@ -109,12 +110,15 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	for _, remote := range f.remotes {
 		var remoteEntries, err = remote.List(dir)
 		if err != nil {
-			// ignore this remote here
 			continue
 		}
 		for _, remoteEntry := range remoteEntries {
 			set[remoteEntry.Remote()] = remoteEntry
 		}
+	}
+
+	if len(set) == 0 {
+		return nil, fs.ErrorDirNotFound
 	}
 
 	for key := range set {
@@ -123,21 +127,29 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	return entries, nil
 }
 
-// NewObject creates a new remote merge file object
+// NewObject creates a new remote union file object based on the first Object it finds (reverse remote order)
 func (f *Fs) NewObject(path string) (fs.Object, error) {
-	for _, remote := range f.remotes {
+	for i := range f.remotes {
+		var remote = f.remotes[len(f.remotes)-i-1]
 		var obj, err = remote.NewObject(path)
 		if err != nil {
-			// ignore this remote here
+			continue
 		}
 		return obj, nil
 	}
-	return nil, errors.New("no match")
+	return nil, fs.ErrorObjectNotFound
 }
 
-// Precision is the remote http file system's modtime precision, which we have no way of knowing. We estimate at 1s
+// Precision is the greatest Precision of all remotes
 func (f *Fs) Precision() time.Duration {
-	return time.Second
+	var greatestPrecision = time.Second
+	for _, remote := range f.remotes {
+		if remote.Precision() <= greatestPrecision {
+			continue
+		}
+		greatestPrecision = remote.Precision()
+	}
+	return greatestPrecision
 }
 
 // NewFs contstructs an Fs from the path.
@@ -151,28 +163,36 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, err
 	}
 	if len(opt.Remotes) == 0 {
-		return nil, errors.New("merge can't point to an empty remote - check the value of the remotes setting")
+		return nil, errors.New("union can't point to an empty remote - check the value of the remotes setting")
 	}
 	if len(opt.Remotes) == 1 {
-		return nil, errors.New("merge can't point to a single remote - check the value of the remotes setting")
+		return nil, errors.New("union can't point to a single remote - check the value of the remotes setting")
+	}
+	for _, remote := range opt.Remotes {
+		if strings.HasPrefix(remote, name+":") {
+			return nil, errors.New("can't point union remote at itself - check the value of the remote setting")
+		}
 	}
 
 	var remotes []fs.Fs
+	var isFile = false
 	for _, remote := range opt.Remotes {
 		_, configName, fsPath, err := fs.ParseRemote(remote)
 		if err != nil {
 			return nil, err
 		}
-		root = path.Join(fsPath, filepath.ToSlash(root))
-		if configName == "local" {
-			myFs, err := fs.NewFs(root)
-			if err != nil {
-				// handle
-			}
-			remotes = append(remotes, myFs)
-			continue
+		var rootString = path.Join(fsPath, filepath.ToSlash(root))
+		if configName != "local" {
+			rootString = configName + ":" + rootString
 		}
-		myFs, err := fs.NewFs(configName + ":" + root)
+		myFs, err := fs.NewFs(rootString)
+		if err != nil {
+			if err == fs.ErrorIsFile {
+				isFile = true
+			} else {
+				return nil, err
+			}
+		}
 		remotes = append(remotes, myFs)
 	}
 
@@ -182,16 +202,15 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:     *opt,
 		remotes: remotes,
 	}
-	f.features = (&fs.Features{
-		CaseInsensitive:         true,
-		ReadMimeType:            true,
-		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	var features = &fs.Features{}
+	for _, remote := range f.remotes {
+		features = features.Mask(remote).WrapsFs(f, remote)
+	}
+	f.features = features
 
-	// skip for now
-	//if strings.HasPrefix(opt.Remotes, name+":") {
-	//	return nil, errors.New("can't point alias remote at itself - check the value of the remote setting")
-	//}
+	if isFile {
+		return f, fs.ErrorIsFile
+	}
 
 	return f, nil
 }
