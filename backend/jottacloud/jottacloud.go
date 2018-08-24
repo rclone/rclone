@@ -1,10 +1,15 @@
 package jottacloud
 
 import (
+	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -12,6 +17,7 @@ import (
 
 	"github.com/ncw/rclone/backend/jottacloud/api"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
@@ -32,8 +38,8 @@ const (
 	defaultDevice     = "Jotta"
 	defaultMountpoint = "Sync"
 	rootURL           = "https://www.jottacloud.com/jfs/"
-	//newApiRootUrl   = "https://api.jottacloud.com"
-	//newUploadUrl	  = "https://up-no-001.jottacloud.com"
+	apiURL            = "https://api.jottacloud.com"
+	cachePrefix       = "rclone-jcmd5-"
 )
 
 // Register with Fs
@@ -60,15 +66,21 @@ func init() {
 				Value: "Archive",
 				Help:  "Archive",
 			}},
+		}, {
+			Name:     "md5_memory_limit",
+			Help:     "Files bigger than this will be cached on disk to calculate the MD5 if required.",
+			Default:  fs.SizeSuffix(10 * 1024 * 1024),
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	User       string `config:"user"`
-	Pass       string `config:"pass"`
-	Mountpoint string `config:"mountpoint"`
+	User               string        `config:"user"`
+	Pass               string        `config:"pass"`
+	Mountpoint         string        `config:"mountpoint"`
+	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
 }
 
 // Fs represents a remote jottacloud
@@ -742,6 +754,63 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	return resp.Body, err
 }
 
+// Read the md5 of in returning a reader which will read the same contents
+//
+// The cleanup function should be called when out is finished with
+// regardless of whether this function returned an error or not.
+func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader, cleanup func(), err error) {
+	// we need a MD5
+	md5Hasher := md5.New()
+	// use the teeReader to write to the local file AND caclulate the MD5 while doing so
+	teeReader := io.TeeReader(in, md5Hasher)
+
+	// nothing to clean up by default
+	cleanup = func() {}
+
+	// don't cache small files on disk to reduce wear of the disk
+	if size > threshold {
+		var tempFile *os.File
+
+		// create the cache file
+		tempFile, err = ioutil.TempFile("", cachePrefix)
+		if err != nil {
+			return
+		}
+
+		_ = os.Remove(tempFile.Name()) // Delete the file - may not work on Windows
+
+		// clean up the file after we are done downloading
+		cleanup = func() {
+			// the file should normally already be close, but just to make sure
+			_ = tempFile.Close()
+			_ = os.Remove(tempFile.Name()) // delete the cache file after we are done - may be deleted already
+		}
+
+		// copy the ENTIRE file to disc and calculate the MD5 in the process
+		if _, err = io.Copy(tempFile, teeReader); err != nil {
+			return
+		}
+		// jump to the start of the local file so we can pass it along
+		if _, err = tempFile.Seek(0, 0); err != nil {
+			return
+		}
+
+		// replace the already read source with a reader of our cached file
+		out = tempFile
+	} else {
+		// that's a small file, just read it into memory
+		var inData []byte
+		inData, err = ioutil.ReadAll(teeReader)
+		if err != nil {
+			return
+		}
+
+		// set the reader to our read memory block
+		out = bytes.NewReader(inData)
+	}
+	return hex.EncodeToString(md5Hasher.Sum(nil)), out, cleanup, nil
+}
+
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // If existing is set then it updates the object rather than creating a new one
@@ -749,6 +818,21 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
+	md5String, err := src.Hash(hash.MD5)
+	if err != nil || md5String == "" {
+		// unwrap the accounting from the input, we use wrap to put it
+		// back on after the buffering
+		var wrap accounting.WrapFn
+		in, wrap = accounting.UnWrap(in)
+		var cleanup func()
+		md5String, in, cleanup, err = readMD5(in, size, int64(o.fs.opt.MD5MemoryThreshold))
+		defer cleanup()
+		if err != nil {
+			return errors.Wrap(err, "failed to calculate MD5")
+		}
+		// Wrap the accounting back onto the stream
+		in = wrap(in)
+	}
 
 	var resp *http.Response
 	var result api.JottaFile
@@ -762,14 +846,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		Parameters:    url.Values{},
 	}
 
-	md5, err := src.Hash(hash.MD5)
-	if err == nil && md5 != "" {
-		opts.ExtraHeaders["JMd5"] = md5
-		opts.Parameters.Set("cphash", md5)
-	}
-
+	opts.ExtraHeaders["JMd5"] = md5String
+	opts.Parameters.Set("cphash", md5String)
 	opts.ExtraHeaders["JSize"] = strconv.FormatInt(size, 10)
-	//opts.ExtraHeaders["JCreated"] =
+	// opts.ExtraHeaders["JCreated"] = api.Time(src.ModTime()).String()
 	opts.ExtraHeaders["JModified"] = api.Time(src.ModTime()).String()
 
 	// Parameters observed in other implementations

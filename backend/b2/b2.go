@@ -318,6 +318,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to authorize account")
 	}
+	// If this is a key limited to a single bucket, it must exist already
+	if f.bucket != "" && f.info.Allowed.BucketID != "" {
+		f.markBucketOK()
+		f.setBucketID(f.info.Allowed.BucketID)
+	}
 	if f.root != "" {
 		f.root += "/"
 		// Check to see if the (bucket,directory) is actually an existing file

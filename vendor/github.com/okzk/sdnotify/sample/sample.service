@@ -6,6 +6,8 @@ Type=notify
 ExecStart=/path/to/sample
 ExecStop=/bin/kill -SIGTERM $MAINPID
 ExecReload=/bin/kill -SIGHUP $MAINPID
+WatchdogSec=60s
+Restart=on-failure
 
 [Install]
 WantedBy = multi-user.target

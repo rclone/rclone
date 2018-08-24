@@ -13,6 +13,7 @@ import (
 	"testing/iotest"
 	"time"
 
+	"github.com/ncw/rclone/lib/israce"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -303,6 +304,9 @@ func TestAsyncReaderSkipBytes(t *testing.T) {
 		8000, len(data), BufferSize, 2 * BufferSize}
 
 	for buffers := 1; buffers <= 5; buffers++ {
+		if israce.Enabled && buffers > 1 {
+			t.Skip("FIXME Skipping further tests with race detector until https://github.com/golang/go/issues/27070 is fixed.")
+		}
 		t.Run(fmt.Sprintf("%d", buffers), func(t *testing.T) {
 			for _, initialRead := range initialReads {
 				t.Run(fmt.Sprintf("%d", initialRead), func(t *testing.T) {

@@ -5,10 +5,11 @@ import (
 	"os"
 )
 
+// SdNotify sends a specified string to the systemd notification socket.
 func SdNotify(state string) error {
 	name := os.Getenv("NOTIFY_SOCKET")
 	if name == "" {
-		return SdNotifyNoSocket
+		return ErrSdNotifyNoSocket
 	}
 
 	conn, err := net.DialUnix("unixgram", nil, &net.UnixAddr{Name: name, Net: "unixgram"})
