@@ -161,7 +161,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 
 	doChangeNotify := wrappedFs.Features().ChangeNotify
 	if doChangeNotify != nil {
-		f.features.ChangeNotify = func(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) chan bool {
+		f.features.ChangeNotify = func(notifyFunc func(string, fs.EntryType), pollInterval <-chan time.Duration) {
 			wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
 				decrypted, err := f.DecryptFileName(path)
 				if err != nil {
@@ -170,7 +170,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 				}
 				notifyFunc(decrypted, entryType)
 			}
-			return doChangeNotify(wrappedNotifyFunc, pollInterval)
+			doChangeNotify(wrappedNotifyFunc, pollInterval)
 		}
 	}
 

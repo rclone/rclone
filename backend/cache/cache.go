@@ -403,7 +403,9 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	}()
 
 	if doChangeNotify := wrappedFs.Features().ChangeNotify; doChangeNotify != nil {
-		doChangeNotify(f.receiveChangeNotify, time.Duration(f.opt.ChunkCleanInterval))
+		pollInterval := make(chan time.Duration, 1)
+		pollInterval <- time.Duration(f.opt.ChunkCleanInterval)
+		doChangeNotify(f.receiveChangeNotify, pollInterval)
 	}
 
 	f.features = (&fs.Features{
@@ -595,12 +597,15 @@ func (f *Fs) notifyChangeUpstream(remote string, entryType fs.EntryType) {
 // ChangeNotify can subsribe multiple callers
 // this is coupled with the wrapped fs ChangeNotify (if it supports it)
 // and also notifies other caches (i.e VFS) to clear out whenever something changes
-func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) chan bool {
+func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollInterval <-chan time.Duration) {
 	f.parentsForgetMu.Lock()
 	defer f.parentsForgetMu.Unlock()
 	fs.Debugf(f, "subscribing to ChangeNotify")
 	f.parentsForgetFn = append(f.parentsForgetFn, notifyFunc)
-	return make(chan bool)
+	go func() {
+		for range pollInterval {
+		}
+	}()
 }
 
 // Name of the remote (as passed into NewFs)

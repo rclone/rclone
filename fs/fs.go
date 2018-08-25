@@ -409,7 +409,7 @@ type Features struct {
 	// ChangeNotify calls the passed function with a path
 	// that has had changes. If the implementation
 	// uses polling, it should adhere to the given interval.
-	ChangeNotify func(func(string, EntryType), time.Duration) chan bool
+	ChangeNotify func(func(string, EntryType), <-chan time.Duration)
 
 	// UnWrap returns the Fs that this Fs is wrapping
 	UnWrap func() Fs
@@ -706,7 +706,13 @@ type ChangeNotifier interface {
 	// ChangeNotify calls the passed function with a path
 	// that has had changes. If the implementation
 	// uses polling, it should adhere to the given interval.
-	ChangeNotify(func(string, EntryType), time.Duration) chan bool
+	// At least one value will be written to the channel,
+	// specifying the initial value and updated values might
+	// follow. A 0 Duration should pause the polling.
+	// The ChangeNotify implemantion must empty the channel
+	// regulary. When the channel gets closed, the implemantion
+	// should stop polling and release resources.
+	ChangeNotify(func(string, EntryType), <-chan time.Duration)
 }
 
 // UnWrapper is an optional interfaces for Fs

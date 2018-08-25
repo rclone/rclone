@@ -758,9 +758,10 @@ func Run(t *testing.T, opt *Opt) {
 		err := operations.Mkdir(remote, "dir")
 		require.NoError(t, err)
 
+		pollInterval := make(chan time.Duration)
 		dirChanges := []string{}
 		objChanges := []string{}
-		quitChannel := doChangeNotify(func(x string, e fs.EntryType) {
+		doChangeNotify(func(x string, e fs.EntryType) {
 			fs.Debugf(nil, "doChangeNotify(%q, %+v)", x, e)
 			if strings.HasPrefix(x, file1.Path[:5]) || strings.HasPrefix(x, file2.Path[:5]) {
 				fs.Debugf(nil, "Ignoring notify for file1 or file2: %q, %v", x, e)
@@ -771,8 +772,9 @@ func Run(t *testing.T, opt *Opt) {
 			} else if e == fs.EntryObject {
 				objChanges = append(objChanges, x)
 			}
-		}, time.Second)
-		defer func() { close(quitChannel) }()
+		}, pollInterval)
+		defer func() { close(pollInterval) }()
+		pollInterval <- time.Second
 
 		var dirs []string
 		for _, idx := range []int{1, 3, 2} {
