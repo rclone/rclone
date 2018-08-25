@@ -176,6 +176,7 @@ type VFS struct {
 	usageMu   sync.Mutex
 	usageTime time.Time
 	usage     *fs.Usage
+	pollChan  chan time.Duration
 }
 
 // Options is options for creating the vfs
@@ -223,13 +224,13 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// Create root directory
 	vfs.root = newDir(vfs, f, nil, fsDir)
 
-	// Start polling if required
-	if vfs.Opt.PollInterval > 0 {
-		if do := vfs.f.Features().ChangeNotify; do != nil {
-			do(vfs.notifyFunc, vfs.Opt.PollInterval)
-		} else {
-			fs.Infof(f, "poll-interval is not supported by this remote")
-		}
+	// Start polling function
+	if do := vfs.f.Features().ChangeNotify; do != nil {
+		vfs.pollChan = make(chan time.Duration)
+		do(vfs.notifyFunc, vfs.pollChan)
+		vfs.pollChan <- vfs.Opt.PollInterval
+	} else {
+		fs.Infof(f, "poll-interval is not supported by this remote")
 	}
 
 	vfs.SetCacheMode(vfs.Opt.CacheMode)
