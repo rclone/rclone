@@ -1240,24 +1240,38 @@ func (o *Object) MimeType() string {
 // Automatically restarts itself in case of unexpected behaviour of the remote.
 //
 // Close the returned channel to stop being notified.
-func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) chan bool {
+func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	checkpoint := f.opt.Checkpoint
 
-	quit := make(chan bool)
 	go func() {
+		var ticker *time.Ticker
+		var tickerC <-chan time.Time
 		for {
-			checkpoint = f.changeNotifyRunner(notifyFunc, checkpoint)
-			if err := config.SetValueAndSave(f.name, "checkpoint", checkpoint); err != nil {
-				fs.Debugf(f, "Unable to save checkpoint: %v", err)
-			}
 			select {
-			case <-quit:
-				return
-			case <-time.After(pollInterval):
+			case pollInterval, ok := <-pollIntervalChan:
+				if !ok {
+					if ticker != nil {
+						ticker.Stop()
+					}
+					return
+				}
+				if pollInterval == 0 {
+					if ticker != nil {
+						ticker.Stop()
+						ticker, tickerC = nil, nil
+					}
+				} else {
+					ticker = time.NewTicker(pollInterval)
+					tickerC = ticker.C
+				}
+			case <-tickerC:
+				checkpoint = f.changeNotifyRunner(notifyFunc, checkpoint)
+				if err := config.SetValueAndSave(f.name, "checkpoint", checkpoint); err != nil {
+					fs.Debugf(f, "Unable to save checkpoint: %v", err)
+				}
 			}
 		}
 	}()
-	return quit
 }
 
 func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), checkpoint string) string {

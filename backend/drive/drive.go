@@ -1660,25 +1660,50 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 // Automatically restarts itself in case of unexpected behaviour of the remote.
 //
 // Close the returned channel to stop being notified.
-func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) chan bool {
-	quit := make(chan bool)
+func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	go func() {
-		select {
-		case <-quit:
-			return
-		default:
-			for {
-				f.changeNotifyRunner(notifyFunc, pollInterval)
-				fs.Debugf(f, "Notify listener service ran into issues, restarting shortly.")
-				time.Sleep(pollInterval)
+		// get the StartPageToken early so all changes from now on get processed
+		startPageToken, err := f.changeNotifyStartPageToken()
+		if err != nil {
+			fs.Infof(f, "Failed to get StartPageToken: %s", err)
+		}
+		var ticker *time.Ticker
+		var tickerC <-chan time.Time
+		for {
+			select {
+			case pollInterval, ok := <-pollIntervalChan:
+				if !ok {
+					if ticker != nil {
+						ticker.Stop()
+					}
+					return
+				}
+				if ticker != nil {
+					ticker.Stop()
+					ticker, tickerC = nil, nil
+				}
+				if pollInterval != 0 {
+					ticker = time.NewTicker(pollInterval)
+					tickerC = ticker.C
+				}
+			case <-tickerC:
+				if startPageToken == "" {
+					startPageToken, err = f.changeNotifyStartPageToken()
+					if err != nil {
+						fs.Infof(f, "Failed to get StartPageToken: %s", err)
+						continue
+					}
+				}
+				fs.Debugf(f, "Checking for changes on remote")
+				startPageToken, err = f.changeNotifyRunner(notifyFunc, startPageToken)
+				if err != nil {
+					fs.Infof(f, "Change notify listener failure: %s", err)
+				}
 			}
 		}
 	}()
-	return quit
 }
-
-func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) {
-	var err error
+func (f *Fs) changeNotifyStartPageToken() (pageToken string, err error) {
 	var startPageToken *drive.StartPageToken
 	err = f.pacer.Call(func() (bool, error) {
 		startPageToken, err = f.svc.Changes.GetStartPageToken().
@@ -1687,13 +1712,14 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 		return shouldRetry(err)
 	})
 	if err != nil {
-		fs.Debugf(f, "Failed to get StartPageToken: %v", err)
 		return
 	}
-	pageToken := startPageToken.StartPageToken
+	return startPageToken.StartPageToken, nil
+}
 
+func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPageToken string) (newStartPageToken string, err error) {
+	pageToken := startPageToken
 	for {
-		fs.Debugf(f, "Checking for changes on remote")
 		var changeList *drive.ChangeList
 
 		err = f.pacer.Call(func() (bool, error) {
@@ -1711,7 +1737,6 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 			return shouldRetry(err)
 		})
 		if err != nil {
-			fs.Debugf(f, "Failed to get Changes: %v", err)
 			return
 		}
 
@@ -1763,15 +1788,12 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 			notifyFunc(entry.path, entry.entryType)
 		}
 
-		if changeList.NewStartPageToken != "" {
-			pageToken = changeList.NewStartPageToken
-			fs.Debugf(f, "All changes were processed. Waiting for more.")
-			time.Sleep(pollInterval)
-		} else if changeList.NextPageToken != "" {
+		switch {
+		case changeList.NewStartPageToken != "":
+			return changeList.NewStartPageToken, nil
+		case changeList.NextPageToken != "":
 			pageToken = changeList.NextPageToken
-			fs.Debugf(f, "There are more changes pending, checking now.")
-		} else {
-			fs.Debugf(f, "Did not get any page token, something went wrong! %+v", changeList)
+		default:
 			return
 		}
 	}
