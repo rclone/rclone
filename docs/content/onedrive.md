@@ -22,51 +22,36 @@ Here is an example of how to make a remote called `remote`.  First run:
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+e) Edit existing remote
 n) New remote
+d) Delete remote
+r) Rename remote
+c) Copy remote
 s) Set configuration password
-n/s> n
+q) Quit config
+e/n/d/r/c/s/q> n
 name> remote
 Type of storage to configure.
+Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
- 1 / Amazon Drive
-   \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 3 / Backblaze B2
-   \ "b2"
- 4 / Dropbox
-   \ "dropbox"
- 5 / Encrypt/Decrypt a remote
-   \ "crypt"
- 6 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
- 7 / Google Drive
-   \ "drive"
- 8 / Hubic
-   \ "hubic"
- 9 / Local Disk
-   \ "local"
-10 / Microsoft OneDrive
+...
+17 / Microsoft OneDrive
    \ "onedrive"
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-   \ "swift"
-12 / SSH/SFTP Connection
-   \ "sftp"
-13 / Yandex Disk
-   \ "yandex"
-Storage> 10
-Microsoft App Client Id - leave blank normally.
+...
+Storage> 17
+Microsoft App Client Id
+Leave blank normally.
+Enter a string value. Press Enter for the default ("").
 client_id>
-Microsoft App Client Secret - leave blank normally.
+Microsoft App Client Secret
+Leave blank normally.
+Enter a string value. Press Enter for the default ("").
 client_secret>
+Edit advanced config? (y/n)
+y) Yes
+n) No
+y/n> n
 Remote config
-Choose OneDrive account type?
- * Say b for a OneDrive business account
- * Say p for a personal OneDrive account
-b) Business
-p) Personal
-b/p> p
 Use auto config?
  * Say Y if not sure
  * Say N if you are working on a remote or headless machine
@@ -77,11 +62,32 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
+Choose a number from below, or type in an existing value
+ 1 / OneDrive Personal or Business
+   \ "onedrive"
+ 2 / Sharepoint site
+   \ "sharepoint"
+ 3 / Type in driveID
+   \ "driveid"
+ 4 / Type in SiteID
+   \ "siteid"
+ 5 / Search a Sharepoint site
+   \ "search"
+Your choice> 1
+Found 1 drives, please select the one you want to use:
+0: OneDrive (business) id=b!Eqwertyuiopasdfghjklzxcvbnm-7mnbvcxzlkjhgfdsapoiuytrewqk
+Chose drive to use:> 0
+Found drive 'root' of type 'business', URL: https://org-my.sharepoint.com/personal/you/Documents
+Is that okay?
+y) Yes
+n) No
+y/n> y
 --------------------
 [remote]
-client_id =
-client_secret =
-token = {"access_token":"XXXXXX"}
+type = onedrive
+token = {"access_token":"youraccesstoken","token_type":"Bearer","refresh_token":"yourrefreshtoken","expiry":"2018-08-26T22:39:52.486512262+08:00"}
+drive_id = b!Eqwertyuiopasdfghjklzxcvbnm-7mnbvcxzlkjhgfdsapoiuytrewqk
+drive_type = business
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -112,20 +118,23 @@ To copy a local directory to an OneDrive directory called backup
 
     rclone copy /home/source remote:backup
 
-### OneDrive for Business ###
+### Getting your own Client ID and Key ###
 
-There is additional support for OneDrive for Business.
-Select "b" when ask
-```
-Choose OneDrive account type?
- * Say b for a OneDrive business account
- * Say p for a personal OneDrive account
-b) Business
-p) Personal
-b/p>
-```
-After that rclone requires an authentication of your account. The application will first authenticate your account, then query the OneDrive resource URL
-and do a second (silent) authentication for this resource URL.
+rclone uses a pair of Client ID and Key shared by all rclone users when performing requests by default.
+If you are having problems with them (E.g., seeing a lot of throttling), you can get your own
+Client ID and Key by following the steps below:
+
+1. Open https://apps.dev.microsoft.com/#/appList, then click `Add an app` (Choose `Converged applications` if applicable)
+2. Enter a name for your app, and click continue. Copy and keep the `Application Id` under the app name for later use.
+3. Under section `Application Secrets`, click `Generate New Password`. Copy and keep that password for later use.
+4. Under section `Platforms`, click `Add platform`, then `Web`. Enter `http://localhost:53682/` in
+`Redirect URLs`.
+5. Under section `Microsoft Graph Permissions`, `Add` these `delegated permissions`:
+`Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`.
+6. Scroll to the bottom and click `Save`.
+
+Now the application is complete. Run `rclone config` to create or edit a OneDrive remote.
+Supply the app ID and password as Client ID and Secret, respectively. rclone will walk you through the remaining steps.
 
 ### Modified time and hashes ###
 
