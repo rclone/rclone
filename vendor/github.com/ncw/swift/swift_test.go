@@ -1479,6 +1479,20 @@ func TestObjectCopy(t *testing.T) {
 	}
 }
 
+func TestObjectCopyDifficultName(t *testing.T) {
+	c, rollback := makeConnectionWithObjectHeaders(t)
+	defer rollback()
+	const dest = OBJECT + "?param %30%31%32 £100"
+	_, err := c.ObjectCopy(CONTAINER, OBJECT, CONTAINER, dest, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = c.ObjectDelete(CONTAINER, dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestObjectCopyWithMetadata(t *testing.T) {
 	c, rollback := makeConnectionWithObjectHeaders(t)
 	defer rollback()

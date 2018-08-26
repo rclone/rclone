@@ -250,12 +250,12 @@
   revision = "887eb06ab6a255fbf5744b5812788e884078620a"
 
 [[projects]]
-  digest = "1:7a4827b2062a21ba644241bdec27959a5be2670f8aa4038ba14cfe2ce389e8d2"
+  digest = "1:e5b9ef2c82d0c904496a3fd6b14e34081df4d425d42d8e57d182ac3d8c93e98a"
   name = "github.com/ncw/swift"
   packages = ["."]
   pruneopts = ""
-  revision = "b2a7479cf26fa841ff90dd932d0221cb5c50782d"
-  version = "v1.0.39"
+  revision = "a0320860b16212c2b59b4912bb6508cda1d7cee6"
+  version = "v1.0.40"
 
 [[projects]]
   branch = "master"
