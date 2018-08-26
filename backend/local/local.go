@@ -16,8 +16,10 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
+	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
@@ -280,6 +282,13 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			// Follow symlinks if required
 			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
 				fi, err = os.Stat(newPath)
+				if os.IsNotExist(err) {
+					// Skip bad symlinks
+					err = fserrors.NoRetryError(errors.Wrap(err, "symlink"))
+					fs.Errorf(newRemote, "Listing error: %v", err)
+					accounting.Stats.Error(err)
+					continue
+				}
 				if err != nil {
 					return nil, err
 				}
