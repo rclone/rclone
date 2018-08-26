@@ -157,7 +157,7 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Pattern to match a azure path
-var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
+var matcher = regexp.MustCompile(`^/*([^/]*)(.*)$`)
 
 // parseParse parses a azure 'url'
 func parsePath(path string) (container, directory string, err error) {
