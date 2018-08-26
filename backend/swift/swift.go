@@ -216,7 +216,7 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Pattern to match a swift path
-var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
+var matcher = regexp.MustCompile(`^/*([^/]*)(.*)$`)
 
 // parseParse parses a swift 'url'
 func parsePath(path string) (container, directory string, err error) {
