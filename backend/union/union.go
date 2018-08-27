@@ -1,4 +1,4 @@
-package alias
+package union
 
 import (
 	"errors"
@@ -14,10 +14,6 @@ import (
 	"time"
 )
 
-var (
-	errorReadOnly = errors.New("union remotes are read only")
-)
-
 // Register with Fs
 func init() {
 	fsi := &fs.RegInfo{
@@ -26,7 +22,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "remotes",
-			Help:     "List of space separated remotes.\nCan be 'remotea:test/dir remoteb:', '\"remotea:test/space dir\" remoteb:', etc.",
+			Help:     "List of space separated remotes.\nCan be 'remotea:test/dir remoteb:', '\"remotea:test/space dir\" remoteb:', etc.\nThe last remote is used to write to.",
 			Required: true,
 		}},
 	}
@@ -69,17 +65,18 @@ func (f *Fs) Features() *fs.Features {
 
 // Rmdir removes the root directory of the Fs object
 func (f *Fs) Rmdir(dir string) error {
-	return errorReadOnly
+	return f.remotes[len(f.remotes)-1].Rmdir(dir)
 }
 
 // Hashes returns hash.HashNone to indicate remote hashing is unavailable
 func (f *Fs) Hashes() hash.Set {
+	// This could probably be set if all remotes share the same hashing algorithm
 	return hash.Set(hash.None)
 }
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(dir string) error {
-	return errorReadOnly
+	return f.remotes[len(f.remotes)-1].Mkdir(dir)
 }
 
 // Put in to the remote path with the modTime given of the given size
@@ -88,12 +85,7 @@ func (f *Fs) Mkdir(dir string) error {
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, errorReadOnly
-}
-
-// PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return nil, errorReadOnly
+	return f.remotes[len(f.remotes)-1].Put(in, src, options...)
 }
 
 // List the objects and directories in dir into entries.  The
@@ -152,7 +144,7 @@ func (f *Fs) Precision() time.Duration {
 	return greatestPrecision
 }
 
-// NewFs contstructs an Fs from the path.
+// NewFs constructs an Fs from the path.
 //
 // The returned Fs is the actual Fs, referenced by remote in the config
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -175,8 +167,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	var remotes []fs.Fs
-	var isFile = false
-	for _, remote := range opt.Remotes {
+	for i := range opt.Remotes {
+		// Last remote first so we return the correct (last) matching fs in case of fs.ErrorIsFile
+		var remote = opt.Remotes[len(opt.Remotes)-i-1]
 		_, configName, fsPath, err := fs.ParseRemote(remote)
 		if err != nil {
 			return nil, err
@@ -188,12 +181,17 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		myFs, err := fs.NewFs(rootString)
 		if err != nil {
 			if err == fs.ErrorIsFile {
-				isFile = true
+				return myFs, err
 			} else {
 				return nil, err
 			}
 		}
 		remotes = append(remotes, myFs)
+	}
+
+	// Reverse the remotes again so they are in the order as before
+	for i, j := 0, len(remotes)-1; i < j; i, j = i+1, j-1 {
+		remotes[i], remotes[j] = remotes[j], remotes[i]
 	}
 
 	f := &Fs{
@@ -202,15 +200,16 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:     *opt,
 		remotes: remotes,
 	}
-	var features = &fs.Features{}
+	var features = (&fs.Features{}).Fill(f)
 	for _, remote := range f.remotes {
-		features = features.Mask(remote).WrapsFs(f, remote)
+		features = features.Mask(remote)
 	}
 	f.features = features
 
-	if isFile {
-		return f, fs.ErrorIsFile
-	}
-
 	return f, nil
 }
+
+// Check the interfaces are satisfied
+var (
+	_ fs.Fs = &Fs{}
+)
