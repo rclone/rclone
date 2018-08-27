@@ -39,19 +39,22 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:6978a38432a017763a148afbc7ce6491734b54292af7d3e969d84d2e9dd242e2"
+  name = "github.com/Azure/go-ansiterm"
+  packages = [
+    ".",
+    "winterm",
+  ]
+  pruneopts = ""
+  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
+
+[[projects]]
+  branch = "master"
   digest = "1:f9282871e22332a39831bc53a3588fc04d763bf3f13312655580c7f4cb012b66"
   name = "github.com/Unknwon/goconfig"
   packages = ["."]
   pruneopts = ""
   revision = "ef1e4c783f8f0478bd8bff0edb3dd0bade552599"
-
-[[projects]]
-  digest = "1:ac226c42eb54c121e0704c6f7f64c96c7817ad6d6286e5536e8cea72807e1079"
-  name = "github.com/VividCortex/ewma"
-  packages = ["."]
-  pruneopts = ""
-  revision = "b24eb346a94c3ba12c1da1e564dbac1b498a77ce"
-  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -250,12 +253,12 @@
   revision = "887eb06ab6a255fbf5744b5812788e884078620a"
 
 [[projects]]
-  digest = "1:7a4827b2062a21ba644241bdec27959a5be2670f8aa4038ba14cfe2ce389e8d2"
+  digest = "1:e5b9ef2c82d0c904496a3fd6b14e34081df4d425d42d8e57d182ac3d8c93e98a"
   name = "github.com/ncw/swift"
   packages = ["."]
   pruneopts = ""
-  revision = "b2a7479cf26fa841ff90dd932d0221cb5c50782d"
-  version = "v1.0.39"
+  revision = "a0320860b16212c2b59b4912bb6508cda1d7cee6"
+  version = "v1.0.40"
 
 [[projects]]
   branch = "master"
@@ -566,8 +569,9 @@
     "bazil.org/fuse",
     "bazil.org/fuse/fs",
     "github.com/Azure/azure-storage-blob-go/2018-03-28/azblob",
+    "github.com/Azure/go-ansiterm",
+    "github.com/Azure/go-ansiterm/winterm",
     "github.com/Unknwon/goconfig",
-    "github.com/VividCortex/ewma",
     "github.com/a8m/tree",
     "github.com/abbot/go-http-auth",
     "github.com/aws/aws-sdk-go/aws",

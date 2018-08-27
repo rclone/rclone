@@ -635,7 +635,7 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Pattern to match a s3 path
-var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
+var matcher = regexp.MustCompile(`^/*([^/]*)(.*)$`)
 
 // parseParse parses a s3 'url'
 func s3ParsePath(path string) (bucket, directory string, err error) {
