@@ -208,8 +208,10 @@ func (o *Object) SetModTime(t time.Time) error {
 
 // Open is used to request a specific part of the file using fs.RangeOption
 func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
-	if err := o.refreshFromSource(true); err != nil {
-		return nil, err
+	if o.Object == nil {
+		if err := o.refreshFromSource(true); err != nil {
+			return nil, err
+		}
 	}
 
 	var err error
