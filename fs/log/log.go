@@ -66,6 +66,7 @@ func Trace(o interface{}, format string, a ...interface{}) func(string, ...inter
 
 // InitLogging start the logging as per the command line flags
 func InitLogging() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	// Log file output
 	if *logFile != "" {
 		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
