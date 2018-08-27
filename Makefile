@@ -210,10 +210,10 @@ tag:	doc
 	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
 	echo -n "$(NEW_TAG)" > docs/layouts/partials/version.html
 	git tag -s -m "Version $(NEW_TAG)" $(NEW_TAG)
+	bin/make_changelog.py $(LAST_TAG) $(NEW_TAG) > docs/content/changelog.md.new
+	mv docs/content/changelog.md.new docs/content/changelog.md
 	@echo "Edit the new changelog in docs/content/changelog.md"
-	@echo "  * $(NEW_TAG) -" `date -I` >> docs/content/changelog.md
-	@git log $(LAST_TAG)..$(NEW_TAG) --oneline >> docs/content/changelog.md
-	@echo "Then commit the changes"
+	@echo "Then commit all the changes"
 	@echo git commit -m \"Version $(NEW_TAG)\" -a -v
 	@echo "And finally run make retag before make cross etc"
 
