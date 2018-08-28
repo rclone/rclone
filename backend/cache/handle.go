@@ -304,11 +304,11 @@ func (r *Handle) Close() error {
 	close(r.preloadQueue)
 	r.closed = true
 	// wait for workers to complete their jobs before returning
-	waitCount := 3
+	waitCount := 300
 	for i := 0; i < len(r.workers); i++ {
 		waitIdx := 0
 		for r.workers[i].isRunning() && waitIdx < waitCount {
-			time.Sleep(time.Second)
+			time.Sleep(10 * time.Millisecond)
 			waitIdx++
 		}
 	}
