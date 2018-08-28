@@ -1,9 +1,0 @@
-# Test configurations
-
-zone: pek3a
-bucket_name: access-key-id
-
-retry_wait_time: 3 # seconds
-max_retries: 60
-
-concurrency: 1
