@@ -1445,8 +1445,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 	if o.fs.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
-	
-        }
+	}
         if o.fs.opt.SSEKMSKeyId != "" {
                 req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyId
         }
