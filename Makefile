@@ -83,7 +83,6 @@ ifdef FULL_TESTS
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/tools/godep
 endif
 
 # Get the release dependencies
@@ -93,8 +92,9 @@ release_dep:
 
 # Update dependencies
 update:
-	go get -u github.com/golang/dep/cmd/dep
-	dep ensure -update -v
+	GO111MODULE=on go get -u ./...
+	GO111MODULE=on go tidy
+	GO111MODULE=on go vendor
 
 doc:	rclone.1 MANUAL.html MANUAL.txt
 

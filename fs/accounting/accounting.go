@@ -129,6 +129,7 @@ func (acc *Account) UpdateReader(in io.ReadCloser) {
 // averageLoop calculates averages for the stats in the background
 func (acc *Account) averageLoop() {
 	tick := time.NewTicker(time.Second)
+	var period float64
 	defer tick.Stop()
 	for {
 		select {
@@ -137,7 +138,11 @@ func (acc *Account) averageLoop() {
 			// Add average of last second.
 			elapsed := now.Sub(acc.lpTime).Seconds()
 			avg := float64(acc.lpBytes) / elapsed
-			acc.avg = (avg + (averagePeriod-1)*acc.avg) / averagePeriod
+			// Soft start the moving average
+			if period < averagePeriod {
+				period++
+			}
+			acc.avg = (avg + (period-1)*acc.avg) / period
 			acc.lpBytes = 0
 			acc.lpTime = now
 			// Unlock stats
@@ -229,26 +234,13 @@ func (acc *Account) speed() (bps, current float64) {
 // eta returns the ETA of the current operation,
 // rounded to full seconds.
 // If the ETA cannot be determined 'ok' returns false.
-func (acc *Account) eta() (eta time.Duration, ok bool) {
-	if acc == nil || acc.size <= 0 {
+func (acc *Account) eta() (etaDuration time.Duration, ok bool) {
+	if acc == nil {
 		return 0, false
 	}
 	acc.statmu.Lock()
 	defer acc.statmu.Unlock()
-	if acc.bytes == 0 {
-		return 0, false
-	}
-	left := acc.size - acc.bytes
-	if left <= 0 {
-		return 0, true
-	}
-	avg := acc.avg
-	if avg <= 0 {
-		return 0, false
-	}
-	seconds := float64(left) / avg
-
-	return time.Second * time.Duration(seconds), true
+	return eta(acc.bytes, acc.size, acc.avg)
 }
 
 // String produces stats for this file

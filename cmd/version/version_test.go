@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/ncw/rclone/cmd"
@@ -21,7 +22,9 @@ func TestVersionWorksWithoutAccessibleConfigFile(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 	assert.NoError(t, tempFile.Close())
-	assert.NoError(t, os.Chmod(path, 0000))
+	if runtime.GOOS != "windows" {
+		assert.NoError(t, os.Chmod(path, 0000))
+	}
 	// re-wire
 	oldOsStdout := os.Stdout
 	oldConfigPath := config.ConfigPath
