@@ -129,6 +129,7 @@ func (acc *Account) UpdateReader(in io.ReadCloser) {
 // averageLoop calculates averages for the stats in the background
 func (acc *Account) averageLoop() {
 	tick := time.NewTicker(time.Second)
+	var period float64
 	defer tick.Stop()
 	for {
 		select {
@@ -137,7 +138,11 @@ func (acc *Account) averageLoop() {
 			// Add average of last second.
 			elapsed := now.Sub(acc.lpTime).Seconds()
 			avg := float64(acc.lpBytes) / elapsed
-			acc.avg = (avg + (averagePeriod-1)*acc.avg) / averagePeriod
+			// Soft start the moving average
+			if period < averagePeriod {
+				period++
+			}
+			acc.avg = (avg + (period-1)*acc.avg) / period
 			acc.lpBytes = 0
 			acc.lpTime = now
 			// Unlock stats
