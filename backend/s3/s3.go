@@ -499,23 +499,23 @@ func init() {
 				Value: "AES256",
 				Help:  "AES256",
 			}, {
-                                Value:  "aws:kms",
-                                Help:  "aws:kms",
+				Value:  "aws:kms",
+				Help:   "aws:kms",
 			}},
 
 		}, {
-                        Name:     "sse_kms_key_id",
-                        Help:     "If using KMS ID you must provide the ARN of Key.",
-                        Provider: "AWS",
-                        Examples: []fs.OptionExample{{
-                                Value: "",
-                                Help:  "None",
-                        }, {
-                                Value: "arn:aws:kms:us-east-1:*",
-                                Help:  "arn:aws:kms:*",
-                        }},
+			Name:     "sse_kms_key_id",
+			Help:     "If using KMS ID you must provide the ARN of Key.",
+			Provider: "AWS",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}, {
+				Value: "arn:aws:kms:us-east-1:*",
+				Help:  "arn:aws:kms:*",
+			}},
 
-                }, {
+		}, {
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing objects in S3.",
 			Provider: "AWS",
@@ -585,7 +585,7 @@ type Options struct {
 	LocationConstraint   string        `config:"location_constraint"`
 	ACL                  string        `config:"acl"`
 	ServerSideEncryption string        `config:"server_side_encryption"`
-        SSEKMSKeyId          string        `config:"sse_kms_key_id"`
+	SSEKMSKeyId          string        `config:"sse_kms_key_id"`
 	StorageClass         string        `config:"storage_class"`
 	ChunkSize            fs.SizeSuffix `config:"chunk_size"`
 	DisableChecksum      bool          `config:"disable_checksum"`
@@ -1446,9 +1446,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	if o.fs.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
 	}
-        if o.fs.opt.SSEKMSKeyId != "" {
-                req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyId
-        }
+	if o.fs.opt.SSEKMSKeyId != "" {
+		req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyId
+	}
 	if o.fs.opt.StorageClass != "" {
 		req.StorageClass = &o.fs.opt.StorageClass
 	}
