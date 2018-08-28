@@ -67,23 +67,24 @@ func Trace(o interface{}, format string, a ...interface{}) func(string, ...inter
 
 // InitLogging start the logging as per the command line flags
 func InitLogging() {
+	flagsStr := "," + *logFormat + ","
 	var flags int
-	if strings.Contains(*logFormat, "date") {
+	if strings.Contains(flagsStr, ",date,") {
 		flags |= log.Ldate
 	}
-	if strings.Contains(*logFormat, "time") {
+	if strings.Contains(flagsStr, ",time,") {
 		flags |= log.Ltime
 	}
-	if strings.Contains(*logFormat, "microseconds") {
+	if strings.Contains(flagsStr, ",microseconds,") {
 		flags |= log.Lmicroseconds
 	}
-	if strings.Contains(*logFormat, "longfile") {
+	if strings.Contains(flagsStr, ",longfile,") {
 		flags |= log.Llongfile
 	}
-	if strings.Contains(*logFormat, "shortfile") {
+	if strings.Contains(flagsStr, ",shortfile,") {
 		flags |= log.Lshortfile
 	}
-	if strings.Contains(*logFormat, "UTC") {
+	if strings.Contains(flagsStr, ",UTC,") {
 		flags |= log.LUTC
 	}
 	log.SetFlags(flags)
