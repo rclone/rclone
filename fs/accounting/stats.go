@@ -140,6 +140,43 @@ func (s *StatsInfo) RemoteStats(in rc.Params) (out rc.Params, err error) {
 	return out, nil
 }
 
+// eta returns the ETA of the current operation,
+// rounded to full seconds.
+// If the ETA cannot be determined 'ok' returns false.
+func eta(size, total int64, rate float64) (eta time.Duration, ok bool) {
+	if total <= 0 || size < 0 || rate <= 0 {
+		return 0, false
+	}
+	remaining := total - size
+	if remaining < 0 {
+		return 0, false
+	}
+	seconds := float64(remaining) / rate
+	return time.Second * time.Duration(seconds), true
+}
+
+// etaString returns the ETA of the current operation,
+// rounded to full seconds.
+// If the ETA cannot be determined it returns "-"
+func etaString(done, total int64, rate float64) string {
+	d, ok := eta(done, total, rate)
+	if !ok {
+		return "-"
+	}
+	return d.String()
+}
+
+// percent returns a/b as a percentage rounded to the nearest integer
+// as a string
+//
+// if the percentage is invalid it returns "-"
+func percent(a int64, b int64) string {
+	if a < 0 || b <= 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%d%%", int(float64(a)*100/float64(b)+0.5))
+}
+
 // String convert the StatsInfo to a string for printing
 func (s *StatsInfo) String() string {
 	s.mu.RLock()
