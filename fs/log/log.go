@@ -16,7 +16,7 @@ import (
 // Flags
 var (
 	logFile        = flags.StringP("log-file", "", "", "Log everything to this file")
-	logFormat      = flags.StringP("log-format", "", "date,time", "")
+	logFormat      = flags.StringP("log-format", "", "date,time", "Comma separated list of log format options")
 	useSyslog      = flags.BoolP("syslog", "", false, "Use Syslog for logging")
 	syslogFacility = flags.StringP("syslog-facility", "", "DAEMON", "Facility for syslog, eg KERN,USER,...")
 )
