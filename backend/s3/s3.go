@@ -499,10 +499,9 @@ func init() {
 				Value: "AES256",
 				Help:  "AES256",
 			}, {
-				Value:  "aws:kms",
-				Help:   "aws:kms",
+				Value: "aws:kms",
+				Help:  "aws:kms",
 			}},
-
 		}, {
 			Name:     "sse_kms_key_id",
 			Help:     "If using KMS ID you must provide the ARN of Key.",
@@ -514,7 +513,6 @@ func init() {
 				Value: "arn:aws:kms:us-east-1:*",
 				Help:  "arn:aws:kms:*",
 			}},
-
 		}, {
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing objects in S3.",
