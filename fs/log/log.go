@@ -88,7 +88,7 @@ func InitLogging() {
 		flags |= log.LUTC
 	}
 	log.SetFlags(flags)
-	
+
 	// Log file output
 	if *logFile != "" {
 		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
