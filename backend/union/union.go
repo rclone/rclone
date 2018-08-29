@@ -109,10 +109,6 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		}
 	}
 
-	if len(set) == 0 {
-		return nil, fs.ErrorDirNotFound
-	}
-
 	for key := range set {
 		entries = append(entries, set[key])
 	}
