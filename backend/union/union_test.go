@@ -4,7 +4,7 @@ package union_test
 import (
 	"testing"
 
-	"github.com/ncw/rclone/backend/drive"
+	"github.com/ncw/rclone/backend/local"
 	"github.com/ncw/rclone/fstest/fstests"
 )
 
@@ -12,6 +12,6 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestUnion:",
-		NilObject:  (*drive.Object)(nil),
+		NilObject:  (*local.Object)(nil),
 	})
 }
