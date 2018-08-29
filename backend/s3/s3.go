@@ -583,7 +583,7 @@ type Options struct {
 	LocationConstraint   string        `config:"location_constraint"`
 	ACL                  string        `config:"acl"`
 	ServerSideEncryption string        `config:"server_side_encryption"`
-	SSEKMSKeyId          string        `config:"sse_kms_key_id"`
+	SSEKMSKeyID          string        `config:"sse_kms_key_id"`
 	StorageClass         string        `config:"storage_class"`
 	ChunkSize            fs.SizeSuffix `config:"chunk_size"`
 	DisableChecksum      bool          `config:"disable_checksum"`
@@ -1444,8 +1444,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	if o.fs.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
 	}
-	if o.fs.opt.SSEKMSKeyId != "" {
-		req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyId
+	if o.fs.opt.SSEKMSKeyID != "" {
+		req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyID
 	}
 	if o.fs.opt.StorageClass != "" {
 		req.StorageClass = &o.fs.opt.StorageClass
