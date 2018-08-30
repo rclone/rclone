@@ -3,15 +3,16 @@ package union
 import (
 	"errors"
 	"fmt"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/hash"
 	"io"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/configmap"
+	"github.com/ncw/rclone/fs/config/configstruct"
+	"github.com/ncw/rclone/fs/hash"
 )
 
 // Register with Fs
