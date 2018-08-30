@@ -481,6 +481,7 @@ represent the currently available converions.
 | epub | application/epub+zip | E-book format |
 | html | text/html | An HTML Document |
 | jpg  | image/jpeg | A JPEG Image File |
+| json | application/vnd.google-apps.script+json | JSON Text Format |
 | odp  | application/vnd.oasis.opendocument.presentation | Openoffice Presentation |
 | ods  | application/vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
 | ods  | application/x-vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
