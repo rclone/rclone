@@ -2,6 +2,7 @@ package copyurl
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
@@ -30,7 +31,9 @@ without saving it in tmp storage.
 				return err
 			}
 
-			return operations.UploadHTTPBody(fsdst, resp.Body, resp.ContentLength, dstFileName)
+			_, err = operations.RcatSize(fsdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
+
+			return err
 		})
 	},
 }

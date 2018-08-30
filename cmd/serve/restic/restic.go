@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 
+	"time"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
@@ -328,8 +330,10 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 		}
 	}
 
-	err := operations.UploadHTTPBody(s.f, r.Body, r.ContentLength, remote)
+	_, err := operations.RcatSize(s.f, remote, r.Body, r.ContentLength, time.Now())
 	if err != nil {
+		accounting.Stats.Error(err)
+		fs.Errorf(remote, "Post request rcat error: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 		return

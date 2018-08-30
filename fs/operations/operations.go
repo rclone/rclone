@@ -1315,46 +1315,43 @@ func NeedTransfer(dst, src fs.Object) bool {
 	return true
 }
 
-// UploadHTTPBody upload an object from http to dst
-func UploadHTTPBody(fdst fs.Fs, body io.ReadCloser, contentLength int64, remote string) error {
-	if contentLength >= 0 {
+// RcatSize reads data from the Reader until EOF and uploads it to a file on remote.
+// Pass in size >=0 if known, <0 if not known
+func RcatSize(fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (dst fs.Object, err error) {
+	var obj fs.Object
+
+	if size >= 0 {
 		// Size known use Put
-		accounting.Stats.Transferring(remote)
-		body := ioutil.NopCloser(body)                                   // we let the server close the body
-		in := accounting.NewAccountSizeName(body, contentLength, remote) // account the transfer (no buffering)
+		accounting.Stats.Transferring(dstFileName)
+		body := ioutil.NopCloser(in)                                 // we let the server close the body
+		in := accounting.NewAccountSizeName(body, size, dstFileName) // account the transfer (no buffering)
 		var err error
 		defer func() {
 			closeErr := in.Close()
 			if closeErr != nil {
-				fs.Errorf(remote, "Post request: close failed: %v", closeErr)
-				if err == nil {
-					err = closeErr
-				}
+				accounting.Stats.Error(closeErr)
+				fs.Errorf(dstFileName, "Post request: close failed: %v", closeErr)
 			}
-			ok := err == nil
-			accounting.Stats.DoneTransferring(remote, err == nil)
-			if !ok {
-				accounting.Stats.Error(err)
-			}
+			accounting.Stats.DoneTransferring(dstFileName, err == nil)
 		}()
-		info := object.NewStaticObjectInfo(remote, time.Now(), contentLength, true, nil, fdst)
-		_, err = fdst.Put(in, info)
+		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst)
+		obj, err = fdst.Put(in, info)
 		if err != nil {
-			fs.Errorf(remote, "Post request put error: %v", err)
+			fs.Errorf(dstFileName, "Post request put error: %v", err)
 
-			return err
+			return nil, err
 		}
 	} else {
 		// Size unknown use Rcat
-		_, err := Rcat(fdst, remote, body, time.Now())
+		obj, err = Rcat(fdst, dstFileName, in, modTime)
 		if err != nil {
-			fs.Errorf(remote, "Post request rcat error: %v", err)
+			fs.Errorf(dstFileName, "Post request rcat error: %v", err)
 
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return obj, nil
 }
 
 // moveOrCopyFile moves or copies a single file possibly to a new name
