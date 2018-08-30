@@ -179,9 +179,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			if err == fs.ErrorIsFile {
 				return myFs, err
-			} else {
-				return nil, err
 			}
+			return nil, err
 		}
 		remotes = append(remotes, myFs)
 	}
