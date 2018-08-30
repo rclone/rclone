@@ -110,6 +110,9 @@ var (
 		"application/x-link-url":     ".url",
 		"application/x-link-webloc":  ".webloc",
 	}
+	_mimeTypeCustomTransform = map[string]string{
+		"application/vnd.google-apps.script+json": "application/json",
+	}
 	partialFields    = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents,webViewLink"
 	fetchFormatsOnce sync.Once                     // make sure we fetch the export/import formats only once
 	_exportFormats   map[string][]string           // allowed export MIME type conversions
@@ -1135,7 +1138,10 @@ func (f *Fs) findExportFormatByMimeType(itemMimeType string) (
 			}
 			for _, emt := range exportMimeTypes {
 				if emt == _mimeType {
-					return _extension, _mimeType, true
+					return _extension, emt, true
+				}
+				if _mimeType == _mimeTypeCustomTransform[emt] {
+					return _extension, emt, true
 				}
 			}
 		}
