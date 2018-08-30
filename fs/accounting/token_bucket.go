@@ -21,7 +21,7 @@ var (
 	currLimit         fs.BwTimeSlot
 )
 
-const maxBurstSize = 1 * 1024 * 1024 // must be bigger than the biggest request
+const maxBurstSize = 4 * 1024 * 1024 // must be bigger than the biggest request
 
 // make a new empty token bucket with the bandwidth given
 func newTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
