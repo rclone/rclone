@@ -6,13 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
+
 	"time"
 
 	"github.com/ncw/rclone/cmd"
@@ -21,7 +21,6 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/object"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/spf13/cobra"
@@ -326,46 +325,18 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 		if err == nil {
 			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+
 			return
 		}
 	}
 
-	// fs.Debugf(s.f, "content length = %d", r.ContentLength)
-	if r.ContentLength >= 0 {
-		// Size known use Put
-		accounting.Stats.Transferring(remote)
-		body := ioutil.NopCloser(r.Body)                                   // we let the server close the body
-		in := accounting.NewAccountSizeName(body, r.ContentLength, remote) // account the transfer (no buffering)
-		var err error
-		defer func() {
-			closeErr := in.Close()
-			if closeErr != nil {
-				fs.Errorf(remote, "Post request: close failed: %v", closeErr)
-				if err == nil {
-					err = closeErr
-				}
-			}
-			ok := err == nil
-			accounting.Stats.DoneTransferring(remote, err == nil)
-			if !ok {
-				accounting.Stats.Error(err)
-			}
-		}()
-		info := object.NewStaticObjectInfo(remote, time.Now(), r.ContentLength, true, nil, s.f)
-		_, err = s.f.Put(in, info)
-		if err != nil {
-			fs.Errorf(remote, "Post request put error: %v", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-	} else {
-		// Size unknown use Rcat
-		_, err := operations.Rcat(s.f, remote, r.Body, time.Now())
-		if err != nil {
-			fs.Errorf(remote, "Post request rcat error: %v", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
+	_, err := operations.RcatSize(s.f, remote, r.Body, r.ContentLength, time.Now())
+	if err != nil {
+		accounting.Stats.Error(err)
+		fs.Errorf(remote, "Post request rcat error: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+		return
 	}
 }
 
