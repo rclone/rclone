@@ -108,7 +108,7 @@ func init() {
 			var siteID string
 			switch config.Choose("Your choice",
 				[]string{"onedrive", "sharepoint", "driveid", "siteid", "search"},
-				[]string{"OneDrive Personal or Business", "Sharepoint site", "Type in driveID", "Type in SiteID", "Search a Sharepoint site"},
+				[]string{"OneDrive Personal or Business", "Root Sharepoint site", "Type in driveID", "Type in SiteID", "Search a Sharepoint site"},
 				false) {
 
 			case "onedrive":
