@@ -15,8 +15,6 @@ environment:
   RCLONE_CONFIG_PASS:
     secure: HbzxSy9zQ8NYWN9NNPf6ALQO9Q0mwRNqwehsLcOEHy0=
 
-stack: go 1.11
-
 install:
 - choco install winfsp -y
 - choco install zip -y
