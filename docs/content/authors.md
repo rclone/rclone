@@ -184,3 +184,4 @@ Contributors
   * Sebastian Bünger <buengese@gmail.com>
   * Martin Polden <mpolden@mpolden.no>
   * Alex Chen <Cnly@users.noreply.github.com>
+  * Denis <deniskovpen@gmail.com>
