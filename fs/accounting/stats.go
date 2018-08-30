@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/rc"
 )
 
@@ -36,6 +37,8 @@ Returns the following values:
 	"speed": average speed in bytes/sec since start of the process,
 	"bytes": total transferred bytes since the start of the process,
 	"errors": number of errors,
+	"fatalError": whether there has been at least one FatalError,
+	"retryError": whether there has been at least one non-NoRetryError,
 	"checks": number of checked files,
 	"transfers": number of transferred files,
 	"deletes" : number of deleted files,
@@ -69,6 +72,8 @@ type StatsInfo struct {
 	bytes             int64
 	errors            int64
 	lastError         error
+	fatalError        bool
+	retryError        bool
 	checks            int64
 	checking          *stringSet
 	checkQueue        int
@@ -107,6 +112,8 @@ func (s *StatsInfo) RemoteStats(in rc.Params) (out rc.Params, err error) {
 	out["speed"] = speed
 	out["bytes"] = s.bytes
 	out["errors"] = s.errors
+	out["fatalError"] = s.fatalError
+	out["retryError"] = s.retryError
 	out["checks"] = s.checks
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
@@ -234,13 +241,23 @@ func (s *StatsInfo) String() string {
 	)
 
 	if !fs.Config.StatsOneLine {
+		errorDetails := ""
+		switch {
+		case s.fatalError:
+			errorDetails = " (fatal error encountered)"
+		case s.retryError:
+			errorDetails = " (retrying may help)"
+		case s.errors != 0:
+			errorDetails = " (no need to retry)"
+		}
+
 		_, _ = fmt.Fprintf(buf, `
-Errors:        %10d
+Errors:        %10d%s
 Checks:        %10d / %d, %s
 Transferred:   %10d / %d, %s
 Elapsed time:  %10v
 `,
-			s.errors,
+			s.errors, errorDetails,
 			s.checks, totalChecks, percent(s.checks, totalChecks),
 			s.transfers, totalTransfer, percent(s.transfers, totalTransfer),
 			dtRounded)
@@ -303,6 +320,34 @@ func (s *StatsInfo) GetLastError() error {
 	return s.lastError
 }
 
+// FatalError sets the fatalError flag
+func (s *StatsInfo) FatalError() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.fatalError = true
+}
+
+// HadFatalError returns whether there has been at least one FatalError
+func (s *StatsInfo) HadFatalError() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.fatalError
+}
+
+// RetryError sets the retryError flag
+func (s *StatsInfo) RetryError() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.retryError = true
+}
+
+// HadRetryError returns whether there has been at least one non-NoRetryError
+func (s *StatsInfo) HadRetryError() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.retryError
+}
+
 // Deletes updates the stats for deletes
 func (s *StatsInfo) Deletes(deletes int64) int64 {
 	s.mu.Lock()
@@ -311,22 +356,28 @@ func (s *StatsInfo) Deletes(deletes int64) int64 {
 	return s.deletes
 }
 
-// ResetCounters sets the counters (bytes, checks, errors, transfers) to 0
+// ResetCounters sets the counters (bytes, checks, errors, transfers, deletes) to 0 and resets lastError, fatalError and retryError
 func (s *StatsInfo) ResetCounters() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.bytes = 0
 	s.errors = 0
+	s.lastError = nil
+	s.fatalError = false
+	s.retryError = false
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
 }
 
-// ResetErrors sets the errors count to 0
+// ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
 func (s *StatsInfo) ResetErrors() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.errors = 0
+	s.lastError = nil
+	s.fatalError = false
+	s.retryError = false
 }
 
 // Errored returns whether there have been any errors
@@ -336,12 +387,18 @@ func (s *StatsInfo) Errored() bool {
 	return s.errors != 0
 }
 
-// Error adds a single error into the stats and assigns lastError
+// Error adds a single error into the stats, assigns lastError and eventually sets fatalError or retryError
 func (s *StatsInfo) Error(err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.errors++
 	s.lastError = err
+	switch {
+	case fserrors.IsFatalError(err):
+		s.fatalError = true
+	case !fserrors.IsNoRetryError(err):
+		s.retryError = true
+	}
 }
 
 // Checking adds a check into the stats

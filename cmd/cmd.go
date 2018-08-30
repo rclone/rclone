@@ -311,11 +311,11 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			}
 			break
 		}
-		if fserrors.IsFatalError(err) {
+		if fserrors.IsFatalError(err) || accounting.Stats.HadFatalError() {
 			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
-		if fserrors.IsNoRetryError(err) {
+		if fserrors.IsNoRetryError(err) || (accounting.Stats.Errored() && !accounting.Stats.HadRetryError()) {
 			fs.Errorf(nil, "Can't retry this error - not attempting retries")
 			break
 		}
