@@ -718,15 +718,17 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 	if err != nil {
 		return err
 	}
-	item, _, err := f.readMetaDataForPath(root)
-	if err != nil {
-		return err
-	}
-	if item.Folder == nil {
-		return errors.New("not a folder")
-	}
-	if check && item.Folder.ChildCount != 0 {
-		return errors.New("folder not empty")
+	if check {
+		// check to see if there are any items
+		found, err := f.listAll(rootID, false, false, func(item *api.Item) bool {
+			return true
+		})
+		if err != nil {
+			return err
+		}
+		if found {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 	err = f.deleteObject(rootID)
 	if err != nil {
