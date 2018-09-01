@@ -1,5 +1,9 @@
 SHELL = bash
 BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
+LAST_TAG := $(shell git describe --tags --abbrev=0)
+ifeq ($(BRANCH),$(LAST_TAG))
+	BRANCH := master
+endif
 TAG_BRANCH := -$(BRANCH)
 BRANCH_PATH := branch/
 ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
@@ -7,7 +11,6 @@ ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
 	BRANCH_PATH :=
 endif
 TAG := $(shell echo $$(git describe --abbrev=8 --tags | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/'))$(TAG_BRANCH)
-LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 ifneq ($(TAG),$(LAST_TAG))
 	TAG := $(TAG)-beta
