@@ -1,26 +1,28 @@
 ---
 date: 2018-09-01T12:54:54+01:00
-title: "rclone size"
-slug: rclone_size
-url: /commands/rclone_size/
+title: "rclone copyurl"
+slug: rclone_copyurl
+url: /commands/rclone_copyurl/
 ---
-## rclone size
+## rclone copyurl
 
-Prints the total size and number of objects in remote:path.
+Copy url content to dest.
 
 ### Synopsis
 
-Prints the total size and number of objects in remote:path.
+
+Download urls content and copy it to destination 
+without saving it in tmp storage.
+
 
 ```
-rclone size remote:path [flags]
+rclone copyurl https://example.com dest:path [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for size
-      --json   format output as JSON
+  -h, --help   help for copyurl
 ```
 
 ### Options inherited from parent commands
