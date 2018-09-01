@@ -379,6 +379,8 @@ func Run(t *testing.T, opt *Opt) {
 	//
 	// It makes sure that aborting a file half way through does not create
 	// a file on the remote.
+	//
+	// go test -v -run 'TestIntegration/Test(Setup|Init|FsMkdir|FsPutError)$'
 	t.Run("TestFsPutError", func(t *testing.T) {
 		skipIfNotOk(t)
 
