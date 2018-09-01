@@ -96,7 +96,7 @@ update:
 	GO111MODULE=on go tidy
 	GO111MODULE=on go vendor
 
-doc:	rclone.1 MANUAL.html MANUAL.txt
+doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
@@ -194,12 +194,9 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)
 
-# Fetch the windows builds from appveyor
-fetch_windows:
-	rclone -v copy --include 'rclone-v*-windows-*.zip' $(BETA_UPLOAD) build/
-	-#cp -av build/rclone-v*-windows-386.zip build/rclone-current-windows-386.zip
-	-#cp -av build/rclone-v*-windows-amd64.zip build/rclone-current-windows-amd64.zip
-	md5sum build/rclone-*-windows-*.zip | sort
+# Fetch the binary builds from travis and appveyor
+fetch_binaries:
+	rclone -v sync $(BETA_UPLOAD) build/
 
 serve:	website
 	cd docs && hugo server -v -w
