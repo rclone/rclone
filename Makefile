@@ -9,6 +9,9 @@ endif
 TAG := $(shell echo $$(git describe --abbrev=8 --tags | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/'))$(TAG_BRANCH)
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
+ifneq ($(TAG),$(LAST_TAG))
+	TAG := $(TAG)-beta
+endif
 GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 # Run full tests if go >= go1.11
@@ -156,16 +159,16 @@ cross:	doc
 	go run bin/cross-compile.go -release current $(BUILDTAGS) $(TAG)
 
 beta:
-	go run bin/cross-compile.go $(BUILDTAGS) $(TAG)β
-	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
-	@echo Beta release ready at https://pub.rclone.org/$(TAG)%CE%B2/
+	go run bin/cross-compile.go $(BUILDTAGS) $(TAG)
+	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)
+	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
 
 log_since_last_release:
 	git log $(LAST_TAG)..
 
 compile_all:
 ifdef FULL_TESTS
-	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)β
+	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)
 else
 	@echo Skipping compile all as version of go too old
 endif
@@ -187,7 +190,7 @@ ifeq ($(TRAVIS_OS_NAME),linux)
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*_Linux_x86_64.tar.gz'
 endif
 	git log $(LAST_TAG).. > /tmp/git-log.txt
-	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) -parallel 8 $(BUILDTAGS) $(TAG)β
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) -parallel 8 $(BUILDTAGS) $(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifndef BRANCH_PATH
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
