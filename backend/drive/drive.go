@@ -58,6 +58,7 @@ const (
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	defaultChunkSize = fs.SizeSuffix(8 * 1024 * 1024)
+	partialFields    = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents,webViewLink"
 )
 
 // Globals
@@ -113,7 +114,6 @@ var (
 	_mimeTypeCustomTransform = map[string]string{
 		"application/vnd.google-apps.script+json": "application/json",
 	}
-	partialFields    = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents,webViewLink"
 	fetchFormatsOnce sync.Once                     // make sure we fetch the export/import formats only once
 	_exportFormats   map[string][]string           // allowed export MIME type conversions
 	_importFormats   map[string][]string           // allowed import MIME type conversions
@@ -402,27 +402,27 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // shouldRetry determines whehter a given err rates being retried
-func shouldRetry(err error) (again bool, errOut error) {
-	again = false
-	if err != nil {
-		if fserrors.ShouldRetry(err) {
-			again = true
-		} else {
-			switch gerr := err.(type) {
-			case *googleapi.Error:
-				if gerr.Code >= 500 && gerr.Code < 600 {
-					// All 5xx errors should be retried
-					again = true
-				} else if len(gerr.Errors) > 0 {
-					reason := gerr.Errors[0].Reason
-					if reason == "rateLimitExceeded" || reason == "userRateLimitExceeded" {
-						again = true
-					}
-				}
+func shouldRetry(err error) (bool, error) {
+	if err == nil {
+		return false, nil
+	}
+	if fserrors.ShouldRetry(err) {
+		return true, err
+	}
+	switch gerr := err.(type) {
+	case *googleapi.Error:
+		if gerr.Code >= 500 && gerr.Code < 600 {
+			// All 5xx errors should be retried
+			return true, err
+		}
+		if len(gerr.Errors) > 0 {
+			reason := gerr.Errors[0].Reason
+			if reason == "rateLimitExceeded" || reason == "userRateLimitExceeded" {
+				return true, err
 			}
 		}
 	}
-	return again, err
+	return false, err
 }
 
 // parseParse parses a drive 'url'
@@ -450,7 +450,7 @@ func containsString(slice []string, s string) bool {
 // If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *Fs) list(dirIDs []string, title string, directoriesOnly bool, filesOnly bool, includeAll bool, fn listFn) (found bool, err error) {
+func (f *Fs) list(dirIDs []string, title string, directoriesOnly, filesOnly, includeAll bool, fn listFn) (found bool, err error) {
 	var query []string
 	if !includeAll {
 		q := "trashed=" + strconv.FormatBool(f.opt.TrashedOnly)
@@ -641,14 +641,7 @@ func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, er
 			if mt == "" {
 				return extensions, mimeTypes, errors.Errorf("couldn't find MIME type for extension %q", extension)
 			}
-			found := false
-			for _, existingExtension := range extensions {
-				if extension == existingExtension {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !containsString(extensions, extension) {
 				extensions = append(extensions, extension)
 				mimeTypes = append(mimeTypes, mt)
 			}
@@ -1045,7 +1038,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Create(createInfo).
-			Fields(googleapi.Field(partialFields)).
+			Fields("id").
 			SupportsTeamDrives(f.isTeamDrive).
 			Do()
 		return shouldRetry(err)
@@ -1209,6 +1202,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	_, err = f.list([]string{directoryID}, "", false, false, false, func(item *drive.File) bool {
 		entry, err := f.itemToDirEntry(path.Join(dir, item.Name), item)
 		if err != nil {
+			iErr = err
 			return true
 		}
 		if entry != nil {
@@ -1502,7 +1496,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 		err = f.pacer.CallNoRetry(func() (bool, error) {
 			info, err = f.svc.Files.Create(createInfo).
 				Media(in, googleapi.ContentType(srcMimeType)).
-				Fields(googleapi.Field(partialFields)).
+				Fields(partialFields).
 				SupportsTeamDrives(f.isTeamDrive).
 				KeepRevisionForever(f.opt.KeepRevisionForever).
 				Do()
@@ -1513,7 +1507,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = f.Upload(in, size, srcMimeType, "", createInfo, remote)
+		info, err = f.Upload(in, size, srcMimeType, "", remote, createInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -1657,17 +1651,14 @@ func (f *Fs) Precision() time.Duration {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	var srcObj *baseObject
-	srcRemote := src.Remote()
 	ext := ""
 	switch src := src.(type) {
 	case *Object:
 		srcObj = &src.baseObject
 	case *documentObject:
-		srcObj = &src.baseObject
-		srcRemote, ext = srcRemote[:len(srcRemote)-src.extLen], srcRemote[len(srcRemote)-src.extLen:]
+		srcObj, ext = &src.baseObject, src.ext()
 	case *linkObject:
-		srcObj = &src.baseObject
-		srcRemote, ext = srcRemote[:len(srcRemote)-src.extLen], srcRemote[len(srcRemote)-src.extLen:]
+		srcObj, ext = &src.baseObject, src.ext()
 	default:
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
@@ -1689,7 +1680,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Copy(srcObj.id, createInfo).
-			Fields(googleapi.Field(partialFields)).
+			Fields(partialFields).
 			SupportsTeamDrives(f.isTeamDrive).
 			KeepRevisionForever(f.opt.KeepRevisionForever).
 			Do()
@@ -1790,17 +1781,14 @@ func (f *Fs) About() (*fs.Usage, error) {
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	var srcObj *baseObject
-	srcRemote := src.Remote()
 	ext := ""
 	switch src := src.(type) {
 	case *Object:
 		srcObj = &src.baseObject
 	case *documentObject:
-		srcObj = &src.baseObject
-		srcRemote, ext = srcRemote[:len(srcRemote)-src.extLen], srcRemote[len(srcRemote)-src.extLen:]
+		srcObj, ext = &src.baseObject, src.ext()
 	case *linkObject:
-		srcObj = &src.baseObject
-		srcRemote, ext = srcRemote[:len(srcRemote)-src.extLen], srcRemote[len(srcRemote)-src.extLen:]
+		srcObj, ext = &src.baseObject, src.ext()
 	default:
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
@@ -1833,7 +1821,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		info, err = f.svc.Files.Update(srcObj.id, dstInfo).
 			RemoveParents(srcParentID).
 			AddParents(dstParents).
-			Fields(googleapi.Field(partialFields)).
+			Fields(partialFields).
 			SupportsTeamDrives(f.isTeamDrive).
 			Do()
 		return shouldRetry(err)
@@ -1869,7 +1857,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 		// TODO: On TeamDrives this might fail if lacking permissions to change ACLs.
 		// Need to either check `canShare` attribute on the object or see if a sufficient permission is already present.
 		_, err = f.svc.Permissions.Create(id, permission).
-			Fields(googleapi.Field("id")).
+			Fields("").
 			SupportsTeamDrives(f.isTeamDrive).
 			Do()
 		return shouldRetry(err)
@@ -2227,7 +2215,7 @@ func (o *baseObject) SetModTime(modTime time.Time) error {
 	err := o.fs.pacer.Call(func() (bool, error) {
 		var err error
 		info, err = o.fs.svc.Files.Update(o.id, updateInfo).
-			Fields(googleapi.Field(partialFields)).
+			Fields(partialFields).
 			SupportsTeamDrives(o.fs.isTeamDrive).
 			Do()
 		return shouldRetry(err)
@@ -2415,7 +2403,7 @@ func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			info, err = o.fs.svc.Files.Update(o.id, updateInfo).
 				Media(in, googleapi.ContentType(uploadMimeType)).
-				Fields(googleapi.Field(partialFields)).
+				Fields(partialFields).
 				SupportsTeamDrives(o.fs.isTeamDrive).
 				KeepRevisionForever(o.fs.opt.KeepRevisionForever).
 				Do()
@@ -2424,7 +2412,7 @@ func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io
 		return
 	}
 	// Upload the file in chunks
-	return o.fs.Upload(in, size, uploadMimeType, o.id, updateInfo, o.remote)
+	return o.fs.Upload(in, size, uploadMimeType, o.id, o.remote, updateInfo)
 }
 
 // Update the already existing object
@@ -2526,6 +2514,13 @@ func (o *baseObject) MimeType() string {
 // ID returns the ID of the Object if known, or "" if not
 func (o *baseObject) ID() string {
 	return o.id
+}
+
+func (o *documentObject) ext() string {
+	return o.baseObject.remote[len(o.baseObject.remote)-o.extLen:]
+}
+func (o *linkObject) ext() string {
+	return o.baseObject.remote[len(o.baseObject.remote)-o.extLen:]
 }
 
 // templates for document link files
