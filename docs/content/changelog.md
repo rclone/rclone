@@ -6,7 +6,7 @@ date: "2018-09-01"
 
 # Changelog
 
-## v1.42 - 2018-09-01
+## v1.43 - 2018-09-01
 
 * New backends
     * Jottacloud (Sebastian Bünger)
