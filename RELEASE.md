@@ -23,6 +23,7 @@ Making a release
   * make upload_website
   * make upload_github
   * make startdev
+  * run bin/tidy-beta <previous version> to tidy old betas
   * # announce with forum post, twitter post, G+ post
 
 Early in the next release cycle update the vendored dependencies
