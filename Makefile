@@ -152,8 +152,8 @@ check_sign:
 	cd build && gpg --verify SHA256SUMS && gpg --decrypt SHA256SUMS | sha256sum -c
 
 upload:
-	rclone -v copy --exclude '*current*' build/ memstore:downloads-rclone-org/$(TAG)
-	rclone -v copy --include '*current*' --include version.txt build/ memstore:downloads-rclone-org
+	rclone -P copy build/ memstore:downloads-rclone-org/$(TAG)
+	rclone lsf build --files-only --include '*.{zip,deb,rpm}' --include version.txt | xargs -i bash -c 'i={}; j="$$i"; [[ $$i =~ (.*)(-v[0-9\.]+-)(.*) ]] && j=$${BASH_REMATCH[1]}-current-$${BASH_REMATCH[3]}; rclone copyto -v "memstore:downloads-rclone-org/$(TAG)/$$i" "memstore:downloads-rclone-org/$$j"'
 
 upload_github:
 	./bin/upload-github $(TAG)
@@ -202,7 +202,7 @@ endif
 
 # Fetch the binary builds from travis and appveyor
 fetch_binaries:
-	rclone -v sync $(BETA_UPLOAD) build/
+	rclone -P sync $(BETA_UPLOAD) build/
 
 serve:	website
 	cd docs && hugo server -v -w
