@@ -153,7 +153,7 @@ func makeConfigPath() string {
 	// variable.  We can't use pflag for this because it isn't initialised
 	// yet so we search the command line manually.
 	_, configSupplied := os.LookupEnv("RCLONE_CONFIG")
-	if (!configSupplied) {
+	if !configSupplied {
 		for _, item := range os.Args {
 			if item == "--config" || strings.HasPrefix(item, "--config=") {
 				configSupplied = true
@@ -167,13 +167,12 @@ func makeConfigPath() string {
 	// then skip creating the directory since it will not be used.
 	if cfgpath != "" {
 		// cfgpath != "" implies cfgdir != ""
-		if (configSupplied) {
+		if configSupplied {
 			return cfgpath
-		} else {
-			err := os.MkdirAll(cfgdir, os.ModePerm)
-			if err == nil {
-				return cfgpath
-			}
+		}
+		err := os.MkdirAll(cfgdir, os.ModePerm)
+		if err == nil {
+			return cfgpath
 		}
 	}
 
@@ -183,12 +182,10 @@ func makeConfigPath() string {
 	}
 
 	// Default to ./.rclone.conf (current working directory) if everything else fails.
-	if !configSupplied {
-		fs.Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
-		fs.Errorf(nil, "Defaulting to storing config in current directory.")
-		fs.Errorf(nil, "Use --config flag to workaround.")
-		fs.Errorf(nil, "Error was: %v", err)
-	}
+	fs.Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
+	fs.Errorf(nil, "Defaulting to storing config in current directory.")
+	fs.Errorf(nil, "Use --config flag to workaround.")
+	fs.Errorf(nil, "Error was: %v", err)
 	return hiddenConfigFileName
 }
 
