@@ -16,6 +16,7 @@ import (
 // Flags
 var (
 	logFile        = flags.StringP("log-file", "", "", "Log everything to this file")
+	logFormat      = flags.StringP("log-format", "", "date,time", "Comma separated list of log format options")
 	useSyslog      = flags.BoolP("syslog", "", false, "Use Syslog for logging")
 	syslogFacility = flags.StringP("syslog-facility", "", "DAEMON", "Facility for syslog, eg KERN,USER,...")
 )
@@ -66,6 +67,28 @@ func Trace(o interface{}, format string, a ...interface{}) func(string, ...inter
 
 // InitLogging start the logging as per the command line flags
 func InitLogging() {
+	flagsStr := "," + *logFormat + ","
+	var flags int
+	if strings.Contains(flagsStr, ",date,") {
+		flags |= log.Ldate
+	}
+	if strings.Contains(flagsStr, ",time,") {
+		flags |= log.Ltime
+	}
+	if strings.Contains(flagsStr, ",microseconds,") {
+		flags |= log.Lmicroseconds
+	}
+	if strings.Contains(flagsStr, ",longfile,") {
+		flags |= log.Llongfile
+	}
+	if strings.Contains(flagsStr, ",shortfile,") {
+		flags |= log.Lshortfile
+	}
+	if strings.Contains(flagsStr, ",UTC,") {
+		flags |= log.LUTC
+	}
+	log.SetFlags(flags)
+
 	// Log file output
 	if *logFile != "" {
 		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)

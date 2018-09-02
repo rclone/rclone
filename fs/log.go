@@ -70,7 +70,7 @@ func (l *LogLevel) Type() string {
 // LogPrint sends the text to the logger of level
 var LogPrint = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)
-	log.Print(text)
+	_ = log.Output(4, text)
 }
 
 // LogPrintf produces a log string from the arguments passed in
