@@ -4,6 +4,9 @@ os: Windows Server 2012 R2
 
 clone_folder: c:\gopath\src\github.com\ncw\rclone
 
+cache:
+  - '%LocalAppData%\go-build'
+
 environment:
   GOPATH: C:\gopath
   CPATH: C:\Program Files (x86)\WinFsp\inc\fuse
