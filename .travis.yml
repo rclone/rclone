@@ -34,6 +34,9 @@ addons:
     - libfuse-dev
     - rpm
     - pkg-config
+cache:
+  directories:
+    - $HOME/.cache/go-build
 matrix:
   allow_failures:
   - go: tip
@@ -41,6 +44,9 @@ matrix:
   - os: osx
     go: 1.11.x
     env: GOTAGS=""
+    cache:
+      directories:
+        - $HOME/Library/Caches/go-build
 deploy:
   provider: script
   script: make travis_beta
