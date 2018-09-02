@@ -186,3 +186,4 @@ Contributors
   * Alex Chen <Cnly@users.noreply.github.com>
   * Denis <deniskovpen@gmail.com>
   * bsteiss <35940619+bsteiss@users.noreply.github.com>
+  * Cédric Connes <cedric.connes@gmail.com>
