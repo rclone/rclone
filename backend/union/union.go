@@ -1,7 +1,6 @@
 package union
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -13,6 +12,7 @@ import (
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/pkg/errors"
 )
 
 // Register with Fs
@@ -100,16 +100,23 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 // found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	set := make(map[string]fs.DirEntry)
+	found := false
 	for _, remote := range f.remotes {
 		var remoteEntries, err = remote.List(dir)
-		if err != nil {
+		if err == fs.ErrorDirNotFound {
 			continue
 		}
+		if err != nil {
+			return nil, errors.Wrapf(err, "List failed on %v", remote)
+		}
+		found = true
 		for _, remoteEntry := range remoteEntries {
 			set[remoteEntry.Remote()] = remoteEntry
 		}
 	}
-
+	if !found {
+		return nil, fs.ErrorDirNotFound
+	}
 	for key := range set {
 		entries = append(entries, set[key])
 	}
@@ -121,8 +128,11 @@ func (f *Fs) NewObject(path string) (fs.Object, error) {
 	for i := range f.remotes {
 		var remote = f.remotes[len(f.remotes)-i-1]
 		var obj, err = remote.NewObject(path)
-		if err != nil {
+		if err == fs.ErrorObjectNotFound {
 			continue
+		}
+		if err != nil {
+			return nil, errors.Wrapf(err, "NewObject failed on %v", remote)
 		}
 		return obj, nil
 	}
@@ -131,12 +141,11 @@ func (f *Fs) NewObject(path string) (fs.Object, error) {
 
 // Precision is the greatest Precision of all remotes
 func (f *Fs) Precision() time.Duration {
-	var greatestPrecision = time.Second
+	var greatestPrecision time.Duration
 	for _, remote := range f.remotes {
-		if remote.Precision() <= greatestPrecision {
-			continue
+		if remote.Precision() > greatestPrecision {
+			greatestPrecision = remote.Precision()
 		}
-		greatestPrecision = remote.Precision()
 	}
 	return greatestPrecision
 }
@@ -196,7 +205,14 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:     *opt,
 		remotes: remotes,
 	}
-	var features = (&fs.Features{}).Fill(f)
+	var features = (&fs.Features{
+		CaseInsensitive:         true,
+		DuplicateFiles:          false,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		CanHaveEmptyDirectories: true,
+		BucketBased:             true,
+	}).Fill(f)
 	for _, remote := range f.remotes {
 		features = features.Mask(remote)
 	}
