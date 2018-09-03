@@ -208,13 +208,17 @@ func (o *Object) SetModTime(t time.Time) error {
 
 // Open is used to request a specific part of the file using fs.RangeOption
 func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
+	var err error
+
 	if o.Object == nil {
-		if err := o.refreshFromSource(true); err != nil {
-			return nil, err
-		}
+		err = o.refreshFromSource(true)
+	} else {
+		err = o.refresh()
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	var err error
 	cacheReader := NewObjectHandle(o, o.CacheFs)
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
