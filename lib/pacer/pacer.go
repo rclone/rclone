@@ -59,6 +59,12 @@ const (
 	//
 	// See https://developers.google.com/drive/v2/web/handle-errors#exponential-backoff
 	GoogleDrivePacer
+
+	// S3Pacer is a specialised pacer for S3
+	//
+	// It is basically the defaultPacer, but allows the sleep time to go to 0
+	// when things are going well.
+	S3Pacer
 )
 
 // Paced is a function which is called by the Call and CallNoRetry
@@ -185,6 +191,8 @@ func (p *Pacer) SetPacer(t Type) *Pacer {
 		p.calculatePace = p.acdPacer
 	case GoogleDrivePacer:
 		p.calculatePace = p.drivePacer
+	case S3Pacer:
+		p.calculatePace = p.s3Pacer
 	default:
 		p.calculatePace = p.defaultPacer
 	}
@@ -306,6 +314,46 @@ func (p *Pacer) drivePacer(retry bool) {
 		// maxSleep is 2**(consecutiveRetries-1) seconds + random milliseconds
 		p.sleepTime = time.Second<<uint(consecutiveRetries-1) + time.Duration(rand.Int63n(int64(time.Second)))
 		fs.Debugf("pacer", "Rate limited, sleeping for %v (%d consecutive low level retries)", p.sleepTime, p.consecutiveRetries)
+	}
+}
+
+// s3Pacer implements a pacer compatible with our expectations of S3, where it tries to not
+// delay at all between successful calls, but backs off in the default fashion in response
+// to any errors.
+// The assumption is that errors should be exceedingly rare (S3 seems to have largely solved
+//  the sort of scability questions rclone is likely to run into), and in the happy case
+//  it can handle calls with no delays between them.
+//
+// Basically defaultPacer, but with some handling of sleepTime going to/from 0ms
+// Ignores minSleep entirely
+//
+// Call with p.mu held
+func (p *Pacer) s3Pacer(retry bool) {
+	oldSleepTime := p.sleepTime
+	if retry {
+		if p.attackConstant == 0 {
+			p.sleepTime = p.maxSleep
+		} else {
+			if p.sleepTime == 0 {
+				p.sleepTime = p.minSleep
+			} else {
+				p.sleepTime = (p.sleepTime << p.attackConstant) / ((1 << p.attackConstant) - 1)
+			}
+		}
+		if p.sleepTime > p.maxSleep {
+			p.sleepTime = p.maxSleep
+		}
+		if p.sleepTime != oldSleepTime {
+			fs.Debugf("pacer", "Rate limited, increasing sleep to %v", p.sleepTime)
+		}
+	} else {
+		p.sleepTime = (p.sleepTime<<p.decayConstant - p.sleepTime) >> p.decayConstant
+		if p.sleepTime < p.minSleep {
+			p.sleepTime = 0
+		}
+		if p.sleepTime != oldSleepTime {
+			fs.Debugf("pacer", "Reducing sleep to %v", p.sleepTime)
+		}
 	}
 }
 
