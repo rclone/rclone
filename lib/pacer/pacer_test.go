@@ -340,6 +340,32 @@ func TestGoogleDrivePacer(t *testing.T) {
 	}
 }
 
+func TestS3Pacer(t *testing.T) {
+	p := New().SetMinSleep(10 * time.Millisecond).SetPacer(S3Pacer).SetMaxSleep(time.Second).SetDecayConstant(2)
+	for _, test := range []struct {
+		in    time.Duration
+		retry bool
+		want  time.Duration
+	}{
+		{0, true, 10 * time.Millisecond},                      //Things were going ok, we failed once, back off to minSleep
+		{10 * time.Millisecond, true, 20 * time.Millisecond},  //Another fail, double the backoff
+		{10 * time.Millisecond, false, 0},                     //Things start going ok when we're at minSleep; should result in no sleep
+		{12 * time.Millisecond, false, 0},                     //*near* minsleep and going ok, decay would take below minSleep, should go to 0
+		{0, false, 0},                                         //Things have been going ok; not retrying should keep sleep at 0
+		{time.Second, true, time.Second},                      //Check maxSleep is enforced
+		{(3 * time.Second) / 4, true, time.Second},            //Check attack heading to maxSleep doesn't exceed maxSleep
+		{time.Second, false, 750 * time.Millisecond},          //Check decay from maxSleep
+		{48 * time.Millisecond, false, 36 * time.Millisecond}, //Check simple decay above minSleep
+	} {
+		p.sleepTime = test.in
+		p.s3Pacer(test.retry)
+		got := p.sleepTime
+		if got != test.want {
+			t.Errorf("bad sleep for %v with retry %v:  want %v got %v", test.in, test.retry, test.want, got)
+		}
+	}
+}
+
 func TestEndCall(t *testing.T) {
 	p := New().SetMaxConnections(5)
 	emptyTokens(p)
