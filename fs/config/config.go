@@ -115,29 +115,31 @@ func makeConfigPath() string {
 		homedir = os.Getenv("HOME")
 	}
 
-	// Possibly find the user's XDG config paths
+	// Find user's configuration directory.
+	// Prefer XDG config path, with fallback to $HOME/.config.
 	// See XDG Base Directory specification
-	// https://specifications.freedesktop.org/basedir-spec/latest/
+	// https://specifications.freedesktop.org/basedir-spec/latest/),
 	xdgdir := os.Getenv("XDG_CONFIG_HOME")
-	var xdgcfgdir string
+	var cfgdir string
 	if xdgdir != "" {
-		xdgcfgdir = filepath.Join(xdgdir, "rclone")
+		// User's configuration directory for rclone is $XDG_CONFIG_HOME/rclone
+		cfgdir = filepath.Join(xdgdir, "rclone")
 	} else if homedir != "" {
-		xdgdir = filepath.Join(homedir, ".config")
-		xdgcfgdir = filepath.Join(xdgdir, "rclone")
+		// User's configuration directory for rclone is $HOME/.config/rclone
+		cfgdir = filepath.Join(homedir, ".config", "rclone")
 	}
 
-	// Use $XDG_CONFIG_HOME/rclone/rclone.conf if already existing
-	var xdgconf string
-	if xdgcfgdir != "" {
-		xdgconf = filepath.Join(xdgcfgdir, configFileName)
-		_, err := os.Stat(xdgconf)
+	// Use rclone.conf from user's configuration directory if already existing
+	var cfgpath string
+	if cfgdir != "" {
+		cfgpath = filepath.Join(cfgdir, configFileName)
+		_, err := os.Stat(cfgpath)
 		if err == nil {
-			return xdgconf
+			return cfgpath
 		}
 	}
 
-	// Use $HOME/.rclone.conf if already existing
+	// Use .rclone.conf from user's home directory if already existing
 	var homeconf string
 	if homedir != "" {
 		homeconf = filepath.Join(homedir, hiddenConfigFileName)
@@ -147,32 +149,39 @@ func makeConfigPath() string {
 		}
 	}
 
-	// Try to create $XDG_CONFIG_HOME/rclone/rclone.conf
-	if xdgconf != "" {
-		// xdgconf != "" implies xdgcfgdir != ""
-		err := os.MkdirAll(xdgcfgdir, os.ModePerm)
-		if err == nil {
-			return xdgconf
-		}
-	}
-
-	// Try to create $HOME/.rclone.conf
-	if homeconf != "" {
-		return homeconf
-	}
-
 	// Check to see if user supplied a --config variable or environment
 	// variable.  We can't use pflag for this because it isn't initialised
 	// yet so we search the command line manually.
 	_, configSupplied := os.LookupEnv("RCLONE_CONFIG")
-	for _, item := range os.Args {
-		if item == "--config" || strings.HasPrefix(item, "--config=") {
-			configSupplied = true
-			break
+	if !configSupplied {
+		for _, item := range os.Args {
+			if item == "--config" || strings.HasPrefix(item, "--config=") {
+				configSupplied = true
+				break
+			}
 		}
 	}
 
-	// Default to ./.rclone.conf (current working directory)
+	// If user's configuration directory was found, then try to create it
+	// and assume rclone.conf can be written there. If user supplied config
+	// then skip creating the directory since it will not be used.
+	if cfgpath != "" {
+		// cfgpath != "" implies cfgdir != ""
+		if configSupplied {
+			return cfgpath
+		}
+		err := os.MkdirAll(cfgdir, os.ModePerm)
+		if err == nil {
+			return cfgpath
+		}
+	}
+
+	// Assume .rclone.conf can be written to user's home directory.
+	if homeconf != "" {
+		return homeconf
+	}
+
+	// Default to ./.rclone.conf (current working directory) if everything else fails.
 	if !configSupplied {
 		fs.Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
 		fs.Errorf(nil, "Defaulting to storing config in current directory.")
