@@ -666,7 +666,7 @@ func (f *Fs) rcFetch(in rc.Params) (rc.Params, error) {
 		}
 	}
 	type fileStatus struct {
-		Error         error
+		Error         string
 		FetchedChunks int
 	}
 	fetchedChunks := make(map[string]fileStatus, len(files))
@@ -675,13 +675,13 @@ func (f *Fs) rcFetch(in rc.Params) (rc.Params, error) {
 		var status fileStatus
 		o, err := f.NewObject(remote)
 		if err != nil {
-			status.Error = err
+			fetchedChunks[file] = fileStatus{Error: err.Error()}
 			continue
 		}
 		co := o.(*Object)
 		err = co.refreshFromSource(true)
 		if err != nil {
-			status.Error = err
+			fetchedChunks[file] = fileStatus{Error: err.Error()}
 			continue
 		}
 		handle := NewObjectHandle(co, f)
@@ -690,8 +690,8 @@ func (f *Fs) rcFetch(in rc.Params) (rc.Params, error) {
 		walkChunkRanges(crs, co.Size(), func(chunk int64) {
 			_, err := handle.getChunk(chunk * f.ChunkSize())
 			if err != nil {
-				if status.Error == nil {
-					status.Error = err
+				if status.Error == "" {
+					status.Error = err.Error()
 				}
 			} else {
 				status.FetchedChunks++
