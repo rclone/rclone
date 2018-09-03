@@ -182,10 +182,12 @@ func makeConfigPath() string {
 	}
 
 	// Default to ./.rclone.conf (current working directory) if everything else fails.
-	fs.Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
-	fs.Errorf(nil, "Defaulting to storing config in current directory.")
-	fs.Errorf(nil, "Use --config flag to workaround.")
-	fs.Errorf(nil, "Error was: %v", err)
+	if !configSupplied {
+		fs.Errorf(nil, "Couldn't find home directory or read HOME or XDG_CONFIG_HOME environment variables.")
+		fs.Errorf(nil, "Defaulting to storing config in current directory.")
+		fs.Errorf(nil, "Use --config flag to workaround.")
+		fs.Errorf(nil, "Error was: %v", err)
+	}
 	return hiddenConfigFileName
 }
 
