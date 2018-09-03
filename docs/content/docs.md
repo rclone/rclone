@@ -665,7 +665,7 @@ files if they are incorrect as it would normally.
 This can be used if the remote is being synced with another tool also
 (eg the Google Drive client).
 
-### --P, --progress ###
+### -P, --progress ###
 
 This flag makes rclone update the stats in a static block in the
 terminal providing a realtime overview of the transfer.
