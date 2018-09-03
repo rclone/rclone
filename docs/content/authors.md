@@ -189,3 +189,4 @@ Contributors
   * Cédric Connes <cedric.connes@gmail.com>
   * Dr. Tobias Quathamer <toddy15@users.noreply.github.com>
   * dcpu <42736967+dcpu@users.noreply.github.com>
+  * Sheldon Rupp <me@shel.io>
