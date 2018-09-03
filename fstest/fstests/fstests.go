@@ -134,11 +134,12 @@ type ExtraConfigItem struct{ Name, Key, Value string }
 
 // Opt is options for Run
 type Opt struct {
-	RemoteName  string
-	NilObject   fs.Object
-	ExtraConfig []ExtraConfigItem
-	// SkipBadWindowsCharacters skips unusable characters for windows if set
-	SkipBadWindowsCharacters bool
+	RemoteName               string
+	NilObject                fs.Object
+	ExtraConfig              []ExtraConfigItem
+	SkipBadWindowsCharacters bool // skips unusable characters for windows if set
+	SkipFsMatch              bool // if set skip exact matching of Fs value
+
 }
 
 // Run runs the basic integration tests for a remote using the remote
@@ -815,13 +816,20 @@ func Run(t *testing.T, opt *Opt) {
 		skipIfNotOk(t)
 		obj := findObject(t, remote, file1.Path)
 		assert.Equal(t, file1.Path, obj.String())
-		assert.Equal(t, "<nil>", opt.NilObject.String())
+		if opt.NilObject != nil {
+			assert.Equal(t, "<nil>", opt.NilObject.String())
+		}
 	})
 
 	// TestObjectFs tests the object can be found
 	t.Run("TestObjectFs", func(t *testing.T) {
 		skipIfNotOk(t)
 		obj := findObject(t, remote, file1.Path)
+		// If this is set we don't do the direct comparison of
+		// the Fs from the object as it may be different
+		if opt.SkipFsMatch {
+			return
+		}
 		testRemote := remote
 		if obj.Fs() != testRemote {
 			// Check to see if this wraps something else
