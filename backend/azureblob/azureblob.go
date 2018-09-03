@@ -37,7 +37,7 @@ const (
 	minSleep              = 10 * time.Millisecond
 	maxSleep              = 10 * time.Second
 	decayConstant         = 1    // bigger for slower decay, exponential
-	listChunkSize         = 5000 // number of items to read at once
+	maxListChunkSize      = 5000 // number of items to read at once
 	modTimeKey            = "mtime"
 	timeFormatIn          = time.RFC3339
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
@@ -81,6 +81,11 @@ func init() {
 			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
 		}, {
+			Name:     "list_chunk",
+			Help:     "Size of blob list.",
+			Default:  maxListChunkSize,
+			Advanced: true,
+		}, {
 			Name: "access_tier",
 			Help: "Access tier of blob, supports hot, cool and archive tiers.\nArchived blobs can be restored by setting access tier to hot or cool." +
 				" Leave blank if you intend to use default access tier, which is set at account level",
@@ -91,13 +96,14 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account      string        `config:"account"`
-	Key          string        `config:"key"`
-	Endpoint     string        `config:"endpoint"`
-	SASURL       string        `config:"sas_url"`
-	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
-	AccessTier   string        `config:"access_tier"`
+	Account       string        `config:"account"`
+	Key           string        `config:"key"`
+	Endpoint      string        `config:"endpoint"`
+	SASURL        string        `config:"sas_url"`
+	UploadCutoff  fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize     fs.SizeSuffix `config:"chunk_size"`
+	ListChunkSize uint          `config:"list_chunk"`
+	AccessTier    string        `config:"access_tier"`
 }
 
 // Fs represents a remote azure server
@@ -210,6 +216,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	if opt.ChunkSize > maxChunkSize {
 		return nil, errors.Errorf("azure: chunk size can't be greater than %v - was %v", maxChunkSize, opt.ChunkSize)
+	}
+	if opt.ListChunkSize > maxListChunkSize {
+		return nil, errors.Errorf("azure: blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
 	}
 	container, directory, err := parsePath(root)
 	if err != nil {
@@ -474,7 +483,7 @@ func (f *Fs) markContainerOK() {
 
 // listDir lists a single directory
 func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
-	err = f.list(dir, false, listChunkSize, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
+	err = f.list(dir, false, f.opt.ListChunkSize, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -545,7 +554,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 		return fs.ErrorListBucketRequired
 	}
 	list := walk.NewListRHelper(callback)
-	err = f.list(dir, true, listChunkSize, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
+	err = f.list(dir, true, f.opt.ListChunkSize, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -566,7 +575,7 @@ type listContainerFn func(*azblob.ContainerItem) error
 // listContainersToFn lists the containers to the function supplied
 func (f *Fs) listContainersToFn(fn listContainerFn) error {
 	params := azblob.ListContainersSegmentOptions{
-		MaxResults: int32(listChunkSize),
+		MaxResults: int32(f.opt.ListChunkSize),
 	}
 	ctx := context.Background()
 	for marker := (azblob.Marker{}); marker.NotDone(); {
