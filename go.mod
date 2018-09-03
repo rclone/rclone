@@ -17,6 +17,7 @@ require (
 	github.com/djherbis/times v1.0.1
 	github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible
 	github.com/go-ini/ini v1.37.0 // indirect
+	github.com/goftp/server v0.0.0-20180821022811-ef4ed0debb24
 	github.com/golang/protobuf v1.1.0 // indirect
 	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20180825215210-0210a2f0f73c // indirect
