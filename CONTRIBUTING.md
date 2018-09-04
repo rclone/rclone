@@ -71,7 +71,7 @@ Make sure you
 
 When you are done with that
 
-  git push origin my-new-feature
+    git push origin my-new-feature
 
 Go to the Github website and click [Create pull
 request](https://help.github.com/articles/creating-a-pull-request/).

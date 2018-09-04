@@ -250,7 +250,7 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, err
 	}
 	if opt.ChunkTotalSize < opt.ChunkSize*fs.SizeSuffix(opt.TotalWorkers) {
-		return nil, errors.Errorf("don't set cache-total-chunk-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
+		return nil, errors.Errorf("don't set cache-chunk-total-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
 			opt.ChunkTotalSize, opt.ChunkSize, opt.TotalWorkers)
 	}
 
