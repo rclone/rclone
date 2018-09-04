@@ -1374,7 +1374,7 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time) (i
 // Update the content of a remote file within 4MB size in one single request
 // This function will set modtime after uploading, which will create a new version for the remote file
 func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
-	if size < 0 || size > int64(fs.SizeSuffix(4 * 1024 * 1024)) {
+	if size < 0 || size > int64(fs.SizeSuffix(4*1024*1024)) {
 		panic("size passed into uploadSinglepart must be >= 0 and <= 4MiB")
 	}
 
