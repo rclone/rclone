@@ -40,6 +40,7 @@ const (
 	defaultMountpoint = "Sync"
 	rootURL           = "https://www.jottacloud.com/jfs/"
 	apiURL            = "https://api.jottacloud.com"
+	shareURL          = "https://www.jottacloud.com/"
 	cachePrefix       = "rclone-jcmd5-"
 )
 
@@ -77,6 +78,11 @@ func init() {
 			Help:     "Delete files permanently rather than putting them into the trash.",
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     "unlink",
+			Help:     "Remove existing public link to file/folder with link command rather than creating.",
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -88,6 +94,7 @@ type Options struct {
 	Mountpoint         string        `config:"mountpoint"`
 	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
 	HardDelete         bool          `config:"hard_delete"`
+	Unlink             bool          `config:"unlink"`
 }
 
 // Fs represents a remote jottacloud
@@ -614,7 +621,7 @@ func (f *Fs) purgeCheck(dir string, check bool) (err error) {
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "rmdir failed")
+		return errors.Wrap(err, "couldn't purge directory")
 	}
 
 	// TODO: Parse response?
@@ -687,7 +694,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	info, err := f.copyOrMove("cp", srcObj.filePath(), remote)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "copy failed")
+		return nil, errors.Wrap(err, "couldn't copy file")
 	}
 
 	return f.newObjectWithInfo(remote, info)
@@ -717,7 +724,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	info, err := f.copyOrMove("mv", srcObj.filePath(), remote)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "move failed")
+		return nil, errors.Wrap(err, "couldn't move file")
 	}
 
 	return f.newObjectWithInfo(remote, info)
@@ -761,9 +768,55 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	_, err = f.copyOrMove("mvDir", path.Join(f.endpointURL, replaceReservedChars(srcPath))+"/", dstRemote)
 
 	if err != nil {
-		return errors.Wrap(err, "moveDir failed")
+		return errors.Wrap(err, "couldn't move directory")
 	}
 	return nil
+}
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(remote string) (link string, err error) {
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       f.filePath(remote),
+		Parameters: url.Values{},
+	}
+
+	if f.opt.Unlink {
+		opts.Parameters.Set("mode", "disableShare")
+	} else {
+		opts.Parameters.Set("mode", "enableShare")
+	}
+
+	var resp *http.Response
+	var result api.JottaFile
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallXML(&opts, nil, &result)
+		return shouldRetry(resp, err)
+	})
+
+	if apiErr, ok := err.(*api.Error); ok {
+		// does not exist
+		if apiErr.StatusCode == http.StatusNotFound {
+			return "", fs.ErrorObjectNotFound
+		}
+	}
+	if err != nil {
+		if f.opt.Unlink {
+			return "", errors.Wrap(err, "couldn't remove public link")
+		}
+		return "", errors.Wrap(err, "couldn't create public link")
+	}
+	if f.opt.Unlink {
+		if result.PublicSharePath != "" {
+			return "", errors.Errorf("couldn't remove public link - %q", result.PublicSharePath)
+		}
+		return "", nil
+	}
+	if result.PublicSharePath == "" {
+		return "", errors.New("couldn't create public link - no link path received")
+	}
+	link = path.Join(shareURL, result.PublicSharePath)
+	return link, nil
 }
 
 // About gets quota information
@@ -1039,13 +1092,14 @@ func (o *Object) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = (*Fs)(nil)
-	_ fs.Purger    = (*Fs)(nil)
-	_ fs.Copier    = (*Fs)(nil)
-	_ fs.Mover     = (*Fs)(nil)
-	_ fs.DirMover  = (*Fs)(nil)
-	_ fs.ListRer   = (*Fs)(nil)
-	_ fs.Abouter   = (*Fs)(nil)
-	_ fs.Object    = (*Object)(nil)
-	_ fs.MimeTyper = (*Object)(nil)
+	_ fs.Fs           = (*Fs)(nil)
+	_ fs.Purger       = (*Fs)(nil)
+	_ fs.Copier       = (*Fs)(nil)
+	_ fs.Mover        = (*Fs)(nil)
+	_ fs.DirMover     = (*Fs)(nil)
+	_ fs.ListRer      = (*Fs)(nil)
+	_ fs.PublicLinker = (*Fs)(nil)
+	_ fs.Abouter      = (*Fs)(nil)
+	_ fs.Object       = (*Object)(nil)
+	_ fs.MimeTyper    = (*Object)(nil)
 )
