@@ -233,16 +233,17 @@ GET http://www.jottacloud.com/JFS/<account>/<device>/<mountpoint>/.../<file>
 
 // JottaFile represents a Jottacloud file
 type JottaFile struct {
-	XMLName    xml.Name
-	Name       string `xml:"name,attr"`
-	Deleted    Flag   `xml:"deleted,attr"`
-	State      string `xml:"currentRevision>state"`
-	CreatedAt  Time   `xml:"currentRevision>created"`
-	ModifiedAt Time   `xml:"currentRevision>modified"`
-	Updated    Time   `xml:"currentRevision>updated"`
-	Size       int64  `xml:"currentRevision>size"`
-	MimeType   string `xml:"currentRevision>mime"`
-	MD5        string `xml:"currentRevision>md5"`
+	XMLName         xml.Name
+	Name            string `xml:"name,attr"`
+	Deleted         Flag   `xml:"deleted,attr"`
+	PublicSharePath string `xml:"publicSharePath"`
+	State           string `xml:"currentRevision>state"`
+	CreatedAt       Time   `xml:"currentRevision>created"`
+	ModifiedAt      Time   `xml:"currentRevision>modified"`
+	Updated         Time   `xml:"currentRevision>updated"`
+	Size            int64  `xml:"currentRevision>size"`
+	MimeType        string `xml:"currentRevision>mime"`
+	MD5             string `xml:"currentRevision>md5"`
 }
 
 // Error is a custom Error for wrapping Jottacloud error responses

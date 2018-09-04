@@ -34,7 +34,9 @@ without account.
 			if err != nil {
 				return err
 			}
-			fmt.Println(link)
+			if link != "" {
+				fmt.Println(link)
+			}
 			return nil
 		})
 	},
