@@ -1,0 +1,144 @@
+---
+title: "Union"
+description: "Remote Unification"
+date: "2018-08-29"
+---
+
+<i class="fa fa-link"></i> Union
+-----------------------------------------
+
+The `union` remote provides a unification similar to UnionFS using other remotes.
+
+Paths may be as deep as required or a local path, 
+eg `remote:directory/subdirectory` or `/directory/subdirectory`.
+
+During the initial setup with `rclone config` you will specify the target
+remotes as a space separated list. The target remotes can either be a local paths or other remotes.
+
+The order of the remotes is important as it defines which remotes take precedence over others if there are files with the same name in the same logical path.
+The last remote is the topmost remote and replaces files with the same name from previous remotes.
+
+Only the last remote is used to write to and delete from, all other remotes are read-only.
+
+Subfolders can be used in target remote. Asume a union remote named `backup`
+with the remotes `mydrive:private/backup mydrive2:/backup`. Invoking `rclone mkdir backup:desktop`
+is exactly the same as invoking `rclone mkdir mydrive2:/backup/desktop`.
+
+There will be no special handling of paths containing `..` segments.
+Invoking `rclone mkdir backup:../desktop` is exactly the same as invoking
+`rclone mkdir mydrive2:/backup/../desktop`.
+
+Here is an example of how to make a union called `remote` for local folders.
+First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+```
+No remotes found - make a new one
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+name> remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Alias for a existing remote
+   \ "alias"
+ 2 / Amazon Drive
+   \ "amazon cloud drive"
+ 3 / Amazon S3 Compliant Storage Providers (AWS, Ceph, Dreamhost, IBM COS, Minio)
+   \ "s3"
+ 4 / Backblaze B2
+   \ "b2"
+ 5 / Box
+   \ "box"
+ 6 / Builds a stackable unification remote, which can appear to merge the contents of several remotes
+   \ "union"
+ 7 / Cache a remote
+   \ "cache"
+ 8 / Dropbox
+   \ "dropbox"
+ 9 / Encrypt/Decrypt a remote
+   \ "crypt"
+10 / FTP Connection
+   \ "ftp"
+11 / Google Cloud Storage (this is not Google Drive)
+   \ "google cloud storage"
+12 / Google Drive
+   \ "drive"
+13 / Hubic
+   \ "hubic"
+14 / JottaCloud
+   \ "jottacloud"
+15 / Local Disk
+   \ "local"
+16 / Mega
+   \ "mega"
+17 / Microsoft Azure Blob Storage
+   \ "azureblob"
+18 / Microsoft OneDrive
+   \ "onedrive"
+19 / OpenDrive
+   \ "opendrive"
+20 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ "swift"
+21 / Pcloud
+   \ "pcloud"
+22 / QingCloud Object Storage
+   \ "qingstor"
+23 / SSH/SFTP Connection
+   \ "sftp"
+24 / Webdav
+   \ "webdav"
+25 / Yandex Disk
+   \ "yandex"
+26 / http Connection
+   \ "http"
+Storage> union
+List of space separated remotes.
+Can be 'remotea:test/dir remoteb:', '"remotea:test/space dir" remoteb:', etc.
+The last remote is used to write to.
+Enter a string value. Press Enter for the default ("").
+remotes>
+Remote config
+--------------------
+[remote]
+type = union
+remotes = C:\dir1 C:\dir2 C:\dir3
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+Current remotes:
+
+Name                 Type
+====                 ====
+remote               union
+
+e) Edit existing remote
+n) New remote
+d) Delete remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+e/n/d/r/c/s/q> q
+```
+
+Once configured you can then use `rclone` like this,
+
+List directories in top level in `C:\dir1`, `C:\dir2` and `C:\dir3`
+
+    rclone lsd remote:
+
+List all the files in `C:\dir1`, `C:\dir2` and `C:\dir3`
+
+    rclone ls remote:
+
+Copy another local directory to the union directory called source, which will be placed into `C:\dir3`
+
+    rclone copy C:\source remote:source
+
