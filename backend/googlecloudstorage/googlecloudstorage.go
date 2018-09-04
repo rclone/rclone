@@ -345,7 +345,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// try loading service account credentials from env variable, then from a file
-	if opt.ServiceAccountCredentials != "" && opt.ServiceAccountFile != "" {
+	if opt.ServiceAccountCredentials == "" && opt.ServiceAccountFile != "" {
 		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(opt.ServiceAccountFile))
 		if err != nil {
 			return nil, errors.Wrap(err, "error opening service account credentials file")
