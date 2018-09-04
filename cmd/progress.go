@@ -38,7 +38,7 @@ func startProgress() chan struct{} {
 	}
 	go func() {
 		progressInterval := defaultProgressInterval
-		if ShowStats() {
+		if ShowStats() && *statsInterval > 0 {
 			progressInterval = *statsInterval
 		}
 		ticker := time.NewTicker(progressInterval)
