@@ -293,7 +293,7 @@ connections. If the chunk size is changed, any downloaded chunks will be invalid
 
 **Default**: 5M
 
-#### --cache-total-chunk-size=SIZE ####
+#### --cache-chunk-total-size=SIZE ####
 
 The total size that the chunks can take up on the local disk. If `cache`
 exceeds this value then it will start to the delete the oldest chunks until 
@@ -304,7 +304,7 @@ it goes under this value.
 #### --cache-chunk-clean-interval=DURATION ####
 
 How often should `cache` perform cleanups of the chunk storage. The default value
-should be ok for most people. If you find that `cache` goes over `cache-total-chunk-size`
+should be ok for most people. If you find that `cache` goes over `cache-chunk-total-size`
 too often then try to lower this value to force it to perform cleanups more often.
 
 **Default**: 1m
