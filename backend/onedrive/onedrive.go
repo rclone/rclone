@@ -1327,6 +1327,10 @@ func (o *Object) cancelUploadSession(url string) (err error) {
 
 // uploadMultipart uploads a file using multipart upload
 func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
+	if size <= 0 {
+		panic("size passed into uploadMultipart must be > 0")
+	}
+
 	// Create upload session
 	fs.Debugf(o, "Starting multipart upload")
 	session, err := o.createUploadSession(modTime)
@@ -1367,6 +1371,55 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time) (i
 	return info, nil
 }
 
+// Update the content of a remote file within 4MB size in one single request
+// This function will set modtime after uploading, which will create a new version for the remote file
+func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
+	if size < 0 || size > int64(fs.SizeSuffix(4 * 1024 * 1024)) {
+		panic("size passed into uploadSinglepart must be >= 0 and <= 4MiB")
+	}
+
+	fs.Debugf(o, "Starting singlepart upload")
+	var resp *http.Response
+	var opts rest.Opts
+	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
+	_, drive, rootURL := parseDirID(directoryID)
+	if drive != "" {
+		opts = rest.Opts{
+			Method:        "PUT",
+			RootURL:       rootURL,
+			Path:          "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
+			ContentLength: &size,
+			Body:          in,
+		}
+	} else {
+		opts = rest.Opts{
+			Method:        "PUT",
+			Path:          "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
+			ContentLength: &size,
+			Body:          in,
+		}
+	}
+
+	if size == 0 {
+		opts.Body = nil
+	}
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.CallJSON(&opts, nil, &info)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = o.setMetaData(info)
+	if err != nil {
+		return nil, err
+	}
+	// Set the mod time now and read metadata
+	return o.setModTime(modTime)
+}
+
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
@@ -1377,10 +1430,18 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 	modTime := src.ModTime()
 
-	info, err := o.uploadMultipart(in, size, modTime)
+	var info *api.Item
+	if size > 0 {
+		info, err = o.uploadMultipart(in, size, modTime)
+	} else if size == 0 {
+		info, err = o.uploadSinglepart(in, size, modTime)
+	} else {
+		panic("src file size must be >= 0")
+	}
 	if err != nil {
 		return err
 	}
+
 	return o.setMetaData(info)
 }
 
