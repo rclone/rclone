@@ -31,13 +31,21 @@ const (
 	listChunks                 = 1000                    // chunk size to read directory listings
 )
 
+// SharedOptions are shared between swift and hubic
+var SharedOptions = []fs.Option{{
+	Name:     "chunk_size",
+	Help:     "Above this size files will be chunked into a _segments container.",
+	Default:  fs.SizeSuffix(5 * 1024 * 1024 * 1024),
+	Advanced: true,
+}}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "swift",
 		Description: "Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
 		NewFs:       NewFs,
-		Options: []fs.Option{{
+		Options: append([]fs.Option{{
 			Name:    "env_auth",
 			Help:    "Get swift credentials from environment variables in standard OpenStack form.",
 			Default: false,
@@ -134,12 +142,7 @@ func init() {
 				Help:  "OVH Public Cloud Archive",
 				Value: "pca",
 			}},
-		}, {
-			Name:     "chunk_size",
-			Help:     "Above this size files will be chunked into a _segments container.",
-			Default:  fs.SizeSuffix(5 * 1024 * 1024 * 1024),
-			Advanced: true,
-		}},
+		}}, SharedOptions...),
 	})
 }
 
@@ -291,7 +294,7 @@ func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
 	return c, nil
 }
 
-// NewFsWithConnection contstructs an Fs from the path, container:path
+// NewFsWithConnection constructs an Fs from the path, container:path
 // and authenticated connection.
 //
 // if noCheckContainer is set then the Fs won't check the container
