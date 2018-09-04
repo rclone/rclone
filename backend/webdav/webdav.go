@@ -15,6 +15,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -80,17 +81,22 @@ func init() {
 		}, {
 			Name: "bearer_token",
 			Help: "Bearer token instead of user/pass (eg a Macaroon)",
+		}, {
+			Name:     "bearer_token_command",
+			Help:     "Command to run to get a bearer token",
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	URL         string `config:"url"`
-	Vendor      string `config:"vendor"`
-	User        string `config:"user"`
-	Pass        string `config:"pass"`
-	BearerToken string `config:"bearer_token"`
+	URL                string `config:"url"`
+	Vendor             string `config:"vendor"`
+	User               string `config:"user"`
+	Pass               string `config:"pass"`
+	BearerToken        string `config:"bearer_token"`
+	BearerTokenCommand string `config:"bearer_token_command"`
 }
 
 // Fs represents a remote webdav
@@ -330,7 +336,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.User != "" || opt.Pass != "" {
 		f.srv.SetUserPass(opt.User, opt.Pass)
 	} else if opt.BearerToken != "" {
-		f.srv.SetHeader("Authorization", "BEARER "+opt.BearerToken)
+		f.setBearerToken(opt.BearerToken)
+	} else if f.opt.BearerTokenCommand != "" {
+		err = f.fetchAndSetBearerToken()
+		if err != nil {
+			return nil, err
+		}
 	}
 	f.srv.SetErrorHandler(errorHandler)
 	err = f.setQuirks(opt.Vendor)
@@ -358,6 +369,49 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// sets the BearerToken up
+func (f *Fs) setBearerToken(token string) {
+	f.opt.BearerToken = token
+	f.srv.SetHeader("Authorization", "BEARER "+token)
+}
+
+// fetch the bearer token using the command
+func (f *Fs) fetchBearerToken(cmd string) (string, error) {
+	var (
+		args   = strings.Split(cmd, " ")
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+		c      = exec.Command(args[0], args[1:]...)
+	)
+	c.Stdout = &stdout
+	c.Stderr = &stderr
+	var (
+		err          = c.Run()
+		stdoutString = strings.TrimSpace(stdout.String())
+		stderrString = strings.TrimSpace(stderr.String())
+	)
+	if err != nil {
+		if stderrString == "" {
+			stderrString = stdoutString
+		}
+		return "", errors.Wrapf(err, "failed to get bearer token using %q: %s", f.opt.BearerTokenCommand, stderrString)
+	}
+	return stdoutString, nil
+}
+
+// fetch the bearer token and set it if successful
+func (f *Fs) fetchAndSetBearerToken() error {
+	if f.opt.BearerTokenCommand == "" {
+		return nil
+	}
+	token, err := f.fetchBearerToken(f.opt.BearerTokenCommand)
+	if err != nil {
+		return err
+	}
+	f.setBearerToken(token)
+	return nil
 }
 
 // setQuirks adjusts the Fs for the vendor passed in
