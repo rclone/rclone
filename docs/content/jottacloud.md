@@ -149,6 +149,11 @@ Controls whether files are sent to the trash or deleted
 permanently. Defaults to false, namely sending files to the trash.
 Use `--jottacloud-hard-delete=true` to delete files permanently instead.
 
+#### --jottacloud-unlink ####
+
+Set to true to make the link command remove existing public link to file/folder.
+Default is false, meaning link command will create or retrieve public link.
+
 ### Troubleshooting ###
 
 Jottacloud exhibits some inconsistent behaviours regarding deleted files and folders which may cause Copy, Move and DirMove operations to previously deleted paths to fail. Emptying the trash should help in such cases.
