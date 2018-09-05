@@ -68,7 +68,7 @@ func newServer(f fs.Fs, opt *ftpopt.Options) (*server, error) {
 
 	ftpopt := &ftp.ServerOpts{
 		Name:           "Rclone FTP Server",
-		WelcomeMessage: "TODO",
+		WelcomeMessage: "Welcome on Rclone FTP Server",
 		Factory: &DriverFactory{
 			vfs: vfs.New(f, &vfsflags.Opt),
 		},

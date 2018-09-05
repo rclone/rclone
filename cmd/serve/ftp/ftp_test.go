@@ -21,7 +21,7 @@ import (
 const (
 	testHOST             = "localhost"
 	testPORT             = "51780"
-	testPASSIVEPORTRANGE = "2000-4000"
+	testPASSIVEPORTRANGE = "30000-32000"
 )
 
 // TestFTP runs the ftp server then runs the unit tests for the
