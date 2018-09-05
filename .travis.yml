@@ -10,6 +10,7 @@ go:
 - 1.10.x
 - 1.11.x
 - tip
+go_import_path: github.com/ncw/rclone
 before_install:
 - if [[ $TRAVIS_OS_NAME == linux ]]; then sudo modprobe fuse ; sudo chmod 666 /dev/fuse ; sudo chown root:$USER /etc/fuse.conf ; fi
 - if [[ $TRAVIS_OS_NAME == osx ]]; then brew update && brew tap caskroom/cask && brew cask install osxfuse ; fi
