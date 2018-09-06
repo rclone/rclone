@@ -201,8 +201,9 @@ func init() {
 				log.Fatalf("Cancelled by user")
 			}
 
-			config.FileSet(name, configDriveID, finalDriveID)
-			config.FileSet(name, configDriveType, rootItem.ParentReference.DriveType)
+			m.Set(configDriveID, finalDriveID)
+			m.Set(configDriveType, rootItem.ParentReference.DriveType)
+			config.SaveConfig()
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,
