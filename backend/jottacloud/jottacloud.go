@@ -666,8 +666,11 @@ func (f *Fs) About() (*fs.Usage, error) {
 	}
 
 	usage := &fs.Usage{
-		Total: fs.NewUsageValue(info.Capacity),
 		Used:  fs.NewUsageValue(info.Usage),
+	}
+	if info.Capacity > 0 {
+		usage.Total = fs.NewUsageValue(info.Capacity)
+		usage.Free = fs.NewUsageValue(info.Capacity - info.Usage)
 	}
 	return usage, nil
 }

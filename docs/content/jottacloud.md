@@ -105,6 +105,12 @@ Any files you delete with rclone will end up in the trash. Due to a lack of API 
 
 Jottacloud supports file versioning. When rclone uploads a new version of a file it creates a new version of it. Currently rclone only supports retrieving the current version but older versions can be accessed via the Jottacloud Website.
 
+### Quota information ###
+
+To view your current quota you can use the `rclone about remote:`
+command which will display your usage limit (unless it is unlimited)
+and the current usage.
+
 ### Limitations ###
 
 Note that Jottacloud is case insensitive so you can't have a file called
