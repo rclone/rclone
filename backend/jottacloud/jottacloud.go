@@ -25,6 +25,7 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
@@ -227,9 +228,14 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// filePathRaw returns an unescaped file path (f.root, file)
+func (f *Fs) filePathRaw(file string) string {
+	return path.Join(f.endpointURL, replaceReservedChars(path.Join(f.root, file)))
+}
+
 // filePath returns a escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
-	return rest.URLPathEscape(path.Join(f.endpointURL, replaceReservedChars(path.Join(f.root, file))))
+	return rest.URLPathEscape(f.filePathRaw(file))
 }
 
 // filePath returns a escaped file path (f.root, remote)
@@ -423,6 +429,98 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}
 	//fmt.Printf("Entries: %+v\n", entries)
 	return entries, nil
+}
+
+// listFileDirFn is called from listFileDir to handle an object.
+type listFileDirFn func(fs.DirEntry) error
+
+// List the objects and directories into entries, from a
+// special kind of JottaFolder representing a FileDirLis
+func (f *Fs) listFileDir(rootPath string, root *api.JottaFolder, fn listFileDirFn) error {
+	rootLen := len(rootPath)
+	for i := range root.Folders {
+		folder := &root.Folders[i]
+		if folder.Deleted {
+			return nil
+		}
+		folderPath := path.Join(folder.Path, folder.Name)
+		var remoteDir string
+		subLen := len(folderPath) - rootLen
+		if subLen > 0 {
+			remoteDir = restoreReservedChars(folderPath[rootLen+1:])
+			d := fs.NewDir(remoteDir, time.Time(folder.ModifiedAt))
+			err := fn(d)
+			if err != nil {
+				return err
+			}
+		}
+		for i := range folder.Files {
+			file := &folder.Files[i]
+			if file.Deleted || file.State != "COMPLETED" {
+				continue
+			}
+			remoteFile := path.Join(remoteDir, restoreReservedChars(file.Name))
+			o, err := f.newObjectWithInfo(remoteFile, file)
+			if err != nil {
+				return err
+			}
+			err = fn(o)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+//
+// dir should be "" to start from the root, and should not
+// have trailing slashes.
+//
+// This should return ErrDirNotFound if the directory isn't
+// found.
+//
+// It should call callback for each tranche of entries read.
+// These need not be returned in any particular order.  If
+// callback returns an error then the listing will stop
+// immediately.
+//
+// Don't implement this unless you have a more efficient way
+// of listing recursively that doing a directory traversal.
+func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       f.filePath(dir),
+		Parameters: url.Values{},
+	}
+	opts.Parameters.Set("mode", "list")
+
+	var resp *http.Response
+	var result api.JottaFolder // Could be JottaFileDirList, but JottaFolder is close enough
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallXML(&opts, nil, &result)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		if apiErr, ok := err.(*api.Error); ok {
+			// does not exist
+			if apiErr.StatusCode == http.StatusNotFound {
+				return fs.ErrorDirNotFound
+			}
+		}
+		return errors.Wrap(err, "couldn't list files")
+	}
+	rootPath := "/" + f.filePathRaw(dir)
+	list := walk.NewListRHelper(callback)
+	err = f.listFileDir(rootPath, &result, func(entry fs.DirEntry) error {
+		return list.Add(entry)
+	})
+	if err != nil {
+		return err
+	}
+	return list.Flush()
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -666,7 +764,7 @@ func (f *Fs) About() (*fs.Usage, error) {
 	}
 
 	usage := &fs.Usage{
-		Used:  fs.NewUsageValue(info.Usage),
+		Used: fs.NewUsageValue(info.Usage),
 	}
 	if info.Capacity > 0 {
 		usage.Total = fs.NewUsageValue(info.Capacity)
@@ -932,6 +1030,7 @@ var (
 	_ fs.Copier    = (*Fs)(nil)
 	_ fs.Mover     = (*Fs)(nil)
 	_ fs.DirMover  = (*Fs)(nil)
+	_ fs.ListRer   = (*Fs)(nil)
 	_ fs.Abouter   = (*Fs)(nil)
 	_ fs.Object    = (*Object)(nil)
 	_ fs.MimeTyper = (*Object)(nil)
