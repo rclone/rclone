@@ -81,6 +81,15 @@ To copy a local directory to an Jottacloud directory called backup
 
     rclone copy /home/source remote:backup
 
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
+Note that the implementation in Jottacloud always uses only a single
+API request to get the entire list, so for large folders this could
+lead to long wait time before the first results are shown.
 
 ### Modified time and hashes ###
 

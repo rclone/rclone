@@ -75,7 +75,7 @@ var (
 		{
 			Name:     "TestJottacloud:",
 			SubDir:   false,
-			FastList: false,
+			FastList: true,
 		},
 		{
 			Name:     "TestOneDrive:",
