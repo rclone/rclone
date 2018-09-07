@@ -106,7 +106,7 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 			return n, err // All retries exhausted
 		}
 
-		if netErr, ok := err.(net.Error); ok && (netErr.Timeout() || netErr.Temporary()) {
+		if _, ok := err.(net.Error); ok {
 			continue
 			// Loop around and try to get and read from new stream.
 		}

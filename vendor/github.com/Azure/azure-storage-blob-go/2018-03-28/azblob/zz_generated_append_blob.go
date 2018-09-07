@@ -33,20 +33,21 @@ func newAppendBlobClient(url url.URL, p pipeline.Pipeline) appendBlobClient {
 // error.contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
-// lease is active and matches this ID. maxSize is optional conditional header. The max length in bytes permitted for
-// the append blob. If the Append Block operation would cause the blob to exceed that limit or if the blob size is
-// already greater than the value specified in this header, the request will fail with MaxBlobSizeConditionNotMet error
-// (HTTP status code 412 - Precondition Failed). appendPosition is optional conditional header, used only for the
-// Append Block operation. A number indicating the byte offset to compare. Append Block will succeed only if the append
-// position is equal to this number. If it is not, the request will fail with the AppendPositionConditionNotMet error
-// (HTTP status code 412 - Precondition Failed). ifModifiedSince is specify this header value to operate only on a blob
-// if it has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate
-// only on a blob if it has not been modified since the specified date/time. ifMatches is specify an ETag value to
-// operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a
-// matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded
-// in the analytics logs when storage analytics logging is enabled.
-func (client appendBlobClient) AppendBlock(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobAppendBlockResponse, error) {
+// Timeouts for Blob Service Operations.</a> transactionalContentMD5 is specify the transactional md5 for the body, to
+// be validated by the service. leaseID is if specified, the operation only succeeds if the container's lease is active
+// and matches this ID. maxSize is optional conditional header. The max length in bytes permitted for the append blob.
+// If the Append Block operation would cause the blob to exceed that limit or if the blob size is already greater than
+// the value specified in this header, the request will fail with MaxBlobSizeConditionNotMet error (HTTP status code
+// 412 - Precondition Failed). appendPosition is optional conditional header, used only for the Append Block operation.
+// A number indicating the byte offset to compare. Append Block will succeed only if the append position is equal to
+// this number. If it is not, the request will fail with the AppendPositionConditionNotMet error (HTTP status code 412
+// - Precondition Failed). ifModifiedSince is specify this header value to operate only on a blob if it has been
+// modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if
+// it has not been modified since the specified date/time. ifMatches is specify an ETag value to operate only on blobs
+// with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching value.
+// requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics
+// logs when storage analytics logging is enabled.
+func (client appendBlobClient) AppendBlock(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobAppendBlockResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -55,7 +56,7 @@ func (client appendBlobClient) AppendBlock(ctx context.Context, body io.ReadSeek
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.appendBlockPreparer(body, contentLength, timeout, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.appendBlockPreparer(body, contentLength, timeout, transactionalContentMD5, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func (client appendBlobClient) AppendBlock(ctx context.Context, body io.ReadSeek
 }
 
 // appendBlockPreparer prepares the AppendBlock request.
-func (client appendBlobClient) appendBlockPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client appendBlobClient) appendBlockPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -79,6 +80,9 @@ func (client appendBlobClient) appendBlockPreparer(body io.ReadSeeker, contentLe
 	params.Set("comp", "appendblock")
 	req.URL.RawQuery = params.Encode()
 	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
+	if transactionalContentMD5 != nil {
+		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(transactionalContentMD5))
+	}
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
@@ -147,10 +151,7 @@ func (client appendBlobClient) Create(ctx context.Context, contentLength int64, 
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
-				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
-		{targetValue: metadata,
-			constraints: []constraint{{target: "metadata", name: null, rule: false,
-				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
 	req, err := client.createPreparer(contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)

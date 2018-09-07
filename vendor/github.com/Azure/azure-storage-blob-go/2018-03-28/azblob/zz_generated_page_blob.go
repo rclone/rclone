@@ -144,10 +144,7 @@ func (client pageBlobClient) CopyIncremental(ctx context.Context, copySource str
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
-				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
-		{targetValue: metadata,
-			constraints: []constraint{{target: "metadata", name: null, rule: false,
-				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
 	req, err := client.copyIncrementalPreparer(copySource, timeout, metadata, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
@@ -211,8 +208,9 @@ func (client pageBlobClient) copyIncrementalResponder(resp pipeline.Response) (p
 
 // Create the Create operation creates a new page blob.
 //
-// contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
-// information, see <a
+// contentLength is the length of the request. blobContentLength is this header specifies the maximum size for the page
+// blob, up to 1 TB. The page blob size must be aligned to a 512-byte boundary. timeout is the timeout parameter is
+// expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> blobContentType is optional. Sets the blob's content type. If specified,
 // this property is stored with the blob and returned with a read request. blobContentEncoding is optional. Sets the
@@ -231,23 +229,18 @@ func (client pageBlobClient) copyIncrementalResponder(resp pipeline.Response) (p
 // ifModifiedSince is specify this header value to operate only on a blob if it has been modified since the specified
 // date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified
 // since the specified date/time. ifMatches is specify an ETag value to operate only on blobs with a matching value.
-// ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. blobContentLength is this
-// header specifies the maximum size for the page blob, up to 1 TB. The page blob size must be aligned to a 512-byte
-// boundary. blobSequenceNumber is set for page blobs only. The sequence number is a user-controlled value that you can
-// use to track requests. The value of the sequence number must be between 0 and 2^63 - 1. requestID is provides a
-// client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
-// analytics logging is enabled.
-func (client pageBlobClient) Create(ctx context.Context, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (*PageBlobCreateResponse, error) {
+// ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. blobSequenceNumber is set
+// for page blobs only. The sequence number is a user-controlled value that you can use to track requests. The value of
+// the sequence number must be between 0 and 2^63 - 1. requestID is provides a client-generated, opaque value with a 1
+// KB character limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client pageBlobClient) Create(ctx context.Context, contentLength int64, blobContentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobSequenceNumber *int64, requestID *string) (*PageBlobCreateResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
-				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
-		{targetValue: metadata,
-			constraints: []constraint{{target: "metadata", name: null, rule: false,
-				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.createPreparer(contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, blobContentLength, blobSequenceNumber, requestID)
+	req, err := client.createPreparer(contentLength, blobContentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, blobSequenceNumber, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +252,7 @@ func (client pageBlobClient) Create(ctx context.Context, contentLength int64, ti
 }
 
 // createPreparer prepares the Create request.
-func (client pageBlobClient) createPreparer(contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) createPreparer(contentLength int64, blobContentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -308,9 +301,7 @@ func (client pageBlobClient) createPreparer(contentLength int64, timeout *int32,
 	if ifNoneMatch != nil {
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
-	if blobContentLength != nil {
-		req.Header.Set("x-ms-blob-content-length", strconv.FormatInt(*blobContentLength, 10))
-	}
+	req.Header.Set("x-ms-blob-content-length", strconv.FormatInt(blobContentLength, 10))
 	if blobSequenceNumber != nil {
 		req.Header.Set("x-ms-blob-sequence-number", strconv.FormatInt(*blobSequenceNumber, 10))
 	}
@@ -700,7 +691,8 @@ func (client pageBlobClient) updateSequenceNumberResponder(resp pipeline.Respons
 // UploadPages the Upload Pages operation writes a range of pages to a page blob
 //
 // body is initial data body will be closed upon successful return. Callers should ensure closure when receiving an
-// error.contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
+// error.contentLength is the length of the request. transactionalContentMD5 is specify the transactional md5 for the
+// body, to be validated by the service. timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> rangeParameter is return only the bytes of the blob in the specified
@@ -714,7 +706,7 @@ func (client pageBlobClient) updateSequenceNumberResponder(resp pipeline.Respons
 // to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client pageBlobClient) UploadPages(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobUploadPagesResponse, error) {
+func (client pageBlobClient) UploadPages(ctx context.Context, body io.ReadSeeker, contentLength int64, transactionalContentMD5 []byte, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobUploadPagesResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -723,7 +715,7 @@ func (client pageBlobClient) UploadPages(ctx context.Context, body io.ReadSeeker
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.uploadPagesPreparer(body, contentLength, timeout, rangeParameter, leaseID, ifSequenceNumberLessThanOrEqualTo, ifSequenceNumberLessThan, ifSequenceNumberEqualTo, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.uploadPagesPreparer(body, contentLength, transactionalContentMD5, timeout, rangeParameter, leaseID, ifSequenceNumberLessThanOrEqualTo, ifSequenceNumberLessThan, ifSequenceNumberEqualTo, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -735,7 +727,7 @@ func (client pageBlobClient) UploadPages(ctx context.Context, body io.ReadSeeker
 }
 
 // uploadPagesPreparer prepares the UploadPages request.
-func (client pageBlobClient) uploadPagesPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) uploadPagesPreparer(body io.ReadSeeker, contentLength int64, transactionalContentMD5 []byte, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -747,6 +739,9 @@ func (client pageBlobClient) uploadPagesPreparer(body io.ReadSeeker, contentLeng
 	params.Set("comp", "page")
 	req.URL.RawQuery = params.Encode()
 	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
+	if transactionalContentMD5 != nil {
+		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(transactionalContentMD5))
+	}
 	if rangeParameter != nil {
 		req.Header.Set("x-ms-range", *rangeParameter)
 	}

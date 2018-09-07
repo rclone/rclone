@@ -65,7 +65,7 @@ func (r *DownloadResponse) Body(o RetryReaderOptions) io.ReadCloser {
 		func(ctx context.Context, getInfo HTTPGetterInfo) (*http.Response, error) {
 			resp, err := r.b.Download(ctx, getInfo.Offset, getInfo.Count,
 				BlobAccessConditions{
-					HTTPAccessConditions: HTTPAccessConditions{IfMatch: getInfo.ETag},
+					ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: getInfo.ETag},
 				},
 				false)
 			if err != nil {

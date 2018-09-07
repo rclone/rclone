@@ -43,11 +43,14 @@ func newStorageError(cause error, response *http.Response, description string) e
 			response:    response,
 			description: description,
 		},
+		serviceCode: ServiceCodeType(response.Header.Get("x-ms-error-code")),
 	}
 }
 
 // ServiceCode returns service-error information. The caller may examine these values but should not modify any of them.
-func (e *storageError) ServiceCode() ServiceCodeType { return e.serviceCode }
+func (e *storageError) ServiceCode() ServiceCodeType {
+	return e.serviceCode
+}
 
 // Error implements the error interface's Error method to return a string representation of the error.
 func (e *storageError) Error() string {
@@ -94,8 +97,6 @@ func (e *storageError) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err
 			break
 		case xml.CharData:
 			switch tokName {
-			case "Code":
-				e.serviceCode = ServiceCodeType(tt)
 			case "Message":
 				e.description = string(tt)
 			default:

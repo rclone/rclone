@@ -119,6 +119,25 @@ func PossibleAccessTierTypeValues() []AccessTierType {
 	return []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot, AccessTierNone, AccessTierP10, AccessTierP20, AccessTierP30, AccessTierP4, AccessTierP40, AccessTierP50, AccessTierP6}
 }
 
+// AccountKindType enumerates the values for account kind type.
+type AccountKindType string
+
+const (
+	// AccountKindBlobStorage ...
+	AccountKindBlobStorage AccountKindType = "BlobStorage"
+	// AccountKindNone represents an empty AccountKindType.
+	AccountKindNone AccountKindType = ""
+	// AccountKindStorage ...
+	AccountKindStorage AccountKindType = "Storage"
+	// AccountKindStorageV2 ...
+	AccountKindStorageV2 AccountKindType = "StorageV2"
+)
+
+// PossibleAccountKindTypeValues returns an array of possible values for the AccountKindType const type.
+func PossibleAccountKindTypeValues() []AccountKindType {
+	return []AccountKindType{AccountKindBlobStorage, AccountKindNone, AccountKindStorage, AccountKindStorageV2}
+}
+
 // ArchiveStatusType enumerates the values for archive status type.
 type ArchiveStatusType string
 
@@ -360,6 +379,29 @@ const (
 // PossibleSequenceNumberActionTypeValues returns an array of possible values for the SequenceNumberActionType const type.
 func PossibleSequenceNumberActionTypeValues() []SequenceNumberActionType {
 	return []SequenceNumberActionType{SequenceNumberActionIncrement, SequenceNumberActionMax, SequenceNumberActionNone, SequenceNumberActionUpdate}
+}
+
+// SkuNameType enumerates the values for sku name type.
+type SkuNameType string
+
+const (
+	// SkuNameNone represents an empty SkuNameType.
+	SkuNameNone SkuNameType = ""
+	// SkuNamePremiumLRS ...
+	SkuNamePremiumLRS SkuNameType = "Premium_LRS"
+	// SkuNameStandardGRS ...
+	SkuNameStandardGRS SkuNameType = "Standard_GRS"
+	// SkuNameStandardLRS ...
+	SkuNameStandardLRS SkuNameType = "Standard_LRS"
+	// SkuNameStandardRAGRS ...
+	SkuNameStandardRAGRS SkuNameType = "Standard_RAGRS"
+	// SkuNameStandardZRS ...
+	SkuNameStandardZRS SkuNameType = "Standard_ZRS"
+)
+
+// PossibleSkuNameTypeValues returns an array of possible values for the SkuNameType const type.
+func PossibleSkuNameTypeValues() []SkuNameType {
+	return []SkuNameType{SkuNameNone, SkuNamePremiumLRS, SkuNameStandardGRS, SkuNameStandardLRS, SkuNameStandardRAGRS, SkuNameStandardZRS}
 }
 
 // StorageErrorCodeType enumerates the values for storage error code type.
@@ -1180,9 +1222,69 @@ func (bdr BlobDeleteResponse) Version() string {
 	return bdr.rawResponse.Header.Get("x-ms-version")
 }
 
-// BlobFlatList ...
-type BlobFlatList struct {
+// BlobFlatListSegment ...
+type BlobFlatListSegment struct {
+	// XMLName is used for marshalling and is subject to removal in a future release.
+	XMLName   xml.Name   `xml:"Blobs"`
 	BlobItems []BlobItem `xml:"Blob"`
+}
+
+// BlobGetAccountInfoResponse ...
+type BlobGetAccountInfoResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bgair BlobGetAccountInfoResponse) Response() *http.Response {
+	return bgair.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bgair BlobGetAccountInfoResponse) StatusCode() int {
+	return bgair.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bgair BlobGetAccountInfoResponse) Status() string {
+	return bgair.rawResponse.Status
+}
+
+// AccountKind returns the value for header x-ms-account-kind.
+func (bgair BlobGetAccountInfoResponse) AccountKind() AccountKindType {
+	return AccountKindType(bgair.rawResponse.Header.Get("x-ms-account-kind"))
+}
+
+// Date returns the value for header Date.
+func (bgair BlobGetAccountInfoResponse) Date() time.Time {
+	s := bgair.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (bgair BlobGetAccountInfoResponse) ErrorCode() string {
+	return bgair.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bgair BlobGetAccountInfoResponse) RequestID() string {
+	return bgair.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// SkuName returns the value for header x-ms-sku-name.
+func (bgair BlobGetAccountInfoResponse) SkuName() SkuNameType {
+	return SkuNameType(bgair.rawResponse.Header.Get("x-ms-sku-name"))
+}
+
+// Version returns the value for header x-ms-version.
+func (bgair BlobGetAccountInfoResponse) Version() string {
+	return bgair.rawResponse.Header.Get("x-ms-version")
 }
 
 // BlobGetPropertiesResponse ...
@@ -1226,6 +1328,19 @@ func (bgpr BlobGetPropertiesResponse) AcceptRanges() string {
 // AccessTier returns the value for header x-ms-access-tier.
 func (bgpr BlobGetPropertiesResponse) AccessTier() string {
 	return bgpr.rawResponse.Header.Get("x-ms-access-tier")
+}
+
+// AccessTierChangeTime returns the value for header x-ms-access-tier-change-time.
+func (bgpr BlobGetPropertiesResponse) AccessTierChangeTime() time.Time {
+	s := bgpr.rawResponse.Header.Get("x-ms-access-tier-change-time")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 // AccessTierInferred returns the value for header x-ms-access-tier-inferred.
@@ -1358,6 +1473,19 @@ func (bgpr BlobGetPropertiesResponse) CopyStatusDescription() string {
 	return bgpr.rawResponse.Header.Get("x-ms-copy-status-description")
 }
 
+// CreationTime returns the value for header x-ms-creation-time.
+func (bgpr BlobGetPropertiesResponse) CreationTime() time.Time {
+	s := bgpr.rawResponse.Header.Get("x-ms-creation-time")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
 // Date returns the value for header Date.
 func (bgpr BlobGetPropertiesResponse) Date() time.Time {
 	s := bgpr.rawResponse.Header.Get("Date")
@@ -1434,14 +1562,18 @@ func (bgpr BlobGetPropertiesResponse) Version() string {
 	return bgpr.rawResponse.Header.Get("x-ms-version")
 }
 
-// BlobHierarchyList ...
-type BlobHierarchyList struct {
+// BlobHierarchyListSegment ...
+type BlobHierarchyListSegment struct {
+	// XMLName is used for marshalling and is subject to removal in a future release.
+	XMLName      xml.Name     `xml:"Blobs"`
 	BlobPrefixes []BlobPrefix `xml:"BlobPrefix"`
 	BlobItems    []BlobItem   `xml:"Blob"`
 }
 
 // BlobItem - An Azure Storage blob
 type BlobItem struct {
+	// XMLName is used for marshalling and is subject to removal in a future release.
+	XMLName    xml.Name       `xml:"Blob"`
 	Name       string         `xml:"Name"`
 	Deleted    bool           `xml:"Deleted"`
 	Snapshot   string         `xml:"Snapshot"`
@@ -1456,8 +1588,11 @@ type BlobPrefix struct {
 
 // BlobProperties - Properties of a blob
 type BlobProperties struct {
-	LastModified time.Time `xml:"Last-Modified"`
-	Etag         ETag      `xml:"Etag"`
+	// XMLName is used for marshalling and is subject to removal in a future release.
+	XMLName      xml.Name   `xml:"Properties"`
+	CreationTime *time.Time `xml:"Creation-Time"`
+	LastModified time.Time  `xml:"Last-Modified"`
+	Etag         ETag       `xml:"Etag"`
 	// ContentLength - Size in bytes
 	ContentLength      *int64  `xml:"Content-Length"`
 	ContentType        *string `xml:"Content-Type"`
@@ -1491,7 +1626,8 @@ type BlobProperties struct {
 	AccessTier         AccessTierType `xml:"AccessTier"`
 	AccessTierInferred *bool          `xml:"AccessTierInferred"`
 	// ArchiveStatus - Possible values include: 'ArchiveStatusRehydratePendingToHot', 'ArchiveStatusRehydratePendingToCool', 'ArchiveStatusNone'
-	ArchiveStatus ArchiveStatusType `xml:"ArchiveStatus"`
+	ArchiveStatus        ArchiveStatusType `xml:"ArchiveStatus"`
+	AccessTierChangeTime *time.Time        `xml:"AccessTierChangeTime"`
 }
 
 // MarshalXML implements the xml.Marshaler interface for BlobProperties.
@@ -2702,6 +2838,64 @@ func (cdr ContainerDeleteResponse) Version() string {
 	return cdr.rawResponse.Header.Get("x-ms-version")
 }
 
+// ContainerGetAccountInfoResponse ...
+type ContainerGetAccountInfoResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (cgair ContainerGetAccountInfoResponse) Response() *http.Response {
+	return cgair.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cgair ContainerGetAccountInfoResponse) StatusCode() int {
+	return cgair.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cgair ContainerGetAccountInfoResponse) Status() string {
+	return cgair.rawResponse.Status
+}
+
+// AccountKind returns the value for header x-ms-account-kind.
+func (cgair ContainerGetAccountInfoResponse) AccountKind() AccountKindType {
+	return AccountKindType(cgair.rawResponse.Header.Get("x-ms-account-kind"))
+}
+
+// Date returns the value for header Date.
+func (cgair ContainerGetAccountInfoResponse) Date() time.Time {
+	s := cgair.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (cgair ContainerGetAccountInfoResponse) ErrorCode() string {
+	return cgair.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (cgair ContainerGetAccountInfoResponse) RequestID() string {
+	return cgair.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// SkuName returns the value for header x-ms-sku-name.
+func (cgair ContainerGetAccountInfoResponse) SkuName() SkuNameType {
+	return SkuNameType(cgair.rawResponse.Header.Get("x-ms-sku-name"))
+}
+
+// Version returns the value for header x-ms-version.
+func (cgair ContainerGetAccountInfoResponse) Version() string {
+	return cgair.rawResponse.Header.Get("x-ms-version")
+}
+
 // ContainerGetPropertiesResponse ...
 type ContainerGetPropertiesResponse struct {
 	rawResponse *http.Response
@@ -2763,6 +2957,16 @@ func (cgpr ContainerGetPropertiesResponse) ETag() ETag {
 	return ETag(cgpr.rawResponse.Header.Get("ETag"))
 }
 
+// HasImmutabilityPolicy returns the value for header x-ms-has-immutability-policy.
+func (cgpr ContainerGetPropertiesResponse) HasImmutabilityPolicy() string {
+	return cgpr.rawResponse.Header.Get("x-ms-has-immutability-policy")
+}
+
+// HasLegalHold returns the value for header x-ms-has-legal-hold.
+func (cgpr ContainerGetPropertiesResponse) HasLegalHold() string {
+	return cgpr.rawResponse.Header.Get("x-ms-has-legal-hold")
+}
+
 // LastModified returns the value for header Last-Modified.
 func (cgpr ContainerGetPropertiesResponse) LastModified() time.Time {
 	s := cgpr.rawResponse.Header.Get("Last-Modified")
@@ -2803,6 +3007,8 @@ func (cgpr ContainerGetPropertiesResponse) Version() string {
 
 // ContainerItem - An Azure Storage container
 type ContainerItem struct {
+	// XMLName is used for marshalling and is subject to removal in a future release.
+	XMLName    xml.Name            `xml:"Container"`
 	Name       string              `xml:"Name"`
 	Properties ContainerProperties `xml:"Properties"`
 	Metadata   Metadata            `xml:"Metadata"`
@@ -2819,7 +3025,9 @@ type ContainerProperties struct {
 	// LeaseDuration - Possible values include: 'LeaseDurationInfinite', 'LeaseDurationFixed', 'LeaseDurationNone'
 	LeaseDuration LeaseDurationType `xml:"LeaseDuration"`
 	// PublicAccess - Possible values include: 'PublicAccessContainer', 'PublicAccessBlob', 'PublicAccessNone'
-	PublicAccess PublicAccessType `xml:"PublicAccess"`
+	PublicAccess          PublicAccessType `xml:"PublicAccess"`
+	HasImmutabilityPolicy *bool            `xml:"HasImmutabilityPolicy"`
+	HasLegalHold          *bool            `xml:"HasLegalHold"`
 }
 
 // MarshalXML implements the xml.Marshaler interface for ContainerProperties.
@@ -3373,7 +3581,7 @@ func (dr downloadResponse) Version() string {
 	return dr.rawResponse.Header.Get("x-ms-version")
 }
 
-// GeoReplication ...
+// GeoReplication - Geo-Replication information for the Secondary Storage Service
 type GeoReplication struct {
 	// Status - The status of the secondary location. Possible values include: 'GeoReplicationStatusLive', 'GeoReplicationStatusBootstrap', 'GeoReplicationStatusUnavailable', 'GeoReplicationStatusNone'
 	Status GeoReplicationStatusType `xml:"Status"`
@@ -3403,15 +3611,15 @@ func (gr *GeoReplication) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 type ListBlobsFlatSegmentResponse struct {
 	rawResponse *http.Response
 	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName         xml.Name     `xml:"EnumerationResults"`
-	ServiceEndpoint string       `xml:"ServiceEndpoint,attr"`
-	ContainerName   string       `xml:"ContainerName,attr"`
-	Prefix          string       `xml:"Prefix"`
-	Marker          string       `xml:"Marker"`
-	MaxResults      int32        `xml:"MaxResults"`
-	Delimiter       string       `xml:"Delimiter"`
-	Segment         BlobFlatList `xml:"Blobs"`
-	NextMarker      Marker       `xml:"NextMarker"`
+	XMLName         xml.Name            `xml:"EnumerationResults"`
+	ServiceEndpoint string              `xml:"ServiceEndpoint,attr"`
+	ContainerName   string              `xml:"ContainerName,attr"`
+	Prefix          string              `xml:"Prefix"`
+	Marker          string              `xml:"Marker"`
+	MaxResults      int32               `xml:"MaxResults"`
+	Delimiter       string              `xml:"Delimiter"`
+	Segment         BlobFlatListSegment `xml:"Blobs"`
+	NextMarker      Marker              `xml:"NextMarker"`
 }
 
 // Response returns the raw HTTP response object.
@@ -3466,15 +3674,15 @@ func (lbfsr ListBlobsFlatSegmentResponse) Version() string {
 type ListBlobsHierarchySegmentResponse struct {
 	rawResponse *http.Response
 	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName         xml.Name          `xml:"EnumerationResults"`
-	ServiceEndpoint string            `xml:"ServiceEndpoint,attr"`
-	ContainerName   string            `xml:"ContainerName,attr"`
-	Prefix          string            `xml:"Prefix"`
-	Marker          string            `xml:"Marker"`
-	MaxResults      int32             `xml:"MaxResults"`
-	Delimiter       string            `xml:"Delimiter"`
-	Segment         BlobHierarchyList `xml:"Blobs"`
-	NextMarker      Marker            `xml:"NextMarker"`
+	XMLName         xml.Name                 `xml:"EnumerationResults"`
+	ServiceEndpoint string                   `xml:"ServiceEndpoint,attr"`
+	ContainerName   string                   `xml:"ContainerName,attr"`
+	Prefix          string                   `xml:"Prefix"`
+	Marker          string                   `xml:"Marker"`
+	MaxResults      int32                    `xml:"MaxResults"`
+	Delimiter       string                   `xml:"Delimiter"`
+	Segment         BlobHierarchyListSegment `xml:"Blobs"`
+	NextMarker      Marker                   `xml:"NextMarker"`
 }
 
 // Response returns the raw HTTP response object.
@@ -3525,8 +3733,8 @@ func (lbhsr ListBlobsHierarchySegmentResponse) Version() string {
 	return lbhsr.rawResponse.Header.Get("x-ms-version")
 }
 
-// ListContainersResponse - An enumeration of containers
-type ListContainersResponse struct {
+// ListContainersSegmentResponse - An enumeration of containers
+type ListContainersSegmentResponse struct {
 	rawResponse *http.Response
 	// XMLName is used for marshalling and is subject to removal in a future release.
 	XMLName         xml.Name        `xml:"EnumerationResults"`
@@ -3539,33 +3747,33 @@ type ListContainersResponse struct {
 }
 
 // Response returns the raw HTTP response object.
-func (lcr ListContainersResponse) Response() *http.Response {
-	return lcr.rawResponse
+func (lcsr ListContainersSegmentResponse) Response() *http.Response {
+	return lcsr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (lcr ListContainersResponse) StatusCode() int {
-	return lcr.rawResponse.StatusCode
+func (lcsr ListContainersSegmentResponse) StatusCode() int {
+	return lcsr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (lcr ListContainersResponse) Status() string {
-	return lcr.rawResponse.Status
+func (lcsr ListContainersSegmentResponse) Status() string {
+	return lcsr.rawResponse.Status
 }
 
 // ErrorCode returns the value for header x-ms-error-code.
-func (lcr ListContainersResponse) ErrorCode() string {
-	return lcr.rawResponse.Header.Get("x-ms-error-code")
+func (lcsr ListContainersSegmentResponse) ErrorCode() string {
+	return lcsr.rawResponse.Header.Get("x-ms-error-code")
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (lcr ListContainersResponse) RequestID() string {
-	return lcr.rawResponse.Header.Get("x-ms-request-id")
+func (lcsr ListContainersSegmentResponse) RequestID() string {
+	return lcsr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // Version returns the value for header x-ms-version.
-func (lcr ListContainersResponse) Version() string {
-	return lcr.rawResponse.Header.Get("x-ms-version")
+func (lcsr ListContainersSegmentResponse) Version() string {
+	return lcsr.rawResponse.Header.Get("x-ms-version")
 }
 
 // Logging - Azure Analytics Logging settings.
@@ -3581,7 +3789,7 @@ type Logging struct {
 	RetentionPolicy RetentionPolicy `xml:"RetentionPolicy"`
 }
 
-// Metrics ...
+// Metrics - a summary of request statistics grouped by API in hour or minute aggregates for blobs
 type Metrics struct {
 	// Version - The version of Storage Analytics to configure.
 	Version *string `xml:"Version"`
@@ -4186,12 +4394,70 @@ type PageRange struct {
 	End   int64 `xml:"End"`
 }
 
-// RetentionPolicy - the retention policy
+// RetentionPolicy - the retention policy which determines how long the associated data should persist
 type RetentionPolicy struct {
 	// Enabled - Indicates whether a retention policy is enabled for the storage service
 	Enabled bool `xml:"Enabled"`
 	// Days - Indicates the number of days that metrics or logging or soft-deleted data should be retained. All data older than this value will be deleted
 	Days *int32 `xml:"Days"`
+}
+
+// ServiceGetAccountInfoResponse ...
+type ServiceGetAccountInfoResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (sgair ServiceGetAccountInfoResponse) Response() *http.Response {
+	return sgair.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (sgair ServiceGetAccountInfoResponse) StatusCode() int {
+	return sgair.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (sgair ServiceGetAccountInfoResponse) Status() string {
+	return sgair.rawResponse.Status
+}
+
+// AccountKind returns the value for header x-ms-account-kind.
+func (sgair ServiceGetAccountInfoResponse) AccountKind() AccountKindType {
+	return AccountKindType(sgair.rawResponse.Header.Get("x-ms-account-kind"))
+}
+
+// Date returns the value for header Date.
+func (sgair ServiceGetAccountInfoResponse) Date() time.Time {
+	s := sgair.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (sgair ServiceGetAccountInfoResponse) ErrorCode() string {
+	return sgair.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (sgair ServiceGetAccountInfoResponse) RequestID() string {
+	return sgair.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// SkuName returns the value for header x-ms-sku-name.
+func (sgair ServiceGetAccountInfoResponse) SkuName() SkuNameType {
+	return SkuNameType(sgair.rawResponse.Header.Get("x-ms-sku-name"))
+}
+
+// Version returns the value for header x-ms-version.
+func (sgair ServiceGetAccountInfoResponse) Version() string {
+	return sgair.rawResponse.Header.Get("x-ms-version")
 }
 
 // ServiceSetPropertiesResponse ...
@@ -4232,8 +4498,7 @@ func (sspr ServiceSetPropertiesResponse) Version() string {
 // SignedIdentifier - signed identifier
 type SignedIdentifier struct {
 	// ID - a unique id
-	ID string `xml:"Id"`
-	// AccessPolicy - The access policy
+	ID           string       `xml:"Id"`
 	AccessPolicy AccessPolicy `xml:"AccessPolicy"`
 }
 
@@ -4309,21 +4574,28 @@ func (si SignedIdentifiers) Version() string {
 	return si.rawResponse.Header.Get("x-ms-version")
 }
 
+// StaticWebsite - The properties that enable an account to host a static website
+type StaticWebsite struct {
+	// Enabled - Indicates whether this account is hosting a static website
+	Enabled bool `xml:"Enabled"`
+	// IndexDocument - The default name of the index page under each directory
+	IndexDocument *string `xml:"IndexDocument"`
+	// ErrorDocument404Path - The absolute path of the custom 404 page
+	ErrorDocument404Path *string `xml:"ErrorDocument404Path"`
+}
+
 // StorageServiceProperties - Storage Service Properties.
 type StorageServiceProperties struct {
-	rawResponse *http.Response
-	// Logging - Azure Analytics Logging settings
-	Logging *Logging `xml:"Logging"`
-	// HourMetrics - A summary of request statistics grouped by API in hourly aggregates for blobs
-	HourMetrics *Metrics `xml:"HourMetrics"`
-	// MinuteMetrics - a summary of request statistics grouped by API in minute aggregates for blobs
+	rawResponse   *http.Response
+	Logging       *Logging `xml:"Logging"`
+	HourMetrics   *Metrics `xml:"HourMetrics"`
 	MinuteMetrics *Metrics `xml:"MinuteMetrics"`
 	// Cors - The set of CORS rules.
 	Cors []CorsRule `xml:"Cors>CorsRule"`
 	// DefaultServiceVersion - The default version to use for requests to the Blob service if an incoming request's version is not specified. Possible values include version 2008-10-27 and all more recent versions
-	DefaultServiceVersion *string `xml:"DefaultServiceVersion"`
-	// DeleteRetentionPolicy - The Delete Retention Policy for the service
+	DefaultServiceVersion *string          `xml:"DefaultServiceVersion"`
 	DeleteRetentionPolicy *RetentionPolicy `xml:"DeleteRetentionPolicy"`
+	StaticWebsite         *StaticWebsite   `xml:"StaticWebsite"`
 }
 
 // Response returns the raw HTTP response object.
@@ -4358,8 +4630,7 @@ func (ssp StorageServiceProperties) Version() string {
 
 // StorageServiceStats - Stats for the storage service.
 type StorageServiceStats struct {
-	rawResponse *http.Response
-	// GeoReplication - Geo-Replication information for the Secondary Storage Service
+	rawResponse    *http.Response
 	GeoReplication *GeoReplication `xml:"GeoReplication"`
 }
 
@@ -4445,6 +4716,26 @@ func (t *timeRFC3339) UnmarshalText(data []byte) (err error) {
 	return
 }
 
+// internal type used for marshalling base64 encoded strings
+type base64Encoded struct {
+	b []byte
+}
+
+// MarshalText implements the encoding.TextMarshaler interface for base64Encoded.
+func (c base64Encoded) MarshalText() ([]byte, error) {
+	return []byte(base64.StdEncoding.EncodeToString(c.b)), nil
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface for base64Encoded.
+func (c *base64Encoded) UnmarshalText(data []byte) error {
+	b, err := base64.StdEncoding.DecodeString(string(data))
+	if err != nil {
+		return err
+	}
+	c.b = b
+	return nil
+}
+
 // internal type used for marshalling
 type accessPolicy struct {
 	Start      timeRFC3339 `xml:"Start"`
@@ -4454,13 +4745,16 @@ type accessPolicy struct {
 
 // internal type used for marshalling
 type blobProperties struct {
+	// XMLName is used for marshalling and is subject to removal in a future release.
+	XMLName                xml.Name          `xml:"Properties"`
+	CreationTime           *timeRFC1123      `xml:"Creation-Time"`
 	LastModified           timeRFC1123       `xml:"Last-Modified"`
 	Etag                   ETag              `xml:"Etag"`
 	ContentLength          *int64            `xml:"Content-Length"`
 	ContentType            *string           `xml:"Content-Type"`
 	ContentEncoding        *string           `xml:"Content-Encoding"`
 	ContentLanguage        *string           `xml:"Content-Language"`
-	ContentMD5             []byte            `xml:"Content-MD5"`
+	ContentMD5             base64Encoded     `xml:"Content-MD5"`
 	ContentDisposition     *string           `xml:"Content-Disposition"`
 	CacheControl           *string           `xml:"Cache-Control"`
 	BlobSequenceNumber     *int64            `xml:"x-ms-blob-sequence-number"`
@@ -4482,16 +4776,19 @@ type blobProperties struct {
 	AccessTier             AccessTierType    `xml:"AccessTier"`
 	AccessTierInferred     *bool             `xml:"AccessTierInferred"`
 	ArchiveStatus          ArchiveStatusType `xml:"ArchiveStatus"`
+	AccessTierChangeTime   *timeRFC1123      `xml:"AccessTierChangeTime"`
 }
 
 // internal type used for marshalling
 type containerProperties struct {
-	LastModified  timeRFC1123       `xml:"Last-Modified"`
-	Etag          ETag              `xml:"Etag"`
-	LeaseStatus   LeaseStatusType   `xml:"LeaseStatus"`
-	LeaseState    LeaseStateType    `xml:"LeaseState"`
-	LeaseDuration LeaseDurationType `xml:"LeaseDuration"`
-	PublicAccess  PublicAccessType  `xml:"PublicAccess"`
+	LastModified          timeRFC1123       `xml:"Last-Modified"`
+	Etag                  ETag              `xml:"Etag"`
+	LeaseStatus           LeaseStatusType   `xml:"LeaseStatus"`
+	LeaseState            LeaseStateType    `xml:"LeaseState"`
+	LeaseDuration         LeaseDurationType `xml:"LeaseDuration"`
+	PublicAccess          PublicAccessType  `xml:"PublicAccess"`
+	HasImmutabilityPolicy *bool             `xml:"HasImmutabilityPolicy"`
+	HasLegalHold          *bool             `xml:"HasLegalHold"`
 }
 
 // internal type used for marshalling

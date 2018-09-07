@@ -45,7 +45,7 @@ func (ab AppendBlobURL) WithSnapshot(snapshot string) AppendBlobURL {
 // Create creates a 0-length append blob. Call AppendBlock to append data to an append blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*AppendBlobCreateResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch := ac.ModifiedAccessConditions.pointers()
 	return ab.abClient.Create(ctx, 0, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
@@ -56,17 +56,23 @@ func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata 
 // This method panics if the stream is not at position 0.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block.
-func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac BlobAccessConditions) (*AppendBlobAppendBlockResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := ac.AppendBlobAccessConditions.pointers()
+func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac AppendBlobAccessConditions, transactionalMD5 []byte) (*AppendBlobAppendBlockResponse, error) {
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := ac.AppendPositionAccessConditions.pointers()
 	return ab.abClient.AppendBlock(ctx, body, validateSeekableStreamAt0AndGetCount(body), nil,
-		ac.LeaseAccessConditions.pointers(),
+		transactionalMD5, ac.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
-// AppendBlobAccessConditions identifies append blob-specific access conditions which you optionally set.
 type AppendBlobAccessConditions struct {
+	ModifiedAccessConditions
+	LeaseAccessConditions
+	AppendPositionAccessConditions
+}
+
+// AppendPositionAccessConditions identifies append blob-specific access conditions which you optionally set.
+type AppendPositionAccessConditions struct {
 	// IfAppendPositionEqual ensures that the AppendBlock operation succeeds
 	// only if the append position is equal to a value.
 	// IfAppendPositionEqual=0 means no 'IfAppendPositionEqual' header specified.
@@ -83,7 +89,7 @@ type AppendBlobAccessConditions struct {
 }
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
-func (ac AppendBlobAccessConditions) pointers() (iape *int64, imsltoe *int64) {
+func (ac AppendPositionAccessConditions) pointers() (iape *int64, imsltoe *int64) {
 	if ac.IfAppendPositionEqual < -1 {
 		panic("IfAppendPositionEqual can't be less than -1")
 	}

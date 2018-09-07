@@ -8,6 +8,7 @@ import (
 )
 
 // BlobSASSignatureValues is used to generate a Shared Access Signature (SAS) for an Azure Storage container or blob.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/constructing-a-service-sas
 type BlobSASSignatureValues struct {
 	Version            string      `param:"sv"`  // If not specified, this defaults to SASVersion
 	Protocol           SASProtocol `param:"spr"` // See the SASProtocol* constants

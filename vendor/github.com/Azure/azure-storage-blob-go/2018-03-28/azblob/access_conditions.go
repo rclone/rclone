@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// HTTPAccessConditions identifies standard HTTP access conditions which you optionally set.
-type HTTPAccessConditions struct {
+// ModifiedAccessConditions identifies standard HTTP access conditions which you optionally set.
+type ModifiedAccessConditions struct {
 	IfModifiedSince   time.Time
 	IfUnmodifiedSince time.Time
 	IfMatch           ETag
@@ -13,7 +13,7 @@ type HTTPAccessConditions struct {
 }
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
-func (ac HTTPAccessConditions) pointers() (ims *time.Time, ius *time.Time, ime *ETag, inme *ETag) {
+func (ac ModifiedAccessConditions) pointers() (ims *time.Time, ius *time.Time, ime *ETag, inme *ETag) {
 	if !ac.IfModifiedSince.IsZero() {
 		ims = &ac.IfModifiedSince
 	}
@@ -31,16 +31,14 @@ func (ac HTTPAccessConditions) pointers() (ims *time.Time, ius *time.Time, ime *
 
 // ContainerAccessConditions identifies container-specific access conditions which you optionally set.
 type ContainerAccessConditions struct {
-	HTTPAccessConditions
+	ModifiedAccessConditions
 	LeaseAccessConditions
 }
 
 // BlobAccessConditions identifies blob-specific access conditions which you optionally set.
 type BlobAccessConditions struct {
-	HTTPAccessConditions
+	ModifiedAccessConditions
 	LeaseAccessConditions
-	AppendBlobAccessConditions
-	PageBlobAccessConditions
 }
 
 // LeaseAccessConditions identifies lease access conditions for a container or blob which you optionally set.
