@@ -48,9 +48,9 @@ const (
 	decayConstant       = 1 // bigger for slower decay, exponential
 	maxParts            = 10000
 	maxVersions         = 100 // maximum number of versions we search in --b2-versions mode
-	minChunkSize        = 5E6
-	defaultChunkSize    = 96 * 1024 * 1024
-	defaultUploadCutoff = 200E6
+	minChunkSize        = 5 * fs.MebiByte
+	defaultChunkSize    = 96 * fs.MebiByte
+	defaultUploadCutoff = 200 * fs.MebiByte
 )
 
 // Globals
@@ -282,6 +282,21 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
 // NewFs contstructs an Fs from the path, bucket:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -293,8 +308,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.UploadCutoff < opt.ChunkSize {
 		return nil, errors.Errorf("b2: upload cutoff (%v) must be greater than or equal to chunk size (%v)", opt.UploadCutoff, opt.ChunkSize)
 	}
-	if opt.ChunkSize < minChunkSize {
-		return nil, errors.Errorf("b2: chunk size can't be less than %v - was %v", minChunkSize, opt.ChunkSize)
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "b2: chunk size")
 	}
 	bucket, directory, err := parsePath(root)
 	if err != nil {

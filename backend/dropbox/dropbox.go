@@ -79,8 +79,8 @@ const (
 	// Choose 48MB which is 91% of Maximum speed.  rclone by
 	// default does 4 transfers so this should use 4*48MB = 192MB
 	// by default.
-	defaultChunkSize = 48 * 1024 * 1024
-	maxChunkSize     = 150 * 1024 * 1024
+	defaultChunkSize = 48 * fs.MebiByte
+	maxChunkSize     = 150 * fs.MebiByte
 )
 
 var (
@@ -202,6 +202,25 @@ func shouldRetry(err error) (bool, error) {
 	return fserrors.ShouldRetry(err), err
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	const minChunkSize = fs.Byte
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	if cs > maxChunkSize {
+		return errors.Errorf("%s is greater than %s", cs, maxChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -210,8 +229,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.ChunkSize > maxChunkSize {
-		return nil, errors.Errorf("chunk size too big, must be < %v", maxChunkSize)
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "dropbox: chunk size")
 	}
 
 	// Convert the old token if it exists.  The old token was just
