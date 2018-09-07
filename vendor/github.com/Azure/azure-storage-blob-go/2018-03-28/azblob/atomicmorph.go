@@ -5,12 +5,14 @@ import "sync/atomic"
 // AtomicMorpherInt32 identifies a method passed to and invoked by the AtomicMorphInt32 function.
 // The AtomicMorpher callback is passed a startValue and based on this value it returns
 // what the new value should be and the result that AtomicMorph should return to its caller.
-type AtomicMorpherInt32 func(startVal int32) (val int32, morphResult interface{})
+type atomicMorpherInt32 func(startVal int32) (val int32, morphResult interface{})
+
+const targetAndMorpherMustNotBeNil = "target and morpher must not be nil"
 
 // AtomicMorph atomically morphs target in to new value (and result) as indicated bythe AtomicMorpher callback function.
-func AtomicMorphInt32(target *int32, morpher AtomicMorpherInt32) interface{} {
+func atomicMorphInt32(target *int32, morpher atomicMorpherInt32) interface{} {
 	if target == nil || morpher == nil {
-		panic("target and morpher mut not be nil")
+		panic(targetAndMorpherMustNotBeNil)
 	}
 	for {
 		currentVal := atomic.LoadInt32(target)
@@ -24,12 +26,12 @@ func AtomicMorphInt32(target *int32, morpher AtomicMorpherInt32) interface{} {
 // AtomicMorpherUint32 identifies a method passed to and invoked by the AtomicMorph function.
 // The AtomicMorpher callback is passed a startValue and based on this value it returns
 // what the new value should be and the result that AtomicMorph should return to its caller.
-type AtomicMorpherUint32 func(startVal uint32) (val uint32, morphResult interface{})
+type atomicMorpherUint32 func(startVal uint32) (val uint32, morphResult interface{})
 
 // AtomicMorph atomically morphs target in to new value (and result) as indicated bythe AtomicMorpher callback function.
-func AtomicMorphUint32(target *uint32, morpher AtomicMorpherUint32) interface{} {
+func atomicMorphUint32(target *uint32, morpher atomicMorpherUint32) interface{} {
 	if target == nil || morpher == nil {
-		panic("target and morpher mut not be nil")
+		panic(targetAndMorpherMustNotBeNil)
 	}
 	for {
 		currentVal := atomic.LoadUint32(target)
@@ -43,12 +45,12 @@ func AtomicMorphUint32(target *uint32, morpher AtomicMorpherUint32) interface{} 
 // AtomicMorpherUint64 identifies a method passed to and invoked by the AtomicMorphUint64 function.
 // The AtomicMorpher callback is passed a startValue and based on this value it returns
 // what the new value should be and the result that AtomicMorph should return to its caller.
-type AtomicMorpherInt64 func(startVal int64) (val int64, morphResult interface{})
+type atomicMorpherInt64 func(startVal int64) (val int64, morphResult interface{})
 
 // AtomicMorph atomically morphs target in to new value (and result) as indicated bythe AtomicMorpher callback function.
-func AtomicMorphInt64(target *int64, morpher AtomicMorpherInt64) interface{} {
+func atomicMorphInt64(target *int64, morpher atomicMorpherInt64) interface{} {
 	if target == nil || morpher == nil {
-		panic("target and morpher mut not be nil")
+		panic(targetAndMorpherMustNotBeNil)
 	}
 	for {
 		currentVal := atomic.LoadInt64(target)
@@ -62,12 +64,12 @@ func AtomicMorphInt64(target *int64, morpher AtomicMorpherInt64) interface{} {
 // AtomicMorpherUint64 identifies a method passed to and invoked by the AtomicMorphUint64 function.
 // The AtomicMorpher callback is passed a startValue and based on this value it returns
 // what the new value should be and the result that AtomicMorph should return to its caller.
-type AtomicMorpherUint64 func(startVal uint64) (val uint64, morphResult interface{})
+type atomicMorpherUint64 func(startVal uint64) (val uint64, morphResult interface{})
 
 // AtomicMorph atomically morphs target in to new value (and result) as indicated bythe AtomicMorpher callback function.
-func AtomicMorphUint64(target *uint64, morpher AtomicMorpherUint64) interface{} {
+func atomicMorphUint64(target *uint64, morpher atomicMorpherUint64) interface{} {
 	if target == nil || morpher == nil {
-		panic("target and morpher mut not be nil")
+		panic(targetAndMorpherMustNotBeNil)
 	}
 	for {
 		currentVal := atomic.LoadUint64(target)

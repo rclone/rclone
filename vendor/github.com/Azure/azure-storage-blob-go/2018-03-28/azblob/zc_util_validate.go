@@ -16,8 +16,8 @@ type httpRange struct {
 }
 
 func (r httpRange) pointers() *string {
-	if r.offset == 0 && r.count == 0 { // Do common case first for performance
-		return nil	// No specified range
+	if r.offset == 0 && r.count == CountToEnd { // Do common case first for performance
+		return nil // No specified range
 	}
 	if r.offset < 0 {
 		panic("The range offset must be >= 0")
@@ -25,7 +25,7 @@ func (r httpRange) pointers() *string {
 	if r.count < 0 {
 		panic("The range count must be >= 0")
 	}
-	endOffset := "" // if count == 0
+	endOffset := "" // if count == CountToEnd (0)
 	if r.count > 0 {
 		endOffset = strconv.FormatInt((r.offset+r.count)-1, 10)
 	}

@@ -47,28 +47,28 @@ func (pb PageBlobURL) WithSnapshot(snapshot string) PageBlobURL {
 	return NewPageBlobURL(p.URL(), pb.blobClient.Pipeline())
 }
 
-// CreatePageBlob creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
+// Create creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*PageBlobCreateResponse, error) {
 	if sequenceNumber < 0 {
 		panic("sequenceNumber must be greater than or equal to 0")
 	}
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	return pb.pbClient.Create(ctx, 0, nil,
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+	return pb.pbClient.Create(ctx, 0, size, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
 		metadata, ac.LeaseAccessConditions.pointers(),
-		&h.ContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, &size, &sequenceNumber, nil)
+		&h.ContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, &sequenceNumber, nil)
 }
 
 // UploadPages writes 1 or more pages to the page blob. The start offset and the stream size must be a multiple of 512 bytes.
 // This method panics if the stream is not at position 0.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page.
-func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.ReadSeeker, ac BlobAccessConditions) (*PageBlobUploadPagesResponse, error) {
+func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.ReadSeeker, ac PageBlobAccessConditions, transactionalMD5 []byte) (*PageBlobUploadPagesResponse, error) {
 	count := validateSeekableStreamAt0AndGetCount(body)
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.PageBlobAccessConditions.pointers()
-	return pb.pbClient.UploadPages(ctx, body, count, nil,
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.SequenceNumberAccessConditions.pointers()
+	return pb.pbClient.UploadPages(ctx, body, count, transactionalMD5, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
@@ -77,9 +77,9 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 
 // ClearPages frees the specified pages from the page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page.
-func (pb PageBlobURL) ClearPages(ctx context.Context, offset int64, count int64, ac BlobAccessConditions) (*PageBlobClearPagesResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.PageBlobAccessConditions.pointers()
+func (pb PageBlobURL) ClearPages(ctx context.Context, offset int64, count int64, ac PageBlobAccessConditions) (*PageBlobClearPagesResponse, error) {
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.SequenceNumberAccessConditions.pointers()
 	return pb.pbClient.ClearPages(ctx, 0, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
@@ -90,7 +90,7 @@ func (pb PageBlobURL) ClearPages(ctx context.Context, offset int64, count int64,
 // GetPageRanges returns the list of valid page ranges for a page blob or snapshot of a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-page-ranges.
 func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int64, ac BlobAccessConditions) (*PageList, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.GetPageRanges(ctx, nil, nil,
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
@@ -100,7 +100,7 @@ func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int
 // GetPageRangesDiff gets the collection of page ranges that differ between a specified snapshot and this page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-page-ranges.
 func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count int64, prevSnapshot string, ac BlobAccessConditions) (*PageList, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.GetPageRangesDiff(ctx, nil, nil, &prevSnapshot,
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
@@ -114,7 +114,7 @@ func (pb PageBlobURL) Resize(ctx context.Context, size int64, ac BlobAccessCondi
 	if size%PageBlobPageBytes != 0 {
 		panic("Size must be a multiple of PageBlobPageBytes (512)")
 	}
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.Resize(ctx, size, nil, ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
@@ -129,7 +129,7 @@ func (pb PageBlobURL) UpdateSequenceNumber(ctx context.Context, action SequenceN
 	if action == SequenceNumberActionIncrement {
 		sn = nil
 	}
-	ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.UpdateSequenceNumber(ctx, action, nil,
 		ac.LeaseAccessConditions.pointers(), ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch,
 		sn, nil)
@@ -141,7 +141,7 @@ func (pb PageBlobURL) UpdateSequenceNumber(ctx context.Context, action SequenceN
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/incremental-copy-blob and
 // https://docs.microsoft.com/en-us/azure/virtual-machines/windows/incremental-snapshots.
 func (pb PageBlobURL) StartCopyIncremental(ctx context.Context, source url.URL, snapshot string, ac BlobAccessConditions) (*PageBlobCopyIncrementalResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	qp := source.Query()
 	qp.Set("snapshot", snapshot)
 	source.RawQuery = qp.Encode()
@@ -170,8 +170,14 @@ func (pr PageRange) pointers() *string {
 	return &asString
 }
 
-// PageBlobAccessConditions identifies page blob-specific access conditions which you optionally set.
 type PageBlobAccessConditions struct {
+	ModifiedAccessConditions
+	LeaseAccessConditions
+	SequenceNumberAccessConditions
+}
+
+// SequenceNumberAccessConditions identifies page blob-specific access conditions which you optionally set.
+type SequenceNumberAccessConditions struct {
 	// IfSequenceNumberLessThan ensures that the page blob operation succeeds
 	// only if the blob's sequence number is less than a value.
 	// IfSequenceNumberLessThan=0 means no 'IfSequenceNumberLessThan' header specified.
@@ -195,7 +201,7 @@ type PageBlobAccessConditions struct {
 }
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
-func (ac PageBlobAccessConditions) pointers() (snltoe *int64, snlt *int64, sne *int64) {
+func (ac SequenceNumberAccessConditions) pointers() (snltoe *int64, snlt *int64, sne *int64) {
 	if ac.IfSequenceNumberLessThan < -1 {
 		panic("Ifsequencenumberlessthan can't be less than -1")
 	}

@@ -81,7 +81,7 @@ func appendToURLPath(u url.URL, name string) url.URL {
 // After getting a segment, process it, and then call ListContainersFlatSegment again (passing the the
 // previously-returned Marker) to get the next segment. For more information, see
 // https://docs.microsoft.com/rest/api/storageservices/list-containers2.
-func (s ServiceURL) ListContainersSegment(ctx context.Context, marker Marker, o ListContainersSegmentOptions) (*ListContainersResponse, error) {
+func (s ServiceURL) ListContainersSegment(ctx context.Context, marker Marker, o ListContainersSegmentOptions) (*ListContainersSegmentResponse, error) {
 	prefix, include, maxResults := o.pointers()
 	return s.client.ListContainersSegment(ctx, prefix, marker.val, maxResults, include, nil, nil)
 }
@@ -89,8 +89,8 @@ func (s ServiceURL) ListContainersSegment(ctx context.Context, marker Marker, o 
 // ListContainersOptions defines options available when calling ListContainers.
 type ListContainersSegmentOptions struct {
 	Detail     ListContainersDetail // No IncludeType header is produced if ""
-	Prefix     string                   // No Prefix header is produced if ""
-	MaxResults int32                    // 0 means unspecified
+	Prefix     string               // No Prefix header is produced if ""
+	MaxResults int32                // 0 means unspecified
 	// TODO: update swagger to generate this type?
 }
 

@@ -6,7 +6,7 @@ bazil.org/fuse/fuseutil
 cloud.google.com/go/compute/metadata
 # github.com/Azure/azure-pipeline-go v0.0.0-20180607212504-7571e8eb0876
 github.com/Azure/azure-pipeline-go/pipeline
-# github.com/Azure/azure-storage-blob-go v0.0.0-20180712005634-eaae161d9d5e
+# github.com/Azure/azure-storage-blob-go v0.0.0-20180906215025-bb46532f68b7
 github.com/Azure/azure-storage-blob-go/2018-03-28/azblob
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm

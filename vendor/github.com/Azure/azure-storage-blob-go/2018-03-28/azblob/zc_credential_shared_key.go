@@ -17,12 +17,12 @@ import (
 
 // NewSharedKeyCredential creates an immutable SharedKeyCredential containing the
 // storage account's name and either its primary or secondary key.
-func NewSharedKeyCredential(accountName, accountKey string) *SharedKeyCredential {
+func NewSharedKeyCredential(accountName, accountKey string) (*SharedKeyCredential, error) {
 	bytes, err := base64.StdEncoding.DecodeString(accountKey)
 	if err != nil {
-		panic(err)
+		return &SharedKeyCredential{}, err
 	}
-	return &SharedKeyCredential{accountName: accountName, accountKey: bytes}
+	return &SharedKeyCredential{accountName: accountName, accountKey: bytes}, nil
 }
 
 // SharedKeyCredential contains an account's name and its primary or secondary key.

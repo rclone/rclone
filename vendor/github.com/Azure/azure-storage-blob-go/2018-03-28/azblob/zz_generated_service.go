@@ -25,6 +25,44 @@ func newServiceClient(url url.URL, p pipeline.Pipeline) serviceClient {
 	return serviceClient{newManagementClient(url, p)}
 }
 
+// GetAccountInfo returns the sku name and account kind
+func (client serviceClient) GetAccountInfo(ctx context.Context) (*ServiceGetAccountInfoResponse, error) {
+	req, err := client.getAccountInfoPreparer()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getAccountInfoResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*ServiceGetAccountInfoResponse), err
+}
+
+// getAccountInfoPreparer prepares the GetAccountInfo request.
+func (client serviceClient) getAccountInfoPreparer() (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("GET", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	params.Set("restype", "account")
+	params.Set("comp", "properties")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-version", ServiceVersion)
+	return req, nil
+}
+
+// getAccountInfoResponder handles the response to the GetAccountInfo request.
+func (client serviceClient) getAccountInfoResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &ServiceGetAccountInfoResponse{rawResponse: resp.Response()}, err
+}
+
 // GetProperties gets the properties of a storage account's Blob service, including properties for Storage Analytics
 // and CORS (Cross-Origin Resource Sharing) rules.
 //
@@ -183,7 +221,7 @@ func (client serviceClient) getStatisticsResponder(resp pipeline.Response) (pipe
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client serviceClient) ListContainersSegment(ctx context.Context, prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (*ListContainersResponse, error) {
+func (client serviceClient) ListContainersSegment(ctx context.Context, prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (*ListContainersSegmentResponse, error) {
 	if err := validate([]validation{
 		{targetValue: maxresults,
 			constraints: []constraint{{target: "maxresults", name: null, rule: false,
@@ -201,7 +239,7 @@ func (client serviceClient) ListContainersSegment(ctx context.Context, prefix *s
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*ListContainersResponse), err
+	return resp.(*ListContainersSegmentResponse), err
 }
 
 // listContainersSegmentPreparer prepares the ListContainersSegment request.
@@ -241,7 +279,7 @@ func (client serviceClient) listContainersSegmentResponder(resp pipeline.Respons
 	if resp == nil {
 		return nil, err
 	}
-	result := &ListContainersResponse{rawResponse: resp.Response()}
+	result := &ListContainersSegmentResponse{rawResponse: resp.Response()}
 	if err != nil {
 		return result, err
 	}

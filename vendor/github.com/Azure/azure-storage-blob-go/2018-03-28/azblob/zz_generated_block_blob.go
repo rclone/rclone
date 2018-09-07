@@ -60,10 +60,7 @@ func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockL
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
-				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
-		{targetValue: metadata,
-			constraints: []constraint{{target: "metadata", name: null, rule: false,
-				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
 	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
@@ -240,13 +237,14 @@ func (client blockBlobClient) getBlockListResponder(resp pipeline.Response) (pip
 // blockID is a valid Base64 string value that identifies the block. Prior to encoding, the string must be less than or
 // equal to 64 bytes in size. For a given blob, the length of the value specified for the blockid parameter must be the
 // same size for each block. contentLength is the length of the request. body is initial data body will be closed upon
-// successful return. Callers should ensure closure when receiving an error.timeout is the timeout parameter is
-// expressed in seconds. For more information, see <a
+// successful return. Callers should ensure closure when receiving an error.transactionalContentMD5 is specify the
+// transactional md5 for the body, to be validated by the service. timeout is the timeout parameter is expressed in
+// seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, contentLength int64, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockResponse, error) {
+func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, contentLength int64, body io.ReadSeeker, transactionalContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -255,7 +253,7 @@ func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, co
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.stageBlockPreparer(blockID, contentLength, body, timeout, leaseID, requestID)
+	req, err := client.stageBlockPreparer(blockID, contentLength, body, transactionalContentMD5, timeout, leaseID, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +265,7 @@ func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, co
 }
 
 // stageBlockPreparer prepares the StageBlock request.
-func (client blockBlobClient) stageBlockPreparer(blockID string, contentLength int64, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) stageBlockPreparer(blockID string, contentLength int64, body io.ReadSeeker, transactionalContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -280,6 +278,9 @@ func (client blockBlobClient) stageBlockPreparer(blockID string, contentLength i
 	params.Set("comp", "block")
 	req.URL.RawQuery = params.Encode()
 	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
+	if transactionalContentMD5 != nil {
+		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(transactionalContentMD5))
+	}
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
@@ -314,7 +315,7 @@ func (client blockBlobClient) stageBlockResponder(resp pipeline.Response) (pipel
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL *string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
+func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -333,7 +334,7 @@ func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID str
 }
 
 // stageBlockFromURLPreparer prepares the StageBlockFromURL request.
-func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL *string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -346,9 +347,7 @@ func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentL
 	params.Set("comp", "block")
 	req.URL.RawQuery = params.Encode()
 	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
-	if sourceURL != nil {
-		req.Header.Set("x-ms-copy-source", *sourceURL)
-	}
+	req.Header.Set("x-ms-copy-source", sourceURL)
 	if sourceRange != nil {
 		req.Header.Set("x-ms-source-range", *sourceRange)
 	}
@@ -411,10 +410,7 @@ func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, co
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
-				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
-		{targetValue: metadata,
-			constraints: []constraint{{target: "metadata", name: null, rule: false,
-				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
 	req, err := client.uploadPreparer(body, contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
