@@ -82,6 +82,10 @@ func init() {
 			Hide:     fs.OptionHideBoth,
 			Advanced: true,
 		}, {
+			Name:     "plex_insecure",
+			Help:     "Skip all certificate verifications when connecting to the Plex server",
+			Advanced: true,
+		}, {
 			Name:    "chunk_size",
 			Help:    "The size of a chunk. Lower value good for slow connections but can affect seamless reading.",
 			Default: DefCacheChunkSize,
@@ -195,6 +199,7 @@ type Options struct {
 	PlexUsername       string        `config:"plex_username"`
 	PlexPassword       string        `config:"plex_password"`
 	PlexToken          string        `config:"plex_token"`
+	PlexInsecure       bool          `config:"plex_insecure"`
 	ChunkSize          fs.SizeSuffix `config:"chunk_size"`
 	InfoAge            fs.Duration   `config:"info_age"`
 	ChunkTotalSize     fs.SizeSuffix `config:"chunk_total_size"`
@@ -297,7 +302,7 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	f.plexConnector = &plexConnector{}
 	if opt.PlexURL != "" {
 		if opt.PlexToken != "" {
-			f.plexConnector, err = newPlexConnectorWithToken(f, opt.PlexURL, opt.PlexToken)
+			f.plexConnector, err = newPlexConnectorWithToken(f, opt.PlexURL, opt.PlexToken, opt.PlexInsecure)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", opt.PlexURL)
 			}
@@ -307,7 +312,7 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 				if err != nil {
 					decPass = opt.PlexPassword
 				}
-				f.plexConnector, err = newPlexConnector(f, opt.PlexURL, opt.PlexUsername, decPass, func(token string) {
+				f.plexConnector, err = newPlexConnector(f, opt.PlexURL, opt.PlexUsername, decPass, opt.PlexInsecure, func(token string) {
 					m.Set("plex_token", token)
 				})
 				if err != nil {
