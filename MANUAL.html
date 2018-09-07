@@ -12,7 +12,7 @@
 <div id="header">
 <h1 class="title">rclone(1) User Manual</h1>
 <h2 class="author">Nick Craig-Wood</h2>
-<h3 class="date">Sep 01, 2018</h3>
+<h3 class="date">Sep 07, 2018</h3>
 </div>
 <h1 id="rclone">Rclone</h1>
 <p><a href="https://rclone.org/"><img src="https://rclone.org/img/rclone-120x120.png" alt="Logo" /></a></p>
@@ -6879,7 +6879,26 @@ nounc = true</code></pre>
 <h4 id="skip-links">--skip-links</h4>
 <p>This flag disables warning messages on skipped symlinks or junction points, as you explicitly acknowledge that they should be skipped.</p>
 <h1 id="changelog">Changelog</h1>
-<h2 id="v1.42---2018-09-01">v1.42 - 2018-09-01</h2>
+<h2 id="v1.43.1---2018-09-07">v1.43.1 - 2018-09-07</h2>
+<p>Point release to fix hubic and azureblob backends.</p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>ncdu: Return error instead of log.Fatal in Show (Fabian Möller)</li>
+<li>cmd: Fix crash with --progress and --stats 0 (Nick Craig-Wood)</li>
+<li>docs: Tidy website display (Anagh Kumar Baranwal)</li>
+</ul></li>
+<li>Azure Blob:
+<ul>
+<li>Fix multi-part uploads. (sandeepkru)</li>
+</ul></li>
+<li>Hubic
+<ul>
+<li>Fix uploads (Nick Craig-Wood)</li>
+<li>Retry auth fetching if it fails to make hubic more reliable (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
+<h2 id="v1.43---2018-09-01">v1.43 - 2018-09-01</h2>
 <ul>
 <li>New backends
 <ul>

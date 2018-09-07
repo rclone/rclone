@@ -1,12 +1,26 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2018-09-01"
+date: "2018-09-07"
 ---
 
 # Changelog
 
-## v1.42 - 2018-09-01
+## v1.43.1 - 2018-09-07
+
+Point release to fix hubic and azureblob backends.
+
+* Bug Fixes
+    * ncdu: Return error instead of log.Fatal in Show (Fabian Möller)
+    * cmd: Fix crash with --progress and --stats 0 (Nick Craig-Wood)
+    * docs: Tidy website display (Anagh Kumar Baranwal)
+* Azure Blob:
+    * Fix multi-part uploads. (sandeepkru)
+* Hubic
+    * Fix uploads (Nick Craig-Wood)
+    * Retry auth fetching if it fails to make hubic more reliable (Nick Craig-Wood)
+
+## v1.43 - 2018-09-01
 
 * New backends
     * Jottacloud (Sebastian Bünger)
