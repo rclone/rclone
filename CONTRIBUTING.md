@@ -81,6 +81,14 @@ You patch will get reviewed and you might get asked to fix some stuff.
 If so, then make the changes in the same branch, squash the commits,
 rebase it to master then push it to Github with `--force`.
 
+## Enabling CI for your fork ##
+
+The CI config files for rclone have taken care of forks of the project, so you can enable CI for your fork repo easily.
+
+rclone currently uses [Travis CI](https://travis-ci.org/), [AppVeyor](https://ci.appveyor.com/), and
+[Circle CI](https://circleci.com/) to build the project. To enable them for your fork, simply go into their
+websites, find your fork of rclone, and enable building there.
+
 ## Testing ##
 
 rclone's tests are run from the go testing framework, so at the top
