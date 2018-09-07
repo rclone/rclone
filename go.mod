@@ -4,7 +4,7 @@ require (
 	bazil.org/fuse v0.0.0-20180421153158-65cc252bf669
 	cloud.google.com/go v0.23.0 // indirect
 	github.com/Azure/azure-pipeline-go v0.0.0-20180607212504-7571e8eb0876 // indirect
-	github.com/Azure/azure-storage-blob-go v0.0.0-20180712005634-eaae161d9d5e
+	github.com/Azure/azure-storage-blob-go v0.0.0-20180906215025-bb46532f68b7
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/Unknwon/goconfig v0.0.0-20180308125533-ef1e4c783f8f
 	github.com/a8m/tree v0.0.0-20180321023834-3cf936ce15d6
@@ -17,6 +17,7 @@ require (
 	github.com/djherbis/times v1.0.1
 	github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible
 	github.com/go-ini/ini v1.37.0 // indirect
+	github.com/golang/lint v0.0.0-20180702182130-06c8688daad7 // indirect
 	github.com/golang/protobuf v1.1.0 // indirect
 	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20180825215210-0210a2f0f73c // indirect
@@ -25,6 +26,7 @@ require (
 	github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8 // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
+	github.com/kisielk/errcheck v1.1.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
@@ -49,12 +51,14 @@ require (
 	github.com/xanzy/ssh-agent v0.2.0
 	github.com/yunify/qingstor-sdk-go v2.2.14+incompatible
 	golang.org/x/crypto v0.0.0-20180617042118-027cca12c2d6
+	golang.org/x/lint v0.0.0-20180702182130-06c8688daad7 // indirect
 	golang.org/x/net v0.0.0-20180611182652-db08ff08e862
 	golang.org/x/oauth2 v0.0.0-20180603041954-1e0a3fa8ba9a
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20180616030259-6c888cc515d3
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
+	golang.org/x/tools v0.0.0-20180904205237-0aa4b8830f48 // indirect
 	google.golang.org/api v0.0.0-20180614000435-2eea9ba0a3d9
 	google.golang.org/appengine v1.1.0 // indirect
 	gopkg.in/ini.v1 v1.38.2 // indirect

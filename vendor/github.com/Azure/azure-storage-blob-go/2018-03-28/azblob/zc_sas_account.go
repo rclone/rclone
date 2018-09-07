@@ -205,7 +205,7 @@ func (rt *AccountSASResourceTypes) Parse(s string) error {
 		switch r {
 		case 's':
 			rt.Service = true
-		case 'q':
+		case 'c':
 			rt.Container = true
 		case 'o':
 			rt.Object = true

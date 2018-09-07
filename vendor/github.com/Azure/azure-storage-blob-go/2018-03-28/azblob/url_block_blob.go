@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	// BlockBlobMaxPutBlobBytes indicates the maximum number of bytes that can be sent in a call to Upload.
+	// BlockBlobMaxUploadBlobBytes indicates the maximum number of bytes that can be sent in a call to Upload.
 	BlockBlobMaxUploadBlobBytes = 256 * 1024 * 1024 // 256MB
 
 	// BlockBlobMaxStageBlockBytes indicates the maximum number of bytes that can be sent in a call to StageBlock.
@@ -59,7 +59,7 @@ func (bb BlockBlobURL) WithSnapshot(snapshot string) BlockBlobURL {
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlockBlobUploadResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return bb.bbClient.Upload(ctx, body, validateSeekableStreamAt0AndGetCount(body), nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(),
@@ -70,16 +70,15 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 // StageBlock uploads the specified block to the block blob's "staging area" to be later committed by a call to CommitBlockList.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block.
-func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions) (*BlockBlobStageBlockResponse, error) {
-	return bb.bbClient.StageBlock(ctx, base64BlockID, validateSeekableStreamAt0AndGetCount(body), body, nil, ac.pointers(), nil)
+func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions, transactionalMD5 []byte) (*BlockBlobStageBlockResponse, error) {
+	return bb.bbClient.StageBlock(ctx, base64BlockID, validateSeekableStreamAt0AndGetCount(body), body, transactionalMD5, nil, ac.pointers(), nil)
 }
 
 // StageBlockFromURL copies the specified block from a source URL to the block blob's "staging area" to be later committed by a call to CommitBlockList.
 // If count is CountToEnd (0), then data is read from specified offset to the end.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/put-block-from-url.
 func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID string, sourceURL url.URL, offset int64, count int64, ac LeaseAccessConditions) (*BlockBlobStageBlockFromURLResponse, error) {
-	sourceURLStr := sourceURL.String()
-	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, &sourceURLStr, httpRange{offset: offset, count: count}.pointers(), nil, nil, ac.pointers(), nil)
+	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, sourceURL.String(), httpRange{offset: offset, count: count}.pointers(), nil, nil, ac.pointers(), nil)
 }
 
 // CommitBlockList writes a blob by specifying the list of block IDs that make up the blob.
@@ -90,7 +89,7 @@ func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID stri
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
 func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders,
 	metadata Metadata, ac BlobAccessConditions) (*BlockBlobCommitBlockListResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return bb.bbClient.CommitBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,

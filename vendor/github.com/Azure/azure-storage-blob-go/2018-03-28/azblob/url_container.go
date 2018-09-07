@@ -92,7 +92,7 @@ func (c ContainerURL) Delete(ctx context.Context, ac ContainerAccessConditions) 
 		panic("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
 	}
 
-	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.ModifiedAccessConditions.pointers()
 	return c.client.Delete(ctx, nil, ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, nil)
 }
@@ -111,7 +111,7 @@ func (c ContainerURL) SetMetadata(ctx context.Context, metadata Metadata, ac Con
 	if !ac.IfUnmodifiedSince.IsZero() || ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
 		panic("the IfUnmodifiedSince, IfMatch, and IfNoneMatch must have their default values because they are ignored by the blob service")
 	}
-	ifModifiedSince, _, _, _ := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, _, _, _ := ac.ModifiedAccessConditions.pointers()
 	return c.client.SetMetadata(ctx, nil, ac.LeaseAccessConditions.pointers(), metadata, ifModifiedSince, nil)
 }
 
@@ -183,14 +183,14 @@ func (c ContainerURL) SetAccessPolicy(ctx context.Context, accessType PublicAcce
 	if ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
 		panic("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
 	}
-	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.ModifiedAccessConditions.pointers()
 	return c.client.SetAccessPolicy(ctx, si, nil, ac.LeaseAccessConditions.pointers(),
 		accessType, ifModifiedSince, ifUnmodifiedSince, nil)
 }
 
 // AcquireLease acquires a lease on the container for delete operations. The lease duration must be between 15 to 60 seconds, or infinite (-1).
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-container.
-func (c ContainerURL) AcquireLease(ctx context.Context, proposedID string, duration int32, ac HTTPAccessConditions) (*ContainerAcquireLeaseResponse, error) {
+func (c ContainerURL) AcquireLease(ctx context.Context, proposedID string, duration int32, ac ModifiedAccessConditions) (*ContainerAcquireLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.pointers()
 	return c.client.AcquireLease(ctx, nil, &duration, &proposedID,
 		ifModifiedSince, ifUnmodifiedSince, nil)
@@ -198,28 +198,28 @@ func (c ContainerURL) AcquireLease(ctx context.Context, proposedID string, durat
 
 // RenewLease renews the container's previously-acquired lease.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-container.
-func (c ContainerURL) RenewLease(ctx context.Context, leaseID string, ac HTTPAccessConditions) (*ContainerRenewLeaseResponse, error) {
+func (c ContainerURL) RenewLease(ctx context.Context, leaseID string, ac ModifiedAccessConditions) (*ContainerRenewLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.pointers()
 	return c.client.RenewLease(ctx, leaseID, nil, ifModifiedSince, ifUnmodifiedSince, nil)
 }
 
 // ReleaseLease releases the container's previously-acquired lease.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-container.
-func (c ContainerURL) ReleaseLease(ctx context.Context, leaseID string, ac HTTPAccessConditions) (*ContainerReleaseLeaseResponse, error) {
+func (c ContainerURL) ReleaseLease(ctx context.Context, leaseID string, ac ModifiedAccessConditions) (*ContainerReleaseLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.pointers()
 	return c.client.ReleaseLease(ctx, leaseID, nil, ifModifiedSince, ifUnmodifiedSince, nil)
 }
 
 // BreakLease breaks the container's previously-acquired lease (if it exists).
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-container.
-func (c ContainerURL) BreakLease(ctx context.Context, period int32, ac HTTPAccessConditions) (*ContainerBreakLeaseResponse, error) {
+func (c ContainerURL) BreakLease(ctx context.Context, period int32, ac ModifiedAccessConditions) (*ContainerBreakLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.pointers()
 	return c.client.BreakLease(ctx, nil, leasePeriodPointer(period), ifModifiedSince, ifUnmodifiedSince, nil)
 }
 
 // ChangeLease changes the container's lease ID.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-container.
-func (c ContainerURL) ChangeLease(ctx context.Context, leaseID string, proposedID string, ac HTTPAccessConditions) (*ContainerChangeLeaseResponse, error) {
+func (c ContainerURL) ChangeLease(ctx context.Context, leaseID string, proposedID string, ac ModifiedAccessConditions) (*ContainerChangeLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.pointers()
 	return c.client.ChangeLease(ctx, leaseID, proposedID, nil, ifModifiedSince, ifUnmodifiedSince, nil)
 }

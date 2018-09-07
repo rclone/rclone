@@ -109,6 +109,7 @@ func NewRequestLogPolicyFactory(o RequestLogOptions) pipeline.Factory {
 	})
 }
 
+// redactSigQueryParam redacts the 'sig' query parameter in URL's raw query to protect secret.
 func redactSigQueryParam(rawQuery string) (bool, string) {
 	rawQuery = strings.ToLower(rawQuery) // lowercase the string so we can look for ?sig= and &sig=
 	sigFound := strings.Contains(rawQuery, "?sig=")
@@ -135,7 +136,8 @@ func prepareRequestForLogging(request pipeline.Request) *http.Request {
 		req = request.Copy()
 		req.Request.URL.RawQuery = rawQuery
 	}
-	return req.Request
+
+	return prepareRequestForServiceLogging(req)
 }
 
 func stack() []byte {
@@ -147,4 +149,34 @@ func stack() []byte {
 		}
 		buf = make([]byte, 2*len(buf))
 	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+// Redact phase useful for blob and file service only. For other services,
+// this method can directly return request.Request.
+///////////////////////////////////////////////////////////////////////////////////////
+func prepareRequestForServiceLogging(request pipeline.Request) *http.Request {
+	req := request
+	if exist, key := doesHeaderExistCaseInsensitive(req.Header, xMsCopySourceHeader); exist {
+		req = request.Copy()
+		url, err := url.Parse(req.Header.Get(key))
+		if err == nil {
+			if sigFound, rawQuery := redactSigQueryParam(url.RawQuery); sigFound {
+				url.RawQuery = rawQuery
+				req.Header.Set(xMsCopySourceHeader, url.String())
+			}
+		}
+	}
+	return req.Request
+}
+
+const xMsCopySourceHeader = "x-ms-copy-source"
+
+func doesHeaderExistCaseInsensitive(header http.Header, key string) (bool, string) {
+	for keyInHeader := range header {
+		if strings.EqualFold(keyInHeader, key) {
+			return true, keyInHeader
+		}
+	}
+	return false, ""
 }
