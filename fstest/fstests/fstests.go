@@ -35,6 +35,48 @@ type InternalTester interface {
 	InternalTest(*testing.T)
 }
 
+// ChunkedUploadConfig contains the values used by TestFsPutChunked
+// to determine the limits of chunked uploading
+type ChunkedUploadConfig struct {
+	// Minimum allowed chunk size
+	MinChunkSize fs.SizeSuffix
+	// Maximum allowed chunk size, 0 is no limit
+	MaxChunkSize fs.SizeSuffix
+	// Rounds the given chunk size up to the next valid value
+	// nil will disable rounding
+	// e.g. the next power of 2
+	CeilChunkSize func(fs.SizeSuffix) fs.SizeSuffix
+}
+
+// SetUploadChunkSizer is a test only interface to change the upload chunk size at runtime
+type SetUploadChunkSizer interface {
+	// Change the configured UploadChunkSize.
+	// Will only be called while no transfer is in progress.
+	SetUploadChunkSize(fs.SizeSuffix) (fs.SizeSuffix, error)
+}
+
+// NextPowerOfTwo returns the current or next bigger power of two.
+// All values less or equal 0 will return 0
+func NextPowerOfTwo(i fs.SizeSuffix) fs.SizeSuffix {
+	return 1 << uint(64-leadingZeros64(uint64(i)-1))
+}
+
+// NextMultipleOf returns a function that can be used as a CeilChunkSize function.
+// This function will return the next multiple of m that is equal or bigger than i.
+// All values less or equal 0 will return 0.
+func NextMultipleOf(m fs.SizeSuffix) func(fs.SizeSuffix) fs.SizeSuffix {
+	if m <= 0 {
+		panic(fmt.Sprintf("invalid multiplier %s", m))
+	}
+	return func(i fs.SizeSuffix) fs.SizeSuffix {
+		if i <= 0 {
+			return 0
+		}
+
+		return (((i - 1) / m) + 1) * m
+	}
+}
+
 // dirsToNames returns a sorted list of names
 func dirsToNames(dirs []fs.Directory) []string {
 	names := []string{}
@@ -140,6 +182,7 @@ type Opt struct {
 	SkipBadWindowsCharacters bool     // skips unusable characters for windows if set
 	SkipFsMatch              bool     // if set skip exact matching of Fs value
 	TiersToTest              []string // List of tiers which can be tested in setTier test
+	ChunkedUpload            ChunkedUploadConfig
 }
 
 // Run runs the basic integration tests for a remote using the remote
