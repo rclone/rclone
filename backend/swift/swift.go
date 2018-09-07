@@ -29,6 +29,7 @@ import (
 const (
 	directoryMarkerContentType = "application/directory" // content type of directory marker objects
 	listChunks                 = 1000                    // chunk size to read directory listings
+	defaultChunkSize           = 5 * fs.GibiByte
 )
 
 // SharedOptions are shared between swift and hubic
@@ -38,7 +39,7 @@ var SharedOptions = []fs.Option{{
 
 Above this size files will be chunked into a _segments container.  The
 default for this is 5GB which is its maximum value.`,
-	Default:  fs.SizeSuffix(5 * 1024 * 1024 * 1024),
+	Default:  defaultChunkSize,
 	Advanced: true,
 }}
 
@@ -302,6 +303,22 @@ func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
 	return c, nil
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	const minChunkSize = fs.Byte
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
 // NewFsWithConnection constructs an Fs from the path, container:path
 // and authenticated connection.
 //
@@ -351,6 +368,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "swift: chunk size")
 	}
 
 	c, err := swiftConnection(opt, name)

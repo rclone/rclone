@@ -45,10 +45,10 @@ const (
 	maxTotalParts         = 50000 // in multipart upload
 	storageDefaultBaseURL = "blob.core.windows.net"
 	// maxUncommittedSize = 9 << 30 // can't upload bigger than this
-	defaultChunkSize    = 4 * 1024 * 1024
-	maxChunkSize        = 100 * 1024 * 1024
-	defaultUploadCutoff = 256 * 1024 * 1024
-	maxUploadCutoff     = 256 * 1024 * 1024
+	defaultChunkSize    = 4 * fs.MebiByte
+	maxChunkSize        = 100 * fs.MebiByte
+	defaultUploadCutoff = 256 * fs.MebiByte
+	maxUploadCutoff     = 256 * fs.MebiByte
 	defaultAccessTier   = azblob.AccessTierNone
 )
 
@@ -237,6 +237,25 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 	return fserrors.ShouldRetry(err), err
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	const minChunkSize = fs.Byte
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	if cs > maxChunkSize {
+		return errors.Errorf("%s is greater than %s", cs, maxChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -249,8 +268,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.UploadCutoff > maxUploadCutoff {
 		return nil, errors.Errorf("azure: upload cutoff (%v) must be less than or equal to %v", opt.UploadCutoff, maxUploadCutoff)
 	}
-	if opt.ChunkSize > maxChunkSize {
-		return nil, errors.Errorf("azure: chunk size can't be greater than %v - was %v", maxChunkSize, opt.ChunkSize)
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "azure: chunk size")
 	}
 	if opt.ListChunkSize > maxListChunkSize {
 		return nil, errors.Errorf("azure: blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)

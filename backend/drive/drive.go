@@ -57,7 +57,8 @@ const (
 	defaultScope                = "drive"
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
-	defaultChunkSize = fs.SizeSuffix(8 * 1024 * 1024)
+	minChunkSize     = 256 * fs.KibiByte
+	defaultChunkSize = 8 * fs.MebiByte
 	partialFields    = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents,webViewLink"
 )
 
@@ -787,6 +788,24 @@ func createOAuthClient(opt *Options, name string, m configmap.Mapper) (*http.Cli
 	return oAuthClient, nil
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if !isPowerOfTwo(int64(cs)) {
+		return errors.Errorf("%v isn't a power of two", cs)
+	}
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -795,11 +814,9 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !isPowerOfTwo(int64(opt.ChunkSize)) {
-		return nil, errors.Errorf("drive: chunk size %v isn't a power of two", opt.ChunkSize)
-	}
-	if opt.ChunkSize < 256*1024 {
-		return nil, errors.Errorf("drive: chunk size can't be less than 256k - was %v", opt.ChunkSize)
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "drive: chunk size")
 	}
 
 	oAuthClient, err := createOAuthClient(opt, name, m)

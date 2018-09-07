@@ -547,7 +547,7 @@ in memory per transfer.
 
 If you are transferring large files over high speed links and you have
 enough memory, then increasing this will speed up the transfers.`,
-			Default:  fs.SizeSuffix(s3manager.MinUploadPartSize),
+			Default:  minChunkSize,
 			Advanced: true,
 		}, {
 			Name:     "disable_checksum",
@@ -595,7 +595,8 @@ const (
 	maxRetries     = 10                            // number of retries to make of operations
 	maxSizeForCopy = 5 * 1024 * 1024 * 1024        // The maximum size of object we can COPY
 	maxFileSize    = 5 * 1024 * 1024 * 1024 * 1024 // largest possible upload file size
-	minSleep       = 10 * time.Millisecond         // In case of error, start at 10ms sleep.
+	minChunkSize   = fs.SizeSuffix(s3manager.MinUploadPartSize)
+	minSleep       = 10 * time.Millisecond // In case of error, start at 10ms sleep.
 )
 
 // Options defines the configuration for this backend
@@ -806,6 +807,21 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	return c, ses, nil
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
 // NewFs constructs an Fs from the path, bucket:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -814,8 +830,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.ChunkSize < fs.SizeSuffix(s3manager.MinUploadPartSize) {
-		return nil, errors.Errorf("s3 chunk size (%v) must be >= %v", opt.ChunkSize, fs.SizeSuffix(s3manager.MinUploadPartSize))
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "s3: chunk size")
 	}
 	bucket, directory, err := s3ParsePath(root)
 	if err != nil {
