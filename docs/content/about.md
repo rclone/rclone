@@ -58,8 +58,9 @@ Features
   * [Sync](/commands/rclone_sync/) (one way) mode to make a directory identical
   * [Check](/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, eg two different cloud accounts
-  * Optional encryption ([Crypt](/crypt/))
-  * Optional cache ([Cache](/cache/))
+  * ([Encryption](/crypt/)) backend
+  * ([Cache](/cache/)) backend
+  * ([Union](/union/)) backend
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
 
 Links
