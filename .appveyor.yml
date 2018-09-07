@@ -46,4 +46,4 @@ artifacts:
 - path: build/*-v*.zip
 
 deploy_script:
-- IF "%APPVEYOR_PULL_REQUEST_NUMBER%" == "" make appveyor_upload
+- IF "%APPVEYOR_REPO_NAME%" == "ncw/rclone" IF "%APPVEYOR_PULL_REQUEST_NUMBER%" == "" make appveyor_upload
