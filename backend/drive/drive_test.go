@@ -1,10 +1,10 @@
 // Test Drive filesystem interface
-package drive_test
+package drive
 
 import (
 	"testing"
 
-	"github.com/ncw/rclone/backend/drive"
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest/fstests"
 )
 
@@ -12,6 +12,16 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestDrive:",
-		NilObject:  (*drive.Object)(nil),
+		NilObject:  (*Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			MinChunkSize:  minChunkSize,
+			CeilChunkSize: fstests.NextPowerOfTwo,
+		},
 	})
 }
+
+func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadChunkSize(cs)
+}
+
+var _ fstests.SetUploadChunkSizer = (*Fs)(nil)

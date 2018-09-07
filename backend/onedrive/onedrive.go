@@ -43,6 +43,8 @@ const (
 	driveTypePersonal           = "personal"
 	driveTypeBusiness           = "business"
 	driveTypeSharepoint         = "documentLibrary"
+	defaultChunkSize            = 10 * fs.MebiByte
+	chunkSizeMultiple           = 320 * fs.KibiByte
 )
 
 // Globals
@@ -217,7 +219,7 @@ func init() {
 
 Above this size files will be chunked - must be multiple of 320k. Note
 that the chunks will be buffered into memory.`,
-			Default:  fs.SizeSuffix(10 * 1024 * 1024),
+			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
 			Name:     "drive_id",
@@ -368,6 +370,25 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	const minChunkSize = fs.Byte
+	if cs%chunkSizeMultiple != 0 {
+		return errors.Errorf("%s is not a multiple of %s", cs, chunkSizeMultiple)
+	}
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -376,8 +397,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.ChunkSize%(320*1024) != 0 {
-		return nil, errors.Errorf("chunk size %d is not a multiple of 320k", opt.ChunkSize)
+
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "onedrive: chunk size")
 	}
 
 	if opt.DriveID == "" || opt.DriveType == "" {

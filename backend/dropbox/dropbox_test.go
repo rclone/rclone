@@ -1,10 +1,10 @@
 // Test Dropbox filesystem interface
-package dropbox_test
+package dropbox
 
 import (
 	"testing"
 
-	"github.com/ncw/rclone/backend/dropbox"
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest/fstests"
 )
 
@@ -12,6 +12,15 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestDropbox:",
-		NilObject:  (*dropbox.Object)(nil),
+		NilObject:  (*Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			MaxChunkSize: maxChunkSize,
+		},
 	})
 }
+
+func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadChunkSize(cs)
+}
+
+var _ fstests.SetUploadChunkSizer = (*Fs)(nil)
