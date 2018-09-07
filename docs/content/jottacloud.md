@@ -108,7 +108,11 @@ the `--jottacloud-md5-memory-limit` flag.
 
 ### Deleting files ###
 
-Any files you delete with rclone will end up in the trash. Due to a lack of API documentation emptying the trash is currently only possible via the Jottacloud website.
+By default rclone will send all files to the trash when deleting files.
+Due to a lack of API documentation emptying the trash is currently
+only possible via the Jottacloud website. If deleting permanently
+is required then use the `--jottacloud-hard-delete` flag,
+or set the equivalent environment variable.
 
 ### Versions ###
 
@@ -138,6 +142,12 @@ system.
 
 Files bigger than this will be cached on disk to calculate the MD5 if
 required. (default 10M)
+
+#### --jottacloud-hard-delete ####
+
+Controls whether files are sent to the trash or deleted
+permanently. Defaults to false, namely sending files to the trash.
+Use `--jottacloud-hard-delete=true` to delete files permanently instead.
 
 ### Troubleshooting ###
 

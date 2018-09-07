@@ -72,6 +72,11 @@ func init() {
 			Help:     "Files bigger than this will be cached on disk to calculate the MD5 if required.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
+		}, {
+			Name:     "hard_delete",
+			Help:     "Delete files permanently rather than putting them into the trash.",
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -82,6 +87,7 @@ type Options struct {
 	Pass               string        `config:"pass"`
 	Mountpoint         string        `config:"mountpoint"`
 	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
+	HardDelete         bool          `config:"hard_delete"`
 }
 
 // Fs represents a remote jottacloud
@@ -596,7 +602,11 @@ func (f *Fs) purgeCheck(dir string, check bool) (err error) {
 		NoResponse: true,
 	}
 
-	opts.Parameters.Set("dlDir", "true")
+	if f.opt.HardDelete {
+		opts.Parameters.Set("rmDir", "true")
+	} else {
+		opts.Parameters.Set("dlDir", "true")
+	}
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -1015,7 +1025,11 @@ func (o *Object) Remove() error {
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set("dl", "true")
+	if o.fs.opt.HardDelete {
+		opts.Parameters.Set("rm", "true")
+	} else {
+		opts.Parameters.Set("dl", "true")
+	}
 
 	return o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.srv.CallXML(&opts, nil, nil)
