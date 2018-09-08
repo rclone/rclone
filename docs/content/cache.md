@@ -243,6 +243,19 @@ which makes it think we're downloading the full file instead of small chunks.
 Organizing the remotes in this order yelds better results:
 <span style="color:green">**cloud remote** -> **cache** -> **crypt**</span>
 
+#### absolute remote paths ####
+
+`cache` can not differentiate between relative and absolute paths for the wrapped remote.
+Any path given in the `remote` config setting and on the command line will be passed to
+the wrapped remote as is, but for storing the chunks on disk the path will be made
+relative by removing any leading `/` character.
+
+This behavior is irrelevant for most backend types, but there are backends where a leading `/`
+changes the effective directory, e.g. in the `sftp` backend paths starting with a `/` are
+relative to the root of the SSH server and paths without are relative to the user home directory.
+As a result `sftp:bin` and `sftp:/bin` will share the same cache folder, even if they represent
+a different directory on the SSH server.
+
 ### Cache and Remote Control (--rc) ###
 Cache supports the new `--rc` mode in rclone and can be remote controlled through the following end points:
 By default, the listener is disabled if you do not add the flag.
