@@ -130,16 +130,20 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point crypt remote at itself - check the value of the remote setting")
 	}
+	wInfo, wName, wPath, wConfig, err := fs.ConfigFs(remote)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
+	}
 	// Look for a file first
-	remotePath := path.Join(remote, cipher.EncryptFileName(rpath))
-	wrappedFs, err := fs.NewFs(remotePath)
+	remotePath := path.Join(wPath, cipher.EncryptFileName(rpath))
+	wrappedFs, err := wInfo.NewFs(wName, remotePath, wConfig)
 	// if that didn't produce a file, look for a directory
 	if err != fs.ErrorIsFile {
-		remotePath = path.Join(remote, cipher.EncryptDirName(rpath))
-		wrappedFs, err = fs.NewFs(remotePath)
+		remotePath = path.Join(wPath, cipher.EncryptDirName(rpath))
+		wrappedFs, err = wInfo.NewFs(wName, remotePath, wConfig)
 	}
 	if err != fs.ErrorIsFile && err != nil {
-		return nil, errors.Wrapf(err, "failed to make remote %q to wrap", remotePath)
+		return nil, errors.Wrapf(err, "failed to make remote %s:%q to wrap", wName, remotePath)
 	}
 	f := &Fs{
 		Fs:     wrappedFs,
