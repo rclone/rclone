@@ -182,6 +182,28 @@ and password) in your remote and it will be automatically enabled.
 Affected settings:
 - `cache-workers`: _Configured value_ during confirmed playback or _1_ all the other times
 
+##### Certificate Validation #####
+
+When the Plex server is configured to only accept secure connections, it is
+possible to use `.plex.direct` URL's to ensure certificate validation succeeds.
+These URL's are used by Plex internally to connect to the Plex server securely.
+
+The format for this URL's is the following:
+
+https://ip-with-dots-replaced.server-hash.plex.direct:32400/
+
+The `ip-with-dots-replaced` part can be any IPv4 address, where the dots
+have been replaced with dashes, e.g. `127.0.0.1` becomes `127-0-0-1`.
+
+To get the `server-hash` part, the easiest way is to visit
+
+https://plex.tv/api/resources?includeHttps=1&X-Plex-Token=your-plex-token
+
+This page will list all the available Plex servers for your account
+with at least one `.plex.direct` link for each. Copy one URL and replace
+the IP address with the desired address. This can be used as the
+`plex_url` value.
+
 ### Known issues ###
 
 #### Mount and --dir-cache-time ####
