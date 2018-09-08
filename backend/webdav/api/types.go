@@ -155,6 +155,12 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		return err
 	}
 
+	// If time is missing then return the epoch
+	if v == "" {
+		*t = Time(time.Unix(0, 0))
+		return nil
+	}
+
 	// Parse the time format in multiple possible ways
 	var newT time.Time
 	for _, timeFormat := range timeFormats {
