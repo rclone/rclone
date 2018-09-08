@@ -449,22 +449,27 @@ type listFileDirFn func(fs.DirEntry) error
 
 // List the objects and directories into entries, from a
 // special kind of JottaFolder representing a FileDirLis
-func (f *Fs) listFileDir(rootPath string, root *api.JottaFolder, fn listFileDirFn) error {
-	rootLen := len(rootPath)
-	for i := range root.Folders {
-		folder := &root.Folders[i]
+func (f *Fs) listFileDir(remoteStartPath string, startFolder *api.JottaFolder, fn listFileDirFn) error {
+	pathPrefix := "/" + f.filePathRaw("") // Non-escaped prefix of API paths to be cut off, to be left with the remote path including the remoteStartPath
+	pathPrefixLength := len(pathPrefix)
+	startPath := path.Join(pathPrefix, remoteStartPath) // Non-escaped API path up to and including remoteStartPath, to decide if it should be created as a new dir object
+	startPathLength := len(startPath)
+	for i := range startFolder.Folders {
+		folder := &startFolder.Folders[i]
 		if folder.Deleted {
 			return nil
 		}
 		folderPath := path.Join(folder.Path, folder.Name)
+		remoteDirLength := len(folderPath) - pathPrefixLength
 		var remoteDir string
-		subLen := len(folderPath) - rootLen
-		if subLen > 0 {
-			remoteDir = restoreReservedChars(folderPath[rootLen+1:])
-			d := fs.NewDir(remoteDir, time.Time(folder.ModifiedAt))
-			err := fn(d)
-			if err != nil {
-				return err
+		if remoteDirLength > 0 {
+			remoteDir = restoreReservedChars(folderPath[pathPrefixLength+1:])
+			if remoteDirLength > startPathLength {
+				d := fs.NewDir(remoteDir, time.Time(folder.ModifiedAt))
+				err := fn(d)
+				if err != nil {
+					return err
+				}
 			}
 		}
 		for i := range folder.Files {
@@ -525,9 +530,8 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 		}
 		return errors.Wrap(err, "couldn't list files")
 	}
-	rootPath := "/" + f.filePathRaw(dir)
 	list := walk.NewListRHelper(callback)
-	err = f.listFileDir(rootPath, &result, func(entry fs.DirEntry) error {
+	err = f.listFileDir(dir, &result, func(entry fs.DirEntry) error {
 		return list.Add(entry)
 	})
 	if err != nil {
