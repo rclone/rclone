@@ -92,7 +92,7 @@ systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
 uploads. Look at the **EXPERIMENTAL** [file caching](#file-caching)
-for solutions to make mount mount more reliable.
+for solutions to make mount more reliable.
 
 ### Attribute caching
 
