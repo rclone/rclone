@@ -171,7 +171,7 @@ Contributors
   * themylogin <themylogin@gmail.com>
   * Onno Zweers <onno.zweers@surfsara.nl>
   * Jasper Lievisse Adriaanse <jasper@humppa.nl>
-  * sandeepkru <sandeep.ummadi@gmail.com>
+  * sandeepkru <sandeep.ummadi@gmail.com> <sandeepkru@users.noreply.github.com>
   * HerrH <atomtigerzoo@users.noreply.github.com>
   * Andrew <4030760+sparkyman215@users.noreply.github.com>
   * dan smith <XX1011@gmail.com>
@@ -194,3 +194,4 @@ Contributors
   * cron410 <cron410@gmail.com>
   * Anagh Kumar Baranwal <anaghk.dos@gmail.com>
   * Felix Brucker <felix@felixbrucker.com>
+  * Santiago Rodríguez <scollazo@users.noreply.github.com>
