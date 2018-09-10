@@ -184,6 +184,13 @@ Upload chunk size.  Default 4MB.  Note that this is stored in memory
 and there may be up to `--transfers` chunks stored at once in memory.
 This can be at most 100MB.
 
+#### --azureblob-list-chunk=SIZE ####
+
+List blob limit. Default is the maximum, 5000. `List blobs` requests
+are permitted 2 minutes per megabyte to complete. If an operation is
+taking longer than 2 minutes per megabyte on average, it will time out ( [source](https://docs.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations#exceptions-to-default-timeout-interval) ). This limit the number of blobs items to return, to avoid the time out.
+
+
 #### --azureblob-access-tier=Hot/Cool/Archive ####
 
 Azure storage supports blob tiering, you can configure tier in advanced
