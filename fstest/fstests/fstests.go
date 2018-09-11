@@ -200,6 +200,14 @@ func Run(t *testing.T, opt *Opt) {
 		}
 	}
 
+	// Skip if remote is not SetTier capable
+	skipIfNotSetTier := func(t *testing.T) {
+		skipIfNotOk(t)
+		if remote.Features().SetTier == false {
+			t.Skip("FS has no SetTier interface")
+		}
+	}
+
 	// TestInit tests basic intitialisation
 	t.Run("TestInit", func(t *testing.T) {
 		var err error
@@ -1059,6 +1067,25 @@ func Run(t *testing.T, opt *Opt) {
 		require.NotEqual(t, "", link4, "Link should not be empty")
 	})
 
+	// TestSetTier tests SetTier and GetTier functionality
+	t.Run("TestSetTier", func(t *testing.T) {
+		skipIfNotSetTier(t)
+		obj := findObject(t, remote, file1.Path)
+		lister, ok := obj.(fs.ListTierer)
+		assert.NotNil(t, ok)
+		supportedTiers := lister.ListTiers()
+		setter, ok := obj.(fs.SetTierer)
+		assert.NotNil(t, ok)
+		getter, ok := obj.(fs.GetTierer)
+		assert.NotNil(t, ok)
+		for _, tier := range supportedTiers {
+			err := setter.SetTier(tier)
+			assert.Nil(t, err)
+			got := getter.GetTier()
+			assert.Equal(t, tier, got)
+		}
+	})
+
 	// TestObjectRemove tests Remove
 	t.Run("TestObjectRemove", func(t *testing.T) {
 		skipIfNotOk(t)
@@ -1130,6 +1157,16 @@ func Run(t *testing.T, opt *Opt) {
 		assert.NotEqual(t, int64(0), usage.Total)
 	})
 
+	// TestInternal calls InternalTest() on the Fs
+	t.Run("TestInternal", func(t *testing.T) {
+		skipIfNotOk(t)
+		if it, ok := remote.(InternalTester); ok {
+			it.InternalTest(t)
+		} else {
+			t.Skipf("%T does not implement InternalTester", remote)
+		}
+	})
+
 	// TestObjectPurge tests Purge
 	t.Run("TestObjectPurge", func(t *testing.T) {
 		skipIfNotOk(t)
@@ -1140,16 +1177,6 @@ func Run(t *testing.T, opt *Opt) {
 
 		err = operations.Purge(remote, "")
 		assert.Error(t, err, "Expecting error after on second purge")
-	})
-
-	// TestInternal calls InternalTest() on the Fs
-	t.Run("TestInternal", func(t *testing.T) {
-		skipIfNotOk(t)
-		if it, ok := remote.(InternalTester); ok {
-			it.InternalTest(t)
-		} else {
-			t.Skipf("%T does not implement InternalTester", remote)
-		}
 	})
 
 	// TestFinalise tidies up after the previous tests
