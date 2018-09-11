@@ -1407,6 +1407,21 @@ func CopyFile(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string) (e
 	return moveOrCopyFile(fdst, fsrc, dstFileName, srcFileName, true)
 }
 
+// SetTier changes tier of object in remote
+func SetTier(fsrc fs.Fs, tier string) error {
+	return ListFn(fsrc, func(o fs.Object) {
+		objImpl, ok := o.(fs.SetTierer)
+		if !ok {
+			fs.Errorf(fsrc, "Remote object does not implement SetTier")
+			return
+		}
+		err := objImpl.SetTier(tier)
+		if err != nil {
+			fs.Errorf(fsrc, "Failed to do SetTier, %v", err)
+		}
+	})
+}
+
 // ListFormat defines files information print format
 type ListFormat struct {
 	separator string
