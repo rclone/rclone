@@ -195,3 +195,4 @@ Contributors
   * Anagh Kumar Baranwal <anaghk.dos@gmail.com>
   * Felix Brucker <felix@felixbrucker.com>
   * Santiago Rodríguez <scollazo@users.noreply.github.com>
+  * Craig Miskell <craig.miskell@fluxfederation.com>
