@@ -229,4 +229,3 @@ startdev:
 
 winzip:
 	zip -9 rclone-$(TAG).zip rclone.exe
-

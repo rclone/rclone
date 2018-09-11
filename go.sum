@@ -30,6 +30,8 @@ github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible h1:ZFvUIiBbGhDY
 github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible/go.mod h1:lr+LhMM3F6Y3lW1T9j2U5l7QeuWm87N9+PPXo3yH4qY=
 github.com/go-ini/ini v1.37.0 h1:/FpMfveJbc7ExTTDgT5nL9Vw+aZdst/c2dOxC931U+M=
 github.com/go-ini/ini v1.37.0/go.mod h1:ByCAeIL28uOIIG0E3PJtZPDL8WnHpFKFOtgjp+3Ies8=
+github.com/goftp/server v0.0.0-20180821022811-ef4ed0debb24 h1:Z9/04aQXMv+h2pKWXyi7hWNoLaeoAepJholvtGwOmxE=
+github.com/goftp/server v0.0.0-20180821022811-ef4ed0debb24/go.mod h1:k/SS6VWkxY7dHPhoMQ8IdRu8L4lQtmGbhyXGg+vCnXE=
 github.com/golang/protobuf v1.1.0 h1:0iH4Ffd/meGoXqF2lSAhZHt8X+cPgkfn/cb6Cce5Vpc=
 github.com/golang/protobuf v1.1.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 h1:zLTLjkaOFEFIOxY5BWLFLwh+cL8vOBW4XJ2aqLE/Tf0=
