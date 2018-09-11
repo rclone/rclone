@@ -178,6 +178,32 @@ func parsePath(path string) (container, directory string, err error) {
 	return
 }
 
+// validateAccessTier checks if azureblob supports user supplied tier
+func validateAccessTier(tier string) bool {
+	switch tier {
+	case string(azblob.AccessTierHot),
+		string(azblob.AccessTierCool),
+		string(azblob.AccessTierArchive):
+		// valid cases
+		return true
+	default:
+		return false
+	}
+}
+
+// validAccessTiers returns list of supported storage tiers on azureblob fs
+func validAccessTiers() []string {
+	validTiers := [...]azblob.AccessTierType{azblob.AccessTierHot, azblob.AccessTierCool,
+		azblob.AccessTierArchive}
+
+	var tiers [len(validTiers)]string
+
+	for i, tier := range validTiers {
+		tiers[i] = string(tier)
+	}
+	return tiers[:]
+}
+
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	401, // Unauthorized (eg "Token has expired")
@@ -231,15 +257,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
-	} else {
-		switch opt.AccessTier {
-		case string(azblob.AccessTierHot):
-		case string(azblob.AccessTierCool):
-		case string(azblob.AccessTierArchive):
-			// valid cases
-		default:
-			return nil, errors.Errorf("azure: Supported access tiers are %s, %s and %s", string(azblob.AccessTierHot), string(azblob.AccessTierCool), azblob.AccessTierArchive)
-		}
+	} else if !validateAccessTier(opt.AccessTier) {
+		return nil, errors.Errorf("Azure Blob: Supported access tiers are %s, %s and %s",
+			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
 	var (
@@ -299,6 +319,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		ReadMimeType:  true,
 		WriteMimeType: true,
 		BucketBased:   true,
+		SetTier:       true,
+		GetTier:       true,
+		ListTiers:     true,
 	}).Fill(f)
 	if f.root != "" {
 		f.root += "/"
@@ -1254,16 +1277,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	// Now, set blob tier based on configured access tier
-	desiredAccessTier := azblob.AccessTierType(o.fs.opt.AccessTier)
-	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err := blob.SetTier(ctx, desiredAccessTier)
-		return o.fs.shouldRetry(err)
-	})
-
-	if err != nil {
-		return errors.Wrap(err, "Failed to set Blob Tier")
-	}
-	return nil
+	return o.SetTier(o.fs.opt.AccessTier)
 }
 
 // Remove an object
@@ -1286,6 +1300,46 @@ func (o *Object) MimeType() string {
 // AccessTier of an object, default is of type none
 func (o *Object) AccessTier() azblob.AccessTierType {
 	return o.accessTier
+}
+
+// SetTier performs changing object tier
+func (o *Object) SetTier(tier string) error {
+	if !validateAccessTier(tier) {
+		return errors.Errorf("Tier %s not supported by Azure Blob Storage", tier)
+	}
+
+	// Check if current tier already matches with desired tier
+	if o.GetTier() == tier {
+		return nil
+	}
+	desiredAccessTier := azblob.AccessTierType(tier)
+	blob := o.getBlobReference()
+	ctx := context.Background()
+	err := o.fs.pacer.Call(func() (bool, error) {
+		_, err := blob.SetTier(ctx, desiredAccessTier)
+		return o.fs.shouldRetry(err)
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "Failed to set Blob Tier")
+	}
+
+	// Set access tier on local object also, this typically
+	// gets updated on get blob properties
+	o.accessTier = desiredAccessTier
+	fs.Debugf(o, "Successfully changed object tier to %s", tier)
+
+	return nil
+}
+
+// GetTier returns object tier in azure as string
+func (o *Object) GetTier() string {
+	return string(o.accessTier)
+}
+
+// ListTiers returns list of storage tiers supported on this object
+func (o *Object) ListTiers() []string {
+	return validAccessTiers()
 }
 
 // Check the interfaces are satisfied
