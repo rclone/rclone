@@ -328,6 +328,25 @@ type ObjectUnWrapper interface {
 	UnWrap() Object
 }
 
+// SetTierer is an optional interface for Object
+type SetTierer interface {
+	// SetTier performs changing storage tier of the Object if
+	// multiple storage classes supported
+	SetTier(tier string) error
+}
+
+// GetTierer is an optional interface for Object
+type GetTierer interface {
+	// GetTier returns storage tier or class of the Object
+	GetTier() string
+}
+
+// ListTierer is an optional interface for Object
+type ListTierer interface {
+	// ListTiers returns list of supported storage tiers
+	ListTiers() []string
+}
+
 // ListRCallback defines a callback function for ListR to use
 //
 // It is called for each tranche of entries read from the listing and
@@ -365,6 +384,9 @@ type Features struct {
 	WriteMimeType           bool // can set the mime type of objects
 	CanHaveEmptyDirectories bool // can have empty directories
 	BucketBased             bool // is bucket based (like s3, swift etc)
+	SetTier                 bool // allows set tier functionality on objects
+	GetTier                 bool // allows to retrieve storage tier of objects
+	ListTiers               bool // allows to list supported tiers on objects
 
 	// Purge all files in the root and the root directory
 	//
@@ -583,6 +605,10 @@ func (ft *Features) Mask(f Fs) *Features {
 	ft.WriteMimeType = ft.WriteMimeType && mask.WriteMimeType
 	ft.CanHaveEmptyDirectories = ft.CanHaveEmptyDirectories && mask.CanHaveEmptyDirectories
 	ft.BucketBased = ft.BucketBased && mask.BucketBased
+	ft.SetTier = ft.SetTier && mask.SetTier
+	ft.GetTier = ft.GetTier && mask.GetTier
+	ft.ListTiers = ft.ListTiers && mask.ListTiers
+
 	if mask.Purge == nil {
 		ft.Purge = nil
 	}
