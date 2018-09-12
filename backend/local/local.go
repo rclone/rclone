@@ -2,6 +2,7 @@
 package local
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,6 +29,7 @@ import (
 
 // Constants
 const devUnset = 0xdeadbeefcafebabe // a device id meaning it is unset
+const linkSuffix = ".rclonelink"    // The suffix added to a translated symbolic link
 
 // Register with Fs
 func init() {
@@ -48,6 +50,13 @@ func init() {
 			Default:  false,
 			NoPrefix: true,
 			ShortOpt: "L",
+			Advanced: true,
+		}, {
+			Name:     "links",
+			Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension",
+			Default:  false,
+			NoPrefix: true,
+			ShortOpt: "l",
 			Advanced: true,
 		}, {
 			Name: "skip_links",
@@ -93,12 +102,13 @@ check can be disabled with this flag.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	FollowSymlinks bool `config:"copy_links"`
-	SkipSymlinks   bool `config:"skip_links"`
-	NoUTFNorm      bool `config:"no_unicode_normalization"`
-	NoCheckUpdated bool `config:"no_check_updated"`
-	NoUNC          bool `config:"nounc"`
-	OneFileSystem  bool `config:"one_file_system"`
+	FollowSymlinks    bool `config:"copy_links"`
+	TranslateSymlinks bool `config:"links"`
+	SkipSymlinks      bool `config:"skip_links"`
+	NoUTFNorm         bool `config:"no_unicode_normalization"`
+	NoCheckUpdated    bool `config:"no_check_updated"`
+	NoUNC             bool `config:"nounc"`
+	OneFileSystem     bool `config:"one_file_system"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -120,13 +130,14 @@ type Fs struct {
 
 // Object represents a local filesystem object
 type Object struct {
-	fs      *Fs    // The Fs this object is part of
-	remote  string // The remote path - properly UTF-8 encoded - for rclone
-	path    string // The local path - may not be properly UTF-8 encoded - for OS
-	size    int64  // file metadata - always present
-	mode    os.FileMode
-	modTime time.Time
-	hashes  map[hash.Type]string // Hashes
+	fs             *Fs    // The Fs this object is part of
+	remote         string // The remote path - properly UTF-8 encoded - for rclone
+	path           string // The local path - may not be properly UTF-8 encoded - for OS
+	size           int64  // file metadata - always present
+	mode           os.FileMode
+	modTime        time.Time
+	hashes         map[hash.Type]string // Hashes
+	translatedLink bool                 // Is this object a translated link
 }
 
 // ------------------------------------------------------------
@@ -166,13 +177,27 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err == nil {
 		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
-	if err == nil && fi.Mode().IsRegular() {
+	if err == nil && f.isRegular(fi.Mode()) {
 		// It is a file, so use the parent as the root
 		f.root = filepath.Dir(f.root)
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// Determine whether a file is a 'regular' file,
+// Symlinks are regular files, only if the TranslateSymlink
+// option is in-effect
+func (f *Fs) isRegular(mode os.FileMode) bool {
+	if !f.opt.TranslateSymlinks {
+		return mode.IsRegular()
+	}
+
+	// fi.Mode().IsRegular() tests that all mode bits are zero
+	// Since symlinks are accepted, test that all other bits are zero,
+	// except the symlink bit
+	return mode&os.ModeType&^os.ModeSymlink == 0
 }
 
 // Name of the remote (as passed into NewFs)
@@ -205,18 +230,38 @@ func (f *Fs) caseInsensitive() bool {
 	return runtime.GOOS == "windows" || runtime.GOOS == "darwin"
 }
 
+// translateLink checks whether the remote is a translated link
+// and returns a new path, removing the suffix as needed,
+// It also returns whether this is a translated link at all
+//
+// for regular files, dstPath is returned unchanged
+func translateLink(remote, dstPath string) (newDstPath string, isTranslatedLink bool) {
+	isTranslatedLink = strings.HasSuffix(remote, linkSuffix)
+	newDstPath = strings.TrimSuffix(dstPath, linkSuffix)
+	return newDstPath, isTranslatedLink
+}
+
 // newObject makes a half completed Object
 //
 // if dstPath is empty then it is made from remote
 func (f *Fs) newObject(remote, dstPath string) *Object {
+	translatedLink := false
+
 	if dstPath == "" {
 		dstPath = f.cleanPath(filepath.Join(f.root, remote))
 	}
 	remote = f.cleanRemote(remote)
+
+	if f.opt.TranslateSymlinks {
+		// Possibly receive a new name for dstPath
+		dstPath, translatedLink = translateLink(remote, dstPath)
+	}
+
 	return &Object{
-		fs:     f,
-		remote: remote,
-		path:   dstPath,
+		fs:             f,
+		remote:         remote,
+		path:           dstPath,
+		translatedLink: translatedLink,
 	}
 }
 
@@ -238,6 +283,11 @@ func (f *Fs) newObjectWithInfo(remote, dstPath string, info os.FileInfo) (fs.Obj
 			}
 			return nil, err
 		}
+		// Handle the odd case, that a symlink was specfied by name without the link suffix
+		if o.fs.opt.TranslateSymlinks && o.mode&os.ModeSymlink != 0 && !o.translatedLink {
+			return nil, fs.ErrorObjectNotFound
+		}
+
 	}
 	if o.mode.IsDir() {
 		return nil, errors.Wrapf(fs.ErrorNotAFile, "%q", remote)
@@ -261,6 +311,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+
 	dir = f.dirNames.Load(dir)
 	fsDirPath := f.cleanPath(filepath.Join(f.root, dir))
 	remote := f.cleanRemote(dir)
@@ -317,6 +368,10 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 					entries = append(entries, d)
 				}
 			} else {
+				// Check whether this link should be translated
+				if f.opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
+					newRemote += linkSuffix
+				}
 				fso, err := f.newObjectWithInfo(newRemote, newPath, fi)
 				if err != nil {
 					return nil, err
@@ -530,7 +585,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		// OK
 	} else if err != nil {
 		return nil, err
-	} else if !dstObj.mode.IsRegular() {
+	} else if !dstObj.fs.isRegular(dstObj.mode) {
 		// It isn't a file
 		return nil, errors.New("can't move file onto non-file")
 	}
@@ -652,7 +707,13 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 	o.fs.objectHashesMu.Unlock()
 
 	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil {
-		in, err := file.Open(o.path)
+		var in io.ReadCloser
+
+		if !o.translatedLink {
+			in, err = file.Open(o.path)
+		} else {
+			in, err = o.openTranslatedLink(0, -1)
+		}
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
@@ -701,7 +762,7 @@ func (o *Object) Storable() bool {
 		}
 	}
 	mode := o.mode
-	if mode&os.ModeSymlink != 0 {
+	if mode&os.ModeSymlink != 0 && !o.fs.opt.TranslateSymlinks {
 		if !o.fs.opt.SkipSymlinks {
 			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
 		}
@@ -762,6 +823,16 @@ func (file *localOpenFile) Close() (err error) {
 	return err
 }
 
+// Returns a ReadCloser() object that contains the contents of a symbolic link
+func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err error) {
+	// Read the link and return the destination  it as the contents of the object
+	linkdst, err := os.Readlink(o.path)
+	if err != nil {
+		return nil, err
+	}
+	return readers.NewLimitedReadCloser(ioutil.NopCloser(strings.NewReader(linkdst[offset:])), limit), nil
+}
+
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset, limit int64 = 0, -1
@@ -779,6 +850,11 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
+	}
+
+	// Handle a translated link
+	if o.translatedLink {
+		return o.openTranslatedLink(offset, limit)
 	}
 
 	fd, err := file.Open(o.path)
@@ -812,8 +888,19 @@ func (o *Object) mkdirAll() error {
 	return os.MkdirAll(dir, 0777)
 }
 
+type nopWriterCloser struct {
+	*bytes.Buffer
+}
+
+func (nwc nopWriterCloser) Close() error {
+	// noop
+	return nil
+}
+
 // Update the object from in with modTime and size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	var out io.WriteCloser
+
 	hashes := hash.Supported
 	for _, option := range options {
 		switch x := option.(type) {
@@ -827,15 +914,23 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 
-	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		return err
-	}
-
-	// Pre-allocate the file for performance reasons
-	err = preAllocate(src.Size(), out)
-	if err != nil {
-		fs.Debugf(o, "Failed to pre-allocate: %v", err)
+	var symlinkData bytes.Buffer
+	// If the object is a regular file, create it.
+	// If it is a translated link, just read in the contents, and
+	// then create a symlink
+	if !o.translatedLink {
+		f, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			return err
+		}
+		// Pre-allocate the file for performance reasons
+		err = preAllocate(src.Size(), f)
+		if err != nil {
+			fs.Debugf(o, "Failed to pre-allocate: %v", err)
+		}
+		out = f
+	} else {
+		out = nopWriterCloser{&symlinkData}
 	}
 
 	// Calculate the hash of the object we are reading as we go along
@@ -850,6 +945,26 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	if err == nil {
 		err = closeErr
 	}
+
+	if o.translatedLink {
+		if err == nil {
+			// Remove any current symlink or file, if one exsits
+			if _, err := os.Lstat(o.path); err == nil {
+				if removeErr := os.Remove(o.path); removeErr != nil {
+					fs.Errorf(o, "Failed to remove previous file: %v", removeErr)
+					return removeErr
+				}
+			}
+			// Use the contents for the copied object to create a symlink
+			err = os.Symlink(symlinkData.String(), o.path)
+		}
+
+		// only continue if symlink creation succeeded
+		if err != nil {
+			return err
+		}
+	}
+
 	if err != nil {
 		fs.Logf(o, "Removing partially written file on error: %v", err)
 		if removeErr := os.Remove(o.path); removeErr != nil {
