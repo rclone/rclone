@@ -67,81 +67,6 @@ const (
 	exitCodeTransferExceeded
 )
 
-// Root is the main rclone command
-var Root = &cobra.Command{
-	Use:   "rclone",
-	Short: "Sync files and directories to and from local and remote object stores - " + fs.Version,
-	Long: `
-Rclone is a command line program to sync files and directories to and
-from various cloud storage systems and using file transfer services, such as:
-
-  * Amazon Drive
-  * Amazon S3
-  * Backblaze B2
-  * Box
-  * Dropbox
-  * FTP
-  * Google Cloud Storage
-  * Google Drive
-  * HTTP
-  * Hubic
-  * Jottacloud
-  * Mega
-  * Microsoft Azure Blob Storage
-  * Microsoft OneDrive
-  * OpenDrive
-  * Openstack Swift / Rackspace cloud files / Memset Memstore
-  * pCloud
-  * QingStor
-  * SFTP
-  * Webdav / Owncloud / Nextcloud
-  * Yandex Disk
-  * The local filesystem
-
-Features
-
-  * MD5/SHA1 hashes checked at all times for file integrity
-  * Timestamps preserved on files
-  * Partial syncs supported on a whole file basis
-  * Copy mode to just copy new/changed files
-  * Sync (one way) mode to make a directory identical
-  * Check mode to check for file hash equality
-  * Can sync to and from network, eg two different cloud accounts
-
-See the home page for installation, usage, documentation, changelog
-and configuration walkthroughs.
-
-  * https://rclone.org/
-`,
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
-		atexit.Run()
-	},
-}
-
-// runRoot implements the main rclone command with no subcommands
-func runRoot(cmd *cobra.Command, args []string) {
-	if version {
-		ShowVersion()
-		resolveExitCode(nil)
-	} else {
-		_ = Root.Usage()
-		_, _ = fmt.Fprintf(os.Stderr, "Command not found.\n")
-		resolveExitCode(errorCommandNotFound)
-	}
-}
-
-func init() {
-	// Add global flags
-	configflags.AddFlags(pflag.CommandLine)
-	filterflags.AddFlags(pflag.CommandLine)
-	rcflags.AddFlags(pflag.CommandLine)
-
-	Root.Run = runRoot
-	Root.Flags().BoolVarP(&version, "version", "V", false, "Print the version number")
-	cobra.OnInitialize(initConfig)
-}
-
 // ShowVersion prints the version to stdout
 func ShowVersion() {
 	fmt.Printf("rclone %s\n", fs.Version)
@@ -549,6 +474,7 @@ func AddBackendFlags() {
 
 // Main runs rclone interpreting flags and commands out of os.Args
 func Main() {
+	setupRootCommand(Root)
 	AddBackendFlags()
 	if err := Root.Execute(); err != nil {
 		log.Fatalf("Fatal error: %v", err)
