@@ -83,6 +83,15 @@ func setupRootCommand(rootCmd *cobra.Command) {
 	cobra.AddTemplateFunc("showLocalFlags", func(cmd *cobra.Command) bool {
 		return cmd.CalledAs() != "rclone"
 	})
+	cobra.AddTemplateFunc("backendFlags", func(cmd *cobra.Command, include bool) *pflag.FlagSet {
+		backendFlagSet := pflag.NewFlagSet("Backend Flags", pflag.ExitOnError)
+		cmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+			if _, ok := backendFlags[flag.Name]; ok == include {
+				backendFlagSet.AddFlag(flag)
+			}
+		})
+		return backendFlagSet
+	})
 	rootCmd.SetUsageTemplate(usageTemplate)
 	// rootCmd.SetHelpTemplate(helpTemplate)
 	// rootCmd.SetFlagErrorFunc(FlagErrorFunc)
@@ -116,7 +125,10 @@ Flags:
 {{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if and (showGlobalFlags .) .HasAvailableInheritedFlags}}
 
 Global Flags:
-{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+{{(backendFlags . false).FlagUsages | trimTrailingWhitespaces}}
+
+Backend Flags:
+{{(backendFlags . true).FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
 
 Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}

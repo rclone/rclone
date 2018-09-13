@@ -432,8 +432,11 @@ func resolveExitCode(err error) {
 	}
 }
 
+var backendFlags map[string]struct{}
+
 // AddBackendFlags creates flags for all the backend options
 func AddBackendFlags() {
+	backendFlags = map[string]struct{}{}
 	for _, fsInfo := range fs.Registry {
 		done := map[string]struct{}{}
 		for i := range fsInfo.Options {
@@ -464,6 +467,7 @@ func AddBackendFlags() {
 				if opt.Hide&fs.OptionHideCommandLine != 0 {
 					flag.Hidden = true
 				}
+				backendFlags[name] = struct{}{}
 			} else {
 				fs.Errorf(nil, "Not adding duplicate flag --%s", name)
 			}
