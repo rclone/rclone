@@ -441,6 +441,8 @@ func (f *File) Sync() error {
 
 // Remove the file
 func (f *File) Remove() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.muRW.Lock()
 	defer f.muRW.Unlock()
 	if f.d.vfs.Opt.ReadOnly {
