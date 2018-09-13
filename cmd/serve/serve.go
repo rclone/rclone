@@ -15,7 +15,9 @@ func init() {
 	Command.AddCommand(http.Command)
 	Command.AddCommand(webdav.Command)
 	Command.AddCommand(restic.Command)
-	Command.AddCommand(ftp.Command)
+	if ftp.Command != nil {
+		Command.AddCommand(ftp.Command)
+	}
 	cmd.Root.AddCommand(Command)
 }
 

@@ -1,3 +1,7 @@
+// Package ftp implements an FTP server for rclone
+
+//+build !plan9
+
 package ftp
 
 import (

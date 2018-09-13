@@ -3,7 +3,7 @@
 //
 // We skip tests on platforms with troublesome character mappings
 
-//+build !windows,!darwin
+//+build !windows,!darwin,!plan9
 
 package ftp
 
