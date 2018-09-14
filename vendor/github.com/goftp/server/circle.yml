@@ -1,0 +1,14 @@
+dependencies:
+  override:
+    - mkdir -p ~/.go_workspace/src/github.com/goftp
+    - ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${HOME}/.go_workspace/src/github.com/goftp/${CIRCLE_PROJECT_REPONAME}
+    # './...' is a relative pattern which means all subdirectories
+    - go get -t -d -v ./...
+    - go build -v
+
+test:
+  override:
+    # './...' is a relative pattern which means all subdirectories
+    - go test -v -race -coverprofile=coverage.txt -covermode=atomic
+  post:
+    - bash <(curl -s https://codecov.io/bash)

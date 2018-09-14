@@ -74,6 +74,8 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
 # github.com/go-ini/ini v1.37.0
 github.com/go-ini/ini
+# github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1
+github.com/goftp/server
 # github.com/golang/protobuf v1.1.0
 github.com/golang/protobuf/proto
 # github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135

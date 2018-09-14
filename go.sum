@@ -32,6 +32,8 @@ github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible h1:ZFvUIiBbGhDY
 github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible/go.mod h1:lr+LhMM3F6Y3lW1T9j2U5l7QeuWm87N9+PPXo3yH4qY=
 github.com/go-ini/ini v1.37.0 h1:/FpMfveJbc7ExTTDgT5nL9Vw+aZdst/c2dOxC931U+M=
 github.com/go-ini/ini v1.37.0/go.mod h1:ByCAeIL28uOIIG0E3PJtZPDL8WnHpFKFOtgjp+3Ies8=
+github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1 h1:WjgeEHEDLGx56ndxS6FYi6qFjZGajSVHPuEPdpJ60cI=
+github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1/go.mod h1:k/SS6VWkxY7dHPhoMQ8IdRu8L4lQtmGbhyXGg+vCnXE=
 github.com/golang/lint v0.0.0-20180702182130-06c8688daad7 h1:2hRPrmiwPrp3fQX967rNJIhQPtiGXdlQWAxKbKw3VHA=
 github.com/golang/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:tluoj9z5200jBnyusfRPU2LqT6J+DAorxEvtC7LHB+E=
 github.com/golang/protobuf v1.1.0 h1:0iH4Ffd/meGoXqF2lSAhZHt8X+cPgkfn/cb6Cce5Vpc=
