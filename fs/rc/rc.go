@@ -94,19 +94,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if r.Method != "POST" {
-		writeError(errors.Errorf("method %q not allowed - POST required", r.Method), http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Find the call
-	call := registry.get(path)
-	if call == nil {
-		writeError(errors.Errorf("couldn't find method %q", path), http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Parse the POST and URL parameters into r.Form
+	// Parse the POST and URL parameters into r.Form, for others r.Form will be empty value
 	err := r.ParseForm()
 	if err != nil {
 		writeError(errors.Wrap(err, "failed to parse form/URL parameters"), http.StatusBadRequest)
@@ -119,7 +107,6 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 			in[k] = vs[len(vs)-1]
 		}
 	}
-	fs.Debugf(nil, "form = %+v", r.Form)
 
 	// Parse a JSON blob from the input
 	if r.Header.Get("Content-Type") == "application/json" {
@@ -128,6 +115,45 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 			writeError(errors.Wrap(err, "failed to read input JSON"), http.StatusBadRequest)
 			return
 		}
+	}
+
+	fs.Debugf(nil, "form = %+v", r.Form)
+
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	//echo back headers client needs
+	reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
+	w.Header().Add("Access-Control-Allow-Headers", reqAccessHeaders)
+
+	switch r.Method {
+	case "POST":
+		s.handlePost(w, r, path, in)
+	case "OPTIONS":
+		s.handleOptions(w, r, in)
+	default:
+		writeError(errors.Errorf("method %q not allowed - POST or OPTIONS required", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+}
+
+func (s *server) handlePost(w http.ResponseWriter, r *http.Request, path string, in Params) {
+	writeError := func(err error, status int) {
+		fs.Errorf(nil, "rc: %q: error: %v", path, err)
+		w.WriteHeader(status)
+		err = WriteJSON(w, Params{
+			"error": err.Error(),
+			"input": in,
+		})
+		if err != nil {
+			// can't return the error at this point
+			fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
+		}
+	}
+
+	// Find the call
+	call := registry.get(path)
+	if call == nil {
+		writeError(errors.Errorf("couldn't find method %q", path), http.StatusMethodNotAllowed)
+		return
 	}
 
 	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
@@ -143,4 +169,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 		// can't return the error at this point
 		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
 	}
+}
+func (s *server) handleOptions(w http.ResponseWriter, r *http.Request, in Params) {
+	w.WriteHeader(http.StatusOK)
 }
