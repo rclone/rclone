@@ -681,6 +681,10 @@ with the `--stats` flag.
 This can be used with the `--stats-one-line` flag for a simpler
 display.
 
+Note: On Windows until[this bug](https://github.com/Azure/go-ansiterm/issues/26)
+is fixed all non-ASCII characters will be replaced with `.` when
+`--progress` is in use.
+
 ### -q, --quiet ###
 
 Normally rclone outputs stats and a completion message.  If you set
