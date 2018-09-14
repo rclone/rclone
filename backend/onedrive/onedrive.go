@@ -1261,7 +1261,7 @@ func (o *Object) createUploadSession(modTime time.Time) (response *api.CreateUpl
 		opts = rest.Opts{
 			Method:  "POST",
 			RootURL: rootURL,
-			Path:    "/" + drive + "/items/" + id + ":/" + rest.URLPathEscape(leaf) + ":/createUploadSession",
+			Path:    "/" + drive + "/items/" + id + ":/" + rest.URLPathEscape(replaceReservedChars(leaf)) + ":/createUploadSession",
 		}
 	} else {
 		opts = rest.Opts{
