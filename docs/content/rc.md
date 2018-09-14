@@ -229,6 +229,9 @@ If an error occurs then there will be an HTTP error status (usually
 400) and the body of the response will contain a JSON encoded error
 object.
 
+The sever implements basic CORS support and allows all origins for that.
+The response to a preflight OPTIONS request will echo the requested "Access-Control-Request-Headers" back.
+
 ### Using POST with URL parameters only
 
 ```
