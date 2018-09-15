@@ -68,26 +68,26 @@ var (
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 	mimeTypeToExtension = map[string]string{
-		"application/epub+zip":                            "epub",
-		"application/msword":                              "doc",
-		"application/pdf":                                 "pdf",
-		"application/rtf":                                 "rtf",
-		"application/vnd.ms-excel":                        "xls",
-		"application/vnd.oasis.opendocument.presentation": "odp",
-		"application/vnd.oasis.opendocument.spreadsheet":  "ods",
-		"application/vnd.oasis.opendocument.text":         "odt",
+		"application/epub+zip":                                                      "epub",
+		"application/msword":                                                        "doc",
+		"application/pdf":                                                           "pdf",
+		"application/rtf":                                                           "rtf",
+		"application/vnd.ms-excel":                                                  "xls",
+		"application/vnd.oasis.opendocument.presentation":                           "odp",
+		"application/vnd.oasis.opendocument.spreadsheet":                            "ods",
+		"application/vnd.oasis.opendocument.text":                                   "odt",
 		"application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
 		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         "xlsx",
 		"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   "docx",
 		"application/x-vnd.oasis.opendocument.spreadsheet":                          "ods",
-		"application/zip":           "zip",
-		"image/jpeg":                "jpg",
-		"image/png":                 "png",
-		"image/svg+xml":             "svg",
-		"text/csv":                  "csv",
-		"text/html":                 "html",
-		"text/plain":                "txt",
-		"text/tab-separated-values": "tsv",
+		"application/zip":                                                           "zip",
+		"image/jpeg":                                                                "jpg",
+		"image/png":                                                                 "png",
+		"image/svg+xml":                                                             "svg",
+		"text/csv":                                                                  "csv",
+		"text/html":                                                                 "html",
+		"text/plain":                                                                "txt",
+		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
 	partialFields       = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents"
@@ -243,6 +243,11 @@ func init() {
 			Default:  false,
 			Help:     "Keep new head revision forever.",
 			Advanced: true,
+		}, {
+			Name:     "base_url",
+			Default:  "https://www.googleapis.com/",
+			Help:     "Override the base url for Google APIs.",
+			Advanced: true,
 		}},
 	})
 
@@ -274,6 +279,7 @@ type Options struct {
 	ChunkSize                 fs.SizeSuffix `config:"chunk_size"`
 	AcknowledgeAbuse          bool          `config:"acknowledge_abuse"`
 	KeepRevisionForever       bool          `config:"keep_revision_forever"`
+	BaseUrl                   string        `config:"base_url"`
 }
 
 // Fs represents a remote drive server
@@ -289,6 +295,7 @@ type Fs struct {
 	pacer        *pacer.Pacer       // To pace the API calls
 	extensions   []string           // preferred extensions to download docs
 	isTeamDrive  bool               // true if this is a team drive
+	baseUrl      string             // baseUrl to use for google apis
 }
 
 // Object describes a drive object
@@ -528,6 +535,10 @@ func (f *Fs) parseExtensions(extensions string) error {
 	return nil
 }
 
+func configureService(opt *Options, svc *drive.Service) {
+	svc.BasePath = fmt.Sprintf("%sdrive/v3/", opt.BaseUrl)
+}
+
 // Figure out if the user wants to use a team drive
 func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 	if opt.TeamDriveID == "" {
@@ -543,6 +554,8 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 		return errors.Wrap(err, "config team drive failed to create oauth client")
 	}
 	svc, err := drive.New(client)
+	configureService(opt, svc)
+
 	if err != nil {
 		return errors.Wrap(err, "config team drive failed to make drive client")
 	}
@@ -648,10 +661,11 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		pacer: newPacer(),
+		name:    name,
+		root:    root,
+		opt:     *opt,
+		pacer:   newPacer(),
+		baseUrl: opt.BaseUrl,
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
 	f.features = (&fs.Features{
@@ -664,6 +678,8 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
 	f.svc, err = drive.New(f.client)
+	configureService(opt, f.svc)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create Drive client")
 	}

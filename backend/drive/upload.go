@@ -61,7 +61,7 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, fileID string,
 	if f.opt.KeepRevisionForever {
 		params.Set("keepRevisionForever", "true")
 	}
-	urls := "https://www.googleapis.com/upload/drive/v3/files"
+	urls := fmt.Sprintf("%supload/drive/v3/files", f.baseUrl)
 	method := "POST"
 	if fileID != "" {
 		params.Set("setModifiedDate", "true")
@@ -99,6 +99,12 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, fileID string,
 		return nil, err
 	}
 	loc := res.Header.Get("Location")
+
+	loc, err = f.replaceBase(loc)
+	if err != nil {
+		return nil, err
+	}
+
 	rx := &resumableUpload{
 		f:             f,
 		remote:        remote,
@@ -108,6 +114,22 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, fileID string,
 		ContentLength: size,
 	}
 	return rx.Upload()
+}
+
+func (f *Fs) replaceBase(loc string) (string, error) {
+	u, err := url.Parse(loc)
+	if err != nil {
+		return "", err
+	}
+
+	b, err := url.Parse(f.baseUrl)
+	if err != nil {
+		return "", err
+	}
+
+	u.Scheme = b.Scheme
+	u.Host = b.Host
+	return u.String(), nil
 }
 
 // Make an http.Request for the range passed in
