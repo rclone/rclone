@@ -27,21 +27,14 @@ import (
 var (
 	charMap = map[rune]rune{
 		'\\': '＼', // FULLWIDTH REVERSE SOLIDUS
-		'+':  '＋', // FULLWIDTH PLUS SIGN
 		'*':  '＊', // FULLWIDTH ASTERISK
 		'<':  '＜', // FULLWIDTH LESS-THAN SIGN
 		'>':  '＞', // FULLWIDTH GREATER-THAN SIGN
 		'?':  '？', // FULLWIDTH QUESTION MARK
-		'!':  '！', // FULLWIDTH EXCLAMATION MARK
-		'&':  '＆', // FULLWIDTH AMPERSAND
 		':':  '：', // FULLWIDTH COLON
 		';':  '；', // FULLWIDTH SEMICOLON
 		'|':  '｜', // FULLWIDTH VERTICAL LINE
-		'#':  '＃', // FULLWIDTH NUMBER SIGN
-		'%':  '％', // FULLWIDTH PERCENT SIGN
 		'"':  '＂', // FULLWIDTH QUOTATION MARK - not on the list but seems to be reserved
-		'\'': '＇', // FULLWIDTH APOSTROPHE
-		'~':  '～', // FULLWIDTH TILDE
 		' ':  '␠', // SYMBOL FOR SPACE
 	}
 	invCharMap           map[rune]rune
