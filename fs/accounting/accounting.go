@@ -256,11 +256,14 @@ func (acc *Account) String() string {
 			etas = "0s"
 		}
 	}
+
 	name := []rune(acc.name)
 	if fs.Config.StatsFileNameLength > 0 {
 		if len(name) > fs.Config.StatsFileNameLength {
-			where := len(name) - fs.Config.StatsFileNameLength
-			name = append([]rune{'.', '.', '.'}, name[where:]...)
+			suffixLength := fs.Config.StatsFileNameLength / 2
+			prefixLength := fs.Config.StatsFileNameLength - suffixLength
+			suffixStart := len(name) - suffixLength
+			name = append(append(name[:prefixLength], '…'), name[suffixStart:]...)
 		}
 	}
 
