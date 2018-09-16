@@ -9,8 +9,8 @@ func TestReplace(t *testing.T) {
 	}{
 		{"", ""},
 		{"abc 123", "abc 123"},
-		{`\+*<>?!&:;|#%"'~`, `＼＋＊＜＞？！＆：；｜＃％＂＇～`},
-		{`\+*<>?!&:;|#%"'~\+*<>?!&:;|#%"'~`, `＼＋＊＜＞？！＆：；｜＃％＂＇～＼＋＊＜＞？！＆：；｜＃％＂＇～`},
+		{`\*<>?:;|"`, `＼＊＜＞？：；｜＂`},
+		{`\*<>?:;|"\*<>?:;|"`, `＼＊＜＞？：；｜＂＼＊＜＞？：；｜＂`},
 		{" leading space", "␠leading space"},
 		{"trailing space ", "trailing space␠"},
 		{" leading space/ leading space/ leading space", "␠leading space/␠leading space/␠leading space"},

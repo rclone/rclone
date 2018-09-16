@@ -199,7 +199,7 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
 func (f *Fs) getAccountInfo() (info *api.AccountInfo, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   rest.URLPathEscape(f.user),
+		Path:   urlPathEscape(f.user),
 	}
 
 	var resp *http.Response
@@ -220,7 +220,7 @@ func (f *Fs) setEndpointURL(mountpoint string) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to get endpoint url")
 	}
-	f.endpointURL = rest.URLPathEscape(path.Join(info.Username, defaultDevice, mountpoint))
+	f.endpointURL = urlPathEscape(path.Join(info.Username, defaultDevice, mountpoint))
 	return nil
 }
 
@@ -241,6 +241,11 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
+// Jottacloud want's '+' to be URL encoded even though the RFC states it's not reserved
+func urlPathEscape(in string) string {
+	return strings.Replace(rest.URLPathEscape(in), "+", "%2B", -1)
+}
+
 // filePathRaw returns an unescaped file path (f.root, file)
 func (f *Fs) filePathRaw(file string) string {
 	return path.Join(f.endpointURL, replaceReservedChars(path.Join(f.root, file)))
@@ -248,7 +253,7 @@ func (f *Fs) filePathRaw(file string) string {
 
 // filePath returns a escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
-	return rest.URLPathEscape(f.filePathRaw(file))
+	return urlPathEscape(f.filePathRaw(file))
 }
 
 // filePath returns a escaped file path (f.root, remote)
