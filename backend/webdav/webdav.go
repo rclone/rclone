@@ -372,6 +372,17 @@ func (f *Fs) setQuirks(vendor string) error {
 		if err != nil {
 			return err
 		}
+
+		odrvcookie.NewRenew(12*time.Hour, func() {
+			spCookies, err := spCk.Cookies()
+			if err != nil {
+				fs.Errorf("could not renew cookies: %s", err.Error())
+				return
+			}
+			f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
+			fs.Debugf(spCookies, "successfully renewed sharepoint cookies")
+		})
+
 		f.srv.SetCookie(&spCookies.FedAuth, &spCookies.RtFa)
 
 		// sharepoint, unlike the other vendors, only lists files if the depth header is set to 0
