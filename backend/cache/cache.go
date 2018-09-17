@@ -920,8 +920,9 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 
 	for _, entry := range entries {
 		found := false
+		entryRemote := entry.Remote()
 		for _, t := range sourceEntries {
-			if t.Remote() == entry.Remote() {
+			if t.Remote() == entryRemote {
 				found = true
 				break
 			}
@@ -929,7 +930,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		if found {
 			continue
 		}
-		fp := path.Join(f.Root(), entry.Remote())
+		fp := path.Join(f.Root(), entryRemote)
 		switch entry.(type) {
 		case fs.Object:
 			_ = f.cache.RemoveObject(fp)
