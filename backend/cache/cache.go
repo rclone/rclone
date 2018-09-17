@@ -936,7 +936,6 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		case fs.Directory:
 			_ = f.cache.RemoveDir(fp)
 		}
-
 		fs.Debugf(dir, "list: remove entry: %v", fp)
 	}
 
