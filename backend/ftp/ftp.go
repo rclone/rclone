@@ -704,6 +704,11 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	path := path.Join(o.fs.root, o.remote)
 	// remove the file if upload failed
 	remove := func() {
+		// Give the FTP server a chance to get its internal state in order after the error.
+		// The error may have been local in which case we closed the connection.  The server
+		// may still be dealing with it for a moment. A sleep isn't ideal but I haven't been
+		// able to think of a better method to find out if the server has finished - ncw
+		time.Sleep(1 * time.Second)
 		removeErr := o.Remove()
 		if removeErr != nil {
 			fs.Debugf(o, "Failed to remove: %v", removeErr)
@@ -717,7 +722,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 	err = c.Stor(path, in)
 	if err != nil {
-		_ = c.Quit()
+		_ = c.Quit() // toss this connection to avoid sync errors
 		remove()
 		return errors.Wrap(err, "update stor")
 	}
