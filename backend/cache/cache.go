@@ -886,7 +886,6 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		fs.Debugf(dir, "list: cached entries: %v", entries)
 		return entries, nil
 	}
-	// FIXME need to clean existing cached listing
 
 	// we first search any temporary files stored locally
 	var cachedEntries fs.DirEntries
@@ -912,16 +911,38 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}
 
 	// search from the source
-	entries, err = f.Fs.List(dir)
+	sourceEntries, err := f.Fs.List(dir)
 	if err != nil {
 		return nil, err
 	}
-	fs.Debugf(dir, "list: read %v from source", len(entries))
-	fs.Debugf(dir, "list: source entries: %v", entries)
+	fs.Debugf(dir, "list: read %v from source", len(sourceEntries))
+	fs.Debugf(dir, "list: source entries: %v", sourceEntries)
+
+	for _, entry := range entries {
+		found := false
+		for _, t := range sourceEntries {
+			if t.Remote() == entry.Remote() {
+				found = true
+				break
+			}
+		}
+		if found {
+			continue
+		}
+		fp := path.Join(f.Root(), entry.Remote())
+		switch entry.(type) {
+		case fs.Object:
+			_ = f.cache.RemoveObject(fp)
+		case fs.Directory:
+			_ = f.cache.RemoveDir(fp)
+		}
+
+		fs.Debugf(dir, "list: remove entry: %v", fp)
+	}
 
 	// and then iterate over the ones from source (temp Objects will override source ones)
 	var batchDirectories []*Directory
-	for _, entry := range entries {
+	for _, entry := range sourceEntries {
 		switch o := entry.(type) {
 		case fs.Object:
 			// skip over temporary objects (might be uploading)
