@@ -968,6 +968,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
+		// Give the WebDAV server a chance to get its internal state in order after the
+		// error.  The error may have been local in which case we closed the connection.
+		// The server may still be dealing with it for a moment. A sleep isn't ideal but I
+		// haven't been able to think of a better method to find out if the server has
+		// finished - ncw
+		time.Sleep(1 * time.Second)
 		// Remove failed upload
 		_ = o.Remove()
 		return err
