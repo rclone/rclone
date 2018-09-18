@@ -419,7 +419,7 @@ func (f *Fs) list(dirIDs []string, title string, directoriesOnly bool, filesOnly
 		// assume that export extensions don't contain escape sequences and only have one part (not .tar.gz)
 		if ext := path.Ext(searchTitle); handleGdocs && len(ext) > 0 && containsString(f.extensions, ext[1:]) {
 			stem = title[:len(title)-len(ext)]
-			query = append(query, fmt.Sprintf("(name='%s' or name='%s')", searchTitle, searchTitle[:len(title)-len(ext)]))
+			query = append(query, fmt.Sprintf("(name='%s' or name='%s')", searchTitle, searchTitle[:len(searchTitle)-len(ext)]))
 		} else {
 			query = append(query, fmt.Sprintf("name='%s'", searchTitle))
 		}
