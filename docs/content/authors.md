@@ -196,3 +196,4 @@ Contributors
   * Felix Brucker <felix@felixbrucker.com>
   * Santiago Rodríguez <scollazo@users.noreply.github.com>
   * Craig Miskell <craig.miskell@fluxfederation.com>
+  * Antoine GIRARD <sapk@sapk.fr>
