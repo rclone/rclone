@@ -192,6 +192,7 @@ golang.org/x/text/unicode/bidi
 # golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
 golang.org/x/time/rate
 # google.golang.org/api v0.0.0-20180614000435-2eea9ba0a3d9
+google.golang.org/api/drive/v2
 google.golang.org/api/drive/v3
 google.golang.org/api/googleapi
 google.golang.org/api/storage/v1
