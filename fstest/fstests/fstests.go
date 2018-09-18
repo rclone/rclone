@@ -137,9 +137,9 @@ type Opt struct {
 	RemoteName               string
 	NilObject                fs.Object
 	ExtraConfig              []ExtraConfigItem
-	SkipBadWindowsCharacters bool // skips unusable characters for windows if set
-	SkipFsMatch              bool // if set skip exact matching of Fs value
-
+	SkipBadWindowsCharacters bool     // skips unusable characters for windows if set
+	SkipFsMatch              bool     // if set skip exact matching of Fs value
+	TiersToTest              []string // List of tiers which can be tested in setTier test
 }
 
 // Run runs the basic integration tests for a remote using the remote
@@ -200,11 +200,12 @@ func Run(t *testing.T, opt *Opt) {
 		}
 	}
 
-	// Skip if remote is not SetTier capable
+	// Skip if remote is not SetTier and GetTier capable
 	skipIfNotSetTier := func(t *testing.T) {
 		skipIfNotOk(t)
-		if remote.Features().SetTier == false {
-			t.Skip("FS has no SetTier interface")
+		if remote.Features().SetTier == false ||
+			remote.Features().GetTier == false {
+			t.Skip("FS has no SetTier & GetTier interfaces")
 		}
 	}
 
@@ -1071,13 +1072,15 @@ func Run(t *testing.T, opt *Opt) {
 	t.Run("TestSetTier", func(t *testing.T) {
 		skipIfNotSetTier(t)
 		obj := findObject(t, remote, file1.Path)
-		lister, ok := obj.(fs.ListTierer)
-		assert.NotNil(t, ok)
-		supportedTiers := lister.ListTiers()
 		setter, ok := obj.(fs.SetTierer)
 		assert.NotNil(t, ok)
 		getter, ok := obj.(fs.GetTierer)
 		assert.NotNil(t, ok)
+		// If interfaces are supported TiersToTest should contain
+		// at least one entry
+		supportedTiers := opt.TiersToTest
+		assert.NotEmpty(t, supportedTiers)
+		// test set tier changes on supported storage classes or tiers
 		for _, tier := range supportedTiers {
 			err := setter.SetTier(tier)
 			assert.Nil(t, err)

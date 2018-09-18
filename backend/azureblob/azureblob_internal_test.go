@@ -11,9 +11,7 @@ import (
 func (f *Fs) InternalTest(t *testing.T) {
 	// Check first feature flags are set on this
 	// remote
-	enabled := f.Features().ListTiers
-	assert.True(t, enabled)
-	enabled = f.Features().SetTier
+	enabled := f.Features().SetTier
 	assert.True(t, enabled)
 	enabled = f.Features().GetTier
 	assert.True(t, enabled)
