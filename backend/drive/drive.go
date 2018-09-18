@@ -37,6 +37,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	drive_v2 "google.golang.org/api/drive/v2"
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
 )
@@ -243,6 +244,11 @@ func init() {
 			Default:  false,
 			Help:     "Keep new head revision forever.",
 			Advanced: true,
+		}, {
+			Name:     "v2_download_min_size",
+			Default:  fs.SizeSuffix(-1),
+			Help:     "If Object's are greater, use drive v2 API to download.",
+			Advanced: true,
 		}},
 	})
 
@@ -274,6 +280,7 @@ type Options struct {
 	ChunkSize                 fs.SizeSuffix `config:"chunk_size"`
 	AcknowledgeAbuse          bool          `config:"acknowledge_abuse"`
 	KeepRevisionForever       bool          `config:"keep_revision_forever"`
+	V2DownloadMinSize         fs.SizeSuffix `config:"v2_download_min_size"`
 }
 
 // Fs represents a remote drive server
@@ -283,6 +290,7 @@ type Fs struct {
 	opt          Options            // parsed options
 	features     *fs.Features       // optional features
 	svc          *drive.Service     // the connection to the drive server
+	v2Svc        *drive_v2.Service  // used to create download links for the v2 api
 	client       *http.Client       // authorized client
 	rootFolderID string             // the id of the root folder
 	dirCache     *dircache.DirCache // Map of directory path to directory id
@@ -301,6 +309,7 @@ type Object struct {
 	bytes        int64  // size of the object
 	modifiedDate string // RFC3339 time it was last modified
 	isDocument   bool   // if set this is a Google doc
+	v2Download   bool   // generate v2 download link ondemand
 	mimeType     string
 }
 
@@ -666,6 +675,13 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	f.svc, err = drive.New(f.client)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create Drive client")
+	}
+
+	if f.opt.V2DownloadMinSize >= 0 {
+		f.v2Svc, err = drive_v2.New(f.client)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't create Drive v2 client")
+		}
 	}
 
 	// set root folder for a team drive or query the user root folder
@@ -1811,6 +1827,9 @@ func (o *Object) setMetaData(info *drive.File) {
 	o.url = fmt.Sprintf("%sfiles/%s?alt=media", o.fs.svc.BasePath, info.Id)
 	o.md5sum = strings.ToLower(info.Md5Checksum)
 	o.bytes = info.Size
+	if o.bytes != -1 && o.fs.opt.V2DownloadMinSize != -1 && o.bytes >= int64(o.fs.opt.V2DownloadMinSize) {
+		o.v2Download = true
+	}
 	if o.fs.opt.UseCreatedDate {
 		o.modifiedDate = info.CreatedTime
 	} else {
@@ -1940,6 +1959,22 @@ func (o *Object) httpResponse(method string, options []fs.OpenOption) (req *http
 			if _, ok := o.(*fs.RangeOption); ok {
 				return nil, nil, errors.New("partial downloads are not supported while exporting Google Documents")
 			}
+		}
+	}
+	if o.v2Download {
+		f := o.fs
+		var v2File *drive_v2.File
+		err = f.pacer.Call(func() (bool, error) {
+			v2File, err = o.fs.v2Svc.Files.Get(o.id).
+				Fields("downloadUrl").
+				SupportsTeamDrives(f.isTeamDrive).
+				Do()
+			return shouldRetry(err)
+		})
+		if err == nil {
+			fs.Debugf(o, "Using v2 download: %v", v2File.DownloadUrl)
+			o.url = v2File.DownloadUrl
+			o.v2Download = false
 		}
 	}
 	req, err = http.NewRequest(method, o.url, nil)
