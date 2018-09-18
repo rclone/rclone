@@ -341,12 +341,6 @@ type GetTierer interface {
 	GetTier() string
 }
 
-// ListTierer is an optional interface for Object
-type ListTierer interface {
-	// ListTiers returns list of supported storage tiers
-	ListTiers() []string
-}
-
 // ListRCallback defines a callback function for ListR to use
 //
 // It is called for each tranche of entries read from the listing and
@@ -386,7 +380,6 @@ type Features struct {
 	BucketBased             bool // is bucket based (like s3, swift etc)
 	SetTier                 bool // allows set tier functionality on objects
 	GetTier                 bool // allows to retrieve storage tier of objects
-	ListTiers               bool // allows to list supported tiers on objects
 
 	// Purge all files in the root and the root directory
 	//
@@ -607,7 +600,6 @@ func (ft *Features) Mask(f Fs) *Features {
 	ft.BucketBased = ft.BucketBased && mask.BucketBased
 	ft.SetTier = ft.SetTier && mask.SetTier
 	ft.GetTier = ft.GetTier && mask.GetTier
-	ft.ListTiers = ft.ListTiers && mask.ListTiers
 
 	if mask.Purge == nil {
 		ft.Purge = nil
