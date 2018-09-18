@@ -197,3 +197,4 @@ Contributors
   * Santiago Rodríguez <scollazo@users.noreply.github.com>
   * Craig Miskell <craig.miskell@fluxfederation.com>
   * Antoine GIRARD <sapk@sapk.fr>
+  * Joanna Marek <joanna.marek@u2i.com>
