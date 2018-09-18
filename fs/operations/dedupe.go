@@ -209,6 +209,20 @@ func dedupeMergeDuplicateDirs(f fs.Fs, duplicateDirs [][]fs.Directory) error {
 	}
 	for _, dirs := range duplicateDirs {
 		if !fs.Config.DryRun {
+
+			//Find the largest directory and merge duplicates into it
+			largestDir := dirs[0]
+			largestDirId := 0
+			counter := 0
+			for _, dir := range dirs {
+				if dir.Size() > largestDir.Size() {
+					largestDir = dir
+					largestDirId = counter
+				}
+				counter++
+			}
+			dirs[0], dirs[largestDirId] = dirs[largestDirId], dirs[0]
+
 			fs.Infof(dirs[0], "Merging contents of duplicate directories")
 			err := mergeDirs(dirs)
 			if err != nil {
