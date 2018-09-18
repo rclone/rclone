@@ -191,19 +191,6 @@ func validateAccessTier(tier string) bool {
 	}
 }
 
-// validAccessTiers returns list of supported storage tiers on azureblob fs
-func validAccessTiers() []string {
-	validTiers := [...]azblob.AccessTierType{azblob.AccessTierHot, azblob.AccessTierCool,
-		azblob.AccessTierArchive}
-
-	var tiers [len(validTiers)]string
-
-	for i, tier := range validTiers {
-		tiers[i] = string(tier)
-	}
-	return tiers[:]
-}
-
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	401, // Unauthorized (eg "Token has expired")
@@ -321,7 +308,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		BucketBased:   true,
 		SetTier:       true,
 		GetTier:       true,
-		ListTiers:     true,
 	}).Fill(f)
 	if f.root != "" {
 		f.root += "/"
@@ -1335,11 +1321,6 @@ func (o *Object) SetTier(tier string) error {
 // GetTier returns object tier in azure as string
 func (o *Object) GetTier() string {
 	return string(o.accessTier)
-}
-
-// ListTiers returns list of storage tiers supported on this object
-func (o *Object) ListTiers() []string {
-	return validAccessTiers()
 }
 
 // Check the interfaces are satisfied
