@@ -9,7 +9,7 @@ set -e
 
 # Compile the go version
 cd src
-./make.bash
+./make.bash || exit 125
 
 # Make sure we are using it
 source ~/bin/use-go1.11
