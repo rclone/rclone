@@ -423,6 +423,8 @@ func TestDirRename(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	vfs, dir, file1 := dirCreate(t, r)
+	file3 := r.WriteObject("dir/file3", "file3 contents!", t1)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file3}, []string{"dir"}, r.Fremote.Precision())
 
 	root, err := vfs.Root()
 	require.NoError(t, err)
@@ -434,11 +436,12 @@ func TestDirRename(t *testing.T) {
 	err = root.Rename("dir", "dir2", root)
 	assert.NoError(t, err)
 	checkListing(t, root, []string{"dir2,0,true"})
-	checkListing(t, dir, []string{"file1,14,false"})
+	checkListing(t, dir, []string{"file1,14,false", "file3,15,false"})
 
 	// check the underlying r.Fremote
 	file1.Path = "dir2/file1"
-	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"dir2"}, r.Fremote.Precision())
+	file3.Path = "dir2/file3"
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file3}, []string{"dir2"}, r.Fremote.Precision())
 
 	// refetch dir
 	node, err := vfs.Stat("dir2")
@@ -449,10 +452,20 @@ func TestDirRename(t *testing.T) {
 	err = dir.Rename("file1", "file2", root)
 	assert.NoError(t, err)
 	checkListing(t, root, []string{"dir2,0,true", "file2,14,false"})
-	checkListing(t, dir, []string(nil))
+	checkListing(t, dir, []string{"file3,15,false"})
 
 	// check the underlying r.Fremote
 	file1.Path = "file2"
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file3}, []string{"dir2"}, r.Fremote.Precision())
+
+	// Rename a file on top of another file
+	err = root.Rename("file2", "file3", dir)
+	assert.NoError(t, err)
+	checkListing(t, root, []string{"dir2,0,true"})
+	checkListing(t, dir, []string{"file3,14,false"})
+
+	// check the underlying r.Fremote
+	file1.Path = "dir2/file3"
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"dir2"}, r.Fremote.Precision())
 
 	// read only check
