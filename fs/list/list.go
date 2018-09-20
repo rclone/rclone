@@ -28,7 +28,7 @@ func DirSorted(f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err
 	// starting directory, otherwise ListDirSorted should not be
 	// called.
 	if !includeAll && filter.Active.ListContainsExcludeFile(entries) {
-		fs.Debugf(dir, "Excluded from sync (and deletion)")
+		fs.Debugf(dir, "Excluded")
 		return nil, nil
 	}
 	return filterAndSortDir(entries, includeAll, dir, filter.Active.IncludeObject, filter.Active.IncludeDirectory(f))
@@ -51,7 +51,7 @@ func filterAndSortDir(entries fs.DirEntries, includeAll bool, dir string,
 			// Make sure we don't delete excluded files if not required
 			if !includeAll && !IncludeObject(x) {
 				ok = false
-				fs.Debugf(x, "Excluded from sync (and deletion)")
+				fs.Debugf(x, "Excluded")
 			}
 		case fs.Directory:
 			if !includeAll {
@@ -61,7 +61,7 @@ func filterAndSortDir(entries fs.DirEntries, includeAll bool, dir string,
 				}
 				if !include {
 					ok = false
-					fs.Debugf(x, "Excluded from sync (and deletion)")
+					fs.Debugf(x, "Excluded")
 				}
 			}
 		default:
