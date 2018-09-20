@@ -359,6 +359,11 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 // Move src object to dst or fdst if nil.  If dst is nil then it uses
 // remote as the name of the new object.
 //
+// Note that you must check the destination does not exist before
+// calling this and pass it as dst.  If you pass dst=nil and the
+// destination does exist then this may create duplicates or return
+// errors.
+//
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Move(fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
