@@ -51,9 +51,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	root = path.Join(fsPath, filepath.ToSlash(root))
 	if configName == "local" {
+		root = filepath.Join(fsPath, root)
 		return fs.NewFs(root)
 	}
+	root = path.Join(fsPath, filepath.ToSlash(root))
 	return fs.NewFs(configName + ":" + root)
 }
