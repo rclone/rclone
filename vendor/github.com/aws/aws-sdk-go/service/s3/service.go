@@ -29,9 +29,9 @@ var initRequest func(*request.Request)
 
 // Service information constants
 const (
-	ServiceName = "s3"        // Service endpoint prefix API calls made to.
-	EndpointsID = ServiceName // Service ID for Regions and Endpoints metadata.
-	ServiceID   = "S3"        // ServiceID is a unique identifer of a specific service
+	ServiceName = "s3"        // Name of service.
+	EndpointsID = ServiceName // ID to lookup a service endpoint with.
+	ServiceID   = "S3"        // ServiceID is a unique identifer of a specific service.
 )
 
 // New creates a new instance of the S3 client with a session.

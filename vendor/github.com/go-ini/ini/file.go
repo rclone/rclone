@@ -237,13 +237,18 @@ func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 	for i, sname := range f.sectionList {
 		sec := f.Section(sname)
 		if len(sec.Comment) > 0 {
-			if sec.Comment[0] != '#' && sec.Comment[0] != ';' {
-				sec.Comment = "; " + sec.Comment
-			} else {
-				sec.Comment = sec.Comment[:1] + " " + strings.TrimSpace(sec.Comment[1:])
-			}
-			if _, err := buf.WriteString(sec.Comment + LineBreak); err != nil {
-				return nil, err
+			// Support multiline comments
+			lines := strings.Split(sec.Comment, LineBreak)
+			for i := range lines {
+				if lines[i][0] != '#' && lines[i][0] != ';' {
+					lines[i] = "; " + lines[i]
+				} else {
+					lines[i] = lines[i][:1] + " " + strings.TrimSpace(lines[i][1:])
+				}
+
+				if _, err := buf.WriteString(lines[i] + LineBreak); err != nil {
+					return nil, err
+				}
 			}
 		}
 
@@ -300,17 +305,19 @@ func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 				if len(indent) > 0 && sname != DEFAULT_SECTION {
 					buf.WriteString(indent)
 				}
-				if key.Comment[0] != '#' && key.Comment[0] != ';' {
-					key.Comment = "; " + key.Comment
-				} else {
-					key.Comment = key.Comment[:1] + " " + strings.TrimSpace(key.Comment[1:])
-				}
 
 				// Support multiline comments
-				key.Comment = strings.Replace(key.Comment, "\n", "\n; ", -1)
+				lines := strings.Split(key.Comment, LineBreak)
+				for i := range lines {
+					if lines[i][0] != '#' && lines[i][0] != ';' {
+						lines[i] = "; " + lines[i]
+					} else {
+						lines[i] = lines[i][:1] + " " + strings.TrimSpace(lines[i][1:])
+					}
 
-				if _, err := buf.WriteString(key.Comment + LineBreak); err != nil {
-					return nil, err
+					if _, err := buf.WriteString(lines[i] + LineBreak); err != nil {
+						return nil, err
+					}
 				}
 			}
 

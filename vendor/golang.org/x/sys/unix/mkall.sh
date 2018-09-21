@@ -59,6 +59,16 @@ _* | *_ | _)
 	echo 'undefined $GOOS_$GOARCH:' "$GOOSARCH" 1>&2
 	exit 1
 	;;
+aix_ppc)
+	mkerrors="$mkerrors -maix32"
+	mksyscall="perl mksyscall_aix.pl -aix"
+	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
+	;;
+aix_ppc64)
+	mkerrors="$mkerrors -maix64"
+	mksyscall="perl mksyscall_aix.pl -aix"
+	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
+	;;
 darwin_386)
 	mkerrors="$mkerrors -m32"
 	mksyscall="./mksyscall.pl -l32"

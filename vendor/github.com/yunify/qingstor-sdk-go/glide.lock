@@ -1,11 +1,6 @@
 hash: 6e1d4e547cdd58944ef920192480d29edd118cac0e8269d793315066d1249b4e
-updated: 2018-05-10T11:43:20.637418+08:00
+updated: 2018-07-16T14:42:51.093308+08:00
 imports:
-- name: github.com/DATA-DOG/godog
-  version: 272624afcc2fc5f818ce069e2e417e7b4fa8bb6c
-  subpackages:
-  - colors
-  - gherkin
 - name: github.com/pengsrc/go-shared
   version: db9bcfc423552eef790d989bb81ef055d0d26286
   subpackages:
@@ -18,6 +13,11 @@ imports:
   version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
   repo: https://github.com/go-yaml/yaml.git
 testImports:
+- name: github.com/DATA-DOG/godog
+  version: 623ff9946e5c72834c19a019a153b8e3a338a52c
+  subpackages:
+  - colors
+  - gherkin
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:

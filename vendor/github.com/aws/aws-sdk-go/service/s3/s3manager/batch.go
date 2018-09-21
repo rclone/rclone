@@ -338,6 +338,11 @@ func (d *BatchDelete) Delete(ctx aws.Context, iter BatchDeleteIterator) error {
 		}
 	}
 
+	// iter.Next() could return false (above) plus populate iter.Err()
+	if iter.Err() != nil {
+		errs = append(errs, newError(iter.Err(), nil, nil))
+	}
+
 	if input != nil && len(input.Delete.Objects) > 0 {
 		if err := deleteBatch(ctx, d, input, objects); err != nil {
 			errs = append(errs, err...)

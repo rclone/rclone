@@ -32,6 +32,30 @@ func New(key [8]uint32, nonce [3]uint32) *Cipher {
 	return &Cipher{key: key, nonce: nonce}
 }
 
+// ChaCha20 constants spelling "expand 32-byte k"
+const (
+	j0 uint32 = 0x61707865
+	j1 uint32 = 0x3320646e
+	j2 uint32 = 0x79622d32
+	j3 uint32 = 0x6b206574
+)
+
+func quarterRound(a, b, c, d uint32) (uint32, uint32, uint32, uint32) {
+	a += b
+	d ^= a
+	d = (d << 16) | (d >> 16)
+	c += d
+	b ^= c
+	b = (b << 12) | (b >> 20)
+	a += b
+	d ^= a
+	d = (d << 8) | (d >> 24)
+	c += d
+	b ^= c
+	b = (b << 7) | (b >> 25)
+	return a, b, c, d
+}
+
 // XORKeyStream XORs each byte in the given slice with a byte from the
 // cipher's key stream. Dst and src must overlap entirely or not at all.
 //
@@ -73,6 +97,9 @@ func (s *Cipher) XORKeyStream(dst, src []byte) {
 		return
 	}
 	if haveAsm {
+		if uint64(len(src))+uint64(s.counter)*64 > (1<<38)-64 {
+			panic("chacha20: counter overflow")
+		}
 		s.xorKeyStreamAsm(dst, src)
 		return
 	}
@@ -85,59 +112,34 @@ func (s *Cipher) XORKeyStream(dst, src []byte) {
 		copy(s.buf[len(s.buf)-64:], src[fin:])
 	}
 
-	// qr calculates a quarter round
-	qr := func(a, b, c, d uint32) (uint32, uint32, uint32, uint32) {
-		a += b
-		d ^= a
-		d = (d << 16) | (d >> 16)
-		c += d
-		b ^= c
-		b = (b << 12) | (b >> 20)
-		a += b
-		d ^= a
-		d = (d << 8) | (d >> 24)
-		c += d
-		b ^= c
-		b = (b << 7) | (b >> 25)
-		return a, b, c, d
-	}
-
-	// ChaCha20 constants
-	const (
-		j0 = 0x61707865
-		j1 = 0x3320646e
-		j2 = 0x79622d32
-		j3 = 0x6b206574
-	)
-
 	// pre-calculate most of the first round
-	s1, s5, s9, s13 := qr(j1, s.key[1], s.key[5], s.nonce[0])
-	s2, s6, s10, s14 := qr(j2, s.key[2], s.key[6], s.nonce[1])
-	s3, s7, s11, s15 := qr(j3, s.key[3], s.key[7], s.nonce[2])
+	s1, s5, s9, s13 := quarterRound(j1, s.key[1], s.key[5], s.nonce[0])
+	s2, s6, s10, s14 := quarterRound(j2, s.key[2], s.key[6], s.nonce[1])
+	s3, s7, s11, s15 := quarterRound(j3, s.key[3], s.key[7], s.nonce[2])
 
 	n := len(src)
 	src, dst = src[:n:n], dst[:n:n] // BCE hint
 	for i := 0; i < n; i += 64 {
 		// calculate the remainder of the first round
-		s0, s4, s8, s12 := qr(j0, s.key[0], s.key[4], s.counter)
+		s0, s4, s8, s12 := quarterRound(j0, s.key[0], s.key[4], s.counter)
 
 		// execute the second round
-		x0, x5, x10, x15 := qr(s0, s5, s10, s15)
-		x1, x6, x11, x12 := qr(s1, s6, s11, s12)
-		x2, x7, x8, x13 := qr(s2, s7, s8, s13)
-		x3, x4, x9, x14 := qr(s3, s4, s9, s14)
+		x0, x5, x10, x15 := quarterRound(s0, s5, s10, s15)
+		x1, x6, x11, x12 := quarterRound(s1, s6, s11, s12)
+		x2, x7, x8, x13 := quarterRound(s2, s7, s8, s13)
+		x3, x4, x9, x14 := quarterRound(s3, s4, s9, s14)
 
 		// execute the remaining 18 rounds
 		for i := 0; i < 9; i++ {
-			x0, x4, x8, x12 = qr(x0, x4, x8, x12)
-			x1, x5, x9, x13 = qr(x1, x5, x9, x13)
-			x2, x6, x10, x14 = qr(x2, x6, x10, x14)
-			x3, x7, x11, x15 = qr(x3, x7, x11, x15)
+			x0, x4, x8, x12 = quarterRound(x0, x4, x8, x12)
+			x1, x5, x9, x13 = quarterRound(x1, x5, x9, x13)
+			x2, x6, x10, x14 = quarterRound(x2, x6, x10, x14)
+			x3, x7, x11, x15 = quarterRound(x3, x7, x11, x15)
 
-			x0, x5, x10, x15 = qr(x0, x5, x10, x15)
-			x1, x6, x11, x12 = qr(x1, x6, x11, x12)
-			x2, x7, x8, x13 = qr(x2, x7, x8, x13)
-			x3, x4, x9, x14 = qr(x3, x4, x9, x14)
+			x0, x5, x10, x15 = quarterRound(x0, x5, x10, x15)
+			x1, x6, x11, x12 = quarterRound(x1, x6, x11, x12)
+			x2, x7, x8, x13 = quarterRound(x2, x7, x8, x13)
+			x3, x4, x9, x14 = quarterRound(x3, x4, x9, x14)
 		}
 
 		x0 += j0
@@ -233,4 +235,30 @@ func XORKeyStream(out, in []byte, counter *[16]byte, key *[32]byte) {
 		counter: binary.LittleEndian.Uint32(counter[0:4]),
 	}
 	s.XORKeyStream(out, in)
+}
+
+// HChaCha20 uses the ChaCha20 core to generate a derived key from a key and a
+// nonce. It should only be used as part of the XChaCha20 construction.
+func HChaCha20(key *[8]uint32, nonce *[4]uint32) [8]uint32 {
+	x0, x1, x2, x3 := j0, j1, j2, j3
+	x4, x5, x6, x7 := key[0], key[1], key[2], key[3]
+	x8, x9, x10, x11 := key[4], key[5], key[6], key[7]
+	x12, x13, x14, x15 := nonce[0], nonce[1], nonce[2], nonce[3]
+
+	for i := 0; i < 10; i++ {
+		x0, x4, x8, x12 = quarterRound(x0, x4, x8, x12)
+		x1, x5, x9, x13 = quarterRound(x1, x5, x9, x13)
+		x2, x6, x10, x14 = quarterRound(x2, x6, x10, x14)
+		x3, x7, x11, x15 = quarterRound(x3, x7, x11, x15)
+
+		x0, x5, x10, x15 = quarterRound(x0, x5, x10, x15)
+		x1, x6, x11, x12 = quarterRound(x1, x6, x11, x12)
+		x2, x7, x8, x13 = quarterRound(x2, x7, x8, x13)
+		x3, x4, x9, x14 = quarterRound(x3, x4, x9, x14)
+	}
+
+	var out [8]uint32
+	out[0], out[1], out[2], out[3] = x0, x1, x2, x3
+	out[4], out[5], out[6], out[7] = x12, x13, x14, x15
+	return out
 }

@@ -22,10 +22,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"mime"
 	"net/http"
 	"net/url"
-	"path"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -134,16 +132,6 @@ func (qb *QingStorBuilder) parseURL() error {
 }
 
 func (qb *QingStorBuilder) setupHeaders(httpRequest *http.Request) error {
-	method := httpRequest.Method
-	if method == "POST" || method == "PUT" || method == "DELETE" {
-		if httpRequest.Header.Get("Content-Type") == "" {
-			mimeType := mime.TypeByExtension(path.Ext(httpRequest.URL.Path))
-			if mimeType != "" {
-				httpRequest.Header.Set("Content-Type", mimeType)
-			}
-		}
-	}
-
 	if httpRequest.Header.Get("User-Agent") == "" {
 		version := fmt.Sprintf(`Go v%s`, strings.Replace(runtime.Version(), "go", "", -1))
 		system := fmt.Sprintf(`%s_%s_%s`, runtime.GOOS, runtime.GOARCH, runtime.Compiler)

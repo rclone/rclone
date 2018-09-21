@@ -109,7 +109,7 @@ func Transform(bc cipher.Block, tweak []byte, inputData []byte, direction direct
 	// make following the paper easy.
 	T := tweak
 	// In the paper, the plaintext data is called "P" and the ciphertext is
-	// called "C". Because encryption and decryption are virtually indentical,
+	// called "C". Because encryption and decryption are virtually identical,
 	// we share the code and always call the input data "P" and the output data
 	// "C", regardless of the direction.
 	P := inputData

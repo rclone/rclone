@@ -38,6 +38,7 @@ There are also some interesting projects using termbox-go:
  - [gotypist](https://github.com/pb-/gotypist) is a fun touch-typing tutor following Steve Yegge's method.
  - [cointop](https://github.com/miguelmota/cointop) is an interactive terminal based UI application for tracking cryptocurrencies.
  - [pexpo](https://github.com/nnao45/pexpo) is a terminal sending ping tool written in Go.
-
+ - [jid](https://github.com/simeji/jid) is an interactive JSON drill down tool using filtering queries like jq.
+ 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)

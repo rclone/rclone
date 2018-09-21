@@ -241,6 +241,8 @@ type Uploader struct {
 	// E.g: 5GB file, with MaxUploadParts set to 100, will upload the file
 	// as 100, 50MB parts.
 	// With a limited of s3.MaxUploadParts (10,000 parts).
+	//
+	// Defaults to package const's MaxUploadParts value.
 	MaxUploadParts int
 
 	// The client to use when uploading to S3.
@@ -357,7 +359,7 @@ func (u Uploader) Upload(input *UploadInput, options ...func(*Uploader)) (*Uploa
 //
 // UploadWithContext is the same as Upload with the additional support for
 // Context input parameters. The Context must not be nil. A nil Context will
-// cause a panic. Use the context to add deadlining, timeouts, ect. The
+// cause a panic. Use the context to add deadlining, timeouts, etc. The
 // UploadWithContext may create sub-contexts for individual underlying requests.
 //
 // Additional functional options can be provided to configure the individual
@@ -395,7 +397,7 @@ func (u Uploader) UploadWithContext(ctx aws.Context, input *UploadInput, opts ..
 //		},
 //	}
 //
-//	iter := &s3managee.UploadObjectsIterator{Objects: objects}
+//	iter := &s3manager.UploadObjectsIterator{Objects: objects}
 //	if err := svc.UploadWithIterator(aws.BackgroundContext(), iter); err != nil {
 //		return err
 //	}
@@ -476,6 +478,9 @@ func (u *uploader) init() {
 	}
 	if u.cfg.PartSize == 0 {
 		u.cfg.PartSize = DefaultUploadPartSize
+	}
+	if u.cfg.MaxUploadParts == 0 {
+		u.cfg.MaxUploadParts = MaxUploadParts
 	}
 
 	u.bufferPool = sync.Pool{

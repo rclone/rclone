@@ -209,6 +209,110 @@ type DeleteBucketExternalMirrorOutput struct {
 	RequestID *string `location:"requestID"`
 }
 
+// DeleteLifecycle does Delete Lifecycle information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/lifecycle/delete_lifecycle.html
+func (s *Bucket) DeleteLifecycle() (*DeleteBucketLifecycleOutput, error) {
+	r, x, err := s.DeleteLifecycleRequest()
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// DeleteLifecycleRequest creates request and output object of DeleteBucketLifecycle.
+func (s *Bucket) DeleteLifecycleRequest() (*request.Request, *DeleteBucketLifecycleOutput, error) {
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "DELETE Bucket Lifecycle",
+		RequestMethod: "DELETE",
+		RequestURI:    "/<bucket-name>?lifecycle",
+		StatusCodes: []int{
+			204, // Lifecycle deleted
+		},
+	}
+
+	x := &DeleteBucketLifecycleOutput{}
+	r, err := request.New(o, nil, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// DeleteBucketLifecycleOutput presents output for DeleteBucketLifecycle.
+type DeleteBucketLifecycleOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+}
+
+// DeleteNotification does Delete Notification information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/notification/delete_notification.html
+func (s *Bucket) DeleteNotification() (*DeleteBucketNotificationOutput, error) {
+	r, x, err := s.DeleteNotificationRequest()
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// DeleteNotificationRequest creates request and output object of DeleteBucketNotification.
+func (s *Bucket) DeleteNotificationRequest() (*request.Request, *DeleteBucketNotificationOutput, error) {
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "DELETE Bucket Notification",
+		RequestMethod: "DELETE",
+		RequestURI:    "/<bucket-name>?notification",
+		StatusCodes: []int{
+			204, // notification deleted
+		},
+	}
+
+	x := &DeleteBucketNotificationOutput{}
+	r, err := request.New(o, nil, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// DeleteBucketNotificationOutput presents output for DeleteBucketNotification.
+type DeleteBucketNotificationOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+}
+
 // DeletePolicy does Delete policy information of the bucket.
 // Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/policy/delete_policy.html
 func (s *Bucket) DeletePolicy() (*DeleteBucketPolicyOutput, error) {
@@ -517,6 +621,116 @@ type GetBucketExternalMirrorOutput struct {
 
 	// Source site url
 	SourceSite *string `json:"source_site,omitempty" name:"source_site" location:"elements"`
+}
+
+// GetLifecycle does Get Lifecycle information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/lifecycle/get_lifecycle.html
+func (s *Bucket) GetLifecycle() (*GetBucketLifecycleOutput, error) {
+	r, x, err := s.GetLifecycleRequest()
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// GetLifecycleRequest creates request and output object of GetBucketLifecycle.
+func (s *Bucket) GetLifecycleRequest() (*request.Request, *GetBucketLifecycleOutput, error) {
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "GET Bucket Lifecycle",
+		RequestMethod: "GET",
+		RequestURI:    "/<bucket-name>?lifecycle",
+		StatusCodes: []int{
+			200, // OK
+		},
+	}
+
+	x := &GetBucketLifecycleOutput{}
+	r, err := request.New(o, nil, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// GetBucketLifecycleOutput presents output for GetBucketLifecycle.
+type GetBucketLifecycleOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+
+	// Bucket Lifecycle rule
+	Rule []*RuleType `json:"rule,omitempty" name:"rule" location:"elements"`
+}
+
+// GetNotification does Get Notification information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/notification/get_notification.html
+func (s *Bucket) GetNotification() (*GetBucketNotificationOutput, error) {
+	r, x, err := s.GetNotificationRequest()
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// GetNotificationRequest creates request and output object of GetBucketNotification.
+func (s *Bucket) GetNotificationRequest() (*request.Request, *GetBucketNotificationOutput, error) {
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "GET Bucket Notification",
+		RequestMethod: "GET",
+		RequestURI:    "/<bucket-name>?notification",
+		StatusCodes: []int{
+			200, // OK
+		},
+	}
+
+	x := &GetBucketNotificationOutput{}
+	r, err := request.New(o, nil, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// GetBucketNotificationOutput presents output for GetBucketNotification.
+type GetBucketNotificationOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+
+	// Bucket Notification
+	Notifications []*NotificationType `json:"notifications,omitempty" name:"notifications" location:"elements"`
 }
 
 // GetPolicy does Get policy information of the bucket.
@@ -1173,6 +1387,174 @@ func (v *PutBucketExternalMirrorInput) Validate() error {
 
 // PutBucketExternalMirrorOutput presents output for PutBucketExternalMirror.
 type PutBucketExternalMirrorOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+}
+
+// PutLifecycle does Set Lifecycle information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/lifecycle/put_lifecycle.html
+func (s *Bucket) PutLifecycle(input *PutBucketLifecycleInput) (*PutBucketLifecycleOutput, error) {
+	r, x, err := s.PutLifecycleRequest(input)
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// PutLifecycleRequest creates request and output object of PutBucketLifecycle.
+func (s *Bucket) PutLifecycleRequest(input *PutBucketLifecycleInput) (*request.Request, *PutBucketLifecycleOutput, error) {
+
+	if input == nil {
+		input = &PutBucketLifecycleInput{}
+	}
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "PUT Bucket Lifecycle",
+		RequestMethod: "PUT",
+		RequestURI:    "/<bucket-name>?lifecycle",
+		StatusCodes: []int{
+			200, // OK
+		},
+	}
+
+	x := &PutBucketLifecycleOutput{}
+	r, err := request.New(o, input, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// PutBucketLifecycleInput presents input for PutBucketLifecycle.
+type PutBucketLifecycleInput struct {
+	// Bucket Lifecycle rule
+	Rule []*RuleType `json:"rule" name:"rule" location:"elements"` // Required
+
+}
+
+// Validate validates the input for PutBucketLifecycle.
+func (v *PutBucketLifecycleInput) Validate() error {
+
+	if len(v.Rule) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "Rule",
+			ParentName:    "PutBucketLifecycleInput",
+		}
+	}
+
+	if len(v.Rule) > 0 {
+		for _, property := range v.Rule {
+			if err := property.Validate(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// PutBucketLifecycleOutput presents output for PutBucketLifecycle.
+type PutBucketLifecycleOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+}
+
+// PutNotification does Set Notification information of the bucket.
+// Documentation URL: https://docs.qingcloud.com/qingstor/api/bucket/notification/put_notification.html
+func (s *Bucket) PutNotification(input *PutBucketNotificationInput) (*PutBucketNotificationOutput, error) {
+	r, x, err := s.PutNotificationRequest(input)
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// PutNotificationRequest creates request and output object of PutBucketNotification.
+func (s *Bucket) PutNotificationRequest(input *PutBucketNotificationInput) (*request.Request, *PutBucketNotificationOutput, error) {
+
+	if input == nil {
+		input = &PutBucketNotificationInput{}
+	}
+
+	properties := *s.Properties
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "PUT Bucket Notification",
+		RequestMethod: "PUT",
+		RequestURI:    "/<bucket-name>?notification",
+		StatusCodes: []int{
+			200, // OK
+		},
+	}
+
+	x := &PutBucketNotificationOutput{}
+	r, err := request.New(o, input, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// PutBucketNotificationInput presents input for PutBucketNotification.
+type PutBucketNotificationInput struct {
+	// Bucket Notification
+	Notifications []*NotificationType `json:"notifications" name:"notifications" location:"elements"` // Required
+
+}
+
+// Validate validates the input for PutBucketNotification.
+func (v *PutBucketNotificationInput) Validate() error {
+
+	if len(v.Notifications) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "Notifications",
+			ParentName:    "PutBucketNotificationInput",
+		}
+	}
+
+	if len(v.Notifications) > 0 {
+		for _, property := range v.Notifications {
+			if err := property.Validate(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// PutBucketNotificationOutput presents output for PutBucketNotification.
+type PutBucketNotificationOutput struct {
 	StatusCode *int `location:"statusCode"`
 
 	RequestID *string `location:"requestID"`

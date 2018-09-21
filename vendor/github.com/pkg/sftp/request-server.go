@@ -2,7 +2,6 @@ package sftp
 
 import (
 	"context"
-	"encoding"
 	"io"
 	"os"
 	"path"
@@ -106,7 +105,7 @@ func (rs *RequestServer) Serve() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var wg sync.WaitGroup
-	runWorker := func(ch requestChan) {
+	runWorker := func(ch chan orderedRequest) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -143,7 +142,7 @@ func (rs *RequestServer) Serve() error {
 			}
 		}
 
-		pktChan <- pkt
+		pktChan <- rs.pktMgr.newOrderedRequest(pkt)
 	}
 
 	close(pktChan) // shuts down sftpServerWorkers
@@ -160,13 +159,13 @@ func (rs *RequestServer) Serve() error {
 }
 
 func (rs *RequestServer) packetWorker(
-	ctx context.Context, pktChan chan requestPacket,
+	ctx context.Context, pktChan chan orderedRequest,
 ) error {
 	for pkt := range pktChan {
 		var rpkt responsePacket
-		switch pkt := pkt.(type) {
+		switch pkt := pkt.requestPacket.(type) {
 		case *sshFxInitPacket:
-			rpkt = sshFxVersionPacket{sftpProtocolVersion, nil}
+			rpkt = sshFxVersionPacket{Version: sftpProtocolVersion}
 		case *sshFxpClosePacket:
 			handle := pkt.getHandle()
 			rpkt = statusFromError(pkt, rs.closeRequest(handle))
@@ -178,7 +177,7 @@ func (rs *RequestServer) packetWorker(
 			if stat, ok := rpkt.(*sshFxpStatResponse); ok {
 				if stat.info.IsDir() {
 					handle := rs.nextRequest(request)
-					rpkt = sshFxpHandlePacket{pkt.id(), handle}
+					rpkt = sshFxpHandlePacket{ID: pkt.id(), Handle: handle}
 				} else {
 					rpkt = statusFromError(pkt, &os.PathError{
 						Path: request.Filepath, Err: syscall.ENOTDIR})
@@ -187,7 +186,7 @@ func (rs *RequestServer) packetWorker(
 		case *sshFxpOpenPacket:
 			request := requestFromPacket(ctx, pkt)
 			handle := rs.nextRequest(request)
-			rpkt = sshFxpHandlePacket{pkt.id(), handle}
+			rpkt = sshFxpHandlePacket{ID: pkt.id(), Handle: handle}
 			if pkt.hasPflags(ssh_FXF_CREAT) {
 				if p := request.call(rs.Handlers, pkt); !statusOk(p) {
 					rpkt = p // if error in write, return it
@@ -209,10 +208,8 @@ func (rs *RequestServer) packetWorker(
 			return errors.Errorf("unexpected packet type %T", pkt)
 		}
 
-		err := rs.sendPacket(rpkt)
-		if err != nil {
-			return err
-		}
+		rs.pktMgr.readyPacket(
+			rs.pktMgr.newOrderedResponse(rpkt, pkt.orderId()))
 	}
 	return nil
 }
@@ -243,14 +240,4 @@ func cleanPath(p string) string {
 		p = "/" + p
 	}
 	return path.Clean(p)
-}
-
-// Wrap underlying connection methods to use packetManager
-func (rs *RequestServer) sendPacket(m encoding.BinaryMarshaler) error {
-	if pkt, ok := m.(responsePacket); ok {
-		rs.pktMgr.readyPacket(pkt)
-	} else {
-		return errors.Errorf("unexpected packet type %T", m)
-	}
-	return nil
 }
