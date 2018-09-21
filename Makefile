@@ -99,8 +99,8 @@ release_dep:
 # Update dependencies
 update:
 	GO111MODULE=on go get -u ./...
-	GO111MODULE=on go tidy
-	GO111MODULE=on go vendor
+	GO111MODULE=on go mod tidy
+	GO111MODULE=on go mod vendor
 
 doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 
