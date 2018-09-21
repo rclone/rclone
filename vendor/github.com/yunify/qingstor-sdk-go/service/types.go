@@ -33,6 +33,26 @@ type Properties struct {
 	Zone *string `json:"zone" name:"zone"`
 }
 
+// AbortIncompleteMultipartUploadType presents AbortIncompleteMultipartUpload.
+type AbortIncompleteMultipartUploadType struct {
+	// days after initiation
+	DaysAfterInitiation *int `json:"days_after_initiation" name:"days_after_initiation"` // Required
+
+}
+
+// Validate validates the AbortIncompleteMultipartUpload.
+func (v *AbortIncompleteMultipartUploadType) Validate() error {
+
+	if v.DaysAfterInitiation == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "DaysAfterInitiation",
+			ParentName:    "AbortIncompleteMultipartUpload",
+		}
+	}
+
+	return nil
+}
+
 // ACLType presents ACL.
 type ACLType struct {
 	Grantee *GranteeType `json:"grantee" name:"grantee"` // Required
@@ -102,6 +122,27 @@ type BucketType struct {
 
 // Validate validates the Bucket.
 func (v *BucketType) Validate() error {
+
+	return nil
+}
+
+// CloudfuncArgsType presents CloudfuncArgs.
+type CloudfuncArgsType struct {
+	Action     *string `json:"action" name:"action"` // Required
+	KeyPrefix  *string `json:"key_prefix,omitempty" name:"key_prefix" default:"gen"`
+	KeySeprate *string `json:"key_seprate,omitempty" name:"key_seprate" default:"_"`
+	SaveBucket *string `json:"save_bucket,omitempty" name:"save_bucket"`
+}
+
+// Validate validates the CloudfuncArgs.
+func (v *CloudfuncArgsType) Validate() error {
+
+	if v.Action == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Action",
+			ParentName:    "CloudfuncArgs",
+		}
+	}
 
 	return nil
 }
@@ -179,6 +220,38 @@ func (v *CORSRuleType) Validate() error {
 		return errors.ParameterRequiredError{
 			ParameterName: "AllowedOrigin",
 			ParentName:    "CORSRule",
+		}
+	}
+
+	return nil
+}
+
+// ExpirationType presents Expiration.
+type ExpirationType struct {
+	// days
+	Days *int `json:"days,omitempty" name:"days"`
+}
+
+// Validate validates the Expiration.
+func (v *ExpirationType) Validate() error {
+
+	return nil
+}
+
+// FilterType presents Filter.
+type FilterType struct {
+	// Prefix matching
+	Prefix *string `json:"prefix" name:"prefix"` // Required
+
+}
+
+// Validate validates the Filter.
+func (v *FilterType) Validate() error {
+
+	if v.Prefix == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Prefix",
+			ParentName:    "Filter",
 		}
 	}
 
@@ -306,6 +379,75 @@ func (v *NotIPAddressType) Validate() error {
 	return nil
 }
 
+// NotificationType presents Notification.
+type NotificationType struct {
+	// Event processing service
+	// Cloudfunc's available values: tupu-porn, notifier, image
+	Cloudfunc     *string            `json:"cloudfunc" name:"cloudfunc"` // Required
+	CloudfuncArgs *CloudfuncArgsType `json:"cloudfunc_args,omitempty" name:"cloudfunc_args"`
+	// event types
+	EventTypes []*string `json:"event_types" name:"event_types"` // Required
+	// notification id
+	ID *string `json:"id" name:"id"` // Required
+	// notify url
+	NotifyURL *string `json:"notify_url,omitempty" name:"notify_url"`
+	// Object name matching rule
+	ObjectFilters []*string `json:"object_filters,omitempty" name:"object_filters"`
+}
+
+// Validate validates the Notification.
+func (v *NotificationType) Validate() error {
+
+	if v.Cloudfunc == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Cloudfunc",
+			ParentName:    "Notification",
+		}
+	}
+
+	if v.Cloudfunc != nil {
+		cloudfuncValidValues := []string{"tupu-porn", "notifier", "image"}
+		cloudfuncParameterValue := fmt.Sprint(*v.Cloudfunc)
+
+		cloudfuncIsValid := false
+		for _, value := range cloudfuncValidValues {
+			if value == cloudfuncParameterValue {
+				cloudfuncIsValid = true
+			}
+		}
+
+		if !cloudfuncIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "Cloudfunc",
+				ParameterValue: cloudfuncParameterValue,
+				AllowedValues:  cloudfuncValidValues,
+			}
+		}
+	}
+
+	if v.CloudfuncArgs != nil {
+		if err := v.CloudfuncArgs.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if len(v.EventTypes) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "EventTypes",
+			ParentName:    "Notification",
+		}
+	}
+
+	if v.ID == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "ID",
+			ParentName:    "Notification",
+		}
+	}
+
+	return nil
+}
+
 // ObjectPartType presents ObjectPart.
 type ObjectPartType struct {
 	// Object part created time
@@ -341,6 +483,90 @@ type OwnerType struct {
 
 // Validate validates the Owner.
 func (v *OwnerType) Validate() error {
+
+	return nil
+}
+
+// RuleType presents Rule.
+type RuleType struct {
+	AbortIncompleteMultipartUpload *AbortIncompleteMultipartUploadType `json:"abort_incomplete_multipart_upload,omitempty" name:"abort_incomplete_multipart_upload"`
+	Expiration                     *ExpirationType                     `json:"expiration,omitempty" name:"expiration"`
+	Filter                         *FilterType                         `json:"filter" name:"filter"` // Required
+	// rule id
+	ID *string `json:"id" name:"id"` // Required
+	// rule status
+	// Status's available values: enabled, disabled
+	Status     *string         `json:"status" name:"status"` // Required
+	Transition *TransitionType `json:"transition,omitempty" name:"transition"`
+}
+
+// Validate validates the Rule.
+func (v *RuleType) Validate() error {
+
+	if v.AbortIncompleteMultipartUpload != nil {
+		if err := v.AbortIncompleteMultipartUpload.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if v.Expiration != nil {
+		if err := v.Expiration.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if v.Filter != nil {
+		if err := v.Filter.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if v.Filter == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Filter",
+			ParentName:    "Rule",
+		}
+	}
+
+	if v.ID == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "ID",
+			ParentName:    "Rule",
+		}
+	}
+
+	if v.Status == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Status",
+			ParentName:    "Rule",
+		}
+	}
+
+	if v.Status != nil {
+		statusValidValues := []string{"enabled", "disabled"}
+		statusParameterValue := fmt.Sprint(*v.Status)
+
+		statusIsValid := false
+		for _, value := range statusValidValues {
+			if value == statusParameterValue {
+				statusIsValid = true
+			}
+		}
+
+		if !statusIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "Status",
+				ParameterValue: statusParameterValue,
+				AllowedValues:  statusValidValues,
+			}
+		}
+	}
+
+	if v.Transition != nil {
+		if err := v.Transition.Validate(); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -442,6 +668,28 @@ type StringNotLikeType struct {
 
 // Validate validates the StringNotLike.
 func (v *StringNotLikeType) Validate() error {
+
+	return nil
+}
+
+// TransitionType presents Transition.
+type TransitionType struct {
+	// days
+	Days *int `json:"days,omitempty" name:"days"`
+	// storage class
+	StorageClass *int `json:"storage_class" name:"storage_class"` // Required
+
+}
+
+// Validate validates the Transition.
+func (v *TransitionType) Validate() error {
+
+	if v.StorageClass == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "StorageClass",
+			ParentName:    "Transition",
+		}
+	}
 
 	return nil
 }

@@ -98,7 +98,7 @@ test-race:
 .PHONY: integration-test
 integration-test:
 	@echo "Run integration test"
-	pushd "./test"; go run *.go; popd
+	pushd "./test"; go test; popd
 	@echo "Done"
 
 .PHONY: release

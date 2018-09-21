@@ -4,8 +4,8 @@ go_import_path: github.com/pkg/sftp
 # current and previous stable releases, plus tip
 # remember to exclude previous and tip for macs below
 go:
-  - 1.9.x
   - 1.10.x
+  - 1.11.x
   - tip
 
 os:
@@ -15,7 +15,7 @@ os:
 matrix:
   exclude:
     - os: osx
-      go: 1.9.x
+      go: 1.10.x
     - os: osx
       go: tip
 

@@ -39,6 +39,8 @@ type Downloader struct {
 	// The number of goroutines to spin up in parallel when sending parts.
 	// If this is set to zero, the DefaultDownloadConcurrency value will be used.
 	//
+	// Concurrency of 1 will download the parts sequentially.
+	//
 	// Concurrency is ignored if the Range input parameter is provided.
 	Concurrency int
 
@@ -135,6 +137,9 @@ type maxRetrier interface {
 // The w io.WriterAt can be satisfied by an os.File to do multipart concurrent
 // downloads, or in memory []byte wrapper using aws.WriteAtBuffer.
 //
+// Specifying a Downloader.Concurrency of 1 will cause the Downloader to
+// download the parts from S3 sequentially.
+//
 // If the GetObjectInput's Range value is provided that will cause the downloader
 // to perform a single GetObjectInput request for that object's range. This will
 // caused the part size, and concurrency configurations to be ignored.
@@ -147,7 +152,7 @@ func (d Downloader) Download(w io.WriterAt, input *s3.GetObjectInput, options ..
 //
 // DownloadWithContext is the same as Download with the additional support for
 // Context input parameters. The Context must not be nil. A nil Context will
-// cause a panic. Use the Context to add deadlining, timeouts, ect. The
+// cause a panic. Use the Context to add deadlining, timeouts, etc. The
 // DownloadWithContext may create sub-contexts for individual underlying
 // requests.
 //
@@ -159,6 +164,9 @@ func (d Downloader) Download(w io.WriterAt, input *s3.GetObjectInput, options ..
 //
 // The w io.WriterAt can be satisfied by an os.File to do multipart concurrent
 // downloads, or in memory []byte wrapper using aws.WriteAtBuffer.
+//
+// Specifying a Downloader.Concurrency of 1 will cause the Downloader to
+// download the parts from S3 sequentially.
 //
 // It is safe to call this method concurrently across goroutines.
 //
@@ -207,14 +215,14 @@ func (d Downloader) DownloadWithContext(ctx aws.Context, w io.WriterAt, input *s
 //
 //	objects := []s3manager.BatchDownloadObject {
 //		{
-//			Input: &s3.GetObjectInput {
+//			Object: &s3.GetObjectInput {
 //				Bucket: aws.String("bucket"),
 //				Key: aws.String("foo"),
 //			},
 //			Writer: fooFile,
 //		},
 //		{
-//			Input: &s3.GetObjectInput {
+//			Object: &s3.GetObjectInput {
 //				Bucket: aws.String("bucket"),
 //				Key: aws.String("bar"),
 //			},

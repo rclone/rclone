@@ -66,7 +66,7 @@ func (svr *Server) getHandle(handle string) (*os.File, bool) {
 type serverRespondablePacket interface {
 	encoding.BinaryUnmarshaler
 	id() uint32
-	respond(svr *Server) error
+	respond(svr *Server) responsePacket
 }
 
 // NewServer creates a new Server instance around the provided streams, serving
@@ -123,12 +123,11 @@ type rxPacket struct {
 }
 
 // Up to N parallel servers
-func (svr *Server) sftpServerWorker(pktChan chan requestPacket) error {
+func (svr *Server) sftpServerWorker(pktChan chan orderedRequest) error {
 	for pkt := range pktChan {
-
 		// readonly checks
 		readonly := true
-		switch pkt := pkt.(type) {
+		switch pkt := pkt.requestPacket.(type) {
 		case notReadOnly:
 			readonly = false
 		case *sshFxpOpenPacket:
@@ -140,9 +139,9 @@ func (svr *Server) sftpServerWorker(pktChan chan requestPacket) error {
 		// If server is operating read-only and a write operation is requested,
 		// return permission denied
 		if !readonly && svr.readOnly {
-			if err := svr.sendError(pkt, syscall.EPERM); err != nil {
-				return errors.Wrap(err, "failed to send read only packet response")
-			}
+			svr.sendPacket(orderedResponse{
+				responsePacket: statusFromError(pkt, syscall.EPERM),
+				orderid:        pkt.orderId()})
 			continue
 		}
 
@@ -153,141 +152,145 @@ func (svr *Server) sftpServerWorker(pktChan chan requestPacket) error {
 	return nil
 }
 
-func handlePacket(s *Server, p interface{}) error {
-	switch p := p.(type) {
+func handlePacket(s *Server, p orderedRequest) error {
+	var rpkt responsePacket
+	switch p := p.requestPacket.(type) {
 	case *sshFxInitPacket:
-		return s.sendPacket(sshFxVersionPacket{sftpProtocolVersion, nil})
+		rpkt = sshFxVersionPacket{Version: sftpProtocolVersion}
 	case *sshFxpStatPacket:
 		// stat the requested file
 		info, err := os.Stat(p.Path)
-		if err != nil {
-			return s.sendError(p, err)
-		}
-		return s.sendPacket(sshFxpStatResponse{
+		rpkt = sshFxpStatResponse{
 			ID:   p.ID,
 			info: info,
-		})
+		}
+		if err != nil {
+			rpkt = statusFromError(p, err)
+		}
 	case *sshFxpLstatPacket:
 		// stat the requested file
 		info, err := os.Lstat(p.Path)
-		if err != nil {
-			return s.sendError(p, err)
-		}
-		return s.sendPacket(sshFxpStatResponse{
+		rpkt = sshFxpStatResponse{
 			ID:   p.ID,
 			info: info,
-		})
+		}
+		if err != nil {
+			rpkt = statusFromError(p, err)
+		}
 	case *sshFxpFstatPacket:
 		f, ok := s.getHandle(p.Handle)
-		if !ok {
-			return s.sendError(p, syscall.EBADF)
+		var err error = syscall.EBADF
+		var info os.FileInfo
+		if ok {
+			info, err = f.Stat()
+			rpkt = sshFxpStatResponse{
+				ID:   p.ID,
+				info: info,
+			}
 		}
-
-		info, err := f.Stat()
 		if err != nil {
-			return s.sendError(p, err)
+			rpkt = statusFromError(p, err)
 		}
-
-		return s.sendPacket(sshFxpStatResponse{
-			ID:   p.ID,
-			info: info,
-		})
 	case *sshFxpMkdirPacket:
 		// TODO FIXME: ignore flags field
 		err := os.Mkdir(p.Path, 0755)
-		return s.sendError(p, err)
+		rpkt = statusFromError(p, err)
 	case *sshFxpRmdirPacket:
 		err := os.Remove(p.Path)
-		return s.sendError(p, err)
+		rpkt = statusFromError(p, err)
 	case *sshFxpRemovePacket:
 		err := os.Remove(p.Filename)
-		return s.sendError(p, err)
+		rpkt = statusFromError(p, err)
 	case *sshFxpRenamePacket:
 		err := os.Rename(p.Oldpath, p.Newpath)
-		return s.sendError(p, err)
+		rpkt = statusFromError(p, err)
 	case *sshFxpSymlinkPacket:
 		err := os.Symlink(p.Targetpath, p.Linkpath)
-		return s.sendError(p, err)
+		rpkt = statusFromError(p, err)
 	case *sshFxpClosePacket:
-		return s.sendError(p, s.closeHandle(p.Handle))
+		rpkt = statusFromError(p, s.closeHandle(p.Handle))
 	case *sshFxpReadlinkPacket:
 		f, err := os.Readlink(p.Path)
-		if err != nil {
-			return s.sendError(p, err)
-		}
-
-		return s.sendPacket(sshFxpNamePacket{
+		rpkt = sshFxpNamePacket{
 			ID: p.ID,
 			NameAttrs: []sshFxpNameAttr{{
 				Name:     f,
 				LongName: f,
 				Attrs:    emptyFileStat,
 			}},
-		})
-
+		}
+		if err != nil {
+			rpkt = statusFromError(p, err)
+		}
 	case *sshFxpRealpathPacket:
 		f, err := filepath.Abs(p.Path)
-		if err != nil {
-			return s.sendError(p, err)
-		}
 		f = cleanPath(f)
-		return s.sendPacket(sshFxpNamePacket{
+		rpkt = sshFxpNamePacket{
 			ID: p.ID,
 			NameAttrs: []sshFxpNameAttr{{
 				Name:     f,
 				LongName: f,
 				Attrs:    emptyFileStat,
 			}},
-		})
+		}
+		if err != nil {
+			rpkt = statusFromError(p, err)
+		}
 	case *sshFxpOpendirPacket:
 		if stat, err := os.Stat(p.Path); err != nil {
-			return s.sendError(p, err)
+			rpkt = statusFromError(p, err)
 		} else if !stat.IsDir() {
-			return s.sendError(p, &os.PathError{
+			rpkt = statusFromError(p, &os.PathError{
 				Path: p.Path, Err: syscall.ENOTDIR})
+		} else {
+			rpkt = sshFxpOpenPacket{
+				ID:     p.ID,
+				Path:   p.Path,
+				Pflags: ssh_FXF_READ,
+			}.respond(s)
 		}
-		return sshFxpOpenPacket{
-			ID:     p.ID,
-			Path:   p.Path,
-			Pflags: ssh_FXF_READ,
-		}.respond(s)
 	case *sshFxpReadPacket:
+		var err error = syscall.EBADF
 		f, ok := s.getHandle(p.Handle)
-		if !ok {
-			return s.sendError(p, syscall.EBADF)
+		if ok {
+			err = nil
+			data := make([]byte, clamp(p.Len, s.maxTxPacket))
+			n, _err := f.ReadAt(data, int64(p.Offset))
+			if _err != nil && (_err != io.EOF || n == 0) {
+				err = _err
+			}
+			rpkt = sshFxpDataPacket{
+				ID:     p.ID,
+				Length: uint32(n),
+				Data:   data[:n],
+			}
+		}
+		if err != nil {
+			rpkt = statusFromError(p, err)
 		}
 
-		data := make([]byte, clamp(p.Len, s.maxTxPacket))
-		n, err := f.ReadAt(data, int64(p.Offset))
-		if err != nil && (err != io.EOF || n == 0) {
-			return s.sendError(p, err)
-		}
-		return s.sendPacket(sshFxpDataPacket{
-			ID:     p.ID,
-			Length: uint32(n),
-			Data:   data[:n],
-		})
 	case *sshFxpWritePacket:
 		f, ok := s.getHandle(p.Handle)
-		if !ok {
-			return s.sendError(p, syscall.EBADF)
+		var err error = syscall.EBADF
+		if ok {
+			_, err = f.WriteAt(p.Data, int64(p.Offset))
 		}
-
-		_, err := f.WriteAt(p.Data, int64(p.Offset))
-		return s.sendError(p, err)
+		rpkt = statusFromError(p, err)
 	case serverRespondablePacket:
-		err := p.respond(s)
-		return errors.Wrap(err, "pkt.respond failed")
+		rpkt = p.respond(s)
 	default:
 		return errors.Errorf("unexpected packet type %T", p)
 	}
+
+	s.pktMgr.readyPacket(s.pktMgr.newOrderedResponse(rpkt, p.orderId()))
+	return nil
 }
 
 // Serve serves SFTP connections until the streams stop or the SFTP subsystem
 // is stopped.
 func (svr *Server) Serve() error {
 	var wg sync.WaitGroup
-	runWorker := func(ch requestChan) {
+	runWorker := func(ch chan orderedRequest) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -324,7 +327,7 @@ func (svr *Server) Serve() error {
 			}
 		}
 
-		pktChan <- pkt
+		pktChan <- svr.pktMgr.newOrderedRequest(pkt)
 	}
 
 	close(pktChan) // shuts down sftpServerWorkers
@@ -336,20 +339,6 @@ func (svr *Server) Serve() error {
 		file.Close()
 	}
 	return err // error from recvPacket
-}
-
-// Wrap underlying connection methods to use packetManager
-func (svr *Server) sendPacket(m encoding.BinaryMarshaler) error {
-	if pkt, ok := m.(responsePacket); ok {
-		svr.pktMgr.readyPacket(pkt)
-	} else {
-		return errors.Errorf("unexpected packet type %T", m)
-	}
-	return nil
-}
-
-func (svr *Server) sendError(p ider, err error) error {
-	return svr.sendPacket(statusFromError(p, err))
 }
 
 type ider interface {
@@ -386,7 +375,7 @@ func (p sshFxpOpenPacket) hasPflags(flags ...uint32) bool {
 	return true
 }
 
-func (p sshFxpOpenPacket) respond(svr *Server) error {
+func (p sshFxpOpenPacket) respond(svr *Server) responsePacket {
 	var osFlags int
 	if p.hasPflags(ssh_FXF_READ, ssh_FXF_WRITE) {
 		osFlags |= os.O_RDWR
@@ -396,7 +385,7 @@ func (p sshFxpOpenPacket) respond(svr *Server) error {
 		osFlags |= os.O_RDONLY
 	} else {
 		// how are they opening?
-		return svr.sendError(p, syscall.EINVAL)
+		return statusFromError(p, syscall.EINVAL)
 	}
 
 	if p.hasPflags(ssh_FXF_APPEND) {
@@ -414,23 +403,23 @@ func (p sshFxpOpenPacket) respond(svr *Server) error {
 
 	f, err := os.OpenFile(p.Path, osFlags, 0644)
 	if err != nil {
-		return svr.sendError(p, err)
+		return statusFromError(p, err)
 	}
 
 	handle := svr.nextHandle(f)
-	return svr.sendPacket(sshFxpHandlePacket{p.ID, handle})
+	return sshFxpHandlePacket{ID: p.id(), Handle: handle}
 }
 
-func (p sshFxpReaddirPacket) respond(svr *Server) error {
+func (p sshFxpReaddirPacket) respond(svr *Server) responsePacket {
 	f, ok := svr.getHandle(p.Handle)
 	if !ok {
-		return svr.sendError(p, syscall.EBADF)
+		return statusFromError(p, syscall.EBADF)
 	}
 
 	dirname := f.Name()
 	dirents, err := f.Readdir(128)
 	if err != nil {
-		return svr.sendError(p, err)
+		return statusFromError(p, err)
 	}
 
 	ret := sshFxpNamePacket{ID: p.ID}
@@ -441,10 +430,10 @@ func (p sshFxpReaddirPacket) respond(svr *Server) error {
 			Attrs:    []interface{}{dirent},
 		})
 	}
-	return svr.sendPacket(ret)
+	return ret
 }
 
-func (p sshFxpSetstatPacket) respond(svr *Server) error {
+func (p sshFxpSetstatPacket) respond(svr *Server) responsePacket {
 	// additional unmarshalling is required for each possibility here
 	b := p.Attrs.([]byte)
 	var err error
@@ -483,13 +472,13 @@ func (p sshFxpSetstatPacket) respond(svr *Server) error {
 		}
 	}
 
-	return svr.sendError(p, err)
+	return statusFromError(p, err)
 }
 
-func (p sshFxpFsetstatPacket) respond(svr *Server) error {
+func (p sshFxpFsetstatPacket) respond(svr *Server) responsePacket {
 	f, ok := svr.getHandle(p.Handle)
 	if !ok {
-		return svr.sendError(p, syscall.EBADF)
+		return statusFromError(p, syscall.EBADF)
 	}
 
 	// additional unmarshalling is required for each possibility here
@@ -530,7 +519,7 @@ func (p sshFxpFsetstatPacket) respond(svr *Server) error {
 		}
 	}
 
-	return svr.sendError(p, err)
+	return statusFromError(p, err)
 }
 
 // translateErrno translates a syscall error number to a SFTP error code.

@@ -26,7 +26,7 @@
   "description": "Stores and retrieves potentially large, immutable data objects.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/storage/docs/json_api/",
-  "etag": "\"Zkyw9ACJZUvcYmlFaKGChzhmtnE/naWmFZqBR_Eg7icNmYvZKp3Vbjs\"",
+  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/akd8i6K-8A6ohXFVzxQZomL5PpA\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/cloud_storage-16.png",
     "x32": "https://www.google.com/images/icons/product/cloud_storage-32.png"
@@ -1573,7 +1573,7 @@
           ],
           "parameters": {
             "destinationBucket": {
-              "description": "Name of the bucket in which to store the new object.",
+              "description": "Name of the bucket containing the source objects. The destination object is stored in this bucket.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -2035,7 +2035,7 @@
               "type": "string"
             },
             "kmsKeyName": {
-              "description": "Resource name of the Cloud KMS key, of the form projects/my-project/locations/global/keyRings/my-kr/cryptoKeys/my-key, that will be used to encrypt the object. Overrides the object metadata's kms_key_name value, if any. Limited availability; usable only by enabled projects.",
+              "description": "Resource name of the Cloud KMS key, of the form projects/my-project/locations/global/keyRings/my-kr/cryptoKeys/my-key, that will be used to encrypt the object. Overrides the object metadata's kms_key_name value, if any.",
               "location": "query",
               "type": "string"
             },
@@ -2766,7 +2766,7 @@
       }
     }
   },
-  "revision": "20180518",
+  "revision": "20180905",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Bucket": {
@@ -2909,6 +2909,10 @@
                       "isLive": {
                         "description": "Relevant only for versioned objects. If the value is true, this condition matches live objects; if the value is false, it matches archived objects.",
                         "type": "boolean"
+                      },
+                      "matchesPattern": {
+                        "description": "A regular expression that satisfies the RE2 syntax. This condition is satisfied when the name of the object matches the RE2 pattern. Note: This feature is currently in the \"Early Access\" launch stage and is only available to a whitelisted set of users; that means that this feature may be changed in backward-incompatible ways and that it is not guaranteed to be released.",
+                        "type": "string"
                       },
                       "matchesStorageClass": {
                         "description": "Objects having any of the storage classes specified by this condition will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.",
@@ -3249,7 +3253,7 @@
                     "storage.objects.compose"
                   ]
                 },
-                "description": "The source object's name. The source object's bucket is implicitly the destination bucket.",
+                "description": "The source object's name. All source objects must reside in the same bucket.",
                 "type": "string"
               },
               "objectPreconditions": {
@@ -3437,7 +3441,7 @@
           "type": "string"
         },
         "kmsKeyName": {
-          "description": "Cloud KMS Key used to encrypt this object, if the object is encrypted by such a key. Limited availability; usable only by enabled projects.",
+          "description": "Cloud KMS Key used to encrypt this object, if the object is encrypted by such a key.",
           "type": "string"
         },
         "md5Hash": {

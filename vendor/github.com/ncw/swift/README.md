@@ -127,17 +127,25 @@ Contributors
 - Paul Querna <pquerna@apache.org>
 - Livio Soares <liviobs@gmail.com>
 - thesyncim <thesyncim@gmail.com>
-- lsowen <lsowen@s1network.com>
+- lsowen <lsowen@s1network.com> <logan@s1network.com>
 - Sylvain Baubeau <sbaubeau@redhat.com>
 - Chris Kastorff <encryptio@gmail.com>
 - Dai HaoJun <haojun.dai@hp.com>
 - Hua Wang <wanghua.humble@gmail.com>
-- Fabian Ruff <fabian@progra.de>
+- Fabian Ruff <fabian@progra.de> <fabian.ruff@sap.com>
 - Arturo Reuschenbach Puncernau <reuschenbach@gmail.com>
 - Petr Kotek <petr.kotek@bigcommerce.com>
-- Stefan Majewsky <stefan.majewsky@sap.com>
+- Stefan Majewsky <stefan.majewsky@sap.com> <majewsky@gmx.net>
 - Cezar Sa Espinola <cezarsa@gmail.com>
 - Sam Gunaratne <samgzeit@gmail.com>
 - Richard Scothern <richard.scothern@gmail.com>
 - Michel Couillard <couillard.michel@voxlog.ca>
 - Christopher Waldon <ckwaldon@us.ibm.com>
+- dennis <dai.haojun@gmail.com>
+- hag <hannes.georg@xing.com>
+- Alexander Neumann <alexander@bumpern.de>
+- eclipseo <30413512+eclipseo@users.noreply.github.com>
+- Yuri Per <yuri@acronis.com>
+- Falk Reimann <falk.reimann@sap.com>
+- Arthur Paim Arnold <arthurpaimarnold@gmail.com>
+- Bruno Michel <bmichel@menfin.info>

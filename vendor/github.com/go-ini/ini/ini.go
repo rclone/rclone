@@ -1,3 +1,5 @@
+// +build go1.6
+
 // Copyright 2014 Unknwon
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
@@ -32,7 +34,7 @@ const (
 
 	// Maximum allowed depth when recursively substituing variable names.
 	_DEPTH_VALUES = 99
-	_VERSION      = "1.37.0"
+	_VERSION      = "1.38.2"
 )
 
 // Version returns current package version literal.
@@ -132,6 +134,8 @@ type LoadOptions struct {
 	IgnoreContinuation bool
 	// IgnoreInlineComment indicates whether to ignore comments at the end of value and treat it as part of value.
 	IgnoreInlineComment bool
+	// SkipUnrecognizableLines indicates whether to skip unrecognizable lines that do not conform to key/value pairs.
+	SkipUnrecognizableLines bool
 	// AllowBooleanKeys indicates whether to allow boolean type keys or treat as value is missing.
 	// This type of keys are mostly used in my.cnf.
 	AllowBooleanKeys bool
@@ -157,7 +161,7 @@ type LoadOptions struct {
 	// when value is NOT surrounded by any quotes.
 	// Note: UNSTABLE, behavior might change to only unescape inside double quotes but may noy necessary at all.
 	UnescapeValueCommentSymbols bool
-	// Some INI formats allow group blocks that store a block of raw content that doesn't otherwise
+	// UnparseableSections stores a list of blocks that are allowed with raw content which do not otherwise
 	// conform to key/value pairs. Specify the names of those blocks here.
 	UnparseableSections []string
 }
@@ -200,7 +204,7 @@ func InsensitiveLoad(source interface{}, others ...interface{}) (*File, error) {
 	return LoadSources(LoadOptions{Insensitive: true}, source, others...)
 }
 
-// InsensitiveLoad has exactly same functionality as Load function
+// ShadowLoad has exactly same functionality as Load function
 // except it allows have shadow keys.
 func ShadowLoad(source interface{}, others ...interface{}) (*File, error) {
 	return LoadSources(LoadOptions{AllowShadows: true}, source, others...)

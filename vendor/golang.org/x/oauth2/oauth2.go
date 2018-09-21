@@ -124,6 +124,8 @@ func SetAuthURLParam(key, value string) AuthCodeOption {
 //
 // Opts may include AccessTypeOnline or AccessTypeOffline, as well
 // as ApprovalForce.
+// It can also be used to pass the PKCE challange.
+// See https://www.oauth.com/oauth2-servers/pkce/ for more info.
 func (c *Config) AuthCodeURL(state string, opts ...AuthCodeOption) string {
 	var buf bytes.Buffer
 	buf.WriteString(c.Endpoint.AuthURL)
@@ -186,13 +188,19 @@ func (c *Config) PasswordCredentialsToken(ctx context.Context, username, passwor
 //
 // The code will be in the *http.Request.FormValue("code"). Before
 // calling Exchange, be sure to validate FormValue("state").
-func (c *Config) Exchange(ctx context.Context, code string) (*Token, error) {
+//
+// Opts may include the PKCE verifier code if previously used in AuthCodeURL.
+// See https://www.oauth.com/oauth2-servers/pkce/ for more info.
+func (c *Config) Exchange(ctx context.Context, code string, opts ...AuthCodeOption) (*Token, error) {
 	v := url.Values{
 		"grant_type": {"authorization_code"},
 		"code":       {code},
 	}
 	if c.RedirectURL != "" {
 		v.Set("redirect_uri", c.RedirectURL)
+	}
+	for _, opt := range opts {
+		opt.setValue(v)
 	}
 	return retrieveToken(ctx, c, v)
 }

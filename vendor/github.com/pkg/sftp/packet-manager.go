@@ -7,30 +7,30 @@ import (
 )
 
 // The goal of the packetManager is to keep the outgoing packets in the same
-// order as the incoming. This is due to some sftp clients requiring this
-// behavior (eg. winscp).
+// order as the incoming as is requires by section 7 of the RFC.
+
+type packetManager struct {
+	requests    chan orderedPacket
+	responses   chan orderedPacket
+	fini        chan struct{}
+	incoming    orderedPackets
+	outgoing    orderedPackets
+	sender      packetSender // connection object
+	working     *sync.WaitGroup
+	packetCount uint32
+}
 
 type packetSender interface {
 	sendPacket(encoding.BinaryMarshaler) error
 }
 
-type packetManager struct {
-	requests  chan requestPacket
-	responses chan responsePacket
-	fini      chan struct{}
-	incoming  requestPacketIDs
-	outgoing  responsePackets
-	sender    packetSender // connection object
-	working   *sync.WaitGroup
-}
-
 func newPktMgr(sender packetSender) *packetManager {
 	s := &packetManager{
-		requests:  make(chan requestPacket, SftpServerWorkerCount),
-		responses: make(chan responsePacket, SftpServerWorkerCount),
+		requests:  make(chan orderedPacket, SftpServerWorkerCount),
+		responses: make(chan orderedPacket, SftpServerWorkerCount),
 		fini:      make(chan struct{}),
-		incoming:  make([]uint32, 0, SftpServerWorkerCount),
-		outgoing:  make([]responsePacket, 0, SftpServerWorkerCount),
+		incoming:  make([]orderedPacket, 0, SftpServerWorkerCount),
+		outgoing:  make([]orderedPacket, 0, SftpServerWorkerCount),
 		sender:    sender,
 		working:   &sync.WaitGroup{},
 	}
@@ -38,31 +38,56 @@ func newPktMgr(sender packetSender) *packetManager {
 	return s
 }
 
-type responsePackets []responsePacket
+//// packet ordering
+func (s *packetManager) newOrderId() uint32 {
+	s.packetCount++
+	return s.packetCount
+}
 
-func (r responsePackets) Sort() {
-	sort.Slice(r, func(i, j int) bool {
-		return r[i].id() < r[j].id()
+type orderedRequest struct {
+	requestPacket
+	orderid uint32
+}
+
+func (s *packetManager) newOrderedRequest(p requestPacket) orderedRequest {
+	return orderedRequest{requestPacket: p, orderid: s.newOrderId()}
+}
+func (p orderedRequest) orderId() uint32       { return p.orderid }
+func (p orderedRequest) setOrderId(oid uint32) { p.orderid = oid }
+
+type orderedResponse struct {
+	responsePacket
+	orderid uint32
+}
+
+func (s *packetManager) newOrderedResponse(p responsePacket, id uint32,
+) orderedResponse {
+	return orderedResponse{responsePacket: p, orderid: id}
+}
+func (p orderedResponse) orderId() uint32       { return p.orderid }
+func (p orderedResponse) setOrderId(oid uint32) { p.orderid = oid }
+
+type orderedPacket interface {
+	id() uint32
+	orderId() uint32
+}
+type orderedPackets []orderedPacket
+
+func (o orderedPackets) Sort() {
+	sort.Slice(o, func(i, j int) bool {
+		return o[i].orderId() < o[j].orderId()
 	})
 }
 
-type requestPacketIDs []uint32
-
-func (r requestPacketIDs) Sort() {
-	sort.Slice(r, func(i, j int) bool {
-		return r[i] < r[j]
-	})
-}
-
+//// packet registry
 // register incoming packets to be handled
-// send id of 0 for packets without id
-func (s *packetManager) incomingPacket(pkt requestPacket) {
+func (s *packetManager) incomingPacket(pkt orderedRequest) {
 	s.working.Add(1)
-	s.requests <- pkt // buffer == SftpServerWorkerCount
+	s.requests <- pkt
 }
 
 // register outgoing packets as being ready
-func (s *packetManager) readyPacket(pkt responsePacket) {
+func (s *packetManager) readyPacket(pkt orderedResponse) {
 	s.responses <- pkt
 	s.working.Done()
 }
@@ -75,38 +100,37 @@ func (s *packetManager) close() {
 }
 
 // Passed a worker function, returns a channel for incoming packets.
-// The goal is to process packets in the order they are received as is
-// requires by section 7 of the RFC, while maximizing throughput of file
-// transfers.
-func (s *packetManager) workerChan(runWorker func(requestChan)) requestChan {
+// Keep process packet responses in the order they are received while
+// maximizing throughput of file transfers.
+func (s *packetManager) workerChan(runWorker func(chan orderedRequest),
+) chan orderedRequest {
 
-	rwChan := make(chan requestPacket, SftpServerWorkerCount)
+	// multiple workers for faster read/writes
+	rwChan := make(chan orderedRequest, SftpServerWorkerCount)
 	for i := 0; i < SftpServerWorkerCount; i++ {
 		runWorker(rwChan)
 	}
 
-	cmdChan := make(chan requestPacket)
+	// single worker to enforce sequential processing of everything else
+	cmdChan := make(chan orderedRequest)
 	runWorker(cmdChan)
 
-	pktChan := make(chan requestPacket, SftpServerWorkerCount)
+	pktChan := make(chan orderedRequest, SftpServerWorkerCount)
 	go func() {
-		// start with cmdChan
-		curChan := cmdChan
 		for pkt := range pktChan {
-			// on file open packet, switch to rwChan
-			switch pkt.(type) {
-			case *sshFxpOpenPacket:
-				curChan = rwChan
-			// on file close packet, switch back to cmdChan
-			// after waiting for any reads/writes to finish
+			switch pkt.requestPacket.(type) {
+			case *sshFxpReadPacket, *sshFxpWritePacket:
+				s.incomingPacket(pkt)
+				rwChan <- pkt
+				continue
 			case *sshFxpClosePacket:
-				// wait for rwChan to finish
+				// wait for reads/writes to finish when file is closed
+				// incomingPacket() call must occur after this
 				s.working.Wait()
-				// stop using rwChan
-				curChan = cmdChan
 			}
 			s.incomingPacket(pkt)
-			curChan <- pkt
+			// all non-RW use sequential cmdChan
+			cmdChan <- pkt
 		}
 		close(rwChan)
 		close(cmdChan)
@@ -121,17 +145,13 @@ func (s *packetManager) controller() {
 	for {
 		select {
 		case pkt := <-s.requests:
-			debug("incoming id: %v", pkt.id())
-			s.incoming = append(s.incoming, pkt.id())
-			if len(s.incoming) > 1 {
-				s.incoming.Sort()
-			}
+			debug("incoming id (oid): %v (%v)", pkt.id(), pkt.orderId())
+			s.incoming = append(s.incoming, pkt)
+			s.incoming.Sort()
 		case pkt := <-s.responses:
-			debug("outgoing pkt: %v", pkt.id())
+			debug("outgoing id (oid): %v (%v)", pkt.id(), pkt.orderId())
 			s.outgoing = append(s.outgoing, pkt)
-			if len(s.outgoing) > 1 {
-				s.outgoing.Sort()
-			}
+			s.outgoing.Sort()
 		case <-s.fini:
 			return
 		}
@@ -149,10 +169,11 @@ func (s *packetManager) maybeSendPackets() {
 		}
 		out := s.outgoing[0]
 		in := s.incoming[0]
-		// 		debug("incoming: %v", s.incoming)
-		// 		debug("outgoing: %v", outfilter(s.outgoing))
-		if in == out.id() {
-			s.sender.sendPacket(out)
+		// debug("incoming: %v", ids(s.incoming))
+		// debug("outgoing: %v", ids(s.outgoing))
+		if in.orderId() == out.orderId() {
+			debug("Sending packet: %v", out.id())
+			s.sender.sendPacket(out.(encoding.BinaryMarshaler))
 			// pop off heads
 			copy(s.incoming, s.incoming[1:])            // shift left
 			s.incoming = s.incoming[:len(s.incoming)-1] // remove last
@@ -164,10 +185,17 @@ func (s *packetManager) maybeSendPackets() {
 	}
 }
 
-//func outfilter(o []responsePacket) []uint32 {
-//	res := make([]uint32, 0, len(o))
-//	for _, v := range o {
-//		res = append(res, v.id())
-//	}
-//	return res
-//}
+// func oids(o []orderedPacket) []uint32 {
+// 	res := make([]uint32, 0, len(o))
+// 	for _, v := range o {
+// 		res = append(res, v.orderId())
+// 	}
+// 	return res
+// }
+// func ids(o []orderedPacket) []uint32 {
+// 	res := make([]uint32, 0, len(o))
+// 	for _, v := range o {
+// 		res = append(res, v.id())
+// 	}
+// 	return res
+// }

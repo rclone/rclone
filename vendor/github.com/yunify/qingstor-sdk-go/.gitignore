@@ -25,6 +25,5 @@ _testmain.go
 
 out
 gen
-vendor
 coverage
 release
