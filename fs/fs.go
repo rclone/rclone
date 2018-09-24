@@ -154,6 +154,20 @@ func (o *Option) Type() string {
 	return reflect.TypeOf(o.value()).Name()
 }
 
+// FlagName for the option
+func (o *Option) FlagName(prefix string) string {
+	name := strings.Replace(o.Name, "_", "-", -1) // convert snake_case to kebab-case
+	if !o.NoPrefix {
+		name = prefix + "-" + name
+	}
+	return name
+}
+
+// EnvVarName for the option
+func (o *Option) EnvVarName(prefix string) string {
+	return OptionToEnv(prefix + "-" + o.Name)
+}
+
 // OptionExamples is a slice of examples
 type OptionExamples []OptionExample
 

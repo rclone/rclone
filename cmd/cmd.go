@@ -447,10 +447,7 @@ func AddBackendFlags() {
 			}
 			done[opt.Name] = struct{}{}
 			// Make a flag from each option
-			name := strings.Replace(opt.Name, "_", "-", -1) // convert snake_case to kebab-case
-			if !opt.NoPrefix {
-				name = fsInfo.Prefix + "-" + name
-			}
+			name := opt.FlagName(fsInfo.Prefix)
 			found := pflag.CommandLine.Lookup(name) != nil
 			if !found {
 				// Take first line of help only
