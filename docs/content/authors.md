@@ -199,3 +199,4 @@ Contributors
   * Antoine GIRARD <sapk@sapk.fr>
   * Joanna Marek <joanna.marek@u2i.com>
   * frenos <frenos@users.noreply.github.com>
+  * ssaqua <ssaqua@users.noreply.github.com>
