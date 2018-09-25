@@ -835,7 +835,7 @@ will be considered.
 
 If the destination does not support server-side copy or move, rclone
 will fall back to the default behaviour and log an error level message
-to the console.
+to the console. Note: Encrypted destinations are not supported by `--track-renames`.
 
 Note that `--track-renames` uses extra memory to keep track of all
 the rename candidates.
