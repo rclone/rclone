@@ -2061,15 +2061,16 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPage
 		}
 		var pathsToClear []entryType
 		for _, change := range changeList.Changes {
+			// find the previous path
 			if path, ok := f.dirCache.GetInv(change.FileId); ok {
 				if change.File != nil && change.File.MimeType != driveFolderType {
 					pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
 				} else {
 					pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryDirectory})
 				}
-				continue
 			}
 
+			// find the new path
 			if change.File != nil {
 				changeType := fs.EntryDirectory
 				if change.File.MimeType != driveFolderType {
