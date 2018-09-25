@@ -89,14 +89,19 @@ func TestDirForgetAll(t *testing.T) {
 
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 1, len(dir.items))
+	assert.False(t, root.read.IsZero())
+	assert.False(t, dir.read.IsZero())
 
 	dir.ForgetAll()
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 0, len(dir.items))
+	assert.True(t, root.read.IsZero())
+	assert.True(t, dir.read.IsZero())
 
 	root.ForgetAll()
 	assert.Equal(t, 0, len(root.items))
 	assert.Equal(t, 0, len(dir.items))
+	assert.True(t, root.read.IsZero())
 }
 
 func TestDirForgetPath(t *testing.T) {
@@ -113,10 +118,19 @@ func TestDirForgetPath(t *testing.T) {
 
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 1, len(dir.items))
+	assert.False(t, root.read.IsZero())
+	assert.False(t, dir.read.IsZero())
+
+	root.ForgetPath("dir/notfound", fs.EntryObject)
+	assert.Equal(t, 1, len(root.items))
+	assert.Equal(t, 1, len(dir.items))
+	assert.False(t, root.read.IsZero())
+	assert.True(t, dir.read.IsZero())
 
 	root.ForgetPath("dir", fs.EntryDirectory)
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 0, len(dir.items))
+	assert.True(t, root.read.IsZero())
 
 	root.ForgetPath("not/in/cache", fs.EntryDirectory)
 	assert.Equal(t, 1, len(root.items))
@@ -151,41 +165,46 @@ func TestDirWalk(t *testing.T) {
 	}
 
 	result = nil
-	root.walk("", fn)
+	root.walk(fn)
 	sort.Strings(result) // sort as there is a map traversal involved
 	assert.Equal(t, []string{"", "dir", "fil", "fil/a", "fil/a/b"}, result)
 
-	result = nil
-	root.walk("dir", fn)
-	assert.Equal(t, []string{"dir"}, result)
-
-	result = nil
-	root.walk("not found", fn)
-	assert.Equal(t, []string(nil), result)
-
-	result = nil
-	root.walk("fil", fn)
-	assert.Equal(t, []string{"fil/a/b", "fil/a", "fil"}, result)
-
-	result = nil
-	fil.(*Dir).walk("fil", fn)
-	assert.Equal(t, []string{"fil/a/b", "fil/a", "fil"}, result)
-
-	result = nil
-	root.walk("fil/a", fn)
-	assert.Equal(t, []string{"fil/a/b", "fil/a"}, result)
-
-	result = nil
-	fil.(*Dir).walk("fil/a", fn)
-	assert.Equal(t, []string{"fil/a/b", "fil/a"}, result)
-
-	result = nil
-	root.walk("fil/a", fn)
-	assert.Equal(t, []string{"fil/a/b", "fil/a"}, result)
-
-	result = nil
-	root.walk("fil/a/b", fn)
-	assert.Equal(t, []string{"fil/a/b"}, result)
+	assert.Nil(t, root.cachedDir("not found"))
+	if dir := root.cachedDir("dir"); assert.NotNil(t, dir) {
+		result = nil
+		dir.walk(fn)
+		assert.Equal(t, []string{"dir"}, result)
+	}
+	if dir := root.cachedDir("fil"); assert.NotNil(t, dir) {
+		result = nil
+		dir.walk(fn)
+		assert.Equal(t, []string{"fil/a/b", "fil/a", "fil"}, result)
+	}
+	if dir := fil.(*Dir); assert.NotNil(t, dir) {
+		result = nil
+		dir.walk(fn)
+		assert.Equal(t, []string{"fil/a/b", "fil/a", "fil"}, result)
+	}
+	if dir := root.cachedDir("fil/a"); assert.NotNil(t, dir) {
+		result = nil
+		dir.walk(fn)
+		assert.Equal(t, []string{"fil/a/b", "fil/a"}, result)
+	}
+	if dir := fil.(*Dir).cachedDir("a"); assert.NotNil(t, dir) {
+		result = nil
+		dir.walk(fn)
+		assert.Equal(t, []string{"fil/a/b", "fil/a"}, result)
+	}
+	if dir := root.cachedDir("fil/a"); assert.NotNil(t, dir) {
+		result = nil
+		dir.walk(fn)
+		assert.Equal(t, []string{"fil/a/b", "fil/a"}, result)
+	}
+	if dir := root.cachedDir("fil/a/b"); assert.NotNil(t, dir) {
+		result = nil
+		dir.walk(fn)
+		assert.Equal(t, []string{"fil/a/b"}, result)
+	}
 }
 
 func TestDirSetModTime(t *testing.T) {

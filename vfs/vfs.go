@@ -227,7 +227,7 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// Start polling function
 	if do := vfs.f.Features().ChangeNotify; do != nil {
 		vfs.pollChan = make(chan time.Duration)
-		do(vfs.notifyFunc, vfs.pollChan)
+		do(vfs.root.ForgetPath, vfs.pollChan)
 		vfs.pollChan <- vfs.Opt.PollInterval
 	} else {
 		fs.Infof(f, "poll-interval is not supported by this remote")
@@ -291,7 +291,7 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 	tick.Stop()
 	for {
 		writers := 0
-		vfs.root.walk("", func(d *Dir) {
+		vfs.root.walk(func(d *Dir) {
 			fs.Debugf(d.path, "Looking for writers")
 			// NB d.mu is held by walk() here
 			for leaf, item := range d.items {
@@ -497,14 +497,4 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 		}
 	}
 	return
-}
-
-// notifyFunc removes the last path segement for directories and calls ForgetPath with the result.
-//
-// This ensures that new or renamed directories appear in their parent.
-func (vfs *VFS) notifyFunc(relativePath string, entryType fs.EntryType) {
-	if entryType == fs.EntryDirectory {
-		relativePath = path.Dir(relativePath)
-	}
-	vfs.root.ForgetPath(relativePath, entryType)
 }

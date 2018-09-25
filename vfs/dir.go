@@ -101,42 +101,70 @@ func (d *Dir) ForgetAll() {
 
 // ForgetPath clears the cache for itself and all subdirectories if
 // they match the given path. The path is specified relative from the
-// directory it is called from.
+// directory it is called from. The cache of the parent directory is
+// marked as stale, but not cleared otherwise.
 // It is not possible to traverse the directory tree upwards, i.e.
 // you cannot clear the cache for the Dir's ancestors or siblings.
 func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
-	// if we are requested to forget a file, we use its parent
-	absPath := path.Join(d.path, relativePath)
-	if entryType != fs.EntryDirectory {
-		absPath = path.Dir(absPath)
-	}
-	if absPath == "." || absPath == "/" {
-		absPath = ""
+	if absPath := path.Join(d.path, relativePath); absPath != "" {
+		parent := path.Dir(absPath)
+		if parent == "." || parent == "/" {
+			parent = ""
+		}
+		parentNode := d.vfs.root.cachedNode(parent)
+		if dir, ok := parentNode.(*Dir); ok {
+			dir.mu.Lock()
+			if !dir.read.IsZero() {
+				fs.Debugf(dir.path, "invalidating directory cache")
+				dir.read = time.Time{}
+			}
+			dir.mu.Unlock()
+		}
 	}
 
-	d.walk(absPath, func(dir *Dir) {
-		fs.Debugf(dir.path, "forgetting directory cache")
-		dir.read = time.Time{}
-		dir.items = make(map[string]Node)
-	})
+	if entryType == fs.EntryDirectory {
+		if dir := d.cachedDir(relativePath); dir != nil {
+			dir.walk(func(dir *Dir) {
+				fs.Debugf(dir.path, "forgetting directory cache")
+				dir.read = time.Time{}
+				dir.items = make(map[string]Node)
+			})
+		}
+	}
 }
 
-// walk runs a function on all cached directories whose path matches
-// the given absolute one. It will be called on a directory's children
-// first. It will not apply the function to parent nodes, regardless
-// of the given path.
-func (d *Dir) walk(absPath string, fun func(*Dir)) {
+// walk runs a function on all cached directories. It will be called
+// on a directory's children first.
+func (d *Dir) walk(fun func(*Dir)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	for _, node := range d.items {
 		if dir, ok := node.(*Dir); ok {
-			dir.walk(absPath, fun)
+			dir.walk(fun)
 		}
 	}
 
-	if d.path == absPath || absPath == "" || strings.HasPrefix(d.path, absPath+"/") {
-		fun(d)
+	fun(d)
+}
+
+// stale returns true if the directory contents will be read the next
+// time it is accessed. stale must be called with d.mu held.
+func (d *Dir) stale(when time.Time) bool {
+	_, stale := d.age(when)
+	return stale
+}
+
+// age returns the duration since the last time the directory contents
+// was read and the content is cosidered stale. age will be 0 and
+// stale true if the last read time is empty.
+// age must be called with d.mu held.
+func (d *Dir) age(when time.Time) (age time.Duration, stale bool) {
+	if d.read.IsZero() {
+		return age, true
 	}
+	age = when.Sub(d.read)
+	stale = age > d.vfs.Opt.DirCacheTime
+	return
 }
 
 // rename should be called after the directory is renamed
@@ -171,14 +199,12 @@ func (d *Dir) delObject(leaf string) {
 // read the directory and sets d.items - must be called with the lock held
 func (d *Dir) _readDir() error {
 	when := time.Now()
-	if d.read.IsZero() {
-		// fs.Debugf(d.path, "Reading directory")
-	} else {
-		age := when.Sub(d.read)
-		if age < d.vfs.Opt.DirCacheTime {
-			return nil
+	if age, stale := d.age(when); stale {
+		if age != 0 {
+			fs.Debugf(d.path, "Re-reading directory (%v old)", age)
 		}
-		fs.Debugf(d.path, "Re-reading directory (%v old)", age)
+	} else {
+		return nil
 	}
 	entries, err := list.DirSorted(d.f, false, d.path)
 	if err == fs.ErrorDirNotFound {
@@ -336,6 +362,33 @@ func (d *Dir) SetModTime(modTime time.Time) error {
 	defer d.mu.Unlock()
 	d.modTime = modTime
 	return nil
+}
+
+func (d *Dir) cachedDir(relativePath string) (dir *Dir) {
+	dir, _ = d.cachedNode(relativePath).(*Dir)
+	return
+}
+
+func (d *Dir) cachedNode(relativePath string) Node {
+	segments := strings.Split(strings.Trim(relativePath, "/"), "/")
+	var node Node = d
+	for _, s := range segments {
+		if s == "" {
+			continue
+		}
+		if dir, ok := node.(*Dir); ok {
+			dir.mu.Lock()
+			node = dir.items[s]
+			dir.mu.Unlock()
+
+			if node != nil {
+				continue
+			}
+		}
+		return nil
+	}
+
+	return node
 }
 
 // Stat looks up a specific entry in the receiver.
