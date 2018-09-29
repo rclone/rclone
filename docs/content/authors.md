@@ -201,3 +201,4 @@ Contributors
   * frenos <frenos@users.noreply.github.com>
   * ssaqua <ssaqua@users.noreply.github.com>
   * xnaas <me@xnaas.info>
+  * Frantisek Fuka <fuka@fuxoft.cz>
