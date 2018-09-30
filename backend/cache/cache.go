@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -918,16 +919,11 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	fs.Debugf(dir, "list: read %v from source", len(sourceEntries))
 	fs.Debugf(dir, "list: source entries: %v", sourceEntries)
 
+	sort.Sort(sourceEntries)
 	for _, entry := range entries {
-		found := false
 		entryRemote := entry.Remote()
-		for _, t := range sourceEntries {
-			if t.Remote() == entryRemote {
-				found = true
-				break
-			}
-		}
-		if found {
+		i := sort.Search(len(sourceEntries), func(i int) bool { return sourceEntries[i].Remote() >= entryRemote })
+		if i < len(sourceEntries) && sourceEntries[i].Remote() == entryRemote {
 			continue
 		}
 		fp := path.Join(f.Root(), entryRemote)
@@ -937,23 +933,21 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		case fs.Directory:
 			_ = f.cache.RemoveDir(fp)
 		}
-		fs.Debugf(dir, "list: remove entry: %v", fp)
+		fs.Debugf(dir, "list: remove entry: %v", entryRemote)
 	}
+	entries = nil
 
 	// and then iterate over the ones from source (temp Objects will override source ones)
 	var batchDirectories []*Directory
+	sort.Sort(cachedEntries)
+	tmpCnt := len(cachedEntries)
 	for _, entry := range sourceEntries {
 		switch o := entry.(type) {
 		case fs.Object:
 			// skip over temporary objects (might be uploading)
-			found := false
-			for _, t := range cachedEntries {
-				if t.Remote() == o.Remote() {
-					found = true
-					break
-				}
-			}
-			if found {
+			oRemote := o.Remote()
+			i := sort.Search(tmpCnt, func(i int) bool { return cachedEntries[i].Remote() >= oRemote })
+			if i < tmpCnt && cachedEntries[i].Remote() == oRemote {
 				continue
 			}
 			co := ObjectFromOriginal(f, o).persist()
