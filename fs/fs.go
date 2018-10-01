@@ -83,6 +83,11 @@ type RegInfo struct {
 	Options Options
 }
 
+// FileName returns the on disk file name for this backend
+func (ri *RegInfo) FileName() string {
+	return strings.Replace(ri.Name, " ", "", -1)
+}
+
 // Options is a slice of configuration Option for a backend
 type Options []Option
 
@@ -871,7 +876,7 @@ type ObjectPair struct {
 // Services are looked up in the config file
 func Find(name string) (*RegInfo, error) {
 	for _, item := range Registry {
-		if item.Name == name || item.Prefix == name {
+		if item.Name == name || item.Prefix == name || item.FileName() == name {
 			return item, nil
 		}
 	}
