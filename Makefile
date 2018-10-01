@@ -107,7 +107,7 @@ doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
 
-MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs
+MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs backenddocs
 	./bin/make_manual.py
 
 MANUAL.html:	MANUAL.md
@@ -118,6 +118,9 @@ MANUAL.txt:	MANUAL.md
 
 commanddocs: rclone
 	rclone gendocs docs/content/commands/
+
+backenddocs: rclone bin/make_backend_docs.py
+	./bin/make_backend_docs.py
 
 rcdocs: rclone
 	bin/make_rc_docs.sh
