@@ -85,7 +85,7 @@ func init() {
 			Help: "Box App Client Secret\nLeave blank normally.",
 		}, {
 			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to multipart upload.",
+			Help:     "Cutoff for switching to multipart upload (>= 50MB).",
 			Default:  fs.SizeSuffix(defaultUploadCutoff),
 			Advanced: true,
 		}, {

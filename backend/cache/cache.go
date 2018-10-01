@@ -87,8 +87,12 @@ func init() {
 			Help:     "Skip all certificate verifications when connecting to the Plex server",
 			Advanced: true,
 		}, {
-			Name:    "chunk_size",
-			Help:    "The size of a chunk. Lower value good for slow connections but can affect seamless reading.",
+			Name: "chunk_size",
+			Help: `The size of a chunk (partial file data).
+
+Use lower numbers for slower connections. If the chunk size is
+changed, any downloaded chunks will be invalid and cache-chunk-path
+will need to be cleared or unexpected EOF errors will occur.`,
 			Default: DefCacheChunkSize,
 			Examples: []fs.OptionExample{{
 				Value: "1m",
@@ -101,8 +105,10 @@ func init() {
 				Help:  "10 MB",
 			}},
 		}, {
-			Name:    "info_age",
-			Help:    "How much time should object info (file size, file hashes etc) be stored in cache.\nUse a very high value if you don't plan on changing the source FS from outside the cache.\nAccepted units are: \"s\", \"m\", \"h\".",
+			Name: "info_age",
+			Help: `How long to cache file structure information (directory listings, file size, times etc). 
+If all write operations are done through the cache then you can safely make
+this value very large as the cache store will also be updated in real time.`,
 			Default: DefCacheInfoAge,
 			Examples: []fs.OptionExample{{
 				Value: "1h",
@@ -115,8 +121,11 @@ func init() {
 				Help:  "48 hours",
 			}},
 		}, {
-			Name:    "chunk_total_size",
-			Help:    "The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted.",
+			Name: "chunk_total_size",
+			Help: `The total size that the chunks can take up on the local disk.
+
+If the cache exceeds this value then it will start to delete the
+oldest chunks until it goes under this value.`,
 			Default: DefCacheTotalChunkSize,
 			Examples: []fs.OptionExample{{
 				Value: "500M",
@@ -131,63 +140,143 @@ func init() {
 		}, {
 			Name:     "db_path",
 			Default:  filepath.Join(config.CacheDir, "cache-backend"),
-			Help:     "Directory to cache DB",
+			Help:     "Directory to store file structure metadata DB.\nThe remote name is used as the DB file name.",
 			Advanced: true,
 		}, {
-			Name:     "chunk_path",
-			Default:  filepath.Join(config.CacheDir, "cache-backend"),
-			Help:     "Directory to cache chunk files",
+			Name:    "chunk_path",
+			Default: filepath.Join(config.CacheDir, "cache-backend"),
+			Help: `Directory to cache chunk files.
+
+Path to where partial file data (chunks) are stored locally. The remote
+name is appended to the final path.
+
+This config follows the "--cache-db-path". If you specify a custom
+location for "--cache-db-path" and don't specify one for "--cache-chunk-path"
+then "--cache-chunk-path" will use the same path as "--cache-db-path".`,
 			Advanced: true,
 		}, {
 			Name:     "db_purge",
 			Default:  false,
-			Help:     "Purge the cache DB before",
+			Help:     "Clear all the cached data for this remote on start.",
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
 		}, {
-			Name:     "chunk_clean_interval",
-			Default:  DefCacheChunkCleanInterval,
-			Help:     "Interval at which chunk cleanup runs",
+			Name:    "chunk_clean_interval",
+			Default: DefCacheChunkCleanInterval,
+			Help: `How often should the cache perform cleanups of the chunk storage.
+The default value should be ok for most people. If you find that the
+cache goes over "cache-chunk-total-size" too often then try to lower
+this value to force it to perform cleanups more often.`,
 			Advanced: true,
 		}, {
-			Name:     "read_retries",
-			Default:  DefCacheReadRetries,
-			Help:     "How many times to retry a read from a cache storage",
+			Name:    "read_retries",
+			Default: DefCacheReadRetries,
+			Help: `How many times to retry a read from a cache storage.
+
+Since reading from a cache stream is independent from downloading file
+data, readers can get to a point where there's no more data in the
+cache.  Most of the times this can indicate a connectivity issue if
+cache isn't able to provide file data anymore.
+
+For really slow connections, increase this to a point where the stream is
+able to provide data but your experience will be very stuttering.`,
 			Advanced: true,
 		}, {
-			Name:     "workers",
-			Default:  DefCacheTotalWorkers,
-			Help:     "How many workers should run in parallel to download chunks",
+			Name:    "workers",
+			Default: DefCacheTotalWorkers,
+			Help: `How many workers should run in parallel to download chunks.
+
+Higher values will mean more parallel processing (better CPU needed)
+and more concurrent requests on the cloud provider.  This impacts
+several aspects like the cloud provider API limits, more stress on the
+hardware that rclone runs on but it also means that streams will be
+more fluid and data will be available much more faster to readers.
+
+**Note**: If the optional Plex integration is enabled then this
+setting will adapt to the type of reading performed and the value
+specified here will be used as a maximum number of workers to use.`,
 			Advanced: true,
 		}, {
-			Name:     "chunk_no_memory",
-			Default:  DefCacheChunkNoMemory,
-			Help:     "Disable the in-memory cache for storing chunks during streaming",
+			Name:    "chunk_no_memory",
+			Default: DefCacheChunkNoMemory,
+			Help: `Disable the in-memory cache for storing chunks during streaming.
+
+By default, cache will keep file data during streaming in RAM as well
+to provide it to readers as fast as possible.
+
+This transient data is evicted as soon as it is read and the number of
+chunks stored doesn't exceed the number of workers. However, depending
+on other settings like "cache-chunk-size" and "cache-workers" this footprint
+can increase if there are parallel streams too (multiple files being read
+at the same time).
+
+If the hardware permits it, use this feature to provide an overall better
+performance during streaming but it can also be disabled if RAM is not
+available on the local machine.`,
 			Advanced: true,
 		}, {
-			Name:     "rps",
-			Default:  int(DefCacheRps),
-			Help:     "Limits the number of requests per second to the source FS. -1 disables the rate limiter",
+			Name:    "rps",
+			Default: int(DefCacheRps),
+			Help: `Limits the number of requests per second to the source FS (-1 to disable)
+
+This setting places a hard limit on the number of requests per second
+that cache will be doing to the cloud provider remote and try to
+respect that value by setting waits between reads.
+
+If you find that you're getting banned or limited on the cloud
+provider through cache and know that a smaller number of requests per
+second will allow you to work with it then you can use this setting
+for that.
+
+A good balance of all the other settings should make this setting
+useless but it is available to set for more special cases.
+
+**NOTE**: This will limit the number of requests during streams but
+other API calls to the cloud provider like directory listings will
+still pass.`,
 			Advanced: true,
 		}, {
-			Name:     "writes",
-			Default:  DefCacheWrites,
-			Help:     "Will cache file data on writes through the FS",
+			Name:    "writes",
+			Default: DefCacheWrites,
+			Help: `Cache file data on writes through the FS
+
+If you need to read files immediately after you upload them through
+cache you can enable this flag to have their data stored in the
+cache store at the same time during upload.`,
 			Advanced: true,
 		}, {
-			Name:     "tmp_upload_path",
-			Default:  "",
-			Help:     "Directory to keep temporary files until they are uploaded to the cloud storage",
+			Name:    "tmp_upload_path",
+			Default: "",
+			Help: `Directory to keep temporary files until they are uploaded.
+
+This is the path where cache will use as a temporary storage for new
+files that need to be uploaded to the cloud provider.
+
+Specifying a value will enable this feature. Without it, it is
+completely disabled and files will be uploaded directly to the cloud
+provider`,
 			Advanced: true,
 		}, {
-			Name:     "tmp_wait_time",
-			Default:  DefCacheTmpWaitTime,
-			Help:     "How long should files be stored in local cache before being uploaded",
+			Name:    "tmp_wait_time",
+			Default: DefCacheTmpWaitTime,
+			Help: `How long should files be stored in local cache before being uploaded
+
+This is the duration that a file must wait in the temporary location
+_cache-tmp-upload-path_ before it is selected for upload.
+
+Note that only one file is uploaded at a time and it can take longer
+to start the upload if a queue formed for this purpose.`,
 			Advanced: true,
 		}, {
-			Name:     "db_wait_time",
-			Default:  DefCacheDbWaitTime,
-			Help:     "How long to wait for the DB to be available - 0 is unlimited",
+			Name:    "db_wait_time",
+			Default: DefCacheDbWaitTime,
+			Help: `How long to wait for the DB to be available - 0 is unlimited
+
+Only one process can have the DB open at any one time, so rclone waits
+for this duration for the DB to become available before it gives an
+error.
+
+If you set it to 0 then it will wait forever.`,
 			Advanced: true,
 		}},
 	})

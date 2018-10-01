@@ -73,23 +73,44 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to chunked upload.",
+			Help:     "Cutoff for switching to chunked upload (<= 256MB).",
 			Default:  fs.SizeSuffix(defaultUploadCutoff),
 			Advanced: true,
 		}, {
-			Name:     "chunk_size",
-			Help:     "Upload chunk size. Must fit in memory.",
+			Name: "chunk_size",
+			Help: `Upload chunk size (<= 100MB).
+
+Note that this is stored in memory and there may be up to
+"--transfers" chunks stored at once in memory.`,
 			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
 		}, {
-			Name:     "list_chunk",
-			Help:     "Size of blob list.",
+			Name: "list_chunk",
+			Help: `Size of blob list.
+
+This sets the number of blobs requested in each listing chunk. Default
+is the maximum, 5000. "List blobs" requests are permitted 2 minutes
+per megabyte to complete. If an operation is taking longer than 2
+minutes per megabyte on average, it will time out (
+[source](https://docs.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations#exceptions-to-default-timeout-interval)
+). This can be used to limit the number of blobs items to return, to
+avoid the time out.`,
 			Default:  maxListChunkSize,
 			Advanced: true,
 		}, {
 			Name: "access_tier",
-			Help: "Access tier of blob, supports hot, cool and archive tiers.\nArchived blobs can be restored by setting access tier to hot or cool." +
-				" Leave blank if you intend to use default access tier, which is set at account level",
+			Help: `Access tier of blob: hot, cool or archive.
+
+Archived blobs can be restored by setting access tier to hot or
+cool. Leave blank if you intend to use default access tier, which is
+set at account level
+
+If there is no "access tier" specified, rclone doesn't apply any tier.
+rclone performs "Set Tier" operation on blobs while uploading, if objects
+are not modified, specifying "access tier" to new one will have no effect.
+If blobs are in "archive tier" at remote, trying to perform data transfer
+operations from remote will not be allowed. User should first restore by
+tiering blob to "Hot" or "Cool".`,
 			Advanced: true,
 		}},
 	})

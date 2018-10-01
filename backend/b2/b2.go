@@ -77,14 +77,24 @@ func init() {
 			Help:     "Endpoint for the service.\nLeave blank normally.",
 			Advanced: true,
 		}, {
-			Name:     "test_mode",
-			Help:     "A flag string for X-Bz-Test-Mode header for debugging.",
+			Name: "test_mode",
+			Help: `A flag string for X-Bz-Test-Mode header for debugging.
+
+This is for debugging purposes only. Setting it to one of the strings
+below will cause b2 to return specific errors:
+
+  * "fail_some_uploads"
+  * "expire_some_account_authorization_tokens"
+  * "force_cap_exceeded"
+
+These will be set in the "X-Bz-Test-Mode" header which is documented
+in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration_checklist.html).`,
 			Default:  "",
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
 		}, {
 			Name:     "versions",
-			Help:     "Include old versions in directory listings.",
+			Help:     "Include old versions in directory listings.\nNote that when using this no file write operations are permitted,\nso you can't upload files or delete them.",
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -92,13 +102,22 @@ func init() {
 			Help:    "Permanently delete files on remote removal, otherwise hide files.",
 			Default: false,
 		}, {
-			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to chunked upload.",
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload.
+
+Files above this size will be uploaded in chunks of "--b2-chunk-size".
+
+This value should be set no larger than 4.657GiB (== 5GB).`,
 			Default:  fs.SizeSuffix(defaultUploadCutoff),
 			Advanced: true,
 		}, {
-			Name:     "chunk_size",
-			Help:     "Upload chunk size. Must fit in memory.",
+			Name: "chunk_size",
+			Help: `Upload chunk size. Must fit in memory.
+
+When uploading large files, chunk the file into this size.  Note that
+these chunks are buffered in memory and there might a maximum of
+"--transfers" chunks in progress at once.  5,000,000 Bytes is the
+minimim size.`,
 			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
 		}},

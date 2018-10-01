@@ -97,13 +97,42 @@ func init() {
 			Hide:     fs.OptionHideBoth,
 			Advanced: true,
 		}, {
-			Name:     "upload_wait_per_gb",
-			Help:     "Additional time per GB to wait after a failed complete upload to see if it appears.",
+			Name: "upload_wait_per_gb",
+			Help: `Additional time per GB to wait after a failed complete upload to see if it appears.
+
+Sometimes Amazon Drive gives an error when a file has been fully
+uploaded but the file appears anyway after a little while.  This
+happens sometimes for files over 1GB in size and nearly every time for
+files bigger than 10GB. This parameter controls the time rclone waits
+for the file to appear.
+
+The default value for this parameter is 3 minutes per GB, so by
+default it will wait 3 minutes for every GB uploaded to see if the
+file appears.
+
+You can disable this feature by setting it to 0. This may cause
+conflict errors as rclone retries the failed upload but the file will
+most likely appear correctly eventually.
+
+These values were determined empirically by observing lots of uploads
+of big files for a range of file sizes.
+
+Upload with the "-v" flag to see more info about what rclone is doing
+in this situation.`,
 			Default:  fs.Duration(180 * time.Second),
 			Advanced: true,
 		}, {
-			Name:     "templink_threshold",
-			Help:     "Files >= this size will be downloaded via their tempLink.",
+			Name: "templink_threshold",
+			Help: `Files >= this size will be downloaded via their tempLink.
+
+Files this size or more will be downloaded via their "tempLink". This
+is to work around a problem with Amazon Drive which blocks downloads
+of files bigger than about 10GB.  The default for this is 9GB which
+shouldn't need to be changed.
+
+To download files above this threshold, rclone requests a "tempLink"
+which downloads the file through a temporary URL directly from the
+underlying S3 storage.`,
 			Default:  defaultTempLinkThreshold,
 			Advanced: true,
 		}},

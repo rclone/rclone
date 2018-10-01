@@ -49,19 +49,33 @@ func init() {
 			ShortOpt: "L",
 			Advanced: true,
 		}, {
-			Name:     "skip_links",
-			Help:     "Don't warn about skipped symlinks.",
+			Name: "skip_links",
+			Help: `Don't warn about skipped symlinks.
+This flag disables warning messages on skipped symlinks or junction
+points, as you explicitly acknowledge that they should be skipped.`,
 			Default:  false,
 			NoPrefix: true,
 			Advanced: true,
 		}, {
-			Name:     "no_unicode_normalization",
-			Help:     "Don't apply unicode normalization to paths and filenames",
+			Name: "no_unicode_normalization",
+			Help: `Don't apply unicode normalization to paths and filenames (Deprecated)
+
+This flag is deprecated now.  Rclone no longer normalizes unicode file
+names, but it compares them with unicode normalization in the sync
+routine instead.`,
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name:     "no_check_updated",
-			Help:     "Don't check to see if the files change during upload",
+			Name: "no_check_updated",
+			Help: `Don't check to see if the files change during upload
+
+Normally rclone checks the size and modification time of files as they
+are being uploaded and aborts with a message which starts "can't copy
+- source file is being updated" if the file changes during upload.
+
+However on some file systems this modification time check may fail (eg
+[Glusterfs #2206](https://github.com/ncw/rclone/issues/2206)) so this
+check can be disabled with this flag.`,
 			Default:  false,
 			Advanced: true,
 		}, {

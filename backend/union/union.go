@@ -19,7 +19,7 @@ import (
 func init() {
 	fsi := &fs.RegInfo{
 		Name:        "union",
-		Description: "Builds a stackable unification remote, which can appear to merge the contents of several remotes",
+		Description: "A stackable unification remote, which can appear to merge the contents of several remotes",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "remotes",
