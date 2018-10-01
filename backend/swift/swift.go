@@ -33,8 +33,11 @@ const (
 
 // SharedOptions are shared between swift and hubic
 var SharedOptions = []fs.Option{{
-	Name:     "chunk_size",
-	Help:     "Above this size files will be chunked into a _segments container.",
+	Name: "chunk_size",
+	Help: `Above this size files will be chunked into a _segments container.
+
+Above this size files will be chunked into a _segments container.  The
+default for this is 5GB which is its maximum value.`,
 	Default:  fs.SizeSuffix(5 * 1024 * 1024 * 1024),
 	Advanced: true,
 }}
@@ -129,8 +132,13 @@ func init() {
 				Value: "admin",
 			}},
 		}, {
-			Name:    "storage_policy",
-			Help:    "The storage policy to use when creating a new container",
+			Name: "storage_policy",
+			Help: `The storage policy to use when creating a new container
+
+This applies the specified storage policy when creating a new
+container. The policy cannot be changed afterwards. The allowed
+configuration values and their meaning depend on your Swift storage
+provider.`,
 			Default: "",
 			Examples: []fs.OptionExample{{
 				Help:  "Default",

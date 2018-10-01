@@ -63,13 +63,20 @@ func init() {
 			Required:   true,
 			IsPassword: true,
 		}, {
-			Name:     "debug",
-			Help:     "Output more debug from Mega.",
+			Name: "debug",
+			Help: `Output more debug from Mega.
+
+If this flag is set (along with -vv) it will print further debugging
+information from the mega backend.`,
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name:     "hard_delete",
-			Help:     "Delete files permanently rather than putting them into the trash.",
+			Name: "hard_delete",
+			Help: `Delete files permanently rather than putting them into the trash.
+
+Normally the mega backend will put all deletions into the trash rather
+than permanently deleting them.  If you specify this then rclone will
+permanently delete objects instead.`,
 			Default:  false,
 			Advanced: true,
 		}},

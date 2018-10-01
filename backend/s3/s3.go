@@ -517,7 +517,7 @@ func init() {
 			}},
 		}, {
 			Name:     "storage_class",
-			Help:     "The storage class to use when storing objects in S3.",
+			Help:     "The storage class to use when storing new objects in S3.",
 			Provider: "AWS",
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -536,8 +536,17 @@ func init() {
 				Help:  "One Zone Infrequent Access storage class",
 			}},
 		}, {
-			Name:     "chunk_size",
-			Help:     "Chunk size to use for uploading",
+			Name: "chunk_size",
+			Help: `Chunk size to use for uploading.
+
+Any files larger than this will be uploaded in chunks of this
+size. The default is 5MB. The minimum is 5MB.
+
+Note that "--s3-upload-concurrency" chunks of this size are buffered
+in memory per transfer.
+
+If you are transferring large files over high speed links and you have
+enough memory, then increasing this will speed up the transfers.`,
 			Default:  fs.SizeSuffix(s3manager.MinUploadPartSize),
 			Advanced: true,
 		}, {
@@ -551,13 +560,27 @@ func init() {
 			Hide:     fs.OptionHideBoth,
 			Advanced: true,
 		}, {
-			Name:     "upload_concurrency",
-			Help:     "Concurrency for multipart uploads.",
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently.
+
+If you are uploading small numbers of large file over high speed link
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.`,
 			Default:  2,
 			Advanced: true,
 		}, {
-			Name:     "force_path_style",
-			Help:     "If true use path style access if false use virtual hosted style.\nSome providers (eg Aliyun OSS or Netease COS) require this.",
+			Name: "force_path_style",
+			Help: `If true use path style access if false use virtual hosted style.
+
+If this is true (the default) then rclone will use path style access,
+if false then rclone will use virtual path style. See [the AWS S3
+docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
+for more info.
+
+Some providers (eg Aliyun OSS or Netease COS) require this set to false.`,
 			Default:  true,
 			Advanced: true,
 		}},

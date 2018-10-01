@@ -207,22 +207,29 @@ func init() {
 		}, {
 			Name:     "use_trash",
 			Default:  true,
-			Help:     "Send files to the trash instead of deleting permanently.",
+			Help:     "Send files to the trash instead of deleting permanently.\nDefaults to true, namely sending files to the trash.\nUse `--drive-use-trash=false` to delete files permanently instead.",
 			Advanced: true,
 		}, {
 			Name:     "skip_gdocs",
 			Default:  false,
-			Help:     "Skip google documents in all listings.",
+			Help:     "Skip google documents in all listings.\nIf given, gdocs practically become invisible to rclone.",
 			Advanced: true,
 		}, {
-			Name:     "shared_with_me",
-			Default:  false,
-			Help:     "Only show files that are shared with me",
+			Name:    "shared_with_me",
+			Default: false,
+			Help: `Only show files that are shared with me.
+
+Instructs rclone to operate on your "Shared with me" folder (where
+Google Drive lets you access the files and folders others have shared
+with you).
+
+This works both with the "list" (lsd, lsl, etc) and the "copy"
+commands (copy, sync, etc), and with all other commands too.`,
 			Advanced: true,
 		}, {
 			Name:     "trashed_only",
 			Default:  false,
-			Help:     "Only show files that are in the trash",
+			Help:     "Only show files that are in the trash.\nThis will show trashed files in their original directory structure.",
 			Advanced: true,
 		}, {
 			Name:     "formats",
@@ -246,9 +253,25 @@ func init() {
 			Help:     "Allow the filetype to change when uploading Google docs (e.g. file.doc to file.docx). This will confuse sync and reupload every time.",
 			Advanced: true,
 		}, {
-			Name:     "use_created_date",
-			Default:  false,
-			Help:     "Use created date instead of modified date.",
+			Name:    "use_created_date",
+			Default: false,
+			Help: `Use file created date instead of modified date.,
+
+Useful when downloading data and you want the creation date used in
+place of the last modified date.
+
+**WARNING**: This flag may have some unexpected consequences.
+
+When uploading to your drive all files will be overwritten unless they
+haven't been modified since their creation. And the inverse will occur
+while downloading.  This side effect can be avoided by using the
+"--checksum" flag.
+
+This feature was implemented to retain photos capture date as recorded
+by google photos. You will first need to check the "Create a Google
+Photos folder" option in your google drive settings. You can then copy
+or move the photos locally and use the date the image was taken
+(created) set as the modification date.`,
 			Advanced: true,
 		}, {
 			Name:     "list_chunk",
@@ -261,9 +284,18 @@ func init() {
 			Help:     "Impersonate this user when using a service account.",
 			Advanced: true,
 		}, {
-			Name:     "alternate_export",
-			Default:  false,
-			Help:     "Use alternate export URLs for google documents export.",
+			Name:    "alternate_export",
+			Default: false,
+			Help: `Use alternate export URLs for google documents export.,
+
+If this option is set this instructs rclone to use an alternate set of
+export URLs for drive documents.  Users have reported that the
+official export URLs can't export large documents, whereas these
+unofficial ones can.
+
+See rclone issue [#2243](https://github.com/ncw/rclone/issues/2243) for background,
+[this google drive issue](https://issuetracker.google.com/issues/36761333) and
+[this helpful post](https://www.labnol.org/internet/direct-links-for-google-drive/28356/).`,
 			Advanced: true,
 		}, {
 			Name:     "upload_cutoff",
@@ -271,19 +303,30 @@ func init() {
 			Help:     "Cutoff for switching to chunked upload",
 			Advanced: true,
 		}, {
-			Name:     "chunk_size",
-			Default:  defaultChunkSize,
-			Help:     "Upload chunk size. Must a power of 2 >= 256k.",
+			Name:    "chunk_size",
+			Default: defaultChunkSize,
+			Help: `Upload chunk size. Must a power of 2 >= 256k.
+
+Making this larger will improve performance, but note that each chunk
+is buffered in memory one per transfer.
+
+Reducing this will reduce memory usage but decrease performance.`,
 			Advanced: true,
 		}, {
-			Name:     "acknowledge_abuse",
-			Default:  false,
-			Help:     "Set to allow files which return cannotDownloadAbusiveFile to be downloaded.",
+			Name:    "acknowledge_abuse",
+			Default: false,
+			Help: `Set to allow files which return cannotDownloadAbusiveFile to be downloaded.
+
+If downloading a file returns the error "This file has been identified
+as malware or spam and cannot be downloaded" with the error code
+"cannotDownloadAbusiveFile" then supply this flag to rclone to
+indicate you acknowledge the risks of downloading the file and rclone
+will download it anyway.`,
 			Advanced: true,
 		}, {
 			Name:     "keep_revision_forever",
 			Default:  false,
-			Help:     "Keep new head revision forever.",
+			Help:     "Keep new head revision of each file forever.",
 			Advanced: true,
 		}, {
 			Name:     "v2_download_min_size",

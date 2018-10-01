@@ -90,9 +90,20 @@ func init() {
 			Help:     "Allow asking for SFTP password when needed.",
 			Advanced: true,
 		}, {
-			Name:     "path_override",
-			Default:  "",
-			Help:     "Override path used by SSH connection.",
+			Name:    "path_override",
+			Default: "",
+			Help: `Override path used by SSH connection.
+
+This allows checksum calculation when SFTP and SSH paths are
+different. This issue affects among others Synology NAS boxes.
+
+Shared folders can be found in directories representing volumes
+
+    rclone sync /home/local/directory remote:/directory --ssh-path-override /volume2/directory
+
+Home directory can be found in a shared folder called "home"
+
+    rclone sync /home/local/directory remote:/home/directory --ssh-path-override /volume1/homes/USER/directory`,
 			Advanced: true,
 		}, {
 			Name:     "set_modtime",

@@ -80,7 +80,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "unlink",
-			Help:     "Remove existing public link to file/folder with link command rather than creating.",
+			Help:     "Remove existing public link to file/folder with link command rather than creating.\nDefault is false, meaning link command will create or retrieve public link.",
 			Default:  false,
 			Advanced: true,
 		}},

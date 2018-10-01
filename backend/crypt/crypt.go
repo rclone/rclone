@@ -67,8 +67,16 @@ func init() {
 			Help:       "Password or pass phrase for salt. Optional but recommended.\nShould be different to the previous password.",
 			IsPassword: true,
 		}, {
-			Name:     "show_mapping",
-			Help:     "For all files listed show how the names encrypt.",
+			Name: "show_mapping",
+			Help: `For all files listed show how the names encrypt.
+
+If this flag is set then for each file that the remote is asked to
+list, it will log (at level INFO) a line stating the decrypted file
+name and the encrypted file name.
+
+This is so you can work out which encrypted names are which decrypted
+names just in case you need to do something with the encrypted file
+names, or for debugging purposes.`,
 			Default:  false,
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,

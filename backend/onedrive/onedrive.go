@@ -212,8 +212,11 @@ func init() {
 			Name: config.ConfigClientSecret,
 			Help: "Microsoft App Client Secret\nLeave blank normally.",
 		}, {
-			Name:     "chunk_size",
-			Help:     "Chunk size to upload files with - must be multiple of 320k.",
+			Name: "chunk_size",
+			Help: `Chunk size to upload files with - must be multiple of 320k.
+
+Above this size files will be chunked - must be multiple of 320k. Note
+that the chunks will be buffered into memory.`,
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
@@ -227,8 +230,14 @@ func init() {
 			Default:  "",
 			Advanced: true,
 		}, {
-			Name:     "expose_onenote_files",
-			Help:     "If true, OneNote files will show up in directory listing (see docs)",
+			Name: "expose_onenote_files",
+			Help: `Set to make OneNote files show up in directory listings.
+
+By default rclone will hide OneNote files in directory listings because
+operations like "Open" and "Update" won't work on them.  But this
+behaviour may also prevent you from deleting them.  If you want to
+delete OneNote files or otherwise want them to show up in directory
+listing, set this option.`,
 			Default:  false,
 			Advanced: true,
 		}},
