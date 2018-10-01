@@ -1000,6 +1000,7 @@ func NewRemoteName() (name string) {
 // editOptions edits the options.  If new is true then it just allows
 // entry and doesn't show any old values.
 func editOptions(ri *fs.RegInfo, name string, isNew bool) {
+	fmt.Printf("** See help for %s backend at: https://rclone.org/%s/ **\n\n", ri.Name, ri.FileName())
 	hasAdvanced := false
 	for _, advanced := range []bool{false, true} {
 		if advanced {
