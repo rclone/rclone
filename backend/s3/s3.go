@@ -1240,6 +1240,15 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		CopySource:        &source,
 		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
 	}
+	if f.opt.ServerSideEncryption != "" {
+		req.ServerSideEncryption = &f.opt.ServerSideEncryption
+	}
+	if f.opt.SSEKMSKeyID != "" {
+		req.SSEKMSKeyId = &f.opt.SSEKMSKeyID
+	}
+	if f.opt.StorageClass != "" {
+		req.StorageClass = &f.opt.StorageClass
+	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.c.CopyObject(&req)
 		return shouldRetry(err)
@@ -1408,6 +1417,15 @@ func (o *Object) SetModTime(modTime time.Time) error {
 		CopySource:        aws.String(pathEscape(sourceKey)),
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
+	}
+	if o.fs.opt.ServerSideEncryption != "" {
+		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
+	}
+	if o.fs.opt.SSEKMSKeyID != "" {
+		req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyID
+	}
+	if o.fs.opt.StorageClass != "" {
+		req.StorageClass = &o.fs.opt.StorageClass
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, err := o.fs.c.CopyObject(&req)
