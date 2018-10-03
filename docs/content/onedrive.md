@@ -165,6 +165,13 @@ system.
 Above this size files will be chunked - must be multiple of 320k. The
 default is 10MB.  Note that the chunks will be buffered into memory.
 
+#### --onedrive-expose-onenote-files ####
+
+By default rclone will hide OneNote files in directory listing because operations like `Open`
+and `Update` won't work on them.  But this behaviour may also prevent you from deleting them.
+If you want to delete OneNote files or otherwise want them to show up in directory listing,
+set this flag.
+
 ### Limitations ###
 
 Note that OneDrive is case insensitive so you can't have a

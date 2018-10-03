@@ -226,15 +226,21 @@ func init() {
 			Help:     "The type of the drive ( personal | business | documentLibrary )",
 			Default:  "",
 			Advanced: true,
+		}, {
+			Name:     "expose_onenote_files",
+			Help:     "If true, OneNote files will show up in directory listing (see docs)",
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize fs.SizeSuffix `config:"chunk_size"`
-	DriveID   string        `config:"drive_id"`
-	DriveType string        `config:"drive_type"`
+	ChunkSize          fs.SizeSuffix `config:"chunk_size"`
+	DriveID            string        `config:"drive_id"`
+	DriveType          string        `config:"drive_type"`
+	ExposeOneNoteFiles bool          `config:"expose_onenote_files"`
 }
 
 // Fs represents a remote one drive
@@ -255,15 +261,16 @@ type Fs struct {
 //
 // Will definitely have info but maybe not meta
 type Object struct {
-	fs           *Fs       // what this object is part of
-	remote       string    // The remote path
-	hasMetaData  bool      // whether info below has been set
-	size         int64     // size of the object
-	modTime      time.Time // modification time of the object
-	id           string    // ID of the object
-	sha1         string    // SHA-1 of the object content
-	quickxorhash string    // QuickXorHash of the object content
-	mimeType     string    // Content-Type of object from server (may not be as uploaded)
+	fs            *Fs       // what this object is part of
+	remote        string    // The remote path
+	hasMetaData   bool      // whether info below has been set
+	isOneNoteFile bool      // Whether the object is a OneNote file
+	size          int64     // size of the object
+	modTime       time.Time // modification time of the object
+	id            string    // ID of the object
+	sha1          string    // SHA-1 of the object content
+	quickxorhash  string    // QuickXorHash of the object content
+	mimeType      string    // Content-Type of object from server (may not be as uploaded)
 }
 
 // ------------------------------------------------------------
@@ -488,6 +495,9 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 		}
 		return "", false, err
 	}
+	if info.GetPackageType() == api.PackageTypeOneNote {
+		return "", false, errors.New("found OneNote file when looking for folder")
+	}
 	if info.GetFolder() == nil {
 		return "", false, errors.New("found file when looking for folder")
 	}
@@ -596,6 +606,11 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}
 	var iErr error
 	_, err = f.listAll(directoryID, false, false, func(info *api.Item) bool {
+		if !f.opt.ExposeOneNoteFiles && info.GetPackageType() == api.PackageTypeOneNote {
+			fs.Debugf(info.Name, "OneNote file not shown in directory listing")
+			return false
+		}
+
 		remote := path.Join(dir, info.GetName())
 		folder := info.GetFolder()
 		if folder != nil {
@@ -1121,6 +1136,8 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.hasMetaData = true
 	o.size = info.GetSize()
 
+	o.isOneNoteFile = info.GetPackageType() == api.PackageTypeOneNote
+
 	// Docs: https://docs.microsoft.com/en-us/onedrive/developer/rest-api/resources/hashes
 	//
 	// We use SHA1 for onedrive personal and QuickXorHash for onedrive for business
@@ -1232,6 +1249,10 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
+	if o.isOneNoteFile {
+		return nil, errors.New("can't open a OneNote file")
+	}
+
 	fs.FixRangeOption(options, o.size)
 	var resp *http.Response
 	opts := newOptsCall(o.id, "GET", "/content")
@@ -1275,6 +1296,12 @@ func (o *Object) createUploadSession(modTime time.Time) (response *api.CreateUpl
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(&opts, &createRequest, &response)
+		if apiErr, ok := err.(*api.Error); ok {
+			if apiErr.ErrorInfo.Code == "nameAlreadyExists" {
+				// Make the error more user-friendly
+				err = errors.New(err.Error() + " (is it a OneNote file?)")
+			}
+		}
 		return shouldRetry(resp, err)
 	})
 	return response, err
@@ -1407,6 +1434,12 @@ func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(&opts, nil, &info)
+		if apiErr, ok := err.(*api.Error); ok {
+			if apiErr.ErrorInfo.Code == "nameAlreadyExists" {
+				// Make the error more user-friendly
+				err = errors.New(err.Error() + " (is it a OneNote file?)")
+			}
+		}
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1425,6 +1458,10 @@ func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	if o.hasMetaData && o.isOneNoteFile {
+		return errors.New("can't upload content to a OneNote file")
+	}
+
 	o.fs.tokenRenewer.Start()
 	defer o.fs.tokenRenewer.Stop()
 
