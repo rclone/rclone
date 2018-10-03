@@ -226,8 +226,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 
 			// Show stats if the user has specifically requested them
 			if cmd.ShowStats() {
-				stopStats := cmd.StartStats()
-				defer close(stopStats)
+				defer cmd.StartStats()()
 			}
 
 			// Skip checkMountEmpty if --allow-non-empty flag is used or if
