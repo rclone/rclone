@@ -17,6 +17,7 @@ import (
 	"runtime/pprof"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -293,7 +294,7 @@ func ShowStats() bool {
 // Run the function with stats and retries if required
 func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	var err error
-	var stopStats chan struct{}
+	stopStats := func() {}
 	if !showStats && ShowStats() {
 		showStats = true
 	}
@@ -331,9 +332,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			time.Sleep(*retriesInterval)
 		}
 	}
-	if showStats {
-		close(stopStats)
-	}
+	stopStats()
 	if err != nil {
 		log.Printf("Failed to %s: %v", cmd.Name(), err)
 		resolveExitCode(err)
@@ -384,24 +383,31 @@ func CheckArgs(MinArgs, MaxArgs int, cmd *cobra.Command, args []string) {
 
 // StartStats prints the stats every statsInterval
 //
-// It returns a channel which should be closed to stop the stats.
-func StartStats() chan struct{} {
-	stopStats := make(chan struct{})
-	if *statsInterval > 0 {
-		go func() {
-			ticker := time.NewTicker(*statsInterval)
-			for {
-				select {
-				case <-ticker.C:
-					accounting.Stats.Log()
-				case <-stopStats:
-					ticker.Stop()
-					return
-				}
-			}
-		}()
+// It returns a func which should be called to stop the stats.
+func StartStats() func() {
+	if *statsInterval <= 0 {
+		return func() {}
 	}
-	return stopStats
+	stopStats := make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		ticker := time.NewTicker(*statsInterval)
+		for {
+			select {
+			case <-ticker.C:
+				accounting.Stats.Log()
+			case <-stopStats:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+	return func() {
+		close(stopStats)
+		wg.Wait()
+	}
 }
 
 // initConfig is run by cobra after initialising the flags
