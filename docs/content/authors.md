@@ -202,3 +202,4 @@ Contributors
   * ssaqua <ssaqua@users.noreply.github.com>
   * xnaas <me@xnaas.info>
   * Frantisek Fuka <fuka@fuxoft.cz>
+  * Paul Kohout <pauljkohout@yahoo.com>
