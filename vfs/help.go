@@ -46,8 +46,6 @@ The maximum memory used by rclone for buffering can be up to
 
 ### File Caching
 
-**NB** File caching is **EXPERIMENTAL** - use with care!
-
 These flags control the VFS file caching options.  The VFS layer is
 used by rclone mount to make a cloud storage system work more like a
 normal file system.
