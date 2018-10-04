@@ -66,13 +66,11 @@ func checkMountEmpty(mountpoint string) error {
 func NewMountCommand(commandName string, Mount func(f fs.Fs, mountpoint string) error) *cobra.Command {
 	var commandDefintion = &cobra.Command{
 		Use:   commandName + " remote:path /path/to/mountpoint",
-		Short: `Mount the remote as a mountpoint. **EXPERIMENTAL**`,
+		Short: `Mount the remote as file system on a mountpoint.`,
 		Long: `
 rclone ` + commandName + ` allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
 FUSE.
-
-This is **EXPERIMENTAL** - use with care.
 
 First set up your remote using ` + "`rclone config`" + `.  Check it works with ` + "`rclone ls`" + ` etc.
 
@@ -148,7 +146,7 @@ File systems expect things to be 100% reliable, whereas cloud storage
 systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone ` + commandName + `
 can't use retries in the same way without making local copies of the
-uploads. Look at the **EXPERIMENTAL** [file caching](#file-caching)
+uploads. Look at the [file caching](#file-caching)
 for solutions to make ` + commandName + ` mount more reliable.
 
 ### Attribute caching
