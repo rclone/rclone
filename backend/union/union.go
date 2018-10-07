@@ -152,11 +152,26 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 // regulary. When the channel gets closed, the implemantion
 // should stop polling and release resources.
 func (f *Fs) ChangeNotify(fn func(string, fs.EntryType), ch <-chan time.Duration) {
+	var remoteChans []chan time.Duration
+
 	for _, remote := range f.remotes {
 		if ChangeNotify := remote.Features().ChangeNotify; ChangeNotify != nil {
+			ch := make(chan time.Duration)
+			remoteChans = append(remoteChans, ch)
 			ChangeNotify(fn, ch)
 		}
 	}
+
+	go func() {
+		for i := range ch {
+			for _, c := range remoteChans {
+				c <- i
+			}
+		}
+		for _, c := range remoteChans {
+			close(c)
+		}
+	}()
 }
 
 // DirCacheFlush resets the directory cache - used in testing
