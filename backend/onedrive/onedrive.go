@@ -1088,6 +1088,32 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.QuickXorHash)
 }
 
+// PublicLink returns a link for downloading without accout.
+func (f *Fs) PublicLink(remote string) (link string, err error) {
+	info, _, err := f.readMetaDataForPath(f.Root())
+	if err != nil {
+		return "", err
+	}
+	opts := newOptsCall(info.ID, "POST", "/createLink")
+
+	share := api.CreateShareLinkRequest{
+		Type:  "view",
+		Scope: "anonymous",
+	}
+
+	var resp *http.Response
+	var result api.CreateShareLinkResponse
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(&opts, &share, &result)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	return result.Link.WebURL, nil
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -1540,6 +1566,7 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}
 	_ fs.IDer            = &Object{}
