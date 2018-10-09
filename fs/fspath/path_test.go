@@ -58,3 +58,32 @@ func TestSplit(t *testing.T) {
 		assert.Equal(t, test.remote, gotParent+gotLeaf, fmt.Sprintf("%s: %q + %q != %q", test.remote, gotParent, gotLeaf, test.remote))
 	}
 }
+func TestJoinRootPath(t *testing.T) {
+	for _, test := range []struct {
+		elements []string
+		want     string
+	}{
+		{nil, ""},
+		{[]string{""}, ""},
+		{[]string{"/"}, "/"},
+		{[]string{"/", "/"}, "/"},
+		{[]string{"/", "//"}, "/"},
+		{[]string{"/root", ""}, "/root"},
+		{[]string{"/root", "/"}, "/root"},
+		{[]string{"/root", "//"}, "/root"},
+		{[]string{"/a/b"}, "/a/b"},
+		{[]string{"//", "/"}, "//"},
+		{[]string{"//server", "path"}, "//server/path"},
+		{[]string{"//server/sub", "path"}, "//server/sub/path"},
+		{[]string{"//server", "//path"}, "//server/path"},
+		{[]string{"//server/sub", "//path"}, "//server/sub/path"},
+		{[]string{"", "//", "/"}, "//"},
+		{[]string{"", "//server", "path"}, "//server/path"},
+		{[]string{"", "//server/sub", "path"}, "//server/sub/path"},
+		{[]string{"", "//server", "//path"}, "//server/path"},
+		{[]string{"", "//server/sub", "//path"}, "//server/sub/path"},
+	} {
+		got := JoinRootPath(test.elements...)
+		assert.Equal(t, test.want, got)
+	}
+}
