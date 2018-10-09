@@ -250,6 +250,28 @@ type MoveItemRequest struct {
 	FileSystemInfo  *FileSystemInfoFacet `json:"fileSystemInfo,omitempty"`  // File system information on client. Read-write.
 }
 
+//CreateShareLinkRequest is the request to create a sharing link
+//Always Type:view and Scope:anonymous for public sharing
+type CreateShareLinkRequest struct {
+	Type  string `json:"type"`            //Link type in View, Edit or Embed
+	Scope string `json:"scope,omitempty"` //Optional. Scope in anonymousi, organization
+}
+
+//CreateShareLinkResponse is the response from CreateShareLinkRequest
+type CreateShareLinkResponse struct {
+	ID    string   `json:"id"`
+	Roles []string `json:"roles"`
+	Link  struct {
+		Type        string `json:"type"`
+		Scope       string `json:"scope"`
+		WebURL      string `json:"webUrl"`
+		Application struct {
+			ID          string `json:"id"`
+			DisplayName string `json:"displayName"`
+		} `json:"application"`
+	} `json:"link"`
+}
+
 // AsyncOperationStatus provides information on the status of a asynchronous job progress.
 //
 // The following API calls return AsyncOperationStatus resources:
