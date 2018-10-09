@@ -4,7 +4,6 @@ package crypt
 import (
 	"fmt"
 	"io"
-	"path"
 	"strings"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
+	"github.com/ncw/rclone/fs/fspath"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
@@ -143,11 +143,11 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
 	}
 	// Look for a file first
-	remotePath := path.Join(wPath, cipher.EncryptFileName(rpath))
+	remotePath := fspath.JoinRootPath(wPath, cipher.EncryptFileName(rpath))
 	wrappedFs, err := wInfo.NewFs(wName, remotePath, wConfig)
 	// if that didn't produce a file, look for a directory
 	if err != fs.ErrorIsFile {
-		remotePath = path.Join(wPath, cipher.EncryptDirName(rpath))
+		remotePath = fspath.JoinRootPath(wPath, cipher.EncryptDirName(rpath))
 		wrappedFs, err = wInfo.NewFs(wName, remotePath, wConfig)
 	}
 	if err != fs.ErrorIsFile && err != nil {
