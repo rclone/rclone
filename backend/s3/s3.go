@@ -582,6 +582,16 @@ for more info.
 Some providers (eg Aliyun OSS or Netease COS) require this set to false.`,
 			Default:  true,
 			Advanced: true,
+		}, {
+			Name: "v2_auth",
+			Help: `If true use v2 authentication.
+
+If this is false (the default) then rclone will use v4 authentication.
+If it is set then rclone will use v2 authentication.
+
+Use this only if v4 signatures don't work, eg pre Jewel/v10 CEPH.`,
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -616,6 +626,7 @@ type Options struct {
 	SessionToken         string        `config:"session_token"`
 	UploadConcurrency    int           `config:"upload_concurrency"`
 	ForcePathStyle       bool          `config:"force_path_style"`
+	V2Auth               bool          `config:"v2_auth"`
 }
 
 // Fs represents a remote s3 server
@@ -790,7 +801,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
 	ses := session.New()
 	c := s3.New(ses, awsConfig)
-	if opt.Region == "other-v2-signature" {
+	if opt.V2Auth || opt.Region == "other-v2-signature" {
 		fs.Debugf(nil, "Using v2 auth")
 		signer := func(req *request.Request) {
 			// Ignore AnonymousCredentials object
