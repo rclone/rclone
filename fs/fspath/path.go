@@ -5,6 +5,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/ncw/rclone/fs/driveletter"
 )
@@ -47,4 +48,20 @@ func Split(remote string) (parent string, leaf string) {
 	// Construct new remote name without last segment
 	parent, leaf = path.Split(remotePath)
 	return remoteName + parent, leaf
+}
+
+// JoinRootPath joins any number of path elements into a single path, adding a
+// separating slash if necessary. The result is Cleaned; in particular,
+// all empty strings are ignored.
+// If the first non empty element has a leading "//" this is preserved.
+func JoinRootPath(elem ...string) string {
+	for i, e := range elem {
+		if e != "" {
+			if strings.HasPrefix(e, "//") {
+				return "/" + path.Clean(strings.Join(elem[i:], "/"))
+			}
+			return path.Clean(strings.Join(elem[i:], "/"))
+		}
+	}
+	return ""
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
+	"github.com/ncw/rclone/fs/fspath"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fs/walk"
@@ -363,7 +364,7 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", opt.Remote)
 	}
 
-	remotePath := path.Join(wPath, rootPath)
+	remotePath := fspath.JoinRootPath(wPath, rootPath)
 	wrappedFs, wrapErr := wInfo.NewFs(wName, remotePath, wConfig)
 	if wrapErr != nil && wrapErr != fs.ErrorIsFile {
 		return nil, errors.Wrapf(wrapErr, "failed to make remote %s:%s to wrap", wName, remotePath)
