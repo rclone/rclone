@@ -166,30 +166,6 @@ func DecodeXML(resp *http.Response, result interface{}) (err error) {
 	return decoder.Decode(result)
 }
 
-// ClientWithHeaderReset makes a new http client which resets the
-// headers passed in on redirect
-//
-// FIXME This is now unecessary with go1.8
-func ClientWithHeaderReset(c *http.Client, headers map[string]string) *http.Client {
-	if len(headers) == 0 {
-		return c
-	}
-	clientCopy := *c
-	clientCopy.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		if len(via) >= 10 {
-			return errors.New("stopped after 10 redirects")
-		}
-		// Reset the headers in the new request
-		for k, v := range headers {
-			if v != "" {
-				req.Header.Set(k, v)
-			}
-		}
-		return nil
-	}
-	return &clientCopy
-}
-
 // ClientWithNoRedirects makes a new http client which won't follow redirects
 func ClientWithNoRedirects(c *http.Client) *http.Client {
 	clientCopy := *c
