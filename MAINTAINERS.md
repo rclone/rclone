@@ -58,7 +58,7 @@ Close tickets as soon as you can - make sure they are tagged with a release.  Po
 
 Try to process pull requests promptly!
 
-Merging pull requests on Github itself works quite well now-a-days so you can squash and rebase or rebase pull requests.  rclone doesn't use merge commits.  Use the squash and rebase option if you need to edit the commit message.
+Merging pull requests on GitHub itself works quite well now-a-days so you can squash and rebase or rebase pull requests.  rclone doesn't use merge commits.  Use the squash and rebase option if you need to edit the commit message.
 
 After merging the commit, in your local master branch, do `git pull` then run `bin/update-authors.py` to update the authors file then `git push`.
 
