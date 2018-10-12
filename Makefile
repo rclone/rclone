@@ -88,7 +88,7 @@ build_dep:
 ifdef FULL_TESTS
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
-	go get -u github.com/golang/lint/golint
+	go get -u golang.org/x/lint/golint
 endif
 
 # Get the release dependencies
