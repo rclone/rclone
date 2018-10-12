@@ -193,12 +193,12 @@ func init() {
 		}, {
 			Name:     "service_account_credentials",
 			Help:     "Service Account Credentials JSON blob\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
-			Hide:     fs.OptionHideBoth,
+			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
 		}, {
 			Name:     "team_drive",
 			Help:     "ID of the Team Drive",
-			Hide:     fs.OptionHideBoth,
+			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
 		}, {
 			Name:     "auth_owner_only",

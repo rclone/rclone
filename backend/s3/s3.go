@@ -557,7 +557,6 @@ enough memory, then increasing this will speed up the transfers.`,
 		}, {
 			Name:     "session_token",
 			Help:     "An AWS session token",
-			Hide:     fs.OptionHideBoth,
 			Advanced: true,
 		}, {
 			Name: "upload_concurrency",
