@@ -61,7 +61,7 @@ Features
 Links
 
   * [Home page](https://rclone.org/)
-  * [Github project page for source and bug tracker](https://github.com/ncw/rclone)
+  * [GitHub project page for source and bug tracker](https://github.com/ncw/rclone)
   * [Rclone Forum](https://forum.rclone.org)
   * <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page</a>
   * [Downloads](https://rclone.org/downloads/)
