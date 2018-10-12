@@ -715,6 +715,7 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 	fmt.Printf("Fetching team drive list...\n")
 	var driveIDs, driveNames []string
 	listTeamDrives := svc.Teamdrives.List().PageSize(100)
+	listFailed := false
 	for {
 		var teamDrives *drive.TeamDriveList
 		err = newPacer().Call(func() (bool, error) {
@@ -722,7 +723,9 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 			return shouldRetry(err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "list team drives failed")
+			fmt.Printf("Listing team drives failed: %v\n", err)
+			listFailed = true
+			break
 		}
 		for _, drive := range teamDrives.TeamDrives {
 			driveIDs = append(driveIDs, drive.Id)
@@ -734,7 +737,7 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 		listTeamDrives.PageToken(teamDrives.NextPageToken)
 	}
 	var driveID string
-	if len(driveIDs) == 0 {
+	if !listFailed && len(driveIDs) == 0 {
 		fmt.Printf("No team drives found in your account")
 	} else {
 		driveID = config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
