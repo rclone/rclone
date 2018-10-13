@@ -12,7 +12,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
 	"time"
 
 	"github.com/ncw/rclone/cmd"

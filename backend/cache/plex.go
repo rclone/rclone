@@ -3,18 +3,16 @@
 package cache
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
-
 	"sync"
-
-	"bytes"
-	"io/ioutil"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/patrickmn/go-cache"

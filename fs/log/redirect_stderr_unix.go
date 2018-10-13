@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/ncw/rclone/fs/config"
-
 	"golang.org/x/sys/unix"
 )
 

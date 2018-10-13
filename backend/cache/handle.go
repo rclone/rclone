@@ -5,12 +5,11 @@ package cache
 import (
 	"fmt"
 	"io"
-	"sync"
-	"time"
-
 	"path"
 	"runtime"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/operations"

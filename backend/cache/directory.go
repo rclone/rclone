@@ -3,9 +3,8 @@
 package cache
 
 import (
-	"time"
-
 	"path"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 )

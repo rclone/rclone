@@ -20,10 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config/configflags"
@@ -36,6 +32,9 @@ import (
 	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fs/rc/rcflags"
 	"github.com/ncw/rclone/lib/atexit"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // Globals

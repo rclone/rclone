@@ -3,14 +3,13 @@
 package cache_test
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"path"
 	"strconv"
 	"testing"
 	"time"
-
-	"fmt"
 
 	"github.com/ncw/rclone/backend/cache"
 	_ "github.com/ncw/rclone/backend/drive"

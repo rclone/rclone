@@ -3,7 +3,6 @@ package deletefile
 import (
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
-
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )

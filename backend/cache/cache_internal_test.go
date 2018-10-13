@@ -4,28 +4,24 @@ package cache_test
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	goflag "flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/pkg/errors"
-
-	"encoding/base64"
-	goflag "flag"
-	"fmt"
-	"runtime/debug"
-
-	"encoding/json"
-	"net/http"
 
 	"github.com/ncw/rclone/backend/cache"
 	"github.com/ncw/rclone/backend/crypt"
@@ -40,6 +36,7 @@ import (
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
