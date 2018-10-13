@@ -47,6 +47,8 @@ type ChunkedUploadConfig struct {
 	// nil will disable rounding
 	// e.g. the next power of 2
 	CeilChunkSize func(fs.SizeSuffix) fs.SizeSuffix
+	// More than one chunk is required on upload
+	NeedMultipleChunks bool
 }
 
 // SetUploadChunkSizer is a test only interface to change the upload chunk size at runtime
@@ -54,6 +56,13 @@ type SetUploadChunkSizer interface {
 	// Change the configured UploadChunkSize.
 	// Will only be called while no transfer is in progress.
 	SetUploadChunkSize(fs.SizeSuffix) (fs.SizeSuffix, error)
+}
+
+// SetUploadCutoffer is a test only interface to change the upload cutoff size at runtime
+type SetUploadCutoffer interface {
+	// Change the configured UploadCutoff.
+	// Will only be called while no transfer is in progress.
+	SetUploadCutoff(fs.SizeSuffix) (fs.SizeSuffix, error)
 }
 
 // NextPowerOfTwo returns the current or next bigger power of two.
@@ -152,8 +161,8 @@ func testPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
 	const maxTries = 10
 again:
 	r := readers.NewPatternReader(file.Size)
-	hash := hash.NewMultiHasher()
-	in := io.TeeReader(r, hash)
+	uploadHash := hash.NewMultiHasher()
+	in := io.TeeReader(r, uploadHash)
 
 	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 	obj, err := f.Put(in, obji)
@@ -168,11 +177,24 @@ again:
 		}
 		require.NoError(t, err, fmt.Sprintf("Put error: %v", err))
 	}
-	file.Hashes = hash.Sums()
+	file.Hashes = uploadHash.Sums()
 	file.Check(t, obj, f.Precision())
+
 	// Re-read the object and check again
 	obj = findObject(t, f, file.Path)
 	file.Check(t, obj, f.Precision())
+
+	// Download the object and check it is OK
+	downloadHash := hash.NewMultiHasher()
+	download, err := obj.Open()
+	require.NoError(t, err)
+	n, err := io.Copy(downloadHash, download)
+	require.NoError(t, err)
+	assert.Equal(t, file.Size, n)
+	require.NoError(t, download.Close())
+	assert.Equal(t, file.Hashes, downloadHash.Sums())
+
+	// Remove the object
 	require.NoError(t, obj.Remove())
 }
 
@@ -506,6 +528,8 @@ func Run(t *testing.T, opt *Opt) {
 			t.Skipf("%T does not implement SetUploadChunkSizer", remote)
 		}
 
+		setUploadCutoffer, _ := remote.(SetUploadCutoffer)
+
 		minChunkSize := opt.ChunkedUpload.MinChunkSize
 		if minChunkSize < 100 {
 			minChunkSize = 100
@@ -546,11 +570,21 @@ func Run(t *testing.T, opt *Opt) {
 		}
 		chunkSizes.Sort()
 
-		old, err := setUploadChunkSizer.SetUploadChunkSize(minChunkSize)
+		// Set the minimum chunk size, upload cutoff and reset it at the end
+		oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(minChunkSize)
 		require.NoError(t, err)
+		var oldUploadCutoff fs.SizeSuffix
+		if setUploadCutoffer != nil {
+			oldUploadCutoff, err = setUploadCutoffer.SetUploadCutoff(minChunkSize)
+			require.NoError(t, err)
+		}
 		defer func() {
-			_, err := setUploadChunkSizer.SetUploadChunkSize(old)
+			_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
 			assert.NoError(t, err)
+			if setUploadCutoffer != nil {
+				_, err := setUploadCutoffer.SetUploadCutoff(oldUploadCutoff)
+				assert.NoError(t, err)
+			}
 		}()
 
 		var lastCs fs.SizeSuffix
@@ -566,8 +600,20 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run(cs.String(), func(t *testing.T) {
 				_, err := setUploadChunkSizer.SetUploadChunkSize(cs)
 				require.NoError(t, err)
+				if setUploadCutoffer != nil {
+					_, err = setUploadCutoffer.SetUploadCutoff(cs)
+					require.NoError(t, err)
+				}
 
-				for _, fileSize := range []fs.SizeSuffix{cs - 1, cs, 2*cs + 1} {
+				var testChunks []fs.SizeSuffix
+				if opt.ChunkedUpload.NeedMultipleChunks {
+					// If NeedMultipleChunks is set then test with > cs
+					testChunks = []fs.SizeSuffix{cs + 1, 2 * cs, 2*cs + 1}
+				} else {
+					testChunks = []fs.SizeSuffix{cs - 1, cs, 2*cs + 1}
+				}
+
+				for _, fileSize := range testChunks {
 					t.Run(fmt.Sprintf("%d", fileSize), func(t *testing.T) {
 						testPutLarge(t, remote, &fstest.Item{
 							ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
