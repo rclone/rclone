@@ -205,3 +205,4 @@ Contributors
   * Paul Kohout <pauljkohout@yahoo.com>
   * dcpu <43330287+dcpu@users.noreply.github.com>
   * jackyzy823 <jackyzy823@gmail.com>
+  * David Haguenauer <ml@kurokatta.org>
