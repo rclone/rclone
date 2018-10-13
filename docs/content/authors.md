@@ -206,3 +206,4 @@ Contributors
   * dcpu <43330287+dcpu@users.noreply.github.com>
   * jackyzy823 <jackyzy823@gmail.com>
   * David Haguenauer <ml@kurokatta.org>
+  * teresy <hi.teresy@gmail.com>
