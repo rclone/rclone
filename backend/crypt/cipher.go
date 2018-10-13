@@ -17,11 +17,9 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/pkg/errors"
-
+	"github.com/rfjakob/eme"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
-
-	"github.com/rfjakob/eme"
 )
 
 // Constants

@@ -3,20 +3,17 @@
 package cache
 
 import (
-	"time"
-
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"sync"
-
-	"io/ioutil"
-
-	"fmt"
+	"time"
 
 	bolt "github.com/coreos/bbolt"
 	"github.com/ncw/rclone/fs"
