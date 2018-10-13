@@ -1269,7 +1269,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
-		BufferSize:      int(o.fs.opt.ChunkSize),
+		BufferSize:      int(o.fs.opt.ChunkSize) + 1, // +1 Needed until https://github.com/Azure/azure-storage-blob-go/pull/75 is merged
 		MaxBuffers:      4,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
