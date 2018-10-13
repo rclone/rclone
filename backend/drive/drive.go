@@ -806,6 +806,18 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	return
 }
 
+func checkUploadCutoff(cs fs.SizeSuffix) error {
+	return nil
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadCutoff(cs)
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -813,6 +825,10 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	err = checkUploadCutoff(opt.UploadCutoff)
+	if err != nil {
+		return nil, errors.Wrap(err, "drive: upload cutoff")
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {

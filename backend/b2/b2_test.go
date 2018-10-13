@@ -14,7 +14,8 @@ func TestIntegration(t *testing.T) {
 		RemoteName: "TestB2:",
 		NilObject:  (*Object)(nil),
 		ChunkedUpload: fstests.ChunkedUploadConfig{
-			MinChunkSize: minChunkSize,
+			MinChunkSize:       minChunkSize,
+			NeedMultipleChunks: true,
 		},
 	})
 }
@@ -23,4 +24,11 @@ func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
 	return f.setUploadChunkSize(cs)
 }
 
-var _ fstests.SetUploadChunkSizer = (*Fs)(nil)
+func (f *Fs) SetUploadCutoff(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadCutoff(cs)
+}
+
+var (
+	_ fstests.SetUploadChunkSizer = (*Fs)(nil)
+	_ fstests.SetUploadCutoffer   = (*Fs)(nil)
+)

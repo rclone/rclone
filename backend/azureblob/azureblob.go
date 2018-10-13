@@ -256,6 +256,21 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	return
 }
 
+func checkUploadCutoff(cs fs.SizeSuffix) error {
+	if cs > maxUploadCutoff {
+		return errors.Errorf("%v must be less than or equal to %v", cs, maxUploadCutoff)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadCutoff(cs)
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -265,8 +280,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, err
 	}
 
-	if opt.UploadCutoff > maxUploadCutoff {
-		return nil, errors.Errorf("azure: upload cutoff (%v) must be less than or equal to %v", opt.UploadCutoff, maxUploadCutoff)
+	err = checkUploadCutoff(opt.UploadCutoff)
+	if err != nil {
+		return nil, errors.Wrap(err, "azure: upload cutoff")
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
