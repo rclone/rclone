@@ -177,7 +177,8 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 
 // Call makes the call and returns the http.Response
 //
-// if err != nil then resp.Body will need to be closed
+// if err != nil then resp.Body will need to be closed unless
+// opt.NoResponse is set
 //
 // it will return resp if at all possible, even if err is set
 func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
@@ -328,6 +329,12 @@ func MultipartUpload(in io.Reader, params url.Values, contentName, fileName stri
 //
 // If request is not nil then it will be JSON encoded as the body of the request
 //
+// If response is not nil then the response will be JSON decoded into
+// it and resp.Body will be closed.
+//
+// If response is nil then the resp.Body will be closed only if
+// opts.NoResponse is set.
+//
 // If (opts.MultipartParams or opts.MultipartContentName) and
 // opts.Body are set then CallJSON will do a multipart upload with a
 // file attached.  opts.MultipartContentName is the name of the
@@ -344,6 +351,12 @@ func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{
 // CallXML runs Call and decodes the body as a XML object into response (if not nil)
 //
 // If request is not nil then it will be XML encoded as the body of the request
+//
+// If response is not nil then the response will be XML decoded into
+// it and resp.Body will be closed.
+//
+// If response is nil then the resp.Body will be closed only if
+// opts.NoResponse is set.
 //
 // See CallJSON for a description of MultipartParams and related opts
 //
@@ -389,6 +402,7 @@ func (api *Client) callCodec(opts *Opts, request interface{}, response interface
 	if err != nil {
 		return resp, err
 	}
+	// if opts.NoResponse is set, resp.Body will have been closed by Call()
 	if response == nil || opts.NoResponse {
 		return resp, nil
 	}
