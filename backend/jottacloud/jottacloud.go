@@ -1085,6 +1085,7 @@ func (o *Object) Remove() error {
 		Method:     "POST",
 		Path:       o.filePath(),
 		Parameters: url.Values{},
+		NoResponse: true,
 	}
 
 	if o.fs.opt.HardDelete {
