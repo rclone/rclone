@@ -293,6 +293,22 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	err = checkUploadChunkSize(cs)
 	if err == nil {
 		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+		f.fillBufferTokens() // reset the buffer tokens
+	}
+	return
+}
+
+func checkUploadCutoff(opt *Options, cs fs.SizeSuffix) error {
+	if cs < opt.ChunkSize {
+		return errors.Errorf("%v is less than chunk size %v", cs, opt.ChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadCutoff(&f.opt, cs)
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
 	}
 	return
 }
@@ -305,8 +321,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opt.UploadCutoff < opt.ChunkSize {
-		return nil, errors.Errorf("b2: upload cutoff (%v) must be greater than or equal to chunk size (%v)", opt.UploadCutoff, opt.ChunkSize)
+	err = checkUploadCutoff(opt, opt.UploadCutoff)
+	if err != nil {
+		return nil, errors.Wrap(err, "b2: upload cutoff")
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
@@ -326,13 +343,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt.Endpoint = defaultEndpoint
 	}
 	f := &Fs{
-		name:         name,
-		opt:          *opt,
-		bucket:       bucket,
-		root:         directory,
-		srv:          rest.NewClient(fshttp.NewClient(fs.Config)).SetErrorHandler(errorHandler),
-		pacer:        pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
-		bufferTokens: make(chan []byte, fs.Config.Transfers),
+		name:   name,
+		opt:    *opt,
+		bucket: bucket,
+		root:   directory,
+		srv:    rest.NewClient(fshttp.NewClient(fs.Config)).SetErrorHandler(errorHandler),
+		pacer:  pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
@@ -345,10 +361,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		f.srv.SetHeader(testModeHeader, testMode)
 		fs.Debugf(f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
 	}
-	// Fill up the buffer tokens
-	for i := 0; i < fs.Config.Transfers; i++ {
-		f.bufferTokens <- nil
-	}
+	f.fillBufferTokens()
 	err = f.authorizeAccount()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to authorize account")
@@ -454,6 +467,14 @@ func (f *Fs) clearUploadURL() {
 	f.uploadMu.Lock()
 	f.uploads = nil
 	f.uploadMu.Unlock()
+}
+
+// Fill up (or reset) the buffer tokens
+func (f *Fs) fillBufferTokens() {
+	f.bufferTokens = make(chan []byte, fs.Config.Transfers)
+	for i := 0; i < fs.Config.Transfers; i++ {
+		f.bufferTokens <- nil
+	}
 }
 
 // getUploadBlock gets a block from the pool of size chunkSize
