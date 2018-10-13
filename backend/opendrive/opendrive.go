@@ -21,6 +21,7 @@ import (
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/pacer"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
 )
@@ -931,8 +932,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	// resp.Body.Close()
 	// fs.Debugf(nil, "PostOpen: %#v", openResponse)
 
-	// 1 MB chunks size
+	// 10 MB chunks size
 	chunkSize := int64(1024 * 1024 * 10)
+	buf := make([]byte, int(chunkSize))
 	chunkOffset := int64(0)
 	remainingBytes := size
 	chunkCounter := 0
@@ -945,14 +947,19 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		remainingBytes -= currentChunkSize
 		fs.Debugf(o, "Uploading chunk %d, size=%d, remain=%d", chunkCounter, currentChunkSize, remainingBytes)
 
+		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, currentChunkSize)
 		err = o.fs.pacer.Call(func() (bool, error) {
+			// seek to the start in case this is a retry
+			if _, err = chunk.Seek(0, io.SeekStart); err != nil {
+				return false, err
+			}
 			var formBody bytes.Buffer
 			w := multipart.NewWriter(&formBody)
 			fw, err := w.CreateFormFile("file_data", o.remote)
 			if err != nil {
 				return false, err
 			}
-			if _, err = io.CopyN(fw, in, currentChunkSize); err != nil {
+			if _, err = io.Copy(fw, chunk); err != nil {
 				return false, err
 			}
 			// Add session_id
