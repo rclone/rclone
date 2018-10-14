@@ -35,7 +35,7 @@ type Options struct {
 	Remotes fs.SpaceSepList `config:"remotes"`
 }
 
-// Fs represents a remote acd server
+// Fs represents a union of remotes
 type Fs struct {
 	name     string       // name of this remote
 	features *fs.Features // optional features
@@ -44,6 +44,27 @@ type Fs struct {
 	remotes  []fs.Fs      // slice of remotes
 	wr       fs.Fs        // writable remote
 	hashSet  hash.Set     // intersection of hash types
+}
+
+// Object describes a union Object
+//
+// This is a wrapped object which returns the Union Fs as its parent
+type Object struct {
+	fs.Object
+	fs *Fs // what this object is part of
+}
+
+// Wrap an existing object in the union Object
+func (f *Fs) wrapObject(o fs.Object) *Object {
+	return &Object{
+		Object: o,
+		fs:     f,
+	}
+}
+
+// Fs returns the union Fs as the parent
+func (o *Object) Fs() fs.Info {
+	return o.fs
 }
 
 // Name of the remote (as passed into NewFs)
@@ -105,7 +126,11 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	return f.wr.Features().Copy(src, remote)
+	o, err := f.wr.Features().Copy(src, remote)
+	if err != nil {
+		return nil, err
+	}
+	return f.wrapObject(o), nil
 }
 
 // Move src to this remote using server side move operations.
@@ -122,7 +147,11 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
-	return f.wr.Features().Move(src, remote)
+	o, err := f.wr.Features().Move(src, remote)
+	if err != nil {
+		return nil, err
+	}
+	return f.wrapObject(o), err
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -190,7 +219,11 @@ func (f *Fs) DirCacheFlush() {
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.wr.Features().PutStream(in, src, options...)
+	o, err := f.wr.Features().PutStream(in, src, options...)
+	if err != nil {
+		return nil, err
+	}
+	return f.wrapObject(o), err
 }
 
 // About gets quota information from the Fs
@@ -204,7 +237,11 @@ func (f *Fs) About() (*fs.Usage, error) {
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.wr.Put(in, src, options...)
+	o, err := f.wr.Put(in, src, options...)
+	if err != nil {
+		return nil, err
+	}
+	return f.wrapObject(o), err
 }
 
 // List the objects and directories in dir into entries.  The
@@ -235,8 +272,11 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	if !found {
 		return nil, fs.ErrorDirNotFound
 	}
-	for key := range set {
-		entries = append(entries, set[key])
+	for _, entry := range set {
+		if o, ok := entry.(fs.Object); ok {
+			entry = f.wrapObject(o)
+		}
+		entries = append(entries, entry)
 	}
 	return entries, nil
 }
@@ -252,7 +292,7 @@ func (f *Fs) NewObject(path string) (fs.Object, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "NewObject failed on %v", remote)
 		}
-		return obj, nil
+		return f.wrapObject(obj), nil
 	}
 	return nil, fs.ErrorObjectNotFound
 }
