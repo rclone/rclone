@@ -1217,6 +1217,7 @@ func Run(t *testing.T, opt *Opt) {
 	})
 
 	// TestPublicLink tests creation of sharable, public links
+	// go test -v -run 'TestIntegration/Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|PublicLink)$'
 	t.Run("TestPublicLink", func(t *testing.T) {
 		skipIfNotOk(t)
 
