@@ -1113,7 +1113,7 @@ func (f *Fs) Hashes() hash.Set {
 
 // PublicLink returns a link for downloading without accout.
 func (f *Fs) PublicLink(remote string) (link string, err error) {
-	info, _, err := f.readMetaDataForPath(f.Root())
+	info, _, err := f.readMetaDataForPath(f.srvPath(remote))
 	if err != nil {
 		return "", err
 	}
@@ -1157,9 +1157,14 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
+// srvPath returns a path for use in server given a remote
+func (f *Fs) srvPath(remote string) string {
+	return replaceReservedChars(f.rootSlash() + remote)
+}
+
 // srvPath returns a path for use in server
 func (o *Object) srvPath() string {
-	return replaceReservedChars(o.fs.rootSlash() + o.remote)
+	return o.fs.srvPath(o.remote)
 }
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
