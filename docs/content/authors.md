@@ -207,3 +207,4 @@ Contributors
   * jackyzy823 <jackyzy823@gmail.com>
   * David Haguenauer <ml@kurokatta.org>
   * teresy <hi.teresy@gmail.com>
+  * buergi <patbuergi@gmx.de>
