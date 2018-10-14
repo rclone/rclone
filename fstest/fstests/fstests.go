@@ -111,13 +111,15 @@ func objsToNames(objs []fs.Object) []string {
 func findObject(t *testing.T, f fs.Fs, Name string) fs.Object {
 	var obj fs.Object
 	var err error
+	sleepTime := 1 * time.Second
 	for i := 1; i <= *fstest.ListRetries; i++ {
 		obj, err = f.NewObject(Name)
 		if err == nil {
 			break
 		}
-		t.Logf("Sleeping for 1 second for findObject eventual consistency: %d/%d (%v)", i, *fstest.ListRetries, err)
-		time.Sleep(1 * time.Second)
+		t.Logf("Sleeping for %v for findObject eventual consistency: %d/%d (%v)", sleepTime, i, *fstest.ListRetries, err)
+		time.Sleep(sleepTime)
+		sleepTime = (sleepTime * 3) / 2
 	}
 	require.NoError(t, err)
 	return obj
