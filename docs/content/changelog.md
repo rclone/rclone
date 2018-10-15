@@ -1,10 +1,109 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2018-09-01"
+date: "2018-10-15"
 ---
 
 # Changelog
+
+## v1.44 - 2018-10-15
+
+* New commands
+    * serve ftp: Add ftp server (Antoine GIRARD)
+    * settier: perform storage tier changes on supported remotes (sandeepkru)
+* New Features
+    * Reworked command line help
+        * Make default help less verbose (Nick Craig-Wood)
+        * Split flags up into global and backend flags (Nick Craig-Wood)
+        * Implement specialised help for flags and backends (Nick Craig-Wood)
+        * Show URL of backend help page when starting config (Nick Craig-Wood)
+    * stats: Long names now split in center (Joanna Marek)
+    * Add --log-format flag for more control over log output (dcpu)
+    * rc: Add support for OPTIONS and basic CORS (frenos)
+    * stats: show FatalErrors and NoRetryErrors in stats (Cédric Connes)
+* Bug Fixes
+    * Fix -P not ending with a new line (Nick Craig-Wood)
+    * config: don't create default config dir when user supplies --config (albertony)
+    * Don't print non-ASCII characters with --progress on windows (Nick Craig-Wood)
+    * Correct logs for excluded items (ssaqua)
+* Mount
+    * Remove EXPERIMENTAL tags (Nick Craig-Wood)
+* VFS
+    * Fix race condition detected by serve ftp tests (Nick Craig-Wood)
+    * Add vfs/poll-interval rc command (Fabian Möller)
+    * Enable rename for nearly all remotes using server side Move or Copy (Nick Craig-Wood)
+    * Reduce directory cache cleared by poll-interval (Fabian Möller)
+    * Remove EXPERIMENTAL tags (Nick Craig-Wood)
+* Local
+    * Skip bad symlinks in dir listing with -L enabled (Cédric Connes)
+    * Preallocate files on Windows to reduce fragmentation (Nick Craig-Wood)
+    * Preallocate files on linux with fallocate(2) (Nick Craig-Wood)
+* Cache
+    * Add cache/fetch rc function (Fabian Möller)
+    * Fix worker scale down (Fabian Möller)
+    * Improve performance by not sending info requests for cached chunks (dcpu)
+    * Fix error return value of cache/fetch rc method (Fabian Möller)
+    * Documentation fix for cache-chunk-total-size (Anagh Kumar Baranwal)
+    * Preserve leading / in wrapped remote path (Fabian Möller)
+    * Add plex_insecure option to skip certificate validation (Fabian Möller)
+    * Remove entries that no longer exist in the source (dcpu)
+* Crypt
+    * Preserve leading / in wrapped remote path (Fabian Möller)
+* Alias
+    * Fix handling of Windows network paths (Nick Craig-Wood)
+* Azure Blob
+    * Add --azureblob-list-chunk parameter (Santiago Rodríguez)
+    * Implemented settier command support on azureblob remote. (sandeepkru)
+    * Work around SDK bug which causes errors for chunk-sized files (Nick Craig-Wood)
+* Box
+    * Implement link sharing. (Sebastian Bünger)
+* Drive
+    * Add --drive-import-formats - google docs can now be imported (Fabian Möller)
+        * Rewrite mime type and extension handling (Fabian Möller)
+        * Add document links (Fabian Möller)
+        * Add support for multipart document extensions (Fabian Möller)
+        * Add support for apps-script to json export (Fabian Möller)
+        * Fix escaped chars in documents during list (Fabian Möller)
+    * Add --drive-v2-download-min-size a workaround for slow downloads (Fabian Möller)
+    * Improve directory notifications in ChangeNotify (Fabian Möller)
+    * When listing team drives in config, continue on failure (Nick Craig-Wood)
+* FTP
+    * Add a small pause after failed upload before deleting file (Nick Craig-Wood)
+* Google Cloud Storage
+    * Fix service_account_file being ignored (Fabian Möller)
+* Jottacloud
+    * Minor improvement in quota info (omit if unlimited) (albertony)
+    * Add --fast-list support (albertony)
+    * Add permanent delete support: --jottacloud-hard-delete (albertony)
+    * Add link sharing support (albertony)
+    * Fix handling of reserved characters. (Sebastian Bünger)
+    * Fix socket leak on Object.Remove (Nick Craig-Wood)
+* Onedrive
+    * Rework to support Microsoft Graph (Cnly)
+        * **NB** this will require re-authenticating the remote
+    * Removed upload cutoff and always do session uploads (Oliver Heyme)
+    * Use single-part upload for empty files (Cnly)
+    * Fix new fields not saved when editing old config (Alex Chen)
+    * Fix sometimes special chars in filenames not replaced (Alex Chen)
+    * Ignore OneNote files by default (Alex Chen)
+    * Add link sharing support (jackyzy823)
+* S3
+    * Use custom pacer, to retry operations when reasonable (Craig Miskell)
+    * Use configured server-side-encryption and storace class options when calling CopyObject() (Paul Kohout)
+    * Make --s3-v2-auth flag (Nick Craig-Wood)
+    * Fix v2 auth on files with spaces (Nick Craig-Wood)
+* Union
+    * Implement union backend which reads from multiple backends (Felix Brucker)
+    * Implement optional interfaces (Move, DirMove, Copy etc) (Nick Craig-Wood)
+    * Fix ChangeNotify to support multiple remotes (Fabian Möller)
+    * Fix --backup-dir on union backend (Nick Craig-Wood)
+* WebDAV
+    * Add another time format (Nick Craig-Wood)
+    * Add a small pause after failed upload before deleting file (Nick Craig-Wood)
+    * Add workaround for missing mtime (buergi)
+    * Sharepoint: Renew cookies after 12hrs (Henning Surmeier)
+* Yandex
+    * Remove redundant nil checks (teresy)
 
 ## v1.43.1 - 2018-09-07
 

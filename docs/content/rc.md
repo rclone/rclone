@@ -81,6 +81,33 @@ Eg
     rclone rc cache/expire remote=path/to/sub/folder/
     rclone rc cache/expire remote=/ withData=true
 
+### cache/fetch: Fetch file chunks
+
+Ensure the specified file chunks are cached on disk.
+
+The chunks= parameter specifies the file chunks to check.
+It takes a comma separated list of array slice indices.
+The slice indices are similar to Python slices: start[:end]
+
+start is the 0 based chunk number from the beginning of the file
+to fetch inclusive. end is 0 based chunk number from the beginning
+of the file to fetch exclisive.
+Both values can be negative, in which case they count from the back
+of the file. The value "-5:" represents the last 5 chunks of a file.
+
+Some valid examples are:
+":5,-5:" -> the first and last five chunks
+"0,-2" -> the first and the second last chunk
+"0:10" -> the first ten chunks
+
+Any parameter with a key that starts with "file" can be used to
+specify files to fetch, eg
+
+    rclone rc cache/fetch chunks=0 file=hello file2=home/goodbye
+
+File names will automatically be encrypted when the a crypt remote
+is used on top of the cache.
+
 ### cache/stats: Get cache stats
 
 Show statistics for the cache remote.
@@ -133,6 +160,8 @@ Returns the following values:
 	"speed": average speed in bytes/sec since start of the process,
 	"bytes": total transferred bytes since the start of the process,
 	"errors": number of errors,
+	"fatalError": whether there has been at least one FatalError,
+	"retryError": whether there has been at least one non-NoRetryError,
 	"checks": number of checked files,
 	"transfers": number of transferred files,
 	"deletes" : number of deleted files,
@@ -188,6 +217,28 @@ parameter key starting with file will forget that file and any
 starting with dir will forget that dir, eg
 
     rclone rc vfs/forget file=hello file2=goodbye dir=home/junk
+
+### vfs/poll-interval: Get the status or update the value of the poll-interval option.
+
+Without any parameter given this returns the current status of the
+poll-interval setting.
+
+When the interval=duration parameter is set, the poll-interval value
+is updated and the polling function is notified.
+Setting interval=0 disables poll-interval.
+
+    rclone rc vfs/poll-interval interval=5m
+
+The timeout=duration parameter can be used to specify a time to wait
+for the current poll function to apply the new value.
+If timeout is less or equal 0, which is the default, wait indefinitely.
+
+The new poll-interval value will only be active when the timeout is
+not reached.
+
+If poll-interval is updated or disabled temporarily, some changes
+might not get picked up by the polling function, depending on the
+used remote.
 
 ### vfs/refresh: Refresh the directory cache.
 

@@ -1,52 +1,47 @@
 ---
 date: 2018-10-15T11:00:47+01:00
-title: "rclone ncdu"
-slug: rclone_ncdu
-url: /commands/rclone_ncdu/
+title: "rclone settier"
+slug: rclone_settier
+url: /commands/rclone_settier/
 ---
-## rclone ncdu
+## rclone settier
 
-Explore a remote with a text based user interface.
+Changes storage class/tier of objects in remote.
 
 ### Synopsis
 
 
-This displays a text based user interface allowing the navigation of a
-remote. It is most useful for answering the question - "What is using
-all my disk space?".
+rclone settier changes storage tier or class at remote if supported.
+Few cloud storage services provides different storage classes on objects,
+for example AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive,
+Google Cloud Storage, Regional Storage, Nearline, Coldline etc.
 
-<script src="https://asciinema.org/a/157793.js" id="asciicast-157793" async></script>
+Note that, certain tier chages make objects not available to access immediately.
+For example tiering to archive in azure blob storage makes objects in frozen state,
+user can restore by setting tier to Hot/Cool, similarly S3 to Glacier makes object
+inaccessible.true
 
-To make the user interface it first scans the entire remote given and
-builds an in memory representation.  rclone ncdu can be used during
-this scanning phase and you will see it building up the directory
-structure as it goes along.
+You can use it to tier single object
 
-Here are the keys - press '?' to toggle the help on and off
+    rclone settier Cool remote:path/file
 
-     ↑,↓ or k,j to Move
-     →,l to enter
-     ←,h to return
-     c toggle counts
-     g toggle graph
-     n,s,C sort by name,size,count
-     ^L refresh screen
-     ? to toggle help on and off
-     q/ESC/c-C to quit
+Or use rclone filters to set tier on only specific files
 
-This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
-rclone remotes.  It is missing lots of features at the moment, most
-importantly deleting files, but is useful as it stands.
+	rclone --include "*.txt" settier Hot remote:path/dir
+
+Or just provide remote directory and all files in directory will be tiered
+
+    rclone settier tier remote:path/dir
 
 
 ```
-rclone ncdu remote:path [flags]
+rclone settier tier remote:path [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for ncdu
+  -h, --help   help for settier
 ```
 
 ### Options inherited from parent commands
