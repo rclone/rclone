@@ -1285,16 +1285,25 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
-		BufferSize:      int(o.fs.opt.ChunkSize) + 1, // +1 Needed until https://github.com/Azure/azure-storage-blob-go/pull/75 is merged
+		BufferSize:      int(o.fs.opt.ChunkSize),
 		MaxBuffers:      4,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
+	}
+	// FIXME Until https://github.com/Azure/azure-storage-blob-go/pull/75
+	// is merged the SDK can't upload a single blob of exactly the chunk
+	// size, so upload with a multpart upload to work around.
+	// See: https://github.com/ncw/rclone/issues/2653
+	multipartUpload := size >= int64(o.fs.opt.UploadCutoff)
+	if size == int64(o.fs.opt.ChunkSize) {
+		multipartUpload = true
+		fs.Debugf(o, "Setting multipart upload for file of chunk size (%d) to work around SDK bug", size)
 	}
 
 	ctx := context.Background()
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		if size >= int64(o.fs.opt.UploadCutoff) {
+		if multipartUpload {
 			// If a large file upload in chunks
 			err = o.uploadMultipart(in, size, &blob, &httpHeaders)
 		} else {
