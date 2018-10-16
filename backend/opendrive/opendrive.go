@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -1082,7 +1083,7 @@ func (o *Object) readMetaData() (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
 		opts := rest.Opts{
 			Method: "GET",
-			Path:   "/folder/itembyname.json/" + o.fs.session.SessionID + "/" + directoryID + "?name=" + rest.URLPathEscape(replaceReservedChars(leaf)),
+			Path:   "/folder/itembyname.json/" + o.fs.session.SessionID + "/" + directoryID + "?name=" + url.QueryEscape(replaceReservedChars(leaf)),
 		}
 		resp, err = o.fs.srv.CallJSON(&opts, nil, &folderList)
 		return o.fs.shouldRetry(resp, err)
