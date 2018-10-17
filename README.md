@@ -55,6 +55,8 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
   * Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
   * The local filesystem [:page_facing_up:](https://rclone.org/local/)
+  
+Please see [the full list of all storage providers and their features](https://rclone.org/overview/)
 
 ## Features
 
@@ -71,10 +73,15 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
 
 ## Installation & documentation
 
-Please see the rclone website for installation, usage, documentation, 
-changelog and configuration walkthroughs.
+Please see the [rclone website](https://rclone.org/) for:
 
-  * https://rclone.org/
+  * [Installation](https://rclone.org/install/)
+  * [Documentation & configuration](https://rclone.org/docs/)
+  * [Changelog](https://rclone.org/changelog/)
+  * [FAQ](https://rclone.org/faq/)
+  * [Storage providers](https://rclone.org/overview/)
+  * [Forum](https://forum.rclone.org/)
+  * ...and more
 
 ## Downloads
 
