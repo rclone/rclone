@@ -184,7 +184,7 @@ func (o *Object) refreshFromSource(ctx context.Context, force bool) error {
 		return err
 	}
 	o.updateData(ctx, liveObject)
-	o.persist()
+	o.persist(false)
 
 	return nil
 }
@@ -201,7 +201,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	}
 
 	o.CacheModTime = t.UnixNano()
-	o.persist()
+	o.persist(true)
 	fs.Debugf(o, "updated ModTime: %v", t)
 
 	return nil
@@ -270,7 +270,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.CacheSize = src.Size()
 	o.CacheHashes = make(map[hash.Type]string)
 	o.CacheTs = time.Now()
-	o.persist()
+	o.persist(true)
 
 	return nil
 }
@@ -326,15 +326,15 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	}
 	o.CacheHashes[ht] = liveHash
 
-	o.persist()
+	o.persist(true)
 	fs.Debugf(o, "object hash cached: %v", liveHash)
 
 	return liveHash, nil
 }
 
 // persist adds this object to the persistent cache
-func (o *Object) persist() *Object {
-	err := o.CacheFs.cache.AddObject(o)
+func (o *Object) persist(noClearChunks bool) *Object {
+	err := o.CacheFs.cache.AddObject(o, noClearChunks)
 	if err != nil {
 		fs.Errorf(o, "failed to cache object: %v", err)
 	}

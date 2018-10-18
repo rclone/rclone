@@ -388,12 +388,32 @@ func (b *Persistent) GetObject(cachedObject *Object) (err error) {
 }
 
 // AddObject will create a cached object in its parent directory
-func (b *Persistent) AddObject(cachedObject *Object) error {
+func (b *Persistent) AddObject(cachedObject *Object, noClearChunks bool) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		bucket := b.getBucket(cachedObject.Dir, true, tx)
 		if bucket == nil {
 			return errors.Errorf("couldn't open parent bucket for %v", cachedObject)
 		}
+
+		if !noClearChunks {
+			fresh := false
+			val := bucket.Get([]byte(cachedObject.Name))
+			if val != nil {
+				var old Object
+				err := json.Unmarshal(val, &old)
+				if err == nil {
+					if cachedObject.CacheModTime == old.CacheModTime && cachedObject.CacheSize == old.CacheSize {
+						fresh = true
+					}
+				}
+			}
+			if !fresh {
+				fp := cachedObject.abs()
+				_ = os.RemoveAll(path.Join(b.dataPath, fp))
+				fs.Debugf(fp, "delete chunks on disk")
+			}
+		}
+
 		// cache Object Info
 		encoded, err := json.Marshal(cachedObject)
 		if err != nil {
@@ -429,7 +449,7 @@ func (b *Persistent) RemoveObject(fp string) error {
 // ExpireObject will flush an Object and all its data if desired
 func (b *Persistent) ExpireObject(co *Object, withData bool) error {
 	co.CacheTs = time.Now().Add(time.Duration(-co.CacheFs.opt.InfoAge))
-	err := b.AddObject(co)
+	err := b.AddObject(co, true)
 	if withData {
 		_ = os.RemoveAll(path.Join(b.dataPath, co.abs()))
 	}

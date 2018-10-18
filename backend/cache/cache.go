@@ -959,7 +959,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	}
 
 	// cache the new entry
-	co = ObjectFromOriginal(ctx, f, obj).persist()
+	co = ObjectFromOriginal(ctx, f, obj).persist(false)
 	fs.Debugf(co, "find: cached object")
 	return co, nil
 }
@@ -1000,7 +1000,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					fs.Debugf(dir, "list: temp file not found in local fs: %v", err)
 					continue
 				}
-				co := ObjectFromOriginal(ctx, f, queuedEntry).persist()
+				co := ObjectFromOriginal(ctx, f, queuedEntry).persist(false)
 				fs.Debugf(co, "list: cached temp object")
 				cachedEntries = append(cachedEntries, co)
 			}
@@ -1046,7 +1046,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if i < tmpCnt && cachedEntries[i].Remote() == oRemote {
 				continue
 			}
-			co := ObjectFromOriginal(ctx, f, o).persist()
+			co := ObjectFromOriginal(ctx, f, o).persist(false)
 			cachedEntries = append(cachedEntries, co)
 			fs.Debugf(dir, "list: cached object: %v", co)
 		case fs.Directory:
@@ -1118,7 +1118,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			for _, entry := range entries {
 				switch o := entry.(type) {
 				case fs.Object:
-					_ = f.cache.AddObject(ObjectFromOriginal(ctx, f, o))
+					_ = f.cache.AddObject(ObjectFromOriginal(ctx, f, o), false)
 				case fs.Directory:
 					_ = f.cache.AddDir(DirectoryFromOriginal(ctx, f, o))
 				default:
@@ -1480,7 +1480,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	// deleting cached chunks and info to be replaced with new ones
 	_ = f.cache.RemoveObject(cachedObj.abs())
 
-	cachedObj.persist()
+	cachedObj.persist(true)
 	fs.Debugf(cachedObj, "put: added to cache")
 
 	// expire parent
@@ -1571,7 +1571,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	fs.Debugf(obj, "copy: file copied")
 
 	// persist new
-	co := ObjectFromOriginal(ctx, f, obj).persist()
+	co := ObjectFromOriginal(ctx, f, obj).persist(false)
 	fs.Debugf(co, "copy: added to cache")
 	// expire the destination path
 	parentCd := NewDirectory(f, cleanPath(path.Dir(co.Remote())))
@@ -1680,7 +1680,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// advertise to ChangeNotify if wrapped doesn't do that
 	f.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
 	// persist new
-	cachedObj := ObjectFromOriginal(ctx, f, obj).persist()
+	cachedObj := ObjectFromOriginal(ctx, f, obj).persist(false)
 	fs.Debugf(cachedObj, "move: added to cache")
 	// expire new parent
 	parentCd = NewDirectory(f, cleanPath(path.Dir(cachedObj.Remote())))
