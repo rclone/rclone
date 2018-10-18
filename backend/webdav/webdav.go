@@ -968,6 +968,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		Body:          in,
 		NoResponse:    true,
 		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
+		ContentType:   fs.MimeType(src),
 	}
 	if o.fs.useOCMtime {
 		opts.ExtraHeaders = map[string]string{
