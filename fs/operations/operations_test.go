@@ -96,6 +96,33 @@ func TestLs(t *testing.T) {
 	assert.Contains(t, res, "       60 potato2\n")
 }
 
+func TestLsWithFilesFrom(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.Fremote, file1, file2)
+
+	// Set the --files-from equivalent
+	f, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, f.AddFile("potato2"))
+	require.NoError(t, f.AddFile("notfound"))
+
+	// Monkey patch the active filter
+	oldFilter := filter.Active
+	filter.Active = f
+	defer func() {
+		filter.Active = oldFilter
+	}()
+
+	var buf bytes.Buffer
+	err = operations.List(r.Fremote, &buf)
+	require.NoError(t, err)
+	assert.Equal(t, "       60 potato2\n", buf.String())
+}
+
 func TestLsLong(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()

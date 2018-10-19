@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -181,6 +182,83 @@ func TestNewFilterIncludeFilesDirs(t *testing.T) {
 		{"path/three", false},
 		{"four", false},
 	})
+}
+
+func TestNewFilterHaveFilesFrom(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, false, f.HaveFilesFrom())
+
+	require.NoError(t, f.AddFile("file"))
+
+	assert.Equal(t, true, f.HaveFilesFrom())
+}
+
+func TestNewFilterMakeListR(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+
+	// Check error if no files
+	listR := f.MakeListR(nil)
+	err = listR("", nil)
+	assert.EqualError(t, err, errFilesFromNotSet.Error())
+
+	// Add some files
+	for _, path := range []string{
+		"path/to/dir/file1.png",
+		"/path/to/dir/file2.png",
+		"/path/to/file3.png",
+		"/path/to/dir2/file4.png",
+		"notfound",
+	} {
+		err = f.AddFile(path)
+		require.NoError(t, err)
+	}
+
+	assert.Equal(t, 5, len(f.files))
+
+	// NewObject function for MakeListR
+	newObjects := FilesMap{}
+	NewObject := func(remote string) (fs.Object, error) {
+		if remote == "notfound" {
+			return nil, fs.ErrorObjectNotFound
+		} else if remote == "error" {
+			return nil, assert.AnError
+		}
+		newObjects[remote] = struct{}{}
+		return mockobject.New(remote), nil
+
+	}
+
+	// Callback for ListRFn
+	listRObjects := FilesMap{}
+	listRcallback := func(entries fs.DirEntries) error {
+		for _, entry := range entries {
+			listRObjects[entry.Remote()] = struct{}{}
+		}
+		return nil
+	}
+
+	// Make the listR and call it
+	listR = f.MakeListR(NewObject)
+	err = listR("", listRcallback)
+	require.NoError(t, err)
+
+	// Check that the correct objects were created and listed
+	want := FilesMap{
+		"path/to/dir/file1.png":  {},
+		"path/to/dir/file2.png":  {},
+		"path/to/file3.png":      {},
+		"path/to/dir2/file4.png": {},
+	}
+	assert.Equal(t, want, newObjects)
+	assert.Equal(t, want, listRObjects)
+
+	// Now check an error is returned from NewObject
+	require.NoError(t, f.AddFile("error"))
+	err = listR("", listRcallback)
+	require.EqualError(t, err, assert.AnError.Error())
 }
 
 func TestNewFilterMinSize(t *testing.T) {
