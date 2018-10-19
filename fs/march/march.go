@@ -71,7 +71,7 @@ type listDirFn func(dir string) (entries fs.DirEntries, err error)
 
 // makeListDir makes a listing function for the given fs and includeAll flags
 func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
-	if !fs.Config.UseListR || f.Features().ListR == nil {
+	if (!fs.Config.UseListR || f.Features().ListR == nil) && !filter.Active.HaveFilesFrom() {
 		return func(dir string) (entries fs.DirEntries, err error) {
 			return list.DirSorted(f, includeAll, dir)
 		}

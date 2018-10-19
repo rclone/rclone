@@ -79,6 +79,35 @@ func TestCopyWithDepth(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
+// Test copy with files from
+func TestCopyWithFilesFrom(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("potato2", "hello world", t1)
+	file2 := r.WriteFile("hello world2", "hello world2", t2)
+
+	// Set the --files-from equivalent
+	f, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, f.AddFile("potato2"))
+	require.NoError(t, f.AddFile("notfound"))
+
+	// Monkey patch the active filter
+	oldFilter := filter.Active
+	filter.Active = f
+	unpatch := func() {
+		filter.Active = oldFilter
+	}
+	defer unpatch()
+
+	err = CopyDir(r.Fremote, r.Flocal)
+	require.NoError(t, err)
+	unpatch()
+
+	fstest.CheckItems(t, r.Flocal, file1, file2)
+	fstest.CheckItems(t, r.Fremote, file1)
+}
+
 // Test copy empty directories
 func TestCopyEmptyDirectories(t *testing.T) {
 	r := fstest.NewRun(t)

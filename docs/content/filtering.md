@@ -293,6 +293,10 @@ This reads a list of file names from the file passed in and **only**
 these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
+Rclone will not scan any directories if you use `--files-from` it will
+just look at the files specified.  Rclone will not error if any of the
+files are missing from the source.
+
 This option can be repeated to read from more than one file.  These
 are read in the order that they are placed on the command line.
 
