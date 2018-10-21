@@ -40,6 +40,8 @@ This will:
 This doesn't transfer unchanged files, testing by size and
 modification time or MD5SUM.  It doesn't delete files from the
 destination.
+
+**Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
