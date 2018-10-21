@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 Make single page versions of the documentation for release and
 conversion into man pages etc.
