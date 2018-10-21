@@ -32,6 +32,8 @@ extended explanation in the ` + "`" + `copy` + "`" + ` command above if unsure.
 
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
+
+**Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
