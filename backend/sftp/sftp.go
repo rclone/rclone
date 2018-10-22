@@ -769,6 +769,10 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 		return "", hash.ErrUnsupported
 	}
 
+	if o.fs.opt.DisableHashCheck {
+		return "", nil
+	}
+
 	c, err := o.fs.getSftpConnection()
 	if err != nil {
 		return "", errors.Wrap(err, "Hash get SFTP connection")
