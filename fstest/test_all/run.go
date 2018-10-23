@@ -98,15 +98,30 @@ func (r *Run) dumpOutput() {
 	log.Println("------------------------------------------------------------")
 }
 
-var failRe = regexp.MustCompile(`(?m)^--- FAIL: (Test\w*) \(`)
+var failRe = regexp.MustCompile(`(?m)^\s*--- FAIL: (Test.*?) \(`)
 
 // findFailures looks for all the tests which failed
 func (r *Run) findFailures() {
 	oldFailedTests := r.failedTests
 	r.failedTests = nil
+	excludeParents := map[string]struct{}{}
 	for _, matches := range failRe.FindAllSubmatch(r.output, -1) {
-		r.failedTests = append(r.failedTests, string(matches[1]))
+		failedTest := string(matches[1])
+		r.failedTests = append(r.failedTests, failedTest)
+		// Find all the parents of this test
+		parts := strings.Split(failedTest, "/")
+		for i := len(parts) - 1; i >= 1; i-- {
+			excludeParents[strings.Join(parts[:i], "/")] = struct{}{}
+		}
 	}
+	// Exclude the parents
+	var newTests = r.failedTests[:0]
+	for _, failedTest := range r.failedTests {
+		if _, excluded := excludeParents[failedTest]; !excluded {
+			newTests = append(newTests, failedTest)
+		}
+	}
+	r.failedTests = newTests
 	if len(r.failedTests) != 0 {
 		r.runFlag = "^(" + strings.Join(r.failedTests, "|") + ")$"
 	} else {
