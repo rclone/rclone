@@ -18,6 +18,7 @@ type Test struct {
 	FastList   bool   // if it is possible to add -fast-list to tests
 	AddBackend bool   // set if Path needs the current backend appending
 	NoRetries  bool   // set if no retries should be performed
+	NoBinary   bool   // set to not build a binary in advance
 }
 
 // Backend describes a backend test
@@ -54,6 +55,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 				FastList:  fastlist,
 				NoRetries: t.NoRetries,
 				OneOnly:   b.OneOnly,
+				NoBinary:  t.NoBinary,
 			}
 			if t.AddBackend {
 				run.Path = path.Join(run.Path, b.Backend)

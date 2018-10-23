@@ -109,8 +109,10 @@ func main() {
 	for _, run := range runs {
 		if _, found := done[run.Path]; !found {
 			done[run.Path] = struct{}{}
-			run.MakeTestBinary()
-			defer run.RemoveTestBinary()
+			if !run.NoBinary {
+				run.MakeTestBinary()
+				defer run.RemoveTestBinary()
+			}
 		}
 	}
 
