@@ -14,12 +14,19 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 )
 
 const testBase = "github.com/ncw/rclone/"
+
+// Control concurrency per backend if required
+var (
+	oneOnlyMu sync.Mutex
+	oneOnly   = map[string]*sync.Mutex{}
+)
 
 // Run holds info about a running test
 //
@@ -33,6 +40,7 @@ type Run struct {
 	SubDir    bool   // add -sub-dir to tests
 	FastList  bool   // add -fast-list to tests
 	NoRetries bool   // don't retry if set
+	OneOnly   bool   // only run test for this backend at once
 	// Internals
 	cmdLine     []string
 	cmdString   string
@@ -300,6 +308,17 @@ func (r *Run) FailedTests() string {
 
 // Run runs all the trials for this test
 func (r *Run) Run(logDir string, result chan<- *Run) {
+	if r.OneOnly {
+		oneOnlyMu.Lock()
+		mu := oneOnly[r.Backend]
+		if mu == nil {
+			mu = new(sync.Mutex)
+			oneOnly[r.Backend] = mu
+		}
+		oneOnlyMu.Unlock()
+		mu.Lock()
+		defer mu.Unlock()
+	}
 	r.Init()
 	r.logDir = logDir
 	for r.try = 1; r.try <= *maxTries; r.try++ {

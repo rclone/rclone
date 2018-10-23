@@ -77,6 +77,7 @@ backends:
    remote:   "TestQingStor:"
    subdir:   false
    fastlist: false
+   oneonly:  true
  - backend:  "azureblob"
    remote:   "TestAzureBlob:"
    subdir:   true
