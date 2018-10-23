@@ -28,6 +28,7 @@ type Backend struct {
 	Remote   string // name of the test remote
 	SubDir   bool   // set to test with -sub-dir
 	FastList bool   // set to test with -fast-list
+	OneOnly  bool   // set to run only one backend test at once
 }
 
 // MakeRuns creates Run objects the Backend and Test
@@ -52,6 +53,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 				SubDir:    subdir,
 				FastList:  fastlist,
 				NoRetries: t.NoRetries,
+				OneOnly:   b.OneOnly,
 			}
 			if t.AddBackend {
 				run.Path = path.Join(run.Path, b.Backend)
