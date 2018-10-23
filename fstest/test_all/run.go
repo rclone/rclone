@@ -41,6 +41,7 @@ type Run struct {
 	FastList  bool   // add -fast-list to tests
 	NoRetries bool   // don't retry if set
 	OneOnly   bool   // only run test for this backend at once
+	NoBinary  bool   // set to not build a binary
 	// Internals
 	cmdLine     []string
 	cmdString   string
@@ -179,6 +180,7 @@ func (r *Run) trial() {
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	cmd.Stderr = multiOut
 	cmd.Stdout = multiOut
+	cmd.Dir = r.Path
 	start := time.Now()
 	r.err = cmd.Run()
 	r.output = b.Bytes()
@@ -226,25 +228,19 @@ func (r *Run) PackagePath() string {
 	return path.Join(GOPATH(), "src", r.Path)
 }
 
-// Chdir into the package directory
-func (r *Run) Chdir() {
-	err := os.Chdir(r.PackagePath())
-	if err != nil {
-		log.Fatalf("Failed to chdir to package %q: %v", r.Path, err)
-	}
-}
-
 // MakeTestBinary makes the binary we will run
 func (r *Run) MakeTestBinary() {
 	binary := r.BinaryPath()
 	binaryName := r.BinaryName()
 	log.Printf("%s: Making test binary %q", r.Path, binaryName)
-	cmdLine := []string{"go", "test", "-c", "-o", binary, testBase + r.Path}
+	cmdLine := []string{"go", "test", "-c"}
 	if *dryRun {
 		log.Printf("Not executing: %v", cmdLine)
 		return
 	}
-	err := exec.Command(cmdLine[0], cmdLine[1:]...).Run()
+	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
+	cmd.Dir = r.Path
+	err := cmd.Run()
 	if err != nil {
 		log.Fatalf("Failed to make test binary: %v", err)
 	}
@@ -286,15 +282,21 @@ func (r *Run) Name() string {
 
 // Init the Run
 func (r *Run) Init() {
-	binary := r.BinaryPath()
-	r.cmdLine = []string{binary, "-test.v", "-test.timeout", timeout.String(), "-remote", r.Remote}
+	prefix := "-test."
+	if r.NoBinary {
+		prefix = "-"
+		r.cmdLine = []string{"go", "test"}
+	} else {
+		r.cmdLine = []string{"./" + r.BinaryName()}
+	}
+	r.cmdLine = append(r.cmdLine, prefix+"v", prefix+"timeout", timeout.String(), "-remote", r.Remote)
 	r.try = 1
 	if *verbose {
 		r.cmdLine = append(r.cmdLine, "-verbose")
 		fs.Config.LogLevel = fs.LogLevelDebug
 	}
 	if *runOnly != "" {
-		r.cmdLine = append(r.cmdLine, "-test.run", *runOnly)
+		r.cmdLine = append(r.cmdLine, prefix+"run", *runOnly)
 	}
 	if r.SubDir {
 		r.cmdLine = append(r.cmdLine, "-subdir")
