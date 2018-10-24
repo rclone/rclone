@@ -1,7 +1,10 @@
+// +build go1.10
+
 // Run tests for all the remotes.  Run this with package names which
 // need integration testing.
 //
 // See the `test` target in the Makefile.
+//
 package main
 
 /* FIXME
