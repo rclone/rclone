@@ -13,6 +13,7 @@ Make TesTrun have a []string of flags to try - that then makes it generic
 import (
 	"flag"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 	"regexp"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	_ "github.com/ncw/rclone/backend/all" // import all fs
+	"github.com/ncw/rclone/lib/pacer"
 )
 
 type remoteConfig struct {
@@ -31,6 +33,7 @@ type remoteConfig struct {
 var (
 	// Flags
 	maxTries     = flag.Int("maxtries", 5, "Number of times to try each test")
+	maxN         = flag.Int("n", 20, "Maximum number of tests to run at once")
 	testRemotes  = flag.String("remotes", "", "Comma separated list of remotes to test, eg 'TestSwift:,TestS3'")
 	testBackends = flag.String("backends", "", "Comma separated list of backends to test, eg 's3,googlecloudstorage")
 	testTests    = flag.String("tests", "", "Comma separated list of tests to test, eg 'fs/sync,fs/operations'")
@@ -72,6 +75,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Seed the random number generator
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	// Filter selection
 	if *testRemotes != "" {
 		conf.filterBackendsByRemotes(strings.Split(*testRemotes, ","))
@@ -98,8 +104,9 @@ func main() {
 	}
 	log.Printf("Testing remotes: %s", strings.Join(names, ", "))
 
-	// Runs we will do for this test
+	// Runs we will do for this test in random order
 	runs := conf.MakeRuns()
+	rand.Shuffle(len(runs), runs.Swap)
 
 	// Create Report
 	report := NewReport()
@@ -120,10 +127,15 @@ func main() {
 	_ = os.Setenv("RCLONE_CACHE_DB_WAIT_TIME", "30m")
 
 	// start the tests
-	results := make(chan *Run, 8)
+	results := make(chan *Run, len(runs))
 	awaiting := 0
+	tokens := pacer.NewTokenDispenser(*maxN)
 	for _, run := range runs {
-		go run.Run(report.LogDir, results)
+		tokens.Get()
+		go func(run *Run) {
+			defer tokens.Put()
+			run.Run(report.LogDir, results)
+		}(run)
 		awaiting++
 	}
 
