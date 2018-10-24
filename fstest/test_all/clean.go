@@ -1,5 +1,7 @@
 // Clean the left over test files
 
+// +build go1.10
+
 package main
 
 import (
