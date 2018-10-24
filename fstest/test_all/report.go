@@ -242,14 +242,11 @@ func (r *Report) EmailHTML() {
 	_ = in.Close()
 }
 
-// Upload uploads a copy of the report online
-func (r *Report) Upload() {
-	if *uploadPath == "" || r.IndexHTML == "" {
-		return
-	}
-	dst := path.Join(*uploadPath, r.DateTime)
+// uploadTo uploads a copy of the report online to the dir given
+func (r *Report) uploadTo(uploadDir string) {
+	dst := path.Join(*uploadPath, uploadDir)
 	log.Printf("Uploading results to %q", dst)
-	cmdLine := []string{"rclone", "copy", "-v", r.LogDir, dst}
+	cmdLine := []string{"rclone", "sync", "--stats-log-level", "NOTICE", r.LogDir, dst}
 	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -257,4 +254,15 @@ func (r *Report) Upload() {
 	if err != nil {
 		log.Fatalf("Failed to upload results: %v", err)
 	}
+}
+
+// Upload uploads a copy of the report online
+func (r *Report) Upload() {
+	if *uploadPath == "" || r.IndexHTML == "" {
+		return
+	}
+	// Upload into dated directory
+	r.uploadTo(r.DateTime)
+	// And again into current
+	r.uploadTo("current")
 }
