@@ -93,7 +93,7 @@ func NewConfig(configFile string) (*Config, error) {
 
 // MakeRuns makes Run objects for each combination of Backend and Test
 // in the config
-func (c *Config) MakeRuns() (runs []*Run) {
+func (c *Config) MakeRuns() (runs Runs) {
 	for _, backend := range c.Backends {
 		for _, test := range c.Tests {
 			runs = append(runs, backend.MakeRuns(&test)...)
