@@ -448,7 +448,12 @@ func init() {
 			Provider: "!AWS,IBMCOS",
 		}, {
 			Name: "acl",
-			Help: "Canned ACL used when creating buckets and/or storing objects in S3.\nFor more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl",
+			Help: `Canned ACL used when creating buckets and storing or copying objects.
+
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+
+Note that this ACL is applied when server side copying objects as S3
+doesn't copy the ACL from the source but rather writes a fresh one.`,
 			Examples: []fs.OptionExample{{
 				Value:    "private",
 				Help:     "Owner gets FULL_CONTROL. No one else has access rights (default).",
@@ -1286,6 +1291,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	source := pathEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
 	req := s3.CopyObjectInput{
 		Bucket:            &f.bucket,
+		ACL:               &f.opt.ACL,
 		Key:               &key,
 		CopySource:        &source,
 		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
