@@ -151,13 +151,13 @@ table.tests {
 	width: 100%;
 }
 table, th, td {
-	border: 1px solid black;
+	border: 1px solid #264653;
 }
 .Failed {
-	color: red;
+	color: #BE5B43;
 }
 .Passed {
-	color: green;
+	color: #17564E;
 }
 .false {
 	font-weight: lighter;
@@ -172,7 +172,20 @@ th, td {
 }
 
 tr:nth-child(even) {
-    background-color: #f2f2f2
+    background-color: #f2f2f2;
+}
+
+a {
+	color: #5B1955;
+	text-decoration: none;
+}
+a:hover, a:focus {
+	color: #F4A261;
+	text-decoration:underline;
+}
+a:focus {
+	outline: thin dotted;
+	outline: 5px auto;
 }
 </style>
 </head>
@@ -181,7 +194,7 @@ tr:nth-child(even) {
 
 <table>
 <tr><th>Version</th><td>{{ .Version }}</td></tr>
-<tr><th>Date</th><td>{{ .DateTime}} [<a href="{{ .URL }}">online</a>]</td></tr>
+<tr><th>Test</th><td><a href="{{ .URL }}">{{ .DateTime}}</a></td></tr>
 <tr><th>Duration</th><td>{{ .Duration }}</td></tr>
 {{ if .Previous}}<tr><th>Previous</th><td><a href="../{{ .Previous }}/index.html">{{ .Previous }}</a></td></tr>{{ end }}
 <tr><th>Up</th><td><a href="../">Older Tests</a></td></tr>
