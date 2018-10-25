@@ -199,7 +199,7 @@ func (w *writeResHeaders) staysWithinBuffer(max int) bool {
 	// TODO: this is a common one. It'd be nice to return true
 	// here and get into the fast path if we could be clever and
 	// calculate the size fast enough, or at least a conservative
-	// uppper bound that usually fires. (Maybe if w.h and
+	// upper bound that usually fires. (Maybe if w.h and
 	// w.trailers are nil, so we don't need to enumerate it.)
 	// Otherwise I'm afraid that just calculating the length to
 	// answer this question would be slower than the ~2µs benefit.
