@@ -112,14 +112,16 @@ func (rep *Reporter) sendAPICallMetric(r *request.Request) {
 
 	now := time.Now()
 	m := metric{
-		ClientID:      aws.String(rep.clientID),
-		API:           aws.String(r.Operation.Name),
-		Service:       aws.String(r.ClientInfo.ServiceID),
-		Timestamp:     (*metricTime)(&now),
-		Type:          aws.String("ApiCall"),
-		AttemptCount:  aws.Int(r.RetryCount + 1),
-		Latency:       aws.Int(int(time.Now().Sub(r.Time) / time.Millisecond)),
-		XAmzRequestID: aws.String(r.RequestID),
+		ClientID:           aws.String(rep.clientID),
+		API:                aws.String(r.Operation.Name),
+		Service:            aws.String(r.ClientInfo.ServiceID),
+		Timestamp:          (*metricTime)(&now),
+		Type:               aws.String("ApiCall"),
+		AttemptCount:       aws.Int(r.RetryCount + 1),
+		Region:             r.Config.Region,
+		Latency:            aws.Int(int(time.Now().Sub(r.Time) / time.Millisecond)),
+		XAmzRequestID:      aws.String(r.RequestID),
+		MaxRetriesExceeded: aws.Int(boolIntValue(r.RetryCount >= r.MaxRetries())),
 	}
 
 	// TODO: Probably want to figure something out for logging dropped
@@ -228,4 +230,13 @@ func (rep *Reporter) InjectHandlers(handlers *request.Handlers) {
 	handlers.Complete.PushFrontNamed(apiCallAttemptHandler)
 
 	handlers.AfterRetry.PushFrontNamed(apiCallAttemptHandler)
+}
+
+// boolIntValue return 1 for true and 0 for false.
+func boolIntValue(b bool) int {
+	if b {
+		return 1
+	}
+
+	return 0
 }

@@ -2,12 +2,12 @@
 bazil.org/fuse
 bazil.org/fuse/fs
 bazil.org/fuse/fuseutil
-# cloud.google.com/go v0.28.0
+# cloud.google.com/go v0.31.0
 cloud.google.com/go/compute/metadata
 # github.com/Azure/azure-pipeline-go v0.1.8
 github.com/Azure/azure-pipeline-go/pipeline
-# github.com/Azure/azure-storage-blob-go v0.0.0-20180906215025-bb46532f68b7
-github.com/Azure/azure-storage-blob-go/2018-03-28/azblob
+# github.com/Azure/azure-storage-blob-go v0.0.0-20181023070848-cf01652132cc
+github.com/Azure/azure-storage-blob-go/azblob
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
@@ -17,7 +17,7 @@ github.com/Unknwon/goconfig
 github.com/a8m/tree
 # github.com/abbot/go-http-auth v0.4.0
 github.com/abbot/go-http-auth
-# github.com/aws/aws-sdk-go v1.15.39
+# github.com/aws/aws-sdk-go v1.15.62
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/corehandlers
@@ -31,6 +31,7 @@ github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/aws/endpoints
 github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/ini
 github.com/aws/aws-sdk-go/internal/shareddefaults
 github.com/aws/aws-sdk-go/aws/client
 github.com/aws/aws-sdk-go/internal/sdkuri
@@ -40,6 +41,7 @@ github.com/aws/aws-sdk-go/aws/awsutil
 github.com/aws/aws-sdk-go/aws/credentials/stscreds
 github.com/aws/aws-sdk-go/aws/csm
 github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/s3err
 github.com/aws/aws-sdk-go/private/protocol
 github.com/aws/aws-sdk-go/private/protocol/eventstream
 github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi
@@ -73,8 +75,6 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/seen_state
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
-# github.com/go-ini/ini v1.38.2
-github.com/go-ini/ini
 # github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1
 github.com/goftp/server
 # github.com/golang/protobuf v1.2.0
@@ -83,7 +83,7 @@ github.com/golang/protobuf/proto
 github.com/google/go-querystring/query
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/jlaffaye/ftp v0.0.0-20180808211605-3f6433f7eae3
+# github.com/jlaffaye/ftp v0.0.0-20181011150954-fe787349a520
 github.com/jlaffaye/ftp
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
@@ -95,7 +95,7 @@ github.com/kr/fs
 github.com/mattn/go-runewidth
 # github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 github.com/ncw/go-acd
-# github.com/ncw/swift v1.0.41
+# github.com/ncw/swift v1.0.42
 github.com/ncw/swift
 # github.com/nsf/termbox-go v0.0.0-20180819125858-b66b20ab708e
 github.com/nsf/termbox-go
@@ -117,7 +117,7 @@ github.com/pkg/sftp
 github.com/pmezard/go-difflib/difflib
 # github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46
 github.com/rfjakob/eme
-# github.com/russross/blackfriday v1.5.1
+# github.com/russross/blackfriday v1.5.2
 github.com/russross/blackfriday
 # github.com/sevlyar/go-daemon v0.1.4
 github.com/sevlyar/go-daemon
@@ -126,7 +126,7 @@ github.com/skratchdot/open-golang/open
 # github.com/spf13/cobra v0.0.3
 github.com/spf13/cobra
 github.com/spf13/cobra/doc
-# github.com/spf13/pflag v1.0.2
+# github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.2.2
 github.com/stretchr/testify/assert
@@ -147,7 +147,7 @@ github.com/yunify/qingstor-sdk-go/request/builder
 github.com/yunify/qingstor-sdk-go/request/signer
 github.com/yunify/qingstor-sdk-go/request/unpacker
 github.com/yunify/qingstor-sdk-go
-# golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b
+# golang.org/x/crypto v0.0.0-20181025113841-85e1b3f9139a
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
@@ -163,7 +163,7 @@ golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/blowfish
-# golang.org/x/net v0.0.0-20180921000356-2f5d2388922f
+# golang.org/x/net v0.0.0-20181023162649-9b4f9f5ad519
 golang.org/x/net/websocket
 golang.org/x/net/html
 golang.org/x/net/publicsuffix
@@ -176,13 +176,13 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/webdav/internal/xml
-# golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
+# golang.org/x/oauth2 v0.0.0-20181017192945-9dcd33a902f4
 golang.org/x/oauth2
 golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20180920110915-d641721ec2de
+# golang.org/x/sys v0.0.0-20181025063200-d989b31c8746
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.0
@@ -192,7 +192,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 # golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
 golang.org/x/time/rate
-# google.golang.org/api v0.0.0-20180921000521-920bb1beccf7
+# google.golang.org/api v0.0.0-20181025000501-39567f0042a0
 google.golang.org/api/drive/v2
 google.golang.org/api/drive/v3
 google.golang.org/api/googleapi

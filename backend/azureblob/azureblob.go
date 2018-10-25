@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
+	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config/configmap"
@@ -1368,7 +1368,7 @@ func (o *Object) SetTier(tier string) error {
 	blob := o.getBlobReference()
 	ctx := context.Background()
 	err := o.fs.pacer.Call(func() (bool, error) {
-		_, err := blob.SetTier(ctx, desiredAccessTier)
+		_, err := blob.SetTier(ctx, desiredAccessTier, azblob.LeaseAccessConditions{})
 		return o.fs.shouldRetry(err)
 	})
 

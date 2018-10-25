@@ -692,6 +692,24 @@ func (sa *SockaddrVM) sockaddr() (unsafe.Pointer, _Socklen, error) {
 	return unsafe.Pointer(&sa.raw), SizeofSockaddrVM, nil
 }
 
+type SockaddrXDP struct {
+	Flags        uint16
+	Ifindex      uint32
+	QueueID      uint32
+	SharedUmemFD uint32
+	raw          RawSockaddrXDP
+}
+
+func (sa *SockaddrXDP) sockaddr() (unsafe.Pointer, _Socklen, error) {
+	sa.raw.Family = AF_XDP
+	sa.raw.Flags = sa.Flags
+	sa.raw.Ifindex = sa.Ifindex
+	sa.raw.Queue_id = sa.QueueID
+	sa.raw.Shared_umem_fd = sa.SharedUmemFD
+
+	return unsafe.Pointer(&sa.raw), SizeofSockaddrXDP, nil
+}
+
 func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case AF_NETLINK:
@@ -793,6 +811,15 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 			}
 			return sa, nil
 		}
+	case AF_XDP:
+		pp := (*RawSockaddrXDP)(unsafe.Pointer(rsa))
+		sa := &SockaddrXDP{
+			Flags:        pp.Flags,
+			Ifindex:      pp.Ifindex,
+			QueueID:      pp.Queue_id,
+			SharedUmemFD: pp.Shared_umem_fd,
+		}
+		return sa, nil
 	}
 	return nil, EAFNOSUPPORT
 }
@@ -1095,7 +1122,7 @@ func ptracePeek(req int, pid int, addr uintptr, out []byte) (count int, err erro
 	// The ptrace syscall differs from glibc's ptrace.
 	// Peeks returns the word in *data, not as the return value.
 
-	var buf [sizeofPtr]byte
+	var buf [SizeofPtr]byte
 
 	// Leading edge. PEEKTEXT/PEEKDATA don't require aligned
 	// access (PEEKUSER warns that it might), but if we don't
@@ -1103,12 +1130,12 @@ func ptracePeek(req int, pid int, addr uintptr, out []byte) (count int, err erro
 	// boundary and not get the bytes leading up to the page
 	// boundary.
 	n := 0
-	if addr%sizeofPtr != 0 {
-		err = ptrace(req, pid, addr-addr%sizeofPtr, uintptr(unsafe.Pointer(&buf[0])))
+	if addr%SizeofPtr != 0 {
+		err = ptrace(req, pid, addr-addr%SizeofPtr, uintptr(unsafe.Pointer(&buf[0])))
 		if err != nil {
 			return 0, err
 		}
-		n += copy(out, buf[addr%sizeofPtr:])
+		n += copy(out, buf[addr%SizeofPtr:])
 		out = out[n:]
 	}
 
@@ -1146,15 +1173,15 @@ func ptracePoke(pokeReq int, peekReq int, pid int, addr uintptr, data []byte) (c
 
 	// Leading edge.
 	n := 0
-	if addr%sizeofPtr != 0 {
-		var buf [sizeofPtr]byte
-		err = ptrace(peekReq, pid, addr-addr%sizeofPtr, uintptr(unsafe.Pointer(&buf[0])))
+	if addr%SizeofPtr != 0 {
+		var buf [SizeofPtr]byte
+		err = ptrace(peekReq, pid, addr-addr%SizeofPtr, uintptr(unsafe.Pointer(&buf[0])))
 		if err != nil {
 			return 0, err
 		}
-		n += copy(buf[addr%sizeofPtr:], data)
+		n += copy(buf[addr%SizeofPtr:], data)
 		word := *((*uintptr)(unsafe.Pointer(&buf[0])))
-		err = ptrace(pokeReq, pid, addr-addr%sizeofPtr, word)
+		err = ptrace(pokeReq, pid, addr-addr%SizeofPtr, word)
 		if err != nil {
 			return 0, err
 		}
@@ -1162,19 +1189,19 @@ func ptracePoke(pokeReq int, peekReq int, pid int, addr uintptr, data []byte) (c
 	}
 
 	// Interior.
-	for len(data) > sizeofPtr {
+	for len(data) > SizeofPtr {
 		word := *((*uintptr)(unsafe.Pointer(&data[0])))
 		err = ptrace(pokeReq, pid, addr+uintptr(n), word)
 		if err != nil {
 			return n, err
 		}
-		n += sizeofPtr
-		data = data[sizeofPtr:]
+		n += SizeofPtr
+		data = data[SizeofPtr:]
 	}
 
 	// Trailing edge.
 	if len(data) > 0 {
-		var buf [sizeofPtr]byte
+		var buf [SizeofPtr]byte
 		err = ptrace(peekReq, pid, addr+uintptr(n), uintptr(unsafe.Pointer(&buf[0])))
 		if err != nil {
 			return n, err
@@ -1273,6 +1300,7 @@ func Mount(source string, target string, fstype string, flags uintptr, data stri
 //sys	Adjtimex(buf *Timex) (state int, err error)
 //sys	Chdir(path string) (err error)
 //sys	Chroot(path string) (err error)
+//sys	ClockGetres(clockid int32, res *Timespec) (err error)
 //sys	ClockGettime(clockid int32, time *Timespec) (err error)
 //sys	Close(fd int) (err error)
 //sys	CopyFileRange(rfd int, roff *int64, wfd int, woff *int64, len int, flags int) (n int, err error)
@@ -1496,7 +1524,6 @@ func Faccessat(dirfd int, path string, mode uint32, flags int) (err error) {
 // Brk
 // Capget
 // Capset
-// ClockGetres
 // ClockNanosleep
 // ClockSettime
 // Clone

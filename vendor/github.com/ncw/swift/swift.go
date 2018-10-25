@@ -1013,7 +1013,8 @@ type Object struct {
 	Bytes              int64      `json:"bytes"`         // size in bytes
 	ServerLastModified string     `json:"last_modified"` // Last modified time, eg '2011-06-30T08:20:47.736680' as a string supplied by the server
 	LastModified       time.Time  // Last modified time converted to a time.Time
-	Hash               string     `json:"hash"` // MD5 hash, eg "d41d8cd98f00b204e9800998ecf8427e"
+	Hash               string     `json:"hash"`     // MD5 hash, eg "d41d8cd98f00b204e9800998ecf8427e"
+	SLOHash            string     `json:"slo_etag"` // MD5 hash of all segments' MD5 hash, eg "d41d8cd98f00b204e9800998ecf8427e"
 	PseudoDirectory    bool       // Set when using delimiter to show that this directory object does not really exist
 	SubDir             string     `json:"subdir"` // returned only when using delimiter to mark "pseudo directories"
 	ObjectType         ObjectType // type of this object
@@ -1064,6 +1065,9 @@ func (c *Connection) Objects(container string, opts *ObjectsOpts) ([]Object, err
 			if err != nil {
 				return nil, err
 			}
+		}
+		if object.SLOHash != "" {
+			object.ObjectType = StaticLargeObjectType
 		}
 	}
 	return objects, err
