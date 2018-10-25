@@ -50,7 +50,7 @@ version:
 
 # Full suite of integration tests
 test:	rclone
-	go install github.com/ncw/rclone/fstest/test_all
+	go install --ldflags "-s -X github.com/ncw/rclone/fs.Version=$(TAG)" $(BUILDTAGS) github.com/ncw/rclone/fstest/test_all
 	-test_all 2>&1 | tee test_all.log
 	@echo "Written logs in test_all.log"
 
