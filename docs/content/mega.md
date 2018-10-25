@@ -68,6 +68,9 @@ d) Delete this remote
 y/e/d> y
 ```
 
+**NOTE:** The encryption keys need to have been already generated after a regular login
+via the browser, otherwise attempting to use the credentials in `rclone` will fail.
+
 Once configured you can then use `rclone` like this,
 
 List directories in top level of your Mega
@@ -152,11 +155,9 @@ permanently delete objects instead.
 
 ### Limitations ###
 
-This backend uses the [go-mega go
-library](https://github.com/t3rm1n4l/go-mega) which is an opensource
+This backend uses the [go-mega go library](https://github.com/t3rm1n4l/go-mega) which is an opensource
 go library implementing the Mega API. There doesn't appear to be any
-documentation for the mega protocol beyond the [mega C++
-SDK](https://github.com/meganz/sdk) source code so there are likely
-quite a few errors still remaining in this library.
+documentation for the mega protocol beyond the [mega C++ SDK](https://github.com/meganz/sdk) source code
+so there are likely quite a few errors still remaining in this library.
 
 Mega allows duplicate files which may confuse rclone.
