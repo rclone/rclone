@@ -10,9 +10,6 @@ import (
 	"github.com/ncw/rclone/fs"
 )
 
-// Params is the input and output type for the Func
-type Params map[string]interface{}
-
 // Func defines a type for a remote control function
 type Func func(in Params) (out Params, err error)
 
