@@ -401,6 +401,78 @@ func TestRcat(t *testing.T) {
 	check(false)
 }
 
+func TestPurge(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	r.Mkdir(r.Fremote)
+
+	// Make some files and dirs
+	r.ForceMkdir(r.Fremote)
+	file1 := r.WriteObject("A1/B1/C1/one", "aaa", t1)
+	//..and dirs we expect to delete
+	require.NoError(t, operations.Mkdir(r.Fremote, "A2"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B2"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B2/C2"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B1/C3"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A3"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A3/B3"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A3/B3/C4"))
+	//..and one more file at the end
+	file2 := r.WriteObject("A1/two", "bbb", t2)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file1, file2,
+		},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+			"A2",
+			"A1/B2",
+			"A1/B2/C2",
+			"A1/B1/C3",
+			"A3",
+			"A3/B3",
+			"A3/B3/C4",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	require.NoError(t, operations.Purge(r.Fremote, "A1/B1"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file2,
+		},
+		[]string{
+			"A1",
+			"A2",
+			"A1/B2",
+			"A1/B2/C2",
+			"A3",
+			"A3/B3",
+			"A3/B3/C4",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	require.NoError(t, operations.Purge(r.Fremote, ""))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+}
+
 func TestRmdirsNoLeaveRoot(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -437,6 +509,28 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 			"A3",
 			"A3/B3",
 			"A3/B3/C4",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	require.NoError(t, operations.Rmdirs(r.Fremote, "A3/B3/C4", false))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file1, file2,
+		},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+			"A2",
+			"A1/B2",
+			"A1/B2/C2",
+			"A1/B1/C3",
+			"A3",
+			"A3/B3",
 		},
 		fs.GetModifyWindow(r.Fremote),
 	)
