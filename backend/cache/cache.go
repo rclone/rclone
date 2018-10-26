@@ -471,7 +471,7 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	fs.Infof(name, "Chunk Clean Interval: %v", f.opt.ChunkCleanInterval)
 	fs.Infof(name, "Workers: %v", f.opt.TotalWorkers)
 	fs.Infof(name, "File Age: %v", f.opt.InfoAge)
-	if !f.opt.StoreWrites {
+	if f.opt.StoreWrites {
 		fs.Infof(name, "Cache Writes: enabled")
 	}
 
