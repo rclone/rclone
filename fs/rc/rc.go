@@ -116,8 +116,6 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fs.Debugf(nil, "form = %+v", r.Form)
-
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	//echo back headers client needs
 	reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
@@ -137,6 +135,11 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 func (s *server) handlePost(w http.ResponseWriter, r *http.Request, path string, in Params) {
 	writeError := func(err error, status int) {
 		fs.Errorf(nil, "rc: %q: error: %v", path, err)
+		// Adjust the error return for some well known errors
+		switch errors.Cause(err) {
+		case fs.ErrorDirNotFound, fs.ErrorObjectNotFound:
+			status = http.StatusNotFound
+		}
 		w.WriteHeader(status)
 		err = WriteJSON(w, Params{
 			"error": err.Error(),
@@ -155,11 +158,26 @@ func (s *server) handlePost(w http.ResponseWriter, r *http.Request, path string,
 		return
 	}
 
-	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
-	out, err := call.Fn(in)
+	// Check to see if it is async or not
+	isAsync, err := in.GetBool("_async")
 	if err != nil {
-		writeError(errors.Wrap(err, "remote control command failed"), http.StatusInternalServerError)
+		writeError(err, http.StatusBadRequest)
 		return
+	}
+
+	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
+	var out Params
+	if isAsync {
+		out, err = StartJob(call.Fn, in)
+	} else {
+		out, err = call.Fn(in)
+	}
+	if err != nil {
+		writeError(err, http.StatusInternalServerError)
+		return
+	}
+	if out == nil {
+		out = make(Params)
 	}
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
