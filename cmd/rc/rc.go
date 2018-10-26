@@ -19,14 +19,16 @@ import (
 )
 
 var (
-	noOutput = false
-	url      = "http://localhost:5572/"
+	noOutput  = false
+	url       = "http://localhost:5572/"
+	jsonInput = ""
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
 	commandDefintion.Flags().BoolVarP(&noOutput, "no-output", "", noOutput, "If set don't output the JSON result.")
 	commandDefintion.Flags().StringVarP(&url, "url", "", url, "URL to connect to rclone remote control.")
+	commandDefintion.Flags().StringVarP(&jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args.")
 }
 
 var commandDefintion = &cobra.Command{
@@ -39,6 +41,10 @@ that specified in the --rc-addr command.
 Arguments should be passed in as parameter=value.
 
 The result will be returned as a JSON object by default.
+
+The --json parameter can be used to pass in a JSON blob as an input
+instead of key=value arguments.  This is the only way of passing in
+more complicated values.
 
 Use "rclone rc" to see a list of all possible commands.`,
 	Run: func(command *cobra.Command, args []string) {
@@ -115,13 +121,24 @@ func run(args []string) (err error) {
 
 	// parse input
 	in := make(rc.Params)
-	for _, param := range args[1:] {
-		equals := strings.IndexRune(param, '=')
-		if equals < 0 {
-			return errors.Errorf("No '=' found in parameter %q", param)
+	params := args[1:]
+	if jsonInput == "" {
+		for _, param := range params {
+			equals := strings.IndexRune(param, '=')
+			if equals < 0 {
+				return errors.Errorf("no '=' found in parameter %q", param)
+			}
+			key, value := param[:equals], param[equals+1:]
+			in[key] = value
 		}
-		key, value := param[:equals], param[equals+1:]
-		in[key] = value
+	} else {
+		if len(params) > 0 {
+			return errors.New("can't use --json and parameters together")
+		}
+		err = json.Unmarshal([]byte(jsonInput), &in)
+		if err != nil {
+			return errors.Wrap(err, "bad --json input")
+		}
 	}
 
 	// Do the call
