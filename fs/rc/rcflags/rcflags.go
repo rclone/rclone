@@ -16,5 +16,6 @@ var (
 // AddFlags adds the remote control flags to the flagSet
 func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.Enabled, "rc", "", false, "Enable the remote control server.")
+	flags.StringVarP(flagSet, &Opt.Files, "rc-files", "", "", "Serve these files on the HTTP server.")
 	httpflags.AddFlagsPrefix(flagSet, "rc-", &Opt.HTTPOptions)
 }
