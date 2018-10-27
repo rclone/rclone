@@ -3,6 +3,7 @@ package vfsflags
 
 import (
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/vfs"
 	"github.com/spf13/pflag"
 )
@@ -14,6 +15,7 @@ var (
 
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
+	rc.AddOption("vfs", &Opt)
 	flags.BoolVarP(flagSet, &Opt.NoModTime, "no-modtime", "", Opt.NoModTime, "Don't read/write the modification time (can speed things up).")
 	flags.BoolVarP(flagSet, &Opt.NoChecksum, "no-checksum", "", Opt.NoChecksum, "Don't compare checksums on up/download.")
 	flags.BoolVarP(flagSet, &Opt.NoSeek, "no-seek", "", Opt.NoSeek, "Don't allow seeking in files.")
