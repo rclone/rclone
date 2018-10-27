@@ -4,19 +4,17 @@ package restic
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
+	"github.com/ncw/rclone/cmd/serve/httplib/serve"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/fserrors"
@@ -220,10 +218,8 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		switch r.Method {
-		case "GET":
-			s.getObject(w, r, remote)
-		case "HEAD":
-			s.headObject(w, r, remote)
+		case "GET", "HEAD":
+			s.serveObject(w, r, remote)
 		case "POST":
 			s.postObject(w, r, remote)
 		case "DELETE":
@@ -234,91 +230,15 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// head request the remote
-func (s *server) headObject(w http.ResponseWriter, r *http.Request, remote string) {
-	o, err := s.f.NewObject(remote)
-	if err != nil {
-		fs.Debugf(remote, "Head request error: %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-
-	// Set content length since we know how long the object is
-	w.Header().Set("Content-Length", strconv.FormatInt(o.Size(), 10))
-}
-
 // get the remote
-func (s *server) getObject(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *server) serveObject(w http.ResponseWriter, r *http.Request, remote string) {
 	o, err := s.f.NewObject(remote)
 	if err != nil {
-		fs.Debugf(remote, "Get request error: %v", err)
+		fs.Debugf(remote, "%s request error: %v", r.Method, err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-
-	// Set content length since we know how long the object is
-	w.Header().Set("Content-Length", strconv.FormatInt(o.Size(), 10))
-
-	// Decode Range request if present
-	code := http.StatusOK
-	size := o.Size()
-	var options []fs.OpenOption
-	if rangeRequest := r.Header.Get("Range"); rangeRequest != "" {
-		//fs.Debugf(nil, "Range: request %q", rangeRequest)
-		option, err := fs.ParseRangeOption(rangeRequest)
-		if err != nil {
-			fs.Debugf(remote, "Get request parse range request error: %v", err)
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
-		}
-		options = append(options, option)
-		offset, limit := option.Decode(o.Size())
-		end := o.Size() // exclusive
-		if limit >= 0 {
-			end = offset + limit
-		}
-		if end > o.Size() {
-			end = o.Size()
-		}
-		size = end - offset
-		// fs.Debugf(nil, "Range: offset=%d, limit=%d, end=%d, size=%d (object size %d)", offset, limit, end, size, o.Size())
-		// Content-Range: bytes 0-1023/146515
-		w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", offset, end-1, o.Size()))
-		// fs.Debugf(nil, "Range: Content-Range: %q", w.Header().Get("Content-Range"))
-		code = http.StatusPartialContent
-	}
-	w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
-
-	file, err := o.Open(options...)
-	if err != nil {
-		fs.Debugf(remote, "Get request open error: %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
-	}
-	accounting.Stats.Transferring(o.Remote())
-	in := accounting.NewAccount(file, o) // account the transfer (no buffering)
-	defer func() {
-		closeErr := in.Close()
-		if closeErr != nil {
-			fs.Errorf(remote, "Get request: close failed: %v", closeErr)
-			if err == nil {
-				err = closeErr
-			}
-		}
-		ok := err == nil
-		accounting.Stats.DoneTransferring(o.Remote(), ok)
-		if !ok {
-			accounting.Stats.Error(err)
-		}
-	}()
-
-	w.WriteHeader(code)
-
-	n, err := io.Copy(w, in)
-	if err != nil {
-		fs.Errorf(remote, "Didn't finish writing GET request (wrote %d/%d bytes): %v", n, size, err)
-		return
-	}
+	serve.Object(w, r, o)
 }
 
 // postObject posts an object to the repository
