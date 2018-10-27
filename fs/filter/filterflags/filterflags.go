@@ -4,6 +4,7 @@ package filterflags
 import (
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/filter"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/spf13/pflag"
 )
 
@@ -14,6 +15,7 @@ var (
 
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
+	rc.AddOption("filter", &Opt)
 	flags.BoolVarP(flagSet, &Opt.DeleteExcluded, "delete-excluded", "", false, "Delete files on dest excluded from sync")
 	flags.StringArrayVarP(flagSet, &Opt.FilterRule, "filter", "f", nil, "Add a file-filtering rule")
 	flags.StringArrayVarP(flagSet, &Opt.FilterFrom, "filter-from", "", nil, "Read filtering patterns from a file")

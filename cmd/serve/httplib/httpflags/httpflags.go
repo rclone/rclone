@@ -3,6 +3,7 @@ package httpflags
 import (
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/spf13/pflag"
 )
 
@@ -13,6 +14,7 @@ var (
 
 // AddFlagsPrefix adds flags for the httplib
 func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *httplib.Options) {
+	rc.AddOption(prefix+"http", &Opt)
 	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to.")
 	flags.DurationVarP(flagSet, &Opt.ServerReadTimeout, prefix+"server-read-timeout", "", Opt.ServerReadTimeout, "Timeout for server reading data")
 	flags.DurationVarP(flagSet, &Opt.ServerWriteTimeout, prefix+"server-write-timeout", "", Opt.ServerWriteTimeout, "Timeout for server writing data")
