@@ -12,6 +12,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/spf13/pflag"
 )
 
@@ -31,6 +32,7 @@ var (
 
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
+	rc.AddOption("main", fs.Config)
 	// NB defaults which aren't the zero for the type should be set in fs/config.go NewConfig
 	flags.CountVarP(flagSet, &verbose, "verbose", "v", "Print lots more stuff (repeat for more)")
 	flags.BoolVarP(flagSet, &quiet, "quiet", "q", false, "Print as little stuff as possible")
