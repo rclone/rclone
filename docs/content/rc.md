@@ -362,9 +362,31 @@ blob in the body.  There are examples of these below using `curl`.
 The response will be a JSON blob in the body of the response.  This is
 formatted to be reasonably human readable.
 
-If an error occurs then there will be an HTTP error status (usually
-400) and the body of the response will contain a JSON encoded error
-object.
+### Error returns
+
+If an error occurs then there will be an HTTP error status (eg 500)
+and the body of the response will contain a JSON encoded error object,
+eg
+
+```
+{
+    "error": "Expecting string value for key \"remote\" (was float64)",
+    "input": {
+        "fs": "/tmp",
+        "remote": 3
+    },
+    "status": 400
+    "path": "operations/rmdir",
+}
+```
+
+The keys in the error response are
+- error - error string
+- input - the input parameters to the call
+- status - the HTTP status code
+- path - the path of the call
+
+### CORS
 
 The sever implements basic CORS support and allows all origins for that.
 The response to a preflight OPTIONS request will echo the requested "Access-Control-Request-Headers" back.
