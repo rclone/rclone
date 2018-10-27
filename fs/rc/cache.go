@@ -14,15 +14,10 @@ var (
 	fsNewFs   = fs.NewFs // for tests
 )
 
-// GetFsNamed gets a fs.Fs named fsName either from the cache or creates it afresh
-func GetFsNamed(in Params, fsName string) (f fs.Fs, err error) {
+// GetCachedFs gets a fs.Fs named fsString either from the cache or creates it afresh
+func GetCachedFs(fsString string) (f fs.Fs, err error) {
 	fsCacheMu.Lock()
 	defer fsCacheMu.Unlock()
-
-	fsString, err := in.GetString(fsName)
-	if err != nil {
-		return nil, err
-	}
 
 	f = fsCache[fsString]
 	if f == nil {
@@ -32,6 +27,16 @@ func GetFsNamed(in Params, fsName string) (f fs.Fs, err error) {
 		}
 	}
 	return f, err
+}
+
+// GetFsNamed gets a fs.Fs named fsName either from the cache or creates it afresh
+func GetFsNamed(in Params, fsName string) (f fs.Fs, err error) {
+	fsString, err := in.GetString(fsName)
+	if err != nil {
+		return nil, err
+	}
+
+	return GetCachedFs(fsString)
 }
 
 // GetFs gets a fs.Fs named "fs" either from the cache or creates it afresh

@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fs/rc/rcflags"
+	"github.com/ncw/rclone/fs/rc/rcserver"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +35,7 @@ the browser when rclone is run.
 		if len(args) > 0 {
 			rcflags.Opt.Files = args[0]
 		}
-		rc.Start(&rcflags.Opt)
+		rcserver.Start(&rcflags.Opt)
 		// Run the rc forever
 		select {}
 	},

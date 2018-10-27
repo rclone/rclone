@@ -84,7 +84,7 @@ func rcError(in Params) (out Params, err error) {
 // List the registered commands
 func rcList(in Params) (out Params, err error) {
 	out = make(Params)
-	out["commands"] = registry.list()
+	out["commands"] = Calls.List()
 	return out, nil
 }
 
@@ -125,7 +125,6 @@ func rcMemStats(in Params) (out Params, err error) {
 
 // Do a garbage collection run
 func rcGc(in Params) (out Params, err error) {
-	out = make(Params)
 	runtime.GC()
-	return out, nil
+	return nil, nil
 }

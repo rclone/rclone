@@ -29,8 +29,8 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fspath"
 	fslog "github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fs/rc/rcflags"
+	"github.com/ncw/rclone/fs/rc/rcserver"
 	"github.com/ncw/rclone/lib/atexit"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -352,8 +352,8 @@ func initConfig() {
 	// Write the args for debug purposes
 	fs.Debugf("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
 
-	// Start the remote control if configured
-	rc.Start(&rcflags.Opt)
+	// Start the remote control server if configured
+	rcserver.Start(&rcflags.Opt)
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {

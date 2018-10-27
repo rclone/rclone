@@ -36,7 +36,7 @@ func NewRegistry() *Registry {
 }
 
 // Add a call to the registry
-func (r *Registry) add(call Call) {
+func (r *Registry) Add(call Call) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	call.Path = strings.Trim(call.Path, "/")
@@ -45,15 +45,15 @@ func (r *Registry) add(call Call) {
 	r.call[call.Path] = &call
 }
 
-// get a Call from a path or nil
-func (r *Registry) get(path string) *Call {
+// Get a Call from a path or nil
+func (r *Registry) Get(path string) *Call {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.call[path]
 }
 
-// get a list of all calls in alphabetical order
-func (r *Registry) list() (out []*Call) {
+// List of all calls in alphabetical order
+func (r *Registry) List() (out []*Call) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	var keys []string
@@ -67,10 +67,10 @@ func (r *Registry) list() (out []*Call) {
 	return out
 }
 
-// The global registry
-var registry = NewRegistry()
+// Calls is the global registry of Call objects
+var Calls = NewRegistry()
 
 // Add a function to the global registry
 func Add(call Call) {
-	registry.add(call)
+	Calls.Add(call)
 }
