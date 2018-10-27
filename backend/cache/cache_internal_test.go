@@ -31,8 +31,8 @@ import (
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/object"
-	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fs/rc/rcflags"
+	"github.com/ncw/rclone/fs/rc/rcserver"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
@@ -693,7 +693,7 @@ func TestInternalChangeSeenAfterDirCacheFlush(t *testing.T) {
 
 func TestInternalChangeSeenAfterRc(t *testing.T) {
 	rcflags.Opt.Enabled = true
-	rc.Start(&rcflags.Opt)
+	rcserver.Start(&rcflags.Opt)
 
 	id := fmt.Sprintf("ticsarc%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
