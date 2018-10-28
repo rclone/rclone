@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"path"
 	"strings"
 	"testing"
 	"time"
@@ -200,36 +199,6 @@ func TestGET(t *testing.T) {
 
 		checkGolden(t, test.Golden, body)
 	}
-}
-
-type mockNode struct {
-	path  string
-	isdir bool
-}
-
-func (n mockNode) Path() string { return n.path }
-func (n mockNode) Name() string {
-	if n.path == "" {
-		return ""
-	}
-	return path.Base(n.path)
-}
-func (n mockNode) IsDir() bool { return n.isdir }
-
-func TestAddEntry(t *testing.T) {
-	var es entries
-	es.addEntry(mockNode{path: "", isdir: true})
-	es.addEntry(mockNode{path: "dir", isdir: true})
-	es.addEntry(mockNode{path: "a/b/c/d.txt", isdir: false})
-	es.addEntry(mockNode{path: "a/b/c/colon:colon.txt", isdir: false})
-	es.addEntry(mockNode{path: "\"quotes\".txt", isdir: false})
-	assert.Equal(t, entries{
-		{remote: "", URL: "/", Leaf: "/"},
-		{remote: "dir", URL: "dir/", Leaf: "dir/"},
-		{remote: "a/b/c/d.txt", URL: "d.txt", Leaf: "d.txt"},
-		{remote: "a/b/c/colon:colon.txt", URL: "./colon:colon.txt", Leaf: "colon:colon.txt"},
-		{remote: "\"quotes\".txt", URL: "%22quotes%22.txt", Leaf: "\"quotes\".txt"},
-	}, es)
 }
 
 func TestFinalise(t *testing.T) {
