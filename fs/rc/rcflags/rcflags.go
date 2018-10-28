@@ -17,6 +17,7 @@ var (
 func AddFlags(flagSet *pflag.FlagSet) {
 	rc.AddOption("rc", &Opt)
 	flags.BoolVarP(flagSet, &Opt.Enabled, "rc", "", false, "Enable the remote control server.")
-	flags.StringVarP(flagSet, &Opt.Files, "rc-files", "", "", "Serve these files on the HTTP server.")
+	flags.StringVarP(flagSet, &Opt.Files, "rc-files", "", "", "Path to local files to serve on the HTTP server.")
+	flags.BoolVarP(flagSet, &Opt.Serve, "rc-serve", "", false, "Enable the serving of remote objects.")
 	httpflags.AddFlagsPrefix(flagSet, "rc-", &Opt.HTTPOptions)
 }
