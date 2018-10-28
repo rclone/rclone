@@ -15,7 +15,11 @@ import (
 func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	if r.Method != "HEAD" && r.Method != "GET" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
 	}
+
+	// Show that we accept ranges
+	w.Header().Set("Accept-Ranges", "bytes")
 
 	// Set content length since we know how long the object is
 	if o.Size() >= 0 {

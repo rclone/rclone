@@ -1,8 +1,6 @@
 package http
 
 import (
-	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 	"path"
@@ -12,9 +10,9 @@ import (
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
+	"github.com/ncw/rclone/cmd/serve/httplib/serve"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/lib/rest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -105,62 +103,6 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// entry is a directory entry
-type entry struct {
-	remote string
-	URL    string
-	Leaf   string
-}
-
-// entries represents a directory
-type entries []entry
-
-// addEntry adds an entry to that directory
-func (es *entries) addEntry(node interface {
-	Path() string
-	Name() string
-	IsDir() bool
-}) {
-	remote := node.Path()
-	leaf := node.Name()
-	urlRemote := leaf
-	if node.IsDir() {
-		leaf += "/"
-		urlRemote += "/"
-	}
-	*es = append(*es, entry{remote: remote, URL: rest.URLPathEscape(urlRemote), Leaf: leaf})
-}
-
-// indexPage is a directory listing template
-var indexPage = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>{{ .Title }}</title>
-</head>
-<body>
-<h1>{{ .Title }}</h1>
-{{ range $i := .Entries }}<a href="{{ $i.URL }}">{{ $i.Leaf }}</a><br />
-{{ end }}</body>
-</html>
-`
-
-// indexTemplate is the instantiated indexPage
-var indexTemplate = template.Must(template.New("index").Parse(indexPage))
-
-// indexData is used to fill in the indexTemplate
-type indexData struct {
-	Title   string
-	Entries entries
-}
-
-// error returns an http.StatusInternalServerError and logs the error
-func internalError(what interface{}, w http.ResponseWriter, text string, err error) {
-	fs.CountError(err)
-	fs.Errorf(what, "%s: %v", text, err)
-	http.Error(w, text+".", http.StatusInternalServerError)
-}
-
 // serveDir serves a directory index at dirRemote
 func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
 	// List the directory
@@ -169,7 +111,7 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 		http.Error(w, "Directory not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		internalError(dirRemote, w, "Failed to list directory", err)
+		serve.Error(dirRemote, w, "Failed to list directory", err)
 		return
 	}
 	if !node.IsDir() {
@@ -179,28 +121,17 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 	dir := node.(*vfs.Dir)
 	dirEntries, err := dir.ReadDirAll()
 	if err != nil {
-		internalError(dirRemote, w, "Failed to list directory", err)
+		serve.Error(dirRemote, w, "Failed to list directory", err)
 		return
 	}
 
-	var out entries
+	// Make the entries for display
+	directory := serve.NewDirectory(dirRemote)
 	for _, node := range dirEntries {
-		out.addEntry(node)
+		directory.AddEntry(node.Path(), node.IsDir())
 	}
 
-	// Account the transfer
-	accounting.Stats.Transferring(dirRemote)
-	defer accounting.Stats.DoneTransferring(dirRemote, true)
-
-	fs.Infof(dirRemote, "%s: Serving directory", r.RemoteAddr)
-	err = indexTemplate.Execute(w, indexData{
-		Entries: out,
-		Title:   fmt.Sprintf("Directory listing of /%s", dirRemote),
-	})
-	if err != nil {
-		internalError(dirRemote, w, "Failed to render template", err)
-		return
-	}
+	directory.Serve(w, r)
 }
 
 // serveFile serves a file object at remote
@@ -211,7 +142,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		internalError(remote, w, "Failed to find file", err)
+		serve.Error(remote, w, "Failed to find file", err)
 		return
 	}
 	if !node.IsFile() {
@@ -245,7 +176,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	// open the object
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
-		internalError(remote, w, "Failed to open file", err)
+		serve.Error(remote, w, "Failed to open file", err)
 		return
 	}
 	defer func() {
