@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strconv"
 
 	"github.com/ncw/rclone/fs"
@@ -24,6 +25,14 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	// Set content length since we know how long the object is
 	if o.Size() >= 0 {
 		w.Header().Set("Content-Length", strconv.FormatInt(o.Size(), 10))
+	}
+
+	// Set content type
+	mimeType := fs.MimeType(o)
+	if mimeType == "application/octet-stream" && path.Ext(o.Remote()) == "" {
+		// Leave header blank so http server guesses
+	} else {
+		w.Header().Set("Content-Type", mimeType)
 	}
 
 	if r.Method == "HEAD" {

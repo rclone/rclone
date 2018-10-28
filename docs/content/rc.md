@@ -9,45 +9,77 @@ date: "2018-03-05"
 If rclone is run with the `--rc` flag then it starts an http server
 which can be used to remote control rclone.
 
+If you just want to run a remote control then see the [rcd command](/commands/rclone_rcd/).
+
 **NB** this is experimental and everything here is subject to change!
 
 ## Supported parameters
 
-#### --rc ####
+### --rc
+
 Flag to start the http server listen on remote requests
       
-#### --rc-addr=IP ####
+### --rc-addr=IP
+
 IPaddress:Port or :Port to bind server to. (default "localhost:5572")
 
-#### --rc-cert=KEY ####
+### --rc-cert=KEY
 SSL PEM key (concatenation of certificate and CA certificate)
 
-#### --rc-client-ca=PATH ####
+### --rc-client-ca=PATH
 Client certificate authority to verify clients with
 
-#### --rc-htpasswd=PATH ####
+### --rc-htpasswd=PATH
+
 htpasswd file - if not provided no authentication is done
 
-#### --rc-key=PATH ####
+### --rc-key=PATH
+
 SSL PEM Private key
 
-#### --rc-max-header-bytes=VALUE ####
+### --rc-max-header-bytes=VALUE
+
 Maximum size of request header (default 4096)
 
-#### --rc-user=VALUE ####
+### --rc-user=VALUE
+
 User name for authentication.
 
-#### --rc-pass=VALUE ####
+### --rc-pass=VALUE
+
 Password for authentication.
 
-#### --rc-realm=VALUE ####
+### --rc-realm=VALUE
+
 Realm for authentication (default "rclone")
 
-#### --rc-server-read-timeout=DURATION ####
+### --rc-server-read-timeout=DURATION
+
 Timeout for server reading data (default 1h0m0s)
 
-#### --rc-server-write-timeout=DURATION ####
+### --rc-server-write-timeout=DURATION
+
 Timeout for server writing data (default 1h0m0s)
+
+### --rc-serve
+
+Enable the serving of remote objects via the HTTP interface.  This
+means objects will be accessible at http://127.0.0.1:5572/ by default,
+so you can browse to http://127.0.0.1:5572/ or http://127.0.0.1:5572/*
+to see a listing of the remotes.  Objects may be requested from
+remotes using this syntax http://127.0.0.1:5572/[remote:path]/path/to/object
+
+Default Off.
+
+### --rc-files /path/to/directory
+
+Path to local files to serve on the HTTP server.
+
+If this is set then rclone will serve the files in that directory.  It
+will also open the root in the web browser if specified.  This is for
+implementing browser based GUIs for rclone functions.
+
+Default Off.
 
 ## Accessing the remote control via the rclone rc command
 
@@ -394,7 +426,7 @@ The response to a preflight OPTIONS request will echo the requested "Access-Cont
 ### Using POST with URL parameters only
 
 ```
-curl -X POST 'http://localhost:5572/rc/noop/?potato=1&sausage=2'
+curl -X POST 'http://localhost:5572/rc/noop?potato=1&sausage=2'
 ```
 
 Response
@@ -409,7 +441,7 @@ Response
 Here is what an error response looks like:
 
 ```
-curl -X POST 'http://localhost:5572/rc/error/?potato=1&sausage=2'
+curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 ```
 
 ```
@@ -425,7 +457,7 @@ curl -X POST 'http://localhost:5572/rc/error/?potato=1&sausage=2'
 Note that curl doesn't return errors to the shell unless you use the `-f` option
 
 ```
-$ curl -f -X POST 'http://localhost:5572/rc/error/?potato=1&sausage=2'
+$ curl -f -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 curl: (22) The requested URL returned error: 400 Bad Request
 $ echo $?
 22
@@ -434,7 +466,7 @@ $ echo $?
 ### Using POST with a form
 
 ```
-curl --data "potato=1" --data "sausage=2" http://localhost:5572/rc/noop/
+curl --data "potato=1" --data "sausage=2" http://localhost:5572/rc/noop
 ```
 
 Response
@@ -450,7 +482,7 @@ Note that you can combine these with URL parameters too with the POST
 parameters taking precedence.
 
 ```
-curl --data "potato=1" --data "sausage=2" "http://localhost:5572/rc/noop/?rutabaga=3&sausage=4"
+curl --data "potato=1" --data "sausage=2" "http://localhost:5572/rc/noop?rutabaga=3&sausage=4"
 ```
 
 Response
@@ -467,7 +499,7 @@ Response
 ### Using POST with a JSON blob
 
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' http://localhost:5572/rc/noop/
+curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' http://localhost:5572/rc/noop
 ```
 
 response
@@ -483,7 +515,7 @@ This can be combined with URL parameters too if required.  The JSON
 blob takes precedence.
 
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' 'http://localhost:5572/rc/noop/?rutabaga=3&potato=4'
+curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' 'http://localhost:5572/rc/noop?rutabaga=3&potato=4'
 ```
 
 ```

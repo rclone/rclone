@@ -5,11 +5,16 @@ import (
 	"encoding/json"
 	"mime"
 	"net/http"
+	"net/url"
+	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/serve"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
@@ -18,7 +23,8 @@ import (
 // Start the remote control server if configured
 func Start(opt *rc.Options) {
 	if opt.Enabled {
-		s := newServer(opt)
+		// Serve on the DefaultServeMux so can have global registrations appear
+		s := newServer(opt, http.DefaultServeMux)
 		go s.serve()
 	}
 }
@@ -27,13 +33,13 @@ func Start(opt *rc.Options) {
 type server struct {
 	srv   *httplib.Server
 	files http.Handler
+	opt   *rc.Options
 }
 
-func newServer(opt *rc.Options) *server {
-	// Serve on the DefaultServeMux so can have global registrations appear
-	mux := http.DefaultServeMux
+func newServer(opt *rc.Options, mux *http.ServeMux) *server {
 	s := &server{
 		srv: httplib.NewServer(mux, &opt.HTTPOptions),
+		opt: opt,
 	}
 	mux.HandleFunc("/", s.handler)
 
@@ -89,7 +95,7 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 
 // handler reads incoming requests and dispatches them
 func (s *server) handler(w http.ResponseWriter, r *http.Request) {
-	path := strings.Trim(r.URL.Path, "/")
+	path := strings.TrimLeft(r.URL.Path, "/")
 
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 
@@ -102,7 +108,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 		s.handlePost(w, r, path)
 	case "OPTIONS":
 		s.handleOptions(w, r, path)
-	case "GET":
+	case "GET", "HEAD":
 		s.handleGet(w, r, path)
 	default:
 		writeError(path, nil, w, errors.Errorf("method %q not allowed", r.Method), http.StatusMethodNotAllowed)
@@ -111,23 +117,29 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handlePost(w http.ResponseWriter, r *http.Request, path string) {
-	// Parse the POST and URL parameters into r.Form, for others r.Form will be empty value
-	err := r.ParseForm()
-	if err != nil {
-		writeError(path, nil, w, errors.Wrap(err, "failed to parse form/URL parameters"), http.StatusBadRequest)
-		return
+	contentType := r.Header.Get("Content-Type")
+
+	values := r.URL.Query()
+	if contentType == "application/x-www-form-urlencoded" {
+		// Parse the POST and URL parameters into r.Form, for others r.Form will be empty value
+		err := r.ParseForm()
+		if err != nil {
+			writeError(path, nil, w, errors.Wrap(err, "failed to parse form/URL parameters"), http.StatusBadRequest)
+			return
+		}
+		values = r.Form
 	}
 
 	// Read the POST and URL parameters into in
 	in := make(rc.Params)
-	for k, vs := range r.Form {
+	for k, vs := range values {
 		if len(vs) > 0 {
 			in[k] = vs[len(vs)-1]
 		}
 	}
 
 	// Parse a JSON blob from the input
-	if r.Header.Get("Content-Type") == "application/json" {
+	if contentType == "application/json" {
 		err := json.NewDecoder(r.Body).Decode(&in)
 		if err != nil {
 			writeError(path, in, w, errors.Wrap(err, "failed to read input JSON"), http.StatusBadRequest)
@@ -138,7 +150,7 @@ func (s *server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	// Find the call
 	call := rc.Calls.Get(path)
 	if call == nil {
-		writeError(path, in, w, errors.Errorf("couldn't find method %q", path), http.StatusMethodNotAllowed)
+		writeError(path, in, w, errors.Errorf("couldn't find method %q", path), http.StatusNotFound)
 		return
 	}
 
@@ -176,24 +188,72 @@ func (s *server) handleOptions(w http.ResponseWriter, r *http.Request, path stri
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
-	// if we have an &fs parameter we are serving from a different fs
-	fsName := r.URL.Query().Get("fs")
-	if fsName != "" {
-		f, err := rc.GetCachedFs(fsName)
+func (s *server) serveRoot(w http.ResponseWriter, r *http.Request) {
+	remotes := config.FileSections()
+	sort.Strings(remotes)
+	directory := serve.NewDirectory("")
+	directory.Title = "List of all rclone remotes."
+	q := url.Values{}
+	for _, remote := range remotes {
+		q.Set("fs", remote)
+		directory.AddEntry("["+remote+":]", true)
+	}
+	directory.Serve(w, r)
+}
+
+func (s *server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
+	f, err := rc.GetCachedFs(fsName)
+	if err != nil {
+		writeError(path, nil, w, errors.Wrap(err, "failed to make Fs"), http.StatusInternalServerError)
+		return
+	}
+	if path == "" || strings.HasSuffix(path, "/") {
+		path = strings.Trim(path, "/")
+		entries, err := list.DirSorted(f, false, path)
 		if err != nil {
-			writeError(path, nil, w, errors.Wrap(err, "failed to make Fs"), http.StatusInternalServerError)
+			writeError(path, nil, w, errors.Wrap(err, "failed to list directory"), http.StatusInternalServerError)
 			return
 		}
+		// Make the entries for display
+		directory := serve.NewDirectory(path)
+		for _, entry := range entries {
+			_, isDir := entry.(fs.Directory)
+			directory.AddEntry(entry.Remote(), isDir)
+		}
+		directory.Serve(w, r)
+	} else {
 		o, err := f.NewObject(path)
 		if err != nil {
 			writeError(path, nil, w, errors.Wrap(err, "failed to find object"), http.StatusInternalServerError)
 			return
 		}
 		serve.Object(w, r, o)
-	} else if s.files == nil {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-	} else {
-		s.files.ServeHTTP(w, r)
 	}
+}
+
+// Match URLS of the form [fs]/remote
+var fsMatch = regexp.MustCompile(`^\[(.*?)\](.*)$`)
+
+func (s *server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
+	// Look to see if this has an fs in the path
+	match := fsMatch.FindStringSubmatch(path)
+	switch {
+	case match != nil && s.opt.Serve:
+		// Serve /[fs]/remote files
+		s.serveRemote(w, r, match[2], match[1])
+		return
+	case path == "*" && s.opt.Serve:
+		// Serve /* as the remote listing
+		s.serveRoot(w, r)
+		return
+	case s.files != nil:
+		// Serve the files
+		s.files.ServeHTTP(w, r)
+		return
+	case path == "" && s.opt.Serve:
+		// Serve the root as a remote listing
+		s.serveRoot(w, r)
+		return
+	}
+	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }
