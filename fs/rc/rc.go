@@ -19,7 +19,8 @@ import (
 type Options struct {
 	HTTPOptions httplib.Options
 	Enabled     bool   // set to enable the server
-	Files       string // set to enable serving files
+	Serve       bool   // set to serve files from remotes
+	Files       string // set to enable serving files locally
 }
 
 // DefaultOpt is the default values used for Options
