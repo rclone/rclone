@@ -145,6 +145,7 @@ var timeFormats = []string{
 	time.RFC1123Z,  // Fri, 05 Jan 2018 14:14:38 +0000 (as used by mydrive.ch)
 	time.UnixDate,  // Wed May 17 15:31:58 UTC 2017 (as used in an internal server)
 	noZerosRFC1123, // Fri, 7 Sep 2018 08:49:58 GMT (as used by server in #2574)
+        time.RFC3339,   // Wed, 31 Oct 2018 13:57:11 CET (as used by komfortcloud.de)
 }
 
 // UnmarshalXML turns XML into a Time
