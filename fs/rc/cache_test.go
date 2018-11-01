@@ -2,6 +2,7 @@ package rc
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest/mockfs"
@@ -22,7 +23,10 @@ func mockNewFs(t *testing.T) func() {
 	}
 	return func() {
 		fsNewFs = oldFsNewFs
-		fsCache = map[string]fs.Fs{}
+		fsCacheMu.Lock()
+		fsCache = map[string]*cacheEntry{}
+		expireRunning = false
+		fsCacheMu.Unlock()
 	}
 }
 
@@ -40,6 +44,33 @@ func TestGetCachedFs(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, f, f2)
+}
+
+func TestCacheExpire(t *testing.T) {
+	defer mockNewFs(t)()
+
+	cacheExpireInterval = time.Millisecond
+	assert.Equal(t, false, expireRunning)
+
+	_, err := GetCachedFs("/")
+	require.NoError(t, err)
+
+	fsCacheMu.Lock()
+	entry := fsCache["/"]
+
+	assert.Equal(t, 1, len(fsCache))
+	fsCacheMu.Unlock()
+	cacheExpire()
+	fsCacheMu.Lock()
+	assert.Equal(t, 1, len(fsCache))
+	entry.lastUsed = time.Now().Add(-cacheExpireDuration - 60*time.Second)
+	assert.Equal(t, true, expireRunning)
+	fsCacheMu.Unlock()
+	time.Sleep(10 * time.Millisecond)
+	fsCacheMu.Lock()
+	assert.Equal(t, false, expireRunning)
+	assert.Equal(t, 0, len(fsCache))
+	fsCacheMu.Unlock()
 }
 
 func TestGetFsNamed(t *testing.T) {
