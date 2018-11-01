@@ -1,6 +1,7 @@
 package rc
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -19,9 +20,13 @@ func TestJobsKickExpire(t *testing.T) {
 	jobs.expireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
 	jobs.kickExpire()
+	jobs.mu.Lock()
 	assert.Equal(t, true, jobs.expireRunning)
+	jobs.mu.Unlock()
 	time.Sleep(10 * time.Millisecond)
+	jobs.mu.Lock()
 	assert.Equal(t, false, jobs.expireRunning)
+	jobs.mu.Unlock()
 }
 
 func TestJobsExpire(t *testing.T) {
@@ -37,11 +42,15 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.Expire()
 	assert.Equal(t, 1, len(jobs.jobs))
+	jobs.mu.Lock()
 	job.EndTime = time.Now().Add(-expireDuration - 60*time.Second)
 	assert.Equal(t, true, jobs.expireRunning)
+	jobs.mu.Unlock()
 	time.Sleep(10 * time.Millisecond)
+	jobs.mu.Lock()
 	assert.Equal(t, false, jobs.expireRunning)
 	assert.Equal(t, 0, len(jobs.jobs))
+	jobs.mu.Unlock()
 }
 
 var noopFn = func(in Params) (Params, error) {
@@ -127,13 +136,27 @@ func TestJobRunPanic(t *testing.T) {
 	jobs := newJobs()
 	job := jobs.NewJob(boom, Params{})
 	<-wait
+	runtime.Gosched() // yield to make sure job is updated
 
+	// Wait a short time for the panic to propagate
+	for i := uint(0); i < 10; i++ {
+		job.mu.Lock()
+		e := job.Error
+		job.mu.Unlock()
+		if e != "" {
+			break
+		}
+		time.Sleep(time.Millisecond << i)
+	}
+
+	job.mu.Lock()
 	assert.Equal(t, false, job.EndTime.IsZero())
 	assert.Equal(t, Params{}, job.Output)
 	assert.NotEqual(t, 0.0, job.Duration)
 	assert.Equal(t, "panic received: boom", job.Error)
 	assert.Equal(t, false, job.Success)
 	assert.Equal(t, true, job.Finished)
+	job.mu.Unlock()
 }
 
 func TestJobsNewJob(t *testing.T) {
