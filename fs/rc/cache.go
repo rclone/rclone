@@ -4,29 +4,66 @@ package rc
 
 import (
 	"sync"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 )
 
 var (
-	fsCacheMu sync.Mutex
-	fsCache   = map[string]fs.Fs{}
-	fsNewFs   = fs.NewFs // for tests
+	fsCacheMu           sync.Mutex
+	fsCache             = map[string]*cacheEntry{}
+	fsNewFs             = fs.NewFs // for tests
+	expireRunning       = false
+	cacheExpireDuration = 300 * time.Second // expire the cache entry when it is older than this
+	cacheExpireInterval = 60 * time.Second  // interval to run the cache expire
 )
+
+type cacheEntry struct {
+	f        fs.Fs
+	fsString string
+	lastUsed time.Time
+}
 
 // GetCachedFs gets a fs.Fs named fsString either from the cache or creates it afresh
 func GetCachedFs(fsString string) (f fs.Fs, err error) {
 	fsCacheMu.Lock()
 	defer fsCacheMu.Unlock()
-
-	f = fsCache[fsString]
-	if f == nil {
+	entry, ok := fsCache[fsString]
+	if !ok {
 		f, err = fsNewFs(fsString)
-		if err == nil {
-			fsCache[fsString] = f
+		if err != nil {
+			return nil, err
+		}
+		entry = &cacheEntry{
+			f:        f,
+			fsString: fsString,
+		}
+		fsCache[fsString] = entry
+	}
+	entry.lastUsed = time.Now()
+	if !expireRunning {
+		time.AfterFunc(cacheExpireInterval, cacheExpire)
+		expireRunning = true
+	}
+	return entry.f, err
+}
+
+// cacheExpire expires any entries that haven't been used recently
+func cacheExpire() {
+	fsCacheMu.Lock()
+	defer fsCacheMu.Unlock()
+	now := time.Now()
+	for fsString, entry := range fsCache {
+		if now.Sub(entry.lastUsed) > cacheExpireDuration {
+			delete(fsCache, fsString)
 		}
 	}
-	return f, err
+	if len(fsCache) != 0 {
+		time.AfterFunc(cacheExpireInterval, cacheExpire)
+		expireRunning = true
+	} else {
+		expireRunning = false
+	}
 }
 
 // GetFsNamed gets a fs.Fs named fsName either from the cache or creates it afresh
