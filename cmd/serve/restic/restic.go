@@ -138,8 +138,11 @@ these **must** end with /.  Eg
 				httpSrv.ServeConn(conn, opts)
 				return nil
 			}
-
-			s.serve()
+			err := s.Serve()
+			if err != nil {
+				return err
+			}
+			s.Wait()
 			return nil
 		})
 	},
@@ -151,28 +154,30 @@ const (
 
 // server contains everything to run the server
 type server struct {
-	f   fs.Fs
-	srv *httplib.Server
+	*httplib.Server
+	f fs.Fs
 }
 
 func newServer(f fs.Fs, opt *httplib.Options) *server {
 	mux := http.NewServeMux()
 	s := &server{
-		f:   f,
-		srv: httplib.NewServer(mux, opt),
+		Server: httplib.NewServer(mux, opt),
+		f:      f,
 	}
 	mux.HandleFunc("/", s.handler)
 	return s
 }
 
-// serve runs the http server - doesn't return
-func (s *server) serve() {
-	err := s.srv.Serve()
+// Serve runs the http server in the background.
+//
+// Use s.Close() and s.Wait() to shutdown server
+func (s *server) Serve() error {
+	err := s.Server.Serve()
 	if err != nil {
-		fs.Errorf(s.f, "Opening listener: %v", err)
+		return err
 	}
-	fs.Logf(s.f, "Serving restic REST API on %s", s.srv.URL())
-	s.srv.Wait()
+	fs.Logf(s.f, "Serving restic REST API on %s", s.URL())
+	return nil
 }
 
 var matchData = regexp.MustCompile("(?:^|/)data/([^/]{2,})$")

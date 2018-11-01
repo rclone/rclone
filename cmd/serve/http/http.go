@@ -46,7 +46,11 @@ control the stats printing.
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
 			s := newServer(f, &httpflags.Opt)
-			s.serve()
+			err := s.Serve()
+			if err != nil {
+				return err
+			}
+			s.Wait()
 			return nil
 		})
 	},
@@ -54,30 +58,32 @@ control the stats printing.
 
 // server contains everything to run the server
 type server struct {
+	*httplib.Server
 	f   fs.Fs
 	vfs *vfs.VFS
-	srv *httplib.Server
 }
 
 func newServer(f fs.Fs, opt *httplib.Options) *server {
 	mux := http.NewServeMux()
 	s := &server{
-		f:   f,
-		vfs: vfs.New(f, &vfsflags.Opt),
-		srv: httplib.NewServer(mux, opt),
+		Server: httplib.NewServer(mux, opt),
+		f:      f,
+		vfs:    vfs.New(f, &vfsflags.Opt),
 	}
 	mux.HandleFunc("/", s.handler)
 	return s
 }
 
-// serve runs the http server - doesn't return
-func (s *server) serve() {
-	err := s.srv.Serve()
+// Serve runs the http server in the background.
+//
+// Use s.Close() and s.Wait() to shutdown server
+func (s *server) Serve() error {
+	err := s.Server.Serve()
 	if err != nil {
-		fs.Errorf(s.f, "Opening listener: %v", err)
+		return err
 	}
-	fs.Logf(s.f, "Serving on %s", s.srv.URL())
-	s.srv.Wait()
+	fs.Logf(s.f, "Serving on %s", s.URL())
+	return nil
 }
 
 // handler reads incoming requests and dispatches them
