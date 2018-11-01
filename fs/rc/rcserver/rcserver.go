@@ -21,25 +21,28 @@ import (
 )
 
 // Start the remote control server if configured
-func Start(opt *rc.Options) {
+//
+// If the server wasn't configured the *Server returned may be nil
+func Start(opt *rc.Options) (*Server, error) {
 	if opt.Enabled {
 		// Serve on the DefaultServeMux so can have global registrations appear
 		s := newServer(opt, http.DefaultServeMux)
-		go s.serve()
+		return s, s.Serve()
 	}
+	return nil, nil
 }
 
-// server contains everything to run the server
-type server struct {
-	srv   *httplib.Server
+// Server contains everything to run the rc server
+type Server struct {
+	*httplib.Server
 	files http.Handler
 	opt   *rc.Options
 }
 
-func newServer(opt *rc.Options, mux *http.ServeMux) *server {
-	s := &server{
-		srv: httplib.NewServer(mux, &opt.HTTPOptions),
-		opt: opt,
+func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
+	s := &Server{
+		Server: httplib.NewServer(mux, &opt.HTTPOptions),
+		opt:    opt,
 	}
 	mux.HandleFunc("/", s.handler)
 
@@ -55,18 +58,20 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *server {
 	return s
 }
 
-// serve runs the http server - doesn't return
-func (s *server) serve() {
-	err := s.srv.Serve()
+// Serve runs the http server in the background.
+//
+// Use s.Close() and s.Wait() to shutdown server
+func (s *Server) Serve() error {
+	err := s.Server.Serve()
 	if err != nil {
-		fs.Errorf(nil, "Opening listener: %v", err)
+		return err
 	}
-	fs.Logf(nil, "Serving remote control on %s", s.srv.URL())
+	fs.Logf(nil, "Serving remote control on %s", s.URL())
 	// Open the files in the browser if set
 	if s.files != nil {
-		_ = open.Start(s.srv.URL())
+		_ = open.Start(s.URL())
 	}
-	s.srv.Wait()
+	return nil
 }
 
 // writeError writes a formatted error to the output
@@ -94,7 +99,7 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 }
 
 // handler reads incoming requests and dispatches them
-func (s *server) handler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimLeft(r.URL.Path, "/")
 
 	w.Header().Add("Access-Control-Allow-Origin", "*")
@@ -116,7 +121,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) handlePost(w http.ResponseWriter, r *http.Request, path string) {
+func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string) {
 	contentType := r.Header.Get("Content-Type")
 
 	values := r.URL.Query()
@@ -184,11 +189,11 @@ func (s *server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 }
 
-func (s *server) handleOptions(w http.ResponseWriter, r *http.Request, path string) {
+func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request, path string) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (s *server) serveRoot(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 	remotes := config.FileSections()
 	sort.Strings(remotes)
 	directory := serve.NewDirectory("")
@@ -201,7 +206,7 @@ func (s *server) serveRoot(w http.ResponseWriter, r *http.Request) {
 	directory.Serve(w, r)
 }
 
-func (s *server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
+func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
 	f, err := rc.GetCachedFs(fsName)
 	if err != nil {
 		writeError(path, nil, w, errors.Wrap(err, "failed to make Fs"), http.StatusInternalServerError)
@@ -234,7 +239,7 @@ func (s *server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 // Match URLS of the form [fs]/remote
 var fsMatch = regexp.MustCompile(`^\[(.*?)\](.*)$`)
 
-func (s *server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
+func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
 	// Look to see if this has an fs in the path
 	match := fsMatch.FindStringSubmatch(path)
 	switch {
