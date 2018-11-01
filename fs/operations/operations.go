@@ -318,6 +318,11 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 		return newDst, err
 	}
 
+	if fs.Config.MdOnly {
+		fs.Infof(src, actionTaken)
+		return newDst, err
+	}
+
 	// Verify sizes are the same after transfer
 	if sizeDiffers(src, dst) {
 		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())

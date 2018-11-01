@@ -84,6 +84,7 @@ type ConfigInfo struct {
 	MaxBacklog            int
 	StatsOneLine          bool
 	Progress              bool
+	MdOnly                bool
 }
 
 // NewConfig creates a new config with everything set to the default
