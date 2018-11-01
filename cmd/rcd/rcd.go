@@ -37,8 +37,13 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		if len(args) > 0 {
 			rcflags.Opt.Files = args[0]
 		}
-		rcserver.Start(&rcflags.Opt)
-		// Run the rc forever
-		select {}
+		s, err := rcserver.Start(&rcflags.Opt)
+		if err != nil {
+			log.Fatalf("Failed to start remote control: %v", err)
+		}
+		if s == nil {
+			log.Fatal("rc server not configured")
+		}
+		s.Wait()
 	},
 }

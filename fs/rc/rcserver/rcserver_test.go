@@ -36,8 +36,11 @@ func TestRcServer(t *testing.T) {
 	opt.Files = testFs
 	mux := http.NewServeMux()
 	rcServer := newServer(&opt, mux)
-	go rcServer.serve()
-	defer rcServer.srv.Close()
+	assert.NoError(t, rcServer.Serve())
+	defer func() {
+		rcServer.Close()
+		rcServer.Wait()
+	}()
 
 	// Do the simplest possible test to check the server is alive
 	// Do it a few times to wait for the server to start
