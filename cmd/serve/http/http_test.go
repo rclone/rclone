@@ -35,7 +35,7 @@ func startServer(t *testing.T, f fs.Fs) {
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
 	httpServer = newServer(f, &opt)
-	go httpServer.serve()
+	assert.NoError(t, httpServer.Serve())
 
 	// try to connect to the test server
 	pause := time.Millisecond
@@ -233,5 +233,6 @@ func TestAddEntry(t *testing.T) {
 }
 
 func TestFinalise(t *testing.T) {
-	httpServer.srv.Close()
+	httpServer.Close()
+	httpServer.Wait()
 }
