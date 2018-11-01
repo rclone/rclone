@@ -13,6 +13,7 @@ import (
 
 	auth "github.com/abbot/go-http-auth"
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 // Globals
@@ -188,7 +189,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 func (s *Server) Serve() error {
 	ln, err := net.Listen("tcp", s.httpServer.Addr)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "start server failed")
 	}
 	s.listener = ln
 	s.waitChan = make(chan struct{})
