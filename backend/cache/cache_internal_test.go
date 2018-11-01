@@ -5,14 +5,12 @@ package cache_test
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	goflag "flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -31,12 +29,12 @@ import (
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/object"
-	"github.com/ncw/rclone/fs/rc/rcflags"
-	"github.com/ncw/rclone/fs/rc/rcserver"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -692,8 +690,8 @@ func TestInternalChangeSeenAfterDirCacheFlush(t *testing.T) {
 }
 
 func TestInternalChangeSeenAfterRc(t *testing.T) {
-	rcflags.Opt.Enabled = true
-	rcserver.Start(&rcflags.Opt)
+	cacheExpire := rc.Calls.Get("cache/expire")
+	assert.NotNil(t, cacheExpire)
 
 	id := fmt.Sprintf("ticsarc%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
@@ -726,13 +724,8 @@ func TestInternalChangeSeenAfterRc(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, o.ModTime().String(), co.ModTime().String())
 
-	m := make(map[string]string)
-	res, err := http.Post(fmt.Sprintf("http://localhost:5572/cache/expire?remote=%s", "data.bin"), "application/json; charset=utf-8", strings.NewReader(""))
-	require.NoError(t, err)
-	defer func() {
-		_ = res.Body.Close()
-	}()
-	_ = json.NewDecoder(res.Body).Decode(&m)
+	// Call the rc function
+	m, err := cacheExpire.Fn(rc.Params{"remote": "data.bin"})
 	require.Contains(t, m, "status")
 	require.Contains(t, m, "message")
 	require.Equal(t, "ok", m["status"])
@@ -752,13 +745,8 @@ func TestInternalChangeSeenAfterRc(t *testing.T) {
 	li1, err = runInstance.list(t, rootFs, "")
 	require.Len(t, li1, 1)
 
-	m = make(map[string]string)
-	res2, err := http.Post("http://localhost:5572/cache/expire?remote=/", "application/json; charset=utf-8", strings.NewReader(""))
-	require.NoError(t, err)
-	defer func() {
-		_ = res2.Body.Close()
-	}()
-	_ = json.NewDecoder(res2.Body).Decode(&m)
+	// Call the rc function
+	m, err = cacheExpire.Fn(rc.Params{"remote": "/"})
 	require.Contains(t, m, "status")
 	require.Contains(t, m, "message")
 	require.Equal(t, "ok", m["status"])
