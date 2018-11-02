@@ -48,6 +48,21 @@ func GetCachedFs(fsString string) (f fs.Fs, err error) {
 	return entry.f, err
 }
 
+// PutCachedFs puts an fs.Fs named fsString into the cache
+func PutCachedFs(fsString string, f fs.Fs) {
+	fsCacheMu.Lock()
+	defer fsCacheMu.Unlock()
+	fsCache[fsString] = &cacheEntry{
+		f:        f,
+		fsString: fsString,
+		lastUsed: time.Now(),
+	}
+	if !expireRunning {
+		time.AfterFunc(cacheExpireInterval, cacheExpire)
+		expireRunning = true
+	}
+}
+
 // cacheExpire expires any entries that haven't been used recently
 func cacheExpire() {
 	fsCacheMu.Lock()
