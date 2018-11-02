@@ -44,6 +44,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -51,6 +52,8 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/oauth2"
 )
+
+const enc = encodings.Dropbox
 
 // Constants
 const (
@@ -372,7 +375,9 @@ func (f *Fs) setRoot(root string) {
 // getMetadata gets the metadata for a file or directory
 func (f *Fs) getMetadata(objPath string) (entry files.IsMetadata, notFound bool, err error) {
 	err = f.pacer.Call(func() (bool, error) {
-		entry, err = f.srv.GetMetadata(&files.GetMetadataArg{Path: objPath})
+		entry, err = f.srv.GetMetadata(&files.GetMetadataArg{
+			Path: enc.FromStandardPath(objPath),
+		})
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -466,7 +471,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for {
 		if !started {
 			arg := files.ListFolderArg{
-				Path:      root,
+				Path:      enc.FromStandardPath(root),
 				Recursive: false,
 			}
 			if root == "/" {
@@ -517,7 +522,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 			// Only the last element is reliably cased in PathDisplay
 			entryPath := metadata.PathDisplay
-			leaf := path.Base(entryPath)
+			leaf := enc.ToStandardName(path.Base(entryPath))
 			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
 				d := fs.NewDir(remote, time.Now())
@@ -575,7 +580,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 	// create it
 	arg2 := files.CreateFolderArg{
-		Path: root,
+		Path: enc.FromStandardPath(root),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.CreateFolderV2(&arg2)
@@ -601,6 +606,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return errors.Wrap(err, "Rmdir")
 	}
 
+	root = enc.FromStandardPath(root)
 	// check directory empty
 	arg := files.ListFolderArg{
 		Path:      root,
@@ -657,9 +663,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Copy
-	arg := files.RelocationArg{}
-	arg.FromPath = srcObj.remotePath()
-	arg.ToPath = dstObj.remotePath()
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: enc.FromStandardPath(srcObj.remotePath()),
+			ToPath:   enc.FromStandardPath(dstObj.remotePath()),
+		},
+	}
 	var err error
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
@@ -691,7 +700,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) Purge(ctx context.Context) (err error) {
 	// Let dropbox delete the filesystem tree
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: f.slashRoot})
+		_, err = f.srv.DeleteV2(&files.DeleteArg{
+			Path: enc.FromStandardPath(f.slashRoot),
+		})
 		return shouldRetry(err)
 	})
 	return err
@@ -720,9 +731,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Do the move
-	arg := files.RelocationArg{}
-	arg.FromPath = srcObj.remotePath()
-	arg.ToPath = dstObj.remotePath()
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: enc.FromStandardPath(srcObj.remotePath()),
+			ToPath:   enc.FromStandardPath(dstObj.remotePath()),
+		},
+	}
 	var err error
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
@@ -747,7 +761,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
-	absPath := "/" + path.Join(f.Root(), remote)
+	absPath := enc.FromStandardPath(path.Join(f.slashRoot, remote))
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
@@ -758,7 +772,8 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		return shouldRetry(err)
 	})
 
-	if err != nil && strings.Contains(err.Error(), sharing.CreateSharedLinkWithSettingsErrorSharedLinkAlreadyExists) {
+	if err != nil && strings.Contains(err.Error(),
+		sharing.CreateSharedLinkWithSettingsErrorSharedLinkAlreadyExists) {
 		fs.Debugf(absPath, "has a public link already, attempting to retrieve it")
 		listArg := sharing.ListSharedLinksArg{
 			Path:       absPath,
@@ -820,9 +835,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// ...apparently not necessary
 
 	// Do the move
-	arg := files.RelocationArg{}
-	arg.FromPath = srcPath
-	arg.ToPath = dstPath
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: enc.FromStandardPath(srcPath),
+			ToPath:   enc.FromStandardPath(dstPath),
+		},
+	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.MoveV2(&arg)
 		return shouldRetry(err)
@@ -977,7 +995,10 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	fs.FixRangeOption(options, o.bytes)
 	headers := fs.OpenOptionHeaders(options)
-	arg := files.DownloadArg{Path: o.remotePath(), ExtraHeaders: headers}
+	arg := files.DownloadArg{
+		Path:         enc.FromStandardPath(o.remotePath()),
+		ExtraHeaders: headers,
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, in, err = o.fs.srv.Download(&arg)
 		return shouldRetry(err)
@@ -1107,7 +1128,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		fs.Logf(o, "File name disallowed - not uploading")
 		return nil
 	}
-	commitInfo := files.NewCommitInfo(o.remotePath())
+	commitInfo := files.NewCommitInfo(enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
 	commitInfo.ClientModified = src.ModTime(ctx).UTC().Round(time.Second)
@@ -1132,7 +1153,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{Path: o.remotePath()})
+		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{
+			Path: enc.FromStandardPath(o.remotePath()),
+		})
 		return shouldRetry(err)
 	})
 	return err
