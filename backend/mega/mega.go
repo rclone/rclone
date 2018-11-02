@@ -29,12 +29,15 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	mega "github.com/t3rm1n4l/go-mega"
 )
+
+const enc = encodings.Mega
 
 const (
 	minSleep      = 10 * time.Millisecond
@@ -245,9 +248,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 }
 
 // splitNodePath splits nodePath into / separated parts, returning nil if it
-// should refer to the root
+// should refer to the root.
+// It also encodes the parts into backend specific encoding
 func splitNodePath(nodePath string) (parts []string) {
 	nodePath = path.Clean(nodePath)
+	nodePath = enc.FromStandardPath(nodePath)
 	parts = strings.Split(nodePath, "/")
 	if len(parts) == 1 && (parts[0] == "." || parts[0] == "/") {
 		return nil
@@ -418,7 +423,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	errors := 0
 	// similar to f.deleteNode(trash) but with HardDelete as true
 	for _, item := range items {
-		fs.Debugf(f, "Deleting trash %q", item.GetName())
+		fs.Debugf(f, "Deleting trash %q", enc.ToStandardName(item.GetName()))
 		deleteErr := f.pacer.Call(func() (bool, error) {
 			err := f.srv.Delete(item, true)
 			return shouldRetry(err)
@@ -500,7 +505,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	var iErr error
 	_, err = f.list(ctx, dirNode, func(info *mega.Node) bool {
-		remote := path.Join(dir, info.GetName())
+		remote := path.Join(dir, enc.ToStandardName(info.GetName()))
 		switch info.GetType() {
 		case mega.FOLDER, mega.ROOT, mega.INBOX, mega.TRASH:
 			d := fs.NewDir(remote, info.GetTimeStamp()).SetID(info.GetHash())
@@ -722,7 +727,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 	if srcLeaf != dstLeaf {
 		//log.Printf("rename %q to %q", srcLeaf, dstLeaf)
 		err = f.pacer.Call(func() (bool, error) {
-			err = f.srv.Rename(info, dstLeaf)
+			err = f.srv.Rename(info, enc.FromStandardName(dstLeaf))
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -871,13 +876,13 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		}
 		// move them into place
 		for _, info := range infos {
-			fs.Infof(srcDir, "merging %q", info.GetName())
+			fs.Infof(srcDir, "merging %q", enc.ToStandardName(info.GetName()))
 			err = f.pacer.Call(func() (bool, error) {
 				err = f.srv.Move(info, dstDirNode)
 				return shouldRetry(err)
 			})
 			if err != nil {
-				return errors.Wrapf(err, "MergeDirs move failed on %q in %v", info.GetName(), srcDir)
+				return errors.Wrapf(err, "MergeDirs move failed on %q in %v", enc.ToStandardName(info.GetName()), srcDir)
 			}
 		}
 		// rmdir (into trash) the now empty source directory
@@ -1120,7 +1125,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	var u *mega.Upload
 	err = o.fs.pacer.Call(func() (bool, error) {
-		u, err = o.fs.srv.NewUpload(dirNode, leaf, size)
+		u, err = o.fs.srv.NewUpload(dirNode, enc.FromStandardName(leaf), size)
 		return shouldRetry(err)
 	})
 	if err != nil {
