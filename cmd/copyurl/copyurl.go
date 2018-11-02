@@ -1,9 +1,6 @@
 package copyurl
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -25,14 +22,7 @@ without saving it in tmp storage.
 		fsdst, dstFileName := cmd.NewFsDstFile(args[1:])
 
 		cmd.Run(true, true, command, func() error {
-			resp, err := http.Get(args[0])
-			if err != nil {
-
-				return err
-			}
-
-			_, err = operations.RcatSize(fsdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
-
+			_, err := operations.CopyURL(fsdst, dstFileName, args[0])
 			return err
 		})
 	},

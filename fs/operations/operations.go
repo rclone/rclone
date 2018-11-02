@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"path"
 	"sort"
 	"strconv"
@@ -1357,6 +1358,16 @@ func RcatSize(fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modT
 	}
 
 	return obj, nil
+}
+
+// CopyURL copies the data from the url to (fdst, dstFileName)
+func CopyURL(fdst fs.Fs, dstFileName string, url string) (dst fs.Object, err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer fs.CheckClose(resp.Body, &err)
+	return RcatSize(fdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
 }
 
 // moveOrCopyFile moves or copies a single file possibly to a new name
