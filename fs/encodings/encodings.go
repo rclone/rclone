@@ -110,8 +110,11 @@ const GoogleCloudStorage = encoder.MultiEncoder(
 // JottaCloud is the encoding used by the jottacloud backend
 //
 // Encode invalid UTF-8 bytes as xml doesn't handle them properly.
+//
+// Also: '*', '/', ':', '<', '>', '?', '\"', '\x00', '|'
 const JottaCloud = encoder.MultiEncoder(
 	uint(Display) |
+		encoder.EncodeWin | // :?"*<>|
 		encoder.EncodeInvalidUtf8)
 
 // Koofr is the encoding used by the koofr backend
