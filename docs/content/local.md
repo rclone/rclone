@@ -24,8 +24,8 @@ on OS X.
 
 ### Filenames ###
 
-Filenames are expected to be encoded in UTF-8 on disk.  This is the
-normal case for Windows and OS X.
+Filenames should be encoded in UTF-8 on disk. This is the normal case
+for Windows and OS X.
 
 There is a bit more uncertainty in the Linux world, but new
 distributions will have UTF-8 encoded files names. If you are using an
@@ -34,12 +34,81 @@ can use the `convmv` tool to convert the filesystem to UTF-8. This
 tool is available in most distributions' package managers.
 
 If an invalid (non-UTF8) filename is read, the invalid characters will
-be replaced with the unicode replacement character, '�'.  `rclone`
-will emit a debug message in this case (use `-v` to see), eg
+be replaced with a quoted representation of the invalid bytes. The name
+`gro\xdf` will be transferred as `gro‛DF`. `rclone` will emit a debug
+message in this case (use `-v` to see), eg
 
 ```
 Local file system at .: Replacing invalid UTF-8 characters in "gro\xdf"
 ```
+
+#### Restricted characters
+
+On non Windows platforms the following characters are replaced when
+handling file names.
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| /         | 0x2F  | ／           |
+
+When running on Windows the following characters are replaced. This
+list is based on the [Windows file naming conventions](https://docs.microsoft.com/de-de/windows/desktop/FileIO/naming-a-file#naming-conventions).
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| SOH       | 0x01  | ␁           |
+| STX       | 0x02  | ␂           |
+| ETX       | 0x03  | ␃           |
+| EOT       | 0x04  | ␄           |
+| ENQ       | 0x05  | ␅           |
+| ACK       | 0x06  | ␆           |
+| BEL       | 0x07  | ␇           |
+| BS        | 0x08  | ␈           |
+| HT        | 0x09  | ␉           |
+| LF        | 0x0A  | ␊           |
+| VT        | 0x0B  | ␋           |
+| FF        | 0x0C  | ␌           |
+| CR        | 0x0D  | ␍           |
+| SO        | 0x0E  | ␎           |
+| SI        | 0x0F  | ␏           |
+| DLE       | 0x10  | ␐           |
+| DC1       | 0x11  | ␑           |
+| DC2       | 0x12  | ␒           |
+| DC3       | 0x13  | ␓           |
+| DC4       | 0x14  | ␔           |
+| NAK       | 0x15  | ␕           |
+| SYN       | 0x16  | ␖           |
+| ETB       | 0x17  | ␗           |
+| CAN       | 0x18  | ␘           |
+| EM        | 0x19  | ␙           |
+| SUB       | 0x1A  | ␚           |
+| ESC       | 0x1B  | ␛           |
+| FS        | 0x1C  | ␜           |
+| GS        | 0x1D  | ␝           |
+| RS        | 0x1E  | ␞           |
+| US        | 0x1F  | ␟           |
+| /         | 0x2F  | ／           |
+| "         | 0x22  | ＂           |
+| *         | 0x2A  | ＊           |
+| :         | 0x3A  | ：           |
+| <         | 0x3C  | ＜           |
+| >         | 0x3E  | ＞           |
+| ?         | 0x3F  | ？           |
+| \         | 0x5C  | ＼           |
+| \|        | 0x7C  | ｜           |
+
+File names on Windows can also not end with the following characters.
+These only get replaced if they are last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+| .         | 0x2E  | ．           |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be converted to UTF-16.
 
 ### Long paths on Windows ###
 
