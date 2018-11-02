@@ -14,8 +14,12 @@ var commandDefintion = &cobra.Command{
 	Use:   "delete remote:path",
 	Short: `Remove the contents of path.`,
 	Long: `
-Remove the contents of path.  Unlike ` + "`" + `purge` + "`" + ` it obeys include/exclude
+Remove the files in path.  Unlike ` + "`" + `purge` + "`" + ` it obeys include/exclude
 filters so can be used to selectively delete files.
+
+` + "`" + `rclone delete` + "`" + ` only deletes objects but leaves the directory structure
+alone. If you want to delete a directory and all of its contents use
+` + "`" + `rclone purge` + "`" + `
 
 Eg delete all files bigger than 100MBytes
 
