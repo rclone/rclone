@@ -27,6 +27,7 @@ const (
 	OneDrive           = Base
 	OpenDrive          = Base
 	Pcloud             = Base
+	S3                 = Base
 )
 
 // ByName returns the encoder for a give backend name or nil

@@ -240,6 +240,23 @@ const FTP = encoder.MultiEncoder(
 	uint(Display) |
 		encoder.EncodeRightSpace)
 
+// S3 is the encoding used by the s3 backend
+//
+// Any UTF-8 character is valid in a key, however it can't handle
+// invalid UTF-8 and / have a special meaning.
+//
+// The SDK can't seem to handle uploading files called '.'
+//
+// FIXME would be nice to add
+// - initial / encoding
+// - doubled / encoding
+// - trailing / encoding
+// so that AWS keys are always valid file names
+const S3 = encoder.MultiEncoder(
+	encoder.EncodeInvalidUtf8 |
+		encoder.EncodeSlash |
+		encoder.EncodeDot)
+
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
 	switch strings.ToLower(name) {
