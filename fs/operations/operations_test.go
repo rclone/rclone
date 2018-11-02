@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -613,6 +615,28 @@ func TestRcatSize(t *testing.T) {
 
 	// Check files exist
 	fstest.CheckItems(t, r.Fremote, file1, file2)
+}
+
+func TestCopyURL(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	contents := "file1 contents\n"
+	file1 := r.WriteFile("file1", contents, t1)
+	r.Mkdir(r.Fremote)
+	fstest.CheckItems(t, r.Fremote)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(contents))
+		assert.NoError(t, err)
+	}))
+	defer ts.Close()
+
+	o, err := operations.CopyURL(r.Fremote, "file1", ts.URL)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), o.Size())
+
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
 }
 
 func TestMoveFile(t *testing.T) {
