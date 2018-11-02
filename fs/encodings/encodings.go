@@ -218,7 +218,8 @@ const OpenDrive = encoder.MultiEncoder(
 //
 // TODO: Investigate Unicode simplification (＼ gets converted to \ server-side)
 const Pcloud = encoder.MultiEncoder(
-	uint(Base) |
+	uint(Display) |
+		encoder.EncodeBackSlash |
 		encoder.EncodeInvalidUtf8)
 
 // ByName returns the encoder for a give backend name or nil

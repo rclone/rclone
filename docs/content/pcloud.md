@@ -94,6 +94,18 @@ be re-uploaded.
 pCloud supports MD5 and SHA1 type hashes, so you can use the
 `--checksum` flag.
 
+#### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| \         | 0x5C  | ＼          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
+
 ### Deleting files ###
 
 Deleted files will be moved to the trash.  Your subscription level
