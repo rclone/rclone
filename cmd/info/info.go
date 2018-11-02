@@ -21,11 +21,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type position int
+
+const (
+	positionMiddle position = 1 << iota
+	positionLeft
+	positionRight
+	positionNone position = 0
+	positionAll  position = positionRight<<1 - 1
+)
+
 var (
 	checkNormalization bool
 	checkControl       bool
 	checkLength        bool
 	checkStreaming     bool
+	positionList       = []position{positionMiddle, positionLeft, positionRight}
 )
 
 func init() {
@@ -59,7 +70,7 @@ a bit of go code for each one.
 type results struct {
 	f                    fs.Fs
 	mu                   sync.Mutex
-	charNeedsEscaping    map[rune]bool
+	stringNeedsEscaping  map[string]position
 	maxFileLength        int
 	canWriteUnnormalized bool
 	canReadUnnormalized  bool
@@ -69,8 +80,8 @@ type results struct {
 
 func newResults(f fs.Fs) *results {
 	return &results{
-		f:                 f,
-		charNeedsEscaping: make(map[rune]bool),
+		f:                   f,
+		stringNeedsEscaping: make(map[string]position),
 	}
 }
 
@@ -79,13 +90,13 @@ func (r *results) Print() {
 	fmt.Printf("// %s\n", r.f.Name())
 	if checkControl {
 		escape := []string{}
-		for c, needsEscape := range r.charNeedsEscaping {
-			if needsEscape {
+		for c, needsEscape := range r.stringNeedsEscaping {
+			if needsEscape != positionNone {
 				escape = append(escape, fmt.Sprintf("0x%02X", c))
 			}
 		}
 		sort.Strings(escape)
-		fmt.Printf("charNeedsEscaping = []byte{\n")
+		fmt.Printf("stringNeedsEscaping = []byte{\n")
 		fmt.Printf("\t%s\n", strings.Join(escape, ", "))
 		fmt.Printf("}\n")
 	}
@@ -130,20 +141,45 @@ func (r *results) checkUTF8Normalization() {
 	}
 }
 
-// check we can write file with the rune passed in
-func (r *results) checkChar(c rune) {
-	fs.Infof(r.f, "Writing file 0x%02X", c)
-	path := fmt.Sprintf("0x%02X-%c-", c, c)
-	_, err := r.writeFile(path)
-	escape := false
-	if err != nil {
-		fs.Infof(r.f, "Couldn't write file 0x%02X", c)
-		escape = true
-	} else {
-		fs.Infof(r.f, "OK writing file 0x%02X", c)
+func (r *results) checkStringPositions(s string) {
+	fs.Infof(r.f, "Writing position file 0x%0X", s)
+	positionError := positionNone
+
+	for _, pos := range positionList {
+		path := ""
+		switch pos {
+		case positionMiddle:
+			path = fmt.Sprintf("position-middle-%0X-%s-", s, s)
+		case positionLeft:
+			path = fmt.Sprintf("%s-position-left-%0X", s, s)
+		case positionRight:
+			path = fmt.Sprintf("position-right-%0X-%s", s, s)
+		default:
+			panic("invalid position: " + pos.String())
+		}
+		_, writeErr := r.writeFile(path)
+		if writeErr != nil {
+			fs.Infof(r.f, "Writing %s position file 0x%0X Error: %s", pos.String(), s, writeErr)
+		} else {
+			fs.Infof(r.f, "Writing %s position file 0x%0X OK", pos.String(), s)
+		}
+		obj, getErr := r.f.NewObject(path)
+		if getErr != nil {
+			fs.Infof(r.f, "Getting %s position file 0x%0X Error: %s", pos.String(), s, getErr)
+		} else {
+			if obj.Size() != 50 {
+				fs.Infof(r.f, "Getting %s position file 0x%0X Invalid Size: %d", pos.String(), s, obj.Size())
+			} else {
+				fs.Infof(r.f, "Getting %s position file 0x%0X OK", pos.String(), s)
+			}
+		}
+		if writeErr != nil || getErr != nil {
+			positionError += pos
+		}
 	}
+
 	r.mu.Lock()
-	r.charNeedsEscaping[c] = escape
+	r.stringNeedsEscaping[s] = positionError
 	r.mu.Unlock()
 }
 
@@ -157,19 +193,28 @@ func (r *results) checkControls() {
 	}
 	var wg sync.WaitGroup
 	for i := rune(0); i < 128; i++ {
+		s := string(i)
 		if i == 0 || i == '/' {
 			// We're not even going to check NULL or /
-			r.charNeedsEscaping[i] = true
+			r.stringNeedsEscaping[s] = positionAll
 			continue
 		}
 		wg.Add(1)
-		c := i
-		go func() {
+		go func(s string) {
 			defer wg.Done()
 			token := <-tokens
-			r.checkChar(c)
+			r.checkStringPositions(s)
 			tokens <- token
-		}()
+		}(s)
+	}
+	for _, s := range []string{"＼", "\xBF", "\xFE"} {
+		wg.Add(1)
+		go func(s string) {
+			defer wg.Done()
+			token := <-tokens
+			r.checkStringPositions(s)
+			tokens <- token
+		}(s)
 	}
 	wg.Wait()
 	fs.Infof(r.f, "Done trying to create control character file names")
@@ -267,4 +312,36 @@ func readInfo(f fs.Fs) error {
 	}
 	r.Print()
 	return nil
+}
+
+func (e position) String() string {
+	switch e {
+	case positionNone:
+		return "none"
+	case positionAll:
+		return "all"
+	}
+	var buf bytes.Buffer
+	if e&positionMiddle != 0 {
+		buf.WriteString("middle")
+		e &= ^positionMiddle
+	}
+	if e&positionLeft != 0 {
+		if buf.Len() != 0 {
+			buf.WriteRune(',')
+		}
+		buf.WriteString("left")
+		e &= ^positionLeft
+	}
+	if e&positionRight != 0 {
+		if buf.Len() != 0 {
+			buf.WriteRune(',')
+		}
+		buf.WriteString("right")
+		e &= ^positionRight
+	}
+	if e != positionNone {
+		panic("invalid position")
+	}
+	return buf.String()
 }
