@@ -25,19 +25,6 @@ func TestMain(m *testing.M) {
 	fstest.TestMain(m)
 }
 
-func TestMapper(t *testing.T) {
-	m := newMapper()
-	assert.Equal(t, m.m, map[string]string{})
-	assert.Equal(t, "potato", m.Save("potato", "potato"))
-	assert.Equal(t, m.m, map[string]string{})
-	assert.Equal(t, "-r'áö", m.Save("-r?'a´o¨", "-r'áö"))
-	assert.Equal(t, m.m, map[string]string{
-		"-r'áö": "-r?'a´o¨",
-	})
-	assert.Equal(t, "potato", m.Load("potato"))
-	assert.Equal(t, "-r?'a´o¨", m.Load("-r'áö"))
-}
-
 // Test copy with source file that's updating
 func TestUpdatingCheck(t *testing.T) {
 	r := fstest.NewRun(t)
