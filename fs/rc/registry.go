@@ -16,10 +16,11 @@ type Func func(in Params) (out Params, err error)
 // Call defines info about a remote control function and is used in
 // the Add function to create new entry points.
 type Call struct {
-	Path  string // path to activate this RC
-	Fn    Func   `json:"-"` // function to call
-	Title string // help for the function
-	Help  string // multi-line markdown formatted help
+	Path         string // path to activate this RC
+	Fn           Func   `json:"-"` // function to call
+	Title        string // help for the function
+	AuthRequired bool   // if set then this call requires authorisation to be set
+	Help         string // multi-line markdown formatted help
 }
 
 // Registry holds the list of all the registered remote control functions
