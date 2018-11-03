@@ -20,6 +20,16 @@ purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.`,
 	})
 	Add(Call{
+		Path:         "rc/noopauth",
+		AuthRequired: true,
+		Fn:           rcNoop,
+		Title:        "Echo the input to the output parameters requiring auth",
+		Help: `
+This echoes the input parameters to the output parameters for testing
+purposes.  It can be used to check that rclone is still alive and to
+check that parameter passing is working properly.`,
+	})
+	Add(Call{
 		Path:  "rc/error",
 		Fn:    rcError,
 		Title: "This returns an error",

@@ -81,6 +81,19 @@ implementing browser based GUIs for rclone functions.
 
 Default Off.
 
+### --rc-no-auth
+
+By default rclone will require authorisation to have been set up on
+the rc interface in order to use any methods which access any rclone
+remotes.  Eg `operations/list` is denied as it involved creating a
+remote as is `sync/copy`.
+
+If this is set then no authorisation will be required on the server to
+use these methods.  The alternative is to use `--rc-user` and
+`--rc-pass` and use these credentials in the request.
+
+Default Off.
+
 ## Accessing the remote control via the rclone rc command
 
 Rclone itself implements the remote control protocol in its `rclone

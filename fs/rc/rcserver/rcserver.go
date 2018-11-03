@@ -159,6 +159,12 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		return
 	}
 
+	// Check to see if it requires authorisation
+	if !s.opt.NoAuth && call.AuthRequired && !s.UsingAuth() {
+		writeError(path, in, w, errors.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
+		return
+	}
+
 	// Check to see if it is async or not
 	isAsync, err := in.GetBool("_async")
 	if rc.NotErrParamNotFound(err) {
