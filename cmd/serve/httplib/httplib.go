@@ -106,6 +106,7 @@ type Server struct {
 	httpServer      *http.Server
 	basicPassHashed string
 	useSSL          bool // if server is configured for SSL/TLS
+	usingAuth       bool // set if authentication is configured
 }
 
 // singleUserProvider provides the encrypted password for a single user
@@ -143,6 +144,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		}
 		authenticator := auth.NewBasicAuthenticator(s.Opt.Realm, secretProvider)
 		handler = auth.JustCheck(authenticator, handler.ServeHTTP)
+		s.usingAuth = true
 	}
 
 	s.useSSL = s.Opt.SslKey != ""
@@ -254,4 +256,9 @@ func (s *Server) URL() string {
 		addr = s.listener.Addr().String()
 	}
 	return fmt.Sprintf("%s://%s/", proto, addr)
+}
+
+// UsingAuth returns true if authentication is required
+func (s *Server) UsingAuth() bool {
+	return s.usingAuth
 }

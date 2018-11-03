@@ -537,6 +537,65 @@ func TestNoServe(t *testing.T) {
 	testServer(t, tests, &opt)
 }
 
+func TestAuthRequired(t *testing.T) {
+	tests := []testRun{{
+		Name:        "auth",
+		URL:         "rc/noopauth",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/javascript",
+		Status:      http.StatusForbidden,
+		Expected: `{
+	"error": "authentication must be set up on the rc server to use \"rc/noopauth\" or the --rc-no-auth flag must be in use",
+	"input": {},
+	"path": "rc/noopauth",
+	"status": 403
+}
+`,
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = false
+	testServer(t, tests, &opt)
+}
+
+func TestNoAuth(t *testing.T) {
+	tests := []testRun{{
+		Name:        "auth",
+		URL:         "rc/noopauth",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/javascript",
+		Status:      http.StatusOK,
+		Expected:    "{}\n",
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = true
+	testServer(t, tests, &opt)
+}
+
+func TestWithUserPass(t *testing.T) {
+	tests := []testRun{{
+		Name:        "auth",
+		URL:         "rc/noopauth",
+		Method:      "POST",
+		Body:        `{}`,
+		ContentType: "application/javascript",
+		Status:      http.StatusOK,
+		Expected:    "{}\n",
+	}}
+	opt := newTestOpt()
+	opt.Serve = false
+	opt.Files = ""
+	opt.NoAuth = false
+	opt.HTTPOptions.BasicUser = "user"
+	opt.HTTPOptions.BasicPass = "pass"
+	testServer(t, tests, &opt)
+}
+
 func TestRCAsync(t *testing.T) {
 	tests := []testRun{{
 		Name:        "ok",
