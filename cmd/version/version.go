@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/version"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -66,63 +65,8 @@ Or
 	},
 }
 
-var parseVersion = regexp.MustCompile(`^(?:rclone )?v(\d+)\.(\d+)(?:\.(\d+))?(?:-(\d+)(?:-(g[\wβ-]+))?)?$`)
-
-type version []int
-
-func newVersion(in string) (v version, err error) {
-	r := parseVersion.FindStringSubmatch(in)
-	if r == nil {
-		return v, errors.Errorf("failed to match version string %q", in)
-	}
-	atoi := func(s string) int {
-		i, err := strconv.Atoi(s)
-		if err != nil {
-			fs.Errorf(nil, "Failed to parse %q as int from %q: %v", s, in, err)
-		}
-		return i
-	}
-	v = version{
-		atoi(r[1]), // major
-		atoi(r[2]), // minor
-	}
-	if r[3] != "" {
-		v = append(v, atoi(r[3])) // patch
-	} else if r[4] != "" {
-		v = append(v, 0) // patch
-	}
-	if r[4] != "" {
-		v = append(v, atoi(r[4])) // dev
-	}
-	return v, nil
-}
-
-// String converts v to a string
-func (v version) String() string {
-	var out []string
-	for _, vv := range v {
-		out = append(out, fmt.Sprint(vv))
-	}
-	return strings.Join(out, ".")
-}
-
-// cmp compares two versions returning >0, <0 or 0
-func (v version) cmp(o version) (d int) {
-	n := len(v)
-	if n > len(o) {
-		n = len(o)
-	}
-	for i := 0; i < n; i++ {
-		d = v[i] - o[i]
-		if d != 0 {
-			return d
-		}
-	}
-	return len(v) - len(o)
-}
-
 // getVersion gets the version by checking the download repository passed in
-func getVersion(url string) (v version, vs string, date time.Time, err error) {
+func getVersion(url string) (v version.Version, vs string, date time.Time, err error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return v, vs, date, err
@@ -144,26 +88,17 @@ func getVersion(url string) (v version, vs string, date time.Time, err error) {
 	if err != nil {
 		return v, vs, date, err
 	}
-	v, err = newVersion(vs)
+	v, err = version.New(vs)
 	return v, vs, date, err
 }
 
 // check the current version against available versions
 func checkVersion() {
 	// Get Current version
-	currentVersion := fs.Version
-	currentIsGit := strings.HasSuffix(currentVersion, "-DEV")
-	if currentIsGit {
-		currentVersion = currentVersion[:len(currentVersion)-4]
-	}
-	vCurrent, err := newVersion(currentVersion)
+	vCurrent, err := version.New(fs.Version)
 	if err != nil {
 		fs.Errorf(nil, "Failed to get parse version: %v", err)
 	}
-	if currentIsGit {
-		vCurrent = append(vCurrent, 999, 999)
-	}
-
 	const timeFormat = "2006-01-02"
 
 	printVersion := func(what, url string) {
@@ -177,7 +112,7 @@ func checkVersion() {
 			v,
 			"(released "+t.Format(timeFormat)+")",
 		)
-		if v.cmp(vCurrent) > 0 {
+		if v.Cmp(vCurrent) > 0 {
 			fmt.Printf("  upgrade: %s\n", url+vs)
 		}
 	}
@@ -190,7 +125,7 @@ func checkVersion() {
 		"beta",
 		"https://beta.rclone.org/",
 	)
-	if currentIsGit {
+	if vCurrent.IsGit() {
 		fmt.Println("Your version is compiled from git so comparisons may be wrong.")
 	}
 }
