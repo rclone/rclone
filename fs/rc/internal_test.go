@@ -1,8 +1,11 @@
 package rc
 
 import (
+	"runtime"
 	"testing"
 
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -73,4 +76,20 @@ func TestCoreGC(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, out)
 	assert.Equal(t, Params(nil), out)
+}
+
+func TestCoreVersion(t *testing.T) {
+	call := Calls.Get("core/version")
+	assert.NotNil(t, call)
+	in := Params{}
+	out, err := call.Fn(in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, fs.Version, out["version"])
+	assert.Equal(t, runtime.GOOS, out["os"])
+	assert.Equal(t, runtime.GOARCH, out["arch"])
+	assert.Equal(t, runtime.Version(), out["goVersion"])
+	_ = out["isGit"].(bool)
+	v := out["decomposed"].(version.Version)
+	assert.True(t, len(v) >= 2)
 }
