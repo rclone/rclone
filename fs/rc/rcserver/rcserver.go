@@ -69,7 +69,16 @@ func (s *Server) Serve() error {
 	fs.Logf(nil, "Serving remote control on %s", s.URL())
 	// Open the files in the browser if set
 	if s.files != nil {
-		_ = open.Start(s.URL())
+		openURL, err := url.Parse(s.URL())
+		if err != nil {
+			return errors.Wrap(err, "invalid serving URL")
+		}
+		// Add username, password into the URL if they are set
+		user, pass := s.opt.HTTPOptions.BasicUser, s.opt.HTTPOptions.BasicPass
+		if user != "" || pass != "" {
+			openURL.User = url.UserPassword(user, pass)
+		}
+		_ = open.Start(openURL.String())
 	}
 	return nil
 }
