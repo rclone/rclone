@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -92,4 +93,16 @@ func TestCoreVersion(t *testing.T) {
 	_ = out["isGit"].(bool)
 	v := out["decomposed"].(version.Version)
 	assert.True(t, len(v) >= 2)
+}
+
+func TestCoreObscure(t *testing.T) {
+	call := Calls.Get("core/obscure")
+	assert.NotNil(t, call)
+	in := Params{
+		"clear": "potato",
+	}
+	out, err := call.Fn(in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, in["clear"], obscure.MustReveal(out["obscured"].(string)))
 }
