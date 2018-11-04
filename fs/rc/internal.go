@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/version"
 	"github.com/pkg/errors"
 )
@@ -188,6 +189,37 @@ func rcVersion(in Params) (out Params, err error) {
 		"os":         runtime.GOOS,
 		"arch":       runtime.GOARCH,
 		"goVersion":  runtime.Version(),
+	}
+	return out, nil
+}
+
+func init() {
+	Add(Call{
+		Path:  "core/obscure",
+		Fn:    rcObscure,
+		Title: "Obscures a string passed in.",
+		Help: `
+Pass a clear string and rclone will obscure it for the config file:
+- clear - string
+
+Returns
+- obscured - string
+`,
+	})
+}
+
+// Return obscured string
+func rcObscure(in Params) (out Params, err error) {
+	clear, err := in.GetString("clear")
+	if err != nil {
+		return nil, err
+	}
+	obscured, err := obscure.Obscure(clear)
+	if err != nil {
+		return nil, err
+	}
+	out = Params{
+		"obscured": obscured,
 	}
 	return out, nil
 }
