@@ -471,10 +471,9 @@ func copyEmptyDirectories(f fs.Fs, entries map[string]fs.DirEntry) error {
 	for _, entry := range entries {
 		dir, ok := entry.(fs.Directory)
 		if ok {
-			err := f.Mkdir(dir.Remote())
+			err := operations.Mkdir(f, dir.Remote())
 			if err != nil {
 				fs.Errorf(fs.LogDirName(f, dir.Remote()), "Failed to Mkdir: %v", err)
-				accounting.Stats.Error(err)
 			} else {
 				okCount++
 			}
