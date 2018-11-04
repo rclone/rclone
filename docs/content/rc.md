@@ -79,6 +79,10 @@ If this is set then rclone will serve the files in that directory.  It
 will also open the root in the web browser if specified.  This is for
 implementing browser based GUIs for rclone functions.
 
+If `--rc-user` or `--rc-pass` is set then the URL that is opened will
+have the authorization in the URL in the `http://user:pass@localhost/`
+style.
+
 Default Off.
 
 ### --rc-no-auth
