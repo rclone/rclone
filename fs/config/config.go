@@ -32,6 +32,7 @@ import (
 	"github.com/ncw/rclone/fs/driveletter"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/fspath"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
@@ -901,18 +902,24 @@ func ChooseOption(o *fs.Option, name string) string {
 	return in
 }
 
+// Suppress the confirm prompts and return a function to undo that
+func suppressConfirm() func() {
+	old := fs.Config.AutoConfirm
+	fs.Config.AutoConfirm = true
+	return func() {
+		fs.Config.AutoConfirm = old
+	}
+}
+
 // UpdateRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
-func UpdateRemote(name string, keyValues []string) error {
-	if len(keyValues)%2 != 0 {
-		return errors.New("found key without value")
-	}
+func UpdateRemote(name string, keyValues rc.Params) error {
+	defer suppressConfirm()()
 	// Set the config
-	for i := 0; i < len(keyValues); i += 2 {
-		getConfigData().SetValue(name, keyValues[i], keyValues[i+1])
+	for k, v := range keyValues {
+		getConfigData().SetValue(name, k, fmt.Sprint(v))
 	}
 	RemoteConfig(name)
-	ShowRemote(name)
 	SaveConfig()
 	return nil
 }
@@ -920,9 +927,7 @@ func UpdateRemote(name string, keyValues []string) error {
 // CreateRemote creates a new remote with name, provider and a list of
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
-func CreateRemote(name string, provider string, keyValues []string) error {
-	// Suppress Confirm
-	fs.Config.AutoConfirm = true
+func CreateRemote(name string, provider string, keyValues rc.Params) error {
 	// Delete the old config if it exists
 	getConfigData().DeleteSection(name)
 	// Set the type
@@ -935,20 +940,12 @@ func CreateRemote(name string, provider string, keyValues []string) error {
 
 // PasswordRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
-func PasswordRemote(name string, keyValues []string) error {
-	if len(keyValues) != 2 {
-		return errors.New("found key without value")
+func PasswordRemote(name string, keyValues rc.Params) error {
+	defer suppressConfirm()()
+	for k, v := range keyValues {
+		keyValues[k] = obscure.MustObscure(fmt.Sprint(v))
 	}
-	// Suppress Confirm
-	fs.Config.AutoConfirm = true
-	passwd := obscure.MustObscure(keyValues[1])
-	if passwd != "" {
-		getConfigData().SetValue(name, keyValues[0], passwd)
-		RemoteConfig(name)
-		ShowRemote(name)
-		SaveConfig()
-	}
-	return nil
+	return UpdateRemote(name, keyValues)
 }
 
 // JSONListProviders prints all the providers and options in JSON format
@@ -1297,16 +1294,28 @@ func FileSections() []string {
 	return sections
 }
 
+// DumpRcRemote dumps the config for a single remote
+func DumpRcRemote(name string) (dump rc.Params) {
+	params := rc.Params{}
+	for _, key := range getConfigData().GetKeyList(name) {
+		params[key] = FileGet(name, key)
+	}
+	return params
+}
+
+// DumpRcBlob dumps all the config as an unstructured blob suitable
+// for the rc
+func DumpRcBlob() (dump rc.Params) {
+	dump = rc.Params{}
+	for _, name := range getConfigData().GetSectionList() {
+		dump[name] = DumpRcRemote(name)
+	}
+	return dump
+}
+
 // Dump dumps all the config as a JSON file
 func Dump() error {
-	dump := make(map[string]map[string]string)
-	for _, name := range getConfigData().GetSectionList() {
-		params := make(map[string]string)
-		for _, key := range getConfigData().GetKeyList(name) {
-			params[key] = FileGet(name, key)
-		}
-		dump[name] = params
-	}
+	dump := DumpRcBlob()
 	b, err := json.MarshalIndent(dump, "", "    ")
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal config dump")
