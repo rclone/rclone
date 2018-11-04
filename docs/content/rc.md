@@ -247,6 +247,90 @@ is used on top of the cache.
 
 Show statistics for the cache remote.
 
+### config/create: create the config for a remote.
+
+This takes the following parameters
+
+- name - name of remote
+- type - type of new remote
+- type - type of the new remote
+
+
+See the [config create command](/commands/rclone_config_create/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/delete: Delete a remote in the config file.
+
+Parameters:
+- name - name of remote to delete
+
+See the [config delete command](/commands/rclone_config_delete/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/dump: Dumps the config file.
+
+Returns a JSON object:
+- key: value
+
+Where keys are remote names and values are the config parameters.
+
+See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/get: Get a remote in the config file.
+
+Parameters:
+- name - name of remote to get
+
+See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/listremotes: Lists the remotes in the config file.
+
+Returns
+- remotes - array of remote names
+
+See the [listremotes command](/commands/rclone_listremotes/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/password: password the config for a remote.
+
+This takes the following parameters
+
+- name - name of remote
+- type - type of new remote
+
+
+See the [config password command](/commands/rclone_config_password/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/providers: Shows how providers are configured in the config file.
+
+Returns a JSON object:
+- providers - array of objects
+
+See the [config providers command](/commands/rclone_config_providers/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/update: update the config for a remote.
+
+This takes the following parameters
+
+- name - name of remote
+- type - type of new remote
+
+
+See the [config update command](/commands/rclone_config_update/) command for more information on the above.
+
+Authentication is required for this call.
+
 ### core/bwlimit: Set the bandwidth limit.
 
 This sets the bandwidth limit to that passed in.
@@ -276,6 +360,14 @@ The most interesting values for most people are:
 * HeapSys: This is the amount of memory rclone has obtained from the OS
 * Sys: this is the total amount of memory requested from the OS
   * It is virtual memory so may include unused memory
+
+### core/obscure: Obscures a string passed in.
+
+Pass a clear string and rclone will obscure it for the config file:
+- clear - string
+
+Returns
+- obscured - string
 
 ### core/pid: Return PID of current process
 
@@ -321,6 +413,230 @@ Returns the following values:
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
 
+### core/version: Shows the current version of rclone and the go runtime.
+
+This shows the current version of go and the go runtime
+- version - rclone version, eg "v1.44"
+- decomposed - version number as [major, minor, patch, subpatch]
+    - note patch and subpatch will be 999 for a git compiled version
+- isGit - boolean - true if this was compiled from the git version
+- os - OS in use as according to Go
+- arch - cpu architecture in use according to Go
+- goVersion - version of Go runtime in use
+
+### job/list: Lists the IDs of the running jobs
+
+Parameters - None
+
+Results
+- jobids - array of integer job ids
+
+### job/status: Reads the status of the job ID
+
+Parameters
+- jobid - id of the job (integer)
+
+Results
+- finished - boolean
+- duration - time in seconds that the job ran for
+- endTime - time the job finished (eg "2018-10-26T18:50:20.528746884+01:00")
+- error - error from the job or empty string for no error
+- finished - boolean whether the job has finished or not
+- id - as passed in above
+- startTime - time the job started (eg "2018-10-26T18:50:20.528336039+01:00")
+- success - boolean - true for success false otherwise
+- output - output of the job as would have been returned if called synchronously
+
+### operations/about: Return the space used on the remote
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+The result is as returned from rclone about --json
+
+Authentication is required for this call.
+
+### operations/cleanup: Remove trashed files in the remote or path
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+
+See the [cleanup command](/commands/rclone_cleanup/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/copyfile: Copy a file from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:" for the source
+- srcRemote - a path within that remote eg "file.txt" for the source
+- dstFs - a remote name string eg "drive2:" for the destination
+- dstRemote - a path within that remote eg "file2.txt" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+Authentication is required for this call.
+
+### operations/copyurl: Copy the URL to the object
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- url - string, URL to read from
+
+See the [copyurl command](/commands/rclone_copyurl/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/delete: Remove files in the path
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+
+See the [delete command](/commands/rclone_delete/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/deletefile: Remove the single file pointed to
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [deletefile command](/commands/rclone_deletefile/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/list: List the given remote and path in JSON format
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- opt - a dictionary of options to control the listing (optional)
+    - recurse - If set recurse directories
+    - noModTime - If set return modification time
+    - showEncrypted -  If set show decrypted names
+    - showOrigIDs - If set show the IDs for each item if known
+    - showHash - If set return a dictionary of hashes
+
+The result is
+
+- list
+    - This is an array of objects as described in the lsjson command
+
+See the lsjson command for more information on the above and examples.
+
+Authentication is required for this call.
+
+### operations/mkdir: Make a destination directory or container
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [mkdir command](/commands/rclone_mkdir/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/movefile: Move a file from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:" for the source
+- srcRemote - a path within that remote eg "file.txt" for the source
+- dstFs - a remote name string eg "drive2:" for the destination
+- dstRemote - a path within that remote eg "file2.txt" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+Authentication is required for this call.
+
+### operations/purge: Remove a directory or container and all of its contents
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [purge command](/commands/rclone_purge/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/rmdir: Remove an empty directory or container
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [rmdir command](/commands/rclone_rmdir/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/rmdirs: Remove all the empty directories in the path
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- leaveRoot - boolean, set to true not to delete the root
+
+See the [rmdirs command](/commands/rclone_rmdirs/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/size: Count the number of bytes and files in remote
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:path/to/dir"
+
+Returns
+
+- count - number of files
+- bytes - number of bytes in those files
+
+See the [size command](/commands/rclone_size/) command for more information on the above.
+
+Authentication is required for this call.
+
+### options/blocks: List all the option blocks
+
+Returns
+- options - a list of the options block names
+
+### options/get: Get all the options
+
+Returns an object where keys are option block names and values are an
+object with the current option values in.
+
+This shows the internal names of the option within rclone which should
+map to the external options very easily with a few exceptions.
+
+### options/set: Set an option
+
+Parameters
+
+- option block name containing an object with
+  - key: value
+
+Repeated as often as required.
+
+Only supply the options you wish to change.  If an option is unknown
+it will be silently ignored.  Not all options will have an effect when
+changed like this.
+
 ### rc/error: This returns an error
 
 This returns an error with the input as part of its error string.
@@ -336,6 +652,57 @@ the commands response.
 This echoes the input parameters to the output parameters for testing
 purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.
+
+### rc/noopauth: Echo the input to the output parameters requiring auth
+
+This echoes the input parameters to the output parameters for testing
+purposes.  It can be used to check that rclone is still alive and to
+check that parameter passing is working properly.
+
+Authentication is required for this call.
+
+### sync/copy: copy a directory from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:src" for the source
+- dstFs - a remote name string eg "drive:dst" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+See the [copy command](/commands/rclone_copy/) command for more information on the above.
+
+Authentication is required for this call.
+
+### sync/move: move a directory from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:src" for the source
+- dstFs - a remote name string eg "drive:dst" for the destination
+- deleteEmptySrcDirs - delete empty src directories if set
+
+This returns
+- jobid - ID of async job to query with job/status
+
+See the [move command](/commands/rclone_move/) command for more information on the above.
+
+Authentication is required for this call.
+
+### sync/sync: sync a directory from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:src" for the source
+- dstFs - a remote name string eg "drive:dst" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+See the [sync command](/commands/rclone_sync/) command for more information on the above.
+
+Authentication is required for this call.
 
 ### vfs/forget: Forget files or directories in the directory cache.
 
