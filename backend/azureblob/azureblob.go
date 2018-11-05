@@ -50,6 +50,7 @@ const (
 	defaultUploadCutoff = 256 * fs.MebiByte
 	maxUploadCutoff     = 256 * fs.MebiByte
 	defaultAccessTier   = azblob.AccessTierNone
+	maxTryTimeout       = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
 )
 
 // Register with Fs
@@ -322,7 +323,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
 		}
-		pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+		pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 		containerURL = serviceURL.NewContainerURL(container)
 	case opt.SASURL != "":
@@ -331,7 +332,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 			return nil, errors.Wrapf(err, "failed to parse SAS URL")
 		}
 		// use anonymous credentials in case of sas url
-		pipeline := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
+		pipeline := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		// Check if we have container level SAS or account level sas
 		parts := azblob.NewBlobURLParts(*u)
 		if parts.ContainerName != "" {
