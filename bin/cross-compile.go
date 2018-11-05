@@ -63,7 +63,9 @@ var osarches = []string{
 
 // Special environment flags for a given arch
 var archFlags = map[string][]string{
-	"386": {"GO386=387"},
+	"386":    {"GO386=387"},
+	"mips":   {"GOMIPS=softfloat"},
+	"mipsle": {"GOMIPS=softfloat"},
 }
 
 // runEnv - run a shell command with env
