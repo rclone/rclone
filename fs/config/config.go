@@ -445,6 +445,10 @@ func changeConfigPassword() {
 // if configKey has been set, the file will be encrypted.
 func saveConfig() error {
 	dir, name := filepath.Split(ConfigPath)
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, "failed to create config directory")
+	}
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
 		return errors.Errorf("Failed to create temp file for new config: %v", err)
