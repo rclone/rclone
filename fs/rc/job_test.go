@@ -82,9 +82,20 @@ var longFn = func(in Params) (Params, error) {
 	return nil, nil
 }
 
+const (
+	sleepTime      = 100 * time.Millisecond
+	floatSleepTime = float64(sleepTime) / 1E9 / 2
+)
+
+// sleep for some time so job.Duration is non-0
+func sleepJob() {
+	time.Sleep(sleepTime)
+}
+
 func TestJobFinish(t *testing.T) {
 	jobs := newJobs()
 	job := jobs.NewJob(longFn, Params{})
+	sleepJob()
 
 	assert.Equal(t, true, job.EndTime.IsZero())
 	assert.Equal(t, Params(nil), job.Output)
@@ -98,27 +109,29 @@ func TestJobFinish(t *testing.T) {
 
 	assert.Equal(t, false, job.EndTime.IsZero())
 	assert.Equal(t, wantOut, job.Output)
-	assert.NotEqual(t, 0.0, job.Duration)
+	assert.True(t, job.Duration >= floatSleepTime)
 	assert.Equal(t, "", job.Error)
 	assert.Equal(t, true, job.Success)
 	assert.Equal(t, true, job.Finished)
 
 	job = jobs.NewJob(longFn, Params{})
+	sleepJob()
 	job.finish(nil, nil)
 
 	assert.Equal(t, false, job.EndTime.IsZero())
 	assert.Equal(t, Params{}, job.Output)
-	assert.NotEqual(t, 0.0, job.Duration)
+	assert.True(t, job.Duration >= floatSleepTime)
 	assert.Equal(t, "", job.Error)
 	assert.Equal(t, true, job.Success)
 	assert.Equal(t, true, job.Finished)
 
 	job = jobs.NewJob(longFn, Params{})
+	sleepJob()
 	job.finish(wantOut, errors.New("potato"))
 
 	assert.Equal(t, false, job.EndTime.IsZero())
 	assert.Equal(t, wantOut, job.Output)
-	assert.NotEqual(t, 0.0, job.Duration)
+	assert.True(t, job.Duration >= floatSleepTime)
 	assert.Equal(t, "potato", job.Error)
 	assert.Equal(t, false, job.Success)
 	assert.Equal(t, true, job.Finished)
@@ -129,6 +142,7 @@ func TestJobFinish(t *testing.T) {
 func TestJobRunPanic(t *testing.T) {
 	wait := make(chan struct{})
 	boom := func(in Params) (Params, error) {
+		sleepJob()
 		defer close(wait)
 		panic("boom")
 	}
@@ -152,7 +166,7 @@ func TestJobRunPanic(t *testing.T) {
 	job.mu.Lock()
 	assert.Equal(t, false, job.EndTime.IsZero())
 	assert.Equal(t, Params{}, job.Output)
-	assert.NotEqual(t, 0.0, job.Duration)
+	assert.True(t, job.Duration >= floatSleepTime)
 	assert.Equal(t, "panic received: boom", job.Error)
 	assert.Equal(t, false, job.Success)
 	assert.Equal(t, true, job.Finished)
