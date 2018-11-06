@@ -90,7 +90,7 @@ systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
 uploads. Look at the [file caching](#file-caching)
-for solutions to make mount mount more reliable.
+for solutions to make mount more reliable.
 
 ### Attribute caching
 
@@ -391,8 +391,8 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --crypt-password2 string                     Password or pass phrase for salt. Optional but recommended.
       --crypt-remote string                        Remote to encrypt/decrypt.
       --crypt-show-mapping                         For all files listed show how the names encrypt.
-      --delete-after                               When synchronizing, delete files on destination after transfering (default)
-      --delete-before                              When synchronizing, delete files on destination before transfering
+      --delete-after                               When synchronizing, delete files on destination after transferring (default)
+      --delete-before                              When synchronizing, delete files on destination before transferring
       --delete-during                              When synchronizing, delete files during transfer
       --delete-excluded                            Delete files on dest excluded from sync
       --disable string                             Disable a comma separated list of features.  Use help to see a list.
@@ -503,7 +503,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --pcloud-client-secret string                Pcloud App Client Secret
   -P, --progress                                   Show progress during transfer.
       --qingstor-access-key-id string              QingStor Access Key ID
-      --qingstor-connection-retries int            Number of connnection retries. (default 3)
+      --qingstor-connection-retries int            Number of connection retries. (default 3)
       --qingstor-endpoint string                   Enter a endpoint URL to connection QingStor API.
       --qingstor-env-auth                          Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.
       --qingstor-secret-access-key string          QingStor Secret Access Key (password)
