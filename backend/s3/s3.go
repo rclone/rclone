@@ -804,8 +804,21 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		WithHTTPClient(fshttp.NewClient(fs.Config)).
 		WithS3ForcePathStyle(opt.ForcePathStyle)
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
-	ses := session.New()
-	c := s3.New(ses, awsConfig)
+	awsSessionOpts := session.Options{
+		Config: *awsConfig,
+	}
+	if opt.EnvAuth && opt.AccessKeyID == "" && opt.SecretAccessKey == "" {
+		// Enable loading config options from ~/.aws/config (selected by AWS_PROFILE env)
+		awsSessionOpts.SharedConfigState = session.SharedConfigEnable
+		// The session constructor (aws/session/mergeConfigSrcs) will only use the user's preferred credential source
+		// (from the shared config file) if the passed-in Options.Config.Credentials is nil.
+		awsSessionOpts.Config.Credentials = nil
+	}
+	ses, err := session.NewSessionWithOptions(awsSessionOpts)
+	if err != nil {
+		return nil, nil, err
+	}
+	c := s3.New(ses)
 	if opt.V2Auth || opt.Region == "other-v2-signature" {
 		fs.Debugf(nil, "Using v2 auth")
 		signer := func(req *request.Request) {
