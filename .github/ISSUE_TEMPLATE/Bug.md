@@ -1,6 +1,7 @@
 ---
 name: Bug report
 about: Report a problem with rclone
+
 ---
 
 <!--
@@ -46,5 +47,3 @@ The Rclone Developers
 
 
 #### A log from the command with the `-vv` flag (eg output from `rclone -vv copy /tmp remote:tmp`)
-
-
