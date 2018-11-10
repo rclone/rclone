@@ -917,7 +917,9 @@ profiling tools on the same port.
 
 To use these, first [install go](https://golang.org/doc/install).
 
-Then (for example) to profile rclone's memory use you can run:
+### Debugging memory use
+
+To profile rclone's memory use you can run:
 
     go tool pprof -web http://localhost:5572/debug/pprof/heap
 
@@ -944,9 +946,25 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
          0     0%   100%  1024.03kB 66.62%  runtime.main
 ```
 
-Possible profiles to look at:
+### Debugging go routine leaks
+
+Memory leaks are most often caused by go routine leaks keeping memory
+alive which should have been garbage collected.
+
+See all active go routines using
+
+    curl http://localhost:5572/debug/pprof/goroutine?debug=1
+
+Or go to http://localhost:5572/debug/pprof/goroutine?debug=1 in your browser.
+
+### Other profiles to look at
+
+You can see a summary of profiles available at http://localhost:5572/debug/pprof/
+
+Here is how to use some of them:
 
   * Memory: `go tool pprof http://localhost:5572/debug/pprof/heap`
+  * Go routines: `curl http://localhost:5572/debug/pprof/goroutine?debug=1`
   * 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
   * 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
 
