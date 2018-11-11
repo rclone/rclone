@@ -51,6 +51,7 @@ func startProgress() func() {
 				printProgress("")
 			case <-stopStats:
 				ticker.Stop()
+				printProgress("")
 				fs.LogPrint = oldLogPrint
 				fmt.Println("")
 				return
