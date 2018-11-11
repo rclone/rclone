@@ -404,13 +404,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	if opt.DriveID == "" || opt.DriveType == "" {
-		log.Fatalf("Unable to get drive_id and drive_type. If you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend.")
+		return nil, errors.New("unable to get drive_id and drive_type - if you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend")
 	}
 
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
-		log.Fatalf("Failed to configure OneDrive: %v", err)
+		return nil, errors.Wrap(err, "failed to configure OneDrive")
 	}
 
 	f := &Fs{
