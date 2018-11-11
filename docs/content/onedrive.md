@@ -244,6 +244,11 @@ in it will be mapped to `？` instead.
 
 The largest allowed file size is 10GiB (10,737,418,240 bytes).
 
+OneDrive seems to be OK with at least 50,000 files in a folder, but at
+100,000 rclone will get errors listing the directory like `couldn’t
+list files: UnknownError:`.  See
+[#2707](https://github.com/ncw/rclone/issues/2707) for more info.
+
 ### Versioning issue ###
 
 Every change in OneDrive causes the service to create a new version.
