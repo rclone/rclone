@@ -90,6 +90,7 @@ type Opt struct {
 	MaxAge         fs.Duration
 	MinSize        fs.SizeSuffix
 	MaxSize        fs.SizeSuffix
+	IgnoreCase     bool
 }
 
 // DefaultOpt is the default config for the filter
@@ -226,7 +227,7 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 		if dirGlob == "/" {
 			continue
 		}
-		dirRe, err := globToRegexp(dirGlob)
+		dirRe, err := globToRegexp(dirGlob, f.Opt.IgnoreCase)
 		if err != nil {
 			return err
 		}
@@ -242,7 +243,7 @@ func (f *Filter) Add(Include bool, glob string) error {
 	if strings.Contains(glob, "**") {
 		isDirRule, isFileRule = true, true
 	}
-	re, err := globToRegexp(glob)
+	re, err := globToRegexp(glob, f.Opt.IgnoreCase)
 	if err != nil {
 		return err
 	}
