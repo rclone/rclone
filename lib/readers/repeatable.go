@@ -2,6 +2,7 @@ package readers
 
 import (
 	"io"
+	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -10,9 +11,10 @@ import (
 // back and forth within the reader but will only read data from the internal Reader as necessary
 // and will play nicely with the Account and io.LimitedReader to reflect current speed
 type RepeatableReader struct {
-	in io.Reader // Input reader
-	i  int64     // current reading index
-	b  []byte    // internal cache buffer
+	mu sync.Mutex // protect against concurrent use
+	in io.Reader  // Input reader
+	i  int64      // current reading index
+	b  []byte     // internal cache buffer
 }
 
 var _ io.ReadSeeker = (*RepeatableReader)(nil)
@@ -21,6 +23,9 @@ var _ io.ReadSeeker = (*RepeatableReader)(nil)
 // If seek position is passed the cache buffer length the function will return
 // the maximum offset that can be used and "fs.RepeatableReader.Seek: offset is unavailable" Error
 func (r *RepeatableReader) Seek(offset int64, whence int) (int64, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	var abs int64
 	cacheLen := int64(len(r.b))
 	switch whence {
@@ -46,6 +51,9 @@ func (r *RepeatableReader) Seek(offset int64, whence int) (int64, error) {
 // Read data from original Reader into bytes
 // Data is either served from the underlying Reader or from cache if was already read
 func (r *RepeatableReader) Read(b []byte) (n int, err error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	cacheLen := int64(len(r.b))
 	if r.i == cacheLen {
 		n, err = r.in.Read(b)
