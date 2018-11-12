@@ -351,6 +351,7 @@ func TestNewFilterMatches(t *testing.T) {
 		{"cleared", 100, 0, false},
 		{"file1.jpg", 100, 0, false},
 		{"file2.png", 100, 0, true},
+		{"FILE2.png", 100, 0, false},
 		{"afile2.png", 100, 0, false},
 		{"file3.jpg", 101, 0, true},
 		{"file4.png", 101, 0, false},
@@ -370,10 +371,33 @@ func TestNewFilterMatches(t *testing.T) {
 		{"sausage2/sub", false},
 		{"sausage2/sub/dir", false},
 		{"sausage3", true},
+		{"SAUSAGE3", false},
 		{"sausage3/sub", true},
 		{"sausage3/sub/dir", true},
 		{"sausage4", false},
 		{"a", true},
+	})
+	assert.False(t, f.InActive())
+}
+
+func TestNewFilterMatchesIgnoreCase(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+	f.Opt.IgnoreCase = true
+	add := func(s string) {
+		err := f.AddRule(s)
+		require.NoError(t, err)
+	}
+	add("+ /file2.png")
+	add("+ /sausage3**")
+	add("- *")
+	testInclude(t, f, []includeTest{
+		{"file2.png", 100, 0, true},
+		{"FILE2.png", 100, 0, true},
+	})
+	testDirInclude(t, f, []includeDirTest{
+		{"sausage3", true},
+		{"SAUSAGE3", true},
 	})
 	assert.False(t, f.InActive())
 }
@@ -470,40 +494,48 @@ five
 
 func TestFilterMatchesFromDocs(t *testing.T) {
 	for _, test := range []struct {
-		glob     string
-		included bool
-		file     string
+		glob       string
+		included   bool
+		file       string
+		ignoreCase bool
 	}{
-		{"file.jpg", true, "file.jpg"},
-		{"file.jpg", true, "directory/file.jpg"},
-		{"file.jpg", false, "afile.jpg"},
-		{"file.jpg", false, "directory/afile.jpg"},
-		{"/file.jpg", true, "file.jpg"},
-		{"/file.jpg", false, "afile.jpg"},
-		{"/file.jpg", false, "directory/file.jpg"},
-		{"*.jpg", true, "file.jpg"},
-		{"*.jpg", true, "directory/file.jpg"},
-		{"*.jpg", false, "file.jpg/anotherfile.png"},
-		{"dir/**", true, "dir/file.jpg"},
-		{"dir/**", true, "dir/dir1/dir2/file.jpg"},
-		{"dir/**", false, "directory/file.jpg"},
-		{"dir/**", false, "adir/file.jpg"},
-		{"l?ss", true, "less"},
-		{"l?ss", true, "lass"},
-		{"l?ss", false, "floss"},
-		{"h[ae]llo", true, "hello"},
-		{"h[ae]llo", true, "hallo"},
-		{"h[ae]llo", false, "hullo"},
-		{"{one,two}_potato", true, "one_potato"},
-		{"{one,two}_potato", true, "two_potato"},
-		{"{one,two}_potato", false, "three_potato"},
-		{"{one,two}_potato", false, "_potato"},
-		{"\\*.jpg", true, "*.jpg"},
-		{"\\\\.jpg", true, "\\.jpg"},
-		{"\\[one\\].jpg", true, "[one].jpg"},
+		{"file.jpg", true, "file.jpg", false},
+		{"file.jpg", true, "directory/file.jpg", false},
+		{"file.jpg", false, "afile.jpg", false},
+		{"file.jpg", false, "directory/afile.jpg", false},
+		{"/file.jpg", true, "file.jpg", false},
+		{"/file.jpg", false, "afile.jpg", false},
+		{"/file.jpg", false, "directory/file.jpg", false},
+		{"*.jpg", true, "file.jpg", false},
+		{"*.jpg", true, "directory/file.jpg", false},
+		{"*.jpg", false, "file.jpg/anotherfile.png", false},
+		{"dir/**", true, "dir/file.jpg", false},
+		{"dir/**", true, "dir/dir1/dir2/file.jpg", false},
+		{"dir/**", false, "directory/file.jpg", false},
+		{"dir/**", false, "adir/file.jpg", false},
+		{"l?ss", true, "less", false},
+		{"l?ss", true, "lass", false},
+		{"l?ss", false, "floss", false},
+		{"h[ae]llo", true, "hello", false},
+		{"h[ae]llo", true, "hallo", false},
+		{"h[ae]llo", false, "hullo", false},
+		{"{one,two}_potato", true, "one_potato", false},
+		{"{one,two}_potato", true, "two_potato", false},
+		{"{one,two}_potato", false, "three_potato", false},
+		{"{one,two}_potato", false, "_potato", false},
+		{"\\*.jpg", true, "*.jpg", false},
+		{"\\\\.jpg", true, "\\.jpg", false},
+		{"\\[one\\].jpg", true, "[one].jpg", false},
+		{"potato", true, "potato", false},
+		{"potato", false, "POTATO", false},
+		{"potato", true, "potato", true},
+		{"potato", true, "POTATO", true},
 	} {
 		f, err := NewFilter(nil)
 		require.NoError(t, err)
+		if test.ignoreCase {
+			f.Opt.IgnoreCase = true
+		}
 		err = f.Add(true, test.glob)
 		require.NoError(t, err)
 		err = f.Add(false, "*")
