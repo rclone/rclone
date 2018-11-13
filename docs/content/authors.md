@@ -213,3 +213,4 @@ Contributors
   * Scott Edlund <sedlund@users.noreply.github.com>
   * Erik Swanson <erik@retailnext.net>
   * Jake Coggiano <jake@stripe.com>
+  * brused27 <brused27@noemailaddress>
