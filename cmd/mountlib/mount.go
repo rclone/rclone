@@ -147,7 +147,7 @@ systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone ` + commandName + `
 can't use retries in the same way without making local copies of the
 uploads. Look at the [file caching](#file-caching)
-for solutions to make ` + commandName + ` mount more reliable.
+for solutions to make ` + commandName + ` more reliable.
 
 ### Attribute caching
 
