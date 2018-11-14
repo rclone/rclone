@@ -121,16 +121,17 @@ func retry(t *testing.T, what string, f func() error) {
 	t.Logf("%s failed: %v", what, err)
 }
 
-// NewRun initialise the remote and local for testing and returns a
-// run object.  Call this from the tests.
+// newRunIndividual initialise the remote and local for testing and
+// returns a run object.  Pass in true to make individual tests or
+// false to use the global one.
 //
 // r.Flocal is an empty local Fs
 // r.Fremote is an empty remote Fs
 //
 // Finalise() will tidy them away when done.
-func NewRun(t *testing.T) *Run {
+func newRunIndividual(t *testing.T, individual bool) *Run {
 	var r *Run
-	if *Individual {
+	if individual {
 		r = newRun()
 	} else {
 		// If not individual, use the global one with the clean method overridden
@@ -174,6 +175,22 @@ func NewRun(t *testing.T) *Run {
 	r.Fatalf = t.Fatalf
 	r.Logf("Remote %q, Local %q, Modify Window %q", r.Fremote, r.Flocal, fs.GetModifyWindow(r.Fremote))
 	return r
+}
+
+// NewRun initialise the remote and local for testing and returns a
+// run object.  Call this from the tests.
+//
+// r.Flocal is an empty local Fs
+// r.Fremote is an empty remote Fs
+//
+// Finalise() will tidy them away when done.
+func NewRun(t *testing.T) *Run {
+	return newRunIndividual(t, *Individual)
+}
+
+// NewRunIndividual as per NewRun but makes an individual remote for this test
+func NewRunIndividual(t *testing.T) *Run {
+	return newRunIndividual(t, true)
 }
 
 // RenameFile renames a file in local
