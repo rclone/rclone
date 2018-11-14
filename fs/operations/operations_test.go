@@ -404,7 +404,7 @@ func TestRcat(t *testing.T) {
 }
 
 func TestPurge(t *testing.T) {
-	r := fstest.NewRun(t)
+	r := fstest.NewRunIndividual(t) // make new container (azureblob has delayed mkdir after rmdir)
 	defer r.Finalise()
 	r.Mkdir(r.Fremote)
 
