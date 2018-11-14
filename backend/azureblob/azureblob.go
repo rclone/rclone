@@ -723,7 +723,7 @@ func (f *Fs) Mkdir(dir string) error {
 // isEmpty checks to see if a given directory is empty and returns an error if not
 func (f *Fs) isEmpty(dir string) (err error) {
 	empty := true
-	err = f.list("", true, 1, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
+	err = f.list(dir, true, 1, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
 		empty = false
 		return nil
 	})
