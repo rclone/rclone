@@ -69,7 +69,7 @@ func init() {
 			}},
 		}, {
 			Name:     "connection_retries",
-			Help:     "Number of connnection retries.",
+			Help:     "Number of connection retries.",
 			Default:  3,
 			Advanced: true,
 		}},
