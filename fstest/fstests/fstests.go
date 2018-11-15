@@ -125,60 +125,65 @@ func findObject(t *testing.T, f fs.Fs, Name string) fs.Object {
 	return obj
 }
 
-// testPut puts file to the remote
-func testPut(t *testing.T, f fs.Fs, file *fstest.Item) string {
-	tries := 1
+// retry f() until no retriable error
+func retry(t *testing.T, what string, f func() error) {
 	const maxTries = 10
-again:
-	contents := fstest.RandomString(100)
-	buf := bytes.NewBufferString(contents)
-	hash := hash.NewMultiHasher()
-	in := io.TeeReader(buf, hash)
-
-	file.Size = int64(buf.Len())
-	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-	obj, err := f.Put(in, obji)
-	if err != nil {
-		// Retry if err returned a retry error
-		if fserrors.IsRetryError(err) && tries < maxTries {
-			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
-			time.Sleep(2 * time.Second)
-
-			tries++
-			goto again
+	var err error
+	for tries := 1; tries <= maxTries; tries++ {
+		err = f()
+		// exit if no error, or error is not retriable
+		if err == nil || !fserrors.IsRetryError(err) {
+			break
 		}
-		require.NoError(t, err, fmt.Sprintf("Put error: %v", err))
+		t.Logf("%s error: %v - low level retry %d/%d", what, err, tries, maxTries)
+		time.Sleep(2 * time.Second)
 	}
-	file.Hashes = hash.Sums()
+	require.NoError(t, err, what)
+}
+
+// testPut puts file to the remote
+func testPut(t *testing.T, f fs.Fs, file *fstest.Item) (string, fs.Object) {
+	var (
+		err        error
+		obj        fs.Object
+		uploadHash *hash.MultiHasher
+		contents   string
+	)
+	retry(t, "Put", func() error {
+		contents = fstest.RandomString(100)
+		buf := bytes.NewBufferString(contents)
+		uploadHash = hash.NewMultiHasher()
+		in := io.TeeReader(buf, uploadHash)
+
+		file.Size = int64(buf.Len())
+		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+		obj, err = f.Put(in, obji)
+		return err
+	})
+	file.Hashes = uploadHash.Sums()
 	file.Check(t, obj, f.Precision())
 	// Re-read the object and check again
 	obj = findObject(t, f, file.Path)
 	file.Check(t, obj, f.Precision())
-	return contents
+	return contents, obj
 }
 
 // testPutLarge puts file to the remote, checks it and removes it on success.
 func testPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
-	tries := 1
-	const maxTries = 10
-again:
-	r := readers.NewPatternReader(file.Size)
-	uploadHash := hash.NewMultiHasher()
-	in := io.TeeReader(r, uploadHash)
+	var (
+		err        error
+		obj        fs.Object
+		uploadHash *hash.MultiHasher
+	)
+	retry(t, "PutLarge", func() error {
+		r := readers.NewPatternReader(file.Size)
+		uploadHash = hash.NewMultiHasher()
+		in := io.TeeReader(r, uploadHash)
 
-	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-	obj, err := f.Put(in, obji)
-	if err != nil {
-		// Retry if err returned a retry error
-		if fserrors.IsRetryError(err) && tries < maxTries {
-			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
-			time.Sleep(2 * time.Second)
-
-			tries++
-			goto again
-		}
-		require.NoError(t, err, fmt.Sprintf("Put error: %v", err))
-	}
+		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+		obj, err = f.Put(in, obji)
+		return err
+	})
 	file.Hashes = uploadHash.Sums()
 	file.Check(t, obj, f.Precision())
 
@@ -496,7 +501,7 @@ func Run(t *testing.T, opt *Opt) {
 	// TestFsPutFile1 tests putting a file
 	t.Run("TestFsPutFile1", func(t *testing.T) {
 		skipIfNotOk(t)
-		file1Contents = testPut(t, remote, &file1)
+		file1Contents, _ = testPut(t, remote, &file1)
 	})
 
 	// TestFsPutError tests uploading a file where there is an error
@@ -534,7 +539,7 @@ func Run(t *testing.T, opt *Opt) {
 	// TestFsUpdateFile1 tests updating file1 with new contents
 	t.Run("TestFsUpdateFile1", func(t *testing.T) {
 		skipIfNotOk(t)
-		file1Contents = testPut(t, remote, &file1)
+		file1Contents, _ = testPut(t, remote, &file1)
 		// Note that the next test will check there are no duplicated file names
 	})
 
@@ -1335,30 +1340,24 @@ func Run(t *testing.T, opt *Opt) {
 			Size:    -1, // use unknown size during upload
 		}
 
-		tries := 1
-		const maxTries = 10
-	again:
-		contentSize := 100
-		contents := fstest.RandomString(contentSize)
-		buf := bytes.NewBufferString(contents)
-		hash := hash.NewMultiHasher()
-		in := io.TeeReader(buf, hash)
+		var (
+			err         error
+			obj         fs.Object
+			uploadHash  *hash.MultiHasher
+			contentSize = 100
+		)
+		retry(t, "PutStream", func() error {
+			contents := fstest.RandomString(contentSize)
+			buf := bytes.NewBufferString(contents)
+			uploadHash = hash.NewMultiHasher()
+			in := io.TeeReader(buf, uploadHash)
 
-		file.Size = -1
-		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-		obj, err := remote.Features().PutStream(in, obji)
-		if err != nil {
-			// Retry if err returned a retry error
-			if fserrors.IsRetryError(err) && tries < maxTries {
-				t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
-				time.Sleep(2 * time.Second)
-
-				tries++
-				goto again
-			}
-			require.NoError(t, err, fmt.Sprintf("PutStream Unknown Length error: %v", err))
-		}
-		file.Hashes = hash.Sums()
+			file.Size = -1
+			obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+			obj, err = remote.Features().PutStream(in, obji)
+			return err
+		})
+		file.Hashes = uploadHash.Sums()
 		file.Size = int64(contentSize) // use correct size when checking
 		file.Check(t, obj, remote.Precision())
 		// Re-read the object and check again
