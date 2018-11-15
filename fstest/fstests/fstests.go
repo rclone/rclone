@@ -380,9 +380,25 @@ func Run(t *testing.T, opt *Opt) {
 		require.NoError(t, err)
 	})
 
+	// Return true if f (or any of the things it wraps) is bucket
+	// based but not at the root.
+	isBucketBasedButNotRoot := func(f fs.Fs) bool {
+		for {
+			doUnWrap := f.Features().UnWrap
+			if doUnWrap == nil {
+				break
+			}
+			f = doUnWrap()
+		}
+		return f.Features().BucketBased && strings.Contains(strings.Trim(f.Root(), "/"), "/")
+	}
+
 	// TestFsRmdirNotFound tests deleting a non existent directory
 	t.Run("TestFsRmdirNotFound", func(t *testing.T) {
 		skipIfNotOk(t)
+		if isBucketBasedButNotRoot(remote) {
+			t.Skip("Skipping test as non root bucket based remote")
+		}
 		err := remote.Rmdir("")
 		assert.Error(t, err, "Expecting error on Rmdir non existent")
 	})
@@ -938,6 +954,9 @@ func Run(t *testing.T, opt *Opt) {
 	// TestFsRmdirFull tests removing a non empty directory
 	t.Run("TestFsRmdirFull", func(t *testing.T) {
 		skipIfNotOk(t)
+		if isBucketBasedButNotRoot(remote) {
+			t.Skip("Skipping test as non root bucket based remote")
+		}
 		err := remote.Rmdir("")
 		require.Error(t, err, "Expecting error on RMdir on non empty remote")
 	})
@@ -1382,8 +1401,10 @@ func Run(t *testing.T, opt *Opt) {
 		require.NoError(t, err)
 		fstest.CheckListing(t, remote, []fstest.Item{})
 
-		err = operations.Purge(remote, "")
-		assert.Error(t, err, "Expecting error after on second purge")
+		if !isBucketBasedButNotRoot(remote) {
+			err = operations.Purge(remote, "")
+			assert.Error(t, err, "Expecting error after on second purge")
+		}
 	})
 
 	// TestFinalise tidies up after the previous tests
