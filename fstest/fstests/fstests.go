@@ -1021,14 +1021,13 @@ func Run(t *testing.T, opt *Opt) {
 			dirs = append(dirs, dir)
 		}
 
-		contents := fstest.RandomString(100)
-		buf := bytes.NewBufferString(contents)
-
 		var objs []fs.Object
 		for _, idx := range []int{2, 4, 3} {
-			obji := object.NewStaticObjectInfo(fmt.Sprintf("dir/file%d", idx), time.Now(), int64(buf.Len()), true, nil, nil)
-			o, err := remote.Put(buf, obji)
-			require.NoError(t, err)
+			file := fstest.Item{
+				ModTime: time.Now(),
+				Path:    fmt.Sprintf("dir/file%d", idx),
+			}
+			_, o := testPut(t, remote, &file)
 			objs = append(objs, o)
 		}
 
