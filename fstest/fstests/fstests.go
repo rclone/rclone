@@ -1005,7 +1005,11 @@ func Run(t *testing.T, opt *Opt) {
 				return
 			}
 			if e == fs.EntryDirectory {
-				dirChanges = append(dirChanges, x)
+				if x != "dir" {
+					// ignore the base directory creation which we sometimes
+					// catch and sometimes don't
+					dirChanges = append(dirChanges, x)
+				}
 			} else if e == fs.EntryObject {
 				objChanges = append(objChanges, x)
 			}
