@@ -1035,7 +1035,14 @@ func Run(t *testing.T, opt *Opt) {
 			objs = append(objs, o)
 		}
 
-		time.Sleep(3 * time.Second)
+		// Wait a little while for the changes to come in
+		for tries := 1; tries < 10; tries++ {
+			if len(dirChanges) == 3 && len(objChanges) == 3 {
+				break
+			}
+			t.Logf("Try %d/10 waiting for dirChanges and objChanges", tries)
+			time.Sleep(3 * time.Second)
+		}
 
 		assert.Equal(t, []string{"dir/subdir1", "dir/subdir3", "dir/subdir2"}, dirChanges)
 		assert.Equal(t, []string{"dir/file2", "dir/file4", "dir/file3"}, objChanges)
