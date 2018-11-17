@@ -31,7 +31,6 @@ import (
 	"github.com/ncw/rclone/backend/webdav/api"
 	"github.com/ncw/rclone/backend/webdav/odrvcookie"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
@@ -96,10 +95,11 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	URL    string `config:"url"`
-	Vendor string `config:"vendor"`
-	User   string `config:"user"`
-	Pass   string `config:"pass"`
+	URL         string `config:"url"`
+	Vendor      string `config:"vendor"`
+	User        string `config:"user"`
+	Pass        string `config:"pass"`
+	BearerToken string `config:"bearer_token"`
 }
 
 // Fs represents a remote webdav
@@ -283,9 +283,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = strings.Trim(root, "/")
 
-	user := config.FileGet(name, "user")
-	pass := config.FileGet(name, "pass")
-	bearerToken := config.FileGet(name, "bearer_token")
 	if !strings.HasSuffix(opt.URL, "/") {
 		opt.URL += "/"
 	}
@@ -320,10 +317,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(f)
-	if user != "" || pass != "" {
+	if opt.User != "" || opt.Pass != "" {
 		f.srv.SetUserPass(opt.User, opt.Pass)
-	} else if bearerToken != "" {
-		f.srv.SetHeader("Authorization", "BEARER "+bearerToken)
+	} else if opt.BearerToken != "" {
+		f.srv.SetHeader("Authorization", "BEARER "+opt.BearerToken)
 	}
 	f.srv.SetErrorHandler(errorHandler)
 	err = f.setQuirks(opt.Vendor)
