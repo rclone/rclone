@@ -291,7 +291,11 @@ func init() {
 				Provider: "DigitalOcean",
 			}, {
 				Value:    "s3.wasabisys.com",
-				Help:     "Wasabi Object Storage",
+				Help:     "Wasabi US East endpoint",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.us-west-1.wasabisys.com",
+				Help:     "Wasabi US West endpoint",
 				Provider: "Wasabi",
 			}},
 		}, {
