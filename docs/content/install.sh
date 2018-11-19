@@ -10,7 +10,7 @@
 set -e
 
 #when adding a tool to the list make sure to also add it's corresponding command further in the script
-unzip_tools_list=('unzip' '7z')
+unzip_tools_list=('unzip' '7z', 'busybox')
 
 usage() { echo "Usage: curl https://rclone.org/install.sh | sudo bash [-s beta]" 1>&2; exit 1; }
 
@@ -132,6 +132,10 @@ case $unzip_tool in
     ;;
   '7z')
     7z x $rclone_zip -o$unzip_dir
+    ;;
+  'busybox')
+    mkdir -p $unzip_dir
+    busybox unzip $rclone_zip -d $unzip_dir
     ;;
 esac
     
