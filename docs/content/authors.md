@@ -214,3 +214,4 @@ Contributors
   * Erik Swanson <erik@retailnext.net>
   * Jake Coggiano <jake@stripe.com>
   * brused27 <brused27@noemailaddress>
+  * Peter Kaminski <kaminski@istori.com>
