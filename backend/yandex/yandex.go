@@ -1,6 +1,3 @@
-// Package yandex provides an interface to the Yandex Disk storage.
-//
-// dibu28 <dibu28@gmail.com> github.com/dibu28
 package yandex
 
 import (
@@ -8,21 +5,25 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"path"
-	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
-	yandex "github.com/ncw/rclone/backend/yandex/api"
+	"github.com/ncw/rclone/backend/yandex/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
-	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/oauthutil"
+	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/readers"
+	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
@@ -31,6 +32,10 @@ import (
 const (
 	rcloneClientID              = "ac39b43b9eba4cae8ffb788c06d816a8"
 	rcloneEncryptedClientSecret = "EfyyNZ3YUEwXM5yAhi72G9YwKn2mkFrYwJNS7cY0TJAhFlX9K-uJFbGlpO-RYjrJ"
+	rootURL                     = "https://cloud-api.yandex.com/v1/disk"
+	minSleep                    = 10 * time.Millisecond
+	maxSleep                    = 2 * time.Second // may needs to be increased, testing needed
+	decayConstant               = 2               // bigger for slower decay, exponential
 )
 
 // Globals
@@ -57,6 +62,7 @@ func init() {
 			err := oauthutil.Config("yandex", name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
+				return
 			}
 		},
 		Options: []fs.Option{{
@@ -65,33 +71,42 @@ func init() {
 		}, {
 			Name: config.ConfigClientSecret,
 			Help: "Yandex Client Secret\nLeave blank normally.",
+		}, {
+			Name:     "unlink",
+			Help:     "Remove existing public link to file/folder with link command rather than creating.\nDefault is false, meaning link command will create or retrieve public link.",
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Token string `config:"token"`
+	Token  string `config:"token"`
+	Unlink bool   `config:"unlink"`
 }
 
 // Fs represents a remote yandex
 type Fs struct {
 	name     string
-	root     string         // root path
-	opt      Options        // parsed options
-	features *fs.Features   // optional features
-	yd       *yandex.Client // client for rest api
-	diskRoot string         // root path with "disk:/" container name
+	root     string       // root path
+	opt      Options      // parsed options
+	features *fs.Features // optional features
+	srv      *rest.Client // the connection to the yandex server
+	pacer    *pacer.Pacer // pacer for API calls
+	diskRoot string       // root path with "disk:/" container name
 }
 
 // Object describes a swift object
 type Object struct {
-	fs       *Fs       // what this object is part of
-	remote   string    // The remote path
-	md5sum   string    // The MD5Sum of the object
-	bytes    uint64    // Bytes in the object
-	modTime  time.Time // Modified time of the object
-	mimeType string    // Content type according to the server
+	fs          *Fs       // what this object is part of
+	remote      string    // The remote path
+	hasMetaData bool      // whether info below has been set
+	md5sum      string    // The MD5Sum of the object
+	size        int64     // Bytes in the object
+	modTime     time.Time // Modified time of the object
+	mimeType    string    // Content type according to the server
+
 }
 
 // ------------------------------------------------------------
@@ -111,71 +126,52 @@ func (f *Fs) String() string {
 	return fmt.Sprintf("Yandex %s", f.root)
 }
 
+// Precision return the precision of this Fs
+func (f *Fs) Precision() time.Duration {
+	return time.Nanosecond
+}
+
+// Hashes returns the supported hash sets.
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.MD5)
+}
+
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// read access token from ConfigFile string
-func getAccessToken(opt *Options) (*oauth2.Token, error) {
-	//Get access token from config string
-	decoder := json.NewDecoder(strings.NewReader(opt.Token))
-	var result *oauth2.Token
-	err := decoder.Decode(&result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+// retryErrorCodes is a slice of error codes that we will retry
+var retryErrorCodes = []int{
+	429, // Too Many Requests.
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
+	509, // Bandwidth Limit Exceeded
 }
 
-// NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
-	// Parse config into Options struct
-	opt := new(Options)
-	err := configstruct.Set(m, opt)
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried.  It returns the err as a convenience
+func shouldRetry(resp *http.Response, err error) (bool, error) {
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+// errorHandler parses a non 2xx error response into an error
+func errorHandler(resp *http.Response) error {
+	// Decode error response
+	errResponse := new(api.ErrorResponse)
+	err := rest.DecodeJSON(resp, &errResponse)
 	if err != nil {
-		return nil, err
+		fs.Debugf(nil, "Couldn't decode error response: %v", err)
 	}
-
-	//read access token from config
-	token, err := getAccessToken(opt)
-	if err != nil {
-		return nil, err
+	if errResponse.Message == "" {
+		errResponse.Message = resp.Status
 	}
-
-	//create new client
-	yandexDisk := yandex.NewClient(token.AccessToken, fshttp.NewClient(fs.Config))
-
-	f := &Fs{
-		name: name,
-		opt:  *opt,
-		yd:   yandexDisk,
+	if errResponse.StatusCode == 0 {
+		errResponse.StatusCode = resp.StatusCode
 	}
-	f.features = (&fs.Features{
-		ReadMimeType:            true,
-		WriteMimeType:           true,
-		CanHaveEmptyDirectories: true,
-	}).Fill(f)
-	f.setRoot(root)
-
-	// Check to see if the object exists and is a file
-	//request object meta info
-	var opt2 yandex.ResourceInfoRequestOptions
-	if ResourceInfoResponse, err := yandexDisk.NewResourceInfoRequest(root, opt2).Exec(); err != nil {
-		//return err
-	} else {
-		if ResourceInfoResponse.ResourceType == "file" {
-			rootDir := path.Dir(root)
-			if rootDir == "." {
-				rootDir = ""
-			}
-			f.setRoot(rootDir)
-			// return an error with an fs which points to the parent
-			return f, fs.ErrorIsFile
-		}
-	}
-
-	return f, nil
+	return errResponse
 }
 
 // Sets root in f
@@ -193,8 +189,118 @@ func (f *Fs) setRoot(root string) {
 	f.diskRoot = diskRoot
 }
 
+// filePath returns a escaped file path (f.root, file)
+func (f *Fs) filePath(file string) string {
+	return path.Join(f.diskRoot, file)
+}
+
+// dirPath returns a escaped file path (f.root, file) ending with '/'
+func (f *Fs) dirPath(file string) string {
+	return path.Join(f.diskRoot, file) + "/"
+}
+
+func (f *Fs) readMetaDataForPath(path string, options *api.ResourceInfoRequestOptions) (*api.ResourceInfoResponse, error) {
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/resources",
+		Parameters: url.Values{},
+	}
+
+	opts.Parameters.Set("path", path)
+
+	if options.SortMode != nil {
+		opts.Parameters.Set("sort", options.SortMode.String())
+	}
+	if options.Limit != 0 {
+		opts.Parameters.Set("limit", strconv.FormatUint(options.Limit, 10))
+	}
+	if options.Offset != 0 {
+		opts.Parameters.Set("offset", strconv.FormatUint(options.Offset, 10))
+	}
+	if options.Fields != nil {
+		opts.Parameters.Set("fields", strings.Join(options.Fields, ","))
+	}
+
+	var err error
+	var info api.ResourceInfoResponse
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(&opts, nil, &info)
+		return shouldRetry(resp, err)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &info, nil
+}
+
+// NewFs constructs an Fs from the path, container:path
+func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := oauthutil.GetToken(name, m)
+	if err != nil {
+		log.Fatalf("Couldn't read OAuth token (this should never happen).")
+	}
+	if token.RefreshToken == "" {
+		log.Fatalf("Unable to get RefreshToken. If you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend.")
+	}
+	if token.TokenType != "OAuth" {
+		token.TokenType = "OAuth"
+		err = oauthutil.PutToken(name, m, token, false)
+		if err != nil {
+			log.Fatalf("Couldn't save OAuth token (this should never happen).")
+		}
+		log.Printf("Automatically upgraded OAuth config.")
+	}
+	oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
+	if err != nil {
+		log.Fatalf("Failed to configure Yandex: %v", err)
+	}
+
+	f := &Fs{
+		name:  name,
+		opt:   *opt,
+		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
+		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+	}
+	f.setRoot(root)
+	f.features = (&fs.Features{
+		ReadMimeType:            true,
+		WriteMimeType:           true,
+		CanHaveEmptyDirectories: true,
+	}).Fill(f)
+	f.srv.SetErrorHandler(errorHandler)
+
+	// Check to see if the object exists and is a file
+	//request object meta info
+	// Check to see if the object exists and is a file
+	//request object meta info
+	if info, err := f.readMetaDataForPath(f.diskRoot, &api.ResourceInfoRequestOptions{}); err != nil {
+
+	} else {
+		if info.ResourceType == "file" {
+			rootDir := path.Dir(root)
+			if rootDir == "." {
+				rootDir = ""
+			}
+			f.setRoot(rootDir)
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
+		}
+	}
+	return f, nil
+}
+
 // Convert a list item into a DirEntry
-func (f *Fs) itemToDirEntry(remote string, object *yandex.ResourceInfoResponse) (fs.DirEntry, error) {
+func (f *Fs) itemToDirEntry(remote string, object *api.ResourceInfoResponse) (fs.DirEntry, error) {
 	switch object.ResourceType {
 	case "dir":
 		t, err := time.Parse(time.RFC3339Nano, object.Modified)
@@ -225,33 +331,33 @@ func (f *Fs) itemToDirEntry(remote string, object *yandex.ResourceInfoResponse) 
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	//request object meta info
-	var opt yandex.ResourceInfoRequestOptions
-	root := f.diskRoot
-	if dir != "" {
-		root += dir + "/"
-	}
-	var limit uint32 = 1000 // max number of object per request
-	var itemsCount uint32   //number of items per page in response
-	var offset uint32       //for the next page of request
-	opt.Limit = &limit
-	opt.Offset = &offset
+	root := f.dirPath(dir)
 
-	//query each page of list until itemCount is less then limit
+	var limit uint64 = 1000 // max number of objects per request
+	var itemsCount uint64   // number of items per page in response
+	var offset uint64       // for the next page of requests
+
 	for {
-		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(root, opt).Exec()
+		opts := &api.ResourceInfoRequestOptions{
+			Limit:  limit,
+			Offset: offset,
+		}
+		info, err := f.readMetaDataForPath(root, opts)
+
 		if err != nil {
-			yErr, ok := err.(yandex.DiskClientError)
-			if ok && yErr.Code == "DiskNotFoundError" {
-				return nil, fs.ErrorDirNotFound
+			if apiErr, ok := err.(*api.ErrorResponse); ok {
+				// does not exist
+				if apiErr.ErrorName == "DiskNotFoundError" {
+					return nil, fs.ErrorDirNotFound
+				}
 			}
 			return nil, err
 		}
-		itemsCount = uint32(len(ResourceInfoResponse.Embedded.Items))
+		itemsCount = uint64(len(info.Embedded.Items))
 
-		if ResourceInfoResponse.ResourceType == "dir" {
+		if info.ResourceType == "dir" {
 			//list all subdirs
-			for _, element := range ResourceInfoResponse.Embedded.Items {
+			for _, element := range info.Embedded.Items {
 				remote := path.Join(dir, element.Name)
 				entry, err := f.itemToDirEntry(remote, &element)
 				if err != nil {
@@ -261,6 +367,8 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 					entries = append(entries, entry)
 				}
 			}
+		} else if info.ResourceType == "file" {
+			return nil, fs.ErrorIsFile
 		}
 
 		//offset for the next page of items
@@ -270,95 +378,14 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			break
 		}
 	}
+
 	return entries, nil
-}
-
-// ListR lists the objects and directories of the Fs starting
-// from dir recursively into out.
-//
-// dir should be "" to start from the root, and should not
-// have trailing slashes.
-//
-// This should return ErrDirNotFound if the directory isn't
-// found.
-//
-// It should call callback for each tranche of entries read.
-// These need not be returned in any particular order.  If
-// callback returns an error then the listing will stop
-// immediately.
-//
-// Don't implement this unless you have a more efficient way
-// of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
-	//request files list. list is divided into pages. We send request for each page
-	//items per page is limited by limit
-	//TODO may be add config parameter for the items per page limit
-	var limit uint32 = 1000 // max number of object per request
-	var itemsCount uint32   //number of items per page in response
-	var offset uint32       //for the next page of request
-	// yandex disk api request options
-	var opt yandex.FlatFileListRequestOptions
-	opt.Limit = &limit
-	opt.Offset = &offset
-	prefix := f.diskRoot
-	if dir != "" {
-		prefix += dir + "/"
-	}
-	//query each page of list until itemCount is less then limit
-	for {
-		//send request
-		info, err := f.yd.NewFlatFileListRequest(opt).Exec()
-		if err != nil {
-			yErr, ok := err.(yandex.DiskClientError)
-			if ok && yErr.Code == "DiskNotFoundError" {
-				return fs.ErrorDirNotFound
-			}
-			return err
-		}
-		itemsCount = uint32(len(info.Items))
-
-		//list files
-		entries := make(fs.DirEntries, 0, len(info.Items))
-		for _, item := range info.Items {
-			// filter file list and get only files we need
-			if strings.HasPrefix(item.Path, prefix) {
-				//trim root folder from filename
-				var name = strings.TrimPrefix(item.Path, f.diskRoot)
-				entry, err := f.itemToDirEntry(name, &item)
-				if err != nil {
-					return err
-				}
-				if entry != nil {
-					entries = append(entries, entry)
-				}
-			}
-		}
-		// send the listing
-		err = callback(entries)
-		if err != nil {
-			return err
-		}
-
-		//offset for the next page of items
-		offset += itemsCount
-		//check if we reached end of list
-		if itemsCount < limit {
-			break
-		}
-	}
-	return nil
-}
-
-// NewObject finds the Object at remote.  If it can't be found it
-// returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(remote, nil)
 }
 
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(remote string, info *api.ResourceInfoResponse) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -368,6 +395,12 @@ func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse)
 		err = o.setMetaData(info)
 	} else {
 		err = o.readMetaData()
+		if apiErr, ok := err.(*api.ErrorResponse); ok {
+			// does not exist
+			if apiErr.ErrorName == "DiskNotFoundError" {
+				return nil, fs.ErrorObjectNotFound
+			}
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -375,52 +408,25 @@ func (f *Fs) newObjectWithInfo(remote string, info *yandex.ResourceInfoResponse)
 	return o, nil
 }
 
-// setMetaData sets the fs data from a storage.Object
-func (o *Object) setMetaData(info *yandex.ResourceInfoResponse) (err error) {
-	if info.ResourceType != "file" {
-		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
-	}
-	o.bytes = info.Size
-	o.md5sum = info.Md5
-	o.mimeType = info.MimeType
-
-	var modTimeString string
-	modTimeObj, ok := info.CustomProperties["rclone_modified"]
-	if ok {
-		// read modTime from rclone_modified custom_property of object
-		modTimeString, ok = modTimeObj.(string)
-	}
-	if !ok {
-		// read modTime from Modified property of object as a fallback
-		modTimeString = info.Modified
-	}
-	t, err := time.Parse(time.RFC3339Nano, modTimeString)
-	if err != nil {
-		return errors.Wrapf(err, "failed to parse modtime from %q", modTimeString)
-	}
-	o.modTime = t
-	return nil
+// NewObject finds the Object at remote.  If it can't be found it
+// returns the error fs.ErrorObjectNotFound.
+func (f *Fs) NewObject(remote string) (fs.Object, error) {
+	return f.newObjectWithInfo(remote, nil)
 }
 
-// readMetaData gets the info if it hasn't already been fetched
-func (o *Object) readMetaData() (err error) {
-	// exit if already fetched
-	if !o.modTime.IsZero() {
-		return nil
+// Creates from the parameters passed in a half finished Object which
+// must have setMetaData called on it
+//
+// Used to create new objects
+func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Object) {
+	// Temporary Object under construction
+	o = &Object{
+		fs:      f,
+		remote:  remote,
+		size:    size,
+		modTime: modTime,
 	}
-
-	//request meta info
-	var opt2 yandex.ResourceInfoRequestOptions
-	ResourceInfoResponse, err := o.fs.yd.NewResourceInfoRequest(o.remotePath(), opt2).Exec()
-	if err != nil {
-		if dcErr, ok := err.(yandex.DiskClientError); ok {
-			if dcErr.Code == "DiskNotFoundError" {
-				return fs.ErrorObjectNotFound
-			}
-		}
-		return err
-	}
-	return o.setMetaData(ResourceInfoResponse)
+	return o
 }
 
 // Put the object
@@ -429,17 +435,7 @@ func (o *Object) readMetaData() (err error) {
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	remote := src.Remote()
-	size := src.Size()
-	modTime := src.ModTime()
-
-	o := &Object{
-		fs:      f,
-		remote:  remote,
-		bytes:   uint64(size),
-		modTime: modTime,
-	}
-	//TODO maybe read metadata after upload to check if file uploaded successfully
+	o := f.createObject(src.Remote(), src.ModTime(), src.Size())
 	return o, o.Update(in, src, options...)
 }
 
@@ -448,13 +444,178 @@ func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption
 	return f.Put(in, src, options...)
 }
 
+// CreateDir makes a directory
+func (f *Fs) CreateDir(path string) (err error) {
+	//fmt.Printf("CreateDir: %s\n", path)
+
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:     "PUT",
+		Path:       "/resources",
+		Parameters: url.Values{},
+		NoResponse: true,
+	}
+
+	opts.Parameters.Set("path", path)
+
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.Call(&opts)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		//fmt.Printf("CreateDir Error: %s\n", err.Error())
+		return err
+	}
+	// fmt.Printf("...Id %q\n", *info.Id)
+	return nil
+}
+
+// This really needs improvement and especially proper error checking
+// but Yandex does not publish a List of possible errors and when they're
+// expected to occur.
+func (f *Fs) mkDirs(path string) (err error) {
+	//trim filename from path
+	//dirString := strings.TrimSuffix(path, filepath.Base(path))
+	//trim "disk:" from path
+	dirString := strings.TrimPrefix(path, "disk:")
+	if dirString == "" {
+		return nil
+	}
+
+	if err = f.CreateDir(dirString); err != nil {
+		if apiErr, ok := err.(*api.ErrorResponse); ok {
+			// allready exists
+			if apiErr.ErrorName != "DiskPathPointsToExistentDirectoryError" {
+				// 2 if it fails then create all directories in the path from root.
+				dirs := strings.Split(dirString, "/") //path separator
+				var mkdirpath = "/"                   //path separator /
+				for _, element := range dirs {
+					if element != "" {
+						mkdirpath += element + "/" //path separator /
+						if err = f.CreateDir(mkdirpath); err != nil {
+							// ignore errors while creating dirs
+						}
+					}
+				}
+			}
+			return nil
+		}
+	}
+	return err
+}
+
+func (f *Fs) mkParentDirs(resPath string) error {
+	// defer log.Trace(dirPath, "")("")
+	// chop off trailing / if it exists
+	if strings.HasSuffix(resPath, "/") {
+		resPath = resPath[:len(resPath)-1]
+	}
+	parent := path.Dir(resPath)
+	if parent == "." {
+		parent = ""
+	}
+	return f.mkDirs(parent)
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
-	root := f.diskRoot
-	if dir != "" {
-		root += dir + "/"
+	path := f.filePath(dir)
+	return f.mkDirs(path)
+}
+
+// waitForJob waits for the job with status in url to complete
+func (f *Fs) waitForJob(location string) (err error) {
+	opts := rest.Opts{
+		RootURL: location,
+		Method:  "GET",
 	}
-	return mkDirFullPath(f.yd, root)
+	deadline := time.Now().Add(fs.Config.Timeout)
+	for time.Now().Before(deadline) {
+		var resp *http.Response
+		var body []byte
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.Call(&opts)
+			if err != nil {
+				return fserrors.ShouldRetry(err), err
+			}
+			body, err = rest.ReadBody(resp)
+			return fserrors.ShouldRetry(err), err
+		})
+		if err != nil {
+			return err
+		}
+		// Try to decode the body first as an api.AsyncOperationStatus
+		var status api.AsyncStatus
+		err = json.Unmarshal(body, &status)
+		if err != nil {
+			return errors.Wrapf(err, "async status result not JSON: %q", body)
+		}
+
+		switch status.Status {
+		case "failure":
+			return errors.Errorf("async operation returned %q", status.Status)
+		case "success":
+			return nil
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+	return errors.Errorf("async operation didn't complete after %v", fs.Config.Timeout)
+}
+
+func (f *Fs) delete(path string, hardDelete bool) (err error) {
+	opts := rest.Opts{
+		Method:     "DELETE",
+		Path:       "/resources",
+		Parameters: url.Values{},
+	}
+
+	opts.Parameters.Set("path", path)
+	opts.Parameters.Set("permanently", strconv.FormatBool(hardDelete))
+
+	var resp *http.Response
+	var body []byte
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.Call(&opts)
+		if err != nil {
+			return fserrors.ShouldRetry(err), err
+		}
+		body, err = rest.ReadBody(resp)
+		return fserrors.ShouldRetry(err), err
+	})
+	if err != nil {
+		return err
+	}
+
+	// if 202 Accepted it's an async operation we have to wait for it complete before retuning
+	if resp.StatusCode == 202 {
+		var info api.AsyncInfo
+		err = json.Unmarshal(body, &info)
+		if err != nil {
+			return errors.Wrapf(err, "async info result not JSON: %q", body)
+		}
+		return f.waitForJob(info.HRef)
+	}
+	return nil
+}
+
+// purgeCheck remotes the root directory, if check is set then it
+// refuses to do so if it has anything in
+func (f *Fs) purgeCheck(dir string, check bool) error {
+	root := f.filePath(dir)
+	if check {
+		//to comply with rclone logic we check if the directory is empty before delete.
+		//send request to get list of objects in this directory.
+		info, err := f.readMetaDataForPath(root, &api.ResourceInfoRequestOptions{})
+		if err != nil {
+			return errors.Wrap(err, "rmdir failed")
+		}
+		if len(info.Embedded.Items) != 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
+	}
+	//delete directory
+	return f.delete(root, false)
 }
 
 // Rmdir deletes the container
@@ -462,34 +623,6 @@ func (f *Fs) Mkdir(dir string) error {
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(dir string) error {
 	return f.purgeCheck(dir, true)
-}
-
-// purgeCheck remotes the root directory, if check is set then it
-// refuses to do so if it has anything in
-func (f *Fs) purgeCheck(dir string, check bool) error {
-	root := f.diskRoot
-	if dir != "" {
-		root += dir + "/"
-	}
-	if check {
-		//to comply with rclone logic we check if the directory is empty before delete.
-		//send request to get list of objects in this directory.
-		var opt yandex.ResourceInfoRequestOptions
-		ResourceInfoResponse, err := f.yd.NewResourceInfoRequest(root, opt).Exec()
-		if err != nil {
-			return errors.Wrap(err, "rmdir failed")
-		}
-		if len(ResourceInfoResponse.Embedded.Items) != 0 {
-			return errors.New("rmdir failed: directory not empty")
-		}
-	}
-	//delete directory
-	return f.yd.Delete(root, true)
-}
-
-// Precision return the precision of this Fs
-func (f *Fs) Precision() time.Duration {
-	return time.Nanosecond
 }
 
 // Purge deletes all the files and the container
@@ -501,14 +634,242 @@ func (f *Fs) Purge() error {
 	return f.purgeCheck("", false)
 }
 
-// CleanUp permanently deletes all trashed files/folders
-func (f *Fs) CleanUp() error {
-	return f.yd.EmptyTrash()
+// copyOrMoves copys or moves directories or files depending on the mthod parameter
+func (f *Fs) copyOrMove(method, src, dst string, overwrite bool) (err error) {
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/resources/" + method,
+		Parameters: url.Values{},
+	}
+
+	opts.Parameters.Set("from", src)
+	opts.Parameters.Set("path", dst)
+	opts.Parameters.Set("overwrite", strconv.FormatBool(overwrite))
+
+	var resp *http.Response
+	var body []byte
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.Call(&opts)
+		if err != nil {
+			return fserrors.ShouldRetry(err), err
+		}
+		body, err = rest.ReadBody(resp)
+		return fserrors.ShouldRetry(err), err
+	})
+	if err != nil {
+		return err
+	}
+
+	// if 202 Accepted it's an async operation we have to wait for it complete before retuning
+	if resp.StatusCode == 202 {
+		var info api.AsyncInfo
+		err = json.Unmarshal(body, &info)
+		if err != nil {
+			return errors.Wrapf(err, "async info result not JSON: %q", body)
+		}
+		return f.waitForJob(info.HRef)
+	}
+	return nil
 }
 
-// Hashes returns the supported hash sets.
-func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.MD5)
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+
+	dstPath := f.filePath(remote)
+	err := f.mkParentDirs(dstPath)
+	if err != nil {
+		return nil, err
+	}
+	err = f.copyOrMove("copy", srcObj.filePath(), dstPath, false)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't copy file")
+	}
+
+	return f.NewObject(remote)
+}
+
+// Move src to this remote using server side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	dstPath := f.filePath(remote)
+	err := f.mkParentDirs(dstPath)
+	if err != nil {
+		return nil, err
+	}
+	err = f.copyOrMove("move", srcObj.filePath(), dstPath, false)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't move file")
+	}
+
+	return f.NewObject(remote)
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		fs.Debugf(srcFs, "Can't move directory - not same remote type")
+		return fs.ErrorCantDirMove
+	}
+	srcPath := path.Join(srcFs.diskRoot, srcRemote)
+	dstPath := f.dirPath(dstRemote)
+
+	//fmt.Printf("Move src: %s (FullPath: %s), dst: %s (FullPath: %s)\n", srcRemote, srcPath, dstRemote, dstPath)
+
+	// Refuse to move to or from the root
+	if srcPath == "disk:/" || dstPath == "disk:/" {
+		fs.Debugf(src, "DirMove error: Can't move root")
+		return errors.New("can't move root directory")
+	}
+
+	err := f.mkParentDirs(dstPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = f.readMetaDataForPath(dstPath, &api.ResourceInfoRequestOptions{})
+	if apiErr, ok := err.(*api.ErrorResponse); ok {
+		// does not exist
+		if apiErr.ErrorName == "DiskNotFoundError" {
+			// OK
+		}
+	} else if err != nil {
+		return err
+	} else {
+		return fs.ErrorDirExists
+	}
+
+	err = f.copyOrMove("move", srcPath, dstPath, false)
+
+	if err != nil {
+		return errors.Wrap(err, "couldn't move directory")
+	}
+	return nil
+}
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(remote string) (link string, err error) {
+	var path string
+	if f.opt.Unlink {
+		path = "/resources/unpublish"
+	} else {
+		path = "/resources/publish"
+	}
+	opts := rest.Opts{
+		Method:     "PUT",
+		Path:       path,
+		Parameters: url.Values{},
+		NoResponse: true,
+	}
+
+	opts.Parameters.Set("path", f.filePath(remote))
+
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.Call(&opts)
+		return shouldRetry(resp, err)
+	})
+
+	if apiErr, ok := err.(*api.ErrorResponse); ok {
+		// does not exist
+		if apiErr.ErrorName == "DiskNotFoundError" {
+			return "", fs.ErrorObjectNotFound
+		}
+	}
+	if err != nil {
+		if f.opt.Unlink {
+			return "", errors.Wrap(err, "couldn't remove public link")
+		}
+		return "", errors.Wrap(err, "couldn't create public link")
+	}
+
+	info, err := f.readMetaDataForPath(f.filePath(remote), &api.ResourceInfoRequestOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	if info.PublicURL == "" {
+		return "", errors.New("couldn't create public link - no link path received")
+	}
+	return info.PublicURL, nil
+}
+
+// CleanUp permanently deletes all trashed files/folders
+func (f *Fs) CleanUp() (err error) {
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:     "DELETE",
+		Path:       "/trash/resources",
+		NoResponse: true,
+	}
+
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.Call(&opts)
+		return shouldRetry(resp, err)
+	})
+	return err
+}
+
+// About gets quota information
+func (f *Fs) About() (*fs.Usage, error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/",
+	}
+
+	var resp *http.Response
+	var info api.DiskInfo
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(&opts, nil, &info)
+		return shouldRetry(resp, err)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	usage := &fs.Usage{
+		Total: fs.NewUsageValue(info.TotalSpace),
+		Used:  fs.NewUsageValue(info.UsedSpace),
+		Free:  fs.NewUsageValue(info.TotalSpace - info.UsedSpace),
+	}
+	return usage, nil
 }
 
 // ------------------------------------------------------------
@@ -531,18 +892,49 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.MD5 {
-		return "", hash.ErrUnsupported
-	}
-	return o.md5sum, nil
+// Returns the full remote path for the object
+func (o *Object) filePath() string {
+	return o.fs.filePath(o.remote)
 }
 
-// Size returns the size of an object in bytes
-func (o *Object) Size() int64 {
-	var size = int64(o.bytes) //need to cast from uint64 in yandex disk to int64 in rclone. can cause overflow
-	return size
+// setMetaData sets the fs data from a storage.Object
+func (o *Object) setMetaData(info *api.ResourceInfoResponse) (err error) {
+	o.hasMetaData = true
+	o.size = info.Size
+	o.md5sum = info.Md5
+	o.mimeType = info.MimeType
+
+	var modTimeString string
+	modTimeObj, ok := info.CustomProperties["rclone_modified"]
+	if ok {
+		// read modTime from rclone_modified custom_property of object
+		modTimeString, ok = modTimeObj.(string)
+	}
+	if !ok {
+		// read modTime from Modified property of object as a fallback
+		modTimeString = info.Modified
+	}
+	t, err := time.Parse(time.RFC3339Nano, modTimeString)
+	if err != nil {
+		return errors.Wrapf(err, "failed to parse modtime from %q", modTimeString)
+	}
+	o.modTime = t
+	return nil
+}
+
+// readMetaData reads ands sets the new metadata for a storage.Object
+func (o *Object) readMetaData() (err error) {
+	if o.hasMetaData {
+		return nil
+	}
+	info, err := o.fs.readMetaDataForPath(o.filePath(), &api.ResourceInfoRequestOptions{})
+	if err != nil {
+		return err
+	}
+	if info.ResourceType != "file" {
+		return fs.ErrorNotAFile
+	}
+	return o.setMetaData(info)
 }
 
 // ModTime returns the modification time of the object
@@ -558,28 +950,22 @@ func (o *Object) ModTime() time.Time {
 	return o.modTime
 }
 
-// Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	return o.fs.yd.Download(o.remotePath(), fs.OpenOptionHeaders(options))
-}
-
-// Remove an object
-func (o *Object) Remove() error {
-	return o.fs.yd.Delete(o.remotePath(), true)
-}
-
-// SetModTime sets the modification time of the local fs object
-//
-// Commits the datastore
-func (o *Object) SetModTime(modTime time.Time) error {
-	remote := o.remotePath()
-	// set custom_property 'rclone_modified' of object to modTime
-	err := o.fs.yd.SetCustomProperty(remote, "rclone_modified", modTime.Format(time.RFC3339Nano))
+// Size returns the size of an object in bytes
+func (o *Object) Size() int64 {
+	err := o.readMetaData()
 	if err != nil {
-		return err
+		fs.Logf(o, "Failed to read metadata: %v", err)
+		return 0
 	}
-	o.modTime = modTime
-	return nil
+	return o.size
+}
+
+// Hash returns the Md5sum of an object returning a lowercase hex string
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.MD5 {
+		return "", hash.ErrUnsupported
+	}
+	return o.md5sum, nil
 }
 
 // Storable returns whether this object is storable
@@ -587,9 +973,116 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// Returns the remote path for the object
-func (o *Object) remotePath() string {
-	return o.fs.diskRoot + o.remote
+func (o *Object) setCustomProperty(property string, value string) (err error) {
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:     "PATCH",
+		Path:       "/resources",
+		Parameters: url.Values{},
+		NoResponse: true,
+	}
+
+	opts.Parameters.Set("path", o.filePath())
+	rcm := map[string]interface{}{
+		property: value,
+	}
+	cpr := api.CustomPropertyResponse{CustomProperties: rcm}
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.CallJSON(&opts, &cpr, nil)
+		return shouldRetry(resp, err)
+	})
+	return err
+}
+
+// SetModTime sets the modification time of the local fs object
+//
+// Commits the datastore
+func (o *Object) SetModTime(modTime time.Time) error {
+	// set custom_property 'rclone_modified' of object to modTime
+	err := o.setCustomProperty("rclone_modified", modTime.Format(time.RFC3339Nano))
+	if err != nil {
+		return err
+	}
+	o.modTime = modTime
+	return nil
+}
+
+// Open an object for read
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	// prepare download
+	var resp *http.Response
+	var dl api.AsyncInfo
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/resources/download",
+		Parameters: url.Values{},
+	}
+
+	opts.Parameters.Set("path", o.filePath())
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.CallJSON(&opts, nil, &dl)
+		return shouldRetry(resp, err)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// perform the download
+	opts = rest.Opts{
+		RootURL: dl.HRef,
+		Method:  "GET",
+		Options: options,
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.Call(&opts)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, err
+}
+
+func (o *Object) upload(in io.Reader, overwrite bool, mimeType string) (err error) {
+	// prepare upload
+	var resp *http.Response
+	var ur api.AsyncInfo
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/resources/upload",
+		Parameters: url.Values{},
+	}
+
+	opts.Parameters.Set("path", o.filePath())
+	opts.Parameters.Set("overwrite", strconv.FormatBool(overwrite))
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.CallJSON(&opts, nil, &ur)
+		return shouldRetry(resp, err)
+	})
+
+	if err != nil {
+		return err
+	}
+
+	// perform the actual upload
+	opts = rest.Opts{
+		RootURL:     ur.HRef,
+		Method:      "PUT",
+		ContentType: mimeType,
+		Body:        in,
+		NoResponse:  true,
+	}
+
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.Call(&opts)
+		return shouldRetry(resp, err)
+	})
+
+	return err
 }
 
 // Update the already existing object
@@ -597,96 +1090,53 @@ func (o *Object) remotePath() string {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	in := readers.NewCountingReader(in0)
+func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	in1 := readers.NewCountingReader(in)
 	modTime := src.ModTime()
+	remote := o.filePath()
 
-	remote := o.remotePath()
 	//create full path to file before upload.
-	err1 := mkDirFullPath(o.fs.yd, remote)
-	if err1 != nil {
-		return err1
+	err := o.fs.mkParentDirs(remote)
+	if err != nil {
+		return err
 	}
+
 	//upload file
-	overwrite := true //overwrite existing file
-	mimeType := fs.MimeType(src)
-	err := o.fs.yd.Upload(in, remote, overwrite, mimeType)
-	if err == nil {
-		//if file uploaded sucessfully then return metadata
-		o.bytes = in.BytesRead()
-		o.modTime = modTime
-		o.md5sum = "" // according to unit tests after put the md5 is empty.
-		//and set modTime of uploaded file
-		err = o.SetModTime(modTime)
+	err = o.upload(in1, true, fs.MimeType(src))
+	if err != nil {
+		return err
 	}
+
+	//if file uploaded sucessfully then return metadata
+	o.modTime = modTime
+	o.md5sum = ""                   // according to unit tests after put the md5 is empty.
+	o.size = int64(in1.BytesRead()) // better solution o.readMetaData() ?
+	//and set modTime of uploaded file
+	err = o.SetModTime(modTime)
+
 	return err
 }
 
-// utility funcs-------------------------------------------------------------------
-
-// mkDirExecute execute mkdir
-func mkDirExecute(client *yandex.Client, path string) (int, string, error) {
-	statusCode, jsonErrorString, err := client.Mkdir(path)
-	if statusCode == 409 { // dir already exist
-		return statusCode, jsonErrorString, err
-	}
-	if statusCode == 201 { // dir was created
-		return statusCode, jsonErrorString, err
-	}
-	if err != nil {
-		// error creating directory
-		return statusCode, jsonErrorString, errors.Wrap(err, "failed to create folder")
-	}
-	return 0, "", nil
-}
-
-//mkDirFullPath Creates Each Directory in the path if needed. Send request once for every directory in the path.
-func mkDirFullPath(client *yandex.Client, path string) error {
-	//trim filename from path
-	dirString := strings.TrimSuffix(path, filepath.Base(path))
-	//trim "disk:/" from path
-	dirString = strings.TrimPrefix(dirString, "disk:/")
-
-	//1 Try to create directory first
-	if _, jsonErrorString, err := mkDirExecute(client, dirString); err != nil {
-		er2, _ := client.ParseAPIError(jsonErrorString)
-		if er2 != "DiskPathPointsToExistentDirectoryError" {
-			//2 if it fails then create all directories in the path from root.
-			dirs := strings.Split(dirString, "/") //path separator /
-			var mkdirpath = "/"                   //path separator /
-			for _, element := range dirs {
-				if element != "" {
-					mkdirpath += element + "/" //path separator /
-					_, _, err2 := mkDirExecute(client, mkdirpath)
-					if err2 != nil {
-						//we continue even if some directories exist.
-					}
-				}
-			}
-		}
-	}
-	return nil
+// Remove an object
+func (o *Object) Remove() error {
+	return o.fs.delete(o.filePath(), false)
 }
 
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType() string {
-	err := o.readMetaData()
-	if err != nil {
-		fs.Logf(o, "Failed to read metadata: %v", err)
-		return ""
-	}
 	return o.mimeType
 }
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = (*Fs)(nil)
-	_ fs.Purger      = (*Fs)(nil)
-	_ fs.CleanUpper  = (*Fs)(nil)
-	_ fs.PutStreamer = (*Fs)(nil)
-	_ fs.ListRer     = (*Fs)(nil)
-	//_ fs.Copier = (*Fs)(nil)
-	_ fs.ListRer   = (*Fs)(nil)
-	_ fs.Object    = (*Object)(nil)
-	_ fs.MimeTyper = &Object{}
+	_ fs.Fs           = (*Fs)(nil)
+	_ fs.Purger       = (*Fs)(nil)
+	_ fs.Copier       = (*Fs)(nil)
+	_ fs.Mover        = (*Fs)(nil)
+	_ fs.DirMover     = (*Fs)(nil)
+	_ fs.PublicLinker = (*Fs)(nil)
+	_ fs.CleanUpper   = (*Fs)(nil)
+	_ fs.Abouter      = (*Fs)(nil)
+	_ fs.Object       = (*Object)(nil)
+	_ fs.MimeTyper    = (*Object)(nil)
 )
