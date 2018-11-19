@@ -66,12 +66,13 @@ type Response struct {
 // Note that status collects all the status values for which we just
 // check the first is OK.
 type Prop struct {
-	Status    []string  `xml:"DAV: status"`
-	Name      string    `xml:"DAV: prop>displayname,omitempty"`
-	Type      *xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
-	Size      int64     `xml:"DAV: prop>getcontentlength,omitempty"`
-	Modified  Time      `xml:"DAV: prop>getlastmodified,omitempty"`
-	Checksums []string  `xml:"prop>checksums>checksum,omitempty"`
+	Status       []string  `xml:"DAV: status"`
+	Name         string    `xml:"DAV: prop>displayname,omitempty"`
+	Type         *xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
+	IsCollection *int      `xml:"DAV: prop>iscollection,omitempty"` // this is a Microsoft extension see #2716
+	Size         int64     `xml:"DAV: prop>getcontentlength,omitempty"`
+	Modified     Time      `xml:"DAV: prop>getlastmodified,omitempty"`
+	Checksums    []string  `xml:"prop>checksums>checksum,omitempty"`
 }
 
 // Parse a status of the form "HTTP/1.1 200 OK" or "HTTP/1.1 200"
