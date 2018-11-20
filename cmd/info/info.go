@@ -138,6 +138,7 @@ func (r *results) checkChar(c rune) {
 	escape := false
 	if err != nil {
 		fs.Infof(r.f, "Couldn't write file 0x%02X", c)
+		escape = true
 	} else {
 		fs.Infof(r.f, "OK writing file 0x%02X", c)
 	}
