@@ -424,20 +424,13 @@ func (u *UI) removeEntry(pos int) {
 func (u *UI) delete() {
 	dirPos := u.sortPerm[u.dirPosMap[u.path].entry]
 	entry := u.entries[dirPos]
-
-	file := false
-	d, _ := u.d.GetDir(dirPos)
-	if d == nil {
-		file = true
-	}
-
 	u.boxMenu = []string{"cancel", "confirm"}
-	if file {
+	if obj, isFile := entry.(fs.Object); isFile {
 		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
 			if o != 1 {
 				return "Aborted!", nil
 			}
-			err := f.Rmdir(entry.String())
+			err := operations.DeleteFile(obj)
 			if err != nil {
 				return "", err
 			}
