@@ -53,7 +53,6 @@ func mountOptions(device string, mountpoint string) (options []string) {
 
 	// OSX options
 	if runtime.GOOS == "darwin" {
-		options = append(options, "-o", "volname="+mountlib.VolumeName)
 		if mountlib.NoAppleDouble {
 			options = append(options, "-o", "noappledouble")
 		}
@@ -70,6 +69,9 @@ func mountOptions(device string, mountpoint string) (options []string) {
 		options = append(options, "--FileSystemName=rclone")
 	}
 
+	if mountlib.VolumeName != "" {
+		options = append(options, "-o", "volname="+mountlib.VolumeName)
+	}
 	if mountlib.AllowNonEmpty {
 		options = append(options, "-o", "nonempty")
 	}

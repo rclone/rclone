@@ -34,7 +34,7 @@ developed on its own branch: https://github.com/russross/blackfriday/tree/v2 and
 documentation is available at
 https://godoc.org/gopkg.in/russross/blackfriday.v2.
 
-It is `go get`-able via via [gopkg.in][6] at `gopkg.in/russross/blackfriday.v2`,
+It is `go get`-able via [gopkg.in][6] at `gopkg.in/russross/blackfriday.v2`,
 but we highly recommend using package management tool like [dep][7] or
 [Glide][8] and make use of semantic versioning. With package management you
 should import `github.com/russross/blackfriday` and specify that you're using
@@ -330,6 +330,12 @@ are a few of note:
 
 *   [LaTeX output](https://bitbucket.org/ambrevar/blackfriday-latex):
     renders output as LaTeX.
+
+*   [bfchroma](https://github.com/Depado/bfchroma/): provides convenience
+    integration with the [Chroma](https://github.com/alecthomas/chroma) code
+    highlighting library. bfchroma is only compatible with v2 of Blackfriday and
+    provides a drop-in renderer ready to use with Blackfriday, as well as
+    options and means for further customization.
 
 
 TODO

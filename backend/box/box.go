@@ -252,7 +252,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
-		log.Fatalf("Failed to configure Box: %v", err)
+		return nil, errors.Wrap(err, "failed to configure Box")
 	}
 
 	f := &Fs{

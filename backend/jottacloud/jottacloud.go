@@ -464,12 +464,12 @@ func (f *Fs) listFileDir(remoteStartPath string, startFolder *api.JottaFolder, f
 		if folder.Deleted {
 			return nil
 		}
-		folderPath := path.Join(folder.Path, folder.Name)
-		remoteDirLength := len(folderPath) - pathPrefixLength
+		folderPath := restoreReservedChars(path.Join(folder.Path, folder.Name))
+		folderPathLength := len(folderPath)
 		var remoteDir string
-		if remoteDirLength > 0 {
-			remoteDir = restoreReservedChars(folderPath[pathPrefixLength+1:])
-			if remoteDirLength > startPathLength {
+		if folderPathLength > pathPrefixLength {
+			remoteDir = folderPath[pathPrefixLength+1:]
+			if folderPathLength > startPathLength {
 				d := fs.NewDir(remoteDir, time.Time(folder.ModifiedAt))
 				err := fn(d)
 				if err != nil {

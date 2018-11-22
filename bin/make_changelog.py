@@ -165,7 +165,7 @@ def main():
 %s
 * Bug Fixes
 %s
-%s""" % (version, datetime.date.today(), "\n".join(new_features_lines), "\n".join(bugfix_lines), "\n".join(backend_lines)))
+%s""" % (next_version, datetime.date.today(), "\n".join(new_features_lines), "\n".join(bugfix_lines), "\n".join(backend_lines)))
     sys.stdout.write(old_tail)
                 
 

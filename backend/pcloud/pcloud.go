@@ -246,7 +246,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
-		log.Fatalf("Failed to configure Pcloud: %v", err)
+		return nil, errors.Wrap(err, "failed to configure Pcloud")
 	}
 
 	f := &Fs{

@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -94,6 +96,33 @@ func TestLs(t *testing.T) {
 	res := buf.String()
 	assert.Contains(t, res, "        0 empty space\n")
 	assert.Contains(t, res, "       60 potato2\n")
+}
+
+func TestLsWithFilesFrom(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth("empty space", "", t2)
+
+	fstest.CheckItems(t, r.Fremote, file1, file2)
+
+	// Set the --files-from equivalent
+	f, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, f.AddFile("potato2"))
+	require.NoError(t, f.AddFile("notfound"))
+
+	// Monkey patch the active filter
+	oldFilter := filter.Active
+	filter.Active = f
+	defer func() {
+		filter.Active = oldFilter
+	}()
+
+	var buf bytes.Buffer
+	err = operations.List(r.Fremote, &buf)
+	require.NoError(t, err)
+	assert.Equal(t, "       60 potato2\n", buf.String())
 }
 
 func TestLsLong(t *testing.T) {
@@ -374,6 +403,78 @@ func TestRcat(t *testing.T) {
 	check(false)
 }
 
+func TestPurge(t *testing.T) {
+	r := fstest.NewRunIndividual(t) // make new container (azureblob has delayed mkdir after rmdir)
+	defer r.Finalise()
+	r.Mkdir(r.Fremote)
+
+	// Make some files and dirs
+	r.ForceMkdir(r.Fremote)
+	file1 := r.WriteObject("A1/B1/C1/one", "aaa", t1)
+	//..and dirs we expect to delete
+	require.NoError(t, operations.Mkdir(r.Fremote, "A2"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B2"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B2/C2"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B1/C3"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A3"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A3/B3"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A3/B3/C4"))
+	//..and one more file at the end
+	file2 := r.WriteObject("A1/two", "bbb", t2)
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file1, file2,
+		},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+			"A2",
+			"A1/B2",
+			"A1/B2/C2",
+			"A1/B1/C3",
+			"A3",
+			"A3/B3",
+			"A3/B3/C4",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	require.NoError(t, operations.Purge(r.Fremote, "A1/B1"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file2,
+		},
+		[]string{
+			"A1",
+			"A2",
+			"A1/B2",
+			"A1/B2/C2",
+			"A3",
+			"A3/B3",
+			"A3/B3/C4",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	require.NoError(t, operations.Purge(r.Fremote, ""))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+}
+
 func TestRmdirsNoLeaveRoot(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -410,6 +511,28 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 			"A3",
 			"A3/B3",
 			"A3/B3/C4",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	require.NoError(t, operations.Rmdirs(r.Fremote, "A3/B3/C4", false))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file1, file2,
+		},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+			"A2",
+			"A1/B2",
+			"A1/B2/C2",
+			"A1/B1/C3",
+			"A3",
+			"A3/B3",
 		},
 		fs.GetModifyWindow(r.Fremote),
 	)
@@ -492,6 +615,28 @@ func TestRcatSize(t *testing.T) {
 
 	// Check files exist
 	fstest.CheckItems(t, r.Fremote, file1, file2)
+}
+
+func TestCopyURL(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	contents := "file1 contents\n"
+	file1 := r.WriteFile("file1", contents, t1)
+	r.Mkdir(r.Fremote)
+	fstest.CheckItems(t, r.Fremote)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(contents))
+		assert.NoError(t, err)
+	}))
+	defer ts.Close()
+
+	o, err := operations.CopyURL(r.Fremote, "file1", ts.URL)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), o.Size())
+
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
 }
 
 func TestMoveFile(t *testing.T) {

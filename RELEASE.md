@@ -32,6 +32,21 @@ Early in the next release cycle update the vendored dependencies
   * git add new files
   * git commit -a -v
 
+If `make update` fails with errors like this:
+
+```
+# github.com/cpuguy83/go-md2man/md2man
+../../../../pkg/mod/github.com/cpuguy83/go-md2man@v1.0.8/md2man/md2man.go:11:16: undefined: blackfriday.EXTENSION_NO_INTRA_EMPHASIS
+../../../../pkg/mod/github.com/cpuguy83/go-md2man@v1.0.8/md2man/md2man.go:12:16: undefined: blackfriday.EXTENSION_TABLES
+```
+
+Can be fixed with
+
+    * GO111MODULE=on go get -u github.com/russross/blackfriday@v1.5.2
+    * GO111MODULE=on go mod tidy
+    * GO111MODULE=on go mod vendor
+ 
+
 Making a point release.  If rclone needs a point release due to some
 horrendous bug, then
   * git branch v1.XX v1.XX-fixes

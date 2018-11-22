@@ -83,6 +83,18 @@ Special characters can be escaped with a `\` before them.
     \\.jpg       - matches "\.jpg"
     \[one\].jpg  - matches "[one].jpg"
 
+Patterns are case sensitive unless the `--ignore-case` flag is used.
+
+Without `--ignore-case` (default)
+
+    potato - matches "potato"
+           - doesn't match "POTATO"
+
+With `--ignore-case`
+
+    potato - matches "potato"
+           - matches "POTATO"
+
 Note also that rclone filter globs can only be used in one of the
 filter command line flags, not in the specification of the remote, so
 `rclone copy "remote:dir*.jpg" /path/to/dir` won't work - what is
@@ -293,6 +305,10 @@ This reads a list of file names from the file passed in and **only**
 these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
+Rclone will not scan any directories if you use `--files-from` it will
+just look at the files specified.  Rclone will not error if any of the
+files are missing from the source.
+
 This option can be repeated to read from more than one file.  These
 are read in the order that they are placed on the command line.
 
@@ -426,6 +442,15 @@ Always test first with `--dry-run` and `-v` before using this flag.
 This dumps the defined filters to the output as regular expressions.
 
 Useful for debugging.
+
+### `--ignore-case` - make searches case insensitive ###
+
+Normally filter patterns are case sensitive.  If this flag is supplied
+then filter patterns become case insensitive.
+
+Normally a `--include "file.txt"` will not match a file called
+`FILE.txt`.  However if you use the `--ignore-case` flag then
+`--include "file.txt"` this will match a file called `FILE.txt`.
 
 ## Quoting shell metacharacters ##
 

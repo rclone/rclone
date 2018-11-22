@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
+	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config/configmap"
@@ -50,6 +50,7 @@ const (
 	defaultUploadCutoff = 256 * fs.MebiByte
 	maxUploadCutoff     = 256 * fs.MebiByte
 	defaultAccessTier   = azblob.AccessTierNone
+	maxTryTimeout       = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
 )
 
 // Register with Fs
@@ -322,7 +323,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
 		}
-		pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+		pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 		containerURL = serviceURL.NewContainerURL(container)
 	case opt.SASURL != "":
@@ -331,7 +332,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 			return nil, errors.Wrapf(err, "failed to parse SAS URL")
 		}
 		// use anonymous credentials in case of sas url
-		pipeline := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
+		pipeline := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		// Check if we have container level SAS or account level sas
 		parts := azblob.NewBlobURLParts(*u)
 		if parts.ContainerName != "" {
@@ -722,7 +723,7 @@ func (f *Fs) Mkdir(dir string) error {
 // isEmpty checks to see if a given directory is empty and returns an error if not
 func (f *Fs) isEmpty(dir string) (err error) {
 	empty := true
-	err = f.list("", true, 1, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
+	err = f.list(dir, true, 1, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
 		empty = false
 		return nil
 	})
@@ -1285,16 +1286,25 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
-		BufferSize:      int(o.fs.opt.ChunkSize) + 1, // +1 Needed until https://github.com/Azure/azure-storage-blob-go/pull/75 is merged
+		BufferSize:      int(o.fs.opt.ChunkSize),
 		MaxBuffers:      4,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
+	}
+	// FIXME Until https://github.com/Azure/azure-storage-blob-go/pull/75
+	// is merged the SDK can't upload a single blob of exactly the chunk
+	// size, so upload with a multpart upload to work around.
+	// See: https://github.com/ncw/rclone/issues/2653
+	multipartUpload := size >= int64(o.fs.opt.UploadCutoff)
+	if size == int64(o.fs.opt.ChunkSize) {
+		multipartUpload = true
+		fs.Debugf(o, "Setting multipart upload for file of chunk size (%d) to work around SDK bug", size)
 	}
 
 	ctx := context.Background()
 	// Don't retry, return a retry error instead
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		if size >= int64(o.fs.opt.UploadCutoff) {
+		if multipartUpload {
 			// If a large file upload in chunks
 			err = o.uploadMultipart(in, size, &blob, &httpHeaders)
 		} else {
@@ -1359,7 +1369,7 @@ func (o *Object) SetTier(tier string) error {
 	blob := o.getBlobReference()
 	ctx := context.Background()
 	err := o.fs.pacer.Call(func() (bool, error) {
-		_, err := blob.SetTier(ctx, desiredAccessTier)
+		_, err := blob.SetTier(ctx, desiredAccessTier, azblob.LeaseAccessConditions{})
 		return o.fs.shouldRetry(err)
 	})
 

@@ -41,8 +41,11 @@ func TestRestic(t *testing.T) {
 
 	// Start the server
 	w := newServer(fremote, &opt)
-	go w.serve()
-	defer w.srv.Close()
+	assert.NoError(t, w.Serve())
+	defer func() {
+		w.Close()
+		w.Wait()
+	}()
 
 	// Change directory to run the tests
 	err = os.Chdir(resticSource)

@@ -18,7 +18,7 @@ const UseServiceDefaultRetries = -1
 type RequestRetryer interface{}
 
 // A Config provides service configuration for service clients. By default,
-// all clients will use the defaults.DefaultConfig tructure.
+// all clients will use the defaults.DefaultConfig structure.
 //
 //     // Create Session with MaxRetry configuration to be shared by multiple
 //     // service clients.

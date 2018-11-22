@@ -18,16 +18,32 @@ import (
 )
 
 // dedupeRename renames the objs slice to different names
-func dedupeRename(remote string, objs []fs.Object) {
-	f := objs[0].Fs()
+func dedupeRename(f fs.Fs, remote string, objs []fs.Object) {
 	doMove := f.Features().Move
 	if doMove == nil {
 		log.Fatalf("Fs %v doesn't support Move", f)
 	}
 	ext := path.Ext(remote)
 	base := remote[:len(remote)-len(ext)]
+
+outer:
 	for i, o := range objs {
-		newName := fmt.Sprintf("%s-%d%s", base, i+1, ext)
+		suffix := 1
+		newName := fmt.Sprintf("%s-%d%s", base, i+suffix, ext)
+		_, err := f.NewObject(newName)
+		for ; err != fs.ErrorObjectNotFound; suffix++ {
+			if err != nil {
+				fs.CountError(err)
+				fs.Errorf(o, "Failed to check for existing object: %v", err)
+				continue outer
+			}
+			if suffix > 100 {
+				fs.Errorf(o, "Could not find an available new name")
+				continue outer
+			}
+			newName = fmt.Sprintf("%s-%d%s", base, i+suffix, ext)
+			_, err = f.NewObject(newName)
+		}
 		if !fs.Config.DryRun {
 			newObj, err := doMove(o, newName)
 			if err != nil {
@@ -81,7 +97,7 @@ func dedupeDeleteIdentical(ht hash.Type, remote string, objs []fs.Object) (remai
 }
 
 // dedupeInteractive interactively dedupes the slice of objects
-func dedupeInteractive(ht hash.Type, remote string, objs []fs.Object) {
+func dedupeInteractive(f fs.Fs, ht hash.Type, remote string, objs []fs.Object) {
 	fmt.Printf("%s: %d duplicates remain\n", remote, len(objs))
 	for i, o := range objs {
 		md5sum, err := o.Hash(ht)
@@ -96,7 +112,7 @@ func dedupeInteractive(ht hash.Type, remote string, objs []fs.Object) {
 		keep := config.ChooseNumber("Enter the number of the file to keep", 1, len(objs))
 		dedupeDeleteAllButOne(keep-1, remote, objs)
 	case 'r':
-		dedupeRename(remote, objs)
+		dedupeRename(f, remote, objs)
 	}
 }
 
@@ -276,7 +292,7 @@ func Deduplicate(f fs.Fs, mode DeduplicateMode) error {
 			}
 			switch mode {
 			case DeduplicateInteractive:
-				dedupeInteractive(ht, remote, objs)
+				dedupeInteractive(f, ht, remote, objs)
 			case DeduplicateFirst:
 				dedupeDeleteAllButOne(0, remote, objs)
 			case DeduplicateNewest:
@@ -286,7 +302,7 @@ func Deduplicate(f fs.Fs, mode DeduplicateMode) error {
 				sort.Sort(objectsSortedByModTime(objs)) // sort oldest first
 				dedupeDeleteAllButOne(0, remote, objs)
 			case DeduplicateRename:
-				dedupeRename(remote, objs)
+				dedupeRename(f, remote, objs)
 			case DeduplicateLargest:
 				largest, largestIndex := int64(-1), -1
 				for i, obj := range objs {

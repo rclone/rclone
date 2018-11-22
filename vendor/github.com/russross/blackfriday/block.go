@@ -15,6 +15,7 @@ package blackfriday
 
 import (
 	"bytes"
+	"strings"
 	"unicode"
 )
 
@@ -92,7 +93,7 @@ func (p *parser) block(out *bytes.Buffer, data []byte) {
 
 		// fenced code block:
 		//
-		// ``` go
+		// ``` go info string here
 		// func fact(n int) int {
 		//     if n <= 1 {
 		//         return n
@@ -562,7 +563,7 @@ func (*parser) isHRule(data []byte) bool {
 // and returns the end index if so, or 0 otherwise. It also returns the marker found.
 // If syntax is not nil, it gets set to the syntax specified in the fence line.
 // A final newline is mandatory to recognize the fence line, unless newlineOptional is true.
-func isFenceLine(data []byte, syntax *string, oldmarker string, newlineOptional bool) (end int, marker string) {
+func isFenceLine(data []byte, info *string, oldmarker string, newlineOptional bool) (end int, marker string) {
 	i, size := 0, 0
 
 	// skip up to three spaces
@@ -598,9 +599,9 @@ func isFenceLine(data []byte, syntax *string, oldmarker string, newlineOptional 
 	}
 
 	// TODO(shurcooL): It's probably a good idea to simplify the 2 code paths here
-	// into one, always get the syntax, and discard it if the caller doesn't care.
-	if syntax != nil {
-		syn := 0
+	// into one, always get the info string, and discard it if the caller doesn't care.
+	if info != nil {
+		infoLength := 0
 		i = skipChar(data, i, ' ')
 
 		if i >= len(data) {
@@ -610,14 +611,14 @@ func isFenceLine(data []byte, syntax *string, oldmarker string, newlineOptional 
 			return 0, ""
 		}
 
-		syntaxStart := i
+		infoStart := i
 
 		if data[i] == '{' {
 			i++
-			syntaxStart++
+			infoStart++
 
 			for i < len(data) && data[i] != '}' && data[i] != '\n' {
-				syn++
+				infoLength++
 				i++
 			}
 
@@ -627,24 +628,24 @@ func isFenceLine(data []byte, syntax *string, oldmarker string, newlineOptional 
 
 			// strip all whitespace at the beginning and the end
 			// of the {} block
-			for syn > 0 && isspace(data[syntaxStart]) {
-				syntaxStart++
-				syn--
+			for infoLength > 0 && isspace(data[infoStart]) {
+				infoStart++
+				infoLength--
 			}
 
-			for syn > 0 && isspace(data[syntaxStart+syn-1]) {
-				syn--
+			for infoLength > 0 && isspace(data[infoStart+infoLength-1]) {
+				infoLength--
 			}
 
 			i++
 		} else {
-			for i < len(data) && !isspace(data[i]) {
-				syn++
+			for i < len(data) && !isverticalspace(data[i]) {
+				infoLength++
 				i++
 			}
 		}
 
-		*syntax = string(data[syntaxStart : syntaxStart+syn])
+		*info = strings.TrimSpace(string(data[infoStart : infoStart+infoLength]))
 	}
 
 	i = skipChar(data, i, ' ')
@@ -662,8 +663,8 @@ func isFenceLine(data []byte, syntax *string, oldmarker string, newlineOptional 
 // or 0 otherwise. It writes to out if doRender is true, otherwise it has no side effects.
 // If doRender is true, a final newline is mandatory to recognize the fenced code block.
 func (p *parser) fencedCodeBlock(out *bytes.Buffer, data []byte, doRender bool) int {
-	var syntax string
-	beg, marker := isFenceLine(data, &syntax, "", false)
+	var infoString string
+	beg, marker := isFenceLine(data, &infoString, "", false)
 	if beg == 0 || beg >= len(data) {
 		return 0
 	}
@@ -697,7 +698,7 @@ func (p *parser) fencedCodeBlock(out *bytes.Buffer, data []byte, doRender bool) 
 	}
 
 	if doRender {
-		p.r.BlockCode(out, work.Bytes(), syntax)
+		p.r.BlockCode(out, work.Bytes(), infoString)
 	}
 
 	return beg
@@ -1142,6 +1143,7 @@ func (p *parser) listItem(out *bytes.Buffer, data []byte, flags *int) int {
 	// process the following lines
 	containsBlankLine := false
 	sublist := 0
+	codeBlockMarker := ""
 
 gatherlines:
 	for line < len(data) {
@@ -1168,6 +1170,28 @@ gatherlines:
 		}
 
 		chunk := data[line+indent : i]
+
+		if p.flags&EXTENSION_FENCED_CODE != 0 {
+			// determine if in or out of codeblock
+			// if in codeblock, ignore normal list processing
+			_, marker := isFenceLine(chunk, nil, codeBlockMarker, false)
+			if marker != "" {
+				if codeBlockMarker == "" {
+					// start of codeblock
+					codeBlockMarker = marker
+				} else {
+					// end of codeblock.
+					*flags |= LIST_ITEM_CONTAINS_BLOCK
+					codeBlockMarker = ""
+				}
+			}
+			// we are in a codeblock, write line, and continue
+			if codeBlockMarker != "" || marker != "" {
+				raw.Write(data[line+indent : i])
+				line = i
+				continue gatherlines
+			}
+		}
 
 		// evaluate how this line fits in
 		switch {

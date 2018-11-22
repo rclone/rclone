@@ -15,10 +15,6 @@ import (
 	"unsafe"
 )
 
-const (
-	_SYS_PLEDGE = 108
-)
-
 // Pledge implements the pledge syscall.
 //
 // The pledge syscall does not accept execpromises on OpenBSD releases
@@ -63,7 +59,7 @@ func Pledge(promises, execpromises string) error {
 		expr = unsafe.Pointer(exptr)
 	}
 
-	_, _, e := syscall.Syscall(_SYS_PLEDGE, uintptr(unsafe.Pointer(pptr)), uintptr(expr), 0)
+	_, _, e := syscall.Syscall(SYS_PLEDGE, uintptr(unsafe.Pointer(pptr)), uintptr(expr), 0)
 	if e != 0 {
 		return e
 	}

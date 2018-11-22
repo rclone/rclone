@@ -1,0 +1,109 @@
+tests:
+ - path: backend
+   addbackend: true
+   noretries:  true
+   nobinary:   true
+ - path: fs/operations
+   subdir:   true
+   fastlist: true
+ - path: fs/sync
+   subdir:   true
+   fastlist: true
+backends:
+ # - backend:  "amazonclouddrive"
+ #   remote:   "TestAmazonCloudDrive:"
+ #   subdir:   false
+ #   fastlist: false
+ - backend:  "b2"
+   remote:   "TestB2:"
+   subdir:   true
+   fastlist: true
+ - backend:  "crypt"
+   remote:   "TestCryptDrive:"
+   subdir:   false
+   fastlist: true
+ - backend:  "crypt"
+   remote:   "TestCryptSwift:"
+   subdir:   false
+   fastlist: false
+ - backend:  "drive"
+   remote:   "TestDrive:"
+   subdir:   false
+   fastlist: true
+ - backend:  "dropbox"
+   remote:   "TestDropbox:"
+   subdir:   false
+   fastlist: false
+ - backend:  "googlecloudstorage"
+   remote:   "TestGoogleCloudStorage:"
+   subdir:   true
+   fastlist: true
+ - backend:  "hubic"
+   remote:   "TestHubic:"
+   subdir:   false
+   fastlist: false
+ - backend:  "jottacloud"
+   remote:   "TestJottacloud:"
+   subdir:   false
+   fastlist: true
+ - backend:  "onedrive"
+   remote:   "TestOneDrive:"
+   subdir:   false
+   fastlist: false
+ - backend:  "s3"
+   remote:   "TestS3:"
+   subdir:   true
+   fastlist: true
+ - backend:  "sftp"
+   remote:   "TestSftp:"
+   subdir:   false
+   fastlist: false
+ - backend:  "swift"
+   remote:   "TestSwift:"
+   subdir:   true
+   fastlist: true
+ - backend:  "yandex"
+   remote:   "TestYandex:"
+   subdir:   false
+   fastlist: false
+ - backend:  "ftp"
+   remote:   "TestFTP:"
+   subdir:   false
+   fastlist: false
+ - backend:  "box"
+   remote:   "TestBox:"
+   subdir:   false
+   fastlist: false
+ - backend:  "qingstor"
+   remote:   "TestQingStor:"
+   subdir:   false
+   fastlist: false
+   oneonly:  true
+ - backend:  "azureblob"
+   remote:   "TestAzureBlob:"
+   subdir:   true
+   fastlist: true
+ - backend:  "pcloud"
+   remote:   "TestPcloud:"
+   subdir:   false
+   fastlist: false
+ - backend:  "webdav"
+   remote:   "TestWebdav:"
+   subdir:   false
+   fastlist: false
+ - backend:  "cache"
+   remote:   "TestCache:"
+   subdir:   false
+   fastlist: false
+ - backend:  "mega"
+   remote:   "TestMega:"
+   subdir:   false
+   fastlist: false
+ - backend:  "opendrive"
+   remote:   "TestOpenDrive:"
+   subdir:   false
+   fastlist: false
+ - backend:  "union"
+   remote:   "TestUnion:"
+   subdir:   false
+   fastlist: false

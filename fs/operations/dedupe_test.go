@@ -155,7 +155,8 @@ func TestDeduplicateRename(t *testing.T) {
 	file1 := r.WriteUncheckedObject("one.txt", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one.txt", "This is one too", t2)
 	file3 := r.WriteUncheckedObject("one.txt", "This is another one", t3)
-	r.CheckWithDuplicates(t, file1, file2, file3)
+	file4 := r.WriteUncheckedObject("one-1.txt", "This is not a duplicate", t1)
+	r.CheckWithDuplicates(t, file1, file2, file3, file4)
 
 	err := operations.Deduplicate(r.Fremote, operations.DeduplicateRename)
 	require.NoError(t, err)
@@ -168,12 +169,19 @@ func TestDeduplicateRename(t *testing.T) {
 			remote := o.Remote()
 			if remote != "one-1.txt" &&
 				remote != "one-2.txt" &&
-				remote != "one-3.txt" {
+				remote != "one-3.txt" &&
+				remote != "one-4.txt" {
 				t.Errorf("Bad file name after rename %q", remote)
 			}
 			size := o.Size()
-			if size != file1.Size && size != file2.Size && size != file3.Size {
+			if size != file1.Size &&
+				size != file2.Size &&
+				size != file3.Size &&
+				size != file4.Size {
 				t.Errorf("Size not one of the object sizes %d", size)
+			}
+			if remote == "one-1.txt" && size != file4.Size {
+				t.Errorf("Existing non-duplicate file modified %q", remote)
 			}
 		})
 		return nil

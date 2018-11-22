@@ -13,6 +13,7 @@ import (
 
 	auth "github.com/abbot/go-http-auth"
 	"github.com/ncw/rclone/fs"
+	"github.com/pkg/errors"
 )
 
 // Globals
@@ -105,6 +106,7 @@ type Server struct {
 	httpServer      *http.Server
 	basicPassHashed string
 	useSSL          bool // if server is configured for SSL/TLS
+	usingAuth       bool // set if authentication is configured
 }
 
 // singleUserProvider provides the encrypted password for a single user
@@ -142,6 +144,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		}
 		authenticator := auth.NewBasicAuthenticator(s.Opt.Realm, secretProvider)
 		handler = auth.JustCheck(authenticator, handler.ServeHTTP)
+		s.usingAuth = true
 	}
 
 	s.useSSL = s.Opt.SslKey != ""
@@ -188,7 +191,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 func (s *Server) Serve() error {
 	ln, err := net.Listen("tcp", s.httpServer.Addr)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "start server failed")
 	}
 	s.listener = ln
 	s.waitChan = make(chan struct{})
@@ -253,4 +256,9 @@ func (s *Server) URL() string {
 		addr = s.listener.Addr().String()
 	}
 	return fmt.Sprintf("%s://%s/", proto, addr)
+}
+
+// UsingAuth returns true if authentication is required
+func (s *Server) UsingAuth() bool {
+	return s.usingAuth
 }

@@ -90,6 +90,7 @@ type Opt struct {
 	MaxAge         fs.Duration
 	MinSize        fs.SizeSuffix
 	MaxSize        fs.SizeSuffix
+	IgnoreCase     bool
 }
 
 // DefaultOpt is the default config for the filter
@@ -226,7 +227,7 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 		if dirGlob == "/" {
 			continue
 		}
-		dirRe, err := globToRegexp(dirGlob)
+		dirRe, err := globToRegexp(dirGlob, f.Opt.IgnoreCase)
 		if err != nil {
 			return err
 		}
@@ -242,7 +243,7 @@ func (f *Filter) Add(Include bool, glob string) error {
 	if strings.Contains(glob, "**") {
 		isDirRule, isFileRule = true, true
 	}
-	re, err := globToRegexp(glob)
+	re, err := globToRegexp(glob, f.Opt.IgnoreCase)
 	if err != nil {
 		return err
 	}
@@ -495,4 +496,32 @@ func (f *Filter) DumpFilters() string {
 		rules = append(rules, dirRule.String())
 	}
 	return strings.Join(rules, "\n")
+}
+
+// HaveFilesFrom returns true if --files-from has been supplied
+func (f *Filter) HaveFilesFrom() bool {
+	return f.files != nil
+}
+
+var errFilesFromNotSet = errors.New("--files-from not set so can't use Filter.ListR")
+
+// MakeListR makes function to return all the files set using --files-from
+func (f *Filter) MakeListR(NewObject func(remote string) (fs.Object, error)) fs.ListRFn {
+	return func(dir string, callback fs.ListRCallback) error {
+		if !f.HaveFilesFrom() {
+			return errFilesFromNotSet
+		}
+		var entries fs.DirEntries
+		for remote := range f.files {
+			entry, err := NewObject(remote)
+			if err == fs.ErrorObjectNotFound {
+				// Skip files that are not found
+			} else if err != nil {
+				return err
+			} else {
+				entries = append(entries, entry)
+			}
+		}
+		return callback(entries)
+	}
 }

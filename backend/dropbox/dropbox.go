@@ -34,6 +34,7 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
@@ -131,13 +132,19 @@ slightly (at most 10%% for 128MB in tests) at the cost of using more
 memory.  It can be set smaller if you are tight on memory.`, fs.SizeSuffix(maxChunkSize)),
 			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
+		}, {
+			Name:     "impersonate",
+			Help:     "Impersonate this user when using a business account.",
+			Default:  "",
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize fs.SizeSuffix `config:"chunk_size"`
+	ChunkSize   fs.SizeSuffix `config:"chunk_size"`
+	Impersonate string        `config:"impersonate"`
 }
 
 // Fs represents a remote dropbox server
@@ -149,6 +156,7 @@ type Fs struct {
 	srv            files.Client   // the connection to the dropbox server
 	sharing        sharing.Client // as above, but for generating sharing links
 	users          users.Client   // as above, but for accessing user information
+	team           team.Client    // for the Teams API
 	slashRoot      string         // root with "/" prefix, lowercase
 	slashRootSlash string         // root with "/" prefix and postfix, lowercase
 	pacer          *pacer.Pacer   // To pace the API calls
@@ -262,6 +270,29 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		Client:          oAuthClient,    // maybe???
 		HeaderGenerator: f.headerGenerator,
 	}
+
+	// NOTE: needs to be created pre-impersonation so we can look up the impersonated user
+	f.team = team.New(config)
+
+	if opt.Impersonate != "" {
+
+		user := team.UserSelectorArg{
+			Email: opt.Impersonate,
+		}
+		user.Tag = "email"
+
+		members := []*team.UserSelectorArg{&user}
+		args := team.NewMembersGetInfoArgs(members)
+
+		memberIds, err := f.team.MembersGetInfo(args)
+
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid dropbox team member: %q", opt.Impersonate)
+		}
+
+		config.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
+	}
+
 	f.srv = files.New(config)
 	f.sharing = sharing.New(config)
 	f.users = users.New(config)

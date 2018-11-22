@@ -4,6 +4,7 @@ package filterflags
 import (
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/filter"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/spf13/pflag"
 )
 
@@ -14,6 +15,7 @@ var (
 
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
+	rc.AddOption("filter", &Opt)
 	flags.BoolVarP(flagSet, &Opt.DeleteExcluded, "delete-excluded", "", false, "Delete files on dest excluded from sync")
 	flags.StringArrayVarP(flagSet, &Opt.FilterRule, "filter", "f", nil, "Add a file-filtering rule")
 	flags.StringArrayVarP(flagSet, &Opt.FilterFrom, "filter-from", "", nil, "Read filtering patterns from a file")
@@ -27,5 +29,6 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &Opt.MaxAge, "max-age", "", "Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y")
 	flags.FVarP(flagSet, &Opt.MinSize, "min-size", "", "Only transfer files bigger than this in k or suffix b|k|M|G")
 	flags.FVarP(flagSet, &Opt.MaxSize, "max-size", "", "Only transfer files smaller than this in k or suffix b|k|M|G")
+	flags.BoolVarP(flagSet, &Opt.IgnoreCase, "ignore-case", "", false, "Ignore case in filters (case insensitive)")
 	//cvsExclude     = BoolP("cvs-exclude", "C", false, "Exclude files in the same way CVS does")
 }

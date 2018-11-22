@@ -291,7 +291,11 @@ func init() {
 				Provider: "DigitalOcean",
 			}, {
 				Value:    "s3.wasabisys.com",
-				Help:     "Wasabi Object Storage",
+				Help:     "Wasabi US East endpoint",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.us-west-1.wasabisys.com",
+				Help:     "Wasabi US West endpoint",
 				Provider: "Wasabi",
 			}},
 		}, {
@@ -448,7 +452,12 @@ func init() {
 			Provider: "!AWS,IBMCOS",
 		}, {
 			Name: "acl",
-			Help: "Canned ACL used when creating buckets and/or storing objects in S3.\nFor more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl",
+			Help: `Canned ACL used when creating buckets and storing or copying objects.
+
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+
+Note that this ACL is applied when server side copying objects as S3
+doesn't copy the ACL from the source but rather writes a fresh one.`,
 			Examples: []fs.OptionExample{{
 				Value:    "private",
 				Help:     "Owner gets FULL_CONTROL. No one else has access rights (default).",
@@ -799,8 +808,21 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		WithHTTPClient(fshttp.NewClient(fs.Config)).
 		WithS3ForcePathStyle(opt.ForcePathStyle)
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
-	ses := session.New()
-	c := s3.New(ses, awsConfig)
+	awsSessionOpts := session.Options{
+		Config: *awsConfig,
+	}
+	if opt.EnvAuth && opt.AccessKeyID == "" && opt.SecretAccessKey == "" {
+		// Enable loading config options from ~/.aws/config (selected by AWS_PROFILE env)
+		awsSessionOpts.SharedConfigState = session.SharedConfigEnable
+		// The session constructor (aws/session/mergeConfigSrcs) will only use the user's preferred credential source
+		// (from the shared config file) if the passed-in Options.Config.Credentials is nil.
+		awsSessionOpts.Config.Credentials = nil
+	}
+	ses, err := session.NewSessionWithOptions(awsSessionOpts)
+	if err != nil {
+		return nil, nil, err
+	}
+	c := s3.New(ses)
 	if opt.V2Auth || opt.Region == "other-v2-signature" {
 		fs.Debugf(nil, "Using v2 auth")
 		signer := func(req *request.Request) {
@@ -1286,6 +1308,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	source := pathEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
 	req := s3.CopyObjectInput{
 		Bucket:            &f.bucket,
+		ACL:               &f.opt.ACL,
 		Key:               &key,
 		CopySource:        &source,
 		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),

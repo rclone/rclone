@@ -87,6 +87,7 @@ includes_DragonFly='
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/mman.h>
+#include <sys/mount.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <net/bpf.h>
@@ -192,6 +193,7 @@ struct ltchars {
 #include <linux/falloc.h>
 #include <linux/filter.h>
 #include <linux/fs.h>
+#include <linux/kexec.h>
 #include <linux/keyctl.h>
 #include <linux/magic.h>
 #include <linux/memfd.h>
@@ -216,6 +218,7 @@ struct ltchars {
 #include <linux/watchdog.h>
 #include <linux/hdreg.h>
 #include <linux/rtc.h>
+#include <linux/if_xdp.h>
 #include <mtd/ubi-user.h>
 #include <net/route.h>
 #include <asm/termbits.h>
@@ -246,6 +249,16 @@ struct ltchars {
 #define FS_KEY_DESC_PREFIX              "fscrypt:"
 #define FS_KEY_DESC_PREFIX_SIZE         8
 #define FS_MAX_KEY_SIZE                 64
+
+// XDP socket constants do not appear to be picked up otherwise.
+// Copied from samples/bpf/xdpsock_user.c.
+#ifndef SOL_XDP
+#define SOL_XDP 283
+#endif
+
+#ifndef AF_XDP
+#define AF_XDP 44
+#endif
 '
 
 includes_NetBSD='
@@ -254,6 +267,7 @@ includes_NetBSD='
 #include <sys/event.h>
 #include <sys/extattr.h>
 #include <sys/mman.h>
+#include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
@@ -279,6 +293,7 @@ includes_OpenBSD='
 #include <sys/param.h>
 #include <sys/event.h>
 #include <sys/mman.h>
+#include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/stat.h>
@@ -380,6 +395,7 @@ ccflags="$@"
 		$2 ~ /^EXTATTR_NAMESPACE_NAMES/ ||
 		$2 ~ /^EXTATTR_NAMESPACE_[A-Z]+_STRING/ {next}
 
+		$2 !~ /^ECCAPBITS/ &&
 		$2 !~ /^ETH_/ &&
 		$2 !~ /^EPROC_/ &&
 		$2 !~ /^EQUIV_/ &&
@@ -426,9 +442,11 @@ ccflags="$@"
 		$2 ~ /^KERN_(HOSTNAME|OS(RELEASE|TYPE)|VERSION)$/ ||
 		$2 ~ /^HW_MACHINE$/ ||
 		$2 ~ /^SYSCTL_VERS/ ||
+		$2 !~ "MNT_BITS" &&
 		$2 ~ /^(MS|MNT|UMOUNT)_/ ||
 		$2 ~ /^TUN(SET|GET|ATTACH|DETACH)/ ||
 		$2 ~ /^(O|F|E?FD|NAME|S|PTRACE|PT)_/ ||
+		$2 ~ /^KEXEC_/ ||
 		$2 ~ /^LINUX_REBOOT_CMD_/ ||
 		$2 ~ /^LINUX_REBOOT_MAGIC[12]$/ ||
 		$2 !~ "NLA_TYPE_MASK" &&
@@ -476,6 +494,7 @@ ccflags="$@"
 		$2 ~ /^FSOPT_/ ||
 		$2 ~ /^WDIOC_/ ||
 		$2 ~ /^NFN/ ||
+		$2 ~ /^XDP_/ ||
 		$2 ~ /^(HDIO|WIN|SMART)_/ ||
 		$2 !~ "WMESGLEN" &&
 		$2 ~ /^W[A-Z0-9]+$/ ||

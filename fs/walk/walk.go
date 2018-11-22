@@ -54,8 +54,14 @@ type Func func(path string, entries fs.DirEntries, err error) error
 // This is implemented by WalkR if Config.UseRecursiveListing is true
 // and f supports it and level > 1, or WalkN otherwise.
 //
+// If --files-from is set then a DirTree will be constructed with just
+// those files in and then walked with WalkR
+//
 // NB (f, path) to be replaced by fs.Dir at some point
 func Walk(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
+	if filter.Active.HaveFilesFrom() {
+		return walkR(f, path, includeAll, maxLevel, fn, filter.Active.MakeListR(f.NewObject))
+	}
 	if (maxLevel < 0 || maxLevel > 1) && fs.Config.UseListR && f.Features().ListR != nil {
 		return walkListR(f, path, includeAll, maxLevel, fn)
 	}
@@ -452,8 +458,14 @@ func walkNDirTree(f fs.Fs, path string, includeAll bool, maxLevel int, listDir l
 // This is implemented by WalkR if Config.UseRecursiveListing is true
 // and f supports it and level > 1, or WalkN otherwise.
 //
+// If --files-from is set then a DirTree will be constructed with just
+// those files in.
+//
 // NB (f, path) to be replaced by fs.Dir at some point
 func NewDirTree(f fs.Fs, path string, includeAll bool, maxLevel int) (DirTree, error) {
+	if filter.Active.HaveFilesFrom() {
+		return walkRDirTree(f, path, includeAll, maxLevel, filter.Active.MakeListR(f.NewObject))
+	}
 	if ListR := f.Features().ListR; (maxLevel < 0 || maxLevel > 1) && fs.Config.UseListR && ListR != nil {
 		return walkRDirTree(f, path, includeAll, maxLevel, ListR)
 	}

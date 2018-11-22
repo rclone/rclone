@@ -50,10 +50,9 @@ version:
 
 # Full suite of integration tests
 test:	rclone
-	go install github.com/ncw/rclone/fstest/test_all
-	-go test -v -count 1 -timeout 20m $(BUILDTAGS) $(GO_FILES) 2>&1 | tee test.log
-	-test_all github.com/ncw/rclone/fs/operations github.com/ncw/rclone/fs/sync 2>&1 | tee fs/test_all.log
-	@echo "Written logs in test.log and fs/test_all.log"
+	go install --ldflags "-s -X github.com/ncw/rclone/fs.Version=$(TAG)" $(BUILDTAGS) github.com/ncw/rclone/fstest/test_all
+	-test_all 2>&1 | tee test_all.log
+	@echo "Written logs in test_all.log"
 
 # Quick test
 quicktest:
@@ -117,7 +116,7 @@ MANUAL.txt:	MANUAL.md
 	pandoc -s --from markdown --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
-	rclone gendocs docs/content/commands/
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/commands/
 
 backenddocs: rclone bin/make_backend_docs.py
 	./bin/make_backend_docs.py

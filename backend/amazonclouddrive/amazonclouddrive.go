@@ -264,7 +264,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, m, acdConfig, baseClient)
 	if err != nil {
-		log.Fatalf("Failed to configure Amazon Drive: %v", err)
+		return nil, errors.Wrap(err, "failed to configure Amazon Drive")
 	}
 
 	c := acd.NewClient(oAuthClient)

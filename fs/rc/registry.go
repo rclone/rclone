@@ -10,19 +10,17 @@ import (
 	"github.com/ncw/rclone/fs"
 )
 
-// Params is the input and output type for the Func
-type Params map[string]interface{}
-
 // Func defines a type for a remote control function
 type Func func(in Params) (out Params, err error)
 
 // Call defines info about a remote control function and is used in
 // the Add function to create new entry points.
 type Call struct {
-	Path  string // path to activate this RC
-	Fn    Func   `json:"-"` // function to call
-	Title string // help for the function
-	Help  string // multi-line markdown formatted help
+	Path         string // path to activate this RC
+	Fn           Func   `json:"-"` // function to call
+	Title        string // help for the function
+	AuthRequired bool   // if set then this call requires authorisation to be set
+	Help         string // multi-line markdown formatted help
 }
 
 // Registry holds the list of all the registered remote control functions
@@ -39,7 +37,7 @@ func NewRegistry() *Registry {
 }
 
 // Add a call to the registry
-func (r *Registry) add(call Call) {
+func (r *Registry) Add(call Call) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	call.Path = strings.Trim(call.Path, "/")
@@ -48,15 +46,15 @@ func (r *Registry) add(call Call) {
 	r.call[call.Path] = &call
 }
 
-// get a Call from a path or nil
-func (r *Registry) get(path string) *Call {
+// Get a Call from a path or nil
+func (r *Registry) Get(path string) *Call {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.call[path]
 }
 
-// get a list of all calls in alphabetical order
-func (r *Registry) list() (out []*Call) {
+// List of all calls in alphabetical order
+func (r *Registry) List() (out []*Call) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	var keys []string
@@ -70,10 +68,10 @@ func (r *Registry) list() (out []*Call) {
 	return out
 }
 
-// The global registry
-var registry = NewRegistry()
+// Calls is the global registry of Call objects
+var Calls = NewRegistry()
 
 // Add a function to the global registry
 func Add(call Call) {
-	registry.add(call)
+	Calls.Add(call)
 }

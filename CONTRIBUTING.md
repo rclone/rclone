@@ -123,6 +123,13 @@ but they can be run against any of the remotes.
     cd fs/operations
     go test -v -remote TestDrive:
 
+If you want to use the integration test framework to run these tests
+all together with an HTML report and test retries then from the
+project root:
+
+    go install github.com/ncw/rclone/fstest/test_all
+    test_all -backend drive
+
 If you want to run all the integration tests against all the remotes,
 then change into the project root and run
 
@@ -343,7 +350,7 @@ Unit tests
 
 Integration tests
 
-  * Add your fs to `fstest/test_all/test_all.go`
+  * Add your backend to `fstest/test_all/config.yaml`
   * Make sure integration tests pass with
       * `cd fs/operations`
       * `go test -v -remote TestRemote:`

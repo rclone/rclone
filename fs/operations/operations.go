@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"path"
 	"sort"
 	"strconv"
@@ -975,7 +976,7 @@ func Purge(f fs.Fs, dir string) error {
 		if err != nil {
 			return err
 		}
-		err = Rmdirs(f, "", false)
+		err = Rmdirs(f, dir, false)
 	}
 	if err != nil {
 		fs.CountError(err)
@@ -1206,7 +1207,7 @@ func PublicLink(f fs.Fs, remote string) (string, error) {
 // containing empty directories) under f, including f.
 func Rmdirs(f fs.Fs, dir string, leaveRoot bool) error {
 	dirEmpty := make(map[string]bool)
-	dirEmpty[""] = !leaveRoot
+	dirEmpty[dir] = !leaveRoot
 	err := walk.Walk(f, dir, true, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 		if err != nil {
 			fs.CountError(err)
@@ -1357,6 +1358,16 @@ func RcatSize(fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modT
 	}
 
 	return obj, nil
+}
+
+// CopyURL copies the data from the url to (fdst, dstFileName)
+func CopyURL(fdst fs.Fs, dstFileName string, url string) (dst fs.Object, err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer fs.CheckClose(resp.Body, &err)
+	return RcatSize(fdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
 }
 
 // moveOrCopyFile moves or copies a single file possibly to a new name
