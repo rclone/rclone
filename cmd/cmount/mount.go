@@ -69,8 +69,10 @@ func mountOptions(device string, mountpoint string) (options []string) {
 		options = append(options, "--FileSystemName=rclone")
 	}
 
-	if mountlib.VolumeName != "" {
-		options = append(options, "-o", "volname="+mountlib.VolumeName)
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		if mountlib.VolumeName != "" {
+			options = append(options, "-o", "volname="+mountlib.VolumeName)
+		}
 	}
 	if mountlib.AllowNonEmpty {
 		options = append(options, "-o", "nonempty")
