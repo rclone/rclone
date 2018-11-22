@@ -1,7 +1,6 @@
 tests:
  - path: backend
    addbackend: true
-   noretries:  true
    nobinary:   true
  - path: fs/operations
    subdir:   true

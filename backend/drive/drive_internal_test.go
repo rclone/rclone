@@ -243,10 +243,19 @@ func (f *Fs) InternalTestDocumentLink(t *testing.T) {
 }
 
 func (f *Fs) InternalTest(t *testing.T) {
-	t.Run("DocumentImport", f.InternalTestDocumentImport)
-	t.Run("DocumentUpdate", f.InternalTestDocumentUpdate)
-	t.Run("DocumentExport", f.InternalTestDocumentExport)
-	t.Run("DocumentLink", f.InternalTestDocumentLink)
+	// These tests all depend on each other so run them as nested tests
+	t.Run("DocumentImport", func(t *testing.T) {
+		f.InternalTestDocumentImport(t)
+		t.Run("DocumentUpdate", func(t *testing.T) {
+			f.InternalTestDocumentUpdate(t)
+			t.Run("DocumentExport", func(t *testing.T) {
+				f.InternalTestDocumentExport(t)
+				t.Run("DocumentLink", func(t *testing.T) {
+					f.InternalTestDocumentLink(t)
+				})
+			})
+		})
+	})
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
