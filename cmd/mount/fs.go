@@ -9,6 +9,7 @@ import (
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
+	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
@@ -72,6 +73,9 @@ func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.Sta
 	if free >= 0 {
 		resp.Bavail = uint64(free) / blockSize
 	}
+	mountlib.ClipBlocks(&resp.Blocks)
+	mountlib.ClipBlocks(&resp.Bfree)
+	mountlib.ClipBlocks(&resp.Bavail)
 	return nil
 }
 

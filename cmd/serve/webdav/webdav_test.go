@@ -16,11 +16,19 @@ import (
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/webdav"
 )
 
 const (
 	testBindAddress = "localhost:51778"
 	testURL         = "http://" + testBindAddress + "/"
+)
+
+// check interfaces
+var (
+	_ os.FileInfo         = FileInfo{nil}
+	_ webdav.ETager       = FileInfo{nil}
+	_ webdav.ContentTyper = FileInfo{nil}
 )
 
 // TestWebDav runs the webdav server then runs the unit tests for the

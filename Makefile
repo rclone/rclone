@@ -1,5 +1,9 @@
 SHELL = bash
 BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
+LAST_TAG := $(shell git describe --tags --abbrev=0)
+ifeq ($(BRANCH),$(LAST_TAG))
+	BRANCH := master
+endif
 TAG_BRANCH := -$(BRANCH)
 BRANCH_PATH := branch/
 ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
@@ -7,8 +11,10 @@ ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
 	BRANCH_PATH :=
 endif
 TAG := $(shell echo $$(git describe --abbrev=8 --tags | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/'))$(TAG_BRANCH)
-LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
+ifneq ($(TAG),$(LAST_TAG))
+	TAG := $(TAG)-beta
+endif
 GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 # Run full tests if go >= go1.11
@@ -83,7 +89,6 @@ ifdef FULL_TESTS
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/tools/godep
 endif
 
 # Get the release dependencies
@@ -93,10 +98,11 @@ release_dep:
 
 # Update dependencies
 update:
-	go get -u github.com/golang/dep/cmd/dep
-	dep ensure -update -v
+	GO111MODULE=on go get -u ./...
+	GO111MODULE=on go tidy
+	GO111MODULE=on go vendor
 
-doc:	rclone.1 MANUAL.html MANUAL.txt
+doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 
 rclone.1:	MANUAL.md
 	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
@@ -156,16 +162,16 @@ cross:	doc
 	go run bin/cross-compile.go -release current $(BUILDTAGS) $(TAG)
 
 beta:
-	go run bin/cross-compile.go $(BUILDTAGS) $(TAG)β
-	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)β
-	@echo Beta release ready at https://pub.rclone.org/$(TAG)%CE%B2/
+	go run bin/cross-compile.go $(BUILDTAGS) $(TAG)
+	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)
+	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
 
 log_since_last_release:
 	git log $(LAST_TAG)..
 
 compile_all:
 ifdef FULL_TESTS
-	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)β
+	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)
 else
 	@echo Skipping compile all as version of go too old
 endif
@@ -187,19 +193,16 @@ ifeq ($(TRAVIS_OS_NAME),linux)
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*_Linux_x86_64.tar.gz'
 endif
 	git log $(LAST_TAG).. > /tmp/git-log.txt
-	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) -parallel 8 $(BUILDTAGS) $(TAG)β
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) -parallel 8 $(BUILDTAGS) $(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifndef BRANCH_PATH
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
 endif
 	@echo Beta release ready at $(BETA_URL)
 
-# Fetch the windows builds from appveyor
-fetch_windows:
-	rclone -v copy --include 'rclone-v*-windows-*.zip' $(BETA_UPLOAD) build/
-	-#cp -av build/rclone-v*-windows-386.zip build/rclone-current-windows-386.zip
-	-#cp -av build/rclone-v*-windows-amd64.zip build/rclone-current-windows-amd64.zip
-	md5sum build/rclone-*-windows-*.zip | sort
+# Fetch the binary builds from travis and appveyor
+fetch_binaries:
+	rclone -v sync $(BETA_UPLOAD) build/
 
 serve:	website
 	cd docs && hugo server -v -w
@@ -210,10 +213,10 @@ tag:	doc
 	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
 	echo -n "$(NEW_TAG)" > docs/layouts/partials/version.html
 	git tag -s -m "Version $(NEW_TAG)" $(NEW_TAG)
+	bin/make_changelog.py $(LAST_TAG) $(NEW_TAG) > docs/content/changelog.md.new
+	mv docs/content/changelog.md.new docs/content/changelog.md
 	@echo "Edit the new changelog in docs/content/changelog.md"
-	@echo "  * $(NEW_TAG) -" `date -I` >> docs/content/changelog.md
-	@git log $(LAST_TAG)..$(NEW_TAG) --oneline >> docs/content/changelog.md
-	@echo "Then commit the changes"
+	@echo "Then commit all the changes"
 	@echo git commit -m \"Version $(NEW_TAG)\" -a -v
 	@echo "And finally run make retag before make cross etc"
 

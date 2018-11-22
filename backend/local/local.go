@@ -151,7 +151,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	if err == nil && fi.Mode().IsRegular() {
 		// It is a file, so use the parent as the root
-		f.root, _ = getDirFile(f.root)
+		f.root = filepath.Dir(f.root)
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
@@ -565,7 +565,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	}
 
 	// Create parent of destination
-	dstParentPath, _ := getDirFile(dstPath)
+	dstParentPath := filepath.Dir(dstPath)
 	err = os.MkdirAll(dstParentPath, 0777)
 	if err != nil {
 		return err
@@ -784,7 +784,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 
 // mkdirAll makes all the directories needed to store the object
 func (o *Object) mkdirAll() error {
-	dir, _ := getDirFile(o.path)
+	dir := filepath.Dir(o.path)
 	return os.MkdirAll(dir, 0777)
 }
 
@@ -870,17 +870,6 @@ func (o *Object) lstat() error {
 // Remove an object
 func (o *Object) Remove() error {
 	return remove(o.path)
-}
-
-// Return the directory and file from an OS path. Assumes
-// os.PathSeparator is used.
-func getDirFile(s string) (string, string) {
-	i := strings.LastIndex(s, string(os.PathSeparator))
-	dir, file := s[:i], s[i+1:]
-	if dir == "" {
-		dir = string(os.PathSeparator)
-	}
-	return dir, file
 }
 
 // cleanPathFragment cleans an OS path fragment which is part of a

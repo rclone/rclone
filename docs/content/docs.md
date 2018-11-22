@@ -133,6 +133,48 @@ It is recommended to use `copy` when copying individual files, not `sync`.
 They have pretty much the same effect but `copy` will use a lot less
 memory.
 
+Syntax of remote paths
+----------------------
+
+The syntax of the paths passed to the rclone command are as follows.
+
+### /path/to/dir
+
+This refers to the local file system.
+
+On Windows only `\` may be used instead of `/` in local paths
+**only**, non local paths must use `/`.
+
+These paths needn't start with a leading `/` - if they don't then they
+will be relative to the current directory.
+
+### remote:path/to/dir
+
+This refers to a directory `path/to/dir` on `remote:` as defined in
+the config file (configured with `rclone config`).
+
+### remote:/path/to/dir
+
+On most backends this is refers to the same directory as
+`remote:path/to/dir` and that format should be preferred.  On a very
+small number of remotes (FTP, SFTP, Dropbox for business) this will
+refer to a different directory.  On these, paths without a leading `/`
+will refer to your "home" directory and paths with a leading `/` will
+refer to the root.
+
+### :backend:path/to/dir
+
+This is an advanced form for creating remotes on the fly.  `backend`
+should be the name or prefix of a backend (the `type` in the config
+file) and all the configuration for the backend should be provided on
+the command line (or in environment variables).
+
+Eg
+
+    rclone lsd --http-url https://pub.rclone.org :http:
+
+Which lists all the directories in `pub.rclone.org`.
+
 Quoting and the shell
 ---------------------
 
@@ -618,6 +660,21 @@ files if they are incorrect as it would normally.
 
 This can be used if the remote is being synced with another tool also
 (eg the Google Drive client).
+
+### --P, --progress ###
+
+This flag makes rclone update the stats in a static block in the
+terminal providing a realtime overview of the transfer.
+
+Any log messages will scroll above the static block.  Log messages
+will push the static block down to the bottom of the terminal where it
+will stay.
+
+Normally this is updated every 500mS but this period can be overridden
+with the `--stats` flag.
+
+This can be used with the `--stats-one-line` flag for a simpler
+display.
 
 ### -q, --quiet ###
 

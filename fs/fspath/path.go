@@ -10,7 +10,7 @@ import (
 )
 
 // Matcher is a pattern to match an rclone URL
-var Matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
+var Matcher = regexp.MustCompile(`^(:?[\w_ -]+):(.*)$`)
 
 // Parse deconstructs a remote path into configName and fsPath
 //

@@ -157,7 +157,7 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Pattern to match a azure path
-var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
+var matcher = regexp.MustCompile(`^/*([^/]*)(.*)$`)
 
 // parseParse parses a azure 'url'
 func parsePath(path string) (container, directory string, err error) {
@@ -1068,7 +1068,7 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, blob *azblob.BlobURL,
 	var (
 		rawID   uint64
 		blockID = "" // id in base64 encoded form
-		blocks  = make([]string, totalParts)
+		blocks  []string
 	)
 
 	// increment the blockID
@@ -1129,7 +1129,7 @@ outer:
 				bufferReader := bytes.NewReader(buf)
 				wrappedReader := wrap(bufferReader)
 				rs := readSeeker{wrappedReader, bufferReader}
-				_, err = blockBlobURL.StageBlock(ctx, blockID, rs, ac)
+				_, err = blockBlobURL.StageBlock(ctx, blockID, &rs, ac)
 				return o.fs.shouldRetry(err)
 			})
 

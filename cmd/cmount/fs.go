@@ -8,11 +8,11 @@ import (
 	"io"
 	"os"
 	"path"
-	"runtime"
 	"sync"
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
+	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
@@ -263,10 +263,7 @@ func (fsys *FS) Releasedir(path string, fh uint64) (errc int) {
 func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer log.Trace(path, "")("stat=%+v, errc=%d", stat, &errc)
 	const blockSize = 4096
-	fsBlocks := uint64(1 << 50)
-	if runtime.GOOS == "windows" {
-		fsBlocks = (1 << 43) - 1
-	}
+	const fsBlocks = (1 << 50) / blockSize
 	stat.Blocks = fsBlocks  // Total data blocks in file system.
 	stat.Bfree = fsBlocks   // Free blocks in file system.
 	stat.Bavail = fsBlocks  // Free blocks in file system if you're not root.
@@ -285,6 +282,9 @@ func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	if free >= 0 {
 		stat.Bavail = uint64(free) / blockSize
 	}
+	mountlib.ClipBlocks(&stat.Blocks)
+	mountlib.ClipBlocks(&stat.Bfree)
+	mountlib.ClipBlocks(&stat.Bavail)
 	return 0
 }
 

@@ -87,6 +87,7 @@ type Options struct {
 type Fs struct {
 	name        string
 	root        string
+	user        string
 	opt         Options
 	features    *fs.Features
 	endpointURL string
@@ -104,6 +105,7 @@ type Object struct {
 	size        int64
 	modTime     time.Time
 	md5         string
+	mimeType    string
 }
 
 // ------------------------------------------------------------
@@ -179,24 +181,32 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
 	return &result, nil
 }
 
-// setEndpointUrl reads the account id and generates the API endpoint URL
-func (f *Fs) setEndpointURL(user, mountpoint string) (err error) {
+// getAccountInfo retrieves account information
+func (f *Fs) getAccountInfo() (info *api.AccountInfo, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   rest.URLPathEscape(user),
+		Path:   rest.URLPathEscape(f.user),
 	}
 
-	var result api.AccountInfo
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &result)
+		resp, err = f.srv.CallXML(&opts, nil, &info)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	f.endpointURL = rest.URLPathEscape(path.Join(result.Username, defaultDevice, mountpoint))
+	return info, nil
+}
+
+// setEndpointUrl reads the account id and generates the API endpoint URL
+func (f *Fs) setEndpointURL(mountpoint string) (err error) {
+	info, err := f.getAccountInfo()
+	if err != nil {
+		return errors.Wrap(err, "failed to get endpoint url")
+	}
+	f.endpointURL = rest.URLPathEscape(path.Join(info.Username, defaultDevice, mountpoint))
 	return nil
 }
 
@@ -253,6 +263,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f := &Fs{
 		name: name,
 		root: root,
+		user: opt.User,
 		opt:  *opt,
 		//endpointURL: rest.URLPathEscape(path.Join(user, defaultDevice, opt.Mountpoint)),
 		srv:   rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(rootURL),
@@ -261,6 +272,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
 	}).Fill(f)
 
 	if user == "" || pass == "" {
@@ -270,7 +283,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f.srv.SetUserPass(opt.User, opt.Pass)
 	f.srv.SetErrorHandler(errorHandler)
 
-	err = f.setEndpointURL(opt.User, opt.Mountpoint)
+	err = f.setEndpointURL(opt.Mountpoint)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't get account info")
 	}
@@ -645,6 +658,20 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	return nil
 }
 
+// About gets quota information
+func (f *Fs) About() (*fs.Usage, error) {
+	info, err := f.getAccountInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	usage := &fs.Usage{
+		Total: fs.NewUsageValue(info.Capacity),
+		Used:  fs.NewUsageValue(info.Usage),
+	}
+	return usage, nil
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
@@ -688,11 +715,17 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// MimeType of an Object if known, "" otherwise
+func (o *Object) MimeType() string {
+	return o.mimeType
+}
+
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	o.hasMetaData = true
 	o.size = int64(info.Size)
 	o.md5 = info.MD5
+	o.mimeType = info.MimeType
 	o.modTime = time.Time(info.ModifiedAt)
 	return nil
 }
@@ -891,10 +924,12 @@ func (o *Object) Remove() error {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
+	_ fs.Fs        = (*Fs)(nil)
+	_ fs.Purger    = (*Fs)(nil)
+	_ fs.Copier    = (*Fs)(nil)
+	_ fs.Mover     = (*Fs)(nil)
+	_ fs.DirMover  = (*Fs)(nil)
+	_ fs.Abouter   = (*Fs)(nil)
+	_ fs.Object    = (*Object)(nil)
+	_ fs.MimeTyper = (*Object)(nil)
 )

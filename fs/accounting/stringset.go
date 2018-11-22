@@ -40,6 +40,13 @@ func (ss *stringSet) empty() bool {
 	return len(ss.items) == 0
 }
 
+// count returns the number of items in the set
+func (ss *stringSet) count() int {
+	ss.mu.RLock()
+	defer ss.mu.RUnlock()
+	return len(ss.items)
+}
+
 // Strings returns all the strings in the stringSet
 func (ss *stringSet) Strings() []string {
 	ss.mu.RLock()
@@ -62,4 +69,20 @@ func (ss *stringSet) Strings() []string {
 // String returns all the file names in the stringSet joined by newline
 func (ss *stringSet) String() string {
 	return strings.Join(ss.Strings(), "\n")
+}
+
+// progress returns total bytes read as well as the size.
+func (ss *stringSet) progress() (totalBytes, totalSize int64) {
+	ss.mu.RLock()
+	defer ss.mu.RUnlock()
+	for name := range ss.items {
+		if acc := Stats.inProgress.get(name); acc != nil {
+			bytes, size := acc.progress()
+			if size >= 0 && bytes >= 0 {
+				totalBytes += bytes
+				totalSize += size
+			}
+		}
+	}
+	return totalBytes, totalSize
 }

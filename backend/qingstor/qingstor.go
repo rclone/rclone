@@ -132,10 +132,12 @@ type Object struct {
 
 // ------------------------------------------------------------
 
+// Pattern to match a qingstor path
+var matcher = regexp.MustCompile(`^/*([^/]*)(.*)$`)
+
 // parseParse parses a qingstor 'url'
 func qsParsePath(path string) (bucket, key string, err error) {
 	// Pattern to match a qingstor path
-	var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
 	parts := matcher.FindStringSubmatch(path)
 	if parts == nil {
 		err = errors.Errorf("Couldn't parse bucket out of qingstor path %q", path)

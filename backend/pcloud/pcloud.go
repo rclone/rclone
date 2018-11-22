@@ -1107,6 +1107,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
+		// sometimes pcloud leaves a half complete file on
+		// error, so delete it if it exists
+		delObj, delErr := o.fs.NewObject(o.remote)
+		if delErr == nil && delObj != nil {
+			_ = delObj.Remove()
+		}
 		return err
 	}
 	if len(result.Items) != 1 {

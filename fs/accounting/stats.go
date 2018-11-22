@@ -140,8 +140,50 @@ func (s *StatsInfo) RemoteStats(in rc.Params) (out rc.Params, err error) {
 	return out, nil
 }
 
+// eta returns the ETA of the current operation,
+// rounded to full seconds.
+// If the ETA cannot be determined 'ok' returns false.
+func eta(size, total int64, rate float64) (eta time.Duration, ok bool) {
+	if total <= 0 || size < 0 || rate <= 0 {
+		return 0, false
+	}
+	remaining := total - size
+	if remaining < 0 {
+		return 0, false
+	}
+	seconds := float64(remaining) / rate
+	return time.Second * time.Duration(seconds), true
+}
+
+// etaString returns the ETA of the current operation,
+// rounded to full seconds.
+// If the ETA cannot be determined it returns "-"
+func etaString(done, total int64, rate float64) string {
+	d, ok := eta(done, total, rate)
+	if !ok {
+		return "-"
+	}
+	return d.String()
+}
+
+// percent returns a/b as a percentage rounded to the nearest integer
+// as a string
+//
+// if the percentage is invalid it returns "-"
+func percent(a int64, b int64) string {
+	if a < 0 || b <= 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%d%%", int(float64(a)*100/float64(b)+0.5))
+}
+
 // String convert the StatsInfo to a string for printing
 func (s *StatsInfo) String() string {
+	// checking and transferring have their own locking so read
+	// here before lock to prevent deadlock on GetBytes
+	transferring, checking := s.transferring.count(), s.checking.count()
+	transferringBytesDone, transferringBytesTotal := s.transferring.progress()
+
 	s.mu.RLock()
 
 	dt := time.Now().Sub(s.start)
@@ -151,33 +193,25 @@ func (s *StatsInfo) String() string {
 		speed = float64(s.bytes) / dtSeconds
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
-	buf := &bytes.Buffer{}
 
 	if fs.Config.DataRateUnit == "bits" {
 		speed = speed * 8
 	}
 
-	percent := func(a int64, b int64) int {
-		if b <= 0 {
-			return 0
-		}
-		return int(float64(a)*100/float64(b) + 0.5)
-	}
+	var (
+		totalChecks   = int64(s.checkQueue) + s.checks + int64(checking)
+		totalTransfer = int64(s.transferQueue) + s.transfers + int64(transferring)
+		// note that s.bytes already includes transferringBytesDone so
+		// we take it off here to avoid double counting
+		totalSize    = s.transferQueueSize + s.bytes + transferringBytesTotal - transferringBytesDone
+		currentSize  = s.bytes
+		buf          = &bytes.Buffer{}
+		xfrchkString = ""
+	)
 
-	totalChecks, totalTransfer, totalSize := int64(s.checkQueue)+s.checks, int64(s.transferQueue)+s.transfers, s.transferQueueSize+s.bytes
-	eta := time.Duration(0)
-	if speed > 0 {
-		eta = time.Second * time.Duration(float64(s.transferQueueSize)/float64(speed)+0.5)
-	}
-	etaString := "-"
-	if eta > 0 {
-		etaString = eta.String()
-	}
 	if !fs.Config.StatsOneLine {
 		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
-	}
-	xfrchkString := ""
-	if fs.Config.StatsOneLine {
+	} else {
 		xfrchk := []string{}
 		if totalTransfer > 0 && s.transferQueue > 0 {
 			xfrchk = append(xfrchk, fmt.Sprintf("xfr#%d/%d", s.transfers, totalTransfer))
@@ -189,13 +223,21 @@ func (s *StatsInfo) String() string {
 			xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
 		}
 	}
-	_, _ = fmt.Fprintf(buf, "%10s / %s, %d%%, %s, ETA %s%s",
-		fs.SizeSuffix(s.bytes), fs.SizeSuffix(totalSize).Unit("Bytes"), percent(s.bytes, totalSize), fs.SizeSuffix(speed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"), etaString, xfrchkString)
+
+	_, _ = fmt.Fprintf(buf, "%10s / %s, %s, %s, ETA %s%s",
+		fs.SizeSuffix(s.bytes),
+		fs.SizeSuffix(totalSize).Unit("Bytes"),
+		percent(s.bytes, totalSize),
+		fs.SizeSuffix(speed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
+		etaString(currentSize, totalSize, speed),
+		xfrchkString,
+	)
+
 	if !fs.Config.StatsOneLine {
 		_, _ = fmt.Fprintf(buf, `
 Errors:        %10d
-Checks:        %10d / %d, %d%%
-Transferred:   %10d / %d, %d%%
+Checks:        %10d / %d, %s
+Transferred:   %10d / %d, %s
 Elapsed time:  %10v
 `,
 			s.errors,
@@ -208,6 +250,7 @@ Elapsed time:  %10v
 	// here to prevent deadlock on GetBytes
 	s.mu.RUnlock()
 
+	// Add per transfer stats if required
 	if !fs.Config.StatsOneLine {
 		if !s.checking.empty() {
 			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
@@ -216,6 +259,7 @@ Elapsed time:  %10v
 			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
 		}
 	}
+
 	return buf.String()
 }
 

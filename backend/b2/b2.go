@@ -177,7 +177,7 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Pattern to match a b2 path
-var matcher = regexp.MustCompile(`^([^/]*)(.*)$`)
+var matcher = regexp.MustCompile(`^/*([^/]*)(.*)$`)
 
 // parseParse parses a b2 'url'
 func parsePath(path string) (bucket, directory string, err error) {

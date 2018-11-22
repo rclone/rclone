@@ -25,6 +25,12 @@ tbody tr:nth-child(odd) {
    background-color:#d0d0ff
 }
 
+pre code {
+  /* Preserve whitespace. Wrap text only at line breaks. */
+  /* Avoids auto-wrapping the code lines. */
+  white-space: pre
+}
+
 /* Hover over links on headers */
 .header-link {
   position: absolute;

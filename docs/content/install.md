@@ -1,7 +1,7 @@
 ---
 title: "Install"
 description: "Rclone Installation"
-date: "2016-03-28"
+date: "2018-08-28"
 ---
 
 # Install #
@@ -11,7 +11,7 @@ Rclone is a Go program and comes as a single binary file.
 ## Quickstart ##
 
   * [Download](/downloads/) the relevant binary.
-  * Unpack and the `rclone` binary.
+  * Extract the `rclone` or `rclone.exe` binary from the archive
   * Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
 See below for some expanded Linux / macOS instructions.
@@ -83,16 +83,25 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
 ## Install from source ##
 
-Make sure you have at least [Go](https://golang.org/) 1.6 installed.
-Make sure your `GOPATH` is set, then:
+Make sure you have at least [Go](https://golang.org/) 1.7
+installed.  [Download go](https://golang.org/dl/) if necessary.  The
+latest release is recommended. Then
+
+    git clone https://github.com/ncw/rclone.git
+    cd rclone
+    go build
+    ./rclone version
+
+You can also build and install rclone in the
+[GOPATH](https://github.com/golang/go/wiki/GOPATH) (which defaults to
+`~/go`) with:
 
     go get -u -v github.com/ncw/rclone
 
-and this will build the binary in `$GOPATH/bin`.  If you have built
-rclone before then you will want to update its dependencies first with
-this
-
-    go get -u -v github.com/ncw/rclone/...
+and this will build the binary in `$GOPATH/bin` (`~/go/bin/rclone` by
+default) after downloading the source to
+`$GOPATH/src/github.com/ncw/rclone` (`~/go/src/github.com/ncw/rclone`
+by default).
 
 ## Installation with Ansible ##
 

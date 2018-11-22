@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-set -eu -o pipefail
-
-go get -u github.com/alecthomas/gometalinter
-gometalinter --install >/dev/null
-go get -u github.com/golang/dep/cmd/dep

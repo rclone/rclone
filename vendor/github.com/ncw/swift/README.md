@@ -26,26 +26,27 @@ See here for full package docs
 - http://godoc.org/github.com/ncw/swift
 
 Here is a short example from the docs
+```go
+import "github.com/ncw/swift"
 
-    import "github.com/ncw/swift"
-
-    // Create a connection
-    c := swift.Connection{
-        UserName: "user",
-        ApiKey:   "key",
-        AuthUrl:  "auth_url",
-        Domain:   "domain",  // Name of the domain (v3 auth only)
-        Tenant:   "tenant",  // Name of the tenant (v2 auth only)
-    }
-    // Authenticate
-    err := c.Authenticate()
-    if err != nil {
-        panic(err)
-    }
-    // List all the containers
-    containers, err := c.ContainerNames(nil)
-    fmt.Println(containers)
-    // etc...
+// Create a connection
+c := swift.Connection{
+    UserName: "user",
+    ApiKey:   "key",
+    AuthUrl:  "auth_url",
+    Domain:   "domain",  // Name of the domain (v3 auth only)
+    Tenant:   "tenant",  // Name of the tenant (v2 auth only)
+}
+// Authenticate
+err := c.Authenticate()
+if err != nil {
+    panic(err)
+}
+// List all the containers
+containers, err := c.ContainerNames(nil)
+fmt.Println(containers)
+// etc...
+```
 
 Additions
 ---------

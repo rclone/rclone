@@ -468,6 +468,32 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 	)
 }
 
+func TestRcatSize(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	const body = "------------------------------------------------------------"
+	file1 := r.WriteFile("potato1", body, t1)
+	file2 := r.WriteFile("potato2", body, t2)
+	// Test with known length
+	bodyReader := ioutil.NopCloser(strings.NewReader(body))
+	obj, err := operations.RcatSize(r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+	assert.Equal(t, file1.Path, obj.Remote())
+
+	// Test with unknown length
+	bodyReader = ioutil.NopCloser(strings.NewReader(body)) // reset Reader
+	ioutil.NopCloser(strings.NewReader(body))
+	obj, err = operations.RcatSize(r.Fremote, file2.Path, bodyReader, -1, file2.ModTime)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+	assert.Equal(t, file2.Path, obj.Remote())
+
+	// Check files exist
+	fstest.CheckItems(t, r.Fremote, file1, file2)
+}
+
 func TestMoveFile(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()

@@ -16,6 +16,7 @@ func TestParse(t *testing.T) {
 		{"path/to/file", "", "path/to/file"},
 		{"remote:path/to/file", "remote", "path/to/file"},
 		{"remote:/path/to/file", "remote", "/path/to/file"},
+		{":backend:/path/to/file", ":backend", "/path/to/file"},
 	} {
 		gotConfigName, gotFsPath := Parse(test.in)
 		assert.Equal(t, test.wantConfigName, gotConfigName)
@@ -28,12 +29,21 @@ func TestSplit(t *testing.T) {
 		remote, wantParent, wantLeaf string
 	}{
 		{"", "", ""},
+
 		{"remote:", "remote:", ""},
 		{"remote:potato", "remote:", "potato"},
 		{"remote:/", "remote:/", ""},
 		{"remote:/potato", "remote:/", "potato"},
 		{"remote:/potato/potato", "remote:/potato/", "potato"},
 		{"remote:potato/sausage", "remote:potato/", "sausage"},
+
+		{":remote:", ":remote:", ""},
+		{":remote:potato", ":remote:", "potato"},
+		{":remote:/", ":remote:/", ""},
+		{":remote:/potato", ":remote:/", "potato"},
+		{":remote:/potato/potato", ":remote:/potato/", "potato"},
+		{":remote:potato/sausage", ":remote:potato/", "sausage"},
+
 		{"/", "/", ""},
 		{"/root", "/", "root"},
 		{"/a/b", "/a/", "b"},

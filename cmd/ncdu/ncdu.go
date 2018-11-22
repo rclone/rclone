@@ -6,7 +6,6 @@ package ncdu
 
 import (
 	"fmt"
-	"log"
 	"path"
 	"sort"
 	"strings"
@@ -466,7 +465,7 @@ func NewUI(f fs.Fs) *UI {
 func (u *UI) Show() error {
 	err := termbox.Init()
 	if err != nil {
-		log.Fatal(err)
+		return errors.Wrap(err, "termbox init")
 	}
 	defer termbox.Close()
 
