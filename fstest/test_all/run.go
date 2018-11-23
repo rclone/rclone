@@ -15,6 +15,7 @@ import (
 	"path"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -101,6 +102,35 @@ func (r *Run) dumpOutput() {
 	log.Println("------------------------------------------------------------")
 }
 
+// This converts a slice of test names into a regexp which matches
+// them.
+func testsToRegexp(tests []string) string {
+	var split []map[string]struct{}
+	// Make a slice with maps of the used parts at each level
+	for _, test := range tests {
+		for i, name := range strings.Split(test, "/") {
+			if i >= len(split) {
+				split = append(split, make(map[string]struct{}))
+			}
+			split[i][name] = struct{}{}
+		}
+	}
+	var out []string
+	for _, level := range split {
+		var testsInLevel = []string{}
+		for name := range level {
+			testsInLevel = append(testsInLevel, name)
+		}
+		sort.Strings(testsInLevel)
+		if len(testsInLevel) > 1 {
+			out = append(out, "^("+strings.Join(testsInLevel, "|")+")$")
+		} else {
+			out = append(out, "^"+testsInLevel[0]+"$")
+		}
+	}
+	return strings.Join(out, "/")
+}
+
 var failRe = regexp.MustCompile(`(?m)^\s*--- FAIL: (Test.*?) \(`)
 
 // findFailures looks for all the tests which failed
@@ -126,7 +156,7 @@ func (r *Run) findFailures() {
 	}
 	r.failedTests = newTests
 	if len(r.failedTests) != 0 {
-		r.runFlag = "^(" + strings.Join(r.failedTests, "|") + ")$"
+		r.runFlag = testsToRegexp(r.failedTests)
 	} else {
 		r.runFlag = ""
 	}
