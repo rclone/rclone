@@ -1,4 +1,4 @@
-// +build go1.10
+// +build go1.11
 
 // Run tests for all the remotes.  Run this with package names which
 // need integration testing.
