@@ -329,7 +329,7 @@ func (wu writeWindowUpdate) writeFrame(ctx writeContext) error {
 }
 
 // encodeHeaders encodes an http.Header. If keys is not nil, then (k, h[k])
-// is encoded only only if k is in keys.
+// is encoded only if k is in keys.
 func encodeHeaders(enc *hpack.Encoder, h http.Header, keys []string) {
 	if keys == nil {
 		sorter := sorterPool.Get().(*sorter)

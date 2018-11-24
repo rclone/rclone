@@ -18,9 +18,8 @@ func newExprStatement(ast AST) AST {
 // CommentStatement represents a comment in the ini defintion.
 //
 //	grammar:
-//	comment -> #comment' | ;comment' | /comment_slash
-//	comment_slash -> /comment'
-//	comment' -> value
+//	comment -> #comment' | ;comment'
+//	comment' -> epsilon | value
 func newCommentStatement(tok Token) AST {
 	return newAST(ASTKindCommentStatement, newExpression(tok))
 }

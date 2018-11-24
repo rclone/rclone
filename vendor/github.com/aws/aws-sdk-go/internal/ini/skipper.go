@@ -5,10 +5,10 @@ package ini
 // files. See example below
 //
 //	[ foo ]
-//	nested = // this section will be skipped
+//	nested = ; this section will be skipped
 //		a=b
 //		c=d
-//	bar=baz // this will be included
+//	bar=baz ; this will be included
 type skipper struct {
 	shouldSkip bool
 	TokenSet   bool
@@ -22,7 +22,10 @@ func newSkipper() skipper {
 }
 
 func (s *skipper) ShouldSkip(tok Token) bool {
-	if s.shouldSkip && s.prevTok.Type() == TokenNL && tok.Type() != TokenWS {
+	if s.shouldSkip &&
+		s.prevTok.Type() == TokenNL &&
+		tok.Type() != TokenWS {
+
 		s.Continue()
 		return false
 	}

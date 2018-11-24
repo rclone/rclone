@@ -3,7 +3,7 @@
     "oauth2": {
       "scopes": {
         "https://www.googleapis.com/auth/drive": {
-          "description": "View and manage the files in your Google Drive"
+          "description": "See, edit, create, and delete all of your Google Drive files"
         },
         "https://www.googleapis.com/auth/drive.appdata": {
           "description": "View and manage its own configuration data in your Google Drive"
@@ -24,7 +24,7 @@
           "description": "View the photos, videos and albums in your Google Photos"
         },
         "https://www.googleapis.com/auth/drive.readonly": {
-          "description": "View the files in your Google Drive"
+          "description": "See and download all your Google Drive files"
         },
         "https://www.googleapis.com/auth/drive.scripts": {
           "description": "Modify your Google Apps Script scripts' behavior"
@@ -38,7 +38,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/IpWGMl9VbmiTG9s-ZaBZIrC4CgE\"",
+  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/ht6QYJxjG-GWKiHV7jWIX4PB5aE\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -3080,7 +3080,7 @@
       }
     }
   },
-  "revision": "20180830",
+  "revision": "20181025",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -4051,6 +4051,7 @@
           "type": "string"
         },
         "downloadUrl": {
+          "description": "Short lived download URL for the file. This field is only populated for files with content stored in Drive; it is not populated for Google Docs or shortcut files.",
           "type": "string"
         },
         "editable": {

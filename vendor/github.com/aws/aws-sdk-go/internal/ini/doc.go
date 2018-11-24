@@ -24,7 +24,6 @@
 //
 //	SkipState will skip (NL WS)+
 //
-//	comment -> # comment' | ; comment' | / comment_slash
-//	comment_slash -> / comment'
+//	comment -> # comment' | ; comment'
 //	comment' -> epsilon | value
 package ini

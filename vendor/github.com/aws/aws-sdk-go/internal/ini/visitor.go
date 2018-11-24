@@ -141,6 +141,11 @@ func (t Section) ValueType(k string) (ValueType, bool) {
 	return v.Type, ok
 }
 
+// Bool returns a bool value at k
+func (t Section) Bool(k string) bool {
+	return t.values[k].BoolValue()
+}
+
 // Int returns an integer value at k
 func (t Section) Int(k string) int64 {
 	return t.values[k].IntValue()

@@ -26,7 +26,7 @@
   "description": "Stores and retrieves potentially large, immutable data objects.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/storage/docs/json_api/",
-  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/akd8i6K-8A6ohXFVzxQZomL5PpA\"",
+  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/LSpI3fR5lOQdDA6XHHjB1Bie2kU\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/cloud_storage-16.png",
     "x32": "https://www.google.com/images/icons/product/cloud_storage-32.png"
@@ -616,7 +616,7 @@
           ]
         },
         "patch": {
-          "description": "Updates a bucket. Changes to the bucket will be readable immediately after writing, but configuration changes may take time to propagate. This method supports patch semantics.",
+          "description": "Patches a bucket. Changes to the bucket will be readable immediately after writing, but configuration changes may take time to propagate.",
           "httpMethod": "PATCH",
           "id": "storage.buckets.patch",
           "parameterOrder": [
@@ -2766,7 +2766,7 @@
       }
     }
   },
-  "revision": "20180905",
+  "revision": "20181013",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Bucket": {

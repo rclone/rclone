@@ -11,15 +11,10 @@ func Get(fi os.FileInfo) Timespec {
 	return getTimespec(fi)
 }
 
-// Stat returns the Timespec for the given filename.
-func Stat(name string) (Timespec, error) {
-	if hasPlatformSpecificStat {
-		if ts, err := platformSpecficStat(name); err == nil {
-			return ts, nil
-		}
-	}
+type statFunc func(string) (os.FileInfo, error)
 
-	fi, err := os.Stat(name)
+func stat(name string, sf statFunc) (Timespec, error) {
+	fi, err := sf(name)
 	if err != nil {
 		return nil, err
 	}

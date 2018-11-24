@@ -166,9 +166,6 @@ func newValue(t ValueType, base int, raw []rune) (Value, error) {
 	switch t {
 	case DecimalType:
 		v.decimal, err = strconv.ParseFloat(string(raw), 64)
-		if err != nil {
-			panic(err)
-		}
 	case IntegerType:
 		if base != 10 {
 			raw = raw[2:]
@@ -181,6 +178,16 @@ func newValue(t ValueType, base int, raw []rune) (Value, error) {
 		v.str = string(raw[1 : len(raw)-1])
 	case BoolType:
 		v.boolean = runeCompare(v.raw, runesTrue)
+	}
+
+	// issue 2253
+	//
+	// if the value trying to be parsed is too large, then we will use
+	// the 'StringType' and raw value instead.
+	if nerr, ok := err.(*strconv.NumError); ok && nerr.Err == strconv.ErrRange {
+		v.Type = StringType
+		v.str = string(raw)
+		err = nil
 	}
 
 	return v, err

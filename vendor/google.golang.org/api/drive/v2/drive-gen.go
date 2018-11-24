@@ -11,18 +11,18 @@ package drive // import "google.golang.org/api/drive/v2"
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	context "golang.org/x/net/context"
-	ctxhttp "golang.org/x/net/context/ctxhttp"
-	gensupport "google.golang.org/api/gensupport"
-	googleapi "google.golang.org/api/googleapi"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	gensupport "google.golang.org/api/gensupport"
+	googleapi "google.golang.org/api/googleapi"
 )
 
 // Always reference these packages, just in case the auto-generated code
@@ -38,7 +38,6 @@ var _ = googleapi.Version
 var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
-var _ = ctxhttp.Do
 
 const apiId = "drive:v2"
 const apiName = "drive"
@@ -47,7 +46,7 @@ const basePath = "https://www.googleapis.com/drive/v2/"
 
 // OAuth2 scopes used by this API.
 const (
-	// View and manage the files in your Google Drive
+	// See, edit, create, and delete all of your Google Drive files
 	DriveScope = "https://www.googleapis.com/auth/drive"
 
 	// View and manage its own configuration data in your Google Drive
@@ -69,7 +68,7 @@ const (
 	// View the photos, videos and albums in your Google Photos
 	DrivePhotosReadonlyScope = "https://www.googleapis.com/auth/drive.photos.readonly"
 
-	// View the files in your Google Drive
+	// See and download all your Google Drive files
 	DriveReadonlyScope = "https://www.googleapis.com/auth/drive.readonly"
 
 	// Modify your Google Apps Script scripts' behavior
@@ -1451,6 +1450,9 @@ type File struct {
 	// Description: A short description of the file.
 	Description string `json:"description,omitempty"`
 
+	// DownloadUrl: Short lived download URL for the file. This field is
+	// only populated for files with content stored in Drive; it is not
+	// populated for Google Docs or shortcut files.
 	DownloadUrl string `json:"downloadUrl,omitempty"`
 
 	// Editable: Deprecated: use capabilities/canEdit.
