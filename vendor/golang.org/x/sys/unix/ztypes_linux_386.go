@@ -286,6 +286,8 @@ type RawSockaddrXDP struct {
 	Shared_umem_fd uint32
 }
 
+type RawSockaddrPPPoX [0x1e]byte
+
 type RawSockaddr struct {
 	Family uint16
 	Data   [14]int8
@@ -421,6 +423,7 @@ const (
 	SizeofSockaddrALG       = 0x58
 	SizeofSockaddrVM        = 0x10
 	SizeofSockaddrXDP       = 0x10
+	SizeofSockaddrPPPoX     = 0x1e
 	SizeofLinger            = 0x8
 	SizeofIovec             = 0x8
 	SizeofIPMreq            = 0x8

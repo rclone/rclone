@@ -334,3 +334,8 @@ func (mi *MediaInfo) ResumableUpload(locURI string) *ResumableUpload {
 		},
 	}
 }
+
+// SetGetBody sets the GetBody field of req to f.
+func SetGetBody(req *http.Request, f func() (io.ReadCloser, error)) {
+	req.GetBody = f
+}

@@ -25,8 +25,7 @@ const (
 	// SkipTokenState will skip any token and push the previous
 	// state onto the stack.
 	SkipTokenState
-	// comment -> # comment' | ; comment' | / comment_slash
-	// comment_slash -> / comment'
+	// comment -> # comment' | ; comment'
 	// comment' -> MarkComplete | value
 	CommentState
 	// MarkComplete state will complete statements and move that
@@ -58,7 +57,7 @@ var parseTable = map[ASTKind]map[TokenType]int{
 		TokenOp:      StatementPrimeState,
 		TokenLit:     ValueState,
 		TokenSep:     OpenScopeState,
-		TokenWS:      SkipTokenState,
+		TokenWS:      ValueState,
 		TokenNL:      SkipState,
 		TokenComment: CommentState,
 		TokenNone:    MarkCompleteState,
@@ -88,8 +87,9 @@ var parseTable = map[ASTKind]map[TokenType]int{
 	},
 	ASTKindSectionStatement: map[TokenType]int{
 		TokenLit: SectionState,
+		TokenOp:  SectionState,
 		TokenSep: CloseScopeState,
-		TokenWS:  SkipTokenState,
+		TokenWS:  SectionState,
 		TokenNL:  SkipTokenState,
 	},
 	ASTKindCompletedSectionStatement: map[TokenType]int{
@@ -157,6 +157,12 @@ loop:
 
 		step := parseTable[k.Kind][tok.Type()]
 		if s.ShouldSkip(tok) {
+			// being in a skip state with no tokens will break out of
+			// the parse loop since there is nothing left to process.
+			if len(tokens) == 0 {
+				break loop
+			}
+
 			step = SkipTokenState
 		}
 
@@ -192,6 +198,7 @@ loop:
 				)
 			}
 
+			k = trimSpaces(k)
 			expr := newEqualExpr(k, tok)
 			stack.Push(expr)
 		case ValueState:
@@ -214,6 +221,9 @@ loop:
 				// assiging a value to some key
 				k.AppendChild(newExpression(tok))
 				stack.Push(newExprStatement(k))
+			case ASTKindExpr:
+				k.Root.raw = append(k.Root.raw, tok.Raw()...)
+				stack.Push(k)
 			case ASTKindExprStatement:
 				root := k.GetRoot()
 				children := root.GetChildren()
@@ -248,6 +258,7 @@ loop:
 				return nil, NewParseError("expected ']'")
 			}
 
+			k = trimSpaces(k)
 			stack.Push(newCompletedSectionStatement(k))
 		case SectionState:
 			var stmt AST
@@ -263,7 +274,6 @@ loop:
 				// the label of the section
 				stmt = newSectionStatement(tok)
 			case ASTKindSectionStatement:
-				k.Root.raw = append(k.Root.raw, ' ')
 				k.Root.raw = append(k.Root.raw, tok.Raw()...)
 				stmt = k
 			default:
@@ -309,4 +319,29 @@ loop:
 
 	// returns a sublist which exludes the start symbol
 	return stack.List(), nil
+}
+
+// trimSpaces will trim spaces on the left and right hand side of
+// the literal.
+func trimSpaces(k AST) AST {
+	// trim left hand side of spaces
+	for i := 0; i < len(k.Root.raw); i++ {
+		if !isWhitespace(k.Root.raw[i]) {
+			break
+		}
+
+		k.Root.raw = k.Root.raw[1:]
+		i--
+	}
+
+	// trim right hand side of spaces
+	for i := len(k.Root.raw) - 1; i >= 0; i-- {
+		if !isWhitespace(k.Root.raw[i]) {
+			break
+		}
+
+		k.Root.raw = k.Root.raw[:len(k.Root.raw)-1]
+	}
+
+	return k
 }

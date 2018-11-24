@@ -42,10 +42,15 @@ func Init() error {
 		return err
 	}
 
-	orig_size = get_term_size(out)
+	orig_size, orig_window = get_term_size(out)
 	win_size := get_win_size(out)
 
 	err = set_console_screen_buffer_size(out, win_size)
+	if err != nil {
+		return err
+	}
+
+	err = fix_win_size(out, win_size)
 	if err != nil {
 		return err
 	}
@@ -56,7 +61,7 @@ func Init() error {
 	}
 
 	show_cursor(false)
-	term_size = get_term_size(out)
+	term_size, _ = get_term_size(out)
 	back_buffer.init(int(term_size.x), int(term_size.y))
 	front_buffer.init(int(term_size.x), int(term_size.y))
 	back_buffer.clear()
@@ -86,9 +91,10 @@ func Close() {
 	}
 	<-cancel_done_comm
 
+	set_console_screen_buffer_size(out, orig_size)
+	set_console_window_info(out, &orig_window)
 	set_console_cursor_info(out, &orig_cursor_info)
 	set_console_cursor_position(out, coord{})
-	set_console_screen_buffer_size(out, orig_size)
 	set_console_mode(in, orig_mode)
 	syscall.Close(in)
 	syscall.Close(out)

@@ -2,9 +2,14 @@
 
 package times
 
-const hasPlatformSpecificStat = false
+import "os"
 
-// do not use, only here to prevent "undefined" method error.
-func platformSpecficStat(name string) (Timespec, error) {
-	return nil, nil
+// Stat returns the Timespec for the given filename.
+func Stat(name string) (Timespec, error) {
+	return stat(name, os.Stat)
+}
+
+// Lstat returns the Timespec for the given filename, and does not follow Symlinks.
+func Lstat(name string) (Timespec, error) {
+	return stat(name, os.Lstat)
 }

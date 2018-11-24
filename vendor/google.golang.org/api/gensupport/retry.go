@@ -15,12 +15,11 @@
 package gensupport
 
 import (
+	"context"
 	"io"
 	"net"
 	"net/http"
 	"time"
-
-	"golang.org/x/net/context"
 )
 
 // Retry invokes the given function, retrying it multiple times if the connection failed or

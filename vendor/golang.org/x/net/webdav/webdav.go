@@ -174,7 +174,7 @@ func (h *Handler) handleOptions(w http.ResponseWriter, r *http.Request) (status 
 	if err != nil {
 		return status, err
 	}
-	ctx := getContext(r)
+	ctx := r.Context()
 	allow := "OPTIONS, LOCK, PUT, MKCOL"
 	if fi, err := h.FileSystem.Stat(ctx, reqPath); err == nil {
 		if fi.IsDir() {
@@ -197,7 +197,7 @@ func (h *Handler) handleGetHeadPost(w http.ResponseWriter, r *http.Request) (sta
 		return status, err
 	}
 	// TODO: check locks for read-only access??
-	ctx := getContext(r)
+	ctx := r.Context()
 	f, err := h.FileSystem.OpenFile(ctx, reqPath, os.O_RDONLY, 0)
 	if err != nil {
 		return http.StatusNotFound, err
@@ -231,7 +231,7 @@ func (h *Handler) handleDelete(w http.ResponseWriter, r *http.Request) (status i
 	}
 	defer release()
 
-	ctx := getContext(r)
+	ctx := r.Context()
 
 	// TODO: return MultiStatus where appropriate.
 
@@ -262,7 +262,7 @@ func (h *Handler) handlePut(w http.ResponseWriter, r *http.Request) (status int,
 	defer release()
 	// TODO(rost): Support the If-Match, If-None-Match headers? See bradfitz'
 	// comments in http.checkEtag.
-	ctx := getContext(r)
+	ctx := r.Context()
 
 	f, err := h.FileSystem.OpenFile(ctx, reqPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -300,7 +300,7 @@ func (h *Handler) handleMkcol(w http.ResponseWriter, r *http.Request) (status in
 	}
 	defer release()
 
-	ctx := getContext(r)
+	ctx := r.Context()
 
 	if r.ContentLength > 0 {
 		return http.StatusUnsupportedMediaType, nil
@@ -344,7 +344,7 @@ func (h *Handler) handleCopyMove(w http.ResponseWriter, r *http.Request) (status
 		return http.StatusForbidden, errDestinationEqualsSource
 	}
 
-	ctx := getContext(r)
+	ctx := r.Context()
 
 	if r.Method == "COPY" {
 		// Section 7.5.1 says that a COPY only needs to lock the destination,
@@ -399,7 +399,7 @@ func (h *Handler) handleLock(w http.ResponseWriter, r *http.Request) (retStatus 
 		return status, err
 	}
 
-	ctx := getContext(r)
+	ctx := r.Context()
 	token, ld, now, created := "", LockDetails{}, time.Now(), false
 	if li == (lockInfo{}) {
 		// An empty lockInfo means to refresh the lock.
@@ -511,7 +511,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request) (status
 	if err != nil {
 		return status, err
 	}
-	ctx := getContext(r)
+	ctx := r.Context()
 	fi, err := h.FileSystem.Stat(ctx, reqPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -581,7 +581,7 @@ func (h *Handler) handleProppatch(w http.ResponseWriter, r *http.Request) (statu
 	}
 	defer release()
 
-	ctx := getContext(r)
+	ctx := r.Context()
 
 	if _, err := h.FileSystem.Stat(ctx, reqPath); err != nil {
 		if os.IsNotExist(err) {

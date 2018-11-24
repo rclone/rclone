@@ -402,6 +402,13 @@ type Winsize struct {
 	Ypixel uint16
 }
 
+type Ptmget struct {
+	Cfd int32
+	Sfd int32
+	Cn  [1024]byte
+	Sn  [1024]byte
+}
+
 const (
 	AT_FDCWD            = -0x64
 	AT_SYMLINK_NOFOLLOW = 0x200

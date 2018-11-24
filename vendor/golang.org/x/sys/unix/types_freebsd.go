@@ -26,7 +26,7 @@ package unix
 #include <termios.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/capability.h>
+#include <sys/capsicum.h>
 #include <sys/event.h>
 #include <sys/mman.h>
 #include <sys/mount.h>

@@ -46,6 +46,10 @@ func main() {
 	valRegex := regexp.MustCompile(`type (Fsid|Sigset_t) struct {(\s+)X__val(\s+\S+\s+)}`)
 	b = valRegex.ReplaceAll(b, []byte("type $1 struct {${2}Val$3}"))
 
+	// Intentionally export __fds_bits field in FdSet
+	fdSetRegex := regexp.MustCompile(`type (FdSet) struct {(\s+)X__fds_bits(\s+\S+\s+)}`)
+	b = fdSetRegex.ReplaceAll(b, []byte("type $1 struct {${2}Bits$3}"))
+
 	// If we have empty Ptrace structs, we should delete them. Only s390x emits
 	// nonempty Ptrace structs.
 	ptraceRexexp := regexp.MustCompile(`type Ptrace((Psw|Fpregs|Per) struct {\s*})`)
@@ -64,6 +68,10 @@ func main() {
 	// conversion to string; see golang.org/issue/20753
 	convertUtsnameRegex := regexp.MustCompile(`((Sys|Node|Domain)name|Release|Version|Machine)(\s+)\[(\d+)\]u?int8`)
 	b = convertUtsnameRegex.ReplaceAll(b, []byte("$1$3[$4]byte"))
+
+	// Convert [1024]int8 to [1024]byte in Ptmget members
+	convertPtmget := regexp.MustCompile(`([SC]n)(\s+)\[(\d+)\]u?int8`)
+	b = convertPtmget.ReplaceAll(b, []byte("$1[$3]byte"))
 
 	// Remove spare fields (e.g. in Statx_t)
 	spareFieldsRegex := regexp.MustCompile(`X__spare\S*`)
