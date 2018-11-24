@@ -227,7 +227,7 @@ Here are the advanced options specific to qingstor (QingCloud Object Storage).
 
 #### --qingstor-connection-retries
 
-Number of connnection retries.
+Number of connection retries.
 
 - Config:      connection_retries
 - Env Var:     RCLONE_QINGSTOR_CONNECTION_RETRIES
