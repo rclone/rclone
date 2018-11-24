@@ -706,6 +706,11 @@ func (f *Fs) Mkdir(dir string) error {
 					f.containerOK = true
 					return false, nil
 				case azblob.ServiceCodeContainerBeingDeleted:
+					// From https://docs.microsoft.com/en-us/rest/api/storageservices/delete-container
+					// When a container is deleted, a container with the same name cannot be created
+					// for at least 30 seconds; the container may not be available for more than 30
+					// seconds if the service is still processing the request.
+					time.Sleep(6 * time.Second) // default 10 retries will be 60 seconds
 					f.containerDeleted = true
 					return true, err
 				}
