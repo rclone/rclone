@@ -1,10 +1,79 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2018-10-15"
+date: "2018-11-24"
 ---
 
 # Changelog
+
+## v1.45 - 2018-11-24
+
+* New backends
+    * The Yandex backend was re-written - see below for details (Sebastian Bünger)
+* New commands
+    * rcd: New command just to serve the remote control API (Nick Craig-Wood)
+* New Features
+    * The remote control API (rc) was greatly expanded to allow full control over rclone (Nick Craig-Wood)
+        * sensitive operations require authorization or the `--rc-no-auth` flag
+        * config/* operations to configure rclone
+        * options/* for reading/setting command line flags
+        * operations/* for all low level operations, eg copy file, list directory
+        * sync/* for sync, copy and move
+        * `--rc-files` flag to serve files on the rc http server
+          * this is for building web native GUIs for rclone
+        * Optionally serving objects on the rc http server
+        * Ensure rclone fails to start up if the `--rc` port is in use already
+        * See [the rc docs](https://rclone.org/rc/) for more info
+    * sync/copy/move
+        * Make `--files-from` only read the objects specified and don't scan directories (Nick Craig-Wood)
+            * This is a huge speed improvement for destinations with lots of files
+    * filter: Add `--ignore-case` flag (Nick Craig-Wood)
+    * ncdu: Add remove function ('d' key) (Henning Surmeier)
+    * rc command
+        * Add `--json` flag for structured JSON input (Nick Craig-Wood)
+        * Add `--user` and `--pass` flags and interpret `--rc-user`, `--rc-pass`, `--rc-addr` (Nick Craig-Wood)
+    * build
+        * Require go1.8 or later for compilation (Nick Craig-Wood)
+        * Enable softfloat on MIPS arch (Scott Edlund)
+        * Integration test framework revamped with a better report and better retries (Nick Craig-Wood)
+* Bug Fixes
+    * cmd: Make --progress update the stats correctly at the end (Nick Craig-Wood)
+    * config: Create config directory on save if it is missing (Nick Craig-Wood)
+    * dedupe: Check for existing filename before renaming a dupe file (ssaqua)
+    * move: Don't create directories with --dry-run (Nick Craig-Wood)
+    * operations: Fix Purge and Rmdirs when dir is not the root (Nick Craig-Wood)
+    * serve http/webdav/restic: Ensure rclone exits if the port is in use (Nick Craig-Wood)
+* Mount
+    * Make `--volname` work for Windows and macOS (Nick Craig-Wood)
+* Azure Blob
+    * Avoid context deadline exceeded error by setting a large TryTimeout value (brused27)
+    * Fix erroneous Rmdir error "directory not empty" (Nick Craig-Wood)
+    * Wait for up to 60s to create a just deleted container (Nick Craig-Wood)
+* Dropbox
+    * Add dropbox impersonate support (Jake Coggiano)
+* Jottacloud
+    * Fix bug in `--fast-list` handing of empty folders (albertony)
+* Opendrive
+    * Fix transfer of files with `+` and `&` in (Nick Craig-Wood)
+    * Fix retries of upload chunks (Nick Craig-Wood)
+* S3
+    * Set ACL for server side copies to that provided by the user (Nick Craig-Wood)
+    * Fix role_arn, credential_source, ... (Erik Swanson)
+    * Add config info for Wasabi's US-West endpoint (Henry Ptasinski)
+* SFTP
+    * Ensure file hash checking is really disabled (Jon Fautley)
+* Swift
+    * Add pacer for retries to make swift more reliable (Nick Craig-Wood)
+* WebDAV
+    * Add Content-Type to PUT requests (Nick Craig-Wood)
+    * Fix config parsing so `--webdav-user` and `--webdav-pass` flags work (Nick Craig-Wood)
+    * Add RFC3339 date format (Ralf Hemberger)
+* Yandex
+    * The yandex backend was re-written (Sebastian Bünger)
+        * This implements low level retries (Sebastian Bünger)
+        * Copy, Move, DirMove, PublicLink and About optional interfaces (Sebastian Bünger)
+        * Improved general error handling (Sebastian Bünger)
+        * Removed ListR for now due to inconsistent behaviour (Sebastian Bünger)
 
 ## v1.44 - 2018-10-15
 

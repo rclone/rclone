@@ -1,5 +1,5 @@
 ---
-date: 2018-10-15T11:00:47+01:00
+date: 2018-11-24T13:43:29Z
 title: "rclone rc"
 slug: rclone_rc
 url: /commands/rclone_rc/
@@ -11,12 +11,24 @@ Run a command against a running rclone.
 ### Synopsis
 
 
-This runs a command against a running rclone.  By default it will use
-that specified in the --rc-addr command.
+
+This runs a command against a running rclone.  Use the --url flag to
+specify an non default URL to connect on.  This can be either a
+":port" which is taken to mean "http://localhost:port" or a
+"host:port" which is taken to mean "http://host:port"
+
+A username and password can be passed in with --user and --pass.
+
+Note that --rc-addr, --rc-user, --rc-pass will be read also for --url,
+--user, --pass.
 
 Arguments should be passed in as parameter=value.
 
 The result will be returned as a JSON object by default.
+
+The --json parameter can be used to pass in a JSON blob as an input
+instead of key=value arguments.  This is the only way of passing in
+more complicated values.
 
 Use "rclone rc" to see a list of all possible commands.
 
@@ -27,9 +39,12 @@ rclone rc commands parameter [flags]
 ### Options
 
 ```
-  -h, --help         help for rc
-      --no-output    If set don't output the JSON result.
-      --url string   URL to connect to rclone remote control. (default "http://localhost:5572/")
+  -h, --help          help for rc
+      --json string   Input JSON - use instead of key=value args.
+      --no-output     If set don't output the JSON result.
+      --pass string   Password to use to connect to rclone remote control.
+      --url string    URL to connect to rclone remote control. (default "http://localhost:5572/")
+      --user string   Username to use to rclone remote control.
 ```
 
 ### Options inherited from parent commands
@@ -70,13 +85,13 @@ rclone rc commands parameter [flags]
       --bwlimit BwTimetable                        Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.
       --cache-chunk-clean-interval Duration        How often should the cache perform cleanups of the chunk storage. (default 1m0s)
       --cache-chunk-no-memory                      Disable the in-memory cache for storing chunks during streaming.
-      --cache-chunk-path string                    Directory to cache chunk files. (default "/home/ncw/.cache/rclone/cache-backend")
+      --cache-chunk-path string                    Directory to cache chunk files. (default "$HOME/.cache/rclone/cache-backend")
       --cache-chunk-size SizeSuffix                The size of a chunk (partial file data). (default 5M)
       --cache-chunk-total-size SizeSuffix          The total size that the chunks can take up on the local disk. (default 10G)
-      --cache-db-path string                       Directory to store file structure metadata DB. (default "/home/ncw/.cache/rclone/cache-backend")
+      --cache-db-path string                       Directory to store file structure metadata DB. (default "$HOME/.cache/rclone/cache-backend")
       --cache-db-purge                             Clear all the cached data for this remote on start.
       --cache-db-wait-time Duration                How long to wait for the DB to be available - 0 is unlimited (default 1s)
-      --cache-dir string                           Directory rclone will use for caching. (default "/home/ncw/.cache/rclone")
+      --cache-dir string                           Directory rclone will use for caching. (default "$HOME/.cache/rclone")
       --cache-info-age Duration                    How long to cache file structure information (directory listings, file size, times etc). (default 6h0m0s)
       --cache-plex-insecure string                 Skip all certificate verifications when connecting to the Plex server
       --cache-plex-password string                 The password of the Plex user
@@ -101,8 +116,8 @@ rclone rc commands parameter [flags]
       --crypt-password2 string                     Password or pass phrase for salt. Optional but recommended.
       --crypt-remote string                        Remote to encrypt/decrypt.
       --crypt-show-mapping                         For all files listed show how the names encrypt.
-      --delete-after                               When synchronizing, delete files on destination after transfering (default)
-      --delete-before                              When synchronizing, delete files on destination before transfering
+      --delete-after                               When synchronizing, delete files on destination after transferring (default)
+      --delete-before                              When synchronizing, delete files on destination before transferring
       --delete-during                              When synchronizing, delete files during transfer
       --delete-excluded                            Delete files on dest excluded from sync
       --disable string                             Disable a comma separated list of features.  Use help to see a list.
@@ -134,6 +149,7 @@ rclone rc commands parameter [flags]
       --dropbox-chunk-size SizeSuffix              Upload chunk size. (< 150M). (default 48M)
       --dropbox-client-id string                   Dropbox App Client Id
       --dropbox-client-secret string               Dropbox App Client Secret
+      --dropbox-impersonate string                 Impersonate this user when using a business account.
   -n, --dry-run                                    Do a trial run with no permanent changes
       --dump string                                List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
       --dump-bodies                                Dump HTTP headers and bodies - may contain sensitive info
@@ -148,7 +164,7 @@ rclone rc commands parameter [flags]
       --ftp-host string                            FTP host to connect to
       --ftp-pass string                            FTP password
       --ftp-port string                            FTP port, leave blank to use default (21)
-      --ftp-user string                            FTP username, leave blank for current username, ncw
+      --ftp-user string                            FTP username, leave blank for current username, $USER
       --gcs-bucket-acl string                      Access Control List for new buckets.
       --gcs-client-id string                       Google Application Client Id
       --gcs-client-secret string                   Google Application Client Secret
@@ -161,6 +177,7 @@ rclone rc commands parameter [flags]
       --hubic-chunk-size SizeSuffix                Above this size files will be chunked into a _segments container. (default 5G)
       --hubic-client-id string                     Hubic Client Id
       --hubic-client-secret string                 Hubic Client Secret
+      --ignore-case                                Ignore case in filters (case insensitive)
       --ignore-checksum                            Skip post copy check of checksums.
       --ignore-errors                              delete even if there are I/O errors
       --ignore-existing                            Skip all files that exist on destination
@@ -213,7 +230,7 @@ rclone rc commands parameter [flags]
       --pcloud-client-secret string                Pcloud App Client Secret
   -P, --progress                                   Show progress during transfer.
       --qingstor-access-key-id string              QingStor Access Key ID
-      --qingstor-connection-retries int            Number of connnection retries. (default 3)
+      --qingstor-connection-retries int            Number of connection retries. (default 3)
       --qingstor-endpoint string                   Enter a endpoint URL to connection QingStor API.
       --qingstor-env-auth                          Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.
       --qingstor-secret-access-key string          QingStor Secret Access Key (password)
@@ -223,18 +240,21 @@ rclone rc commands parameter [flags]
       --rc-addr string                             IPaddress:Port or :Port to bind server to. (default "localhost:5572")
       --rc-cert string                             SSL PEM key (concatenation of certificate and CA certificate)
       --rc-client-ca string                        Client certificate authority to verify clients with
+      --rc-files string                            Path to local files to serve on the HTTP server.
       --rc-htpasswd string                         htpasswd file - if not provided no authentication is done
       --rc-key string                              SSL PEM Private key
       --rc-max-header-bytes int                    Maximum size of request header (default 4096)
+      --rc-no-auth                                 Don't require auth for certain methods.
       --rc-pass string                             Password for authentication.
       --rc-realm string                            realm for authentication (default "rclone")
+      --rc-serve                                   Enable the serving of remote objects.
       --rc-server-read-timeout duration            Timeout for server reading data (default 1h0m0s)
       --rc-server-write-timeout duration           Timeout for server writing data (default 1h0m0s)
       --rc-user string                             User name for authentication.
       --retries int                                Retry operations this many times if they fail (default 3)
       --retries-sleep duration                     Interval between retrying operations if they fail, e.g 500ms, 60s, 5m. (0 to disable)
       --s3-access-key-id string                    AWS Access Key ID.
-      --s3-acl string                              Canned ACL used when creating buckets and/or storing objects in S3.
+      --s3-acl string                              Canned ACL used when creating buckets and storing or copying objects.
       --s3-chunk-size SizeSuffix                   Chunk size to use for uploading. (default 5M)
       --s3-disable-checksum                        Don't store MD5 checksum with object metadata
       --s3-endpoint string                         Endpoint for S3 API.
@@ -295,7 +315,7 @@ rclone rc commands parameter [flags]
       --union-remotes string                       List of space separated remotes.
   -u, --update                                     Skip files that are newer on the destination.
       --use-server-modtime                         Use server modified time instead of object metadata
-      --user-agent string                          Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.44")
+      --user-agent string                          Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.45")
   -v, --verbose count                              Print lots more stuff (repeat for more)
       --webdav-bearer-token string                 Bearer token instead of user/pass (eg a Macaroon)
       --webdav-pass string                         Password.
@@ -304,10 +324,11 @@ rclone rc commands parameter [flags]
       --webdav-vendor string                       Name of the Webdav site/service/software you are using
       --yandex-client-id string                    Yandex Client Id
       --yandex-client-secret string                Yandex Client Secret
+      --yandex-unlink                              Remove existing public link to file/folder with link command rather than creating.
 ```
 
 ### SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
-###### Auto generated by spf13/cobra on 15-Oct-2018
+###### Auto generated by spf13/cobra on 24-Nov-2018

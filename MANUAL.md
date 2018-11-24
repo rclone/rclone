@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Oct 15, 2018
+% Nov 24, 2018
 
 Rclone
 ======
@@ -313,6 +313,8 @@ written a trailing / - meaning "copy the contents of this directory".
 This applies to all commands and whether you are talking about the
 source or destination.
 
+**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
+
 
 ```
 rclone copy source:path dest:path [flags]
@@ -349,6 +351,8 @@ extended explanation in the `copy` command above if unsure.
 
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
+
+**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
 
 
 ```
@@ -387,6 +391,8 @@ If you want to delete empty source directories after move, use the --delete-empt
 **Important**: Since this can cause data loss, test first with the
 --dry-run flag.
 
+**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics.
+
 
 ```
 rclone move source:path dest:path [flags]
@@ -406,8 +412,12 @@ Remove the contents of path.
 ### Synopsis
 
 
-Remove the contents of path.  Unlike `purge` it obeys include/exclude
+Remove the files in path.  Unlike `purge` it obeys include/exclude
 filters so can be used to selectively delete files.
+
+`rclone delete` only deletes objects but leaves the directory structure
+alone. If you want to delete a directory and all of its contents use
+`rclone purge`
 
 Eg delete all files bigger than 100MBytes
 
@@ -1289,6 +1299,8 @@ This doesn't transfer unchanged files, testing by size and
 modification time or MD5SUM.  It doesn't delete files from the
 destination.
 
+**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
+
 
 ```
 rclone copyto source:path dest:path [flags]
@@ -1940,7 +1952,7 @@ systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
 uploads. Look at the [file caching](#file-caching)
-for solutions to make mount mount more reliable.
+for solutions to make mount more reliable.
 
 ### Attribute caching
 
@@ -2208,6 +2220,8 @@ transfer.
 **Important**: Since this can cause data loss, test first with the
 --dry-run flag.
 
+**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics.
+
 
 ```
 rclone moveto source:path dest:path [flags]
@@ -2245,13 +2259,17 @@ Here are the keys - press '?' to toggle the help on and off
      c toggle counts
      g toggle graph
      n,s,C sort by name,size,count
+     d delete file/directory
      ^L refresh screen
      ? to toggle help on and off
      q/ESC/c-C to quit
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
-rclone remotes.  It is missing lots of features at the moment, most
-importantly deleting files, but is useful as it stands.
+rclone remotes.  It is missing lots of features at the moment
+but is useful as it stands.
+
+Note that it might take some time to delete big files/folders. The
+UI won't respond in the meantime since the deletion is done synchronously.
 
 
 ```
@@ -2289,12 +2307,24 @@ Run a command against a running rclone.
 ### Synopsis
 
 
-This runs a command against a running rclone.  By default it will use
-that specified in the --rc-addr command.
+
+This runs a command against a running rclone.  Use the --url flag to
+specify an non default URL to connect on.  This can be either a
+":port" which is taken to mean "http://localhost:port" or a
+"host:port" which is taken to mean "http://host:port"
+
+A username and password can be passed in with --user and --pass.
+
+Note that --rc-addr, --rc-user, --rc-pass will be read also for --url,
+--user, --pass.
 
 Arguments should be passed in as parameter=value.
 
 The result will be returned as a JSON object by default.
+
+The --json parameter can be used to pass in a JSON blob as an input
+instead of key=value arguments.  This is the only way of passing in
+more complicated values.
 
 Use "rclone rc" to see a list of all possible commands.
 
@@ -2305,9 +2335,12 @@ rclone rc commands parameter [flags]
 ### Options
 
 ```
-  -h, --help         help for rc
-      --no-output    If set don't output the JSON result.
-      --url string   URL to connect to rclone remote control. (default "http://localhost:5572/")
+  -h, --help          help for rc
+      --json string   Input JSON - use instead of key=value args.
+      --no-output     If set don't output the JSON result.
+      --pass string   Password to use to connect to rclone remote control.
+      --url string    URL to connect to rclone remote control. (default "http://localhost:5572/")
+      --user string   Username to use to rclone remote control.
 ```
 
 ## rclone rcat
@@ -2348,6 +2381,34 @@ rclone rcat remote:path [flags]
 
 ```
   -h, --help   help for rcat
+```
+
+## rclone rcd
+
+Run rclone listening to remote control commands only.
+
+### Synopsis
+
+
+This runs rclone so that it only listents to remote control commands.
+
+This is useful if you are controlling rclone via the rc API.
+
+If you pass in a path to a directory, rclone will serve that directory
+for GET requests on the URL passed in.  It will also open the URL in
+the browser when rclone is run.
+
+See the [rc documentation](https://rclone.org/rc/) for more info on the rc flags.
+
+
+```
+rclone rcd <path to files to serve>* [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for rcd
 ```
 
 ## rclone rmdirs
@@ -4677,6 +4738,18 @@ Special characters can be escaped with a `\` before them.
     \\.jpg       - matches "\.jpg"
     \[one\].jpg  - matches "[one].jpg"
 
+Patterns are case sensitive unless the `--ignore-case` flag is used.
+
+Without `--ignore-case` (default)
+
+    potato - matches "potato"
+           - doesn't match "POTATO"
+
+With `--ignore-case`
+
+    potato - matches "potato"
+           - matches "POTATO"
+
 Note also that rclone filter globs can only be used in one of the
 filter command line flags, not in the specification of the remote, so
 `rclone copy "remote:dir*.jpg" /path/to/dir` won't work - what is
@@ -4887,6 +4960,10 @@ This reads a list of file names from the file passed in and **only**
 these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
+Rclone will not scan any directories if you use `--files-from` it will
+just look at the files specified.  Rclone will not error if any of the
+files are missing from the source.
+
 This option can be repeated to read from more than one file.  These
 are read in the order that they are placed on the command line.
 
@@ -5021,6 +5098,15 @@ This dumps the defined filters to the output as regular expressions.
 
 Useful for debugging.
 
+### `--ignore-case` - make searches case insensitive ###
+
+Normally filter patterns are case sensitive.  If this flag is supplied
+then filter patterns become case insensitive.
+
+Normally a `--include "file.txt"` will not match a file called
+`FILE.txt`.  However if you use the `--ignore-case` flag then
+`--include "file.txt"` this will match a file called `FILE.txt`.
+
 ## Quoting shell metacharacters ##
 
 The examples above may not work verbatim in your shell as they have
@@ -5063,45 +5149,94 @@ should not be used multiple times.
 If rclone is run with the `--rc` flag then it starts an http server
 which can be used to remote control rclone.
 
+If you just want to run a remote control then see the [rcd command](https://rclone.org/commands/rclone_rcd/).
+
 **NB** this is experimental and everything here is subject to change!
 
 ## Supported parameters
 
-#### --rc ####
+### --rc
+
 Flag to start the http server listen on remote requests
       
-#### --rc-addr=IP ####
+### --rc-addr=IP
+
 IPaddress:Port or :Port to bind server to. (default "localhost:5572")
 
-#### --rc-cert=KEY ####
+### --rc-cert=KEY
 SSL PEM key (concatenation of certificate and CA certificate)
 
-#### --rc-client-ca=PATH ####
+### --rc-client-ca=PATH
 Client certificate authority to verify clients with
 
-#### --rc-htpasswd=PATH ####
+### --rc-htpasswd=PATH
+
 htpasswd file - if not provided no authentication is done
 
-#### --rc-key=PATH ####
+### --rc-key=PATH
+
 SSL PEM Private key
 
-#### --rc-max-header-bytes=VALUE ####
+### --rc-max-header-bytes=VALUE
+
 Maximum size of request header (default 4096)
 
-#### --rc-user=VALUE ####
+### --rc-user=VALUE
+
 User name for authentication.
 
-#### --rc-pass=VALUE ####
+### --rc-pass=VALUE
+
 Password for authentication.
 
-#### --rc-realm=VALUE ####
+### --rc-realm=VALUE
+
 Realm for authentication (default "rclone")
 
-#### --rc-server-read-timeout=DURATION ####
+### --rc-server-read-timeout=DURATION
+
 Timeout for server reading data (default 1h0m0s)
 
-#### --rc-server-write-timeout=DURATION ####
+### --rc-server-write-timeout=DURATION
+
 Timeout for server writing data (default 1h0m0s)
+
+### --rc-serve
+
+Enable the serving of remote objects via the HTTP interface.  This
+means objects will be accessible at http://127.0.0.1:5572/ by default,
+so you can browse to http://127.0.0.1:5572/ or http://127.0.0.1:5572/*
+to see a listing of the remotes.  Objects may be requested from
+remotes using this syntax http://127.0.0.1:5572/[remote:path]/path/to/object
+
+Default Off.
+
+### --rc-files /path/to/directory
+
+Path to local files to serve on the HTTP server.
+
+If this is set then rclone will serve the files in that directory.  It
+will also open the root in the web browser if specified.  This is for
+implementing browser based GUIs for rclone functions.
+
+If `--rc-user` or `--rc-pass` is set then the URL that is opened will
+have the authorization in the URL in the `http://user:pass@localhost/`
+style.
+
+Default Off.
+
+### --rc-no-auth
+
+By default rclone will require authorisation to have been set up on
+the rc interface in order to use any methods which access any rclone
+remotes.  Eg `operations/list` is denied as it involved creating a
+remote as is `sync/copy`.
+
+If this is set then no authorisation will be required on the server to
+use these methods.  The alternative is to use `--rc-user` and
+`--rc-pass` and use these credentials in the request.
+
+Default Off.
 
 ## Accessing the remote control via the rclone rc command
 
@@ -5120,6 +5255,92 @@ $ rclone rc rc/noop param1=one param2=two
 
 Run `rclone rc` on its own to see the help for the installed remote
 control commands.
+
+`rclone rc` also supports a `--json` flag which can be used to send
+more complicated input parameters.
+
+```
+$ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 } }' rc/noop
+{
+	"p1": [
+		1,
+		"2",
+		null,
+		4
+	],
+	"p2": {
+		"a": 1,
+		"b": 2
+	}
+}
+```
+
+## Special parameters
+
+The rc interface supports some special parameters which apply to
+**all** commands.  These start with `_` to show they are different.
+
+### Running asynchronous jobs with _async = true
+
+If `_async` has a true value when supplied to an rc call then it will
+return immediately with a job id and the task will be run in the
+background.  The `job/status` call can be used to get information of
+the background job.  The job can be queried for up to 1 minute after
+it has finished.
+
+It is recommended that potentially long running jobs, eg `sync/sync`,
+`sync/copy`, `sync/move`, `operations/purge` are run with the `_async`
+flag to avoid any potential problems with the HTTP request and
+response timing out.
+
+Starting a job with the `_async` flag:
+
+```
+$ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 }, "_async": true }' rc/noop
+{
+	"jobid": 2
+}
+```
+
+Query the status to see if the job has finished.  For more information
+on the meaning of these return parameters see the `job/status` call.
+
+```
+$ rclone rc --json '{ "jobid":2 }' job/status
+{
+	"duration": 0.000124163,
+	"endTime": "2018-10-27T11:38:07.911245881+01:00",
+	"error": "",
+	"finished": true,
+	"id": 2,
+	"output": {
+		"_async": true,
+		"p1": [
+			1,
+			"2",
+			null,
+			4
+		],
+		"p2": {
+			"a": 1,
+			"b": 2
+		}
+	},
+	"startTime": "2018-10-27T11:38:07.911121728+01:00",
+	"success": true
+}
+```
+
+`job/list` can be used to show the running or recently completed jobs
+
+```
+$ rclone rc job/list
+{
+	"jobids": [
+		2
+	]
+}
+```
 
 ## Supported commands
 <!--- autogenerated start - run make rcdocs - don't edit here -->
@@ -5166,6 +5387,90 @@ is used on top of the cache.
 
 Show statistics for the cache remote.
 
+### config/create: create the config for a remote.
+
+This takes the following parameters
+
+- name - name of remote
+- type - type of new remote
+- type - type of the new remote
+
+
+See the [config create command](https://rclone.org/commands/rclone_config_create/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/delete: Delete a remote in the config file.
+
+Parameters:
+- name - name of remote to delete
+
+See the [config delete command](https://rclone.org/commands/rclone_config_delete/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/dump: Dumps the config file.
+
+Returns a JSON object:
+- key: value
+
+Where keys are remote names and values are the config parameters.
+
+See the [config dump command](https://rclone.org/commands/rclone_config_dump/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/get: Get a remote in the config file.
+
+Parameters:
+- name - name of remote to get
+
+See the [config dump command](https://rclone.org/commands/rclone_config_dump/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/listremotes: Lists the remotes in the config file.
+
+Returns
+- remotes - array of remote names
+
+See the [listremotes command](https://rclone.org/commands/rclone_listremotes/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/password: password the config for a remote.
+
+This takes the following parameters
+
+- name - name of remote
+- type - type of new remote
+
+
+See the [config password command](https://rclone.org/commands/rclone_config_password/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/providers: Shows how providers are configured in the config file.
+
+Returns a JSON object:
+- providers - array of objects
+
+See the [config providers command](https://rclone.org/commands/rclone_config_providers/) command for more information on the above.
+
+Authentication is required for this call.
+
+### config/update: update the config for a remote.
+
+This takes the following parameters
+
+- name - name of remote
+- type - type of new remote
+
+
+See the [config update command](https://rclone.org/commands/rclone_config_update/) command for more information on the above.
+
+Authentication is required for this call.
+
 ### core/bwlimit: Set the bandwidth limit.
 
 This sets the bandwidth limit to that passed in.
@@ -5195,6 +5500,14 @@ The most interesting values for most people are:
 * HeapSys: This is the amount of memory rclone has obtained from the OS
 * Sys: this is the total amount of memory requested from the OS
   * It is virtual memory so may include unused memory
+
+### core/obscure: Obscures a string passed in.
+
+Pass a clear string and rclone will obscure it for the config file:
+- clear - string
+
+Returns
+- obscured - string
 
 ### core/pid: Return PID of current process
 
@@ -5240,6 +5553,230 @@ Returns the following values:
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
 
+### core/version: Shows the current version of rclone and the go runtime.
+
+This shows the current version of go and the go runtime
+- version - rclone version, eg "v1.44"
+- decomposed - version number as [major, minor, patch, subpatch]
+    - note patch and subpatch will be 999 for a git compiled version
+- isGit - boolean - true if this was compiled from the git version
+- os - OS in use as according to Go
+- arch - cpu architecture in use according to Go
+- goVersion - version of Go runtime in use
+
+### job/list: Lists the IDs of the running jobs
+
+Parameters - None
+
+Results
+- jobids - array of integer job ids
+
+### job/status: Reads the status of the job ID
+
+Parameters
+- jobid - id of the job (integer)
+
+Results
+- finished - boolean
+- duration - time in seconds that the job ran for
+- endTime - time the job finished (eg "2018-10-26T18:50:20.528746884+01:00")
+- error - error from the job or empty string for no error
+- finished - boolean whether the job has finished or not
+- id - as passed in above
+- startTime - time the job started (eg "2018-10-26T18:50:20.528336039+01:00")
+- success - boolean - true for success false otherwise
+- output - output of the job as would have been returned if called synchronously
+
+### operations/about: Return the space used on the remote
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+The result is as returned from rclone about --json
+
+Authentication is required for this call.
+
+### operations/cleanup: Remove trashed files in the remote or path
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+
+See the [cleanup command](https://rclone.org/commands/rclone_cleanup/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/copyfile: Copy a file from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:" for the source
+- srcRemote - a path within that remote eg "file.txt" for the source
+- dstFs - a remote name string eg "drive2:" for the destination
+- dstRemote - a path within that remote eg "file2.txt" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+Authentication is required for this call.
+
+### operations/copyurl: Copy the URL to the object
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- url - string, URL to read from
+
+See the [copyurl command](https://rclone.org/commands/rclone_copyurl/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/delete: Remove files in the path
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+
+See the [delete command](https://rclone.org/commands/rclone_delete/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/deletefile: Remove the single file pointed to
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [deletefile command](https://rclone.org/commands/rclone_deletefile/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/list: List the given remote and path in JSON format
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- opt - a dictionary of options to control the listing (optional)
+    - recurse - If set recurse directories
+    - noModTime - If set return modification time
+    - showEncrypted -  If set show decrypted names
+    - showOrigIDs - If set show the IDs for each item if known
+    - showHash - If set return a dictionary of hashes
+
+The result is
+
+- list
+    - This is an array of objects as described in the lsjson command
+
+See the lsjson command for more information on the above and examples.
+
+Authentication is required for this call.
+
+### operations/mkdir: Make a destination directory or container
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [mkdir command](https://rclone.org/commands/rclone_mkdir/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/movefile: Move a file from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:" for the source
+- srcRemote - a path within that remote eg "file.txt" for the source
+- dstFs - a remote name string eg "drive2:" for the destination
+- dstRemote - a path within that remote eg "file2.txt" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+Authentication is required for this call.
+
+### operations/purge: Remove a directory or container and all of its contents
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [purge command](https://rclone.org/commands/rclone_purge/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/rmdir: Remove an empty directory or container
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+See the [rmdir command](https://rclone.org/commands/rclone_rmdir/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/rmdirs: Remove all the empty directories in the path
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- leaveRoot - boolean, set to true not to delete the root
+
+See the [rmdirs command](https://rclone.org/commands/rclone_rmdirs/) command for more information on the above.
+
+Authentication is required for this call.
+
+### operations/size: Count the number of bytes and files in remote
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:path/to/dir"
+
+Returns
+
+- count - number of files
+- bytes - number of bytes in those files
+
+See the [size command](https://rclone.org/commands/rclone_size/) command for more information on the above.
+
+Authentication is required for this call.
+
+### options/blocks: List all the option blocks
+
+Returns
+- options - a list of the options block names
+
+### options/get: Get all the options
+
+Returns an object where keys are option block names and values are an
+object with the current option values in.
+
+This shows the internal names of the option within rclone which should
+map to the external options very easily with a few exceptions.
+
+### options/set: Set an option
+
+Parameters
+
+- option block name containing an object with
+  - key: value
+
+Repeated as often as required.
+
+Only supply the options you wish to change.  If an option is unknown
+it will be silently ignored.  Not all options will have an effect when
+changed like this.
+
 ### rc/error: This returns an error
 
 This returns an error with the input as part of its error string.
@@ -5255,6 +5792,57 @@ the commands response.
 This echoes the input parameters to the output parameters for testing
 purposes.  It can be used to check that rclone is still alive and to
 check that parameter passing is working properly.
+
+### rc/noopauth: Echo the input to the output parameters requiring auth
+
+This echoes the input parameters to the output parameters for testing
+purposes.  It can be used to check that rclone is still alive and to
+check that parameter passing is working properly.
+
+Authentication is required for this call.
+
+### sync/copy: copy a directory from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:src" for the source
+- dstFs - a remote name string eg "drive:dst" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+See the [copy command](https://rclone.org/commands/rclone_copy/) command for more information on the above.
+
+Authentication is required for this call.
+
+### sync/move: move a directory from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:src" for the source
+- dstFs - a remote name string eg "drive:dst" for the destination
+- deleteEmptySrcDirs - delete empty src directories if set
+
+This returns
+- jobid - ID of async job to query with job/status
+
+See the [move command](https://rclone.org/commands/rclone_move/) command for more information on the above.
+
+Authentication is required for this call.
+
+### sync/sync: sync a directory from source remote to destination remote
+
+This takes the following parameters
+
+- srcFs - a remote name string eg "drive:src" for the source
+- dstFs - a remote name string eg "drive:dst" for the destination
+
+This returns
+- jobid - ID of async job to query with job/status
+
+See the [sync command](https://rclone.org/commands/rclone_sync/) command for more information on the above.
+
+Authentication is required for this call.
 
 ### vfs/forget: Forget files or directories in the directory cache.
 
@@ -5330,9 +5918,31 @@ blob in the body.  There are examples of these below using `curl`.
 The response will be a JSON blob in the body of the response.  This is
 formatted to be reasonably human readable.
 
-If an error occurs then there will be an HTTP error status (usually
-400) and the body of the response will contain a JSON encoded error
-object.
+### Error returns
+
+If an error occurs then there will be an HTTP error status (eg 500)
+and the body of the response will contain a JSON encoded error object,
+eg
+
+```
+{
+    "error": "Expecting string value for key \"remote\" (was float64)",
+    "input": {
+        "fs": "/tmp",
+        "remote": 3
+    },
+    "status": 400
+    "path": "operations/rmdir",
+}
+```
+
+The keys in the error response are
+- error - error string
+- input - the input parameters to the call
+- status - the HTTP status code
+- path - the path of the call
+
+### CORS
 
 The sever implements basic CORS support and allows all origins for that.
 The response to a preflight OPTIONS request will echo the requested "Access-Control-Request-Headers" back.
@@ -5340,7 +5950,7 @@ The response to a preflight OPTIONS request will echo the requested "Access-Cont
 ### Using POST with URL parameters only
 
 ```
-curl -X POST 'http://localhost:5572/rc/noop/?potato=1&sausage=2'
+curl -X POST 'http://localhost:5572/rc/noop?potato=1&sausage=2'
 ```
 
 Response
@@ -5355,7 +5965,7 @@ Response
 Here is what an error response looks like:
 
 ```
-curl -X POST 'http://localhost:5572/rc/error/?potato=1&sausage=2'
+curl -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 ```
 
 ```
@@ -5371,7 +5981,7 @@ curl -X POST 'http://localhost:5572/rc/error/?potato=1&sausage=2'
 Note that curl doesn't return errors to the shell unless you use the `-f` option
 
 ```
-$ curl -f -X POST 'http://localhost:5572/rc/error/?potato=1&sausage=2'
+$ curl -f -X POST 'http://localhost:5572/rc/error?potato=1&sausage=2'
 curl: (22) The requested URL returned error: 400 Bad Request
 $ echo $?
 22
@@ -5380,7 +5990,7 @@ $ echo $?
 ### Using POST with a form
 
 ```
-curl --data "potato=1" --data "sausage=2" http://localhost:5572/rc/noop/
+curl --data "potato=1" --data "sausage=2" http://localhost:5572/rc/noop
 ```
 
 Response
@@ -5396,7 +6006,7 @@ Note that you can combine these with URL parameters too with the POST
 parameters taking precedence.
 
 ```
-curl --data "potato=1" --data "sausage=2" "http://localhost:5572/rc/noop/?rutabaga=3&sausage=4"
+curl --data "potato=1" --data "sausage=2" "http://localhost:5572/rc/noop?rutabaga=3&sausage=4"
 ```
 
 Response
@@ -5413,7 +6023,7 @@ Response
 ### Using POST with a JSON blob
 
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' http://localhost:5572/rc/noop/
+curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' http://localhost:5572/rc/noop
 ```
 
 response
@@ -5429,7 +6039,7 @@ This can be combined with URL parameters too if required.  The JSON
 blob takes precedence.
 
 ```
-curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' 'http://localhost:5572/rc/noop/?rutabaga=3&potato=4'
+curl -H "Content-Type: application/json" -X POST -d '{"potato":2,"sausage":1}' 'http://localhost:5572/rc/noop?rutabaga=3&potato=4'
 ```
 
 ```
@@ -5447,7 +6057,9 @@ profiling tools on the same port.
 
 To use these, first [install go](https://golang.org/doc/install).
 
-Then (for example) to profile rclone's memory use you can run:
+### Debugging memory use
+
+To profile rclone's memory use you can run:
 
     go tool pprof -web http://localhost:5572/debug/pprof/heap
 
@@ -5474,9 +6086,25 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
          0     0%   100%  1024.03kB 66.62%  runtime.main
 ```
 
-Possible profiles to look at:
+### Debugging go routine leaks
+
+Memory leaks are most often caused by go routine leaks keeping memory
+alive which should have been garbage collected.
+
+See all active go routines using
+
+    curl http://localhost:5572/debug/pprof/goroutine?debug=1
+
+Or go to http://localhost:5572/debug/pprof/goroutine?debug=1 in your browser.
+
+### Other profiles to look at
+
+You can see a summary of profiles available at http://localhost:5572/debug/pprof/
+
+Here is how to use some of them:
 
   * Memory: `go tool pprof http://localhost:5572/debug/pprof/heap`
+  * Go routines: `curl http://localhost:5572/debug/pprof/goroutine?debug=1`
   * 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
   * 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
 
@@ -5629,7 +6257,7 @@ operations more efficient.
 | QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
-| Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes         | Yes |
 | The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No          | Yes |
 
 ### Purge ###
@@ -6748,7 +7376,9 @@ Required when using an S3 clone.
     - "sgp1.digitaloceanspaces.com"
         - Digital Ocean Spaces Singapore 1
     - "s3.wasabisys.com"
-        - Wasabi Object Storage
+        - Wasabi US East endpoint
+    - "s3.us-west-1.wasabisys.com"
+        - Wasabi US West endpoint
 
 #### --s3-location-constraint
 
@@ -6876,8 +7506,12 @@ Leave blank if not sure. Used when creating buckets only.
 
 #### --s3-acl
 
-Canned ACL used when creating buckets and/or storing objects in S3.
+Canned ACL used when creating buckets and storing or copying objects.
+
 For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+
+Note that this ACL is applied when server side copying objects as S3
+doesn't copy the ACL from the source but rather writes a fresh one.
 
 - Config:      acl
 - Env Var:     RCLONE_S3_ACL
@@ -9585,6 +10219,15 @@ memory.  It can be set smaller if you are tight on memory.
 - Type:        SizeSuffix
 - Default:     48M
 
+#### --dropbox-impersonate
+
+Impersonate this user when using a business account.
+
+- Config:      impersonate
+- Env Var:     RCLONE_DROPBOX_IMPERSONATE
+- Type:        string
+- Default:     ""
+
 <!--- autogenerated options stop -->
 
 ### Limitations ###
@@ -11617,6 +12260,9 @@ d) Delete this remote
 y/e/d> y
 ```
 
+**NOTE:** The encryption keys need to have been already generated after a regular login
+via the browser, otherwise attempting to use the credentials in `rclone` will fail.
+
 Once configured you can then use `rclone` like this,
 
 List directories in top level of your Mega
@@ -11701,12 +12347,10 @@ permanently delete objects instead.
 
 ### Limitations ###
 
-This backend uses the [go-mega go
-library](https://github.com/t3rm1n4l/go-mega) which is an opensource
+This backend uses the [go-mega go library](https://github.com/t3rm1n4l/go-mega) which is an opensource
 go library implementing the Mega API. There doesn't appear to be any
-documentation for the mega protocol beyond the [mega C++
-SDK](https://github.com/meganz/sdk) source code so there are likely
-quite a few errors still remaining in this library.
+documentation for the mega protocol beyond the [mega C++ SDK](https://github.com/meganz/sdk) source code
+so there are likely quite a few errors still remaining in this library.
 
 Mega allows duplicate files which may confuse rclone.
 
@@ -12226,6 +12870,11 @@ in it will be mapped to `？` instead.
 
 The largest allowed file size is 10GiB (10,737,418,240 bytes).
 
+OneDrive seems to be OK with at least 50,000 files in a folder, but at
+100,000 rclone will get errors listing the directory like `couldn’t
+list files: UnknownError:`.  See
+[#2707](https://github.com/ncw/rclone/issues/2707) for more info.
+
 ### Versioning issue ###
 
 Every change in OneDrive causes the service to create a new version.
@@ -12611,7 +13260,7 @@ Here are the advanced options specific to qingstor (QingCloud Object Storage).
 
 #### --qingstor-connection-retries
 
-Number of connnection retries.
+Number of connection retries.
 
 - Config:      connection_retries
 - Env Var:     RCLONE_QINGSTOR_CONNECTION_RETRIES
@@ -14098,12 +14747,6 @@ excess files in the path.
 
     rclone sync /home/local/directory remote:directory
 
-### --fast-list ###
-
-This remote supports `--fast-list` which allows you to use fewer
-transactions in exchange for more memory. See the [rclone
-docs](/docs/#fast-list) for more details.
-
 ### Modified time ###
 
 Modified times are supported and are stored accurate to 1 ns in custom
@@ -14118,6 +14761,11 @@ MD5 checksums are natively supported by Yandex Disk.
 If you wish to empty your trash you can use the `rclone cleanup remote:`
 command which will permanently delete all your trashed files. This command
 does not take any path arguments.
+
+### Quota information ###
+
+To view your current quota you can use the `rclone about remote:`
+command which will display your usage limit (quota) and the current usage.
 
 <!--- autogenerated options start - DO NOT EDIT, instead edit fs.RegInfo in backend/yandex/yandex.go then run make backenddocs -->
 ### Standard Options
@@ -14143,6 +14791,20 @@ Leave blank normally.
 - Env Var:     RCLONE_YANDEX_CLIENT_SECRET
 - Type:        string
 - Default:     ""
+
+### Advanced Options
+
+Here are the advanced options specific to yandex (Yandex Disk).
+
+#### --yandex-unlink
+
+Remove existing public link to file/folder with link command rather than creating.
+Default is false, meaning link command will create or retrieve public link.
+
+- Config:      unlink
+- Env Var:     RCLONE_YANDEX_UNLINK
+- Type:        bool
+- Default:     false
 
 <!--- autogenerated options stop -->
 
@@ -14384,6 +15046,75 @@ Don't cross filesystem boundaries (unix/macOS only).
 <!--- autogenerated options stop -->
 
 # Changelog
+
+## v1.45 - 2018-11-24
+
+* New backends
+    * The Yandex backend was re-written - see below for details (Sebastian Bünger)
+* New commands
+    * rcd: New command just to serve the remote control API (Nick Craig-Wood)
+* New Features
+    * The remote control API (rc) was greatly expanded to allow full control over rclone (Nick Craig-Wood)
+        * sensitive operations require authorization or the `--rc-no-auth` flag
+        * config/* operations to configure rclone
+        * options/* for reading/setting command line flags
+        * operations/* for all low level operations, eg copy file, list directory
+        * sync/* for sync, copy and move
+        * `--rc-files` flag to serve files on the rc http server
+          * this is for building web native GUIs for rclone
+        * Optionally serving objects on the rc http server
+        * Ensure rclone fails to start up if the `--rc` port is in use already
+        * See [the rc docs](https://rclone.org/rc/) for more info
+    * sync/copy/move
+        * Make `--files-from` only read the objects specified and don't scan directories (Nick Craig-Wood)
+            * This is a huge speed improvement for destinations with lots of files
+    * filter: Add `--ignore-case` flag (Nick Craig-Wood)
+    * ncdu: Add remove function ('d' key) (Henning Surmeier)
+    * rc command
+        * Add `--json` flag for structured JSON input (Nick Craig-Wood)
+        * Add `--user` and `--pass` flags and interpret `--rc-user`, `--rc-pass`, `--rc-addr` (Nick Craig-Wood)
+    * build
+        * Require go1.8 or later for compilation (Nick Craig-Wood)
+        * Enable softfloat on MIPS arch (Scott Edlund)
+        * Integration test framework revamped with a better report and better retries (Nick Craig-Wood)
+* Bug Fixes
+    * cmd: Make --progress update the stats correctly at the end (Nick Craig-Wood)
+    * config: Create config directory on save if it is missing (Nick Craig-Wood)
+    * dedupe: Check for existing filename before renaming a dupe file (ssaqua)
+    * move: Don't create directories with --dry-run (Nick Craig-Wood)
+    * operations: Fix Purge and Rmdirs when dir is not the root (Nick Craig-Wood)
+    * serve http/webdav/restic: Ensure rclone exits if the port is in use (Nick Craig-Wood)
+* Mount
+    * Make `--volname` work for Windows and macOS (Nick Craig-Wood)
+* Azure Blob
+    * Avoid context deadline exceeded error by setting a large TryTimeout value (brused27)
+    * Fix erroneous Rmdir error "directory not empty" (Nick Craig-Wood)
+    * Wait for up to 60s to create a just deleted container (Nick Craig-Wood)
+* Dropbox
+    * Add dropbox impersonate support (Jake Coggiano)
+* Jottacloud
+    * Fix bug in `--fast-list` handing of empty folders (albertony)
+* Opendrive
+    * Fix transfer of files with `+` and `&` in (Nick Craig-Wood)
+    * Fix retries of upload chunks (Nick Craig-Wood)
+* S3
+    * Set ACL for server side copies to that provided by the user (Nick Craig-Wood)
+    * Fix role_arn, credential_source, ... (Erik Swanson)
+    * Add config info for Wasabi's US-West endpoint (Henry Ptasinski)
+* SFTP
+    * Ensure file hash checking is really disabled (Jon Fautley)
+* Swift
+    * Add pacer for retries to make swift more reliable (Nick Craig-Wood)
+* WebDAV
+    * Add Content-Type to PUT requests (Nick Craig-Wood)
+    * Fix config parsing so `--webdav-user` and `--webdav-pass` flags work (Nick Craig-Wood)
+    * Add RFC3339 date format (Ralf Hemberger)
+* Yandex
+    * The yandex backend was re-written (Sebastian Bünger)
+        * This implements low level retries (Sebastian Bünger)
+        * Copy, Move, DirMove, PublicLink and About optional interfaces (Sebastian Bünger)
+        * Improved general error handling (Sebastian Bünger)
+        * Removed ListR for now due to inconsistent behaviour (Sebastian Bünger)
 
 ## v1.44 - 2018-10-15
 
@@ -15989,17 +16720,37 @@ just requires writing the algorithm to do it.
 
 ### Can I use rclone with an HTTP proxy? ###
 
-Yes. rclone will use the environment variables `HTTP_PROXY`,
-`HTTPS_PROXY` and `NO_PROXY`, similar to cURL and other programs.
+Yes. rclone will follow the standard environment variables for
+proxies, similar to cURL and other programs.
 
-`HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
+In general the variables are called `http_proxy` (for services reached
+over `http`) and `https_proxy` (for services reached over `https`).  Most
+public services will be using `https`, but you may wish to set both.
 
-The environment values may be either a complete URL or a "host[:port]",
-in which case the "http" scheme is assumed.
+If you ever use `FTP` then you would need to set `ftp_proxy`.
+
+The content of the variable is `protocol://server:port`.  The protocol
+value is the one used to talk to the proxy server, itself, and is commonly
+either `http` or `socks5`.
+
+Slightly annoyingly, there is no _standard_ for the name; some applications
+may use `http_proxy` but another one `HTTP_PROXY`.  The `Go` libraries
+used by `rclone` will try both variations, but you may wish to set all
+possibilities.  So, on Linux, you may end up with code similar to
+
+    export http_proxy=http://proxyserver:12345
+    export https_proxy=$http_proxy
+    export HTTP_PROXY=$http_proxy
+    export HTTPS_PROXY=$http_proxy
 
 The `NO_PROXY` allows you to disable the proxy for specific hosts.
 Hosts must be comma separated, and can contain domains or parts.
 For instance "foo.com" also matches "bar.foo.com".
+
+e.g.
+
+    export no_proxy=localhost,127.0.0.0/8,my.host.name
+    export NO_PROXY=$no_proxy
 
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 
@@ -16158,7 +16909,7 @@ Contributors
   * Marvin Watson <marvwatson@users.noreply.github.com>
   * Danny Tsai <danny8376@gmail.com>
   * Yoni Jah <yonjah+git@gmail.com> <yonjah+github@gmail.com>
-  * Stephen Harris <github@spuddy.org>
+  * Stephen Harris <github@spuddy.org> <sweharris@users.noreply.github.com>
   * Ihor Dvoretskyi <ihor.dvoretskyi@gmail.com>
   * Jon Craton <jncraton@gmail.com>
   * Hraban Luyat <hraban@0brg.net>
@@ -16300,6 +17051,15 @@ Contributors
   * David Haguenauer <ml@kurokatta.org>
   * teresy <hi.teresy@gmail.com>
   * buergi <patbuergi@gmx.de>
+  * Florian Gamboeck <mail@floga.de>
+  * Ralf Hemberger <10364191+rhemberger@users.noreply.github.com>
+  * Scott Edlund <sedlund@users.noreply.github.com>
+  * Erik Swanson <erik@retailnext.net>
+  * Jake Coggiano <jake@stripe.com>
+  * brused27 <brused27@noemailaddress>
+  * Peter Kaminski <kaminski@istori.com>
+  * Henry Ptasinski <henry@logout.com>
+  * Alexander <kharkovalexander@gmail.com>
 
 # Contact the rclone project #
 
