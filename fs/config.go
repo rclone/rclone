@@ -62,6 +62,7 @@ type ConfigInfo struct {
 	MaxDepth              int
 	IgnoreSize            bool
 	IgnoreChecksum        bool
+	NoTraverse            bool
 	NoUpdateModTime       bool
 	DataRateUnit          string
 	BackupDir             string
