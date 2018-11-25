@@ -37,6 +37,11 @@ into ` + "`dest:path`" + ` then delete the original (if no errors on copy) in
 
 If you want to delete empty source directories after move, use the --delete-empty-src-dirs flag.
 
+See the [--no-traverse](/docs/#no-traverse) option for controlling
+whether rclone lists the destination directory or not.  Supplying this
+option when moving a small number of files into a large destination
+can speed transfers up greatly.
+
 **Important**: Since this can cause data loss, test first with the
 --dry-run flag.
 

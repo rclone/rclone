@@ -23,6 +23,7 @@ type March struct {
 	Fdst          fs.Fs           // source Fs
 	Fsrc          fs.Fs           // dest Fs
 	Dir           string          // directory
+	NoTraverse    bool            // don't traverse the destination
 	SrcIncludeAll bool            // don't include all files in the src
 	DstIncludeAll bool            // don't include all files in the destination
 	Callback      Marcher         // object to call with results
@@ -45,7 +46,9 @@ type Marcher interface {
 // init sets up a march over opt.Fsrc, and opt.Fdst calling back callback for each match
 func (m *March) init() {
 	m.srcListDir = m.makeListDir(m.Fsrc, m.SrcIncludeAll)
-	m.dstListDir = m.makeListDir(m.Fdst, m.DstIncludeAll)
+	if !m.NoTraverse {
+		m.dstListDir = m.makeListDir(m.Fdst, m.DstIncludeAll)
+	}
 	// Now create the matching transform
 	// ..normalise the UTF8 first
 	m.transforms = append(m.transforms, norm.NFC.String)
@@ -344,7 +347,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 			srcList, srcListErr = m.srcListDir(job.srcRemote)
 		}()
 	}
-	if !job.noDst {
+	if !m.NoTraverse && !job.noDst {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -365,6 +368,20 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 		fs.Errorf(job.dstRemote, "error reading destination directory: %v", dstListErr)
 		fs.CountError(dstListErr)
 		return nil
+	}
+
+	// If NoTraverse is set, then try to find a matching object
+	// for each item in the srcList
+	if m.NoTraverse {
+		for _, src := range srcList {
+			if srcObj, ok := src.(fs.Object); ok {
+				leaf := path.Base(srcObj.Remote())
+				dstObj, err := m.Fdst.NewObject(path.Join(job.dstRemote, leaf))
+				if err == nil {
+					dstList = append(dstList, dstObj)
+				}
+			}
+		}
 	}
 
 	// Work out what to do and do it

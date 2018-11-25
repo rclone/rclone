@@ -27,7 +27,6 @@ var (
 	deleteAfter     bool
 	bindAddr        string
 	disableFeatures string
-	noTraverse      bool
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -65,7 +64,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &fs.Config.MaxDepth, "max-depth", "", fs.Config.MaxDepth, "If set limits the recursion depth to this.")
 	flags.BoolVarP(flagSet, &fs.Config.IgnoreSize, "ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
 	flags.BoolVarP(flagSet, &fs.Config.IgnoreChecksum, "ignore-checksum", "", fs.Config.IgnoreChecksum, "Skip post copy check of checksums.")
-	flags.BoolVarP(flagSet, &noTraverse, "no-traverse", "", noTraverse, "Obsolete - does nothing.")
+	flags.BoolVarP(flagSet, &fs.Config.NoTraverse, "no-traverse", "", fs.Config.NoTraverse, "Don't traverse destination file system on copy.")
 	flags.BoolVarP(flagSet, &fs.Config.NoUpdateModTime, "no-update-modtime", "", fs.Config.NoUpdateModTime, "Don't update destination mod-time if files identical.")
 	flags.StringVarP(flagSet, &fs.Config.BackupDir, "backup-dir", "", fs.Config.BackupDir, "Make backups into hierarchy based in DIR.")
 	flags.StringVarP(flagSet, &fs.Config.Suffix, "suffix", "", fs.Config.Suffix, "Suffix for use with --backup-dir.")
@@ -111,10 +110,6 @@ func SetFlags() {
 		if quiet {
 			log.Fatalf("Can't set -q and --log-level")
 		}
-	}
-
-	if noTraverse {
-		fs.Logf(nil, "--no-traverse is obsolete and no longer needed - please remove")
 	}
 
 	if dumpHeaders {
