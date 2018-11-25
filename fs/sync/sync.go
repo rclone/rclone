@@ -646,7 +646,14 @@ func (s *syncCopyMove) run() error {
 	s.startTrackRenames()
 
 	// set up a march over fdst and fsrc
-	m := march.New(s.ctx, s.fdst, s.fsrc, s.dir, s)
+	m := &march.March{
+		Ctx:           s.ctx,
+		Fdst:          s.fdst,
+		Fsrc:          s.fsrc,
+		Dir:           s.dir,
+		Callback:      s,
+		DstIncludeAll: filter.Active.Opt.DeleteExcluded,
+	}
 	m.Run()
 
 	s.stopTrackRenames()

@@ -685,7 +685,13 @@ func CheckFn(fdst, fsrc fs.Fs, check checkFn, oneway bool) error {
 	}
 
 	// set up a march over fdst and fsrc
-	m := march.New(context.Background(), fdst, fsrc, "", c)
+	m := &march.March{
+		Ctx:      context.Background(),
+		Fdst:     fdst,
+		Fsrc:     fsrc,
+		Dir:      "",
+		Callback: c,
+	}
 	fs.Infof(fdst, "Waiting for checks to finish")
 	m.Run()
 

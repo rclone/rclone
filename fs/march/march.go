@@ -16,14 +16,16 @@ import (
 )
 
 // March holds the data used to traverse two Fs simultaneously,
-// calling callback for each match
+// calling Callback for each match
 type March struct {
 	// parameters
-	ctx      context.Context
-	fdst     fs.Fs
-	fsrc     fs.Fs
-	dir      string
-	callback Marcher
+	Ctx           context.Context // context for background goroutines
+	Fdst          fs.Fs           // source Fs
+	Fsrc          fs.Fs           // dest Fs
+	Dir           string          // directory
+	SrcIncludeAll bool            // don't include all files in the src
+	DstIncludeAll bool            // don't include all files in the destination
+	Callback      Marcher         // object to call with results
 	// internal state
 	srcListDir listDirFn // function to call to list a directory in the src
 	dstListDir listDirFn // function to call to list a directory in the dst
@@ -40,17 +42,10 @@ type Marcher interface {
 	Match(dst, src fs.DirEntry) (recurse bool)
 }
 
-// New sets up a march over fsrc, and fdst calling back callback for each match
-func New(ctx context.Context, fdst, fsrc fs.Fs, dir string, callback Marcher) *March {
-	m := &March{
-		ctx:      ctx,
-		fdst:     fdst,
-		fsrc:     fsrc,
-		dir:      dir,
-		callback: callback,
-	}
-	m.srcListDir = m.makeListDir(fsrc, false)
-	m.dstListDir = m.makeListDir(fdst, filter.Active.Opt.DeleteExcluded)
+// init sets up a march over opt.Fsrc, and opt.Fdst calling back callback for each match
+func (m *March) init() {
+	m.srcListDir = m.makeListDir(m.Fsrc, m.SrcIncludeAll)
+	m.dstListDir = m.makeListDir(m.Fdst, m.DstIncludeAll)
 	// Now create the matching transform
 	// ..normalise the UTF8 first
 	m.transforms = append(m.transforms, norm.NFC.String)
@@ -60,10 +55,9 @@ func New(ctx context.Context, fdst, fsrc fs.Fs, dir string, callback Marcher) *M
 	//                  | Yes | No  | No                 |
 	//                  | No  | Yes | Yes                |
 	//                  | Yes | Yes | Yes                |
-	if fdst.Features().CaseInsensitive {
+	if m.Fdst.Features().CaseInsensitive {
 		m.transforms = append(m.transforms, strings.ToLower)
 	}
-	return m
 }
 
 // list a directory into entries, err
@@ -86,7 +80,7 @@ func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
 		mu.Lock()
 		defer mu.Unlock()
 		if !started {
-			dirs, dirsErr = walk.NewDirTree(f, m.dir, includeAll, fs.Config.MaxDepth)
+			dirs, dirsErr = walk.NewDirTree(f, m.Dir, includeAll, fs.Config.MaxDepth)
 			started = true
 		}
 		if dirsErr != nil {
@@ -114,6 +108,8 @@ type listDirJob struct {
 
 // Run starts the matching process off
 func (m *March) Run() {
+	m.init()
+
 	srcDepth := fs.Config.MaxDepth
 	if srcDepth < 0 {
 		srcDepth = fs.MaxLevel
@@ -133,7 +129,7 @@ func (m *March) Run() {
 			defer wg.Done()
 			for {
 				select {
-				case <-m.ctx.Done():
+				case <-m.Ctx.Done():
 					return
 				case job, ok := <-in:
 					if !ok {
@@ -147,7 +143,7 @@ func (m *March) Run() {
 							// jobs off for traversal in the background
 							for _, newJob := range jobs {
 								select {
-								case <-m.ctx.Done():
+								case <-m.Ctx.Done():
 									// discard job if finishing
 									traversing.Done()
 								case in <- newJob:
@@ -164,14 +160,14 @@ func (m *March) Run() {
 	// Start the process
 	traversing.Add(1)
 	in <- listDirJob{
-		srcRemote: m.dir,
+		srcRemote: m.Dir,
 		srcDepth:  srcDepth - 1,
-		dstRemote: m.dir,
+		dstRemote: m.Dir,
 		dstDepth:  dstDepth - 1,
 	}
 	go func() {
 		// when the context is cancelled discard the remaining jobs
-		<-m.ctx.Done()
+		<-m.Ctx.Done()
 		for range in {
 			traversing.Done()
 		}
@@ -184,7 +180,7 @@ func (m *March) Run() {
 // Check to see if the context has been cancelled
 func (m *March) aborting() bool {
 	select {
-	case <-m.ctx.Done():
+	case <-m.Ctx.Done():
 		return true
 	default:
 	}
@@ -377,7 +373,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 		if m.aborting() {
 			return nil
 		}
-		recurse := m.callback.SrcOnly(src)
+		recurse := m.Callback.SrcOnly(src)
 		if recurse && job.srcDepth > 0 {
 			jobs = append(jobs, listDirJob{
 				srcRemote: src.Remote(),
@@ -391,7 +387,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 		if m.aborting() {
 			return nil
 		}
-		recurse := m.callback.DstOnly(dst)
+		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {
 			jobs = append(jobs, listDirJob{
 				dstRemote: dst.Remote(),
@@ -404,7 +400,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 		if m.aborting() {
 			return nil
 		}
-		recurse := m.callback.Match(match.dst, match.src)
+		recurse := m.Callback.Match(match.dst, match.src)
 		if recurse && job.srcDepth > 0 && job.dstDepth > 0 {
 			jobs = append(jobs, listDirJob{
 				srcRemote: match.src.Remote(),
