@@ -1,6 +1,6 @@
 // Test AzureBlob filesystem interface
 
-// +build !freebsd,!netbsd,!openbsd,!plan9,!solaris,go1.8
+// +build !plan9,!solaris,go1.8
 
 package azureblob
 
