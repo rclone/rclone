@@ -1,4 +1,7 @@
 // Package drive interfaces with the Google Drive object storage system
+
+// +build go1.9
+
 package drive
 
 // FIXME need to deal with some corner cases

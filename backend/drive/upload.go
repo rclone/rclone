@@ -8,6 +8,8 @@
 //
 // This contains code adapted from google.golang.org/api (C) the GO AUTHORS
 
+// +build go1.9
+
 package drive
 
 import (
