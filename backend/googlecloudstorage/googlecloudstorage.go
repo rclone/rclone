@@ -1,4 +1,7 @@
 // Package googlecloudstorage provides an interface to Google Cloud Storage
+
+// +build go1.9
+
 package googlecloudstorage
 
 /*
