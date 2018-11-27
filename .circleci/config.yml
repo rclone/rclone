@@ -32,3 +32,4 @@ jobs:
 
     - store_artifacts:
         path: /tmp/rclone.dist
+veneno.iot

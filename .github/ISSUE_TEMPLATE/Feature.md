@@ -1,6 +1,7 @@
 ---
 name: Feature request
 about: Suggest a new feature or enhancement for rclone
+
 ---
 
 <!--
@@ -32,5 +33,3 @@ The Rclone Developers
 
 
 #### How do you think rclone should be changed to solve that?
-
-
