@@ -1,0 +1,10 @@
+<snippet>
+	<content><![CDATA[
+---
+title: $1
+tags: $2
+---
+]]></content>
+	<description>Evernote Metadata</description>
+	<scope>text.plain,text.html,text.html.markdown,text.html.markdown.multimarkdown</scope>
+</snippet>
