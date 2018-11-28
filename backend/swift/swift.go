@@ -43,6 +43,20 @@ Above this size files will be chunked into a _segments container.  The
 default for this is 5GB which is its maximum value.`,
 	Default:  defaultChunkSize,
 	Advanced: true,
+}, {
+	Name: "no_chunk",
+	Help: `Don't chunk files during streaming upload.
+
+When doing streaming uploads (eg using rcat or mount) setting this
+flag will cause the swift backend to not upload chunked files.
+
+This will limit the maximum upload size to 5GB. However non chunked
+files are easier to deal with and have an MD5SUM.
+
+Rclone will still chunk files bigger than chunk_size when doing normal
+copy operations.`,
+	Default:  false,
+	Advanced: true,
 }}
 
 // Register with Fs
@@ -175,6 +189,7 @@ type Options struct {
 	StoragePolicy string        `config:"storage_policy"`
 	EndpointType  string        `config:"endpoint_type"`
 	ChunkSize     fs.SizeSuffix `config:"chunk_size"`
+	NoChunk       bool          `config:"no_chunk"`
 }
 
 // Fs represents a remote swift server
@@ -1105,13 +1120,15 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	contentType := fs.MimeType(src)
 	headers := m.ObjectHeaders()
 	uniquePrefix := ""
-	if size > int64(o.fs.opt.ChunkSize) || size == -1 {
+	if size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk) {
 		uniquePrefix, err = o.updateChunks(in, headers, size, contentType)
 		if err != nil {
 			return err
 		}
 	} else {
-		headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length as we know it
+		if size >= 0 {
+			headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length if we know it
+		}
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			_, err = o.fs.c.ObjectPut(o.fs.container, o.fs.root+o.remote, in, true, "", contentType, headers)
 			return shouldRetry(err)
