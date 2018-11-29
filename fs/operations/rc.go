@@ -116,9 +116,6 @@ func init() {
 - srcRemote - a path within that remote eg "file.txt" for the source
 - dstFs - a remote name string eg "drive2:" for the destination
 - dstRemote - a path within that remote eg "file2.txt" for the destination
-
-This returns
-- jobid - ID of async job to query with job/status
 `,
 		})
 	}

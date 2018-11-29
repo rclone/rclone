@@ -23,8 +23,6 @@ func init() {
 - srcFs - a remote name string eg "drive:src" for the source
 - dstFs - a remote name string eg "drive:dst" for the destination
 ` + moveHelp + `
-This returns
-- jobid - ID of async job to query with job/status
 
 See the [` + name + ` command](/commands/rclone_` + name + `/) command for more information on the above.`,
 		})
