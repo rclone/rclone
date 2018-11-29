@@ -599,7 +599,7 @@ func (f *Fs) Rmdir(dir string) error {
 	if err != nil {
 		return errors.Wrap(err, "Rmdir")
 	}
-	err = c.sftpClient.Remove(root)
+	err = c.sftpClient.RemoveDirectory(root)
 	f.putSftpConnection(&c, err)
 	return err
 }
