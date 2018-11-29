@@ -601,10 +601,9 @@ func (f *Fs) mkParentDir(dirPath string) error {
 	return f.mkdir(parent)
 }
 
-// mkdir makes the directory and parents using native paths
-func (f *Fs) mkdir(dirPath string) error {
-	// defer log.Trace(dirPath, "")("")
-	// We assume the root is already ceated
+// low level mkdir, only makes the directory, doesn't attempt to create parents
+func (f *Fs) _mkdir(dirPath string) error {
+	// We assume the root is already created
 	if dirPath == "" {
 		return nil
 	}
@@ -617,20 +616,26 @@ func (f *Fs) mkdir(dirPath string) error {
 		Path:       dirPath,
 		NoResponse: true,
 	}
-	err := f.pacer.Call(func() (bool, error) {
+	return f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.Call(&opts)
 		return shouldRetry(resp, err)
 	})
+}
+
+// mkdir makes the directory and parents using native paths
+func (f *Fs) mkdir(dirPath string) error {
+	// defer log.Trace(dirPath, "")("")
+	err := f._mkdir(dirPath)
 	if apiErr, ok := err.(*api.Error); ok {
 		// already exists
 		if apiErr.StatusCode == http.StatusMethodNotAllowed || apiErr.StatusCode == http.StatusNotAcceptable {
 			return nil
 		}
-		// parent does not exists
+		// parent does not exist
 		if apiErr.StatusCode == http.StatusConflict {
 			err = f.mkParentDir(dirPath)
 			if err == nil {
-				err = f.mkdir(dirPath)
+				err = f._mkdir(dirPath)
 			}
 		}
 	}
