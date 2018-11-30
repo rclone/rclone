@@ -6,7 +6,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/ncw/rclone/fs"
 )
 
 const (
@@ -148,6 +151,8 @@ var timeFormats = []string{
 	time.RFC3339,   // Wed, 31 Oct 2018 13:57:11 CET (as used by komfortcloud.de)
 }
 
+var oneTimeError sync.Once
+
 // UnmarshalXML turns XML into a Time
 func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var v string
@@ -170,6 +175,15 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 			*t = Time(newT)
 			break
 		}
+	}
+	if err != nil {
+		oneTimeError.Do(func() {
+			fs.Errorf(nil, "Failed to parse time %q - using the epoch", v)
+		})
+		// Return the epoch instead
+		*t = Time(time.Unix(0, 0))
+		// ignore error
+		err = nil
 	}
 	return err
 }
