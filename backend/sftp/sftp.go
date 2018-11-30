@@ -594,6 +594,16 @@ func (f *Fs) Mkdir(dir string) error {
 
 // Rmdir removes the root directory of the Fs object
 func (f *Fs) Rmdir(dir string) error {
+	// Check to see if directory is empty as some servers will
+	// delete recursively with RemoveDirectory
+	entries, err := f.List(dir)
+	if err != nil {
+		return errors.Wrap(err, "Rmdir")
+	}
+	if len(entries) != 0 {
+		return fs.ErrorDirectoryNotEmpty
+	}
+	// Remove the directory
 	root := path.Join(f.root, dir)
 	c, err := f.getSftpConnection()
 	if err != nil {
