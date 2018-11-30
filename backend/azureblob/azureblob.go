@@ -347,7 +347,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:         *opt,
 		container:   container,
 		root:        directory,
-		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant).SetPacer(pacer.S3Pacer),
 		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
 		client:      fshttp.NewClient(fs.Config),
 	}
