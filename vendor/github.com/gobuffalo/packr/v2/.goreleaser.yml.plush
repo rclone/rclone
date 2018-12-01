@@ -1,0 +1,29 @@
+builds:
+-
+  goos:
+    - darwin
+    - linux
+    - windows
+  env:
+    - CGO_ENABLED=0
+  main: ./packr2/main.go
+  binary: packr2
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+<%= if (brew) { %>
+brew:
+  github:
+    owner: gobuffalo
+    name: homebrew-tap
+<% } %>

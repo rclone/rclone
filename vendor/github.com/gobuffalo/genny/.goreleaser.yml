@@ -1,0 +1,28 @@
+builds:
+-
+  goos:
+    - darwin
+    - linux
+    - windows
+  env:
+    - CGO_ENABLED=0
+  # main: ./genny/main.go
+  # binary: {{.Binary}}
+  # hooks:
+  #   pre: packr
+  #   post: packr clean
+
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+brew:
+  github:
+    owner: markbates
+    name: homebrew-tap

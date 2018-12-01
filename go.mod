@@ -12,20 +12,18 @@ require (
 	github.com/billziss-gh/cgofuse v1.1.0
 	github.com/coreos/bbolt v0.0.0-20180318001526-af9db2027c98
 	github.com/cpuguy83/go-md2man v1.0.8 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/djherbis/times v1.1.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible
+	github.com/gobuffalo/packr/v2 v2.0.0-rc.8
 	github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 // indirect
 	github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jlaffaye/ftp v0.0.0-20181101112434-47f21d10f0ee
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/kr/fs v0.1.0 // indirect
-	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 	github.com/ncw/swift v1.0.42
@@ -35,7 +33,6 @@ require (
 	github.com/pengsrc/go-shared v0.2.0 // indirect
 	github.com/pkg/errors v0.8.0
 	github.com/pkg/sftp v1.8.3
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/sevlyar/go-daemon v0.1.4
@@ -48,15 +45,13 @@ require (
 	github.com/t3rm1n4l/go-mega v0.0.0-20180817194457-854bf31d998b
 	github.com/xanzy/ssh-agent v0.2.0
 	github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
-	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
+	golang.org/x/crypto v0.0.0-20181127143415-eb0de9b17e85
 	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a
 	golang.org/x/oauth2 v0.0.0-20181120190819-8f65e3013eba
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b
 	golang.org/x/text v0.3.0
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 	google.golang.org/api v0.0.0-20181120235003-faade3cbb06a
 	google.golang.org/appengine v1.3.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.1
 )

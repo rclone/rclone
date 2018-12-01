@@ -11,6 +11,8 @@ github.com/Azure/azure-storage-blob-go/azblob
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
+# github.com/BurntSushi/toml v0.3.1
+github.com/BurntSushi/toml
 # github.com/Unknwon/goconfig v0.0.0-20181105214110-56bd8ab18619
 github.com/Unknwon/goconfig
 # github.com/a8m/tree v0.0.0-20180321023834-3cf936ce15d6
@@ -76,6 +78,38 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/seen_state
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
+# github.com/gobuffalo/buffalo-plugins v1.6.11
+github.com/gobuffalo/buffalo-plugins/plugins
+github.com/gobuffalo/buffalo-plugins/plugins/plugdeps
+# github.com/gobuffalo/envy v1.6.9
+github.com/gobuffalo/envy
+# github.com/gobuffalo/events v1.1.8
+github.com/gobuffalo/events
+# github.com/gobuffalo/flect v0.0.0-20181114183036-47375f6d8328
+github.com/gobuffalo/flect/name
+github.com/gobuffalo/flect
+# github.com/gobuffalo/genny v0.0.0-20181119162812-e8ff4adce8bb
+github.com/gobuffalo/genny
+github.com/gobuffalo/genny/movinglater/gotools
+github.com/gobuffalo/genny/movinglater/gotools/goimports
+github.com/gobuffalo/genny/movinglater/gotools/gomods
+# github.com/gobuffalo/logger v0.0.0-20181127160119-5b956e21995c
+github.com/gobuffalo/logger
+# github.com/gobuffalo/mapi v1.0.1
+github.com/gobuffalo/mapi
+# github.com/gobuffalo/meta v0.0.0-20181114191255-b130ebedd2f7
+github.com/gobuffalo/meta
+# github.com/gobuffalo/packd v0.0.0-20181124090624-311c6248e5fb
+github.com/gobuffalo/packd
+# github.com/gobuffalo/packr/v2 v2.0.0-rc.8
+github.com/gobuffalo/packr/v2
+github.com/gobuffalo/packr/v2/file/resolver
+github.com/gobuffalo/packr/v2/file
+github.com/gobuffalo/packr/v2/jam/parser
+github.com/gobuffalo/packr/v2/plog
+github.com/gobuffalo/packr/v2/file/resolver/encoding/hex
+# github.com/gobuffalo/syncx v0.0.0-20181120194010-558ac7de985f
+github.com/gobuffalo/syncx
 # github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1
 github.com/goftp/server
 # github.com/golang/protobuf v1.2.0
@@ -88,10 +122,20 @@ github.com/inconshreveable/mousetrap
 github.com/jlaffaye/ftp
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
+# github.com/joho/godotenv v1.3.0
+github.com/joho/godotenv
 # github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 github.com/kardianos/osext
+# github.com/karrick/godirwalk v1.7.5
+github.com/karrick/godirwalk
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
+# github.com/markbates/oncer v0.0.0-20181014194634-05fccaae8fc4
+github.com/markbates/oncer
+# github.com/markbates/safe v1.0.1
+github.com/markbates/safe
 # github.com/mattn/go-runewidth v0.0.3
 github.com/mattn/go-runewidth
 # github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
@@ -122,6 +166,8 @@ github.com/rfjakob/eme
 github.com/russross/blackfriday
 # github.com/sevlyar/go-daemon v0.1.4
 github.com/sevlyar/go-daemon
+# github.com/sirupsen/logrus v1.2.0
+github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
 github.com/skratchdot/open-golang/open
 # github.com/spf13/cobra v0.0.3
@@ -148,7 +194,7 @@ github.com/yunify/qingstor-sdk-go/request/builder
 github.com/yunify/qingstor-sdk-go/request/signer
 github.com/yunify/qingstor-sdk-go/request/unpacker
 github.com/yunify/qingstor-sdk-go
-# golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
+# golang.org/x/crypto v0.0.0-20181127143415-eb0de9b17e85
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
@@ -193,6 +239,11 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 # golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 golang.org/x/time/rate
+# golang.org/x/tools v0.0.0-20181127195227-b4e97c0ed882
+golang.org/x/tools/go/ast/astutil
+golang.org/x/tools/imports
+golang.org/x/tools/internal/gopathwalk
+golang.org/x/tools/internal/fastwalk
 # google.golang.org/api v0.0.0-20181120235003-faade3cbb06a
 google.golang.org/api/drive/v2
 google.golang.org/api/drive/v3
