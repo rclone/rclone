@@ -10,6 +10,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/lib/rest"
+	"github.com/gobuffalo/packr/v2"
 )
 
 // DirEntry is a directory entry
@@ -84,19 +85,8 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// indexPage is a directory listing template
-var indexPage = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>{{ .Title }}</title>
-</head>
-<body>
-<h1>{{ .Title }}</h1>
-{{ range $i := .Entries }}<a href="{{ $i.URL }}">{{ $i.Leaf }}</a><br />
-{{ end }}</body>
-</html>
-`
+var box = packr.New("templates", "./templates")
+var indexPage, err = box.FindString("index.html")
 
 // indexTemplate is the instantiated indexPage
 var indexTemplate = template.Must(template.New("index").Parse(indexPage))

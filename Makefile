@@ -94,12 +94,14 @@ endif
 release_dep:
 	go get -u github.com/goreleaser/nfpm/...
 	go get -u github.com/aktau/github-release
+	go get -u github.com/gobuffalo/packr/v2/packr2
 
 # Update dependencies
 update:
 	GO111MODULE=on go get -u ./...
 	GO111MODULE=on go mod tidy
 	GO111MODULE=on go mod vendor
+	GO111MODULE=on packr2
 
 doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 

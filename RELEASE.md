@@ -1,6 +1,7 @@
 Extra required software for making a release
   * [github-release](https://github.com/aktau/github-release) for uploading packages
   * pandoc for making the html and man pages
+  * [packr2](https://github.com/gobuffalo/packr/tree/master/v2) for compiling templates
 
 Making a release
   * git status - make sure everything is checked in
