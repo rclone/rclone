@@ -1,5 +1,7 @@
 package serve
 
+//x go generate go run assets_generate.go
+
 import (
 	"fmt"
 	"html/template"
@@ -10,7 +12,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/lib/rest"
-	"github.com/gobuffalo/packr/v2"
+	"github.com/shurcooL/vfsgen"
 )
 
 // DirEntry is a directory entry
@@ -85,8 +87,24 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var box = packr.New("templates", "./templates")
-var indexPage, err = box.FindString("index.html")
+// var box = packr.New("templates", "./templates")
+// var indexPage, err = box.FindString("index.html")
+
+var vfs http.FileSystem = http.Dir("/home/jgoel/rclone/cmd/serve/httplib/serve/templates")
+var err2 = vfsgen.Generate(vfs, vfsgen.Options{})
+
+/*
+if err != nil {
+	log.Fatalln(err)
+}
+*/
+
+var f, _ = vfs.Open("index.html")
+var s, _ = f.Stat()
+var buffer = make([]byte, s.Size())
+var bytesread, err = f.Read(buffer)
+var indexPage = string(buffer)
 
 // indexTemplate is the instantiated indexPage
 var indexTemplate = template.Must(template.New("index").Parse(indexPage))
+//var indexTemplate = template.Must(template.New("index").Parse(indexPage))
