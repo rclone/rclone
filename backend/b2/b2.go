@@ -980,6 +980,12 @@ func (f *Fs) purge(oldOnly bool) error {
 			errReturn = err
 		}
 	}
+	var isUnfinishedUploadStale = func(timestamp api.Timestamp) bool {
+		if time.Since(time.Time(timestamp)).Hours() > 24 {
+			return true
+		}
+		return false
+	}
 
 	// Delete Config.Transfers in parallel
 	toBeDeleted := make(chan *api.File, fs.Config.Transfers)
@@ -1002,6 +1008,9 @@ func (f *Fs) purge(oldOnly bool) error {
 			if oldOnly && last != remote {
 				if object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
+					toBeDeleted <- object
+				} else if object.Action == "start" && isUnfinishedUploadStale(object.UploadTimestamp) {
+					fs.Debugf(remote, "Deleting current version (id %q) as it is a start marker (upload started at %s)", object.ID, time.Time(object.UploadTimestamp).Local())
 					toBeDeleted <- object
 				} else {
 					fs.Debugf(remote, "Not deleting current version (id %q) %q", object.ID, object.Action)
