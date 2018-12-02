@@ -211,10 +211,13 @@ type Fs struct {
 //
 // Will definitely have info but maybe not meta
 type Object struct {
-	fs      *Fs           // what this object is part of
-	remote  string        // The remote path
-	info    swift.Object  // Info from the swift object if known
-	headers swift.Headers // The object headers if known
+	fs           *Fs    // what this object is part of
+	remote       string // The remote path
+	size         int64
+	lastModified time.Time
+	contentType  string
+	md5          string
+	headers      swift.Headers // The object headers if known
 }
 
 // ------------------------------------------------------------
@@ -447,7 +450,10 @@ func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) (fs.Object, er
 	}
 	if info != nil {
 		// Set info but not headers
-		o.info = *info
+		err := o.decodeMetaData(info)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		err := o.readMetaData() // reads info and headers, returning an error
 		if err != nil {
@@ -844,7 +850,7 @@ func (o *Object) Hash(t hash.Type) (string, error) {
 		fs.Debugf(o, "Returning empty Md5sum for swift large object")
 		return "", nil
 	}
-	return strings.ToLower(o.info.Hash), nil
+	return strings.ToLower(o.md5), nil
 }
 
 // hasHeader checks for the header passed in returning false if the
@@ -873,7 +879,22 @@ func (o *Object) isStaticLargeObject() (bool, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	return o.info.Bytes
+	return o.size
+}
+
+// decodeMetaData sets the metadata in the object from a swift.Object
+//
+// Sets
+//  o.lastModified
+//  o.size
+//  o.md5
+//  o.contentType
+func (o *Object) decodeMetaData(info *swift.Object) (err error) {
+	o.lastModified = info.LastModified
+	o.size = info.Bytes
+	o.md5 = info.Hash
+	o.contentType = info.ContentType
+	return nil
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -897,8 +918,11 @@ func (o *Object) readMetaData() (err error) {
 		}
 		return err
 	}
-	o.info = info
 	o.headers = h
+	err = o.decodeMetaData(&info)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -909,17 +933,17 @@ func (o *Object) readMetaData() (err error) {
 // LastModified returned in the http headers
 func (o *Object) ModTime() time.Time {
 	if fs.Config.UseServerModTime {
-		return o.info.LastModified
+		return o.lastModified
 	}
 	err := o.readMetaData()
 	if err != nil {
 		fs.Debugf(o, "Failed to read metadata: %s", err)
-		return o.info.LastModified
+		return o.lastModified
 	}
 	modTime, err := o.headers.ObjectMetadata().GetModTime()
 	if err != nil {
 		// fs.Logf(o, "Failed to read mtime from object: %v", err)
-		return o.info.LastModified
+		return o.lastModified
 	}
 	return modTime
 }
@@ -953,7 +977,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 // It compares the Content-Type to directoryMarkerContentType - that
 // makes it a directory marker which is not storable.
 func (o *Object) Storable() bool {
-	return o.info.ContentType != directoryMarkerContentType
+	return o.contentType != directoryMarkerContentType
 }
 
 // Open an object for read
@@ -1125,17 +1149,26 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		if err != nil {
 			return err
 		}
+		o.headers = nil // wipe old metadata
 	} else {
 		if size >= 0 {
 			headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length if we know it
 		}
+		var rxHeaders swift.Headers
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			_, err = o.fs.c.ObjectPut(o.fs.container, o.fs.root+o.remote, in, true, "", contentType, headers)
+			rxHeaders, err = o.fs.c.ObjectPut(o.fs.container, o.fs.root+o.remote, in, true, "", contentType, headers)
 			return shouldRetry(err)
 		})
 		if err != nil {
 			return err
 		}
+		// set Metadata since ObjectPut checked the hash and length so we know the
+		// object has been safely uploaded
+		o.lastModified = modTime
+		o.size = size
+		o.md5 = rxHeaders["ETag"]
+		o.contentType = contentType
+		o.headers = headers
 	}
 
 	// If file was a dynamic large object then remove old/all segments
@@ -1146,8 +1179,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		}
 	}
 
-	// Read the metadata from the newly created object
-	o.headers = nil // wipe old metadata
+	// Read the metadata from the newly created object if necessary
 	return o.readMetaData()
 }
 
@@ -1177,7 +1209,7 @@ func (o *Object) Remove() error {
 
 // MimeType of an Object if known, "" otherwise
 func (o *Object) MimeType() string {
-	return o.info.ContentType
+	return o.contentType
 }
 
 // Check the interfaces are satisfied
