@@ -331,9 +331,10 @@ func (f *File) setSize(n int64) {
 // Update the object when written and add it to the directory
 func (f *File) setObject(o fs.Object) {
 	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.o = o
 	_ = f.applyPendingModTime()
+	f.mu.Unlock()
+
 	f.d.addObject(f)
 }
 
@@ -440,20 +441,23 @@ func (f *File) Sync() error {
 
 // Remove the file
 func (f *File) Remove() error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.muRW.Lock()
-	defer f.muRW.Unlock()
 	if f.d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
+	f.mu.Lock()
+	f.muRW.Lock()
 	if f.o != nil {
 		err := f.o.Remove()
 		if err != nil {
 			fs.Errorf(f, "File.Remove file error: %v", err)
+			f.muRW.Unlock()
+			f.mu.Unlock()
 			return err
 		}
 	}
+	f.muRW.Unlock()
+	f.mu.Unlock()
+
 	// Remove the item from the directory listing
 	f.d.delObject(f.Name())
 	// Remove the object from the cache
