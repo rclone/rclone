@@ -144,6 +144,11 @@ func TestNewObject(t *testing.T) {
 
 	dt, ok := fstest.CheckTimeEqualWithPrecision(tObj, tFile, time.Second)
 	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", o.Remote(), dt, time.Second, tObj, tFile, time.Second))
+
+	// check object not found
+	o, err = f.NewObject("not found.txt")
+	assert.Nil(t, o)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
 }
 
 func TestOpen(t *testing.T) {
