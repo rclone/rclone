@@ -193,7 +193,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	}
 	err := o.stat()
 	if err != nil {
-		return nil, errors.Wrap(err, "Stat failed")
+		return nil, err
 	}
 	return o, nil
 }
@@ -416,6 +416,9 @@ func (o *Object) url() string {
 func (o *Object) stat() error {
 	url := o.url()
 	res, err := o.fs.httpClient.Head(url)
+	if err == nil && res.StatusCode == http.StatusNotFound {
+		return fs.ErrorObjectNotFound
+	}
 	err = statusError(res, err)
 	if err != nil {
 		return errors.Wrap(err, "failed to stat")
