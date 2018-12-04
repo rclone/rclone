@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 	"golang.org/x/net/websocket"
 )
 

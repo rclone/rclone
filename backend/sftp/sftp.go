@@ -28,7 +28,7 @@ import (
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
-	"github.com/xanzy/ssh-agent"
+	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/time/rate"
 )
