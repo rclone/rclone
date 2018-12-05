@@ -509,6 +509,7 @@ func (f *Fs) list(dir string, recurse bool, maxResults uint, fn listFn) error {
 		MaxResults: int32(maxResults),
 	}
 	ctx := context.Background()
+	directoryMarkers := map[string]struct{}{}
 	for marker := (azblob.Marker{}); marker.NotDone(); {
 		var response *azblob.ListBlobsHierarchySegmentResponse
 		err := f.pacer.Call(func() (bool, error) {
@@ -538,13 +539,29 @@ func (f *Fs) list(dir string, recurse bool, maxResults uint, fn listFn) error {
 				continue
 			}
 			remote := file.Name[len(f.root):]
-			// Check for directory
-			isDirectory := strings.HasSuffix(remote, "/")
-			if isDirectory {
-				remote = remote[:len(remote)-1]
+			// is this a directory marker?
+			if *file.Properties.ContentLength == 0 {
+				// Note that metadata with hdi_isfolder = true seems to be a
+				// defacto standard for marking blobs as directories.
+				endsWithSlash := strings.HasSuffix(remote, "/")
+				if endsWithSlash || remote == "" || file.Metadata["hdi_isfolder"] == "true" {
+					if endsWithSlash {
+						remote = remote[:len(remote)-1]
+					}
+					err = fn(remote, file, true)
+					if err != nil {
+						return err
+					}
+					// Keep track of directory markers. If recursing then
+					// there will be no Prefixes so no need to keep track
+					if !recurse {
+						directoryMarkers[remote] = struct{}{}
+					}
+					continue // skip directory marker
+				}
 			}
 			// Send object
-			err = fn(remote, file, isDirectory)
+			err = fn(remote, file, false)
 			if err != nil {
 				return err
 			}
@@ -557,6 +574,10 @@ func (f *Fs) list(dir string, recurse bool, maxResults uint, fn listFn) error {
 				continue
 			}
 			remote = remote[len(f.root):]
+			// Don't send if already sent as a directory marker
+			if _, found := directoryMarkers[remote]; found {
+				continue
+			}
 			// Send object
 			err = fn(remote, nil, true)
 			if err != nil {
