@@ -23,6 +23,18 @@ package team_policies
 
 import "github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 
+// CameraUploadsPolicyState : has no documentation (yet)
+type CameraUploadsPolicyState struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for CameraUploadsPolicyState
+const (
+	CameraUploadsPolicyStateDisabled = "disabled"
+	CameraUploadsPolicyStateEnabled  = "enabled"
+	CameraUploadsPolicyStateOther    = "other"
+)
+
 // EmmState : has no documentation (yet)
 type EmmState struct {
 	dropbox.Tagged
