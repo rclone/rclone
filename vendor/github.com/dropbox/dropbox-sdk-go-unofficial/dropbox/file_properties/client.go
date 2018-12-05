@@ -27,6 +27,7 @@ import (
 	"net/http"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth"
 )
 
 // Client interface describes all routes in this namespace
@@ -142,7 +143,7 @@ func (dbx *apiImpl) PropertiesAdd(arg *AddPropertiesArg) (err error) {
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		return
 	}
@@ -155,17 +156,11 @@ func (dbx *apiImpl) PropertiesAdd(arg *AddPropertiesArg) (err error) {
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -209,7 +204,7 @@ func (dbx *apiImpl) PropertiesOverwrite(arg *OverwritePropertyGroupArg) (err err
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		return
 	}
@@ -222,17 +217,11 @@ func (dbx *apiImpl) PropertiesOverwrite(arg *OverwritePropertyGroupArg) (err err
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -276,7 +265,7 @@ func (dbx *apiImpl) PropertiesRemove(arg *RemovePropertiesArg) (err error) {
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		return
 	}
@@ -289,17 +278,11 @@ func (dbx *apiImpl) PropertiesRemove(arg *RemovePropertiesArg) (err error) {
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -343,7 +326,7 @@ func (dbx *apiImpl) PropertiesSearch(arg *PropertiesSearchArg) (res *PropertiesS
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -361,17 +344,11 @@ func (dbx *apiImpl) PropertiesSearch(arg *PropertiesSearchArg) (res *PropertiesS
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -415,7 +392,7 @@ func (dbx *apiImpl) PropertiesSearchContinue(arg *PropertiesSearchContinueArg) (
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -433,17 +410,11 @@ func (dbx *apiImpl) PropertiesSearchContinue(arg *PropertiesSearchContinueArg) (
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -487,7 +458,7 @@ func (dbx *apiImpl) PropertiesUpdate(arg *UpdatePropertiesArg) (err error) {
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		return
 	}
@@ -500,17 +471,11 @@ func (dbx *apiImpl) PropertiesUpdate(arg *UpdatePropertiesArg) (err error) {
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -551,7 +516,7 @@ func (dbx *apiImpl) TemplatesAddForTeam(arg *AddTemplateArg) (res *AddTemplateRe
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -569,17 +534,11 @@ func (dbx *apiImpl) TemplatesAddForTeam(arg *AddTemplateArg) (res *AddTemplateRe
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -623,7 +582,7 @@ func (dbx *apiImpl) TemplatesAddForUser(arg *AddTemplateArg) (res *AddTemplateRe
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -641,17 +600,11 @@ func (dbx *apiImpl) TemplatesAddForUser(arg *AddTemplateArg) (res *AddTemplateRe
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -692,7 +645,7 @@ func (dbx *apiImpl) TemplatesGetForTeam(arg *GetTemplateArg) (res *GetTemplateRe
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -710,17 +663,11 @@ func (dbx *apiImpl) TemplatesGetForTeam(arg *GetTemplateArg) (res *GetTemplateRe
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -764,7 +711,7 @@ func (dbx *apiImpl) TemplatesGetForUser(arg *GetTemplateArg) (res *GetTemplateRe
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -782,17 +729,11 @@ func (dbx *apiImpl) TemplatesGetForUser(arg *GetTemplateArg) (res *GetTemplateRe
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -825,7 +766,7 @@ func (dbx *apiImpl) TemplatesListForTeam() (res *ListTemplateResult, err error) 
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -843,17 +784,11 @@ func (dbx *apiImpl) TemplatesListForTeam() (res *ListTemplateResult, err error) 
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -889,7 +824,7 @@ func (dbx *apiImpl) TemplatesListForUser() (res *ListTemplateResult, err error) 
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -907,17 +842,11 @@ func (dbx *apiImpl) TemplatesListForUser() (res *ListTemplateResult, err error) 
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -958,7 +887,7 @@ func (dbx *apiImpl) TemplatesRemoveForTeam(arg *RemoveTemplateArg) (err error) {
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		return
 	}
@@ -971,17 +900,11 @@ func (dbx *apiImpl) TemplatesRemoveForTeam(arg *RemoveTemplateArg) (err error) {
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -1025,7 +948,7 @@ func (dbx *apiImpl) TemplatesRemoveForUser(arg *RemoveTemplateArg) (err error) {
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		return
 	}
@@ -1038,17 +961,11 @@ func (dbx *apiImpl) TemplatesRemoveForUser(arg *RemoveTemplateArg) (err error) {
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -1089,7 +1006,7 @@ func (dbx *apiImpl) TemplatesUpdateForTeam(arg *UpdateTemplateArg) (res *UpdateT
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -1107,17 +1024,11 @@ func (dbx *apiImpl) TemplatesUpdateForTeam(arg *UpdateTemplateArg) (res *UpdateT
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
@@ -1161,7 +1072,7 @@ func (dbx *apiImpl) TemplatesUpdateForUser(arg *UpdateTemplateArg) (res *UpdateT
 		return
 	}
 
-	dbx.Config.LogDebug("body: %v", body)
+	dbx.Config.LogDebug("body: %s", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -1179,17 +1090,11 @@ func (dbx *apiImpl) TemplatesUpdateForUser(arg *UpdateTemplateArg) (res *UpdateT
 		err = apiError
 		return
 	}
-	var apiError dropbox.APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		err = apiError
-		return
-	}
-	err = json.Unmarshal(body, &apiError)
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
 	if err != nil {
 		return
 	}
-	err = apiError
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
 	return
 }
 
