@@ -693,6 +693,7 @@ const (
 	FileActionEnableViewerInfo      = "enable_viewer_info"
 	FileActionInviteViewer          = "invite_viewer"
 	FileActionInviteViewerNoComment = "invite_viewer_no_comment"
+	FileActionInviteEditor          = "invite_editor"
 	FileActionUnshare               = "unshare"
 	FileActionRelinquishMembership  = "relinquish_membership"
 	FileActionShareLink             = "share_link"
@@ -1496,7 +1497,9 @@ func NewGroupInfo(GroupName string, GroupId string, GroupManagementType *team_co
 
 // MembershipInfo : The information about a member of the shared content.
 type MembershipInfo struct {
-	// AccessType : The access type for this member.
+	// AccessType : The access type for this member. It contains inherited
+	// access type from parent folder, and acquired access type from this
+	// folder.
 	AccessType *AccessLevel `json:"access_type"`
 	// Permissions : The permissions that requesting user has on this member.
 	// The set of permissions corresponds to the MemberActions in the request.
@@ -1754,6 +1757,7 @@ type LinkAudience struct {
 const (
 	LinkAudiencePublic  = "public"
 	LinkAudienceTeam    = "team"
+	LinkAudienceNoOne   = "no_one"
 	LinkAudienceMembers = "members"
 	LinkAudienceOther   = "other"
 )
@@ -3262,6 +3266,8 @@ type ShareFolderArgBase struct {
 	// ViewerInfoPolicy : Who can enable/disable viewer info for this shared
 	// folder.
 	ViewerInfoPolicy *ViewerInfoPolicy `json:"viewer_info_policy,omitempty"`
+	// AccessInheritance : The access inheritance settings for the folder.
+	AccessInheritance *AccessInheritance `json:"access_inheritance"`
 }
 
 // NewShareFolderArgBase returns a new ShareFolderArgBase instance
@@ -3269,6 +3275,7 @@ func NewShareFolderArgBase(Path string) *ShareFolderArgBase {
 	s := new(ShareFolderArgBase)
 	s.Path = Path
 	s.ForceAsync = false
+	s.AccessInheritance = &AccessInheritance{Tagged: dropbox.Tagged{"inherit"}}
 	return s
 }
 
@@ -3289,6 +3296,7 @@ func NewShareFolderArg(Path string) *ShareFolderArg {
 	s := new(ShareFolderArg)
 	s.Path = Path
 	s.ForceAsync = false
+	s.AccessInheritance = &AccessInheritance{Tagged: dropbox.Tagged{"inherit"}}
 	return s
 }
 

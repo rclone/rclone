@@ -3,6 +3,7 @@ module github.com/ncw/rclone
 require (
 	bazil.org/fuse v0.0.0-20180421153158-65cc252bf669
 	cloud.google.com/go v0.33.1 // indirect
+	github.com/Azure/azure-pipeline-go v0.1.8
 	github.com/Azure/azure-storage-blob-go v0.0.0-20181023070848-cf01652132cc
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/Unknwon/goconfig v0.0.0-20181105214110-56bd8ab18619
@@ -14,7 +15,7 @@ require (
 	github.com/cpuguy83/go-md2man v1.0.8 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/djherbis/times v1.1.0
-	github.com/dropbox/dropbox-sdk-go-unofficial v4.1.0+incompatible
+	github.com/dropbox/dropbox-sdk-go-unofficial v5.0.1-0.20181205034806-56e5f6595305+incompatible
 	github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 // indirect
 	github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1
 	github.com/google/go-querystring v1.0.0 // indirect
