@@ -218,3 +218,4 @@ Contributors
   * Henry Ptasinski <henry@logout.com>
   * Alexander <kharkovalexander@gmail.com>
   * Garry McNulty <garrmcnu@gmail.com>
+  * Mathieu Carbou <mathieu.carbou@gmail.com>
