@@ -543,6 +543,9 @@ doesn't copy the ACL from the source but rather writes a fresh one.`,
 			}, {
 				Value: "ONEZONE_IA",
 				Help:  "One Zone Infrequent Access storage class",
+			}, {
+				Value: "GLACIER",
+				Help:  "Glacier storage class",
 			}},
 		}, {
 			Name: "upload_cutoff",
