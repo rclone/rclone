@@ -21,7 +21,6 @@
 package dropbox
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -37,8 +36,8 @@ const (
 	hostAPI       = "api"
 	hostContent   = "content"
 	hostNotify    = "notify"
-	sdkVersion    = "5.2.0"
-	specVersion   = "097e9ba"
+	sdkVersion    = "4.2.0"
+	specVersion   = "222ba8c"
 )
 
 // Version returns the current SDK version and API Spec version
@@ -207,17 +206,8 @@ func (e APIError) Error() string {
 	return e.ErrorSummary
 }
 
-// HandleCommonAPIErrors handles common API errors
-func HandleCommonAPIErrors(c Config, resp *http.Response, body []byte) error {
-	var apiError APIError
-	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
-		apiError.ErrorSummary = string(body)
-		return apiError
-	}
-	e := json.Unmarshal(body, &apiError)
-	if e != nil {
-		c.LogDebug("%v", e)
-		return e
-	}
-	return apiError
+func init() {
+	// These are not registered in the oauth library by default
+	oauth2.RegisterBrokenAuthHeaderProvider("https://api.dropboxapi.com")
+	oauth2.RegisterBrokenAuthHeaderProvider("https://api-dbdev.dev.corp.dropbox.com")
 }

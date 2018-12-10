@@ -2315,43 +2315,11 @@ func (u *MembersAddLaunch) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// MembersDeactivateBaseArg : Exactly one of team_member_id, email, or
-// external_id must be provided to identify the user account.
-type MembersDeactivateBaseArg struct {
-	// User : Identity of user to remove/suspend/have their files moved.
-	User *UserSelectorArg `json:"user"`
-}
-
-// NewMembersDeactivateBaseArg returns a new MembersDeactivateBaseArg instance
-func NewMembersDeactivateBaseArg(User *UserSelectorArg) *MembersDeactivateBaseArg {
-	s := new(MembersDeactivateBaseArg)
-	s.User = User
-	return s
-}
-
-// MembersDataTransferArg : has no documentation (yet)
-type MembersDataTransferArg struct {
-	MembersDeactivateBaseArg
-	// TransferDestId : Files from the deleted member account will be
-	// transferred to this user.
-	TransferDestId *UserSelectorArg `json:"transfer_dest_id"`
-	// TransferAdminId : Errors during the transfer process will be sent via
-	// email to this user.
-	TransferAdminId *UserSelectorArg `json:"transfer_admin_id"`
-}
-
-// NewMembersDataTransferArg returns a new MembersDataTransferArg instance
-func NewMembersDataTransferArg(User *UserSelectorArg, TransferDestId *UserSelectorArg, TransferAdminId *UserSelectorArg) *MembersDataTransferArg {
-	s := new(MembersDataTransferArg)
-	s.User = User
-	s.TransferDestId = TransferDestId
-	s.TransferAdminId = TransferAdminId
-	return s
-}
-
-// MembersDeactivateArg : has no documentation (yet)
+// MembersDeactivateArg : Exactly one of team_member_id, email, or external_id
+// must be provided to identify the user account.
 type MembersDeactivateArg struct {
-	MembersDeactivateBaseArg
+	// User : Identity of user to remove/suspend.
+	User *UserSelectorArg `json:"user"`
 	// WipeData : If provided, controls if the user's data will be deleted on
 	// their linked devices.
 	WipeData bool `json:"wipe_data"`
@@ -2574,27 +2542,6 @@ func NewMembersRemoveArg(User *UserSelectorArg) *MembersRemoveArg {
 	return s
 }
 
-// MembersTransferFilesError : has no documentation (yet)
-type MembersTransferFilesError struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for MembersTransferFilesError
-const (
-	MembersTransferFilesErrorUserNotFound                        = "user_not_found"
-	MembersTransferFilesErrorUserNotInTeam                       = "user_not_in_team"
-	MembersTransferFilesErrorOther                               = "other"
-	MembersTransferFilesErrorRemovedAndTransferDestShouldDiffer  = "removed_and_transfer_dest_should_differ"
-	MembersTransferFilesErrorRemovedAndTransferAdminShouldDiffer = "removed_and_transfer_admin_should_differ"
-	MembersTransferFilesErrorTransferDestUserNotFound            = "transfer_dest_user_not_found"
-	MembersTransferFilesErrorTransferDestUserNotInTeam           = "transfer_dest_user_not_in_team"
-	MembersTransferFilesErrorTransferAdminUserNotInTeam          = "transfer_admin_user_not_in_team"
-	MembersTransferFilesErrorTransferAdminUserNotFound           = "transfer_admin_user_not_found"
-	MembersTransferFilesErrorUnspecifiedTransferAdminId          = "unspecified_transfer_admin_id"
-	MembersTransferFilesErrorTransferAdminIsNotAdmin             = "transfer_admin_is_not_admin"
-	MembersTransferFilesErrorRecipientNotVerified                = "recipient_not_verified"
-)
-
 // MembersRemoveError : has no documentation (yet)
 type MembersRemoveError struct {
 	dropbox.Tagged
@@ -2605,16 +2552,15 @@ const (
 	MembersRemoveErrorUserNotFound                        = "user_not_found"
 	MembersRemoveErrorUserNotInTeam                       = "user_not_in_team"
 	MembersRemoveErrorOther                               = "other"
+	MembersRemoveErrorRemoveLastAdmin                     = "remove_last_admin"
 	MembersRemoveErrorRemovedAndTransferDestShouldDiffer  = "removed_and_transfer_dest_should_differ"
 	MembersRemoveErrorRemovedAndTransferAdminShouldDiffer = "removed_and_transfer_admin_should_differ"
 	MembersRemoveErrorTransferDestUserNotFound            = "transfer_dest_user_not_found"
 	MembersRemoveErrorTransferDestUserNotInTeam           = "transfer_dest_user_not_in_team"
-	MembersRemoveErrorTransferAdminUserNotInTeam          = "transfer_admin_user_not_in_team"
 	MembersRemoveErrorTransferAdminUserNotFound           = "transfer_admin_user_not_found"
+	MembersRemoveErrorTransferAdminUserNotInTeam          = "transfer_admin_user_not_in_team"
 	MembersRemoveErrorUnspecifiedTransferAdminId          = "unspecified_transfer_admin_id"
 	MembersRemoveErrorTransferAdminIsNotAdmin             = "transfer_admin_is_not_admin"
-	MembersRemoveErrorRecipientNotVerified                = "recipient_not_verified"
-	MembersRemoveErrorRemoveLastAdmin                     = "remove_last_admin"
 	MembersRemoveErrorCannotKeepAccountAndTransfer        = "cannot_keep_account_and_transfer"
 	MembersRemoveErrorCannotKeepAccountAndDeleteData      = "cannot_keep_account_and_delete_data"
 	MembersRemoveErrorEmailAddressTooLongToBeDisabled     = "email_address_too_long_to_be_disabled"
@@ -2744,31 +2690,6 @@ const (
 	MembersSuspendErrorSuspendInactiveUser = "suspend_inactive_user"
 	MembersSuspendErrorSuspendLastAdmin    = "suspend_last_admin"
 	MembersSuspendErrorTeamLicenseLimit    = "team_license_limit"
-)
-
-// MembersTransferFormerMembersFilesError : has no documentation (yet)
-type MembersTransferFormerMembersFilesError struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for MembersTransferFormerMembersFilesError
-const (
-	MembersTransferFormerMembersFilesErrorUserNotFound                        = "user_not_found"
-	MembersTransferFormerMembersFilesErrorUserNotInTeam                       = "user_not_in_team"
-	MembersTransferFormerMembersFilesErrorOther                               = "other"
-	MembersTransferFormerMembersFilesErrorRemovedAndTransferDestShouldDiffer  = "removed_and_transfer_dest_should_differ"
-	MembersTransferFormerMembersFilesErrorRemovedAndTransferAdminShouldDiffer = "removed_and_transfer_admin_should_differ"
-	MembersTransferFormerMembersFilesErrorTransferDestUserNotFound            = "transfer_dest_user_not_found"
-	MembersTransferFormerMembersFilesErrorTransferDestUserNotInTeam           = "transfer_dest_user_not_in_team"
-	MembersTransferFormerMembersFilesErrorTransferAdminUserNotInTeam          = "transfer_admin_user_not_in_team"
-	MembersTransferFormerMembersFilesErrorTransferAdminUserNotFound           = "transfer_admin_user_not_found"
-	MembersTransferFormerMembersFilesErrorUnspecifiedTransferAdminId          = "unspecified_transfer_admin_id"
-	MembersTransferFormerMembersFilesErrorTransferAdminIsNotAdmin             = "transfer_admin_is_not_admin"
-	MembersTransferFormerMembersFilesErrorRecipientNotVerified                = "recipient_not_verified"
-	MembersTransferFormerMembersFilesErrorUserDataIsBeingTransferred          = "user_data_is_being_transferred"
-	MembersTransferFormerMembersFilesErrorUserNotRemoved                      = "user_not_removed"
-	MembersTransferFormerMembersFilesErrorUserDataCannotBeTransferred         = "user_data_cannot_be_transferred"
-	MembersTransferFormerMembersFilesErrorUserDataAlreadyTransferred          = "user_data_already_transferred"
 )
 
 // MembersUnsuspendArg : Exactly one of team_member_id, email, or external_id
@@ -2927,16 +2848,12 @@ func (u *RemoveCustomQuotaResult) UnmarshalJSON(body []byte) error {
 type RemovedStatus struct {
 	// IsRecoverable : True if the removed team member is recoverable.
 	IsRecoverable bool `json:"is_recoverable"`
-	// IsDisconnected : True if the team member's account was converted to
-	// individual account.
-	IsDisconnected bool `json:"is_disconnected"`
 }
 
 // NewRemovedStatus returns a new RemovedStatus instance
-func NewRemovedStatus(IsRecoverable bool, IsDisconnected bool) *RemovedStatus {
+func NewRemovedStatus(IsRecoverable bool) *RemovedStatus {
 	s := new(RemovedStatus)
 	s.IsRecoverable = IsRecoverable
-	s.IsDisconnected = IsDisconnected
 	return s
 }
 
@@ -4085,17 +4002,6 @@ func NewTeamNamespacesListContinueArg(Cursor string) *TeamNamespacesListContinue
 	return s
 }
 
-// TeamNamespacesListError : has no documentation (yet)
-type TeamNamespacesListError struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for TeamNamespacesListError
-const (
-	TeamNamespacesListErrorInvalidArg = "invalid_arg"
-	TeamNamespacesListErrorOther      = "other"
-)
-
 // TeamNamespacesListContinueError : has no documentation (yet)
 type TeamNamespacesListContinueError struct {
 	dropbox.Tagged
@@ -4103,9 +4009,8 @@ type TeamNamespacesListContinueError struct {
 
 // Valid tag values for TeamNamespacesListContinueError
 const (
-	TeamNamespacesListContinueErrorInvalidArg    = "invalid_arg"
-	TeamNamespacesListContinueErrorOther         = "other"
 	TeamNamespacesListContinueErrorInvalidCursor = "invalid_cursor"
+	TeamNamespacesListContinueErrorOther         = "other"
 )
 
 // TeamNamespacesListResult : Result for `namespacesList`.
