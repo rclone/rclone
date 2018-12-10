@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing"
@@ -204,16 +203,7 @@ func shouldRetry(err error) (bool, error) {
 		return false, err
 	}
 	baseErrString := errors.Cause(err).Error()
-	// handle any official Retry-After header from Dropbox's SDK first
-	switch e := err.(type) {
-	case auth.RateLimitAPIError:
-		if e.RateLimitError.RetryAfter > 0 {
-			fs.Debugf(baseErrString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
-			time.Sleep(time.Duration(e.RateLimitError.RetryAfter) * time.Second)
-		}
-		return true, err
-	}
-	// Keep old behaviour for backward compatibility
+	// FIXME there is probably a better way of doing this!
 	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") {
 		return true, err
 	}
