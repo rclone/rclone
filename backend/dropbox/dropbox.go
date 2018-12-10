@@ -203,8 +203,14 @@ func shouldRetry(err error) (bool, error) {
 		return false, err
 	}
 	baseErrString := errors.Cause(err).Error()
-	// FIXME there is probably a better way of doing this!
 	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") {
+		switch e := err.(type) {
+		case dropbox.APIError:
+			if e.RetryAfter > 0 {
+				fs.Debugf(baseErrString, "Too many requests or write operations. Trying again in %d seconds.", e.RetryAfter)
+				time.Sleep(time.Duration(e.RetryAfter) * time.Second)
+			}
+		}
 		return true, err
 	}
 	return fserrors.ShouldRetry(err), err

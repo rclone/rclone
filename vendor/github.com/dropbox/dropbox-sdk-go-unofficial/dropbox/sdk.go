@@ -200,6 +200,7 @@ type Tagged struct {
 // APIError is the base type for endpoint-specific errors.
 type APIError struct {
 	ErrorSummary string `json:"error_summary"`
+	RetryAfter   int
 }
 
 func (e APIError) Error() string {
