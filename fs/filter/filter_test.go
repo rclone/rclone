@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -220,7 +221,10 @@ func TestNewFilterMakeListR(t *testing.T) {
 
 	// NewObject function for MakeListR
 	newObjects := FilesMap{}
+	var newObjectMu sync.Mutex
 	NewObject := func(remote string) (fs.Object, error) {
+		newObjectMu.Lock()
+		defer newObjectMu.Unlock()
 		if remote == "notfound" {
 			return nil, fs.ErrorObjectNotFound
 		} else if remote == "error" {
@@ -233,7 +237,10 @@ func TestNewFilterMakeListR(t *testing.T) {
 
 	// Callback for ListRFn
 	listRObjects := FilesMap{}
+	var callbackMu sync.Mutex
 	listRcallback := func(entries fs.DirEntries) error {
+		callbackMu.Lock()
+		defer callbackMu.Unlock()
 		for _, entry := range entries {
 			listRObjects[entry.Remote()] = struct{}{}
 		}
