@@ -13,6 +13,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 // Active is the globally active filter
@@ -511,17 +512,33 @@ func (f *Filter) MakeListR(NewObject func(remote string) (fs.Object, error)) fs.
 		if !f.HaveFilesFrom() {
 			return errFilesFromNotSet
 		}
-		var entries fs.DirEntries
-		for remote := range f.files {
-			entry, err := NewObject(remote)
-			if err == fs.ErrorObjectNotFound {
-				// Skip files that are not found
-			} else if err != nil {
-				return err
-			} else {
-				entries = append(entries, entry)
-			}
+		var (
+			remotes = make(chan string, fs.Config.Checkers)
+			g       errgroup.Group
+		)
+		for i := 0; i < fs.Config.Checkers; i++ {
+			g.Go(func() (err error) {
+				var entries = make(fs.DirEntries, 1)
+				for remote := range remotes {
+					entries[0], err = NewObject(remote)
+					if err == fs.ErrorObjectNotFound {
+						// Skip files that are not found
+					} else if err != nil {
+						return err
+					} else {
+						err = callback(entries)
+						if err != nil {
+							return err
+						}
+					}
+				}
+				return nil
+			})
 		}
-		return callback(entries)
+		for remote := range f.files {
+			remotes <- remote
+		}
+		close(remotes)
+		return g.Wait()
 	}
 }
