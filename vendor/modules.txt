@@ -65,13 +65,13 @@ github.com/davecgh/go-spew/spew
 github.com/djherbis/times
 # github.com/dropbox/dropbox-sdk-go-unofficial v5.0.1-0.20181205034806-56e5f6595305+incompatible
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox
+github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/async
-github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/file_properties
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/seen_state
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
@@ -184,6 +184,8 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
+# golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
+golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b
 golang.org/x/sys/unix
 golang.org/x/sys/windows
