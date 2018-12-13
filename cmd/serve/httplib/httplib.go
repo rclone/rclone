@@ -4,11 +4,13 @@ package httplib
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
@@ -143,7 +145,28 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 			secretProvider = s.singleUserProvider
 		}
 		authenticator := auth.NewBasicAuthenticator(s.Opt.Realm, secretProvider)
-		handler = auth.JustCheck(authenticator, handler.ServeHTTP)
+		oldHandler := handler
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if username := authenticator.CheckAuth(r); username == "" {
+				authHeader := r.Header.Get(authenticator.Headers.V().Authorization)
+				if authHeader != "" {
+					s := strings.SplitN(authHeader, " ", 2)
+					var userName = "UNKNOWN"
+					if len(s) == 2 && s[0] == "Basic" {
+						b, err := base64.StdEncoding.DecodeString(s[1])
+						if err == nil {
+							userName = strings.SplitN(string(b), ":", 2)[0]
+						}
+					}
+					fs.Infof(r.URL.Path, "%s: Unauthorized request from %s", r.RemoteAddr, userName)
+				} else {
+					fs.Infof(r.URL.Path, "%s: Basic auth challenge sent", r.RemoteAddr)
+				}
+				authenticator.RequireAuth(w, r)
+			} else {
+				oldHandler.ServeHTTP(w, r)
+			}
+		})
 		s.usingAuth = true
 	}
 
