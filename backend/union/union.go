@@ -376,6 +376,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}).Fill(f)
 	features = features.Mask(f.wr) // mask the features just on the writable fs
 
+	// Really need the union of all remotes for these, so
+	// re-instate and calculate separately.
+	features.ChangeNotify = f.ChangeNotify
+	features.DirCacheFlush = f.DirCacheFlush
+
 	// FIXME maybe should be masking the bools here?
 
 	// Clear ChangeNotify and DirCacheFlush if all are nil
