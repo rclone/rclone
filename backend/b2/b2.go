@@ -368,6 +368,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	// If this is a key limited to a single bucket, it must exist already
 	if f.bucket != "" && f.info.Allowed.BucketID != "" {
+		allowedBucket := f.info.Allowed.BucketName
+		if allowedBucket == "" {
+			return nil, errors.New("bucket that application key is restricted to no longer exists")
+		}
+		if allowedBucket != f.bucket {
+			return nil, errors.Errorf("you must use bucket %q with this application key", allowedBucket)
+		}
 		f.markBucketOK()
 		f.setBucketID(f.info.Allowed.BucketID)
 	}

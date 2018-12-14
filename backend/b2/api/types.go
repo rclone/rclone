@@ -136,6 +136,7 @@ type AuthorizeAccountResponse struct {
 	AccountID               string   `json:"accountId"`               // The identifier for the account.
 	Allowed                 struct { // An object (see below) containing the capabilities of this auth token, and any restrictions on using it.
 		BucketID     string      `json:"bucketId"`     // When present, access is restricted to one bucket.
+		BucketName   string      `json:"bucketName"`   // When present, name of bucket - may be empty
 		Capabilities []string    `json:"capabilities"` // A list of strings, each one naming a capability the key has.
 		NamePrefix   interface{} `json:"namePrefix"`   // When present, access is restricted to files whose names start with the prefix
 	} `json:"allowed"`
