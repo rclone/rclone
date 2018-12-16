@@ -1,10 +1,9 @@
 package serve
 
-//x go generate go run assets_generate.go
-
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -12,7 +11,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/lib/rest"
-	"github.com/shurcooL/vfsgen"
+	"github.com/ncw/rclone/cmd/serve/httplib/serve/data"
 )
 
 // DirEntry is a directory entry
@@ -80,6 +79,12 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	defer accounting.Stats.DoneTransferring(d.DirRemote, true)
 
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
+
+	var indexPage = GetTemplate(w)
+
+	// indexTemplate is the instantiated indexPage
+	var indexTemplate = template.Must(template.New("index").Parse(indexPage))
+
 	err := indexTemplate.Execute(w, d)
 	if err != nil {
 		Error(d.DirRemote, w, "Failed to render template", err)
@@ -87,24 +92,25 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// var box = packr.New("templates", "./templates")
-// var indexPage, err = box.FindString("index.html")
+func GetTemplate(w http.ResponseWriter) (template string) {
+	template = ""
 
-var vfs http.FileSystem = http.Dir("/home/jgoel/rclone/cmd/serve/httplib/serve/templates")
-var err2 = vfsgen.Generate(vfs, vfsgen.Options{})
+	templateFile, err := data.Assets.Open("index.html")
+	if err != nil {
+		Error(templateFile, w, "Failed to open template", err)
+		return
+	}
 
-/*
-if err != nil {
-	log.Fatalln(err)
+	defer templateFile.Close()
+
+	templateBytes, err := ioutil.ReadAll(templateFile)
+	if err != nil {
+		Error(templateFile, w, "Failed to read template file contents", err)
+		return
+	}
+
+	template = string(templateBytes)
+	return
 }
-*/
 
-var f, _ = vfs.Open("index.html")
-var s, _ = f.Stat()
-var buffer = make([]byte, s.Size())
-var bytesread, err = f.Read(buffer)
-var indexPage = string(buffer)
 
-// indexTemplate is the instantiated indexPage
-var indexTemplate = template.Must(template.New("index").Parse(indexPage))
-//var indexTemplate = template.Must(template.New("index").Parse(indexPage))
