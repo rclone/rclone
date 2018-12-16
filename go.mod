@@ -40,6 +40,8 @@ require (
 	github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/sevlyar/go-daemon v0.1.4
+	github.com/shurcooL/httpfs v0.0.0-20171119174359-809beceb2371 // indirect
+	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
 	github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
