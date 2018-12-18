@@ -194,6 +194,10 @@ func TestEncryptSegment(t *testing.T) {
 
 func TestDecryptSegment(t *testing.T) {
 	// We've tested the forwards above, now concentrate on the errors
+	longName := make([]byte, 3328)
+	for i := range longName {
+		longName[i] = 'a'
+	}
 	c, _ := newCipher(NameEncryptionStandard, "", "", true)
 	for _, test := range []struct {
 		in          string
@@ -201,6 +205,7 @@ func TestDecryptSegment(t *testing.T) {
 	}{
 		{"64=", ErrorBadBase32Encoding},
 		{"!", base32.CorruptInputError(0)},
+		{string(longName), ErrorTooLongAfterDecode},
 		{encodeFileName([]byte("a")), ErrorNotAMultipleOfBlocksize},
 		{encodeFileName([]byte("123456789abcdef")), ErrorNotAMultipleOfBlocksize},
 		{encodeFileName([]byte("123456789abcdef0")), pkcs7.ErrorPaddingTooLong},
