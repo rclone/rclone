@@ -5,22 +5,31 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"sync"
+	"syscall"
 
 	ansiterm "github.com/Azure/go-ansiterm"
 	"github.com/Azure/go-ansiterm/winterm"
+	"github.com/pkg/errors"
 )
 
 var (
-	initAnsiParser sync.Once
-	ansiParser     *ansiterm.AnsiParser
+	ansiParser *ansiterm.AnsiParser
 )
 
+func initTerminal() error {
+	winEventHandler := winterm.CreateWinEventHandler(os.Stdout.Fd(), os.Stdout)
+	if winEventHandler == nil {
+		err := syscall.GetLastError()
+		if err == nil {
+			err = errors.New("initialization failed")
+		}
+		return errors.Wrap(err, "windows terminal")
+	}
+	ansiParser = ansiterm.CreateParser("Ground", winEventHandler)
+	return nil
+}
+
 func writeToTerminal(b []byte) {
-	initAnsiParser.Do(func() {
-		winEventHandler := winterm.CreateWinEventHandler(os.Stdout.Fd(), os.Stdout)
-		ansiParser = ansiterm.CreateParser("Ground", winEventHandler)
-	})
 	// Remove all non-ASCII characters until this is fixed
 	// https://github.com/Azure/go-ansiterm/issues/26
 	r := []rune(string(b))

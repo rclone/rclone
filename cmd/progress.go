@@ -27,6 +27,11 @@ const (
 //
 // It returns a func which should be called to stop the stats.
 func startProgress() func() {
+	err := initTerminal()
+	if err != nil {
+		fs.Errorf(nil, "Failed to start progress: %v", err)
+		return func() {}
+	}
 	stopStats := make(chan struct{})
 	oldLogPrint := fs.LogPrint
 	if !log.Redirected() {
