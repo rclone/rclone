@@ -138,6 +138,11 @@ memory.  It can be set smaller if you are tight on memory.`, fs.SizeSuffix(maxCh
 			Help:     "Impersonate this user when using a business account.",
 			Default:  "",
 			Advanced: true,
+		}, {
+			Name:     "token",
+			Help:     "Dropbox Oauth Access Token as a JSON blob",
+			Default:  "",
+			Advanced: true,
 		}},
 	})
 }
@@ -146,6 +151,7 @@ memory.  It can be set smaller if you are tight on memory.`, fs.SizeSuffix(maxCh
 type Options struct {
 	ChunkSize   fs.SizeSuffix `config:"chunk_size"`
 	Impersonate string        `config:"impersonate"`
+	Token       string        `config:"token"`
 }
 
 // Fs represents a remote dropbox server
@@ -250,6 +256,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "dropbox: chunk size")
+	}
+
+	if opt.Token != "" {
+		config.SetValue(name, config.ConfigToken, opt.Token)
 	}
 
 	// Convert the old token if it exists.  The old token was just
