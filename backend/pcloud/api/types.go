@@ -161,7 +161,6 @@ type UserInfo struct {
 	PublicLinkQuota       int64  `json:"publiclinkquota"`
 	Email                 string `json:"email"`
 	UserID                int    `json:"userid"`
-	Result                int    `json:"result"`
 	Quota                 int64  `json:"quota"`
 	TrashRevretentionDays int    `json:"trashrevretentiondays"`
 	Premium               bool   `json:"premium"`
