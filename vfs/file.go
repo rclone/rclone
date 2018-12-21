@@ -444,19 +444,19 @@ func (f *File) Remove() error {
 	if f.d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
-	f.mu.Lock()
-	f.muRW.Lock()
+	f.muRW.Lock() // muRW must be locked before mu to avoid
+	f.mu.Lock()   // deadlock in RWFileHandle.openPending and .close
 	if f.o != nil {
 		err := f.o.Remove()
 		if err != nil {
 			fs.Errorf(f, "File.Remove file error: %v", err)
-			f.muRW.Unlock()
 			f.mu.Unlock()
+			f.muRW.Unlock()
 			return err
 		}
 	}
-	f.muRW.Unlock()
 	f.mu.Unlock()
+	f.muRW.Unlock()
 
 	// Remove the item from the directory listing
 	f.d.delObject(f.Name())
