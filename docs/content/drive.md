@@ -845,9 +845,7 @@ second that each client_id can do set by Google.  rclone already has a
 high quota and I will continue to make sure it is high enough by
 contacting Google.
 
-However you might find you get better performance making your own
-client_id if you are a heavy user. Or you may not depending on exactly
-how Google have been raising rclone's rate limit.
+It is strongly recommended to use your own client ID as the default rclone ID is heavily used. If you have multiple services running, it is recommended to use an API key for each service. The default Google quota is 10 transactions per second so it is recommended to stay under that number as if you use more than that, it will cause rclone to rate limit and make things slower.
 
 Here is how to create your own Google Drive client ID for rclone:
 
