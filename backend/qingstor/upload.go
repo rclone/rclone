@@ -348,7 +348,7 @@ func (mu *multiUploader) abort() error {
 		req := qs.AbortMultipartUploadInput{
 			UploadID: uploadID,
 		}
-		fs.Debugf(mu, "Aborting multi-part object %s", uploadID)
+		fs.Debugf(mu, "Aborting multi-part object %q", *uploadID)
 		_, err = bucketInit.AbortMultipartUpload(mu.cfg.key, &req)
 	}
 
