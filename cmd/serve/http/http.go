@@ -126,7 +126,7 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 	}
 
 	// Make the entries for display
-	directory := serve.NewDirectory(dirRemote)
+	directory := serve.NewDirectory(dirRemote, s.HTMLTemplate)
 	for _, node := range dirEntries {
 		directory.AddEntry(node.Path(), node.IsDir())
 	}
