@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
+	"github.com/ncw/rclone/cmd/serve/httplib/serve/data"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 )
@@ -107,8 +109,9 @@ type Server struct {
 	waitChan        chan struct{} // for waiting on the listener to close
 	httpServer      *http.Server
 	basicPassHashed string
-	useSSL          bool // if server is configured for SSL/TLS
-	usingAuth       bool // set if authentication is configured
+	useSSL          bool               // if server is configured for SSL/TLS
+	usingAuth       bool               // set if authentication is configured
+	HTMLTemplate    *template.Template // HTML template for web interface
 }
 
 // singleUserProvider provides the encrypted password for a single user
@@ -204,6 +207,12 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		s.httpServer.TLSConfig.ClientCAs = certpool
 		s.httpServer.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
 	}
+
+	htmlTemplate, templateErr := data.GetTemplate()
+	if templateErr != nil {
+		log.Fatalf(templateErr.Error())
+	}
+	s.HTMLTemplate = htmlTemplate
 
 	return s
 }

@@ -21,17 +21,19 @@ type DirEntry struct {
 
 // Directory represents a directory
 type Directory struct {
-	DirRemote string
-	Title     string
-	Entries   []DirEntry
-	Query     string
+	DirRemote    string
+	Title        string
+	Entries      []DirEntry
+	Query        string
+	HTMLTemplate *template.Template
 }
 
 // NewDirectory makes an empty Directory
-func NewDirectory(dirRemote string) *Directory {
+func NewDirectory(dirRemote string, htmlTemplate *template.Template) *Directory {
 	d := &Directory{
-		DirRemote: dirRemote,
-		Title:     fmt.Sprintf("Directory listing of /%s", dirRemote),
+		DirRemote:    dirRemote,
+		Title:        fmt.Sprintf("Directory listing of /%s", dirRemote),
+		HTMLTemplate: htmlTemplate,
 	}
 	return d
 }
@@ -77,26 +79,10 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	defer accounting.Stats.DoneTransferring(d.DirRemote, true)
 
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
-	err := indexTemplate.Execute(w, d)
+
+	err := d.HTMLTemplate.Execute(w, d)
 	if err != nil {
 		Error(d.DirRemote, w, "Failed to render template", err)
 		return
 	}
 }
-
-// indexPage is a directory listing template
-var indexPage = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>{{ .Title }}</title>
-</head>
-<body>
-<h1>{{ .Title }}</h1>
-{{ range $i := .Entries }}<a href="{{ $i.URL }}">{{ $i.Leaf }}</a><br />
-{{ end }}</body>
-</html>
-`
-
-// indexTemplate is the instantiated indexPage
-var indexTemplate = template.Must(template.New("index").Parse(indexPage))
