@@ -2,23 +2,32 @@ package serve
 
 import (
 	"errors"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
+	"github.com/ncw/rclone/cmd/serve/httplib/serve/data"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
+func GetTemplate(t *testing.T) *template.Template {
+	htmlTemplate, err := data.GetTemplate()
+	require.NoError(t, err)
+	return htmlTemplate
+}
+
 func TestNewDirectory(t *testing.T) {
-	d := NewDirectory("z")
+	d := NewDirectory("z", GetTemplate(t))
 	assert.Equal(t, "z", d.DirRemote)
 	assert.Equal(t, "Directory listing of /z", d.Title)
 }
 
 func TestSetQuery(t *testing.T) {
-	d := NewDirectory("z")
+	d := NewDirectory("z", GetTemplate(t))
 	assert.Equal(t, "", d.Query)
 	d.SetQuery(url.Values{"potato": []string{"42"}})
 	assert.Equal(t, "?potato=42", d.Query)
@@ -27,7 +36,7 @@ func TestSetQuery(t *testing.T) {
 }
 
 func TestAddEntry(t *testing.T) {
-	var d = NewDirectory("z")
+	var d = NewDirectory("z", GetTemplate(t))
 	d.AddEntry("", true)
 	d.AddEntry("dir", true)
 	d.AddEntry("a/b/c/d.txt", false)
@@ -42,7 +51,7 @@ func TestAddEntry(t *testing.T) {
 	}, d.Entries)
 
 	// Now test with a query parameter
-	d = NewDirectory("z").SetQuery(url.Values{"potato": []string{"42"}})
+	d = NewDirectory("z", GetTemplate(t)).SetQuery(url.Values{"potato": []string{"42"}})
 	d.AddEntry("file", false)
 	d.AddEntry("dir", true)
 	assert.Equal(t, []DirEntry{
@@ -62,7 +71,7 @@ func TestError(t *testing.T) {
 }
 
 func TestServe(t *testing.T) {
-	d := NewDirectory("aDirectory")
+	d := NewDirectory("aDirectory", GetTemplate(t))
 	d.AddEntry("file", false)
 	d.AddEntry("dir", true)
 
