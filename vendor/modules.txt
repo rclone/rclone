@@ -63,7 +63,7 @@ github.com/cpuguy83/go-md2man/md2man
 github.com/davecgh/go-spew/spew
 # github.com/djherbis/times v1.1.0
 github.com/djherbis/times
-# github.com/dropbox/dropbox-sdk-go-unofficial v5.0.1-0.20181205034806-56e5f6595305+incompatible
+# github.com/dropbox/dropbox-sdk-go-unofficial v5.4.0+incompatible
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common

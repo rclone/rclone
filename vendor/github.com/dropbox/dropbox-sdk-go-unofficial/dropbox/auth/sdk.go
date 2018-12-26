@@ -9,6 +9,19 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 )
 
+// AuthAPIError wraps AuthError
+type AuthAPIError struct {
+	dropbox.APIError
+	AuthError *AuthError `json:"error"`
+}
+
+// AccessAPIError wraps AccessError
+type AccessAPIError struct {
+	dropbox.APIError
+	AccessError *AccessError `json:"error"`
+}
+
+// RateLimitAPIError wraps RateLimitError
 type RateLimitAPIError struct {
 	dropbox.APIError
 	RateLimitError *RateLimitError `json:"error"`
@@ -16,7 +29,22 @@ type RateLimitAPIError struct {
 
 // HandleCommonAuthErrors handles common authentication errors
 func HandleCommonAuthErrors(c dropbox.Config, resp *http.Response, body []byte) error {
-	if resp.StatusCode == http.StatusTooManyRequests {
+	switch resp.StatusCode {
+	case http.StatusUnauthorized:
+		var apiError AuthAPIError
+		if err := json.Unmarshal(body, &apiError); err != nil {
+			c.LogDebug("Error unmarshaling '%s' into JSON", body)
+			return err
+		}
+		return apiError
+	case http.StatusForbidden:
+		var apiError AccessAPIError
+		if err := json.Unmarshal(body, &apiError); err != nil {
+			c.LogDebug("Error unmarshaling '%s' into JSON", body)
+			return err
+		}
+		return apiError
+	case http.StatusTooManyRequests:
 		var apiError RateLimitAPIError
 		// Check content-type
 		contentType, _, _ := mime.ParseMediaType(resp.Header.Get("content-type"))
@@ -33,6 +61,7 @@ func HandleCommonAuthErrors(c dropbox.Config, resp *http.Response, body []byte) 
 			apiError.RateLimitError.RetryAfter = uint64(timeout)
 		}
 		return apiError
+	default:
+		return nil
 	}
-	return nil
 }
