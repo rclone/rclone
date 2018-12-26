@@ -15,7 +15,7 @@ require (
 	github.com/cpuguy83/go-md2man v1.0.8 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/djherbis/times v1.1.0
-	github.com/dropbox/dropbox-sdk-go-unofficial v5.0.1-0.20181205034806-56e5f6595305+incompatible
+	github.com/dropbox/dropbox-sdk-go-unofficial v5.4.0+incompatible
 	github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 // indirect
 	github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1
 	github.com/google/go-querystring v1.0.0 // indirect

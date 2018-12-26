@@ -549,7 +549,7 @@ func (dbx *apiImpl) CopyV2(arg *RelocationArg) (res *RelocationResult, err error
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "copy", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "copy_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -695,7 +695,7 @@ func (dbx *apiImpl) CopyBatchV2(arg *RelocationBatchArgBase) (res *RelocationBat
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "copy_batch", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "copy_batch_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -830,7 +830,7 @@ func (dbx *apiImpl) CopyBatchCheckV2(arg *async.PollArg) (res *RelocationBatchV2
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "copy_batch/check", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "copy_batch/check_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -1097,7 +1097,7 @@ func (dbx *apiImpl) CreateFolderV2(arg *CreateFolderArg) (res *CreateFolderResul
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "create_folder", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "create_folder_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -1364,7 +1364,7 @@ func (dbx *apiImpl) DeleteV2(arg *DeleteArg) (res *DeleteResult, err error) {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "delete", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "delete_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -2515,7 +2515,7 @@ func (dbx *apiImpl) MoveV2(arg *RelocationArg) (res *RelocationResult, err error
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "move", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "move_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -2661,7 +2661,7 @@ func (dbx *apiImpl) MoveBatchV2(arg *MoveBatchArg) (res *RelocationBatchV2Launch
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "move_batch", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "move_batch_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -2793,7 +2793,7 @@ func (dbx *apiImpl) MoveBatchCheckV2(arg *async.PollArg) (res *RelocationBatchV2
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "move_batch/check", headers, bytes.NewReader(b))
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "files", "move_batch/check_v2", headers, bytes.NewReader(b))
 	if err != nil {
 		return
 	}
@@ -3698,7 +3698,7 @@ func (dbx *apiImpl) UploadSessionAppendV2(arg *UploadSessionAppendArg, content i
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
 	}
 
-	req, err := (*dropbox.Context)(dbx).NewRequest("content", "upload", true, "files", "upload_session/append", headers, content)
+	req, err := (*dropbox.Context)(dbx).NewRequest("content", "upload", true, "files", "upload_session/append_v2", headers, content)
 	if err != nil {
 		return
 	}
