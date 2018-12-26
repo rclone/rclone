@@ -154,7 +154,7 @@ Contributors
   * Michael P. Dubner <pywebmail@list.ru>
   * Antoine GIRARD <sapk@users.noreply.github.com>
   * Mateusz Piotrowski <mpp302@gmail.com>
-  * Animosity022 <animosity22@users.noreply.github.com>
+  * Animosity022 <animosity22@users.noreply.github.com> <earl.texter@gmail.com>
   * Peter Baumgartner <pete@lincolnloop.com>
   * Craig Rachel <craig@craigrachel.com>
   * Michael G. Noll <miguno@users.noreply.github.com>
@@ -221,3 +221,4 @@ Contributors
   * Mathieu Carbou <mathieu.carbou@gmail.com>
   * Mark Otway <mark@otway.com>
   * William Cocker <37018962+WilliamCocker@users.noreply.github.com>
+  * François Leurent <131.js@cloudyks.org>
