@@ -385,7 +385,7 @@ func Run(t *testing.T, opt *Opt) {
 	t.Run("FsName", func(t *testing.T) {
 		skipIfNotOk(t)
 		got := remote.Name()
-		want := remoteName
+		want := remoteName[:strings.IndexRune(remoteName, ':')+1]
 		if isLocalRemote {
 			want = "local:"
 		}
