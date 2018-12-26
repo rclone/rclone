@@ -222,3 +222,4 @@ Contributors
   * Mark Otway <mark@otway.com>
   * William Cocker <37018962+WilliamCocker@users.noreply.github.com>
   * François Leurent <131.js@cloudyks.org>
+  * Arkadius Stefanski <arkste@gmail.com>
