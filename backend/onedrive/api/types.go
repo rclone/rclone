@@ -285,6 +285,7 @@ type AsyncOperationStatus struct {
 
 // GetID returns a normalized ID of the item
 // If DriveID is known it will be prefixed to the ID with # seperator
+// Can be parsed using onedrive.parseNormalizedID(normalizedID)
 func (i *Item) GetID() string {
 	if i.IsRemote() && i.RemoteItem.ID != "" {
 		return i.RemoteItem.ParentReference.DriveID + "#" + i.RemoteItem.ID

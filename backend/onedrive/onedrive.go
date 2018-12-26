@@ -334,26 +334,82 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 	return authRety || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
-// readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Response, err error) {
-	var opts rest.Opts
-	if len(path) == 0 {
-		opts = rest.Opts{
-			Method: "GET",
-			Path:   "/root",
-		}
-	} else {
-		opts = rest.Opts{
-			Method: "GET",
-			Path:   "/root:/" + rest.URLPathEscape(replaceReservedChars(path)),
-		}
-	}
+// readMetaDataForPathRelativeToID reads the metadata for a path relative to an item that is addressed by its normalized ID.
+// if `relPath` == "", it reads the metadata for the item with that ID.
+func (f *Fs) readMetaDataForPathRelativeToID(normalizedID string, relPath string) (info *api.Item, resp *http.Response, err error) {
+	opts := newOptsCall(normalizedID, "GET", ":/"+rest.URLPathEscape(replaceReservedChars(relPath)))
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(&opts, nil, &info)
 		return shouldRetry(resp, err)
 	})
 
 	return info, resp, err
+}
+
+// readMetaDataForPath reads the metadata from the path (relative to the absolute root)
+func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Response, err error) {
+	firstSlashIndex := strings.IndexRune(path, '/')
+
+	if f.driveType != driveTypePersonal || firstSlashIndex == -1 {
+		var opts rest.Opts
+		if len(path) == 0 {
+			opts = rest.Opts{
+				Method: "GET",
+				Path:   "/root",
+			}
+		} else {
+			opts = rest.Opts{
+				Method: "GET",
+				Path:   "/root:/" + rest.URLPathEscape(replaceReservedChars(path)),
+			}
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(&opts, nil, &info)
+			return shouldRetry(resp, err)
+		})
+		return info, resp, err
+	}
+
+	// The following branch handles the case when we're using OneDrive Personal and the path is in a folder.
+	// For OneDrive Personal, we need to consider the "shared with me" folders.
+	// An item in such a folder can only be addressed by its ID relative to the sharer's driveID or
+	// by its path relative to the folder's ID relative to the sharer's driveID.
+	// Note: A "shared with me" folder can only be placed in the sharee's absolute root.
+	// So we read metadata relative to a suitable folder's normalized ID.
+	var dirCacheFoundRoot bool
+	var rootNormalizedID string
+	if f.dirCache != nil {
+		var ok bool
+		if rootNormalizedID, ok = f.dirCache.Get(""); ok {
+			dirCacheFoundRoot = true
+		}
+	}
+
+	relPath, insideRoot := getRelativePathInsideBase(f.root, path)
+	var firstDir, baseNormalizedID string
+	if !insideRoot || !dirCacheFoundRoot {
+		// We do not have the normalized ID in dirCache for our query to base on. Query it manually.
+		firstDir, relPath = path[:firstSlashIndex], path[firstSlashIndex+1:]
+		info, resp, err := f.readMetaDataForPath(firstDir)
+		if err != nil {
+			return info, resp, err
+		}
+		baseNormalizedID = info.GetID()
+	} else {
+		if f.root != "" {
+			// Read metadata based on root
+			baseNormalizedID = rootNormalizedID
+		} else {
+			// Read metadata based on firstDir
+			firstDir, relPath = path[:firstSlashIndex], path[firstSlashIndex+1:]
+			baseNormalizedID, err = f.dirCache.FindDir(firstDir, false)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+
+	return f.readMetaDataForPathRelativeToID(baseNormalizedID, relPath)
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -514,18 +570,11 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// fs.Debugf(f, "FindLeaf(%q, %q)", pathID, leaf)
-	parent, ok := f.dirCache.GetInv(pathID)
+	_, ok := f.dirCache.GetInv(pathID)
 	if !ok {
 		return "", false, errors.New("couldn't find parent ID")
 	}
-	path := leaf
-	if parent != "" {
-		path = parent + "/" + path
-	}
-	if f.dirCache.FoundRoot() {
-		path = f.rootSlash() + path
-	}
-	info, resp, err := f.readMetaDataForPath(path)
+	info, resp, err := f.readMetaDataForPathRelativeToID(pathID, leaf)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return "", false, nil
@@ -867,13 +916,13 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	opts.ExtraHeaders = map[string]string{"Prefer": "respond-async"}
 	opts.NoResponse = true
 
-	id, _, _ := parseDirID(directoryID)
+	id, dstDriveID, _ := parseNormalizedID(directoryID)
 
 	replacedLeaf := replaceReservedChars(leaf)
 	copyReq := api.CopyItemRequest{
 		Name: &replacedLeaf,
 		ParentReference: api.ItemReference{
-			DriveID: f.driveID,
+			DriveID: dstDriveID,
 			ID:      id,
 		},
 	}
@@ -943,12 +992,13 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	// Move the object
 	opts := newOptsCall(srcObj.id, "PATCH", "")
 
-	id, _, _ := parseDirID(directoryID)
+	id, dstDriveID, _ := parseNormalizedID(directoryID)
 
 	move := api.MoveItemRequest{
 		Name: replaceReservedChars(leaf),
 		ParentReference: &api.ItemReference{
-			ID: id,
+			DriveID: dstDriveID,
+			ID:      id,
 		},
 		// We set the mod time too as it gets reset otherwise
 		FileSystemInfo: &api.FileSystemInfoFacet{
@@ -1024,7 +1074,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	if err != nil {
 		return err
 	}
-	parsedDstDirID, _, _ := parseDirID(dstDirectoryID)
+	parsedDstDirID, dstDriveID, _ := parseNormalizedID(dstDirectoryID)
 
 	// Check destination does not exist
 	if dstRemote != "" {
@@ -1045,7 +1095,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	}
 
 	// Get timestamps of src so they can be preserved
-	srcInfo, _, err := srcFs.readMetaDataForPath(srcPath)
+	srcInfo, _, err := srcFs.readMetaDataForPathRelativeToID(srcID, "")
 	if err != nil {
 		return err
 	}
@@ -1055,7 +1105,8 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	move := api.MoveItemRequest{
 		Name: replaceReservedChars(leaf),
 		ParentReference: &api.ItemReference{
-			ID: parsedDstDirID,
+			DriveID: dstDriveID,
+			ID:      parsedDstDirID,
 		},
 		// We set the mod time too as it gets reset otherwise
 		FileSystemInfo: &api.FileSystemInfoFacet{
@@ -1122,7 +1173,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 	if err != nil {
 		return "", err
 	}
-	opts := newOptsCall(info.ID, "POST", "/createLink")
+	opts := newOptsCall(info.GetID(), "POST", "/createLink")
 
 	share := api.CreateShareLinkRequest{
 		Type:  "view",
@@ -1270,13 +1321,13 @@ func (o *Object) ModTime() time.Time {
 // setModTime sets the modification time of the local fs object
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
 	var opts rest.Opts
-	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
-	_, drive, rootURL := parseDirID(directoryID)
+	leaf, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
+	trueDirID, drive, rootURL := parseNormalizedID(directoryID)
 	if drive != "" {
 		opts = rest.Opts{
 			Method:  "PATCH",
 			RootURL: rootURL,
-			Path:    "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()),
+			Path:    "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(leaf),
 		}
 	} else {
 		opts = rest.Opts{
@@ -1344,7 +1395,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // createUploadSession creates an upload session for the object
 func (o *Object) createUploadSession(modTime time.Time) (response *api.CreateUploadResponse, err error) {
 	leaf, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
-	id, drive, rootURL := parseDirID(directoryID)
+	id, drive, rootURL := parseNormalizedID(directoryID)
 	var opts rest.Opts
 	if drive != "" {
 		opts = rest.Opts{
@@ -1477,13 +1528,13 @@ func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (
 	fs.Debugf(o, "Starting singlepart upload")
 	var resp *http.Response
 	var opts rest.Opts
-	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
-	_, drive, rootURL := parseDirID(directoryID)
+	leaf, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
+	trueDirID, drive, rootURL := parseNormalizedID(directoryID)
 	if drive != "" {
 		opts = rest.Opts{
 			Method:        "PUT",
 			RootURL:       rootURL,
-			Path:          "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
+			Path:          "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(leaf) + ":/content",
 			ContentLength: &size,
 			Body:          in,
 		}
@@ -1566,8 +1617,8 @@ func (o *Object) ID() string {
 	return o.id
 }
 
-func newOptsCall(id string, method string, route string) (opts rest.Opts) {
-	id, drive, rootURL := parseDirID(id)
+func newOptsCall(normalizedID string, method string, route string) (opts rest.Opts) {
+	id, drive, rootURL := parseNormalizedID(normalizedID)
 
 	if drive != "" {
 		return rest.Opts{
@@ -1582,12 +1633,30 @@ func newOptsCall(id string, method string, route string) (opts rest.Opts) {
 	}
 }
 
-func parseDirID(ID string) (string, string, string) {
+// parseNormalizedID parses a normalized ID (may be in the form `driveID#itemID` or just `itemID`)
+// and returns itemID, driveID, rootURL.
+// Such a normalized ID can come from (*Item).GetID()
+func parseNormalizedID(ID string) (string, string, string) {
 	if strings.Index(ID, "#") >= 0 {
 		s := strings.Split(ID, "#")
 		return s[1], s[0], graphURL + "/drives"
 	}
 	return ID, "", ""
+}
+
+// getRelativePathInsideBase checks if `target` is inside `base`. If so, it
+// returns a relative path for `target` based on `base` and a boolean `true`.
+// Otherwise returns "", false.
+func getRelativePathInsideBase(base, target string) (string, bool) {
+	if base == "" {
+		return target, true
+	}
+
+	baseSlash := base + "/"
+	if strings.HasPrefix(target+"/", baseSlash) {
+		return target[len(baseSlash):], true
+	}
+	return "", false
 }
 
 // Check the interfaces are satisfied
