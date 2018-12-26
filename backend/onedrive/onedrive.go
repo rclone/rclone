@@ -989,10 +989,16 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
+	id, dstDriveID, _ := parseNormalizedID(directoryID)
+
+	if dstDriveID != srcObj.fs.driveID {
+		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
+		// "Items cannot be moved between Drives using this request."
+		return nil, fs.ErrorCantMove
+	}
+
 	// Move the object
 	opts := newOptsCall(srcObj.id, "PATCH", "")
-
-	id, dstDriveID, _ := parseNormalizedID(directoryID)
 
 	move := api.MoveItemRequest{
 		Name: replaceReservedChars(leaf),
@@ -1075,6 +1081,12 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		return err
 	}
 	parsedDstDirID, dstDriveID, _ := parseNormalizedID(dstDirectoryID)
+
+	if dstDriveID != srcFs.driveID {
+		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
+		// "Items cannot be moved between Drives using this request."
+		return fs.ErrorCantDirMove
+	}
 
 	// Check destination does not exist
 	if dstRemote != "" {
