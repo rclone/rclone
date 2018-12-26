@@ -179,13 +179,13 @@ func (u *uploader) upload() error {
 	// Do one read to determine if we have more than one part
 	reader, _, err := u.nextReader()
 	if err == io.EOF { // single part
-		fs.Debugf(u, "Tried to upload a singile object to QingStor")
+		fs.Debugf(u, "Uploading as single part object to QingStor")
 		return u.singlePartUpload(reader)
 	} else if err != nil {
 		return errors.Errorf("read upload data failed: %s", err)
 	}
 
-	fs.Debugf(u, "Treied to upload a multi-part object to QingStor")
+	fs.Debugf(u, "Uploading as multi-part object to QingStor")
 	mu := multiUploader{uploader: u}
 	return mu.multiPartUpload(reader)
 }
@@ -261,7 +261,7 @@ func (mu *multiUploader) initiate() error {
 	req := qs.InitiateMultipartUploadInput{
 		ContentType: &mu.cfg.mimeType,
 	}
-	fs.Debugf(mu, "Tried to initiate a multi-part upload")
+	fs.Debugf(mu, "Initiating a multi-part upload")
 	rsp, err := bucketInit.InitiateMultipartUpload(mu.cfg.key, &req)
 	if err == nil {
 		mu.uploadID = rsp.UploadID
@@ -279,12 +279,12 @@ func (mu *multiUploader) send(c chunk) error {
 		ContentLength: &c.size,
 		Body:          c.buffer,
 	}
-	fs.Debugf(mu, "Tried to upload a part to QingStor that partNumber %d and partSize %d", c.partNumber, c.size)
+	fs.Debugf(mu, "Uploading a part to QingStor with partNumber %d and partSize %d", c.partNumber, c.size)
 	_, err := bucketInit.UploadMultipart(mu.cfg.key, &req)
 	if err != nil {
 		return err
 	}
-	fs.Debugf(mu, "Upload part finished that partNumber %d and partSize %d", c.partNumber, c.size)
+	fs.Debugf(mu, "Done uploading part partNumber %d and partSize %d", c.partNumber, c.size)
 
 	mu.mtx.Lock()
 	defer mu.mtx.Unlock()
@@ -304,7 +304,7 @@ func (mu *multiUploader) list() error {
 	req := qs.ListMultipartInput{
 		UploadID: mu.uploadID,
 	}
-	fs.Debugf(mu, "Tried to list a multi-part")
+	fs.Debugf(mu, "Reading multi-part details")
 	rsp, err := bucketInit.ListMultipart(mu.cfg.key, &req)
 	if err == nil {
 		mu.objectParts = rsp.ObjectParts
@@ -331,7 +331,7 @@ func (mu *multiUploader) complete() error {
 		ObjectParts: mu.objectParts,
 		ETag:        &md5String,
 	}
-	fs.Debugf(mu, "Tried to complete a multi-part")
+	fs.Debugf(mu, "Completing multi-part object")
 	_, err = bucketInit.CompleteMultipartUpload(mu.cfg.key, &req)
 	if err == nil {
 		fs.Debugf(mu, "Complete multi-part finished")
@@ -348,7 +348,7 @@ func (mu *multiUploader) abort() error {
 		req := qs.AbortMultipartUploadInput{
 			UploadID: uploadID,
 		}
-		fs.Debugf(mu, "Tried to abort a multi-part")
+		fs.Debugf(mu, "Aborting multi-part object %q", *uploadID)
 		_, err = bucketInit.AbortMultipartUpload(mu.cfg.key, &req)
 	}
 
