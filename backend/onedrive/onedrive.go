@@ -990,8 +990,9 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	id, dstDriveID, _ := parseNormalizedID(directoryID)
+	_, srcObjDriveID, _ := parseNormalizedID(srcObj.id)
 
-	if dstDriveID != srcObj.fs.driveID {
+	if dstDriveID != srcObjDriveID {
 		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
 		// "Items cannot be moved between Drives using this request."
 		return nil, fs.ErrorCantMove
@@ -1082,7 +1083,14 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	}
 	parsedDstDirID, dstDriveID, _ := parseNormalizedID(dstDirectoryID)
 
-	if dstDriveID != srcFs.driveID {
+	// Find ID of src
+	srcID, err := srcFs.dirCache.FindDir(srcRemote, false)
+	if err != nil {
+		return err
+	}
+	_, srcDriveID, _ := parseNormalizedID(srcID)
+
+	if dstDriveID != srcDriveID {
 		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
 		// "Items cannot be moved between Drives using this request."
 		return fs.ErrorCantDirMove
@@ -1098,12 +1106,6 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		} else {
 			return fs.ErrorDirExists
 		}
-	}
-
-	// Find ID of src
-	srcID, err := srcFs.dirCache.FindDir(srcRemote, false)
-	if err != nil {
-		return err
 	}
 
 	// Get timestamps of src so they can be preserved
