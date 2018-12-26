@@ -68,6 +68,8 @@ github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2 h1:VlXvEx6JbFp7F9iz92zX
 github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2/go.mod h1:MLIrzg7gp/kzVBxRE1olT7CWYMCklcUWU+ekoxOD9x0=
 github.com/ncw/swift v1.0.42 h1:ztvRb6hs52IHOcaYt73f9lXYLIeIuWgdooRDhdyllGI=
 github.com/ncw/swift v1.0.42/go.mod h1:23YIA4yWVnGwv2dQlN4bB7egfYX6YLn0Yo/S6zZO/ZM=
+github.com/ncw/swift v1.0.43 h1:TZn2l/bPV0CqG+/G5BFh/ROWnyX7dL2D0URaOjNQRsw=
+github.com/ncw/swift v1.0.43/go.mod h1:23YIA4yWVnGwv2dQlN4bB7egfYX6YLn0Yo/S6zZO/ZM=
 github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed h1:bAVGG6B+R5qpSylrrA+BAMrzYkdAoiTaKPVxRB+4cyM=
 github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed/go.mod h1:IuKpRQcYE1Tfu+oAQqaLisqDeXgjyyltCfsaoYN18NQ=
 github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd h1:+iAPaTbi1gZpcpDwe/BW1fx7Xoesv69hLNGPheoyhBs=
