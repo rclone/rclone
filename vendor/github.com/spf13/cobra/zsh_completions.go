@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -81,9 +82,18 @@ func writeLevel(w io.Writer, root *Command, i int) {
 	commands := filterByLevel(root, i)
 	byParent := groupByParent(commands)
 
-	for p, c := range byParent {
-		names := names(c)
-		fmt.Fprintf(w, "      %s)\n", p)
+	// sort the parents to keep a determinist order
+	parents := make([]string, len(byParent))
+	j := 0
+	for parent := range byParent {
+		parents[j] = parent
+		j++
+	}
+	sort.StringSlice(parents).Sort()
+
+	for _, parent := range parents {
+		names := names(byParent[parent])
+		fmt.Fprintf(w, "      %s)\n", parent)
 		fmt.Fprintf(w, "        _arguments '%d: :(%s)'\n", i, strings.Join(names, " "))
 		fmt.Fprintln(w, "      ;;")
 	}
