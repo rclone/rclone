@@ -358,7 +358,7 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 			if err != nil {
 				return err
 			}
-			return PutToken(name, m, token, false)
+			return PutToken(name, m, token, true)
 		}
 	case TitleBarRedirectURL:
 		useWebServer = automatic
