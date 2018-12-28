@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/lib/rest"
+	"github.com/ncw/rclone/vfs"
 )
 
 // DirEntry is a directory entry
@@ -17,6 +19,9 @@ type DirEntry struct {
 	remote string
 	URL    string
 	Leaf   string
+	Modified time.Time
+	Size int64
+	IsDir bool
 }
 
 // Directory represents a directory
@@ -45,6 +50,29 @@ func (d *Directory) SetQuery(queryParams url.Values) *Directory {
 		d.Query = "?" + queryParams.Encode()
 	}
 	return d
+}
+
+func (d *Directory) AddEntryWithNode(node vfs.Node) {
+	remote := node.Path()
+	isDir := node.IsDir()
+
+	leaf := path.Base(remote)
+	if leaf == "." {
+		leaf = ""
+	}
+	urlRemote := leaf
+	if isDir {
+		leaf += "/"
+		urlRemote += "/"
+	}
+	d.Entries = append(d.Entries, DirEntry{
+		remote: remote,
+		URL:    rest.URLPathEscape(urlRemote) + d.Query,
+		Leaf:   leaf,
+		Modified: node.ModTime(),
+		Size: node.Size(),
+		IsDir: isDir,
+	})
 }
 
 // AddEntry adds an entry to that directory
