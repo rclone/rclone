@@ -80,5 +80,9 @@ var _ fusefs.HandleReleaser = (*FileHandle)(nil)
 // the kernel
 func (fh *FileHandle) Release(ctx context.Context, req *fuse.ReleaseRequest) (err error) {
 	defer log.Trace(fh, "")("err=%v", &err)
-	return translateError(fh.Handle.Release())
+	// Run the Release asynchronously, ignoring errors
+	go func() {
+		_ = fh.Handle.Release()
+	}()
+	return nil
 }

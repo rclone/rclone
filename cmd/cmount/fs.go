@@ -388,7 +388,11 @@ func (fsys *FS) Release(path string, fh uint64) (errc int) {
 		return errc
 	}
 	_ = fsys.closeHandle(fh)
-	return translateError(handle.Release())
+	// Run the Release asynchronously, ignoring errors
+	go func() {
+		_ = handle.Release()
+	}()
+	return 0
 }
 
 // Unlink removes a file.
