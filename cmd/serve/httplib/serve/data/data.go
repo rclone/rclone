@@ -13,7 +13,7 @@ import (
 
 // GetTemplate eturns the HTML template for serving directories via HTTP
 func GetTemplate() (tpl *template.Template, err error) {
-	templateFile, err := Assets.Open("index.html")
+	templateFile, err := Assets.Open("templates/index.html")
 	if err != nil {
 		return nil, errors.Wrap(err, "get template open")
 	}

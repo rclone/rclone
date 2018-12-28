@@ -21,18 +21,38 @@ var Assets = func() http.FileSystem {
 	fs := vfsgen۰FS{
 		"/": &vfsgen۰DirInfo{
 			name:    "/",
-			modTime: time.Date(2018, 12, 16, 6, 54, 42, 894445775, time.UTC),
+			modTime: time.Date(2018, 12, 28, 20, 55, 13, 616036310, time.UTC),
 		},
-		"/index.html": &vfsgen۰CompressedFileInfo{
+		"/static": &vfsgen۰DirInfo{
+			name:    "static",
+			modTime: time.Date(2018, 12, 28, 21, 2, 15, 733900067, time.UTC),
+		},
+		"/static/style.css": &vfsgen۰FileInfo{
+			name:    "style.css",
+			modTime: time.Date(2018, 12, 28, 21, 3, 5, 371530275, time.UTC),
+			content: []byte("\x2f\x2a\x20\x50\x6c\x61\x63\x65\x68\x6f\x6c\x64\x65\x72\x20\x66\x6f\x72\x20\x73\x74\x79\x6c\x65\x73\x68\x65\x65\x74\x20\x2a\x2f"),
+		},
+		"/templates": &vfsgen۰DirInfo{
+			name:    "templates",
+			modTime: time.Date(2018, 12, 28, 19, 56, 11, 663690228, time.UTC),
+		},
+		"/templates/index.html": &vfsgen۰CompressedFileInfo{
 			name:             "index.html",
-			modTime:          time.Date(2018, 12, 16, 6, 54, 42, 790442328, time.UTC),
+			modTime:          time.Date(2018, 12, 28, 19, 56, 11, 663690228, time.UTC),
 			uncompressedSize: 226,
 
 			compressedContent: []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x5c\x8f\x31\xcf\x83\x20\x10\x86\x77\x7e\xc5\x7d\xc4\xf5\x93\xb8\x35\x0d\xb0\xb4\x6e\x26\x6d\x1a\x3b\x74\x3c\xeb\x29\x24\x4a\x13\xa4\x43\x43\xf8\xef\x0d\xea\xd4\x09\xee\x79\xef\x9e\xcb\xc9\xbf\xf3\xe5\xd4\x3e\xae\x35\x98\x30\x4f\x9a\xc9\xfc\xc0\x84\x6e\x54\x9c\x1c\xcf\x80\xb0\xd7\x4c\xce\x14\x10\x9e\x06\xfd\x42\x41\xf1\x77\x18\xfe\x0f\x39\x0d\x36\x4c\xa4\x63\x84\xb2\xcd\x3f\x48\x49\x8a\x8d\x31\x29\xf6\xd1\xee\xd5\x7f\xb2\xa8\xfa\xe9\x33\x95\x66\x31\x82\x47\x37\x12\x14\x16\x8e\x0a\xca\xda\x05\x6f\x69\xc9\x39\x82\xf1\x34\x28\x1e\x23\x14\xb6\xbc\xdf\x1a\x48\x89\xeb\xad\x6a\x08\x87\xd5\x81\x5a\x76\x1e\xc4\x2a\x22\xd7\xaf\x6c\xdf\x27\xb6\x8b\xbe\x01\x00\x00\xff\xff\x92\x2e\x35\x75\xe2\x00\x00\x00"),
 		},
 	}
 	fs["/"].(*vfsgen۰DirInfo).entries = []os.FileInfo{
-		fs["/index.html"].(os.FileInfo),
+		fs["/static"].(os.FileInfo),
+		fs["/templates"].(os.FileInfo),
+	}
+	fs["/static"].(*vfsgen۰DirInfo).entries = []os.FileInfo{
+		fs["/static/style.css"].(os.FileInfo),
+	}
+	fs["/templates"].(*vfsgen۰DirInfo).entries = []os.FileInfo{
+		fs["/templates/index.html"].(os.FileInfo),
 	}
 
 	return fs
@@ -57,6 +77,11 @@ func (fs vfsgen۰FS) Open(path string) (http.File, error) {
 		return &vfsgen۰CompressedFile{
 			vfsgen۰CompressedFileInfo: f,
 			gr:                        gr,
+		}, nil
+	case *vfsgen۰FileInfo:
+		return &vfsgen۰File{
+			vfsgen۰FileInfo: f,
+			Reader:          bytes.NewReader(f.content),
 		}, nil
 	case *vfsgen۰DirInfo:
 		return &vfsgen۰Dir{
@@ -137,6 +162,37 @@ func (f *vfsgen۰CompressedFile) Seek(offset int64, whence int) (int64, error) {
 }
 func (f *vfsgen۰CompressedFile) Close() error {
 	return f.gr.Close()
+}
+
+// vfsgen۰FileInfo is a static definition of an uncompressed file (because it's not worth gzip compressing).
+type vfsgen۰FileInfo struct {
+	name    string
+	modTime time.Time
+	content []byte
+}
+
+func (f *vfsgen۰FileInfo) Readdir(count int) ([]os.FileInfo, error) {
+	return nil, fmt.Errorf("cannot Readdir from file %s", f.name)
+}
+func (f *vfsgen۰FileInfo) Stat() (os.FileInfo, error) { return f, nil }
+
+func (f *vfsgen۰FileInfo) NotWorthGzipCompressing() {}
+
+func (f *vfsgen۰FileInfo) Name() string       { return f.name }
+func (f *vfsgen۰FileInfo) Size() int64        { return int64(len(f.content)) }
+func (f *vfsgen۰FileInfo) Mode() os.FileMode  { return 0444 }
+func (f *vfsgen۰FileInfo) ModTime() time.Time { return f.modTime }
+func (f *vfsgen۰FileInfo) IsDir() bool        { return false }
+func (f *vfsgen۰FileInfo) Sys() interface{}   { return nil }
+
+// vfsgen۰File is an opened file instance.
+type vfsgen۰File struct {
+	*vfsgen۰FileInfo
+	*bytes.Reader
+}
+
+func (f *vfsgen۰File) Close() error {
+	return nil
 }
 
 // vfsgen۰DirInfo is a static definition of a directory.

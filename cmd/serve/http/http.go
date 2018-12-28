@@ -11,6 +11,7 @@ import (
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/cmd/serve/httplib/serve"
+	"github.com/ncw/rclone/cmd/serve/httplib/serve/data"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/vfs"
@@ -96,11 +97,32 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	isDir := strings.HasSuffix(urlPath, "/")
 	remote := strings.Trim(urlPath, "/")
-	if isDir {
+	isStatic := r.URL.Query().Get("rclone-static") == "true"
+
+	if isStatic {
+		s.serveStatic(w, r, remote)
+	} else if isDir {
 		s.serveDir(w, r, remote)
 	} else {
 		s.serveFile(w, r, remote)
 	}
+}
+
+// serveStatic serves a static file from the internal data/ directory
+func (s *server) serveStatic(w http.ResponseWriter, r *http.Request, staticPath string) {
+	staticFile, err := data.Assets.Open(staticPath)
+	if err != nil {
+		serve.Error(staticPath, w, "Failed to open static file", err)
+		return
+	}
+
+	node, err := staticFile.Stat()
+	if err != nil {
+		http.Error(w, "Static file not found", http.StatusNotFound)
+		return
+	}
+
+	http.ServeContent(w, r, staticPath, node.ModTime(), staticFile)
 }
 
 // serveDir serves a directory index at dirRemote

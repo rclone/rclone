@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	var AssetDir http.FileSystem = http.Dir("./templates")
+	var AssetDir http.FileSystem = http.Dir("./data")
 	err := vfsgen.Generate(AssetDir, vfsgen.Options{
 		PackageName:  "data",
 		BuildTags:    "!dev",
