@@ -18,7 +18,6 @@ import (
 	"github.com/ncw/rclone/backend/jottacloud/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
@@ -42,7 +41,7 @@ const (
 	defaultMountpoint           = "Sync"
 	rootURL                     = "https://www.jottacloud.com/jfs/"
 	apiURL                      = "https://api.jottacloud.com/files/v1/"
-	shareURL                    = "https://www.jottacloud.com/"
+	baseURL                     = "https://www.jottacloud.com/"
 	tokenURL                    = "https://api.jottacloud.com/auth/v1/token"
 	cachePrefix                 = "rclone-jcmd5-"
 	rcloneClientID              = "nibfk8biu12ju7hpqomr8b1e40"
@@ -75,13 +74,11 @@ func init() {
 			if !ok {
 				fs.Errorf(nil, "No username defined")
 			}
-			var password string
-			password, ok = m.Get(configPassword)
+			password, ok := m.Get(configPassword)
 			if !ok {
 				fs.Errorf(nil, "No username defined")
 			}
 			password = obscure.MustReveal(password)
-
 			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 
 			values := url.Values{}
@@ -94,19 +91,10 @@ func init() {
 				Method:      "POST",
 				RootURL:     oauthConfig.Endpoint.AuthURL,
 				ContentType: "application/x-www-form-urlencoded",
-				Body:        strings.NewReader(values.Encode()),
+				Parameters:  values,
 			}
 
-			// tokenJSON is the struct representing the HTTP response from OAuth2
-			// providers returning a token in JSON form.
-			type tokenJSON struct {
-				AccessToken  string `json:"access_token"`
-				TokenType    string `json:"token_type"`
-				RefreshToken string `json:"refresh_token"`
-				ExpiresIn    int32  `json:"expires_in"` // at least PayPal returns string, while most return number
-			}
-			var jsonToken tokenJSON
-
+			var jsonToken api.TokenJSON
 			resp, err := srv.CallJSON(&opts, nil, &jsonToken)
 			if err != nil {
 				fs.Errorf(nil, "Failed to get resource token: %v", err)
@@ -392,9 +380,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = parsePath(root)
 
-	user := config.FileGet(name, "user")
-	pass := config.FileGet(name, "pass")
-
 	if opt.Pass != "" {
 		var err error
 		opt.Pass, err = obscure.Reveal(opt.Pass)
@@ -424,7 +409,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		user: opt.User,
 		opt:  *opt,
 		//endpointURL: rest.URLPathEscape(path.Join(user, defaultDevice, opt.Mountpoint)),
-		srv:    rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(rootURL),
+		srv:    rest.NewClient(oAuthClient).SetRoot(rootURL),
 		apiSrv: rest.NewClient(oAuthClient).SetRoot(apiURL),
 		pacer:  pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
@@ -434,7 +419,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		ReadMimeType:            true,
 		WriteMimeType:           true,
 	}).Fill(f)
-
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -442,13 +426,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		_, err := f.readMetaDataForPath("")
 		return err
 	})
-
-	if user == "" || pass == "" {
-		return nil, errors.New("jottacloud needs user and password")
-	}
-
-	f.srv.SetUserPass(opt.User, opt.Pass)
-	f.srv.SetErrorHandler(errorHandler)
 
 	err = f.setEndpointURL(opt.Mountpoint)
 	if err != nil {
@@ -491,7 +468,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.JottaFile) (fs.Object, e
 		// Set info
 		err = o.setMetaData(info)
 	} else {
-		err = o.readMetaData() // reads info and meta, returning an error
+		err = o.readMetaData(false) // reads info and meta, returning an error
 	}
 	if err != nil {
 		return nil, err
@@ -539,7 +516,7 @@ func (f *Fs) CreateDir(path string) (jf *api.JottaFolder, err error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	//fmt.Printf("List: %s\n", dir)
+	//fmt.Printf("List: %s\n", f.filePath(dir))
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   f.filePath(dir),
@@ -819,7 +796,6 @@ func (f *Fs) copyOrMove(method, src, dest string) (info *api.JottaFile, err erro
 	if err != nil {
 		return nil, err
 	}
-
 	return info, nil
 }
 
@@ -967,7 +943,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 	if result.PublicSharePath == "" {
 		return "", errors.New("couldn't create public link - no link path received")
 	}
-	link = path.Join(shareURL, result.PublicSharePath)
+	link = path.Join(baseURL, result.PublicSharePath)
 	return link, nil
 }
 
@@ -1023,7 +999,7 @@ func (o *Object) Hash(t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData()
+	err := o.readMetaData(false)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
@@ -1046,13 +1022,16 @@ func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	return nil
 }
 
-func (o *Object) readMetaData() (err error) {
-	if o.hasMetaData {
+func (o *Object) readMetaData(force bool) (err error) {
+	if o.hasMetaData && !force {
 		return nil
 	}
 	info, err := o.fs.readMetaDataForPath(o.remote)
 	if err != nil {
 		return err
+	}
+	if info.Deleted {
+		return fs.ErrorObjectNotFound
 	}
 	return o.setMetaData(info)
 }
@@ -1062,7 +1041,7 @@ func (o *Object) readMetaData() (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime() time.Time {
-	err := o.readMetaData()
+	err := o.readMetaData(false)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
@@ -1183,8 +1162,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		in = wrap(in)
 	}
 
-	var resp *http.Response
 	// use the api to allocate the file first and get resume / deduplication info
+	var resp *http.Response
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "allocate",
@@ -1198,7 +1177,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		Created:  fileDate,
 		Modified: fileDate,
 		Md5:      md5String,
-		Path:     "/" + o.fs.opt.Mountpoint + "/" + replaceReservedChars(path.Join(o.fs.root, o.remote)),
+		Path:     path.Join(o.fs.opt.Mountpoint, replaceReservedChars(path.Join(o.fs.root, o.remote))),
 	}
 
 	// send it
@@ -1211,7 +1190,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 
-	// Can be INCOMPLETE and CORRPUT, try to upload a then
+	// If the file state is INCOMPLETE and CORRPUT, try to upload a then
 	if response.State != "COMPLETED" {
 		// how much do we still have to upload?
 		remainingBytes := size - response.ResumePos
@@ -1219,10 +1198,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 			Method:        "POST",
 			RootURL:       response.UploadURL,
 			ContentLength: &remainingBytes,
+			ContentType:   "application/octet-stream",
 			Body:          in,
 			ExtraHeaders:  make(map[string]string),
 		}
-		opts.ExtraHeaders["Content-Type"] = "application/octet-stream"
 		if response.ResumePos != 0 {
 			opts.ExtraHeaders["Range"] = "bytes=" + strconv.FormatInt(response.ResumePos, 10) + "-" + strconv.FormatInt(size-1, 10)
 		}
@@ -1245,6 +1224,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		o.size = int64(result.Bytes)
 		o.md5 = result.Md5
 		o.modTime = time.Unix(result.Modified/1000, 0)
+	} else {
+		// If the file state is COMPLETE we don't need to upload it because the file was allready found but we still ned to update our metadata
+		o.readMetaData(true)
 	}
 
 	return nil
