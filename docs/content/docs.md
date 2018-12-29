@@ -267,6 +267,15 @@ Options
 
 Rclone has a number of options to control its behaviour.
 
+Options that take parameters can have the values passed in two ways,
+`--option=value` or `--option value`. However boolean (true/false)
+options behave slightly differently to the other options in that
+`--boolean` sets the option to `true` and the absence of the flag sets
+it to `false`.  It is also possible to specify `--boolean=false` or
+`--boolean=true`.  Note that `--boolean false` is not valid - this is
+parsed as `--boolean` and the `false` is parsed as an extra command
+line argument for rclone.
+
 Options which use TIME use the go time parser.  A duration string is a
 possibly signed sequence of decimal numbers, each with optional
 fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
