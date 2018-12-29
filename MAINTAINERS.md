@@ -1,14 +1,17 @@
 # Maintainers guide for rclone #
 
-Current active maintainers of rclone are
+Current active maintainers of rclone are:
 
-  * Nick Craig-Wood @ncw
-  * Stefan Breunig @breunigs
-  * Ishuah Kariuki @ishuah
-  * Remus Bunduc @remusb - cache subsystem maintainer
-  * Fabian Möller @B4dM4n
-  * Alex Chen @Cnly
-  * Sandeep Ummadi @sandeepkru
+| Name             | GitHub ID   | Specific Responsibilities    |
+| :--------------- | :---------- | :--------------------------  |
+| Nick Craig-Wood  | @ncw        | overall project health       |
+| Stefan Breunig   | @breunigs   |                              |
+| Ishuah Kariuki   | @ishuah     |                              |
+| Remus Bunduc     | @remusb     | cache backend                |
+| Fabian Möller    | @B4dM4n     |                              |
+| Alex Chen        | @Cnly       | onedrive backend             |
+| Sandeep Ummadi   | @sandeepkru | azureblob backend            |
+| Sebastian Bünger | @buengese   | jottacloud & yandex backends |
 
 **This is a work in progress Draft**
 
