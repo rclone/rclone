@@ -64,6 +64,15 @@ func (f *Flag) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	return attr, errors.New("unimplemented")
 }
 
+// TokenJSON is the struct representing the HTTP response from OAuth2
+// providers returning a token in JSON form.
+type TokenJSON struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int32  `json:"expires_in"` // at least PayPal returns string, while most return number
+}
+
 /*
 GET http://www.jottacloud.com/JFS/<account>
 
