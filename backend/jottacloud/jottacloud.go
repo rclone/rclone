@@ -18,6 +18,7 @@ import (
 	"github.com/ncw/rclone/backend/jottacloud/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
@@ -47,7 +48,6 @@ const (
 	rcloneClientID              = "nibfk8biu12ju7hpqomr8b1e40"
 	rcloneEncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
 	configUsername              = "user"
-	configPassword              = "pass"
 )
 
 var (
@@ -70,23 +70,31 @@ func init() {
 		Description: "JottaCloud",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			tokenString, ok := m.Get("token")
+			if ok && tokenString != "" {
+				fmt.Printf("Already have a token - refresh?\n")
+				if !config.Confirm() {
+					return
+				}
+			}
+
 			username, ok := m.Get(configUsername)
 			if !ok {
 				fs.Errorf(nil, "No username defined")
 			}
-			password, ok := m.Get(configPassword)
-			if !ok {
-				fs.Errorf(nil, "No username defined")
+			// Password
+			password := config.GetPassword("Your Jottacloud password is only required during config and will not be stored.")
+			if password == "" {
+				fs.Errorf(nil, "Password must not be empty!")
 			}
-			password = obscure.MustReveal(password)
-			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 
+			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 			values := url.Values{}
 			values.Set("grant_type", "PASSWORD")
 			values.Set("password", password)
 			values.Set("username", username)
-			values.Set("client_id", rcloneClientID)
-			values.Set("client_secret", obscure.MustReveal(rcloneEncryptedClientSecret))
+			values.Set("client_id", oauthConfig.ClientID)
+			values.Set("client_secret", oauthConfig.ClientSecret)
 			opts := rest.Opts{
 				Method:      "POST",
 				RootURL:     oauthConfig.Endpoint.AuthURL,
@@ -119,11 +127,7 @@ func init() {
 		},
 		Options: []fs.Option{{
 			Name: configUsername,
-			Help: "User Name",
-		}, {
-			Name:       configPassword,
-			Help:       "Password.",
-			IsPassword: true,
+			Help: "User Name:",
 		}, {
 			Name:     "mountpoint",
 			Help:     "The mountpoint to use.",
@@ -162,7 +166,6 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	User               string        `config:"user"`
-	Pass               string        `config:"pass"`
 	Mountpoint         string        `config:"mountpoint"`
 	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
 	HardDelete         bool          `config:"hard_delete"`
@@ -336,15 +339,6 @@ func (o *Object) filePath() string {
 	return o.fs.filePath(o.remote)
 }
 
-// dummyClose is required for the grantTypeFilter below
-// because http.Request.Body needs to be a io.ReadCloser
-// and bytes.NewReader is only a io.Reader
-type dummyCloser struct {
-	io.Reader
-}
-
-func (dummyCloser) Close() error { return nil }
-
 // Jottacloud requires the grant_type 'refresh_token' string
 // to be uppercase and throws a 400 Bad Request if we use the
 // lower case used by the oauth2 module
@@ -364,7 +358,7 @@ func grantTypeFilter(req *http.Request) {
 		refreshBody = []byte(strings.Replace(string(refreshBody), "grant_type=refresh_token", "grant_type=REFRESH_TOKEN", 1))
 
 		// set the new ReadCloser (with a dummy Close())
-		req.Body = &dummyCloser{bytes.NewReader(refreshBody)}
+		req.Body = ioutil.NopCloser(bytes.NewReader(refreshBody))
 	}
 }
 
@@ -379,14 +373,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = parsePath(root)
-
-	if opt.Pass != "" {
-		var err error
-		opt.Pass, err = obscure.Reveal(opt.Pass)
-		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt password")
-		}
-	}
 
 	// the oauth client for the api servers needs
 	// a filter to fix the grant_type issues (see above)
@@ -451,7 +437,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
-
 	return f, nil
 }
 
@@ -1226,7 +1211,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		o.modTime = time.Unix(result.Modified/1000, 0)
 	} else {
 		// If the file state is COMPLETE we don't need to upload it because the file was allready found but we still ned to update our metadata
-		o.readMetaData(true)
+		return o.readMetaData(true)
 	}
 
 	return nil
