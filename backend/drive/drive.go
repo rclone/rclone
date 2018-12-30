@@ -54,7 +54,7 @@ const (
 	driveFolderType             = "application/vnd.google-apps.folder"
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
-	minSleep                    = 10 * time.Millisecond
+	defaultMinSleep             = fs.Duration(100 * time.Millisecond)
 	defaultExportExtensions     = "docx,xlsx,pptx,svg"
 	scopePrefix                 = "https://www.googleapis.com/auth/"
 	defaultScope                = "drive"
@@ -356,6 +356,11 @@ will download it anyway.`,
 			Default:  fs.SizeSuffix(-1),
 			Help:     "If Object's are greater, use drive v2 API to download.",
 			Advanced: true,
+		}, {
+			Name:     "pacer_min_sleep",
+			Default:  defaultMinSleep,
+			Help:     "Minimum time to sleep between API calls.",
+			Advanced: true,
 		}},
 	})
 
@@ -398,6 +403,7 @@ type Options struct {
 	AcknowledgeAbuse          bool          `config:"acknowledge_abuse"`
 	KeepRevisionForever       bool          `config:"keep_revision_forever"`
 	V2DownloadMinSize         fs.SizeSuffix `config:"v2_download_min_size"`
+	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
 }
 
 // Fs represents a remote drive server
@@ -744,7 +750,7 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 	listFailed := false
 	for {
 		var teamDrives *drive.TeamDriveList
-		err = newPacer().Call(func() (bool, error) {
+		err = newPacer(opt).Call(func() (bool, error) {
 			teamDrives, err = listTeamDrives.Do()
 			return shouldRetry(err)
 		})
@@ -774,8 +780,8 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 }
 
 // newPacer makes a pacer configured for drive
-func newPacer() *pacer.Pacer {
-	return pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer)
+func newPacer(opt *Options) *pacer.Pacer {
+	return pacer.New().SetMinSleep(time.Duration(opt.PacerMinSleep)).SetPacer(pacer.GoogleDrivePacer)
 }
 
 func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {
@@ -879,7 +885,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		name:  name,
 		root:  root,
 		opt:   *opt,
-		pacer: newPacer(),
+		pacer: newPacer(opt),
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
 	f.features = (&fs.Features{
