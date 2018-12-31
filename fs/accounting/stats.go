@@ -320,6 +320,13 @@ func (s *StatsInfo) GetLastError() error {
 	return s.lastError
 }
 
+// GetChecks returns the number of checks
+func (s *StatsInfo) GetChecks() int64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.checks
+}
+
 // FatalError sets the fatalError flag
 func (s *StatsInfo) FatalError() {
 	s.mu.Lock()
