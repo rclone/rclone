@@ -577,6 +577,7 @@ type checkMarch struct {
 	noHashes        int32
 	srcFilesMissing int32
 	dstFilesMissing int32
+	matches         int32
 }
 
 // DstOnly have an object which is in the destination only
@@ -644,6 +645,7 @@ func (c *checkMarch) Match(dst, src fs.DirEntry) (recurse bool) {
 			if differ {
 				atomic.AddInt32(&c.differences, 1)
 			} else {
+				atomic.AddInt32(&c.matches, 1)
 				fs.Debugf(dstX, "OK")
 			}
 			if noHash {
@@ -710,6 +712,9 @@ func CheckFn(fdst, fsrc fs.Fs, check checkFn, oneway bool) error {
 	fs.Logf(fdst, "%d differences found", accounting.Stats.GetErrors())
 	if c.noHashes > 0 {
 		fs.Logf(fdst, "%d hashes could not be checked", c.noHashes)
+	}
+	if c.matches > 0 {
+		fs.Logf(fdst, "%d matching files", c.matches)
 	}
 	if c.differences > 0 {
 		return errors.Errorf("%d differences found", c.differences)
