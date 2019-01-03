@@ -315,6 +315,18 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 	f.poolMu.Unlock()
 }
 
+// shellExpand replaces a leading "~" with "${HOME}" and expands all environment
+// variables afterwards.
+func shellExpand(s string) string {
+	if s != "" {
+		if s[0] == '~' {
+			s = "${HOME}" + s[1:]
+		}
+		s = os.ExpandEnv(s)
+	}
+	return s
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -342,8 +354,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc")
 	}
 
+	keyFile := shellExpand(opt.KeyFile)
 	// Add ssh agent-auth if no password or file specified
-	if (opt.Pass == "" && opt.KeyFile == "") || opt.KeyUseAgent {
+	if (opt.Pass == "" && keyFile == "") || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't connect to ssh-agent")
@@ -352,8 +365,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't read ssh agent signers")
 		}
-		if opt.KeyFile != "" {
-			pubBytes, err := ioutil.ReadFile(opt.KeyFile + ".pub")
+		if keyFile != "" {
+			pubBytes, err := ioutil.ReadFile(keyFile + ".pub")
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to read public key file")
 			}
@@ -379,8 +392,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// Load key file if specified
-	if opt.KeyFile != "" {
-		key, err := ioutil.ReadFile(opt.KeyFile)
+	if keyFile != "" {
+		key, err := ioutil.ReadFile(keyFile)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read private key file")
 		}
