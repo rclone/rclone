@@ -9,6 +9,7 @@ require (
 	github.com/Unknwon/goconfig v0.0.0-20181105214110-56bd8ab18619
 	github.com/a8m/tree v0.0.0-20180321023834-3cf936ce15d6
 	github.com/abbot/go-http-auth v0.4.0
+	github.com/anacrolix/dms v0.0.0-20180117034613-8af4925bffb5
 	github.com/aws/aws-sdk-go v1.15.81
 	github.com/billziss-gh/cgofuse v1.1.0
 	github.com/coreos/bbolt v0.0.0-20180318001526-af9db2027c98
