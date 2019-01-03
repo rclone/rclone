@@ -392,6 +392,14 @@ func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) error {
 		var nextChunkLen int
 		reader, nextChunkLen, err = mu.nextReader()
 		if err != nil && err != io.EOF {
+			// empty ch
+			go func() {
+				for range ch {
+				}
+			}()
+			// Wait for all goroutines finish
+			close(ch)
+			mu.wg.Wait()
 			return err
 		}
 		if nextChunkLen == 0 && partNumber > 0 {
