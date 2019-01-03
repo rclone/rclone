@@ -66,7 +66,14 @@ func init() {
 			IsPassword: true,
 		}, {
 			Name: "key_file",
-			Help: "Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.",
+			Help: "Path to PEM-encoded private key file, leave blank to use ssh-agent.",
+		}, {
+			Name: "key_file_pass",
+			Help: `The passphrase to decrypt the PEM-encoded private key file.
+
+Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
+in the new OpenSSH format can't be used.`,
+			IsPassword: true,
 		}, {
 			Name:    "use_insecure_cipher",
 			Help:    "Enable the use of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.",
@@ -122,6 +129,7 @@ type Options struct {
 	Port              string `config:"port"`
 	Pass              string `config:"pass"`
 	KeyFile           string `config:"key_file"`
+	KeyFilePass       string `config:"key_file_pass"`
 	UseInsecureCipher bool   `config:"use_insecure_cipher"`
 	DisableHashCheck  bool   `config:"disable_hashcheck"`
 	AskPassword       bool   `config:"ask_password"`
@@ -344,7 +352,14 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read private key file")
 		}
-		signer, err := ssh.ParsePrivateKey(key)
+		clearpass := ""
+		if opt.KeyFilePass != "" {
+			clearpass, err = obscure.Reveal(opt.KeyFilePass)
+			if err != nil {
+				return nil, err
+			}
+		}
+		signer, err := ssh.ParsePrivateKeyWithPassphrase(key, []byte(clearpass))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse private key file")
 		}
