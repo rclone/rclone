@@ -3,6 +3,8 @@ package serve
 import (
 	"errors"
 
+	"github.com/ncw/rclone/cmd/serve/dlna"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/ftp"
 	"github.com/ncw/rclone/cmd/serve/http"
@@ -18,6 +20,9 @@ func init() {
 	}
 	if restic.Command != nil {
 		Command.AddCommand(restic.Command)
+	}
+	if dlna.Command != nil {
+		Command.AddCommand(dlna.Command)
 	}
 	if ftp.Command != nil {
 		Command.AddCommand(ftp.Command)
