@@ -17,6 +17,12 @@ github.com/Unknwon/goconfig
 github.com/a8m/tree
 # github.com/abbot/go-http-auth v0.4.0
 github.com/abbot/go-http-auth
+# github.com/anacrolix/dms v0.0.0-20180117034613-8af4925bffb5
+github.com/anacrolix/dms/dlna
+github.com/anacrolix/dms/soap
+github.com/anacrolix/dms/ssdp
+github.com/anacrolix/dms/upnp
+github.com/anacrolix/dms/upnpav
 # github.com/aws/aws-sdk-go v1.15.81
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
@@ -173,11 +179,15 @@ golang.org/x/net/context
 golang.org/x/net/http2
 golang.org/x/net/webdav
 golang.org/x/net/html/atom
+golang.org/x/net/ipv4
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/webdav/internal/xml
 golang.org/x/net/context/ctxhttp
+golang.org/x/net/bpf
+golang.org/x/net/internal/iana
+golang.org/x/net/internal/socket
 # golang.org/x/oauth2 v0.0.0-20181120190819-8f65e3013eba
 golang.org/x/oauth2
 golang.org/x/oauth2/google

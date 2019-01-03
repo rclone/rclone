@@ -14,6 +14,8 @@ github.com/a8m/tree v0.0.0-20180321023834-3cf936ce15d6 h1:UCQe3W9LxwL2ff5r0PqQfS
 github.com/a8m/tree v0.0.0-20180321023834-3cf936ce15d6/go.mod h1:FSdwKX97koS5efgm8WevNf7XS3PqtyFkKDDXrz778cg=
 github.com/abbot/go-http-auth v0.4.0 h1:QjmvZ5gSC7jm3Zg54DqWE/T5m1t2AfDu6QlXJT0EVT0=
 github.com/abbot/go-http-auth v0.4.0/go.mod h1:Cz6ARTIzApMJDzh5bRMSUou6UMSp0IEXg9km/ci7TJM=
+github.com/anacrolix/dms v0.0.0-20180117034613-8af4925bffb5 h1:lmyFvZXNGOmsKCYXNwzDLWafnxeewxsFwdsvTvSC1sg=
+github.com/anacrolix/dms v0.0.0-20180117034613-8af4925bffb5/go.mod h1:DGqLjaZ3ziKKNRt+U5Q9PLWJ52Q/4rxfaaH/b3QYKaE=
 github.com/aws/aws-sdk-go v1.15.81 h1:va7uoFaV9uKAtZ6BTmp1u7paoMsizYRRLvRuoC07nQ8=
 github.com/aws/aws-sdk-go v1.15.81/go.mod h1:E3/ieXAlvM0XWO57iftYVDLLvQ824smPP3ATZkfNZeM=
 github.com/billziss-gh/cgofuse v1.1.0 h1:tATn9ZDvuPcOVlvR4tJitGHgAqy1y18+4mKmRfdfjec=
