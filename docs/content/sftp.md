@@ -204,10 +204,22 @@ SSH password, leave blank to use ssh-agent.
 
 #### --sftp-key-file
 
-Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.
+Path to PEM-encoded private key file, leave blank to use ssh-agent.
 
 - Config:      key_file
 - Env Var:     RCLONE_SFTP_KEY_FILE
+- Type:        string
+- Default:     ""
+
+#### --sftp-key-file-pass
+
+The passphrase to decrypt the PEM-encoded private key file.
+
+Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
+in the new OpenSSH format can't be used.
+
+- Config:      key_file_pass
+- Env Var:     RCLONE_SFTP_KEY_FILE_PASS
 - Type:        string
 - Default:     ""
 
