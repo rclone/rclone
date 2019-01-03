@@ -124,11 +124,15 @@ The SFTP remote supports three authentication methods:
   * Key file
   * ssh-agent
 
-Key files should be unencrypted PEM-encoded private key files.  For
-instance `/home/$USER/.ssh/id_rsa`.
+Key files should be PEM-encoded private key files. For instance `/home/$USER/.ssh/id_rsa`.
+Only unencrypted OpenSSH or PEM encrypted files are supported.
 
-If you don't specify `pass` or `key_file` then rclone will attempt to
-contact an ssh-agent.
+If you don't specify `pass` or `key_file` then rclone will attempt to contact an ssh-agent.
+
+You can also specify `key_use_agent` to force the usage of an ssh-agent. In this case
+`key_file` can also be specified to force the usage of a specific key in the ssh-agent.
+
+Using an ssh-agent is the only way to load encrypted OpenSSH keys at the moment.
 
 If you set the `--sftp-ask-password` option, rclone will prompt for a
 password when needed and no password has been configured.
@@ -204,7 +208,7 @@ SSH password, leave blank to use ssh-agent.
 
 #### --sftp-key-file
 
-Path to PEM-encoded private key file, leave blank to use ssh-agent.
+Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.
 
 - Config:      key_file
 - Env Var:     RCLONE_SFTP_KEY_FILE
@@ -222,6 +226,19 @@ in the new OpenSSH format can't be used.
 - Env Var:     RCLONE_SFTP_KEY_FILE_PASS
 - Type:        string
 - Default:     ""
+
+#### --sftp-key-use-agent
+
+When set forces the usage of the ssh-agent.
+
+When key-file is also set, the ".pub" file of the specified key-file is read and only the associated key is
+requested from the ssh-agent. This allows to avoid `Too many authentication failures for *username*` errors
+when the ssh-agent contains many keys.
+
+- Config:      key_use_agent
+- Env Var:     RCLONE_SFTP_KEY_USE_AGENT
+- Type:        bool
+- Default:     false
 
 #### --sftp-use-insecure-cipher
 

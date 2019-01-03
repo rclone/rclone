@@ -66,7 +66,7 @@ func init() {
 			IsPassword: true,
 		}, {
 			Name: "key_file",
-			Help: "Path to PEM-encoded private key file, leave blank to use ssh-agent.",
+			Help: "Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.",
 		}, {
 			Name: "key_file_pass",
 			Help: `The passphrase to decrypt the PEM-encoded private key file.
@@ -74,6 +74,14 @@ func init() {
 Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
 in the new OpenSSH format can't be used.`,
 			IsPassword: true,
+		}, {
+			Name: "key_use_agent",
+			Help: `When set forces the usage of the ssh-agent.
+
+When key-file is also set, the ".pub" file of the specified key-file is read and only the associated key is
+requested from the ssh-agent. This allows to avoid ` + "`Too many authentication failures for *username*`" + ` errors
+when the ssh-agent contains many keys.`,
+			Default: false,
 		}, {
 			Name:    "use_insecure_cipher",
 			Help:    "Enable the use of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.",
@@ -130,6 +138,7 @@ type Options struct {
 	Pass              string `config:"pass"`
 	KeyFile           string `config:"key_file"`
 	KeyFilePass       string `config:"key_file_pass"`
+	KeyUseAgent       bool   `config:"key_use_agent"`
 	UseInsecureCipher bool   `config:"use_insecure_cipher"`
 	DisableHashCheck  bool   `config:"disable_hashcheck"`
 	AskPassword       bool   `config:"ask_password"`
@@ -334,7 +343,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// Add ssh agent-auth if no password or file specified
-	if opt.Pass == "" && opt.KeyFile == "" {
+	if (opt.Pass == "" && opt.KeyFile == "") || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't connect to ssh-agent")
@@ -343,7 +352,30 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't read ssh agent signers")
 		}
-		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signers...))
+		if opt.KeyFile != "" {
+			pubBytes, err := ioutil.ReadFile(opt.KeyFile + ".pub")
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read public key file")
+			}
+			pub, _, _, _, err := ssh.ParseAuthorizedKey(pubBytes)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse public key file")
+			}
+			pubM := pub.Marshal()
+			found := false
+			for _, s := range signers {
+				if bytes.Equal(pubM, s.PublicKey().Marshal()) {
+					sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(s))
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, errors.New("private key not found in the ssh-agent")
+			}
+		} else {
+			sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signers...))
+		}
 	}
 
 	// Load key file if specified
