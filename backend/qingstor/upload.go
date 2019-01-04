@@ -152,11 +152,11 @@ func (u *uploader) init() {
 }
 
 // singlePartUpload upload a single object that contentLength less than "defaultUploadPartSize"
-func (u *uploader) singlePartUpload(buf io.ReadSeeker) error {
+func (u *uploader) singlePartUpload(buf io.Reader, size int64) error {
 	bucketInit, _ := u.bucketInit()
 
 	req := qs.PutObjectInput{
-		ContentLength: &u.readerPos,
+		ContentLength: &size,
 		ContentType:   &u.cfg.mimeType,
 		Body:          buf,
 	}
@@ -180,7 +180,7 @@ func (u *uploader) upload() error {
 	reader, _, err := u.nextReader()
 	if err == io.EOF { // single part
 		fs.Debugf(u, "Uploading as single part object to QingStor")
-		return u.singlePartUpload(reader)
+		return u.singlePartUpload(reader, u.readerPos)
 	} else if err != nil {
 		return errors.Errorf("read upload data failed: %s", err)
 	}

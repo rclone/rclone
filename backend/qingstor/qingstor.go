@@ -72,14 +72,51 @@ func init() {
 			Help:     "Number of connection retries.",
 			Default:  3,
 			Advanced: true,
+		}, {
+			Name: "upload_cutoff",
+			Help: `Cutoff for switching to chunked upload
+
+Any files larger than this will be uploaded in chunks of chunk_size.
+The minimum is 0 and the maximum is 5GB.`,
+			Default:  defaultUploadCutoff,
+			Advanced: true,
+		}, {
+			Name: "chunk_size",
+			Help: `Chunk size to use for uploading.
+
+When uploading files larger than upload_cutoff they will be uploaded
+as multipart uploads using this chunk size.
+
+Note that "--qingstor-upload-concurrency" chunks of this size are buffered
+in memory per transfer.
+
+If you are transferring large files over high speed links and you have
+enough memory, then increasing this will speed up the transfers.`,
+			Default:  minChunkSize,
+			Advanced: true,
+		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently.
+
+If you are uploading small numbers of large file over high speed link
+and these uploads do not fully utilize your bandwidth, then increasing
+this may help to speed up the transfers.`,
+			Default:  4,
+			Advanced: true,
 		}},
 	})
 }
 
 // Constants
 const (
-	listLimitSize  = 1000                   // Number of items to read at once
-	maxSizeForCopy = 1024 * 1024 * 1024 * 5 // The maximum size of object we can COPY
+	listLimitSize       = 1000                   // Number of items to read at once
+	maxSizeForCopy      = 1024 * 1024 * 1024 * 5 // The maximum size of object we can COPY
+	minChunkSize        = fs.SizeSuffix(minMultiPartSize)
+	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
+	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
 )
 
 // Globals
@@ -92,12 +129,15 @@ func timestampToTime(tp int64) time.Time {
 
 // Options defines the configuration for this backend
 type Options struct {
-	EnvAuth           bool   `config:"env_auth"`
-	AccessKeyID       string `config:"access_key_id"`
-	SecretAccessKey   string `config:"secret_access_key"`
-	Endpoint          string `config:"endpoint"`
-	Zone              string `config:"zone"`
-	ConnectionRetries int    `config:"connection_retries"`
+	EnvAuth           bool          `config:"env_auth"`
+	AccessKeyID       string        `config:"access_key_id"`
+	SecretAccessKey   string        `config:"secret_access_key"`
+	Endpoint          string        `config:"endpoint"`
+	Zone              string        `config:"zone"`
+	ConnectionRetries int           `config:"connection_retries"`
+	UploadCutoff      fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize         fs.SizeSuffix `config:"chunk_size"`
+	UploadConcurrency int           `config:"upload_concurrency"`
 }
 
 // Fs represents a remote qingstor server
@@ -227,6 +267,36 @@ func qsServiceConnection(opt *Options) (*qs.Service, error) {
 	return qs.Init(cf)
 }
 
+func checkUploadChunkSize(cs fs.SizeSuffix) error {
+	if cs < minChunkSize {
+		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadChunkSize(cs)
+	if err == nil {
+		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
+	}
+	return
+}
+
+func checkUploadCutoff(cs fs.SizeSuffix) error {
+	if cs > maxUploadCutoff {
+		return errors.Errorf("%s is greater than %s", cs, maxUploadCutoff)
+	}
+	return nil
+}
+
+func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
+	err = checkUploadCutoff(cs)
+	if err == nil {
+		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
+	}
+	return
+}
+
 // NewFs constructs an Fs from the path, bucket:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -234,6 +304,14 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	err = checkUploadChunkSize(opt.ChunkSize)
+	if err != nil {
+		return nil, errors.Wrap(err, "qingstor: chunk size")
+	}
+	err = checkUploadCutoff(opt.UploadCutoff)
+	if err != nil {
+		return nil, errors.Wrap(err, "qingstor: upload cutoff")
 	}
 	bucket, key, err := qsParsePath(root)
 	if err != nil {
@@ -913,16 +991,24 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	mimeType := fs.MimeType(src)
 
 	req := uploadInput{
-		body:     in,
-		qsSvc:    o.fs.svc,
-		bucket:   o.fs.bucket,
-		zone:     o.fs.zone,
-		key:      key,
-		mimeType: mimeType,
+		body:        in,
+		qsSvc:       o.fs.svc,
+		bucket:      o.fs.bucket,
+		zone:        o.fs.zone,
+		key:         key,
+		mimeType:    mimeType,
+		partSize:    int64(o.fs.opt.ChunkSize),
+		concurrency: o.fs.opt.UploadConcurrency,
 	}
 	uploader := newUploader(&req)
 
-	err = uploader.upload()
+	size := src.Size()
+	multipart := size < 0 || size >= int64(o.fs.opt.UploadCutoff)
+	if multipart {
+		err = uploader.upload()
+	} else {
+		err = uploader.singlePartUpload(in, size)
+	}
 	if err != nil {
 		return err
 	}
