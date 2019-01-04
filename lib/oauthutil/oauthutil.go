@@ -153,6 +153,30 @@ type TokenSource struct {
 	expiryTimer *time.Timer // signals whenever the token expires
 }
 
+// If token has expired then first try re-reading it from the config
+// file in case a concurrently runnng rclone has updated it already
+func (ts *TokenSource) reReadToken() bool {
+	tokenString, err := config.FileGetFresh(ts.name, config.ConfigToken)
+	if err != nil {
+		fs.Debugf(ts.name, "Failed to read token out of config file: %v", err)
+		return false
+	}
+	newToken := new(oauth2.Token)
+	err = json.Unmarshal([]byte(tokenString), newToken)
+	if err != nil {
+		fs.Debugf(ts.name, "Failed to parse token out of config file: %v", err)
+		return false
+	}
+	if !newToken.Valid() {
+		fs.Debugf(ts.name, "Loaded invalid token from config file - ignoring")
+		return false
+	}
+	fs.Debugf(ts.name, "Loaded fresh token from config file")
+	ts.token = newToken
+	ts.tokenSource = nil // invalidate since we changed the token
+	return true
+}
+
 // Token returns a token or an error.
 // Token must be safe for concurrent use by multiple goroutines.
 // The returned Token must not be modified.
@@ -161,17 +185,39 @@ type TokenSource struct {
 func (ts *TokenSource) Token() (*oauth2.Token, error) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
+	var (
+		token   *oauth2.Token
+		err     error
+		changed = false
+	)
+	const maxTries = 5
 
-	// Make a new token source if required
-	if ts.tokenSource == nil {
-		ts.tokenSource = ts.config.TokenSource(ts.ctx, ts.token)
+	// Try getting the token a few times
+	for i := 1; i <= maxTries; i++ {
+		// Try reading the token from the config file in case it has
+		// been updated by a concurrent rclone process
+		if !ts.token.Valid() {
+			if ts.reReadToken() {
+				changed = true
+			}
+		}
+
+		// Make a new token source if required
+		if ts.tokenSource == nil {
+			ts.tokenSource = ts.config.TokenSource(ts.ctx, ts.token)
+		}
+
+		token, err = ts.tokenSource.Token()
+		if err == nil {
+			break
+		}
+		fs.Debugf(ts.name, "Token refresh failed try %d/%d: %v", i, maxTries, err)
+		time.Sleep(1 * time.Second)
 	}
-
-	token, err := ts.tokenSource.Token()
 	if err != nil {
 		return nil, err
 	}
-	changed := *token != *ts.token
+	changed = changed || (*token != *ts.token)
 	ts.token = token
 	if changed {
 		// Bump on the expiry timer if it is set
