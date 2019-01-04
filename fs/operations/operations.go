@@ -1337,6 +1337,14 @@ func RcatSize(fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modT
 		accounting.Stats.Transferring(dstFileName)
 		body := ioutil.NopCloser(in)                                 // we let the server close the body
 		in := accounting.NewAccountSizeName(body, size, dstFileName) // account the transfer (no buffering)
+
+		if fs.Config.DryRun {
+			fs.Logf("stdin", "Not uploading as --dry-run")
+			// prevents "broken pipe" errors
+			_, err = io.Copy(ioutil.Discard, in)
+			return nil, err
+		}
+
 		var err error
 		defer func() {
 			closeErr := in.Close()
