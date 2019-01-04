@@ -575,6 +575,17 @@ func SetValueAndSave(name, key, value string) (err error) {
 	return nil
 }
 
+// FileGetFresh reads the config key under section return the value or
+// an error if the config file was not found or that value couldn't be
+// read.
+func FileGetFresh(section, key string) (value string, err error) {
+	reloadedConfigFile, err := loadConfigFile()
+	if err != nil {
+		return "", err
+	}
+	return reloadedConfigFile.GetValue(section, key)
+}
+
 // ShowRemotes shows an overview of the config file
 func ShowRemotes() {
 	remotes := getConfigData().GetSectionList()
