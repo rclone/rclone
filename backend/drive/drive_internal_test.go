@@ -22,6 +22,31 @@ import (
 	"google.golang.org/api/drive/v3"
 )
 
+func TestDriveScopes(t *testing.T) {
+	for _, test := range []struct {
+		in       string
+		want     []string
+		wantFlag bool
+	}{
+		{"", []string{
+			"https://www.googleapis.com/auth/drive",
+		}, false},
+		{" drive.file , drive.readonly", []string{
+			"https://www.googleapis.com/auth/drive.file",
+			"https://www.googleapis.com/auth/drive.readonly",
+		}, false},
+		{" drive.file , drive.appfolder", []string{
+			"https://www.googleapis.com/auth/drive.file",
+			"https://www.googleapis.com/auth/drive.appfolder",
+		}, true},
+	} {
+		got := driveScopes(test.in)
+		assert.Equal(t, test.want, got, test.in)
+		gotFlag := driveScopesContainsAppFolder(got)
+		assert.Equal(t, test.wantFlag, gotFlag, test.in)
+	}
+}
+
 /*
 var additionalMimeTypes = map[string]string{
 	"application/vnd.ms-excel.sheet.macroenabled.12":                          ".xlsm",
