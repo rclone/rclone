@@ -125,6 +125,29 @@ var (
 	_linkTemplates   map[string]*template.Template // available link types
 )
 
+// Parse the scopes option returning a slice of scopes
+func driveScopes(scopesString string) (scopes []string) {
+	if scopesString == "" {
+		scopesString = defaultScope
+	}
+	for _, scope := range strings.Split(scopesString, ",") {
+		scope = strings.TrimSpace(scope)
+		scopes = append(scopes, scopePrefix+scope)
+	}
+	return scopes
+}
+
+// Returns true if one of the scopes was "drive.appfolder"
+func driveScopesContainsAppFolder(scopes []string) bool {
+	for _, scope := range scopes {
+		if scope == scopePrefix+"drive.appfolder" {
+			return true
+		}
+
+	}
+	return false
+}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -139,18 +162,14 @@ func init() {
 				fs.Errorf(nil, "Couldn't parse config into struct: %v", err)
 				return
 			}
+
 			// Fill in the scopes
-			if opt.Scope == "" {
-				opt.Scope = defaultScope
+			driveConfig.Scopes = driveScopes(opt.Scope)
+			// Set the root_folder_id if using drive.appfolder
+			if driveScopesContainsAppFolder(driveConfig.Scopes) {
+				m.Set("root_folder_id", "appDataFolder")
 			}
-			driveConfig.Scopes = nil
-			for _, scope := range strings.Split(opt.Scope, ",") {
-				driveConfig.Scopes = append(driveConfig.Scopes, scopePrefix+strings.TrimSpace(scope))
-				// Set the root_folder_id if using drive.appfolder
-				if scope == "drive.appfolder" {
-					m.Set("root_folder_id", "appDataFolder")
-				}
-			}
+
 			if opt.ServiceAccountFile == "" {
 				err = oauthutil.Config("drive", name, m, driveConfig)
 				if err != nil {
@@ -756,7 +775,8 @@ func newPacer() *pacer.Pacer {
 }
 
 func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {
-	conf, err := google.JWTConfigFromJSON(credentialsData, driveConfig.Scopes...)
+	scopes := driveScopes(opt.Scope)
+	conf, err := google.JWTConfigFromJSON(credentialsData, scopes...)
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
