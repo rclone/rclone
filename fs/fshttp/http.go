@@ -8,12 +8,14 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/http/cookiejar"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
 	"golang.org/x/time/rate"
+	"golang.org/x/net/publicsuffix"
 )
 
 const (
@@ -25,6 +27,7 @@ var (
 	transport   http.RoundTripper
 	noTransport sync.Once
 	tpsBucket   *rate.Limiter // for limiting number of http transactions per second
+	cookieJar, _  = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 )
 
 // StartHTTPTokenBucket starts the token bucket if necessary
@@ -142,8 +145,15 @@ func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
 
 // NewClient returns an http.Client with the correct timeouts
 func NewClient(ci *fs.ConfigInfo) *http.Client {
-	return &http.Client{
-		Transport: NewTransport(ci),
+	if ci.Cookie {
+		return &http.Client{
+			Transport: NewTransport(ci),
+			Jar: cookieJar,
+		}
+	} else {
+		return &http.Client{
+			Transport: NewTransport(ci),
+		}
 	}
 }
 

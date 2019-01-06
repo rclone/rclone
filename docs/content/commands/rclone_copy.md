@@ -121,6 +121,7 @@ rclone copy source:path dest:path [flags]
   -c, --checksum                                   Skip based on checksum & size, not mod-time & size
       --config string                              Config file. (default "/home/ncw/.rclone.conf")
       --contimeout duration                        Connect timeout (default 1m0s)
+      --cookie                                     Enable session cookiejar
   -L, --copy-links                                 Follow symlinks and copy the pointed to item.
       --cpuprofile string                          Write cpu profile to file
       --crypt-directory-name-encryption            Option to either encrypt directory names or leave them intact. (default true)
