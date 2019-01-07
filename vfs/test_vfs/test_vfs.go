@@ -16,6 +16,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/ncw/rclone/lib/file"
 )
 
 var (
@@ -194,7 +196,7 @@ func (t *Test) close() {
 func (t *Test) open() {
 	t.close()
 	t.logf("open")
-	handle, err := os.OpenFile(t.path(), os.O_RDWR|os.O_CREATE, 0666)
+	handle, err := file.OpenFile(t.path(), os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		t.errorf("failed to open: %v", err)
 		return
