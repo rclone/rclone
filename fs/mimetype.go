@@ -12,6 +12,7 @@ func MimeTypeFromName(remote string) (mimeType string) {
 	if !strings.ContainsRune(mimeType, '/') {
 		mimeType = "application/octet-stream"
 	}
+	mimeType = strings.Replace(mimeType, "; charset=utf-8", "", -1) // Remove charset
 	return mimeType
 }
 
