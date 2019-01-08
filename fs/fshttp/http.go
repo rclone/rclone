@@ -145,16 +145,13 @@ func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
 
 // NewClient returns an http.Client with the correct timeouts
 func NewClient(ci *fs.ConfigInfo) *http.Client {
-	if ci.Cookie {
-		return &http.Client{
-			Transport: NewTransport(ci),
-			Jar: cookieJar,
-		}
-	} else {
-		return &http.Client{
-			Transport: NewTransport(ci),
-		}
+	transport := &http.Client{
+		Transport: NewTransport(ci),
 	}
+	if ci.Cookie {
+		transport.Jar = cookieJar
+	}
+	return transport
 }
 
 // Transport is a our http Transport which wraps an http.Transport
