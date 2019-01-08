@@ -43,7 +43,7 @@ var DefaultOpt = Options{
 	Umask:             0,
 	UID:               ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
 	GID:               ^uint32(0), // overriden for non windows in mount_unix.go
-	DirPerms:          os.FileMode(0777) | os.ModeDir,
+	DirPerms:          os.FileMode(0777),
 	FilePerms:         os.FileMode(0666),
 	CacheMode:         CacheModeOff,
 	CacheMaxAge:       3600 * time.Second,
