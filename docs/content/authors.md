@@ -225,3 +225,4 @@ Contributors
   * Arkadius Stefanski <arkste@gmail.com>
   * Jay <dev@jaygoel.com>
   * andrea rota <a@xelera.eu>
+  * nicolov <nicolov@users.noreply.github.com>
