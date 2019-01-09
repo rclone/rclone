@@ -97,7 +97,9 @@ func TestVFSNew(t *testing.T) {
 
 	// Check making a VFS with nil options
 	vfs := New(r.Fremote, nil)
-	assert.Equal(t, vfs.Opt, DefaultOpt)
+	var defaultOpt = DefaultOpt
+	defaultOpt.DirPerms |= os.ModeDir
+	assert.Equal(t, vfs.Opt, defaultOpt)
 	assert.Equal(t, vfs.f, r.Fremote)
 
 	// Check the initialisation
