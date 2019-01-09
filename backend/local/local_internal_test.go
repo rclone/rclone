@@ -1,13 +1,13 @@
 package local
 
 import (
-	"os"
 	"path"
 	"testing"
 	"time"
 
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fstest"
+	"github.com/ncw/rclone/lib/file"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +38,7 @@ func TestUpdatingCheck(t *testing.T) {
 	filePath := "sub dir/local test"
 	r.WriteFile(filePath, "content", time.Now())
 
-	fd, err := os.Open(path.Join(r.LocalName, filePath))
+	fd, err := file.Open(path.Join(r.LocalName, filePath))
 	if err != nil {
 		t.Fatalf("failed opening file %q: %v", filePath, err)
 	}

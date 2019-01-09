@@ -21,6 +21,7 @@ import (
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/file"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 )
@@ -651,7 +652,7 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 	o.fs.objectHashesMu.Unlock()
 
 	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil {
-		in, err := os.Open(o.path)
+		in, err := file.Open(o.path)
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
@@ -780,7 +781,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		}
 	}
 
-	fd, err := os.Open(o.path)
+	fd, err := file.Open(o.path)
 	if err != nil {
 		return
 	}
@@ -826,7 +827,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 
-	out, err := os.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return err
 	}
