@@ -104,6 +104,8 @@ func sizeDiffers(src, dst fs.ObjectInfo) bool {
 	return src.Size() != dst.Size()
 }
 
+var checksumWarning sync.Once
+
 func equal(src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
 	if sizeDiffers(src, dst) {
 		fs.Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
@@ -125,6 +127,9 @@ func equal(src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
 			return false
 		}
 		if ht == hash.None {
+			checksumWarning.Do(func() {
+				fs.Logf(dst.Fs(), "--checksum is in use but the source and destination have no hashes in common; falling back to --size-only")
+			})
 			fs.Debugf(src, "Size of src and dst objects identical")
 		} else {
 			fs.Debugf(src, "Size and %v of src and dst objects identical", ht)
