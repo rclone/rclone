@@ -9,6 +9,7 @@ import (
 	"log"
 	"path"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -119,7 +120,12 @@ func (c *Config) filterBackendsByRemotes(remotes []string) {
 		}
 		if !found {
 			log.Printf("Remote %q not found - inserting with default flags", name)
-			newBackends = append(newBackends, Backend{Remote: name})
+			// Lookup which backend
+			fsInfo, _, _, _, err := fs.ConfigFs(name)
+			if err != nil {
+				log.Fatalf("couldn't find remote %q: %v", name, err)
+			}
+			newBackends = append(newBackends, Backend{Backend: fsInfo.FileName(), Remote: name})
 		}
 	}
 	c.Backends = newBackends
