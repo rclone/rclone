@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -58,6 +59,28 @@ func checkMountEmpty(mountpoint string) error {
 			e = errors.Wrap(fpErr, errorMsg)
 		}
 		return e
+	}
+	return nil
+}
+
+// Check the root doesn't overlap the mountpoint
+func checkMountpointOverlap(root, mountpoint string) error {
+	abs := func(x string) string {
+		if absX, err := filepath.EvalSymlinks(x); err == nil {
+			x = absX
+		}
+		if absX, err := filepath.Abs(x); err == nil {
+			x = absX
+		}
+		x = filepath.ToSlash(x)
+		if !strings.HasSuffix(x, "/") {
+			x += "/"
+		}
+		return x
+	}
+	rootAbs, mountpointAbs := abs(root), abs(mountpoint)
+	if strings.HasPrefix(rootAbs, mountpointAbs) || strings.HasPrefix(mountpointAbs, rootAbs) {
+		return errors.Errorf("mount point %q and directory to be mounted %q mustn't overlap", mountpoint, root)
 	}
 	return nil
 }
@@ -220,7 +243,14 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 				config.PassConfigKeyForDaemonization = true
 			}
 
+			mountpoint := args[1]
 			fdst := cmd.NewFsDir(args)
+			if fdst.Name() == "" || fdst.Name() == "local" {
+				err := checkMountpointOverlap(fdst.Root(), mountpoint)
+				if err != nil {
+					log.Fatalf("Fatal error: %v", err)
+				}
+			}
 
 			// Show stats if the user has specifically requested them
 			if cmd.ShowStats() {
@@ -230,7 +260,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 			// Skip checkMountEmpty if --allow-non-empty flag is used or if
 			// the Operating System is Windows
 			if !AllowNonEmpty && runtime.GOOS != "windows" {
-				err := checkMountEmpty(args[1])
+				err := checkMountEmpty(mountpoint)
 				if err != nil {
 					log.Fatalf("Fatal error: %v", err)
 				}
@@ -253,7 +283,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 				}
 			}
 
-			err := Mount(fdst, args[1])
+			err := Mount(fdst, mountpoint)
 			if err != nil {
 				log.Fatalf("Fatal error: %v", err)
 			}
