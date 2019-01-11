@@ -227,3 +227,4 @@ Contributors
   * andrea rota <a@xelera.eu>
   * nicolov <nicolov@users.noreply.github.com>
   * Dario Guzik <dario@guzik.com.ar>
+  * qip <qip@users.noreply.github.com>
