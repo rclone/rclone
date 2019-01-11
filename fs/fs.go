@@ -370,6 +370,35 @@ type GetTierer interface {
 	GetTier() string
 }
 
+// ObjectOptionalInterfaces returns the names of supported and
+// unsupported optional interfaces for an Object
+func ObjectOptionalInterfaces(o Object) (supported, unsupported []string) {
+	store := func(ok bool, name string) {
+		if ok {
+			supported = append(supported, name)
+		} else {
+			unsupported = append(unsupported, name)
+		}
+	}
+
+	_, ok := o.(MimeTyper)
+	store(ok, "MimeType")
+
+	_, ok = o.(IDer)
+	store(ok, "ID")
+
+	_, ok = o.(ObjectUnWrapper)
+	store(ok, "UnWrap")
+
+	_, ok = o.(SetTierer)
+	store(ok, "SetTier")
+
+	_, ok = o.(GetTierer)
+	store(ok, "GetTier")
+
+	return supported, unsupported
+}
+
 // ListRCallback defines a callback function for ListR to use
 //
 // It is called for each tranche of entries read from the listing and
