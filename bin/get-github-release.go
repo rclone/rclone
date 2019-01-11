@@ -8,6 +8,8 @@
 package main
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -31,7 +33,7 @@ var (
 	extract = flag.String("extract", "", "Extract the named executable from the .tar.gz and install into bindir.")
 	bindir  = flag.String("bindir", defaultBinDir(), "Directory to install files downloaded with -extract.")
 	// Globals
-	matchProject = regexp.MustCompile(`^(\w+)/(\w+)$`)
+	matchProject = regexp.MustCompile(`^([\w-]+)/([\w-]+)$`)
 )
 
 // A github release
@@ -229,6 +231,66 @@ func run(args ...string) {
 	}
 }
 
+// Untars fileName from srcFile
+func untar(srcFile, fileName, extractDir string) {
+	f, err := os.Open(srcFile)
+	if err != nil {
+		log.Fatalf("Couldn't open tar: %v", err)
+	}
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			log.Fatalf("Couldn't close tar: %v", err)
+		}
+	}()
+
+	var in io.Reader = f
+
+	srcExt := filepath.Ext(srcFile)
+	if srcExt == ".gz" || srcExt == ".tgz" {
+		gzf, err := gzip.NewReader(f)
+		if err != nil {
+			log.Fatalf("Couldn't open gzip: %v", err)
+		}
+		in = gzf
+	}
+
+	tarReader := tar.NewReader(in)
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Trouble reading tar file: %v", err)
+		}
+		name := header.Name
+		switch header.Typeflag {
+		case tar.TypeReg:
+			baseName := filepath.Base(name)
+			if baseName == fileName {
+				outPath := filepath.Join(extractDir, fileName)
+				out, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+				if err != nil {
+					log.Fatalf("Couldn't open output file: %v", err)
+				}
+				defer func() {
+					err := out.Close()
+					if err != nil {
+						log.Fatalf("Couldn't close output: %v", err)
+					}
+				}()
+				n, err := io.Copy(out, tarReader)
+				if err != nil {
+					log.Fatalf("Couldn't write output file: %v", err)
+				}
+				log.Printf("Wrote %s (%d bytes) as %q", fileName, n, outPath)
+			}
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
@@ -257,8 +319,6 @@ func main() {
 			log.Fatalf("Need to set -bindir")
 		}
 		log.Printf("Unpacking %s from %s and installing into %s", *extract, fileName, *bindir)
-		run("tar", "xf", fileName, *extract)
-		run("chmod", "a+x", *extract)
-		run("mv", "-f", *extract, *bindir+"/")
+		untar(fileName, *extract, *bindir+"/")
 	}
 }
