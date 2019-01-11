@@ -1104,12 +1104,6 @@ func (o *Object) readMetaData() (err error) {
 	return o.decodeMetaDataFromPropertiesResponse(blobProperties)
 }
 
-// timeString returns modTime as the number of milliseconds
-// elapsed since January 1, 1970 UTC as a decimal string.
-func timeString(modTime time.Time) string {
-	return strconv.FormatInt(modTime.UnixNano()/1E6, 10)
-}
-
 // parseTimeString converts a decimal string number of milliseconds
 // elapsed since January 1, 1970 UTC into a time.Time and stores it in
 // the modTime variable.

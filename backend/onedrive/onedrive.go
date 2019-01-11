@@ -227,7 +227,7 @@ that the chunks will be buffered into memory.`,
 			Advanced: true,
 		}, {
 			Name:     "drive_type",
-			Help:     "The type of the drive ( personal | business | documentLibrary )",
+			Help:     "The type of the drive ( " + driveTypePersonal + " | " + driveTypeBusiness + " | " + driveTypeSharepoint + " )",
 			Default:  "",
 			Advanced: true,
 		}, {
