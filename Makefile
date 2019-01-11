@@ -64,30 +64,20 @@ endif
 # Do source code quality checks
 check:	rclone
 ifdef FULL_TESTS
-	go vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf ./...
-	errcheck $(BUILDTAGS) ./...
-	find . -name \*.go | grep -v /vendor/ | xargs goimports -d | grep . ; test $$? -eq 1
-	go list ./... | xargs -n1 golint | grep -E -v '(StorageUrl|CdnUrl|ApplicationCredentialId)' ; test $$? -eq 1
+	@# we still run go vet for -printfuncs which golangci-lint doesn't do yet
+	@# see: https://github.com/golangci/golangci-lint/issues/204
+	@echo "-- START CODE QUALITY REPORT -------------------------------"
+	@go vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf ./...
+	@golangci-lint run ./...
+	@echo "-- END CODE QUALITY REPORT ---------------------------------"
 else
 	@echo Skipping source quality tests as version of go too old
 endif
 
-gometalinter_install:
-	go get -u github.com/alecthomas/gometalinter
-	gometalinter --install --update
-
-# We aren't using gometalinter as the default linter yet because
-# 1. it doesn't support build tags: https://github.com/alecthomas/gometalinter/issues/275
-# 2. can't get -printfuncs working with the vet linter
-gometalinter:
-	gometalinter ./...
-
 # Get the build dependencies
 build_dep:
 ifdef FULL_TESTS
-	go get -u github.com/kisielk/errcheck
-	go get -u golang.org/x/tools/cmd/goimports
-	go get -u golang.org/x/lint/golint
+	go run bin/get-github-release.go -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*-linux-amd64.tar.gz'
 endif
 
 # Get the release dependencies
