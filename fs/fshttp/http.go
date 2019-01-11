@@ -7,12 +7,14 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httputil"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"golang.org/x/net/publicsuffix"
 	"golang.org/x/time/rate"
 )
 
@@ -22,9 +24,10 @@ const (
 )
 
 var (
-	transport   http.RoundTripper
-	noTransport sync.Once
-	tpsBucket   *rate.Limiter // for limiting number of http transactions per second
+	transport    http.RoundTripper
+	noTransport  sync.Once
+	tpsBucket    *rate.Limiter // for limiting number of http transactions per second
+	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 )
 
 // StartHTTPTokenBucket starts the token bucket if necessary
@@ -142,9 +145,13 @@ func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
 
 // NewClient returns an http.Client with the correct timeouts
 func NewClient(ci *fs.ConfigInfo) *http.Client {
-	return &http.Client{
+	transport := &http.Client{
 		Transport: NewTransport(ci),
 	}
+	if ci.Cookie {
+		transport.Jar = cookieJar
+	}
+	return transport
 }
 
 // Transport is a our http Transport which wraps an http.Transport

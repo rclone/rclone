@@ -87,6 +87,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &fs.Config.MaxBacklog, "max-backlog", "", fs.Config.MaxBacklog, "Maximum number of objects in sync or check backlog.")
 	flags.BoolVarP(flagSet, &fs.Config.StatsOneLine, "stats-one-line", "", fs.Config.StatsOneLine, "Make the stats fit on one line.")
 	flags.BoolVarP(flagSet, &fs.Config.Progress, "progress", "P", fs.Config.Progress, "Show progress during transfer.")
+	flags.BoolVarP(flagSet, &fs.Config.Cookie, "use-cookies", "", fs.Config.Cookie, "Enable session cookiejar.")
 }
 
 // SetFlags converts any flags into config which weren't straight foward

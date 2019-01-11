@@ -85,6 +85,7 @@ type ConfigInfo struct {
 	MaxBacklog            int
 	StatsOneLine          bool
 	Progress              bool
+	Cookie                bool
 }
 
 // NewConfig creates a new config with everything set to the default
