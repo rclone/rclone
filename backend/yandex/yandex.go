@@ -307,7 +307,7 @@ func (f *Fs) itemToDirEntry(remote string, object *api.ResourceInfoResponse) (fs
 		if err != nil {
 			return nil, errors.Wrap(err, "error parsing time in directory item")
 		}
-		d := fs.NewDir(remote, t).SetSize(int64(object.Size))
+		d := fs.NewDir(remote, t).SetSize(object.Size)
 		return d, nil
 	case "file":
 		o, err := f.newObjectWithInfo(remote, object)

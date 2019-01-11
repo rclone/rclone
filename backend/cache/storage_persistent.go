@@ -398,7 +398,7 @@ func (b *Persistent) AddObject(cachedObject *Object) error {
 		if err != nil {
 			return errors.Errorf("couldn't marshal object (%v) info: %v", cachedObject, err)
 		}
-		err = bucket.Put([]byte(cachedObject.Name), []byte(encoded))
+		err = bucket.Put([]byte(cachedObject.Name), encoded)
 		if err != nil {
 			return errors.Errorf("couldn't cache object (%v) info: %v", cachedObject, err)
 		}
@@ -809,7 +809,7 @@ func (b *Persistent) addPendingUpload(destPath string, started bool) error {
 		if err != nil {
 			return errors.Errorf("couldn't marshal object (%v) info: %v", destPath, err)
 		}
-		err = bucket.Put([]byte(destPath), []byte(encoded))
+		err = bucket.Put([]byte(destPath), encoded)
 		if err != nil {
 			return errors.Errorf("couldn't cache object (%v) info: %v", destPath, err)
 		}
@@ -1049,7 +1049,7 @@ func (b *Persistent) ReconcileTempUploads(cacheFs *Fs) error {
 			if err != nil {
 				return errors.Errorf("couldn't marshal object (%v) info: %v", queuedEntry, err)
 			}
-			err = bucket.Put([]byte(destPath), []byte(encoded))
+			err = bucket.Put([]byte(destPath), encoded)
 			if err != nil {
 				return errors.Errorf("couldn't cache object (%v) info: %v", destPath, err)
 			}

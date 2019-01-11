@@ -211,8 +211,8 @@ outer:
 		}
 
 		reqSize := remaining
-		if reqSize >= int64(chunkSize) {
-			reqSize = int64(chunkSize)
+		if reqSize >= chunkSize {
+			reqSize = chunkSize
 		}
 
 		// Make a block of memory

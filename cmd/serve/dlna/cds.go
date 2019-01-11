@@ -158,7 +158,7 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 		}, nil
 	case "Browse":
 		var browse browse
-		if err := xml.Unmarshal([]byte(argsXML), &browse); err != nil {
+		if err := xml.Unmarshal(argsXML, &browse); err != nil {
 			return nil, err
 		}
 		obj, err := cds.objectFromID(browse.ObjectID)
@@ -179,7 +179,7 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 				}
 				return
 			}():]
-			if browse.RequestedCount != 0 && int(browse.RequestedCount) < len(objs) {
+			if browse.RequestedCount != 0 && browse.RequestedCount < len(objs) {
 				objs = objs[:browse.RequestedCount]
 			}
 			result, err := xml.Marshal(objs)

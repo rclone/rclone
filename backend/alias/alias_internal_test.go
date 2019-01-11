@@ -80,7 +80,7 @@ func TestNewFS(t *testing.T) {
 			wantEntry := test.entries[i]
 
 			require.Equal(t, wantEntry.remote, gotEntry.Remote(), what)
-			require.Equal(t, wantEntry.size, int64(gotEntry.Size()), what)
+			require.Equal(t, wantEntry.size, gotEntry.Size(), what)
 			_, isDir := gotEntry.(fs.Directory)
 			require.Equal(t, wantEntry.isDir, isDir, what)
 		}

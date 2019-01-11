@@ -387,10 +387,10 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 
 	// write the object
 	o := runInstance.writeObjectBytes(t, cfs.UnWrap(), "data.bin", testData)
-	require.Equal(t, o.Size(), int64(testSize))
+	require.Equal(t, o.Size(), testSize)
 	time.Sleep(time.Second * 3)
 
-	checkSample, err := runInstance.readDataFromRemote(t, rootFs, "data.bin", 0, int64(testSize), false)
+	checkSample, err := runInstance.readDataFromRemote(t, rootFs, "data.bin", 0, testSize, false)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(checkSample)), o.Size())
 

@@ -16,7 +16,7 @@ func (f *Fs) About() (*fs.Usage, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read disk usage")
 	}
-	bs := int64(s.Bsize)
+	bs := int64(s.Bsize) // nolint: unconvert
 	usage := &fs.Usage{
 		Total: fs.NewUsageValue(bs * int64(s.Blocks)),         // quota of bytes that can be used
 		Used:  fs.NewUsageValue(bs * int64(s.Blocks-s.Bfree)), // bytes in use

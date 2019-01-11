@@ -785,7 +785,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		remote := path.Join(dir, folder.Name)
 		// cache the directory ID for later lookups
 		f.dirCache.Put(remote, folder.FolderID)
-		d := fs.NewDir(remote, time.Unix(int64(folder.DateModified), 0)).SetID(folder.FolderID)
+		d := fs.NewDir(remote, time.Unix(folder.DateModified, 0)).SetID(folder.FolderID)
 		d.SetItems(int64(folder.ChildFolders))
 		entries = append(entries, d)
 	}

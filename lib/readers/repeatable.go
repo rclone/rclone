@@ -100,5 +100,5 @@ func NewRepeatableReaderBuffer(r io.Reader, buf []byte) *RepeatableReader {
 // NewRepeatableLimitReaderBuffer create new repeatable reader from
 // Reader r and buf wrapped in a io.LimitReader to read only size.
 func NewRepeatableLimitReaderBuffer(r io.Reader, buf []byte, size int64) *RepeatableReader {
-	return NewRepeatableReaderBuffer(io.LimitReader(r, int64(size)), buf)
+	return NewRepeatableReaderBuffer(io.LimitReader(r, size), buf)
 }

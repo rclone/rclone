@@ -108,7 +108,7 @@ in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration
 Files above this size will be uploaded in chunks of "--b2-chunk-size".
 
 This value should be set no larger than 4.657GiB (== 5GB).`,
-			Default:  fs.SizeSuffix(defaultUploadCutoff),
+			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -118,7 +118,7 @@ When uploading large files, chunk the file into this size.  Note that
 these chunks are buffered in memory and there might a maximum of
 "--transfers" chunks in progress at once.  5,000,000 Bytes is the
 minimim size.`,
-			Default:  fs.SizeSuffix(defaultChunkSize),
+			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
 			Name:     "disable_checksum",

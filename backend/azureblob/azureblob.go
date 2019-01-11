@@ -77,7 +77,7 @@ func init() {
 		}, {
 			Name:     "upload_cutoff",
 			Help:     "Cutoff for switching to chunked upload (<= 256MB).",
-			Default:  fs.SizeSuffix(defaultUploadCutoff),
+			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -85,7 +85,7 @@ func init() {
 
 Note that this is stored in memory and there may be up to
 "--transfers" chunks stored at once in memory.`,
-			Default:  fs.SizeSuffix(defaultChunkSize),
+			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
 			Name: "list_chunk",
@@ -1037,7 +1037,7 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *azblob.BlobGetProper
 	o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5())
 	o.mimeType = info.ContentType()
 	o.size = size
-	o.modTime = time.Time(info.LastModified())
+	o.modTime = info.LastModified()
 	o.accessTier = azblob.AccessTierType(info.AccessTier())
 	o.setMetadata(metadata)
 

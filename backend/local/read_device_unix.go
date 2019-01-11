@@ -22,5 +22,5 @@ func readDevice(fi os.FileInfo, oneFileSystem bool) uint64 {
 		fs.Debugf(fi.Name(), "Type assertion fi.Sys().(*syscall.Stat_t) failed from: %#v", fi.Sys())
 		return devUnset
 	}
-	return uint64(statT.Dev)
+	return uint64(statT.Dev) // nolint: unconvert
 }
