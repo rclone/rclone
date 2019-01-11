@@ -2586,6 +2586,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 	newO, err := o.fs.newObjectWithInfo(src.Remote(), info)
+	if err != nil {
+		return err
+	}
 	switch newO := newO.(type) {
 	case *Object:
 		*o = *newO
@@ -2624,6 +2627,9 @@ func (o *documentObject) Update(in io.Reader, src fs.ObjectInfo, options ...fs.O
 	remote = remote[:len(remote)-o.extLen]
 
 	newO, err := o.fs.newObjectWithInfo(remote, info)
+	if err != nil {
+		return err
+	}
 	switch newO := newO.(type) {
 	case *documentObject:
 		*o = *newO

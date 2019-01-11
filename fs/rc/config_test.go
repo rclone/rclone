@@ -74,7 +74,7 @@ func TestOptionsSet(t *testing.T) {
 			"Int": 50,
 		},
 	}
-	out, err = call.Fn(in)
+	_, err = call.Fn(in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown option block")
 
@@ -82,7 +82,7 @@ func TestOptionsSet(t *testing.T) {
 	in = Params{
 		"potato": []string{"a", "b"},
 	}
-	out, err = call.Fn(in)
+	_, err = call.Fn(in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to write options")
 }
