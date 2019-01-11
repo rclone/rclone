@@ -7,15 +7,15 @@ import (
 	"crypto/tls"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"net/http/cookiejar"
+	"net/http/httputil"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"golang.org/x/time/rate"
 	"golang.org/x/net/publicsuffix"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -24,10 +24,10 @@ const (
 )
 
 var (
-	transport   http.RoundTripper
-	noTransport sync.Once
-	tpsBucket   *rate.Limiter // for limiting number of http transactions per second
-	cookieJar, _  = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	transport    http.RoundTripper
+	noTransport  sync.Once
+	tpsBucket    *rate.Limiter // for limiting number of http transactions per second
+	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 )
 
 // StartHTTPTokenBucket starts the token bucket if necessary
