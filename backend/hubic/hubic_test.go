@@ -11,7 +11,9 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: "TestHubic:",
-		NilObject:  (*hubic.Object)(nil),
+		RemoteName:          "TestHubic:",
+		NilObject:           (*hubic.Object)(nil),
+		SkipFsCheckWrap:     true,
+		SkipObjectCheckWrap: true,
 	})
 }
