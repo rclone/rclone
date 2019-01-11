@@ -463,7 +463,7 @@ func (c *cipher) deobfuscateSegment(ciphertext string) (string, error) {
 			if int(newRune) < base {
 				newRune += 256
 			}
-			_, _ = result.WriteRune(rune(newRune))
+			_, _ = result.WriteRune(newRune)
 
 		default:
 			_, _ = result.WriteRune(runeValue)

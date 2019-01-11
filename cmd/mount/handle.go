@@ -45,7 +45,7 @@ func (fh *FileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *f
 	if err != nil {
 		return translateError(err)
 	}
-	resp.Size = int(n)
+	resp.Size = n
 	return nil
 }
 

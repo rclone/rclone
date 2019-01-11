@@ -1006,7 +1006,7 @@ func (o *Object) MimeType() string {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	o.hasMetaData = true
-	o.size = int64(info.Size)
+	o.size = info.Size
 	o.md5 = info.MD5
 	o.mimeType = info.MimeType
 	o.modTime = time.Time(info.ModifiedAt)
@@ -1212,7 +1212,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 		// finally update the meta data
 		o.hasMetaData = true
-		o.size = int64(result.Bytes)
+		o.size = result.Bytes
 		o.md5 = result.Md5
 		o.modTime = time.Unix(result.Modified/1000, 0)
 	} else {

@@ -456,7 +456,7 @@ func AddBackendFlags() {
 					help = help[:nl]
 				}
 				help = strings.TrimSpace(help)
-				flag := pflag.CommandLine.VarPF(opt, name, string(opt.ShortOpt), help)
+				flag := pflag.CommandLine.VarPF(opt, name, opt.ShortOpt, help)
 				if _, isBool := opt.Default.(bool); isBool {
 					flag.NoOptDefVal = "true"
 				}

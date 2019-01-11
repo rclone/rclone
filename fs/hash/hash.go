@@ -255,7 +255,7 @@ func (h Set) GetOne() Type {
 		i++
 		v >>= 1
 	}
-	return Type(None)
+	return None
 }
 
 // Array returns an array of all hash types in the set
