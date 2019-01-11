@@ -195,7 +195,7 @@ type Options struct {
 	StorageURL                  string        `config:"storage_url"`
 	AuthToken                   string        `config:"auth_token"`
 	AuthVersion                 int           `config:"auth_version"`
-	ApplicationCredentialId     string        `config:"application_credential_id"`
+	ApplicationCredentialID     string        `config:"application_credential_id"`
 	ApplicationCredentialName   string        `config:"application_credential_name"`
 	ApplicationCredentialSecret string        `config:"application_credential_secret"`
 	StoragePolicy               string        `config:"storage_policy"`
@@ -317,7 +317,7 @@ func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
 		StorageUrl:                  opt.StorageURL,
 		AuthToken:                   opt.AuthToken,
 		AuthVersion:                 opt.AuthVersion,
-		ApplicationCredentialId:     opt.ApplicationCredentialId,
+		ApplicationCredentialId:     opt.ApplicationCredentialID,
 		ApplicationCredentialName:   opt.ApplicationCredentialName,
 		ApplicationCredentialSecret: opt.ApplicationCredentialSecret,
 		EndpointType:                swift.EndpointType(opt.EndpointType),

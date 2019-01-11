@@ -1632,15 +1632,13 @@ func (r *run) getCacheFs(f fs.Fs) (*cache.Fs, error) {
 	cfs, ok := f.(*cache.Fs)
 	if ok {
 		return cfs, nil
-	} else {
-		if f.Features().UnWrap != nil {
-			cfs, ok := f.Features().UnWrap().(*cache.Fs)
-			if ok {
-				return cfs, nil
-			}
+	}
+	if f.Features().UnWrap != nil {
+		cfs, ok := f.Features().UnWrap().(*cache.Fs)
+		if ok {
+			return cfs, nil
 		}
 	}
-
 	return nil, errors.New("didn't found a cache fs")
 }
 
