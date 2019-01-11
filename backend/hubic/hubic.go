@@ -9,8 +9,10 @@ package hubic
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ncw/rclone/backend/swift"
@@ -124,7 +126,9 @@ func (f *Fs) getCredentials() (err error) {
 	}
 	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return errors.Errorf("failed to get credentials: %s", resp.Status)
+		body, _ := ioutil.ReadAll(resp.Body)
+		bodyStr := strings.TrimSpace(strings.Replace(string(body), "\n", " ", -1))
+		return errors.Errorf("failed to get credentials: %s: %s", resp.Status, bodyStr)
 	}
 	decoder := json.NewDecoder(resp.Body)
 	var result credentials
