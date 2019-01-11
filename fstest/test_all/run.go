@@ -23,8 +23,6 @@ import (
 	"github.com/ncw/rclone/fs"
 )
 
-const testBase = "github.com/ncw/rclone/"
-
 // Control concurrency per backend if required
 var (
 	oneOnlyMu sync.Mutex

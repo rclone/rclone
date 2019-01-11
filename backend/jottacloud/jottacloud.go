@@ -40,7 +40,7 @@ const (
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	defaultDevice               = "Jotta"
-	defaultMountpoint           = "Sync"
+	defaultMountpoint           = "Sync" // nolint
 	rootURL                     = "https://www.jottacloud.com/jfs/"
 	apiURL                      = "https://api.jottacloud.com/files/v1/"
 	baseURL                     = "https://www.jottacloud.com/"

@@ -27,12 +27,6 @@ import (
 	"github.com/ncw/rclone/lib/pacer"
 )
 
-type remoteConfig struct {
-	Name     string
-	SubDir   bool
-	FastList bool
-}
-
 var (
 	// Flags
 	maxTries     = flag.Int("maxtries", 5, "Number of times to try each test")
