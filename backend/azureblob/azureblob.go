@@ -392,7 +392,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 				return nil, errors.New("Container name in SAS URL and container provided in command do not match")
 			}
 
-			container = parts.ContainerName
 			containerURL = azblob.NewContainerURL(*u, pipeline)
 		} else {
 			serviceURL = azblob.NewServiceURL(*u, pipeline)

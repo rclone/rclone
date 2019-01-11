@@ -114,11 +114,11 @@ func TestGetFsAndRemoteNamed(t *testing.T) {
 	assert.NotNil(t, f)
 	assert.Equal(t, "hello", remote)
 
-	f, remote, err = GetFsAndRemoteNamed(in, "fsX", "remote")
+	f, _, err = GetFsAndRemoteNamed(in, "fsX", "remote")
 	require.Error(t, err)
 	assert.Nil(t, f)
 
-	f, remote, err = GetFsAndRemoteNamed(in, "fs", "remoteX")
+	f, _, err = GetFsAndRemoteNamed(in, "fs", "remoteX")
 	require.Error(t, err)
 	assert.Nil(t, f)
 
