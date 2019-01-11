@@ -226,3 +226,4 @@ Contributors
   * Jay <dev@jaygoel.com>
   * andrea rota <a@xelera.eu>
   * nicolov <nicolov@users.noreply.github.com>
+  * Dario Guzik <dario@guzik.com.ar>
