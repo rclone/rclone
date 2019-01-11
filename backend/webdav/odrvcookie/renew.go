@@ -2,13 +2,10 @@ package odrvcookie
 
 import (
 	"time"
-
-	"github.com/ncw/rclone/lib/rest"
 )
 
 // CookieRenew holds information for the renew
 type CookieRenew struct {
-	srv     *rest.Client
 	timer   *time.Ticker
 	renewFn func()
 }
