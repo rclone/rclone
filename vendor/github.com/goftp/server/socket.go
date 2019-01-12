@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 )
 
 // DataSocket describes a data socket is used to send non-control data between the client and
@@ -208,13 +209,23 @@ func (socket *ftpPassiveSocket) GoListenAndServe(sessionID string) (err error) {
 		return
 	}
 
-	var listener net.Listener
-	listener, err = net.ListenTCP("tcp", laddr)
+	var tcplistener *net.TCPListener
+	tcplistener, err = net.ListenTCP("tcp", laddr)
 	if err != nil {
 		socket.logger.Print(sessionID, err)
 		return
 	}
 
+	// The timeout, for a remote client to establish connection
+	// with a PASV style data connection.
+	const acceptTimeout = 60 * time.Second
+	err = tcplistener.SetDeadline(time.Now().Add(acceptTimeout))
+	if err != nil {
+		socket.logger.Print(sessionID, err)
+		return
+	}
+
+	var listener net.Listener = tcplistener
 	add := listener.Addr()
 	parts := strings.Split(add.String(), ":")
 	port, err := strconv.Atoi(parts[len(parts)-1])

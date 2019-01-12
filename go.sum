@@ -39,6 +39,8 @@ github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 h1:cC0Hbb+18DJ4i
 github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9/go.mod h1:GpOj6zuVBG3Inr9qjEnuVTgBlk2lZ1S9DcoFiXWyKss=
 github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1 h1:WjgeEHEDLGx56ndxS6FYi6qFjZGajSVHPuEPdpJ60cI=
 github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1/go.mod h1:k/SS6VWkxY7dHPhoMQ8IdRu8L4lQtmGbhyXGg+vCnXE=
+github.com/goftp/server v0.0.0-20190111142836-88de73f463af h1:PJxb1aA1z+Ohy2j28L92+ng9phXpZVFRFbPkfmJcRGo=
+github.com/goftp/server v0.0.0-20190111142836-88de73f463af/go.mod h1:k/SS6VWkxY7dHPhoMQ8IdRu8L4lQtmGbhyXGg+vCnXE=
 github.com/golang/protobuf v1.2.0 h1:P3YflyNX/ehuJFLhxviNdFxQPkGK5cDcApsge1SqnvM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/google/go-querystring v1.0.0 h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASuANWTrk=
