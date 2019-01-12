@@ -122,25 +122,41 @@ func writable(path string) bool {
 
 // Directory to install releases in by default
 //
-// Find writable directories on $PATH.  Use the first writable
-// directory which is in $HOME or failing that the first writable
-// directory.
+// Find writable directories on $PATH.  Use $GOPATH/bin if that is on
+// the path and writable or use the first writable directory which is
+// in $HOME or failing that the first writable directory.
 //
 // Returns "" if none of the above were found
 func defaultBinDir() string {
 	home := os.Getenv("HOME")
-	var binDir string
+	var (
+		bin       string
+		homeBin   string
+		goHomeBin string
+		gopath    = os.Getenv("GOPATH")
+	)
 	for _, dir := range strings.Split(os.Getenv("PATH"), ":") {
 		if writable(dir) {
 			if strings.HasPrefix(dir, home) {
-				return dir
+				if homeBin != "" {
+					homeBin = dir
+				}
+				if gopath != "" && strings.HasPrefix(dir, gopath) && goHomeBin == "" {
+					goHomeBin = dir
+				}
 			}
-			if binDir != "" {
-				binDir = dir
+			if bin == "" {
+				bin = dir
 			}
 		}
 	}
-	return binDir
+	if goHomeBin != "" {
+		return goHomeBin
+	}
+	if homeBin != "" {
+		return homeBin
+	}
+	return bin
 }
 
 // read the body or an error message
