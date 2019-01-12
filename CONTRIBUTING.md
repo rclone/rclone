@@ -351,6 +351,12 @@ Unit tests
 Integration tests
 
   * Add your backend to `fstest/test_all/config.yaml`
+      * Once you've done that then you can use the integration test framework from the project root:
+      * go install ./...
+      * test_all -backend remote
+
+Or if you want to run the integration tests manually:
+
   * Make sure integration tests pass with
       * `cd fs/operations`
       * `go test -v -remote TestRemote:`
