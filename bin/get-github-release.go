@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 
@@ -34,6 +35,12 @@ var (
 	bindir  = flag.String("bindir", defaultBinDir(), "Directory to install files downloaded with -extract.")
 	// Globals
 	matchProject = regexp.MustCompile(`^([\w-]+)/([\w-]+)$`)
+	osAliases    = map[string][]string{
+		"darwin": []string{"macos", "osx"},
+	}
+	archAliases = map[string][]string{
+		"amd64": []string{"x86_64"},
+	}
 )
 
 // A github release
@@ -177,12 +184,29 @@ func getAsset(project string, matchName *regexp.Regexp) (string, string) {
 	}
 
 	for _, asset := range release.Assets {
-		if matchName.MatchString(asset.Name) {
+		//log.Printf("Finding %s", asset.Name)
+		if matchName.MatchString(asset.Name) && isOurOsArch(asset.Name) {
 			return asset.BrowserDownloadURL, asset.Name
 		}
 	}
 	log.Fatalf("Didn't find asset in info")
 	return "", ""
+}
+
+// isOurOsArch returns true if s contains our OS and our Arch
+func isOurOsArch(s string) bool {
+	s = strings.ToLower(s)
+	check := func(base string, aliases map[string][]string) bool {
+		names := []string{base}
+		names = append(names, aliases[base]...)
+		for _, name := range names {
+			if strings.Contains(s, name) {
+				return true
+			}
+		}
+		return false
+	}
+	return check(runtime.GOARCH, archAliases) && check(runtime.GOOS, osAliases)
 }
 
 // get a file for download

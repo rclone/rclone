@@ -77,7 +77,7 @@ endif
 # Get the build dependencies
 build_dep:
 ifdef FULL_TESTS
-	go run bin/get-github-release.go -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*-linux-amd64.tar.gz'
+	go run bin/get-github-release.go -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*\.tar\.gz'
 endif
 
 # Get the release dependencies
@@ -189,7 +189,7 @@ endif
 
 travis_beta:
 ifeq ($(TRAVIS_OS_NAME),linux)
-	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*_Linux_x86_64.tar.gz'
+	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*\.tar.gz'
 endif
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) -parallel 8 $(BUILDTAGS) $(TAG)
