@@ -65,10 +65,14 @@ backends:
    remote:   "TestS3DigitalOcean:"
    subdir:   true
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
  - backend:  "s3"
    remote:   "TestS3Ceph:"
    subdir:   true
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
  - backend:  "sftp"
    remote:   "TestSftp:"
    subdir:   false
@@ -81,6 +85,8 @@ backends:
    remote:   "TestSwiftCeph:"
    subdir:   true
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
  - backend:  "yandex"
    remote:   "TestYandex:"
    subdir:   false
@@ -118,6 +124,8 @@ backends:
    remote:   "TestMega:"
    subdir:   false
    fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    subdir:   false

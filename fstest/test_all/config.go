@@ -28,11 +28,12 @@ type Test struct {
 //
 // FIXME make bucket based remotes set sub-dir automatically???
 type Backend struct {
-	Backend  string // name of the backend directory
-	Remote   string // name of the test remote
-	SubDir   bool   // set to test with -sub-dir
-	FastList bool   // set to test with -fast-list
-	OneOnly  bool   // set to run only one backend test at once
+	Backend  string   // name of the backend directory
+	Remote   string   // name of the test remote
+	SubDir   bool     // set to test with -sub-dir
+	FastList bool     // set to test with -fast-list
+	OneOnly  bool     // set to run only one backend test at once
+	Ignore   []string // test names to ignore the failure of
 }
 
 // MakeRuns creates Run objects the Backend and Test
@@ -48,6 +49,10 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	if b.FastList && t.FastList {
 		fastlists = append(fastlists, true)
 	}
+	ignore := make(map[string]struct{}, len(b.Ignore))
+	for _, item := range b.Ignore {
+		ignore[item] = struct{}{}
+	}
 	for _, subdir := range subdirs {
 		for _, fastlist := range fastlists {
 			run := &Run{
@@ -59,6 +64,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 				NoRetries: t.NoRetries,
 				OneOnly:   b.OneOnly,
 				NoBinary:  t.NoBinary,
+				Ignore:    ignore,
 			}
 			if t.AddBackend {
 				run.Path = path.Join(run.Path, b.Backend)
