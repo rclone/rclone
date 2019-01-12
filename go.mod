@@ -18,7 +18,7 @@ require (
 	github.com/djherbis/times v1.1.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.4.0+incompatible
 	github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 // indirect
-	github.com/goftp/server v0.0.0-20180914132916-1fd52c8552f1
+	github.com/goftp/server v0.0.0-20190111142836-88de73f463af
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
