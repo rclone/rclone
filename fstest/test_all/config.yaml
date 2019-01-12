@@ -53,12 +53,32 @@ backends:
    remote:   "TestS3:"
    subdir:   true
    fastlist: true
+ - backend:  "s3"
+   remote:   "TestS3Minio:"
+   subdir:   true
+   fastlist: true
+ - backend:  "s3"
+   remote:   "TestS3Wasabi:"
+   subdir:   true
+   fastlist: true
+ - backend:  "s3"
+   remote:   "TestS3DigitalOcean:"
+   subdir:   true
+   fastlist: true
+ - backend:  "s3"
+   remote:   "TestS3Ceph:"
+   subdir:   true
+   fastlist: true
  - backend:  "sftp"
    remote:   "TestSftp:"
    subdir:   false
    fastlist: false
  - backend:  "swift"
    remote:   "TestSwift:"
+   subdir:   true
+   fastlist: true
+ - backend:  "swift"
+   remote:   "TestSwiftCeph:"
    subdir:   true
    fastlist: true
  - backend:  "yandex"
