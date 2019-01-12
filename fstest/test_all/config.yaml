@@ -73,6 +73,10 @@ backends:
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+ - backend:  "s3"
+   remote:   "TestS3Alibaba:"
+   subdir:   true
+   fastlist: true
  - backend:  "sftp"
    remote:   "TestSftp:"
    subdir:   false

@@ -617,17 +617,21 @@ doesn't copy the ACL from the source but rather writes a fresh one.`,
 				Help:  "Glacier storage class",
 			}},
 		}, {
+			// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in OSS.",
 			Provider: "Alibaba",
 			Examples: []fs.OptionExample{{
-				Value: "Standard",
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
 				Help:  "Standard storage class",
 			}, {
-				Value: "Archive",
+				Value: "GLACIER",
 				Help:  "Archive storage mode.",
 			}, {
-				Value: "IA",
+				Value: "STANDARD_IA",
 				Help:  "Infrequent access storage mode.",
 			}},
 		}, {
