@@ -53,7 +53,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers (AWS, Ceph, Dreamhost, IBM COS, Minio)",
+		Description: "Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,
@@ -61,6 +61,9 @@ func init() {
 			Examples: []fs.OptionExample{{
 				Value: "AWS",
 				Help:  "Amazon Web Services (AWS) S3",
+			}, {
+				Value: "Alibaba",
+				Help:  "Alibaba Cloud Object Storage System (OSS) formerly Aliyun",
 			}, {
 				Value: "Ceph",
 				Help:  "Ceph Object Storage",
@@ -76,6 +79,9 @@ func init() {
 			}, {
 				Value: "Minio",
 				Help:  "Minio Object Storage",
+			}, {
+				Value: "Netease",
+				Help:  "Netease Object Storage (NOS)",
 			}, {
 				Value: "Wasabi",
 				Help:  "Wasabi Object Storage",
@@ -150,7 +156,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS",
+			Provider: "!AWS,Alibaba",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure. Will use v4 signatures and an empty region.",
@@ -270,9 +276,72 @@ func init() {
 				Help:  "Toronto Single Site Private Endpoint",
 			}},
 		}, {
+			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
+			Name:     "endpoint",
+			Help:     "Endpoint for OSS API.",
+			Provider: "Alibaba",
+			Examples: []fs.OptionExample{{
+				Value: "oss-cn-hangzhou.aliyuncs.com",
+				Help:  "East China 1 (Hangzhou)",
+			}, {
+				Value: "oss-cn-shanghai.aliyuncs.com",
+				Help:  "East China 2 (Shanghai)",
+			}, {
+				Value: "oss-cn-qingdao.aliyuncs.com",
+				Help:  "North China 1 (Qingdao)",
+			}, {
+				Value: "oss-cn-beijing.aliyuncs.com",
+				Help:  "North China 2 (Beijing)",
+			}, {
+				Value: "oss-cn-zhangjiakou.aliyuncs.com",
+				Help:  "North China 3 (Zhangjiakou)",
+			}, {
+				Value: "oss-cn-huhehaote.aliyuncs.com",
+				Help:  "North China 5 (Huhehaote)",
+			}, {
+				Value: "oss-cn-shenzhen.aliyuncs.com",
+				Help:  "South China 1 (Shenzhen)",
+			}, {
+				Value: "oss-cn-hongkong.aliyuncs.com",
+				Help:  "Hong Kong (Hong Kong)",
+			}, {
+				Value: "oss-us-west-1.aliyuncs.com",
+				Help:  "US West 1 (Silicon Valley)",
+			}, {
+				Value: "oss-us-east-1.aliyuncs.com",
+				Help:  "US East 1 (Virginia)",
+			}, {
+				Value: "oss-ap-southeast-1.aliyuncs.com",
+				Help:  "Southeast Asia Southeast 1 (Singapore)",
+			}, {
+				Value: "oss-ap-southeast-2.aliyuncs.com",
+				Help:  "Asia Pacific Southeast 2 (Sydney)",
+			}, {
+				Value: "oss-ap-southeast-3.aliyuncs.com",
+				Help:  "Southeast Asia Southeast 3 (Kuala Lumpur)",
+			}, {
+				Value: "oss-ap-southeast-5.aliyuncs.com",
+				Help:  "Asia Pacific Southeast 5 (Jakarta)",
+			}, {
+				Value: "oss-ap-northeast-1.aliyuncs.com",
+				Help:  "Asia Pacific Northeast 1 (Japan)",
+			}, {
+				Value: "oss-ap-south-1.aliyuncs.com",
+				Help:  "Asia Pacific South 1 (Mumbai)",
+			}, {
+				Value: "oss-eu-central-1.aliyuncs.com",
+				Help:  "Central Europe 1 (Frankfurt)",
+			}, {
+				Value: "oss-eu-west-1.aliyuncs.com",
+				Help:  "West Europe (London)",
+			}, {
+				Value: "oss-me-east-1.aliyuncs.com",
+				Help:  "Middle East 1 (Dubai)",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS",
+			Provider: "!AWS,IBMCOS,Alibaba",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-west-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -449,7 +518,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS",
+			Provider: "!AWS,IBMCOS,Alibaba",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -546,6 +615,20 @@ doesn't copy the ACL from the source but rather writes a fresh one.`,
 			}, {
 				Value: "GLACIER",
 				Help:  "Glacier storage class",
+			}},
+		}, {
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in OSS.",
+			Provider: "Alibaba",
+			Examples: []fs.OptionExample{{
+				Value: "Standard",
+				Help:  "Standard storage class",
+			}, {
+				Value: "Archive",
+				Help:  "Archive storage mode.",
+			}, {
+				Value: "IA",
+				Help:  "Infrequent access storage mode.",
 			}},
 		}, {
 			Name: "upload_cutoff",
@@ -714,7 +797,7 @@ func (f *Fs) Features() *fs.Features {
 // retryErrorCodes is a slice of error codes that we will retry
 // See: https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
 var retryErrorCodes = []int{
-	409, // Conflict - various states that could be resolved on a retry
+	// 409, // Conflict - various states that could be resolved on a retry
 	503, // Service Unavailable/Slow Down - "Reduce your request rate"
 }
 
@@ -722,14 +805,13 @@ var retryErrorCodes = []int{
 // as it should notice closed connections and timeouts which are the most likely
 // sort of failure modes
 func shouldRetry(err error) (bool, error) {
-
 	// If this is an awserr object, try and extract more useful information to determine if we should retry
 	if awsError, ok := err.(awserr.Error); ok {
 		// Simple case, check the original embedded error in case it's generically retriable
 		if fserrors.ShouldRetry(awsError.OrigErr()) {
 			return true, err
 		}
-		//Failing that, if it's a RequestFailure it's probably got an http status code we can check
+		// Failing that, if it's a RequestFailure it's probably got an http status code we can check
 		if reqErr, ok := err.(awserr.RequestFailure); ok {
 			for _, e := range retryErrorCodes {
 				if reqErr.StatusCode() == e {
@@ -738,7 +820,7 @@ func shouldRetry(err error) (bool, error) {
 			}
 		}
 	}
-	//Ok, not an awserr, check for generic failure conditions
+	// Ok, not an awserr, check for generic failure conditions
 	return fserrors.ShouldRetry(err), err
 }
 
@@ -814,6 +896,9 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	}
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
+	}
+	if opt.Provider == "Alibaba" || opt.Provider == "Netease" {
+		opt.ForcePathStyle = false
 	}
 	awsConfig := aws.NewConfig().
 		WithRegion(opt.Region).

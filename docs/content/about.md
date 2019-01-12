@@ -13,6 +13,7 @@ Rclone
 
 Rclone is a command line program to sync files and directories to and from:
 
+* {{< provider name="Alibaba Cloud (Aliyun) Object Storage System (OSS)" home="https://www.alibabacloud.com/product/oss/" config="/s3/#alibaba-oss" >}}
 * {{< provider name="Amazon Drive" home="https://www.amazon.com/clouddrive" config="/amazonclouddrive/" >}} ([See note](/amazonclouddrive/#status))
 * {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
 * {{< provider name="Backblaze B2" home="https://www.backblaze.com/b2/cloud-storage.html" config="/b2/" >}}
