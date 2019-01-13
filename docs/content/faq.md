@@ -15,8 +15,8 @@ work on all the remote storage systems.
 ### Can I copy the config from one machine to another ###
 
 Sure!  Rclone stores all of its config in a single file.  If you want
-to find this file, the simplest way is to run `rclone -h` and look at
-the help for the `--config` flag which will tell you where it is.
+to find this file, run `rclone config file` which will tell you where
+it is.
 
 See the [remote setup docs](/remote_setup/) for more info.
 

@@ -74,15 +74,14 @@ So first configure rclone on your desktop machine
 
 to set up the config file.
 
-Find the config file by running `rclone -h` and looking for the help for the `--config` option
+Find the config file by running `rclone config file`, for example
 
 ```
-$ rclone -h
-[snip]
-      --config="/home/user/.rclone.conf": Config file.
-[snip]
+$ rclone config file
+Configuration file is stored at:
+/home/user/.rclone.conf
 ```
 
 Now transfer it to the remote box (scp, cut paste, ftp, sftp etc) and
-place it in the correct place (use `rclone -h` on the remote box to
-find out where).
+place it in the correct place (use `rclone config file` on the remote
+box to find out where).

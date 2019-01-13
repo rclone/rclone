@@ -437,8 +437,8 @@ Normally the config file is in your home directory as a file called
 older version). If `$XDG_CONFIG_HOME` is set it will be at
 `$XDG_CONFIG_HOME/rclone/rclone.conf`
 
-If you run `rclone -h` and look at the help for the `--config` option
-you will see where the default location is for you.
+If you run `rclone config file` you will see where the default
+location is for you.
 
 Use this flag to override the config location, eg `rclone
 --config=".myconfig" .config`.
