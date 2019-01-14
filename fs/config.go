@@ -110,7 +110,7 @@ func NewConfig() *ConfigInfo {
 	c.BufferSize = SizeSuffix(16 << 20)
 	c.UserAgent = "rclone/" + Version
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
-	c.StatsFileNameLength = 40
+	c.StatsFileNameLength = 45
 	c.AskPassword = true
 	c.TPSLimitBurst = 1
 	c.MaxTransfer = -1

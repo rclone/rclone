@@ -1,21 +1,26 @@
 package accounting
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/ncw/rclone/fs"
 )
 
 // stringSet holds a set of strings
 type stringSet struct {
 	mu    sync.RWMutex
 	items map[string]struct{}
+	name  string
 }
 
 // newStringSet creates a new empty string set of capacity size
-func newStringSet(size int) *stringSet {
+func newStringSet(size int, name string) *stringSet {
 	return &stringSet{
 		items: make(map[string]struct{}, size),
+		name:  name,
 	}
 }
 
@@ -57,7 +62,11 @@ func (ss *stringSet) Strings() []string {
 		if acc := Stats.inProgress.get(name); acc != nil {
 			out = acc.String()
 		} else {
-			out = name
+			out = fmt.Sprintf("%*s: %s",
+				fs.Config.StatsFileNameLength,
+				shortenName(name, fs.Config.StatsFileNameLength),
+				ss.name,
+			)
 		}
 		strings = append(strings, " * "+out)
 	}
