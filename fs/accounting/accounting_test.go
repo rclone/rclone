@@ -2,10 +2,12 @@ package accounting
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/asyncreader"
@@ -207,4 +209,47 @@ func TestAccountMaxTransfer(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, ErrorMaxTransferLimitReached, err)
 	assert.True(t, fserrors.IsFatalError(err))
+}
+
+func TestShortenName(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		size int
+		want string
+	}{
+		{"", 0, ""},
+		{"abcde", 10, "abcde"},
+		{"abcde", 0, "abcde"},
+		{"abcde", -1, "abcde"},
+		{"abcde", 5, "abcde"},
+		{"abcde", 4, "ab…e"},
+		{"abcde", 3, "a…e"},
+		{"abcde", 2, "a…"},
+		{"abcde", 1, "…"},
+		{"abcdef", 6, "abcdef"},
+		{"abcdef", 5, "ab…ef"},
+		{"abcdef", 4, "ab…f"},
+		{"abcdef", 3, "a…f"},
+		{"abcdef", 2, "a…"},
+		{"áßcdèf", 1, "…"},
+		{"áßcdè", 5, "áßcdè"},
+		{"áßcdè", 4, "áß…è"},
+		{"áßcdè", 3, "á…è"},
+		{"áßcdè", 2, "á…"},
+		{"áßcdè", 1, "…"},
+		{"áßcdèł", 6, "áßcdèł"},
+		{"áßcdèł", 5, "áß…èł"},
+		{"áßcdèł", 4, "áß…ł"},
+		{"áßcdèł", 3, "á…ł"},
+		{"áßcdèł", 2, "á…"},
+		{"áßcdèł", 1, "…"},
+	} {
+		t.Run(fmt.Sprintf("in=%q, size=%d", test.in, test.size), func(t *testing.T) {
+			got := shortenName(test.in, test.size)
+			assert.Equal(t, test.want, got)
+			if test.size > 0 {
+				assert.True(t, utf8.RuneCountInString(got) <= test.size, "too big")
+			}
+		})
+	}
 }

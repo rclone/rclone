@@ -6,6 +6,7 @@ import (
 	"io"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/asyncreader"
@@ -243,6 +244,24 @@ func (acc *Account) eta() (etaDuration time.Duration, ok bool) {
 	return eta(acc.bytes, acc.size, acc.avg)
 }
 
+// shortenName shortens in to size runes long
+// If size <= 0 then in is left untouched
+func shortenName(in string, size int) string {
+	if size <= 0 {
+		return in
+	}
+	if utf8.RuneCountInString(in) <= size {
+		return in
+	}
+	name := []rune(in)
+	size-- // don't count elipsis rune
+	suffixLength := size / 2
+	prefixLength := size - suffixLength
+	suffixStart := len(name) - suffixLength
+	name = append(append(name[:prefixLength], '…'), name[suffixStart:]...)
+	return string(name)
+}
+
 // String produces stats for this file
 func (acc *Account) String() string {
 	a, b := acc.progress()
@@ -257,16 +276,6 @@ func (acc *Account) String() string {
 		}
 	}
 
-	name := []rune(acc.name)
-	if fs.Config.StatsFileNameLength > 0 {
-		if len(name) > fs.Config.StatsFileNameLength {
-			suffixLength := fs.Config.StatsFileNameLength / 2
-			prefixLength := fs.Config.StatsFileNameLength - suffixLength
-			suffixStart := len(name) - suffixLength
-			name = append(append(name[:prefixLength], '…'), name[suffixStart:]...)
-		}
-	}
-
 	if fs.Config.DataRateUnit == "bits" {
 		cur = cur * 8
 	}
@@ -276,11 +285,11 @@ func (acc *Account) String() string {
 		percentageDone = int(100 * float64(a) / float64(b))
 	}
 
-	done := fmt.Sprintf("%2d%% /%s", percentageDone, fs.SizeSuffix(b))
-
-	return fmt.Sprintf("%45s: %s, %s/s, %s",
-		string(name),
-		done,
+	return fmt.Sprintf("%*s:%3d%% /%s, %s/s, %s",
+		fs.Config.StatsFileNameLength,
+		shortenName(acc.name, fs.Config.StatsFileNameLength),
+		percentageDone,
+		fs.SizeSuffix(b),
 		fs.SizeSuffix(cur),
 		etas,
 	)

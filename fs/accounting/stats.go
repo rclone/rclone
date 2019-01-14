@@ -92,8 +92,8 @@ type StatsInfo struct {
 // NewStats cretates an initialised StatsInfo
 func NewStats() *StatsInfo {
 	return &StatsInfo{
-		checking:     newStringSet(fs.Config.Checkers),
-		transferring: newStringSet(fs.Config.Transfers),
+		checking:     newStringSet(fs.Config.Checkers, "checking"),
+		transferring: newStringSet(fs.Config.Transfers, "transferring"),
 		start:        time.Now(),
 		inProgress:   newInProgress(),
 	}
