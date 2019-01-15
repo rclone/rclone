@@ -646,7 +646,21 @@ func (f *ftpReadCloser) Read(p []byte) (n int, err error) {
 
 // Close the FTP reader and return the connection to the pool
 func (f *ftpReadCloser) Close() error {
-	err := f.rc.Close()
+	var err error
+	errchan := make(chan error, 1)
+	go func() {
+		errchan <- f.rc.Close()
+	}()
+	// Wait for Close for up to 60 seconds
+	timer := time.NewTimer(60 * time.Second)
+	select {
+	case err = <-errchan:
+		timer.Stop()
+	case <-timer.C:
+		// if timer fired assume no error but connection dead
+		fs.Errorf(f.f, "Timeout when waiting for connection Close")
+		return nil
+	}
 	// if errors while reading or closing, dump the connection
 	if err != nil || f.err != nil {
 		_ = f.c.Quit()
