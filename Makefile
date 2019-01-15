@@ -185,6 +185,13 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)
 
+circleci_upload:
+	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
+ifndef BRANCH_PATH
+	-#./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/testbuilds
+endif
+	@echo Beta release ready at $(BETA_URL)/testbuilds
+
 BUILD_FLAGS := -exclude "^(windows|darwin)/"
 ifeq ($(TRAVIS_OS_NAME),osx)
 	BUILD_FLAGS := -include "^darwin/" -cgo
