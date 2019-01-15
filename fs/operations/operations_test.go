@@ -956,3 +956,90 @@ func TestListFormat(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"|subdir/|"+items[1].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[1]))
 
 }
+
+func TestDirMove(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	r.Mkdir(r.Fremote)
+
+	// Make some files and dirs
+	r.ForceMkdir(r.Fremote)
+	files := []fstest.Item{
+		r.WriteObject("A1/one", "one", t1),
+		r.WriteObject("A1/two", "two", t2),
+		r.WriteObject("A1/B1/three", "three", t3),
+		r.WriteObject("A1/B1/C1/four", "four", t1),
+		r.WriteObject("A1/B1/C2/five", "five", t2),
+	}
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B2"))
+	require.NoError(t, operations.Mkdir(r.Fremote, "A1/B1/C3"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		files,
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B2",
+			"A1/B1/C1",
+			"A1/B1/C2",
+			"A1/B1/C3",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	require.NoError(t, operations.DirMove(r.Fremote, "A1", "A2"))
+
+	for i := range files {
+		files[i].Path = strings.Replace(files[i].Path, "A1/", "A2/", -1)
+		files[i].WinPath = ""
+	}
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		files,
+		[]string{
+			"A2",
+			"A2/B1",
+			"A2/B2",
+			"A2/B1/C1",
+			"A2/B1/C2",
+			"A2/B1/C3",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+	// Disable DirMove
+	features := r.Fremote.Features()
+	oldDirMove := features.DirMove
+	features.DirMove = nil
+	defer func() {
+		features.DirMove = oldDirMove
+	}()
+
+	require.NoError(t, operations.DirMove(r.Fremote, "A2", "A3"))
+
+	for i := range files {
+		files[i].Path = strings.Replace(files[i].Path, "A2/", "A3/", -1)
+		files[i].WinPath = ""
+	}
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		files,
+		[]string{
+			"A3",
+			"A3/B1",
+			"A3/B2",
+			"A3/B1/C1",
+			"A3/B1/C2",
+			"A3/B1/C3",
+		},
+		fs.GetModifyWindow(r.Fremote),
+	)
+
+}

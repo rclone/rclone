@@ -26,6 +26,7 @@ import (
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 // CheckHashes checks the two files to see if they have common
@@ -1584,4 +1585,82 @@ func (l *ListFormat) Format(entry fs.DirEntry) (result string) {
 		result = strings.Join(out, l.separator)
 	}
 	return result
+}
+
+// DirMove renames srcRemote to dstRemote
+//
+// It does this by loading the directory tree into memory (using ListR
+// if available) and doing renames in parallel.
+func DirMove(f fs.Fs, srcRemote, dstRemote string) (err error) {
+	// Use DirMove if possible
+	if doDirMove := f.Features().DirMove; doDirMove != nil {
+		return doDirMove(f, srcRemote, dstRemote)
+	}
+
+	// Load the directory tree into memory
+	tree, err := walk.NewDirTree(f, srcRemote, true, -1)
+	if err != nil {
+		return errors.Wrap(err, "RenameDir tree walk")
+	}
+
+	// Get the directories in sorted order
+	dirs := tree.Dirs()
+
+	// Make the destination directories - must be done in order not in parallel
+	for _, dir := range dirs {
+		dstPath := dstRemote + dir[len(srcRemote):]
+		err := f.Mkdir(dstPath)
+		if err != nil {
+			return errors.Wrap(err, "RenameDir mkdir")
+		}
+	}
+
+	// Rename the files in parallel
+	type rename struct {
+		o       fs.Object
+		newPath string
+	}
+	renames := make(chan rename, fs.Config.Transfers)
+	g, ctx := errgroup.WithContext(context.Background())
+	for i := 0; i < fs.Config.Transfers; i++ {
+		g.Go(func() error {
+			for job := range renames {
+				dstOverwritten, _ := f.NewObject(job.newPath)
+				_, err := Move(f, dstOverwritten, job.newPath, job.o)
+				if err != nil {
+					return err
+				}
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
+				}
+
+			}
+			return nil
+		})
+	}
+	for dir, entries := range tree {
+		dstPath := dstRemote + dir[len(srcRemote):]
+		for _, entry := range entries {
+			if o, ok := entry.(fs.Object); ok {
+				renames <- rename{o, path.Join(dstPath, path.Base(o.Remote()))}
+			}
+		}
+	}
+	close(renames)
+	err = g.Wait()
+	if err != nil {
+		return errors.Wrap(err, "RenameDir renames")
+	}
+
+	// Remove the source directories in reverse order
+	for i := len(dirs) - 1; i >= 0; i-- {
+		err := f.Rmdir(dirs[i])
+		if err != nil {
+			return errors.Wrap(err, "RenameDir rmdir")
+		}
+	}
+
+	return nil
 }
