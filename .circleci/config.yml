@@ -29,6 +29,19 @@ jobs:
         command: |
             mkdir -p /tmp/rclone.dist
             cp -R rclone-* /tmp/rclone.dist
+            mkdir build
+            cp -R rclone-* build/
+
+    - run:
+        name: Build rclone
+        command: |
+            go version
+            go build
+
+    - run:
+        name: Upload artifacts
+        command: |
+            make circleci_upload
 
     - store_artifacts:
         path: /tmp/rclone.dist
