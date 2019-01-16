@@ -523,6 +523,8 @@ func init() {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
 
+This ACL is used for creating objects and if bucket_acl isn't set, for creating buckets too.
+
 For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 
 Note that this ACL is applied when server side copying objects as S3
@@ -567,6 +569,28 @@ doesn't copy the ACL from the source but rather writes a fresh one.`,
 				Value:    "authenticated-read",
 				Help:     "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access. Not supported on Buckets. This acl is available on IBM Cloud (Infra) and On-Premise IBM COS",
 				Provider: "IBMCOS",
+			}},
+		}, {
+			Name: "bucket_acl",
+			Help: `Canned ACL used when creating buckets.
+
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+
+Note that this ACL is applied when only when creating buckets.  If it
+isn't set then "acl" is used instead.`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "private",
+				Help:  "Owner gets FULL_CONTROL. No one else has access rights (default).",
+			}, {
+				Value: "public-read",
+				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ access.",
+			}, {
+				Value: "public-read-write",
+				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+			}, {
+				Value: "authenticated-read",
+				Help:  "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.",
 			}},
 		}, {
 			Name:     "server_side_encryption",
@@ -727,6 +751,7 @@ type Options struct {
 	Endpoint             string        `config:"endpoint"`
 	LocationConstraint   string        `config:"location_constraint"`
 	ACL                  string        `config:"acl"`
+	BucketACL            string        `config:"bucket_acl"`
 	ServerSideEncryption string        `config:"server_side_encryption"`
 	SSEKMSKeyID          string        `config:"sse_kms_key_id"`
 	StorageClass         string        `config:"storage_class"`
@@ -992,6 +1017,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	bucket, directory, err := s3ParsePath(root)
 	if err != nil {
 		return nil, err
+	}
+	if opt.ACL == "" {
+		opt.ACL = "private"
+	}
+	if opt.BucketACL == "" {
+		opt.BucketACL = opt.ACL
 	}
 	c, ses, err := s3Connection(opt)
 	if err != nil {
@@ -1351,7 +1382,7 @@ func (f *Fs) Mkdir(dir string) error {
 	}
 	req := s3.CreateBucketInput{
 		Bucket: &f.bucket,
-		ACL:    &f.opt.ACL,
+		ACL:    &f.opt.BucketACL,
 	}
 	if f.opt.LocationConstraint != "" {
 		req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
@@ -1370,6 +1401,7 @@ func (f *Fs) Mkdir(dir string) error {
 	if err == nil {
 		f.bucketOK = true
 		f.bucketDeleted = false
+		fs.Infof(f, "Bucket created with ACL %q", *req.ACL)
 	}
 	return err
 }
@@ -1393,6 +1425,7 @@ func (f *Fs) Rmdir(dir string) error {
 	if err == nil {
 		f.bucketOK = false
 		f.bucketDeleted = true
+		fs.Infof(f, "Bucket deleted")
 	}
 	return err
 }
