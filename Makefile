@@ -188,7 +188,7 @@ endif
 circleci_upload:
 	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
 ifndef BRANCH_PATH
-	-#./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/testbuilds
+	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
