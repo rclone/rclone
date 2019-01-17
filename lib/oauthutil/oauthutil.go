@@ -358,16 +358,24 @@ func ConfigErrorCheck(id, name string, m configmap.Mapper, errorHandler func(*ht
 
 func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Request) AuthError, oauthConfig *oauth2.Config, offline bool, opts []oauth2.AuthCodeOption) error {
 	oauthConfig, changed := overrideCredentials(name, m, oauthConfig)
-	auto, ok := m.Get(config.ConfigAutomatic)
-	automatic := ok && auto != ""
+	authorizeOnlyValue, ok := m.Get(config.ConfigAuthorize)
+	authorizeOnly := ok && authorizeOnlyValue != "" // set if being run by "rclone authorize"
 
 	// See if already have a token
 	tokenString, ok := m.Get("token")
 	if ok && tokenString != "" {
 		fmt.Printf("Already have a token - refresh?\n")
-		if !config.Confirm() {
+		if !config.ConfirmWithConfig(m, "config_refresh_token", true) {
 			return nil
 		}
+	}
+
+	// Ask the user whether they are using a local machine
+	isLocal := func() bool {
+		fmt.Printf("Use auto config?\n")
+		fmt.Printf(" * Say Y if not sure\n")
+		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
+		return config.ConfirmWithConfig(m, "config_is_local", true)
 	}
 
 	// Detect whether we should use internal web server
@@ -378,14 +386,10 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 			fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
 		}
 		useWebServer = true
-		if automatic {
+		if authorizeOnly {
 			break
 		}
-		fmt.Printf("Use auto config?\n")
-		fmt.Printf(" * Say Y if not sure\n")
-		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
-		auto := config.Confirm()
-		if !auto {
+		if !isLocal() {
 			fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
 			fmt.Printf("Execute the following on your machine:\n")
 			if changed {
@@ -407,12 +411,9 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 			return PutToken(name, m, token, true)
 		}
 	case TitleBarRedirectURL:
-		useWebServer = automatic
-		if !automatic {
-			fmt.Printf("Use auto config?\n")
-			fmt.Printf(" * Say Y if not sure\n")
-			fmt.Printf(" * Say N if you are working on a remote or headless machine or Y didn't work\n")
-			useWebServer = config.Confirm()
+		useWebServer = authorizeOnly
+		if !authorizeOnly {
+			useWebServer = isLocal()
 		}
 		if useWebServer {
 			// copy the config and set to use the internal webserver
@@ -479,12 +480,12 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 	}
 
 	// Print code if we do automatic retrieval
-	if automatic {
+	if authorizeOnly {
 		result, err := json.Marshal(token)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal token")
 		}
-		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste", result)
+		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste\n", result)
 	}
 	return PutToken(name, m, token, true)
 }
