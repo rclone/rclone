@@ -45,9 +45,11 @@ Choose a number from below, or type in your own value
    \ "nextcloud"
  2 / Owncloud
    \ "owncloud"
- 3 / Sharepoint
+ 3 / Sharepoint Online, authenticated by Microsoft OneDrive account.
    \ "sharepoint"
- 4 / Other site/service or software
+ 4 / Sharepoint with NTLM authentication. Usually self-hosted instances.
+   \ "sharepoint-ntlm"
+ 5 / Other site/service or software
    \ "other"
 vendor> 1
 User name
@@ -136,6 +138,8 @@ Name of the Webdav site/service/software you are using
         - Owncloud
     - "sharepoint"
         - Sharepoint
+    - "sharepoint-ntlm"
+        - Sharepoint with NTLM authentication
     - "other"
         - Other site/service or software
 
@@ -147,6 +151,8 @@ User name
 - Env Var:     RCLONE_WEBDAV_USER
 - Type:        string
 - Default:     ""
+
+In case vendor mode `sharepoint-ntlm` is used, the user name is in the form `DOMAIN\user`
 
 #### --webdav-pass
 
@@ -201,7 +207,7 @@ This is configured in an identical way to Owncloud.  Note that
 Nextcloud initially did not support streaming of files (`rcat`) whereas
 Owncloud did, but [this](https://github.com/nextcloud/nextcloud-snap/issues/365) seems to be fixed as of 2020-11-27 (tested with rclone v1.53.1 and Nextcloud Server v19).
 
-### Sharepoint ###
+### Sharepoint OneDrive ###
 
 Rclone can be used with Sharepoint provided by OneDrive for Business
 or Office365 Education Accounts.
@@ -237,11 +243,40 @@ Your config file should look like this:
 [sharepoint]
 type = webdav
 url = https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/Documents
-vendor = other
+vendor = sharepoint
 user = YourEmailAddress
 pass = encryptedpassword
 ```
 
+### Sharepoint with NTLM ###
+
+Use this option in case your (hosted) Sharepoint is not tied to OneDrive accounts and uses NTLM authentication.
+
+For getting the `url` configuration, similarly to the above, first navigate to the desired directory in your browser to get the URL,
+then strip everything after the name of the opened directory.
+
+Example:
+If the URL is:
+https://example.sharepoint.com/sites/12345/Documents/Forms/AllItems.aspx
+
+The configuration to use would be:
+https://example.sharepoint.com/sites/12345/Documents
+
+Set the `vendor` to `sharepoint-ntlm`.
+
+NTLM uses domain and user name combination for authentication,
+set `user` to `DOMAIN\username`.
+
+Your config file should look like this:
+
+```
+[sharepoint]
+type = webdav
+url = https://[YOUR-DOMAIN]/some-path-to/Documents
+vendor = sharepoint-ntlm
+user = DOMAIN\user
+pass = encryptedpassword
+```
 #### Required Flags for SharePoint ####
 As SharePoint does some special things with uploaded documents, you won't be able to use the documents size or the documents hash to compare if a file has been changed since the upload / which file is newer.
 

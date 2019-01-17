@@ -33,6 +33,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+
+	ntlmssp "github.com/Azure/go-ntlmssp"
 )
 
 const (
@@ -67,14 +69,17 @@ func init() {
 				Help:  "Owncloud",
 			}, {
 				Value: "sharepoint",
-				Help:  "Sharepoint",
+				Help:  "Sharepoint Online, authenticated by Microsoft OneDrive account.",
+			}, {
+				Value: "sharepoint-ntlm",
+				Help:  "Sharepoint with NTLM authentication. Usually self-hosted or company instances.",
 			}, {
 				Value: "other",
 				Help:  "Other site/service or software",
 			}},
 		}, {
 			Name: "user",
-			Help: "User name",
+			Help: "User name. In case NTLM authentication is used, the username should be in the format 'Domain\\User'.",
 		}, {
 			Name:       "pass",
 			Help:       "Password.",
@@ -330,13 +335,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	client := fshttp.NewClient(ctx)
+	if opt.Vendor == "sharepoint-ntlm" {
+		// Add NTLM layer
+		client.Transport = ntlmssp.Negotiator{RoundTripper: client.Transport}
+	}
 	f := &Fs{
 		name:        name,
 		root:        root,
 		opt:         *opt,
 		endpoint:    u,
 		endpointURL: u.String(),
-		srv:         rest.NewClient(fshttp.NewClient(ctx)).SetRoot(u.String()),
+		srv:         rest.NewClient(client).SetRoot(u.String()),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		precision:   fs.ModTimeNotSupported,
 	}
@@ -464,6 +474,10 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		// however, rclone defaults to 1 since it provides recursive directory listing
 		// to determine if we may have found a file, the request has to be resent
 		// with the depth set to 0
+		f.retryWithZeroDepth = true
+	case "sharepoint-ntlm":
+		// Sharepoint with NTLM authentication
+		// See comment above
 		f.retryWithZeroDepth = true
 	case "other":
 	default:
