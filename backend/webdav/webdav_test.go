@@ -38,3 +38,14 @@ func TestIntegration3(t *testing.T) {
 		NilObject:  (*webdav.Object)(nil),
 	})
 }
+
+// TestIntegration runs integration tests against the remote
+func TestIntegration4(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("skipping as -remote is set")
+	}
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: "TestWebdavNTLM:",
+		NilObject:  (*webdav.Object)(nil),
+	})
+}
