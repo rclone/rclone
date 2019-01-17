@@ -718,12 +718,16 @@ func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, er
 
 // Figure out if the user wants to use a team drive
 func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
+	// Stop if we are running non-interactive config
+	if fs.Config.AutoConfirm {
+		return nil
+	}
 	if opt.TeamDriveID == "" {
 		fmt.Printf("Configure this as a team drive?\n")
 	} else {
 		fmt.Printf("Change current team drive ID %q?\n", opt.TeamDriveID)
 	}
-	if !config.ConfirmWithDefault(false) {
+	if !config.Confirm() {
 		return nil
 	}
 	client, err := createOAuthClient(opt, name, m)

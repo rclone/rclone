@@ -75,9 +75,8 @@ func init() {
 				return
 			}
 
-			// Are we running headless?
-			if automatic, _ := m.Get(config.ConfigAutomatic); automatic != "" {
-				// Yes, okay we are done
+			// Stop if we are running non-interactive config
+			if fs.Config.AutoConfirm {
 				return
 			}
 
@@ -199,7 +198,7 @@ func init() {
 
 			fmt.Printf("Found drive '%s' of type '%s', URL: %s\nIs that okay?\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL)
 			// This does not work, YET :)
-			if !config.Confirm() {
+			if !config.ConfirmWithConfig(m, "config_drive_ok", true) {
 				log.Fatalf("Cancelled by user")
 			}
 

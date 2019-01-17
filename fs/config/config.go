@@ -27,6 +27,7 @@ import (
 	"github.com/Unknwon/goconfig"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/driveletter"
@@ -57,8 +58,8 @@ const (
 	// ConfigTokenURL is the config key used to store the token server endpoint
 	ConfigTokenURL = "token_url"
 
-	// ConfigAutomatic indicates that we want non-interactive configuration
-	ConfigAutomatic = "config_automatic"
+	// ConfigAuthorize indicates that we just want "rclone authorize"
+	ConfigAuthorize = "config_authorize"
 )
 
 // Global
@@ -639,21 +640,38 @@ func Command(commands []string) byte {
 	}
 }
 
-// ConfirmWithDefault asks the user for Yes or No and returns true or false.
-//
-// If AutoConfirm is set, it will return the Default value passed in
-func ConfirmWithDefault(Default bool) bool {
-	if fs.Config.AutoConfirm {
-		return Default
-	}
-	return Command([]string{"yYes", "nNo"}) == 'y'
-}
-
 // Confirm asks the user for Yes or No and returns true or false
 //
 // If AutoConfirm is set, it will return true
 func Confirm() bool {
-	return ConfirmWithDefault(true)
+	return Command([]string{"yYes", "nNo"}) == 'y'
+}
+
+// ConfirmWithConfig asks the user for Yes or No and returns true or
+// false.
+//
+// If AutoConfirm is set, it will look up the value in m and return
+// that, but if it isn't set then it will return the Default value
+// passed in
+func ConfirmWithConfig(m configmap.Getter, configName string, Default bool) bool {
+	if fs.Config.AutoConfirm {
+		configString, ok := m.Get(configName)
+		if ok {
+			configValue, err := strconv.ParseBool(configString)
+			if err != nil {
+				fs.Errorf(nil, "Failed to parse config parameter %s=%q as boolean - using default %v: %v", configName, configString, Default, err)
+			} else {
+				Default = configValue
+			}
+		}
+		answer := "No"
+		if Default {
+			answer = "Yes"
+		}
+		fmt.Printf("Auto confirm is set: answering %s, override by setting config parameter %s=%v\n", answer, configName, !Default)
+		return Default
+	}
+	return Confirm()
 }
 
 // Choose one of the defaults or type a new string if newOk is set
@@ -943,8 +961,6 @@ func CreateRemote(name string, provider string, keyValues rc.Params) error {
 	getConfigData().DeleteSection(name)
 	// Set the type
 	getConfigData().SetValue(name, "type", provider)
-	// Show this is automatically configured
-	getConfigData().SetValue(name, ConfigAutomatic, "yes")
 	// Set the remaining values
 	return UpdateRemote(name, keyValues)
 }
@@ -1227,6 +1243,7 @@ func SetPassword() {
 //   rclone authorize "fs name"
 //   rclone authorize "fs name" "client id" "client secret"
 func Authorize(args []string) {
+	defer suppressConfirm()()
 	switch len(args) {
 	case 1, 3:
 	default:
@@ -1243,8 +1260,8 @@ func Authorize(args []string) {
 	// Make sure we delete it
 	defer DeleteRemote(name)
 
-	// Indicate that we want fully automatic configuration.
-	getConfigData().SetValue(name, ConfigAutomatic, "yes")
+	// Indicate that we are running rclone authorize
+	getConfigData().SetValue(name, ConfigAuthorize, "true")
 	if len(args) == 3 {
 		getConfigData().SetValue(name, ConfigClientID, args[1])
 		getConfigData().SetValue(name, ConfigClientSecret, args[2])
