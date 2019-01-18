@@ -13,10 +13,10 @@ jobs:
     - run:
         name: Cross-compile rclone
         command: |
-            docker pull billziss/xgo-cgofuse
+            docker pull rclone/xgo-cgofuse
             go get -v github.com/karalabe/xgo
             xgo \
-                --image=billziss/xgo-cgofuse \
+                --image=rclone/xgo-cgofuse \
                 --targets=darwin/386,darwin/amd64,linux/386,linux/amd64,windows/386,windows/amd64 \
                 -tags cmount \
                 .
