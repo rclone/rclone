@@ -227,6 +227,10 @@ type Fs interface {
 
 	// Put in to the remote path with the modTime given of the given size
 	//
+	// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+	// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
+	// return an error or upload it properly (rather than e.g. calling panic).
+	//
 	// May create the object even if it returns an error - if so
 	// will return the object and the error, otherwise will return
 	// nil and the error
@@ -275,6 +279,10 @@ type Object interface {
 	Open(options ...OpenOption) (io.ReadCloser, error)
 
 	// Update in to the object with the modTime given of the given size
+	//
+	// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+	// But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
+	// return an error or update the object properly (rather than e.g. calling panic).
 	Update(in io.Reader, src ObjectInfo, options ...OpenOption) error
 
 	// Removes this object
