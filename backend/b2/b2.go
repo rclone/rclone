@@ -120,20 +120,26 @@ these chunks are buffered in memory and there might a maximum of
 minimim size.`,
 			Default:  fs.SizeSuffix(defaultChunkSize),
 			Advanced: true,
+		}, {
+			Name:     "disable_checksum",
+			Help:     `Disable checksums for large (> upload cutoff) files`,
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account      string        `config:"account"`
-	Key          string        `config:"key"`
-	Endpoint     string        `config:"endpoint"`
-	TestMode     string        `config:"test_mode"`
-	Versions     bool          `config:"versions"`
-	HardDelete   bool          `config:"hard_delete"`
-	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
+	Account         string        `config:"account"`
+	Key             string        `config:"key"`
+	Endpoint        string        `config:"endpoint"`
+	TestMode        string        `config:"test_mode"`
+	Versions        bool          `config:"versions"`
+	HardDelete      bool          `config:"hard_delete"`
+	UploadCutoff    fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize       fs.SizeSuffix `config:"chunk_size"`
+	DisableCheckSum bool          `config:"disable_checksum"`
 }
 
 // Fs represents a remote b2 server
