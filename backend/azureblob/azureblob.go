@@ -754,12 +754,50 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return fs, fs.Update(in, src, options...)
 }
 
+// Check if the container exists
+//
+// NB this can return incorrect results if called immediately after container deletion
+func (f *Fs) dirExists() (bool, error) {
+	options := azblob.ListBlobsSegmentOptions{
+		Details: azblob.BlobListingDetails{
+			Copy:             false,
+			Metadata:         false,
+			Snapshots:        false,
+			UncommittedBlobs: false,
+			Deleted:          false,
+		},
+		MaxResults: 1,
+	}
+	err := f.pacer.Call(func() (bool, error) {
+		ctx := context.Background()
+		_, err := f.cntURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "", options)
+		return f.shouldRetry(err)
+	})
+	if err == nil {
+		return true, nil
+	}
+	// Check http error code along with service code, current SDK doesn't populate service code correctly sometimes
+	if storageErr, ok := err.(azblob.StorageError); ok && (storageErr.ServiceCode() == azblob.ServiceCodeContainerNotFound || storageErr.Response().StatusCode == http.StatusNotFound) {
+		return false, nil
+	}
+	return false, err
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	f.containerOKMu.Lock()
 	defer f.containerOKMu.Unlock()
 	if f.containerOK {
 		return nil
+	}
+	if !f.containerDeleted {
+		exists, err := f.dirExists()
+		if err == nil {
+			f.containerOK = exists
+		}
+		if err != nil || exists {
+			return err
+		}
 	}
 
 	// now try to create the container
