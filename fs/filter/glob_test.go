@@ -108,3 +108,45 @@ func TestGlobToDirGlobs(t *testing.T) {
 		assert.Equal(t, test.want, got, test.in)
 	}
 }
+
+func TestGlobBoundedRecursion(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want bool
+	}{
+		{`*`, false},
+		{`/*`, true},
+		{`/**`, false},
+		{`*.jpg`, false},
+		{`/*.jpg`, true},
+		{`/a/*.jpg`, true},
+		{`/a/b/*.jpg`, true},
+		{`*/*/*.jpg`, false},
+		{`a/b/`, false},
+		{`a/b`, false},
+		{`a/b/*.{png,gif}`, false},
+		{`/a/{jpg,png,gif}/*.{jpg,true,gif}`, true},
+		{`a/{a,a*b,a**c}/d/`, false},
+		{`/a/{a,a*b,a/c,d}/d/`, true},
+		{`**`, false},
+		{`a**`, false},
+		{`a**b`, false},
+		{`a**b**c**d`, false},
+		{`a**b/c**d`, false},
+		{`/A/a**b/B/c**d/C/`, false},
+		{`/var/spool/**/ncw`, false},
+		{`var/spool/**/ncw/`, false},
+		{"/file1.jpg", true},
+		{"/file2.png", true},
+		{"/*.jpg", true},
+		{"/*.png", true},
+		{"/potato", true},
+		{"/sausage1", true},
+		{"/sausage2*", true},
+		{"/sausage3**", false},
+		{"/a/*.jpg", true},
+	} {
+		got := globBoundedRecursion(test.in)
+		assert.Equal(t, test.want, got, test.in)
+	}
+}

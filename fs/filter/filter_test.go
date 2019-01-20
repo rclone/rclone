@@ -25,6 +25,7 @@ func TestNewFilterDefault(t *testing.T) {
 	assert.Len(t, f.dirRules.rules, 0)
 	assert.Nil(t, f.files)
 	assert.True(t, f.InActive())
+	assert.False(t, f.BoundedRecursion())
 }
 
 // testFile creates a temp file with the contents
@@ -103,6 +104,38 @@ func TestNewFilterFull(t *testing.T) {
 		}
 	}
 	assert.False(t, f.InActive())
+	assert.False(t, f.BoundedRecursion())
+}
+
+func TestFilterBoundedRecursion(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want bool
+	}{
+		{"", false},
+		{"- /**", true},
+		{"+ *.jpg", false},
+		{"+ *.jpg\n- /**", false},
+		{"+ /*.jpg\n- /**", true},
+		{"+ *.png\n+ /*.jpg\n- /**", false},
+		{"+ /*.png\n+ /*.jpg\n- /**", true},
+		{"- *.jpg\n- /**", true},
+		{"+ /*.jpg\n- /**", true},
+		{"+ /*dir/\n- /**", true},
+		{"+ /*dir/\n", false},
+		{"+ /*dir/**\n- /**", false},
+		{"+ **/pics*/*.jpg\n- /**", false},
+	} {
+		f, err := NewFilter(nil)
+		require.NoError(t, err)
+		for _, rule := range strings.Split(test.in, "\n") {
+			if rule != "" {
+				require.NoError(t, f.AddRule(rule))
+			}
+		}
+		got := f.BoundedRecursion()
+		assert.Equal(t, test.want, got, test.in)
+	}
 }
 
 type includeTest struct {
@@ -151,6 +184,7 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 		{"file3.jpg", 3, 0, false},
 	})
 	assert.False(t, f.InActive())
+	assert.False(t, f.BoundedRecursion())
 }
 
 func TestNewFilterIncludeFilesDirs(t *testing.T) {
@@ -278,6 +312,7 @@ func TestNewFilterMinSize(t *testing.T) {
 		{"potato/file2.jpg", 99, 0, false},
 	})
 	assert.False(t, f.InActive())
+	assert.False(t, f.BoundedRecursion())
 }
 
 func TestNewFilterMaxSize(t *testing.T) {
