@@ -55,6 +55,7 @@ const (
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
 	defaultMinSleep             = fs.Duration(100 * time.Millisecond)
+	defaultBurst                = 100
 	defaultExportExtensions     = "docx,xlsx,pptx,svg"
 	scopePrefix                 = "https://www.googleapis.com/auth/"
 	defaultScope                = "drive"
@@ -361,6 +362,11 @@ will download it anyway.`,
 			Default:  defaultMinSleep,
 			Help:     "Minimum time to sleep between API calls.",
 			Advanced: true,
+		}, {
+			Name:     "pacer_burst",
+			Default:  defaultBurst,
+			Help:     "Number of API calls to allow without sleeping.",
+			Advanced: true,
 		}},
 	})
 
@@ -404,6 +410,7 @@ type Options struct {
 	KeepRevisionForever       bool          `config:"keep_revision_forever"`
 	V2DownloadMinSize         fs.SizeSuffix `config:"v2_download_min_size"`
 	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
+	PacerBurst                int           `config:"pacer_burst"`
 }
 
 // Fs represents a remote drive server
@@ -781,7 +788,7 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 
 // newPacer makes a pacer configured for drive
 func newPacer(opt *Options) *pacer.Pacer {
-	return pacer.New().SetMinSleep(time.Duration(opt.PacerMinSleep)).SetPacer(pacer.GoogleDrivePacer)
+	return pacer.New().SetMinSleep(time.Duration(opt.PacerMinSleep)).SetBurst(opt.PacerBurst).SetPacer(pacer.GoogleDrivePacer)
 }
 
 func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {

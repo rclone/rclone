@@ -234,7 +234,7 @@ func (p *Pacer) beginCall() {
 		// fs.Debugf(f, "New sleep for %v at %v", t, time.Now())
 		// Sleep the minimum time with the rate limiter
 		if minSleep > 0 && sleepTime >= minSleep {
-			p.limiter.Wait(context.Background())
+			_ = p.limiter.Wait(context.Background())
 			sleepTime -= minSleep
 		}
 		// Then sleep the remaining time
