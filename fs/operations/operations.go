@@ -830,11 +830,7 @@ func CheckDownload(fdst, fsrc fs.Fs, oneway bool) error {
 //
 // Lists in parallel which may get them out of order
 func ListFn(f fs.Fs, fn func(fs.Object)) error {
-	return walk.Walk(f, "", false, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
-		if err != nil {
-			// FIXME count errors and carry on for listing
-			return err
-		}
+	return walk.ListR(f, "", false, fs.Config.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(fn)
 		return nil
 	})
@@ -950,11 +946,7 @@ func ConfigMaxDepth(recursive bool) int {
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(f fs.Fs, w io.Writer) error {
-	return walk.Walk(f, "", false, ConfigMaxDepth(false), func(dirPath string, entries fs.DirEntries, err error) error {
-		if err != nil {
-			// FIXME count errors and carry on for listing
-			return err
-		}
+	return walk.ListR(f, "", false, ConfigMaxDepth(false), walk.ListDirs, func(entries fs.DirEntries) error {
 		entries.ForDir(func(dir fs.Directory) {
 			if dir != nil {
 				syncFprintf(w, "%12d %13s %9d %s\n", dir.Size(), dir.ModTime().Local().Format("2006-01-02 15:04:05"), dir.Items(), dir.Remote())
@@ -1062,21 +1054,17 @@ func listToChan(f fs.Fs, dir string) fs.ObjectsChan {
 	o := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(o)
-		_ = walk.Walk(f, dir, true, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
-			if err != nil {
-				if err == fs.ErrorDirNotFound {
-					return nil
-				}
-				err = errors.Errorf("Failed to list: %v", err)
-				fs.CountError(err)
-				fs.Errorf(nil, "%v", err)
-				return nil
-			}
+		err := walk.ListR(f, dir, true, fs.Config.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
 			entries.ForObject(func(obj fs.Object) {
 				o <- obj
 			})
 			return nil
 		})
+		if err != nil && err != fs.ErrorDirNotFound {
+			err = errors.Wrap(err, "failed to list")
+			fs.CountError(err)
+			fs.Errorf(nil, "%v", err)
+		}
 	}()
 	return o
 }
