@@ -782,6 +782,39 @@ func Run(t *testing.T, opt *Opt) {
 				TestFsListDirFile2(t)
 			})
 
+			// Test the files are all there with walk.ListR recursive listings
+			t.Run("FsListR", func(t *testing.T) {
+				skipIfNotOk(t)
+				objs, dirs, err := walk.GetAll(remote, "", true, -1)
+				require.NoError(t, err)
+				assert.Equal(t, []string{
+					"hello_ sausage",
+					"hello_ sausage/êé",
+					"hello_ sausage/êé/Hello, 世界",
+					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠",
+				}, dirsToNames(dirs))
+				assert.Equal(t, []string{
+					"file name.txt",
+					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt",
+				}, objsToNames(objs))
+			})
+
+			// Test the files are all there with
+			// walk.ListR recursive listings on a sub dir
+			t.Run("FsListRSubdir", func(t *testing.T) {
+				skipIfNotOk(t)
+				objs, dirs, err := walk.GetAll(remote, path.Dir(path.Dir(path.Dir(path.Dir(file2.Path)))), true, -1)
+				require.NoError(t, err)
+				assert.Equal(t, []string{
+					"hello_ sausage/êé",
+					"hello_ sausage/êé/Hello, 世界",
+					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠",
+				}, dirsToNames(dirs))
+				assert.Equal(t, []string{
+					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt",
+				}, objsToNames(objs))
+			})
+
 			// TestFsListDirRoot tests that DirList works in the root
 			TestFsListDirRoot := func(t *testing.T) {
 				skipIfNotOk(t)

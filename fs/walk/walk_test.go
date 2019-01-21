@@ -2,12 +2,15 @@ package walk
 
 import (
 	"fmt"
+	"io"
+	"strings"
 	"sync"
 	"testing"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/filter"
 	"github.com/ncw/rclone/fstest/mockdir"
+	"github.com/ncw/rclone/fstest/mockfs"
 	"github.com/ncw/rclone/fstest/mockobject"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -633,4 +636,308 @@ b/c/d/
 	}
 	// Set to default value, to avoid side effects
 	filter.Active.Opt.ExcludeFile = ""
+}
+
+func TestListType(t *testing.T) {
+	assert.Equal(t, true, ListObjects.Objects())
+	assert.Equal(t, false, ListObjects.Dirs())
+	assert.Equal(t, false, ListDirs.Objects())
+	assert.Equal(t, true, ListDirs.Dirs())
+	assert.Equal(t, true, ListAll.Objects())
+	assert.Equal(t, true, ListAll.Dirs())
+
+	var (
+		a           = mockobject.Object("a")
+		b           = mockobject.Object("b")
+		dir         = mockdir.New("dir")
+		adir        = mockobject.Object("dir/a")
+		dir2        = mockdir.New("dir2")
+		origEntries = fs.DirEntries{
+			a, b, dir, adir, dir2,
+		}
+		dirEntries = fs.DirEntries{
+			dir, dir2,
+		}
+		objEntries = fs.DirEntries{
+			a, b, adir,
+		}
+	)
+	copyOrigEntries := func() (out fs.DirEntries) {
+		out = make(fs.DirEntries, len(origEntries))
+		copy(out, origEntries)
+		return out
+	}
+
+	got := copyOrigEntries()
+	ListAll.Filter(&got)
+	assert.Equal(t, origEntries, got)
+
+	got = copyOrigEntries()
+	ListObjects.Filter(&got)
+	assert.Equal(t, objEntries, got)
+
+	got = copyOrigEntries()
+	ListDirs.Filter(&got)
+	assert.Equal(t, dirEntries, got)
+}
+
+func TestListR(t *testing.T) {
+	objects := fs.DirEntries{
+		mockobject.Object("a"),
+		mockobject.Object("b"),
+		mockdir.New("dir"),
+		mockobject.Object("dir/a"),
+		mockobject.Object("dir/b"),
+		mockobject.Object("dir/c"),
+	}
+	f := mockfs.NewFs("mock", "/")
+	var got []string
+	clearCallback := func() {
+		got = nil
+	}
+	callback := func(entries fs.DirEntries) error {
+		for _, entry := range entries {
+			got = append(got, entry.Remote())
+		}
+		return nil
+	}
+	doListR := func(dir string, callback fs.ListRCallback) error {
+		var os fs.DirEntries
+		for _, o := range objects {
+			if dir == "" || strings.HasPrefix(o.Remote(), dir+"/") {
+				os = append(os, o)
+			}
+		}
+		return callback(os)
+	}
+
+	// Setup filter
+	oldFilter := filter.Active
+	defer func() {
+		filter.Active = oldFilter
+	}()
+
+	var err error
+	filter.Active, err = filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, filter.Active.AddRule("+ b"))
+	require.NoError(t, filter.Active.AddRule("- *"))
+
+	// Base case
+	clearCallback()
+	err = listR(f, "", true, ListAll, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "dir", "dir/a", "dir/b", "dir/c"}, got)
+
+	// Base case - with Objects
+	clearCallback()
+	err = listR(f, "", true, ListObjects, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "dir/a", "dir/b", "dir/c"}, got)
+
+	// Base case - with Dirs
+	clearCallback()
+	err = listR(f, "", true, ListDirs, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"dir"}, got)
+
+	// With filter
+	clearCallback()
+	err = listR(f, "", false, ListAll, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"b", "dir", "dir/b"}, got)
+
+	// With filter - with Objects
+	clearCallback()
+	err = listR(f, "", false, ListObjects, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"b", "dir/b"}, got)
+
+	// With filter - with Dir
+	clearCallback()
+	err = listR(f, "", false, ListDirs, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"dir"}, got)
+
+	// With filter and subdir
+	clearCallback()
+	err = listR(f, "dir", false, ListAll, callback, doListR, false)
+	require.NoError(t, err)
+	require.Equal(t, []string{"dir/b"}, got)
+
+	// Now bucket based
+	objects = fs.DirEntries{
+		mockobject.Object("a"),
+		mockobject.Object("b"),
+		mockobject.Object("dir/a"),
+		mockobject.Object("dir/b"),
+		mockobject.Object("dir/subdir/c"),
+		mockdir.New("dir/subdir"),
+	}
+
+	// Base case
+	clearCallback()
+	err = listR(f, "", true, ListAll, callback, doListR, true)
+	require.NoError(t, err)
+	require.Equal(t, []string{"a", "b", "dir/a", "dir/b", "dir/subdir/c", "dir/subdir", "dir"}, got)
+
+	// With filter
+	clearCallback()
+	err = listR(f, "", false, ListAll, callback, doListR, true)
+	require.NoError(t, err)
+	require.Equal(t, []string{"b", "dir/b", "dir/subdir", "dir"}, got)
+
+	// With filter and subdir
+	clearCallback()
+	err = listR(f, "dir", false, ListAll, callback, doListR, true)
+	require.NoError(t, err)
+	require.Equal(t, []string{"dir/b", "dir/subdir"}, got)
+
+	// With filter and subdir - with Objects
+	clearCallback()
+	err = listR(f, "dir", false, ListObjects, callback, doListR, true)
+	require.NoError(t, err)
+	require.Equal(t, []string{"dir/b"}, got)
+
+	// With filter and subdir - with Dirs
+	clearCallback()
+	err = listR(f, "dir", false, ListDirs, callback, doListR, true)
+	require.NoError(t, err)
+	require.Equal(t, []string{"dir/subdir"}, got)
+}
+
+func TestDirMapAdd(t *testing.T) {
+	type add struct {
+		dir  string
+		sent bool
+	}
+	for i, test := range []struct {
+		root string
+		in   []add
+		want map[string]bool
+	}{
+		{
+			root: "",
+			in: []add{
+				{"", true},
+			},
+			want: map[string]bool{},
+		},
+		{
+			root: "",
+			in: []add{
+				{"a/b/c", true},
+			},
+			want: map[string]bool{
+				"a/b/c": true,
+				"a/b":   false,
+				"a":     false,
+			},
+		},
+		{
+			root: "",
+			in: []add{
+				{"a/b/c", true},
+				{"a/b", true},
+			},
+			want: map[string]bool{
+				"a/b/c": true,
+				"a/b":   true,
+				"a":     false,
+			},
+		},
+		{
+			root: "",
+			in: []add{
+				{"a/b", true},
+				{"a/b/c", false},
+			},
+			want: map[string]bool{
+				"a/b/c": false,
+				"a/b":   true,
+				"a":     false,
+			},
+		},
+		{
+			root: "root",
+			in: []add{
+				{"root/a/b", true},
+				{"root/a/b/c", false},
+			},
+			want: map[string]bool{
+				"root/a/b/c": false,
+				"root/a/b":   true,
+				"root/a":     false,
+			},
+		},
+	} {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			dm := newDirMap(test.root)
+			for _, item := range test.in {
+				dm.add(item.dir, item.sent)
+			}
+			assert.Equal(t, test.want, dm.m)
+		})
+	}
+}
+
+func TestDirMapAddEntries(t *testing.T) {
+	dm := newDirMap("")
+	entries := fs.DirEntries{
+		mockobject.Object("dir/a"),
+		mockobject.Object("dir/b"),
+		mockdir.New("dir"),
+		mockobject.Object("dir2/a"),
+		mockobject.Object("dir2/b"),
+	}
+	require.NoError(t, dm.addEntries(entries))
+	assert.Equal(t, map[string]bool{"dir": true, "dir2": false}, dm.m)
+}
+
+func TestDirMapSendEntries(t *testing.T) {
+	var got []string
+	clearCallback := func() {
+		got = nil
+	}
+	callback := func(entries fs.DirEntries) error {
+		for _, entry := range entries {
+			got = append(got, entry.Remote())
+		}
+		return nil
+	}
+
+	// general test
+	dm := newDirMap("")
+	entries := fs.DirEntries{
+		mockobject.Object("dir/a"),
+		mockobject.Object("dir/b"),
+		mockdir.New("dir"),
+		mockobject.Object("dir2/a"),
+		mockobject.Object("dir2/b"),
+		mockobject.Object("dir1/a"),
+		mockobject.Object("dir3/b"),
+	}
+	require.NoError(t, dm.addEntries(entries))
+	clearCallback()
+	err := dm.sendEntries(callback)
+	require.NoError(t, err)
+	assert.Equal(t, []string{
+		"dir1",
+		"dir2",
+		"dir3",
+	}, got)
+
+	// return error from callback
+	callback2 := func(entries fs.DirEntries) error {
+		return io.EOF
+	}
+	err = dm.sendEntries(callback2)
+	require.Equal(t, io.EOF, err)
+
+	// empty
+	dm = newDirMap("")
+	clearCallback()
+	err = dm.sendEntries(callback)
+	require.NoError(t, err)
+	assert.Equal(t, []string(nil), got)
 }
