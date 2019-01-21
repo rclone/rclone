@@ -192,10 +192,7 @@ var _ pflag.Value = (*DeduplicateMode)(nil)
 // dedupeFindDuplicateDirs scans f for duplicate directories
 func dedupeFindDuplicateDirs(f fs.Fs) ([][]fs.Directory, error) {
 	duplicateDirs := [][]fs.Directory{}
-	err := walk.Walk(f, "", true, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
-		if err != nil {
-			return err
-		}
+	err := walk.ListR(f, "", true, fs.Config.MaxDepth, walk.ListDirs, func(entries fs.DirEntries) error {
 		dirs := map[string][]fs.Directory{}
 		entries.ForDir(func(d fs.Directory) {
 			dirs[d.Remote()] = append(dirs[d.Remote()], d)
@@ -268,10 +265,7 @@ func Deduplicate(f fs.Fs, mode DeduplicateMode) error {
 
 	// Now find duplicate files
 	files := map[string][]fs.Object{}
-	err := walk.Walk(f, "", true, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
-		if err != nil {
-			return err
-		}
+	err := walk.ListR(f, "", true, fs.Config.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
 			remote := o.Remote()
 			files[remote] = append(files[remote], o)
