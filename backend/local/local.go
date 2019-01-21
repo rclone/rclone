@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -742,6 +743,7 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 	}
 
 	n, err = file.in.Read(p)
+	log.Printf("*** Read result n=%d, err=%v, len(p)=%d", n, err, len(p))
 	if n > 0 {
 		// Hash routines never return an error
 		_, _ = file.hash.Write(p[:n])
