@@ -468,11 +468,8 @@ func Purge(f fs.Fs) {
 	}
 	if doFallbackPurge {
 		dirs := []string{""}
-		err = walk.Walk(f, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
-			if err != nil {
-				log.Printf("purge walk returned error: %v", err)
-				return nil
-			}
+		err = walk.ListR(f, "", true, -1, walk.ListAll, func(entries fs.DirEntries) error {
+			var err error
 			entries.ForObject(func(obj fs.Object) {
 				fs.Debugf(f, "Purge object %q", obj.Remote())
 				err = obj.Remove()

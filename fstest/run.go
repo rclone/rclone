@@ -139,13 +139,7 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 		*r = *oneRun
 		r.cleanRemote = func() {
 			var toDelete []string
-			err := walk.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
-				if err != nil {
-					if err == fs.ErrorDirNotFound {
-						return nil
-					}
-					t.Fatalf("Error listing: %v", err)
-				}
+			err := walk.ListR(r.Fremote, "", true, -1, walk.ListAll, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					switch x := entry.(type) {
 					case fs.Object:
