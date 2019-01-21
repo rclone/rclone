@@ -1191,7 +1191,7 @@ func (f *Fs) Rmdir(dir string) error {
 		}
 
 		var queuedEntries []*Object
-		err = walk.Walk(f.tempFs, dir, true, -1, func(path string, entries fs.DirEntries, err error) error {
+		err = walk.ListR(f.tempFs, dir, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 			for _, o := range entries {
 				if oo, ok := o.(fs.Object); ok {
 					co := ObjectFromOriginal(f, oo)
@@ -1287,7 +1287,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		}
 
 		var queuedEntries []*Object
-		err := walk.Walk(f.tempFs, srcRemote, true, -1, func(path string, entries fs.DirEntries, err error) error {
+		err := walk.ListR(f.tempFs, srcRemote, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 			for _, o := range entries {
 				if oo, ok := o.(fs.Object); ok {
 					co := ObjectFromOriginal(f, oo)

@@ -1023,7 +1023,7 @@ func (b *Persistent) ReconcileTempUploads(cacheFs *Fs) error {
 		}
 
 		var queuedEntries []fs.Object
-		err = walk.Walk(cacheFs.tempFs, "", true, -1, func(path string, entries fs.DirEntries, err error) error {
+		err = walk.ListR(cacheFs.tempFs, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 			for _, o := range entries {
 				if oo, ok := o.(fs.Object); ok {
 					queuedEntries = append(queuedEntries, oo)
