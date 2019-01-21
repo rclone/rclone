@@ -161,10 +161,7 @@ func TestDeduplicateRename(t *testing.T) {
 	err := operations.Deduplicate(r.Fremote, operations.DeduplicateRename)
 	require.NoError(t, err)
 
-	require.NoError(t, walk.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
-		if err != nil {
-			return err
-		}
+	require.NoError(t, walk.ListR(r.Fremote, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
 			remote := o.Remote()
 			if remote != "one-1.txt" &&
