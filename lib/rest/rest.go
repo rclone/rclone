@@ -198,7 +198,17 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.Parameters != nil && len(opts.Parameters) > 0 {
 		url += "?" + opts.Parameters.Encode()
 	}
-	req, err := http.NewRequest(opts.Method, url, opts.Body)
+	body := opts.Body
+	// If length is set and zero then nil out the body to stop use
+	// use of chunked encoding and insert a "Content-Length: 0"
+	// header.
+	//
+	// If we don't do this we get "Content-Length" headers for all
+	// files except 0 length files.
+	if opts.ContentLength != nil && *opts.ContentLength == 0 {
+		body = nil
+	}
+	req, err := http.NewRequest(opts.Method, url, body)
 	if err != nil {
 		return
 	}

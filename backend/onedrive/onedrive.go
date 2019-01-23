@@ -1560,10 +1560,6 @@ func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (
 		}
 	}
 
-	if size == 0 {
-		opts.Body = nil
-	}
-
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(&opts, nil, &info)
 		if apiErr, ok := err.(*api.Error); ok {
