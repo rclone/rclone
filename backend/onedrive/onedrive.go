@@ -492,11 +492,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	// Get rootID
 	rootInfo, _, err := f.readMetaDataForPath("")
-	if err != nil || rootInfo.ID == "" {
+	if err != nil || rootInfo.GetID() == "" {
 		return nil, errors.Wrap(err, "failed to get root")
 	}
 
-	f.dirCache = dircache.New(root, rootInfo.ID, f)
+	f.dirCache = dircache.New(root, rootInfo.GetID(), f)
 
 	// Find the current root
 	err = f.dirCache.FindRoot(false)
