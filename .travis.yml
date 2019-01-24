@@ -1,27 +1,33 @@
+---
 language: go
 sudo: required
 dist: trusty
 os:
-- linux
-go:
-- 1.8.x
-- 1.9.x
-- 1.10.x
-- 1.11.x
-- 1.12.x
-- tip
+  - linux
 go_import_path: github.com/ncw/rclone
 before_install:
-- if [[ $TRAVIS_OS_NAME == linux ]]; then sudo modprobe fuse ; sudo chmod 666 /dev/fuse ; sudo chown root:$USER /etc/fuse.conf ; fi
-- if [[ $TRAVIS_OS_NAME == osx ]]; then brew update && brew tap caskroom/cask && brew cask install osxfuse ; fi
+  - git fetch --unshallow --tags
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      sudo modprobe fuse
+      sudo chmod 666 /dev/fuse
+      sudo chown root:$USER /etc/fuse.conf
+    fi
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update
+      brew tap caskroom/cask
+      brew cask install osxfuse
+    fi
+    if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+      choco install -y winfsp zip make
+      cd ../..                  # fix crlf in git checkout
+      mv $TRAVIS_REPO_SLUG _old
+      git config --global core.autocrlf false
+      git clone _old $TRAVIS_REPO_SLUG
+      cd $TRAVIS_REPO_SLUG
+    fi
 install:
-- git fetch --unshallow --tags
-- make vars
-- make build_dep
-script:
-- make check
-- make quicktest
-- make compile_all
+  - make vars
 env:
   global:
     - GOTAGS=cmount
@@ -32,23 +38,66 @@ env:
 addons:
   apt:
     packages:
-    - fuse
-    - libfuse-dev
-    - rpm
-    - pkg-config
+      - fuse
+      - libfuse-dev
+      - rpm
+      - pkg-config
 cache:
   directories:
     - $HOME/.cache/go-build
 matrix:
   allow_failures:
-  - go: tip
+    - go: tip
   include:
-  - os: osx
-    go: 1.12.x
-    env: GOTAGS=""
-    cache:
-      directories:
-        - $HOME/Library/Caches/go-build
+    - go: 1.8.x
+      script:
+        - make quicktest
+    - go: 1.9.x
+      script:
+        - make quicktest
+    - go: 1.10.x
+      script:
+        - make quicktest
+    - go: 1.11.x
+      script:
+        - make quicktest
+    - go: 1.12.x
+      env:
+        - GOTAGS=cmount
+      script:
+        - make build_dep
+        - make check
+        - make quicktest
+        - make racequicktest
+        - make compile_all
+    - os: osx
+      go: 1.12.x
+      env:
+        - GOTAGS=  # cmount doesn't work on osx travis for some reason
+      cache:
+        directories:
+          - $HOME/Library/Caches/go-build
+      script:
+        - make
+        - make quicktest
+        - make racequicktest
+    # - os: windows
+    #   go: 1.12.x
+    #   env:
+    #     - GOTAGS=cmount
+    #     - CPATH='C:\Program Files (x86)\WinFsp\inc\fuse'
+    #   #filter_secrets: false     # works around a problem with secrets under windows
+    #   cache:
+    #     directories:
+    #       - ${LocalAppData}/go-build
+    #   script:
+    #     - make
+    #     - make quicktest
+    #     - make racequicktest
+    - go: tip
+      script:
+        - make quicktest
+
 deploy:
   provider: script
   script: make travis_beta
@@ -57,4 +106,4 @@ deploy:
     repo: ncw/rclone
     all_branches: true
     go: 1.12.x
-    condition: $TRAVIS_PULL_REQUEST == false
+    condition: $TRAVIS_PULL_REQUEST == false && $TRAVIS_OS_NAME != "windows"
