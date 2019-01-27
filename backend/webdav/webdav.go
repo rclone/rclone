@@ -869,6 +869,46 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.None)
 }
 
+// About gets quota information
+func (f *Fs) About() (*fs.Usage, error) {
+	opts := rest.Opts{
+		Method: "PROPFIND",
+		Path:   "",
+		ExtraHeaders: map[string]string{
+			"Depth": "0",
+		},
+	}
+	opts.Body = bytes.NewBuffer([]byte(`<?xml version="1.0" ?>
+<D:propfind xmlns:D="DAV:">
+ <D:prop>
+  <D:quota-available-bytes/>
+  <D:quota-used-bytes/>
+ </D:prop>
+</D:propfind>
+`))
+	var q = api.Quota{
+		Available: -1,
+		Used:      -1,
+	}
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallXML(&opts, nil, &q)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "about call failed")
+	}
+	usage := &fs.Usage{}
+	if q.Available >= 0 && q.Used >= 0 {
+		usage.Total = fs.NewUsageValue(q.Available + q.Used)
+	}
+	if q.Used >= 0 {
+		usage.Used = fs.NewUsageValue(q.Used)
+	}
+	return usage, nil
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -1059,5 +1099,6 @@ var (
 	_ fs.Copier      = (*Fs)(nil)
 	_ fs.Mover       = (*Fs)(nil)
 	_ fs.DirMover    = (*Fs)(nil)
+	_ fs.Abouter     = (*Fs)(nil)
 	_ fs.Object      = (*Object)(nil)
 )
