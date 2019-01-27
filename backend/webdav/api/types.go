@@ -209,3 +209,22 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	}
 	return err
 }
+
+// Quota is used to read the bytes used and available
+//
+// <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
+//  <d:response>
+//   <d:href>/remote.php/webdav/</d:href>
+//   <d:propstat>
+//    <d:prop>
+//     <d:quota-available-bytes>-3</d:quota-available-bytes>
+//     <d:quota-used-bytes>376461895</d:quota-used-bytes>
+//    </d:prop>
+//    <d:status>HTTP/1.1 200 OK</d:status>
+//   </d:propstat>
+//  </d:response>
+// </d:multistatus>
+type Quota struct {
+	Available int64 `xml:"DAV: response>propstat>prop>quota-available-bytes"`
+	Used      int64 `xml:"DAV: response>propstat>prop>quota-used-bytes"`
+}
