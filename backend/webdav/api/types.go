@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/hash"
 )
 
 const (
@@ -65,11 +66,12 @@ type Response struct {
 // Note that status collects all the status values for which we just
 // check the first is OK.
 type Prop struct {
-	Status   []string  `xml:"DAV: status"`
-	Name     string    `xml:"DAV: prop>displayname,omitempty"`
-	Type     *xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
-	Size     int64     `xml:"DAV: prop>getcontentlength,omitempty"`
-	Modified Time      `xml:"DAV: prop>getlastmodified,omitempty"`
+	Status    []string  `xml:"DAV: status"`
+	Name      string    `xml:"DAV: prop>displayname,omitempty"`
+	Type      *xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
+	Size      int64     `xml:"DAV: prop>getcontentlength,omitempty"`
+	Modified  Time      `xml:"DAV: prop>getlastmodified,omitempty"`
+	Checksums []string  `xml:"prop>checksums>checksum,omitempty"`
 }
 
 // Parse a status of the form "HTTP/1.1 200 OK" or "HTTP/1.1 200"
@@ -93,6 +95,26 @@ func (p *Prop) StatusOK() bool {
 		return true
 	}
 	return false
+}
+
+// Hashes returns a map of all checksums - may be nil
+func (p *Prop) Hashes() (hashes map[hash.Type]string) {
+	if len(p.Checksums) == 0 {
+		return nil
+	}
+	hashes = make(map[hash.Type]string)
+	for _, checksums := range p.Checksums {
+		checksums = strings.ToLower(checksums)
+		for _, checksum := range strings.Split(checksums, " ") {
+			switch {
+			case strings.HasPrefix(checksum, "sha1:"):
+				hashes[hash.SHA1] = checksum[5:]
+			case strings.HasPrefix(checksum, "md5:"):
+				hashes[hash.MD5] = checksum[4:]
+			}
+		}
+	}
+	return hashes
 }
 
 // PropValue is a tagged name and value
