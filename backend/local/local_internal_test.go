@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/lib/file"
@@ -163,4 +164,13 @@ func TestSymlink(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "file.txt"[2:5+1], string(contents))
 	require.NoError(t, in.Close())
+}
+
+func TestSymlinkError(t *testing.T) {
+	m := configmap.Simple{
+		"links":      "true",
+		"copy_links": "true",
+	}
+	_, err := NewFs("local", "/", m)
+	assert.Equal(t, errLinksAndCopyLinks, err)
 }

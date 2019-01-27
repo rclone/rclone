@@ -142,6 +142,8 @@ type Object struct {
 
 // ------------------------------------------------------------
 
+var errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
+
 // NewFs constructs an Fs from the path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -149,6 +151,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	if opt.TranslateSymlinks && opt.FollowSymlinks {
+		return nil, errLinksAndCopyLinks
 	}
 
 	if opt.NoUTFNorm {

@@ -81,7 +81,8 @@ Normally rclone will ignore symlinks or junction points (which behave
 like symlinks under Windows).
 
 If you supply `--copy-links` or `-L` then rclone will follow the
-symlink and copy the pointed to file or directory.
+symlink and copy the pointed to file or directory.  Note that this
+flag is incompatible with `-links` / `-l`.
 
 This flag applies to all commands.
 
@@ -121,10 +122,10 @@ $ rclone -L ls /tmp/a
 Normally rclone will ignore symlinks or junction points (which behave
 like symlinks under Windows).
 
-If you supply this flag then rclone will copy symblic links from the local storage,
+If you supply this flag then rclone will copy symbolic links from the local storage,
 and store them as text files, with a '.rclonelink' suffix in the remote storage.
 
-The text file will contain the target of the symblic link (see example).
+The text file will contain the target of the symbolic link (see example).
 
 This flag applies to all commands.
 
@@ -151,7 +152,7 @@ $ rclone ls remote:/tmp/a
       14 file2.rclonelink
 ```
 
-The remote files will contain the target of the symblic links
+The remote files will contain the target of the symbolic links
 
 ```
 $ rclone cat remote:/tmp/a/file1.rclonelink
@@ -183,7 +184,10 @@ $ tree /tmp/b
 └── file2.rclonelink
 ````
 
+Note that this flag is incompatible with `-copy-links` / `-L`.
+
 ### Restricting filesystems with --one-file-system
+
 Normally rclone will recurse through filesystems as mounted.
 
 However if you set `--one-file-system` or `-x` this tells rclone to
