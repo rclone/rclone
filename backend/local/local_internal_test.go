@@ -1,10 +1,14 @@
 package local
 
 import (
+	"io/ioutil"
+	"os"
 	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/lib/file"
@@ -71,4 +75,92 @@ func TestUpdatingCheck(t *testing.T) {
 	_, err = in.Read(buf)
 	require.NoError(t, err)
 
+}
+
+func TestSymlink(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	f := r.Flocal.(*Fs)
+	dir := f.root
+
+	// Write a file
+	modTime1 := fstest.Time("2001-02-03T04:05:10.123123123Z")
+	file1 := r.WriteFile("file.txt", "hello", modTime1)
+
+	// Write a symlink
+	modTime2 := fstest.Time("2002-02-03T04:05:10.123123123Z")
+	symlinkPath := filepath.Join(dir, "symlink.txt")
+	require.NoError(t, os.Symlink("file.txt", symlinkPath))
+	require.NoError(t, lChtimes(symlinkPath, modTime2, modTime2))
+
+	// Object viewed as symlink
+	file2 := fstest.NewItem("symlink.txt"+linkSuffix, "file.txt", modTime2)
+
+	// Object viewed as destination
+	file2d := fstest.NewItem("symlink.txt", "hello", modTime1)
+
+	// Check with no symlink flags
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote)
+
+	// Set fs into "-L" mode
+	f.opt.FollowSymlinks = true
+	f.opt.TranslateSymlinks = false
+	f.lstat = os.Stat
+
+	fstest.CheckItems(t, r.Flocal, file1, file2d)
+	fstest.CheckItems(t, r.Fremote)
+
+	// Set fs into "-l" mode
+	f.opt.FollowSymlinks = false
+	f.opt.TranslateSymlinks = true
+	f.lstat = os.Lstat
+
+	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2}, nil, fs.ModTimeNotSupported)
+	if haveLChtimes {
+		fstest.CheckItems(t, r.Flocal, file1, file2)
+	}
+
+	// Create a symlink
+	modTime3 := fstest.Time("2002-03-03T04:05:10.123123123Z")
+	file3 := r.WriteObjectTo(r.Flocal, "symlink2.txt"+linkSuffix, "file.txt", modTime3, false)
+	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2, file3}, nil, fs.ModTimeNotSupported)
+	if haveLChtimes {
+		fstest.CheckItems(t, r.Flocal, file1, file2, file3)
+	}
+
+	// Check it got the correct contents
+	symlinkPath = filepath.Join(dir, "symlink2.txt")
+	fi, err := os.Lstat(symlinkPath)
+	require.NoError(t, err)
+	assert.False(t, fi.Mode().IsRegular())
+	linkText, err := os.Readlink(symlinkPath)
+	require.NoError(t, err)
+	assert.Equal(t, "file.txt", linkText)
+
+	// Check that NewObject gets the correct object
+	o, err := r.Flocal.NewObject("symlink2.txt" + linkSuffix)
+	require.NoError(t, err)
+	assert.Equal(t, "symlink2.txt"+linkSuffix, o.Remote())
+	assert.Equal(t, int64(8), o.Size())
+
+	// Check that NewObject doesn't see the non suffixed version
+	_, err = r.Flocal.NewObject("symlink2.txt")
+	require.Equal(t, fs.ErrorObjectNotFound, err)
+
+	// Check reading the object
+	in, err := o.Open()
+	require.NoError(t, err)
+	contents, err := ioutil.ReadAll(in)
+	require.NoError(t, err)
+	require.Equal(t, "file.txt", string(contents))
+	require.NoError(t, in.Close())
+
+	// Check reading the object with range
+	in, err = o.Open(&fs.RangeOption{Start: 2, End: 5})
+	require.NoError(t, err)
+	contents, err = ioutil.ReadAll(in)
+	require.NoError(t, err)
+	require.Equal(t, "file.txt"[2:5+1], string(contents))
+	require.NoError(t, in.Close())
 }
