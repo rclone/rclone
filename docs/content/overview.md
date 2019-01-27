@@ -36,7 +36,7 @@ Here is an overview of the major features of each cloud storage system.
 | pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
 | SFTP                         | MD5, SHA1 ‡ | Yes     | Depends          | No              | -         |
-| WebDAV                       | -           | Yes ††  | Depends          | No              | -         |
+| WebDAV                       | MD5, SHA1 ††| Yes ††† | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
 | The local filesystem         | All         | Yes     | Depends          | No              | -         |
 
@@ -57,7 +57,9 @@ This is an SHA256 sum of all the 4MB block SHA256s.
 ‡ SFTP supports checksums if the same login has shell access and `md5sum`
 or `sha1sum` as well as `echo` are in the remote's PATH.
 
-†† WebDAV supports modtimes when used with Owncloud and Nextcloud only.
+†† WebDAV supports hashes when used with Owncloud and Nextcloud only.
+
+††† WebDAV supports modtimes when used with Owncloud and Nextcloud only.
 
 ‡‡ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive
 for business and SharePoint server support Microsoft's own
