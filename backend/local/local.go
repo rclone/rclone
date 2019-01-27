@@ -744,7 +744,12 @@ func (o *Object) ModTime() time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(modTime time.Time) error {
-	err := os.Chtimes(o.path, modTime, modTime)
+	var err error
+	if o.translatedLink {
+		err = lChtimes(o.path, modTime, modTime)
+	} else {
+		err = os.Chtimes(o.path, modTime, modTime)
+	}
 	if err != nil {
 		return err
 	}
