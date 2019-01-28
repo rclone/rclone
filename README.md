@@ -51,6 +51,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * put.io [:page_facing_up:](https://rclone.org/webdav/#put-io)
   * QingStor [:page_facing_up:](https://rclone.org/qingstor/)
   * Rackspace Cloud Files [:page_facing_up:](https://rclone.org/swift/)
+  * Scaleway [:page_facing_up:](https://rclone.org/s3/#scaleway)
   * SFTP [:page_facing_up:](https://rclone.org/sftp/)
   * Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
