@@ -30,7 +30,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.3 // indirect
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
-	github.com/ncw/swift v1.0.43
+	github.com/ncw/swift v1.0.44
 	github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed
 	github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd
 	github.com/patrickmn/go-cache v2.1.0+incompatible
