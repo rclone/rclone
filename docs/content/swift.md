@@ -329,6 +329,33 @@ User ID to log in - optional - most swift systems use user and leave this blank 
 - Type:        string
 - Default:     ""
 
+#### --swift-application-credential-id
+
+Application Credential ID to log in - optional (v3 auth) (OS_APPLICATION_CREDENTIAL_ID).
+
+- Config:      application_credential_id
+- Env Var:     RCLONE_SWIFT_APPLICATION_CREDENTIAL_ID
+- Type:        string
+- Default:     ""
+
+#### --swift-application-credential-name
+
+Application Credential name to log in - optional (v3 auth) (OS_APPLICATION_CREDENTIAL_NAME).
+
+- Config:      application_credential_name
+- Env Var:     RCLONE_SWIFT_APPLICATION_CREDENTIAL_NAME
+- Type:        string
+- Default:     ""
+
+#### --swift-application-credential-secret
+
+Application Credential secret to log in - optional (v3 auth) (OS_APPLICATION_CREDENTIAL_SECRET).
+
+- Config:      application_credential_secret
+- Env Var:     RCLONE_SWIFT_APPLICATION_CREDENTIAL_SECRET
+- Type:        string
+- Default:     ""
+
 #### --swift-domain
 
 User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
