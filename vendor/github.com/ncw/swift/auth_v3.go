@@ -3,14 +3,16 @@ package swift
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 )
 
 const (
-	v3AuthMethodToken        = "token"
-	v3AuthMethodPassword     = "password"
-	v3CatalogTypeObjectStore = "object-store"
+	v3AuthMethodToken                 = "token"
+	v3AuthMethodPassword              = "password"
+	v3AuthMethodApplicationCredential = "application_credential"
+	v3CatalogTypeObjectStore          = "object-store"
 )
 
 // V3 Authentication request
@@ -19,9 +21,10 @@ const (
 type v3AuthRequest struct {
 	Auth struct {
 		Identity struct {
-			Methods  []string        `json:"methods"`
-			Password *v3AuthPassword `json:"password,omitempty"`
-			Token    *v3AuthToken    `json:"token,omitempty"`
+			Methods               []string                     `json:"methods"`
+			Password              *v3AuthPassword              `json:"password,omitempty"`
+			Token                 *v3AuthToken                 `json:"token,omitempty"`
+			ApplicationCredential *v3AuthApplicationCredential `json:"application_credential,omitempty"`
 		} `json:"identity"`
 		Scope *v3Scope `json:"scope,omitempty"`
 	} `json:"auth"`
@@ -61,6 +64,13 @@ type v3AuthToken struct {
 
 type v3AuthPassword struct {
 	User v3User `json:"user"`
+}
+
+type v3AuthApplicationCredential struct {
+	Id     string  `json:"id,omitempty"`
+	Name   string  `json:"name,omitempty"`
+	Secret string  `json:"secret,omitempty"`
+	User   *v3User `json:"user,omitempty"`
 }
 
 // V3 Authentication response
@@ -117,7 +127,57 @@ func (auth *v3Auth) Request(c *Connection) (*http.Request, error) {
 
 	v3 := v3AuthRequest{}
 
-	if c.UserName == "" && c.UserId == "" {
+	if (c.ApplicationCredentialId != "" || c.ApplicationCredentialName != "") && c.ApplicationCredentialSecret != "" {
+		var user *v3User
+
+		if c.ApplicationCredentialId != "" {
+			c.ApplicationCredentialName = ""
+			user = &v3User{}
+		}
+
+		if user == nil && c.UserId != "" {
+			// UserID could be used without the domain information
+			user = &v3User{
+				Id: c.UserId,
+			}
+		}
+
+		if user == nil && c.UserName == "" {
+			// Make sure that Username or UserID are provided
+			return nil, fmt.Errorf("UserID or Name should be provided")
+		}
+
+		if user == nil && c.DomainId != "" {
+			user = &v3User{
+				Name: c.UserName,
+				Domain: &v3Domain{
+					Id: c.DomainId,
+				},
+			}
+		}
+
+		if user == nil && c.Domain != "" {
+			user = &v3User{
+				Name: c.UserName,
+				Domain: &v3Domain{
+					Name: c.Domain,
+				},
+			}
+		}
+
+		// Make sure that DomainID or DomainName are provided among Username
+		if user == nil {
+			return nil, fmt.Errorf("DomainID or Domain should be provided")
+		}
+
+		v3.Auth.Identity.Methods = []string{v3AuthMethodApplicationCredential}
+		v3.Auth.Identity.ApplicationCredential = &v3AuthApplicationCredential{
+			Id:     c.ApplicationCredentialId,
+			Name:   c.ApplicationCredentialName,
+			Secret: c.ApplicationCredentialSecret,
+			User:   user,
+		}
+	} else if c.UserName == "" && c.UserId == "" {
 		v3.Auth.Identity.Methods = []string{v3AuthMethodToken}
 		v3.Auth.Identity.Token = &v3AuthToken{Id: c.ApiKey}
 	} else {
@@ -140,27 +200,29 @@ func (auth *v3Auth) Request(c *Connection) (*http.Request, error) {
 		v3.Auth.Identity.Password.User.Domain = domain
 	}
 
-	if c.TrustId != "" {
-		v3.Auth.Scope = &v3Scope{Trust: &v3Trust{Id: c.TrustId}}
-	} else if c.TenantId != "" || c.Tenant != "" {
+	if v3.Auth.Identity.Methods[0] != v3AuthMethodApplicationCredential {
+		if c.TrustId != "" {
+			v3.Auth.Scope = &v3Scope{Trust: &v3Trust{Id: c.TrustId}}
+		} else if c.TenantId != "" || c.Tenant != "" {
 
-		v3.Auth.Scope = &v3Scope{Project: &v3Project{}}
+			v3.Auth.Scope = &v3Scope{Project: &v3Project{}}
 
-		if c.TenantId != "" {
-			v3.Auth.Scope.Project.Id = c.TenantId
-		} else if c.Tenant != "" {
-			v3.Auth.Scope.Project.Name = c.Tenant
-			switch {
-			case c.TenantDomain != "":
-				v3.Auth.Scope.Project.Domain = &v3Domain{Name: c.TenantDomain}
-			case c.TenantDomainId != "":
-				v3.Auth.Scope.Project.Domain = &v3Domain{Id: c.TenantDomainId}
-			case c.Domain != "":
-				v3.Auth.Scope.Project.Domain = &v3Domain{Name: c.Domain}
-			case c.DomainId != "":
-				v3.Auth.Scope.Project.Domain = &v3Domain{Id: c.DomainId}
-			default:
-				v3.Auth.Scope.Project.Domain = &v3Domain{Name: "Default"}
+			if c.TenantId != "" {
+				v3.Auth.Scope.Project.Id = c.TenantId
+			} else if c.Tenant != "" {
+				v3.Auth.Scope.Project.Name = c.Tenant
+				switch {
+				case c.TenantDomain != "":
+					v3.Auth.Scope.Project.Domain = &v3Domain{Name: c.TenantDomain}
+				case c.TenantDomainId != "":
+					v3.Auth.Scope.Project.Domain = &v3Domain{Id: c.TenantDomainId}
+				case c.Domain != "":
+					v3.Auth.Scope.Project.Domain = &v3Domain{Name: c.Domain}
+				case c.DomainId != "":
+					v3.Auth.Scope.Project.Domain = &v3Domain{Id: c.DomainId}
+				default:
+					v3.Auth.Scope.Project.Domain = &v3Domain{Name: "Default"}
+				}
 			}
 		}
 	}
