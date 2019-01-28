@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -80,14 +81,11 @@ func init() {
 
 			username, ok := m.Get(configUsername)
 			if !ok {
-				fs.Errorf(nil, "No username defined")
+				log.Fatalf("No username defined")
 			}
-			// Password
 			password := config.GetPassword("Your Jottacloud password is only required during config and will not be stored.")
-			if password == "" {
-				fs.Errorf(nil, "Password must not be empty!")
-			}
 
+			// prepare out token request with username and password
 			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 			values := url.Values{}
 			values.Set("grant_type", "PASSWORD")
@@ -105,12 +103,21 @@ func init() {
 			var jsonToken api.TokenJSON
 			resp, err := srv.CallJSON(&opts, nil, &jsonToken)
 			if err != nil {
-				fs.Errorf(nil, "Failed to get resource token: %v", err)
-				return
-			}
-			if resp.StatusCode != 200 {
-				fs.Errorf(nil, "Failed to get resource token: Got HTTP error code %d", resp.StatusCode)
-				return
+				// if 2fa is enabled the first request is expected to fail. we'lls do another request with the 2fa code as an additional http header
+				if resp != nil {
+					if resp.Header.Get("X-JottaCloud-OTP") == "required; SMS" {
+						fmt.Printf("This account has 2 factor authentication enabled you will receive a verification code via SMS.\n")
+						fmt.Printf("Enter verification code> ")
+						authCode := config.ReadLine()
+						authCode = strings.Replace(authCode, "-", "", -1) // the sms received contains a pair of 3 digit numbers seperated by '-' but wants a single 6 digit number
+						opts.ExtraHeaders = make(map[string]string)
+						opts.ExtraHeaders["X-Jottacloud-Otp"] = authCode
+						resp, err = srv.CallJSON(&opts, nil, &jsonToken)
+					}
+				}
+				if err != nil {
+					log.Fatalf("Failed to get resource token: %v", err)
+				}
 			}
 
 			var token oauth2.Token
@@ -122,7 +129,7 @@ func init() {
 			// finally save them in the config
 			err = oauthutil.PutToken(name, m, &token, true)
 			if err != nil {
-				fs.Errorf(nil, "Error while setting token: %s", err)
+				log.Fatalf("Error while setting token: %s", err)
 			}
 		},
 		Options: []fs.Option{{
@@ -390,11 +397,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name: name,
-		root: root,
-		user: opt.User,
-		opt:  *opt,
-		//endpointURL: rest.URLPathEscape(path.Join(user, defaultDevice, opt.Mountpoint)),
+		name:   name,
+		root:   root,
+		user:   opt.User,
+		opt:    *opt,
 		srv:    rest.NewClient(oAuthClient).SetRoot(rootURL),
 		apiSrv: rest.NewClient(oAuthClient).SetRoot(apiURL),
 		pacer:  pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
