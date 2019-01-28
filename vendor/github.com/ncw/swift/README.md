@@ -139,7 +139,7 @@ Contributors
 - Cezar Sa Espinola <cezarsa@gmail.com>
 - Sam Gunaratne <samgzeit@gmail.com>
 - Richard Scothern <richard.scothern@gmail.com>
-- Michel Couillard <couillard.michel@voxlog.ca>
+- Michel Couillard <!--<couillard.michel@voxlog.ca>--> <michel.couillard@gmail.com>
 - Christopher Waldon <ckwaldon@us.ibm.com>
 - dennis <dai.haojun@gmail.com>
 - hag <hannes.georg@xing.com>
@@ -152,3 +152,4 @@ Contributors
 - Charles Hsu <charles0126@gmail.com>
 - Omar Ali <omarali@users.noreply.github.com>
 - Andreas Andersen <andreas@softwaredesign.se>
+- kayrus <kay.diam@gmail.com>
