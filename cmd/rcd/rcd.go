@@ -17,7 +17,7 @@ var commandDefintion = &cobra.Command{
 	Use:   "rcd <path to files to serve>*",
 	Short: `Run rclone listening to remote control commands only.`,
 	Long: `
-This runs rclone so that it only listents to remote control commands.
+This runs rclone so that it only listens to remote control commands.
 
 This is useful if you are controlling rclone via the rc API.
 
