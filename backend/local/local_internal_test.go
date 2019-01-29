@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -99,6 +100,9 @@ func TestSymlink(t *testing.T) {
 
 	// Object viewed as symlink
 	file2 := fstest.NewItem("symlink.txt"+linkSuffix, "file.txt", modTime2)
+	if runtime.GOOS == "windows" {
+		file2.Size = 0 // symlinks are 0 length under Windows
+	}
 
 	// Object viewed as destination
 	file2d := fstest.NewItem("symlink.txt", "hello", modTime1)
@@ -128,6 +132,9 @@ func TestSymlink(t *testing.T) {
 	// Create a symlink
 	modTime3 := fstest.Time("2002-03-03T04:05:10.123123123Z")
 	file3 := r.WriteObjectTo(r.Flocal, "symlink2.txt"+linkSuffix, "file.txt", modTime3, false)
+	if runtime.GOOS == "windows" {
+		file3.Size = 0 // symlinks are 0 length under Windows
+	}
 	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2, file3}, nil, fs.ModTimeNotSupported)
 	if haveLChtimes {
 		fstest.CheckItems(t, r.Flocal, file1, file2, file3)
@@ -146,7 +153,9 @@ func TestSymlink(t *testing.T) {
 	o, err := r.Flocal.NewObject("symlink2.txt" + linkSuffix)
 	require.NoError(t, err)
 	assert.Equal(t, "symlink2.txt"+linkSuffix, o.Remote())
-	assert.Equal(t, int64(8), o.Size())
+	if runtime.GOOS != "windows" {
+		assert.Equal(t, int64(8), o.Size())
+	}
 
 	// Check that NewObject doesn't see the non suffixed version
 	_, err = r.Flocal.NewObject("symlink2.txt")
