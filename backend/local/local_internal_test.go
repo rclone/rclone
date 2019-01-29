@@ -47,6 +47,9 @@ func TestUpdatingCheck(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed opening file %q: %v", filePath, err)
 	}
+	defer func() {
+		require.NoError(t, fd.Close())
+	}()
 
 	fi, err := fd.Stat()
 	require.NoError(t, err)
