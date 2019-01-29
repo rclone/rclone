@@ -97,8 +97,6 @@ In general the variables are called `http_proxy` (for services reached
 over `http`) and `https_proxy` (for services reached over `https`).  Most
 public services will be using `https`, but you may wish to set both.
 
-If you ever use `FTP` then you would need to set `ftp_proxy`.
-
 The content of the variable is `protocol://server:port`.  The protocol
 value is the one used to talk to the proxy server, itself, and is commonly
 either `http` or `socks5`.
@@ -121,6 +119,8 @@ e.g.
 
     export no_proxy=localhost,127.0.0.0/8,my.host.name
     export NO_PROXY=$no_proxy
+
+Note that the ftp backend does not support `ftp_proxy` yet.
 
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 
