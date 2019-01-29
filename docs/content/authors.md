@@ -230,3 +230,4 @@ Contributors
   * qip <qip@users.noreply.github.com>
   * yair@unicorn <yair@unicorn>
   * Matt Robinson <brimstone@the.narro.ws>
+  * kayrus <kay.diam@gmail.com>
