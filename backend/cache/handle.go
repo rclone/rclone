@@ -251,11 +251,6 @@ func (r *Handle) getChunk(chunkStart int64, data []byte) (int64, error) {
 			r.offset, chunkStart, len(data), offset, r.cacheFs().opt.ChunkSize, r.cachedObject.Size())
 		return -1, io.ErrUnexpectedEOF
 	}
-	
-	if offset > 0 {
-		
-		data = data[int(offset):]
-	}
 
 	return readLength, nil
 }
