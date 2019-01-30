@@ -478,7 +478,7 @@ func (w *worker) download(chunkStart int64, retry int) {
 		w.download(chunkStart, retry+1)
 		return
 	}
-	data = data[:sourceRead] // reslice to remove extra garbage
+	dataSliced := data[:sourceRead] // reslice to remove extra garbage
 	if err == io.ErrUnexpectedEOF {
 		fs.Debugf(w, "partial downloaded chunk %v", fs.SizeSuffix(chunkStart))
 	} else {
@@ -486,13 +486,13 @@ func (w *worker) download(chunkStart int64, retry int) {
 	}
 
 	if w.r.UseMemory {
-		err = w.r.memory.AddChunk(w.r.cachedObject.abs(), data, chunkStart)
+		err = w.r.memory.AddChunk(w.r.cachedObject.abs(), dataSliced, chunkStart)
 		if err != nil {
 			fs.Errorf(w, "failed caching chunk in ram %v: %v", chunkStart, err)
 		}
 	}
 
-	err = w.r.storage().AddChunk(w.r.cachedObject.abs(), data, chunkStart)
+	err = w.r.storage().AddChunk(w.r.cachedObject.abs(), dataSliced, chunkStart)
 	if err != nil {
 		fs.Errorf(w, "failed caching chunk in storage %v: %v", chunkStart, err)
 	}
