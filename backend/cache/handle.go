@@ -14,6 +14,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
+	"github.com/90TechSAS/go-buffer-pool-recycler"
 )
 
 var uploaderMap = make(map[string]*backgroundWriter)
@@ -49,9 +50,10 @@ type Handle struct {
 	seenOffsets    map[int64]bool
 	mu             sync.Mutex
 	workersWg      sync.WaitGroup
-	confirmReading chan bool
 	workers        int
 	maxWorkerID    int
+	pool           *bpool.Pool
+	confirmReading chan bool
 	UseMemory      bool
 	closed         bool
 	reading        bool
@@ -68,6 +70,7 @@ func NewObjectHandle(o *Object, cfs *Fs) *Handle {
 		UseMemory: !cfs.opt.ChunkNoMemory,
 		reading:   false,
 	}
+	r.pool = bpool.GetPool(int(r.cfs.opt.ChunkSize), int(r.cfs.opt.TotalWorkers)) // Create a pool
 	r.seenOffsets = make(map[int64]bool)
 	r.memory = NewMemory(-1)
 
@@ -197,20 +200,20 @@ func (r *Handle) queueOffset(offset int64) {
 // getChunk is called by the FS to retrieve a specific chunk of known start and size from where it can find it
 // it can be from transient or persistent cache
 // it will also build the chunk from the cache's specific chunk boundaries and build the final desired chunk in a buffer
-func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
-	var data []byte
+func (r *Handle) getChunk(chunkStart int64, data []byte) (int64, error) {
 	var err error
+	var readLength int64
 
 	// we calculate the modulus of the requested offset with the size of a chunk
 	offset := chunkStart % int64(r.cacheFs().opt.ChunkSize)
 
+	r.queueOffset(chunkStart)
 	// we align the start offset of the first chunk to a likely chunk in the storage
 	chunkStart = chunkStart - offset
-	r.queueOffset(chunkStart)
 	found := false
 
 	if r.UseMemory {
-		data, err = r.memory.GetChunk(r.cachedObject, chunkStart)
+		readLength, err = r.memory.GetChunk(r.cachedObject, chunkStart, offset, data)
 		if err == nil {
 			found = true
 		}
@@ -220,7 +223,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 		// we're gonna give the workers a chance to pickup the chunk
 		// and retry a couple of times
 		for i := 0; i < r.cacheFs().opt.ReadRetries*8; i++ {
-			data, err = r.storage().GetChunk(r.cachedObject, chunkStart)
+			readLength, err = r.storage().GetChunk(r.cachedObject, chunkStart, offset, data)
 			if err == nil {
 				found = true
 				break
@@ -233,33 +236,35 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 
 	// not found in ram or
 	// the worker didn't managed to download the chunk in time so we abort and close the stream
-	if err != nil || len(data) == 0 || !found {
+	if err != nil || data == nil || !found {
 		if r.workers == 0 {
 			fs.Errorf(r, "out of workers")
-			return nil, io.ErrUnexpectedEOF
+			return -1, io.ErrUnexpectedEOF
 		}
 
-		return nil, errors.Errorf("chunk not found %v", chunkStart)
+		return -1, errors.Errorf("chunk not found %v", chunkStart)
 	}
 
 	// first chunk will be aligned with the start
+	if len(data) == 0 {
+		fs.Errorf(r, "unexpected conditions during reading. current position: %v, current chunk position: %v, current chunk size: %v, offset: %v, chunk size: %v, file size: %v",
+			r.offset, chunkStart, len(data), offset, r.cacheFs().opt.ChunkSize, r.cachedObject.Size())
+		return -1, io.ErrUnexpectedEOF
+	}
+	
 	if offset > 0 {
-		if offset > int64(len(data)) {
-			fs.Errorf(r, "unexpected conditions during reading. current position: %v, current chunk position: %v, current chunk size: %v, offset: %v, chunk size: %v, file size: %v",
-				r.offset, chunkStart, len(data), offset, r.cacheFs().opt.ChunkSize, r.cachedObject.Size())
-			return nil, io.ErrUnexpectedEOF
-		}
+		
 		data = data[int(offset):]
 	}
 
-	return data, nil
+	return readLength, nil
 }
 
 // Read a chunk from storage or len(p)
 func (r *Handle) Read(p []byte) (n int, err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	var buf []byte
+	var readSize int64
 
 	// first reading
 	if !r.reading {
@@ -270,18 +275,17 @@ func (r *Handle) Read(p []byte) (n int, err error) {
 		return 0, io.EOF
 	}
 	currentOffset := r.offset
-	buf, err = r.getChunk(currentOffset)
+	readSize, err = r.getChunk(currentOffset, p)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		fs.Errorf(r, "(%v/%v) error (%v) response", currentOffset, r.cachedObject.Size(), err)
 	}
-	if len(buf) == 0 && err != io.ErrUnexpectedEOF {
+	if readSize == 0 && err != io.ErrUnexpectedEOF {
 		return 0, io.EOF
 	}
-	readSize := copy(p, buf)
 	newOffset := currentOffset + int64(readSize)
 	r.offset = newOffset
 
-	return readSize, err
+	return int(readSize), err
 }
 
 // Close will tell the workers to stop
@@ -396,6 +400,10 @@ func (w *worker) run() {
 			break
 		}
 
+		// split into offset and chunkStart
+		offset := chunkStart % int64(w.r.cacheFs().opt.ChunkSize)
+		chunkStart = chunkStart - offset
+
 		// skip if it exists
 		if w.r.UseMemory {
 			if w.r.memory.HasChunk(w.r.cachedObject, chunkStart) {
@@ -403,34 +411,39 @@ func (w *worker) run() {
 			}
 
 			// add it in ram if it's in the persistent storage
-			data, err = w.r.storage().GetChunk(w.r.cachedObject, chunkStart)
+			data = w.r.pool.Get()
+			_, err = w.r.storage().GetChunk(w.r.cachedObject, chunkStart, offset, data)
 			if err == nil {
 				err = w.r.memory.AddChunk(w.r.cachedObject.abs(), data, chunkStart)
 				if err != nil {
 					fs.Errorf(w, "failed caching chunk in ram %v: %v", chunkStart, err)
 				} else {
+					w.r.pool.Put(data)
 					continue
 				}
 			}
+			w.r.pool.Put(data)
 		} else {
 			if w.r.storage().HasChunk(w.r.cachedObject, chunkStart) {
 				continue
 			}
 		}
 
-		chunkEnd := chunkStart + int64(w.r.cacheFs().opt.ChunkSize)
+		//chunkEnd := chunkStart + int64(w.r.cacheFs().opt.ChunkSize)
 		// TODO: Remove this comment if it proves to be reliable for #1896
 		//if chunkEnd > w.r.cachedObject.Size() {
 		//	chunkEnd = w.r.cachedObject.Size()
 		//}
 
-		w.download(chunkStart, chunkEnd, 0)
+		w.download(chunkStart, 0)
 	}
 }
 
-func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
+func (w *worker) download(chunkStart int64, retry int) {
 	var err error
 	var data []byte
+
+	chunkEnd := int64(w.r.cacheFs().opt.ChunkSize) + chunkStart
 
 	// stop retries
 	if retry >= w.r.cacheFs().opt.ReadRetries {
@@ -453,11 +466,12 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 		if err != nil {
 			fs.Errorf(w, "%v", err)
 		}
-		w.download(chunkStart, chunkEnd, retry+1)
+		w.download(chunkStart, retry+1)
 		return
 	}
 
-	data = make([]byte, chunkEnd-chunkStart)
+	data = w.r.pool.Get()
+
 	var sourceRead int
 	sourceRead, err = io.ReadFull(w.rc, data)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
@@ -466,7 +480,7 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 		if err != nil {
 			fs.Errorf(w, "%v", err)
 		}
-		w.download(chunkStart, chunkEnd, retry+1)
+		w.download(chunkStart, retry+1)
 		return
 	}
 	data = data[:sourceRead] // reslice to remove extra garbage
@@ -487,6 +501,8 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 	if err != nil {
 		fs.Errorf(w, "failed caching chunk in storage %v: %v", chunkStart, err)
 	}
+
+	w.r.pool.Put(data)
 }
 
 const (

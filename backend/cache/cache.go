@@ -791,7 +791,8 @@ func (f *Fs) rcFetch(in rc.Params) (rc.Params, error) {
 		handle.UseMemory = false
 		handle.scaleWorkers(1)
 		walkChunkRanges(crs, co.Size(), func(chunk int64) {
-			_, err := handle.getChunk(chunk * f.ChunkSize())
+			buffer := make([]byte,f.ChunkSize())
+			_, err := handle.getChunk(chunk * f.ChunkSize(), buffer)
 			if err != nil {
 				if status.Error == "" {
 					status.Error = err.Error()

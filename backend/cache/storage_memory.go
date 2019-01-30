@@ -43,16 +43,18 @@ func (m *Memory) HasChunk(cachedObject *Object, offset int64) bool {
 }
 
 // GetChunk will retrieve a single chunk which belongs to a cached object or an error if it doesn't find it
-func (m *Memory) GetChunk(cachedObject *Object, offset int64) ([]byte, error) {
+func (m *Memory) GetChunk(cachedObject *Object, chunkStart int64, offset int64, data []byte) (int64, error) {
 	key := cachedObject.abs() + "-" + strconv.FormatInt(offset, 10)
-	var data []byte
+	var temp []byte
 
 	if x, found := m.db.Get(key); found {
-		data = x.([]byte)
-		return data, nil
+		temp = x.([]byte)
+		copy(temp[offset:], data[:])
+		readLength := int64(len(data)) - offset
+		return readLength, nil
 	}
 
-	return nil, errors.Errorf("couldn't get cached object data at offset %v", offset)
+	return -1, errors.Errorf("couldn't get cached object data at offset %v", offset)
 }
 
 // AddChunk adds a new chunk of a cached object
@@ -63,6 +65,8 @@ func (m *Memory) AddChunk(fp string, data []byte, offset int64) error {
 // AddChunkAhead adds a new chunk of a cached object
 func (m *Memory) AddChunkAhead(fp string, data []byte, offset int64, t time.Duration) error {
 	key := fp + "-" + strconv.FormatInt(offset, 10)
+	dataCopy := make([]byte, len(data))
+	copy(dataCopy, data)
 	m.db.Set(key, data, cache.DefaultExpiration)
 
 	return nil

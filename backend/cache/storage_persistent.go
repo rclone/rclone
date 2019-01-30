@@ -471,16 +471,27 @@ func (b *Persistent) HasChunk(cachedObject *Object, offset int64) bool {
 }
 
 // GetChunk will retrieve a single chunk which belongs to a cached object or an error if it doesn't find it
-func (b *Persistent) GetChunk(cachedObject *Object, offset int64) ([]byte, error) {
-	var data []byte
+func (b *Persistent) GetChunk(cachedObject *Object, chunkStart int64, offset int64, data []byte) (int64, error) {
+	fn := path.Join(b.dataPath, cachedObject.abs(), strconv.FormatInt(chunkStart, 10))
 
-	fp := path.Join(b.dataPath, cachedObject.abs(), strconv.FormatInt(offset, 10))
-	data, err := ioutil.ReadFile(fp)
+	file, err := os.Open(fn)
 	if err != nil {
-		return nil, err
+		return -1, err
+	}
+	defer file.Close()
+
+	_, err = file.Seek(offset, 0) 
+	if err != nil {
+		return -1, err
 	}
 
-	return data, err
+	bytesread, err := file.Read(data)
+	if err != nil {
+		return -1, err
+	}
+
+	//todo: future read64
+	return int64(bytesread), err
 }
 
 // AddChunk adds a new chunk of a cached object
@@ -492,6 +503,9 @@ func (b *Persistent) AddChunk(fp string, data []byte, offset int64) error {
 	if err != nil {
 		return err
 	}
+
+	size := int64(len(data))
+	data = nil
 
 	return b.db.Update(func(tx *bolt.Tx) error {
 		tsBucket := tx.Bucket([]byte(DataTsBucket))
@@ -521,7 +535,7 @@ func (b *Persistent) AddChunk(fp string, data []byte, offset int64) error {
 		if found {
 			return nil
 		}
-		enc, err := json.Marshal(chunkInfo{Path: fp, Offset: offset, Size: int64(len(data))})
+		enc, err := json.Marshal(chunkInfo{Path: fp, Offset: offset, Size: size})
 		if err != nil {
 			fs.Debugf(fp, "failed to timestamp chunk: %v", err)
 		}
