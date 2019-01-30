@@ -131,6 +131,15 @@ func init() {
 			Name: "auth_token",
 			Help: "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)",
 		}, {
+			Name: "application_credential_id",
+			Help: "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID)",
+		}, {
+			Name: "application_credential_name",
+			Help: "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME)",
+		}, {
+			Name: "application_credential_secret",
+			Help: "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET)",
+		}, {
 			Name:    "auth_version",
 			Help:    "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)",
 			Default: 0,
@@ -173,23 +182,26 @@ provider.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	EnvAuth       bool          `config:"env_auth"`
-	User          string        `config:"user"`
-	Key           string        `config:"key"`
-	Auth          string        `config:"auth"`
-	UserID        string        `config:"user_id"`
-	Domain        string        `config:"domain"`
-	Tenant        string        `config:"tenant"`
-	TenantID      string        `config:"tenant_id"`
-	TenantDomain  string        `config:"tenant_domain"`
-	Region        string        `config:"region"`
-	StorageURL    string        `config:"storage_url"`
-	AuthToken     string        `config:"auth_token"`
-	AuthVersion   int           `config:"auth_version"`
-	StoragePolicy string        `config:"storage_policy"`
-	EndpointType  string        `config:"endpoint_type"`
-	ChunkSize     fs.SizeSuffix `config:"chunk_size"`
-	NoChunk       bool          `config:"no_chunk"`
+	EnvAuth                     bool          `config:"env_auth"`
+	User                        string        `config:"user"`
+	Key                         string        `config:"key"`
+	Auth                        string        `config:"auth"`
+	UserID                      string        `config:"user_id"`
+	Domain                      string        `config:"domain"`
+	Tenant                      string        `config:"tenant"`
+	TenantID                    string        `config:"tenant_id"`
+	TenantDomain                string        `config:"tenant_domain"`
+	Region                      string        `config:"region"`
+	StorageURL                  string        `config:"storage_url"`
+	AuthToken                   string        `config:"auth_token"`
+	AuthVersion                 int           `config:"auth_version"`
+	ApplicationCredentialId     string        `config:"application_credential_id"`
+	ApplicationCredentialName   string        `config:"application_credential_name"`
+	ApplicationCredentialSecret string        `config:"application_credential_secret"`
+	StoragePolicy               string        `config:"storage_policy"`
+	EndpointType                string        `config:"endpoint_type"`
+	ChunkSize                   fs.SizeSuffix `config:"chunk_size"`
+	NoChunk                     bool          `config:"no_chunk"`
 }
 
 // Fs represents a remote swift server
@@ -293,22 +305,25 @@ func parsePath(path string) (container, directory string, err error) {
 func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
 	c := &swift.Connection{
 		// Keep these in the same order as the Config for ease of checking
-		UserName:       opt.User,
-		ApiKey:         opt.Key,
-		AuthUrl:        opt.Auth,
-		UserId:         opt.UserID,
-		Domain:         opt.Domain,
-		Tenant:         opt.Tenant,
-		TenantId:       opt.TenantID,
-		TenantDomain:   opt.TenantDomain,
-		Region:         opt.Region,
-		StorageUrl:     opt.StorageURL,
-		AuthToken:      opt.AuthToken,
-		AuthVersion:    opt.AuthVersion,
-		EndpointType:   swift.EndpointType(opt.EndpointType),
-		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
-		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
-		Transport:      fshttp.NewTransport(fs.Config),
+		UserName:                    opt.User,
+		ApiKey:                      opt.Key,
+		AuthUrl:                     opt.Auth,
+		UserId:                      opt.UserID,
+		Domain:                      opt.Domain,
+		Tenant:                      opt.Tenant,
+		TenantId:                    opt.TenantID,
+		TenantDomain:                opt.TenantDomain,
+		Region:                      opt.Region,
+		StorageUrl:                  opt.StorageURL,
+		AuthToken:                   opt.AuthToken,
+		AuthVersion:                 opt.AuthVersion,
+		ApplicationCredentialId:     opt.ApplicationCredentialId,
+		ApplicationCredentialName:   opt.ApplicationCredentialName,
+		ApplicationCredentialSecret: opt.ApplicationCredentialSecret,
+		EndpointType:                swift.EndpointType(opt.EndpointType),
+		ConnectTimeout:              10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
+		Timeout:                     10 * fs.Config.Timeout,        // Use the timeouts in the transport
+		Transport:                   fshttp.NewTransport(fs.Config),
 	}
 	if opt.EnvAuth {
 		err := c.ApplyEnvironment()
@@ -318,11 +333,13 @@ func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
 	}
 	StorageUrl, AuthToken := c.StorageUrl, c.AuthToken // nolint
 	if !c.Authenticated() {
-		if c.UserName == "" && c.UserId == "" {
-			return nil, errors.New("user name or user id not found for authentication (and no storage_url+auth_token is provided)")
-		}
-		if c.ApiKey == "" {
-			return nil, errors.New("key not found")
+		if (c.ApplicationCredentialId != "" || c.ApplicationCredentialName != "") && c.ApplicationCredentialSecret == "" {
+			if c.UserName == "" && c.UserId == "" {
+				return nil, errors.New("user name or user id not found for authentication (and no storage_url+auth_token is provided)")
+			}
+			if c.ApiKey == "" {
+				return nil, errors.New("key not found")
+			}
 		}
 		if c.AuthUrl == "" {
 			return nil, errors.New("auth not found")

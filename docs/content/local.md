@@ -81,7 +81,8 @@ Normally rclone will ignore symlinks or junction points (which behave
 like symlinks under Windows).
 
 If you supply `--copy-links` or `-L` then rclone will follow the
-symlink and copy the pointed to file or directory.
+symlink and copy the pointed to file or directory.  Note that this
+flag is incompatible with `-links` / `-l`.
 
 This flag applies to all commands.
 
@@ -115,6 +116,75 @@ $ rclone -L ls /tmp/a
         6 b/two
         6 b/one
 ```
+
+#### --links, -l 
+
+Normally rclone will ignore symlinks or junction points (which behave
+like symlinks under Windows).
+
+If you supply this flag then rclone will copy symbolic links from the local storage,
+and store them as text files, with a '.rclonelink' suffix in the remote storage.
+
+The text file will contain the target of the symbolic link (see example).
+
+This flag applies to all commands.
+
+For example, supposing you have a directory structure like this
+
+```
+$ tree /tmp/a
+/tmp/a
+├── file1 -> ./file4
+└── file2 -> /home/user/file3
+```
+
+Copying the entire directory with '-l'
+
+```
+$ rclone copyto -l /tmp/a/file1 remote:/tmp/a/
+```
+
+The remote files are created with a '.rclonelink' suffix
+
+```
+$ rclone ls remote:/tmp/a
+       5 file1.rclonelink
+      14 file2.rclonelink
+```
+
+The remote files will contain the target of the symbolic links
+
+```
+$ rclone cat remote:/tmp/a/file1.rclonelink
+./file4
+
+$ rclone cat remote:/tmp/a/file2.rclonelink
+/home/user/file3
+```
+
+Copying them back with '-l'
+
+```
+$ rclone copyto -l remote:/tmp/a/ /tmp/b/
+
+$ tree /tmp/b
+/tmp/b
+├── file1 -> ./file4
+└── file2 -> /home/user/file3
+```
+
+However, if copied back without '-l'
+
+```
+$ rclone copyto remote:/tmp/a/ /tmp/b/
+
+$ tree /tmp/b
+/tmp/b
+├── file1.rclonelink
+└── file2.rclonelink
+````
+
+Note that this flag is incompatible with `-copy-links` / `-L`.
 
 ### Restricting filesystems with --one-file-system
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/list"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
 )
@@ -576,15 +577,15 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			return err
 		}
 	case fs.Directory:
-		doDirMove := d.f.Features().DirMove
-		if doDirMove == nil {
-			err := errors.Errorf("Fs %q can't rename directories (no DirMove)", d.f)
+		features := d.f.Features()
+		if features.DirMove == nil && features.Move == nil && features.Copy == nil {
+			err := errors.Errorf("Fs %q can't rename directories (no DirMove, Move or Copy)", d.f)
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
 		srcRemote := x.Remote()
 		dstRemote := newPath
-		err = doDirMove(d.f, srcRemote, dstRemote)
+		err = operations.DirMove(d.f, srcRemote, dstRemote)
 		if err != nil {
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err

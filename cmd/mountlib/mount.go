@@ -326,7 +326,11 @@ func ClipBlocks(b *uint64) {
 	var max uint64
 	switch runtime.GOOS {
 	case "windows":
-		max = (1 << 43) - 1
+		if runtime.GOARCH == "386" {
+			max = (1 << 32) - 1
+		} else {
+			max = (1 << 43) - 1
+		}
 	case "darwin":
 		// OSX FUSE only supports 32 bit number of blocks
 		// https://github.com/osxfuse/osxfuse/issues/396

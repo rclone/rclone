@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -26,22 +27,41 @@ import (
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/walk"
+	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
 )
 
 // Globals
 const (
-	minSleep          = 10 * time.Millisecond
-	maxSleep          = 2 * time.Second
-	decayConstant     = 2 // bigger for slower decay, exponential
-	defaultDevice     = "Jotta"
-	defaultMountpoint = "Sync"
-	rootURL           = "https://www.jottacloud.com/jfs/"
-	apiURL            = "https://api.jottacloud.com"
-	shareURL          = "https://www.jottacloud.com/"
-	cachePrefix       = "rclone-jcmd5-"
+	minSleep                    = 10 * time.Millisecond
+	maxSleep                    = 2 * time.Second
+	decayConstant               = 2 // bigger for slower decay, exponential
+	defaultDevice               = "Jotta"
+	defaultMountpoint           = "Sync"
+	rootURL                     = "https://www.jottacloud.com/jfs/"
+	apiURL                      = "https://api.jottacloud.com/files/v1/"
+	baseURL                     = "https://www.jottacloud.com/"
+	tokenURL                    = "https://api.jottacloud.com/auth/v1/token"
+	cachePrefix                 = "rclone-jcmd5-"
+	rcloneClientID              = "nibfk8biu12ju7hpqomr8b1e40"
+	rcloneEncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
+	configUsername              = "user"
+)
+
+var (
+	// Description of how to auth for this app for a personal account
+	oauthConfig = &oauth2.Config{
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  tokenURL,
+			TokenURL: tokenURL,
+		},
+		ClientID:     rcloneClientID,
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
+		RedirectURL:  oauthutil.RedirectLocalhostURL,
+	}
 )
 
 // Register with Fs
@@ -50,13 +70,71 @@ func init() {
 		Name:        "jottacloud",
 		Description: "JottaCloud",
 		NewFs:       NewFs,
+		Config: func(name string, m configmap.Mapper) {
+			tokenString, ok := m.Get("token")
+			if ok && tokenString != "" {
+				fmt.Printf("Already have a token - refresh?\n")
+				if !config.Confirm() {
+					return
+				}
+			}
+
+			username, ok := m.Get(configUsername)
+			if !ok {
+				log.Fatalf("No username defined")
+			}
+			password := config.GetPassword("Your Jottacloud password is only required during config and will not be stored.")
+
+			// prepare out token request with username and password
+			srv := rest.NewClient(fshttp.NewClient(fs.Config))
+			values := url.Values{}
+			values.Set("grant_type", "PASSWORD")
+			values.Set("password", password)
+			values.Set("username", username)
+			values.Set("client_id", oauthConfig.ClientID)
+			values.Set("client_secret", oauthConfig.ClientSecret)
+			opts := rest.Opts{
+				Method:      "POST",
+				RootURL:     oauthConfig.Endpoint.AuthURL,
+				ContentType: "application/x-www-form-urlencoded",
+				Parameters:  values,
+			}
+
+			var jsonToken api.TokenJSON
+			resp, err := srv.CallJSON(&opts, nil, &jsonToken)
+			if err != nil {
+				// if 2fa is enabled the first request is expected to fail. we'lls do another request with the 2fa code as an additional http header
+				if resp != nil {
+					if resp.Header.Get("X-JottaCloud-OTP") == "required; SMS" {
+						fmt.Printf("This account has 2 factor authentication enabled you will receive a verification code via SMS.\n")
+						fmt.Printf("Enter verification code> ")
+						authCode := config.ReadLine()
+						authCode = strings.Replace(authCode, "-", "", -1) // the sms received contains a pair of 3 digit numbers seperated by '-' but wants a single 6 digit number
+						opts.ExtraHeaders = make(map[string]string)
+						opts.ExtraHeaders["X-Jottacloud-Otp"] = authCode
+						resp, err = srv.CallJSON(&opts, nil, &jsonToken)
+					}
+				}
+				if err != nil {
+					log.Fatalf("Failed to get resource token: %v", err)
+				}
+			}
+
+			var token oauth2.Token
+			token.AccessToken = jsonToken.AccessToken
+			token.RefreshToken = jsonToken.RefreshToken
+			token.TokenType = jsonToken.TokenType
+			token.Expiry = time.Now().Add(time.Duration(jsonToken.ExpiresIn) * time.Second)
+
+			// finally save them in the config
+			err = oauthutil.PutToken(name, m, &token, true)
+			if err != nil {
+				log.Fatalf("Error while setting token: %s", err)
+			}
+		},
 		Options: []fs.Option{{
-			Name: "user",
-			Help: "User Name",
-		}, {
-			Name:       "pass",
-			Help:       "Password.",
-			IsPassword: true,
+			Name: configUsername,
+			Help: "User Name:",
 		}, {
 			Name:     "mountpoint",
 			Help:     "The mountpoint to use.",
@@ -83,6 +161,11 @@ func init() {
 			Help:     "Remove existing public link to file/folder with link command rather than creating.\nDefault is false, meaning link command will create or retrieve public link.",
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     "upload_resume_limit",
+			Help:     "Files bigger than this can be resumed if the upload failes.",
+			Default:  fs.SizeSuffix(10 * 1024 * 1024),
+			Advanced: true,
 		}},
 	})
 }
@@ -90,23 +173,25 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	User               string        `config:"user"`
-	Pass               string        `config:"pass"`
 	Mountpoint         string        `config:"mountpoint"`
 	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
 	HardDelete         bool          `config:"hard_delete"`
 	Unlink             bool          `config:"unlink"`
+	UploadThreshold    fs.SizeSuffix `config:"upload_resume_limit"`
 }
 
 // Fs represents a remote jottacloud
 type Fs struct {
-	name        string
-	root        string
-	user        string
-	opt         Options
-	features    *fs.Features
-	endpointURL string
-	srv         *rest.Client
-	pacer       *pacer.Pacer
+	name         string
+	root         string
+	user         string
+	opt          Options
+	features     *fs.Features
+	endpointURL  string
+	srv          *rest.Client
+	apiSrv       *rest.Client
+	pacer        *pacer.Pacer
+	tokenRenewer *oauthutil.Renew // renew the token on expiry
 }
 
 // Object describes a jottacloud object
@@ -261,6 +346,29 @@ func (o *Object) filePath() string {
 	return o.fs.filePath(o.remote)
 }
 
+// Jottacloud requires the grant_type 'refresh_token' string
+// to be uppercase and throws a 400 Bad Request if we use the
+// lower case used by the oauth2 module
+//
+// This filter catches all refresh requests, reads the body,
+// changes the case and then sends it on
+func grantTypeFilter(req *http.Request) {
+	if tokenURL == req.URL.String() {
+		// read the entire body
+		refreshBody, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return
+		}
+		_ = req.Body.Close()
+
+		// make the refesh token upper case
+		refreshBody = []byte(strings.Replace(string(refreshBody), "grant_type=refresh_token", "grant_type=REFRESH_TOKEN", 1))
+
+		// set the new ReadCloser (with a dummy Close())
+		req.Body = ioutil.NopCloser(bytes.NewReader(refreshBody))
+	}
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -273,25 +381,29 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = parsePath(root)
 
-	user := config.FileGet(name, "user")
-	pass := config.FileGet(name, "pass")
-
-	if opt.Pass != "" {
-		var err error
-		opt.Pass, err = obscure.Reveal(opt.Pass)
-		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt password")
-		}
+	// the oauth client for the api servers needs
+	// a filter to fix the grant_type issues (see above)
+	baseClient := fshttp.NewClient(fs.Config)
+	if do, ok := baseClient.Transport.(interface {
+		SetRequestFilter(f func(req *http.Request))
+	}); ok {
+		do.SetRequestFilter(grantTypeFilter)
+	} else {
+		fs.Debugf(name+":", "Couldn't add request filter - uploads will fail")
+	}
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, m, oauthConfig, baseClient)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to configure Jottacloud oauth client")
 	}
 
 	f := &Fs{
-		name: name,
-		root: root,
-		user: opt.User,
-		opt:  *opt,
-		//endpointURL: rest.URLPathEscape(path.Join(user, defaultDevice, opt.Mountpoint)),
-		srv:   rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(rootURL),
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		name:   name,
+		root:   root,
+		user:   opt.User,
+		opt:    *opt,
+		srv:    rest.NewClient(oAuthClient).SetRoot(rootURL),
+		apiSrv: rest.NewClient(oAuthClient).SetRoot(apiURL),
+		pacer:  pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -299,13 +411,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		ReadMimeType:            true,
 		WriteMimeType:           true,
 	}).Fill(f)
-
-	if user == "" || pass == "" {
-		return nil, errors.New("jottacloud needs user and password")
-	}
-
-	f.srv.SetUserPass(opt.User, opt.Pass)
 	f.srv.SetErrorHandler(errorHandler)
+
+	// Renew the token in the background
+	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+		_, err := f.readMetaDataForPath("")
+		return err
+	})
 
 	err = f.setEndpointURL(opt.Mountpoint)
 	if err != nil {
@@ -331,7 +443,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
-
 	return f, nil
 }
 
@@ -348,7 +459,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.JottaFile) (fs.Object, e
 		// Set info
 		err = o.setMetaData(info)
 	} else {
-		err = o.readMetaData() // reads info and meta, returning an error
+		err = o.readMetaData(false) // reads info and meta, returning an error
 	}
 	if err != nil {
 		return nil, err
@@ -396,7 +507,7 @@ func (f *Fs) CreateDir(path string) (jf *api.JottaFolder, err error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	//fmt.Printf("List: %s\n", dir)
+	//fmt.Printf("List: %s\n", f.filePath(dir))
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   f.filePath(dir),
@@ -676,7 +787,6 @@ func (f *Fs) copyOrMove(method, src, dest string) (info *api.JottaFile, err erro
 	if err != nil {
 		return nil, err
 	}
-
 	return info, nil
 }
 
@@ -824,7 +934,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 	if result.PublicSharePath == "" {
 		return "", errors.New("couldn't create public link - no link path received")
 	}
-	link = path.Join(shareURL, result.PublicSharePath)
+	link = path.Join(baseURL, result.PublicSharePath)
 	return link, nil
 }
 
@@ -880,7 +990,7 @@ func (o *Object) Hash(t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData()
+	err := o.readMetaData(false)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
@@ -903,13 +1013,16 @@ func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	return nil
 }
 
-func (o *Object) readMetaData() (err error) {
-	if o.hasMetaData {
+func (o *Object) readMetaData(force bool) (err error) {
+	if o.hasMetaData && !force {
 		return nil
 	}
 	info, err := o.fs.readMetaDataForPath(o.remote)
 	if err != nil {
 		return err
+	}
+	if info.Deleted {
+		return fs.ErrorObjectNotFound
 	}
 	return o.setMetaData(info)
 }
@@ -919,7 +1032,7 @@ func (o *Object) readMetaData() (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime() time.Time {
-	err := o.readMetaData()
+	err := o.readMetaData(false)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
@@ -1040,43 +1153,74 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		in = wrap(in)
 	}
 
+	// use the api to allocate the file first and get resume / deduplication info
 	var resp *http.Response
-	var result api.JottaFile
 	opts := rest.Opts{
-		Method:        "POST",
-		Path:          o.filePath(),
-		Body:          in,
-		ContentType:   fs.MimeType(src),
-		ContentLength: &size,
-		ExtraHeaders:  make(map[string]string),
-		Parameters:    url.Values{},
+		Method:       "POST",
+		Path:         "allocate",
+		ExtraHeaders: make(map[string]string),
+	}
+	fileDate := api.Time(src.ModTime()).APIString()
+
+	// the allocate request
+	var request = api.AllocateFileRequest{
+		Bytes:    size,
+		Created:  fileDate,
+		Modified: fileDate,
+		Md5:      md5String,
+		Path:     path.Join(o.fs.opt.Mountpoint, replaceReservedChars(path.Join(o.fs.root, o.remote))),
 	}
 
-	opts.ExtraHeaders["JMd5"] = md5String
-	opts.Parameters.Set("cphash", md5String)
-	opts.ExtraHeaders["JSize"] = strconv.FormatInt(size, 10)
-	// opts.ExtraHeaders["JCreated"] = api.Time(src.ModTime()).String()
-	opts.ExtraHeaders["JModified"] = api.Time(src.ModTime()).String()
-
-	// Parameters observed in other implementations
-	//opts.ExtraHeaders["X-Jfs-DeviceName"] = "Jotta"
-	//opts.ExtraHeaders["X-Jfs-Devicename-Base64"] = ""
-	//opts.ExtraHeaders["X-Jftp-Version"] = "2.4" this appears to be the current version
-	//opts.ExtraHeaders["jx_csid"] = ""
-	//opts.ExtraHeaders["jx_lisence"] = ""
-
-	opts.Parameters.Set("umode", "nomultipart")
-
+	// send it
+	var response api.AllocateFileResponse
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		resp, err = o.fs.srv.CallXML(&opts, nil, &result)
+		resp, err = o.fs.apiSrv.CallJSON(&opts, &request, &response)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
 		return err
 	}
 
-	// TODO: Check returned Metadata? Timeout on big uploads?
-	return o.setMetaData(&result)
+	// If the file state is INCOMPLETE and CORRPUT, try to upload a then
+	if response.State != "COMPLETED" {
+		// how much do we still have to upload?
+		remainingBytes := size - response.ResumePos
+		opts = rest.Opts{
+			Method:        "POST",
+			RootURL:       response.UploadURL,
+			ContentLength: &remainingBytes,
+			ContentType:   "application/octet-stream",
+			Body:          in,
+			ExtraHeaders:  make(map[string]string),
+		}
+		if response.ResumePos != 0 {
+			opts.ExtraHeaders["Range"] = "bytes=" + strconv.FormatInt(response.ResumePos, 10) + "-" + strconv.FormatInt(size-1, 10)
+		}
+
+		// copy the already uploaded bytes into the trash :)
+		var result api.UploadResponse
+		_, err = io.CopyN(ioutil.Discard, in, response.ResumePos)
+		if err != nil {
+			return err
+		}
+
+		// send the remaining bytes
+		resp, err = o.fs.apiSrv.CallJSON(&opts, nil, &result)
+		if err != nil {
+			return err
+		}
+
+		// finally update the meta data
+		o.hasMetaData = true
+		o.size = int64(result.Bytes)
+		o.md5 = result.Md5
+		o.modTime = time.Unix(result.Modified/1000, 0)
+	} else {
+		// If the file state is COMPLETE we don't need to upload it because the file was allready found but we still ned to update our metadata
+		return o.readMetaData(true)
+	}
+
+	return nil
 }
 
 // Remove an object

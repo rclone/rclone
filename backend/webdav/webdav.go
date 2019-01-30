@@ -2,23 +2,13 @@
 // object storage system.
 package webdav
 
-// Owncloud: Getting Oc-Checksum:
-// SHA1:f572d396fae9206628714fb2ce00f72e94f2258f on HEAD but not on
-// nextcloud?
-
-// docs for file webdav
-// https://docs.nextcloud.com/server/12/developer_manual/client_apis/WebDAV/index.html
-
-// indicates checksums can be set as metadata here
-// https://github.com/nextcloud/server/issues/6129
-// owncloud seems to have checksums as metadata though - can read them
-
 // SetModTime might be possible
 // https://stackoverflow.com/questions/3579608/webdav-can-a-client-modify-the-mtime-of-a-file
 // ...support for a PROPSET to lastmodified (mind the missing get) which does the utime() call might be an option.
 // For example the ownCloud WebDAV server does it that way.
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -116,6 +106,7 @@ type Fs struct {
 	canStream          bool          // set if can stream
 	useOCMtime         bool          // set if can use X-OC-Mtime
 	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
+	hasChecksums       bool          // set if can use owncloud style checksums
 }
 
 // Object describes a webdav object
@@ -127,7 +118,8 @@ type Object struct {
 	hasMetaData bool      // whether info below has been set
 	size        int64     // size of the object
 	modTime     time.Time // modification time of the object
-	sha1        string    // SHA-1 of the object content
+	sha1        string    // SHA-1 of the object content if known
+	md5         string    // MD5 of the object content if known
 }
 
 // ------------------------------------------------------------
@@ -193,6 +185,9 @@ func (f *Fs) readMetaDataForPath(path string, depth string) (info *api.Prop, err
 			"Depth": depth,
 		},
 		NoRedirect: true,
+	}
+	if f.hasChecksums {
+		opts.Body = bytes.NewBuffer(owncloudProps)
 	}
 	var result api.Multistatus
 	var resp *http.Response
@@ -357,9 +352,11 @@ func (f *Fs) setQuirks(vendor string) error {
 		f.canStream = true
 		f.precision = time.Second
 		f.useOCMtime = true
+		f.hasChecksums = true
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
+		f.hasChecksums = true
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
@@ -426,6 +423,22 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
+// Read the normal props, plus the checksums
+//
+// <oc:checksums><oc:checksum>SHA1:f572d396fae9206628714fb2ce00f72e94f2258f MD5:b1946ac92492d2347c6235b4d2611184 ADLER32:084b021f</oc:checksum></oc:checksums>
+var owncloudProps = []byte(`<?xml version="1.0"?>
+<d:propfind  xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
+ <d:prop>
+  <d:displayname />
+  <d:getlastmodified />
+  <d:getcontentlength />
+  <d:resourcetype />
+  <d:getcontenttype />
+  <oc:checksums />
+ </d:prop>
+</d:propfind>
+`)
+
 // list the objects into the function supplied
 //
 // If directories is set it only sends directories
@@ -444,6 +457,9 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, depth str
 		ExtraHeaders: map[string]string{
 			"Depth": depth,
 		},
+	}
+	if f.hasChecksums {
+		opts.Body = bytes.NewBuffer(owncloudProps)
 	}
 	var result api.Multistatus
 	var resp *http.Response
@@ -847,7 +863,50 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if f.hasChecksums {
+		return hash.NewHashSet(hash.MD5, hash.SHA1)
+	}
 	return hash.Set(hash.None)
+}
+
+// About gets quota information
+func (f *Fs) About() (*fs.Usage, error) {
+	opts := rest.Opts{
+		Method: "PROPFIND",
+		Path:   "",
+		ExtraHeaders: map[string]string{
+			"Depth": "0",
+		},
+	}
+	opts.Body = bytes.NewBuffer([]byte(`<?xml version="1.0" ?>
+<D:propfind xmlns:D="DAV:">
+ <D:prop>
+  <D:quota-available-bytes/>
+  <D:quota-used-bytes/>
+ </D:prop>
+</D:propfind>
+`))
+	var q = api.Quota{
+		Available: -1,
+		Used:      -1,
+	}
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallXML(&opts, nil, &q)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "about call failed")
+	}
+	usage := &fs.Usage{}
+	if q.Available >= 0 && q.Used >= 0 {
+		usage.Total = fs.NewUsageValue(q.Available + q.Used)
+	}
+	if q.Used >= 0 {
+		usage.Used = fs.NewUsageValue(q.Used)
+	}
+	return usage, nil
 }
 
 // ------------------------------------------------------------
@@ -870,12 +929,17 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Hash returns the SHA-1 of an object returning a lowercase hex string
+// Hash returns the SHA1 or MD5 of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.SHA1 {
-		return "", hash.ErrUnsupported
+	if o.fs.hasChecksums {
+		switch t {
+		case hash.SHA1:
+			return o.sha1, nil
+		case hash.MD5:
+			return o.md5, nil
+		}
 	}
-	return o.sha1, nil
+	return "", hash.ErrUnsupported
 }
 
 // Size returns the size of an object in bytes
@@ -893,6 +957,11 @@ func (o *Object) setMetaData(info *api.Prop) (err error) {
 	o.hasMetaData = true
 	o.size = info.Size
 	o.modTime = time.Time(info.Modified)
+	if o.fs.hasChecksums {
+		hashes := info.Hashes()
+		o.sha1 = hashes[hash.SHA1]
+		o.md5 = hashes[hash.MD5]
+	}
 	return nil
 }
 
@@ -972,9 +1041,21 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
 		ContentType:   fs.MimeType(src),
 	}
-	if o.fs.useOCMtime {
-		opts.ExtraHeaders = map[string]string{
-			"X-OC-Mtime": fmt.Sprintf("%f", float64(src.ModTime().UnixNano())/1E9),
+	if o.fs.useOCMtime || o.fs.hasChecksums {
+		opts.ExtraHeaders = map[string]string{}
+		if o.fs.useOCMtime {
+			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime().UnixNano())/1E9)
+		}
+		if o.fs.hasChecksums {
+			// Set an upload checksum - prefer SHA1
+			//
+			// This is used as an upload integrity test. If we set
+			// only SHA1 here, owncloud will calculate the MD5 too.
+			if sha1, _ := src.Hash(hash.SHA1); sha1 != "" {
+				opts.ExtraHeaders["OC-Checksum"] = "SHA1:" + sha1
+			} else if md5, _ := src.Hash(hash.MD5); md5 != "" {
+				opts.ExtraHeaders["OC-Checksum"] = "MD5:" + md5
+			}
 		}
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
@@ -1018,5 +1099,6 @@ var (
 	_ fs.Copier      = (*Fs)(nil)
 	_ fs.Mover       = (*Fs)(nil)
 	_ fs.DirMover    = (*Fs)(nil)
+	_ fs.Abouter     = (*Fs)(nil)
 	_ fs.Object      = (*Object)(nil)
 )

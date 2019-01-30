@@ -5,11 +5,10 @@ package asyncreader
 import (
 	"io"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/lib/mmap"
+	"github.com/ncw/rclone/lib/pool"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 )
@@ -105,14 +104,25 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 	}()
 }
 
+// bufferPool is a global pool of buffers
+var bufferPool *pool.Pool
+var bufferPoolOnce sync.Once
+
 // return the buffer to the pool (clearing it)
 func (a *AsyncReader) putBuffer(b *buffer) {
-	pool.put(b)
+	bufferPool.Put(b.buf)
+	b.buf = nil
 }
 
 // get a buffer from the pool
 func (a *AsyncReader) getBuffer() *buffer {
-	return pool.get()
+	bufferPoolOnce.Do(func() {
+		// Initialise the buffer pool when used
+		bufferPool = pool.New(bufferCacheFlushTime, BufferSize, bufferCacheSize, fs.Config.UseMmap)
+	})
+	return &buffer{
+		buf: bufferPool.Get(),
+	}
 }
 
 // Read will return the next available data.
@@ -299,99 +309,6 @@ type buffer struct {
 	buf    []byte
 	err    error
 	offset int
-}
-
-// Pool of internal buffers
-type bufferPool struct {
-	cache     chan *buffer
-	timer     *time.Timer
-	inUse     int32
-	flushTime time.Duration
-}
-
-// pool is a global pool of buffers
-var pool = newBufferPool(bufferCacheFlushTime, bufferCacheSize)
-
-// newBufferPool makes a buffer pool
-func newBufferPool(flushTime time.Duration, size int) *bufferPool {
-	bp := &bufferPool{
-		cache:     make(chan *buffer, size),
-		flushTime: flushTime,
-	}
-	bp.timer = time.AfterFunc(bufferCacheFlushTime, bp.flush)
-	return bp
-}
-
-// flush the entire buffer cache
-func (bp *bufferPool) flush() {
-	for {
-		select {
-		case b := <-bp.cache:
-			bp.free(b)
-		default:
-			return
-		}
-	}
-}
-
-func (bp *bufferPool) buffersInUse() int {
-	return int(atomic.LoadInt32(&bp.inUse))
-}
-
-// starts or resets the buffer flusher timer
-func (bp *bufferPool) kickFlusher() {
-	bp.timer.Reset(bp.flushTime)
-}
-
-// gets a buffer from the pool or allocates one
-func (bp *bufferPool) get() *buffer {
-	select {
-	case b := <-bp.cache:
-		return b
-	default:
-	}
-	mem, err := mmap.Alloc(BufferSize)
-	if err != nil {
-		fs.Errorf(nil, "Failed to get memory for buffer, waiting for a freed one: %v", err)
-		return <-bp.cache
-	}
-	atomic.AddInt32(&bp.inUse, 1)
-	return &buffer{
-		mem: mem,
-		buf: mem,
-		err: nil,
-	}
-}
-
-// free returns the buffer to the OS
-func (bp *bufferPool) free(b *buffer) {
-	err := mmap.Free(b.mem)
-	if err != nil {
-		fs.Errorf(nil, "Failed to free memory: %v", err)
-	} else {
-		atomic.AddInt32(&bp.inUse, -1)
-	}
-	b.mem = nil
-	b.buf = nil
-}
-
-// putBuffer returns the buffer to the buffer cache or frees it
-func (bp *bufferPool) put(b *buffer) {
-	b.clear()
-	select {
-	case bp.cache <- b:
-		bp.kickFlusher()
-		return
-	default:
-	}
-	bp.free(b)
-}
-
-// clear returns the buffer to its full size and clears the members
-func (b *buffer) clear() {
-	b.buf = b.buf[:cap(b.buf)]
-	b.err = nil
-	b.offset = 0
 }
 
 // isEmpty returns true is offset is at end of
