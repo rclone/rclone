@@ -83,11 +83,6 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 			select {
 			case <-a.token:
 				b := a.getBuffer()
-				if b == nil {
-					// no buffer allocated
-					// drop the token and continue
-					continue
-				}
 				if a.size < BufferSize {
 					b.buf = b.buf[:a.size]
 					a.size <<= 1
@@ -305,7 +300,6 @@ func (a *AsyncReader) Close() (err error) {
 // If an error is present, it must be returned
 // once all buffer content has been served.
 type buffer struct {
-	mem    []byte
 	buf    []byte
 	err    error
 	offset int
