@@ -45,7 +45,11 @@ func New(flushTime time.Duration, bufferSize, poolSize int, useMmap bool) *Pool 
 			return nil
 		}
 	}
-	bp.timer = time.AfterFunc(flushTime, bp.Flush)
+
+	if flushTime > 0 {
+		bp.timer = time.AfterFunc(flushTime, bp.Flush)
+	}
+
 	return bp
 }
 

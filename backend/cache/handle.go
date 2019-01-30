@@ -13,8 +13,8 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/operations"
+	"github.com/ncw/rclone/lib/pool"
 	"github.com/pkg/errors"
-	"github.com/90TechSAS/go-buffer-pool-recycler"
 )
 
 var uploaderMap = make(map[string]*backgroundWriter)
@@ -52,7 +52,7 @@ type Handle struct {
 	workersWg      sync.WaitGroup
 	workers        int
 	maxWorkerID    int
-	pool           *bpool.Pool
+	pool           *pool.Pool
 	confirmReading chan bool
 	UseMemory      bool
 	closed         bool
@@ -70,7 +70,8 @@ func NewObjectHandle(o *Object, cfs *Fs) *Handle {
 		UseMemory: !cfs.opt.ChunkNoMemory,
 		reading:   false,
 	}
-	r.pool = bpool.GetPool(int(r.cfs.opt.ChunkSize), int(r.cfs.opt.TotalWorkers)) // Create a pool
+
+	r.pool = pool.New(0, int(r.cfs.opt.ChunkSize), int(r.cfs.opt.TotalWorkers), fs.Config.UseMmap) //Create a pool
 	r.seenOffsets = make(map[int64]bool)
 	r.memory = NewMemory(-1)
 
