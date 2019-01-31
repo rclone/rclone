@@ -39,6 +39,7 @@ import (
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -2494,15 +2495,31 @@ func (o *documentObject) Open(options ...fs.OpenOption) (in io.ReadCloser, err e
 	// Update the size with what we are reading as it can change from
 	// the HEAD in the listing to this GET. This stops rclone marking
 	// the transfer as corrupted.
+	var offset, end int64 = 0, -1
+	var newOptions = options[:0]
 	for _, o := range options {
+		// Note that Range requests don't work on Google docs:
 		// https://developers.google.com/drive/v3/web/manage-downloads#partial_download
-		if _, ok := o.(*fs.RangeOption); ok {
-			return nil, errors.New("partial downloads are not supported while exporting Google Documents")
+		// So do a subset of them manually
+		switch x := o.(type) {
+		case *fs.RangeOption:
+			offset, end = x.Start, x.End
+		case *fs.SeekOption:
+			offset, end = x.Offset, -1
+		default:
+			newOptions = append(newOptions, o)
 		}
+	}
+	options = newOptions
+	if offset != 0 {
+		return nil, errors.New("partial downloads are not supported while exporting Google Documents")
 	}
 	in, err = o.baseObject.open(o.url, options...)
 	if in != nil {
 		in = &openDocumentFile{o: o, in: in}
+	}
+	if end >= 0 {
+		in = readers.NewLimitedReadCloser(in, end-offset+1)
 	}
 	return
 }
