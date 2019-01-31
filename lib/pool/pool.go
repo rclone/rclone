@@ -73,7 +73,9 @@ func (bp *Pool) InUse() int {
 
 // starts or resets the buffer flusher timer
 func (bp *Pool) kickFlusher() {
-	bp.timer.Reset(bp.flushTime)
+	if bp.timer != nil {
+		bp.timer.Reset(bp.flushTime)
+	}
 }
 
 // Get a buffer from the pool or allocate one
