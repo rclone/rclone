@@ -67,8 +67,9 @@ type cache struct {
 	f      fs.Fs                 // fs for the cache directory
 	opt    *Options              // vfs Options
 	root   string                // root of the cache directory
-	itemMu sync.Mutex            // protects the next two maps
+	itemMu sync.Mutex            // protects the following variables
 	item   map[string]*cacheItem // files/directories in the cache
+	used   int64                 // total size of files in the cache
 }
 
 // cacheItem is stored in the item map
@@ -76,6 +77,7 @@ type cacheItem struct {
 	opens  int       // number of times file is open
 	atime  time.Time // last time file was accessed
 	isFile bool      // if this is a file or a directory
+	size   int64     // size of the cached item
 }
 
 // newCacheItem returns an item for the cache
@@ -196,11 +198,13 @@ func (c *cache) get(name string) *cacheItem {
 	return item
 }
 
-// updateTime sets the atime of the name to that passed in if it is
+// updateStat sets the atime of the name to that passed in if it is
 // newer than the existing or there isn't an existing time.
 //
+// it also sets the size
+//
 // name should be a remote path not an osPath
-func (c *cache) updateTime(name string, when time.Time) {
+func (c *cache) updateStat(name string, when time.Time, size int64) {
 	name = clean(name)
 	c.itemMu.Lock()
 	item, found := c._get(true, name)
@@ -208,6 +212,7 @@ func (c *cache) updateTime(name string, when time.Time) {
 		fs.Debugf(name, "updateTime: setting atime to %v", when)
 		item.atime = when
 	}
+	item.size = size
 	c.itemMu.Unlock()
 }
 
@@ -266,6 +271,12 @@ func (c *cache) _close(isFile bool, name string) {
 		if item.opens < 0 {
 			fs.Errorf(name, "cache: double close")
 		}
+		osPath := c.toOSPath(name)
+		fi, err := os.Stat(osPath)
+		// Update the size on close
+		if err == nil && !fi.IsDir() {
+			item.size = fi.Size()
+		}
 		if name == "" {
 			break
 		}
@@ -291,7 +302,7 @@ func (c *cache) remove(name string) {
 	if err != nil && !os.IsNotExist(err) {
 		fs.Errorf(name, "Failed to remove from cache: %v", err)
 	} else {
-		fs.Debugf(name, "Removed from cache")
+		fs.Infof(name, "Removed from cache")
 	}
 }
 
@@ -338,26 +349,34 @@ func (c *cache) walk(fn func(osPath string, fi os.FileInfo, name string) error) 
 	})
 }
 
-// updateAtimes walks the cache updating any atimes it finds
-func (c *cache) updateAtimes() error {
-	return c.walk(func(osPath string, fi os.FileInfo, name string) error {
+// updateStats walks the cache updating any atimes and sizes it finds
+//
+// it also updates used
+func (c *cache) updateStats() error {
+	var newUsed int64
+	err := c.walk(func(osPath string, fi os.FileInfo, name string) error {
 		if !fi.IsDir() {
 			// Update the atime with that of the file
 			atime := times.Get(fi).AccessTime()
-			c.updateTime(name, atime)
+			c.updateStat(name, atime, fi.Size())
+			newUsed += fi.Size()
 		} else {
 			c.cacheDir(name)
 		}
 		return nil
 	})
+	c.itemMu.Lock()
+	c.used = newUsed
+	c.itemMu.Unlock()
+	return err
 }
 
 // purgeOld gets rid of any files that are over age
 func (c *cache) purgeOld(maxAge time.Duration) {
-	c._purgeOld(maxAge, c.remove, c.removeDir)
+	c._purgeOld(maxAge, c.remove)
 }
 
-func (c *cache) _purgeOld(maxAge time.Duration, remove func(name string), removeDir func(name string) bool) {
+func (c *cache) _purgeOld(maxAge time.Duration, remove func(name string)) {
 	c.itemMu.Lock()
 	defer c.itemMu.Unlock()
 	cutoff := time.Now().Add(-maxAge)
@@ -373,7 +392,16 @@ func (c *cache) _purgeOld(maxAge time.Duration, remove func(name string), remove
 			}
 		}
 	}
-	// now find any empty directories
+}
+
+// Purge any empty directories
+func (c *cache) purgeEmptyDirs() {
+	c._purgeEmptyDirs(c.removeDir)
+}
+
+func (c *cache) _purgeEmptyDirs(removeDir func(name string) bool) {
+	c.itemMu.Lock()
+	defer c.itemMu.Unlock()
 	var dirs []string
 	for name, item := range c.item {
 		if !item.isFile && item.opens == 0 {
@@ -391,6 +419,56 @@ func (c *cache) _purgeOld(maxAge time.Duration, remove func(name string), remove
 	}
 }
 
+// This is a cacheItem with a name for sorting
+type cacheNamedItem struct {
+	name string
+	item *cacheItem
+}
+type cacheNamedItems []cacheNamedItem
+
+func (v cacheNamedItems) Len() int           { return len(v) }
+func (v cacheNamedItems) Swap(i, j int)      { v[i], v[j] = v[j], v[i] }
+func (v cacheNamedItems) Less(i, j int) bool { return v[i].item.atime.Before(v[j].item.atime) }
+
+// Remove any files that are over quota starting from the
+// oldest first
+func (c *cache) purgeOverQuota(quota int64) {
+	c._purgeOverQuota(quota, c.remove)
+}
+
+func (c *cache) _purgeOverQuota(quota int64, remove func(name string)) {
+	c.itemMu.Lock()
+	defer c.itemMu.Unlock()
+
+	if quota <= 0 || c.used < quota {
+		return
+	}
+
+	var items cacheNamedItems
+
+	// Make a slice of unused files
+	for name, item := range c.item {
+		if item.isFile && item.opens == 0 {
+			items = append(items, cacheNamedItem{
+				name: name,
+				item: item,
+			})
+		}
+	}
+	sort.Sort(items)
+
+	// Remove items until the quota is OK
+	for _, item := range items {
+		if c.used < quota {
+			break
+		}
+		remove(item.name)
+		// Remove the entry
+		delete(c.item, item.name)
+		c.used -= item.item.size
+	}
+}
+
 // clean empties the cache of stuff if it can
 func (c *cache) clean() {
 	// Cache may be empty so end
@@ -399,17 +477,32 @@ func (c *cache) clean() {
 		return
 	}
 
-	fs.Debugf(nil, "Cleaning the cache")
+	c.itemMu.Lock()
+	oldItems, oldUsed := len(c.item), fs.SizeSuffix(c.used)
+	c.itemMu.Unlock()
 
-	// first walk the FS to update the atimes
-	err = c.updateAtimes()
+	// first walk the FS to update the atimes and sizes
+	err = c.updateStats()
 	if err != nil {
 		fs.Errorf(nil, "Error traversing cache %q: %v", c.root, err)
 	}
 
-	// Now remove any files that are over age and any empty
-	// directories
+	// Remove any files that are over age
 	c.purgeOld(c.opt.CacheMaxAge)
+
+	// Now remove any files that are over quota starting from the
+	// oldest first
+	c.purgeOverQuota(int64(c.opt.CacheMaxSize))
+
+	// Remove any empty directories
+	c.purgeEmptyDirs()
+
+	// Stats
+	c.itemMu.Lock()
+	newItems, newUsed := len(c.item), fs.SizeSuffix(c.used)
+	c.itemMu.Unlock()
+
+	fs.Infof(nil, "Cleaned the cache: objects %d (was %d), total size %v (was %v)", newItems, oldItems, newUsed, oldUsed)
 }
 
 // cleaner calls clean at regular intervals
