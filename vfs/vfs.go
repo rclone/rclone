@@ -50,6 +50,7 @@ var DefaultOpt = Options{
 	CachePollInterval: 60 * time.Second,
 	ChunkSize:         128 * fs.MebiByte,
 	ChunkSizeLimit:    -1,
+	CacheMaxSize:      -1,
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
@@ -196,6 +197,7 @@ type Options struct {
 	ChunkSizeLimit    fs.SizeSuffix // if > ChunkSize double the chunk size after each chunk until reached
 	CacheMode         CacheMode
 	CacheMaxAge       time.Duration
+	CacheMaxSize      fs.SizeSuffix
 	CachePollInterval time.Duration
 }
 

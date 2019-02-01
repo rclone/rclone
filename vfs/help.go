@@ -60,6 +60,7 @@ may find that you need one or the other or both.
     --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
     --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
     --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+    --vfs-cache-max-size int             Max total size of objects in the cache. (default off)
 
 If run with ` + "`-vv`" + ` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -74,6 +75,11 @@ Note that files are written back to the remote only when they are
 closed so if rclone is quit or dies with open files then these won't
 get written back to the remote.  However they will still be in the on
 disk cache.
+
+If using --vfs-cache-max-size note that the cache may exceed this size
+for two reasons.  Firstly because it is only checked every
+--vfs-cache-poll-interval.  Secondly because open files cannot be
+evicted from the cache.
 
 #### --vfs-cache-mode off
 
