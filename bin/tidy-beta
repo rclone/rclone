@@ -3,7 +3,7 @@
 
 version="$1"
 if [ "$version" = "" ]; then
-    echo "Syntax: $0 <version> [delete]"
+    echo "Syntax: $0 <version, eg v1.42> [delete]"
     exit 1
 fi
 dry_run="--dry-run"
@@ -14,4 +14,4 @@ else
     echo "Use '$0 $version delete' to actually delete files"
 fi
 
-rclone ${dry_run} --fast-list -P --checkers 16 --transfers 16 delete --include "**/${version}**" memstore:beta-rclone-org
+rclone ${dry_run} -P --fast-list --checkers 16 --transfers 16 delete --include "**${version}**" memstore:beta-rclone-org
