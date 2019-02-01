@@ -231,3 +231,4 @@ Contributors
   * yair@unicorn <yair@unicorn>
   * Matt Robinson <brimstone@the.narro.ws>
   * kayrus <kay.diam@gmail.com>
+  * Rémy Léone <remy.leone@gmail.com>
