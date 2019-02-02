@@ -511,9 +511,6 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	require.NoError(t, err)
 	err = ioutil.WriteFile(p, []byte("hello2"), 0600)
 	require.NoError(t, err)
-	// make it definitely after
-	t1 := time.Now().Add(10 * time.Second)
-	c.updateStat("sub/dir2/potato2", t1, 0)
 
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=2 size=0`,
@@ -547,6 +544,10 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(11), c.used)
 
+	// make potato2 definitely after potato
+	t1 := time.Now().Add(10 * time.Second)
+	c.updateStat("sub/dir2/potato2", t1, 6)
+
 	// Check only potato removed to get below quota
 	removed = nil
 	c._purgeOverQuota(10, remove)
@@ -570,9 +571,6 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	err = ioutil.WriteFile(p, []byte("hello"), 0600)
 	require.NoError(t, err)
 	c.close("sub/dir/potato")
-	// make it definitely after
-	t2 := t1.Add(20 * time.Second)
-	c.updateStat("sub/dir/potato", t2, 5)
 
 	// Update the stats to read the total size
 	err = c.updateStats()
@@ -587,6 +585,10 @@ func TestCachePurgeOverQuota(t *testing.T) {
 		`name="sub/dir2" isFile=false opens=0 size=0`,
 		`name="sub/dir2/potato2" isFile=true opens=0 size=6`,
 	}, itemAsString(c))
+
+	// make potato definitely after potato2
+	t2 := t1.Add(20 * time.Second)
+	c.updateStat("sub/dir/potato", t2, 5)
 
 	// Check only potato2 removed to get below quota
 	removed = nil
