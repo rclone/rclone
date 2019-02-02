@@ -163,8 +163,14 @@ func init() {
 				Value: "asia-east1",
 				Help:  "Taiwan.",
 			}, {
+				Value: "asia-east2",
+				Help:  "Hong Kong.",
+			}, {
 				Value: "asia-northeast1",
 				Help:  "Tokyo.",
+			}, {
+				Value: "asia-south1",
+				Help:  "Mumbai.",
 			}, {
 				Value: "asia-southeast1",
 				Help:  "Singapore.",
@@ -172,11 +178,20 @@ func init() {
 				Value: "australia-southeast1",
 				Help:  "Sydney.",
 			}, {
+				Value: "europe-north1",
+				Help:  "Finland.",
+			}, {
 				Value: "europe-west1",
 				Help:  "Belgium.",
 			}, {
 				Value: "europe-west2",
 				Help:  "London.",
+			}, {
+				Value: "europe-west3",
+				Help:  "Frankfurt.",
+			}, {
+				Value: "europe-west4",
+				Help:  "Netherlands.",
 			}, {
 				Value: "us-central1",
 				Help:  "Iowa.",
@@ -189,6 +204,9 @@ func init() {
 			}, {
 				Value: "us-west1",
 				Help:  "Oregon.",
+			}, {
+				Value: "us-west2",
+				Help:  "California.",
 			}},
 		}, {
 			Name: "storage_class",
