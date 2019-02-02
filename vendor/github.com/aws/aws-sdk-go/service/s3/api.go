@@ -22670,6 +22670,9 @@ const (
 
 	// BucketLocationConstraintEuCentral1 is a BucketLocationConstraint enum value
 	BucketLocationConstraintEuCentral1 = "eu-central-1"
+
+	// BucketLocationConstraintEuNorth1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintEuNorth1 = "eu-north-1"
 )
 
 const (
