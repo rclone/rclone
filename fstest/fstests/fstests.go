@@ -1407,6 +1407,53 @@ func Run(t *testing.T, opt *Opt) {
 
 		})
 
+		// TestFsUploadUnknownSize ensures Fs.Put() and Object.Update() don't panic when
+		// src.Size() == -1
+		t.Run("FsUploadUnknownSize", func(t *testing.T) {
+			skipIfNotOk(t)
+
+			t.Run("FsPutUnknownSize", func(t *testing.T) {
+				defer func() {
+					assert.Nil(t, recover(), "Fs.Put() should not panic when src.Size() == -1")
+				}()
+
+				contents := fstest.RandomString(100)
+				in := bytes.NewBufferString(contents)
+
+				obji := object.NewStaticObjectInfo("unknown-size-put.txt", fstest.Time("2002-02-03T04:05:06.499999999Z"), -1, true, nil, nil)
+				obj, err := remote.Put(in, obji)
+				if err == nil {
+					require.NoError(t, obj.Remove(), "successfully uploaded unknown-sized file but failed to remove")
+				}
+				// if err != nil: it's okay as long as no panic
+			})
+
+			t.Run("FsUpdateUnknownSize", func(t *testing.T) {
+				unknownSizeUpdateFile := fstest.Item{
+					ModTime: fstest.Time("2002-02-03T04:05:06.499999999Z"),
+					Path:    "unknown-size-update.txt",
+				}
+
+				testPut(t, remote, &unknownSizeUpdateFile)
+
+				defer func() {
+					assert.Nil(t, recover(), "Object.Update() should not panic when src.Size() == -1")
+				}()
+
+				newContents := fstest.RandomString(200)
+				in := bytes.NewBufferString(newContents)
+
+				obj := findObject(t, remote, unknownSizeUpdateFile.Path)
+				obji := object.NewStaticObjectInfo(unknownSizeUpdateFile.Path, unknownSizeUpdateFile.ModTime, -1, true, nil, obj.Fs())
+				err := obj.Update(in, obji)
+				if err == nil {
+					require.NoError(t, obj.Remove(), "successfully updated object with unknown-sized source but failed to remove")
+				}
+				// if err != nil: it's okay as long as no panic
+			})
+
+		})
+
 		// Purge the folder
 		err = operations.Purge(remote, "")
 		require.NoError(t, err)
