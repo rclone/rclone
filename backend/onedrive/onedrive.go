@@ -1602,7 +1602,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	} else if size == 0 {
 		info, err = o.uploadSinglepart(in, size, modTime)
 	} else {
-		panic("src file size must be >= 0")
+		return errors.New("unknown-sized upload not supported")
 	}
 	if err != nil {
 		return err
