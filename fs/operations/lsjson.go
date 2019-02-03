@@ -24,16 +24,43 @@ type ListJSONItem struct {
 	OrigID    string            `json:",omitempty"`
 }
 
-// Timestamp a time in RFC3339 format with Nanosecond precision secongs
-type Timestamp time.Time
+// Timestamp a time in the provided format
+type Timestamp struct {
+	When   time.Time
+	Format string
+}
 
 // MarshalJSON turns a Timestamp into JSON
 func (t Timestamp) MarshalJSON() (out []byte, err error) {
-	tt := time.Time(t)
-	if tt.IsZero() {
+	if t.When.IsZero() {
 		return []byte(`""`), nil
 	}
-	return []byte(`"` + tt.Format(time.RFC3339Nano) + `"`), nil
+	return []byte(`"` + t.When.Format(t.Format) + `"`), nil
+}
+
+// Returns a time format for the given precision
+func formatForPrecision(precision time.Duration) string {
+	switch {
+	case precision <= time.Nanosecond:
+		return "2006-01-02T15:04:05.000000000Z07:00"
+	case precision <= 10*time.Nanosecond:
+		return "2006-01-02T15:04:05.00000000Z07:00"
+	case precision <= 100*time.Nanosecond:
+		return "2006-01-02T15:04:05.0000000Z07:00"
+	case precision <= time.Microsecond:
+		return "2006-01-02T15:04:05.000000Z07:00"
+	case precision <= 10*time.Microsecond:
+		return "2006-01-02T15:04:05.00000Z07:00"
+	case precision <= 100*time.Microsecond:
+		return "2006-01-02T15:04:05.0000Z07:00"
+	case precision <= time.Millisecond:
+		return "2006-01-02T15:04:05.000Z07:00"
+	case precision <= 10*time.Millisecond:
+		return "2006-01-02T15:04:05.00Z07:00"
+	case precision <= 100*time.Millisecond:
+		return "2006-01-02T15:04:05.0Z07:00"
+	}
+	return time.RFC3339
 }
 
 // ListJSONOpt describes the options for ListJSON
@@ -61,6 +88,7 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 			return errors.Wrap(err, "ListJSON failed to make new crypt remote")
 		}
 	}
+	format := formatForPrecision(fsrc.Precision())
 	err := walk.Walk(fsrc, remote, false, ConfigMaxDepth(opt.Recurse), func(dirPath string, entries fs.DirEntries, err error) error {
 		if err != nil {
 			fs.CountError(err)
@@ -75,7 +103,7 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 				MimeType: fs.MimeTypeDirEntry(entry),
 			}
 			if !opt.NoModTime {
-				item.ModTime = Timestamp(entry.ModTime())
+				item.ModTime = Timestamp{When: entry.ModTime(), Format: format}
 			}
 			if cipher != nil {
 				switch entry.(type) {

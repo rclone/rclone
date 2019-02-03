@@ -60,7 +60,13 @@ If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
 When used without --recursive the Path will always be the same as Name.
 
-The time is in RFC3339 format with nanosecond precision.
+The time is in RFC3339 format with up to nanosecond precision.  The
+number of decimal digits in the seconds will depend on the precision
+that the remote can hold the times, so if times are accurate to the
+nearest millisecond (eg Google Drive) then 3 digits will always be
+shown ("2017-05-31T16:15:57.034+01:00") whereas if the times are
+accurate to the nearest second (Dropbox, Box, WebDav etc) no digits
+will be shown ("2017-05-31T16:15:57+01:00").
 
 The whole output can be processed as a JSON blob, or alternatively it
 can be processed line by line as each item is written one to a line.
