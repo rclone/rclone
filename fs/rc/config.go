@@ -74,6 +74,20 @@ Repeated as often as required.
 Only supply the options you wish to change.  If an option is unknown
 it will be silently ignored.  Not all options will have an effect when
 changed like this.
+
+For example:
+
+This sets DEBUG level logs (-vv)
+
+    rclone rc options/set --json '{"main": {"LogLevel": 8}}'
+
+And this sets INFO level logs (-v)
+
+    rclone rc options/set --json '{"main": {"LogLevel": 7}}'
+
+And this sets NOTICE level logs (normal without -v)
+
+    rclone rc options/set --json '{"main": {"LogLevel": 6}}'
 `,
 	})
 }
