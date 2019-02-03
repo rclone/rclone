@@ -526,6 +526,9 @@ func Run(t *testing.T, opt *Opt) {
 
 		t.Run("FsPutChunked", func(t *testing.T) {
 			skipIfNotOk(t)
+			if testing.Short() {
+				t.Skip("not running with -short")
+			}
 
 			setUploadChunkSizer, _ := remote.(SetUploadChunkSizer)
 			if setUploadChunkSizer == nil {
