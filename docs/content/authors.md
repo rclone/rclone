@@ -233,3 +233,4 @@ Contributors
   * kayrus <kay.diam@gmail.com>
   * Rémy Léone <remy.leone@gmail.com>
   * Wojciech Smigielski <wojciech.hieronim.smigielski@gmail.com>
+  * weetmuts <oehrstroem@gmail.com>
