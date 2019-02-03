@@ -455,8 +455,8 @@ func walkNDirTree(f fs.Fs, path string, includeAll bool, maxLevel int, listDir l
 // If maxLevel is < 0 then it will recurse indefinitely, else it will
 // only do maxLevel levels.
 //
-// This is implemented by WalkR if Config.UseRecursiveListing is true
-// and f supports it and level > 1, or WalkN otherwise.
+// This is implemented by WalkR if f supports ListR and level > 1, or
+// WalkN otherwise.
 //
 // If --files-from is set then a DirTree will be constructed with just
 // those files in.
@@ -466,7 +466,7 @@ func NewDirTree(f fs.Fs, path string, includeAll bool, maxLevel int) (DirTree, e
 	if filter.Active.HaveFilesFrom() {
 		return walkRDirTree(f, path, includeAll, maxLevel, filter.Active.MakeListR(f.NewObject))
 	}
-	if ListR := f.Features().ListR; (maxLevel < 0 || maxLevel > 1) && fs.Config.UseListR && ListR != nil {
+	if ListR := f.Features().ListR; (maxLevel < 0 || maxLevel > 1) && ListR != nil {
 		return walkRDirTree(f, path, includeAll, maxLevel, ListR)
 	}
 	return walkNDirTree(f, path, includeAll, maxLevel, list.DirSorted)
