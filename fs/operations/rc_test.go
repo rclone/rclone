@@ -175,7 +175,7 @@ func TestRcList(t *testing.T) {
 	assert.Equal(t, 2, len(list))
 
 	checkFile1 := func(got *operations.ListJSONItem) {
-		assert.WithinDuration(t, t1, time.Time(got.ModTime), time.Second)
+		assert.WithinDuration(t, t1, got.ModTime.When, time.Second)
 		assert.Equal(t, "a", got.Path)
 		assert.Equal(t, "a", got.Name)
 		assert.Equal(t, int64(1), got.Size)
@@ -209,7 +209,7 @@ func TestRcList(t *testing.T) {
 	checkSubdir(list[1])
 
 	checkFile2 := func(got *operations.ListJSONItem) {
-		assert.WithinDuration(t, t2, time.Time(got.ModTime), time.Second)
+		assert.WithinDuration(t, t2, got.ModTime.When, time.Second)
 		assert.Equal(t, "subdir/b", got.Path)
 		assert.Equal(t, "b", got.Name)
 		assert.Equal(t, int64(2), got.Size)
