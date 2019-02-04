@@ -40,6 +40,9 @@ func init() {
 			Examples: []fs.OptionExample{{
 				Value: "https://example.com",
 				Help:  "Connect to example.com",
+			}, {
+				Value: "https://user:pass@example.com",
+				Help:  "Connect to example.com using a username and password",
 			}},
 		}},
 	}
