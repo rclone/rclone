@@ -139,7 +139,7 @@ github.com/spf13/pflag
 # github.com/stretchr/testify v1.2.2
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/t3rm1n4l/go-mega v0.0.0-20180817194457-854bf31d998b
+# github.com/t3rm1n4l/go-mega v0.0.0-20190204171941-1b8ac3503be8
 github.com/t3rm1n4l/go-mega
 # github.com/xanzy/ssh-agent v0.2.0
 github.com/xanzy/ssh-agent
@@ -155,7 +155,7 @@ github.com/yunify/qingstor-sdk-go/request/builder
 github.com/yunify/qingstor-sdk-go/request/signer
 github.com/yunify/qingstor-sdk-go/request/unpacker
 github.com/yunify/qingstor-sdk-go
-# golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
+# golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh

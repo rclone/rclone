@@ -114,12 +114,16 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/t3rm1n4l/go-mega v0.0.0-20180817194457-854bf31d998b h1:Yt/fB2INfWb29Vcya4X0BNCLmObKmDdt0o0IndFzEY8=
 github.com/t3rm1n4l/go-mega v0.0.0-20180817194457-854bf31d998b/go.mod h1:ObGZcW2yPzFXEsaTZVMgLKhdUSHMYM3aEDE/u7YnfU8=
+github.com/t3rm1n4l/go-mega v0.0.0-20190204171941-1b8ac3503be8 h1:pRD8qAFGq7u9wK/lTg64wkdpCZh4lsTvRoEzQWWLMGE=
+github.com/t3rm1n4l/go-mega v0.0.0-20190204171941-1b8ac3503be8/go.mod h1:XWL4vDyd3JKmJx+hZWUVgCNmmhZ2dTBcaNDcxH465s0=
 github.com/xanzy/ssh-agent v0.2.0 h1:Adglfbi5p9Z0BmK2oKU9nTG+zKfniSfnaMYB+ULd+Ro=
 github.com/xanzy/ssh-agent v0.2.0/go.mod h1:0NyE30eGUDliuLEHJgYte/zncp2zdTStcOnWhgSqHD8=
 github.com/yunify/qingstor-sdk-go v2.2.15+incompatible h1:/Z0q3/eSMoPYAuRmhjWtuGSmVVciFC6hfm3yfCKuvz0=
 github.com/yunify/qingstor-sdk-go v2.2.15+incompatible/go.mod h1:w6wqLDQ5bBTzxGJ55581UrSwLrsTAsdo9N6yX/8d9RY=
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869 h1:kkXA53yGe04D0adEYJwEVQjeBppL01Exg+fnMjfUraU=
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613 h1:MQ/ZZiDsUapFFiMS+vzwXkCTeEKaum+Do5rINYJDmxc=
+golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180724234803-3673e40ba225/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20181114220301-adae6a3d119a h1:gOpx8G595UYyvj8UK4+OFyY4rx037g3fmfhe5SasG3U=
 golang.org/x/net v0.0.0-20181114220301-adae6a3d119a/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
