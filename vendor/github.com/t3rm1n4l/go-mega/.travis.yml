@@ -4,13 +4,13 @@ osx_image: xcode7.3
 os:
 - linux
 go:
-- 1.7.6
-- 1.8.7
-- 1.9.5
-- "1.10.1"
+- 1.9.x
+- 1.10.x
+- 1.11.x
 - tip
 install:
 - make build_dep
+- go get -u ./...
 script:
 - make check
 - make test
@@ -19,7 +19,7 @@ matrix:
   - go: tip
   include:
   - os: osx
-    go: "1.10.1"
+    go: "1.11.x"
 env:
   global:
   - secure: RzsF80V1i69FVJwKSF8WrFzk5bRUKtPxRkhjiLOO0b1usFg0EIY6XFp3s/VTR6oT91LRXml3Bp7wHHrkPvGnHyUyuxj6loj3gIrsX8cZHUtjyQX/Szfi9MOJpbdJvfCcHByEh9YGldAz//9zvEo5oGuI29Luur3cv+BJNJElmHg=

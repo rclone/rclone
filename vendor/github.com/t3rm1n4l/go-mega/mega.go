@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // Default settings
@@ -93,6 +96,10 @@ func (c *config) SetUploadWorkers(w int) error {
 
 type Mega struct {
 	config
+	// Version of the account
+	accountVersion int
+	// Salt for the account if accountVersion > 1
+	accountSalt []byte
 	// Sequence number
 	sn int64
 	// Server state sn
@@ -457,8 +464,47 @@ func (m *Mega) api_request(r []byte) (buf []byte, err error) {
 	return nil, err
 }
 
+// prelogin call
+func (m *Mega) prelogin(email string) error {
+	var msg [1]PreloginMsg
+	var res [1]PreloginResp
+
+	email = strings.ToLower(email) // mega uses lowercased emails for login purposes - FIXME is this true for prelogin?
+
+	msg[0].Cmd = "us0"
+	msg[0].User = email
+
+	req, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	result, err := m.api_request(req)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(result, &res)
+	if err != nil {
+		return err
+	}
+
+	if res[0].Version == 0 {
+		return errors.New("prelogin: no version returned")
+	} else if res[0].Version > 2 {
+		return fmt.Errorf("prelogin: version %d account not supported", res[0].Version)
+	} else if res[0].Version == 2 {
+		if len(res[0].Salt) == 0 {
+			return errors.New("prelogin: no salt returned")
+		}
+		m.accountSalt = base64urldecode([]byte(res[0].Salt))
+	}
+	m.accountVersion = res[0].Version
+
+	return nil
+}
+
 // Authenticate and start a session
-func (m *Mega) Login(email string, passwd string) error {
+func (m *Mega) login(email string, passwd string) error {
 	var msg [1]LoginMsg
 	var res [1]LoginResp
 	var err error
@@ -473,7 +519,22 @@ func (m *Mega) Login(email string, passwd string) error {
 
 	msg[0].Cmd = "us"
 	msg[0].User = email
-	msg[0].Handle = string(uhandle)
+	if m.accountVersion == 1 {
+		msg[0].Handle = string(uhandle)
+	} else {
+		const derivedKeyLength = 2 * aes.BlockSize
+		derivedKey := pbkdf2.Key([]byte(passwd), m.accountSalt, 100000, derivedKeyLength, sha512.New)
+		authKey := derivedKey[aes.BlockSize:]
+		passkey = derivedKey[:aes.BlockSize]
+
+		sessionKey := make([]byte, aes.BlockSize)
+		_, err = rand.Read(sessionKey)
+		if err != nil {
+			return err
+		}
+		msg[0].Handle = string(base64urlencode(authKey))
+		msg[0].SessionKey = string(base64urlencode(sessionKey))
+	}
 
 	req, _ := json.Marshal(msg)
 	result, err = m.api_request(req)
@@ -491,6 +552,20 @@ func (m *Mega) Login(email string, passwd string) error {
 	cipher, err := aes.NewCipher(passkey)
 	cipher.Decrypt(m.k, m.k)
 	m.sid, err = decryptSessionId([]byte(res[0].Privk), []byte(res[0].Csid), m.k)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Authenticate and start a session
+func (m *Mega) Login(email string, passwd string) error {
+	err := m.prelogin(email)
+	if err != nil {
+		return err
+	}
+
+	err = m.login(email, passwd)
 	if err != nil {
 		return err
 	}

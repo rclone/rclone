@@ -49,10 +49,10 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.2.2
-	github.com/t3rm1n4l/go-mega v0.0.0-20180817194457-854bf31d998b
+	github.com/t3rm1n4l/go-mega v0.0.0-20190204171941-1b8ac3503be8
 	github.com/xanzy/ssh-agent v0.2.0
 	github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
-	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
+	golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
 	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a
 	golang.org/x/oauth2 v0.0.0-20181120190819-8f65e3013eba
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
