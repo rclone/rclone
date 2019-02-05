@@ -139,7 +139,7 @@ github.com/spf13/pflag
 # github.com/stretchr/testify v1.2.2
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/t3rm1n4l/go-mega v0.0.0-20190204171941-1b8ac3503be8
+# github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da
 github.com/t3rm1n4l/go-mega
 # github.com/xanzy/ssh-agent v0.2.0
 github.com/xanzy/ssh-agent
