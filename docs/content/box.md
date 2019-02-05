@@ -112,6 +112,17 @@ To copy a local directory to an Box directory called backup
 
     rclone copy /home/source remote:backup
 
+### Using rclone with an Enterprise account with SSO ###
+
+If you have an "Enterprise" account type with Box with single sign on
+(SSO), you need to create a password to use Box with rclone. This can
+be done at your Enterprise Box account by going to Settings, "Account"
+Tab, and then set the password in the "Authentication" field.
+
+Once you have done this, you can setup your Enterprise Box account
+using the same procedure detailed above in the, using the password you
+have just set.
+
 ### Invalid refresh token ###
 
 According to the [box docs](https://developer.box.com/v2.0/docs/oauth-20#section-6-using-the-access-and-refresh-tokens):
