@@ -116,6 +116,8 @@ github.com/t3rm1n4l/go-mega v0.0.0-20180817194457-854bf31d998b h1:Yt/fB2INfWb29V
 github.com/t3rm1n4l/go-mega v0.0.0-20180817194457-854bf31d998b/go.mod h1:ObGZcW2yPzFXEsaTZVMgLKhdUSHMYM3aEDE/u7YnfU8=
 github.com/t3rm1n4l/go-mega v0.0.0-20190204171941-1b8ac3503be8 h1:pRD8qAFGq7u9wK/lTg64wkdpCZh4lsTvRoEzQWWLMGE=
 github.com/t3rm1n4l/go-mega v0.0.0-20190204171941-1b8ac3503be8/go.mod h1:XWL4vDyd3JKmJx+hZWUVgCNmmhZ2dTBcaNDcxH465s0=
+github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da h1:hWHAUYEtxnj8tb2pHj5WPGEIE8leSi/3cMND8fUjsBE=
+github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da/go.mod h1:XWL4vDyd3JKmJx+hZWUVgCNmmhZ2dTBcaNDcxH465s0=
 github.com/xanzy/ssh-agent v0.2.0 h1:Adglfbi5p9Z0BmK2oKU9nTG+zKfniSfnaMYB+ULd+Ro=
 github.com/xanzy/ssh-agent v0.2.0/go.mod h1:0NyE30eGUDliuLEHJgYte/zncp2zdTStcOnWhgSqHD8=
 github.com/yunify/qingstor-sdk-go v2.2.15+incompatible h1:/Z0q3/eSMoPYAuRmhjWtuGSmVVciFC6hfm3yfCKuvz0=
