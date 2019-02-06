@@ -32,7 +32,46 @@ documentation, changelog and configuration walkthroughs.
 		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
 		atexit.Run()
 	},
+	BashCompletionFunction: bashCompletionFunc,
 }
+
+const (
+	bashCompletionFunc = `
+__custom_func() {
+    if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
+        local cur cword prev words
+        if declare -F _init_completion > /dev/null; then
+            _init_completion -n : || return
+        else
+            __rclone_init_completion -n : || return
+        fi
+        if [[ $cur =~ ^[[:alnum:]]*$ ]]; then
+            local remote
+            while IFS= read -r remote; do
+                [[ $remote != $cur* ]] || COMPREPLY+=("$remote")
+            done < <(command rclone listremotes)
+            if [[ ${COMPREPLY[@]} ]]; then
+                local paths=("$cur"*)
+                [[ ! -f ${paths[0]} ]] || COMPREPLY+=("${paths[@]}")
+            fi
+        elif [[ $cur =~ ^[[:alnum:]]+: ]]; then
+            local path=${cur#*:}
+            if [[ $path == */* ]]; then
+                local prefix=${path%/*}
+            else
+                local prefix=
+            fi
+            local line
+            while IFS= read -r line; do
+                local reply=${prefix:+$prefix/}$line
+                [[ $reply != $path* ]] || COMPREPLY+=("$reply")
+            done < <(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null)
+        fi
+        [[ ! ${COMPREPLY[@]} ]] || compopt -o nospace
+    fi
+}
+`
+)
 
 // root help command
 var helpCommand = &cobra.Command{
