@@ -26,6 +26,7 @@ type Pool struct {
 	poolSize     int
 	timer        *time.Timer
 	inUse        int
+	alloced      int
 	flushTime    time.Duration
 	flushPending bool
 	alloc        func(int) ([]byte, error)
@@ -82,7 +83,7 @@ func (bp *Pool) put(buf []byte) {
 // Call with mu held
 func (bp *Pool) flush(n int) {
 	for i := 0; i < n; i++ {
-		_ = bp.get()
+		bp.freeBuffer(bp.get())
 	}
 	bp.minFill = len(bp.cache)
 }
@@ -121,6 +122,13 @@ func (bp *Pool) InPool() int {
 	return len(bp.cache)
 }
 
+// Alloced returns the number of buffers allocated and not yet freed
+func (bp *Pool) Alloced() int {
+	bp.mu.Lock()
+	defer bp.mu.Unlock()
+	return bp.alloced
+}
+
 // starts or resets the buffer flusher timer - call with mu held
 func (bp *Pool) kickFlusher() {
 	if bp.flushPending {
@@ -150,6 +158,7 @@ func (bp *Pool) Get() []byte {
 			var err error
 			buf, err = bp.alloc(bp.bufferSize)
 			if err == nil {
+				bp.alloced++
 				break
 			}
 			log.Printf("Failed to get memory for buffer, waiting for %v: %v", waitTime, err)
@@ -165,12 +174,13 @@ func (bp *Pool) Get() []byte {
 	return buf
 }
 
-// freeBuffer returns mem to the os if required
+// freeBuffer returns mem to the os if required - call with lock held
 func (bp *Pool) freeBuffer(mem []byte) {
 	err := bp.free(mem)
 	if err != nil {
 		log.Printf("Failed to free memory: %v", err)
 	}
+	bp.alloced--
 }
 
 // Put returns the buffer to the buffer cache or frees it
