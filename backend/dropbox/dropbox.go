@@ -214,7 +214,7 @@ func shouldRetry(err error) (bool, error) {
 		return true, err
 	}
 	// Keep old behavior for backward compatibility
-	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") {
+	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") || baseErrString == "" {
 		return true, err
 	}
 	return fserrors.ShouldRetry(err), err
