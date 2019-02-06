@@ -37,26 +37,32 @@ func testGetPut(t *testing.T, useMmap bool, unreliable bool) {
 	b1 := bp.Get()
 	assert.Equal(t, 1, bp.InUse())
 	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 1, bp.Alloced())
 
 	b2 := bp.Get()
 	assert.Equal(t, 2, bp.InUse())
 	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 
 	b3 := bp.Get()
 	assert.Equal(t, 3, bp.InUse())
 	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 3, bp.Alloced())
 
 	bp.Put(b1)
 	assert.Equal(t, 2, bp.InUse())
 	assert.Equal(t, 1, bp.InPool())
+	assert.Equal(t, 3, bp.Alloced())
 
 	bp.Put(b2)
 	assert.Equal(t, 1, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 3, bp.Alloced())
 
 	bp.Put(b3)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 
 	addr := func(b []byte) string {
 		return fmt.Sprintf("%p", &b[0])
@@ -65,16 +71,19 @@ func testGetPut(t *testing.T, useMmap bool, unreliable bool) {
 	assert.Equal(t, addr(b2), addr(b1a))
 	assert.Equal(t, 1, bp.InUse())
 	assert.Equal(t, 1, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 
 	b2a := bp.Get()
 	assert.Equal(t, addr(b1), addr(b2a))
 	assert.Equal(t, 2, bp.InUse())
 	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 
 	bp.Put(b1a)
 	bp.Put(b2a)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 
 	assert.Panics(t, func() {
 		bp.Put(make([]byte, 1))
@@ -83,6 +92,7 @@ func testGetPut(t *testing.T, useMmap bool, unreliable bool) {
 	bp.Flush()
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 0, bp.Alloced())
 }
 
 func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
@@ -99,6 +109,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 	bp.Put(b3)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 	bp.mu.Lock()
 	assert.Equal(t, 0, bp.minFill)
 	assert.Equal(t, true, bp.flushPending)
@@ -119,6 +130,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 	checkFlushHasHappened(0)
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 0, bp.Alloced())
 	bp.mu.Lock()
 	assert.Equal(t, 0, bp.minFill)
 	assert.Equal(t, false, bp.flushPending)
@@ -142,6 +154,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 	bp.mu.Lock()
 	assert.Equal(t, 2, bp.minFill)
 	assert.Equal(t, true, bp.flushPending)
@@ -151,6 +164,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 2, bp.InPool())
+	assert.Equal(t, 2, bp.Alloced())
 	bp.mu.Lock()
 	assert.Equal(t, 1, bp.minFill)
 	assert.Equal(t, true, bp.flushPending)
@@ -160,6 +174,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 1, bp.InPool())
+	assert.Equal(t, 1, bp.Alloced())
 	bp.mu.Lock()
 	assert.Equal(t, 1, bp.minFill)
 	assert.Equal(t, true, bp.flushPending)
@@ -169,6 +184,7 @@ func testFlusher(t *testing.T, useMmap bool, unreliable bool) {
 
 	assert.Equal(t, 0, bp.InUse())
 	assert.Equal(t, 0, bp.InPool())
+	assert.Equal(t, 0, bp.Alloced())
 	bp.mu.Lock()
 	assert.Equal(t, 0, bp.minFill)
 	assert.Equal(t, false, bp.flushPending)
