@@ -649,7 +649,8 @@ func (f *Fs) mkdir(dirPath string) error {
 	err := f._mkdir(dirPath)
 	if apiErr, ok := err.(*api.Error); ok {
 		// already exists
-		if apiErr.StatusCode == http.StatusMethodNotAllowed || apiErr.StatusCode == http.StatusNotAcceptable {
+		// owncloud returns 423/StatusLocked if the create is already in progress
+		if apiErr.StatusCode == http.StatusMethodNotAllowed || apiErr.StatusCode == http.StatusNotAcceptable || apiErr.StatusCode == http.StatusLocked {
 			return nil
 		}
 		// parent does not exist
