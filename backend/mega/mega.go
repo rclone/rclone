@@ -497,7 +497,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 // Creates from the parameters passed in a half finished Object which
 // must have setMetaData called on it
 //
-// Returns the dirNode, obect, leaf and error
+// Returns the dirNode, object, leaf and error
 //
 // Used to create new objects
 func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Object, dirNode *mega.Node, leaf string, err error) {
@@ -523,10 +523,10 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	exisitingObj, err := f.newObjectWithInfo(src.Remote(), nil)
+	existingObj, err := f.newObjectWithInfo(src.Remote(), nil)
 	switch err {
 	case nil:
-		return exisitingObj, exisitingObj.Update(in, src, options...)
+		return existingObj, existingObj.Update(in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
 		return f.PutUnchecked(in, src)
@@ -847,14 +847,14 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 				return shouldRetry(err)
 			})
 			if err != nil {
-				return errors.Wrapf(err, "MergDirs move failed on %q in %v", info.GetName(), srcDir)
+				return errors.Wrapf(err, "MergeDirs move failed on %q in %v", info.GetName(), srcDir)
 			}
 		}
 		// rmdir (into trash) the now empty source directory
 		fs.Infof(srcDir, "removing empty directory")
 		err = f.deleteNode(srcDirNode)
 		if err != nil {
-			return errors.Wrapf(err, "MergDirs move failed to rmdir %q", srcDir)
+			return errors.Wrapf(err, "MergeDirs move failed to rmdir %q", srcDir)
 		}
 	}
 	return nil
@@ -1129,7 +1129,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return errors.Wrap(err, "failed to finish upload")
 	}
 
-	// If the upload succeded and the original object existed, then delete it
+	// If the upload succeeded and the original object existed, then delete it
 	if o.info != nil {
 		err = o.fs.deleteNode(o.info)
 		if err != nil {

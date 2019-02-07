@@ -17,12 +17,12 @@ type Error struct {
 	Message string `json:"message"` // A human-readable message, in English, saying what went wrong.
 }
 
-// Error statisfies the error interface
+// Error satisfies the error interface
 func (e *Error) Error() string {
 	return fmt.Sprintf("%s (%d %s)", e.Message, e.Status, e.Code)
 }
 
-// Fatal statisfies the Fatal interface
+// Fatal satisfies the Fatal interface
 //
 // It indicates which errors should be treated as fatal
 func (e *Error) Fatal() bool {
@@ -100,7 +100,7 @@ func RemoveVersion(remote string) (t Timestamp, newRemote string) {
 	return Timestamp(newT), base[:versionStart] + ext
 }
 
-// IsZero returns true if the timestamp is unitialised
+// IsZero returns true if the timestamp is uninitialized
 func (t Timestamp) IsZero() bool {
 	return time.Time(t).IsZero()
 }

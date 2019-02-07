@@ -748,7 +748,7 @@ func (c *cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 	if !bytes.Equal(readBuf[:fileMagicSize], fileMagicBytes) {
 		return nil, fh.finishAndClose(ErrorEncryptedBadMagic)
 	}
-	// retreive the nonce
+	// retrieve the nonce
 	fh.nonce.fromBuf(readBuf[fileMagicSize:])
 	fh.initialNonce = fh.nonce
 	return fh, nil

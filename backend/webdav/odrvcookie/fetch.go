@@ -102,7 +102,7 @@ func (ca *CookieAuth) Cookies() (*CookieResponse, error) {
 func (ca *CookieAuth) getSPCookie(conf *SuccessResponse) (*CookieResponse, error) {
 	spRoot, err := url.Parse(ca.endpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while contructing endpoint URL")
+		return nil, errors.Wrap(err, "Error while constructing endpoint URL")
 	}
 
 	u, err := url.Parse("https://" + spRoot.Host + "/_forms/default.aspx?wa=wsignin1.0")
@@ -121,7 +121,7 @@ func (ca *CookieAuth) getSPCookie(conf *SuccessResponse) (*CookieResponse, error
 		Jar: jar,
 	}
 
-	// Send the previously aquired Token as a Post parameter
+	// Send the previously acquired Token as a Post parameter
 	if _, err = client.Post(u.String(), "text/xml", strings.NewReader(conf.Succ.Token)); err != nil {
 		return nil, errors.Wrap(err, "Error while grabbing cookies from endpoint: %v")
 	}

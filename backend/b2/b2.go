@@ -117,7 +117,7 @@ This value should be set no larger than 4.657GiB (== 5GB).`,
 When uploading large files, chunk the file into this size.  Note that
 these chunks are buffered in memory and there might a maximum of
 "--transfers" chunks in progress at once.  5,000,000 Bytes is the
-minimim size.`,
+minimum size.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
@@ -319,7 +319,7 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	return
 }
 
-// NewFs contstructs an Fs from the path, bucket:path
+// NewFs constructs an Fs from the path, bucket:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
@@ -1459,7 +1459,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	// Content-Type b2/x-auto to automatically set the stored Content-Type
 	// post upload. In the case where a file extension is absent or the
 	// lookup fails, the Content-Type is set to application/octet-stream. The
-	// Content-Type mappings can be purused here.
+	// Content-Type mappings can be pursued here.
 	//
 	// X-Bz-Content-Sha1
 	// required

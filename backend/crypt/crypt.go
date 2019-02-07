@@ -122,7 +122,7 @@ func NewCipher(m configmap.Mapper) (Cipher, error) {
 	return newCipherForConfig(opt)
 }
 
-// NewFs contstructs an Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
@@ -555,7 +555,7 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 }
 
 // ComputeHash takes the nonce from o, and encrypts the contents of
-// src with it, and calcuates the hash given by HashType on the fly
+// src with it, and calculates the hash given by HashType on the fly
 //
 // Note that we break lots of encapsulation in this function.
 func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {

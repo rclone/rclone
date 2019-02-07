@@ -171,13 +171,13 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
-	authRety := false
+	authRetry := false
 
 	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
-		authRety = true
+		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
-	return authRety || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // substitute reserved characters for box
@@ -530,10 +530,10 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	exisitingObj, err := f.newObjectWithInfo(src.Remote(), nil)
+	existingObj, err := f.newObjectWithInfo(src.Remote(), nil)
 	switch err {
 	case nil:
-		return exisitingObj, exisitingObj.Update(in, src, options...)
+		return existingObj, existingObj.Update(in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
 		return f.PutUnchecked(in, src)

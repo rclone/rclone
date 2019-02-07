@@ -30,7 +30,7 @@ type Options struct {
 	Remote string `config:"remote"`
 }
 
-// NewFs contstructs an Fs from the path.
+// NewFs constructs an Fs from the path.
 //
 // The returned Fs is the actual Fs, referenced by remote in the config
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {

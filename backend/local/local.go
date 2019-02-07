@@ -225,10 +225,10 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// caseInsenstive returns whether the remote is case insensitive or not
+// caseInsensitive returns whether the remote is case insensitive or not
 func (f *Fs) caseInsensitive() bool {
 	// FIXME not entirely accurate since you can have case
-	// sensitive Fses on darwin and case insenstive Fses on linux.
+	// sensitive Fses on darwin and case insensitive Fses on linux.
 	// Should probably check but that would involve creating a
 	// file in the remote to be most accurate which probably isn't
 	// desirable.
@@ -288,7 +288,7 @@ func (f *Fs) newObjectWithInfo(remote, dstPath string, info os.FileInfo) (fs.Obj
 			}
 			return nil, err
 		}
-		// Handle the odd case, that a symlink was specfied by name without the link suffix
+		// Handle the odd case, that a symlink was specified by name without the link suffix
 		if o.fs.opt.TranslateSymlinks && o.mode&os.ModeSymlink != 0 && !o.translatedLink {
 			return nil, fs.ErrorObjectNotFound
 		}
@@ -958,7 +958,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	if o.translatedLink {
 		if err == nil {
-			// Remove any current symlink or file, if one exsits
+			// Remove any current symlink or file, if one exists
 			if _, err := os.Lstat(o.path); err == nil {
 				if removeErr := os.Remove(o.path); removeErr != nil {
 					fs.Errorf(o, "Failed to remove previous file: %v", removeErr)

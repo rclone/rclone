@@ -307,7 +307,7 @@ func (f *Fs) newPipeline(c azblob.Credential, o azblob.PipelineOptions) pipeline
 	return pipeline.NewPipeline(factories, pipeline.Options{HTTPSender: httpClientFactory(f.client), Log: o.Log})
 }
 
-// NewFs contstructs an Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)

@@ -237,10 +237,10 @@ func init() {
 				Help:  "EU Cross Region Amsterdam Private Endpoint",
 			}, {
 				Value: "s3.eu-gb.objectstorage.softlayer.net",
-				Help:  "Great Britan Endpoint",
+				Help:  "Great Britain Endpoint",
 			}, {
 				Value: "s3.eu-gb.objectstorage.service.networklayer.com",
-				Help:  "Great Britan Private Endpoint",
+				Help:  "Great Britain Private Endpoint",
 			}, {
 				Value: "s3.ap-geo.objectstorage.softlayer.net",
 				Help:  "APAC Cross Regional Endpoint",
@@ -450,7 +450,7 @@ func init() {
 				Help:  "US East Region Flex",
 			}, {
 				Value: "us-south-standard",
-				Help:  "US Sout hRegion Standard",
+				Help:  "US South Region Standard",
 			}, {
 				Value: "us-south-vault",
 				Help:  "US South Region Vault",
@@ -474,16 +474,16 @@ func init() {
 				Help:  "EU Cross Region Flex",
 			}, {
 				Value: "eu-gb-standard",
-				Help:  "Great Britan Standard",
+				Help:  "Great Britain Standard",
 			}, {
 				Value: "eu-gb-vault",
-				Help:  "Great Britan Vault",
+				Help:  "Great Britain Vault",
 			}, {
 				Value: "eu-gb-cold",
-				Help:  "Great Britan Cold",
+				Help:  "Great Britain Cold",
 			}, {
 				Value: "eu-gb-flex",
-				Help:  "Great Britan Flex",
+				Help:  "Great Britain Flex",
 			}, {
 				Value: "ap-standard",
 				Help:  "APAC Standard",
@@ -842,7 +842,7 @@ var retryErrorCodes = []int{
 func (f *Fs) shouldRetry(err error) (bool, error) {
 	// If this is an awserr object, try and extract more useful information to determine if we should retry
 	if awsError, ok := err.(awserr.Error); ok {
-		// Simple case, check the original embedded error in case it's generically retriable
+		// Simple case, check the original embedded error in case it's generically retryable
 		if fserrors.ShouldRetry(awsError.OrigErr()) {
 			return true, err
 		}
