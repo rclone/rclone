@@ -42,7 +42,7 @@ func TestCacheModeSet(t *testing.T) {
 
 func TestCacheModeType(t *testing.T) {
 	var m CacheMode
-	assert.Equal(t, "string", m.Type())
+	assert.Equal(t, "CacheMode", m.Type())
 }
 
 // convert c.item to a string

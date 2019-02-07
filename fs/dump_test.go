@@ -54,5 +54,5 @@ func TestDumpFlagsSet(t *testing.T) {
 
 func TestDumpFlagsType(t *testing.T) {
 	f := DumpFlags(0)
-	assert.Equal(t, "string", f.Type())
+	assert.Equal(t, "DumpFlags", f.Type())
 }
