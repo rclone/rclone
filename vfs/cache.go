@@ -59,7 +59,7 @@ func (l *CacheMode) Set(s string) error {
 
 // Type of the value
 func (l *CacheMode) Type() string {
-	return "string"
+	return "CacheMode"
 }
 
 // cache opened files

@@ -27,7 +27,7 @@ func (l *CommaSepList) Set(s string) error {
 
 // Type of the value
 func (CommaSepList) Type() string {
-	return "[]string"
+	return "CommaSepList"
 }
 
 // Scan implements the fmt.Scanner interface
@@ -46,7 +46,7 @@ func (l *SpaceSepList) Set(s string) error {
 
 // Type of the value
 func (SpaceSepList) Type() string {
-	return "[]string"
+	return "SpaceSepList"
 }
 
 // Scan implements the fmt.Scanner interface
