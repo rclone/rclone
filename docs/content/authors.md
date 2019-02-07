@@ -234,3 +234,4 @@ Contributors
   * Rémy Léone <remy.leone@gmail.com>
   * Wojciech Smigielski <wojciech.hieronim.smigielski@gmail.com>
   * weetmuts <oehrstroem@gmail.com>
+  * Jonathan <vanillajonathan@users.noreply.github.com>
