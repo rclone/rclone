@@ -2199,11 +2199,13 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPage
 
 				// translate the parent dir of this object
 				if len(change.File.Parents) > 0 {
-					if parentPath, ok := f.dirCache.GetInv(change.File.Parents[0]); ok {
-						// and append the drive file name to compute the full file name
-						newPath := path.Join(parentPath, change.File.Name)
-						// this will now clear the actual file too
-						pathsToClear = append(pathsToClear, entryType{path: newPath, entryType: changeType})
+					for _, parent := range change.File.Parents {
+						if parentPath, ok := f.dirCache.GetInv(parent); ok {
+							// and append the drive file name to compute the full file name
+							newPath := path.Join(parentPath, change.File.Name)
+							// this will now clear the actual file too
+							pathsToClear = append(pathsToClear, entryType{path: newPath, entryType: changeType})
+						}
 					}
 				} else { // a true root object that is changed
 					pathsToClear = append(pathsToClear, entryType{path: change.File.Name, entryType: changeType})
