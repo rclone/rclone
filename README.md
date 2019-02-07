@@ -44,7 +44,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * Nextcloud [:page_facing_up:](https://rclone.org/webdav/#nextcloud)
   * OVH [:page_facing_up:](https://rclone.org/swift/)
   * OpenDrive [:page_facing_up:](https://rclone.org/opendrive/)
-  * Openstack Swift [:page_facing_up:](https://rclone.org/swift/)
+  * OpenStack Swift [:page_facing_up:](https://rclone.org/swift/)
   * Oracle Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
   * ownCloud [:page_facing_up:](https://rclone.org/webdav/#owncloud)
   * pCloud [:page_facing_up:](https://rclone.org/pcloud/)
@@ -62,13 +62,13 @@ Please see [the full list of all storage providers and their features](https://r
 
 ## Features
 
-  * MD5/SHA1 hashes checked at all times for file integrity
+  * MD5/SHA-1 hashes checked at all times for file integrity
   * Timestamps preserved on files
   * Partial syncs supported on a whole file basis
   * [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed files
   * [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
   * [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
-  * Can sync to and from network, eg two different cloud accounts
+  * Can sync to and from network, e.g. two different cloud accounts
   * Optional encryption ([Crypt](https://rclone.org/crypt/))
   * Optional cache ([Cache](https://rclone.org/cache/))
   * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
