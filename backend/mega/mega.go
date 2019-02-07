@@ -1076,6 +1076,9 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
+	if size < 0 {
+		return errors.New("mega backend can't upload a file of unknown length")
+	}
 	//modTime := src.ModTime()
 	remote := o.Remote()
 
