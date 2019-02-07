@@ -120,7 +120,7 @@ func (x *SizeSuffix) Set(s string) error {
 
 // Type of the value
 func (x *SizeSuffix) Type() string {
-	return "int64"
+	return "SizeSuffix"
 }
 
 // Scan implements the fmt.Scanner interface

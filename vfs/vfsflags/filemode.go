@@ -30,5 +30,5 @@ func (x *FileMode) Set(s string) error {
 
 // Type of the value
 func (x *FileMode) Type() string {
-	return "int"
+	return "FileMode"
 }

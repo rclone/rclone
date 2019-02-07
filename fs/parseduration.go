@@ -90,7 +90,7 @@ func (d *Duration) Set(s string) error {
 
 // Type of the value
 func (d Duration) Type() string {
-	return "duration"
+	return "Duration"
 }
 
 // Scan implements the fmt.Scanner interface
