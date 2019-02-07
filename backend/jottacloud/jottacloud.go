@@ -103,7 +103,7 @@ func init() {
 			var jsonToken api.TokenJSON
 			resp, err := srv.CallJSON(&opts, nil, &jsonToken)
 			if err != nil {
-				// if 2fa is enabled the first request is expected to fail. we'lls do another request with the 2fa code as an additional http header
+				// if 2fa is enabled the first request is expected to fail. We will do another request with the 2fa code as an additional http header
 				if resp != nil {
 					if resp.Header.Get("X-JottaCloud-OTP") == "required; SMS" {
 						fmt.Printf("This account has 2 factor authentication enabled you will receive a verification code via SMS.\n")
@@ -163,7 +163,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "upload_resume_limit",
-			Help:     "Files bigger than this can be resumed if the upload failes.",
+			Help:     "Files bigger than this can be resumed if the upload fail's.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}},
@@ -361,7 +361,7 @@ func grantTypeFilter(req *http.Request) {
 		}
 		_ = req.Body.Close()
 
-		// make the refesh token upper case
+		// make the refresh token upper case
 		refreshBody = []byte(strings.Replace(string(refreshBody), "grant_type=refresh_token", "grant_type=REFRESH_TOKEN", 1))
 
 		// set the new ReadCloser (with a dummy Close())
@@ -769,7 +769,7 @@ func (f *Fs) Purge() error {
 	return f.purgeCheck("", false)
 }
 
-// copyOrMoves copys or moves directories or files depending on the mthod parameter
+// copyOrMoves copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(method, src, dest string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1080,7 +1080,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader, cleanup func(), err error) {
 	// we need a MD5
 	md5Hasher := md5.New()
-	// use the teeReader to write to the local file AND caclulate the MD5 while doing so
+	// use the teeReader to write to the local file AND calculate the MD5 while doing so
 	teeReader := io.TeeReader(in, md5Hasher)
 
 	// nothing to clean up by default

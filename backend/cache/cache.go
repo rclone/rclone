@@ -576,7 +576,7 @@ The slice indices are similar to Python slices: start[:end]
 
 start is the 0 based chunk number from the beginning of the file
 to fetch inclusive. end is 0 based chunk number from the beginning
-of the file to fetch exclisive.
+of the file to fetch exclusive.
 Both values can be negative, in which case they count from the back
 of the file. The value "-5:" represents the last 5 chunks of a file.
 
@@ -870,7 +870,7 @@ func (f *Fs) notifyChangeUpstream(remote string, entryType fs.EntryType) {
 	}
 }
 
-// ChangeNotify can subsribe multiple callers
+// ChangeNotify can subscribe multiple callers
 // this is coupled with the wrapped fs ChangeNotify (if it supports it)
 // and also notifies other caches (i.e VFS) to clear out whenever something changes
 func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollInterval <-chan time.Duration) {
@@ -1549,7 +1549,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	if srcObj.isTempFile() {
-		// we check if the feature is stil active
+		// we check if the feature is still active
 		if f.opt.TempWritePath == "" {
 			fs.Errorf(srcObj, "can't copy - this is a local cached file but this feature is turned off this run")
 			return nil, fs.ErrorCantCopy
@@ -1625,7 +1625,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 
 	// if this is a temp object then we perform the changes locally
 	if srcObj.isTempFile() {
-		// we check if the feature is stil active
+		// we check if the feature is still active
 		if f.opt.TempWritePath == "" {
 			fs.Errorf(srcObj, "can't move - this is a local cached file but this feature is turned off this run")
 			return nil, fs.ErrorCantMove

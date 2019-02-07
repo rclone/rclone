@@ -13,7 +13,7 @@ type Error struct {
 	} `json:"error"`
 }
 
-// Error statisfies the error interface
+// Error satisfies the error interface
 func (e *Error) Error() string {
 	return fmt.Sprintf("%s (Error %d)", e.Info.Message, e.Info.Code)
 }

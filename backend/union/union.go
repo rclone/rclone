@@ -177,8 +177,8 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 // At least one value will be written to the channel,
 // specifying the initial value and updated values might
 // follow. A 0 Duration should pause the polling.
-// The ChangeNotify implemantion must empty the channel
-// regulary. When the channel gets closed, the implemantion
+// The ChangeNotify implementation must empty the channel
+// regularly. When the channel gets closed, the implementation
 // should stop polling and release resources.
 func (f *Fs) ChangeNotify(fn func(string, fs.EntryType), ch <-chan time.Duration) {
 	var remoteChans []chan time.Duration

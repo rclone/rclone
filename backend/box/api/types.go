@@ -45,7 +45,7 @@ type Error struct {
 	RequestID   string `json:"request_id"`
 }
 
-// Error returns a string for the error and statistifes the error interface
+// Error returns a string for the error and satisfies the error interface
 func (e *Error) Error() string {
 	out := fmt.Sprintf("Error %q (%d)", e.Code, e.Status)
 	if e.Message != "" {
@@ -57,7 +57,7 @@ func (e *Error) Error() string {
 	return out
 }
 
-// Check Error statisfies the error interface
+// Check Error satisfies the error interface
 var _ error = (*Error)(nil)
 
 // ItemFields are the fields needed for FileInfo

@@ -124,7 +124,7 @@ type PropValue struct {
 	Value   string   `xml:",chardata"`
 }
 
-// Error is used to desribe webdav errors
+// Error is used to describe webdav errors
 //
 // <d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
 //   <s:exception>Sabre\DAV\Exception\NotFound</s:exception>
@@ -137,7 +137,7 @@ type Error struct {
 	StatusCode int
 }
 
-// Error returns a string for the error and statistifes the error interface
+// Error returns a string for the error and satisfies the error interface
 func (e *Error) Error() string {
 	var out []string
 	if e.Message != "" {

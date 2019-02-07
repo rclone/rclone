@@ -482,7 +482,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// shouldRetry determines whehter a given err rates being retried
+// shouldRetry determines whether a given err rates being retried
 func shouldRetry(err error) (bool, error) {
 	if err == nil {
 		return false, nil
@@ -863,7 +863,7 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	return
 }
 
-// NewFs contstructs an Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
@@ -1483,7 +1483,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	in := make(chan listREntry, inputBuffer)
 	out := make(chan error, fs.Config.Checkers)
 	list := walk.NewListRHelper(callback)
-	overfflow := []listREntry{}
+	overflow := []listREntry{}
 
 	cb := func(entry fs.DirEntry) error {
 		mu.Lock()
@@ -1493,7 +1493,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 			case in <- listREntry{d.ID(), d.Remote()}:
 				wg.Add(1)
 			default:
-				overfflow = append(overfflow, listREntry{d.ID(), d.Remote()})
+				overflow = append(overflow, listREntry{d.ID(), d.Remote()})
 			}
 		}
 		return list.Add(entry)
@@ -1509,18 +1509,18 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 		// wait until the all directories are processed
 		wg.Wait()
 		// if the input channel overflowed add the collected entries to the channel now
-		for len(overfflow) > 0 {
+		for len(overflow) > 0 {
 			mu.Lock()
-			l := len(overfflow)
-			// only fill half of the channel to prevent entries beeing put into overfflow again
+			l := len(overflow)
+			// only fill half of the channel to prevent entries beeing put into overflow again
 			if l > inputBuffer/2 {
 				l = inputBuffer / 2
 			}
 			wg.Add(l)
-			for _, d := range overfflow[:l] {
+			for _, d := range overflow[:l] {
 				in <- d
 			}
-			overfflow = overfflow[l:]
+			overflow = overflow[l:]
 			mu.Unlock()
 
 			// wait again for the completion of all directories
@@ -1711,14 +1711,14 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 				return shouldRetry(err)
 			})
 			if err != nil {
-				return errors.Wrapf(err, "MergDirs move failed on %q in %v", info.Name, srcDir)
+				return errors.Wrapf(err, "MergeDirs move failed on %q in %v", info.Name, srcDir)
 			}
 		}
 		// rmdir (into trash) the now empty source directory
 		fs.Infof(srcDir, "removing empty directory")
 		err = f.rmdir(srcDir.ID(), true)
 		if err != nil {
-			return errors.Wrapf(err, "MergDirs move failed to rmdir %q", srcDir)
+			return errors.Wrapf(err, "MergeDirs move failed to rmdir %q", srcDir)
 		}
 	}
 	return nil
@@ -2137,7 +2137,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 // ChangeNotify calls the passed function with a path that has had changes.
 // If the implementation uses polling, it should adhere to the given interval.
 //
-// Automatically restarts itself in case of unexpected behaviour of the remote.
+// Automatically restarts itself in case of unexpected behavior of the remote.
 //
 // Close the returned channel to stop being notified.
 func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {

@@ -213,7 +213,7 @@ func shouldRetry(err error) (bool, error) {
 		}
 		return true, err
 	}
-	// Keep old behaviour for backward compatibility
+	// Keep old behavior for backward compatibility
 	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") {
 		return true, err
 	}
@@ -239,7 +239,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	return
 }
 
-// NewFs contstructs an Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)

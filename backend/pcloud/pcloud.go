@@ -385,7 +385,7 @@ func fileIDtoNumber(fileID string) string {
 	if len(fileID) > 0 && fileID[0] == 'f' {
 		return fileID[1:]
 	}
-	fs.Debugf(nil, "Invalid filee id %q", fileID)
+	fs.Debugf(nil, "Invalid file id %q", fileID)
 	return fileID
 }
 

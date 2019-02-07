@@ -300,7 +300,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// shouldRetry determines whehter a given err rates being retried
+// shouldRetry determines whether a given err rates being retried
 func shouldRetry(err error) (again bool, errOut error) {
 	again = false
 	if err != nil {
@@ -348,7 +348,7 @@ func getServiceAccountClient(credentialsData []byte) (*http.Client, error) {
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
-// NewFs contstructs an Fs from the path, bucket:path
+// NewFs constructs an Fs from the path, bucket:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	var oAuthClient *http.Client
 

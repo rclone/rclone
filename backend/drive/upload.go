@@ -185,7 +185,7 @@ func (rx *resumableUpload) transferChunk(start int64, chunk io.ReadSeeker, chunk
 	// been 200 OK.
 	//
 	// So parse the response out of the body.  We aren't expecting
-	// any other 2xx codes, so we parse it unconditionaly on
+	// any other 2xx codes, so we parse it unconditionally on
 	// StatusCode
 	if err = json.NewDecoder(res.Body).Decode(&rx.ret); err != nil {
 		return 598, err

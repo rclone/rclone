@@ -449,7 +449,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 	_, err = bucketInit.PutObject(key, &req)
 	if err != nil {
-		fs.Debugf(f, "Copied Faild, API Error: %v", err)
+		fs.Debugf(f, "Copy Failed, API Error: %v", err)
 		return nil, err
 	}
 	return f.NewObject(remote)
@@ -756,7 +756,7 @@ func (f *Fs) Mkdir(dir string) error {
 		}
 		switch *statistics.Status {
 		case "deleted":
-			fs.Debugf(f, "Wiat for qingstor sync bucket status, retries: %d", retries)
+			fs.Debugf(f, "Wait for qingstor sync bucket status, retries: %d", retries)
 			time.Sleep(time.Second * 1)
 			retries++
 			continue
@@ -875,7 +875,7 @@ func (o *Object) readMetaData() (err error) {
 	fs.Debugf(o, "Read metadata of key: %s", key)
 	resp, err := bucketInit.HeadObject(key, &qs.HeadObjectInput{})
 	if err != nil {
-		fs.Debugf(o, "Read metadata faild, API Error: %v", err)
+		fs.Debugf(o, "Read metadata failed, API Error: %v", err)
 		if e, ok := err.(*qsErr.QingStorError); ok {
 			if e.StatusCode == http.StatusNotFound {
 				return fs.ErrorObjectNotFound

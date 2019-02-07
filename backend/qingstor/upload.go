@@ -163,7 +163,7 @@ func (u *uploader) singlePartUpload(buf io.Reader, size int64) error {
 
 	_, err := bucketInit.PutObject(u.cfg.key, &req)
 	if err == nil {
-		fs.Debugf(u, "Upload single objcet finished")
+		fs.Debugf(u, "Upload single object finished")
 	}
 	return err
 }

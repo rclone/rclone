@@ -2,7 +2,7 @@
 Translate file names for JottaCloud adapted from OneDrive
 
 
-The following characters are JottaClous reserved characters, and can't
+The following characters are JottaCloud reserved characters, and can't
 be used in JottaCloud folder and file names.
 
   jottacloud  = "/" / "\" / "*" / "<" / ">" / "?" / "!" / "&" / ":" / ";" / "|" / "#" / "%" / """ / "'" / "." / "~"

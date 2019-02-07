@@ -249,7 +249,7 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
-// addShlash makes sure s is terminated with a / if non empty
+// addSlash makes sure s is terminated with a / if non empty
 func addSlash(s string) string {
 	if s != "" && !strings.HasSuffix(s, "/") {
 		s += "/"

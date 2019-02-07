@@ -251,7 +251,7 @@ func parseName(base *url.URL, name string) (string, error) {
 	}
 	// calculate the name relative to the base
 	name = u.Path[len(base.Path):]
-	// musn't be empty
+	// mustn't be empty
 	if name == "" {
 		return "", errNameIsEmpty
 	}

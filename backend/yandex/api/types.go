@@ -56,7 +56,7 @@ type AsyncInfo struct {
 	Templated bool   `json:"templated"`
 }
 
-// AsyncStatus is returned when requesting the status of an async operations. Possble values in-progress, success, failure
+// AsyncStatus is returned when requesting the status of an async operations. Possible values in-progress, success, failure
 type AsyncStatus struct {
 	Status string `json:"status"`
 }
