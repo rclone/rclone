@@ -6,6 +6,7 @@ package http
 
 import (
 	"io"
+	"mime"
 	"net/http"
 	"net/url"
 	"path"
@@ -44,6 +45,22 @@ func init() {
 				Value: "https://user:pass@example.com",
 				Help:  "Connect to example.com using a username and password",
 			}},
+		}, {
+			Name: "no_slash",
+			Help: `Set this if the site doesn't end directories with /
+
+Use this if your target website does not use / on the end of
+directories.
+
+A / on the end of a path is how rclone normally tells the difference
+between files and directories.  If this flag is set, then rclone will
+treat all files with Content-Type: text/html as directories and read
+URLs from them rather than downloading them.
+
+Note that this may cause rclone to confuse genuine HTML files with
+directories.`,
+			Default:  false,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -52,6 +69,7 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	Endpoint string `config:"url"`
+	NoSlash  bool   `config:"no_slash"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -359,11 +377,16 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				fs:     f,
 				remote: remote,
 			}
-			if err = file.stat(); err != nil {
+			switch err = file.stat(); err {
+			case nil:
+				entries = append(entries, file)
+			case fs.ErrorNotAFile:
+				// ...found a directory not a file
+				dir := fs.NewDir(remote, timeUnset)
+				entries = append(entries, dir)
+			default:
 				fs.Debugf(remote, "skipping because of error: %v", err)
-				continue
 			}
-			entries = append(entries, file)
 		}
 	}
 	return entries, nil
@@ -439,6 +462,16 @@ func (o *Object) stat() error {
 	o.size = parseInt64(res.Header.Get("Content-Length"), -1)
 	o.modTime = t
 	o.contentType = res.Header.Get("Content-Type")
+	// If NoSlash is set then check ContentType to see if it is a directory
+	if o.fs.opt.NoSlash {
+		mediaType, _, err := mime.ParseMediaType(o.contentType)
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse Content-Type: %q", o.contentType)
+		}
+		if mediaType == "text/html" {
+			return fs.ErrorNotAFile
+		}
+	}
 	return nil
 }
 
