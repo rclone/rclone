@@ -65,7 +65,7 @@ func prepare(t *testing.T) (fs.Fs, func()) {
 	return f, tidy
 }
 
-func testListRoot(t *testing.T, f fs.Fs) {
+func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
 	entries, err := f.List("")
 	require.NoError(t, err)
 
@@ -93,15 +93,29 @@ func testListRoot(t *testing.T, f fs.Fs) {
 
 	e = entries[3]
 	assert.Equal(t, "two.html", e.Remote())
-	assert.Equal(t, int64(7), e.Size())
-	_, ok = e.(*Object)
-	assert.True(t, ok)
+	if noSlash {
+		assert.Equal(t, int64(-1), e.Size())
+		_, ok = e.(fs.Directory)
+		assert.True(t, ok)
+	} else {
+		assert.Equal(t, int64(41), e.Size())
+		_, ok = e.(*Object)
+		assert.True(t, ok)
+	}
 }
 
 func TestListRoot(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
-	testListRoot(t, f)
+	testListRoot(t, f, false)
+}
+
+func TestListRootNoSlash(t *testing.T) {
+	f, tidy := prepare(t)
+	f.(*Fs).opt.NoSlash = true
+	defer tidy()
+
+	testListRoot(t, f, true)
 }
 
 func TestListSubDir(t *testing.T) {
@@ -194,7 +208,7 @@ func TestIsAFileRoot(t *testing.T) {
 	f, err := NewFs(remoteName, "one%.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
 
-	testListRoot(t, f)
+	testListRoot(t, f, false)
 }
 
 func TestIsAFileSubDir(t *testing.T) {
