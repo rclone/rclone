@@ -326,14 +326,16 @@ func (f *Fs) readDir(dir string) (names []string, err error) {
 		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", URL)
 	}
 	res, err := f.httpClient.Get(URL)
-	if err == nil && res.StatusCode == http.StatusNotFound {
-		return nil, fs.ErrorDirNotFound
+	if err == nil {
+		defer fs.CheckClose(res.Body, &err)
+		if res.StatusCode == http.StatusNotFound {
+			return nil, fs.ErrorDirNotFound
+		}
 	}
 	err = statusError(res, err)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to readDir")
 	}
-	defer fs.CheckClose(res.Body, &err)
 
 	contentType := strings.SplitN(res.Header.Get("Content-Type"), ";", 2)[0]
 	switch contentType {
