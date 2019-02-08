@@ -270,14 +270,20 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 	if err != nil {
 		return nil, err
 	}
-	var walk func(*html.Node)
+	var (
+		walk func(*html.Node)
+		seen = make(map[string]struct{})
+	)
 	walk = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			for _, a := range n.Attr {
 				if a.Key == "href" {
 					name, err := parseName(base, a.Val)
 					if err == nil {
-						names = append(names, name)
+						if _, found := seen[name]; !found {
+							names = append(names, name)
+							seen[name] = struct{}{}
+						}
 					}
 					break
 				}
