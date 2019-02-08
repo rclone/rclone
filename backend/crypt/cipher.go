@@ -208,21 +208,6 @@ func (c *cipher) putBlock(buf []byte) {
 	c.buffers.Put(buf)
 }
 
-// check to see if the byte string is valid with no control characters
-// from 0x00 to 0x1F and is a valid UTF-8 string
-func checkValidString(buf []byte) error {
-	for i := range buf {
-		c := buf[i]
-		if c >= 0x00 && c < 0x20 || c == 0x7F {
-			return ErrorBadDecryptControlChar
-		}
-	}
-	if !utf8.Valid(buf) {
-		return ErrorBadDecryptUTF8
-	}
-	return nil
-}
-
 // encodeFileName encodes a filename using a modified version of
 // standard base32 as described in RFC4648
 //
@@ -291,10 +276,6 @@ func (c *cipher) decryptSegment(ciphertext string) (string, error) {
 	}
 	paddedPlaintext := eme.Transform(c.block, c.nameTweak[:], rawCiphertext, eme.DirectionDecrypt)
 	plaintext, err := pkcs7.Unpad(nameCipherBlockSize, paddedPlaintext)
-	if err != nil {
-		return "", err
-	}
-	err = checkValidString(plaintext)
 	if err != nil {
 		return "", err
 	}
