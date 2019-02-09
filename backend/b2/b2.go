@@ -125,6 +125,14 @@ minimum size.`,
 			Help:     `Disable checksums for large (> upload cutoff) files`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name: "download_url",
+			Help: `Custom endpoint for downloads.
+
+This is usually set to a Cloudflare CDN URL as Backblaze offers
+free egress for data downloaded through the Cloudflare network.
+Leave blank if you want to use the endpoint provided by Backblaze.`,
+			Advanced: true,
 		}},
 	})
 }
@@ -140,6 +148,7 @@ type Options struct {
 	UploadCutoff    fs.SizeSuffix `config:"upload_cutoff"`
 	ChunkSize       fs.SizeSuffix `config:"chunk_size"`
 	DisableCheckSum bool          `config:"disable_checksum"`
+	DownloadURL     string        `config:"download_url"`
 }
 
 // Fs represents a remote b2 server
@@ -1296,9 +1305,17 @@ var _ io.ReadCloser = &openFile{}
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: o.fs.info.DownloadURL,
 		Options: options,
 	}
+
+	// Use downloadUrl from backblaze if downloadUrl is not set
+	// otherwise use the custom downloadUrl
+	if o.fs.opt.DownloadURL == "" {
+		opts.RootURL = o.fs.info.DownloadURL
+	} else {
+		opts.RootURL = o.fs.opt.DownloadURL
+	}
+
 	// Download by id if set otherwise by name
 	if o.id != "" {
 		opts.Path += "/b2api/v1/b2_download_file_by_id?fileId=" + urlEncode(o.id)
