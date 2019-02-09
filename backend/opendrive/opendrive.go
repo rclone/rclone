@@ -65,7 +65,7 @@ type Fs struct {
 	opt      Options            // parsed options
 	features *fs.Features       // optional features
 	srv      *rest.Client       // the connection to the server
-	pacer    *pacer.Pacer       // To pace and retry the API calls
+	pacer    *fs.Pacer          // To pace and retry the API calls
 	session  UserSessionInfo    // contains the session data
 	dirCache *dircache.DirCache // Map of directory path to directory id
 }
@@ -144,7 +144,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		root:  root,
 		opt:   *opt,
 		srv:   rest.NewClient(fshttp.NewClient(fs.Config)).SetErrorHandler(errorHandler),
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 
 	f.dirCache = dircache.New(root, "0", f)

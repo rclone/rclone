@@ -144,7 +144,7 @@ type Fs struct {
 	containerOKMu    sync.Mutex            // mutex to protect container OK
 	containerOK      bool                  // true if we have created the container
 	containerDeleted bool                  // true if we have deleted the container
-	pacer            *pacer.Pacer          // To pace and retry the API calls
+	pacer            *fs.Pacer             // To pace and retry the API calls
 	uploadToken      *pacer.TokenDispenser // control concurrency
 }
 
@@ -347,7 +347,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:         *opt,
 		container:   container,
 		root:        directory,
-		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant).SetPacer(pacer.S3Pacer),
+		pacer:       fs.NewPacer(pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
 		client:      fshttp.NewClient(fs.Config),
 	}

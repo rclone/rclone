@@ -155,7 +155,7 @@ type Fs struct {
 	noAuthClient *http.Client       // unauthenticated http client
 	root         string             // the path we are working on
 	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *pacer.Pacer       // pacer for API calls
+	pacer        *fs.Pacer          // pacer for API calls
 	trueRootID   string             // ID of true root directory
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 }
@@ -273,7 +273,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		root:         root,
 		opt:          *opt,
 		c:            c,
-		pacer:        pacer.New().SetMinSleep(minSleep).SetPacer(pacer.AmazonCloudDrivePacer),
+		pacer:        fs.NewPacer(pacer.NewAmazonCloudDrive(pacer.MinSleep(minSleep))),
 		noAuthClient: fshttp.NewClient(fs.Config),
 	}
 	f.features = (&fs.Features{

@@ -160,7 +160,7 @@ type Fs struct {
 	team           team.Client    // for the Teams API
 	slashRoot      string         // root with "/" prefix, lowercase
 	slashRootSlash string         // root with "/" prefix and postfix, lowercase
-	pacer          *pacer.Pacer   // To pace the API calls
+	pacer          *fs.Pacer      // To pace the API calls
 	ns             string         // The namespace we are using or "" for none
 }
 
@@ -209,7 +209,7 @@ func shouldRetry(err error) (bool, error) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
 			fs.Debugf(baseErrString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
-			time.Sleep(time.Duration(e.RateLimitError.RetryAfter) * time.Second)
+			err = pacer.RetryAfterError(err, time.Duration(e.RateLimitError.RetryAfter)*time.Second)
 		}
 		return true, err
 	}
@@ -273,7 +273,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	config := dropbox.Config{
 		LogLevel:        dropbox.LogOff, // logging in the SDK: LogOff, LogDebug, LogInfo
