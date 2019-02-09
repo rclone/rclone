@@ -259,6 +259,15 @@ Follow symlinks and copy the pointed to item.
 - Type:        bool
 - Default:     false
 
+#### --links
+
+Translate symlinks to/from regular files with a '.rclonelink' extension
+
+- Config:      links
+- Env Var:     RCLONE_LOCAL_LINKS
+- Type:        bool
+- Default:     false
+
 #### --skip-links
 
 Don't warn about skipped symlinks.

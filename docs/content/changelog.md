@@ -1,10 +1,139 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2018-11-24"
+date: "2019-02-09"
 ---
 
 # Changelog
+
+## v1.46 - 2019-02-09
+
+* New backends
+    * Support Alibaba Cloud (Aliyun) OSS via the s3 backend (Nick Craig-Wood)
+* New commands
+    * serve dlna: serves a remove via DLNA for the local network (nicolov)
+* New Features
+    * copy, move: Restore deprecated `--no-traverse` flag (Nick Craig-Wood)
+        * This is useful for when transferring a small number of files into a large destination
+    * genautocomplete: Add remote path completion for bash completion (Christopher Peterson & Danil Semelenov)
+    * Buffer memory handling reworked to return memory to the OS better (Nick Craig-Wood)
+        * Buffer recycling library to replace sync.Pool
+        * Optionally use memory mapped memory for better memory shrinking
+        * Enable with `--use-mmap` if having memory problems - not default yet
+    * Parallelise reading of files specified by `--files-from` (Nick Craig-Wood)
+    * check: Add stats showing total files matched. (Dario Guzik)
+    * Allow rename/delete open files under Windows (Nick Craig-Wood)
+    * lsjson: Use exactly the correct number of decimal places in the seconds (Nick Craig-Wood)
+    * Add cookie support with cmdline switch `--use-cookies` for all HTTP based remotes (qip)
+    * Warn if `--checksum` is set but there are no hashes available (Nick Craig-Wood)
+    * Rework rate limiting (pacer) to be more accurate and allow bursting (Nick Craig-Wood)
+    * Improve error reporting for too many/few arguments in commands (Nick Craig-Wood)
+    * listremotes: Remove `-l` short flag as it conflicts with the new global flag (weetmuts)
+    * Make http serving with auth generate INFO messages on auth fail (Nick Craig-Wood)
+* Bug Fixes
+    * Fix layout of stats (Nick Craig-Wood)
+    * Fix `--progress` crash under Windows Jenkins (Nick Craig-Wood)
+    * Fix transfer of google/onedrive docs by calling Rcat in Copy when size is -1 (Cnly)
+    * copyurl: Fix checking of `--dry-run` (Denis Skovpen)
+* Mount
+    * Check that mountpoint and local directory to mount don't overlap (Nick Craig-Wood)
+    * Fix mount size under 32 bit Windows (Nick Craig-Wood)
+* VFS
+    * Implement renaming of directories for backends without DirMove (Nick Craig-Wood)
+        * now all backends except b2 support renaming directories
+    * Implement `--vfs-cache-max-size` to limit the total size of the cache (Nick Craig-Wood)
+    * Add `--dir-perms` and `--file-perms` flags to set default permissions (Nick Craig-Wood)
+    * Fix deadlock on concurrent operations on a directory (Nick Craig-Wood)
+    * Fix deadlock between RWFileHandle.close and File.Remove (Nick Craig-Wood)
+    * Fix renaming/deleting open files with cache mode "writes" under Windows (Nick Craig-Wood)
+    * Fix panic on rename with `--dry-run` set (Nick Craig-Wood)
+    * Fix vfs/refresh with recurse=true needing the `--fast-list` flag
+* Local
+    * Add support for `-l`/`--links` (symbolic link translation) (yair@unicorn)
+        * this works by showing links as `link.rclonelink` - see local backend docs for more info
+        * this errors if used with `-L`/`--copy-links`
+    * Fix renaming/deleting open files on Windows (Nick Craig-Wood)
+* Crypt
+    * Check for maximum length before decrypting filename to fix panic (Garry McNulty)
+* Azure Blob
+    * Allow building azureblob backend on *BSD (themylogin)
+    * Use the rclone HTTP client to support `--dump headers`, `--tpslimit` etc (Nick Craig-Wood)
+    * Use the s3 pacer for 0 delay in non error conditions (Nick Craig-Wood)
+    * Ignore directory markers (Nick Craig-Wood)
+    * Stop Mkdir attempting to create existing containers (Nick Craig-Wood)
+* B2
+    * cleanup: will remove unfinished large files >24hrs old (Garry McNulty)
+    * For a bucket limited application key check the bucket name (Nick Craig-Wood)
+        * before this, rclone would use the authorised bucket regardless of what you put on the command line
+    * Added `--b2-disable-checksum` flag (Wojciech Smigielski)
+        * this enables large files to be uploaded without a SHA-1 hash for speed reasons
+* Drive
+    * Set default pacer to 100ms for 10 tps (Nick Craig-Wood)
+        * This fits the Google defaults much better and reduces the 403 errors massively
+        * Add `--drive-pacer-min-sleep` and `--drive-pacer-burst` to control the pacer
+    * Improve ChangeNotify support for items with multiple parents (Fabian Möller)
+    * Fix ListR for items with multiple parents - this fixes oddities with `vfs/refresh` (Fabian Möller)
+    * Fix using `--drive-impersonate` and appfolders (Nick Craig-Wood)
+    * Fix google docs in rclone mount for some (not all) applications (Nick Craig-Wood)
+* Dropbox
+    * Retry-After support for Dropbox backend (Mathieu Carbou)
+* FTP
+    * Wait for 60 seconds for a connection to Close then declare it dead (Nick Craig-Wood)
+        * helps with indefinite hangs on some FTP servers
+* Google Cloud Storage
+    * Update google cloud storage endpoints (weetmuts)
+* HTTP
+    * Add an example with username and password which is supported but wasn't documented (Nick Craig-Wood)
+    * Fix backend with `--files-from` and non-existent files (Nick Craig-Wood)
+* Hubic
+    * Make error message more informative if authentication fails (Nick Craig-Wood)
+* Jottacloud
+    * Resume and deduplication support (Oliver Heyme)
+    * Use token auth for all API requests Don't store password anymore (Sebastian Bünger)
+    * Add support for 2-factor authentification (Sebastian Bünger)
+* Mega
+    * Implement v2 account login which fixes logins for newer Mega accounts (Nick Craig-Wood)
+    * Return error if an unknown length file is attempted to be uploaded (Nick Craig-Wood)
+    * Add new error codes for better error reporting (Nick Craig-Wood)
+* Onedrive
+    * Fix broken support for "shared with me" folders (Alex Chen)
+    * Fix root ID not normalised (Cnly)
+    * Return err instead of panic on unknown-sized uploads (Cnly)
+* Qingstor
+    * Fix go routine leak on multipart upload errors (Nick Craig-Wood)
+    * Add upload chunk size/concurrency/cutoff control (Nick Craig-Wood)
+    * Default `--qingstor-upload-concurrency` to 1 to work around bug (Nick Craig-Wood)
+* S3
+    * Implement `--s3-upload-cutoff` for single part uploads below this (Nick Craig-Wood)
+    * Change `--s3-upload-concurrency` default to 4 to increase perfomance (Nick Craig-Wood)
+    * Add `--s3-bucket-acl` to control bucket ACL (Nick Craig-Wood)
+    * Auto detect region for buckets on operation failure (Nick Craig-Wood)
+    * Add GLACIER storage class (William Cocker)
+    * Add Scaleway to s3 documentation (Rémy Léone)
+    * Add AWS endpoint eu-north-1 (weetmuts)
+* SFTP
+    * Add support for PEM encrypted private keys (Fabian Möller)
+    * Add option to force the usage of an ssh-agent (Fabian Möller)
+    * Perform environment variable expansion on key-file (Fabian Möller)
+    * Fix rmdir on Windows based servers (eg CrushFTP) (Nick Craig-Wood)
+    * Fix rmdir deleting directory contents on some SFTP servers (Nick Craig-Wood)
+    * Fix error on dangling symlinks (Nick Craig-Wood)
+* Swift
+    * Add `--swift-no-chunk` to disable segmented uploads in rcat/mount (Nick Craig-Wood)
+    * Introduce application credential auth support (kayrus)
+    * Fix memory usage by slimming Object (Nick Craig-Wood)
+    * Fix extra requests on upload (Nick Craig-Wood)
+    * Fix reauth on big files (Nick Craig-Wood)
+* Union
+    * Fix poll-interval not working (Nick Craig-Wood)
+* WebDAV
+    * Support About which means rclone mount will show the correct disk size (Nick Craig-Wood)
+    * Support MD5 and SHA1 hashes with Owncloud and Nextcloud (Nick Craig-Wood)
+    * Fail soft on time parsing errors (Nick Craig-Wood)
+    * Fix infinite loop on failed directory creation (Nick Craig-Wood)
+    * Fix identification of directories for Bitrix Site Manager (Nick Craig-Wood)
+    * Fix upload of 0 length files on some servers (Nick Craig-Wood)
+    * Fix if MKCOL fails with 423 Locked assume the directory exists (Nick Craig-Wood)
 
 ## v1.45 - 2018-11-24
 
