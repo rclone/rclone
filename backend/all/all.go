@@ -2,6 +2,7 @@ package all
 
 import (
 	// Active file systems
+	_ "github.com/ncw/rclone/backend/adb"
 	_ "github.com/ncw/rclone/backend/alias"
 	_ "github.com/ncw/rclone/backend/amazonclouddrive"
 	_ "github.com/ncw/rclone/backend/azureblob"
