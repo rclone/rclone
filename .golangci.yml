@@ -20,6 +20,9 @@ linters:
   disable-all: true
 
 issues:
+  # Enable some lints excluded by default
+  exclude-use-default: false
+
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-per-linter: 0
 
