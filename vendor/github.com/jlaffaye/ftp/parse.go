@@ -8,7 +8,9 @@ import (
 	"time"
 )
 
-var errUnsupportedListLine = errors.New("Unsupported LIST line")
+var errUnsupportedListLine = errors.New("unsupported LIST line")
+var errUnsupportedListDate = errors.New("unsupported LIST date")
+var errUnknownListEntryType = errors.New("unknown entry type")
 
 type parseFunc func(string, time.Time, *time.Location) (*Entry, error)
 
@@ -132,7 +134,7 @@ func parseLsListLine(line string, now time.Time, loc *time.Location) (*Entry, er
 	case 'l':
 		e.Type = EntryTypeLink
 	default:
-		return nil, errors.New("Unknown entry type")
+		return nil, errUnknownListEntryType
 	}
 
 	if err := e.setTime(fields[5:8], now, loc); err != nil {
@@ -246,7 +248,7 @@ func (e *Entry) setTime(fields []string, now time.Time, loc *time.Location) (err
 
 	} else { // only the date
 		if len(fields[2]) != 4 {
-			return errors.New("Invalid year format in time string")
+			return errUnsupportedListDate
 		}
 		timeStr := fmt.Sprintf("%s %s %s 00:00", fields[1], fields[0], fields[2])
 		e.Time, err = time.ParseInLocation("_2 Jan 2006 15:04", timeStr, loc)

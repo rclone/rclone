@@ -55,7 +55,7 @@ func (md *Metadata) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 
 // Marker represents an opaque value used in paged responses.
 type Marker struct {
-	val *string
+	Val *string
 }
 
 // NotDone returns true if the list enumeration should be started or is not yet complete. Specifically, NotDone returns true
@@ -63,14 +63,14 @@ type Marker struct {
 // the service. NotDone also returns true whenever the service returns an interim result portion. NotDone returns false only
 // after the service has returned the final result portion.
 func (m Marker) NotDone() bool {
-	return m.val == nil || *m.val != ""
+	return m.Val == nil || *m.Val != ""
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface for Marker.
 func (m *Marker) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var out string
 	err := d.DecodeElement(&out, &start)
-	m.val = &out
+	m.Val = &out
 	return err
 }
 

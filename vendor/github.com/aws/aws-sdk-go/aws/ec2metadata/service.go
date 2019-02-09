@@ -4,7 +4,7 @@
 // This package's client can be disabled completely by setting the environment
 // variable "AWS_EC2_METADATA_DISABLED=true". This environment variable set to
 // true instructs the SDK to disable the EC2 Metadata client. The client cannot
-// be used while the environemnt variable is set to true, (case insensitive).
+// be used while the environment variable is set to true, (case insensitive).
 package ec2metadata
 
 import (

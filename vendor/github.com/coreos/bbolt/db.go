@@ -1,4 +1,4 @@
-package bolt
+package bbolt
 
 import (
 	"errors"
@@ -43,6 +43,16 @@ var defaultPageSize = os.Getpagesize()
 // The time elapsed between consecutive file locking attempts.
 const flockRetryTimeout = 50 * time.Millisecond
 
+// FreelistType is the type of the freelist backend
+type FreelistType string
+
+const (
+	// FreelistArrayType indicates backend freelist type is array
+	FreelistArrayType = FreelistType("array")
+	// FreelistMapType indicates backend freelist type is hashmap
+	FreelistMapType = FreelistType("hashmap")
+)
+
 // DB represents a collection of buckets persisted to a file on disk.
 // All data access is performed through transactions which can be obtained through the DB.
 // All the functions on DB will return a ErrDatabaseNotOpen if accessed before Open() is called.
@@ -69,6 +79,13 @@ type DB struct {
 	// write performance under normal operation, but requires a full database
 	// re-sync during recovery.
 	NoFreelistSync bool
+
+	// FreelistType sets the backend freelist type. There are two options. Array which is simple but endures
+	// dramatic performance degradation if database is large and framentation in freelist is common.
+	// The alternative one is using hashmap, it is faster in almost all circumstances
+	// but it doesn't guarantee that it offers the smallest page id available. In normal case it is safe.
+	// The default type is array
+	FreelistType FreelistType
 
 	// When true, skips the truncate call when growing the database.
 	// Setting this to true is only safe on non-ext3/ext4 systems.
@@ -105,8 +122,7 @@ type DB struct {
 
 	path     string
 	file     *os.File
-	lockfile *os.File // windows only
-	dataref  []byte   // mmap'ed readonly, write throws SEGV
+	dataref  []byte // mmap'ed readonly, write throws SEGV
 	data     *[maxMapSize]byte
 	datasz   int
 	filesz   int // current on disk file size
@@ -170,6 +186,7 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 	db.NoGrowSync = options.NoGrowSync
 	db.MmapFlags = options.MmapFlags
 	db.NoFreelistSync = options.NoFreelistSync
+	db.FreelistType = options.FreelistType
 
 	// Set default values for later DB operations.
 	db.MaxBatchSize = DefaultMaxBatchSize
@@ -197,8 +214,7 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 	// if !options.ReadOnly.
 	// The database file is locked using the shared lock (more than one process may
 	// hold a lock at the same time) otherwise (options.ReadOnly is set).
-	if err := flock(db, mode, !db.readOnly, options.Timeout); err != nil {
-		db.lockfile = nil // make 'unused' happy. TODO: rework locks
+	if err := flock(db, !db.readOnly, options.Timeout); err != nil {
 		_ = db.close()
 		return nil, err
 	}
@@ -285,7 +301,7 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 // concurrent accesses being made to the freelist.
 func (db *DB) loadFreelist() {
 	db.freelistLoad.Do(func() {
-		db.freelist = newFreelist()
+		db.freelist = newFreelist(db.FreelistType)
 		if !db.hasSyncedFreelist() {
 			// Reconstruct free list by scanning the DB.
 			db.freelist.readIDs(db.freepages())
@@ -293,7 +309,7 @@ func (db *DB) loadFreelist() {
 			// Read free list from freelist page.
 			db.freelist.read(db.page(db.meta().freelist))
 		}
-		db.stats.FreePageN = len(db.freelist.ids)
+		db.stats.FreePageN = db.freelist.free_count()
 	})
 }
 
@@ -454,8 +470,8 @@ func (db *DB) Close() error {
 	db.metalock.Lock()
 	defer db.metalock.Unlock()
 
-	db.mmaplock.RLock()
-	defer db.mmaplock.RUnlock()
+	db.mmaplock.Lock()
+	defer db.mmaplock.Unlock()
 
 	return db.close()
 }
@@ -1007,6 +1023,13 @@ type Options struct {
 	// under normal operation, but requires a full database re-sync during recovery.
 	NoFreelistSync bool
 
+	// FreelistType sets the backend freelist type. There are two options. Array which is simple but endures
+	// dramatic performance degradation if database is large and framentation in freelist is common.
+	// The alternative one is using hashmap, it is faster in almost all circumstances
+	// but it doesn't guarantee that it offers the smallest page id available. In normal case it is safe.
+	// The default type is array
+	FreelistType FreelistType
+
 	// Open database in read-only mode. Uses flock(..., LOCK_SH |LOCK_NB) to
 	// grab a shared lock (UNIX).
 	ReadOnly bool
@@ -1036,8 +1059,9 @@ type Options struct {
 // DefaultOptions represent the options used if nil options are passed into Open().
 // No timeout is used which will cause Bolt to wait indefinitely for a lock.
 var DefaultOptions = &Options{
-	Timeout:    0,
-	NoGrowSync: false,
+	Timeout:      0,
+	NoGrowSync:   false,
+	FreelistType: FreelistArrayType,
 }
 
 // Stats represents statistics about the database.

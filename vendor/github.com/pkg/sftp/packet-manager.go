@@ -176,8 +176,10 @@ func (s *packetManager) maybeSendPackets() {
 			s.sender.sendPacket(out.(encoding.BinaryMarshaler))
 			// pop off heads
 			copy(s.incoming, s.incoming[1:])            // shift left
+			s.incoming[len(s.incoming)-1] = nil         // clear last
 			s.incoming = s.incoming[:len(s.incoming)-1] // remove last
 			copy(s.outgoing, s.outgoing[1:])            // shift left
+			s.outgoing[len(s.outgoing)-1] = nil         // clear last
 			s.outgoing = s.outgoing[:len(s.outgoing)-1] // remove last
 		} else {
 			break

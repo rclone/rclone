@@ -118,13 +118,16 @@ func (t *Token) Extra(key string) interface{} {
 	return v
 }
 
+// timeNow is time.Now but pulled out as a variable for tests.
+var timeNow = time.Now
+
 // expired reports whether the token is expired.
 // t must be non-nil.
 func (t *Token) expired() bool {
 	if t.Expiry.IsZero() {
 		return false
 	}
-	return t.Expiry.Round(0).Add(-expiryDelta).Before(time.Now())
+	return t.Expiry.Round(0).Add(-expiryDelta).Before(timeNow())
 }
 
 // Valid reports whether t is non-nil, has an AccessToken, and is not expired.

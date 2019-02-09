@@ -28,10 +28,10 @@ func main() {
 	if goarch == "" {
 		goarch = os.Getenv("GOARCH")
 	}
-	// Check that we are using the new build system if we should be.
-	if goos == "linux" && goarch != "sparc64" {
+	// Check that we are using the Docker-based build system if we should be.
+	if goos == "linux" {
 		if os.Getenv("GOLANG_SYS_BUILD") != "docker" {
-			os.Stderr.WriteString("In the new build system, mkpost should not be called directly.\n")
+			os.Stderr.WriteString("In the Docker-based build system, mkpost should not be called directly.\n")
 			os.Stderr.WriteString("See README.md\n")
 			os.Exit(1)
 		}

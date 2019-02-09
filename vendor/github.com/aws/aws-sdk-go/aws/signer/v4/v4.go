@@ -98,25 +98,25 @@ var ignoredHeaders = rules{
 var requiredSignedHeaders = rules{
 	whitelist{
 		mapRule{
-			"Cache-Control":                                               struct{}{},
-			"Content-Disposition":                                         struct{}{},
-			"Content-Encoding":                                            struct{}{},
-			"Content-Language":                                            struct{}{},
-			"Content-Md5":                                                 struct{}{},
-			"Content-Type":                                                struct{}{},
-			"Expires":                                                     struct{}{},
-			"If-Match":                                                    struct{}{},
-			"If-Modified-Since":                                           struct{}{},
-			"If-None-Match":                                               struct{}{},
-			"If-Unmodified-Since":                                         struct{}{},
-			"Range":                                                       struct{}{},
-			"X-Amz-Acl":                                                   struct{}{},
-			"X-Amz-Copy-Source":                                           struct{}{},
-			"X-Amz-Copy-Source-If-Match":                                  struct{}{},
-			"X-Amz-Copy-Source-If-Modified-Since":                         struct{}{},
-			"X-Amz-Copy-Source-If-None-Match":                             struct{}{},
-			"X-Amz-Copy-Source-If-Unmodified-Since":                       struct{}{},
-			"X-Amz-Copy-Source-Range":                                     struct{}{},
+			"Cache-Control":                         struct{}{},
+			"Content-Disposition":                   struct{}{},
+			"Content-Encoding":                      struct{}{},
+			"Content-Language":                      struct{}{},
+			"Content-Md5":                           struct{}{},
+			"Content-Type":                          struct{}{},
+			"Expires":                               struct{}{},
+			"If-Match":                              struct{}{},
+			"If-Modified-Since":                     struct{}{},
+			"If-None-Match":                         struct{}{},
+			"If-Unmodified-Since":                   struct{}{},
+			"Range":                                 struct{}{},
+			"X-Amz-Acl":                             struct{}{},
+			"X-Amz-Copy-Source":                     struct{}{},
+			"X-Amz-Copy-Source-If-Match":            struct{}{},
+			"X-Amz-Copy-Source-If-Modified-Since":   struct{}{},
+			"X-Amz-Copy-Source-If-None-Match":       struct{}{},
+			"X-Amz-Copy-Source-If-Unmodified-Since": struct{}{},
+			"X-Amz-Copy-Source-Range":               struct{}{},
 			"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Algorithm": struct{}{},
 			"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key":       struct{}{},
 			"X-Amz-Copy-Source-Server-Side-Encryption-Customer-Key-Md5":   struct{}{},
@@ -134,7 +134,7 @@ var requiredSignedHeaders = rules{
 			"X-Amz-Server-Side-Encryption-Customer-Key":                   struct{}{},
 			"X-Amz-Server-Side-Encryption-Customer-Key-Md5":               struct{}{},
 			"X-Amz-Storage-Class":                                         struct{}{},
-			"X-Amz-Tagging":					       struct{}{},
+			"X-Amz-Tagging":                                               struct{}{},
 			"X-Amz-Website-Redirect-Location":                             struct{}{},
 			"X-Amz-Content-Sha256":                                        struct{}{},
 		},
@@ -182,7 +182,7 @@ type Signer struct {
 	// http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
 	DisableURIPathEscaping bool
 
-	// Disales the automatical setting of the HTTP request's Body field with the
+	// Disables the automatical setting of the HTTP request's Body field with the
 	// io.ReadSeeker passed in to the signer. This is useful if you're using a
 	// custom wrapper around the body for the io.ReadSeeker and want to preserve
 	// the Body value on the Request.Body.
@@ -422,7 +422,7 @@ var SignRequestHandler = request.NamedHandler{
 // If the credentials of the request's config are set to
 // credentials.AnonymousCredentials the request will not be signed.
 func SignSDKRequest(req *request.Request) {
-	signSDKRequestWithCurrTime(req, time.Now)
+	SignSDKRequestWithCurrentTime(req, time.Now)
 }
 
 // BuildNamedHandler will build a generic handler for signing.
@@ -430,12 +430,15 @@ func BuildNamedHandler(name string, opts ...func(*Signer)) request.NamedHandler 
 	return request.NamedHandler{
 		Name: name,
 		Fn: func(req *request.Request) {
-			signSDKRequestWithCurrTime(req, time.Now, opts...)
+			SignSDKRequestWithCurrentTime(req, time.Now, opts...)
 		},
 	}
 }
 
-func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time, opts ...func(*Signer)) {
+// SignSDKRequestWithCurrentTime will sign the SDK's request using the time
+// function passed in. Behaves the same as SignSDKRequest with the exception
+// the request is signed with the value returned by the current time function.
+func SignSDKRequestWithCurrentTime(req *request.Request, curTimeFn func() time.Time, opts ...func(*Signer)) {
 	// If the request does not need to be signed ignore the signing of the
 	// request if the AnonymousCredentials object is used.
 	if req.Config.Credentials == credentials.AnonymousCredentials {
@@ -471,13 +474,9 @@ func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time
 		opt(v4)
 	}
 
-	signingTime := req.Time
-	if !req.LastSignedAt.IsZero() {
-		signingTime = req.LastSignedAt
-	}
-
+	curTime := curTimeFn()
 	signedHeaders, err := v4.signWithBody(req.HTTPRequest, req.GetBody(),
-		name, region, req.ExpireTime, req.ExpireTime > 0, signingTime,
+		name, region, req.ExpireTime, req.ExpireTime > 0, curTime,
 	)
 	if err != nil {
 		req.Error = err
@@ -486,7 +485,7 @@ func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time
 	}
 
 	req.SignedHeaderVals = signedHeaders
-	req.LastSignedAt = curTimeFn()
+	req.LastSignedAt = curTime
 }
 
 const logSignInfoMsg = `DEBUG: Request Signature:
@@ -755,7 +754,7 @@ func makeSha256Reader(reader io.ReadSeeker) []byte {
 const doubleSpace = "  "
 
 // stripExcessSpaces will rewrite the passed in slice's string values to not
-// contain muliple side-by-side spaces.
+// contain multiple side-by-side spaces.
 func stripExcessSpaces(vals []string) {
 	var j, k, l, m, spaces int
 	for i, str := range vals {

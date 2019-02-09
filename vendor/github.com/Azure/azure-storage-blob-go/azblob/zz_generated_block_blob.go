@@ -8,13 +8,14 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/xml"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // blockBlobClient is the client for the BlockBlob methods of the Azblob service.

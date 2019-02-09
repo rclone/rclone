@@ -35,7 +35,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/ESklhHtjidCDMugyP9gJKRCO-YM\"",
+  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/DmsVwHXLUfZJqrDE1d-9tgSUvKk\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -1770,7 +1770,7 @@
       }
     }
   },
-  "revision": "20181025",
+  "revision": "20181213",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -2259,6 +2259,14 @@
         "explicitlyTrashed": {
           "description": "Whether the file has been explicitly trashed, as opposed to recursively trashed from a parent folder.",
           "type": "boolean"
+        },
+        "exportLinks": {
+          "additionalProperties": {
+            "description": "A mapping from export format to URL",
+            "type": "string"
+          },
+          "description": "Links for exporting Google Docs to specific formats.",
+          "type": "object"
         },
         "fileExtension": {
           "description": "The final component of fullFileExtension. This is only available for files with binary content in Drive.",
@@ -2844,6 +2852,14 @@
       "description": "The metadata for a revision to a file.",
       "id": "Revision",
       "properties": {
+        "exportLinks": {
+          "additionalProperties": {
+            "description": "A mapping from export format to URL",
+            "type": "string"
+          },
+          "description": "Links for exporting Google Docs to specific formats.",
+          "type": "object"
+        },
         "id": {
           "description": "The ID of the revision.",
           "type": "string"

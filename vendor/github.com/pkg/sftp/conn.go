@@ -36,6 +36,17 @@ type clientConn struct {
 	wg         sync.WaitGroup
 	sync.Mutex                          // protects inflight
 	inflight   map[uint32]chan<- result // outstanding requests
+
+	closed chan struct{}
+	err    error
+}
+
+// Wait blocks until the conn has shut down, and return the error
+// causing the shutdown. It can be called concurrently from multiple
+// goroutines.
+func (c *clientConn) Wait() error {
+	<-c.closed
+	return c.err
 }
 
 // Close closes the SFTP session.
@@ -122,6 +133,8 @@ func (c *clientConn) broadcastErr(err error) {
 	for _, ch := range listeners {
 		ch <- result{err: err}
 	}
+	c.err = err
+	close(c.closed)
 }
 
 type serverConn struct {

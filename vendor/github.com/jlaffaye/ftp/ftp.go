@@ -188,10 +188,10 @@ func (c *ServerConn) setUTF8() error {
 		return err
 	}
 
-        // Workaround for FTP servers, that does not support this option.
-        if code == StatusBadArguments {
-                return nil
-        }
+	// Workaround for FTP servers, that does not support this option.
+	if code == StatusBadArguments {
+		return nil
+	}
 
 	// The ftpd "filezilla-server" has FEAT support for UTF8, but always returns
 	// "202 UTF8 mode is always enabled. No need to send this command." when
@@ -217,7 +217,7 @@ func (c *ServerConn) epsv() (port int, err error) {
 	start := strings.Index(line, "|||")
 	end := strings.LastIndex(line, "|")
 	if start == -1 || end == -1 {
-		err = errors.New("Invalid EPSV response format")
+		err = errors.New("invalid EPSV response format")
 		return
 	}
 	port, err = strconv.Atoi(line[start+3 : end])
@@ -235,7 +235,7 @@ func (c *ServerConn) pasv() (host string, port int, err error) {
 	start := strings.Index(line, "(")
 	end := strings.LastIndex(line, ")")
 	if start == -1 || end == -1 {
-		err = errors.New("Invalid PASV response format")
+		err = errors.New("invalid PASV response format")
 		return
 	}
 
@@ -243,7 +243,7 @@ func (c *ServerConn) pasv() (host string, port int, err error) {
 	pasvData := strings.Split(line[start+1:end], ",")
 
 	if len(pasvData) < 6 {
-		err = errors.New("Invalid PASV response format")
+		err = errors.New("invalid PASV response format")
 		return
 	}
 
@@ -421,7 +421,7 @@ func (c *ServerConn) CurrentDir() (string, error) {
 	end := strings.LastIndex(msg, "\"")
 
 	if start == -1 || end == -1 {
-		return "", errors.New("Unsuported PWD response format")
+		return "", errors.New("unsuported PWD response format")
 	}
 
 	return msg[start+1 : end], nil
@@ -516,7 +516,12 @@ func (c *ServerConn) RemoveDirRecur(path string) error {
 	if err != nil {
 		return err
 	}
+
 	entries, err := c.List(currentDir)
+	if err != nil {
+		return err
+	}
+
 	for _, entry := range entries {
 		if entry.Name != ".." && entry.Name != "." {
 			if entry.Type == EntryTypeFolder {

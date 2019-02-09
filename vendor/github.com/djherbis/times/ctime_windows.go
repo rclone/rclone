@@ -140,10 +140,9 @@ func getFileInformationByHandleEx(handle syscall.Handle, data *fileBasicInfo) (e
 
 	r1, _, e1 := syscall.Syscall6(procGetFileInformationByHandleEx.Addr(), 4, uintptr(handle), uintptr(fileBasicInfoClass), uintptr(unsafe.Pointer(data)), unsafe.Sizeof(*data), 0, 0)
 	if r1 == 0 {
+		err = syscall.EINVAL
 		if e1 != 0 {
 			err = error(e1)
-		} else {
-			err = syscall.EINVAL
 		}
 	}
 	return

@@ -72,20 +72,24 @@ func (list) String() string {
 // publicsuffix.org database compiled into the library.
 //
 // icann is whether the public suffix is managed by the Internet Corporation
-// for Assigned Names and Numbers. If not, the public suffix is privately
-// managed. For example, foo.org and foo.co.uk are ICANN domains,
-// foo.dyndns.org and foo.blogspot.co.uk are private domains.
+// for Assigned Names and Numbers. If not, the public suffix is either a
+// privately managed domain (and in practice, not a top level domain) or an
+// unmanaged top level domain (and not explicitly mentioned in the
+// publicsuffix.org list). For example, "foo.org" and "foo.co.uk" are ICANN
+// domains, "foo.dyndns.org" and "foo.blogspot.co.uk" are private domains and
+// "cromulent" is an unmanaged top level domain.
 //
-// Use cases for distinguishing ICANN domains like foo.com from private
-// domains like foo.appspot.com can be found at
+// Use cases for distinguishing ICANN domains like "foo.com" from private
+// domains like "foo.appspot.com" can be found at
 // https://wiki.mozilla.org/Public_Suffix_List/Use_Cases
 func PublicSuffix(domain string) (publicSuffix string, icann bool) {
 	lo, hi := uint32(0), uint32(numTLD)
-	s, suffix, wildcard := domain, len(domain), false
+	s, suffix, icannNode, wildcard := domain, len(domain), false, false
 loop:
 	for {
 		dot := strings.LastIndex(s, ".")
 		if wildcard {
+			icann = icannNode
 			suffix = 1 + dot
 		}
 		if lo == hi {
@@ -97,7 +101,7 @@ loop:
 		}
 
 		u := nodes[f] >> (nodesBitsTextOffset + nodesBitsTextLength)
-		icann = u&(1<<nodesBitsICANN-1) != 0
+		icannNode = u&(1<<nodesBitsICANN-1) != 0
 		u >>= nodesBitsICANN
 		u = children[u&(1<<nodesBitsChildren-1)]
 		lo = u & (1<<childrenBitsLo - 1)
@@ -113,6 +117,9 @@ loop:
 		}
 		u >>= childrenBitsNodeType
 		wildcard = u&(1<<childrenBitsWildcard-1) != 0
+		if !wildcard {
+			icann = icannNode
+		}
 
 		if dot == -1 {
 			break

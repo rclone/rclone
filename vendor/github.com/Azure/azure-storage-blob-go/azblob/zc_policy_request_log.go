@@ -109,8 +109,8 @@ func NewRequestLogPolicyFactory(o RequestLogOptions) pipeline.Factory {
 	})
 }
 
-// redactSigQueryParam redacts the 'sig' query parameter in URL's raw query to protect secret.
-func redactSigQueryParam(rawQuery string) (bool, string) {
+// RedactSigQueryParam redacts the 'sig' query parameter in URL's raw query to protect secret.
+func RedactSigQueryParam(rawQuery string) (bool, string) {
 	rawQuery = strings.ToLower(rawQuery) // lowercase the string so we can look for ?sig= and &sig=
 	sigFound := strings.Contains(rawQuery, "?sig=")
 	if !sigFound {
@@ -131,7 +131,7 @@ func redactSigQueryParam(rawQuery string) (bool, string) {
 
 func prepareRequestForLogging(request pipeline.Request) *http.Request {
 	req := request
-	if sigFound, rawQuery := redactSigQueryParam(req.URL.RawQuery); sigFound {
+	if sigFound, rawQuery := RedactSigQueryParam(req.URL.RawQuery); sigFound {
 		// Make copy so we don't destroy the query parameters we actually need to send in the request
 		req = request.Copy()
 		req.Request.URL.RawQuery = rawQuery
@@ -161,7 +161,7 @@ func prepareRequestForServiceLogging(request pipeline.Request) *http.Request {
 		req = request.Copy()
 		url, err := url.Parse(req.Header.Get(key))
 		if err == nil {
-			if sigFound, rawQuery := redactSigQueryParam(url.RawQuery); sigFound {
+			if sigFound, rawQuery := RedactSigQueryParam(url.RawQuery); sigFound {
 				url.RawQuery = rawQuery
 				req.Header.Set(xMsCopySourceHeader, url.String())
 			}

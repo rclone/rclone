@@ -78,6 +78,12 @@ func IsAppEngine() bool {
 	return internal.IsAppEngine()
 }
 
+// IsSecondGen reports whether the App Engine app is running on the second generation
+// runtimes (>= Go 1.11).
+func IsSecondGen() bool {
+	return internal.IsSecondGen()
+}
+
 // NewContext returns a context for an in-flight HTTP request.
 // This function is cheap.
 func NewContext(req *http.Request) context.Context {

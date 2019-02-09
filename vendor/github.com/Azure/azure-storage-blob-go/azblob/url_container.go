@@ -229,7 +229,7 @@ func (c ContainerURL) ChangeLease(ctx context.Context, leaseID string, proposedI
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/list-blobs.
 func (c ContainerURL) ListBlobsFlatSegment(ctx context.Context, marker Marker, o ListBlobsSegmentOptions) (*ListBlobsFlatSegmentResponse, error) {
 	prefix, include, maxResults := o.pointers()
-	return c.client.ListBlobFlatSegment(ctx, prefix, marker.val, maxResults, include, nil, nil)
+	return c.client.ListBlobFlatSegment(ctx, prefix, marker.Val, maxResults, include, nil, nil)
 }
 
 // ListBlobsHierarchySegment returns a single segment of blobs starting from the specified Marker. Use an empty
@@ -242,7 +242,7 @@ func (c ContainerURL) ListBlobsHierarchySegment(ctx context.Context, marker Mark
 		return nil, errors.New("snapshots are not supported in this listing operation")
 	}
 	prefix, include, maxResults := o.pointers()
-	return c.client.ListBlobHierarchySegment(ctx, delimiter, prefix, marker.val, maxResults, include, nil, nil)
+	return c.client.ListBlobHierarchySegment(ctx, delimiter, prefix, marker.Val, maxResults, include, nil, nil)
 }
 
 // ListBlobsSegmentOptions defines options available when calling ListBlobs.

@@ -2,18 +2,18 @@
 bazil.org/fuse
 bazil.org/fuse/fs
 bazil.org/fuse/fuseutil
-# cloud.google.com/go v0.33.1
+# cloud.google.com/go v0.36.0
 cloud.google.com/go/compute/metadata
 # github.com/Azure/azure-pipeline-go v0.1.8
 github.com/Azure/azure-pipeline-go/pipeline
-# github.com/Azure/azure-storage-blob-go v0.0.0-20181023070848-cf01652132cc
+# github.com/Azure/azure-storage-blob-go v0.0.0-20190123011202-457680cc0804
 github.com/Azure/azure-storage-blob-go/azblob
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
 # github.com/Unknwon/goconfig v0.0.0-20181105214110-56bd8ab18619
 github.com/Unknwon/goconfig
-# github.com/a8m/tree v0.0.0-20180321023834-3cf936ce15d6
+# github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 github.com/a8m/tree
 # github.com/abbot/go-http-auth v0.4.0
 github.com/abbot/go-http-auth
@@ -23,7 +23,7 @@ github.com/anacrolix/dms/soap
 github.com/anacrolix/dms/ssdp
 github.com/anacrolix/dms/upnp
 github.com/anacrolix/dms/upnpav
-# github.com/aws/aws-sdk-go v1.15.81
+# github.com/aws/aws-sdk-go v1.16.31
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/corehandlers
@@ -44,6 +44,7 @@ github.com/aws/aws-sdk-go/internal/sdkuri
 github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
 github.com/aws/aws-sdk-go/aws/client/metadata
 github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/credentials/processcreds
 github.com/aws/aws-sdk-go/aws/credentials/stscreds
 github.com/aws/aws-sdk-go/aws/csm
 github.com/aws/aws-sdk-go/aws/signer/v4
@@ -61,13 +62,13 @@ github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 # github.com/billziss-gh/cgofuse v1.1.0
 github.com/billziss-gh/cgofuse/fuse
-# github.com/coreos/bbolt v0.0.0-20180318001526-af9db2027c98
+# github.com/coreos/bbolt v1.3.2
 github.com/coreos/bbolt
 # github.com/cpuguy83/go-md2man v1.0.8
 github.com/cpuguy83/go-md2man/md2man
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/djherbis/times v1.1.0
+# github.com/djherbis/times v1.2.0
 github.com/djherbis/times
 # github.com/dropbox/dropbox-sdk-go-unofficial v5.4.0+incompatible
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox
@@ -91,7 +92,7 @@ github.com/golang/protobuf/proto
 github.com/google/go-querystring/query
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/jlaffaye/ftp v0.0.0-20181101112434-47f21d10f0ee
+# github.com/jlaffaye/ftp v0.0.0-20190126081051-8019e6774408
 github.com/jlaffaye/ftp
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
@@ -99,13 +100,13 @@ github.com/jmespath/go-jmespath
 github.com/kardianos/osext
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
-# github.com/mattn/go-runewidth v0.0.3
+# github.com/mattn/go-runewidth v0.0.4
 github.com/mattn/go-runewidth
 # github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 github.com/ncw/go-acd
 # github.com/ncw/swift v1.0.44
 github.com/ncw/swift
-# github.com/nsf/termbox-go v0.0.0-20181027232701-60ab7e3d12ed
+# github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d
 github.com/nsf/termbox-go
 # github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd
 github.com/okzk/sdnotify
@@ -117,9 +118,9 @@ github.com/pengsrc/go-shared/convert
 github.com/pengsrc/go-shared/buffer
 github.com/pengsrc/go-shared/check
 github.com/pengsrc/go-shared/reopen
-# github.com/pkg/errors v0.8.0
+# github.com/pkg/errors v0.8.1
 github.com/pkg/errors
-# github.com/pkg/sftp v1.8.3
+# github.com/pkg/sftp v1.10.0
 github.com/pkg/sftp
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
@@ -129,14 +130,14 @@ github.com/rfjakob/eme
 github.com/russross/blackfriday
 # github.com/sevlyar/go-daemon v0.1.4
 github.com/sevlyar/go-daemon
-# github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
+# github.com/skratchdot/open-golang v0.0.0-20190104022628-a2dfa6d0dab6
 github.com/skratchdot/open-golang/open
 # github.com/spf13/cobra v0.0.3
 github.com/spf13/cobra
 github.com/spf13/cobra/doc
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/stretchr/testify v1.2.2
+# github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da
@@ -155,7 +156,7 @@ github.com/yunify/qingstor-sdk-go/request/builder
 github.com/yunify/qingstor-sdk-go/request/signer
 github.com/yunify/qingstor-sdk-go/request/unpacker
 github.com/yunify/qingstor-sdk-go
-# golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
+# golang.org/x/crypto v0.0.0-20190208162236-193df9c0f06f
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
@@ -171,7 +172,7 @@ golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/blowfish
-# golang.org/x/net v0.0.0-20181114220301-adae6a3d119a
+# golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
 golang.org/x/net/websocket
 golang.org/x/net/html
 golang.org/x/net/publicsuffix
@@ -188,32 +189,32 @@ golang.org/x/net/context/ctxhttp
 golang.org/x/net/bpf
 golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
-# golang.org/x/oauth2 v0.0.0-20181120190819-8f65e3013eba
+# golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
 golang.org/x/oauth2
 golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
+# golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b
+# golang.org/x/sys v0.0.0-20190204203706-41f3e6584952
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
 golang.org/x/text/unicode/norm
 golang.org/x/text/transform
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 # golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 golang.org/x/time/rate
-# google.golang.org/api v0.0.0-20181120235003-faade3cbb06a
+# google.golang.org/api v0.1.0
 google.golang.org/api/drive/v2
 google.golang.org/api/drive/v3
 google.golang.org/api/googleapi
 google.golang.org/api/storage/v1
 google.golang.org/api/gensupport
 google.golang.org/api/googleapi/internal/uritemplates
-# google.golang.org/appengine v1.3.0
+# google.golang.org/appengine v1.4.0
 google.golang.org/appengine
 google.golang.org/appengine/urlfetch
 google.golang.org/appengine/internal
@@ -224,5 +225,5 @@ google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
-# gopkg.in/yaml.v2 v2.2.1
+# gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
