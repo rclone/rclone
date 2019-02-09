@@ -256,7 +256,7 @@ type Fs struct {
 	bucket     string           // the bucket we are working on
 	bucketOKMu sync.Mutex       // mutex to protect bucket OK
 	bucketOK   bool             // true if we have created the bucket
-	pacer      *pacer.Pacer     // To pace the API calls
+	pacer      *fs.Pacer        // To pace the API calls
 }
 
 // Object describes a storage object
@@ -395,7 +395,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		bucket: bucket,
 		root:   directory,
 		opt:    *opt,
-		pacer:  pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer),
+		pacer:  fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(minSleep))),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,

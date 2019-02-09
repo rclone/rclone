@@ -426,7 +426,7 @@ type Fs struct {
 	client           *http.Client       // authorized client
 	rootFolderID     string             // the id of the root folder
 	dirCache         *dircache.DirCache // Map of directory path to directory id
-	pacer            *pacer.Pacer       // To pace the API calls
+	pacer            *fs.Pacer          // To pace the API calls
 	exportExtensions []string           // preferred extensions to download docs
 	importMimeTypes  []string           // MIME types to convert to docs
 	isTeamDrive      bool               // true if this is a team drive
@@ -789,8 +789,8 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 }
 
 // newPacer makes a pacer configured for drive
-func newPacer(opt *Options) *pacer.Pacer {
-	return pacer.New().SetMinSleep(time.Duration(opt.PacerMinSleep)).SetBurst(opt.PacerBurst).SetPacer(pacer.GoogleDrivePacer)
+func newPacer(opt *Options) *fs.Pacer {
+	return fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst)))
 }
 
 func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {

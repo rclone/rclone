@@ -93,7 +93,7 @@ type Fs struct {
 	opt      Options      // parsed options
 	features *fs.Features // optional features
 	srv      *rest.Client // the connection to the yandex server
-	pacer    *pacer.Pacer // pacer for API calls
+	pacer    *fs.Pacer    // pacer for API calls
 	diskRoot string       // root path with "disk:/" container name
 }
 
@@ -269,7 +269,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		name:  name,
 		opt:   *opt,
 		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{

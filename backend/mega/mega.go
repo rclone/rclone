@@ -98,7 +98,7 @@ type Fs struct {
 	opt        Options      // parsed config options
 	features   *fs.Features // optional features
 	srv        *mega.Mega   // the connection to the server
-	pacer      *pacer.Pacer // pacer for API calls
+	pacer      *fs.Pacer    // pacer for API calls
 	rootNodeMu sync.Mutex   // mutex for _rootNode
 	_rootNode  *mega.Node   // root node - call findRoot to use this
 	mkdirMu    sync.Mutex   // used to serialize calls to mkdir / rmdir
@@ -217,7 +217,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		root:  root,
 		opt:   *opt,
 		srv:   srv,
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
