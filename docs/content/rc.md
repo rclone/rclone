@@ -226,7 +226,7 @@ The slice indices are similar to Python slices: start[:end]
 
 start is the 0 based chunk number from the beginning of the file
 to fetch inclusive. end is 0 based chunk number from the beginning
-of the file to fetch exclisive.
+of the file to fetch exclusive.
 Both values can be negative, in which case they count from the back
 of the file. The value "-5:" represents the last 5 chunks of a file.
 
@@ -477,9 +477,6 @@ This takes the following parameters
 - dstFs - a remote name string eg "drive2:" for the destination
 - dstRemote - a path within that remote eg "file2.txt" for the destination
 
-This returns
-- jobid - ID of async job to query with job/status
-
 Authentication is required for this call.
 
 ### operations/copyurl: Copy the URL to the object
@@ -556,9 +553,6 @@ This takes the following parameters
 - srcRemote - a path within that remote eg "file.txt" for the source
 - dstFs - a remote name string eg "drive2:" for the destination
 - dstRemote - a path within that remote eg "file2.txt" for the destination
-
-This returns
-- jobid - ID of async job to query with job/status
 
 Authentication is required for this call.
 
@@ -637,6 +631,20 @@ Only supply the options you wish to change.  If an option is unknown
 it will be silently ignored.  Not all options will have an effect when
 changed like this.
 
+For example:
+
+This sets DEBUG level logs (-vv)
+
+    rclone rc options/set --json '{"main": {"LogLevel": 8}}'
+
+And this sets INFO level logs (-v)
+
+    rclone rc options/set --json '{"main": {"LogLevel": 7}}'
+
+And this sets NOTICE level logs (normal without -v)
+
+    rclone rc options/set --json '{"main": {"LogLevel": 6}}'
+
 ### rc/error: This returns an error
 
 This returns an error with the input as part of its error string.
@@ -668,8 +676,6 @@ This takes the following parameters
 - srcFs - a remote name string eg "drive:src" for the source
 - dstFs - a remote name string eg "drive:dst" for the destination
 
-This returns
-- jobid - ID of async job to query with job/status
 
 See the [copy command](/commands/rclone_copy/) command for more information on the above.
 
@@ -683,8 +689,6 @@ This takes the following parameters
 - dstFs - a remote name string eg "drive:dst" for the destination
 - deleteEmptySrcDirs - delete empty src directories if set
 
-This returns
-- jobid - ID of async job to query with job/status
 
 See the [move command](/commands/rclone_move/) command for more information on the above.
 
@@ -697,8 +701,6 @@ This takes the following parameters
 - srcFs - a remote name string eg "drive:src" for the source
 - dstFs - a remote name string eg "drive:dst" for the destination
 
-This returns
-- jobid - ID of async job to query with job/status
 
 See the [sync command](/commands/rclone_sync/) command for more information on the above.
 

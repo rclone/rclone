@@ -347,16 +347,26 @@ Location for the newly created buckets.
         - Multi-regional location for United States.
     - "asia-east1"
         - Taiwan.
+    - "asia-east2"
+        - Hong Kong.
     - "asia-northeast1"
         - Tokyo.
+    - "asia-south1"
+        - Mumbai.
     - "asia-southeast1"
         - Singapore.
     - "australia-southeast1"
         - Sydney.
+    - "europe-north1"
+        - Finland.
     - "europe-west1"
         - Belgium.
     - "europe-west2"
         - London.
+    - "europe-west3"
+        - Frankfurt.
+    - "europe-west4"
+        - Netherlands.
     - "us-central1"
         - Iowa.
     - "us-east1"
@@ -365,6 +375,8 @@ Location for the newly created buckets.
         - Northern Virginia.
     - "us-west1"
         - Oregon.
+    - "us-west2"
+        - California.
 
 #### --gcs-storage-class
 
