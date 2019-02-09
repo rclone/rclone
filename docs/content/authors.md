@@ -235,3 +235,4 @@ Contributors
   * Wojciech Smigielski <wojciech.hieronim.smigielski@gmail.com>
   * weetmuts <oehrstroem@gmail.com>
   * Jonathan <vanillajonathan@users.noreply.github.com>
+  * James Carpenter <orbsmiv@users.noreply.github.com>
