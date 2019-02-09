@@ -317,7 +317,7 @@ loop:
 		return nil, NewParseError(fmt.Sprintf("incomplete expression: %v", stack.container))
 	}
 
-	// returns a sublist which exludes the start symbol
+	// returns a sublist which excludes the start symbol
 	return stack.List(), nil
 }
 

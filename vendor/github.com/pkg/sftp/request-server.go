@@ -3,7 +3,6 @@ package sftp
 import (
 	"context"
 	"io"
-	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -56,37 +55,24 @@ func (rs *RequestServer) nextRequest(r *Request) string {
 	defer rs.openRequestLock.Unlock()
 	rs.handleCount++
 	handle := strconv.Itoa(rs.handleCount)
+	r.handle = handle
 	rs.openRequests[handle] = r
 	return handle
 }
 
-// Returns Request from openRequests, bool is false if it is missing
-// If the method is different, save/return a new Request w/ that Method.
+// Returns Request from openRequests, bool is false if it is missing.
 //
 // The Requests in openRequests work essentially as open file descriptors that
 // you can do different things with. What you are doing with it are denoted by
-// the first packet of that type (read/write/etc). We create a new Request when
-// it changes to set the request.Method attribute in a thread safe way.
-func (rs *RequestServer) getRequest(handle, method string) (*Request, bool) {
+// the first packet of that type (read/write/etc).
+func (rs *RequestServer) getRequest(handle string) (*Request, bool) {
 	rs.openRequestLock.RLock()
+	defer rs.openRequestLock.RUnlock()
 	r, ok := rs.openRequests[handle]
-	rs.openRequestLock.RUnlock()
-	if !ok || r.Method == method {
-		return r, ok
-	}
-	// if we make it here we need to replace the request
-	rs.openRequestLock.Lock()
-	defer rs.openRequestLock.Unlock()
-	r, ok = rs.openRequests[handle]
-	if !ok || r.Method == method { // re-check needed b/c lock race
-		return r, ok
-	}
-	r = r.copy()
-	r.Method = method
-	rs.openRequests[handle] = r
 	return r, ok
 }
 
+// Close the Request and clear from openRequests map
 func (rs *RequestServer) closeRequest(handle string) error {
 	rs.openRequestLock.Lock()
 	defer rs.openRequestLock.Unlock()
@@ -173,28 +159,24 @@ func (rs *RequestServer) packetWorker(
 			rpkt = cleanPacketPath(pkt)
 		case *sshFxpOpendirPacket:
 			request := requestFromPacket(ctx, pkt)
-			rpkt = request.call(rs.Handlers, pkt)
-			if stat, ok := rpkt.(*sshFxpStatResponse); ok {
-				if stat.info.IsDir() {
-					handle := rs.nextRequest(request)
-					rpkt = sshFxpHandlePacket{ID: pkt.id(), Handle: handle}
-				} else {
-					rpkt = statusFromError(pkt, &os.PathError{
-						Path: request.Filepath, Err: syscall.ENOTDIR})
-				}
-			}
+			rs.nextRequest(request)
+			rpkt = request.opendir(rs.Handlers, pkt)
 		case *sshFxpOpenPacket:
 			request := requestFromPacket(ctx, pkt)
-			handle := rs.nextRequest(request)
-			rpkt = sshFxpHandlePacket{ID: pkt.id(), Handle: handle}
-			if pkt.hasPflags(ssh_FXF_CREAT) {
-				if p := request.call(rs.Handlers, pkt); !statusOk(p) {
-					rpkt = p // if error in write, return it
-				}
+			rs.nextRequest(request)
+			rpkt = request.open(rs.Handlers, pkt)
+		case *sshFxpFstatPacket:
+			handle := pkt.getHandle()
+			request, ok := rs.getRequest(handle)
+			if !ok {
+				rpkt = statusFromError(pkt, syscall.EBADF)
+			} else {
+				request = NewRequest("Stat", request.Filepath)
+				rpkt = request.call(rs.Handlers, pkt)
 			}
 		case hasHandle:
 			handle := pkt.getHandle()
-			request, ok := rs.getRequest(handle, requestMethod(pkt))
+			request, ok := rs.getRequest(handle)
 			if !ok {
 				rpkt = statusFromError(pkt, syscall.EBADF)
 			} else {
@@ -212,12 +194,6 @@ func (rs *RequestServer) packetWorker(
 			rs.pktMgr.newOrderedResponse(rpkt, pkt.orderId()))
 	}
 	return nil
-}
-
-// True is responsePacket is an OK status packet
-func statusOk(rpkt responsePacket) bool {
-	p, ok := rpkt.(sshFxpStatusPacket)
-	return ok && p.StatusError.Code == ssh_FX_OK
 }
 
 // clean and return name packet for file

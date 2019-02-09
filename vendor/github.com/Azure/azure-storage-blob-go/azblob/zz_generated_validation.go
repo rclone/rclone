@@ -5,10 +5,11 @@ package azblob
 
 import (
 	"fmt"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // Constraint stores constraint name, target field name

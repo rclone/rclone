@@ -97,6 +97,16 @@ type Transport struct {
 	// to mean no limit.
 	MaxHeaderListSize uint32
 
+	// StrictMaxConcurrentStreams controls whether the server's
+	// SETTINGS_MAX_CONCURRENT_STREAMS should be respected
+	// globally. If false, new TCP connections are created to the
+	// server as needed to keep each under the per-connection
+	// SETTINGS_MAX_CONCURRENT_STREAMS limit. If true, the
+	// server's SETTINGS_MAX_CONCURRENT_STREAMS is interpreted as
+	// a global limit and callers of RoundTrip block when needed,
+	// waiting for their turn.
+	StrictMaxConcurrentStreams bool
+
 	// t1, if non-nil, is the standard library Transport using
 	// this transport. Its settings are used (but not its
 	// RoundTrip method, etc).
@@ -711,8 +721,19 @@ func (cc *ClientConn) idleStateLocked() (st clientConnIdleState) {
 	if cc.singleUse && cc.nextStreamID > 1 {
 		return
 	}
-	st.canTakeNewRequest = cc.goAway == nil && !cc.closed && !cc.closing &&
-		int64(cc.nextStreamID)+int64(cc.pendingRequests) < math.MaxInt32
+	var maxConcurrentOkay bool
+	if cc.t.StrictMaxConcurrentStreams {
+		// We'll tell the caller we can take a new request to
+		// prevent the caller from dialing a new TCP
+		// connection, but then we'll block later before
+		// writing it.
+		maxConcurrentOkay = true
+	} else {
+		maxConcurrentOkay = int64(len(cc.streams)+1) < int64(cc.maxConcurrentStreams)
+	}
+
+	st.canTakeNewRequest = cc.goAway == nil && !cc.closed && !cc.closing && maxConcurrentOkay &&
+		int64(cc.nextStreamID)+2*int64(cc.pendingRequests) < math.MaxInt32
 	st.freshConn = cc.nextStreamID == 1 && st.canTakeNewRequest
 	return
 }

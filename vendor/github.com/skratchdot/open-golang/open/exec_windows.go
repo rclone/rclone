@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 var (
@@ -20,9 +21,13 @@ func cleaninput(input string) string {
 }
 
 func open(input string) *exec.Cmd {
-	return exec.Command(runDll32, cmd, input)
+	cmd := exec.Command(runDll32, cmd, input)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	return cmd
 }
 
 func openWith(input string, appName string) *exec.Cmd {
-	return exec.Command("cmd", "/C", "start", "", appName, cleaninput(input))
+	cmd := exec.Command("cmd", "/C", "start", "", appName, cleaninput(input))
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	return cmd
 }

@@ -24,6 +24,7 @@ type Request struct {
 	Flags    uint32
 	Attrs    []byte // convert to sub-struct
 	Target   string // for renames and sym-links
+	handle   string
 	// reader/writer/readdir from handlers
 	state state
 	// context lasts duration of request
@@ -155,7 +156,7 @@ func (r *Request) call(handlers Handlers, pkt requestPacket) responsePacket {
 	switch r.Method {
 	case "Get":
 		return fileget(handlers.FileGet, r, pkt)
-	case "Put", "Open":
+	case "Put":
 		return fileput(handlers.FilePut, r, pkt)
 	case "Setstat", "Rename", "Rmdir", "Mkdir", "Symlink", "Remove":
 		return filecmd(handlers.FileCmd, r, pkt)
@@ -169,37 +170,47 @@ func (r *Request) call(handlers Handlers, pkt requestPacket) responsePacket {
 	}
 }
 
-// file data for additional read/write packets
-func packetData(p requestPacket) (data []byte, offset int64, length uint32) {
-	switch p := p.(type) {
-	case *sshFxpReadPacket:
-		length = p.Len
-		offset = int64(p.Offset)
-	case *sshFxpWritePacket:
-		data = p.Data
-		length = p.Length
-		offset = int64(p.Offset)
+// Additional initialization for Open packets
+func (r *Request) open(h Handlers, pkt requestPacket) responsePacket {
+	flags := r.Pflags()
+	var err error
+	switch {
+	case flags.Write, flags.Append, flags.Creat, flags.Trunc:
+		r.Method = "Put"
+		r.state.writerAt, err = h.FilePut.Filewrite(r)
+	case flags.Read:
+		r.Method = "Get"
+		r.state.readerAt, err = h.FileGet.Fileread(r)
+	default:
+		return statusFromError(pkt, errors.New("bad file flags"))
 	}
-	return
+	if err != nil {
+		return statusFromError(pkt, err)
+	}
+	return &sshFxpHandlePacket{ID: pkt.id(), Handle: r.handle}
+}
+func (r *Request) opendir(h Handlers, pkt requestPacket) responsePacket {
+	var err error
+	r.Method = "List"
+	r.state.listerAt, err = h.FileList.Filelist(r)
+	if err != nil {
+		switch err.(type) {
+		case syscall.Errno:
+			err = &os.PathError{Path: r.Filepath, Err: err}
+		}
+		return statusFromError(pkt, err)
+	}
+	return &sshFxpHandlePacket{ID: pkt.id(), Handle: r.handle}
 }
 
 // wrap FileReader handler
 func fileget(h FileReader, r *Request, pkt requestPacket) responsePacket {
-	var err error
+	//fmt.Println("fileget", r)
 	r.state.RLock()
 	reader := r.state.readerAt
 	r.state.RUnlock()
 	if reader == nil {
-		r.state.Lock()
-		if r.state.readerAt == nil {
-			r.state.readerAt, err = h.Fileread(r)
-			if err != nil {
-				r.state.Unlock()
-				return statusFromError(pkt, err)
-			}
-		}
-		reader = r.state.readerAt
-		r.state.Unlock()
+		return statusFromError(pkt, errors.New("unexpected read packet"))
 	}
 
 	_, offset, length := packetData(pkt)
@@ -218,26 +229,31 @@ func fileget(h FileReader, r *Request, pkt requestPacket) responsePacket {
 
 // wrap FileWriter handler
 func fileput(h FileWriter, r *Request, pkt requestPacket) responsePacket {
-	var err error
+	//fmt.Println("fileput", r)
 	r.state.RLock()
 	writer := r.state.writerAt
 	r.state.RUnlock()
 	if writer == nil {
-		r.state.Lock()
-		if r.state.writerAt == nil {
-			r.state.writerAt, err = h.Filewrite(r)
-			if err != nil {
-				r.state.Unlock()
-				return statusFromError(pkt, err)
-			}
-		}
-		writer = r.state.writerAt
-		r.state.Unlock()
+		return statusFromError(pkt, errors.New("unexpected write packet"))
 	}
 
 	data, offset, _ := packetData(pkt)
-	_, err = writer.WriteAt(data, offset)
+	_, err := writer.WriteAt(data, offset)
 	return statusFromError(pkt, err)
+}
+
+// file data for additional read/write packets
+func packetData(p requestPacket) (data []byte, offset int64, length uint32) {
+	switch p := p.(type) {
+	case *sshFxpReadPacket:
+		length = p.Len
+		offset = int64(p.Offset)
+	case *sshFxpWritePacket:
+		data = p.Data
+		length = p.Length
+		offset = int64(p.Offset)
+	}
+	return
 }
 
 // wrap FileCmder handler
@@ -257,11 +273,7 @@ func filelist(h FileLister, r *Request, pkt requestPacket) responsePacket {
 	var err error
 	lister := r.getLister()
 	if lister == nil {
-		lister, err = h.Filelist(r)
-		if err != nil {
-			return statusFromError(pkt, err)
-		}
-		r.setListerState(lister)
+		return statusFromError(pkt, errors.New("unexpected dir packet"))
 	}
 
 	offset := r.lsNext()
@@ -346,16 +358,10 @@ func filestat(h FileLister, r *Request, pkt requestPacket) responsePacket {
 // init attributes of request object from packet data
 func requestMethod(p requestPacket) (method string) {
 	switch p.(type) {
-	case *sshFxpReadPacket:
-		method = "Get"
-	case *sshFxpWritePacket:
-		method = "Put"
-	case *sshFxpReaddirPacket:
-		method = "List"
-	case *sshFxpOpenPacket:
-		method = "Open"
-	case *sshFxpOpendirPacket:
-		method = "Stat"
+	case *sshFxpReadPacket, *sshFxpWritePacket, *sshFxpOpenPacket:
+		// set in open() above
+	case *sshFxpOpendirPacket, *sshFxpReaddirPacket:
+		// set in opendir() above
 	case *sshFxpSetstatPacket, *sshFxpFsetstatPacket:
 		method = "Setstat"
 	case *sshFxpRenamePacket:

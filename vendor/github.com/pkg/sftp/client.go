@@ -122,6 +122,7 @@ func NewClientPipe(rd io.Reader, wr io.WriteCloser, opts ...ClientOption) (*Clie
 				WriteCloser: wr,
 			},
 			inflight: make(map[uint32]chan<- result),
+			closed:   make(chan struct{}),
 		},
 		maxPacket:             1 << 15,
 		maxConcurrentRequests: 64,

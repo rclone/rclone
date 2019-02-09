@@ -80,7 +80,7 @@ func appendToURLPath(u url.URL, name string) url.URL {
 // https://docs.microsoft.com/rest/api/storageservices/list-containers2.
 func (s ServiceURL) ListContainersSegment(ctx context.Context, marker Marker, o ListContainersSegmentOptions) (*ListContainersSegmentResponse, error) {
 	prefix, include, maxResults := o.pointers()
-	return s.client.ListContainersSegment(ctx, prefix, marker.val, maxResults, include, nil, nil)
+	return s.client.ListContainersSegment(ctx, prefix, marker.Val, maxResults, include, nil, nil)
 }
 
 // ListContainersOptions defines options available when calling ListContainers.

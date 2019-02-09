@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// http://golang.org/src/os/stat_nacl.go
+// https://golang.org/src/os/stat_nacljs.go
 
 package times
 

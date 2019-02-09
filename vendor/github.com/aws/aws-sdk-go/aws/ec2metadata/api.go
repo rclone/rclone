@@ -118,6 +118,10 @@ func (c *EC2Metadata) Region() (string, error) {
 		return "", err
 	}
 
+	if len(resp) == 0 {
+		return "", awserr.New("EC2MetadataError", "invalid Region response", nil)
+	}
+
 	// returns region without the suffix. Eg: us-west-2a becomes us-west-2
 	return resp[:len(resp)-1], nil
 }

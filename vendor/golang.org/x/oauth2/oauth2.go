@@ -31,7 +31,7 @@ var NoContext = context.TODO()
 // which doesn't support the HTTP Basic authentication
 // scheme to authenticate with the authorization server.
 // Once a server is registered, credentials (client_id and client_secret)
-// will be passed as query parameters rather than being present
+// will be passed as parameters in the request body rather than being present
 // in the Authorization header.
 // See https://code.google.com/p/goauth2/issues/detail?id=31 for background.
 func RegisterBrokenAuthHeaderProvider(tokenURL string) {

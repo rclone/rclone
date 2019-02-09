@@ -6,9 +6,10 @@ package azblob
 import (
 	"bytes"
 	"fmt"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"net"
 	"net/http"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // if you want to provide custom error handling set this variable to your constructor function

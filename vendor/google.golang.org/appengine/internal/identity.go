@@ -31,9 +31,15 @@ func AppID(c netcontext.Context) string {
 // ../appengine.go. See that file for commentary.
 func IsStandard() bool {
 	// appengineStandard will be true for first-gen runtimes (<= Go 1.9) but not
-	// second-gen (>= Go 1.11). Second-gen runtimes set $GAE_ENV so we use that
-	// to check if we're on a second-gen runtime.
-	return appengineStandard || os.Getenv("GAE_ENV") == "standard"
+	// second-gen (>= Go 1.11).
+	return appengineStandard || IsSecondGen()
+}
+
+// IsStandard is the implementation of the wrapper function of the same name in
+// ../appengine.go. See that file for commentary.
+func IsSecondGen() bool {
+	// Second-gen runtimes set $GAE_ENV so we use that to check if we're on a second-gen runtime.
+	return os.Getenv("GAE_ENV") == "standard"
 }
 
 // IsFlex is the implementation of the wrapper function of the same name in

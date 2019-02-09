@@ -7,12 +7,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // serviceClient is the client for the Service methods of the Azblob service.

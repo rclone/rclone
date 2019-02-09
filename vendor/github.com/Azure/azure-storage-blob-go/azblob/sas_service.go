@@ -79,8 +79,13 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		ipRange:     v.IPRange,
 
 		// Container/Blob-specific SAS parameters
-		resource:   resource,
-		identifier: v.Identifier,
+		resource:           resource,
+		identifier:         v.Identifier,
+		cacheControl:       v.CacheControl,
+		contentDisposition: v.ContentDisposition,
+		contentEncoding:    v.ContentEncoding,
+		contentLanguage:    v.ContentLanguage,
+		contentType:        v.ContentType,
 
 		// Calculated SAS signature
 		signature: signature,

@@ -7,8 +7,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io/ioutil"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 type responder func(resp pipeline.Response) (result pipeline.Response, err error)

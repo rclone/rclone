@@ -17,6 +17,7 @@ There are also some interesting projects using termbox-go:
  - [httopd](https://github.com/verdverm/httopd) is top for httpd logs.
  - [mop](https://github.com/mop-tracker/mop) is stock market tracker for hackers.
  - [termui](https://github.com/gizak/termui) is a terminal dashboard.
+ - [termdash](https://github.com/mum4k/termdash) is a terminal dashboard.
  - [termloop](https://github.com/JoelOtter/termloop) is a terminal game engine.
  - [xterm-color-chart](https://github.com/kutuluk/xterm-color-chart) is a XTerm 256 color chart.
  - [gocui](https://github.com/jroimartin/gocui) is a minimalist Go library aimed at creating console user interfaces.
