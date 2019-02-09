@@ -216,7 +216,7 @@ type Fs struct {
 	containerOK       bool              // true if we have created the container
 	segmentsContainer string            // container to store the segments (if any) in
 	noCheckContainer  bool              // don't check the container before creating it
-	pacer             *pacer.Pacer      // To pace the API calls
+	pacer             *fs.Pacer         // To pace the API calls
 }
 
 // Object describes a swift object
@@ -401,7 +401,7 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 		segmentsContainer: container + "_segments",
 		root:              directory,
 		noCheckContainer:  noCheckContainer,
-		pacer:             pacer.New().SetMinSleep(minSleep).SetPacer(pacer.S3Pacer),
+		pacer:             fs.NewPacer(pacer.NewS3(pacer.MinSleep(minSleep))),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,

@@ -101,7 +101,7 @@ type Fs struct {
 	endpoint           *url.URL      // URL of the host
 	endpointURL        string        // endpoint as a string
 	srv                *rest.Client  // the connection to the one drive server
-	pacer              *pacer.Pacer  // pacer for API calls
+	pacer              *fs.Pacer     // pacer for API calls
 	precision          time.Duration // mod time precision
 	canStream          bool          // set if can stream
 	useOCMtime         bool          // set if can use X-OC-Mtime
@@ -318,7 +318,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		endpoint:    u,
 		endpointURL: u.String(),
 		srv:         rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(u.String()),
-		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		precision:   fs.ModTimeNotSupported,
 	}
 	f.features = (&fs.Features{

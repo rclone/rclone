@@ -95,7 +95,7 @@ type Fs struct {
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *pacer.Pacer       // pacer for API calls
+	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 }
 
@@ -254,7 +254,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		root:  root,
 		opt:   *opt,
 		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,

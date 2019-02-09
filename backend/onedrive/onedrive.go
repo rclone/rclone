@@ -261,7 +261,7 @@ type Fs struct {
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the one drive server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
-	pacer        *pacer.Pacer       // pacer for API calls
+	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 	driveID      string             // ID to use for querying Microsoft Graph
 	driveType    string             // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
@@ -475,7 +475,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
 		srv:       rest.NewClient(oAuthClient).SetRoot(graphURL + "/drives/" + opt.DriveID),
-		pacer:     pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer:     fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,

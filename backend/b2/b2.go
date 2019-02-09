@@ -167,7 +167,7 @@ type Fs struct {
 	uploadMu      sync.Mutex                   // lock for upload variable
 	uploads       []*api.GetUploadURLResponse  // result of get upload URL calls
 	authMu        sync.Mutex                   // lock for authorizing the account
-	pacer         *pacer.Pacer                 // To pace and retry the API calls
+	pacer         *fs.Pacer                    // To pace and retry the API calls
 	bufferTokens  chan []byte                  // control concurrency of multipart uploads
 }
 
@@ -251,13 +251,7 @@ func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
 				fs.Errorf(f, "Malformed %s header %q: %v", retryAfterHeader, retryAfterString, err)
 			}
 		}
-		retryAfterDuration := time.Duration(retryAfter) * time.Second
-		if f.pacer.GetSleep() < retryAfterDuration {
-			fs.Debugf(f, "Setting sleep to %v after error: %v", retryAfterDuration, err)
-			// We set 1/2 the value here because the pacer will double it immediately
-			f.pacer.SetSleep(retryAfterDuration / 2)
-		}
-		return true, err
+		return true, pacer.RetryAfterError(err, time.Duration(retryAfter)*time.Second)
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -363,7 +357,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		bucket: bucket,
 		root:   directory,
 		srv:    rest.NewClient(fshttp.NewClient(fs.Config)).SetErrorHandler(errorHandler),
-		pacer:  pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		pacer:  fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
