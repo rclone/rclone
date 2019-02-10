@@ -236,3 +236,4 @@ Contributors
   * weetmuts <oehrstroem@gmail.com>
   * Jonathan <vanillajonathan@users.noreply.github.com>
   * James Carpenter <orbsmiv@users.noreply.github.com>
+  * Vince <vince0villamora@gmail.com>
