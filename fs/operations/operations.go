@@ -283,7 +283,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 		// If can't server side copy, do it manually
 		if err == fs.ErrorCantCopy {
 			var in0 io.ReadCloser
-			in0, err = src.Open(hashOption)
+			in0, err = newReOpen(src, hashOption, fs.Config.LowLevelRetries)
 			if err != nil {
 				err = errors.Wrap(err, "failed to open source object")
 			} else {
