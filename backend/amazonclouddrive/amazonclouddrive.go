@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/go-acd"
+	acd "github.com/ncw/go-acd"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"

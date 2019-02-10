@@ -32,7 +32,7 @@ import (
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
-	"github.com/t3rm1n4l/go-mega"
+	mega "github.com/t3rm1n4l/go-mega"
 )
 
 const (
