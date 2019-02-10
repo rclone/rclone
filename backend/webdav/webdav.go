@@ -173,9 +173,16 @@ func itemIsDir(item *api.Response) bool {
 		fs.Debugf(nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
 	}
 	// the iscollection prop is a Microsoft extension, but if present it is a reliable indicator
-	// if the above check failed - see #2716
+	// if the above check failed - see #2716. This can be an integer or a boolean - see #2964
 	if t := item.Props.IsCollection; t != nil {
-		return *t != 0
+		switch x := strings.ToLower(*t); x {
+		case "0", "false":
+			return false
+		case "1", "true":
+			return true
+		default:
+			fs.Debugf(nil, "Unknown value %q for IsCollection", x)
+		}
 	}
 	return false
 }

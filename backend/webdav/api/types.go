@@ -69,7 +69,7 @@ type Prop struct {
 	Status       []string  `xml:"DAV: status"`
 	Name         string    `xml:"DAV: prop>displayname,omitempty"`
 	Type         *xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
-	IsCollection *int      `xml:"DAV: prop>iscollection,omitempty"` // this is a Microsoft extension see #2716
+	IsCollection *string   `xml:"DAV: prop>iscollection,omitempty"` // this is a Microsoft extension see #2716
 	Size         int64     `xml:"DAV: prop>getcontentlength,omitempty"`
 	Modified     Time      `xml:"DAV: prop>getlastmodified,omitempty"`
 	Checksums    []string  `xml:"prop>checksums>checksum,omitempty"`
