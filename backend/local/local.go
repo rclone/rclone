@@ -28,13 +28,16 @@ import (
 )
 
 // Constants
-const devUnset = 0xdeadbeefcafebabe // a device id meaning it is unset
-const linkSuffix = ".rclonelink"    // The suffix added to a translated symbolic link
+const (
+	devUnset   = 0xdeadbeefcafebabe // a device id meaning it is unset
+	linkSuffix = ".rclonelink"      // The suffix added to a translated symbolic link
+	remoteType = "local"
+)
 
 // Register with Fs
 func init() {
 	fsi := &fs.RegInfo{
-		Name:        "local",
+		Name:        remoteType,
 		Description: "Local Disk",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -203,6 +206,11 @@ func (f *Fs) isRegular(mode os.FileMode) bool {
 	// Since symlinks are accepted, test that all other bits are zero,
 	// except the symlink bit
 	return mode&os.ModeType&^os.ModeSymlink == 0
+}
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
 }
 
 // Name of the remote (as passed into NewFs)

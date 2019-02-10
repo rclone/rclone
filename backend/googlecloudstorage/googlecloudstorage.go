@@ -45,7 +45,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
-	storage "google.golang.org/api/storage/v1"
+	"google.golang.org/api/storage/v1"
 )
 
 const (
@@ -56,6 +56,7 @@ const (
 	metaMtime                   = "mtime" // key to store mtime under in metadata
 	listChunks                  = 1000    // chunk size to read directory listings
 	minSleep                    = 10 * time.Millisecond
+	remoteType                  = "google cloud storage"
 )
 
 var (
@@ -72,7 +73,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "google cloud storage",
+		Name:        remoteType,
 		Prefix:      "gcs",
 		Description: "Google Cloud Storage (this is not Google Drive)",
 		NewFs:       NewFs,
@@ -793,6 +794,11 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {

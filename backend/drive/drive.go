@@ -66,6 +66,7 @@ const (
 	minChunkSize     = 256 * fs.KibiByte
 	defaultChunkSize = 8 * fs.MebiByte
 	partialFields    = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents,webViewLink"
+	remoteType       = "drive"
 )
 
 // Globals
@@ -154,7 +155,7 @@ func driveScopesContainsAppFolder(scopes []string) bool {
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "drive",
+		Name:        remoteType,
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
@@ -461,6 +462,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

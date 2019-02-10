@@ -37,12 +37,13 @@ const (
 	maxSleep      = 2 * time.Second
 	decayConstant = 2   // bigger for slower decay, exponential
 	defaultDepth  = "1" // depth for PROPFIND
+	remoteType    = "webdav"
 )
 
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "webdav",
+		Name:        remoteType,
 		Description: "Webdav",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -123,6 +124,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

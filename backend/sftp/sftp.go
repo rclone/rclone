@@ -35,6 +35,7 @@ import (
 
 const (
 	connectionsPerSecond = 10 // don't make more than this many ssh connections/s
+	remoteType           = "sftp"
 )
 
 var (
@@ -43,7 +44,7 @@ var (
 
 func init() {
 	fsi := &fs.RegInfo{
-		Name:        "sftp",
+		Name:        remoteType,
 		Description: "SSH/SFTP Connection",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -465,6 +466,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
 }
 
 // Name returns the configured name of the file system

@@ -15,10 +15,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	remoteType = "union"
+)
+
 // Register with Fs
 func init() {
 	fsi := &fs.RegInfo{
-		Name:        "union",
+		Name:        remoteType,
 		Description: "A stackable unification remote, which can appear to merge the contents of several remotes",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -65,6 +69,11 @@ func (f *Fs) wrapObject(o fs.Object) *Object {
 // Fs returns the union Fs as the parent
 func (o *Object) Fs() fs.Info {
 	return o.fs
+}
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
 }
 
 // Name of the remote (as passed into NewFs)

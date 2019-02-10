@@ -32,7 +32,7 @@ import (
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
-	mega "github.com/t3rm1n4l/go-mega"
+	"github.com/t3rm1n4l/go-mega"
 )
 
 const (
@@ -40,6 +40,7 @@ const (
 	maxSleep      = 2 * time.Second
 	eventWaitTime = 500 * time.Millisecond
 	decayConstant = 2 // bigger for slower decay, exponential
+	remoteType    = "mega"
 )
 
 var (
@@ -50,7 +51,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "mega",
+		Name:        remoteType,
 		Description: "Mega",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -880,6 +881,11 @@ func (f *Fs) About() (*fs.Usage, error) {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {

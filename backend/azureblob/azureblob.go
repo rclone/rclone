@@ -53,12 +53,13 @@ const (
 	maxUploadCutoff     = 256 * fs.MebiByte
 	defaultAccessTier   = azblob.AccessTierNone
 	maxTryTimeout       = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
+	remoteType          = "azureblob"
 )
 
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "azureblob",
+		Name:        remoteType,
 		Description: "Microsoft Azure Blob Storage",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -161,6 +162,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

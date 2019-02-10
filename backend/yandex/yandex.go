@@ -36,6 +36,7 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second // may needs to be increased, testing needed
 	decayConstant               = 2               // bigger for slower decay, exponential
+	remoteType                  = "yandex"
 )
 
 // Globals
@@ -55,7 +56,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "yandex",
+		Name:        remoteType,
 		Description: "Yandex Disk",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
@@ -106,10 +107,14 @@ type Object struct {
 	size        int64     // Bytes in the object
 	modTime     time.Time // Modified time of the object
 	mimeType    string    // Content type according to the server
-
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

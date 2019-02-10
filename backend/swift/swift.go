@@ -32,6 +32,7 @@ const (
 	listChunks                 = 1000                    // chunk size to read directory listings
 	defaultChunkSize           = 5 * fs.GibiByte
 	minSleep                   = 10 * time.Millisecond // In case of error, start at 10ms sleep.
+	remoteType                 = "swift"
 )
 
 // SharedOptions are shared between swift and hubic
@@ -62,7 +63,7 @@ copy operations.`,
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "swift",
+		Name:        remoteType,
 		Description: "Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
 		NewFs:       NewFs,
 		Options: append([]fs.Option{{
@@ -233,6 +234,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

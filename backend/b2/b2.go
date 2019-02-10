@@ -51,6 +51,7 @@ const (
 	minChunkSize        = 5 * fs.MebiByte
 	defaultChunkSize    = 96 * fs.MebiByte
 	defaultUploadCutoff = 200 * fs.MebiByte
+	remoteType          = "b2"
 )
 
 // Globals
@@ -61,7 +62,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "b2",
+		Name:        remoteType,
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -174,6 +175,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

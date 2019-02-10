@@ -28,10 +28,14 @@ import (
 	qs "github.com/yunify/qingstor-sdk-go/service"
 )
 
+const (
+	remoteType = "qingstor"
+)
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "qingstor",
+		Name:        remoteType,
 		Description: "QingCloud Object Storage",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -365,6 +369,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		}
 	}
 	return f, nil
+}
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
 }
 
 // Name of the remote (as passed into NewFs)

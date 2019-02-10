@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	acd "github.com/ncw/go-acd"
+	"github.com/ncw/go-acd"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
@@ -45,6 +45,7 @@ const (
 	minSleep                 = 20 * time.Millisecond
 	warnFileSize             = 50000 << 20            // Display warning for files larger than this size
 	defaultTempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
+	remoteType               = "amazon cloud drive"
 )
 
 // Globals
@@ -65,7 +66,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "amazon cloud drive",
+		Name:        remoteType,
 		Prefix:      "acd",
 		Description: "Amazon Drive",
 		NewFs:       NewFs,
@@ -170,6 +171,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

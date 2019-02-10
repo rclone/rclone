@@ -48,6 +48,7 @@ const (
 	listChunks                  = 1000     // chunk size to read directory listings
 	minUploadCutoff             = 50000000 // upload cutoff can be no lower than this
 	defaultUploadCutoff         = 50 * 1024 * 1024
+	remoteType                  = "box"
 )
 
 // Globals
@@ -68,7 +69,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "box",
+		Name:        remoteType,
 		Description: "Box",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
@@ -131,6 +132,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

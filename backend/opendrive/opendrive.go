@@ -31,12 +31,13 @@ const (
 	minSleep        = 10 * time.Millisecond
 	maxSleep        = 5 * time.Minute
 	decayConstant   = 1 // bigger for slower decay, exponential
+	remoteType      = "opendrive"
 )
 
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "opendrive",
+		Name:        remoteType,
 		Description: "OpenDrive",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -87,6 +88,11 @@ func parsePath(path string) (root string) {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

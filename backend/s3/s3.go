@@ -49,10 +49,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	remoteType = "s3"
+)
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "s3",
+		Name:        remoteType,
 		Description: "Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -802,6 +806,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

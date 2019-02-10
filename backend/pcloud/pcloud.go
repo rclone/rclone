@@ -44,6 +44,7 @@ const (
 	decayConstant               = 2    // bigger for slower decay, exponential
 	rootID                      = "d0" // ID of root folder is always this
 	rootURL                     = "https://api.pcloud.com"
+	remoteType                  = "pcloud"
 )
 
 // Globals
@@ -64,7 +65,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "pcloud",
+		Name:        remoteType,
 		Description: "Pcloud",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
@@ -851,6 +852,11 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Fs returns the parent Fs
 func (o *Object) Fs() fs.Info {

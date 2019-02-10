@@ -83,6 +83,7 @@ const (
 	// by default.
 	defaultChunkSize = 48 * fs.MebiByte
 	maxChunkSize     = 150 * fs.MebiByte
+	remoteType       = "dropbox"
 )
 
 var (
@@ -106,7 +107,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "dropbox",
+		Name:        remoteType,
 		Description: "Dropbox",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
@@ -176,6 +177,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

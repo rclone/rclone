@@ -23,6 +23,10 @@ import (
 	"golang.org/x/net/html"
 )
 
+const (
+	remoteType = "http"
+)
+
 var (
 	errorReadOnly = errors.New("http remotes are read only")
 	timeUnset     = time.Unix(0, 0)
@@ -30,7 +34,7 @@ var (
 
 func init() {
 	fsi := &fs.RegInfo{
-		Name:        "http",
+		Name:        remoteType,
 		Description: "http Connection",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
@@ -161,6 +165,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.New("internal error: url doesn't end with /")
 	}
 	return f, nil
+}
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
 }
 
 // Name returns the configured name of the file system

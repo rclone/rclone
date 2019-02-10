@@ -272,7 +272,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 		// Try server side copy first - if has optional interface and
 		// is same underlying remote
 		actionTaken = "Copied (server side copy)"
-		if doCopy := f.Features().Copy; doCopy != nil && SameConfig(src.Fs(), f) {
+		if doCopy := f.Features().Copy; doCopy != nil && SameRemoteType(src.Fs(), f) {
 			newDst, err = doCopy(src, remote)
 			if err == nil {
 				dst = newDst
@@ -391,7 +391,7 @@ func Move(fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Ob
 		return newDst, nil
 	}
 	// See if we have Move available
-	if doMove := fdst.Features().Move; doMove != nil && SameConfig(src.Fs(), fdst) {
+	if doMove := fdst.Features().Move; doMove != nil && SameRemoteType(src.Fs(), fdst) {
 		// Delete destination if it exists
 		if dst != nil {
 			err = DeleteFile(dst)
@@ -528,6 +528,10 @@ func DeleteFiles(toBeDeleted fs.ObjectsChan) error {
 // file entry
 func SameConfig(fdst, fsrc fs.Info) bool {
 	return fdst.Name() == fsrc.Name()
+}
+
+func SameRemoteType(fdst, fsrc fs.Info) bool {
+	return fdst.Type() == fsrc.Type()
 }
 
 // Same returns true if fdst and fsrc point to the same underlying Fs

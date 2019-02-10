@@ -19,10 +19,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	remoteType = "ftp"
+)
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "ftp",
+		Name:        remoteType,
 		Description: "FTP Connection",
 		NewFs:       NewFs,
 		Options: []fs.Option{
@@ -88,6 +92,11 @@ type FileInfo struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of this fs
 func (f *Fs) Name() string {

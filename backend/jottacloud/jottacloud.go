@@ -49,6 +49,7 @@ const (
 	rcloneClientID              = "nibfk8biu12ju7hpqomr8b1e40"
 	rcloneEncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
 	configUsername              = "user"
+	remoteType                  = "jottacloud"
 )
 
 var (
@@ -67,7 +68,7 @@ var (
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "jottacloud",
+		Name:        remoteType,
 		Description: "JottaCloud",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
@@ -208,6 +209,11 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// Name of the remote type
+func (f *Fs) Type() string {
+	return remoteType
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

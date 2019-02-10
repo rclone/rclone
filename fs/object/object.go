@@ -65,6 +65,9 @@ var MemoryFs memoryFs
 // memoryFs is an in memory fs
 type memoryFs struct{}
 
+// Name of the remote type
+func (memoryFs) Type() string { return "memory" }
+
 // Name of the remote (as passed into NewFs)
 func (memoryFs) Name() string { return "memory" }
 
