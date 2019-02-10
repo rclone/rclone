@@ -530,7 +530,7 @@ func SameConfig(fdst, fsrc fs.Info) bool {
 	return fdst.Name() == fsrc.Name()
 }
 
-// SameConfig returns true if fdst and fsrc are using the same remote type
+// SameRemoteType returns true if fdst and fsrc are using the same remote type
 func SameRemoteType(fdst, fsrc fs.Info) bool {
 	return fdst.Type() == fsrc.Type()
 }

@@ -167,7 +167,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	return f, nil
 }
 
-// Name of the remote type
+// Type of the remote
 func (f *Fs) Type() string {
 	return remoteType
 }

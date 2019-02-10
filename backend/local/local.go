@@ -208,7 +208,7 @@ func (f *Fs) isRegular(mode os.FileMode) bool {
 	return mode&os.ModeType&^os.ModeSymlink == 0
 }
 
-// Name of the remote type
+// Type of the remote
 func (f *Fs) Type() string {
 	return remoteType
 }

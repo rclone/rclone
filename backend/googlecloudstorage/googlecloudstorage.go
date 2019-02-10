@@ -795,7 +795,7 @@ func (f *Fs) Hashes() hash.Set {
 
 // ------------------------------------------------------------
 
-// Name of the remote type
+// Type of the remote
 func (f *Fs) Type() string {
 	return remoteType
 }

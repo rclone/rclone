@@ -210,7 +210,7 @@ type Object struct {
 
 // ------------------------------------------------------------
 
-// Name of the remote type
+// Type of the remote
 func (f *Fs) Type() string {
 	return remoteType
 }

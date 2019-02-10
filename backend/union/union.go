@@ -71,7 +71,7 @@ func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
-// Name of the remote type
+// Type of the remote
 func (f *Fs) Type() string {
 	return remoteType
 }

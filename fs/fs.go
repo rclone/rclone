@@ -249,7 +249,7 @@ type Fs interface {
 
 // Info provides a read only interface to information about a filesystem.
 type Info interface {
-	// Name of the remote type
+	// Type of the remote
 	Type() string
 
 	// Name of the remote (as passed into NewFs)
