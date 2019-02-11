@@ -87,6 +87,9 @@ type ConfigInfo struct {
 	Progress              bool
 	Cookie                bool
 	UseMmap               bool
+	CaCert                string // Client Side CA
+	ClientCert            string // Client Side Cert
+	ClientKey             string // Client Side Key
 }
 
 // NewConfig creates a new config with everything set to the default
