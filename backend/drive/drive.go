@@ -907,6 +907,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		ReadMimeType:            true,
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
+		ServerSideAcrossConfigs: true,
 	}).Fill(f)
 
 	// Create a new authorized Drive client.

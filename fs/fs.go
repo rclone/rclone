@@ -409,6 +409,7 @@ type Features struct {
 	BucketBased             bool // is bucket based (like s3, swift etc)
 	SetTier                 bool // allows set tier functionality on objects
 	GetTier                 bool // allows to retrieve storage tier of objects
+	ServerSideAcrossConfigs bool // can server side copy between different remotes of the same type
 
 	// Purge all files in the root and the root directory
 	//
