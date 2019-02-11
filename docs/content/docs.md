@@ -991,6 +991,47 @@ with this setting.
 
 Prints the version number
 
+SSL/TLS options
+---------------
+
+The outoing SSL/TLS connections rclone makes can be controlled with
+these options.  For example this can be very useful with the HTTP or
+WebDAV backends. Rclone HTTP servers have their own set of
+configuration for SSL/TLS which you can find in their documentation.
+
+### --ca-cert string
+
+This loads the PEM encoded certificate authority certificate and uses
+it to verify the certificates of the servers rclone connects to.
+
+If you have generated certificates signed with a local CA then you
+will need this flag to connect to servers using those certificates.
+
+### --client-cert string
+
+This loads the PEM encoded client side certificate.
+
+This is used for [mutual TLS authentication](https://en.wikipedia.org/wiki/Mutual_authentication).
+
+The `--client-key` flag is required too when using this.
+
+### --client-key string
+
+This loads the PEM encoded client side private key used for mutual TLS
+authentication.  Used in conjunction with `--client-cert`.
+
+### --no-check-certificate=true/false ###
+
+`--no-check-certificate` controls whether a client verifies the
+server's certificate chain and host name.
+If `--no-check-certificate` is true, TLS accepts any certificate
+presented by the server and any host name in that certificate.
+In this mode, TLS is susceptible to man-in-the-middle attacks.
+
+This option defaults to `false`.
+
+**This should be used only for testing.**
+
 Configuration Encryption
 ------------------------
 Your configuration file contains information for logging in to 
@@ -1146,18 +1187,6 @@ use it.
 ### --memprofile=FILE ###
 
 Write memory profile to file. This can be analysed with `go tool pprof`.
-
-### --no-check-certificate=true/false ###
-
-`--no-check-certificate` controls whether a client verifies the
-server's certificate chain and host name.
-If `--no-check-certificate` is true, TLS accepts any certificate
-presented by the server and any host name in that certificate.
-In this mode, TLS is susceptible to man-in-the-middle attacks.
-
-This option defaults to `false`.
-
-**This should be used only for testing.**
 
 ### --no-traverse ###
 
