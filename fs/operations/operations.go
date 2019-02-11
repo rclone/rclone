@@ -273,7 +273,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 		// Try server side copy first - if has optional interface and
 		// is same underlying remote
 		actionTaken = "Copied (server side copy)"
-		if doCopy := f.Features().Copy; doCopy != nil && SameConfig(src.Fs(), f) {
+		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && f.Features().ServerSideAcrossConfigs)) {
 			newDst, err = doCopy(src, remote)
 			if err == nil {
 				dst = newDst
@@ -392,7 +392,7 @@ func Move(fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Ob
 		return newDst, nil
 	}
 	// See if we have Move available
-	if doMove := fdst.Features().Move; doMove != nil && SameConfig(src.Fs(), fdst) {
+	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && fdst.Features().ServerSideAcrossConfigs)) {
 		// Delete destination if it exists
 		if dst != nil {
 			err = DeleteFile(dst)
@@ -523,6 +523,11 @@ func DeleteFilesWithBackupDir(toBeDeleted fs.ObjectsChan, backupDir fs.Fs) error
 // DeleteFiles removes all the files passed in the channel
 func DeleteFiles(toBeDeleted fs.ObjectsChan) error {
 	return DeleteFilesWithBackupDir(toBeDeleted, nil)
+}
+
+// SameRemoteType returns true if fdst and fsrc are the same type
+func SameRemoteType(fdst, fsrc fs.Info) bool {
+	return fmt.Sprintf("%T", fdst) == fmt.Sprintf("%T", fsrc)
 }
 
 // SameConfig returns true if fdst and fsrc are using the same config
