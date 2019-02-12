@@ -601,6 +601,12 @@ func (f *File) Truncate(size int64) (err error) {
 		}
 		return err
 	}
+
+	// If no writers, and size is already correct then all done
+	if f.o.Size() == size {
+		return nil
+	}
+
 	fs.Debugf(f.o, "Truncating file")
 
 	// Otherwise if no writers then truncate the file by opening
