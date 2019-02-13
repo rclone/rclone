@@ -124,6 +124,18 @@ func TestLsWithFilesFrom(t *testing.T) {
 	err = operations.List(r.Fremote, &buf)
 	require.NoError(t, err)
 	assert.Equal(t, "       60 potato2\n", buf.String())
+
+	// Now try with --no-traverse
+	oldNoTraverse := fs.Config.NoTraverse
+	fs.Config.NoTraverse = true
+	defer func() {
+		fs.Config.NoTraverse = oldNoTraverse
+	}()
+
+	buf.Reset()
+	err = operations.List(r.Fremote, &buf)
+	require.NoError(t, err)
+	assert.Equal(t, "       60 potato2\n", buf.String())
 }
 
 func TestLsLong(t *testing.T) {
