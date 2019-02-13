@@ -16,7 +16,7 @@ Many of the most widely used Go projects are built using Cobra including:
 * [CockroachDB](http://www.cockroachlabs.com/)
 * [Bleve](http://www.blevesearch.com/)
 * [ProjectAtomic (enterprise)](http://www.projectatomic.io/)
-* [GiantSwarm's swarm](https://github.com/giantswarm/cli)
+* [Giant Swarm's gsctl](https://github.com/giantswarm/gsctl)
 * [Nanobox](https://github.com/nanobox-io/nanobox)/[Nanopack](https://github.com/nanopack)
 * [rclone](http://rclone.org/)
 * [nehm](https://github.com/bogem/nehm)
@@ -152,9 +152,6 @@ In a Cobra app, typically the main.go file is very bare. It serves one purpose: 
 package main
 
 import (
-  "fmt"
-  "os"
-
   "{pathToYourApp}/cmd"
 )
 
@@ -265,9 +262,6 @@ In a Cobra app, typically the main.go file is very bare. It serves, one purpose,
 package main
 
 import (
-  "fmt"
-  "os"
-
   "{pathToYourApp}/cmd"
 )
 
@@ -395,6 +389,7 @@ The following validators are built in:
 - `MinimumNArgs(int)` - the command will report an error if there are not at least N positional args.
 - `MaximumNArgs(int)` - the command will report an error if there are more than N positional args.
 - `ExactArgs(int)` - the command will report an error if there are not exactly N positional args.
+- `ExactValidArgs(int)` = the command will report and error if there are not exactly N positional args OR if there are any positional args that are not in the `ValidArgs` field of `Command`
 - `RangeArgs(min, max)` - the command will report an error if the number of args is not between the minimum and maximum number of expected args.
 
 An example of setting the custom validator:
