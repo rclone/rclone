@@ -15,6 +15,7 @@ import (
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 )
@@ -45,6 +46,11 @@ func init() {
 				Help:       "FTP password",
 				IsPassword: true,
 				Required:   true,
+			}, {
+				Name:     "concurrency",
+				Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited",
+				Default:  0,
+				Advanced: true,
 			},
 		},
 	})
@@ -52,10 +58,11 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host string `config:"host"`
-	User string `config:"user"`
-	Pass string `config:"pass"`
-	Port string `config:"port"`
+	Host        string `config:"host"`
+	User        string `config:"user"`
+	Pass        string `config:"pass"`
+	Port        string `config:"port"`
+	Concurrency int    `config:"concurrency"`
 }
 
 // Fs represents a remote FTP server
@@ -70,6 +77,7 @@ type Fs struct {
 	dialAddr string
 	poolMu   sync.Mutex
 	pool     []*ftp.ServerConn
+	tokens   *pacer.TokenDispenser
 }
 
 // Object describes an FTP file
@@ -128,6 +136,9 @@ func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 
 // Get an FTP connection from the pool, or open a new one
 func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
+	if f.opt.Concurrency > 0 {
+		f.tokens.Get()
+	}
 	f.poolMu.Lock()
 	if len(f.pool) > 0 {
 		c = f.pool[0]
@@ -147,6 +158,9 @@ func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
 // if err is not nil then it checks the connection is alive using a
 // NOOP request
 func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
+	if f.opt.Concurrency > 0 {
+		defer f.tokens.Put()
+	}
 	c := *pc
 	*pc = nil
 	if err != nil {
@@ -198,6 +212,7 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 		user:     user,
 		pass:     pass,
 		dialAddr: dialAddr,
+		tokens:   pacer.NewTokenDispenser(opt.Concurrency),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
