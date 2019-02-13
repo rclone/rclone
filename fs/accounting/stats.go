@@ -201,8 +201,9 @@ func (s *StatsInfo) String() string {
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
 
+	displaySpeed := speed
 	if fs.Config.DataRateUnit == "bits" {
-		speed = speed * 8
+		displaySpeed *= 8
 	}
 
 	var (
@@ -235,7 +236,7 @@ func (s *StatsInfo) String() string {
 		fs.SizeSuffix(s.bytes),
 		fs.SizeSuffix(totalSize).Unit("Bytes"),
 		percent(s.bytes, totalSize),
-		fs.SizeSuffix(speed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
+		fs.SizeSuffix(displaySpeed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
 		etaString(currentSize, totalSize, speed),
 		xfrchkString,
 	)
