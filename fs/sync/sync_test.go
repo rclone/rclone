@@ -117,7 +117,7 @@ func TestCopyWithDepth(t *testing.T) {
 }
 
 // Test copy with files from
-func TestCopyWithFilesFrom(t *testing.T) {
+func testCopyWithFilesFrom(t *testing.T, noTraverse bool) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("potato2", "hello world", t1)
@@ -131,9 +131,12 @@ func TestCopyWithFilesFrom(t *testing.T) {
 
 	// Monkey patch the active filter
 	oldFilter := filter.Active
+	oldNoTraverse := fs.Config.NoTraverse
 	filter.Active = f
+	fs.Config.NoTraverse = noTraverse
 	unpatch := func() {
 		filter.Active = oldFilter
+		fs.Config.NoTraverse = oldNoTraverse
 	}
 	defer unpatch()
 
@@ -144,6 +147,8 @@ func TestCopyWithFilesFrom(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, file1)
 }
+func TestCopyWithFilesFrom(t *testing.T)              { testCopyWithFilesFrom(t, false) }
+func TestCopyWithFilesFromAndNoTraverse(t *testing.T) { testCopyWithFilesFrom(t, true) }
 
 // Test copy empty directories
 func TestCopyEmptyDirectories(t *testing.T) {
