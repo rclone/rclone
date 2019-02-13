@@ -346,7 +346,7 @@ func init() {
 			Help:     "Endpoint for S3 API.\nRequired when using an S3 clone.",
 			Provider: "!AWS,IBMCOS,Alibaba",
 			Examples: []fs.OptionExample{{
-				Value:    "objects-us-west-1.dream.io",
+				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
 				Provider: "Dreamhost",
 			}, {
