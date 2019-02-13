@@ -23,6 +23,8 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20190126081051-8019e6774408
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
+	github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a // indirect
+	github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
