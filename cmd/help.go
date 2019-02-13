@@ -37,7 +37,7 @@ documentation, changelog and configuration walkthroughs.
 
 const (
 	bashCompletionFunc = `
-__custom_func() {
+__rclone_custom_func() {
     if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
         local cur cword prev words
         if declare -F _init_completion > /dev/null; then
