@@ -88,6 +88,10 @@ func parseParam(p string) Param {
 func main() {
 	// Get the OS and architecture (using GOARCH_TARGET if it exists)
 	goos := os.Getenv("GOOS")
+	if goos == "" {
+		fmt.Fprintln(os.Stderr, "GOOS not defined in environment")
+		os.Exit(1)
+	}
 	goarch := os.Getenv("GOARCH_TARGET")
 	if goarch == "" {
 		goarch = os.Getenv("GOARCH")

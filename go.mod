@@ -42,6 +42,7 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da
+	github.com/thinkhy/go-adb v0.0.0-20190123053734-b4b48de70418
 	github.com/xanzy/ssh-agent v0.2.0
 	github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
 	go.etcd.io/bbolt v1.3.2 // indirect
@@ -49,10 +50,12 @@ require (
 	golang.org/x/net v0.0.0-20190206173232-65e2d4e15006
 	golang.org/x/oauth2 v0.0.0-20190130055435-99b60b757ec1
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
-	golang.org/x/sys v0.0.0-20190204203706-41f3e6584952
+	golang.org/x/sys v0.0.0-20190213121743-983097b1a8a3
 	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c
 	google.golang.org/api v0.1.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+replace github.com/thinkhy/go-adb v0.0.0-20190123053734-b4b48de70418 => ../../../github.com/thinkhy/go-adb

@@ -90,6 +90,10 @@ github.com/goftp/server
 github.com/golang/protobuf/proto
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
+# github.com/hashicorp/go-cleanhttp v0.5.0
+github.com/hashicorp/go-cleanhttp
+# github.com/hashicorp/go-retryablehttp v0.5.2
+github.com/hashicorp/go-retryablehttp
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/jlaffaye/ftp v0.0.0-20190126081051-8019e6774408
@@ -142,6 +146,10 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da
 github.com/t3rm1n4l/go-mega
+# github.com/thinkhy/go-adb v0.0.0-20190123053734-b4b48de70418 => ../../../github.com/thinkhy/go-adb
+github.com/thinkhy/go-adb
+github.com/thinkhy/go-adb/wire
+github.com/thinkhy/go-adb/internal/errors
 # github.com/xanzy/ssh-agent v0.2.0
 github.com/xanzy/ssh-agent
 # github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
@@ -197,7 +205,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20190204203706-41f3e6584952
+# golang.org/x/sys v0.0.0-20190213121743-983097b1a8a3
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
