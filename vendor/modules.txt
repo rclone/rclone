@@ -98,6 +98,10 @@ github.com/jlaffaye/ftp
 github.com/jmespath/go-jmespath
 # github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 github.com/kardianos/osext
+# github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a
+github.com/koofr/go-httpclient
+# github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff
+github.com/koofr/go-koofrclient
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
 # github.com/mattn/go-runewidth v0.0.4

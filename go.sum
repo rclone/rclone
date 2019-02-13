@@ -87,6 +87,10 @@ github.com/jtolds/gls v4.2.1+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVY
 github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 h1:PJPDf8OUfOK1bb/NeTKd4f1QXZItOX389VN3B6qC8ro=
 github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
+github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a h1:W+gnfphB7WpRj0rbTF40e3edULfri4fou2kUFw6AF3A=
+github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a/go.mod h1:3xszwh+rNrYk1r9SStc4iJ326gne1OaBcrdB1ACsbzI=
+github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff h1:GlfzG8bgyoJYz+5sMvGpYnHrg4veNVNnDGuE9hTEMHk=
+github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff/go.mod h1:MRAz4Gsxd+OzrZ0owwrUHc0zLESL+1Y5syqK/sJxK2A=
 github.com/kr/fs v0.1.0 h1:Jskdu9ieNAYnjxsi0LbQp1ulIKZV1LAFgK1tWhpZgl8=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
