@@ -64,6 +64,9 @@ type syncCopyMove struct {
 }
 
 func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool) (*syncCopyMove, error) {
+	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.Overlapping(fdst, fsrc) {
+		return nil, fserrors.FatalError(fs.ErrorOverlapping)
+	}
 	s := &syncCopyMove{
 		fdst:               fdst,
 		fsrc:               fsrc,
@@ -918,13 +921,6 @@ func MoveDir(fdst, fsrc fs.Fs, deleteEmptySrcDirs bool) error {
 			fs.Errorf(fdst, "Server side directory move failed: %v", err)
 			return err
 		}
-	}
-
-	// The two remotes mustn't overlap if we didn't do server side move
-	if operations.Overlapping(fdst, fsrc) {
-		err := fs.ErrorCantMoveOverlapping
-		fs.Errorf(fdst, "%v", err)
-		return err
 	}
 
 	// Otherwise move the files one by one

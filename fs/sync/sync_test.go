@@ -11,6 +11,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/filter"
+	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fstest"
@@ -1102,7 +1103,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 
 	// Subdir move with no filters should return ErrorCantMoveOverlapping
 	err = MoveDir(FremoteMove, r.Fremote, false)
-	assert.EqualError(t, err, fs.ErrorCantMoveOverlapping.Error())
+	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
 
 	// Now try with a filter which should also fail with ErrorCantMoveOverlapping
 	filter.Active.Opt.MinSize = 40
@@ -1110,7 +1111,27 @@ func TestServerSideMoveOverlap(t *testing.T) {
 		filter.Active.Opt.MinSize = -1
 	}()
 	err = MoveDir(FremoteMove, r.Fremote, false)
-	assert.EqualError(t, err, fs.ErrorCantMoveOverlapping.Error())
+	assert.Equal(t, err, fs.ErrorOverlapping)
+}
+
+// Test a sync with overlap
+func TestSyncOverlap(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	subRemoteName := r.FremoteName + "/rclone-sync-test"
+	FremoteSync, err := fs.NewFs(subRemoteName)
+	require.NoError(t, err)
+
+	checkErr := func(err error) {
+		assert.True(t, fserrors.IsFatalError(err))
+		assert.Equal(t, err.Error(), fs.ErrorOverlapping.Error())
+	}
+
+	checkErr(Sync(FremoteSync, r.Fremote))
+	checkErr(Sync(r.Fremote, FremoteSync))
+	checkErr(Sync(r.Fremote, r.Fremote))
+	checkErr(Sync(FremoteSync, FremoteSync))
 }
 
 // Test with BackupDir set
