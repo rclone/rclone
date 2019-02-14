@@ -1,8 +1,10 @@
 package adb
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -14,6 +16,7 @@ import (
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	adb "github.com/thinkhy/go-adb"
 	"github.com/thinkhy/go-adb/wire"
@@ -424,6 +427,8 @@ func (o *Object) setMetadata(entry *adb.DirEntry) {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
+	const blockSize = 1 << 12
+
 	var offset, count int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
@@ -447,14 +452,21 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 	}
 	fs.Debugf(o, "Open: remote: %q offset: %d count: %d", o.remote, offset, count)
 
-	conn, err := o.fs.device.execCommand(fmt.Sprintf("sh -c 'dd \"if=$0\" bs=1 skip=%d count=%d 2>/dev/null'", offset, count), path.Join(o.fs.root, o.remote))
+	if count == 0 {
+		return ioutil.NopCloser(bytes.NewReader(nil)), nil
+	}
+	offsetBlocks, offsetRest := offset/blockSize, offset%blockSize
+	countBlocks := (count-1)/blockSize + 1
+
+	conn, err := o.fs.device.execCommand(fmt.Sprintf("sh -c 'dd \"if=$0\" bs=%d skip=%d count=%d 2>/dev/null'", blockSize, offsetBlocks, countBlocks), path.Join(o.fs.root, o.remote))
 	if err != nil {
 		return nil, err
 	}
 
 	return &adbReader{
-		conn:     conn,
-		expected: count,
+		ReadCloser: readers.NewLimitedReadCloser(conn, count+offsetRest),
+		skip:       offsetRest,
+		expected:   count,
 	}, nil
 }
 
@@ -767,21 +779,28 @@ func prepareCommandLineEscaped(cmd string, args ...string) string {
 }
 
 type adbReader struct {
-	conn     *wire.Conn
+	io.ReadCloser
+	skip     int64
 	read     int64
 	expected int64
 }
 
-func (r *adbReader) Close() error {
-	return r.conn.Close()
-}
 func (r *adbReader) Read(b []byte) (n int, err error) {
-	n, err = r.conn.Read(b)
+	n, err = r.ReadCloser.Read(b)
+	if s := r.skip; n > 0 && s > 0 {
+		_n := int64(n)
+		if _n <= s {
+			r.skip -= _n
+			return r.Read(b)
+		}
+		r.skip = 0
+		copy(b, b[s:n])
+		n -= int(s)
+	}
 	r.read += int64(n)
 	if err == io.EOF && r.read < r.expected {
 		fs.Debugf("adb", "Read: read: %d expected: %d n: %d", r.read, r.expected, n)
 		return n, io.ErrUnexpectedEOF
 	}
 	return n, err
-
 }
