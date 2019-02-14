@@ -532,7 +532,7 @@ func SameConfig(fdst, fsrc fs.Info) bool {
 
 // Same returns true if fdst and fsrc point to the same underlying Fs
 func Same(fdst, fsrc fs.Info) bool {
-	return SameConfig(fdst, fsrc) && fdst.Root() == fsrc.Root()
+	return SameConfig(fdst, fsrc) && strings.Trim(fdst.Root(), "/") == strings.Trim(fsrc.Root(), "/")
 }
 
 // Overlapping returns true if fdst and fsrc point to the same

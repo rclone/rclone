@@ -61,7 +61,7 @@ var (
 	ErrorNotAFile                    = errors.New("is a not a regular file")
 	ErrorNotDeleting                 = errors.New("not deleting files as there were IO errors")
 	ErrorNotDeletingDirs             = errors.New("not deleting directories as there were IO errors")
-	ErrorCantMoveOverlapping         = errors.New("can't move files on overlapping remotes")
+	ErrorOverlapping                 = errors.New("can't sync or move files on overlapping remotes")
 	ErrorDirectoryNotEmpty           = errors.New("directory not empty")
 	ErrorImmutableModified           = errors.New("immutable file modified")
 	ErrorPermissionDenied            = errors.New("permission denied")
