@@ -39,7 +39,6 @@ import (
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/filter"
 	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
@@ -873,61 +872,90 @@ func TestCheckEqualReaders(t *testing.T) {
 }
 
 func TestListFormat(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	file1 := r.WriteObject("a", "a", t1)
-	file2 := r.WriteObject("subdir/b", "b", t1)
+	item0 := &operations.ListJSONItem{
+		Path:      "a",
+		Name:      "a",
+		Encrypted: "encryptedFileName",
+		Size:      1,
+		MimeType:  "application/octet-stream",
+		ModTime: operations.Timestamp{
+			When:   t1,
+			Format: "2006-01-02T15:04:05.000000000Z07:00"},
+		IsDir: false,
+		Hashes: map[string]string{
+			"MD5":          "0cc175b9c0f1b6a831c399e269772661",
+			"SHA-1":        "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8",
+			"DropboxHash":  "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8",
+			"QuickXorHash": "6100000000000000000000000100000000000000"},
+		ID:     "fileID",
+		OrigID: "fileOrigID",
+	}
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	item1 := &operations.ListJSONItem{
+		Path:      "subdir",
+		Name:      "subdir",
+		Encrypted: "encryptedDirName",
+		Size:      -1,
+		MimeType:  "inode/directory",
+		ModTime: operations.Timestamp{
+			When:   t2,
+			Format: "2006-01-02T15:04:05.000000000Z07:00"},
+		IsDir:  true,
+		Hashes: map[string]string(nil),
+		ID:     "dirID",
+		OrigID: "dirOrigID",
+	}
 
-	items, _ := list.DirSorted(r.Fremote, true, "")
 	var list operations.ListFormat
 	list.AddPath()
 	list.SetDirSlash(false)
-	assert.Equal(t, "subdir", list.Format(items[1]))
+	assert.Equal(t, "subdir", list.Format(item1))
 
 	list.SetDirSlash(true)
-	assert.Equal(t, "subdir/", list.Format(items[1]))
+	assert.Equal(t, "subdir/", list.Format(item1))
 
 	list.SetOutput(nil)
-	assert.Equal(t, "", list.Format(items[1]))
+	assert.Equal(t, "", list.Format(item1))
 
-	list.AppendOutput(func() string { return "a" })
-	list.AppendOutput(func() string { return "b" })
-	assert.Equal(t, "ab", list.Format(items[1]))
+	list.AppendOutput(func(item *operations.ListJSONItem) string { return "a" })
+	list.AppendOutput(func(item *operations.ListJSONItem) string { return "b" })
+	assert.Equal(t, "ab", list.Format(item1))
 	list.SetSeparator(":::")
-	assert.Equal(t, "a:::b", list.Format(items[1]))
+	assert.Equal(t, "a:::b", list.Format(item1))
 
 	list.SetOutput(nil)
 	list.AddModTime()
-	assert.Equal(t, items[0].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[0]))
+	assert.Equal(t, t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
 
 	list.SetOutput(nil)
+	list.SetSeparator("|")
 	list.AddID()
-	_ = list.Format(items[0]) // Can't really check anything - at least it didn't panic!
+	list.AddOrigID()
+	assert.Equal(t, "fileID|fileOrigID", list.Format(item0))
+	assert.Equal(t, "dirID|dirOrigID", list.Format(item1))
 
 	list.SetOutput(nil)
 	list.AddMimeType()
-	assert.Contains(t, list.Format(items[0]), "/")
-	assert.Equal(t, "inode/directory", list.Format(items[1]))
+	assert.Contains(t, list.Format(item0), "/")
+	assert.Equal(t, "inode/directory", list.Format(item1))
 
 	list.SetOutput(nil)
 	list.AddPath()
 	list.SetAbsolute(true)
-	assert.Equal(t, "/a", list.Format(items[0]))
+	assert.Equal(t, "/a", list.Format(item0))
 	list.SetAbsolute(false)
-	assert.Equal(t, "a", list.Format(items[0]))
+	assert.Equal(t, "a", list.Format(item0))
 
 	list.SetOutput(nil)
 	list.AddSize()
-	assert.Equal(t, "1", list.Format(items[0]))
+	assert.Equal(t, "1", list.Format(item0))
 
 	list.AddPath()
 	list.AddModTime()
 	list.SetDirSlash(true)
 	list.SetSeparator("__SEP__")
-	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[0]))
-	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"__SEP__subdir/__SEP__"+items[1].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[1]))
+	assert.Equal(t, "1__SEP__a__SEP__"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
+	assert.Equal(t, "-1__SEP__subdir/__SEP__"+t2.Local().Format("2006-01-02 15:04:05"), list.Format(item1))
 
 	for _, test := range []struct {
 		ht   hash.Type
@@ -939,10 +967,7 @@ func TestListFormat(t *testing.T) {
 	} {
 		list.SetOutput(nil)
 		list.AddHash(test.ht)
-		got := list.Format(items[0])
-		if got != "UNSUPPORTED" && got != "" {
-			assert.Equal(t, test.want, got)
-		}
+		assert.Equal(t, test.want, list.Format(item0))
 	}
 
 	list.SetOutput(nil)
@@ -952,8 +977,15 @@ func TestListFormat(t *testing.T) {
 	list.AddPath()
 	list.AddModTime()
 	list.SetDirSlash(true)
-	assert.Equal(t, "1|a|"+items[0].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[0]))
-	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"|subdir/|"+items[1].ModTime().Local().Format("2006-01-02 15:04:05"), list.Format(items[1]))
+	assert.Equal(t, "1|a|"+t1.Local().Format("2006-01-02 15:04:05"), list.Format(item0))
+	assert.Equal(t, "-1|subdir/|"+t2.Local().Format("2006-01-02 15:04:05"), list.Format(item1))
+
+	list.SetOutput(nil)
+	list.SetSeparator("|")
+	list.AddPath()
+	list.AddEncrypted()
+	assert.Equal(t, "a|encryptedFileName", list.Format(item0))
+	assert.Equal(t, "subdir/|encryptedDirName/", list.Format(item1))
 
 }
 
