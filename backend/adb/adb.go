@@ -481,12 +481,27 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 			fs.Logf(option, "Unsupported mandatory option: %v", option)
 		}
 	}
-	_, err := o.writeToFile(path.Join(o.fs.root, o.remote), in, 0666, src.ModTime())
+	written, err := o.writeToFile(path.Join(o.fs.root, o.remote), in, 0666, src.ModTime())
 	if err != nil {
 		if removeErr := o.Remove(); removeErr != nil {
 			fs.Errorf(o, "Failed to remove partially written file: %v", removeErr)
 		}
 		return err
+	}
+	expected := src.Size()
+	if expected == -1 {
+		expected = written
+	}
+	for _, t := range []int64{100, 250, 500, 1000, 2500, 5000, 10000} {
+		err = o.stat()
+		if err != nil {
+			return err
+		}
+		if o.size == expected {
+			return nil
+		}
+		fs.Debugf(o, "Invalid size after update, expected: %d got: %d", expected, o.size)
+		time.Sleep(time.Duration(t) * time.Millisecond)
 	}
 	return o.stat()
 }
