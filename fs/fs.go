@@ -1139,15 +1139,6 @@ func NewPacer(c pacer.Calculator) *Pacer {
 }
 
 func (d *logCalculator) Calculate(state pacer.State) time.Duration {
-	type causer interface {
-		Cause() error
-	}
-
-	if c, ok := state.LastError.(causer); ok {
-		state.LastError = c.Cause()
-	} else {
-		Logf("pacer", "Invalid error in fs.Pacer: %t", state.LastError)
-	}
 	oldSleepTime := state.SleepTime
 	newSleepTime := d.Calculator.Calculate(state)
 	if state.ConsecutiveRetries > 0 {
