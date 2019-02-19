@@ -427,6 +427,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
 	}
 
+	return NewFsWithConnection(name, root, opt, sshConfig)
+}
+
+// NewFsWithConnection creates a new Fs object from the name and root and a ssh.ClientConfig. It connects to
+// the host specified in the ssh.ClientConfig
+func NewFsWithConnection(name string, root string, opt *Options, sshConfig *ssh.ClientConfig) (fs.Fs, error) {
 	f := &Fs{
 		name:      name,
 		root:      root,
