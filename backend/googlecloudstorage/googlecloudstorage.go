@@ -16,6 +16,7 @@ FIXME Patch/Delete/Get isn't working with files with spaces in - giving 404 erro
 */
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -45,6 +46,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
+	// NOTE: This API is deprecated
 	storage "google.golang.org/api/storage/v1"
 )
 
@@ -381,7 +383,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	} else {
 		oAuthClient, _, err = oauthutil.NewClient(name, m, storageConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to configure Google Cloud Storage")
+			ctx := context.Background()
+			oAuthClient, err = google.DefaultClient(ctx, storage.DevstorageFullControlScope)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to configure Google Cloud Storage")
+			}
 		}
 	}
 
