@@ -381,6 +381,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = parsePath(root)
 
+	// add jottacloud to the long list of sites that don't follow the oauth spec correctly
+	oauth2.RegisterBrokenAuthHeaderProvider("https://www.jottacloud.com/")
+
 	// the oauth client for the api servers needs
 	// a filter to fix the grant_type issues (see above)
 	baseClient := fshttp.NewClient(fs.Config)
