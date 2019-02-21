@@ -854,6 +854,15 @@ The most likely cause of this is the duplicated file issue above - run
 `rclone dedupe` and check your logs for duplicate object or directory
 messages.
 
+This can also be caused by a delay/caching on google drive's end when
+comparing directory listings. Specifically with team drives used in
+combination with --fast-list. Files that were uploaded recently may
+not appear on the directory list sent to rclone when using --fast-list.
+
+Waiting a moderate period of time between attempts (estimated to be
+approximately 1 hour) and/or not using --fast-list both seem to be
+effective in preventing the problem.
+
 ### Making your own client_id ###
 
 When you use rclone with Google drive in its default configuration you
