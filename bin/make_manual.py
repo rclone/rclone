@@ -36,6 +36,7 @@ docs = [
     "http.md",
     "hubic.md",
     "jottacloud.md",
+    "koofr.md",
     "mega.md",
     "azureblob.md",
     "onedrive.md",
