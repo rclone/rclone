@@ -36,6 +36,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * Hubic [:page_facing_up:](https://rclone.org/hubic/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
   * IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
+  * Koofr [:page_facing_up:](https://rclone.org/koofr/)
   * Memset Memstore [:page_facing_up:](https://rclone.org/swift/)
   * Mega [:page_facing_up:](https://rclone.org/mega/)
   * Microsoft Azure Blob Storage [:page_facing_up:](https://rclone.org/azureblob/)
