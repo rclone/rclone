@@ -138,3 +138,7 @@ backends:
    remote:   "TestUnion:"
    subdir:   false
    fastlist: false
+ - backend:  "koofr"
+   remote:   "TestKoofr:"
+   subdir:   false
+   fastlist: false

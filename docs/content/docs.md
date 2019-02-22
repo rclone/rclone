@@ -1,7 +1,7 @@
 ---
 title: "Documentation"
 description: "Rclone Usage"
-date: "2015-06-06"
+date: "2019-02-25"
 ---
 
 Configure
@@ -34,6 +34,7 @@ See the following for detailed instructions for
   * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Jottacloud](/jottacloud/)
+  * [Koofr](/koofr/)
   * [Mega](/mega/)
   * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)
