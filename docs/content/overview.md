@@ -2,7 +2,7 @@
 title: "Overview of cloud storage systems"
 description: "Overview of cloud storage systems"
 type: page
-date: "2015-09-06"
+date: "2019-02-25"
 ---
 
 # Overview of cloud storage systems #
@@ -28,6 +28,7 @@ Here is an overview of the major features of each cloud storage system.
 | HTTP                         | -           | No      | No               | No              | R         |
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R/W       |
+| Koofr                        | MD5         | No      | Yes              | No              | -         |
 | Mega                         | -           | No      | No               | Yes             | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive           | SHA1 ‡‡     | Yes     | Yes              | No              | R         |
