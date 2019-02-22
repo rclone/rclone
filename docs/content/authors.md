@@ -243,3 +243,4 @@ Contributors
   * calisro <robert.calistri@gmail.com>
   * Dr.Rx <david.rey@nventive.com>
   * marcintustin <marcintustin@users.noreply.github.com>
+  * jaKa Močnik <jaka@koofr.net>
