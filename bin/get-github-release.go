@@ -17,14 +17,18 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
 	"time"
 
+	"github.com/ncw/rclone/lib/rest"
+	"golang.org/x/net/html"
 	"golang.org/x/sys/unix"
 )
 
@@ -33,6 +37,7 @@ var (
 	install = flag.Bool("install", false, "Install the downloaded package using sudo dpkg -i.")
 	extract = flag.String("extract", "", "Extract the named executable from the .tar.gz and install into bindir.")
 	bindir  = flag.String("bindir", defaultBinDir(), "Directory to install files downloaded with -extract.")
+	useAPI  = flag.Bool("use-api", false, "Use the API for finding the release instead of scraping the page.")
 	// Globals
 	matchProject = regexp.MustCompile(`^([\w-]+)/([\w-]+)$`)
 	osAliases    = map[string][]string{
@@ -209,6 +214,55 @@ func getAsset(project string, matchName *regexp.Regexp) (string, string) {
 	return "", ""
 }
 
+// Get an asset URL and name by scraping the downloads page
+//
+// This doesn't use the API so isn't rate limited when not using GITHUB login details
+func getAssetFromReleasesPage(project string, matchName *regexp.Regexp) (assetURL string, assetName string) {
+	baseURL := "https://github.com/" + project + "/releases"
+	log.Printf("Fetching asset info for %q from %q", project, baseURL)
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		log.Fatalf("URL Parse failed: %v", err)
+	}
+	resp, err := http.Get(baseURL)
+	if err != nil {
+		log.Fatalf("Failed to fetch release info %q: %v", baseURL, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Error: %s", readBody(resp.Body))
+		log.Fatalf("Bad status %d when fetching %q release info: %s", resp.StatusCode, baseURL, resp.Status)
+	}
+	doc, err := html.Parse(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to parse web page: %v", err)
+	}
+	var walk func(*html.Node)
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			for _, a := range n.Attr {
+				if a.Key == "href" {
+					if name := path.Base(a.Val); matchName.MatchString(name) && isOurOsArch(name) {
+						if u, err := rest.URLJoin(base, a.Val); err == nil {
+							assetName = name
+							assetURL = u.String()
+						}
+					}
+					break
+				}
+			}
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c)
+		}
+	}
+	walk(doc)
+	if assetName == "" || assetURL == "" {
+		log.Fatalf("Didn't find URL in page")
+	}
+	return assetURL, assetName
+}
+
 // isOurOsArch returns true if s contains our OS and our Arch
 func isOurOsArch(s string) bool {
 	s = strings.ToLower(s)
@@ -346,7 +400,12 @@ func main() {
 		log.Fatalf("Invalid regexp for name %q: %v", nameRe, err)
 	}
 
-	assetURL, assetName := getAsset(project, matchName)
+	var assetURL, assetName string
+	if *useAPI {
+		assetURL, assetName = getAsset(project, matchName)
+	} else {
+		assetURL, assetName = getAssetFromReleasesPage(project, matchName)
+	}
 	fileName := filepath.Join(os.TempDir(), assetName)
 	getFile(assetURL, fileName)
 
