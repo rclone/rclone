@@ -98,7 +98,7 @@ The main rclone commands with most used first
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	- Output shell completion scripts for rclone.
 * [rclone gendocs](/commands/rclone_gendocs/)	- Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	- List all the remotes in the config file.
-* [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint. **EXPERIMENTAL**
+* [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint.
 * [rclone moveto](/commands/rclone_moveto/)	- Move file or directory from source to dest.
 * [rclone obscure](/commands/rclone_obscure/)	- Obscure password for use in the rclone.conf
 * [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Check the integrity of a crypted remote.
