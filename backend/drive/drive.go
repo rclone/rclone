@@ -186,10 +186,10 @@ func init() {
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,
-			Help: "Google Application Client Id\nLeave blank normally.",
+			Help: "Google Application Client Id\nSetting your own is recommended.\nSee https://rclone.org/drive/#making-your-own-client-id for how to create your own.\nIf you leave this blank, it will use an internal key which is low performance.",
 		}, {
 			Name: config.ConfigClientSecret,
-			Help: "Google Application Client Secret\nLeave blank normally.",
+			Help: "Google Application Client Secret\nSetting your own is recommended.",
 		}, {
 			Name: "scope",
 			Help: "Scope that rclone should use when requesting access from drive.",
