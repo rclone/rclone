@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	runewidth "github.com/mattn/go-runewidth"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/ncdu/scan"
 	"github.com/ncw/rclone/fs"
@@ -122,7 +123,7 @@ func Printf(x, y int, fg, bg termbox.Attribute, format string, args ...interface
 func Line(x, y, xmax int, fg, bg termbox.Attribute, spacer rune, msg string) {
 	for _, c := range msg {
 		termbox.SetCell(x, y, c, fg, bg)
-		x++
+		x += runewidth.RuneWidth(c)
 		if x >= xmax {
 			return
 		}
