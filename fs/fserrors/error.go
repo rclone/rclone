@@ -194,7 +194,7 @@ func Cause(cause error) (retriable bool, err error) {
 			// this case.
 			err = prev
 		}
-		if err == prev {
+		if reflect.DeepEqual(err, prev) {
 			// Unpack any struct or *struct with a field
 			// of name Err which satisfies the error
 			// interface.  This includes *url.Error,
@@ -215,7 +215,7 @@ func Cause(cause error) (retriable bool, err error) {
 				}
 			}
 		}
-		if err == prev {
+		if reflect.DeepEqual(err, prev) {
 			break
 		}
 	}
