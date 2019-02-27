@@ -574,6 +574,9 @@ func TestRWFileHandleOpenTests(t *testing.T) {
 func TestRWFileModTimeWithOpenWriters(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
+	if !canSetModTime(t, r) {
+		return
+	}
 	vfs, fh := rwHandleCreateWriteOnly(t, r)
 
 	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
@@ -590,6 +593,8 @@ func TestRWFileModTimeWithOpenWriters(t *testing.T) {
 	info, err := vfs.Stat("file1")
 	require.NoError(t, err)
 
-	// avoid errors because of timezone differences
-	assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
+	if r.Fremote.Precision() != fs.ModTimeNotSupported {
+		// avoid errors because of timezone differences
+		assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
+	}
 }

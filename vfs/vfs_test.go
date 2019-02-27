@@ -232,6 +232,10 @@ func TestVFSOpenFile(t *testing.T) {
 func TestVFSRename(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
+	features := r.Fremote.Features()
+	if features.Move == nil && features.Copy == nil {
+		return // skip as can't rename files
+	}
 	vfs := New(r.Fremote, nil)
 
 	file1 := r.WriteObject("dir/file2", "file2 contents", t2)
