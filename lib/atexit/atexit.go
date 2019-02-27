@@ -31,11 +31,10 @@ func Register(fn func()) FnHandle {
 	fns[&fn] = true
 	fnsMutex.Unlock()
 
-	// Run AtExit handlers on SIGINT or SIGTERM so everything gets
-	// tidied up properly
+	// Run AtExit handlers on exitSignals so everything gets tidied up properly
 	registerOnce.Do(func() {
 		exitChan = make(chan os.Signal, 1)
-		signal.Notify(exitChan, os.Interrupt) // syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT
+		signal.Notify(exitChan, exitSignals...)
 		go func() {
 			sig := <-exitChan
 			if sig == nil {
