@@ -353,6 +353,33 @@ func TestDirMkdir(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
+func TestDirMkdirSub(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	vfs, dir, file1 := dirCreate(t, r)
+
+	_, err := dir.Mkdir("file1")
+	assert.Error(t, err)
+
+	sub, err := dir.Mkdir("sub")
+	assert.NoError(t, err)
+
+	subsub, err := sub.Mkdir("subsub")
+	assert.NoError(t, err)
+
+	// check the vfs
+	checkListing(t, dir, []string{"file1,14,false", "sub,0,true"})
+	checkListing(t, sub, []string{"subsub,0,true"})
+	checkListing(t, subsub, []string(nil))
+
+	// check the underlying r.Fremote
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"dir", "dir/sub", "dir/sub/subsub"}, r.Fremote.Precision())
+
+	vfs.Opt.ReadOnly = true
+	_, err = dir.Mkdir("sausage")
+	assert.Equal(t, EROFS, err)
+}
+
 func TestDirRemove(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
