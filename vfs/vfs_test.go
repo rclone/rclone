@@ -263,24 +263,32 @@ func TestVFSStatfs(t *testing.T) {
 	assert.Nil(t, vfs.usage)
 	assert.True(t, vfs.usageTime.IsZero())
 
+	aboutSupported := r.Fremote.Features().About != nil
+
 	// read
 	total, used, free := vfs.Statfs()
+	if !aboutSupported {
+		assert.Equal(t, int64(-1), total)
+		assert.Equal(t, int64(-1), free)
+		assert.Equal(t, int64(-1), used)
+		return // can't test anything else if About not supported
+	}
 	require.NotNil(t, vfs.usage)
 	assert.False(t, vfs.usageTime.IsZero())
 	if vfs.usage.Total != nil {
 		assert.Equal(t, *vfs.usage.Total, total)
 	} else {
-		assert.Equal(t, -1, total)
+		assert.Equal(t, int64(-1), total)
 	}
 	if vfs.usage.Free != nil {
 		assert.Equal(t, *vfs.usage.Free, free)
 	} else {
-		assert.Equal(t, -1, free)
+		assert.Equal(t, int64(-1), free)
 	}
 	if vfs.usage.Used != nil {
 		assert.Equal(t, *vfs.usage.Used, used)
 	} else {
-		assert.Equal(t, -1, used)
+		assert.Equal(t, int64(-1), used)
 	}
 
 	// read cached
