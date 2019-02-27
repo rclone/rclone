@@ -170,11 +170,24 @@ should be the name or prefix of a backend (the `type` in the config
 file) and all the configuration for the backend should be provided on
 the command line (or in environment variables).
 
-Eg
+Here are some examples:
 
     rclone lsd --http-url https://pub.rclone.org :http:
 
-Which lists all the directories in `pub.rclone.org`.
+To list all the directories in the root of `https://pub.rclone.org/`.
+
+    rclone lsf --http-url https://example.com :http:path/to/dir
+
+To list files and directories in `https://example.com/path/to/dir/`
+
+    rclone copy --http-url https://example.com :http:path/to/dir /tmp/dir
+
+To copy files and directories in `https://example.com/path/to/dir` to `/tmp/dir`.
+
+    rclone copy --sftp-host example.com :sftp:path/to/dir /tmp/dir
+
+To copy files and directories from `example.com` in the relative
+directory `path/to/dir` to `/tmp/dir` using sftp.
 
 Quoting and the shell
 ---------------------
