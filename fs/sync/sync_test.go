@@ -1111,7 +1111,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 		filter.Active.Opt.MinSize = -1
 	}()
 	err = MoveDir(FremoteMove, r.Fremote, false)
-	assert.Equal(t, err, fs.ErrorOverlapping)
+	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
 }
 
 // Test a sync with overlap
