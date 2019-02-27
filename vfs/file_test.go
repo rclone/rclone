@@ -77,6 +77,9 @@ func TestFileMethods(t *testing.T) {
 
 func TestFileSetModTime(t *testing.T) {
 	r := fstest.NewRun(t)
+	if !canSetModTime(t, r) {
+		return
+	}
 	defer r.Finalise()
 	vfs, file, file1 := fileCreate(t, r)
 

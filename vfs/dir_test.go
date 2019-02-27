@@ -468,6 +468,12 @@ func TestDirRemoveName(t *testing.T) {
 func TestDirRename(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
+
+	features := r.Fremote.Features()
+	if features.DirMove == nil && features.Move == nil && features.Copy == nil {
+		return // skip as can't rename directories
+	}
+
 	vfs, dir, file1 := dirCreate(t, r)
 	file3 := r.WriteObject("dir/file3", "file3 contents!", t1)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file3}, []string{"dir"}, r.Fremote.Precision())

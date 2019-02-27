@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -220,10 +221,41 @@ func TestWriteFileHandleRelease(t *testing.T) {
 	assert.True(t, fh.closed)
 }
 
+var (
+	canSetModTimeOnce  sync.Once
+	canSetModTimeValue = true
+)
+
+// returns whether the remote can set modtime
+func canSetModTime(t *testing.T, r *fstest.Run) bool {
+	canSetModTimeOnce.Do(func() {
+		mtime1 := time.Date(2008, time.November, 18, 17, 32, 31, 0, time.UTC)
+		_ = r.WriteObject("time_test", "stuff", mtime1)
+		obj, err := r.Fremote.NewObject("time_test")
+		require.NoError(t, err)
+		mtime2 := time.Date(2009, time.November, 18, 17, 32, 31, 0, time.UTC)
+		err = obj.SetModTime(mtime2)
+		switch err {
+		case nil:
+			canSetModTimeValue = true
+		case fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
+			canSetModTimeValue = false
+		default:
+			require.NoError(t, err)
+		}
+		require.NoError(t, obj.Remove())
+		fs.Debugf(nil, "Can set mod time: %v", canSetModTimeValue)
+	})
+	return canSetModTimeValue
+}
+
 // tests mod time on open files
 func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
+	if !canSetModTime(t, r) {
+		return
+	}
 	vfs, fh := writeHandleCreate(t, r)
 
 	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
@@ -240,6 +272,8 @@ func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
 	info, err := vfs.Stat("file1")
 	require.NoError(t, err)
 
-	// avoid errors because of timezone differences
-	assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
+	if r.Fremote.Precision() != fs.ModTimeNotSupported {
+		// avoid errors because of timezone differences
+		assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
+	}
 }
