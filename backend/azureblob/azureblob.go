@@ -1386,16 +1386,16 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	blob := o.getBlobReference()
 	httpHeaders := azblob.BlobHTTPHeaders{}
 	httpHeaders.ContentType = fs.MimeType(o)
-	// Multipart upload doesn't support MD5 checksums at put block calls, hence calculate
-	// MD5 only for PutBlob requests
-	if size < int64(o.fs.opt.UploadCutoff) {
-		if sourceMD5, _ := src.Hash(hash.MD5); sourceMD5 != "" {
-			sourceMD5bytes, err := hex.DecodeString(sourceMD5)
-			if err == nil {
-				httpHeaders.ContentMD5 = sourceMD5bytes
-			} else {
-				fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
-			}
+	// Compute the Content-MD5 of the file, for multiparts uploads it
+	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
+	// Note: If multipart, a MD5 checksum will also be computed for each uploaded block
+	// 		 in order to validate its integrity during transport
+	if sourceMD5, _ := src.Hash(hash.MD5); sourceMD5 != "" {
+		sourceMD5bytes, err := hex.DecodeString(sourceMD5)
+		if err == nil {
+			httpHeaders.ContentMD5 = sourceMD5bytes
+		} else {
+			fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
 		}
 	}
 
