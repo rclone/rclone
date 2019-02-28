@@ -1124,8 +1124,9 @@ func TestSyncOverlap(t *testing.T) {
 	require.NoError(t, err)
 
 	checkErr := func(err error) {
+		require.Error(t, err)
 		assert.True(t, fserrors.IsFatalError(err))
-		assert.Equal(t, err.Error(), fs.ErrorOverlapping.Error())
+		assert.Equal(t, fs.ErrorOverlapping.Error(), err.Error())
 	}
 
 	checkErr(Sync(FremoteSync, r.Fremote))

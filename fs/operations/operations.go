@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -543,7 +544,7 @@ func Overlapping(fdst, fsrc fs.Info) bool {
 	}
 	// Return the Root with a trailing / if not empty
 	fixedRoot := func(f fs.Info) string {
-		s := strings.Trim(f.Root(), "/")
+		s := strings.Trim(filepath.ToSlash(f.Root()), "/")
 		if s != "" {
 			s += "/"
 		}
