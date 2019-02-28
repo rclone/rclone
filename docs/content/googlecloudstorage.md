@@ -217,6 +217,20 @@ the rclone config file, you can set `service_account_credentials` with
 the actual contents of the file instead, or set the equivalent
 environment variable.
 
+### Application Default Credentials ###
+
+If no other source of credentials is provided, rclone will fall back
+to
+[Application Default Credentials](https://cloud.google.com/video-intelligence/docs/common/auth#authenticating_with_application_default_credentials)
+this is useful both when you already have configured authentication
+for your developer account, or in production when running on a google
+compute host. Note that if running in docker, you may need to run
+additional commands on your google compute machine -
+[see this page](https://cloud.google.com/container-registry/docs/advanced-authentication#gcloud_as_a_docker_credential_helper).
+
+Note that in the case application default credentials are used, there
+is no need to explicitly configure a project number.
+
 ### --fast-list ###
 
 This remote supports `--fast-list` which allows you to use fewer
