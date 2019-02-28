@@ -240,3 +240,4 @@ Contributors
   * Nestar47 <47841759+Nestar47@users.noreply.github.com>
   * Six <brbsix@gmail.com>
   * Alexandru Bumbacea <alexandru.bumbacea@booking.com>
+  * calisro <robert.calistri@gmail.com>
