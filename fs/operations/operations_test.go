@@ -777,6 +777,7 @@ func TestSame(t *testing.T) {
 
 func TestOverlapping(t *testing.T) {
 	a := &testFsInfo{name: "name", root: "root"}
+	slash := string(os.PathSeparator) // native path separator
 	for _, test := range []struct {
 		name     string
 		root     string
@@ -789,6 +790,8 @@ func TestOverlapping(t *testing.T) {
 		{"name", "roo", false},
 		{"name", "root/toot", true},
 		{"name", "root/toot/", true},
+		{"name", "root" + slash + "toot", true},
+		{"name", "root" + slash + "toot" + slash, true},
 		{"name", "", true},
 		{"name", "/", true},
 	} {
