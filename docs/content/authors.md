@@ -241,3 +241,4 @@ Contributors
   * Six <brbsix@gmail.com>
   * Alexandru Bumbacea <alexandru.bumbacea@booking.com>
   * calisro <robert.calistri@gmail.com>
+  * Dr.Rx <david.rey@nventive.com>
