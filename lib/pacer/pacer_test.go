@@ -237,7 +237,6 @@ func TestGoogleDrivePacer(t *testing.T) {
 		count := 0
 		for i := 0; i < test.calls; i++ {
 			sleep := c.Calculate(State{})
-			time.Sleep(sleep)
 			if sleep != 0 {
 				count++
 			}
