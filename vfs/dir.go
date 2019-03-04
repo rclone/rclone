@@ -290,14 +290,17 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree walk.DirTree, w
 // readDirTree forces a refresh of the complete directory tree
 func (d *Dir) readDirTree() error {
 	d.mu.Lock()
-	defer d.mu.Unlock()
+	f, path := d.f, d.path
+	d.mu.Unlock()
 	when := time.Now()
-	d.read = time.Time{}
-	fs.Debugf(d.path, "Reading directory tree")
-	dt, err := walk.NewDirTree(d.f, d.path, false, -1)
+	fs.Debugf(path, "Reading directory tree")
+	dt, err := walk.NewDirTree(f, path, false, -1)
 	if err != nil {
 		return err
 	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.read = time.Time{}
 	err = d._readDirFromDirTree(dt, when)
 	if err != nil {
 		return err
