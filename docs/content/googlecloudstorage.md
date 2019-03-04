@@ -342,6 +342,27 @@ Access Control List for new buckets.
     - "publicReadWrite"
         - Project team owners get OWNER access, and all Users get WRITER access.
 
+#### --gcs-bucket-policy-only
+
+Access checks should use bucket-level IAM policies.
+
+If you want to upload objects to a bucket with Bucket Policy Only set
+then you will need to set this.
+
+When it is set, rclone:
+
+- ignores ACLs set on buckets
+- ignores ACLs set on objects
+- creates buckets with Bucket Policy Only set
+
+Docs: https://cloud.google.com/storage/docs/bucket-policy-only
+
+
+- Config:      bucket_policy_only
+- Env Var:     RCLONE_GCS_BUCKET_POLICY_ONLY
+- Type:        bool
+- Default:     false
+
 #### --gcs-location
 
 Location for the newly created buckets.
