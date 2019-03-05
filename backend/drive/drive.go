@@ -676,28 +676,33 @@ func isPowerOfTwo(x int64) bool {
 }
 
 // add a charset parameter to all text/* MIME types
-func fixMimeType(mimeType string) string {
-	mediaType, param, err := mime.ParseMediaType(mimeType)
+func fixMimeType(mimeTypeIn string) string {
+	if mimeTypeIn == "" {
+		return ""
+	}
+	mediaType, param, err := mime.ParseMediaType(mimeTypeIn)
 	if err != nil {
-		return mimeType
+		return mimeTypeIn
 	}
-	if strings.HasPrefix(mimeType, "text/") && param["charset"] == "" {
+	mimeTypeOut := mimeTypeIn
+	if strings.HasPrefix(mediaType, "text/") && param["charset"] == "" {
 		param["charset"] = "utf-8"
-		mimeType = mime.FormatMediaType(mediaType, param)
+		mimeTypeOut = mime.FormatMediaType(mediaType, param)
 	}
-	return mimeType
+	if mimeTypeOut == "" {
+		panic(errors.Errorf("unable to fix MIME type %q", mimeTypeIn))
+	}
+	return mimeTypeOut
 }
-func fixMimeTypeMap(m map[string][]string) map[string][]string {
-	for _, v := range m {
+func fixMimeTypeMap(in map[string][]string) (out map[string][]string) {
+	out = make(map[string][]string, len(in))
+	for k, v := range in {
 		for i, mt := range v {
-			fixed := fixMimeType(mt)
-			if fixed == "" {
-				panic(errors.Errorf("unable to fix MIME type %q", mt))
-			}
-			v[i] = fixed
+			v[i] = fixMimeType(mt)
 		}
+		out[fixMimeType(k)] = v
 	}
-	return m
+	return out
 }
 func isInternalMimeType(mimeType string) bool {
 	return strings.HasPrefix(mimeType, "application/vnd.google-apps.")
