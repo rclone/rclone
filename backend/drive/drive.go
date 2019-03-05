@@ -2203,7 +2203,7 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPage
 		var changeList *drive.ChangeList
 
 		err = f.pacer.Call(func() (bool, error) {
-			changesCall := f.svc.Changes.List(pageToken).
+			changesCall := f.svc.Changes.List(pageToken).IncludeCorpusRemovals(true).
 				Fields("nextPageToken,newStartPageToken,changes(fileId,file(name,parents,mimeType))")
 			if f.opt.ListChunk > 0 {
 				changesCall.PageSize(f.opt.ListChunk)
