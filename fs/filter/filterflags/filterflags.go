@@ -13,9 +13,15 @@ var (
 	Opt = filter.DefaultOpt
 )
 
+// Reload the filters from the flags
+func Reload() (err error) {
+	filter.Active, err = filter.NewFilter(&Opt)
+	return err
+}
+
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
-	rc.AddOption("filter", &Opt)
+	rc.AddOptionReload("filter", &Opt, Reload)
 	flags.BoolVarP(flagSet, &Opt.DeleteExcluded, "delete-excluded", "", false, "Delete files on dest excluded from sync")
 	flags.StringArrayVarP(flagSet, &Opt.FilterRule, "filter", "f", nil, "Add a file-filtering rule")
 	flags.StringArrayVarP(flagSet, &Opt.FilterFrom, "filter-from", "", nil, "Read filtering patterns from a file")

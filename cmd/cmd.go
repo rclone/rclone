@@ -341,8 +341,7 @@ func initConfig() {
 	configflags.SetFlags()
 
 	// Load filters
-	var err error
-	filter.Active, err = filter.NewFilter(&filterflags.Opt)
+	err := filterflags.Reload()
 	if err != nil {
 		log.Fatalf("Failed to load filters: %v", err)
 	}
