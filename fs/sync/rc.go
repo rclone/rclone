@@ -39,17 +39,21 @@ func rcSyncCopyMove(in rc.Params, name string) (out rc.Params, err error) {
 	if err != nil {
 		return nil, err
 	}
+	createEmptySrcDirs, err := in.GetBool("createEmptySrcDirs")
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
 	switch name {
 	case "sync":
-		return nil, Sync(dstFs, srcFs)
+		return nil, Sync(dstFs, srcFs, createEmptySrcDirs)
 	case "copy":
-		return nil, CopyDir(dstFs, srcFs)
+		return nil, CopyDir(dstFs, srcFs, createEmptySrcDirs)
 	case "move":
 		deleteEmptySrcDirs, err := in.GetBool("deleteEmptySrcDirs")
 		if rc.NotErrParamNotFound(err) {
 			return nil, err
 		}
-		return nil, MoveDir(dstFs, srcFs, deleteEmptySrcDirs)
+		return nil, MoveDir(dstFs, srcFs, deleteEmptySrcDirs, createEmptySrcDirs)
 	}
 	panic("unknown rcSyncCopyMove type")
 }

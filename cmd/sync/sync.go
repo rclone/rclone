@@ -6,8 +6,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	createEmptySrcDirs = false
+)
+
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
+	commandDefintion.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync")
 }
 
 var commandDefintion = &cobra.Command{
@@ -39,7 +44,7 @@ go there.
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
 		cmd.Run(true, true, command, func() error {
-			return sync.Sync(fdst, fsrc)
+			return sync.Sync(fdst, fsrc, createEmptySrcDirs)
 		})
 	},
 }

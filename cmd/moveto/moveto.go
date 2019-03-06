@@ -52,7 +52,7 @@ transfer.
 
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.MoveDir(fdst, fsrc, false)
+				return sync.MoveDir(fdst, fsrc, false, false)
 			}
 			return operations.MoveFile(fdst, fsrc, dstFileName, srcFileName)
 		})

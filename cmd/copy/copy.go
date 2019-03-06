@@ -7,8 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	createEmptySrcDirs = false
+)
+
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
+	commandDefintion.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after copy")
 }
 
 var commandDefintion = &cobra.Command{
@@ -69,7 +74,7 @@ changed recently very efficiently like this:
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.CopyDir(fdst, fsrc)
+				return sync.CopyDir(fdst, fsrc, createEmptySrcDirs)
 			}
 			return operations.CopyFile(fdst, fsrc, srcFileName, srcFileName)
 		})
