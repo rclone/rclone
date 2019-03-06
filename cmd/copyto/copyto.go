@@ -48,7 +48,7 @@ destination.
 		fsrc, srcFileName, fdst, dstFileName := cmd.NewFsSrcDstFiles(args)
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.CopyDir(fdst, fsrc)
+				return sync.CopyDir(fdst, fsrc, false)
 			}
 			return operations.CopyFile(fdst, fsrc, dstFileName, srcFileName)
 		})

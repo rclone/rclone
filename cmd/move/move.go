@@ -10,11 +10,13 @@ import (
 // Globals
 var (
 	deleteEmptySrcDirs = false
+	createEmptySrcDirs = false
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
 	commandDefintion.Flags().BoolVarP(&deleteEmptySrcDirs, "delete-empty-src-dirs", "", deleteEmptySrcDirs, "Delete empty source dirs after move")
+	commandDefintion.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after move")
 }
 
 var commandDefintion = &cobra.Command{
@@ -52,7 +54,7 @@ can speed transfers up greatly.
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.MoveDir(fdst, fsrc, deleteEmptySrcDirs)
+				return sync.MoveDir(fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
 			}
 			return operations.MoveFile(fdst, fsrc, srcFileName, srcFileName)
 		})
