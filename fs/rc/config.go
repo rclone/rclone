@@ -8,11 +8,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-var optionBlock = map[string]interface{}{}
+var (
+	optionBlock  = map[string]interface{}{}
+	optionReload = map[string]func() error{}
+)
 
 // AddOption adds an option set
 func AddOption(name string, option interface{}) {
 	optionBlock[name] = option
+}
+
+// AddOptionReload adds an option set with a reload function to be
+// called when options are changed
+func AddOptionReload(name string, option interface{}, reload func() error) {
+	optionBlock[name] = option
+	optionReload[name] = reload
 }
 
 func init() {
@@ -103,7 +113,12 @@ func rcOptionsSet(in Params) (out Params, err error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to write options from block %q", name)
 		}
-
+		if reload := optionReload[name]; reload != nil {
+			err = reload()
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to reload options from block %q", name)
+			}
+		}
 	}
 	return out, nil
 }
