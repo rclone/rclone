@@ -24,6 +24,7 @@ type syncCopyMove struct {
 	fsrc               fs.Fs
 	deleteMode         fs.DeleteMode // how we are doing deletions
 	DoMove             bool
+	copyEmptySrcDirs   bool
 	deleteEmptySrcDirs bool
 	dir                string
 	// internal state
@@ -63,7 +64,7 @@ type syncCopyMove struct {
 	suffix         string                 // suffix to add to files placed in backupDir
 }
 
-func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool) (*syncCopyMove, error) {
+func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) (*syncCopyMove, error) {
 	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.Overlapping(fdst, fsrc) {
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
@@ -72,6 +73,7 @@ func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 		fsrc:               fsrc,
 		deleteMode:         deleteMode,
 		DoMove:             DoMove,
+		copyEmptySrcDirs:   copyEmptySrcDirs,
 		deleteEmptySrcDirs: deleteEmptySrcDirs,
 		dir:                "",
 		srcFilesChan:       make(chan fs.Object, fs.Config.Checkers+fs.Config.Transfers),
@@ -689,7 +691,9 @@ func (s *syncCopyMove) run() error {
 	s.stopTransfers()
 	s.stopDeleters()
 
-	s.processError(copyEmptyDirectories(s.fdst, s.srcEmptyDirs))
+	if s.copyEmptySrcDirs {
+		s.processError(copyEmptyDirectories(s.fdst, s.srcEmptyDirs))
+	}
 
 	// Delete files after
 	if s.deleteMode == fs.DeleteModeAfter {
@@ -852,7 +856,7 @@ func (s *syncCopyMove) Match(dst, src fs.DirEntry) (recurse bool) {
 // If DoMove is true then files will be moved instead of copied
 //
 // dir is the start directory, "" for root
-func runSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool) error {
+func runSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
 	if deleteMode != fs.DeleteModeOff && DoMove {
 		return fserrors.FatalError(errors.New("can't delete and move at the same time"))
 	}
@@ -862,7 +866,7 @@ func runSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 			return fserrors.FatalError(errors.New("can't use --delete-before with --track-renames"))
 		}
 		// only delete stuff during in this pass
-		do, err := newSyncCopyMove(fdst, fsrc, fs.DeleteModeOnly, false, deleteEmptySrcDirs)
+		do, err := newSyncCopyMove(fdst, fsrc, fs.DeleteModeOnly, false, deleteEmptySrcDirs, copyEmptySrcDirs)
 		if err != nil {
 			return err
 		}
@@ -873,7 +877,7 @@ func runSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 		// Next pass does a copy only
 		deleteMode = fs.DeleteModeOff
 	}
-	do, err := newSyncCopyMove(fdst, fsrc, deleteMode, DoMove, deleteEmptySrcDirs)
+	do, err := newSyncCopyMove(fdst, fsrc, deleteMode, DoMove, deleteEmptySrcDirs, copyEmptySrcDirs)
 	if err != nil {
 		return err
 	}
@@ -881,22 +885,22 @@ func runSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 }
 
 // Sync fsrc into fdst
-func Sync(fdst, fsrc fs.Fs) error {
-	return runSyncCopyMove(fdst, fsrc, fs.Config.DeleteMode, false, false)
+func Sync(fdst, fsrc fs.Fs, copyEmptySrcDirs bool) error {
+	return runSyncCopyMove(fdst, fsrc, fs.Config.DeleteMode, false, false, copyEmptySrcDirs)
 }
 
 // CopyDir copies fsrc into fdst
-func CopyDir(fdst, fsrc fs.Fs) error {
-	return runSyncCopyMove(fdst, fsrc, fs.DeleteModeOff, false, false)
+func CopyDir(fdst, fsrc fs.Fs, copyEmptySrcDirs bool) error {
+	return runSyncCopyMove(fdst, fsrc, fs.DeleteModeOff, false, false, copyEmptySrcDirs)
 }
 
 // moveDir moves fsrc into fdst
-func moveDir(fdst, fsrc fs.Fs, deleteEmptySrcDirs bool) error {
-	return runSyncCopyMove(fdst, fsrc, fs.DeleteModeOff, true, deleteEmptySrcDirs)
+func moveDir(fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
+	return runSyncCopyMove(fdst, fsrc, fs.DeleteModeOff, true, deleteEmptySrcDirs, copyEmptySrcDirs)
 }
 
 // MoveDir moves fsrc into fdst
-func MoveDir(fdst, fsrc fs.Fs, deleteEmptySrcDirs bool) error {
+func MoveDir(fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
 	if operations.Same(fdst, fsrc) {
 		fs.Errorf(fdst, "Nothing to do as source and destination are the same")
 		return nil
@@ -924,5 +928,5 @@ func MoveDir(fdst, fsrc fs.Fs, deleteEmptySrcDirs bool) error {
 	}
 
 	// Otherwise move the files one by one
-	return moveDir(fdst, fsrc, deleteEmptySrcDirs)
+	return moveDir(fdst, fsrc, deleteEmptySrcDirs, copyEmptySrcDirs)
 }
