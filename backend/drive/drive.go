@@ -241,6 +241,22 @@ func init() {
 			Help:     "Skip google documents in all listings.\nIf given, gdocs practically become invisible to rclone.",
 			Advanced: true,
 		}, {
+			Name:    "skip_checksum_gphotos",
+			Default: false,
+			Help: `Skip MD5 checksum on Google photos and videos only.
+
+Use this if you get checksum errors when transferring Google photos or
+videos.
+
+Setting this flag will cause Google photos and videos to return a
+blank MD5 checksum.
+
+Google photos are identifed by being in the "photos" space.
+
+Corrupted checksums are caused by Google modifying the image/video but
+not updating the checksum.`,
+			Advanced: true,
+		}, {
 			Name:    "shared_with_me",
 			Default: false,
 			Help: `Only show files that are shared with me.
@@ -396,6 +412,7 @@ type Options struct {
 	AuthOwnerOnly             bool          `config:"auth_owner_only"`
 	UseTrash                  bool          `config:"use_trash"`
 	SkipGdocs                 bool          `config:"skip_gdocs"`
+	SkipChecksumGphotos       bool          `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool          `config:"shared_with_me"`
 	TrashedOnly               bool          `config:"trashed_only"`
 	Extensions                string        `config:"formats"`
@@ -614,6 +631,9 @@ func (f *Fs) list(dirIDs []string, title string, directoriesOnly, filesOnly, inc
 
 	if f.opt.AuthOwnerOnly {
 		fields += ",owners"
+	}
+	if f.opt.SkipChecksumGphotos {
+		fields += ",spaces"
 	}
 
 	fields = fmt.Sprintf("files(%s),nextPageToken", fields)
@@ -1002,6 +1022,15 @@ func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
 
 // newRegularObject creates a fs.Object for a normal drive.File
 func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
+	// wipe checksum if SkipChecksumGphotos and file is type Photo or Video
+	if f.opt.SkipChecksumGphotos {
+		for _, space := range info.Spaces {
+			if space == "photos" {
+				info.Md5Checksum = ""
+				break
+			}
+		}
+	}
 	return &Object{
 		baseObject: f.newBaseObject(remote, info),
 		url:        fmt.Sprintf("%sfiles/%s?alt=media", f.svc.BasePath, info.Id),
