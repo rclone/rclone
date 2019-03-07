@@ -241,6 +241,11 @@ func init() {
 			Help:     "Skip google documents in all listings.\nIf given, gdocs practically become invisible to rclone.",
 			Advanced: true,
 		}, {
+			Name:     "skip_checksum_gphotos",
+			Default:  false,
+			Help:     "Skip MD5 checksum on Google Photos and Videos only. As when these are stored and modified by google their checksum isn't updated causing MD5 checksum errors.",
+			Advanced: true,
+		}, {
 			Name:    "shared_with_me",
 			Default: false,
 			Help: `Only show files that are shared with me.
@@ -396,6 +401,7 @@ type Options struct {
 	AuthOwnerOnly             bool          `config:"auth_owner_only"`
 	UseTrash                  bool          `config:"use_trash"`
 	SkipGdocs                 bool          `config:"skip_gdocs"`
+	SkipChecksumGphotos       bool          `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool          `config:"shared_with_me"`
 	TrashedOnly               bool          `config:"trashed_only"`
 	Extensions                string        `config:"formats"`
@@ -1001,10 +1007,18 @@ func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
 
 // newRegularObject creates a fs.Object for a normal drive.File
 func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
+	// For Readability 
+	// - if SkipChecksumGphotos and file is type Photo or Video then skip.
+	doMd5sum := true
+	if f.opt.SkipChecksumGphotos && 
+		(info.MimeType == "application/vnd.google-apps.photo" || info.MimeType == "application/vnd.google-apps.video") {
+			doMd5sum = false
+	}
+	
 	return &Object{
 		baseObject: f.newBaseObject(remote, info),
 		url:        fmt.Sprintf("%sfiles/%s?alt=media", f.svc.BasePath, info.Id),
-		md5sum:     strings.ToLower(info.Md5Checksum),
+		md5sum:     doMd5sum && strings.ToLower(info.Md5Checksum),
 		v2Download: f.opt.V2DownloadMinSize != -1 && info.Size >= int64(f.opt.V2DownloadMinSize),
 	}
 }
