@@ -188,3 +188,10 @@ causes not all domains to be resolved properly.
 Additionally with the `GODEBUG=netdns=` environment variable the Go
 resolver decision can be influenced. This also allows to resolve certain
 issues with DNS resolution. See the [name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
+
+### The total size reported in the stats for a sync is wrong and keeps changing
+
+It is likely you have more than 10,000 files that need to be
+synced. By default rclone only gets 10,000 files ahead in a sync so as
+not to use up too much memory. You can change this default with the
+[--max-backlog](/docs/#max-backlog-n) flag.
