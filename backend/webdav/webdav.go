@@ -644,10 +644,18 @@ func (f *Fs) _mkdir(dirPath string) error {
 		Path:       dirPath,
 		NoResponse: true,
 	}
-	return f.pacer.Call(func() (bool, error) {
+	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.Call(&opts)
 		return shouldRetry(resp, err)
 	})
+	if apiErr, ok := err.(*api.Error); ok {
+		// already exists
+		// owncloud returns 423/StatusLocked if the create is already in progress
+		if apiErr.StatusCode == http.StatusMethodNotAllowed || apiErr.StatusCode == http.StatusNotAcceptable || apiErr.StatusCode == http.StatusLocked {
+			return nil
+		}
+	}
+	return err
 }
 
 // mkdir makes the directory and parents using native paths
@@ -655,12 +663,7 @@ func (f *Fs) mkdir(dirPath string) error {
 	// defer log.Trace(dirPath, "")("")
 	err := f._mkdir(dirPath)
 	if apiErr, ok := err.(*api.Error); ok {
-		// already exists
-		// owncloud returns 423/StatusLocked if the create is already in progress
-		if apiErr.StatusCode == http.StatusMethodNotAllowed || apiErr.StatusCode == http.StatusNotAcceptable || apiErr.StatusCode == http.StatusLocked {
-			return nil
-		}
-		// parent does not exist
+		// parent does not exist so create it first then try again
 		if apiErr.StatusCode == http.StatusConflict {
 			err = f.mkParentDir(dirPath)
 			if err == nil {
