@@ -28,7 +28,7 @@ const (
 
 var (
 	transport    http.RoundTripper
-	noTransport  sync.Once
+	noTransport  = new(sync.Once)
 	tpsBucket    *rate.Limiter // for limiting number of http transactions per second
 	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 )
@@ -121,9 +121,15 @@ func dialContextTimeout(ctx context.Context, network, address string, ci *fs.Con
 	return newTimeoutConn(c, ci.Timeout)
 }
 
+// ResetTransport resets the existing transport, allowing it to take new settings.
+// Should only be used for testing.
+func ResetTransport() {
+	noTransport = new(sync.Once)
+}
+
 // NewTransport returns an http.RoundTripper with the correct timeouts
 func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
-	noTransport.Do(func() {
+	(*noTransport).Do(func() {
 		// Start with a sensible set of defaults then override.
 		// This also means we get new stuff when it gets added to go
 		t := new(http.Transport)
