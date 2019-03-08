@@ -38,6 +38,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/filter"
+	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fstest"
@@ -634,15 +635,18 @@ func TestCopyURL(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	contents := "file1 contents\n"
+	contents := "file contents\n"
 	file1 := r.WriteFile("file1", contents, t1)
+	file2 := r.WriteFile("file2", contents, t1)
 	r.Mkdir(r.Fremote)
 	fstest.CheckItems(t, r.Fremote)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// check when reading from regular HTTP server
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(contents))
 		assert.NoError(t, err)
-	}))
+	})
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	o, err := operations.CopyURL(r.Fremote, "file1", ts.URL)
@@ -650,6 +654,21 @@ func TestCopyURL(t *testing.T) {
 	assert.Equal(t, int64(len(contents)), o.Size())
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
+
+	// check when reading from unverified HTTPS server
+	fs.Config.InsecureSkipVerify = true
+	fshttp.ResetTransport()
+	defer func() {
+		fs.Config.InsecureSkipVerify = false
+		fshttp.ResetTransport()
+	}()
+	tss := httptest.NewTLSServer(handler)
+	defer tss.Close()
+
+	o, err = operations.CopyURL(r.Fremote, "file2", tss.URL)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), o.Size())
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2}, nil, fs.ModTimeNotSupported)
 }
 
 func TestMoveFile(t *testing.T) {
