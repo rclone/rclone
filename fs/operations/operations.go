@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"path"
 	"path/filepath"
 	"sort"
@@ -21,6 +20,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/march"
 	"github.com/ncw/rclone/fs/object"
@@ -1411,7 +1411,9 @@ func RcatSize(fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modT
 
 // CopyURL copies the data from the url to (fdst, dstFileName)
 func CopyURL(fdst fs.Fs, dstFileName string, url string) (dst fs.Object, err error) {
-	resp, err := http.Get(url)
+	client := fshttp.NewClient(fs.Config)
+	resp, err := client.Get(url)
+
 	if err != nil {
 		return nil, err
 	}
