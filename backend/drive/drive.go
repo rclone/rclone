@@ -2436,6 +2436,10 @@ func (o *baseObject) httpResponse(url, method string, options []fs.OpenOption) (
 		return req, nil, err
 	}
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
+	if o.bytes == 0 {
+		// Don't supply range requests for 0 length objects as they always fail
+		delete(req.Header, "Range")
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
 		if err == nil {
