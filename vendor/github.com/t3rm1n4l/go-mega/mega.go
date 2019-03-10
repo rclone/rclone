@@ -894,6 +894,11 @@ func (m *Mega) NewDownload(src *Node) (*Download, error) {
 		return nil, err
 	}
 
+	// DownloadResp has an embedded error in it for some reason
+	if res[0].Err != 0 {
+		return nil, parseError(res[0].Err)
+	}
+
 	_, err = decryptAttr(key, []byte(res[0].Attr))
 	if err != nil {
 		return nil, err

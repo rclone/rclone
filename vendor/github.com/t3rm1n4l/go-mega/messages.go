@@ -120,10 +120,10 @@ type DownloadMsg struct {
 }
 
 type DownloadResp struct {
-	G    string `json:"g"`
-	Size uint64 `json:"s"`
-	Attr string `json:"at"`
-	Err  uint32 `json:"e"`
+	G    string   `json:"g"`
+	Size uint64   `json:"s"`
+	Attr string   `json:"at"`
+	Err  ErrorMsg `json:"e"`
 }
 
 type UploadMsg struct {
