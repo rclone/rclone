@@ -821,6 +821,16 @@ then the files will have SUFFIX added on to them.
 
 See `--backup-dir` for more info.
 
+### --suffix-keep-extension ###
+
+When using `--suffix`, setting this causes rclone put the SUFFIX
+before the extension of the files that it backs up rather than after.
+
+So let's say we had `--suffix -2019-01-01`, without the flag `file.txt`
+would be backed up to `file.txt-2019-01-01` and with the flag it would
+be backed up to `file-2019-01-01.txt`.  This can be helpful to make
+sure the suffixed files can still be opened.
+
 ### --syslog ###
 
 On capable OSes (not Windows or Plan9) send all log output to syslog.

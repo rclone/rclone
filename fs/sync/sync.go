@@ -226,7 +226,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 				} else {
 					// If destination already exists, then we must move it into --backup-dir if required
 					if pair.Dst != nil && s.backupDir != nil {
-						remoteWithSuffix := pair.Dst.Remote() + s.suffix
+						remoteWithSuffix := operations.SuffixName(pair.Dst.Remote())
 						overwritten, _ := s.backupDir.NewObject(remoteWithSuffix)
 						_, err := operations.Move(s.backupDir, overwritten, remoteWithSuffix, pair.Dst)
 						if err != nil {

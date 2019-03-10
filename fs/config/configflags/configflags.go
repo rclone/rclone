@@ -68,6 +68,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &fs.Config.NoUpdateModTime, "no-update-modtime", "", fs.Config.NoUpdateModTime, "Don't update destination mod-time if files identical.")
 	flags.StringVarP(flagSet, &fs.Config.BackupDir, "backup-dir", "", fs.Config.BackupDir, "Make backups into hierarchy based in DIR.")
 	flags.StringVarP(flagSet, &fs.Config.Suffix, "suffix", "", fs.Config.Suffix, "Suffix for use with --backup-dir.")
+	flags.BoolVarP(flagSet, &fs.Config.SuffixKeepExtension, "suffix-keep-extension", "", fs.Config.SuffixKeepExtension, "Preserve the extension when using --suffix.")
 	flags.BoolVarP(flagSet, &fs.Config.UseListR, "fast-list", "", fs.Config.UseListR, "Use recursive list if available. Uses more memory but fewer transactions.")
 	flags.Float64VarP(flagSet, &fs.Config.TPSLimit, "tpslimit", "", fs.Config.TPSLimit, "Limit HTTP transactions per second to this.")
 	flags.IntVarP(flagSet, &fs.Config.TPSLimitBurst, "tpslimit-burst", "", fs.Config.TPSLimitBurst, "Max burst of transactions for --tpslimit.")

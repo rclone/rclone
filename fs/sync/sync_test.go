@@ -1188,7 +1188,7 @@ func TestSyncOverlap(t *testing.T) {
 }
 
 // Test with BackupDir set
-func testSyncBackupDir(t *testing.T, suffix string) {
+func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
@@ -1199,16 +1199,18 @@ func testSyncBackupDir(t *testing.T, suffix string) {
 
 	fs.Config.BackupDir = r.FremoteName + "/backup"
 	fs.Config.Suffix = suffix
+	fs.Config.SuffixKeepExtension = suffixKeepExtension
 	defer func() {
 		fs.Config.BackupDir = ""
 		fs.Config.Suffix = ""
+		fs.Config.SuffixKeepExtension = false
 	}()
 
 	// Make the setup so we have one, two, three in the dest
 	// and one (different), two (same) in the source
 	file1 := r.WriteObject("dst/one", "one", t1)
 	file2 := r.WriteObject("dst/two", "two", t1)
-	file3 := r.WriteObject("dst/three", "three", t1)
+	file3 := r.WriteObject("dst/three.txt", "three", t1)
 	file2a := r.WriteFile("two", "two", t1)
 	file1a := r.WriteFile("one", "oneA", t2)
 
@@ -1227,13 +1229,17 @@ func testSyncBackupDir(t *testing.T, suffix string) {
 	file1a.Path = "dst/one"
 	// two should be unchanged
 	// three should be moved to the backup dir
-	file3.Path = "backup/three" + suffix
+	if suffixKeepExtension {
+		file3.Path = "backup/three" + suffix + ".txt"
+	} else {
+		file3.Path = "backup/three.txt" + suffix
+	}
 
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file1a)
 
 	// Now check what happens if we do it again
 	// Restore a different three and update one in the source
-	file3a := r.WriteObject("dst/three", "threeA", t2)
+	file3a := r.WriteObject("dst/three.txt", "threeA", t2)
 	file1b := r.WriteFile("one", "oneBB", t3)
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file1a, file3a)
 
@@ -1248,12 +1254,17 @@ func testSyncBackupDir(t *testing.T, suffix string) {
 	file1b.Path = "dst/one"
 	// two should be unchanged
 	// three should be moved to the backup dir
-	file3a.Path = "backup/three" + suffix
+	if suffixKeepExtension {
+		file3a.Path = "backup/three" + suffix + ".txt"
+	} else {
+		file3a.Path = "backup/three.txt" + suffix
+	}
 
 	fstest.CheckItems(t, r.Fremote, file1b, file2, file3a, file1a)
 }
-func TestSyncBackupDir(t *testing.T)           { testSyncBackupDir(t, "") }
-func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak") }
+func TestSyncBackupDir(t *testing.T)                        { testSyncBackupDir(t, "", false) }
+func TestSyncBackupDirWithSuffix(t *testing.T)              { testSyncBackupDir(t, ".bak", false) }
+func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) { testSyncBackupDir(t, "-2019-01-01", true) }
 
 // Check we can sync two files with differing UTF-8 representations
 func TestSyncUTFNorm(t *testing.T) {

@@ -67,6 +67,7 @@ type ConfigInfo struct {
 	DataRateUnit          string
 	BackupDir             string
 	Suffix                string
+	SuffixKeepExtension   bool
 	UseListR              bool
 	BufferSize            SizeSuffix
 	BwLimit               BwTimetable
