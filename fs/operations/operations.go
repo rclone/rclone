@@ -435,6 +435,20 @@ func CanServerSideMove(fdst fs.Fs) bool {
 	return canMove || canCopy
 }
 
+// SuffixName adds the current --suffix to the remote, obeying
+// --suffix-keep-extension if set
+func SuffixName(remote string) string {
+	if fs.Config.Suffix == "" {
+		return remote
+	}
+	if fs.Config.SuffixKeepExtension {
+		ext := path.Ext(remote)
+		base := remote[:len(remote)-len(ext)]
+		return base + fs.Config.Suffix + ext
+	}
+	return remote + fs.Config.Suffix
+}
+
 // DeleteFileWithBackupDir deletes a single file respecting --dry-run
 // and accumulating stats and errors.
 //
@@ -456,7 +470,7 @@ func DeleteFileWithBackupDir(dst fs.Object, backupDir fs.Fs) (err error) {
 		if !SameConfig(dst.Fs(), backupDir) {
 			err = errors.New("parameter to --backup-dir has to be on the same remote as destination")
 		} else {
-			remoteWithSuffix := dst.Remote() + fs.Config.Suffix
+			remoteWithSuffix := SuffixName(dst.Remote())
 			overwritten, _ := backupDir.NewObject(remoteWithSuffix)
 			_, err = Move(backupDir, overwritten, remoteWithSuffix, dst)
 		}

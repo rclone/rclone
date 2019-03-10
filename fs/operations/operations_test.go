@@ -231,6 +231,33 @@ func TestHashSums(t *testing.T) {
 	}
 }
 
+func TestSuffixName(t *testing.T) {
+	origSuffix, origKeepExt := fs.Config.Suffix, fs.Config.SuffixKeepExtension
+	defer func() {
+		fs.Config.Suffix, fs.Config.SuffixKeepExtension = origSuffix, origKeepExt
+	}()
+	for _, test := range []struct {
+		remote  string
+		suffix  string
+		keepExt bool
+		want    string
+	}{
+		{"test.txt", "", false, "test.txt"},
+		{"test.txt", "", true, "test.txt"},
+		{"test.txt", "-suffix", false, "test.txt-suffix"},
+		{"test.txt", "-suffix", true, "test-suffix.txt"},
+		{"test.txt.csv", "-suffix", false, "test.txt.csv-suffix"},
+		{"test.txt.csv", "-suffix", true, "test.txt-suffix.csv"},
+		{"test", "-suffix", false, "test-suffix"},
+		{"test", "-suffix", true, "test-suffix"},
+	} {
+		fs.Config.Suffix = test.suffix
+		fs.Config.SuffixKeepExtension = test.keepExt
+		got := operations.SuffixName(test.remote)
+		assert.Equal(t, test.want, got, fmt.Sprintf("%+v", test))
+	}
+}
+
 func TestCount(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
