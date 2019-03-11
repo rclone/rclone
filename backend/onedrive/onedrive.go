@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncw/rclone/lib/atexit"
+
 	"github.com/ncw/rclone/backend/onedrive/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
@@ -1491,23 +1493,40 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time) (i
 		return nil, errors.New("unknown-sized upload not supported")
 	}
 
+	uploadURLChan := make(chan string, 1)
+	gracefulCancel := func() {
+		uploadURL, ok := <-uploadURLChan
+		// Reading from uploadURLChan blocks the atexit process until
+		// we are able to use uploadURL to cancel the upload
+		if !ok { // createUploadSession failed - no need to cancel upload
+			return
+		}
+
+		fs.Debugf(o, "Cancelling multipart upload")
+		cancelErr := o.cancelUploadSession(uploadURL)
+		if cancelErr != nil {
+			fs.Logf(o, "Failed to cancel multipart upload: %v", cancelErr)
+		}
+	}
+	cancelFuncHandle := atexit.Register(gracefulCancel)
+
 	// Create upload session
 	fs.Debugf(o, "Starting multipart upload")
 	session, err := o.createUploadSession(modTime)
 	if err != nil {
+		close(uploadURLChan)
+		atexit.Unregister(cancelFuncHandle)
 		return nil, err
 	}
 	uploadURL := session.UploadURL
+	uploadURLChan <- uploadURL
 
-	// Cancel the session if something went wrong
 	defer func() {
 		if err != nil {
-			fs.Debugf(o, "Cancelling multipart upload: %v", err)
-			cancelErr := o.cancelUploadSession(uploadURL)
-			if cancelErr != nil {
-				fs.Logf(o, "Failed to cancel multipart upload: %v", err)
-			}
+			fs.Debugf(o, "Error encountered during upload: %v", err)
+			gracefulCancel()
 		}
+		atexit.Unregister(cancelFuncHandle)
 	}()
 
 	// Upload the chunks
