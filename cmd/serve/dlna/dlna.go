@@ -86,6 +86,13 @@ var services = []*service{
 	},
 }
 
+func init() {
+	for _, s := range services {
+		p := path.Join("/scpd", s.ServiceId)
+		s.SCPDURL = p
+	}
+}
+
 func devices() []string {
 	return []string{
 		"urn:schemas-upnp-org:device:MediaServer:1",
@@ -250,9 +257,6 @@ func (s *server) initMux(mux *http.ServeMux) {
 
 	// Install handlers to serve SCPD for each UPnP service.
 	for _, s := range services {
-		p := path.Join("/scpd", s.ServiceId)
-		s.SCPDURL = p
-
 		mux.HandleFunc(s.SCPDURL, func(serviceDesc string) http.HandlerFunc {
 			return func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("content-type", `text/xml; charset="utf-8"`)

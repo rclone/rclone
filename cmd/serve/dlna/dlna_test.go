@@ -59,6 +59,8 @@ func TestRootSCPD(t *testing.T) {
 	// Make sure that the SCPD contains a CDS service.
 	require.Contains(t, string(body),
 		"<serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>")
+	// Ensure that the SCPD url is configured.
+	require.Regexp(t, "<SCPDURL>/.*</SCPDURL>", string(body))
 }
 
 // Make sure that it serves content from the remote.
