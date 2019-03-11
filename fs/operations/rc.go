@@ -172,7 +172,7 @@ See the [` + op.name + ` command](/commands/rclone_` + op.name + `/) command for
 	}
 }
 
-// Mkdir a directory
+// Run a single command, eg Mkdir
 func rcSingleCommand(in rc.Params, name string, noRemote bool) (out rc.Params, err error) {
 	var (
 		f      fs.Fs
@@ -240,7 +240,7 @@ See the [size command](/commands/rclone_size/) command for more information on t
 	})
 }
 
-// Mkdir a directory
+// Size a directory
 func rcSize(in rc.Params) (out rc.Params, err error) {
 	f, err := rc.GetFs(in)
 	if err != nil {
@@ -253,5 +253,40 @@ func rcSize(in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	out["count"] = count
 	out["bytes"] = bytes
+	return out, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "operations/publiclink",
+		AuthRequired: true,
+		Fn:           rcPublicLink,
+		Title:        "Create or retrieve a public link to the given file or folder.",
+		Help: `This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+Returns
+
+- url - URL of the resource
+
+See the [link command](/commands/rclone_link/) command for more information on the above.
+`,
+	})
+}
+
+// Make a public link
+func rcPublicLink(in rc.Params) (out rc.Params, err error) {
+	f, remote, err := rc.GetFsAndRemote(in)
+	if err != nil {
+		return nil, err
+	}
+	url, err := PublicLink(f, remote)
+	if err != nil {
+		return nil, err
+	}
+	out = make(rc.Params)
+	out["url"] = url
 	return out, nil
 }

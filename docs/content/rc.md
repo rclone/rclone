@@ -556,6 +556,21 @@ This takes the following parameters
 
 Authentication is required for this call.
 
+### operations/publiclink: Create or retrieve a public link to the given file or folder.
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+Returns
+
+- url - URL of the resource
+
+See the [link command](/commands/rclone_link/) command for more information on the above.
+
+Authentication is required for this call.
+
 ### operations/purge: Remove a directory or container and all of its contents
 
 This takes the following parameters

@@ -356,3 +356,16 @@ func TestRcSize(t *testing.T) {
 		"bytes": int64(120),
 	}, out)
 }
+
+// operations/publiclink: Create or retrieve a public link to the given file or folder.
+func TestRcPublicLink(t *testing.T) {
+	r, call := rcNewRun(t, "operations/publiclink")
+	defer r.Finalise()
+	in := rc.Params{
+		"fs":     r.FremoteName,
+		"remote": "",
+	}
+	_, err := call.Fn(in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "doesn't support public links")
+}
