@@ -245,3 +245,4 @@ Contributors
   * marcintustin <marcintustin@users.noreply.github.com>
   * jaKa Močnik <jaka@koofr.net>
   * Fionera <fionera@fionera.de>
+  * Dan Walters <dan@walters.io>
