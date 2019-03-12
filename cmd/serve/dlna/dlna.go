@@ -84,6 +84,14 @@ var services = []*service{
 		},
 		SCPD: contentDirectoryServiceDescription,
 	},
+	{
+		Service: upnp.Service{
+			ServiceType: "urn:schemas-upnp-org:service:ConnectionManager:1",
+			ServiceId:   "urn:upnp-org:serviceId:ConnectionManager",
+			ControlURL:  serviceControlURL,
+		},
+		SCPD: connectionManagerServiceDescription,
+	},
 }
 
 func init() {
