@@ -299,3 +299,12 @@ Description: Using application 'rclone' is currently not supported for your orga
 This means that rclone can't use the OneDrive for Business API with your account. You can't do much about it, maybe write an email to your admins.
 
 However, there are other ways to interact with your OneDrive account. Have a look at the webdav backend: https://rclone.org/webdav/#sharepoint
+
+
+```
+Error: invalid_grant
+Code: AADSTS50076
+Description: Due to a configuration change made by your administrator, or because you moved to a new location, you must use multi-factor authentication to access '...'.
+```
+
+If you see the error above after enabling multi-factor authentication for your account, you can fix it by refreshing your OAuth refresh token. To do that, run `rclone config`, and choose to edit your OneDrive backend. Then, you don't need to actually make any changes until you reach this question: `Already have a token - refresh?`. For this question, answer `y` and go through the process to refresh your token, just like the first time the backend is configured. After this, rclone should work again for this backend.
