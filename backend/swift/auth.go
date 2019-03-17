@@ -2,6 +2,7 @@ package swift
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ncw/swift"
 )
@@ -65,6 +66,14 @@ func (a *auth) Token() string {
 	return a.parentAuth.Token()
 }
 
+// Expires returns the time the token expires if known or Zero if not.
+func (a *auth) Expires() (t time.Time) {
+	if do, ok := a.parentAuth.(swift.Expireser); ok {
+		t = do.Expires()
+	}
+	return t
+}
+
 // The CDN url if available
 func (a *auth) CdnUrl() string { // nolint
 	if a.parentAuth == nil {
@@ -74,4 +83,7 @@ func (a *auth) CdnUrl() string { // nolint
 }
 
 // Check the interfaces are satisfied
-var _ swift.Authenticator = (*auth)(nil)
+var (
+	_ swift.Authenticator = (*auth)(nil)
+	_ swift.Expireser     = (*auth)(nil)
+)
