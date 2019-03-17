@@ -1,6 +1,13 @@
 package swift
 
-import "testing"
+import (
+	"testing"
+	"time"
+
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/swift"
+	"github.com/stretchr/testify/assert"
+)
 
 func TestInternalUrlEncode(t *testing.T) {
 	for _, test := range []struct {
@@ -22,4 +29,38 @@ func TestInternalUrlEncode(t *testing.T) {
 			t.Logf("%q: want %q got %q", test.in, test.want, got)
 		}
 	}
+}
+
+func TestInternalShouldRetryHeaders(t *testing.T) {
+	headers := swift.Headers{
+		"Content-Length": "64",
+		"Content-Type":   "text/html; charset=UTF-8",
+		"Date":           "Mon: 18 Mar 2019 12:11:23 GMT",
+		"Retry-After":    "1",
+	}
+	err := &swift.Error{
+		StatusCode: 429,
+		Text:       "Too Many Requests",
+	}
+
+	// Short sleep should just do the sleep
+	start := time.Now()
+	retry, gotErr := shouldRetryHeaders(headers, err)
+	dt := time.Since(start)
+	assert.True(t, retry)
+	assert.Equal(t, err, gotErr)
+	assert.True(t, dt > time.Second/2)
+
+	// Long sleep should return RetryError
+	headers["Retry-After"] = "3600"
+	start = time.Now()
+	retry, gotErr = shouldRetryHeaders(headers, err)
+	dt = time.Since(start)
+	assert.True(t, dt < time.Second)
+	assert.False(t, retry)
+	assert.Equal(t, true, fserrors.IsRetryAfterError(gotErr))
+	after := gotErr.(fserrors.RetryAfter).RetryAfter()
+	dt = after.Sub(start)
+	assert.True(t, dt >= time.Hour-time.Second && dt <= time.Hour+time.Second)
+
 }
