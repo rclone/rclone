@@ -952,6 +952,13 @@ func (f *Fs) hide(Name string) error {
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
+		if apiErr, ok := err.(*api.Error); ok {
+			if apiErr.Code == "already_hidden" {
+				// sometimes eventual consistency causes this, so
+				// ignore this error since it is harmless
+				return nil
+			}
+		}
 		return errors.Wrapf(err, "failed to hide %q", Name)
 	}
 	return nil
