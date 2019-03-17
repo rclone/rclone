@@ -57,7 +57,7 @@ __rclone_custom_func() {
         else
             local path=${cur#*:}
             if [[ $path == */* ]]; then
-                local prefix=${path%/*}
+                local prefix=$(eval printf '%s' "${path%/*}")
             else
                 local prefix=
             fi
@@ -66,6 +66,7 @@ __rclone_custom_func() {
                 local reply=${prefix:+$prefix/}$line
                 [[ $reply != $path* ]] || COMPREPLY+=("$reply")
             done < <(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null)
+	    [[ ! ${COMPREPLY[@]} ]] || compopt -o filenames
         fi
         [[ ! ${COMPREPLY[@]} ]] || compopt -o nospace
     fi
