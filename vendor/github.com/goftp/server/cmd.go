@@ -698,6 +698,9 @@ func (cmd commandRetr) Execute(conn *Conn, param string) {
 		defer data.Close()
 		conn.writeMessage(150, fmt.Sprintf("Data transfer starting %v bytes", bytes))
 		err = conn.sendOutofBandDataWriter(data)
+		if err != nil {
+			conn.writeMessage(551, "Error reading file")
+		}
 	} else {
 		conn.writeMessage(551, "File not available")
 	}

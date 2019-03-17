@@ -54,6 +54,8 @@ github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 h1:cC0Hbb+18DJ4i
 github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9/go.mod h1:GpOj6zuVBG3Inr9qjEnuVTgBlk2lZ1S9DcoFiXWyKss=
 github.com/goftp/server v0.0.0-20190111142836-88de73f463af h1:PJxb1aA1z+Ohy2j28L92+ng9phXpZVFRFbPkfmJcRGo=
 github.com/goftp/server v0.0.0-20190111142836-88de73f463af/go.mod h1:k/SS6VWkxY7dHPhoMQ8IdRu8L4lQtmGbhyXGg+vCnXE=
+github.com/goftp/server v0.0.0-20190304020633-eabccc535b5a h1:XTJuuzIub3zu2FgPqdFM9XFYYisXWu2hN/rFwayAIcY=
+github.com/goftp/server v0.0.0-20190304020633-eabccc535b5a/go.mod h1:k/SS6VWkxY7dHPhoMQ8IdRu8L4lQtmGbhyXGg+vCnXE=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:tluoj9z5200jBnyusfRPU2LqT6J+DAorxEvtC7LHB+E=
