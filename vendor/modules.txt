@@ -84,7 +84,7 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/seen_state
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
-# github.com/goftp/server v0.0.0-20190111142836-88de73f463af
+# github.com/goftp/server v0.0.0-20190304020633-eabccc535b5a
 github.com/goftp/server
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
