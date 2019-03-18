@@ -246,3 +246,4 @@ Contributors
   * jaKa Močnik <jaka@koofr.net>
   * Fionera <fionera@fionera.de>
   * Dan Walters <dan@walters.io>
+  * Danil Semelenov <sgtpep@users.noreply.github.com>
