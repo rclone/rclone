@@ -151,7 +151,7 @@ func TimeToFloatString(t time.Time) string {
 	return nsToFloatString(t.UnixNano())
 }
 
-// Read a modification time (mtime) from a Metadata object
+// GetModTime reads a modification time (mtime) from a Metadata object
 //
 // This is a defacto standard (used in the official python-swiftclient
 // amongst others) for storing the modification time (as read using
@@ -163,7 +163,7 @@ func (m Metadata) GetModTime() (t time.Time, err error) {
 	return FloatStringToTime(m["mtime"])
 }
 
-// Write an modification time (mtime) to a Metadata object
+// SetModTime writes an modification time (mtime) to a Metadata object
 //
 // This is a defacto standard (used in the official python-swiftclient
 // amongst others) for storing the modification time (as read using

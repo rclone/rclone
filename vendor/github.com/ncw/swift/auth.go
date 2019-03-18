@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // Auth defines the operations needed to authenticate with swift
@@ -23,6 +24,11 @@ type Authenticator interface {
 	Token() string
 	// The CDN url if available
 	CdnUrl() string
+}
+
+// Expireser is an optional interface to read the expiration time of the token
+type Expireser interface {
+	Expires() time.Time
 }
 
 type CustomEndpointAuthenticator interface {
@@ -238,6 +244,15 @@ func (auth *v2Auth) StorageUrlForEndpoint(endpointType EndpointType) string {
 // v2 Authentication - read auth token
 func (auth *v2Auth) Token() string {
 	return auth.Auth.Access.Token.Id
+}
+
+// v2 Authentication - read expires
+func (auth *v2Auth) Expires() time.Time {
+	t, err := time.Parse(time.RFC3339, auth.Auth.Access.Token.Expires)
+	if err != nil {
+		return time.Time{} // return Zero if not parsed
+	}
+	return t
 }
 
 // v2 Authentication - read cdn url

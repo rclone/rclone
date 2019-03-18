@@ -153,3 +153,4 @@ Contributors
 - Omar Ali <omarali@users.noreply.github.com>
 - Andreas Andersen <andreas@softwaredesign.se>
 - kayrus <kay.diam@gmail.com>
+- CodeLingo Bot <bot@codelingo.io>
