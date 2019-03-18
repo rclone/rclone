@@ -175,7 +175,7 @@ var timeFormats = []string{
 	time.UnixDate,  // Wed May 17 15:31:58 UTC 2017 (as used in an internal server)
 	noZerosRFC1123, // Fri, 7 Sep 2018 08:49:58 GMT (as used by server in #2574)
 	time.RFC3339,   // Wed, 31 Oct 2018 13:57:11 CET (as used by komfortcloud.de)
-	TZOffsetRFC1123,// Wed, 13 Mar 2019 15:19:49 GMT-00:00 (as used by Salesforce Commerce Cloud)
+	tzOffsetRFC1123,// Wed, 13 Mar 2019 15:19:49 GMT-00:00 (as used by Salesforce Commerce Cloud)
 }
 
 var oneTimeError sync.Once
