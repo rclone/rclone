@@ -721,6 +721,10 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 
 		switch {
 		case itm.T == FILE:
+			if len(compkey) < 8 {
+				m.logf("ignoring item: compkey too short (%d): %#v", len(compkey), itm)
+				return nil, nil
+			}
 			key = []uint32{compkey[0] ^ compkey[4], compkey[1] ^ compkey[5], compkey[2] ^ compkey[6], compkey[3] ^ compkey[7]}
 		default:
 			key = compkey
