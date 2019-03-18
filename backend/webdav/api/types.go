@@ -21,7 +21,7 @@ const (
 	noZerosRFC1123 = "Mon, _2 Jan 2006 15:04:05 MST"
 	// The same as time.RFC1123 with suffixed timezone offset
 	// see https://github.com/ncw/rclone/issues/3048
-	TZOffsetRFC1123 = "Mon, 02 Jan 2006 15:04:05 MST-07:00"
+	tzOffsetRFC1123 = "Mon, 02 Jan 2006 15:04:05 MST-07:00"
 )
 
 // Multistatus contains responses returned from an HTTP 207 return code
