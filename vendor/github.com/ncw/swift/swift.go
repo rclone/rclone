@@ -122,6 +122,7 @@ type Connection struct {
 	// These are filled in after Authenticate is called as are the defaults for above
 	StorageUrl string
 	AuthToken  string
+	Expires    time.Time // time the token expires, may be Zero if unknown
 	client     *http.Client
 	Auth       Authenticator `json:"-" xml:"-"` // the current authenticator
 	authLock   sync.Mutex    // lock when R/W StorageUrl, AuthToken, Auth
@@ -519,6 +520,12 @@ again:
 		c.StorageUrl = c.Auth.StorageUrl(c.Internal)
 	}
 	c.AuthToken = c.Auth.Token()
+	if do, ok := c.Auth.(Expireser); ok {
+		c.Expires = do.Expires()
+	} else {
+		c.Expires = time.Time{}
+	}
+
 	if !c.authenticated() {
 		err = newError(0, "Response didn't have storage url and auth token")
 		return
@@ -580,7 +587,14 @@ func (c *Connection) Authenticated() bool {
 //
 // Call with authLock held
 func (c *Connection) authenticated() bool {
-	return c.StorageUrl != "" && c.AuthToken != ""
+	if c.StorageUrl == "" || c.AuthToken == "" {
+		return false
+	}
+	if c.Expires.IsZero() {
+		return true
+	}
+	timeUntilExpiry := c.Expires.Sub(time.Now())
+	return timeUntilExpiry >= 60*time.Second
 }
 
 // SwiftInfo contains the JSON object returned by Swift when the /info

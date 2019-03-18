@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const (
@@ -76,9 +77,10 @@ type v3AuthApplicationCredential struct {
 // V3 Authentication response
 type v3AuthResponse struct {
 	Token struct {
-		Expires_At, Issued_At string
-		Methods               []string
-		Roles                 []struct {
+		ExpiresAt string `json:"expires_at"`
+		IssuedAt  string `json:"issued_at"`
+		Methods   []string
+		Roles     []struct {
 			Id, Name string
 			Links    struct {
 				Self string
@@ -283,6 +285,14 @@ func (auth *v3Auth) StorageUrlForEndpoint(endpointType EndpointType) string {
 
 func (auth *v3Auth) Token() string {
 	return auth.Headers.Get("X-Subject-Token")
+}
+
+func (auth *v3Auth) Expires() time.Time {
+	t, err := time.Parse(time.RFC3339, auth.Auth.Token.ExpiresAt)
+	if err != nil {
+		return time.Time{} // return Zero if not parsed
+	}
+	return t
 }
 
 func (auth *v3Auth) CdnUrl() string {
