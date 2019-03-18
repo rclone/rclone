@@ -188,8 +188,8 @@ func rcJobStatus(in Params) (out Params, err error) {
 	defer job.mu.Unlock()
 	out = make(Params)
 	err = Reshape(&out, job)
-	if job == nil {
-		return nil, errors.New("Reshape failed in job status")
+	if err != nil {
+		return nil, errors.Wrap(err, "reshape failed in job status")
 	}
 	return out, nil
 }
