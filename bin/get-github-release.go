@@ -244,8 +244,10 @@ func getAssetFromReleasesPage(project string, matchName *regexp.Regexp) (assetUR
 				if a.Key == "href" {
 					if name := path.Base(a.Val); matchName.MatchString(name) && isOurOsArch(name) {
 						if u, err := rest.URLJoin(base, a.Val); err == nil {
-							assetName = name
-							assetURL = u.String()
+							if assetName == "" {
+								assetName = name
+								assetURL = u.String()
+							}
 						}
 					}
 					break
