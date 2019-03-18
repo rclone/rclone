@@ -61,10 +61,7 @@ racequicktest:
 
 # Do source code quality checks
 check:	rclone
-	@# we still run go vet for -printfuncs which golangci-lint doesn't do yet
-	@# see: https://github.com/golangci/golangci-lint/issues/204
 	@echo "-- START CODE QUALITY REPORT -------------------------------"
-	@go vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf ./...
 	@golangci-lint run $(LINTTAGS) ./...
 	@echo "-- END CODE QUALITY REPORT ---------------------------------"
 
