@@ -708,9 +708,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			id := info.GetID()
 			f.dirCache.Put(remote, id)
 			d := fs.NewDir(remote, time.Time(info.GetLastModifiedDateTime())).SetID(id)
-			if folder != nil {
-				d.SetItems(folder.ChildCount)
-			}
+			d.SetItems(folder.ChildCount)
 			entries = append(entries, d)
 		} else {
 			o, err := f.newObjectWithInfo(remote, info)
@@ -824,9 +822,6 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 		return err
 	}
 	f.dirCache.FlushDir(dir)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
