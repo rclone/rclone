@@ -247,3 +247,4 @@ Contributors
   * Fionera <fionera@fionera.de>
   * Dan Walters <dan@walters.io>
   * Danil Semelenov <sgtpep@users.noreply.github.com>
+  * xopez <28950736+xopez@users.noreply.github.com>
