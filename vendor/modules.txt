@@ -108,7 +108,7 @@ github.com/kr/fs
 github.com/mattn/go-runewidth
 # github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 github.com/ncw/go-acd
-# github.com/ncw/swift v1.0.46
+# github.com/ncw/swift v1.0.47
 github.com/ncw/swift
 # github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d
 github.com/nsf/termbox-go
