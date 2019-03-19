@@ -194,6 +194,13 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		return nil
 	}
 
+	// If time has two timezones, eg Salesforce Commerce Cloud
+	// chop one of them off
+	// See: https://github.com/ncw/rclone/issues/3048
+	if strings.HasSuffix(v, "GMT-00:00") {
+		v = v[:len(v)-6]
+	}
+
 	// Parse the time format in multiple possible ways
 	var newT time.Time
 	for _, timeFormat := range timeFormats {
