@@ -14,7 +14,9 @@ func SetExpectContinueTimeout(tr *http.Transport, t time.Duration) {
 }
 
 func AddExpectAndTransferEncoding(req *http.Request, hasContentLength bool) {
-	req.Header.Add("Expect", "100-continue")
+	if req.Body != nil {
+		req.Header.Add("Expect", "100-continue")
+	}
 	if !hasContentLength {
 		req.TransferEncoding = []string{"chunked"}
 	}
