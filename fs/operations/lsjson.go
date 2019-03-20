@@ -23,6 +23,7 @@ type ListJSONItem struct {
 	Hashes        map[string]string `json:",omitempty"`
 	ID            string            `json:",omitempty"`
 	OrigID        string            `json:",omitempty"`
+	Tier          string            `json:",omitempty"`
 }
 
 // Timestamp a time in the provided format
@@ -91,6 +92,7 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 			return errors.Wrap(err, "ListJSON failed to make new crypt remote")
 		}
 	}
+	canGetTier := fsrc.Features().GetTier
 	format := formatForPrecision(fsrc.Precision())
 	err := walk.ListR(fsrc, remote, false, ConfigMaxDepth(opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
 		for _, entry := range entries {
@@ -161,6 +163,11 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 						} else if hash != "" {
 							item.Hashes[hashType.String()] = hash
 						}
+					}
+				}
+				if canGetTier {
+					if do, ok := x.(fs.GetTierer); ok {
+						item.Tier = do.GetTier()
 					}
 				}
 			default:
