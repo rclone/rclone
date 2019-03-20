@@ -678,8 +678,14 @@ func (ft *Features) Mask(f Fs) *Features {
 	// if mask.UnWrap == nil {
 	// 	ft.UnWrap = nil
 	// }
+	// if mask.Wrapper == nil {
+	// 	ft.Wrapper = nil
+	// }
 	if mask.DirCacheFlush == nil {
 		ft.DirCacheFlush = nil
+	}
+	if mask.PublicLink == nil {
+		ft.PublicLink = nil
 	}
 	if mask.PutUnchecked == nil {
 		ft.PutUnchecked = nil
