@@ -171,21 +171,6 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		CanHaveEmptyDirectories: true,
 	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
 
-	doChangeNotify := wrappedFs.Features().ChangeNotify
-	if doChangeNotify != nil {
-		f.features.ChangeNotify = func(notifyFunc func(string, fs.EntryType), pollInterval <-chan time.Duration) {
-			wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-				decrypted, err := f.DecryptFileName(path)
-				if err != nil {
-					fs.Logf(f, "ChangeNotify was unable to decrypt %q: %s", path, err)
-					return
-				}
-				notifyFunc(decrypted, entryType)
-			}
-			doChangeNotify(wrappedNotifyFunc, pollInterval)
-		}
-	}
-
 	return f, err
 }
 
@@ -648,6 +633,38 @@ func (f *Fs) DirCacheFlush() {
 	if do != nil {
 		do()
 	}
+}
+
+// ChangeNotify calls the passed function with a path
+// that has had changes. If the implementation
+// uses polling, it should adhere to the given interval.
+func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+	do := f.Fs.Features().ChangeNotify
+	if do == nil {
+		return
+	}
+	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
+		fs.Logf(f, "path %q entryType %d", path, entryType)
+		var (
+			err       error
+			decrypted string
+		)
+		switch entryType {
+		case fs.EntryDirectory:
+			decrypted, err = f.cipher.DecryptDirName(path)
+		case fs.EntryObject:
+			decrypted, err = f.cipher.DecryptFileName(path)
+		default:
+			fs.Errorf(path, "crypt ChangeNotify: ignoring unknown EntryType %d", entryType)
+			return
+		}
+		if err != nil {
+			fs.Logf(f, "ChangeNotify was unable to decrypt %q: %s", path, err)
+			return
+		}
+		notifyFunc(decrypted, entryType)
+	}
+	do(wrappedNotifyFunc, pollIntervalChan)
 }
 
 // Object describes a wrapped for being read from the Fs
