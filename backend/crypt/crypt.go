@@ -635,6 +635,20 @@ func (f *Fs) DirCacheFlush() {
 	}
 }
 
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(remote string) (string, error) {
+	do := f.Fs.Features().PublicLink
+	if do == nil {
+		return "", errors.New("PublicLink not supported")
+	}
+	o, err := f.NewObject(remote)
+	if err != nil {
+		// assume it is a directory
+		return do(f.cipher.EncryptDirName(remote))
+	}
+	return do(o.(*Object).Object.Remote())
+}
+
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
 // uses polling, it should adhere to the given interval.
@@ -838,6 +852,11 @@ var (
 	_ fs.UnWrapper       = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.Wrapper         = (*Fs)(nil)
+	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.ChangeNotifier  = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)
