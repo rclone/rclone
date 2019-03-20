@@ -1596,6 +1596,13 @@ func (l *ListFormat) AddOrigID() {
 	})
 }
 
+// AddTier adds file's Tier to the output if known
+func (l *ListFormat) AddTier() {
+	l.AppendOutput(func(entry *ListJSONItem) string {
+		return entry.Tier
+	})
+}
+
 // AddMimeType adds file's MimeType to the output if known
 func (l *ListFormat) AddMimeType() {
 	l.AppendOutput(func(entry *ListJSONItem) string {

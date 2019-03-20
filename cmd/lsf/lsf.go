@@ -70,6 +70,7 @@ output:
     o - Original ID of underlying object
     m - MimeType of object if known
     e - encrypted name
+    T - tier of storage if known, eg "Hot" or "Cool"
 
 So if you wanted the path, size and modification time, you would use
 --format "pst", or maybe --format "tsp" to put the path last.
@@ -191,6 +192,8 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 		case 'o':
 			list.AddOrigID()
 			opt.ShowOrigIDs = true
+		case 'T':
+			list.AddTier()
 		default:
 			return errors.Errorf("Unknown format character %q", char)
 		}
