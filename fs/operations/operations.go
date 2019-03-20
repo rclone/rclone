@@ -274,9 +274,14 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 		// is same underlying remote
 		actionTaken = "Copied (server side copy)"
 		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && f.Features().ServerSideAcrossConfigs)) {
+			// Check transfer limit for server side copies
+			if fs.Config.MaxTransfer >= 0 && accounting.Stats.GetBytes() >= int64(fs.Config.MaxTransfer) {
+				return nil, accounting.ErrorMaxTransferLimitReached
+			}
 			newDst, err = doCopy(src, remote)
 			if err == nil {
 				dst = newDst
+				accounting.Stats.Bytes(dst.Size()) // account the bytes for the server side transfer
 			}
 		} else {
 			err = fs.ErrorCantCopy
