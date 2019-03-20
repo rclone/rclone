@@ -202,6 +202,7 @@ type Options struct {
 // Fs represents a wrapped fs.Fs
 type Fs struct {
 	fs.Fs
+	wrapper  fs.Fs
 	name     string
 	root     string
 	opt      Options
@@ -544,6 +545,16 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// WrapFs returns the Fs that is wrapping this Fs
+func (f *Fs) WrapFs() fs.Fs {
+	return f.wrapper
+}
+
+// SetWrapper sets the Fs that is wrapping this Fs
+func (f *Fs) SetWrapper(wrapper fs.Fs) {
+	f.wrapper = wrapper
+}
+
 // EncryptFileName returns an encrypted file name
 func (f *Fs) EncryptFileName(fileName string) string {
 	return f.cipher.EncryptFileName(fileName)
@@ -614,6 +625,29 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr 
 	}
 
 	return m.Sums()[hashType], nil
+}
+
+// MergeDirs merges the contents of all the directories passed
+// in into the first one and rmdirs the other directories.
+func (f *Fs) MergeDirs(dirs []fs.Directory) error {
+	do := f.Fs.Features().MergeDirs
+	if do == nil {
+		return errors.New("MergeDirs not supported")
+	}
+	out := make([]fs.Directory, len(dirs))
+	for i, dir := range dirs {
+		out[i] = fs.NewDirCopy(dir).SetRemote(f.cipher.EncryptDirName(dir.Remote()))
+	}
+	return do(out)
+}
+
+// DirCacheFlush resets the directory cache - used in testing
+// as an optional interface
+func (f *Fs) DirCacheFlush() {
+	do := f.Fs.Features().DirCacheFlush
+	if do != nil {
+		do()
+	}
 }
 
 // Object describes a wrapped for being read from the Fs
