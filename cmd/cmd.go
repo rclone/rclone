@@ -230,22 +230,31 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	SigInfoHandler()
 	for try := 1; try <= *retries; try++ {
 		err = f()
-		if !Retry || (err == nil && !accounting.Stats.Errored()) {
+		fs.CountError(err)
+		if !Retry || !accounting.Stats.Errored() {
 			if try > 1 {
 				fs.Errorf(nil, "Attempt %d/%d succeeded", try, *retries)
 			}
 			break
 		}
-		if fserrors.IsFatalError(err) || accounting.Stats.HadFatalError() {
+		if accounting.Stats.HadFatalError() {
 			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
-		if fserrors.IsNoRetryError(err) || (accounting.Stats.Errored() && !accounting.Stats.HadRetryError()) {
+		if accounting.Stats.Errored() && !accounting.Stats.HadRetryError() {
 			fs.Errorf(nil, "Can't retry this error - not attempting retries")
 			break
 		}
-		if err != nil {
-			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.Stats.GetErrors(), err)
+		if retryAfter := accounting.Stats.RetryAfter(); !retryAfter.IsZero() {
+			d := retryAfter.Sub(time.Now())
+			if d > 0 {
+				fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
+				time.Sleep(d)
+			}
+		}
+		lastErr := accounting.Stats.GetLastError()
+		if lastErr != nil {
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.Stats.GetErrors(), lastErr)
 		} else {
 			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, *retries, accounting.Stats.GetErrors())
 		}

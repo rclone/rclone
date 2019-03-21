@@ -15,6 +15,7 @@ import (
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fstest"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
@@ -468,7 +469,7 @@ func TestSyncIgnoreErrors(t *testing.T) {
 	)
 
 	accounting.Stats.ResetCounters()
-	fs.CountError(nil)
+	fs.CountError(errors.New("boom"))
 	assert.NoError(t, Sync(r.Fremote, r.Flocal, false))
 
 	fstest.CheckListingWithPrecision(
@@ -778,7 +779,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	)
 
 	accounting.Stats.ResetCounters()
-	fs.CountError(nil)
+	fs.CountError(errors.New("boom"))
 	err := Sync(r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 

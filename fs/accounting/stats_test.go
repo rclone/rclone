@@ -2,9 +2,12 @@ package accounting
 
 import (
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,4 +51,69 @@ func TestPercentage(t *testing.T) {
 	assert.Equal(t, percent(100, -100), "-")
 	assert.Equal(t, percent(-100, 100), "-")
 	assert.Equal(t, percent(-100, -100), "-")
+}
+
+func TestStatsError(t *testing.T) {
+	s := NewStats()
+	assert.Equal(t, int64(0), s.GetErrors())
+	assert.False(t, s.HadFatalError())
+	assert.False(t, s.HadRetryError())
+	assert.Equal(t, time.Time{}, s.RetryAfter())
+	assert.Equal(t, nil, s.GetLastError())
+	assert.False(t, s.Errored())
+
+	t0 := time.Now()
+	t1 := t0.Add(time.Second)
+
+	s.Error(nil)
+	assert.Equal(t, int64(0), s.GetErrors())
+	assert.False(t, s.HadFatalError())
+	assert.False(t, s.HadRetryError())
+	assert.Equal(t, time.Time{}, s.RetryAfter())
+	assert.Equal(t, nil, s.GetLastError())
+	assert.False(t, s.Errored())
+
+	s.Error(io.EOF)
+	assert.Equal(t, int64(1), s.GetErrors())
+	assert.False(t, s.HadFatalError())
+	assert.True(t, s.HadRetryError())
+	assert.Equal(t, time.Time{}, s.RetryAfter())
+	assert.Equal(t, io.EOF, s.GetLastError())
+	assert.True(t, s.Errored())
+
+	e := fserrors.ErrorRetryAfter(t0)
+	s.Error(e)
+	assert.Equal(t, int64(2), s.GetErrors())
+	assert.False(t, s.HadFatalError())
+	assert.True(t, s.HadRetryError())
+	assert.Equal(t, t0, s.RetryAfter())
+	assert.Equal(t, e, s.GetLastError())
+
+	err := errors.Wrap(fserrors.ErrorRetryAfter(t1), "potato")
+	s.Error(err)
+	assert.Equal(t, int64(3), s.GetErrors())
+	assert.False(t, s.HadFatalError())
+	assert.True(t, s.HadRetryError())
+	assert.Equal(t, t1, s.RetryAfter())
+	assert.Equal(t, t1, fserrors.RetryAfterErrorTime(err))
+
+	s.Error(fserrors.FatalError(io.EOF))
+	assert.Equal(t, int64(4), s.GetErrors())
+	assert.True(t, s.HadFatalError())
+	assert.True(t, s.HadRetryError())
+	assert.Equal(t, t1, s.RetryAfter())
+
+	s.ResetErrors()
+	assert.Equal(t, int64(0), s.GetErrors())
+	assert.False(t, s.HadFatalError())
+	assert.False(t, s.HadRetryError())
+	assert.Equal(t, time.Time{}, s.RetryAfter())
+	assert.Equal(t, nil, s.GetLastError())
+	assert.False(t, s.Errored())
+
+	s.Error(fserrors.NoRetryError(io.EOF))
+	assert.Equal(t, int64(1), s.GetErrors())
+	assert.False(t, s.HadFatalError())
+	assert.False(t, s.HadRetryError())
+	assert.Equal(t, time.Time{}, s.RetryAfter())
 }

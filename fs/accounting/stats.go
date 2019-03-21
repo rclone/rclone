@@ -74,6 +74,7 @@ type StatsInfo struct {
 	lastError         error
 	fatalError        bool
 	retryError        bool
+	retryAfter        time.Time
 	checks            int64
 	checking          *stringSet
 	checkQueue        int
@@ -373,6 +374,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.lastError = nil
 	s.fatalError = false
 	s.retryError = false
+	s.retryAfter = time.Time{}
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
@@ -386,6 +388,7 @@ func (s *StatsInfo) ResetErrors() {
 	s.lastError = nil
 	s.fatalError = false
 	s.retryError = false
+	s.retryAfter = time.Time{}
 }
 
 // Errored returns whether there have been any errors
@@ -397,6 +400,9 @@ func (s *StatsInfo) Errored() bool {
 
 // Error adds a single error into the stats, assigns lastError and eventually sets fatalError or retryError
 func (s *StatsInfo) Error(err error) {
+	if err == nil {
+		return
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.errors++
@@ -404,9 +410,23 @@ func (s *StatsInfo) Error(err error) {
 	switch {
 	case fserrors.IsFatalError(err):
 		s.fatalError = true
+	case fserrors.IsRetryAfterError(err):
+		retryAfter := fserrors.RetryAfterErrorTime(err)
+		if s.retryAfter.IsZero() || retryAfter.Sub(s.retryAfter) > 0 {
+			s.retryAfter = retryAfter
+		}
+		s.retryError = true
 	case !fserrors.IsNoRetryError(err):
 		s.retryError = true
 	}
+}
+
+// RetryAfter returns the time to retry after if it is set.  It will
+// be Zero if it isn't set.
+func (s *StatsInfo) RetryAfter() time.Time {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.retryAfter
 }
 
 // Checking adds a check into the stats
