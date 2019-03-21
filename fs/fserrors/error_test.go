@@ -8,6 +8,7 @@ import (
 	"os"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -142,4 +143,22 @@ func TestShouldRetry(t *testing.T) {
 		got := ShouldRetry(test.err)
 		assert.Equal(t, test.want, got, fmt.Sprintf("test #%d: %v", i, test.err))
 	}
+}
+
+func TestRetryAfter(t *testing.T) {
+	e := NewErrorRetryAfter(time.Second)
+	after := e.RetryAfter()
+	dt := after.Sub(time.Now())
+	assert.True(t, dt >= 900*time.Millisecond && dt <= 1100*time.Millisecond)
+	assert.True(t, IsRetryAfterError(e))
+	assert.False(t, IsRetryAfterError(io.EOF))
+	assert.Equal(t, time.Time{}, RetryAfterErrorTime(io.EOF))
+	assert.False(t, IsRetryAfterError(nil))
+	assert.Contains(t, e.Error(), "try again after")
+
+	t0 := time.Now()
+	err := errors.Wrap(ErrorRetryAfter(t0), "potato")
+	assert.Equal(t, t0, RetryAfterErrorTime(err))
+	assert.True(t, IsRetryAfterError(err))
+	assert.Contains(t, e.Error(), "try again after")
 }

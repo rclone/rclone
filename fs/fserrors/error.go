@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -164,6 +165,58 @@ func IsNoRetryError(err error) bool {
 		return r.NoRetry()
 	}
 	return false
+}
+
+// RetryAfter is an optional interface for error as to whether the
+// operation should be retried after a given delay
+//
+// This should be returned from Update or Put methods as required and
+// will cause the entire sync to be retried after a delay.
+type RetryAfter interface {
+	error
+	RetryAfter() time.Time
+}
+
+// ErrorRetryAfter is an error which expresses a time that should be
+// waited for until trying again
+type ErrorRetryAfter time.Time
+
+// NewErrorRetryAfter returns an ErrorRetryAfter with the given
+// duration as an endpoint
+func NewErrorRetryAfter(d time.Duration) ErrorRetryAfter {
+	return ErrorRetryAfter(time.Now().Add(d))
+}
+
+// Error returns the textual version of the error
+func (e ErrorRetryAfter) Error() string {
+	return fmt.Sprintf("try again after %v (%v)", time.Time(e).Format(time.RFC3339Nano), time.Time(e).Sub(time.Now()))
+}
+
+// RetryAfter returns the time the operation should be retried at or
+// after
+func (e ErrorRetryAfter) RetryAfter() time.Time {
+	return time.Time(e)
+}
+
+// Check interface
+var _ RetryAfter = ErrorRetryAfter{}
+
+// RetryAfterErrorTime returns the time that the RetryAfter error
+// indicates or a Zero time.Time
+func RetryAfterErrorTime(err error) time.Time {
+	if err == nil {
+		return time.Time{}
+	}
+	_, err = Cause(err)
+	if do, ok := err.(RetryAfter); ok {
+		return do.RetryAfter()
+	}
+	return time.Time{}
+}
+
+// IsRetryAfterError returns true if err is an ErrorRetryAfter
+func IsRetryAfterError(err error) bool {
+	return !RetryAfterErrorTime(err).IsZero()
 }
 
 // Cause is a souped up errors.Cause which can unwrap some standard
