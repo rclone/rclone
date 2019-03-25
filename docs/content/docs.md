@@ -68,7 +68,7 @@ Subcommands
 
 rclone uses a system of subcommands.  For example
 
-    rclone ls remote:path # lists a re
+    rclone ls remote:path # lists a remote
     rclone copy /local/path remote:path # copies /local/path to the remote
     rclone sync /local/path remote:path # syncs /local/path to the remote
 
