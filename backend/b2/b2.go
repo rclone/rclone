@@ -1213,7 +1213,7 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
 	if err != nil {
 		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
-		return err
+		return nil
 	}
 	o.modTime = time.Unix(unixMilliseconds/1E3, (unixMilliseconds%1E3)*1E6).UTC()
 	return nil
