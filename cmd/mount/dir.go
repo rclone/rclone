@@ -37,6 +37,8 @@ func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Crtime = modTime
 	// FIXME include Valid so get some caching?
 	// FIXME fs.Debugf(d.path, "Dir.Attr %+v", a)
+	a.Size = 512
+	a.Blocks = 1
 	return nil
 }
 
