@@ -1872,6 +1872,9 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		remote = remote[:len(remote)-len(ext)]
 	}
 
+	// Look to see if there is an existing object
+	existingObject, _ := f.NewObject(remote)
+
 	createInfo, err := f.createFileInfo(remote, src.ModTime())
 	if err != nil {
 		return nil, err
@@ -1889,7 +1892,17 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return f.newObjectWithInfo(remote, info)
+	newObject, err := f.newObjectWithInfo(remote, info)
+	if err != nil {
+		return nil, err
+	}
+	if existingObject != nil {
+		err = existingObject.Remove()
+		if err != nil {
+			fs.Errorf(existingObject, "Failed to remove existing object after copy: %v", err)
+		}
+	}
+	return newObject, nil
 }
 
 // Purge deletes all the files and the container
