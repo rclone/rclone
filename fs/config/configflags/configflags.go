@@ -87,6 +87,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &fs.Config.MaxTransfer, "max-transfer", "", "Maximum size of data to transfer.")
 	flags.IntVarP(flagSet, &fs.Config.MaxBacklog, "max-backlog", "", fs.Config.MaxBacklog, "Maximum number of objects in sync or check backlog.")
 	flags.BoolVarP(flagSet, &fs.Config.StatsOneLine, "stats-one-line", "", fs.Config.StatsOneLine, "Make the stats fit on one line.")
+	flags.BoolVarP(flagSet, &fs.Config.StatsOneLineDate, "stats-one-line-date", "", fs.Config.StatsOneLineDate, "Enables --stats-one-line and add current date/time prefix.")
+	flags.StringVarP(flagSet, &fs.Config.StatsOneLineDateFormat, "stats-one-line-date-format", "", fs.Config.StatsOneLineDateFormat, "Enables --stats-one-line-date and uses custom formatted date. Enclose date string in double quotes (\"). See https://golang.org/pkg/time/#Time.Format")
 	flags.BoolVarP(flagSet, &fs.Config.Progress, "progress", "P", fs.Config.Progress, "Show progress during transfer.")
 	flags.BoolVarP(flagSet, &fs.Config.Cookie, "use-cookies", "", fs.Config.Cookie, "Enable session cookiejar.")
 	flags.BoolVarP(flagSet, &fs.Config.UseMmap, "use-mmap", "", fs.Config.UseMmap, "Use mmap allocator (see docs).")
@@ -147,6 +149,15 @@ func SetFlags() {
 
 	if fs.Config.Suffix != "" && fs.Config.BackupDir == "" {
 		log.Fatalf(`Can only use --suffix with --backup-dir.`)
+	}
+
+	switch {
+	case len(fs.Config.StatsOneLineDateFormat) > 0:
+		fs.Config.StatsOneLineDate = true
+		fs.Config.StatsOneLine = true
+	case fs.Config.StatsOneLineDate:
+		fs.Config.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
+		fs.Config.StatsOneLine = true
 	}
 
 	if bindAddr != "" {
