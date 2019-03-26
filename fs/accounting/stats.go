@@ -216,6 +216,7 @@ func (s *StatsInfo) String() string {
 		currentSize  = s.bytes
 		buf          = &bytes.Buffer{}
 		xfrchkString = ""
+		dateString   = ""
 	)
 
 	if !fs.Config.StatsOneLine {
@@ -231,9 +232,14 @@ func (s *StatsInfo) String() string {
 		if len(xfrchk) > 0 {
 			xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
 		}
+		if fs.Config.StatsOneLineDate {
+			t := time.Now()
+			dateString = t.Format(fs.Config.StatsOneLineDateFormat) // Including the separator so people can customize it
+		}
 	}
 
-	_, _ = fmt.Fprintf(buf, "%10s / %s, %s, %s, ETA %s%s",
+	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s",
+		dateString,
 		fs.SizeSuffix(s.bytes),
 		fs.SizeSuffix(totalSize).Unit("Bytes"),
 		percent(s.bytes, totalSize),
