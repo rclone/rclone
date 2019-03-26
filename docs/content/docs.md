@@ -800,6 +800,18 @@ section](#logging) for more info on log levels.
 When this is specified, rclone condenses the stats into a single line
 showing the most important stats only.
 
+### --stats-one-line-date ###
+
+When this is specified, rclone enables the single-line stats and prepends
+the display with a date string. The default is `2006/01/02 15:04:05 - `
+
+### --stats-one-line-date-format ###
+
+When this is specified, rclone enables the single-line stats and prepends
+the display with a user-supplied date string. The date string MUST be
+enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
+date formatting syntax.
+
 ### --stats-unit=bits|bytes ###
 
 By default, data transfer rates will be printed in bytes/second.
