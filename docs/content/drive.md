@@ -162,7 +162,7 @@ directories.
 ### Root folder ID ###
 
 You can set the `root_folder_id` for rclone.  This is the directory
-(identified by its `Folder ID`) that rclone considers to be a the root
+(identified by its `Folder ID`) that rclone considers to be the root
 of your drive.
 
 Normally you will leave this blank and rclone will determine the
@@ -321,7 +321,7 @@ docs](/docs/#fast-list) for more details.
 It does this by combining multiple `list` calls into a single API request.
 
 This works by combining many `'%s' in parents` filters into one expression.
-To list the contents of directories a, b and c, the the following requests will be send by the regular `List` function:
+To list the contents of directories a, b and c, the following requests will be send by the regular `List` function:
 ```
 trashed=false and 'a' in parents
 trashed=false and 'b' in parents
@@ -407,7 +407,7 @@ pdf`, or if you prefer openoffice/libreoffice formats you might use
 `--drive-export-formats ods,odt,odp`.
 
 Note that rclone adds the extension to the google doc, so if it is
-calles `My Spreadsheet` on google docs, it will be exported as `My
+called `My Spreadsheet` on google docs, it will be exported as `My
 Spreadsheet.xlsx` or `My Spreadsheet.pdf` etc.
 
 When importing files into Google Drive, rclone will conververt all
@@ -417,7 +417,7 @@ rclone will not convert any files by default, since the conversion
 is lossy process.
 
 The conversion must result in a file with the same extension when
-the `--drive-export-formats` rules are applied to the uploded document.
+the `--drive-export-formats` rules are applied to the uploaded document.
 
 Here are some examples for allowed and prohibited conversions.
 
@@ -434,7 +434,7 @@ Here are some examples for allowed and prohibited conversions.
 This limitation can be disabled by specifying `--drive-allow-import-name-change`.
 When using this flag, rclone can convert multiple files types resulting
 in the same document type at once, eg with `--drive-import-formats docx,odt,txt`,
-all files having these extension would result in a doument represented as a docx file.
+all files having these extension would result in a document represented as a docx file.
 This brings the additional risk of overwriting a document, if multiple files
 have the same stem. Many rclone operations will not handle this name change
 in any way. They assume an equal name when copying files and might copy the
@@ -446,7 +446,7 @@ listed here. Some of these additional ones might only be available when
 the operating system provides the correct MIME type entries.
 
 This list can be changed by Google Drive at any time and might not
-represent the currently available converions.
+represent the currently available conversions.
 
 | Extension | Mime Type | Description |
 | --------- |-----------| ------------|
@@ -470,8 +470,8 @@ represent the currently available converions.
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
-Google douments can also be exported as link files. These files will
-open a browser window for the Google Docs website of that dument
+Google documents can also be exported as link files. These files will
+open a browser window for the Google Docs website of that document
 when opened. The link file extension has to be specified as a
 `--drive-export-formats` parameter. They will match all available
 Google Documents.

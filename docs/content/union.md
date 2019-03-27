@@ -20,7 +20,7 @@ The last remote is the topmost remote and replaces files with the same name from
 
 Only the last remote is used to write to and delete from, all other remotes are read-only.
 
-Subfolders can be used in target remote. Asume a union remote named `backup`
+Subfolders can be used in target remote. Assume a union remote named `backup`
 with the remotes `mydrive:private/backup mydrive2:/backup`. Invoking `rclone mkdir backup:desktop`
 is exactly the same as invoking `rclone mkdir mydrive2:/backup/desktop`.
 

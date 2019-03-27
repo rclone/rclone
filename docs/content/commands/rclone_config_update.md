@@ -18,7 +18,7 @@ For example to update the env_auth field of a remote of name myremote you would 
 
     rclone config update myremote swift env_auth true
 
-If the remote uses oauth the token will be updated, if you don't
+If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
     rclone config update myremote swift env_auth true config_refresh_token false

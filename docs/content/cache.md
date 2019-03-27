@@ -262,7 +262,7 @@ There is an issue with wrapping the remotes in this order:
 During testing, I experienced a lot of bans with the remotes in this order.
 I suspect it might be related to how crypt opens files on the cloud provider
 which makes it think we're downloading the full file instead of small chunks.
-Organizing the remotes in this order yelds better results:
+Organizing the remotes in this order yields better results:
 <span style="color:green">**cloud remote** -> **cache** -> **crypt**</span>
 
 #### absolute remote paths ####

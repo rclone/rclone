@@ -577,7 +577,7 @@ Eg
         37600 fubuwic
 
 
-Any of the filtering options can be applied to this commmand.
+Any of the filtering options can be applied to this command.
 
 There are several related list commands
 

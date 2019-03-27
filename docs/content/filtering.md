@@ -60,7 +60,7 @@ A `?` matches any character except a slash `/`.
           - matches "lass"
           - doesn't match "floss"
 
-A `[` and `]` together make a a character class, such as `[a-z]` or
+A `[` and `]` together make a character class, such as `[a-z]` or
 `[aeiou]` or `[[:alpha:]]`.  See the [go regexp
 docs](https://golang.org/pkg/regexp/syntax/) for more info on these.
 

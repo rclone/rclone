@@ -15,7 +15,7 @@ eg `remote:directory/subdirectory` or `/directory/subdirectory`.
 During the initial setup with `rclone config` you will specify the target
 remote. The target remote can either be a local path or another remote.
 
-Subfolders can be used in target remote. Asume a alias remote named `backup`
+Subfolders can be used in target remote. Assume a alias remote named `backup`
 with the target `mydrive:private/backup`. Invoking `rclone mkdir backup:desktop`
 is exactly the same as invoking `rclone mkdir mydrive:private/backup/desktop`.
 
