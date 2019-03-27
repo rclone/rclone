@@ -11,8 +11,8 @@ Copy url content to dest.
 ### Synopsis
 
 
-Download urls content and copy it to destination 
-without saving it in tmp storage.
+Download url's content and copy it to destination 
+without saving it in temporary storage.
 
 
 ```

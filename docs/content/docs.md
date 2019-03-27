@@ -348,7 +348,7 @@ It is also possible to specify a "timetable" of limits, which will cause
 certain limits to be applied at certain times. To specify a timetable, format your
 entries as "WEEKDAY-HH:MM,BANDWIDTH WEEKDAY-HH:MM,BANDWIDTH..." where:
 WEEKDAY is optional element.
-It could be writen as whole world or only using 3 first characters.
+It could be written as whole world or only using 3 first characters.
 HH:MM is an hour from 00:00 to 23:59.
 
 An example of a typical timetable to avoid link saturation during daytime
@@ -366,7 +366,7 @@ An example of timetable with WEEKDAY could be:
 
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
 
-It mean that, the transfer bandwidh will be set to 512kBytes/sec on Monday.
+It mean that, the transfer bandwidth will be set to 512kBytes/sec on Monday.
 It will raise to 10Mbytes/s before the end of Friday. 
 At 10:00 on Sunday it will be set to 1Mbyte/s.
 From 20:00 at Sunday will be unlimited.

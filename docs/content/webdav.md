@@ -100,7 +100,7 @@ Plain WebDAV does not support modified times.  However when used with
 Owncloud or Nextcloud rclone will support modified times.
 
 Likewise plain WebDAV does not support hashes, however when used with
-Owncloud or Nexcloud rclone will support SHA1 and MD5 hashes.
+Owncloud or Nextcloud rclone will support SHA1 and MD5 hashes.
 Depending on the exact version of Owncloud or Nextcloud hashes may
 appear on all objects, or only on objects which had a hash uploaded
 with them.
