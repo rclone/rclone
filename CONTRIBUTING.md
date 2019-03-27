@@ -135,7 +135,7 @@ then change into the project root and run
 
     make test
 
-This command is run daily on the the integration test server. You can
+This command is run daily on the integration test server. You can
 find the results at https://pub.rclone.org/integration-tests/
 
 ## Code Organisation ##

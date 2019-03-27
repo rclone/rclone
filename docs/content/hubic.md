@@ -122,7 +122,7 @@ The modified time is stored as metadata on the object as
 `X-Object-Meta-Mtime` as floating point since the epoch accurate to 1
 ns.
 
-This is a defacto standard (used in the official python-swiftclient
+This is a de facto standard (used in the official python-swiftclient
 amongst others) for storing the modification time for an object.
 
 Note that Hubic wraps the Swift backend, so most of the properties of

@@ -173,9 +173,9 @@ excess files in the container.
 
     rclone sync /home/local/directory remote:container
 
-### Configuration from an Openstack credentials file ###
+### Configuration from an OpenStack credentials file ###
 
-An Opentstack credentials file typically looks something something
+An OpenStack credentials file typically looks something something
 like this (without the comments)
 
 ```

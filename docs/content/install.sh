@@ -2,7 +2,7 @@
 
 # error codes
 # 0 - exited without problems
-# 1 - parameters not supported were used or some unexpected error occured
+# 1 - parameters not supported were used or some unexpected error occurred
 # 2 - OS not supported by this script
 # 3 - installed version of rclone is up to date
 # 4 - supported unzip tools are not available
@@ -142,7 +142,7 @@ esac
 cd $unzip_dir/*
 
 
-#mounting rclone to enviroment
+#mounting rclone to environment
 
 case $OS in
   'linux')
