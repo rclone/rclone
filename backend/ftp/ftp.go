@@ -345,11 +345,36 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "list")
 	}
-	files, err := c.List(path.Join(f.root, dir))
-	f.putFtpConnection(&c, err)
-	if err != nil {
-		return nil, translateErrorDir(err)
+
+	var listErr error
+	var files []*ftp.Entry
+
+	resultchan := make(chan []*ftp.Entry, 1)
+	errchan := make(chan error, 1)
+	go func() {
+		result, err := c.List(path.Join(f.root, dir))
+		f.putFtpConnection(&c, err)
+		if err != nil {
+			errchan <- err
+			return
+		}
+		resultchan <- result
+	}()
+
+	// Wait for List for up to Timeout seconds
+	timer := time.NewTimer(fs.Config.Timeout)
+	select {
+	case listErr = <-errchan:
+		timer.Stop()
+		return nil, translateErrorDir(listErr)
+	case files = <-resultchan:
+		timer.Stop()
+	case <-timer.C:
+		// if timer fired assume no error but connection dead
+		fs.Errorf(f, "Timeout when waiting for List")
+		return nil, errors.New("Timeout when waiting for List")
 	}
+
 	// Annoyingly FTP returns success for a directory which
 	// doesn't exist, so check it really doesn't exist if no
 	// entries found.
