@@ -653,6 +653,9 @@ isn't set then "acl" is used instead.`,
 			}, {
 				Value: "DEEP_ARCHIVE",
 				Help:  "Glacier Deep Archive storage class",
+			}, {
+				Value: "INTELLIGENT_TIERING",
+				Help:  "Intelligent-Tiering storage class",
 			}},
 		}, {
 			// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
