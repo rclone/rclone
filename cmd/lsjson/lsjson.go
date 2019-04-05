@@ -23,6 +23,8 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
 	commandDefintion.Flags().BoolVarP(&opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names.")
 	commandDefintion.Flags().BoolVarP(&opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
+	commandDefintion.Flags().BoolVarP(&opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
+	commandDefintion.Flags().BoolVarP(&opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing.")
 }
 
 var commandDefintion = &cobra.Command{
@@ -54,6 +56,10 @@ If --hash is not specified the Hashes property won't be emitted.
 If --no-modtime is specified then ModTime will be blank.
 
 If --encrypted is not specified the Encrypted won't be emitted.
+
+If --dirs-only is not specified files in addition to directories are returned
+
+If --files-only is not specified directories in addition to the files will be returned.
 
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
