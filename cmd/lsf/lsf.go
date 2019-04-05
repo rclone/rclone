@@ -164,6 +164,8 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 	list.SetAbsolute(absolute)
 	var opt = operations.ListJSONOpt{
 		NoModTime: true,
+		DirsOnly:  dirsOnly,
+		FilesOnly: filesOnly,
 		Recurse:   recurse,
 	}
 
@@ -195,15 +197,6 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 	}
 
 	return operations.ListJSON(fsrc, "", &opt, func(item *operations.ListJSONItem) error {
-		if item.IsDir {
-			if filesOnly {
-				return nil
-			}
-		} else {
-			if dirsOnly {
-				return nil
-			}
-		}
 		_, _ = fmt.Fprintln(out, list.Format(item))
 		return nil
 	})
