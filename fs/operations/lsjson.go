@@ -70,6 +70,8 @@ type ListJSONOpt struct {
 	ShowEncrypted bool `json:"showEncrypted"`
 	ShowOrigIDs   bool `json:"showOrigIDs"`
 	ShowHash      bool `json:"showHash"`
+	DirsOnly      bool `json:"dirsOnly"`
+	FilesOnly     bool `json:"filesOnly"`
 }
 
 // ListJSON lists fsrc using the options in opt calling callback for each item
@@ -91,6 +93,19 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 	format := formatForPrecision(fsrc.Precision())
 	err := walk.ListR(fsrc, remote, false, ConfigMaxDepth(opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
 		for _, entry := range entries {
+			switch entry.(type) {
+			case fs.Directory:
+				if opt.FilesOnly {
+					continue
+				}
+			case fs.Object:
+				if opt.DirsOnly {
+					continue
+				}
+			default:
+				fs.Errorf(nil, "Unknown type %T in listing", entry)
+			}
+
 			item := ListJSONItem{
 				Path:     entry.Remote(),
 				Name:     path.Base(entry.Remote()),
