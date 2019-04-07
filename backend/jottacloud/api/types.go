@@ -314,3 +314,9 @@ type UploadResponse struct {
 	Deleted   interface{} `json:"deleted"`
 	Mime      string      `json:"mime"`
 }
+
+// DeviceRegistrationResponse is the response to registering a device
+type DeviceRegistrationResponse struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+}
