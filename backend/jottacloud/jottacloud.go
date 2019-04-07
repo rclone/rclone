@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -45,10 +46,14 @@ const (
 	apiURL                      = "https://api.jottacloud.com/files/v1/"
 	baseURL                     = "https://www.jottacloud.com/"
 	tokenURL                    = "https://api.jottacloud.com/auth/v1/token"
+	registerURL                 = "https://api.jottacloud.com/auth/v1/register"
 	cachePrefix                 = "rclone-jcmd5-"
 	rcloneClientID              = "nibfk8biu12ju7hpqomr8b1e40"
 	rcloneEncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
 	configUsername              = "user"
+	configClientID              = "client_id"
+	configClientSecret          = "client_secret"
+	charset                     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 var (
@@ -58,9 +63,7 @@ var (
 			AuthURL:  tokenURL,
 			TokenURL: tokenURL,
 		},
-		ClientID:     rcloneClientID,
-		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
-		RedirectURL:  oauthutil.RedirectLocalhostURL,
+		RedirectURL: oauthutil.RedirectLocalhostURL,
 	}
 )
 
@@ -79,6 +82,55 @@ func init() {
 				}
 			}
 
+			srv := rest.NewClient(fshttp.NewClient(fs.Config))
+
+			// ask if we should create a device specifc token: https://github.com/ncw/rclone/issues/2995
+			fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
+			if config.Confirm() {
+				// random generator to generate random device names
+				seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+				randonDeviceNamePartLength := 21
+				randomDeviceNamePart := make([]byte, randonDeviceNamePartLength)
+				for i := range randomDeviceNamePart {
+					randomDeviceNamePart[i] = charset[seededRand.Intn(len(charset))]
+				}
+				randomDeviceName := "rclone-" + string(randomDeviceNamePart)
+				fs.Debugf(nil, "Trying to register device '%s'", randomDeviceName)
+
+				values := url.Values{}
+				values.Set("device_id", randomDeviceName)
+
+				// all information comes from https://github.com/ttyridal/aiojotta/wiki/Jotta-protocol-3.-Authentication#token-authentication
+				opts := rest.Opts{
+					Method:       "POST",
+					RootURL:      registerURL,
+					ContentType:  "application/x-www-form-urlencoded",
+					ExtraHeaders: map[string]string{"Authorization": "Bearer c2xrZmpoYWRsZmFramhkc2xma2phaHNkbGZramhhc2xkZmtqaGFzZGxrZmpobGtq"},
+					Parameters:   values,
+				}
+
+				var deviceRegistration api.DeviceRegistrationResponse
+				_, err := srv.CallJSON(&opts, nil, &deviceRegistration)
+				if err != nil {
+					log.Fatalf("Failed to register device: %v", err)
+				}
+
+				m.Set(configClientID, deviceRegistration.ClientID)
+				m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
+				fs.Debugf(nil, "Got clientID '%s' and clientSecret '%s'", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
+			}
+
+			clientID, ok := m.Get(configClientID)
+			if !ok {
+				clientID = rcloneClientID
+			}
+			clientSecret, ok := m.Get(configClientSecret)
+			if !ok {
+				clientSecret = rcloneEncryptedClientSecret
+			}
+			oauthConfig.ClientID = clientID
+			oauthConfig.ClientSecret = obscure.MustReveal(clientSecret)
+
 			username, ok := m.Get(configUsername)
 			if !ok {
 				log.Fatalf("No username defined")
@@ -86,7 +138,6 @@ func init() {
 			password := config.GetPassword("Your Jottacloud password is only required during config and will not be stored.")
 
 			// prepare out token request with username and password
-			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 			values := url.Values{}
 			values.Set("grant_type", "PASSWORD")
 			values.Set("password", password)
@@ -380,6 +431,17 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = parsePath(root)
+
+	clientID, ok := m.Get(configClientID)
+	if !ok {
+		clientID = rcloneClientID
+	}
+	clientSecret, ok := m.Get(configClientSecret)
+	if !ok {
+		clientSecret = rcloneEncryptedClientSecret
+	}
+	oauthConfig.ClientID = clientID
+	oauthConfig.ClientSecret = obscure.MustReveal(clientSecret)
 
 	// add jottacloud to the long list of sites that don't follow the oauth spec correctly
 	oauth2.RegisterBrokenAuthHeaderProvider("https://www.jottacloud.com/")
