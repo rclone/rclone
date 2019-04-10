@@ -1,7 +1,7 @@
 ---
 language: go
 sudo: required
-dist: trusty
+dist: xenial
 os:
   - linux
 go_import_path: github.com/ncw/rclone
