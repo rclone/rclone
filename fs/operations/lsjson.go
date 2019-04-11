@@ -12,16 +12,17 @@ import (
 
 // ListJSONItem in the struct which gets marshalled for each line
 type ListJSONItem struct {
-	Path      string
-	Name      string
-	Encrypted string `json:",omitempty"`
-	Size      int64
-	MimeType  string    `json:",omitempty"`
-	ModTime   Timestamp //`json:",omitempty"`
-	IsDir     bool
-	Hashes    map[string]string `json:",omitempty"`
-	ID        string            `json:",omitempty"`
-	OrigID    string            `json:",omitempty"`
+	Path          string
+	Name          string
+	EncryptedPath string `json:",omitempty"`
+	Encrypted     string `json:",omitempty"`
+	Size          int64
+	MimeType      string    `json:",omitempty"`
+	ModTime       Timestamp //`json:",omitempty"`
+	IsDir         bool
+	Hashes        map[string]string `json:",omitempty"`
+	ID            string            `json:",omitempty"`
+	OrigID        string            `json:",omitempty"`
 }
 
 // Timestamp a time in the provided format
@@ -118,12 +119,13 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 			if cipher != nil {
 				switch entry.(type) {
 				case fs.Directory:
-					item.Encrypted = cipher.EncryptDirName(path.Base(entry.Remote()))
+					item.EncryptedPath = cipher.EncryptDirName(entry.Remote())
 				case fs.Object:
-					item.Encrypted = cipher.EncryptFileName(path.Base(entry.Remote()))
+					item.EncryptedPath = cipher.EncryptFileName(entry.Remote())
 				default:
 					fs.Errorf(nil, "Unknown type %T in listing", entry)
 				}
+				item.Encrypted = path.Base(item.EncryptedPath)
 			}
 			if do, ok := entry.(fs.IDer); ok {
 				item.ID = do.ID()
