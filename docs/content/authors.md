@@ -249,3 +249,4 @@ Contributors
   * Danil Semelenov <sgtpep@users.noreply.github.com>
   * xopez <28950736+xopez@users.noreply.github.com>
   * Ben Boeckel <mathstuf@gmail.com>
+  * Manu <manu@snapdragon.cc>
