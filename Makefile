@@ -24,6 +24,7 @@ BETA_UPLOAD := $(BETA_UPLOAD_ROOT)/$(BETA_PATH)
 # Pass in GOTAGS=xyz on the make command line to set build tags
 ifdef GOTAGS
 BUILDTAGS=-tags "$(GOTAGS)"
+LINTTAGS=--build-tags "$(GOTAGS)"
 endif
 
 .PHONY: rclone vars version
@@ -64,7 +65,7 @@ check:	rclone
 	@# see: https://github.com/golangci/golangci-lint/issues/204
 	@echo "-- START CODE QUALITY REPORT -------------------------------"
 	@go vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf ./...
-	@golangci-lint run ./...
+	@golangci-lint run $(LINTTAGS) ./...
 	@echo "-- END CODE QUALITY REPORT ---------------------------------"
 
 # Get the build dependencies

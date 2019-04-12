@@ -1,9 +1,5 @@
 # golangci-lint configuration options
 
-run:
-  build-tags:
-    - cmount
-
 linters:
   enable:
     - deadcode
