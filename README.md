@@ -7,7 +7,6 @@
 [Changelog](https://rclone.org/changelog/) |
 [Installation](https://rclone.org/install/) |
 [Forum](https://forum.rclone.org/) | 
-[G+](https://google.com/+RcloneOrg)
 
 [![Build Status](https://travis-ci.org/ncw/rclone.svg?branch=master)](https://travis-ci.org/ncw/rclone)
 [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/ncw/rclone?branch=master&passingText=windows%20-%20ok&svg=true)](https://ci.appveyor.com/project/ncw/rclone)
