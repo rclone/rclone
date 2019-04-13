@@ -491,7 +491,9 @@ Here are the standard options specific to drive (Google Drive).
 #### --drive-client-id
 
 Google Application Client Id
-Leave blank normally.
+Setting your own is recommended.
+See https://rclone.org/drive/#making-your-own-client-id for how to create your own.
+If you leave this blank, it will use an internal key which is low performance.
 
 - Config:      client_id
 - Env Var:     RCLONE_DRIVE_CLIENT_ID
@@ -501,7 +503,7 @@ Leave blank normally.
 #### --drive-client-secret
 
 Google Application Client Secret
-Leave blank normally.
+Setting your own is recommended.
 
 - Config:      client_secret
 - Env Var:     RCLONE_DRIVE_CLIENT_SECRET
@@ -605,6 +607,26 @@ If given, gdocs practically become invisible to rclone.
 
 - Config:      skip_gdocs
 - Env Var:     RCLONE_DRIVE_SKIP_GDOCS
+- Type:        bool
+- Default:     false
+
+#### --drive-skip-checksum-gphotos
+
+Skip MD5 checksum on Google photos and videos only.
+
+Use this if you get checksum errors when transferring Google photos or
+videos.
+
+Setting this flag will cause Google photos and videos to return a
+blank MD5 checksum.
+
+Google photos are identifed by being in the "photos" space.
+
+Corrupted checksums are caused by Google modifying the image/video but
+not updating the checksum.
+
+- Config:      skip_checksum_gphotos
+- Env Var:     RCLONE_DRIVE_SKIP_CHECKSUM_GPHOTOS
 - Type:        bool
 - Default:     false
 

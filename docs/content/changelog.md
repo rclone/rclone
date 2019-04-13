@@ -1,10 +1,96 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-02-09"
+date: "2019-04-13"
 ---
 
 # Changelog
+
+## v1.47.0 - 2019-04-13
+
+* New backends
+    * Backend for Koofr cloud storage service. (jaKa)
+* New Features
+    * Resume downloads if the reader fails in copy (Nick Craig-Wood)
+        * this means rclone will restart transfers if the source has an error
+        * this is most useful for downloads or cloud to cloud copies
+    * Use `--fast-list` for listing operations where it won't use more memory (Nick Craig-Wood)
+        * this should speed up the following operations on remotes which support `ListR`
+        * `dedupe`, `serve restic` `lsf`, `ls`, `lsl`, `lsjson`, `lsd`, `md5sum`, `sha1sum`, `hashsum`, `size`, `delete`, `cat`, `settier`
+        * use `--disable ListR` to get old behaviour if required
+    * Make `--files-from` traverse the destination unless `--no-traverse` is set (Nick Craig-Wood)
+        * this fixes `--files-from` with Google drive and excessive API use in general.
+    * Make server side copy account bytes and obey `--max-transfer` (Nick Craig-Wood)
+    * Add `--create-empty-src-dirs` flag and default to not creating empty dirs (ishuah)
+    * Add client side TLS/SSL flags `--ca-cert`/`--client-cert`/`--client-key` (Nick Craig-Wood)
+    * Implement `--suffix-keep-extension` for use with `--suffix` (Nick Craig-Wood)
+    * build:
+        * Switch to semvar compliant version tags to be go modules compliant (Nick Craig-Wood)
+        * Update to use go1.12.x for the build (Nick Craig-Wood)
+    * serve dlna: Add connection manager service description to improve compatibility (Dan Walters)
+    * lsf: Add 'e' format to show encrypted names and 'o' for original IDs (Nick Craig-Wood)
+    * lsjson: Added `--files-only` and `--dirs-only` flags (calistri)
+    * rc: Implement operations/publiclink the equivalent of `rclone link` (Nick Craig-Wood)
+* Bug Fixes
+    * accounting: Fix total ETA when `--stats-unit bits` is in effect (Nick Craig-Wood)
+    * Bash TAB completion
+        * Use private custom func to fix clash between rclone and kubectl (Nick Craig-Wood)
+        * Fix for remotes with underscores in their names (Six)
+        * Fix completion of remotes (Florian Gamböck)
+        * Fix autocompletion of remote paths with spaces (Danil Semelenov)
+    * serve dlna: Fix root XML service descriptor (Dan Walters)
+    * ncdu: Fix display corruption with Chinese characters (Nick Craig-Wood)
+    * Add SIGTERM to signals which run the exit handlers on unix (Nick Craig-Wood)
+    * rc: Reload filter when the options are set via the rc (Nick Craig-Wood)
+* VFS / Mount
+    * Fix FreeBSD: Ignore Truncate if called with no readers and already the correct size (Nick Craig-Wood)
+    * Read directory and check for a file before mkdir (Nick Craig-Wood)
+    * Shorten the locking window for vfs/refresh (Nick Craig-Wood)
+* Azure Blob
+    * Enable MD5 checksums when uploading files bigger than the "Cutoff" (Dr.Rx)
+    * Fix SAS URL support (Nick Craig-Wood)
+* B2
+    * Allow manual configuration of backblaze downloadUrl (Vince)
+    * Ignore already_hidden error on remove (Nick Craig-Wood)
+    * Ignore malformed `src_last_modified_millis` (Nick Craig-Wood)
+* Drive
+    * Add `--skip-checksum-gphotos` to ignore incorrect checksums on Google Photos (Nick Craig-Wood)
+    * Allow server side move/copy between different remotes. (Fionera)
+    * Add docs on team drives and `--fast-list` eventual consistency (Nestar47)
+    * Fix imports of text files (Nick Craig-Wood)
+    * Fix range requests on 0 length files (Nick Craig-Wood)
+    * Fix creation of duplicates with server side copy (Nick Craig-Wood)
+* Dropbox
+    * Retry blank errors to fix long listings (Nick Craig-Wood)
+* FTP
+    * Add `--ftp-concurrency` to limit maximum number of connections (Nick Craig-Wood)
+* Google Cloud Storage
+    * Fall back to default application credentials (marcintustin)
+    * Allow bucket policy only buckets (Nick Craig-Wood)
+* HTTP
+    * Add `--http-no-slash` for websites with directories with no slashes (Nick Craig-Wood)
+    * Remove duplicates from listings (Nick Craig-Wood)
+    * Fix socket leak on 404 errors (Nick Craig-Wood)
+* Jottacloud
+    * Fix token refresh (Sebastian Bünger)
+    * Add device registration (Oliver Heyme)
+* Onedrive
+    * Implement graceful cancel of multipart uploads if rclone is interrupted (Cnly)
+    * Always add trailing colon to path when addressing items, (Cnly)
+    * Return errors instead of panic for invalid uploads (Fabian Möller)
+* S3
+    * Add support for "Glacier Deep Archive" storage class (Manu)
+    * Update Dreamhost endpoint (Nick Craig-Wood)
+    * Note incompatibility with CEPH Jewel (Nick Craig-Wood)
+* SFTP
+    * Allow custom ssh client config (Alexandru Bumbacea)
+* Swift
+    * Obey Retry-After to enable OVH restore from cold storage (Nick Craig-Wood)
+    * Work around token expiry on CEPH (Nick Craig-Wood)
+* WebDAV
+    * Allow IsCollection property to be integer or boolean (Nick Craig-Wood)
+    * Fix race when creating directories (Nick Craig-Wood)
+    * Fix About/df when reading the available/total returns 0 (Nick Craig-Wood)
 
 ## v1.46 - 2019-02-09
 

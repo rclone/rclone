@@ -11,7 +11,7 @@ Making a release
   * edit docs/content/changelog.md
   * make doc
   * git status - to check for new man pages - git add them
-  * git commit -a -v -m "Version v1.XX"
+  * git commit -a -v -m "Version v1.XX.0"
   * make retag
   * git push --tags origin master
   * # Wait for the appveyor and travis builds to complete then...
