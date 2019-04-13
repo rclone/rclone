@@ -38,7 +38,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/ht6QYJxjG-GWKiHV7jWIX4PB5aE\"",
+  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/XBo3v2wypoRQ0OatiSPR_63Htp4\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -2748,7 +2748,7 @@
     "revisions": {
       "methods": {
         "delete": {
-          "description": "Removes a revision.",
+          "description": "Permanently deletes a file version. You can only delete revisions for files with binary content, like images or videos. Revisions for other files, like Google Docs or Sheets, and the last remaining file version can't be deleted.",
           "httpMethod": "DELETE",
           "id": "drive.revisions.delete",
           "parameterOrder": [
@@ -3080,7 +3080,7 @@
       }
     }
   },
-  "revision": "20181025",
+  "revision": "20190311",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {

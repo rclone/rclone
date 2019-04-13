@@ -26,7 +26,7 @@
   "description": "Stores and retrieves potentially large, immutable data objects.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/storage/docs/json_api/",
-  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/KPalWULMnQfaqumeaBhBrVfHFNM\"",
+  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/5J1bGH010PqoE1O9vmClDRlYmZI\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/cloud_storage-16.png",
     "x32": "https://www.google.com/images/icons/product/cloud_storage-32.png"
@@ -2766,7 +2766,7 @@
       }
     }
   },
-  "revision": "20181109",
+  "revision": "20190129",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Bucket": {
@@ -2859,6 +2859,7 @@
           "description": "The bucket's IAM configuration.",
           "properties": {
             "bucketPolicyOnly": {
+              "description": "The bucket's Bucket Policy Only configuration.",
               "properties": {
                 "enabled": {
                   "description": "If set, access checks only use bucket-level IAM policies or above.",
@@ -3295,6 +3296,34 @@
       },
       "type": "object"
     },
+    "Expr": {
+      "description": "Represents an expression text. Example: title: \"User account presence\" description: \"Determines whether the request has a user account\" expression: \"size(request.user) \u003e 0\"",
+      "id": "Expr",
+      "properties": {
+        "description": {
+          "description": "An optional description of the expression. This is a longer text which describes the expression, e.g. when hovered over it in a UI.",
+          "type": "string"
+        },
+        "expression": {
+          "description": "Textual representation of an expression in Common Expression Language syntax. The application context of the containing message determines which well-known feature set of CEL is supported.",
+          "type": "string"
+        },
+        "kind": {
+          "default": "storage#expr",
+          "description": "The kind of item this is. For storage, this is always storage#expr. This field is ignored on input.",
+          "type": "string"
+        },
+        "location": {
+          "description": "An optional string indicating the location of the expression for error reporting, e.g. a file name and a position in the file.",
+          "type": "string"
+        },
+        "title": {
+          "description": "An optional title for the expression, i.e. a short string describing its purpose. This can be used e.g. in UIs which allow to enter the expression.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Notification": {
       "description": "A subscription to receive Google PubSub notifications.",
       "id": "Notification",
@@ -3695,7 +3724,8 @@
           "items": {
             "properties": {
               "condition": {
-                "type": "any"
+                "$ref": "Expr",
+                "description": "The condition that is associated with this binding. NOTE: an unsatisfied condition will not allow user access via current binding. Different bindings, including their conditions, are examined independently."
               },
               "members": {
                 "annotations": {

@@ -1,5 +1,9 @@
 [![GoDoc](https://godoc.org/github.com/nsf/termbox-go?status.svg)](http://godoc.org/github.com/nsf/termbox-go)
 
+## IMPORTANT
+
+This library is somewhat not maintained anymore. But I'm glad that it did what I wanted the most. It moved people away from "ncurses" mindset and these days we see both re-implementations of termbox API in various languages and even possibly better libs with similar API design. If you're looking for a Go lib that provides terminal-based user interface facilities, I've heard that https://github.com/gdamore/tcell is good (never used it myself). Also for more complicated interfaces and/or computer games I recommend you to consider using HTML-based UI. Having said that, termbox still somewhat works. In fact I'm writing this line of text right now in godit (which is a text editor written using termbox-go). So, be aware. Good luck and have a nice day.
+
 ## Termbox
 Termbox is a library that provides a minimalistic API which allows the programmer to write text-based user interfaces. The library is crossplatform and has both terminal-based implementations on *nix operating systems and a winapi console based implementation for windows operating systems. The basic idea is an abstraction of the greatest common subset of features available on all major terminals and other terminal-like APIs in a minimalistic fashion. Small API means it is easy to implement, test, maintain and learn it, that's what makes the termbox a distinct library in its area.
 
@@ -40,6 +44,6 @@ There are also some interesting projects using termbox-go:
  - [cointop](https://github.com/miguelmota/cointop) is an interactive terminal based UI application for tracking cryptocurrencies.
  - [pexpo](https://github.com/nnao45/pexpo) is a terminal sending ping tool written in Go.
  - [jid](https://github.com/simeji/jid) is an interactive JSON drill down tool using filtering queries like jq.
- 
+
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)

@@ -69,6 +69,17 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
+// AppendBlockFromURL copies a new block of data from source URL to the end of the existing append blob.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block-from-url.
+func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.URL, offset int64, count int64, ac AppendBlobAccessConditions, transactionalMD5 []byte) (*AppendBlobAppendBlockFromURLResponse, error) {
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := ac.AppendPositionAccessConditions.pointers()
+	return ab.abClient.AppendBlockFromURL(ctx, sourceURL.String(), 0, httpRange{offset: offset, count: count}.pointers(),
+		transactionalMD5, nil, transactionalMD5, ac.LeaseAccessConditions.pointers(),
+		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
+}
+
 type AppendBlobAccessConditions struct {
 	ModifiedAccessConditions
 	LeaseAccessConditions
