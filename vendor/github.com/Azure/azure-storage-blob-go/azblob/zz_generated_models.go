@@ -654,6 +654,103 @@ func (ap *AccessPolicy) UnmarshalXML(d *xml.Decoder, start xml.StartElement) err
 	return d.DecodeElement(ap2, &start)
 }
 
+// AppendBlobAppendBlockFromURLResponse ...
+type AppendBlobAppendBlockFromURLResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (ababfur AppendBlobAppendBlockFromURLResponse) Response() *http.Response {
+	return ababfur.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (ababfur AppendBlobAppendBlockFromURLResponse) StatusCode() int {
+	return ababfur.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (ababfur AppendBlobAppendBlockFromURLResponse) Status() string {
+	return ababfur.rawResponse.Status
+}
+
+// BlobAppendOffset returns the value for header x-ms-blob-append-offset.
+func (ababfur AppendBlobAppendBlockFromURLResponse) BlobAppendOffset() string {
+	return ababfur.rawResponse.Header.Get("x-ms-blob-append-offset")
+}
+
+// BlobCommittedBlockCount returns the value for header x-ms-blob-committed-block-count.
+func (ababfur AppendBlobAppendBlockFromURLResponse) BlobCommittedBlockCount() int32 {
+	s := ababfur.rawResponse.Header.Get("x-ms-blob-committed-block-count")
+	if s == "" {
+		return -1
+	}
+	i, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		i = 0
+	}
+	return int32(i)
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (ababfur AppendBlobAppendBlockFromURLResponse) ContentMD5() []byte {
+	s := ababfur.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		b = nil
+	}
+	return b
+}
+
+// Date returns the value for header Date.
+func (ababfur AppendBlobAppendBlockFromURLResponse) Date() time.Time {
+	s := ababfur.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (ababfur AppendBlobAppendBlockFromURLResponse) ErrorCode() string {
+	return ababfur.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// ETag returns the value for header ETag.
+func (ababfur AppendBlobAppendBlockFromURLResponse) ETag() ETag {
+	return ETag(ababfur.rawResponse.Header.Get("ETag"))
+}
+
+// LastModified returns the value for header Last-Modified.
+func (ababfur AppendBlobAppendBlockFromURLResponse) LastModified() time.Time {
+	s := ababfur.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (ababfur AppendBlobAppendBlockFromURLResponse) RequestID() string {
+	return ababfur.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (ababfur AppendBlobAppendBlockFromURLResponse) Version() string {
+	return ababfur.rawResponse.Header.Get("x-ms-version")
+}
+
 // AppendBlobAppendBlockResponse ...
 type AppendBlobAppendBlockResponse struct {
 	rawResponse *http.Response
@@ -4191,6 +4288,103 @@ func (pbusnr PageBlobUpdateSequenceNumberResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (pbusnr PageBlobUpdateSequenceNumberResponse) Version() string {
 	return pbusnr.rawResponse.Header.Get("x-ms-version")
+}
+
+// PageBlobUploadPagesFromURLResponse ...
+type PageBlobUploadPagesFromURLResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (pbupfur PageBlobUploadPagesFromURLResponse) Response() *http.Response {
+	return pbupfur.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pbupfur PageBlobUploadPagesFromURLResponse) StatusCode() int {
+	return pbupfur.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pbupfur PageBlobUploadPagesFromURLResponse) Status() string {
+	return pbupfur.rawResponse.Status
+}
+
+// BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
+func (pbupfur PageBlobUploadPagesFromURLResponse) BlobSequenceNumber() int64 {
+	s := pbupfur.rawResponse.Header.Get("x-ms-blob-sequence-number")
+	if s == "" {
+		return -1
+	}
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		i = 0
+	}
+	return i
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (pbupfur PageBlobUploadPagesFromURLResponse) ContentMD5() []byte {
+	s := pbupfur.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		b = nil
+	}
+	return b
+}
+
+// Date returns the value for header Date.
+func (pbupfur PageBlobUploadPagesFromURLResponse) Date() time.Time {
+	s := pbupfur.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (pbupfur PageBlobUploadPagesFromURLResponse) ErrorCode() string {
+	return pbupfur.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// ETag returns the value for header ETag.
+func (pbupfur PageBlobUploadPagesFromURLResponse) ETag() ETag {
+	return ETag(pbupfur.rawResponse.Header.Get("ETag"))
+}
+
+// IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
+func (pbupfur PageBlobUploadPagesFromURLResponse) IsServerEncrypted() string {
+	return pbupfur.rawResponse.Header.Get("x-ms-request-server-encrypted")
+}
+
+// LastModified returns the value for header Last-Modified.
+func (pbupfur PageBlobUploadPagesFromURLResponse) LastModified() time.Time {
+	s := pbupfur.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (pbupfur PageBlobUploadPagesFromURLResponse) RequestID() string {
+	return pbupfur.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (pbupfur PageBlobUploadPagesFromURLResponse) Version() string {
+	return pbupfur.rawResponse.Header.Get("x-ms-version")
 }
 
 // PageBlobUploadPagesResponse ...

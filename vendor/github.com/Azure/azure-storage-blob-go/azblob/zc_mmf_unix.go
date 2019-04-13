@@ -1,4 +1,4 @@
-// +build linux darwin freebsd openbsd netbsd
+// +build linux darwin freebsd openbsd netbsd dragonfly
 
 package azblob
 

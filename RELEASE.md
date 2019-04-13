@@ -27,6 +27,7 @@ Making a release
 
 Early in the next release cycle update the vendored dependencies
   * Review any pinned packages in go.mod and remove if possible
+      * GO111MODULE=on go get -u github.com/spf13/cobra@master
   * make update
   * git status
   * git add new files
