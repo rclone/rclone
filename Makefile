@@ -194,7 +194,7 @@ endif
 
 # Fetch the binary builds from travis and appveyor
 fetch_binaries:
-	rclone -P sync $(BETA_UPLOAD) build/
+	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
 	cd docs && hugo server -v -w
