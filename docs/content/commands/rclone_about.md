@@ -1,5 +1,5 @@
 ---
-date: 2019-02-09T10:42:18Z
+date: 2019-04-13T11:00:52+01:00
 title: "rclone about"
 slug: rclone_about
 url: /commands/rclone_about/
@@ -89,6 +89,7 @@ rclone about remote: [flags]
       --b2-account string                            Account ID or Application Key ID
       --b2-chunk-size SizeSuffix                     Upload chunk size. Must fit in memory. (default 96M)
       --b2-disable-checksum                          Disable checksums for large (> upload cutoff) files
+      --b2-download-url string                       Custom endpoint for downloads.
       --b2-endpoint string                           Endpoint for the service.
       --b2-hard-delete                               Permanently delete files on remote removal, otherwise hide files.
       --b2-key string                                Application Key
@@ -103,6 +104,7 @@ rclone about remote: [flags]
       --box-upload-cutoff SizeSuffix                 Cutoff for switching to multipart upload (>= 50MB). (default 50M)
       --buffer-size SizeSuffix                       In memory buffer size when reading files for each --transfer. (default 16M)
       --bwlimit BwTimetable                          Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.
+      --ca-cert string                               CA certificate used to verify servers
       --cache-chunk-clean-interval Duration          How often should the cache perform cleanups of the chunk storage. (default 1m0s)
       --cache-chunk-no-memory                        Disable the in-memory cache for storing chunks during streaming.
       --cache-chunk-path string                      Directory to cache chunk files. (default "$HOME/.cache/rclone/cache-backend")
@@ -126,6 +128,8 @@ rclone about remote: [flags]
       --cache-writes                                 Cache file data on writes through the FS
       --checkers int                                 Number of checkers to run in parallel. (default 8)
   -c, --checksum                                     Skip based on checksum (if available) & size, not mod-time & size
+      --client-cert string                           Client SSL certificate (PEM) for mutual TLS auth
+      --client-key string                            Client SSL private key (PEM) for mutual TLS auth
       --config string                                Config file. (default "/home/ncw/.rclone.conf")
       --contimeout duration                          Connect timeout (default 1m0s)
   -L, --copy-links                                   Follow symlinks and copy the pointed to item.
@@ -161,6 +165,7 @@ rclone about remote: [flags]
       --drive-service-account-credentials string     Service Account Credentials JSON blob
       --drive-service-account-file string            Service Account Credentials JSON file path
       --drive-shared-with-me                         Only show files that are shared with me.
+      --drive-skip-checksum-gphotos                  Skip MD5 checksum on Google photos and videos only.
       --drive-skip-gdocs                             Skip google documents in all listings.
       --drive-team-drive string                      ID of the Team Drive
       --drive-trashed-only                           Only show files that are in the trash.
@@ -183,11 +188,13 @@ rclone about remote: [flags]
       --files-from stringArray                       Read list of source-file names from file
   -f, --filter stringArray                           Add a file-filtering rule
       --filter-from stringArray                      Read filtering patterns from a file
+      --ftp-concurrency int                          Maximum number of FTP simultaneous connections, 0 for unlimited
       --ftp-host string                              FTP host to connect to
       --ftp-pass string                              FTP password
       --ftp-port string                              FTP port, leave blank to use default (21)
       --ftp-user string                              FTP username, leave blank for current username, $USER
       --gcs-bucket-acl string                        Access Control List for new buckets.
+      --gcs-bucket-policy-only                       Access checks should use bucket-level IAM policies.
       --gcs-client-id string                         Google Application Client Id
       --gcs-client-secret string                     Google Application Client Secret
       --gcs-location string                          Location for the newly created buckets.
@@ -195,6 +202,7 @@ rclone about remote: [flags]
       --gcs-project-number string                    Project number.
       --gcs-service-account-file string              Service Account Credentials JSON file path
       --gcs-storage-class string                     The storage class to use when storing objects in Google Cloud Storage.
+      --http-no-slash                                Set this if the site doesn't end directories with /
       --http-url string                              URL of http host to connect to
       --hubic-chunk-size SizeSuffix                  Above this size files will be chunked into a _segments container. (default 5G)
       --hubic-client-id string                       Hubic Client Id
@@ -215,6 +223,10 @@ rclone about remote: [flags]
       --jottacloud-unlink                            Remove existing public link to file/folder with link command rather than creating.
       --jottacloud-upload-resume-limit SizeSuffix    Files bigger than this can be resumed if the upload fail's. (default 10M)
       --jottacloud-user string                       User Name:
+      --koofr-endpoint string                        The Koofr API endpoint to use (default "https://app.koofr.net")
+      --koofr-mountid string                         Mount ID of the mount to use. If omitted, the primary mount is used.
+      --koofr-password string                        Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
+      --koofr-user string                            Your Koofr user name
   -l, --links                                        Translate symlinks to/from regular files with a '.rclonelink' extension
       --local-no-check-updated                       Don't check to see if the files change during upload
       --local-no-unicode-normalization               Don't apply unicode normalization to paths and filenames (Deprecated)
@@ -320,6 +332,7 @@ rclone about remote: [flags]
       --stats-unit string                            Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
       --streaming-upload-cutoff SizeSuffix           Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends. (default 100k)
       --suffix string                                Suffix for use with --backup-dir.
+      --suffix-keep-extension                        Preserve the extension when using --suffix.
       --swift-application-credential-id string       Application Credential ID (OS_APPLICATION_CREDENTIAL_ID)
       --swift-application-credential-name string     Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME)
       --swift-application-credential-secret string   Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET)
@@ -352,7 +365,7 @@ rclone about remote: [flags]
       --use-cookies                                  Enable session cookiejar.
       --use-mmap                                     Use mmap allocator (see docs).
       --use-server-modtime                           Use server modified time instead of object metadata
-      --user-agent string                            Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.46")
+      --user-agent string                            Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.47.0")
   -v, --verbose count                                Print lots more stuff (repeat for more)
       --webdav-bearer-token string                   Bearer token instead of user/pass (eg a Macaroon)
       --webdav-pass string                           Password.
@@ -368,4 +381,4 @@ rclone about remote: [flags]
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 
-###### Auto generated by spf13/cobra on 9-Feb-2019
+###### Auto generated by spf13/cobra on 13-Apr-2019

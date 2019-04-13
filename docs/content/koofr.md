@@ -163,12 +163,12 @@ Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/
 
 Here are the advanced options specific to koofr (Koofr).
 
-#### --koofr-baseurl
+#### --koofr-endpoint
 
-Base URL of the Koofr API to connect to
+The Koofr API endpoint to use
 
-- Config:      baseurl
-- Env Var:     RCLONE_KOOFR_BASEURL
+- Config:      endpoint
+- Env Var:     RCLONE_KOOFR_ENDPOINT
 - Type:        string
 - Default:     "https://app.koofr.net"
 
