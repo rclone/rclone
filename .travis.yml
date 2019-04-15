@@ -42,6 +42,7 @@ addons:
       - libfuse-dev
       - rpm
       - pkg-config
+      - util-linux  # for taskset
 cache:
   directories:
     - $HOME/.cache/go-build
@@ -61,6 +62,9 @@ matrix:
     - go: 1.11.x
       script:
         - make quicktest
+    - go: 1.11.x
+      script:
+        - taskset -c 0 make quicktest  # 1 CPU machine
     - go: 1.12.x
       env:
         - GOTAGS=cmount
