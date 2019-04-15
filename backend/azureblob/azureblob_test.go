@@ -1,6 +1,6 @@
 // Test AzureBlob filesystem interface
 
-// +build !plan9,!solaris,go1.8
+// +build !plan9,!solaris
 
 package azureblob
 

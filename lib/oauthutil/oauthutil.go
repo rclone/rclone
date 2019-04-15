@@ -590,3 +590,15 @@ func (s *authServer) Start() {
 	err = s.server.Serve(s.listener)
 	fs.Debugf(nil, "Closed auth server with error: %v", err)
 }
+
+func (s *authServer) Stop() {
+	fs.Debugf(nil, "Closing auth server")
+	if s.code != nil {
+		close(s.code)
+		s.code = nil
+	}
+	_ = s.listener.Close()
+
+	// close the server
+	_ = s.server.Close()
+}

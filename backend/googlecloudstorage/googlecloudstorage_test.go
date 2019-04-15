@@ -1,7 +1,5 @@
 // Test GoogleCloudStorage filesystem interface
 
-// +build go1.9
-
 package googlecloudstorage_test
 
 import (

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/bits"
 	"os"
 	"path"
 	"path/filepath"
@@ -72,7 +73,7 @@ type SetUploadCutoffer interface {
 // NextPowerOfTwo returns the current or next bigger power of two.
 // All values less or equal 0 will return 0
 func NextPowerOfTwo(i fs.SizeSuffix) fs.SizeSuffix {
-	return 1 << uint(64-leadingZeros64(uint64(i)-1))
+	return 1 << uint(64-bits.LeadingZeros64(uint64(i)-1))
 }
 
 // NextMultipleOf returns a function that can be used as a CeilChunkSize function.

@@ -24,11 +24,11 @@ const (
 
 // Errors which have exact counterparts in os
 var (
-	ENOENT = os.ErrNotExist
-	EEXIST = os.ErrExist
-	EPERM  = os.ErrPermission
-	EINVAL = os.ErrInvalid
-	// ECLOSED see errors_{old,new}.go
+	ENOENT  = os.ErrNotExist
+	EEXIST  = os.ErrExist
+	EPERM   = os.ErrPermission
+	EINVAL  = os.ErrInvalid
+	ECLOSED = os.ErrClosed
 )
 
 var errorNames = []string{
