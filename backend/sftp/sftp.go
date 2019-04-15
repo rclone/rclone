@@ -1,6 +1,6 @@
 // Package sftp provides a filesystem interface using github.com/pkg/sftp
 
-// +build !plan9,go1.9
+// +build !plan9
 
 package sftp
 

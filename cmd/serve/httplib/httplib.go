@@ -180,17 +180,17 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 
 	// FIXME make a transport?
 	s.httpServer = &http.Server{
-		Addr:           s.Opt.ListenAddr,
-		Handler:        handler,
-		ReadTimeout:    s.Opt.ServerReadTimeout,
-		WriteTimeout:   s.Opt.ServerWriteTimeout,
-		MaxHeaderBytes: s.Opt.MaxHeaderBytes,
+		Addr:              s.Opt.ListenAddr,
+		Handler:           handler,
+		ReadTimeout:       s.Opt.ServerReadTimeout,
+		WriteTimeout:      s.Opt.ServerWriteTimeout,
+		MaxHeaderBytes:    s.Opt.MaxHeaderBytes,
+		ReadHeaderTimeout: 10 * time.Second, // time to send the headers
+		IdleTimeout:       60 * time.Second, // time to keep idle connections open
 		TLSConfig: &tls.Config{
 			MinVersion: tls.VersionTLS10, // disable SSL v3.0 and earlier
 		},
 	}
-	// go version specific initialisation
-	initServer(s.httpServer)
 
 	if s.Opt.ClientCA != "" {
 		if !s.useSSL {
@@ -267,7 +267,7 @@ func (s *Server) Wait() {
 
 // Close shuts the running server down
 func (s *Server) Close() {
-	err := closeServer(s.httpServer)
+	err := s.httpServer.Close()
 	if err != nil {
 		log.Printf("Error on closing HTTP server: %v", err)
 		return

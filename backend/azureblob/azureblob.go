@@ -1,6 +1,6 @@
 // Package azureblob provides an interface to the Microsoft Azure blob object storage system
 
-// +build !plan9,!solaris,go1.8
+// +build !plan9,!solaris
 
 package azureblob
 
