@@ -64,7 +64,7 @@ matrix:
         - make quicktest
     - go: 1.11.x
       script:
-        - taskset -c 0 make quicktest  # 1 CPU machine
+        - taskset -c 0 make test  # 1 CPU machine
     - go: 1.12.x
       env:
         - GOTAGS=cmount
