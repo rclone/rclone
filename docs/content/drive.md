@@ -410,7 +410,7 @@ Note that rclone adds the extension to the google doc, so if it is
 called `My Spreadsheet` on google docs, it will be exported as `My
 Spreadsheet.xlsx` or `My Spreadsheet.pdf` etc.
 
-When importing files into Google Drive, rclone will conververt all
+When importing files into Google Drive, rclone will convert all
 files with an extension in `--drive-import-formats` to their
 associated document type.
 rclone will not convert any files by default, since the conversion
