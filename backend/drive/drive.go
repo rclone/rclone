@@ -382,6 +382,11 @@ will download it anyway.`,
 			Default:  defaultBurst,
 			Help:     "Number of API calls to allow without sleeping.",
 			Advanced: true,
+		}, {
+			Name:     "fast_list_grouping",
+			Default:  50,
+			Help:     "Groups of IDs to request with --fast-list.",
+			Advanced: true,
 		}},
 	})
 
@@ -427,6 +432,7 @@ type Options struct {
 	V2DownloadMinSize         fs.SizeSuffix `config:"v2_download_min_size"`
 	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
 	PacerBurst                int           `config:"pacer_burst"`
+	FastListGrouping          int           `config:"fast_list_grouping"`
 }
 
 // Fs represents a remote drive server
@@ -1483,7 +1489,6 @@ func (f *Fs) listRRunner(wg *sync.WaitGroup, in <-chan listREntry, out chan<- er
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	const (
-		grouping    = 50
 		inputBuffer = 1000
 	)
 
@@ -1535,7 +1540,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	in <- listREntry{directoryID, dir}
 
 	for i := 0; i < fs.Config.Checkers; i++ {
-		go f.listRRunner(&wg, in, out, cb, grouping)
+		go f.listRRunner(&wg, in, out, cb, f.opt.FastListGrouping)
 	}
 	go func() {
 		// wait until the all directories are processed
