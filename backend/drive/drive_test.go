@@ -1,7 +1,5 @@
 // Test Drive filesystem interface
 
-// +build go1.9
-
 package drive
 
 import (

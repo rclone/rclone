@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Feb 09, 2019
+% Apr 13, 2019
 
 Rclone
 ======
@@ -25,6 +25,7 @@ Rclone is a command line program to sync files and directories to and from:
 * Hubic
 * Jottacloud
 * IBM COS S3
+* Koofr
 * Memset Memstore
 * Mega
 * Microsoft Azure Blob Storage
@@ -66,7 +67,6 @@ Links
   * [Home page](https://rclone.org/)
   * [GitHub project page for source and bug tracker](https://github.com/ncw/rclone)
   * [Rclone Forum](https://forum.rclone.org)
-  * <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page</a>
   * [Downloads](https://rclone.org/downloads/)
 
 # Install #
@@ -214,6 +214,7 @@ See the following for detailed instructions for
   * [HTTP](https://rclone.org/http/)
   * [Hubic](https://rclone.org/hubic/)
   * [Jottacloud](https://rclone.org/jottacloud/)
+  * [Koofr](https://rclone.org/koofr/)
   * [Mega](https://rclone.org/mega/)
   * [Microsoft Azure Blob Storage](https://rclone.org/azureblob/)
   * [Microsoft OneDrive](https://rclone.org/onedrive/)
@@ -247,7 +248,7 @@ Subcommands
 
 rclone uses a system of subcommands.  For example
 
-    rclone ls remote:path # lists a re
+    rclone ls remote:path # lists a remote
     rclone copy /local/path remote:path # copies /local/path to the remote
     rclone sync /local/path remote:path # syncs /local/path to the remote
 
@@ -336,7 +337,8 @@ rclone copy source:path dest:path [flags]
 ### Options
 
 ```
-  -h, --help   help for copy
+      --create-empty-src-dirs   Create empty source dirs on destination after copy
+  -h, --help                    help for copy
 ```
 
 ## rclone sync
@@ -375,7 +377,8 @@ rclone sync source:path dest:path [flags]
 ### Options
 
 ```
-  -h, --help   help for sync
+      --create-empty-src-dirs   Create empty source dirs on destination after sync
+  -h, --help                    help for sync
 ```
 
 ## rclone move
@@ -419,6 +422,7 @@ rclone move source:path dest:path [flags]
 ### Options
 
 ```
+      --create-empty-src-dirs   Create empty source dirs on destination after move
       --delete-empty-src-dirs   Delete empty source dirs after move
   -h, --help                    help for move
 ```
@@ -577,7 +581,7 @@ Eg
         37600 fubuwic
 
 
-Any of the filtering options can be applied to this command.
+Any of the filtering options can be applied to this commmand.
 
 There are several related list commands
 
@@ -1705,8 +1709,10 @@ output:
     s - size
     t - modification time
     h - hash
-    i - ID of object if known
+    i - ID of object
+    o - Original ID of underlying object
     m - MimeType of object if known
+    e - encrypted name
 
 So if you wanted the path, size and modification time, you would use
 --format "pst", or maybe --format "tsp" to put the path last.
@@ -1850,6 +1856,10 @@ If --no-modtime is specified then ModTime will be blank.
 
 If --encrypted is not specified the Encrypted won't be emitted.
 
+If --dirs-only is not specified files in addition to directories are returned
+
+If --files-only is not specified directories in addition to the files will be returned.
+
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
@@ -1896,7 +1906,9 @@ rclone lsjson remote:path [flags]
 ### Options
 
 ```
+      --dirs-only    Show only directories in the listing.
   -M, --encrypted    Show the encrypted names.
+      --files-only   Show only files in the listing.
       --hash         Include hashes in the output (may take longer).
   -h, --help         help for lsjson
       --no-modtime   Don't read the modification time (can speed things up).
@@ -3720,11 +3732,24 @@ should be the name or prefix of a backend (the `type` in the config
 file) and all the configuration for the backend should be provided on
 the command line (or in environment variables).
 
-Eg
+Here are some examples:
 
     rclone lsd --http-url https://pub.rclone.org :http:
 
-Which lists all the directories in `pub.rclone.org`.
+To list all the directories in the root of `https://pub.rclone.org/`.
+
+    rclone lsf --http-url https://example.com :http:path/to/dir
+
+To list files and directories in `https://example.com/path/to/dir/`
+
+    rclone copy --http-url https://example.com :http:path/to/dir /tmp/dir
+
+To copy files and directories in `https://example.com/path/to/dir` to `/tmp/dir`.
+
+    rclone copy --sftp-host example.com :sftp:path/to/dir /tmp/dir
+
+To copy files and directories from `example.com` in the relative
+directory `path/to/dir` to `/tmp/dir` using sftp.
 
 Quoting and the shell
 ---------------------
@@ -3884,7 +3909,7 @@ It is also possible to specify a "timetable" of limits, which will cause
 certain limits to be applied at certain times. To specify a timetable, format your
 entries as "WEEKDAY-HH:MM,BANDWIDTH WEEKDAY-HH:MM,BANDWIDTH..." where:
 WEEKDAY is optional element.
-It could be writen as whole world or only using 3 first characters.
+It could be written as whole world or only using 3 first characters.
 HH:MM is an hour from 00:00 to 23:59.
 
 An example of a typical timetable to avoid link saturation during daytime
@@ -3902,7 +3927,7 @@ An example of timetable with WEEKDAY could be:
 
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
 
-It mean that, the transfer bandwidh will be set to 512kBytes/sec on Monday.
+It mean that, the transfer bandwidth will be set to 512kBytes/sec on Monday.
 It will raise to 10Mbytes/s before the end of Friday. 
 At 10:00 on Sunday it will be set to 1Mbyte/s.
 From 20:00 at Sunday will be unlimited.
@@ -4220,6 +4245,24 @@ uploaded compressed files.
 There is no need to set this in normal operation, and doing so will
 decrease the network transfer efficiency of rclone.
 
+### --no-traverse ###
+
+The `--no-traverse` flag controls whether the destination file system
+is traversed when using the `copy` or `move` commands.
+`--no-traverse` is not compatible with `sync` and will be ignored if
+you supply it with `sync`.
+
+If you are only copying a small number of files (or are filtering most
+of the files) and/or have a large number of files on the destination
+then `--no-traverse` will stop rclone listing the destination and save
+time.
+
+However, if you are copying a large number of files, especially if you
+are doing a copy where lots of the files under consideration haven't
+changed and won't need copying then you shouldn't use `--no-traverse`.
+
+See [rclone copy](https://rclone.org/commands/rclone_copy/) for an example of how to use it.
+
 ### --no-update-modtime ###
 
 When using this flag, rclone won't update modification times of remote
@@ -4338,6 +4381,16 @@ This is for use with `--backup-dir` only.  If this isn't set then
 then the files will have SUFFIX added on to them.
 
 See `--backup-dir` for more info.
+
+### --suffix-keep-extension ###
+
+When using `--suffix`, setting this causes rclone put the SUFFIX
+before the extension of the files that it backs up rather than after.
+
+So let's say we had `--suffix -2019-01-01`, without the flag `file.txt`
+would be backed up to `file.txt-2019-01-01` and with the flag it would
+be backed up to `file-2019-01-01.txt`.  This can be helpful to make
+sure the suffixed files can still be opened.
 
 ### --syslog ###
 
@@ -4541,6 +4594,47 @@ with this setting.
 
 Prints the version number
 
+SSL/TLS options
+---------------
+
+The outoing SSL/TLS connections rclone makes can be controlled with
+these options.  For example this can be very useful with the HTTP or
+WebDAV backends. Rclone HTTP servers have their own set of
+configuration for SSL/TLS which you can find in their documentation.
+
+### --ca-cert string
+
+This loads the PEM encoded certificate authority certificate and uses
+it to verify the certificates of the servers rclone connects to.
+
+If you have generated certificates signed with a local CA then you
+will need this flag to connect to servers using those certificates.
+
+### --client-cert string
+
+This loads the PEM encoded client side certificate.
+
+This is used for [mutual TLS authentication](https://en.wikipedia.org/wiki/Mutual_authentication).
+
+The `--client-key` flag is required too when using this.
+
+### --client-key string
+
+This loads the PEM encoded client side private key used for mutual TLS
+authentication.  Used in conjunction with `--client-cert`.
+
+### --no-check-certificate=true/false ###
+
+`--no-check-certificate` controls whether a client verifies the
+server's certificate chain and host name.
+If `--no-check-certificate` is true, TLS accepts any certificate
+presented by the server and any host name in that certificate.
+In this mode, TLS is susceptible to man-in-the-middle attacks.
+
+This option defaults to `false`.
+
+**This should be used only for testing.**
+
 Configuration Encryption
 ------------------------
 Your configuration file contains information for logging in to 
@@ -4696,36 +4790,6 @@ use it.
 ### --memprofile=FILE ###
 
 Write memory profile to file. This can be analysed with `go tool pprof`.
-
-### --no-check-certificate=true/false ###
-
-`--no-check-certificate` controls whether a client verifies the
-server's certificate chain and host name.
-If `--no-check-certificate` is true, TLS accepts any certificate
-presented by the server and any host name in that certificate.
-In this mode, TLS is susceptible to man-in-the-middle attacks.
-
-This option defaults to `false`.
-
-**This should be used only for testing.**
-
-### --no-traverse ###
-
-The `--no-traverse` flag controls whether the destination file system
-is traversed when using the `copy` or `move` commands.
-`--no-traverse` is not compatible with `sync` and will be ignored if
-you supply it with `sync`.
-
-If you are only copying a small number of files (or are filtering most
-of the files) and/or have a large number of files on the destination
-then `--no-traverse` will stop rclone listing the destination and save
-time.
-
-However, if you are copying a large number of files, especially if you
-are doing a copy where lots of the files under consideration haven't
-changed and won't need copying then you shouldn't use `--no-traverse`.
-
-See [rclone copy](https://rclone.org/commands/rclone_copy/) for an example of how to use it.
 
 Filtering
 ---------
@@ -5019,7 +5083,7 @@ A `?` matches any character except a slash `/`.
           - matches "lass"
           - doesn't match "floss"
 
-A `[` and `]` together make a a character class, such as `[a-z]` or
+A `[` and `]` together make a character class, such as `[a-z]` or
 `[aeiou]` or `[[:alpha:]]`.  See the [go regexp
 docs](https://golang.org/pkg/regexp/syntax/) for more info on these.
 
@@ -5264,9 +5328,14 @@ This reads a list of file names from the file passed in and **only**
 these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
-Rclone will not scan any directories if you use `--files-from` it will
-just look at the files specified.  Rclone will not error if any of the
-files are missing from the source.
+Rclone will traverse the file system if you use `--files-from`,
+effectively using the files in `--files-from` as a set of filters.
+Rclone will not error if any of the files are missing.
+
+If you use `--no-traverse` as well as `--files-from` then rclone will
+not traverse the destination file system, it will find each file
+individually using approximately 1 API call. This can be more
+efficient for small lists of files.
 
 This option can be repeated to read from more than one file.  These
 are read in the order that they are placed on the command line.
@@ -6000,6 +6069,21 @@ This takes the following parameters
 
 Authentication is required for this call.
 
+### operations/publiclink: Create or retrieve a public link to the given file or folder.
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+
+Returns
+
+- url - URL of the resource
+
+See the [link command](https://rclone.org/commands/rclone_link/) command for more information on the above.
+
+Authentication is required for this call.
+
 ### operations/purge: Remove a directory or container and all of its contents
 
 This takes the following parameters
@@ -6443,6 +6527,7 @@ Here is an overview of the major features of each cloud storage system.
 | HTTP                         | -           | No      | No               | No              | R         |
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R/W       |
+| Koofr                        | MD5         | No      | Yes              | No              | -         |
 | Mega                         | -           | No      | No               | Yes             | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive           | SHA1 ‡‡     | Yes     | Yes              | No              | R         |
@@ -6651,7 +6736,7 @@ eg `remote:directory/subdirectory` or `/directory/subdirectory`.
 During the initial setup with `rclone config` you will specify the target
 remote. The target remote can either be a local path or another remote.
 
-Subfolders can be used in target remote. Asume a alias remote named `backup`
+Subfolders can be used in target remote. Assume a alias remote named `backup`
 with the target `mydrive:private/backup`. Invoking `rclone mkdir backup:desktop`
 is exactly the same as invoking `rclone mkdir mydrive:private/backup/desktop`.
 
@@ -7294,6 +7379,8 @@ Choose a number from below, or type in your own value
    \ "ONEZONE_IA"
  6 / Glacier storage class
    \ "GLACIER"
+ 7 / Glacier Deep Archive storage class
+   \ "DEEP_ARCHIVE"
 storage_class> 1
 Remote config
 --------------------
@@ -7348,9 +7435,9 @@ upload files bigger than 5GB.
 Note that files uploaded *both* with multipart upload *and* through
 crypt remotes do not have MD5 sums.
 
-Rclone switches from single part uploads to multipart uploads at the
+rclone switches from single part uploads to multipart uploads at the
 point specified by `--s3-upload-cutoff`.  This can be a maximum of 5GB
-and a minimum of 0 (ie always upload mulipart files).
+and a minimum of 0 (ie always upload multipart files).
 
 The chunk sizes used in the multipart upload are specified by
 `--s3-chunk-size` and the number of chunks uploaded concurrently is
@@ -7366,7 +7453,7 @@ single part transfers will be faster.
 
 Increasing `--s3-upload-concurrency` will increase throughput (8 would
 be a sensible value) and increasing `--s3-chunk-size` also increases
-througput (16M would be sensible).  Increasing either of these will
+throughput (16M would be sensible).  Increasing either of these will
 use more memory.  The default values are high enough to gain most of
 the possible performance without using too much memory.
 
@@ -7461,7 +7548,7 @@ you can't transfer small objects.  As a work-around you can use the
 
 A proper fix is being worked on in [issue #1824](https://github.com/ncw/rclone/issues/1824).
 
-### Glacier ###
+### Glacier and Glacier Deep Archive ###
 
 You can upload objects using the glacier storage class or transition them to glacier using a [lifecycle policy](http://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html).
 The bucket can still be synced or copied into normally, but if rclone
@@ -7760,7 +7847,7 @@ Required when using an S3 clone.
 - Type:        string
 - Default:     ""
 - Examples:
-    - "objects-us-west-1.dream.io"
+    - "objects-us-east-1.dream.io"
         - Dream Objects endpoint
     - "nyc3.digitaloceanspaces.com"
         - Digital Ocean Spaces New York 3
@@ -7990,6 +8077,8 @@ The storage class to use when storing new objects in S3.
         - One Zone Infrequent Access storage class
     - "GLACIER"
         - Glacier storage class
+    - "DEEP_ARCHIVE"
+        - Glacier Deep Archive storage class
 
 #### --s3-storage-class
 
@@ -8186,6 +8275,11 @@ server_side_encryption =
 storage_class =
 ```
 
+If you are using an older version of CEPH, eg 10.2.x Jewel, then you
+may need to supply the parameter `--s3-upload-cutoff 0` or put this in
+the config file as `upload_cutoff 0` to work around a bug which causes
+uploading of small files to fail.
+
 Note also that Ceph sometimes puts `/` in the passwords it gives
 users.  If you read the secret access key using the command line tools
 you will get a JSON blob with the `/` escaped as `\/`.  Make sure you
@@ -8241,7 +8335,7 @@ storage_class =
 
 To connect to DigitalOcean Spaces you will need an access key and secret key. These can be retrieved on the "[Applications & API](https://cloud.digitalocean.com/settings/api/tokens)" page of the DigitalOcean control panel. They will be needed when promted by `rclone config` for your `access_key_id` and `secret_access_key`.
 
-When prompted for a `region` or `location_constraint`, press enter to use the default value. The region must be included in the `endpoint` setting (e.g. `nyc3.digitaloceanspaces.com`). The defualt values can be used for other settings.
+When prompted for a `region` or `location_constraint`, press enter to use the default value. The region must be included in the `endpoint` setting (e.g. `nyc3.digitaloceanspaces.com`). The default values can be used for other settings.
 
 Going through the whole process of creating a new remote by running `rclone config`, each prompt should be answered as shown below:
 
@@ -9038,7 +9132,7 @@ start and finish the upload) and another 2 requests for each chunk:
 
 #### Versions ####
 
-Versions can be viewd with the `--b2-versions` flag. When it is set
+Versions can be viewed with the `--b2-versions` flag. When it is set
 rclone will show and act on older versions of files.  For example
 
 Listing without `--b2-versions`
@@ -9176,6 +9270,19 @@ Disable checksums for large (> upload cutoff) files
 - Env Var:     RCLONE_B2_DISABLE_CHECKSUM
 - Type:        bool
 - Default:     false
+
+#### --b2-download-url
+
+Custom endpoint for downloads.
+
+This is usually set to a Cloudflare CDN URL as Backblaze offers
+free egress for data downloaded through the Cloudflare network.
+Leave blank if you want to use the endpoint provided by Backblaze.
+
+- Config:      download_url
+- Env Var:     RCLONE_B2_DOWNLOAD_URL
+- Type:        string
+- Default:     ""
 
 <!--- autogenerated options stop -->
 
@@ -9720,7 +9827,7 @@ There is an issue with wrapping the remotes in this order:
 During testing, I experienced a lot of bans with the remotes in this order.
 I suspect it might be related to how crypt opens files on the cloud provider
 which makes it think we're downloading the full file instead of small chunks.
-Organizing the remotes in this order yelds better results:
+Organizing the remotes in this order yields better results:
 <span style="color:green">**cloud remote** -> **cache** -> **crypt**</span>
 
 #### absolute remote paths ####
@@ -10915,6 +11022,19 @@ FTP password
 - Type:        string
 - Default:     ""
 
+### Advanced Options
+
+Here are the advanced options specific to ftp (FTP Connection).
+
+#### --ftp-concurrency
+
+Maximum number of FTP simultaneous connections, 0 for unlimited
+
+- Config:      concurrency
+- Env Var:     RCLONE_FTP_CONCURRENCY
+- Type:        int
+- Default:     0
+
 <!--- autogenerated options stop -->
 
 ### Limitations ###
@@ -11144,6 +11264,20 @@ the rclone config file, you can set `service_account_credentials` with
 the actual contents of the file instead, or set the equivalent
 environment variable.
 
+### Application Default Credentials ###
+
+If no other source of credentials is provided, rclone will fall back
+to
+[Application Default Credentials](https://cloud.google.com/video-intelligence/docs/common/auth#authenticating_with_application_default_credentials)
+this is useful both when you already have configured authentication
+for your developer account, or in production when running on a google
+compute host. Note that if running in docker, you may need to run
+additional commands on your google compute machine -
+[see this page](https://cloud.google.com/container-registry/docs/advanced-authentication#gcloud_as_a_docker_credential_helper).
+
+Note that in the case application default credentials are used, there
+is no need to explicitly configure a project number.
+
 ### --fast-list ###
 
 This remote supports `--fast-list` which allows you to use fewer
@@ -11254,6 +11388,27 @@ Access Control List for new buckets.
         - Project team owners get OWNER access, and all Users get READER access.
     - "publicReadWrite"
         - Project team owners get OWNER access, and all Users get WRITER access.
+
+#### --gcs-bucket-policy-only
+
+Access checks should use bucket-level IAM policies.
+
+If you want to upload objects to a bucket with Bucket Policy Only set
+then you will need to set this.
+
+When it is set, rclone:
+
+- ignores ACLs set on buckets
+- ignores ACLs set on objects
+- creates buckets with Bucket Policy Only set
+
+Docs: https://cloud.google.com/storage/docs/bucket-policy-only
+
+
+- Config:      bucket_policy_only
+- Env Var:     RCLONE_GCS_BUCKET_POLICY_ONLY
+- Type:        bool
+- Default:     false
 
 #### --gcs-location
 
@@ -11487,7 +11642,7 @@ directories.
 ### Root folder ID ###
 
 You can set the `root_folder_id` for rclone.  This is the directory
-(identified by its `Folder ID`) that rclone considers to be a the root
+(identified by its `Folder ID`) that rclone considers to be the root
 of your drive.
 
 Normally you will leave this blank and rclone will determine the
@@ -11646,7 +11801,7 @@ docs](/docs/#fast-list) for more details.
 It does this by combining multiple `list` calls into a single API request.
 
 This works by combining many `'%s' in parents` filters into one expression.
-To list the contents of directories a, b and c, the the following requests will be send by the regular `List` function:
+To list the contents of directories a, b and c, the following requests will be send by the regular `List` function:
 ```
 trashed=false and 'a' in parents
 trashed=false and 'b' in parents
@@ -11732,7 +11887,7 @@ pdf`, or if you prefer openoffice/libreoffice formats you might use
 `--drive-export-formats ods,odt,odp`.
 
 Note that rclone adds the extension to the google doc, so if it is
-calles `My Spreadsheet` on google docs, it will be exported as `My
+called `My Spreadsheet` on google docs, it will be exported as `My
 Spreadsheet.xlsx` or `My Spreadsheet.pdf` etc.
 
 When importing files into Google Drive, rclone will conververt all
@@ -11742,7 +11897,7 @@ rclone will not convert any files by default, since the conversion
 is lossy process.
 
 The conversion must result in a file with the same extension when
-the `--drive-export-formats` rules are applied to the uploded document.
+the `--drive-export-formats` rules are applied to the uploaded document.
 
 Here are some examples for allowed and prohibited conversions.
 
@@ -11759,7 +11914,7 @@ Here are some examples for allowed and prohibited conversions.
 This limitation can be disabled by specifying `--drive-allow-import-name-change`.
 When using this flag, rclone can convert multiple files types resulting
 in the same document type at once, eg with `--drive-import-formats docx,odt,txt`,
-all files having these extension would result in a doument represented as a docx file.
+all files having these extension would result in a document represented as a docx file.
 This brings the additional risk of overwriting a document, if multiple files
 have the same stem. Many rclone operations will not handle this name change
 in any way. They assume an equal name when copying files and might copy the
@@ -11771,7 +11926,7 @@ listed here. Some of these additional ones might only be available when
 the operating system provides the correct MIME type entries.
 
 This list can be changed by Google Drive at any time and might not
-represent the currently available converions.
+represent the currently available conversions.
 
 | Extension | Mime Type | Description |
 | --------- |-----------| ------------|
@@ -11795,8 +11950,8 @@ represent the currently available converions.
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
-Google douments can also be exported as link files. These files will
-open a browser window for the Google Docs website of that dument
+Google documents can also be exported as link files. These files will
+open a browser window for the Google Docs website of that document
 when opened. The link file extension has to be specified as a
 `--drive-export-formats` parameter. They will match all available
 Google Documents.
@@ -11816,7 +11971,9 @@ Here are the standard options specific to drive (Google Drive).
 #### --drive-client-id
 
 Google Application Client Id
-Leave blank normally.
+Setting your own is recommended.
+See https://rclone.org/drive/#making-your-own-client-id for how to create your own.
+If you leave this blank, it will use an internal key which is low performance.
 
 - Config:      client_id
 - Env Var:     RCLONE_DRIVE_CLIENT_ID
@@ -11826,7 +11983,7 @@ Leave blank normally.
 #### --drive-client-secret
 
 Google Application Client Secret
-Leave blank normally.
+Setting your own is recommended.
 
 - Config:      client_secret
 - Env Var:     RCLONE_DRIVE_CLIENT_SECRET
@@ -11930,6 +12087,26 @@ If given, gdocs practically become invisible to rclone.
 
 - Config:      skip_gdocs
 - Env Var:     RCLONE_DRIVE_SKIP_GDOCS
+- Type:        bool
+- Default:     false
+
+#### --drive-skip-checksum-gphotos
+
+Skip MD5 checksum on Google photos and videos only.
+
+Use this if you get checksum errors when transferring Google photos or
+videos.
+
+Setting this flag will cause Google photos and videos to return a
+blank MD5 checksum.
+
+Google photos are identifed by being in the "photos" space.
+
+Corrupted checksums are caused by Google modifying the image/video but
+not updating the checksum.
+
+- Config:      skip_checksum_gphotos
+- Env Var:     RCLONE_DRIVE_SKIP_CHECKSUM_GPHOTOS
 - Type:        bool
 - Default:     false
 
@@ -12179,6 +12356,15 @@ The most likely cause of this is the duplicated file issue above - run
 `rclone dedupe` and check your logs for duplicate object or directory
 messages.
 
+This can also be caused by a delay/caching on google drive's end when
+comparing directory listings. Specifically with team drives used in
+combination with --fast-list. Files that were uploaded recently may
+not appear on the directory list sent to rclone when using --fast-list.
+
+Waiting a moderate period of time between attempts (estimated to be
+approximately 1 hour) and/or not using --fast-list both seem to be
+effective in preventing the problem.
+
 ### Making your own client_id ###
 
 When you use rclone with Google drive in its default configuration you
@@ -12356,6 +12542,30 @@ URL of http host to connect to
     - "https://user:pass@example.com"
         - Connect to example.com using a username and password
 
+### Advanced Options
+
+Here are the advanced options specific to http (http Connection).
+
+#### --http-no-slash
+
+Set this if the site doesn't end directories with /
+
+Use this if your target website does not use / on the end of
+directories.
+
+A / on the end of a path is how rclone normally tells the difference
+between files and directories.  If this flag is set, then rclone will
+treat all files with Content-Type: text/html as directories and read
+URLs from them rather than downloading them.
+
+Note that this may cause rclone to confuse genuine HTML files with
+directories.
+
+- Config:      no_slash
+- Env Var:     RCLONE_HTTP_NO_SLASH
+- Type:        bool
+- Default:     false
+
 <!--- autogenerated options stop -->
 
 Hubic
@@ -12476,7 +12686,7 @@ The modified time is stored as metadata on the object as
 `X-Object-Meta-Mtime` as floating point since the epoch accurate to 1
 ns.
 
-This is a defacto standard (used in the official python-swiftclient
+This is a de facto standard (used in the official python-swiftclient
 amongst others) for storing the modification time for an object.
 
 Note that Hubic wraps the Swift backend, so most of the properties of
@@ -12586,15 +12796,6 @@ Storage> jottacloud
 User Name
 Enter a string value. Press Enter for the default ("").
 user> user
-Password.
-y) Yes type in my own password
-g) Generate random password
-n) No leave this optional password blank
-y/g/n> y
-Enter the password:
-password:
-Confirm the password:
-password:
 The mountpoint to use.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
@@ -12603,13 +12804,29 @@ Choose a number from below, or type in your own value
  2 / Archive
    \ "Archive"
 mountpoint> Archive
+Edit advanced config? (y/n)
+y) Yes
+n) No
+y/n> n
 Remote config
+
+Do you want to create a machine specific API key?
+
+Rclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.
+
+y) Yes
+n) No
+y/n> y
+Your Jottacloud password is only required during config and will not be stored.
+password:
 --------------------
 [remote]
 type = jottacloud
-user = user
-pass = *** ENCRYPTED ***
+user = olihey
 mountpoint = Archive
+client_id = .....
+client_secret = ........
+token = {........}
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -12672,6 +12889,10 @@ Jottacloud supports file versioning. When rclone uploads a new version of a file
 To view your current quota you can use the `rclone about remote:`
 command which will display your usage limit (unless it is unlimited)
 and the current usage.
+
+### Device IDs ###
+
+Jottacloud requires each 'device' to be registered. Rclone brings such a registration to easily access your account but if you want to use Jottacloud together with rclone on multiple machines you NEED to create a seperate deviceID/deviceSecrect on each machine. You will asked during setting up the remote. Please be aware that this also means that copying the rclone config from one machine to another does NOT work with Jottacloud accounts. You have to create it on each machine.
 
 <!--- autogenerated options start - DO NOT EDIT, instead edit fs.RegInfo in backend/jottacloud/jottacloud.go then run make backenddocs -->
 ### Standard Options
@@ -12756,6 +12977,190 @@ Jottacloud only supports filenames up to 255 characters in length.
 ### Troubleshooting ###
 
 Jottacloud exhibits some inconsistent behaviours regarding deleted files and folders which may cause Copy, Move and DirMove operations to previously deleted paths to fail. Emptying the trash should help in such cases.
+
+Koofr
+-----------------------------------------
+
+Paths are specified as `remote:path`
+
+Paths may be as deep as required, eg `remote:directory/subdirectory`.
+
+The initial setup for Koofr involves creating an application password for
+rclone. You can do that by opening the Koofr
+[web application](https://app.koofr.net/app/admin/preferences/password),
+giving the password a nice name like `rclone` and clicking on generate.
+
+Here is an example of how to make a remote called `koofr`.  First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+```
+No remotes found - make a new one
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+name> koofr 
+Type of storage to configure.
+Enter a string value. Press Enter for the default ("").
+Choose a number from below, or type in your own value
+ 1 / A stackable unification remote, which can appear to merge the contents of several remotes
+   \ "union"
+ 2 / Alias for a existing remote
+   \ "alias"
+ 3 / Amazon Drive
+   \ "amazon cloud drive"
+ 4 / Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)
+   \ "s3"
+ 5 / Backblaze B2
+   \ "b2"
+ 6 / Box
+   \ "box"
+ 7 / Cache a remote
+   \ "cache"
+ 8 / Dropbox
+   \ "dropbox"
+ 9 / Encrypt/Decrypt a remote
+   \ "crypt"
+10 / FTP Connection
+   \ "ftp"
+11 / Google Cloud Storage (this is not Google Drive)
+   \ "google cloud storage"
+12 / Google Drive
+   \ "drive"
+13 / Hubic
+   \ "hubic"
+14 / JottaCloud
+   \ "jottacloud"
+15 / Koofr
+   \ "koofr"
+16 / Local Disk
+   \ "local"
+17 / Mega
+   \ "mega"
+18 / Microsoft Azure Blob Storage
+   \ "azureblob"
+19 / Microsoft OneDrive
+   \ "onedrive"
+20 / OpenDrive
+   \ "opendrive"
+21 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ "swift"
+22 / Pcloud
+   \ "pcloud"
+23 / QingCloud Object Storage
+   \ "qingstor"
+24 / SSH/SFTP Connection
+   \ "sftp"
+25 / Webdav
+   \ "webdav"
+26 / Yandex Disk
+   \ "yandex"
+27 / http Connection
+   \ "http"
+Storage> koofr
+** See help for koofr backend at: https://rclone.org/koofr/ **
+
+Your Koofr user name
+Enter a string value. Press Enter for the default ("").
+user> USER@NAME
+Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
+y) Yes type in my own password
+g) Generate random password
+y/g> y
+Enter the password:
+password:
+Confirm the password:
+password:
+Edit advanced config? (y/n)
+y) Yes
+n) No
+y/n> n
+Remote config
+--------------------
+[koofr]
+type = koofr
+baseurl = https://app.koofr.net
+user = USER@NAME
+password = *** ENCRYPTED ***
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
+
+You can choose to edit advanced config in order to enter your own service URL
+if you use an on-premise or white label Koofr instance, or choose an alternative
+mount instead of your primary storage.
+
+Once configured you can then use `rclone` like this,
+
+List directories in top level of your Koofr
+
+    rclone lsd koofr:
+
+List all the files in your Koofr
+
+    rclone ls koofr:
+
+To copy a local directory to an Koofr directory called backup
+
+    rclone copy /home/source remote:backup
+
+<!--- autogenerated options start - DO NOT EDIT, instead edit fs.RegInfo in backend/koofr/koofr.go then run make backenddocs -->
+### Standard Options
+
+Here are the standard options specific to koofr (Koofr).
+
+#### --koofr-user
+
+Your Koofr user name
+
+- Config:      user
+- Env Var:     RCLONE_KOOFR_USER
+- Type:        string
+- Default:     ""
+
+#### --koofr-password
+
+Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
+
+- Config:      password
+- Env Var:     RCLONE_KOOFR_PASSWORD
+- Type:        string
+- Default:     ""
+
+### Advanced Options
+
+Here are the advanced options specific to koofr (Koofr).
+
+#### --koofr-endpoint
+
+The Koofr API endpoint to use
+
+- Config:      endpoint
+- Env Var:     RCLONE_KOOFR_ENDPOINT
+- Type:        string
+- Default:     "https://app.koofr.net"
+
+#### --koofr-mountid
+
+Mount ID of the mount to use. If omitted, the primary mount is used.
+
+- Config:      mountid
+- Env Var:     RCLONE_KOOFR_MOUNTID
+- Type:        string
+- Default:     ""
+
+<!--- autogenerated options stop -->
+
+### Limitations ###
+
+Note that Koofr is case insensitive so you can't have a file called
+"Hello.doc" and one called "hello.doc".
 
 Mega
 -----------------------------------------
@@ -13487,6 +13892,15 @@ This means that rclone can't use the OneDrive for Business API with your account
 
 However, there are other ways to interact with your OneDrive account. Have a look at the webdav backend: https://rclone.org/webdav/#sharepoint
 
+
+```
+Error: invalid_grant
+Code: AADSTS50076
+Description: Due to a configuration change made by your administrator, or because you moved to a new location, you must use multi-factor authentication to access '...'.
+```
+
+If you see the error above after enabling multi-factor authentication for your account, you can fix it by refreshing your OAuth refresh token. To do that, run `rclone config`, and choose to edit your OneDrive backend. Then, you don't need to actually make any changes until you reach this question: `Already have a token - refresh?`. For this question, answer `y` and go through the process to refresh your token, just like the first time the backend is configured. After this, rclone should work again for this backend.
+
 OpenDrive
 ------------------------------------
 
@@ -14062,9 +14476,9 @@ excess files in the container.
 
     rclone sync /home/local/directory remote:container
 
-### Configuration from an Openstack credentials file ###
+### Configuration from an OpenStack credentials file ###
 
-An Opentstack credentials file typically looks something something
+An OpenStack credentials file typically looks something something
 like this (without the comments)
 
 ```
@@ -14932,7 +15346,7 @@ The last remote is the topmost remote and replaces files with the same name from
 
 Only the last remote is used to write to and delete from, all other remotes are read-only.
 
-Subfolders can be used in target remote. Asume a union remote named `backup`
+Subfolders can be used in target remote. Assume a union remote named `backup`
 with the remotes `mydrive:private/backup mydrive2:/backup`. Invoking `rclone mkdir backup:desktop`
 is exactly the same as invoking `rclone mkdir mydrive2:/backup/desktop`.
 
@@ -15168,7 +15582,7 @@ Plain WebDAV does not support modified times.  However when used with
 Owncloud or Nextcloud rclone will support modified times.
 
 Likewise plain WebDAV does not support hashes, however when used with
-Owncloud or Nexcloud rclone will support SHA1 and MD5 hashes.
+Owncloud or Nextcloud rclone will support SHA1 and MD5 hashes.
 Depending on the exact version of Owncloud or Nextcloud hashes may
 appear on all objects, or only on objects which had a hash uploaded
 with them.
@@ -15840,6 +16254,92 @@ Don't cross filesystem boundaries (unix/macOS only).
 <!--- autogenerated options stop -->
 
 # Changelog
+
+## v1.47.0 - 2019-04-13
+
+* New backends
+    * Backend for Koofr cloud storage service. (jaKa)
+* New Features
+    * Resume downloads if the reader fails in copy (Nick Craig-Wood)
+        * this means rclone will restart transfers if the source has an error
+        * this is most useful for downloads or cloud to cloud copies
+    * Use `--fast-list` for listing operations where it won't use more memory (Nick Craig-Wood)
+        * this should speed up the following operations on remotes which support `ListR`
+        * `dedupe`, `serve restic` `lsf`, `ls`, `lsl`, `lsjson`, `lsd`, `md5sum`, `sha1sum`, `hashsum`, `size`, `delete`, `cat`, `settier`
+        * use `--disable ListR` to get old behaviour if required
+    * Make `--files-from` traverse the destination unless `--no-traverse` is set (Nick Craig-Wood)
+        * this fixes `--files-from` with Google drive and excessive API use in general.
+    * Make server side copy account bytes and obey `--max-transfer` (Nick Craig-Wood)
+    * Add `--create-empty-src-dirs` flag and default to not creating empty dirs (ishuah)
+    * Add client side TLS/SSL flags `--ca-cert`/`--client-cert`/`--client-key` (Nick Craig-Wood)
+    * Implement `--suffix-keep-extension` for use with `--suffix` (Nick Craig-Wood)
+    * build:
+        * Switch to semvar compliant version tags to be go modules compliant (Nick Craig-Wood)
+        * Update to use go1.12.x for the build (Nick Craig-Wood)
+    * serve dlna: Add connection manager service description to improve compatibility (Dan Walters)
+    * lsf: Add 'e' format to show encrypted names and 'o' for original IDs (Nick Craig-Wood)
+    * lsjson: Added `--files-only` and `--dirs-only` flags (calistri)
+    * rc: Implement operations/publiclink the equivalent of `rclone link` (Nick Craig-Wood)
+* Bug Fixes
+    * accounting: Fix total ETA when `--stats-unit bits` is in effect (Nick Craig-Wood)
+    * Bash TAB completion
+        * Use private custom func to fix clash between rclone and kubectl (Nick Craig-Wood)
+        * Fix for remotes with underscores in their names (Six)
+        * Fix completion of remotes (Florian Gamböck)
+        * Fix autocompletion of remote paths with spaces (Danil Semelenov)
+    * serve dlna: Fix root XML service descriptor (Dan Walters)
+    * ncdu: Fix display corruption with Chinese characters (Nick Craig-Wood)
+    * Add SIGTERM to signals which run the exit handlers on unix (Nick Craig-Wood)
+    * rc: Reload filter when the options are set via the rc (Nick Craig-Wood)
+* VFS / Mount
+    * Fix FreeBSD: Ignore Truncate if called with no readers and already the correct size (Nick Craig-Wood)
+    * Read directory and check for a file before mkdir (Nick Craig-Wood)
+    * Shorten the locking window for vfs/refresh (Nick Craig-Wood)
+* Azure Blob
+    * Enable MD5 checksums when uploading files bigger than the "Cutoff" (Dr.Rx)
+    * Fix SAS URL support (Nick Craig-Wood)
+* B2
+    * Allow manual configuration of backblaze downloadUrl (Vince)
+    * Ignore already_hidden error on remove (Nick Craig-Wood)
+    * Ignore malformed `src_last_modified_millis` (Nick Craig-Wood)
+* Drive
+    * Add `--skip-checksum-gphotos` to ignore incorrect checksums on Google Photos (Nick Craig-Wood)
+    * Allow server side move/copy between different remotes. (Fionera)
+    * Add docs on team drives and `--fast-list` eventual consistency (Nestar47)
+    * Fix imports of text files (Nick Craig-Wood)
+    * Fix range requests on 0 length files (Nick Craig-Wood)
+    * Fix creation of duplicates with server side copy (Nick Craig-Wood)
+* Dropbox
+    * Retry blank errors to fix long listings (Nick Craig-Wood)
+* FTP
+    * Add `--ftp-concurrency` to limit maximum number of connections (Nick Craig-Wood)
+* Google Cloud Storage
+    * Fall back to default application credentials (marcintustin)
+    * Allow bucket policy only buckets (Nick Craig-Wood)
+* HTTP
+    * Add `--http-no-slash` for websites with directories with no slashes (Nick Craig-Wood)
+    * Remove duplicates from listings (Nick Craig-Wood)
+    * Fix socket leak on 404 errors (Nick Craig-Wood)
+* Jottacloud
+    * Fix token refresh (Sebastian Bünger)
+    * Add device registration (Oliver Heyme)
+* Onedrive
+    * Implement graceful cancel of multipart uploads if rclone is interrupted (Cnly)
+    * Always add trailing colon to path when addressing items, (Cnly)
+    * Return errors instead of panic for invalid uploads (Fabian Möller)
+* S3
+    * Add support for "Glacier Deep Archive" storage class (Manu)
+    * Update Dreamhost endpoint (Nick Craig-Wood)
+    * Note incompatibility with CEPH Jewel (Nick Craig-Wood)
+* SFTP
+    * Allow custom ssh client config (Alexandru Bumbacea)
+* Swift
+    * Obey Retry-After to enable OVH restore from cold storage (Nick Craig-Wood)
+    * Work around token expiry on CEPH (Nick Craig-Wood)
+* WebDAV
+    * Allow IsCollection property to be integer or boolean (Nick Craig-Wood)
+    * Fix race when creating directories (Nick Craig-Wood)
+    * Fix About/df when reading the available/total returns 0 (Nick Craig-Wood)
 
 ## v1.46 - 2019-02-09
 
@@ -17742,6 +18242,13 @@ Additionally with the `GODEBUG=netdns=` environment variable the Go
 resolver decision can be influenced. This also allows to resolve certain
 issues with DNS resolution. See the [name resolution section in the go docs](https://golang.org/pkg/net/#hdr-Name_Resolution).
 
+### The total size reported in the stats for a sync is wrong and keeps changing
+
+It is likely you have more than 10,000 files that need to be
+synced. By default rclone only gets 10,000 files ahead in a sync so as
+not to use up too much memory. You can change this default with the
+[--max-backlog](/docs/#max-backlog-n) flag.
+
 License
 -------
 
@@ -18002,12 +18509,26 @@ Contributors
   * weetmuts <oehrstroem@gmail.com>
   * Jonathan <vanillajonathan@users.noreply.github.com>
   * James Carpenter <orbsmiv@users.noreply.github.com>
+  * Vince <vince0villamora@gmail.com>
+  * Nestar47 <47841759+Nestar47@users.noreply.github.com>
+  * Six <brbsix@gmail.com>
+  * Alexandru Bumbacea <alexandru.bumbacea@booking.com>
+  * calisro <robert.calistri@gmail.com>
+  * Dr.Rx <david.rey@nventive.com>
+  * marcintustin <marcintustin@users.noreply.github.com>
+  * jaKa Močnik <jaka@koofr.net>
+  * Fionera <fionera@fionera.de>
+  * Dan Walters <dan@walters.io>
+  * Danil Semelenov <sgtpep@users.noreply.github.com>
+  * xopez <28950736+xopez@users.noreply.github.com>
+  * Ben Boeckel <mathstuf@gmail.com>
+  * Manu <manu@snapdragon.cc>
 
 # Contact the rclone project #
 
 ## Forum ##
 
-Forum for general discussions and questions:
+Forum for questions and general discussion:
 
   * https://forum.rclone.org
 
@@ -18017,18 +18538,11 @@ The project website is at:
 
   * https://github.com/ncw/rclone
 
-There you can file bug reports, ask for help or contribute pull
-requests.
-
-## Google+ ##
-
-Rclone has a Google+ page which announcements are posted to
-
-  * <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page for general comments</a>
+There you can file bug reports or contribute pull requests.
 
 ## Twitter ##
 
-You can also follow me on twitter for rclone announcements
+You can also follow me on twitter for rclone announcements:
 
   * [@njcw](https://twitter.com/njcw)
 

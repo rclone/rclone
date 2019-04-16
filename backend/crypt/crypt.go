@@ -169,22 +169,9 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		WriteMimeType:           false,
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
+		SetTier:                 true,
+		GetTier:                 true,
 	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
-
-	doChangeNotify := wrappedFs.Features().ChangeNotify
-	if doChangeNotify != nil {
-		f.features.ChangeNotify = func(notifyFunc func(string, fs.EntryType), pollInterval <-chan time.Duration) {
-			wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-				decrypted, err := f.DecryptFileName(path)
-				if err != nil {
-					fs.Logf(f, "ChangeNotify was unable to decrypt %q: %s", path, err)
-					return
-				}
-				notifyFunc(decrypted, entryType)
-			}
-			doChangeNotify(wrappedNotifyFunc, pollInterval)
-		}
-	}
 
 	return f, err
 }
@@ -202,6 +189,7 @@ type Options struct {
 // Fs represents a wrapped fs.Fs
 type Fs struct {
 	fs.Fs
+	wrapper  fs.Fs
 	name     string
 	root     string
 	opt      Options
@@ -544,6 +532,16 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// WrapFs returns the Fs that is wrapping this Fs
+func (f *Fs) WrapFs() fs.Fs {
+	return f.wrapper
+}
+
+// SetWrapper sets the Fs that is wrapping this Fs
+func (f *Fs) SetWrapper(wrapper fs.Fs) {
+	f.wrapper = wrapper
+}
+
 // EncryptFileName returns an encrypted file name
 func (f *Fs) EncryptFileName(fileName string) string {
 	return f.cipher.EncryptFileName(fileName)
@@ -614,6 +612,75 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr 
 	}
 
 	return m.Sums()[hashType], nil
+}
+
+// MergeDirs merges the contents of all the directories passed
+// in into the first one and rmdirs the other directories.
+func (f *Fs) MergeDirs(dirs []fs.Directory) error {
+	do := f.Fs.Features().MergeDirs
+	if do == nil {
+		return errors.New("MergeDirs not supported")
+	}
+	out := make([]fs.Directory, len(dirs))
+	for i, dir := range dirs {
+		out[i] = fs.NewDirCopy(dir).SetRemote(f.cipher.EncryptDirName(dir.Remote()))
+	}
+	return do(out)
+}
+
+// DirCacheFlush resets the directory cache - used in testing
+// as an optional interface
+func (f *Fs) DirCacheFlush() {
+	do := f.Fs.Features().DirCacheFlush
+	if do != nil {
+		do()
+	}
+}
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(remote string) (string, error) {
+	do := f.Fs.Features().PublicLink
+	if do == nil {
+		return "", errors.New("PublicLink not supported")
+	}
+	o, err := f.NewObject(remote)
+	if err != nil {
+		// assume it is a directory
+		return do(f.cipher.EncryptDirName(remote))
+	}
+	return do(o.(*Object).Object.Remote())
+}
+
+// ChangeNotify calls the passed function with a path
+// that has had changes. If the implementation
+// uses polling, it should adhere to the given interval.
+func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+	do := f.Fs.Features().ChangeNotify
+	if do == nil {
+		return
+	}
+	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
+		fs.Logf(f, "path %q entryType %d", path, entryType)
+		var (
+			err       error
+			decrypted string
+		)
+		switch entryType {
+		case fs.EntryDirectory:
+			decrypted, err = f.cipher.DecryptDirName(path)
+		case fs.EntryObject:
+			decrypted, err = f.cipher.DecryptFileName(path)
+		default:
+			fs.Errorf(path, "crypt ChangeNotify: ignoring unknown EntryType %d", entryType)
+			return
+		}
+		if err != nil {
+			fs.Logf(f, "ChangeNotify was unable to decrypt %q: %s", path, err)
+			return
+		}
+		notifyFunc(decrypted, entryType)
+	}
+	do(wrappedNotifyFunc, pollIntervalChan)
 }
 
 // Object describes a wrapped for being read from the Fs
@@ -774,6 +841,34 @@ func (o *ObjectInfo) Hash(hash hash.Type) (string, error) {
 	return "", nil
 }
 
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	do, ok := o.Object.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// SetTier performs changing storage tier of the Object if
+// multiple storage classes supported
+func (o *Object) SetTier(tier string) error {
+	do, ok := o.Object.(fs.SetTierer)
+	if !ok {
+		return errors.New("crypt: underlying remote does not support SetTier")
+	}
+	return do.SetTier(tier)
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *Object) GetTier() string {
+	do, ok := o.Object.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -787,7 +882,15 @@ var (
 	_ fs.UnWrapper       = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.Wrapper         = (*Fs)(nil)
+	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.ChangeNotifier  = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)
+	_ fs.IDer            = (*Object)(nil)
+	_ fs.SetTierer       = (*Object)(nil)
+	_ fs.GetTierer       = (*Object)(nil)
 )

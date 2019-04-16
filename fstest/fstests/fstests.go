@@ -11,9 +11,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/bits"
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"testing"
@@ -72,7 +74,7 @@ type SetUploadCutoffer interface {
 // NextPowerOfTwo returns the current or next bigger power of two.
 // All values less or equal 0 will return 0
 func NextPowerOfTwo(i fs.SizeSuffix) fs.SizeSuffix {
-	return 1 << uint(64-leadingZeros64(uint64(i)-1))
+	return 1 << uint(64-bits.LeadingZeros64(uint64(i)-1))
 }
 
 // NextMultipleOf returns a function that can be used as a CeilChunkSize function.
@@ -240,13 +242,27 @@ type ExtraConfigItem struct{ Name, Key, Value string }
 
 // Opt is options for Run
 type Opt struct {
-	RemoteName               string
-	NilObject                fs.Object
-	ExtraConfig              []ExtraConfigItem
-	SkipBadWindowsCharacters bool     // skips unusable characters for windows if set
-	SkipFsMatch              bool     // if set skip exact matching of Fs value
-	TiersToTest              []string // List of tiers which can be tested in setTier test
-	ChunkedUpload            ChunkedUploadConfig
+	RemoteName                   string
+	NilObject                    fs.Object
+	ExtraConfig                  []ExtraConfigItem
+	SkipBadWindowsCharacters     bool     // skips unusable characters for windows if set
+	SkipFsMatch                  bool     // if set skip exact matching of Fs value
+	TiersToTest                  []string // List of tiers which can be tested in setTier test
+	ChunkedUpload                ChunkedUploadConfig
+	UnimplementableFsMethods     []string // List of methods which can't be implemented in this wrapping Fs
+	UnimplementableObjectMethods []string // List of methods which can't be implemented in this wrapping Fs
+	SkipFsCheckWrap              bool     // if set skip FsCheckWrap
+	SkipObjectCheckWrap          bool     // if set skip ObjectCheckWrap
+}
+
+// returns true if x is found in ss
+func stringsContains(x string, ss []string) bool {
+	for _, s := range ss {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }
 
 // Run runs the basic integration tests for a remote using the options passed in.
@@ -358,6 +374,34 @@ func Run(t *testing.T, opt *Opt) {
 
 	// Skip the rest if it failed
 	skipIfNotOk(t)
+
+	// Check to see if Fs that wrap other Fs implement all the optional methods
+	t.Run("FsCheckWrap", func(t *testing.T) {
+		skipIfNotOk(t)
+		if opt.SkipFsCheckWrap {
+			t.Skip("Skipping FsCheckWrap on this Fs")
+		}
+		ft := new(fs.Features).Fill(remote)
+		if ft.UnWrap == nil {
+			t.Skip("Not a wrapping Fs")
+		}
+		v := reflect.ValueOf(ft).Elem()
+		vType := v.Type()
+		for i := 0; i < v.NumField(); i++ {
+			vName := vType.Field(i).Name
+			if stringsContains(vName, opt.UnimplementableFsMethods) {
+				continue
+			}
+			field := v.Field(i)
+			// skip the bools
+			if field.Type().Kind() == reflect.Bool {
+				continue
+			}
+			if field.IsNil() {
+				t.Errorf("Missing Fs wrapper for %s", vName)
+			}
+		}
+	})
 
 	// TestFsRmdirNotFound tests deleting a non existent directory
 	t.Run("FsRmdirNotFound", func(t *testing.T) {
@@ -1363,6 +1407,25 @@ func Run(t *testing.T, opt *Opt) {
 					assert.Nil(t, err)
 					got := getter.GetTier()
 					assert.Equal(t, tier, got)
+				}
+			})
+
+			// Check to see if Fs that wrap other Objects implement all the optional methods
+			t.Run("ObjectCheckWrap", func(t *testing.T) {
+				skipIfNotOk(t)
+				if opt.SkipObjectCheckWrap {
+					t.Skip("Skipping FsCheckWrap on this Fs")
+				}
+				ft := new(fs.Features).Fill(remote)
+				if ft.UnWrap == nil {
+					t.Skip("Not a wrapping Fs")
+				}
+				obj := findObject(t, remote, file1.Path)
+				_, unsupported := fs.ObjectOptionalInterfaces(obj)
+				for _, name := range unsupported {
+					if !stringsContains(name, opt.UnimplementableObjectMethods) {
+						t.Errorf("Missing Object wrapper for %s", name)
+					}
 				}
 			})
 

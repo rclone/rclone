@@ -170,7 +170,7 @@ openbsd_arm)
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs -- -fsigned-char"
 	;;
 solaris_amd64)
-	mksyscall="./mksyscall_solaris.pl"
+	mksyscall="go run mksyscall_solaris.go"
 	mkerrors="$mkerrors -m64"
 	mksysnum=
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
@@ -207,8 +207,6 @@ esac
 	esac
 	if [ -n "$mksysctl" ]; then echo "$mksysctl |gofmt >$zsysctl"; fi
 	if [ -n "$mksysnum" ]; then echo "$mksysnum |gofmt >zsysnum_$GOOSARCH.go"; fi
-	if [ -n "$mktypes" ]; then
-		echo "$mktypes types_$GOOS.go | go run mkpost.go > ztypes_$GOOSARCH.go";
+	if [ -n "$mktypes" ]; then echo "$mktypes types_$GOOS.go | go run mkpost.go > ztypes_$GOOSARCH.go"; fi
 	if [ -n "$mkasm" ]; then echo "$mkasm $GOARCH"; fi
-	fi
 ) | $run

@@ -439,9 +439,6 @@ func (p *parser) resetInsertionMode() {
 		case a.Select:
 			if !last {
 				for ancestor, first := n, p.oe[0]; ancestor != first; {
-					if ancestor == first {
-						break
-					}
 					ancestor = p.oe[p.oe.index(ancestor)-1]
 					switch ancestor.DataAtom {
 					case a.Template:
@@ -904,7 +901,7 @@ func inBodyIM(p *parser) bool {
 		case a.A:
 			for i := len(p.afe) - 1; i >= 0 && p.afe[i].Type != scopeMarkerNode; i-- {
 				if n := p.afe[i]; n.Type == ElementNode && n.DataAtom == a.A {
-					p.inBodyEndTagFormatting(a.A)
+					p.inBodyEndTagFormatting(a.A, "a")
 					p.oe.remove(n)
 					p.afe.remove(n)
 					break
@@ -918,7 +915,7 @@ func inBodyIM(p *parser) bool {
 		case a.Nobr:
 			p.reconstructActiveFormattingElements()
 			if p.elementInScope(defaultScope, a.Nobr) {
-				p.inBodyEndTagFormatting(a.Nobr)
+				p.inBodyEndTagFormatting(a.Nobr, "nobr")
 				p.reconstructActiveFormattingElements()
 			}
 			p.addFormattingElement()
@@ -1126,7 +1123,7 @@ func inBodyIM(p *parser) bool {
 		case a.H1, a.H2, a.H3, a.H4, a.H5, a.H6:
 			p.popUntil(defaultScope, a.H1, a.H2, a.H3, a.H4, a.H5, a.H6)
 		case a.A, a.B, a.Big, a.Code, a.Em, a.Font, a.I, a.Nobr, a.S, a.Small, a.Strike, a.Strong, a.Tt, a.U:
-			p.inBodyEndTagFormatting(p.tok.DataAtom)
+			p.inBodyEndTagFormatting(p.tok.DataAtom, p.tok.Data)
 		case a.Applet, a.Marquee, a.Object:
 			if p.popUntil(defaultScope, p.tok.DataAtom) {
 				p.clearActiveFormattingElements()
@@ -1137,7 +1134,7 @@ func inBodyIM(p *parser) bool {
 		case a.Template:
 			return inHeadIM(p)
 		default:
-			p.inBodyEndTagOther(p.tok.DataAtom)
+			p.inBodyEndTagOther(p.tok.DataAtom, p.tok.Data)
 		}
 	case CommentToken:
 		p.addChild(&Node{
@@ -1164,7 +1161,7 @@ func inBodyIM(p *parser) bool {
 	return true
 }
 
-func (p *parser) inBodyEndTagFormatting(tagAtom a.Atom) {
+func (p *parser) inBodyEndTagFormatting(tagAtom a.Atom, tagName string) {
 	// This is the "adoption agency" algorithm, described at
 	// https://html.spec.whatwg.org/multipage/syntax.html#adoptionAgency
 
@@ -1186,7 +1183,7 @@ func (p *parser) inBodyEndTagFormatting(tagAtom a.Atom) {
 			}
 		}
 		if formattingElement == nil {
-			p.inBodyEndTagOther(tagAtom)
+			p.inBodyEndTagOther(tagAtom, tagName)
 			return
 		}
 		feIndex := p.oe.index(formattingElement)
@@ -1291,9 +1288,17 @@ func (p *parser) inBodyEndTagFormatting(tagAtom a.Atom) {
 // inBodyEndTagOther performs the "any other end tag" algorithm for inBodyIM.
 // "Any other end tag" handling from 12.2.6.5 The rules for parsing tokens in foreign content
 // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inforeign
-func (p *parser) inBodyEndTagOther(tagAtom a.Atom) {
+func (p *parser) inBodyEndTagOther(tagAtom a.Atom, tagName string) {
 	for i := len(p.oe) - 1; i >= 0; i-- {
-		if p.oe[i].DataAtom == tagAtom {
+		// Two element nodes have the same tag if they have the same Data (a
+		// string-typed field). As an optimization, for common HTML tags, each
+		// Data string is assigned a unique, non-zero DataAtom (a uint32-typed
+		// field), since integer comparison is faster than string comparison.
+		// Uncommon (custom) tags get a zero DataAtom.
+		//
+		// The if condition here is equivalent to (p.oe[i].Data == tagName).
+		if (p.oe[i].DataAtom == tagAtom) &&
+			((tagAtom != 0) || (p.oe[i].Data == tagName)) {
 			p.oe = p.oe[:i]
 			break
 		}

@@ -49,9 +49,6 @@ matrix:
   allow_failures:
     - go: tip
   include:
-    - go: 1.8.x
-      script:
-        - make quicktest
     - go: 1.9.x
       script:
         - make quicktest

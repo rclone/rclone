@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
@@ -593,8 +594,18 @@ func (u *multiuploader) upload(firstBuf io.ReadSeeker, firstPart []byte) (*Uploa
 			uploadID: u.uploadID,
 		}
 	}
+
+	// Create a presigned URL of the S3 Get Object in order to have parity with
+	// single part upload.
+	getReq, _ := u.cfg.S3.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: u.in.Bucket,
+		Key:    u.in.Key,
+	})
+	getReq.Config.Credentials = credentials.AnonymousCredentials
+	uploadLocation, _, _ := getReq.PresignRequest(1)
+
 	return &UploadOutput{
-		Location:  aws.StringValue(complete.Location),
+		Location:  uploadLocation,
 		VersionID: complete.VersionId,
 		UploadID:  u.uploadID,
 	}, nil

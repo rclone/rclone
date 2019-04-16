@@ -1,4 +1,4 @@
-// Copyright 2018 Google Inc. All rights reserved.
+// Copyright 2019 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,13 +8,39 @@
 //
 // This package is DEPRECATED. Use package cloud.google.com/go/storage instead.
 //
-// See https://developers.google.com/storage/docs/json_api/
+// For product documentation, see: https://developers.google.com/storage/docs/json_api/
+//
+// Creating a client
 //
 // Usage example:
 //
 //   import "google.golang.org/api/storage/v1"
 //   ...
-//   storageService, err := storage.New(oauthHttpClient)
+//   ctx := context.Background()
+//   storageService, err := storage.NewService(ctx)
+//
+// In this example, Google Application Default Credentials are used for authentication.
+//
+// For information on how to create and obtain Application Default Credentials, see https://developers.google.com/identity/protocols/application-default-credentials.
+//
+// Other authentication options
+//
+// By default, all available scopes (see "Constants") are used to authenticate. To restrict scopes, use option.WithScopes:
+//
+//   storageService, err := storage.NewService(ctx, option.WithScopes(storage.DevstorageReadWriteScope))
+//
+// To use an API key for authentication (note: some APIs do not support API keys), use option.WithAPIKey:
+//
+//   storageService, err := storage.NewService(ctx, option.WithAPIKey("AIza..."))
+//
+// To use an OAuth token (e.g., a user token obtained via a three-legged OAuth flow), use option.WithTokenSource:
+//
+//   config := &oauth2.Config{...}
+//   // ...
+//   token, err := config.Exchange(ctx, ...)
+//   storageService, err := storage.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
+//
+// See https://godoc.org/google.golang.org/api/option/ for details on options.
 package storage // import "google.golang.org/api/storage/v1"
 
 import (
@@ -31,6 +57,8 @@ import (
 
 	gensupport "google.golang.org/api/gensupport"
 	googleapi "google.golang.org/api/googleapi"
+	option "google.golang.org/api/option"
+	htransport "google.golang.org/api/transport/http"
 )
 
 // Always reference these packages, just in case the auto-generated code
@@ -70,6 +98,36 @@ const (
 	DevstorageReadWriteScope = "https://www.googleapis.com/auth/devstorage.read_write"
 )
 
+// NewService creates a new Service.
+func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
+	scopesOption := option.WithScopes(
+		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/cloud-platform.read-only",
+		"https://www.googleapis.com/auth/devstorage.full_control",
+		"https://www.googleapis.com/auth/devstorage.read_only",
+		"https://www.googleapis.com/auth/devstorage.read_write",
+	)
+	// NOTE: prepend, so we don't override user-specified scopes.
+	opts = append([]option.ClientOption{scopesOption}, opts...)
+	client, endpoint, err := htransport.NewClient(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+	s, err := New(client)
+	if err != nil {
+		return nil, err
+	}
+	if endpoint != "" {
+		s.BasePath = endpoint
+	}
+	return s, nil
+}
+
+// New creates a new Service. It uses the provided http.Client for requests.
+//
+// Deprecated: please use NewService instead.
+// To provide a custom HTTP client, use option.WithHTTPClient.
+// If you are using google.golang.org/api/googleapis/transport.APIKey, use option.WithAPIKey with NewService instead.
 func New(client *http.Client) (*Service, error) {
 	if client == nil {
 		return nil, errors.New("client is nil")
@@ -449,6 +507,7 @@ func (s *BucketEncryption) MarshalJSON() ([]byte, error) {
 
 // BucketIamConfiguration: The bucket's IAM configuration.
 type BucketIamConfiguration struct {
+	// BucketPolicyOnly: The bucket's Bucket Policy Only configuration.
 	BucketPolicyOnly *BucketIamConfigurationBucketPolicyOnly `json:"bucketPolicyOnly,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "BucketPolicyOnly") to
@@ -475,6 +534,8 @@ func (s *BucketIamConfiguration) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// BucketIamConfigurationBucketPolicyOnly: The bucket's Bucket Policy
+// Only configuration.
 type BucketIamConfigurationBucketPolicyOnly struct {
 	// Enabled: If set, access checks only use bucket-level IAM policies or
 	// above.
@@ -1201,6 +1262,57 @@ func (s *ComposeRequestSourceObjectsObjectPreconditions) MarshalJSON() ([]byte, 
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// Expr: Represents an expression text. Example: title: "User account
+// presence" description: "Determines whether the request has a user
+// account" expression: "size(request.user) > 0"
+type Expr struct {
+	// Description: An optional description of the expression. This is a
+	// longer text which describes the expression, e.g. when hovered over it
+	// in a UI.
+	Description string `json:"description,omitempty"`
+
+	// Expression: Textual representation of an expression in Common
+	// Expression Language syntax. The application context of the containing
+	// message determines which well-known feature set of CEL is supported.
+	Expression string `json:"expression,omitempty"`
+
+	// Kind: The kind of item this is. For storage, this is always
+	// storage#expr. This field is ignored on input.
+	Kind string `json:"kind,omitempty"`
+
+	// Location: An optional string indicating the location of the
+	// expression for error reporting, e.g. a file name and a position in
+	// the file.
+	Location string `json:"location,omitempty"`
+
+	// Title: An optional title for the expression, i.e. a short string
+	// describing its purpose. This can be used e.g. in UIs which allow to
+	// enter the expression.
+	Title string `json:"title,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Description") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Description") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Expr) MarshalJSON() ([]byte, error) {
+	type NoMethod Expr
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Notification: A subscription to receive Google PubSub notifications.
 type Notification struct {
 	// CustomAttributes: An optional list of additional attributes to attach
@@ -1784,7 +1896,11 @@ func (s *Policy) MarshalJSON() ([]byte, error) {
 }
 
 type PolicyBindings struct {
-	Condition interface{} `json:"condition,omitempty"`
+	// Condition: The condition that is associated with this binding. NOTE:
+	// an unsatisfied condition will not allow user access via current
+	// binding. Different bindings, including their conditions, are examined
+	// independently.
+	Condition *Expr `json:"condition,omitempty"`
 
 	// Members: A collection of identifiers for members who may assume the
 	// provided role. Recognized identifiers are as follows:
@@ -9174,7 +9290,7 @@ func (c *ObjectsInsertCall) doRequest(alt string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header = reqHeaders
-	gensupport.SetGetBody(req, getBody)
+	req.GetBody = getBody
 	googleapi.Expand(req.URL, map[string]string{
 		"bucket": c.bucket,
 	})

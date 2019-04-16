@@ -21,8 +21,9 @@ func TestIntegration(t *testing.T) {
 		t.Skip("Skipping as -remote not set")
 	}
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: *fstest.RemoteName,
-		NilObject:  (*crypt.Object)(nil),
+		RemoteName:                   *fstest.RemoteName,
+		NilObject:                    (*crypt.Object)(nil),
+		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
 
@@ -42,6 +43,7 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 		},
+		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
 
@@ -61,6 +63,7 @@ func TestOff(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
 			{Name: name, Key: "filename_encryption", Value: "off"},
 		},
+		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
 
@@ -80,6 +83,7 @@ func TestObfuscate(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
 			{Name: name, Key: "filename_encryption", Value: "obfuscate"},
 		},
-		SkipBadWindowsCharacters: true,
+		SkipBadWindowsCharacters:     true,
+		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }

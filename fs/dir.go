@@ -28,6 +28,7 @@ func NewDirCopy(d Directory) *Dir {
 		modTime: d.ModTime(),
 		size:    d.Size(),
 		items:   d.Items(),
+		id:      d.ID(),
 	}
 }
 
