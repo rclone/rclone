@@ -14,6 +14,7 @@ import (
 	"os/user"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -813,6 +814,47 @@ func (f *Fs) Hashes() hash.Set {
 	return set
 }
 
+// About gets usage stats
+func (f *Fs) About() (*fs.Usage, error) {
+	c, err := f.getSftpConnection()
+	if err != nil {
+		return nil, errors.Wrap(err, "About get SFTP connection")
+	}
+	session, err := c.sshClient.NewSession()
+	f.putSftpConnection(&c, err)
+	if err != nil {
+		return nil, errors.Wrap(err, "About put SFTP connection")
+	}
+
+	var stdout, stderr bytes.Buffer
+	session.Stdout = &stdout
+	session.Stderr = &stderr
+	escapedPath := shellEscape(f.root)
+	if f.opt.PathOverride != "" {
+		escapedPath = shellEscape(path.Join(f.opt.PathOverride, f.root))
+	}
+	if len(escapedPath) == 0 {
+		escapedPath = "/"
+	}
+	err = session.Run("df -k " + escapedPath)
+	if err != nil {
+		_ = session.Close()
+		return nil, errors.Wrap(err, "About invocation of df failed. Your remote may not support about.")
+	}
+	_ = session.Close()
+
+	usageTotal, usageUsed, usageAvail := parseUsage(stdout.Bytes())
+	if usageTotal < 0 || usageUsed < 0 || usageAvail < 0 {
+		return nil, errors.Wrap(err, "About failed to parse information")
+	}
+	usage := &fs.Usage{
+		Total: fs.NewUsageValue(usageTotal),
+		Used:  fs.NewUsageValue(usageUsed),
+		Free:  fs.NewUsageValue(usageAvail),
+	}
+	return usage, nil
+}
+
 // Fs is the filesystem this remote sftp file object is located within
 func (o *Object) Fs() fs.Info {
 	return o.fs
@@ -901,6 +943,34 @@ func shellEscape(str string) string {
 // as expected by the rest of this application
 func parseHash(bytes []byte) string {
 	return strings.Split(string(bytes), " ")[0] // Split at hash / filename separator
+}
+
+// Parses the byte array output from the SSH session
+// returned by an invocation of df into
+// the disk size, used space, and avaliable space on the disk, in that order.
+// Only works when `df` has output info on only one disk
+func parseUsage(bytes []byte) (int64, int64, int64) {
+	lines := strings.Split(string(bytes), "\n")
+	if len(lines) < 2 {
+		return -1, -1, -1
+	}
+	split := strings.Fields(lines[1])
+	if len(split) < 6 {
+		return -1, -1, -1
+	}
+	spaceTotal, err := strconv.ParseInt(split[1], 10, 64)
+	if err != nil {
+		return -1, -1, -1
+	}
+	spaceUsed, err := strconv.ParseInt(split[2], 10, 64)
+	if err != nil {
+		return -1, -1, -1
+	}
+	spaceAvail, err := strconv.ParseInt(split[3], 10, 64)
+	if err != nil {
+		return -1, -1, -1
+	}
+	return spaceTotal * 1024, spaceUsed * 1024, spaceAvail * 1024
 }
 
 // Size returns the size in bytes of the remote sftp file
