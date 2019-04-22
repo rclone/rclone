@@ -23,6 +23,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
 		NilObject:                    (*crypt.Object)(nil),
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
@@ -43,6 +44,7 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
@@ -63,6 +65,7 @@ func TestOff(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
 			{Name: name, Key: "filename_encryption", Value: "off"},
 		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
@@ -84,6 +87,7 @@ func TestObfuscate(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "obfuscate"},
 		},
 		SkipBadWindowsCharacters:     true,
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }

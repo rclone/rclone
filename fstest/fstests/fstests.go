@@ -674,6 +674,36 @@ func Run(t *testing.T, opt *Opt) {
 			}
 		})
 
+		t.Run("FsOpenWriterAt", func(t *testing.T) {
+			skipIfNotOk(t)
+			openWriterAt := remote.Features().OpenWriterAt
+			if openWriterAt == nil {
+				t.Skip("FS has no OpenWriterAt interface")
+			}
+			path := "writer-at-subdir/writer-at-file"
+			out, err := openWriterAt(path, -1)
+			require.NoError(t, err)
+
+			var n int
+			n, err = out.WriteAt([]byte("def"), 3)
+			assert.NoError(t, err)
+			assert.Equal(t, 3, n)
+			n, err = out.WriteAt([]byte("ghi"), 6)
+			assert.NoError(t, err)
+			assert.Equal(t, 3, n)
+			n, err = out.WriteAt([]byte("abc"), 0)
+			assert.NoError(t, err)
+			assert.Equal(t, 3, n)
+
+			assert.NoError(t, out.Close())
+
+			obj := findObject(t, remote, path)
+			assert.Equal(t, "abcdefghi", readObject(t, obj, -1), "contents of file differ")
+
+			assert.NoError(t, obj.Remove())
+			assert.NoError(t, remote.Rmdir("writer-at-subdir"))
+		})
+
 		// TestFsChangeNotify tests that changes are properly
 		// propagated
 		//

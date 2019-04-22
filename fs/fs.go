@@ -427,6 +427,12 @@ type Usage struct {
 	Objects *int64 `json:"objects,omitempty"` // objects in the storage system
 }
 
+// WriterAtCloser wraps io.WriterAt and io.Closer
+type WriterAtCloser interface {
+	io.WriterAt
+	io.Closer
+}
+
 // Features describe the optional features of the Fs
 type Features struct {
 	// Feature flags, whether Fs
@@ -548,6 +554,13 @@ type Features struct {
 
 	// About gets quota information from the Fs
 	About func() (*Usage, error)
+
+	// OpenWriterAt opens with a handle for random access writes
+	//
+	// Pass in the remote desired and the size if known.
+	//
+	// It truncates any existing object
+	OpenWriterAt func(remote string, size int64) (WriterAtCloser, error)
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -640,6 +653,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(Abouter); ok {
 		ft.About = do.About
 	}
+	if do, ok := f.(OpenWriterAter); ok {
+		ft.OpenWriterAt = do.OpenWriterAt
+	}
 	return ft.DisableList(Config.DisableFeatures)
 }
 
@@ -704,6 +720,9 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.About == nil {
 		ft.About = nil
+	}
+	if mask.OpenWriterAt == nil {
+		ft.OpenWriterAt = nil
 	}
 	return ft.DisableList(Config.DisableFeatures)
 }
@@ -902,6 +921,16 @@ type RangeSeeker interface {
 type Abouter interface {
 	// About gets quota information from the Fs
 	About() (*Usage, error)
+}
+
+// OpenWriterAter is an optional interface for Fs
+type OpenWriterAter interface {
+	// OpenWriterAt opens with a handle for random access writes
+	//
+	// Pass in the remote desired and the size if known.
+	//
+	// It truncates any existing object
+	OpenWriterAt(remote string, size int64) (WriterAtCloser, error)
 }
 
 // ObjectsChan is a channel of Objects

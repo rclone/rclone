@@ -998,6 +998,36 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	return o.lstat()
 }
 
+// OpenWriterAt opens with a handle for random access writes
+//
+// Pass in the remote desired and the size if known.
+//
+// It truncates any existing object
+func (f *Fs) OpenWriterAt(remote string, size int64) (fs.WriterAtCloser, error) {
+	// Temporary Object under construction
+	o := f.newObject(remote, "")
+
+	err := o.mkdirAll()
+	if err != nil {
+		return nil, err
+	}
+
+	if o.translatedLink {
+		return nil, errors.New("can't open a symlink for random writing")
+	}
+
+	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return nil, err
+	}
+	// Pre-allocate the file for performance reasons
+	err = preAllocate(size, out)
+	if err != nil {
+		fs.Debugf(o, "Failed to pre-allocate: %v", err)
+	}
+	return out, nil
+}
+
 // setMetadata sets the file info from the os.FileInfo passed in
 func (o *Object) setMetadata(info os.FileInfo) {
 	// Don't overwrite the info if we don't need to
@@ -1139,10 +1169,11 @@ func cleanWindowsName(f *Fs, name string) string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.Purger      = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.Mover       = &Fs{}
-	_ fs.DirMover    = &Fs{}
-	_ fs.Object      = &Object{}
+	_ fs.Fs             = &Fs{}
+	_ fs.Purger         = &Fs{}
+	_ fs.PutStreamer    = &Fs{}
+	_ fs.Mover          = &Fs{}
+	_ fs.DirMover       = &Fs{}
+	_ fs.OpenWriterAter = &Fs{}
+	_ fs.Object         = &Object{}
 )
