@@ -17,7 +17,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   "TestCache:",
 		NilObject:                    (*cache.Object)(nil),
-		UnimplementableFsMethods:     []string{"PublicLink", "MergeDirs"},
+		UnimplementableFsMethods:     []string{"PublicLink", "MergeDirs", "OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType", "ID", "GetTier", "SetTier"},
 	})
 }
