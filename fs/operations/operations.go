@@ -249,6 +249,10 @@ var _ fs.MimeTyper = (*overrideRemoteObject)(nil)
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	accounting.Stats.Transferring(src.Remote())
+	defer func() {
+		accounting.Stats.DoneTransferring(src.Remote(), err == nil)
+	}()
 	newDst = dst
 	if fs.Config.DryRun {
 		fs.Logf(src, "Not copying as --dry-run")
@@ -391,6 +395,10 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Move(fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	accounting.Stats.Checking(src.Remote())
+	defer func() {
+		accounting.Stats.DoneChecking(src.Remote())
+	}()
 	newDst = dst
 	if fs.Config.DryRun {
 		fs.Logf(src, "Not moving as --dry-run")
@@ -1451,9 +1459,7 @@ func moveOrCopyFile(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName stri
 	}
 
 	if NeedTransfer(dstObj, srcObj) {
-		accounting.Stats.Transferring(srcFileName)
 		_, err = Op(fdst, dstObj, dstFileName, srcObj)
-		accounting.Stats.DoneTransferring(srcFileName, err == nil)
 	} else {
 		accounting.Stats.Checking(srcFileName)
 		if !cp {

@@ -995,9 +995,9 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
 	if canTrackRenames {
-		assert.Equal(t, accounting.Stats.GetTransfers(), int64(0))
+		assert.Equal(t, int64(0), accounting.Stats.GetTransfers())
 	} else {
-		assert.Equal(t, accounting.Stats.GetTransfers(), int64(1))
+		assert.Equal(t, int64(1), accounting.Stats.GetTransfers())
 	}
 }
 

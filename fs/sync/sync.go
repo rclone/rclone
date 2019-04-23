@@ -288,14 +288,12 @@ func (s *syncCopyMove) pairCopyOrMove(in *pipe, fdst fs.Fs, wg *sync.WaitGroup) 
 			return
 		}
 		src := pair.Src
-		accounting.Stats.Transferring(src.Remote())
 		if s.DoMove {
 			_, err = operations.Move(fdst, pair.Dst, src.Remote(), src)
 		} else {
 			_, err = operations.Copy(fdst, pair.Dst, src.Remote(), src)
 		}
 		s.processError(err)
-		accounting.Stats.DoneTransferring(src.Remote(), err == nil)
 	}
 }
 
@@ -604,9 +602,6 @@ func (s *syncCopyMove) makeRenameMap() {
 // tryRename renames a src object when doing track renames if
 // possible, it returns true if the object was renamed.
 func (s *syncCopyMove) tryRename(src fs.Object) bool {
-	accounting.Stats.Checking(src.Remote())
-	defer accounting.Stats.DoneChecking(src.Remote())
-
 	// Calculate the hash of the src object
 	hash := s.renameHash(src)
 	if hash == "" {
