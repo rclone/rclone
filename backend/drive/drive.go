@@ -1877,11 +1877,16 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
+	supportTeamDrives, err := f.ShouldSupportTeamDrives(src)
+	if err != nil {
+		return nil, err
+	}
+
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Copy(srcObj.id, createInfo).
 			Fields(partialFields).
-			SupportsTeamDrives(f.isTeamDrive).
+			SupportsTeamDrives(supportTeamDrives).
 			KeepRevisionForever(f.opt.KeepRevisionForever).
 			Do()
 		return shouldRetry(err)
@@ -2025,6 +2030,11 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	dstParents := strings.Join(dstInfo.Parents, ",")
 	dstInfo.Parents = nil
 
+	supportTeamDrives, err := f.ShouldSupportTeamDrives(src)
+	if err != nil {
+		return nil, err
+	}
+
 	// Do the move
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
@@ -2032,7 +2042,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 			RemoveParents(srcParentID).
 			AddParents(dstParents).
 			Fields(partialFields).
-			SupportsTeamDrives(f.isTeamDrive).
+			SupportsTeamDrives(supportTeamDrives).
 			Do()
 		return shouldRetry(err)
 	})
@@ -2041,6 +2051,20 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	return f.newObjectWithInfo(remote, info)
+}
+
+// ShouldSupportTeamDrives returns the request should support TeamDrives
+func (f *Fs) ShouldSupportTeamDrives(src fs.Object) (bool, error) {
+	srcIsTeamDrive := false
+	if srcFs, ok := src.Fs().(*Fs); ok {
+		srcIsTeamDrive = srcFs.isTeamDrive
+	}
+
+	if f.isTeamDrive {
+		return true, nil
+	}
+
+	return srcIsTeamDrive, nil
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
