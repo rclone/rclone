@@ -73,6 +73,7 @@ Please see [the full list of all storage providers and their features](https://r
   * Optional encryption ([Crypt](https://rclone.org/crypt/))
   * Optional cache ([Cache](https://rclone.org/cache/))
   * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
+  * Multi-threaded downloads to local disk
 
 ## Installation & documentation
 

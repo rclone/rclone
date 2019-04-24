@@ -93,6 +93,8 @@ type ConfigInfo struct {
 	CaCert                 string // Client Side CA
 	ClientCert             string // Client Side Cert
 	ClientKey              string // Client Side Key
+	MultiThreadCutoff      SizeSuffix
+	MultiThreadStreams     int
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -124,6 +126,8 @@ func NewConfig() *ConfigInfo {
 	c.MaxBacklog = 10000
 	// We do not want to set the default here. We use this variable being empty as part of the fall-through of options.
 	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
+	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
+	c.MultiThreadStreams = 4
 
 	return c
 }

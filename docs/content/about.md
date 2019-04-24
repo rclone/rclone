@@ -65,6 +65,7 @@ Features
   * ([Cache](/cache/)) backend
   * ([Union](/union/)) backend
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
+  * Multi-threaded downloads to local disk
 
 Links
 
