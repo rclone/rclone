@@ -674,6 +674,49 @@ if you are reading and writing to an OS X filing system this will be
 
 This command line flag allows you to override that computed default.
 
+### --multi-thread-cutoff=SIZE ###
+
+When downloading files to the local backend above this size, rclone
+will use multiple threads to download the file. (default 250M)
+
+Rclone preallocates the file (using `fallocate(FALLOC_FL_KEEP_SIZE)`
+on unix or `NTSetInformationFile` on Windows both of which takes no
+time) then each thread writes directly into the file at the correct
+place.  This means that rclone won't create fragmented or sparse files
+and there won't be any assembly time at the end of the transfer.
+
+The number of threads used to dowload is controlled by
+`--multi-thread-streams`.
+
+Use `-vv` if you wish to see info about the threads.
+
+This will work with the `sync`/`copy`/`move` commands and friends
+`copyto`/`moveto`.  Multi thread downloads will be used with `rclone
+mount` and `rclone serve` if `--vfs-cache-mode` is set to `writes` or
+above.
+
+**NB** that this **only** works for a local destination but will work
+with any source.
+
+### --multi-thread-streams=N ###
+
+When using multi thread downloads (see above `--multi-thread-cutoff`)
+this sets the maximum number of streams to use.  Set to `0` to disable
+multi thread downloads. (Default 4)
+
+Exactly how many streams rclone uses for the download depends on the
+size of the file. To calculate the number of download streams Rclone
+divides the size of the file by the `--multi-thread-cutoff` and rounds
+up, up to the maximum set with `--multi-thread-streams`.
+
+So if `--multi-thread-cutoff 250MB` and `--multi-thread-streams 4` are
+in effect (the defaults):
+
+- 0MB.250MB files will be downloaded with 1 stream
+- 250MB..500MB files will be downloaded with 2 streams
+- 500MB..750MB files will be downloaded with 3 streams
+- 750MB+ files will be downloaded with 4 streams
+
 ### --no-gzip-encoding ###
 
 Don't set `Accept-Encoding: gzip`.  This means that rclone won't ask

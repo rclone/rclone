@@ -292,38 +292,56 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 		}
 		// If can't server side copy, do it manually
 		if err == fs.ErrorCantCopy {
-			var in0 io.ReadCloser
-			in0, err = newReOpen(src, hashOption, nil, fs.Config.LowLevelRetries)
-			if err != nil {
-				err = errors.Wrap(err, "failed to open source object")
-			} else {
-				if src.Size() == -1 {
-					// -1 indicates unknown size. Use Rcat to handle both remotes supporting and not supporting PutStream.
-					if doUpdate {
-						actionTaken = "Copied (Rcat, replaced existing)"
-					} else {
-						actionTaken = "Copied (Rcat, new)"
-					}
-					dst, err = Rcat(f, remote, in0, src.ModTime())
-					newDst = dst
+			if doOpenWriterAt := f.Features().OpenWriterAt; doOpenWriterAt != nil && src.Size() >= int64(fs.Config.MultiThreadCutoff) && fs.Config.MultiThreadStreams > 1 {
+				// Number of streams proportional to size
+				streams := src.Size() / int64(fs.Config.MultiThreadCutoff)
+				// With maximum
+				if streams > int64(fs.Config.MultiThreadStreams) {
+					streams = int64(fs.Config.MultiThreadStreams)
+				}
+				if streams < 2 {
+					streams = 2
+				}
+				dst, err = multiThreadCopy(f, remote, src, int(streams))
+				if doUpdate {
+					actionTaken = "Multi-thread Copied (replaced existing)"
 				} else {
-					in := accounting.NewAccount(in0, src).WithBuffer() // account and buffer the transfer
-					var wrappedSrc fs.ObjectInfo = src
-					// We try to pass the original object if possible
-					if src.Remote() != remote {
-						wrappedSrc = &overrideRemoteObject{Object: src, remote: remote}
-					}
-					if doUpdate {
-						actionTaken = "Copied (replaced existing)"
-						err = dst.Update(in, wrappedSrc, hashOption)
-					} else {
-						actionTaken = "Copied (new)"
-						dst, err = f.Put(in, wrappedSrc, hashOption)
-					}
-					closeErr := in.Close()
-					if err == nil {
+					actionTaken = "Multi-thread Copied (new)"
+				}
+			} else {
+				var in0 io.ReadCloser
+				in0, err = newReOpen(src, hashOption, nil, fs.Config.LowLevelRetries)
+				if err != nil {
+					err = errors.Wrap(err, "failed to open source object")
+				} else {
+					if src.Size() == -1 {
+						// -1 indicates unknown size. Use Rcat to handle both remotes supporting and not supporting PutStream.
+						if doUpdate {
+							actionTaken = "Copied (Rcat, replaced existing)"
+						} else {
+							actionTaken = "Copied (Rcat, new)"
+						}
+						dst, err = Rcat(f, remote, in0, src.ModTime())
 						newDst = dst
-						err = closeErr
+					} else {
+						in := accounting.NewAccount(in0, src).WithBuffer() // account and buffer the transfer
+						var wrappedSrc fs.ObjectInfo = src
+						// We try to pass the original object if possible
+						if src.Remote() != remote {
+							wrappedSrc = &overrideRemoteObject{Object: src, remote: remote}
+						}
+						if doUpdate {
+							actionTaken = "Copied (replaced existing)"
+							err = dst.Update(in, wrappedSrc, hashOption)
+						} else {
+							actionTaken = "Copied (new)"
+							dst, err = f.Put(in, wrappedSrc, hashOption)
+						}
+						closeErr := in.Close()
+						if err == nil {
+							newDst = dst
+							err = closeErr
+						}
 					}
 				}
 			}
