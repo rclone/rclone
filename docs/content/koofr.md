@@ -34,7 +34,7 @@ Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
  1 / A stackable unification remote, which can appear to merge the contents of several remotes
    \ "union"
- 2 / Alias for a existing remote
+ 2 / Alias for an existing remote
    \ "alias"
  3 / Amazon Drive
    \ "amazon cloud drive"

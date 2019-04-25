@@ -35,7 +35,7 @@ n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Alias for a existing remote
+ 1 / Alias for an existing remote
    \ "alias"
 [snip]
 14 / Mega
