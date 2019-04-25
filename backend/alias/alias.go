@@ -14,7 +14,7 @@ import (
 func init() {
 	fsi := &fs.RegInfo{
 		Name:        "alias",
-		Description: "Alias for a existing remote",
+		Description: "Alias for an existing remote",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "remote",
