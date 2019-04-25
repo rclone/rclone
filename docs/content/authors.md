@@ -251,3 +251,4 @@ Contributors
   * Ben Boeckel <mathstuf@gmail.com>
   * Manu <manu@snapdragon.cc>
   * Kyle E. Mitchell <kyle@kemitchell.com>
+  * Gary Kim <gary@garykim.dev>
