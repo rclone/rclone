@@ -114,6 +114,94 @@ objects with the same name.
 This confuses rclone greatly when syncing - use the `rclone dedupe`
 command to rename or remove duplicates.
 
+### Restricted filenames ###
+
+Some cloud storage systems might have restrictions on the characters
+that are usable in file or directory names.
+When `rclone` detects such a name during a file upload, it will
+transparently replace the restricted characters with similar looking
+Unicode characters.
+
+This process is designed to avoid ambiguous file names as much as
+possible and allow to move files between many cloud storage systems
+transparently.
+
+The name shown by `rclone` to the user or during log output will only
+contain a minimal set of [replaced characters](#restricted-characters)
+to ensure correct formatting and not necessarily the actual name used
+on the cloud storage.
+
+This transformation is reversed when downloading a file or parsing
+`rclone` arguments.
+For example, when uploading a file named `my file?.txt` to Onedrive
+will be displayed as `my file?.txt` on the console, but stored as
+`my file？.txt` (the `?` gets replaced by the similar looking `？`
+character) to Onedrive.
+The reverse transformation allows to read a file`unusual/name.txt`
+from Google Drive, by passing the name `unusual／name.txt` (the `/` needs
+to be replaced by the similar looking `／` character) on the command line.
+
+#### Default restricted characters {#restricted-characters}
+
+The table below shows the characters that are replaced by default.
+
+When a replacement character is found in a filename, this character
+will be escaped with the `‛` character to avoid ambiguous file names.
+(e.g. a file named `␀.txt` would shown as `‛␀.txt`)
+
+Each cloud storage backend can use a different set of characters,
+which will be specified in the documentation for each backend.
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| SOH       | 0x01  | ␁           |
+| STX       | 0x02  | ␂           |
+| ETX       | 0x03  | ␃           |
+| EOT       | 0x04  | ␄           |
+| ENQ       | 0x05  | ␅           |
+| ACK       | 0x06  | ␆           |
+| BEL       | 0x07  | ␇           |
+| BS        | 0x08  | ␈           |
+| HT        | 0x09  | ␉           |
+| LF        | 0x0A  | ␊           |
+| VT        | 0x0B  | ␋           |
+| FF        | 0x0C  | ␌           |
+| CR        | 0x0D  | ␍           |
+| SO        | 0x0E  | ␎           |
+| SI        | 0x0F  | ␏           |
+| DLE       | 0x10  | ␐           |
+| DC1       | 0x11  | ␑           |
+| DC2       | 0x12  | ␒           |
+| DC3       | 0x13  | ␓           |
+| DC4       | 0x14  | ␔           |
+| NAK       | 0x15  | ␕           |
+| SYN       | 0x16  | ␖           |
+| ETB       | 0x17  | ␗           |
+| CAN       | 0x18  | ␘           |
+| EM        | 0x19  | ␙           |
+| SUB       | 0x1A  | ␚           |
+| ESC       | 0x1B  | ␛           |
+| FS        | 0x1C  | ␜           |
+| GS        | 0x1D  | ␝           |
+| RS        | 0x1E  | ␞           |
+| US        | 0x1F  | ␟           |
+| /         | 0x2F  | ／           |
+| DEL       | 0x7F  | ␡           |
+
+#### Invalid UTF-8 bytes {#invalid-utf8}
+
+Some backends only support a sequence of well formed UTF-8 bytes
+as file or directory names.
+
+In this case all invalid UTF-8 bytes will be replaced with a quoted
+representation of the byte value to allow uploading a file to such a
+backend. For example, the invalid byte `0xFE` will be encoded as `‛FE`.
+
+A common source of invalid UTF-8 bytes are local filesystems, that store
+names in a different encoding than UTF-8 or UTF-16, like latin1. See the
+[local filenames](/local/#filenames) section for details.
+
 ### MIME Type ###
 
 MIME types (also known as media types) classify types of documents
