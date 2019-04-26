@@ -402,6 +402,27 @@ func (f *Fs) clearRoot() {
 	//log.Printf("cleared root directory")
 }
 
+// CleanUp deletes all files currently in trash
+func (f *Fs) CleanUp() (err error) {
+	trash := f.srv.FS.GetTrash()
+	items := []*mega.Node{}
+	_, err = f.list(trash, func(item *mega.Node) bool {
+		items = append(items, item)
+		return false
+	})
+	if err != nil {
+		return errors.Wrap(err, "CleanUp failed to list items in trash")
+	}
+	// similar to f.deleteNode(trash) but with HardDelete as true
+	for _, item := range items {
+		err = f.pacer.Call(func() (bool, error) {
+			err = f.srv.Delete(item, true)
+			return shouldRetry(err)
+		})
+	}
+	return err
+}
+
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
