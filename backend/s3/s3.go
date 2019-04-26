@@ -732,6 +732,14 @@ If it is set then rclone will use v2 authentication.
 Use this only if v4 signatures don't work, eg pre Jewel/v10 CEPH.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     "use_accelerate_endpoint",
+			Provider: "AWS",
+			Help: `If true use the AWS S3 accelerated endpoint.
+
+See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration-examples.html)`,
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -752,25 +760,26 @@ const (
 
 // Options defines the configuration for this backend
 type Options struct {
-	Provider             string        `config:"provider"`
-	EnvAuth              bool          `config:"env_auth"`
-	AccessKeyID          string        `config:"access_key_id"`
-	SecretAccessKey      string        `config:"secret_access_key"`
-	Region               string        `config:"region"`
-	Endpoint             string        `config:"endpoint"`
-	LocationConstraint   string        `config:"location_constraint"`
-	ACL                  string        `config:"acl"`
-	BucketACL            string        `config:"bucket_acl"`
-	ServerSideEncryption string        `config:"server_side_encryption"`
-	SSEKMSKeyID          string        `config:"sse_kms_key_id"`
-	StorageClass         string        `config:"storage_class"`
-	UploadCutoff         fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize            fs.SizeSuffix `config:"chunk_size"`
-	DisableChecksum      bool          `config:"disable_checksum"`
-	SessionToken         string        `config:"session_token"`
-	UploadConcurrency    int           `config:"upload_concurrency"`
-	ForcePathStyle       bool          `config:"force_path_style"`
-	V2Auth               bool          `config:"v2_auth"`
+	Provider              string        `config:"provider"`
+	EnvAuth               bool          `config:"env_auth"`
+	AccessKeyID           string        `config:"access_key_id"`
+	SecretAccessKey       string        `config:"secret_access_key"`
+	Region                string        `config:"region"`
+	Endpoint              string        `config:"endpoint"`
+	LocationConstraint    string        `config:"location_constraint"`
+	ACL                   string        `config:"acl"`
+	BucketACL             string        `config:"bucket_acl"`
+	ServerSideEncryption  string        `config:"server_side_encryption"`
+	SSEKMSKeyID           string        `config:"sse_kms_key_id"`
+	StorageClass          string        `config:"storage_class"`
+	UploadCutoff          fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize             fs.SizeSuffix `config:"chunk_size"`
+	DisableChecksum       bool          `config:"disable_checksum"`
+	SessionToken          string        `config:"session_token"`
+	UploadConcurrency     int           `config:"upload_concurrency"`
+	ForcePathStyle        bool          `config:"force_path_style"`
+	V2Auth                bool          `config:"v2_auth"`
+	UseAccelerateEndpoint bool          `config:"use_accelerate_endpoint"`
 }
 
 // Fs represents a remote s3 server
@@ -944,14 +953,15 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
 	}
-	if opt.Provider == "Alibaba" || opt.Provider == "Netease" {
+	if opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.UseAccelerateEndpoint {
 		opt.ForcePathStyle = false
 	}
 	awsConfig := aws.NewConfig().
 		WithMaxRetries(maxRetries).
 		WithCredentials(cred).
 		WithHTTPClient(fshttp.NewClient(fs.Config)).
-		WithS3ForcePathStyle(opt.ForcePathStyle)
+		WithS3ForcePathStyle(opt.ForcePathStyle).
+		WithS3UseAccelerate(opt.UseAccelerateEndpoint)
 	if opt.Region != "" {
 		awsConfig.WithRegion(opt.Region)
 	}
