@@ -1,0 +1,148 @@
+---
+# Azure pipelines build for rclone
+# Parts stolen shamelessly from all round the Internet, especially Caddy
+
+trigger:
+  branches:
+    include:
+      - '*'
+  tags:
+    include:
+      - '*'
+
+strategy:
+  matrix:
+    linux:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: latest
+    mac:
+      imageName: macos-10.13
+      gorootDir: /usr/local
+      GO_VERSION: latest
+    windows:
+      imageName: windows-2019
+      gorootDir: C:\
+      GO_VERSION: latest
+    go1.11:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.11.8
+    go1.10:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.10.8
+    go1.9:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.9.7
+
+pool:
+  vmImage: $(imageName)
+
+variables:
+  GOROOT: $(gorootDir)/go
+  GOPATH: $(system.defaultWorkingDirectory)/gopath
+  GOBIN: $(GOPATH)/bin
+  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)'
+  GO111MODULE: 'off'
+  GOTAGS: cmount
+  GO_LATEST: false
+
+steps:
+- bash: |
+    latestGo=$(curl "https://golang.org/VERSION?m=text")
+    echo "##vso[task.setvariable variable=GO_VERSION]$latestGo"
+    echo "##vso[task.setvariable variable=GO_LATEST]true"
+    echo "Latest Go version: $latestGo"
+  condition: eq( variables['GO_VERSION'], 'latest' )
+  displayName: "Get latest Go version"
+
+- bash: |
+    sudo rm -f $(which go)
+    echo '##vso[task.prependpath]$(GOBIN)'
+    echo '##vso[task.prependpath]$(GOROOT)/bin'
+    mkdir -p '$(modulePath)'
+    shopt -s extglob
+    shopt -s dotglob
+    mv !(gopath) '$(modulePath)'
+  displayName: Remove old Go, set GOBIN/GOROOT, and move project into GOPATH
+
+  # Install Libraries (varies by platform)
+
+- bash: |
+    sudo modprobe fuse
+    sudo chmod 666 /dev/fuse
+    sudo chown root:$USER /etc/fuse.conf
+    sudo apt install fuse libfuse-dev rpm pkg-config
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Install Libraries on Linux
+
+- bash: |
+    brew update
+    brew tap caskroom/cask
+    brew cask install osxfuse
+  condition: eq( variables['Agent.OS'], 'Darwin' )
+  displayName: Install Libraries on macOS
+
+- powershell: |
+    choco install -y winfsp zip make
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  displayName: Install Libraries on Windows
+
+  # Install Go (this varies by platform)
+
+- bash: |
+    wget "https://dl.google.com/go/$(GO_VERSION).linux-amd64.tar.gz"
+    sudo tar -C $(gorootDir) -xzf "$(GO_VERSION).linux-amd64.tar.gz"
+  condition: eq( variables['Agent.OS'], 'Linux' )
+  displayName: Install Go on Linux
+
+- bash: |
+    wget "https://dl.google.com/go/$(GO_VERSION).darwin-amd64.tar.gz"
+    sudo tar -C $(gorootDir) -xzf "$(GO_VERSION).darwin-amd64.tar.gz"
+  condition: eq( variables['Agent.OS'], 'Darwin' )
+  displayName: Install Go on macOS
+
+- powershell: |
+    Write-Host "Downloading Go... (please be patient, I am very slow)"
+    (New-Object System.Net.WebClient).DownloadFile("https://dl.google.com/go/$(GO_VERSION).windows-amd64.zip", "$(GO_VERSION).windows-amd64.zip")
+    Write-Host "Extracting Go... (I'm slow too)"
+    Expand-Archive "$(GO_VERSION).windows-amd64.zip" -DestinationPath "$(gorootDir)"
+  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+  displayName: Install Go on Windows
+
+- bash: |
+    printf "Using go at: $(which go)\n"
+    printf "Go version: $(go version)\n"
+    printf "\n\nGo environment:\n\n"
+    go env
+    printf "\n\nSystem environment:\n\n"
+    env
+    printf "\n\nRclone environment:\n\n"
+    make vars
+  displayName: Print Go version and environment
+
+- script: |
+    make
+    make quicktest
+  workingDirectory: '$(modulePath)'
+  displayName: Run tests
+
+- bash: |
+    make racequicktest
+  displayName: Race test
+  condition: eq( variables['GO_LATEST'], 'true' )
+
+- bash: |
+    make build_dep
+    make check
+  condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['GO_LATEST'], 'true' ) )
+  displayName: Code quality test
+
+- bash: |
+    make compile_all
+  condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['GO_LATEST'], 'true' ) )
+  displayName: Compile all architectures test
+
+# FIXME deploy
