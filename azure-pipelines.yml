@@ -121,6 +121,7 @@ steps:
       env
       printf "\n\nRclone environment:\n\n"
       make vars
+    workingDirectory: '$(modulePath)'
     displayName: Print Go version and environment
 
   - script: |
@@ -131,6 +132,7 @@ steps:
 
   - bash: |
       make racequicktest
+    workingDirectory: '$(modulePath)'
     displayName: Race test
     condition: eq( variables['GO_LATEST'], 'true' )
 
@@ -138,11 +140,13 @@ steps:
       make build_dep
       make check
     condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['GO_LATEST'], 'true' ) )
+    workingDirectory: '$(modulePath)'
     displayName: Code quality test
 
   - bash: |
       make compile_all
     condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['GO_LATEST'], 'true' ) )
+    workingDirectory: '$(modulePath)'
     displayName: Compile all architectures test
 
 # FIXME deploy
