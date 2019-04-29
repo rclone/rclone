@@ -1,5 +1,5 @@
 SHELL = bash
-BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
+BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(BUILD_SOURCEBRANCHNAME),$(shell git rev-parse --abbrev-ref HEAD))
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 ifeq ($(BRANCH),$(LAST_TAG))
 	BRANCH := master
