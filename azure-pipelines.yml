@@ -74,7 +74,7 @@ steps:
       sudo modprobe fuse
       sudo chmod 666 /dev/fuse
       sudo chown root:$USER /etc/fuse.conf
-      sudo apt install fuse libfuse-dev rpm pkg-config
+      sudo apt-get install fuse libfuse-dev rpm pkg-config
     condition: eq( variables['Agent.OS'], 'Linux' )
     displayName: Install Libraries on Linux
 
