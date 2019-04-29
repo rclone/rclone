@@ -3,9 +3,6 @@
 # Parts stolen shamelessly from all round the Internet, especially Caddy
 
 trigger:
-  branches:
-    include:
-      - '*'
   tags:
     include:
       - '*'
