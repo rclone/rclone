@@ -48,6 +48,7 @@ variables:
   GO111MODULE: 'off'
   GOTAGS: cmount
   GO_LATEST: false
+  CPATH: ''
 
 steps:
   - bash: |
@@ -87,7 +88,7 @@ steps:
 
   - powershell: |
       choco install -y winfsp zip make
-      [Environment]::SetEnvironmentVariable("CPATH", "C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse", "Machine")
+      Write-Host "##vso[task.setvariable variable=CPATH]C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse"
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
     displayName: Install Libraries on Windows
 
