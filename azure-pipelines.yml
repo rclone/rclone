@@ -87,6 +87,7 @@ steps:
 
   - powershell: |
       choco install -y winfsp zip make
+      [Environment]::SetEnvironmentVariable("CPATH", "C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse", "Machine")
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
     displayName: Install Libraries on Windows
 
