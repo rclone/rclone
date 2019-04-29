@@ -95,7 +95,9 @@ steps:
 
   - bash: |
       wget "https://dl.google.com/go/$(GO_VERSION).linux-amd64.tar.gz"
-      sudo tar -C $(gorootDir) -xzf "$(GO_VERSION).linux-amd64.tar.gz"
+      sudo mkdir $(gorootDir)
+      sudo chown ${USER}:${USER} $(gorootDir)
+      tar -C $(gorootDir) -xzf "$(GO_VERSION).linux-amd64.tar.gz"
     condition: eq( variables['Agent.OS'], 'Linux' )
     displayName: Install Go on Linux
 
