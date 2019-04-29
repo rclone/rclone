@@ -29,30 +29,25 @@ const (
 	symbolOffset = '␀' // SYMBOL FOR NULL
 	// QuoteRune is the rune used for quoting reserved characters
 	QuoteRune = '‛' // SINGLE HIGH-REVERSED-9 QUOTATION MARK
-	// EncodeStandard contains the flags used for the Standard Encoder
-	EncodeStandard = EncodeZero | EncodeSlash | EncodeCtl | EncodeDel
-	// Standard defines the encoding that is used for paths in- and output by rclone.
-	//
-	// List of replaced characters:
-	//     (0x00)  -> '␀' // SYMBOL FOR NULL
-	//   / (slash) -> '／' // FULLWIDTH SOLIDUS
-	Standard = MultiEncoder(EncodeStandard)
 )
 
 // Possible flags for the MultiEncoder
 const (
-	EncodeZero        uint = 0         // NUL(0x00)
-	EncodeSlash       uint = 1 << iota // /
-	EncodeWin                          // :?"*<>|
-	EncodeBackSlash                    // \
-	EncodeHashPercent                  // #%
-	EncodeDel                          // DEL(0x7F)
-	EncodeCtl                          // CTRL(0x01-0x1F)
-	EncodeLeftSpace                    // Leading SPACE
-	EncodeLeftTilde                    // Leading ~
-	EncodeRightSpace                   // Trailing SPACE
-	EncodeRightPeriod                  // Trailing .
-	EncodeInvalidUtf8                  // Invalid UTF-8 bytes
+	EncodeZero          uint = 0         // NUL(0x00)
+	EncodeSlash         uint = 1 << iota // /
+	EncodeWin                            // :?"*<>|
+	EncodeBackSlash                      // \
+	EncodeHashPercent                    // #%
+	EncodeDel                            // DEL(0x7F)
+	EncodeCtl                            // CTRL(0x01-0x1F)
+	EncodeLeftSpace                      // Leading SPACE
+	EncodeLeftTilde                      // Leading ~
+	EncodeLeftCrLfHtVt                   // Leading CR LF HT VT
+	EncodeRightSpace                     // Trailing SPACE
+	EncodeRightPeriod                    // Trailing .
+	EncodeRightCrLfHtVt                  // Trailing CR LF HT VT
+	EncodeInvalidUtf8                    // Invalid UTF-8 bytes
+	EncodeDot                            // . and .. names
 )
 
 // Encoder can transform names to and from the original and translated version.
