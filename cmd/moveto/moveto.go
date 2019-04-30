@@ -19,7 +19,7 @@ If source:path is a file or directory then it moves it to a file or
 directory named dest:path.
 
 This can be used to rename files or upload single files to other than
-their existing name.  If the source is a directory then it acts exacty
+their existing name.  If the source is a directory then it acts exactly
 like the move command.
 
 So

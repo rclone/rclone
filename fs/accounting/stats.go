@@ -90,7 +90,7 @@ type StatsInfo struct {
 	inProgress        *inProgress
 }
 
-// NewStats cretates an initialised StatsInfo
+// NewStats creates an initialised StatsInfo
 func NewStats() *StatsInfo {
 	return &StatsInfo{
 		checking:     newStringSet(fs.Config.Checkers, "checking"),

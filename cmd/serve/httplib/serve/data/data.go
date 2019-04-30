@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetTemplate eturns the HTML template for serving directories via HTTP
+// GetTemplate returns the HTML template for serving directories via HTTP
 func GetTemplate() (tpl *template.Template, err error) {
 	templateFile, err := Assets.Open("index.html")
 	if err != nil {

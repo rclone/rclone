@@ -188,7 +188,7 @@ func (s *syncCopyMove) processError(err error) {
 	}
 }
 
-// Returns the current error (if any) in the order of prececedence
+// Returns the current error (if any) in the order of precedence
 //   fatalErr
 //   normal error
 //   noRetryErr

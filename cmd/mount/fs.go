@@ -24,7 +24,7 @@ type FS struct {
 	f fs.Fs
 }
 
-// Check interface satistfied
+// Check interface satisfied
 var _ fusefs.FS = (*FS)(nil)
 
 // NewFS makes a new FS
@@ -46,7 +46,7 @@ func (f *FS) Root() (node fusefs.Node, err error) {
 	return &Dir{root}, nil
 }
 
-// Check interface satsified
+// Check interface satisfied
 var _ fusefs.FSStatfser = (*FS)(nil)
 
 // Statfs is called to obtain file system metadata.

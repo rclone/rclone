@@ -219,7 +219,7 @@ func TestWalkNotFoundMaskError(t *testing.T) {
 	).Walk()
 }
 
-func TestWalkNotFoundSkipkError(t *testing.T) {
+func TestWalkNotFoundSkipError(t *testing.T) {
 	// this doesn't work for WalkR
 	newListDirs(t, nil, true,
 		listResults{

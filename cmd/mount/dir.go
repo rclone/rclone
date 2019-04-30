@@ -20,7 +20,7 @@ type Dir struct {
 	*vfs.Dir
 }
 
-// Check interface satsified
+// Check interface satisfied
 var _ fusefs.Node = (*Dir)(nil)
 
 // Attr updates the attributes of a directory

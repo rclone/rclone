@@ -676,11 +676,11 @@ func ConfirmWithConfig(m configmap.Getter, configName string, Default bool) bool
 
 // Choose one of the defaults or type a new string if newOk is set
 func Choose(what string, defaults, help []string, newOk bool) string {
-	valueDescripton := "an existing"
+	valueDescription := "an existing"
 	if newOk {
-		valueDescripton = "your own"
+		valueDescription = "your own"
 	}
-	fmt.Printf("Choose a number from below, or type in %s value\n", valueDescripton)
+	fmt.Printf("Choose a number from below, or type in %s value\n", valueDescription)
 	for i, text := range defaults {
 		var lines []string
 		if help != nil {

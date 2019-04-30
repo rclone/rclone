@@ -34,7 +34,7 @@ check that parameter passing is working properly.`,
 	})
 }
 
-// Echo the input to the ouput parameters
+// Echo the input to the output parameters
 func rcNoop(in Params) (out Params, err error) {
 	return in, nil
 }

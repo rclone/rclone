@@ -1,4 +1,4 @@
-// Package flags contains enahnced versions of spf13/pflag flag
+// Package flags contains enhanced versions of spf13/pflag flag
 // routines which will read from the environment also.
 package flags
 

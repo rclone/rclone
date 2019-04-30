@@ -211,7 +211,7 @@ func testPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
 	require.NoError(t, obj.Remove())
 }
 
-// errorReader just returne an error on Read
+// errorReader just returns an error on Read
 type errorReader struct {
 	err error
 }
@@ -267,7 +267,7 @@ func stringsContains(x string, ss []string) bool {
 
 // Run runs the basic integration tests for a remote using the options passed in.
 //
-// They are structured in a heirachical way so that dependencies for the tests can be created.
+// They are structured in a hierarchical way so that dependencies for the tests can be created.
 //
 // For example some tests require the directory to be created - these
 // are inside the "FsMkdir" test.  Some tests require some tests files

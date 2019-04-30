@@ -68,7 +68,7 @@ func (o *RangeOption) Header() (key string, value string) {
 }
 
 // ParseRangeOption parses a RangeOption from a Range: header.
-// It only appects single ranges.
+// It only accepts single ranges.
 func ParseRangeOption(s string) (po *RangeOption, err error) {
 	const preamble = "bytes="
 	if !strings.HasPrefix(s, preamble) {
