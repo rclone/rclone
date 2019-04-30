@@ -189,6 +189,14 @@ which will be specified in the documentation for each backend.
 | /         | 0x2F  | ／           |
 | DEL       | 0x7F  | ␡           |
 
+The default encoding will also encode these file names as they are
+problematic with many cloud storage systems.
+
+| File name | Replacement |
+| --------- |:-----------:|
+| .         | ．          |
+| ..        | ．．         |
+
 #### Invalid UTF-8 bytes {#invalid-utf8}
 
 Some backends only support a sequence of well formed UTF-8 bytes
