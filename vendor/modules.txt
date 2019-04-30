@@ -98,7 +98,7 @@ github.com/google/go-querystring/query
 github.com/hashicorp/golang-lru/simplelru
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/jlaffaye/ftp v0.0.0-20190411155707-52d3001130a6
+# github.com/jlaffaye/ftp v0.0.0-20190519203911-8f5b34ce006f
 github.com/jlaffaye/ftp
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
