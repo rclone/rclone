@@ -92,7 +92,21 @@ func (mask MultiEncoder) Encode(in string) string {
 		encodeRightSpace     = uint(mask)&EncodeRightSpace != 0
 		encodeRightPeriod    = uint(mask)&EncodeRightPeriod != 0
 		encodeInvalidUnicode = uint(mask)&EncodeInvalidUtf8 != 0
+		encodeDot            = uint(mask)&EncodeDot != 0
 	)
+
+	if encodeDot {
+		switch in {
+		case ".":
+			return "．"
+		case "..":
+			return "．．"
+		case "．":
+			return string(QuoteRune) + "．"
+		case "．．":
+			return string(QuoteRune) + "．" + string(QuoteRune) + "．"
+		}
+	}
 
 	// handle prefix only replacements
 	prefix := ""
@@ -299,7 +313,21 @@ func (mask MultiEncoder) Decode(in string) string {
 		encodeRightSpace     = uint(mask)&EncodeRightSpace != 0
 		encodeRightPeriod    = uint(mask)&EncodeRightPeriod != 0
 		encodeInvalidUnicode = uint(mask)&EncodeInvalidUtf8 != 0
+		encodeDot            = uint(mask)&EncodeDot != 0
 	)
+
+	if encodeDot {
+		switch in {
+		case "．":
+			return "."
+		case "．．":
+			return ".."
+		case string(QuoteRune) + "．":
+			return "．"
+		case string(QuoteRune) + "．" + string(QuoteRune) + "．":
+			return "．．"
+		}
+	}
 
 	// handle prefix only replacements
 	prefix := ""
