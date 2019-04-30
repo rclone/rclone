@@ -96,6 +96,10 @@ github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/jlaffaye/ftp v0.0.0-20190411155707-52d3001130a6 h1:tAJSNnBx4ZAfMe8IuISVFsoS13fDJfb54k8/X5jGIfI=
 github.com/jlaffaye/ftp v0.0.0-20190411155707-52d3001130a6/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
+github.com/jlaffaye/ftp v0.0.0-20190427163646-6a014d5e22e6 h1:L8GOc4DyMAj4NyTq5He3pY/tfgLWcgwGXGnan5RWf1A=
+github.com/jlaffaye/ftp v0.0.0-20190427163646-6a014d5e22e6/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
+github.com/jlaffaye/ftp v0.0.0-20190519203911-8f5b34ce006f h1:oUoY3Lvi7PD1F3CuayxfdJtwmKV7WNQBdXt8fK1breU=
+github.com/jlaffaye/ftp v0.0.0-20190519203911-8f5b34ce006f/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
