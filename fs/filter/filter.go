@@ -95,7 +95,7 @@ func (rs *rules) boundedRecursion() bool {
 // FilesMap describes the map of files to transfer
 type FilesMap map[string]struct{}
 
-// Opt configues the filter
+// Opt configures the filter
 type Opt struct {
 	DeleteExcluded bool
 	FilterRule     []string

@@ -67,7 +67,7 @@ func filterAndSortDir(entries fs.DirEntries, includeAll bool, dir string,
 		default:
 			return nil, errors.Errorf("unknown object type %T", entry)
 		}
-		// check remote name belongs in this directry
+		// check remote name belongs in this directory
 		remote := entry.Remote()
 		switch {
 		case !ok:

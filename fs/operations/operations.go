@@ -206,7 +206,7 @@ func equal(src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
 
 // Used to remove a failed copy
 //
-// Returns whether the file was succesfully removed or not
+// Returns whether the file was successfully removed or not
 func removeFailedCopy(dst fs.Object) bool {
 	if dst == nil {
 		return false
@@ -226,7 +226,7 @@ type overrideRemoteObject struct {
 	remote string
 }
 
-// Remote returns the overriden remote name
+// Remote returns the overridden remote name
 func (o *overrideRemoteObject) Remote() string {
 	return o.remote
 }

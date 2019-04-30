@@ -132,7 +132,7 @@ func (x *SizeSuffix) Scan(s fmt.ScanState, ch rune) error {
 	return x.Set(string(token))
 }
 
-// SizeSuffixList is a sclice SizeSuffix values
+// SizeSuffixList is a slice SizeSuffix values
 type SizeSuffixList []SizeSuffix
 
 func (l SizeSuffixList) Len() int           { return len(l) }

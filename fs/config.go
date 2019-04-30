@@ -94,7 +94,7 @@ type ConfigInfo struct {
 }
 
 // NewConfig creates a new config with everything set to the default
-// value.  These are the ultimate defaults and are overriden by the
+// value.  These are the ultimate defaults and are overridden by the
 // config module.
 func NewConfig() *ConfigInfo {
 	c := new(ConfigInfo)

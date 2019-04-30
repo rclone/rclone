@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// returns the "%p" reprentation of the thing passed in
+// returns the "%p" representation of the thing passed in
 func ptr(p interface{}) string {
 	return fmt.Sprintf("%p", p)
 }

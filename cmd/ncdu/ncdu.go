@@ -361,7 +361,7 @@ func (u *UI) Draw() error {
 		Linef(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Total usage: %v, Objects: %d%s", fs.SizeSuffix(size), count, message)
 	}
 
-	// Show the box on top if requred
+	// Show the box on top if required
 	if u.showBox {
 		u.Box()
 	}

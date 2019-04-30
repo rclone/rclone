@@ -183,8 +183,8 @@ func (cr *ChunkedReader) Open() (*ChunkedReader, error) {
 
 // openRange will open the source Object with the current chunk range
 //
-// If the current open reader implenets RangeSeeker, it is tried first.
-// When RangeSeek failes, o.Open with a RangeOption is used.
+// If the current open reader implements RangeSeeker, it is tried first.
+// When RangeSeek fails, o.Open with a RangeOption is used.
 //
 // A length <= 0 will request till the end of the file
 func (cr *ChunkedReader) openRange() error {

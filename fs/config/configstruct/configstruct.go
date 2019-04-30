@@ -43,7 +43,7 @@ func StringToInterface(def interface{}, in string) (newValue interface{}, err er
 	return o.Elem().Interface(), nil
 }
 
-// Item descripts a single entry in the options structure
+// Item describes a single entry in the options structure
 type Item struct {
 	Name  string // snake_case
 	Field string // CamelCase

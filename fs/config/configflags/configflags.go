@@ -95,7 +95,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &fs.Config.ClientKey, "client-key", "", fs.Config.ClientKey, "Client SSL private key (PEM) for mutual TLS auth")
 }
 
-// SetFlags converts any flags into config which weren't straight foward
+// SetFlags converts any flags into config which weren't straight forward
 func SetFlags() {
 	if verbose >= 2 {
 		fs.Config.LogLevel = fs.LogLevelDebug

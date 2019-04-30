@@ -155,7 +155,7 @@ func (f *DriverFactory) NewDriver() (ftp.Driver, error) {
 	}, nil
 }
 
-//Driver impletation of ftp server
+//Driver implementation of ftp server
 type Driver struct {
 	vfs  *vfs.VFS
 	lock sync.Mutex
@@ -378,7 +378,7 @@ func (d *Driver) PutFile(path string, data io.Reader, appendData bool) (n int64,
 	return bytes, nil
 }
 
-//FileInfo  struct ot hold file infor for ftp server
+//FileInfo struct to hold file info for ftp server
 type FileInfo struct {
 	os.FileInfo
 
@@ -387,7 +387,7 @@ type FileInfo struct {
 	group uint32
 }
 
-//Mode return êrm mode of file.
+//Mode return mode of file.
 func (f *FileInfo) Mode() os.FileMode {
 	return f.mode
 }
@@ -407,7 +407,7 @@ func (f *FileInfo) Group() string {
 	str := fmt.Sprint(f.group)
 	g, err := user.LookupGroupId(str)
 	if err != nil {
-		return str //Group not found default to numrical value
+		return str //Group not found default to numerical value
 	}
 	return g.Name
 }

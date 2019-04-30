@@ -82,7 +82,7 @@ var (
 	progressMu sync.Mutex
 )
 
-// printProgress prings the progress with an optional log
+// printProgress prints the progress with an optional log
 func printProgress(logMessage string) {
 	progressMu.Lock()
 	defer progressMu.Unlock()

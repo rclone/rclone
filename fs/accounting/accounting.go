@@ -116,7 +116,7 @@ func (acc *Account) StopBuffering() {
 }
 
 // UpdateReader updates the underlying io.ReadCloser stopping the
-// asynb buffer (if any) and re-adding it
+// async buffer (if any) and re-adding it
 func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
 	acc.StopBuffering()
