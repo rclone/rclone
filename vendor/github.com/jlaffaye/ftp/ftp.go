@@ -40,7 +40,7 @@ type ServerConn struct {
 	mlstSupported bool
 }
 
-// DialOption represents an option to start a new connection with DialWithOptions
+// DialOption represents an option to start a new connection with Dial
 type DialOption struct {
 	setup func(do *dialOptions)
 }
@@ -49,10 +49,12 @@ type DialOption struct {
 type dialOptions struct {
 	context     context.Context
 	dialer      net.Dialer
-	tlsConfig   tls.Config
+	tlsConfig   *tls.Config
 	conn        net.Conn
 	disableEPSV bool
 	location    *time.Location
+	debugOutput io.Writer
+	dialFunc    func(network, address string) (net.Conn, error)
 }
 
 // Entry describes a file and is returned by List().
@@ -70,8 +72,8 @@ type Response struct {
 	closed bool
 }
 
-// DialWithOptions connects to the specified address with optinal options
-func DialWithOptions(addr string, options ...DialOption) (*ServerConn, error) {
+// Dial connects to the specified address with optinal options
+func Dial(addr string, options ...DialOption) (*ServerConn, error) {
 	do := &dialOptions{}
 	for _, option := range options {
 		option.setup(do)
@@ -83,27 +85,40 @@ func DialWithOptions(addr string, options ...DialOption) (*ServerConn, error) {
 
 	tconn := do.conn
 	if tconn == nil {
-		ctx := do.context
+		var err error
 
-		if ctx == nil {
-			ctx = context.Background()
+		if do.dialFunc != nil {
+			tconn, err = do.dialFunc("tcp", addr)
+		} else if do.tlsConfig != nil {
+			tconn, err = tls.DialWithDialer(&do.dialer , "tcp", addr, do.tlsConfig)
+		} else {
+			ctx := do.context
+
+			if ctx == nil {
+				ctx = context.Background()
+			}
+
+			tconn, err = do.dialer.DialContext(ctx, "tcp", addr)
 		}
 
-		conn, err := do.dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
 			return nil, err
 		}
-		tconn = conn
 	}
 
 	// Use the resolved IP address in case addr contains a domain name
 	// If we use the domain name, we might not resolve to the same IP.
 	remoteAddr := tconn.RemoteAddr().(*net.TCPAddr)
 
+	var sourceConn io.ReadWriteCloser = tconn
+	if do.debugOutput != nil {
+		sourceConn = newDebugWrapper(tconn, do.debugOutput)
+	}
+
 	c := &ServerConn{
 		options:  do,
 		features: make(map[string]string),
-		conn:     textproto.NewConn(tconn),
+		conn:     textproto.NewConn(sourceConn),
 		host:     remoteAddr.IP.String(),
 	}
 
@@ -172,9 +187,33 @@ func DialWithContext(ctx context.Context) DialOption {
 }
 
 // DialWithTLS returns a DialOption that configures the ServerConn with specified TLS config
-func DialWithTLS(tlsConfig tls.Config) DialOption {
+// 
+// If called together with the DialWithDialFunc option, the DialWithDialFunc function
+// will be used when dialing new connections but regardless of the function,
+// the connection will be treated as a TLS connection.
+func DialWithTLS(tlsConfig *tls.Config) DialOption {
 	return DialOption{func(do *dialOptions) {
 		do.tlsConfig = tlsConfig
+	}}
+}
+
+// DialWithDebugOutput returns a DialOption that configures the ServerConn to write to the Writer
+// everything it reads from the server
+func DialWithDebugOutput(w io.Writer) DialOption {
+	return DialOption{func(do *dialOptions) {
+		do.debugOutput = w
+	}}
+}
+
+// DialWithDialFunc returns a DialOption that configures the ServerConn to use the
+// specified function to establish both control and data connections
+//
+// If used together with the DialWithNetConn option, the DialWithNetConn
+// takes precedence for the control connection, while data connections will
+// be established using function specified with the DialWithDialFunc option
+func DialWithDialFunc(f func(network, address string) (net.Conn, error)) DialOption {
+	return DialOption{func(do *dialOptions) {
+		do.dialFunc = f
 	}}
 }
 
@@ -183,17 +222,12 @@ func Connect(addr string) (*ServerConn, error) {
 	return Dial(addr)
 }
 
-// Dial is like DialTimeout with no timeout
-func Dial(addr string) (*ServerConn, error) {
-	return DialTimeout(addr, 0)
-}
-
 // DialTimeout initializes the connection to the specified ftp server address.
 //
 // It is generally followed by a call to Login() as most FTP commands require
 // an authenticated user.
 func DialTimeout(addr string, timeout time.Duration) (*ServerConn, error) {
-	return DialWithOptions(addr, DialWithTimeout(timeout))
+	return Dial(addr, DialWithTimeout(timeout))
 }
 
 // Login authenticates the client with specified user and password.
@@ -224,6 +258,12 @@ func (c *ServerConn) Login(user, password string) error {
 
 	// Switch to UTF-8
 	err = c.setUTF8()
+
+	// If using implicit TLS, make data connections also use TLS
+	if c.options.tlsConfig != nil {
+		c.cmd(StatusCommandOK, "PBSZ 0")
+		c.cmd(StatusCommandOK, "PROT P")
+	}
 
 	return err
 }
@@ -378,7 +418,20 @@ func (c *ServerConn) openDataConn() (net.Conn, error) {
 		return nil, err
 	}
 
-	return c.options.dialer.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(port)))
+	addr := net.JoinHostPort(host, strconv.Itoa(port))
+	if c.options.dialFunc != nil {
+		return c.options.dialFunc("tcp", addr)
+	}
+
+	if c.options.tlsConfig != nil {
+		conn, err := c.options.dialer.Dial("tcp", addr)
+		if err != nil {
+			return nil, err
+		}
+		return tls.Client(conn, c.options.tlsConfig), err
+	}
+
+	return c.options.dialer.Dial("tcp", addr)
 }
 
 // cmd is a helper function to execute a command and check for the expected FTP
