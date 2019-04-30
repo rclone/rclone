@@ -2,6 +2,7 @@
 package ftp
 
 import (
+	"crypto/tls"
 	"io"
 	"net/textproto"
 	"os"
@@ -47,6 +48,10 @@ func init() {
 				IsPassword: true,
 				Required:   true,
 			}, {
+				Name:    "tls",
+				Help:    "Use FTP over TLS, leave blank for (false)",
+				Default: false,
+			}, {
 				Name:     "concurrency",
 				Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited",
 				Default:  0,
@@ -62,6 +67,7 @@ type Options struct {
 	User        string `config:"user"`
 	Pass        string `config:"pass"`
 	Port        string `config:"port"`
+	TLS         bool   `config:"tls"`
 	Concurrency int    `config:"concurrency"`
 }
 
@@ -120,7 +126,14 @@ func (f *Fs) Features() *fs.Features {
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
-	c, err := ftp.DialTimeout(f.dialAddr, fs.Config.ConnectTimeout)
+	ftpConfig := []ftp.DialOption{ftp.DialWithTimeout(fs.Config.ConnectTimeout)}
+	if f.opt.TLS {
+		tlsConfig := &tls.Config{
+			ServerName: f.opt.Host,
+		}
+		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
+	}
+	c, err := ftp.Dial(f.dialAddr, ftpConfig...)
 	if err != nil {
 		fs.Errorf(f, "Error while Dialing %s: %s", f.dialAddr, err)
 		return nil, errors.Wrap(err, "ftpConnection Dial")
@@ -203,7 +216,11 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	}
 
 	dialAddr := opt.Host + ":" + port
-	u := "ftp://" + path.Join(dialAddr+"/", root)
+	protocol := "ftp://"
+	if opt.TLS {
+		protocol = "ftps://"
+	}
+	u := protocol + path.Join(dialAddr+"/", root)
 	f := &Fs{
 		name:     name,
 		root:     root,
