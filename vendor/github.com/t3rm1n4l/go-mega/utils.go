@@ -37,27 +37,33 @@ func newHttpClient(timeout time.Duration) *http.Client {
 
 // bytes_to_a32 converts the byte slice b to uint32 slice considering
 // the bytes to be in big endian order.
-func bytes_to_a32(b []byte) []uint32 {
+func bytes_to_a32(b []byte) ([]uint32, error) {
 	length := len(b) + 3
 	a := make([]uint32, length/4)
 	buf := bytes.NewBuffer(b)
 	for i, _ := range a {
-		_ = binary.Read(buf, binary.BigEndian, &a[i])
+		err := binary.Read(buf, binary.BigEndian, &a[i])
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return a
+	return a, nil
 }
 
 // a32_to_bytes converts the uint32 slice a to byte slice where each
 // uint32 is decoded in big endian order.
-func a32_to_bytes(a []uint32) []byte {
+func a32_to_bytes(a []uint32) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	buf.Grow(len(a) * 4) // To prevent reallocations in Write
 	for _, v := range a {
-		_ = binary.Write(buf, binary.BigEndian, v)
+		err := binary.Write(buf, binary.BigEndian, v)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 // base64urlencode encodes byte slice b using base64 url encoding.
@@ -79,7 +85,7 @@ func base64urlencode(b []byte) []byte {
 
 // base64urldecode decodes the byte slice b using base64 url decoding.
 // It adds required '=' padding before decoding.
-func base64urldecode(b []byte) []byte {
+func base64urldecode(b []byte) ([]byte, error) {
 	enc := base64.URLEncoding
 	padSize := 4 - len(b)%4
 
@@ -92,18 +98,29 @@ func base64urldecode(b []byte) []byte {
 
 	decSize := enc.DecodedLen(len(b))
 	buf := make([]byte, decSize)
-	n, _ := enc.Decode(buf, b)
-	return buf[:n]
+	n, err := enc.Decode(buf, b)
+	if err != nil {
+		return nil, err
+	}
+	return buf[:n], err
 }
 
 // base64_to_a32 converts base64 encoded byte slice b to uint32 slice.
-func base64_to_a32(b []byte) []uint32 {
-	return bytes_to_a32(base64urldecode(b))
+func base64_to_a32(b []byte) ([]uint32, error) {
+	d, err := base64urldecode(b)
+	if err != nil {
+		return nil, err
+	}
+	return bytes_to_a32(d)
 }
 
 // a32_to_base64 converts uint32 slice to base64 encoded byte slice.
-func a32_to_base64(a []uint32) []byte {
-	return base64urlencode(a32_to_bytes(a))
+func a32_to_base64(a []uint32) ([]byte, error) {
+	d, err := a32_to_bytes(a)
+	if err != nil {
+		return nil, err
+	}
+	return base64urlencode(d), nil
 }
 
 // paddnull pads byte slice b such that the size of resulting byte
@@ -121,10 +138,16 @@ func paddnull(b []byte, q int) []byte {
 }
 
 // password_key calculates password hash from the user password.
-func password_key(p string) []byte {
-	a := bytes_to_a32(paddnull([]byte(p), 4))
+func password_key(p string) ([]byte, error) {
+	a, err := bytes_to_a32(paddnull([]byte(p), 4))
+	if err != nil {
+		return nil, err
+	}
 
-	pkey := a32_to_bytes([]uint32{0x93C467E3, 0x7DB0C7A4, 0xD1BE3F81, 0x0152CB56})
+	pkey, err := a32_to_bytes([]uint32{0x93C467E3, 0x7DB0C7A4, 0xD1BE3F81, 0x0152CB56})
+	if err != nil {
+		return nil, err
+	}
 
 	n := (len(a) + 3) / 4
 
@@ -137,7 +160,14 @@ func password_key(p string) []byte {
 				key[k] = a[k+j]
 			}
 		}
-		ciphers[j/4], _ = aes.NewCipher(a32_to_bytes(key)) // Uses AES in ECB mode
+		bkey, err := a32_to_bytes(key)
+		if err != nil {
+			return nil, err
+		}
+		ciphers[j/4], err = aes.NewCipher(bkey) // Uses AES in ECB mode
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for i := 65536; i > 0; i-- {
@@ -146,24 +176,36 @@ func password_key(p string) []byte {
 		}
 	}
 
-	return pkey
+	return pkey, nil
 }
 
 // stringhash computes generic string hash. Uses k as the key for AES
 // cipher.
-func stringhash(s string, k []byte) []byte {
-	a := bytes_to_a32(paddnull([]byte(s), 4))
+func stringhash(s string, k []byte) ([]byte, error) {
+	a, err := bytes_to_a32(paddnull([]byte(s), 4))
+	if err != nil {
+		return nil, err
+	}
 	h := []uint32{0, 0, 0, 0}
 	for i, v := range a {
 		h[i&3] ^= v
 	}
 
-	hb := a32_to_bytes(h)
-	cipher, _ := aes.NewCipher(k)
+	hb, err := a32_to_bytes(h)
+	if err != nil {
+		return nil, err
+	}
+	cipher, err := aes.NewCipher(k)
+	if err != nil {
+		return nil, err
+	}
 	for i := 16384; i > 0; i-- {
 		cipher.Encrypt(hb, hb)
 	}
-	ha := bytes_to_a32(paddnull(hb, 4))
+	ha, err := bytes_to_a32(paddnull(hb, 4))
+	if err != nil {
+		return nil, err
+	}
 
 	return a32_to_base64([]uint32{ha[0], ha[2]})
 }
@@ -232,14 +274,23 @@ func blockEncrypt(blk cipher.Block, dst, src []byte) error {
 // key.
 func decryptSessionId(privk []byte, csid []byte, mk []byte) ([]byte, error) {
 
-	block, _ := aes.NewCipher(mk)
-	pk := base64urldecode(privk)
-	err := blockDecrypt(block, pk, pk)
+	block, err := aes.NewCipher(mk)
+	if err != nil {
+		return nil, err
+	}
+	pk, err := base64urldecode(privk)
+	if err != nil {
+		return nil, err
+	}
+	err = blockDecrypt(block, pk, pk)
 	if err != nil {
 		return nil, err
 	}
 
-	c := base64urldecode(csid)
+	c, err := base64urldecode(csid)
+	if err != nil {
+		return nil, err
+	}
 
 	m, _ := getMPI(c)
 
@@ -283,10 +334,17 @@ func decryptAttr(key []byte, data []byte) (attr FileAttr, err error) {
 	if err != nil {
 		return attr, err
 	}
-	iv := a32_to_bytes([]uint32{0, 0, 0, 0})
+	iv, err := a32_to_bytes([]uint32{0, 0, 0, 0})
+	if err != nil {
+		return attr, err
+	}
 	mode := cipher.NewCBCDecrypter(block, iv)
 	buf := make([]byte, len(data))
-	mode.CryptBlocks(buf, base64urldecode([]byte(data)))
+	ddata, err := base64urldecode([]byte(data))
+	if err != nil {
+		return attr, err
+	}
+	mode.CryptBlocks(buf, ddata)
 
 	if string(buf[:4]) == "MEGA" {
 		str := strings.TrimRight(string(buf[4:]), "\x00")
@@ -313,7 +371,10 @@ func encryptAttr(key []byte, attr FileAttr) (b []byte, err error) {
 	attrib = append(attrib, data...)
 	attrib = paddnull(attrib, 16)
 
-	iv := a32_to_bytes([]uint32{0, 0, 0, 0})
+	iv, err := a32_to_bytes([]uint32{0, 0, 0, 0})
+	if err != nil {
+		return nil, err
+	}
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(attrib, attrib)
 

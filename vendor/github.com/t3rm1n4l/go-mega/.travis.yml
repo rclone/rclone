@@ -4,9 +4,8 @@ osx_image: xcode7.3
 os:
 - linux
 go:
-- 1.9.x
-- 1.10.x
 - 1.11.x
+- 1.12.x
 - tip
 install:
 - make build_dep
@@ -19,7 +18,7 @@ matrix:
   - go: tip
   include:
   - os: osx
-    go: "1.11.x"
+    go: "1.12.x"
 env:
   global:
   - secure: RzsF80V1i69FVJwKSF8WrFzk5bRUKtPxRkhjiLOO0b1usFg0EIY6XFp3s/VTR6oT91LRXml3Bp7wHHrkPvGnHyUyuxj6loj3gIrsX8cZHUtjyQX/Szfi9MOJpbdJvfCcHByEh9YGldAz//9zvEo5oGuI29Luur3cv+BJNJElmHg=

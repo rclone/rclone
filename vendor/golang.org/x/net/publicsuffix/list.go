@@ -165,6 +165,10 @@ func nodeLabel(i uint32) string {
 // EffectiveTLDPlusOne returns the effective top level domain plus one more
 // label. For example, the eTLD+1 for "foo.bar.golang.org" is "golang.org".
 func EffectiveTLDPlusOne(domain string) (string, error) {
+	if strings.HasPrefix(domain, ".") || strings.HasSuffix(domain, ".") || strings.Contains(domain, "..") {
+		return "", fmt.Errorf("publicsuffix: empty label in domain %q", domain)
+	}
+
 	suffix, _ := PublicSuffix(domain)
 	if len(domain) <= len(suffix) {
 		return "", fmt.Errorf("publicsuffix: cannot derive eTLD+1 for domain %q", domain)

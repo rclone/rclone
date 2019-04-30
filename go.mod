@@ -46,18 +46,19 @@ require (
 	github.com/spf13/cobra v0.0.4-0.20190321000552-67fc4837d267
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0
-	github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da
+	github.com/t3rm1n4l/go-mega v0.0.0-20190430100803-72151b53bb44
 	github.com/xanzy/ssh-agent v0.2.1
 	github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
 	go.etcd.io/bbolt v1.3.2 // indirect
 	go.opencensus.io v0.20.2 // indirect
-	golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a
-	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
+	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
+	golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
-	golang.org/x/sync v0.0.0-20190412183630-56d357773e84
-	golang.org/x/sys v0.0.0-20190412213103-97732733099d
-	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872
+	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	golang.org/x/tools v0.0.0-20190430004104-b9fed7929fc1 // indirect
 	google.golang.org/api v0.3.2
 	google.golang.org/appengine v1.5.0 // indirect
 	google.golang.org/grpc v1.20.0 // indirect

@@ -150,7 +150,7 @@ github.com/spf13/pflag
 # github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/t3rm1n4l/go-mega v0.0.0-20190205172012-55a226cf41da
+# github.com/t3rm1n4l/go-mega v0.0.0-20190430100803-72151b53bb44
 github.com/t3rm1n4l/go-mega
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
@@ -183,7 +183,7 @@ go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
 go.opencensus.io/resource
 go.opencensus.io
-# golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a
+# golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
@@ -199,7 +199,7 @@ golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/blowfish
-# golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3
+# golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6
 golang.org/x/net/websocket
 golang.org/x/net/html
 golang.org/x/net/publicsuffix
@@ -224,13 +224,13 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.0.0-20190412183630-56d357773e84
+# golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20190412213103-97732733099d
+# golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/cpu
-# golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2
+# golang.org/x/text v0.3.2
 golang.org/x/text/unicode/norm
 golang.org/x/text/transform
 golang.org/x/text/secure/bidirule

@@ -2133,3 +2133,168 @@ type FanotifyResponse struct {
 	Fd       int32
 	Response uint32
 }
+
+const (
+	CRYPTO_MSG_BASE      = 0x10
+	CRYPTO_MSG_NEWALG    = 0x10
+	CRYPTO_MSG_DELALG    = 0x11
+	CRYPTO_MSG_UPDATEALG = 0x12
+	CRYPTO_MSG_GETALG    = 0x13
+	CRYPTO_MSG_DELRNG    = 0x14
+	CRYPTO_MSG_GETSTAT   = 0x15
+)
+
+const (
+	CRYPTOCFGA_UNSPEC           = 0x0
+	CRYPTOCFGA_PRIORITY_VAL     = 0x1
+	CRYPTOCFGA_REPORT_LARVAL    = 0x2
+	CRYPTOCFGA_REPORT_HASH      = 0x3
+	CRYPTOCFGA_REPORT_BLKCIPHER = 0x4
+	CRYPTOCFGA_REPORT_AEAD      = 0x5
+	CRYPTOCFGA_REPORT_COMPRESS  = 0x6
+	CRYPTOCFGA_REPORT_RNG       = 0x7
+	CRYPTOCFGA_REPORT_CIPHER    = 0x8
+	CRYPTOCFGA_REPORT_AKCIPHER  = 0x9
+	CRYPTOCFGA_REPORT_KPP       = 0xa
+	CRYPTOCFGA_REPORT_ACOMP     = 0xb
+	CRYPTOCFGA_STAT_LARVAL      = 0xc
+	CRYPTOCFGA_STAT_HASH        = 0xd
+	CRYPTOCFGA_STAT_BLKCIPHER   = 0xe
+	CRYPTOCFGA_STAT_AEAD        = 0xf
+	CRYPTOCFGA_STAT_COMPRESS    = 0x10
+	CRYPTOCFGA_STAT_RNG         = 0x11
+	CRYPTOCFGA_STAT_CIPHER      = 0x12
+	CRYPTOCFGA_STAT_AKCIPHER    = 0x13
+	CRYPTOCFGA_STAT_KPP         = 0x14
+	CRYPTOCFGA_STAT_ACOMP       = 0x15
+)
+
+type CryptoUserAlg struct {
+	Name        [64]int8
+	Driver_name [64]int8
+	Module_name [64]int8
+	Type        uint32
+	Mask        uint32
+	Refcnt      uint32
+	Flags       uint32
+}
+
+type CryptoStatAEAD struct {
+	Type         [64]int8
+	Encrypt_cnt  uint64
+	Encrypt_tlen uint64
+	Decrypt_cnt  uint64
+	Decrypt_tlen uint64
+	Err_cnt      uint64
+}
+
+type CryptoStatAKCipher struct {
+	Type         [64]int8
+	Encrypt_cnt  uint64
+	Encrypt_tlen uint64
+	Decrypt_cnt  uint64
+	Decrypt_tlen uint64
+	Verify_cnt   uint64
+	Sign_cnt     uint64
+	Err_cnt      uint64
+}
+
+type CryptoStatCipher struct {
+	Type         [64]int8
+	Encrypt_cnt  uint64
+	Encrypt_tlen uint64
+	Decrypt_cnt  uint64
+	Decrypt_tlen uint64
+	Err_cnt      uint64
+}
+
+type CryptoStatCompress struct {
+	Type            [64]int8
+	Compress_cnt    uint64
+	Compress_tlen   uint64
+	Decompress_cnt  uint64
+	Decompress_tlen uint64
+	Err_cnt         uint64
+}
+
+type CryptoStatHash struct {
+	Type      [64]int8
+	Hash_cnt  uint64
+	Hash_tlen uint64
+	Err_cnt   uint64
+}
+
+type CryptoStatKPP struct {
+	Type                      [64]int8
+	Setsecret_cnt             uint64
+	Generate_public_key_cnt   uint64
+	Compute_shared_secret_cnt uint64
+	Err_cnt                   uint64
+}
+
+type CryptoStatRNG struct {
+	Type          [64]int8
+	Generate_cnt  uint64
+	Generate_tlen uint64
+	Seed_cnt      uint64
+	Err_cnt       uint64
+}
+
+type CryptoStatLarval struct {
+	Type [64]int8
+}
+
+type CryptoReportLarval struct {
+	Type [64]int8
+}
+
+type CryptoReportHash struct {
+	Type       [64]int8
+	Blocksize  uint32
+	Digestsize uint32
+}
+
+type CryptoReportCipher struct {
+	Type        [64]int8
+	Blocksize   uint32
+	Min_keysize uint32
+	Max_keysize uint32
+}
+
+type CryptoReportBlkCipher struct {
+	Type        [64]int8
+	Geniv       [64]int8
+	Blocksize   uint32
+	Min_keysize uint32
+	Max_keysize uint32
+	Ivsize      uint32
+}
+
+type CryptoReportAEAD struct {
+	Type        [64]int8
+	Geniv       [64]int8
+	Blocksize   uint32
+	Maxauthsize uint32
+	Ivsize      uint32
+}
+
+type CryptoReportComp struct {
+	Type [64]int8
+}
+
+type CryptoReportRNG struct {
+	Type     [64]int8
+	Seedsize uint32
+}
+
+type CryptoReportAKCipher struct {
+	Type [64]int8
+}
+
+type CryptoReportKPP struct {
+	Type [64]int8
+}
+
+type CryptoReportAcomp struct {
+	Type [64]int8
+}
