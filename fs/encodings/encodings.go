@@ -12,7 +12,8 @@ import (
 // Base only encodes the zero byte and slash
 const Base = encoder.MultiEncoder(
 	encoder.EncodeZero |
-		encoder.EncodeSlash)
+		encoder.EncodeSlash |
+		encoder.EncodeDot)
 
 // Display is the internal encoding for logging and output
 const Display = encoder.Standard
@@ -83,7 +84,7 @@ const Box = encoder.MultiEncoder(
 
 // Drive is the encoding used by the drive backend
 //
-// Encode invalid UTF-8 bytes as json doesn't handle them.
+// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 // Don't encode / as it's a valid name character in drive.
 const Drive = encoder.MultiEncoder(
 	encoder.EncodeInvalidUtf8)
