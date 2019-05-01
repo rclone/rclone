@@ -9,11 +9,17 @@ tests:
    subdir:   true
    fastlist: true
  - path: vfs
+ - path: cmd/serve/restic
+   localonly: true
 backends:
  # - backend:  "amazonclouddrive"
  #   remote:   "TestAmazonCloudDrive:"
  #   subdir:   false
  #   fastlist: false
+ - backend:  "local"
+   remote:   ""
+   subdir:   false
+   fastlist: false
  - backend:  "b2"
    remote:   "TestB2:"
    subdir:   true
