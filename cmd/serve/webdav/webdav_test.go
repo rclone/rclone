@@ -20,8 +20,7 @@ import (
 )
 
 const (
-	testBindAddress = "localhost:51778"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 )
 
 // check interfaces
@@ -70,7 +69,7 @@ func TestWebDav(t *testing.T) {
 	cmd := exec.Command("go", args...)
 	cmd.Env = append(os.Environ(),
 		"RCLONE_CONFIG_WEBDAVTEST_TYPE=webdav",
-		"RCLONE_CONFIG_WEBDAVTEST_URL="+testURL,
+		"RCLONE_CONFIG_WEBDAVTEST_URL="+w.Server.URL(),
 		"RCLONE_CONFIG_WEBDAVTEST_VENDOR=other",
 	)
 	out, err := cmd.CombinedOutput()

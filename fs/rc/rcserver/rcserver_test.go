@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	testBindAddress = "localhost:51781"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 	testFs          = "testdata/files"
 	remoteURL       = "[" + testFs + "]/" // initial URL path to fetch from that remote
 )
@@ -39,6 +38,7 @@ func TestRcServer(t *testing.T) {
 		rcServer.Close()
 		rcServer.Wait()
 	}()
+	testURL := rcServer.Server.URL()
 
 	// Do the simplest possible test to check the server is alive
 	// Do it a few times to wait for the server to start

@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	testBindAddress = "localhost:51779"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 	resticSource    = "../../../../../restic/restic"
 )
 
@@ -62,7 +61,7 @@ func TestRestic(t *testing.T) {
 		}
 		cmd := exec.Command("go", args...)
 		cmd.Env = append(os.Environ(),
-			"RESTIC_TEST_REST_REPOSITORY=rest:"+testURL+path,
+			"RESTIC_TEST_REST_REPOSITORY=rest:"+w.Server.URL()+path,
 		)
 		out, err := cmd.CombinedOutput()
 		if len(out) != 0 {

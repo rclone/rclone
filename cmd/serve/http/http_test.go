@@ -3,7 +3,6 @@ package http
 import (
 	"flag"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"strings"
 	"testing"
@@ -21,11 +20,11 @@ import (
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
 	httpServer   *server
+	testURL      string
 )
 
 const (
-	testBindAddress = "localhost:51777"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 )
 
 func startServer(t *testing.T, f fs.Fs) {
@@ -33,13 +32,14 @@ func startServer(t *testing.T, f fs.Fs) {
 	opt.ListenAddr = testBindAddress
 	httpServer = newServer(f, &opt)
 	assert.NoError(t, httpServer.Serve())
+	testURL = httpServer.Server.URL()
 
 	// try to connect to the test server
 	pause := time.Millisecond
 	for i := 0; i < 10; i++ {
-		conn, err := net.Dial("tcp", testBindAddress)
+		resp, err := http.Head(testURL)
 		if err == nil {
-			_ = conn.Close()
+			_ = resp.Body.Close()
 			return
 		}
 		// t.Logf("couldn't connect, sleeping for %v: %v", pause, err)
