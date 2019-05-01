@@ -39,6 +39,11 @@ var (
 
 // RunTests runs all the tests against all the VFS cache modes
 func RunTests(t *testing.T, fn MountFn) {
+	// Kill everything if the timer elapes
+	timer := time.AfterFunc(60*time.Second, func() {
+		panic("mount has locked up")
+	})
+	defer timer.Stop()
 	mountFn = fn
 	flag.Parse()
 	cacheModes := []vfs.CacheMode{
