@@ -22,6 +22,7 @@ type Test struct {
 	AddBackend bool   // set if Path needs the current backend appending
 	NoRetries  bool   // set if no retries should be performed
 	NoBinary   bool   // set to not build a binary in advance
+	LocalOnly  bool   // if set only run with the local backend
 }
 
 // Backend describes a backend test
@@ -55,6 +56,9 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	}
 	for _, subdir := range subdirs {
 		for _, fastlist := range fastlists {
+			if t.LocalOnly && b.Backend != "local" {
+				continue
+			}
 			run := &Run{
 				Remote:    b.Remote,
 				Backend:   b.Backend,
