@@ -20,11 +20,11 @@ import (
 
 var (
 	dlnaServer *server
+	testURL    string
 )
 
 const (
-	testBindAddress = "localhost:51777"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 )
 
 func startServer(t *testing.T, f fs.Fs) {
@@ -32,6 +32,7 @@ func startServer(t *testing.T, f fs.Fs) {
 	opt.ListenAddr = testBindAddress
 	dlnaServer = newServer(f, &opt)
 	assert.NoError(t, dlnaServer.Serve())
+	testURL = "http://" + dlnaServer.HTTPConn.Addr().String() + "/"
 }
 
 func TestInit(t *testing.T) {
