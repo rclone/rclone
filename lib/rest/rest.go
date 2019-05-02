@@ -393,7 +393,7 @@ func (api *Client) callCodec(opts *Opts, request interface{}, response interface
 			opts.Body = bytes.NewBuffer(requestBody)
 		}
 	}
-	isMultipart := (opts.MultipartParams != nil || opts.MultipartMetadataName != "") && opts.Body != nil
+	isMultipart := (opts.MultipartParams != nil || opts.MultipartContentName != "") && opts.Body != nil
 	if isMultipart {
 		params := opts.MultipartParams
 		if params == nil {
