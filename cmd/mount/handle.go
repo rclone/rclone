@@ -3,13 +3,13 @@
 package mount
 
 import (
+	"context"
 	"io"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.8
 )
 
 // FileHandle is an open for read file handle on a File
