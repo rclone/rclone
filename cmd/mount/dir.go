@@ -3,6 +3,7 @@
 package mount
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.8
 )
 
 // Dir represents a directory entry

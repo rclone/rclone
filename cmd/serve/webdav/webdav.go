@@ -3,6 +3,7 @@
 package webdav
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.8
 	"golang.org/x/net/webdav"
 )
 

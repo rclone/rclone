@@ -3,6 +3,7 @@
 package mount
 
 import (
+	"context"
 	"io"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.8
 )
 
 // File represents a file

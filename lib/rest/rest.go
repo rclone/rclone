@@ -253,7 +253,7 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.NoRedirect {
 		c = ClientWithNoRedirects(api.c)
 	} else {
-		c = ClientWithHeaderReset(api.c, headers)
+		c = api.c
 	}
 	if api.signer != nil {
 		err = api.signer(req)
