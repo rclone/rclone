@@ -78,6 +78,7 @@ func newServer(f fs.Fs, opt *ftpopt.Options) (*server, error) {
 		},
 		Hostname:     host,
 		Port:         portNum,
+		PublicIp:     opt.PublicIP,
 		PassivePorts: opt.PassivePorts,
 		Auth: &Auth{
 			BasicUser: opt.BasicUser,

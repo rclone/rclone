@@ -24,6 +24,7 @@ You can set a single username and password with the --user and --pass flags.
 type Options struct {
 	//TODO add more options
 	ListenAddr   string // Port to listen on
+	PublicIP     string // Passive ports range
 	PassivePorts string // Passive ports range
 	BasicUser    string // single username for basic auth if not using Htpasswd
 	BasicPass    string // password for BasicUser
@@ -32,6 +33,7 @@ type Options struct {
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
 	ListenAddr:   "localhost:2121",
+	PublicIP:     "",
 	PassivePorts: "30000-32000",
 	BasicUser:    "anonymous",
 	BasicPass:    "",
