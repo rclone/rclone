@@ -16,6 +16,7 @@ var (
 func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *ftpopt.Options) {
 	rc.AddOption("ftp", &Opt)
 	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to.")
+	flags.StringVarP(flagSet, &Opt.PublicIP, prefix+"public-ip", "", Opt.PublicIP, "Public IP address to advertise for passive connections.")
 	flags.StringVarP(flagSet, &Opt.PassivePorts, prefix+"passive-port", "", Opt.PassivePorts, "Passive port range to use.")
 	flags.StringVarP(flagSet, &Opt.BasicUser, prefix+"user", "", Opt.BasicUser, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.BasicPass, prefix+"pass", "", Opt.BasicPass, "Password for authentication. (empty value allow every password)")
