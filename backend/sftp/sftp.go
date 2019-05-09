@@ -844,13 +844,15 @@ func (f *Fs) About() (*fs.Usage, error) {
 	_ = session.Close()
 
 	usageTotal, usageUsed, usageAvail := parseUsage(stdout.Bytes())
-	if usageTotal < 0 || usageUsed < 0 || usageAvail < 0 {
-		return nil, errors.Wrap(err, "About failed to parse information")
+	usage := &fs.Usage{}
+	if usageTotal >= 0 {
+		usage.Total = fs.NewUsageValue(usageTotal)
 	}
-	usage := &fs.Usage{
-		Total: fs.NewUsageValue(usageTotal),
-		Used:  fs.NewUsageValue(usageUsed),
-		Free:  fs.NewUsageValue(usageAvail),
+	if usageUsed >= 0 {
+		usage.Used = fs.NewUsageValue(usageUsed)
+	}
+	if usageAvail >= 0 {
+		usage.Free = fs.NewUsageValue(usageAvail)
 	}
 	return usage, nil
 }
@@ -949,26 +951,27 @@ func parseHash(bytes []byte) string {
 // returned by an invocation of df into
 // the disk size, used space, and avaliable space on the disk, in that order.
 // Only works when `df` has output info on only one disk
-func parseUsage(bytes []byte) (int64, int64, int64) {
+func parseUsage(bytes []byte) (spaceTotal int64, spaceUsed int64, spaceAvail int64) {
+	spaceTotal, spaceUsed, spaceAvail = -1, -1, -1
 	lines := strings.Split(string(bytes), "\n")
 	if len(lines) < 2 {
-		return -1, -1, -1
+		return
 	}
 	split := strings.Fields(lines[1])
 	if len(split) < 6 {
-		return -1, -1, -1
+		return
 	}
 	spaceTotal, err := strconv.ParseInt(split[1], 10, 64)
 	if err != nil {
-		return -1, -1, -1
+		spaceTotal = -1
 	}
-	spaceUsed, err := strconv.ParseInt(split[2], 10, 64)
+	spaceUsed, err = strconv.ParseInt(split[2], 10, 64)
 	if err != nil {
-		return -1, -1, -1
+		spaceUsed = -1
 	}
-	spaceAvail, err := strconv.ParseInt(split[3], 10, 64)
+	spaceAvail, err = strconv.ParseInt(split[3], 10, 64)
 	if err != nil {
-		return -1, -1, -1
+		spaceAvail = -1
 	}
 	return spaceTotal * 1024, spaceUsed * 1024, spaceAvail * 1024
 }
