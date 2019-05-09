@@ -95,6 +95,9 @@ Use the --json flag for a computer readable output, eg
 			if err != nil {
 				return errors.Wrap(err, "About call failed")
 			}
+			if u == nil {
+				return errors.New("nil usage returned")
+			}
 			if jsonOutput {
 				out := json.NewEncoder(os.Stdout)
 				out.SetIndent("", "\t")
