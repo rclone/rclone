@@ -187,10 +187,10 @@ func readCurrentUser() (userName string) {
 	return os.Getenv("LOGNAME")
 }
 
-// Dial starts a client connection to the given SSH server. It is a
+// dial starts a client connection to the given SSH server. It is a
 // convenience function that connects to the given network address,
 // initiates the SSH handshake, and then sets up a Client.
-func Dial(network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+func (f *Fs) dial(network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
 	dialer := fshttp.NewDialer(fs.Config)
 	conn, err := dialer.Dial(network, addr)
 	if err != nil {
@@ -200,6 +200,7 @@ func Dial(network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error
 	if err != nil {
 		return nil, err
 	}
+	fs.Debugf(f, "New connection %s->%s to %q", c.LocalAddr(), c.RemoteAddr(), c.ServerVersion())
 	return ssh.NewClient(c, chans, reqs), nil
 }
 
@@ -245,7 +246,7 @@ func (f *Fs) sftpConnection() (c *conn, err error) {
 	c = &conn{
 		err: make(chan error, 1),
 	}
-	c.sshClient, err = Dial("tcp", f.opt.Host+":"+f.opt.Port, f.config)
+	c.sshClient, err = f.dial("tcp", f.opt.Host+":"+f.opt.Port, f.config)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't connect SSH")
 	}
@@ -348,6 +349,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		Auth:            []ssh.AuthMethod{},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         fs.Config.ConnectTimeout,
+		ClientVersion:   "SSH-2.0-" + fs.Config.UserAgent,
 	}
 
 	if opt.UseInsecureCipher {
