@@ -1,18 +1,18 @@
 ---
 date: 2019-05-10T23:12:21+01:00
-title: "rclone serve http"
-slug: rclone_serve_http
-url: /commands/rclone_serve_http/
+title: "rclone serve sftp"
+slug: rclone_serve_sftp
+url: /commands/rclone_serve_sftp/
 ---
-## rclone serve http
+## rclone serve sftp
 
-Serve the remote over HTTP.
+Serve the remote over SFTP.
 
 ### Synopsis
 
-rclone serve http implements a basic web server to serve the remote
-over HTTP.  This can be viewed in a web browser or you can make a
-remote of type http read from it.
+rclone serve sftp implements an SFTP server to serve the remote
+over SFTP.  This can be used with an SFTP client or you can make a
+remote of type sftp to use with it.
 
 You can use the filter flags (eg --include, --exclude) to control what
 is served.
@@ -22,55 +22,24 @@ The server will log errors.  Use -v to see access logs.
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
 
-### Server options
+You must provide some means of authentication, either with --user/--pass,
+an authorized keys file (specify location with --authorized-keys - the
+default is the same as ssh) or set the --no-auth flag for no
+authentication when logging in.
 
-Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
-IPs.  By default it only listens on localhost.  You can use port
-:0 to let the OS choose an available port.
+Note that this also implements a small number of shell commands so
+that it can provide md5sum/sha1sum/df information for the sftp
+backend.
 
-If you set --addr to listen on a public or LAN accessible IP address
-then using Authentication is advised - see the next section for info.
+If you don't supply a --key then rclone will generate one and cache it
+for later use.
 
---server-read-timeout and --server-write-timeout can be used to
-control the timeouts on the server.  Note that this is the total time
-for a transfer.
+By default the server binds to localhost:2022 - if you want it to be
+reachable externally then supply "--addr :2022" for example.
 
---max-header-bytes controls the maximum number of bytes the server will
-accept in the HTTP header.
+Note that the default of "--vfs-cache-mode off" is fine for the rclone
+sftp backend, but it may not be with other SFTP clients.
 
-#### Authentication
-
-By default this will serve files without needing a login.
-
-You can either use an htpasswd file which can take lots of users, or
-set a single username and password with the --user and --pass flags.
-
-Use --htpasswd /path/to/htpasswd to provide an htpasswd file.  This is
-in standard apache format and supports MD5, SHA1 and BCrypt for basic
-authentication.  Bcrypt is recommended.
-
-To create an htpasswd file:
-
-    touch htpasswd
-    htpasswd -B htpasswd user
-    htpasswd -B htpasswd anotherUser
-
-The password file can be updated while rclone is running.
-
-Use --realm to set the authentication realm.
-
-#### SSL/TLS
-
-By default this will serve over http.  If you want you can serve over
-https.  You will need to supply the --cert and --key flags.  If you
-wish to do client side certificate validation then you will need to
-supply --client-ca also.
-
---cert should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  --key should be the PEM encoded
-private key and --client-ca should be the PEM encoded client
-certificate authority certificate.
 
 ### Directory Cache
 
@@ -208,32 +177,27 @@ If an upload or download fails it will be retried up to
 
 
 ```
-rclone serve http remote:path [flags]
+rclone serve sftp remote:path [flags]
 ```
 
 ### Options
 
 ```
-      --addr string                            IPaddress:Port or :Port to bind server to. (default "localhost:8080")
-      --cert string                            SSL PEM key (concatenation of certificate and CA certificate)
-      --client-ca string                       Client certificate authority to verify clients with
+      --addr string                            IPaddress:Port or :Port to bind server to. (default "localhost:2022")
+      --authorized-keys string                 Authorized keys file (default "~/.ssh/authorized_keys")
       --dir-cache-time duration                Time to cache directory entries for. (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
       --file-perms FileMode                    File permissions (default 0666)
       --gid uint32                             Override the gid field set by the filesystem. (default 502)
-  -h, --help                                   help for http
-      --htpasswd string                        htpasswd file - if not provided no authentication is done
-      --key string                             SSL PEM Private key
-      --max-header-bytes int                   Maximum size of request header (default 4096)
+  -h, --help                                   help for sftp
+      --key string                             SSH private key file (leave blank to auto generate)
+      --no-auth                                Allow connections with no authentication if set.
       --no-checksum                            Don't compare checksums on up/download.
       --no-modtime                             Don't read/write the modification time (can speed things up).
       --no-seek                                Don't allow seeking in files.
       --pass string                            Password for authentication.
       --poll-interval duration                 Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
       --read-only                              Mount read-only.
-      --realm string                           realm for authentication (default "rclone")
-      --server-read-timeout duration           Timeout for server reading data (default 1h0m0s)
-      --server-write-timeout duration          Timeout for server writing data (default 1h0m0s)
       --uid uint32                             Override the uid field set by the filesystem. (default 502)
       --umask int                              Override the permission bits set by the filesystem. (default 2)
       --user string                            User name for authentication.

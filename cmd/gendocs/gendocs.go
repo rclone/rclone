@@ -11,6 +11,7 @@ import (
 	"github.com/ncw/rclone/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/spf13/pflag"
 )
 
 func init() {
@@ -50,6 +51,10 @@ rclone.org website.`,
 			base := strings.TrimSuffix(name, path.Ext(name))
 			return "/commands/" + strings.ToLower(base) + "/"
 		}
+		// Hide all of the root entries flags
+		cmd.Root.Flags().VisitAll(func(flag *pflag.Flag) {
+			flag.Hidden = true
+		})
 		return doc.GenMarkdownTreeCustom(cmd.Root, out, prepender, linkHandler)
 	},
 }
