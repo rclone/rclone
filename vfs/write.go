@@ -121,10 +121,19 @@ func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
 
 // Implementatino of WriteAt - call with lock held
 func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
-	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(p))
+	// defer log.Trace(fh.remote, "len=%d off=%d", len(p), off)("n=%d, fh.off=%d, err=%v", &n, &fh.offset, &err)
 	if fh.closed {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: error: %v", EBADF)
 		return 0, ECLOSED
+	}
+	// Wait a short time for sequential writes to appear
+	const maxTries = 1000
+	const sleepTime = 1 * time.Millisecond
+	for try := 1; fh.offset != off && try <= maxTries; try++ {
+		//fs.Debugf(fh.remote, "waiting for in sequence write %d/%d", try, maxTries)
+		fh.mu.Unlock()
+		time.Sleep(sleepTime)
+		fh.mu.Lock()
 	}
 	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
