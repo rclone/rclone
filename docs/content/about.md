@@ -61,11 +61,12 @@ Features
   * [Sync](/commands/rclone_sync/) (one way) mode to make a directory identical
   * [Check](/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, eg two different cloud accounts
-  * ([Encryption](/crypt/)) backend
-  * ([Cache](/cache/)) backend
-  * ([Union](/union/)) backend
+  * [Encryption](/crypt/) backend
+  * [Cache](/cache/) backend
+  * [Union](/union/) backend
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
   * Multi-threaded downloads to local disk
+  * Can [serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[dlna](/commands/rclone_serve_dlna/)
 
 Links
 
