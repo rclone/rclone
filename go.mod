@@ -28,6 +28,7 @@ require (
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.4
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 	github.com/ncw/swift v1.0.47
 	github.com/nsf/termbox-go v0.0.0-20190325093121-288510b9734e
@@ -58,7 +59,6 @@ require (
 	golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
-	golang.org/x/tools v0.0.0-20190430004104-b9fed7929fc1 // indirect
 	google.golang.org/api v0.3.2
 	google.golang.org/appengine v1.5.0 // indirect
 	google.golang.org/grpc v1.20.0 // indirect
