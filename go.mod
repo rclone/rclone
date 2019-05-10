@@ -18,6 +18,7 @@ require (
 	github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 // indirect
 	github.com/goftp/server v0.0.0-20190304020633-eabccc535b5a
 	github.com/golang/protobuf v1.3.1 // indirect
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190411002643-bd77b112433e // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect

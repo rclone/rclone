@@ -8,24 +8,21 @@ tests:
  - path: fs/sync
    subdir:   true
    fastlist: true
- - path: vfs
- - path: cmd/serve/restic
-   localonly: true
 backends:
  # - backend:  "amazonclouddrive"
  #   remote:   "TestAmazonCloudDrive:"
  #   subdir:   false
  #   fastlist: false
- - backend:  "local"
-   remote:   ""
-   subdir:   false
-   fastlist: false
  - backend:  "b2"
    remote:   "TestB2:"
    subdir:   true
    fastlist: true
  - backend:  "crypt"
    remote:   "TestCryptDrive:"
+   subdir:   false
+   fastlist: true
+ - backend:  "press"
+   remote:   "TestPress:"
    subdir:   false
    fastlist: true
  - backend:  "crypt"
@@ -60,30 +57,6 @@ backends:
    remote:   "TestS3:"
    subdir:   true
    fastlist: true
- - backend:  "s3"
-   remote:   "TestS3Minio:"
-   subdir:   true
-   fastlist: true
- - backend:  "s3"
-   remote:   "TestS3Wasabi:"
-   subdir:   true
-   fastlist: true
- - backend:  "s3"
-   remote:   "TestS3DigitalOcean:"
-   subdir:   true
-   fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
- - backend:  "s3"
-   remote:   "TestS3Ceph:"
-   subdir:   true
-   fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
- - backend:  "s3"
-   remote:   "TestS3Alibaba:"
-   subdir:   true
-   fastlist: true
  - backend:  "sftp"
    remote:   "TestSftp:"
    subdir:   false
@@ -92,12 +65,6 @@ backends:
    remote:   "TestSwift:"
    subdir:   true
    fastlist: true
- - backend:  "swift"
-   remote:   "TestSwiftCeph:"
-   subdir:   true
-   fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
  - backend:  "yandex"
    remote:   "TestYandex:"
    subdir:   false
@@ -135,17 +102,11 @@ backends:
    remote:   "TestMega:"
    subdir:   false
    fastlist: false
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    subdir:   false
    fastlist: false
  - backend:  "union"
    remote:   "TestUnion:"
-   subdir:   false
-   fastlist: false
- - backend:  "koofr"
-   remote:   "TestKoofr:"
    subdir:   false
    fastlist: false
