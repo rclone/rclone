@@ -19,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
@@ -27,6 +26,7 @@ import (
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/env"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
@@ -318,21 +318,6 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 	f.poolMu.Unlock()
 }
 
-// shellExpand replaces a leading "~" with "${HOME}" and expands all environment
-// variables afterwards.
-func shellExpand(s string) string {
-	if s != "" {
-		if s[0] == '~' {
-			newS, err := homedir.Expand(s)
-			if err == nil {
-				s = newS
-			}
-		}
-		s = os.ExpandEnv(s)
-	}
-	return s
-}
-
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -361,7 +346,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc")
 	}
 
-	keyFile := shellExpand(opt.KeyFile)
+	keyFile := env.ShellExpand(opt.KeyFile)
 	// Add ssh agent-auth if no password or file specified
 	if (opt.Pass == "" && keyFile == "") || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
