@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
@@ -322,7 +323,10 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 func shellExpand(s string) string {
 	if s != "" {
 		if s[0] == '~' {
-			s = "${HOME}" + s[1:]
+			newS, err := homedir.Expand(s)
+			if err == nil {
+				s = newS
+			}
 		}
 		s = os.ExpandEnv(s)
 	}

@@ -14,7 +14,6 @@ import (
 	"log"
 	mathrand "math/rand"
 	"os"
-	"os/user"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -25,6 +24,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Unknwon/goconfig"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config/configmap"
@@ -106,16 +106,7 @@ func getConfigData() *goconfig.ConfigFile {
 // Return the path to the configuration file
 func makeConfigPath() string {
 	// Find user's home directory
-	usr, err := user.Current()
-	var homedir string
-	if err == nil {
-		homedir = usr.HomeDir
-	} else {
-		// Fall back to reading $HOME - work around user.Current() not
-		// working for cross compiled binaries on OSX.
-		// https://github.com/golang/go/issues/6376
-		homedir = os.Getenv("HOME")
-	}
+	homeDir, err := homedir.Dir()
 
 	// Find user's configuration directory.
 	// Prefer XDG config path, with fallback to $HOME/.config.
@@ -126,9 +117,9 @@ func makeConfigPath() string {
 	if xdgdir != "" {
 		// User's configuration directory for rclone is $XDG_CONFIG_HOME/rclone
 		cfgdir = filepath.Join(xdgdir, "rclone")
-	} else if homedir != "" {
+	} else if homeDir != "" {
 		// User's configuration directory for rclone is $HOME/.config/rclone
-		cfgdir = filepath.Join(homedir, ".config", "rclone")
+		cfgdir = filepath.Join(homeDir, ".config", "rclone")
 	}
 
 	// Use rclone.conf from user's configuration directory if already existing
@@ -143,8 +134,8 @@ func makeConfigPath() string {
 
 	// Use .rclone.conf from user's home directory if already existing
 	var homeconf string
-	if homedir != "" {
-		homeconf = filepath.Join(homedir, hiddenConfigFileName)
+	if homeDir != "" {
+		homeconf = filepath.Join(homeDir, hiddenConfigFileName)
 		_, err := os.Stat(homeconf)
 		if err == nil {
 			return homeconf
