@@ -252,3 +252,4 @@ Contributors
   * Manu <manu@snapdragon.cc>
   * Kyle E. Mitchell <kyle@kemitchell.com>
   * Gary Kim <gary@garykim.dev>
+  * Jon <jonathn@github.com>
