@@ -709,9 +709,10 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 
 	o.fs.objectHashesMu.Lock()
 	hashes := o.hashes
+	hashValue, hashFound := o.hashes[r]
 	o.fs.objectHashesMu.Unlock()
 
-	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil {
+	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil || !hashFound {
 		var in io.ReadCloser
 
 		if !o.translatedLink {
@@ -722,7 +723,7 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
-		hashes, err = hash.Stream(in)
+		hashes, err = hash.StreamTypes(in, hash.NewHashSet(r))
 		closeErr := in.Close()
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to read")
@@ -730,11 +731,16 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 		if closeErr != nil {
 			return "", errors.Wrap(closeErr, "hash: failed to close")
 		}
+		hashValue = hashes[r]
 		o.fs.objectHashesMu.Lock()
-		o.hashes = hashes
+		if o.hashes == nil {
+			o.hashes = hashes
+		} else {
+			o.hashes[r] = hashValue
+		}
 		o.fs.objectHashesMu.Unlock()
 	}
-	return hashes[r], nil
+	return hashValue, nil
 }
 
 // Size returns the size of an object in bytes
