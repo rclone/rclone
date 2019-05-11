@@ -1,0 +1,12 @@
+$ go test -run TestCompressDecompress # LZ4 test
+PASS
+ok  	github.com/ncw/rclone/backend/press	155.394s # This is about 30 seconds slower than C
+$ go test -run TestCompressDecompress # GZIP-MIN test
+PASS
+ok  	github.com/ncw/rclone/backend/press	188.850s
+$ go test -run TestCompressDecompress # Snappy test
+PASS
+ok  	github.com/ncw/rclone/backend/press	122.039s
+$ go test -run TestCompressDecompress # LZ4 test without checksum
+PASS
+ok  	github.com/ncw/rclone/backend/press	151.921s

@@ -11,9 +11,9 @@ import (
 	"crypto/md5"
 )
 
-const testFileName = "compression.go"
-const outFileName = "/dev/null"
-const outFileName2 = "test/testSeek.vdi"
+const testFileName = "test.vdi"
+const outFileName = "/tmp/compression_compressed.gzip"
+const outFileName2 = "/dev/null"
 
 const Preset = "lz4"
 

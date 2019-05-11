@@ -2,6 +2,7 @@ module github.com/ncw/rclone
 
 require (
 	bazil.org/fuse v0.0.0-20180421153158-65cc252bf669
+	bitbucket.org/StephaneBunel/xxhash-go v0.0.0-20130310175814-c77f1e3b34a6
 	cloud.google.com/go v0.37.4 // indirect
 	github.com/Azure/azure-pipeline-go v0.1.8
 	github.com/Azure/azure-storage-blob-go v0.6.0
@@ -22,6 +23,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190411002643-bd77b112433e // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
+	github.com/id01/go-lz4 v1.0.3
 	github.com/jlaffaye/ftp v0.0.0-20190411155707-52d3001130a6
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a
@@ -37,6 +39,7 @@ require (
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pengsrc/go-shared v0.2.0 // indirect
+	github.com/pierrec/lz4 v2.0.5+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.10.0
 	github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46
