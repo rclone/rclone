@@ -253,3 +253,4 @@ Contributors
   * Kyle E. Mitchell <kyle@kemitchell.com>
   * Gary Kim <gary@garykim.dev>
   * Jon <jonathn@github.com>
+  * Jeff Quinn <jeffrey.quinn@bluevoyant.com>
