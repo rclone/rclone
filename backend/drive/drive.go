@@ -1851,7 +1851,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	}
 
 	var info *drive.File
-	if size == 0 || size < int64(f.opt.UploadCutoff) {
+	if size >= 0 && size < int64(f.opt.UploadCutoff) {
 		// Make the API request to upload metadata and file data.
 		// Don't retry, return a retry error instead
 		err = f.pacer.CallNoRetry(func() (bool, error) {
@@ -2845,7 +2845,7 @@ func (o *baseObject) update(ctx context.Context, updateInfo *drive.File, uploadM
 	src fs.ObjectInfo) (info *drive.File, err error) {
 	// Make the API request to upload metadata and file data.
 	size := src.Size()
-	if size == 0 || size < int64(o.fs.opt.UploadCutoff) {
+	if size >= 0 && size < int64(o.fs.opt.UploadCutoff) {
 		// Don't retry, return a retry error instead
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			info, err = o.fs.svc.Files.Update(o.id, updateInfo).
