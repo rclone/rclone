@@ -25,7 +25,6 @@ import (
 TODO:
 - Implement Object.Update()
 - Implement Object.ComputeHash()
-- Trying to access a single file results in "directory not found", but copying/catting directories works.
 - Buffering in the compression.go file causes problems. This needs investigation but isn't curcial.
 
 NOTES:
@@ -77,6 +76,24 @@ func init() {
 const bufferSize = 8388608 // Size of buffer when compressing or decompressing the entire file.
 			// Larger size means more multithreading with larger block sizes and thread counts.
 
+// dirName gets the containing directory of a remote
+func dirName(remote string) (dir string) {
+	index := strings.LastIndex(remote, "/")
+	if index == -1 {
+		return ""
+	}
+	return remote[:index]
+}
+
+// baseName gets the filename of a remote without directories
+func baseName(remote string) (dir string) {
+	index := strings.LastIndex(remote, "/")
+	if index == -1 {
+		return ""
+	}
+	return remote[index+1:]
+}
+
 // newCompressionForConfig constructs a Compression object for the given config name
 func newCompressionForConfig(opt *Options) (*Compression, error) {
 	c, err := NewCompressionPreset(opt.CompressionMode)
@@ -103,17 +120,37 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
 	}
-	// Look for a file first
-	remotePath := fspath.JoinRootPath(wPath, rpath + c.GetFileExtension())
-	wrappedFs, err := wInfo.NewFs(wName, remotePath, wConfig)
-	// if that didn't produce a file, look for a directory
-	if err != fs.ErrorIsFile {
+	// Strip trailing slashes if they exist in rpath
+	rpath = strings.TrimRight(rpath, "/")
+
+	// First, check for a file
+	// Open the containing directory first
+	containingRemotePath := fspath.JoinRootPath(wPath, dirName(rpath))
+	containingFs, err := wInfo.NewFs(wName, containingRemotePath, wConfig)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to make remote %s:%q to check for possible files", wName, containingRemotePath)
+	}
+	// Looks for a valid file in the listing of the containing directory
+	listing, err := containingFs.List("")
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list %s:%q to find possible files", wName, containingRemotePath)
+	}
+	wrappedFilename := findFileInEntriesStartingWith(listing, baseName(rpath))
+	// If a file was found, create an fs for it. Otherwise, check for a directory
+	var wrappedFs fs.Fs
+	var remotePath string
+	if wrappedFilename != "" {
+		remotePath = fspath.JoinRootPath(containingRemotePath, wrappedFilename)
+		wrappedFs, err = wInfo.NewFs(wName, remotePath, wConfig)
+	} else {
 		remotePath = fspath.JoinRootPath(wPath, rpath)
 		wrappedFs, err = wInfo.NewFs(wName, remotePath, wConfig)
 	}
-	if err != fs.ErrorIsFile && err != nil {
+	if err != nil && err != fs.ErrorIsFile {
 		return nil, errors.Wrapf(err, "failed to make remote %s:%q to wrap", wName, remotePath)
 	}
+
+	// Create the wrapping fs
 	f := &Fs{
 		Fs:     wrappedFs,
 		name:   name,
@@ -308,20 +345,30 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	})
 }
 
+// findFileInEntriesStartingWith finds a file starting with a name in a list of DirEntries. Returns empty string on not found.
+func findFileInEntriesStartingWith(dirEntries fs.DirEntries, name string) (foundRemote string) {
+	dirEntries.ForObject(func(dirEntry fs.Object){
+		// First make sure this isn't a directory
+		directory := reflect.TypeOf((*fs.Directory)(nil)).Elem()
+		if !reflect.TypeOf(dirEntry).Implements(directory) {
+			// Then check string prefix
+			currRemote := dirEntry.Remote()
+			if strings.HasPrefix(currRemote, name) {
+				foundRemote = currRemote
+			}
+		}
+	})
+	return foundRemote
+}
+
 // NewObject finds the Object at remote.
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	// List the directory where the objects are, then look through the list for a remote that starts with our remote.
-	dirEntries, err := f.List(remote[:strings.Index(remote, "/")])
+	dirEntries, err := f.List(dirName(remote))
 	if err != nil {
 		return nil, err
 	}
-	var foundRemote string = ""
-	dirEntries.ForObject(func(dirEntry fs.Object){
-		currRemote := dirEntry.Remote()
-		if currRemote[:len(remote)] == remote {
-			foundRemote = currRemote
-		}
-	})
+	foundRemote := findFileInEntriesStartingWith(dirEntries, remote)
 	// If we couldn't find an object starting with our remote, return an error
 	if foundRemote == "" {
 		return nil, fs.ErrorObjectNotFound
