@@ -356,9 +356,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 	}
 
 	// Verify hashes are the same after transfer - ignoring blank hashes
-	// TODO(klauspost): This could be extended, so we always create a hash type matching
-	// the destination, and calculate it while sending.
-	if hashType != hash.None {
+	if !fs.Config.IgnoreChecksum && hashType != hash.None {
 		var srcSum string
 		srcSum, err = src.Hash(hashType)
 		if err != nil {
@@ -370,7 +368,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 			if err != nil {
 				fs.CountError(err)
 				fs.Errorf(dst, "Failed to read hash: %v", err)
-			} else if !fs.Config.IgnoreChecksum && !hash.Equals(srcSum, dstSum) {
+			} else if !hash.Equals(srcSum, dstSum) {
 				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
 				fs.Errorf(dst, "%v", err)
 				fs.CountError(err)
