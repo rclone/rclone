@@ -28,8 +28,9 @@ import (
 )
 
 // Constants
-const devUnset = 0xdeadbeefcafebabe // a device id meaning it is unset
-const linkSuffix = ".rclonelink"    // The suffix added to a translated symbolic link
+const devUnset = 0xdeadbeefcafebabe                                       // a device id meaning it is unset
+const linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
+const useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
 
 // Register with Fs
 func init() {
@@ -327,7 +328,14 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 
 	fd, err := os.Open(fsDirPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to open directory %q", dir)
+		isPerm := os.IsPermission(err)
+		err = errors.Wrapf(err, "failed to open directory %q", dir)
+		fs.Errorf(dir, "%v", err)
+		if isPerm {
+			accounting.Stats.Error(fserrors.NoRetryError(err))
+			err = nil // ignore error but fail sync
+		}
+		return nil, err
 	}
 	defer func() {
 		cerr := fd.Close()
@@ -337,12 +345,38 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}()
 
 	for {
-		fis, err := fd.Readdir(1024)
-		if err == io.EOF && len(fis) == 0 {
-			break
+		var fis []os.FileInfo
+		if useReadDir {
+			// Windows and Plan9 read the directory entries with the stat information in which
+			// shouldn't fail because of unreadable entries.
+			fis, err = fd.Readdir(1024)
+			if err == io.EOF && len(fis) == 0 {
+				break
+			}
+		} else {
+			// For other OSes we read the names only (which shouldn't fail) then stat the
+			// individual ourselves so we can log errors but not fail the directory read.
+			var names []string
+			names, err = fd.Readdirnames(1024)
+			if err == io.EOF && len(names) == 0 {
+				break
+			}
+			if err == nil {
+				for _, name := range names {
+					namepath := filepath.Join(fsDirPath, name)
+					fi, fierr := os.Lstat(namepath)
+					if fierr != nil {
+						err = errors.Wrapf(err, "failed to read directory %q", namepath)
+						fs.Errorf(dir, "%v", fierr)
+						accounting.Stats.Error(fserrors.NoRetryError(fierr)) // fail the sync
+						continue
+					}
+					fis = append(fis, fi)
+				}
+			}
 		}
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read directory %q", dir)
+			return nil, errors.Wrap(err, "failed to read directory entry")
 		}
 
 		for _, fi := range fis {
