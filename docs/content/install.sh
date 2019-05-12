@@ -152,9 +152,13 @@ case $OS in
     chown root:root /usr/bin/rclone.new
     mv /usr/bin/rclone.new /usr/bin/rclone
     #manuals
-    mkdir -p /usr/local/share/man/man1
-    cp rclone.1 /usr/local/share/man/man1/
-    mandb
+    if ! [ -x "$(command -v mandb)" ]; then
+        echo 'mandb not found. The rclone man docs will not be installed.'
+    else 
+        mkdir -p /usr/local/share/man/man1
+        cp rclone.1 /usr/local/share/man/man1/
+        mandb
+    fi
     ;;
   'freebsd'|'openbsd'|'netbsd')
     #bin
