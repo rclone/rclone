@@ -1,4 +1,4 @@
-// Package crypt provides wrappers for Fs and Object which implement encryption
+// Package press provides wrappers for Fs and Object which implement compression. Based off crypt.
 package press
 
 import (
@@ -9,13 +9,11 @@ import (
 	"bufio"
 	"reflect"
 	"strconv"
-//	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
-//	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fspath"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
@@ -23,9 +21,7 @@ import (
 
 /**
 TODO:
-- Implement Object.Update()
 - Implement Object.ComputeHash()
-- Find out why moving or copying a file within the remote gives "directory not found"
 - Buffering in the compression.go file causes problems. This needs investigation but isn't curcial.
 
 NOTES:
@@ -115,7 +111,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	remote := opt.Remote
 	if strings.HasPrefix(remote, name+":") {
-		return nil, errors.New("can't point crypt remote at itself - check the value of the remote setting")
+		return nil, errors.New("can't point press remote at itself - check the value of the remote setting")
 	}
 	wInfo, wName, wPath, wConfig, err := fs.ConfigFs(remote)
 	if err != nil {
@@ -170,21 +166,6 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		CanHaveEmptyDirectories: true,
 	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
 
-//	doChangeNotify := wrappedFs.Features().ChangeNotify
-/*	if doChangeNotify != nil {
-		f.features.ChangeNotify = func(notifyFunc func(string, fs.EntryType), pollInterval <-chan time.Duration) {
-			wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-				decrypted, err := f.DecryptFileName(path)
-				if err != nil {
-					fs.Logf(f, "ChangeNotify was unable to decrypt %q: %s", path, err)
-					return
-				}
-				notifyFunc(decrypted, entryType)
-			}
-			doChangeNotify(wrappedNotifyFunc, pollInterval)
-		}
-	}*/
-
 	return f, err
 }
 
@@ -216,18 +197,6 @@ func (c *Compression) generateFileNameFromNameAndSize(remote string, size int64)
 // Generates a file name for a compressed version of an uncompressed file.
 func (c *Compression) generateFileName(objectInfo fs.ObjectInfo) (remote string) {
 	return c.generateFileNameFromNameAndSize(objectInfo.Remote(), objectInfo.Size())
-}
-
-// Casts an io.Reader up to an io.ReadSeeker if possible
-func readerToReadSeeker(r io.Reader) io.ReadSeeker {
-	// Declare a type object representing io.ReadSeeker
-	readSeeker := reflect.TypeOf((*io.ReadSeeker)(nil)).Elem()
-	// Convert into io.ReadSeeker if possible, return nil otherwise
-	if reflect.TypeOf(r).Implements(readSeeker) {
-		return reflect.ValueOf(r).Interface().(io.ReadSeeker)
-	} else {
-		return nil
-	}
 }
 
 // Options defines the configuration for this backend
@@ -395,61 +364,6 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 }
 
 type putFn func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
-
-// put implements Put or PutStream
-/*
-func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
-	// Encrypt the data into wrappedIn
-	wrappedIn, err := f.cipher.EncryptData(in)
-	if err != nil {
-		return nil, err
-	}
-
-	// Find a hash the destination supports to compute a hash of
-	// the encrypted data
-	ht := f.Fs.Hashes().GetOne()
-	var hasher *hash.MultiHasher
-	if ht != hash.None {
-		hasher, err = hash.NewMultiHasherTypes(hash.NewHashSet(ht))
-		if err != nil {
-			return nil, err
-		}
-		// unwrap the accounting
-		var wrap accounting.WrapFn
-		wrappedIn, wrap = accounting.UnWrap(wrappedIn)
-		// add the hasher
-		wrappedIn = io.TeeReader(wrappedIn, hasher)
-		// wrap the accounting back on
-		wrappedIn = wrap(wrappedIn)
-	}
-
-	// Transfer the data
-	o, err := put(wrappedIn, f.newObjectInfo(src), options...)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check the hashes of the encrypted data if we were comparing them
-	if ht != hash.None && hasher != nil {
-		srcHash := hasher.Sums()[ht]
-		var dstHash string
-		dstHash, err = o.Hash(ht)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to read destination hash")
-		}
-		if srcHash != "" && dstHash != "" && srcHash != dstHash {
-			// remove object
-			err = o.Remove()
-			if err != nil {
-				fs.Errorf(o, "Failed to remove corrupted object: %v", err)
-			}
-			return nil, errors.Errorf("corrupted on transfer: %v crypted hash differ %q vs %q", ht, srcHash, dstHash)
-		}
-	}
-
-	return f.newObject(o), nil
-}
-*/
 
 func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
 	// Unwrap reader accounting
@@ -694,16 +608,6 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
-// EncryptFileName returns an encrypted file name
-//func (f *Fs) EncryptFileName(fileName string) string {
-//	return f.cipher.EncryptFileName(fileName)
-//}
-
-// DecryptFileName returns a decrypted file name
-//func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
-//	return f.cipher.DecryptFileName(encryptedFileName)
-//}
-
 // TODO: Still needs implementation
 // ComputeHash takes the nonce from o, and encrypts the contents of
 // src with it, and calcuates the hash given by HashType on the fly
@@ -813,9 +717,17 @@ func (o *Object) Remote() string {
 
 // Size returns the size of the file
 func (o *Object) Size() int64 {
+	// Same as getting size from an ObjectInfo
+	remote := o.Remote()
+	_, _, size, err := processFileName(remote)
+	if err != nil {
+		fs.Debugf(o, "Error processing file name: %v", err)
+	}
+	return size
+/* Alternative (slow) way
 	in, err := o.Object.Open(&fs.SeekOption{Offset: 0})
-	inSeek := readerToReadSeeker(in)
-	if inSeek == nil {
+	inSeek, ok := in.(io.ReadSeeker)
+	if !ok {
 		fs.Debugf(o, "Unable to get ReadSeeker to determine size")
 		panic("Cannot get ReadSeeker to determine size")
 		return -1
@@ -825,6 +737,7 @@ func (o *Object) Size() int64 {
 		fs.Debugf(o, "Bad size for decompression: %v", err)
 	}
 	return decompressedSize
+*/
 }
 
 // Hash returns the selected checksum of the file
@@ -885,11 +798,8 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 		return nil, err
 	}
 	// Use reflection to get a readSeekCloser if possible
-	readSeekCloserType := reflect.TypeOf((*ReadSeekCloser)(nil)).Elem()
-	var readSeekCloser ReadSeekCloser
-	if reflect.TypeOf(readCloser).Implements(readSeekCloserType) {
-		readSeekCloser = reflect.ValueOf(readCloser).Interface().(ReadSeekCloser)
-	} else {
+	readSeekCloser, ok := readCloser.(io.ReadSeekCloser)
+	if !ok {
 		return nil, errors.New("Wrapped remote does not support seeking")
 	}
 	// Get file handle
@@ -909,17 +819,13 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	return combineReaderAndCloser(fileReader, readCloser), nil
 }
 
-// TODO: Still needs implementation?
 // Using magic update function from crypt
 // Update in to the object with the modTime given of the given size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-//	panic("Object.Update() NOT IMPLEMENTED")
-//	return errors.New("Update not implemented yet")
 	update := func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 		return o.Object, o.Object.Update(in, src, options...)
 	}
 	_, err := o.f.put(in, src, options, update)
-//	_, err := o.f.put(in, src, options, nil)
 	return err
 }
 
@@ -952,17 +858,6 @@ func (o *ObjectInfo) Fs() fs.Info {
 func (o *ObjectInfo) Remote() string {
 	return o.f.c.generateFileName(o.ObjectInfo)
 }
-/*
-func (o *ObjectInfo) Remote() string {
-	remote := o.ObjectInfo.Remote()
-	filename, _, _, _, err := processFileName(remote)
-	if err != nil {
-		fs.Debugf(o, "Error on getting remote path: %v", err)
-		return remote
-	}
-	return filename
-}
-*/
 
 // Size returns the size of the file
 func (o *ObjectInfo) Size() int64 {

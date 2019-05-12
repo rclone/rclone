@@ -6,3 +6,4 @@ docs/public
 rclone.iml
 .idea
 backend/press/test.vdi
+*.test
