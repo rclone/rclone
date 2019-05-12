@@ -413,13 +413,21 @@ func (f *Fs) CleanUp() (err error) {
 	if err != nil {
 		return errors.Wrap(err, "CleanUp failed to list items in trash")
 	}
+	fs.Infof(f, "Deleting %d items from the trash", len(items))
+	errors := 0
 	// similar to f.deleteNode(trash) but with HardDelete as true
 	for _, item := range items {
-		err = f.pacer.Call(func() (bool, error) {
-			err = f.srv.Delete(item, true)
+		fs.Debugf(f, "Deleting trash %q", item.GetName())
+		deleteErr := f.pacer.Call(func() (bool, error) {
+			err := f.srv.Delete(item, true)
 			return shouldRetry(err)
 		})
+		if deleteErr != nil {
+			err = deleteErr
+			errors++
+		}
 	}
+	fs.Infof(f, "Deleted %d items from the trash with %d errors", len(items), errors)
 	return err
 }
 
