@@ -995,9 +995,17 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
 	if canTrackRenames {
-		assert.Equal(t, int64(0), accounting.Stats.GetTransfers())
+		if r.Fremote.Features().Move == nil {
+			// If no server side Move, we are falling back to Copy + Delete
+			assert.Equal(t, int64(1), accounting.Stats.GetTransfers()) // 1 copy
+			assert.Equal(t, int64(4), accounting.Stats.GetChecks())    // 2 file checks + 1 move + 1 delete
+		} else {
+			assert.Equal(t, int64(0), accounting.Stats.GetTransfers()) // 0 copy
+			assert.Equal(t, int64(3), accounting.Stats.GetChecks())    // 2 file checks + 1 move
+		}
 	} else {
-		assert.Equal(t, int64(1), accounting.Stats.GetTransfers())
+		assert.Equal(t, int64(2), accounting.Stats.GetChecks())    // 2 file checks
+		assert.Equal(t, int64(1), accounting.Stats.GetTransfers()) // 0 copy
 	}
 }
 
