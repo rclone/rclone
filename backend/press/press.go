@@ -25,6 +25,7 @@ import (
 TODO:
 - Implement Object.Update()
 - Implement Object.ComputeHash()
+- Find out why moving or copying a file within the remote gives "directory not found"
 - Buffering in the compression.go file causes problems. This needs investigation but isn't curcial.
 
 NOTES:
@@ -89,7 +90,7 @@ func dirName(remote string) (dir string) {
 func baseName(remote string) (dir string) {
 	index := strings.LastIndex(remote, "/")
 	if index == -1 {
-		return ""
+		return remote
 	}
 	return remote[index+1:]
 }
@@ -135,7 +136,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to list %s:%q to find possible files", wName, containingRemotePath)
 	}
-	wrappedFilename := findFileInEntriesStartingWith(listing, baseName(rpath))
+	wrappedFilename := findFileInEntriesMatching(listing, baseName(rpath))
 	// If a file was found, create an fs for it. Otherwise, check for a directory
 	var wrappedFs fs.Fs
 	var remotePath string
@@ -207,9 +208,14 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	return name, extension, size, nil
 }
 
+// Generates a file name for a compressed version of an uncompressed file with a remote and size.
+func (c *Compression) generateFileNameFromNameAndSize(remote string, size int64) (newRemote string) {
+	return remote + fmt.Sprintf("%016x", size) + c.GetFileExtension()
+}
+
 // Generates a file name for a compressed version of an uncompressed file.
 func (c *Compression) generateFileName(objectInfo fs.ObjectInfo) (remote string) {
-	return objectInfo.Remote() + fmt.Sprintf("%016x", objectInfo.Size()) + c.GetFileExtension()
+	return c.generateFileNameFromNameAndSize(objectInfo.Remote(), objectInfo.Size())
 }
 
 // Casts an io.Reader up to an io.ReadSeeker if possible
@@ -276,7 +282,7 @@ func (f *Fs) addDir(entries *fs.DirEntries, dir fs.Directory) {
 	*entries = append(*entries, f.newDir(dir))
 }
 
-// Processes file entries by removing extensions from objects.
+// Processes file entries by removing compression data. Don't ask me how it works. I don't know.
 func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
 	for _, entry := range entries {
@@ -345,15 +351,16 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	})
 }
 
-// findFileInEntriesStartingWith finds a file starting with a name in a list of DirEntries. Returns empty string on not found.
-func findFileInEntriesStartingWith(dirEntries fs.DirEntries, name string) (foundRemote string) {
+// findFileInEntriesMatching finds a file, which, when compression data stored in it is stripped, matches a file in a list of DirEntries. Returns empty string on not found.
+func findFileInEntriesMatching(dirEntries fs.DirEntries, name string) (foundRemote string) {
 	dirEntries.ForObject(func(dirEntry fs.Object){
 		// First make sure this isn't a directory
 		directory := reflect.TypeOf((*fs.Directory)(nil)).Elem()
 		if !reflect.TypeOf(dirEntry).Implements(directory) {
-			// Then check string prefix
+			// Then test whether our processed file name matches
 			currRemote := dirEntry.Remote()
-			if strings.HasPrefix(currRemote, name) {
+			origFileName, _, _, _ := processFileName(currRemote)
+			if name == origFileName {
 				foundRemote = currRemote
 			}
 		}
@@ -364,11 +371,15 @@ func findFileInEntriesStartingWith(dirEntries fs.DirEntries, name string) (found
 // NewObject finds the Object at remote.
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	// List the directory where the objects are, then look through the list for a remote that starts with our remote.
-	dirEntries, err := f.List(dirName(remote))
+	dirNameRemote := dirName(remote)
+	dirEntries, err := f.Fs.List(dirNameRemote)
+	if err == fs.ErrorDirNotFound {
+		return nil, fs.ErrorObjectNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
-	foundRemote := findFileInEntriesStartingWith(dirEntries, remote)
+	foundRemote := findFileInEntriesMatching(dirEntries, remote)
 	// If we couldn't find an object starting with our remote, return an error
 	if foundRemote == "" {
 		return nil, fs.ErrorObjectNotFound
@@ -377,6 +388,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	// Otherwise, we can get that object
 	o, err := f.Fs.NewObject(foundRemote)
 	if err != nil {
+		fmt.Printf("%v\n", err)
 		return nil, err
 	}
 	return f.newObject(o), nil
@@ -562,7 +574,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	newFilename := f.c.generateFileName(o)
+	newFilename := f.c.generateFileNameFromNameAndSize(remote, o.Size())
 	oResult, err := do(o.Object, newFilename)
 	if err != nil {
 		return nil, err
@@ -588,7 +600,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
-	newFilename := f.c.generateFileName(o)
+	newFilename := f.c.generateFileNameFromNameAndSize(remote, o.Size())
 	oResult, err := do(o.Object, newFilename)
 	if err != nil {
 		return nil, err
@@ -897,15 +909,17 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	return combineReaderAndCloser(fileReader, readCloser), nil
 }
 
-// TODO: Still needs implementation
+// TODO: Still needs implementation?
+// Using magic update function from crypt
 // Update in to the object with the modTime given of the given size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	panic("Object.Update() NOT IMPLEMENTED")
+//	panic("Object.Update() NOT IMPLEMENTED")
 //	return errors.New("Update not implemented yet")
 	update := func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 		return o.Object, o.Object.Update(in, src, options...)
 	}
 	_, err := o.f.put(in, src, options, update)
+//	_, err := o.f.put(in, src, options, nil)
 	return err
 }
 

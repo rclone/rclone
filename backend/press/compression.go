@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"errors"
 	"bytes"
+	"encoding/binary"
 	"bufio"
 	"compress/gzip"
 )
@@ -15,13 +16,13 @@ import (
 // Compression modes
 const (
 	GZIP_STORE = iota
-	GZIP_MIN = iota
-	GZIP_DEFAULT = iota
-	GZIP_MAX = iota
-	XZ_IN_GZ_MIN = iota
-	XZ_IN_GZ = iota
-	LZ4 = iota
-	SNAPPY = iota
+	GZIP_MIN
+	GZIP_DEFAULT
+	GZIP_MAX
+	XZ_IN_GZ_MIN
+	XZ_IN_GZ
+	LZ4
+	SNAPPY
 )
 
 // Constants
@@ -84,12 +85,8 @@ func (c* Compression) maxCompressedBlockSize() uint32 {
 // Gets file extension for current compression mode
 func (c* Compression) GetFileExtension() string {
 	switch c.CompressionMode {
-		case GZIP_STORE: fallthrough
-		case GZIP_MIN: fallthrough
-		case GZIP_DEFAULT: fallthrough
-		case GZIP_MAX: return ".gz"
-		case XZ_IN_GZ_MIN: fallthrough
-		case XZ_IN_GZ: return ".xzgz"
+		case GZIP_STORE, GZIP_MIN, GZIP_DEFAULT, GZIP_MAX: return ".gz"
+		case XZ_IN_GZ_MIN, XZ_IN_GZ: return ".xzgz"
 		case LZ4: return ".lz4"
 		case SNAPPY: return ".snap"
 	}
@@ -121,12 +118,8 @@ func (c* Compression) GetFileCompressionInfo(reader io.Reader) (compressable boo
 // Gets the file header we add to files of the currently used algorithm. Currently only used for lz4.
 func (c* Compression) getHeader() []byte {
 	switch c.CompressionMode {
-		case GZIP_STORE: fallthrough
-		case GZIP_MIN: fallthrough
-		case GZIP_DEFAULT: fallthrough
-		case GZIP_MAX: return GZIP_HEADER
-		case XZ_IN_GZ_MIN: fallthrough
-		case XZ_IN_GZ: return EXEC_HEADER
+		case GZIP_STORE, GZIP_MIN, GZIP_DEFAULT, GZIP_MAX: return GZIP_HEADER
+		case XZ_IN_GZ_MIN, XZ_IN_GZ: return EXEC_HEADER
 		case LZ4: return LZ4_HEADER
 		case SNAPPY: return SNAPPY_HEADER
 	}
@@ -136,12 +129,8 @@ func (c* Compression) getHeader() []byte {
 // Gets the file footer we add to files of the currently used algorithm. Currently only used for lz4.
 func (c* Compression) getFooter() []byte {
 	switch c.CompressionMode {
-		case GZIP_STORE: fallthrough
-		case GZIP_MIN: fallthrough
-		case GZIP_DEFAULT: fallthrough
-		case GZIP_MAX: return []byte{}
-		case XZ_IN_GZ_MIN: fallthrough
-		case XZ_IN_GZ: return []byte{}
+		case GZIP_STORE, GZIP_MIN, GZIP_DEFAULT, GZIP_MAX: return []byte{}
+		case XZ_IN_GZ_MIN, XZ_IN_GZ: return []byte{}
 		case LZ4: return LZ4_FOOTER
 		case SNAPPY: return []byte{}
 	}
@@ -151,27 +140,16 @@ func (c* Compression) getFooter() []byte {
 /*** BYTE CONVERSION FUNCTIONS ***/
 // Converts uint16 to bytes (little endian)
 func uint16ToBytes(n uint16) []byte {
-	return []byte{byte(n&0xff), byte(n>>8)}
-}
-
-// Converts bytes to uint16 (little endian)
-func bytesToUint16(n []byte) uint16 {
-	return uint16(n[0])+(uint16(n[1])<<8)
+	b := make([]byte, 2)
+	binary.LittleEndian.PutUint16(b, n)
+	return b
 }
 
 // Converts uint32 to bytes (little endian)
 func uint32ToBytes(n uint32) []byte {
-	return append(uint16ToBytes(uint16(n&0xffff)), uint16ToBytes(uint16(n>>16))...)
-}
-
-// Converts bytes to uint32 (little endian)
-func bytesToUint32(n []byte) uint32 {
-	res := uint32(0)
-	for i := 3; i>=0; i-- {
-		res <<= 8
-		res += uint32(n[i])
-	}
-	return res
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, n)
+	return b
 }
 
 /*** BLOCK DATA SERIALIZATION FUNCTIONS ***/
@@ -350,10 +328,7 @@ func (c *Compression) CompressFile(in io.Reader, size int64, out io.Writer) erro
 // Wrapper function to decompress a block range
 func (d *Decompressor) decompressBlockRange(in io.Reader, out io.Writer) (n int, err error) {
 	switch d.c.CompressionMode { // Select decompression function based off compression mode
-		case GZIP_STORE: fallthrough
-		case GZIP_MIN: fallthrough
-		case GZIP_DEFAULT: fallthrough
-		case GZIP_MAX: return decompressBlockRangeGz(in, out)
+		case GZIP_STORE, GZIP_MIN, GZIP_DEFAULT, GZIP_MAX: return decompressBlockRangeGz(in, out)
 		case XZ_IN_GZ_MIN: return decompressBlockRangeExecGz(in, out, d.c.BinPath, []string{"-dc1"})
 		case XZ_IN_GZ: return decompressBlockRangeExecGz(in, out, d.c.BinPath, []string{"-dc"})
 		case LZ4: return decompressBlockLz4(in, out, int64(d.c.BlockSize))
@@ -474,7 +449,7 @@ func (d* Decompressor) init(c *Compression, in io.ReadSeeker, size int64) error 
 	if err != nil {
 		return err
 	}
-	gzippedBlockDataLen := bytesToUint32(gzippedBlockDataLenBytes)
+	gzippedBlockDataLen := binary.LittleEndian.Uint32(gzippedBlockDataLenBytes)
 
 	// Get gzipped block data in gzip extra data fields
 	if DEBUG {
@@ -498,7 +473,7 @@ func (d* Decompressor) init(c *Compression, in io.ReadSeeker, size int64) error 
 		}
 		// Note: These reads should never EOF
 		gzippedBlockDataRawReader.Read(gzipExtraDataLenBytes)
-		gzipExtraDataLen := bytesToUint16(gzipExtraDataLenBytes)
+		gzipExtraDataLen := binary.LittleEndian.Uint16(gzipExtraDataLenBytes)
 		if DEBUG {
 			log.Printf("%d", gzipExtraDataLen)
 		}
@@ -538,7 +513,7 @@ func (d* Decompressor) init(c *Compression, in io.ReadSeeker, size int64) error 
 	currentBlockPosition := int64(0)
 	for i := uint32(0); i < d.numBlocks; i++ { // Loop through block data, getting starts of blocks.
 		bs := i*4 // Location of start of data for our current block
-		currentBlockSize := bytesToUint32(blockData[bs:bs+4])
+		currentBlockSize := binary.LittleEndian.Uint32(blockData[bs:bs+4])
 		currentBlockPosition += int64(currentBlockSize)
 		d.blockStarts[i] = currentBlockPosition
 	}
@@ -549,7 +524,7 @@ func (d* Decompressor) init(c *Compression, in io.ReadSeeker, size int64) error 
 	d.numBlocks-- // Subtract 1 from number of blocks because our header technically isn't a block
 
 	// Get uncompressed size of last block and derive uncompressed size of file
-	lastBlockRawSize := bytesToUint32(blockData[blockDataLen-4:])
+	lastBlockRawSize := binary.LittleEndian.Uint32(blockData[blockDataLen-4:])
 	d.decompressedSize = int64(d.numBlocks-1) * int64(d.c.BlockSize) + int64(lastBlockRawSize)
 	if DEBUG {
 		log.Printf("Decompressed size = %d", d.decompressedSize)

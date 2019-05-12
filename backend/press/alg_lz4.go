@@ -4,6 +4,7 @@ import (
 //	"io/ioutil"
 	"bytes"
 	"errors"
+	"encoding/binary"
 
 	lz4 "github.com/id01/go-lz4"
 	xxh "bitbucket.org/StephaneBunel/xxhash-go"
@@ -47,7 +48,7 @@ func decompressBlockLz4(in io.Reader, out io.Writer, BlockSize int64) (n int, er
 	compressedBytes := compressedBytesWithHash[:len(compressedBytesWithHash)-4]
 	hash := compressedBytesWithHash[len(compressedBytesWithHash)-4:]
 	// Verify, decode, write, and return
-	if bytesToUint32(hash) != xxh.Checksum32(compressedBytes[4:]) {
+	if binary.LittleEndian.Uint32(hash) != xxh.Checksum32(compressedBytes[4:]) {
 		return 0, errors.New("XXHash checksum invalid")
 	}
 	dst := make([]byte, BlockSize*2)
