@@ -660,7 +660,7 @@ func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalCha
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		fs.Logf(f, "path %q entryType %d", path, entryType)
+		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
 		var (
 			err       error
 			decrypted string
