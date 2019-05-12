@@ -231,6 +231,10 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	for try := 1; try <= *retries; try++ {
 		err = f()
 		fs.CountError(err)
+		lastErr := accounting.Stats.GetLastError()
+		if err == nil {
+			err = lastErr
+		}
 		if !Retry || !accounting.Stats.Errored() {
 			if try > 1 {
 				fs.Errorf(nil, "Attempt %d/%d succeeded", try, *retries)
@@ -252,7 +256,6 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 				time.Sleep(d)
 			}
 		}
-		lastErr := accounting.Stats.GetLastError()
 		if lastErr != nil {
 			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.Stats.GetErrors(), lastErr)
 		} else {
@@ -267,7 +270,12 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	}
 	stopStats()
 	if err != nil {
-		log.Printf("Failed to %s: %v", cmd.Name(), err)
+		nerrs := accounting.Stats.GetErrors()
+		if nerrs <= 1 {
+			log.Printf("Failed to %s: %v", cmd.Name(), err)
+		} else {
+			log.Printf("Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, err)
+		}
 		resolveExitCode(err)
 	}
 	if showStats && (accounting.Stats.Errored() || *statsInterval > 0) {
