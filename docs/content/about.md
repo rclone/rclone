@@ -64,6 +64,7 @@ Features
   * ([Encryption](/crypt/)) backend
   * ([Cache](/cache/)) backend
   * ([Union](/union/)) backend
+  * Experimental ([Compression](/press/)) backend
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
 
 Links

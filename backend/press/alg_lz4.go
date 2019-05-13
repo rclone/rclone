@@ -1,7 +1,6 @@
 package press
 import (
 	"io"
-//	"io/ioutil"
 	"bytes"
 	"errors"
 	"encoding/binary"
@@ -10,8 +9,28 @@ import (
 	xxh "bitbucket.org/StephaneBunel/xxhash-go"
 )
 
+/*
+Structure of LZ4 header:
+Flags:
+	Version = 01
+	Independent = 1
+	Block Checksum = 1
+	Content Size = 0
+	Content Checksum = 0
+	Reserved = 0
+	Dictionary ID = 0
+
+BD byte:
+	Reserved = 0
+	Block Max Size = 101 (or 5; 256kb)
+	Reserved = 0000
+
+Header checksum byte (xxhash(flags and bd byte) >> 1) & 0xff
+*/
+
+// Header and footer of our LZ4 file
 var LZ4_HEADER = []byte{0x04, 0x22, 0x4d, 0x18, 0x70, 0x50, 0x84}
-var LZ4_FOOTER = []byte{0x00, 0x00, 0x00, 0x00}
+var LZ4_FOOTER = []byte{0x00, 0x00, 0x00, 0x00} // This is just an empty block
 
 // Function that compresses a block using lz4
 func (c *Compression) compressBlockLz4(in []byte, out io.Writer) (compressedSize uint32, uncompressedSize int64, err error) {
@@ -53,7 +72,6 @@ func decompressBlockLz4(in io.Reader, out io.Writer, BlockSize int64) (n int, er
 	}
 	dst := make([]byte, BlockSize*2)
 	decompressed, err := lz4.Decode(dst, compressedBytes)
-//	log.Printf("%d: %v", len(decompressed), decompressed)
 	out.Write(decompressed)
 	return len(decompressed), err
 }

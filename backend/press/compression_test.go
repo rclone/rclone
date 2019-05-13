@@ -8,11 +8,13 @@ import (
 	"bytes"
 	"strings"
 	"testing"
-//	"time"
+	"math/rand"
+	"encoding/base64"
 	"crypto/md5"
 )
 
-const TestString = "The quick brown fox jumps over the lazy dog."
+const TestStringSmall = "The quick brown fox jumps over the lazy dog."
+const TestSizeLarge = 2097152 // 2 megabytes
 
 // Tests compression and decompression for a preset
 func testCompressDecompress(t *testing.T, preset string, testString string) {
@@ -79,22 +81,45 @@ func testCompressDecompress(t *testing.T, preset string, testString string) {
 	}
 }
 
+// Gets a compressible string
+func getCompressibleString(size int) string {
+	// Get pseudorandom bytes
+	prbytes := make([]byte, size*3/4+16)
+	prsource := rand.New(rand.NewSource(0))
+	prsource.Read(prbytes)
+	// Encode in base64
+	encoding := base64.NewEncoding("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/")
+	return encoding.EncodeToString(prbytes)[:size]
+}
+
 // Tests LZ4
-func TestLZ4(t *testing.T) {
-	testCompressDecompress(t, "lz4", TestString)
+func TestLZ4CompressSmall(t *testing.T) {
+	testCompressDecompress(t, "lz4", TestStringSmall)
+}
+func TestLZ4CompressLarge(t *testing.T) {
+	testCompressDecompress(t, "lz4", getCompressibleString(TestSizeLarge))
 }
 
 // Tests Snappy
-func TestSnappy(t *testing.T) {
-	testCompressDecompress(t, "snappy", TestString)
+func TestSnappyCompressSmall(t *testing.T) {
+	testCompressDecompress(t, "snappy", TestStringSmall)
+}
+func TestSnappyCompressLarge(t *testing.T) {
+	testCompressDecompress(t, "snappy", getCompressibleString(TestSizeLarge))
 }
 
 // Tests GZIP
-func TestGzip(t *testing.T) {
-	testCompressDecompress(t, "gzip-min", TestString)
+func TestGzipCompressSmall(t *testing.T) {
+	testCompressDecompress(t, "gzip-min", TestStringSmall)
+}
+func TestGzipCompressLarge(t *testing.T) {
+	testCompressDecompress(t, "gzip-min", getCompressibleString(TestSizeLarge))
 }
 
 // Tests XZ
-func TestXZ(t *testing.T) {
-	testCompressDecompress(t, "xz-min", TestString)
+func TestXZCompressSmall(t *testing.T) {
+	testCompressDecompress(t, "xz-min", TestStringSmall)
+}
+func TestXZCompressLarge(t *testing.T) {
+	testCompressDecompress(t, "xz-min", getCompressibleString(TestSizeLarge))
 }

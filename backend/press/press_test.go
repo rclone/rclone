@@ -22,6 +22,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: *fstest.RemoteName,
 		NilObject:  (*Object)(nil),
+		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
 
@@ -35,6 +36,7 @@ func TestRemoteLz4(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		NilObject:  (*Object)(nil),
+		UnimplementableObjectMethods: []string{"MimeType"},
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
@@ -53,6 +55,7 @@ func TestRemoteGzip(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		NilObject:  (*Object)(nil),
+		UnimplementableObjectMethods: []string{"MimeType"},
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
@@ -71,6 +74,7 @@ func TestRemoteXZ(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		NilObject:  (*Object)(nil),
+		UnimplementableObjectMethods: []string{"MimeType"},
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},

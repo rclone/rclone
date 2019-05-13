@@ -1,6 +1,12 @@
-// Note: I am not a go programmer; this may need some refining.
-// It's my first time writing golang :)
-package press // POC Compressor
+// This file is the backend implementation for seekable compression.
+package press
+
+/*
+NOTES:
+Structure of the metadata we store is:
+gzipExtraify(gzip([4-byte header size][4-byte block size] ... [4-byte block size][4-byte raw size of last block]))
+This is appended to any compressed file, and is ignored as trailing garbage in our LZ4 and SNAPPY implementations, and seen as empty archives in our GZIP and XZ_IN_GZ implementations.
+*/
 
 import (
 	"log"

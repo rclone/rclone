@@ -62,7 +62,7 @@ compression_mode> gzip-min
 ### Compression Modes
 Currently there are four compression algorithms supported: lz4, snappy, gzip, and xz.
 Gzip and xz are further divided into two modes: "min" with less compression and "default" with more.
-Currently, xz modes are only supported if there is an Xz binary in your system's $PATH.
+Currently, xz modes are only supported if there is an xz binary in your system's $PATH.
 Depending on your operating system, the methods of installing this binary vary. This may be changed in
 future updates.
 
@@ -84,4 +84,4 @@ check whether your wrapped remote works with press before using it.
 #### Experimental
 This remote is currently **experimental**. Things may break and data may be lost. Anything you do with this remote is
 at your own risk. Please understand the risks associated with using experimental code and don't use this remote in
-critial applications.
+critical applications.

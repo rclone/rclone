@@ -15,6 +15,7 @@ import (
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/fspath"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/chunkedreader"
 	"github.com/pkg/errors"
 )
 
@@ -68,6 +69,9 @@ func init() {
 // Constants
 const bufferSize = 8388608 // Size of buffer when compressing or decompressing the entire file.
 			// Larger size means more multithreading with larger block sizes and thread counts.
+			// Currently at 8MB.
+const INITIAL_CHUNK_SIZE = 262144 // Initial and max sizes of chunks when reading parts of the file. Currently
+const MAX_CHUNK_SIZE = 8388608    // at 256KB and 8 MB.
 
 // dirName gets the containing directory of a remote
 func dirName(remote string) (dir string) {
@@ -669,14 +673,11 @@ func (o *Object) Remote() string {
 
 // Size returns the size of the file
 func (o *Object) Size() int64 {
-	in, err := newObjectSeeker(o.Object, []fs.OpenOption{})
-	if err != nil {
-		fs.Debugf(o, "Unable to get ObjectSeeker to determine size: %v", err)
-		return -1
-	}
+	in := chunkedreader.New(o.Object, INITIAL_CHUNK_SIZE, MAX_CHUNK_SIZE)
 	_, decompressedSize, err := o.f.c.DecompressFile(in, o.Object.Size()) // Does not decompress the file until it is read from
 	if err != nil {
-		fs.Debugf(o, "Bad size for decompression: %v", err)
+		fs.Debugf(o, "Unable to determine size: %v", err)
+		return -1
 	}
 	return decompressedSize
 }
@@ -725,13 +726,10 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 				openOptions = append(openOptions, option)
 		}
 	}
-	// Get a ObjectSeeker for the wrapped object with our options
-	objectSeeker, err := newObjectSeeker(o.Object, options)
-	if err != nil {
-		return nil, err
-	}
+	// Get a chunkedreader for the wrapped object
+	chunkedReader := chunkedreader.New(o.Object, INITIAL_CHUNK_SIZE, MAX_CHUNK_SIZE)
 	// Get file handle
-	FileHandle, _, err := o.f.c.DecompressFile(objectSeeker, o.Object.Size())
+	FileHandle, _, err := o.f.c.DecompressFile(chunkedReader, o.Object.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -744,7 +742,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 		fileReader = FileHandle
 	}
 	// Return a ReadCloser
-	return combineReaderAndCloser(fileReader, objectSeeker), nil
+	return combineReaderAndCloser(fileReader, chunkedReader), nil
 }
 
 // Update in to the object with the modTime given of the given size
