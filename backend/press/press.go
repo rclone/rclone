@@ -34,7 +34,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "remote",
-			Help:     "Remote to compress. Should be a seekable remote like crypt.",
+			Help:     "Remote to compress.",
 			Required: true,
 		}, {
 			Name:    "compression_mode",
