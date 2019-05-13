@@ -344,10 +344,9 @@ type DecompressionResult struct {
 }
 func (d *Decompressor) decompressBlockRangeMultithreaded(in io.Reader, out io.Writer, startingBlock uint32) (n int, err error) {
 	// First, use bufio.Reader to reduce the number of reads and bufio.Writer to reduce the number of writes
-	bufin := in
-	bufout := out	// For some reason, this buffering causes problems. Investigate the cause.
-//	bufin := bufio.NewReader(in)
-//	bufout := bufio.NewWriter(out)
+	bufin := bufio.NewReader(in)
+	bufout := bufio.NewWriter(out)
+	defer bufout.Flush() // Needed to prevent us from ending up with all nulls
 
 	// Decompress each block individually.
 	currBatch := startingBlock // Block # of start of current batch of blocks

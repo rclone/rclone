@@ -7,8 +7,6 @@ import (
 	"strings"
 	"bytes"
 	"bufio"
-	"reflect"
-	"strconv"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
@@ -21,10 +19,11 @@ import (
 
 /**
 TODO:
-- Buffering in the compression.go file causes problems. This needs investigation but isn't curcial.
+Nothing atm.
 
 NOTES:
-Filenames are now <original file name><16 hex chars containing original size of file>.<extension>
+Filenames are now <original file name>.<extension>
+Size() function is really inefficient because it requires opening and seeking through the file
 Files are now always compressed - the heuristic test function is defunct
 **/
 
@@ -120,25 +119,10 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	rpath = strings.TrimRight(rpath, "/")
 
 	// First, check for a file
-	// Open the containing directory first
-	containingRemotePath := fspath.JoinRootPath(wPath, dirName(rpath))
-	containingFs, err := wInfo.NewFs(wName, containingRemotePath, wConfig)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to make remote %s:%q to check for possible files", wName, containingRemotePath)
-	}
-	// Looks for a valid file in the listing of the containing directory
-	listing, err := containingFs.List("")
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list %s:%q to find possible files", wName, containingRemotePath)
-	}
-	wrappedFilename := findFileInEntriesMatching(listing, baseName(rpath))
 	// If a file was found, create an fs for it. Otherwise, check for a directory
-	var wrappedFs fs.Fs
-	var remotePath string
-	if wrappedFilename != "" {
-		remotePath = fspath.JoinRootPath(containingRemotePath, wrappedFilename)
-		wrappedFs, err = wInfo.NewFs(wName, remotePath, wConfig)
-	} else {
+	remotePath := fspath.JoinRootPath(wPath, c.generateFileNameFromName(rpath))
+	wrappedFs, err := wInfo.NewFs(wName, remotePath, wConfig)
+	if err != fs.ErrorIsFile {
 		remotePath = fspath.JoinRootPath(wPath, rpath)
 		wrappedFs, err = wInfo.NewFs(wName, remotePath, wConfig)
 	}
@@ -169,33 +153,26 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 }
 
 // Processes a file name for a compressed file. Returns the original file name, the extension, and the size of the original file.
-func processFileName(compressedFileName string) (origFileName string, extension string, size int64, err error) {
-	// First, separate the filename from the extension
+func processFileName(compressedFileName string) (origFileName string, extension string, err error) {
+	// Separate the filename from the extension
 	extensionPos := strings.LastIndex(compressedFileName, ".")
 	if extensionPos == -1 {
-		return "", "", 0, errors.New("File name has no extension")
+		return "", "", errors.New("File name has no extension")
 	}
 	name := compressedFileName[:extensionPos]
 	extension = compressedFileName[extensionPos:]
-	// Get the last 16 chars of the non-extension file name (which are the hexadecimal encoded size)
-	size, err = strconv.ParseInt(name[len(name)-16:], 16, 64)
-	if err != nil {
-		return "", "", 0, errors.New("File name does not contain size")
-	}
-	// Remove the size from the name
-	name = name[:len(name)-16]
 	// Return everything
-	return name, extension, size, nil
+	return name, extension, nil
 }
 
-// Generates a file name for a compressed version of an uncompressed file with a remote and size.
-func (c *Compression) generateFileNameFromNameAndSize(remote string, size int64) (newRemote string) {
-	return remote + fmt.Sprintf("%016x", size) + c.GetFileExtension()
+// Generates a file name for a compressed version of an uncompressed file with a remote.
+func (c *Compression) generateFileNameFromName(remote string) (newRemote string) {
+	return remote + c.GetFileExtension()
 }
 
 // Generates a file name for a compressed version of an uncompressed file.
 func (c *Compression) generateFileName(objectInfo fs.ObjectInfo) (remote string) {
-	return c.generateFileNameFromNameAndSize(objectInfo.Remote(), objectInfo.Size())
+	return c.generateFileNameFromName(objectInfo.Remote())
 }
 
 // Options defines the configuration for this backend
@@ -237,7 +214,7 @@ func (f *Fs) String() string {
 // Remove the last extension of the file that is used for determining whether a file is compressed.
 func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) {
 	remote := obj.Remote()
-	_, _, _, err := processFileName(remote)
+	_, _, err := processFileName(remote)
 	if err != nil {
 		fs.Debugf(remote, "Skipping unrecognized file name: %v", err)
 		return
@@ -275,15 +252,6 @@ func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-/*
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	entries, err = f.Fs.List(f.cipher.EncryptDirName(dir))
-	if err != nil {
-		return nil, err
-	}
-	return f.encryptEntries(entries)
-}*/
-
 // List entries and process them
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	entries, err = f.Fs.List(dir)
@@ -319,44 +287,11 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	})
 }
 
-// findFileInEntriesMatching finds a file, which, when compression data stored in it is stripped, matches a file in a list of DirEntries. Returns empty string on not found.
-func findFileInEntriesMatching(dirEntries fs.DirEntries, name string) (foundRemote string) {
-	dirEntries.ForObject(func(dirEntry fs.Object){
-		// First make sure this isn't a directory
-		directory := reflect.TypeOf((*fs.Directory)(nil)).Elem()
-		if !reflect.TypeOf(dirEntry).Implements(directory) {
-			// Then test whether our processed file name matches
-			currRemote := dirEntry.Remote()
-			origFileName, _, _, _ := processFileName(currRemote)
-			if name == origFileName {
-				foundRemote = currRemote
-			}
-		}
-	})
-	return foundRemote
-}
-
 // NewObject finds the Object at remote.
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	// List the directory where the objects are, then look through the list for a remote that starts with our remote.
-	dirNameRemote := dirName(remote)
-	dirEntries, err := f.Fs.List(dirNameRemote)
-	if err == fs.ErrorDirNotFound {
-		return nil, fs.ErrorObjectNotFound
-	}
+	// Just generate the file name and get the object
+	o, err := f.Fs.NewObject(f.c.generateFileNameFromName(remote))
 	if err != nil {
-		return nil, err
-	}
-	foundRemote := findFileInEntriesMatching(dirEntries, remote)
-	// If we couldn't find an object starting with our remote, return an error
-	if foundRemote == "" {
-		return nil, fs.ErrorObjectNotFound
-	}
-
-	// Otherwise, we can get that object
-	o, err := f.Fs.NewObject(foundRemote)
-	if err != nil {
-		fmt.Printf("%v\n", err)
 		return nil, err
 	}
 	return f.newObject(o), nil
@@ -378,7 +313,7 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	wrappedIn = wrap(bufio.NewReaderSize(pipeReader, bufferSize)) // Bufio required for multithreading
 
 	// Find a hash the destination supports to compute a hash of
-	// the encrypted data
+	// the compressed data
 	ht := f.Fs.Hashes().GetOne()
 	var hasher *hash.MultiHasher
 	if ht != hash.None {
@@ -401,7 +336,7 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 		return nil, err
 	}
 
-	// Check the hashes of the encrypted data if we were comparing them
+	// Check the hashes of the compressed data if we were comparing them
 	if ht != hash.None && hasher != nil {
 		srcHash := hasher.Sums()[ht]
 		var dstHash string
@@ -415,7 +350,7 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 			if err != nil {
 				fs.Errorf(o, "Failed to remove corrupted object: %v", err)
 			}
-			return nil, errors.Errorf("corrupted on transfer: %v crypted hash differ %q vs %q", ht, srcHash, dstHash)
+			return nil, errors.Errorf("corrupted on transfer: %v compressed hashes differ %q vs %q", ht, srcHash, dstHash)
 		}
 	}
 
@@ -487,7 +422,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	newFilename := f.c.generateFileNameFromNameAndSize(remote, o.Size())
+	newFilename := f.c.generateFileNameFromName(remote)
 	oResult, err := do(o.Object, newFilename)
 	if err != nil {
 		return nil, err
@@ -513,7 +448,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
-	newFilename := f.c.generateFileNameFromNameAndSize(remote, o.Size())
+	newFilename := f.c.generateFileNameFromName(remote)
 	oResult, err := do(o.Object, newFilename)
 	if err != nil {
 		return nil, err
@@ -609,7 +544,7 @@ func (f *Fs) UnWrap() fs.Fs {
 
 // Object describes a wrapped for being read from the Fs
 //
-// This decrypts the remote name and decrypts the data
+// This decompresses the remote name and decompresses the data
 type Object struct {
 	fs.Object
 	f *Fs
@@ -639,7 +574,7 @@ func (o *Object) String() string {
 // Remote returns the remote path
 func (o *Object) Remote() string {
 	remote := o.Object.Remote()
-	filename, _, _, err := processFileName(remote)
+	filename, _, err := processFileName(remote)
 	if err != nil {
 		fs.Debugf(o, "Error on getting remote path: %v", err)
 		return remote
@@ -649,14 +584,6 @@ func (o *Object) Remote() string {
 
 // Size returns the size of the file
 func (o *Object) Size() int64 {
-	// Same as getting size from an ObjectInfo (note: seems glitched for now. Needs some debug)
-//	remote := o.Object.Remote()
-//	_, _, size, err := processFileName(remote)
-//	if err != nil {
-//		fs.Debugf(o, "Error processing file name: %v", err)
-//	}
-//	return size
-
 	in, err := o.Object.Open(&fs.SeekOption{Offset: 0})
 	inSeek, ok := in.(io.ReadSeeker)
 	if !ok {
@@ -669,7 +596,6 @@ func (o *Object) Size() int64 {
 		fs.Debugf(o, "Bad size for decompression: %v", err)
 	}
 	return decompressedSize
-
 }
 
 // Hash returns the selected checksum of the file
@@ -751,7 +677,6 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	return combineReaderAndCloser(fileReader, readCloser), nil
 }
 
-// Using magic update function from crypt
 // Update in to the object with the modTime given of the given size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	update := func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -761,14 +686,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	return err
 }
 
-// newDir returns a dir with the Name decrypted
+// newDir returns a dir
 func (f *Fs) newDir(dir fs.Directory) fs.Directory {
 	return dir // We're using the same dir
 }
 
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source
-//
-// This encrypts the remote name and adjusts the size
 type ObjectInfo struct {
 	fs.ObjectInfo
 	f *Fs
@@ -793,12 +716,12 @@ func (o *ObjectInfo) Remote() string {
 
 // Size returns the size of the file
 func (o *ObjectInfo) Size() int64 {
-	remote := o.Remote()
-	_, _, size, err := processFileName(remote)
+	obj, err := o.f.NewObject(o.Remote())
 	if err != nil {
-		fs.Debugf(o, "Error processing file name: %v", err)
+		fs.Debugf(o, "Cannot find file: %v", err)
+		return -1
 	}
-	return size
+	return obj.Size()
 }
 
 // Hash returns the selected checksum of the file
