@@ -98,7 +98,7 @@ commanddocs: rclone
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/commands/
 
 backenddocs: rclone bin/make_backend_docs.py
-	./bin/make_backend_docs.py
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" ./bin/make_backend_docs.py
 
 rcdocs: rclone
 	bin/make_rc_docs.sh
