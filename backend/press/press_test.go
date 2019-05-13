@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ncw/rclone/backend/crypt"
-	_ "github.com/ncw/rclone/backend/drive" // for integration tests
+//	"github.com/ncw/rclone/backend/press"
+//	_ "github.com/ncw/rclone/backend/drive" // for integration tests
 	_ "github.com/ncw/rclone/backend/local"
-	_ "github.com/ncw/rclone/backend/swift" // for integration tests
-	"github.com/ncw/rclone/fs/config/obscure"
+//	_ "github.com/ncw/rclone/backend/swift" // for integration tests
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/fstest/fstests"
 )
@@ -22,64 +21,60 @@ func TestIntegration(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: *fstest.RemoteName,
-		NilObject:  (*crypt.Object)(nil),
+		NilObject:  (*Object)(nil),
 	})
 }
 
-// TestStandard runs integration tests against the remote
-func TestStandard(t *testing.T) {
+// TestRemoteLz4 tests LZ4 compression
+func TestRemoteLz4(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-standard")
-	name := "TestCrypt"
+	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-lz4")
+	name := "TestPressLz4"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
-		NilObject:  (*crypt.Object)(nil),
+		NilObject:  (*Object)(nil),
 		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
-			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
-			{Name: name, Key: "filename_encryption", Value: "standard"},
+			{Name: name, Key: "compression_mode", Value: "lz4"},
 		},
 	})
 }
 
-// TestOff runs integration tests against the remote
-func TestOff(t *testing.T) {
+// TestRemoteGzip tests GZIP compression
+func TestRemoteGzip(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-off")
-	name := "TestCrypt2"
+	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-gzip")
+	name := "TestPressGzip"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
-		NilObject:  (*crypt.Object)(nil),
+		NilObject:  (*Object)(nil),
 		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
-			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
-			{Name: name, Key: "filename_encryption", Value: "off"},
+			{Name: name, Key: "compression_mode", Value: "gzip-min"},
 		},
 	})
 }
 
-// TestObfuscate runs integration tests against the remote
-func TestObfuscate(t *testing.T) {
+// TestRemoteXZ tests XZ compression
+func TestRemoteXZ(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-obfuscate")
-	name := "TestCrypt3"
+	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-xz")
+	name := "TestPressXZ"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
-		NilObject:  (*crypt.Object)(nil),
+		NilObject:  (*Object)(nil),
 		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
-			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
-			{Name: name, Key: "filename_encryption", Value: "obfuscate"},
+			{Name: name, Key: "compression_mode", Value: "xz-min"},
 		},
-		SkipBadWindowsCharacters: true,
 	})
 }

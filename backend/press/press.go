@@ -7,6 +7,7 @@ import (
 	"strings"
 	"bytes"
 	"bufio"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
@@ -18,9 +19,6 @@ import (
 )
 
 /**
-TODO:
-Nothing atm.
-
 NOTES:
 Filenames are now <original file name>.<extension>
 Size() function is really inefficient because it requires opening and seeking through the file
@@ -48,7 +46,7 @@ func init() {
 					Help:  "Fast, real-time compression with reasonable compression ratios.",
 				}, {
 					Value: "snappy",
-					Help:  "Google's compression algorithm. Slightly slower and larger than LZ4.",
+					Help:  "Google's compression algorithm. Slightly faster and larger than LZ4.",
 				}, {
 					Value: "gzip-min",
 					Help:  "Standard gzip compression with fastest parameters.",
@@ -147,6 +145,8 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		WriteMimeType:           false,
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
+		SetTier:                 true,
+		GetTier:                 true,
 	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
 
 	return f, err
@@ -184,6 +184,7 @@ type Options struct {
 // Fs represents a wrapped fs.Fs
 type Fs struct {
 	fs.Fs
+	wrapper  fs.Fs
 	name     string
 	root     string
 	opt      Options
@@ -306,9 +307,11 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	// Compress the file
 	var wrappedIn io.Reader
 	pipeReader, pipeWriter := io.Pipe()
+	compressionError := make(chan error)
 	go func() {
-		f.c.CompressFile(in, 0, pipeWriter)
+		err := f.c.CompressFile(in, 0, pipeWriter)
 		pipeWriter.Close()
+		compressionError <- err
 	}()
 	wrappedIn = wrap(bufio.NewReaderSize(pipeReader, bufferSize)) // Bufio required for multithreading
 
@@ -333,6 +336,14 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	// Transfer the data
 	o, err := put(wrappedIn, f.newObjectInfo(src), options...)
 	if err != nil {
+		o.Remove()
+		return nil, err
+	}
+
+	// Check whether we got an error during compression
+	err = <-compressionError
+	if err != nil {
+		o.Remove()
 		return nil, err
 	}
 
@@ -542,6 +553,80 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// WrapFs returns the Fs that is wrapping this Fs
+func (f *Fs) WrapFs() fs.Fs {
+	return f.wrapper
+}
+
+// SetWrapper sets the Fs that is wrapping this Fs
+func (f *Fs) SetWrapper(wrapper fs.Fs) {
+	f.wrapper = wrapper
+}
+
+// MergeDirs merges the contents of all the directories passed
+// in into the first one and rmdirs the other directories.
+func (f *Fs) MergeDirs(dirs []fs.Directory) error {
+	do := f.Fs.Features().MergeDirs
+	if do == nil {
+		return errors.New("MergeDirs not supported")
+	}
+	out := make([]fs.Directory, len(dirs))
+	for i, dir := range dirs {
+		out[i] = fs.NewDirCopy(dir).SetRemote(dir.Remote())
+	}
+	return do(out)
+}
+
+// DirCacheFlush resets the directory cache - used in testing
+// as an optional interface
+func (f *Fs) DirCacheFlush() {
+	do := f.Fs.Features().DirCacheFlush
+	if do != nil {
+		do()
+	}
+}
+
+// ChangeNotify calls the passed function with a path
+// that has had changes. If the implementation
+// uses polling, it should adhere to the given interval.
+func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+	do := f.Fs.Features().ChangeNotify
+	if do == nil {
+		return
+	}
+	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
+		fs.Logf(f, "path %q entryType %d", path, entryType)
+		var (
+			wrappedPath string
+		)
+		switch entryType {
+		case fs.EntryDirectory:
+			wrappedPath = path
+		case fs.EntryObject:
+			wrappedPath = f.c.generateFileNameFromName(path)
+		default:
+			fs.Errorf(path, "crypt ChangeNotify: ignoring unknown EntryType %d", entryType)
+			return
+		}
+		notifyFunc(wrappedPath, entryType)
+	}
+	do(wrappedNotifyFunc, pollIntervalChan)
+}
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(remote string) (string, error) {
+	do := f.Fs.Features().PublicLink
+	if do == nil {
+		return "", errors.New("PublicLink not supported")
+	}
+	o, err := f.NewObject(remote)
+	if err != nil {
+		// assume it is a directory
+		return do(remote)
+	}
+	return do(o.(*Object).Object.Remote())
+}
+
 // Object describes a wrapped for being read from the Fs
 //
 // This decompresses the remote name and decompresses the data
@@ -584,14 +669,12 @@ func (o *Object) Remote() string {
 
 // Size returns the size of the file
 func (o *Object) Size() int64 {
-	in, err := o.Object.Open(&fs.SeekOption{Offset: 0})
-	inSeek, ok := in.(io.ReadSeeker)
-	if !ok {
-		fs.Debugf(o, "Unable to get ReadSeeker to determine size")
-		panic("Cannot get ReadSeeker to determine size")
+	in, err := newObjectSeeker(o.Object, []fs.OpenOption{})
+	if err != nil {
+		fs.Debugf(o, "Unable to get ObjectSeeker to determine size: %v", err)
 		return -1
 	}
-	_, decompressedSize, err := o.f.c.DecompressFile(inSeek, o.Object.Size()) // Does not decompress the file until it is read from
+	_, decompressedSize, err := o.f.c.DecompressFile(in, o.Object.Size()) // Does not decompress the file until it is read from
 	if err != nil {
 		fs.Debugf(o, "Bad size for decompression: %v", err)
 	}
@@ -607,14 +690,6 @@ func (o *Object) Hash(ht hash.Type) (string, error) {
 // UnWrap returns the wrapped Object
 func (o *Object) UnWrap() fs.Object {
 	return o.Object
-}
-
-// ReadSeekCloser interface
-type ReadSeekCloser interface {
-	io.Reader
-	io.Seeker
-	io.Closer
-	fs.RangeSeeker
 }
 
 // Combines a Reader and a Closer to a ReadCloser
@@ -650,18 +725,13 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 				openOptions = append(openOptions, option)
 		}
 	}
-	// Get the readCloser handle which starts at the start of the file. Note that this will actually return a readSeekCloser if we're running over crypt.
-	readCloser, err := o.Object.Open(openOptions...)
+	// Get a ObjectSeeker for the wrapped object with our options
+	objectSeeker, err := newObjectSeeker(o.Object, options)
 	if err != nil {
 		return nil, err
 	}
-	// Use reflection to get a readSeekCloser if possible
-	readSeekCloser, ok := readCloser.(ReadSeekCloser)
-	if !ok {
-		return nil, errors.New("Wrapped remote does not support seeking")
-	}
 	// Get file handle
-	FileHandle, _, err := o.f.c.DecompressFile(readSeekCloser, o.Object.Size())
+	FileHandle, _, err := o.f.c.DecompressFile(objectSeeker, o.Object.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -674,7 +744,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 		fileReader = FileHandle
 	}
 	// Return a ReadCloser
-	return combineReaderAndCloser(fileReader, readCloser), nil
+	return combineReaderAndCloser(fileReader, objectSeeker), nil
 }
 
 // Update in to the object with the modTime given of the given size
@@ -730,6 +800,34 @@ func (o *ObjectInfo) Hash(hash hash.Type) (string, error) {
 	return "", nil
 }
 
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	do, ok := o.Object.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// SetTier performs changing storage tier of the Object if
+// multiple storage classes supported
+func (o *Object) SetTier(tier string) error {
+	do, ok := o.Object.(fs.SetTierer)
+	if !ok {
+		return errors.New("crypt: underlying remote does not support SetTier")
+	}
+	return do.SetTier(tier)
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *Object) GetTier() string {
+	do, ok := o.Object.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -743,7 +841,15 @@ var (
 	_ fs.UnWrapper       = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
+	_ fs.Wrapper         = (*Fs)(nil)
+	_ fs.MergeDirser     = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.ChangeNotifier  = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)
+	_ fs.IDer            = (*Object)(nil)
+	_ fs.SetTierer       = (*Object)(nil)
+	_ fs.GetTierer       = (*Object)(nil)
 )

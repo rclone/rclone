@@ -6,31 +6,29 @@ import (
 	"os"
 	"bufio"
 	"bytes"
+	"strings"
 	"testing"
 //	"time"
 	"crypto/md5"
 )
 
-const testFileName = "test.vdi"
-const outFileName = "/tmp/compression_compressed.gzip"
-const outFileName2 = "/dev/null"
+const TestString = "The quick brown fox jumps over the lazy dog."
 
-const Preset = "lz4"
-
-func TestCompressDecompress(t *testing.T) {
+// Tests compression and decompression for a preset
+func testCompressDecompress(t *testing.T, preset string, testString string) {
 	// Create compression instance
-	comp, err := NewCompressionPreset(Preset)
+	comp, err := NewCompressionPreset(preset)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Open files and hashers
-	testFile, err := os.Open(testFileName)
+	testFile := strings.NewReader(testString)
 	testFileHasher := md5.New()
 	if err != nil {
 		t.Fatal(err)
 	}
-	compressedFile, err := ioutil.TempFile(os.TempDir(), testFileName)
+	compressedFile, err := ioutil.TempFile(os.TempDir(), "rclone_compression_test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,8 +68,8 @@ func TestCompressDecompress(t *testing.T) {
 	decompressedFileHash := outHasher.Sum(nil)
 
 	// Clean up
-	testFile.Close()
 	compressedFile.Close()
+	os.Remove(compressedFile.Name())
 
 	// Compare hashes
 	t.Logf("Hash of original file: %x\n", testFileHash)
@@ -80,59 +78,23 @@ func TestCompressDecompress(t *testing.T) {
 		t.Fatal("Hashes do not match!")
 	}
 }
-/*
-func TestSeek(t *testing.T) {
-	comp, err := NewCompressionPreset(Preset)
-	if err != nil {
-		t.Fatal(err)
-	}
-	inFileInfo, err := os.Stat(testFileName+comp.GetFileExtension())
-	if err != nil {
-		t.Fatal(err)
-	}
-	inFile, err := os.Open(testFileName+comp.GetFileExtension())
-	if err != nil {
-		t.Fatal(err)
-	}
-	outFil, err := os.Create(outFileName2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	FileHandle, decompressedSize, err := comp.DecompressFile(inFile, inFileInfo.Size())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("Decompressed size: %d\n", decompressedSize)
-	for {
-		FileHandle.Seek(12345678, io.SeekCurrent) // 93323248
-		_, err := io.CopyN(outFil, FileHandle, 16)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	inFile.Close()
-	outFil.Close()
+
+// Tests LZ4
+func TestLZ4(t *testing.T) {
+	testCompressDecompress(t, "lz4", TestString)
 }
 
-func TestFileCompressionInfo(t *testing.T) {
-	comp, err := NewCompressionPreset(Preset)
-	if err != nil {
-		t.Fatal(err)
-	}
-	inFile, err := os.Open(testFileName)
-	if err != nil {
-		t.Fatal(err)
-	}
-	inFile2, err := os.Open(testFileName+comp.GetFileExtension())
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, extension, err := comp.GetFileCompressionInfo(inFile)
-	t.Logf("Extension for uncompressed: %s\n", extension)
-	_, extension, err = comp.GetFileCompressionInfo(inFile2)
-	t.Logf("Extension for compressed: %s\n", extension)
-	inFile.Close()
-}*/
+// Tests Snappy
+func TestSnappy(t *testing.T) {
+	testCompressDecompress(t, "snappy", TestString)
+}
+
+// Tests GZIP
+func TestGzip(t *testing.T) {
+	testCompressDecompress(t, "gzip-min", TestString)
+}
+
+// Tests XZ
+func TestXZ(t *testing.T) {
+	testCompressDecompress(t, "xz-min", TestString)
+}
