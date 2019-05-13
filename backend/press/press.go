@@ -21,7 +21,6 @@ import (
 
 /**
 TODO:
-- Implement Object.ComputeHash()
 - Buffering in the compression.go file causes problems. This needs investigation but isn't curcial.
 
 NOTES:
@@ -608,73 +607,6 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
-// TODO: Still needs implementation
-// ComputeHash takes the nonce from o, and encrypts the contents of
-// src with it, and calcuates the hash given by HashType on the fly
-//
-// Note that we break lots of encapsulation in this function.
-func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
-	panic("Fs.ComputeHash NOT IMPLEMENTED")
-	return "", errors.New("ComputeHash not implemented")
-/*
-	// Read the nonce - opening the file is sufficient to read the nonce in
-	// use a limited read so we only read the header
-	in, err := o.Object.Open(&fs.RangeOption{Start: 0, End: int64(fileHeaderSize) - 1})
-	if err != nil {
-		return "", errors.Wrap(err, "failed to open object to read nonce")
-	}
-	d, err := f.cipher.(*cipher).newDecrypter(in)
-	if err != nil {
-		_ = in.Close()
-		return "", errors.Wrap(err, "failed to open object to read nonce")
-	}
-	nonce := d.nonce
-	// fs.Debugf(o, "Read nonce % 2x", nonce)
-
-	// Check nonce isn't all zeros
-	isZero := true
-	for i := range nonce {
-		if nonce[i] != 0 {
-			isZero = false
-		}
-	}
-	if isZero {
-		fs.Errorf(o, "empty nonce read")
-	}
-
-	// Close d (and hence in) once we have read the nonce
-	err = d.Close()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to close nonce read")
-	}
-
-	// Open the src for input
-	in, err = src.Open()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to open src")
-	}
-	defer fs.CheckClose(in, &err)
-
-	// Now encrypt the src with the nonce
-	out, err := f.cipher.(*cipher).newEncrypter(in, &nonce)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to make encrypter")
-	}
-
-	// pipe into hash
-	m, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
-	if err != nil {
-		return "", errors.Wrap(err, "failed to make hasher")
-	}
-	_, err = io.Copy(m, out)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to hash data")
-	}
-
-	return m.Sums()[hashType], nil
-*/
-}
-
 // Object describes a wrapped for being read from the Fs
 //
 // This decrypts the remote name and decrypts the data
@@ -717,14 +649,14 @@ func (o *Object) Remote() string {
 
 // Size returns the size of the file
 func (o *Object) Size() int64 {
-	// Same as getting size from an ObjectInfo
-	remote := o.Remote()
-	_, _, size, err := processFileName(remote)
-	if err != nil {
-		fs.Debugf(o, "Error processing file name: %v", err)
-	}
-	return size
-/* Alternative (slow) way
+	// Same as getting size from an ObjectInfo (note: seems glitched for now. Needs some debug)
+//	remote := o.Object.Remote()
+//	_, _, size, err := processFileName(remote)
+//	if err != nil {
+//		fs.Debugf(o, "Error processing file name: %v", err)
+//	}
+//	return size
+
 	in, err := o.Object.Open(&fs.SeekOption{Offset: 0})
 	inSeek, ok := in.(io.ReadSeeker)
 	if !ok {
@@ -737,7 +669,7 @@ func (o *Object) Size() int64 {
 		fs.Debugf(o, "Bad size for decompression: %v", err)
 	}
 	return decompressedSize
-*/
+
 }
 
 // Hash returns the selected checksum of the file
@@ -798,7 +730,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 		return nil, err
 	}
 	// Use reflection to get a readSeekCloser if possible
-	readSeekCloser, ok := readCloser.(io.ReadSeekCloser)
+	readSeekCloser, ok := readCloser.(ReadSeekCloser)
 	if !ok {
 		return nil, errors.New("Wrapped remote does not support seeking")
 	}
