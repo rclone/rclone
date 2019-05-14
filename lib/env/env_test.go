@@ -2,6 +2,7 @@ package env
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -20,10 +21,10 @@ func TestShellExpand(t *testing.T) {
 		in, want string
 	}{
 		{"", ""},
-		{"~", home},
-		{"~/dir/file.txt", home + "/dir/file.txt"},
-		{"/dir/~/file.txt", "/dir/~/file.txt"},
-		{"~/${EXPAND_TEST}", home + "/potato"},
+		{"~", filepath.FromSlash(home)},
+		{filepath.FromSlash("~/dir/file.txt"), filepath.FromSlash(home + "/dir/file.txt")},
+		{filepath.FromSlash("/dir/~/file.txt"), filepath.FromSlash("/dir/~/file.txt")},
+		{filepath.FromSlash("~/${EXPAND_TEST}"), filepath.FromSlash(home + "/potato")},
 	} {
 		got := ShellExpand(test.in)
 		assert.Equal(t, test.want, got, test.in)
