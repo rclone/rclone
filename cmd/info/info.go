@@ -6,15 +6,21 @@ package info
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/info/internal"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
@@ -22,28 +28,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type position int
-
-const (
-	positionMiddle position = 1 << iota
-	positionLeft
-	positionRight
-	positionNone position = 0
-	positionAll  position = positionRight<<1 - 1
-)
-
 var (
+	writeJSON          string
 	checkNormalization bool
 	checkControl       bool
 	checkLength        bool
 	checkStreaming     bool
-	positionList       = []position{positionMiddle, positionLeft, positionRight}
+	uploadWait         time.Duration
+	positionLeftRe     = regexp.MustCompile(`(?s)^(.*)-position-left-([[:xdigit:]]+)$`)
+	positionMiddleRe   = regexp.MustCompile(`(?s)^position-middle-([[:xdigit:]]+)-(.*)-$`)
+	positionRightRe    = regexp.MustCompile(`(?s)^position-right-([[:xdigit:]]+)-(.*)$`)
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
+	commandDefintion.Flags().StringVarP(&writeJSON, "write-json", "", "", "Write results to file.")
 	commandDefintion.Flags().BoolVarP(&checkNormalization, "check-normalization", "", true, "Check UTF-8 Normalization.")
 	commandDefintion.Flags().BoolVarP(&checkControl, "check-control", "", true, "Check control characters.")
+	commandDefintion.Flags().DurationVarP(&uploadWait, "upload-wait", "", 0, "Wait after writing a file.")
 	commandDefintion.Flags().BoolVarP(&checkLength, "check-length", "", true, "Check max filename length.")
 	commandDefintion.Flags().BoolVarP(&checkStreaming, "check-streaming", "", true, "Check uploads with indeterminate file size.")
 }
@@ -72,7 +74,8 @@ type results struct {
 	ctx                  context.Context
 	f                    fs.Fs
 	mu                   sync.Mutex
-	stringNeedsEscaping  map[string]position
+	stringNeedsEscaping  map[string]internal.Position
+	controlResults       map[string]internal.ControlResult
 	maxFileLength        int
 	canWriteUnnormalized bool
 	canReadUnnormalized  bool
@@ -84,7 +87,8 @@ func newResults(ctx context.Context, f fs.Fs) *results {
 	return &results{
 		ctx:                 ctx,
 		f:                   f,
-		stringNeedsEscaping: make(map[string]position),
+		stringNeedsEscaping: make(map[string]internal.Position),
+		controlResults:      make(map[string]internal.ControlResult),
 	}
 }
 
@@ -94,12 +98,14 @@ func (r *results) Print() {
 	if checkControl {
 		escape := []string{}
 		for c, needsEscape := range r.stringNeedsEscaping {
-			if needsEscape != positionNone {
-				escape = append(escape, fmt.Sprintf("0x%02X", c))
+			if needsEscape != internal.PositionNone {
+				k := strconv.Quote(c)
+				k = k[1 : len(k)-1]
+				escape = append(escape, fmt.Sprintf("'%s'", k))
 			}
 		}
 		sort.Strings(escape)
-		fmt.Printf("stringNeedsEscaping = []byte{\n")
+		fmt.Printf("stringNeedsEscaping = []rune{\n")
 		fmt.Printf("\t%s\n", strings.Join(escape, ", "))
 		fmt.Printf("}\n")
 	}
@@ -116,11 +122,53 @@ func (r *results) Print() {
 	}
 }
 
+// WriteJSON writes the results to a JSON file when requested
+func (r *results) WriteJSON() {
+	if writeJSON == "" {
+		return
+	}
+
+	report := internal.InfoReport{
+		Remote: r.f.Name(),
+	}
+	if checkControl {
+		report.ControlCharacters = &r.controlResults
+	}
+	if checkLength {
+		report.MaxFileLength = &r.maxFileLength
+	}
+	if checkNormalization {
+		report.CanWriteUnnormalized = &r.canWriteUnnormalized
+		report.CanReadUnnormalized = &r.canReadUnnormalized
+		report.CanReadRenormalized = &r.canReadRenormalized
+	}
+	if checkStreaming {
+		report.CanStream = &r.canStream
+	}
+
+	if f, err := os.Create(writeJSON); err != nil {
+		fs.Errorf(r.f, "Creating JSON file failed: %s", err)
+	} else {
+		defer fs.CheckClose(f, &err)
+		enc := json.NewEncoder(f)
+		enc.SetIndent("", "  ")
+		err := enc.Encode(report)
+		if err != nil {
+			fs.Errorf(r.f, "Writing JSON file failed: %s", err)
+		}
+	}
+	fs.Infof(r.f, "Wrote JSON file: %s", writeJSON)
+}
+
 // writeFile writes a file with some random contents
 func (r *results) writeFile(path string) (fs.Object, error) {
 	contents := random.String(50)
 	src := object.NewStaticObjectInfo(path, time.Now(), int64(len(contents)), true, nil, r.f)
-	return r.f.Put(r.ctx, bytes.NewBufferString(contents), src)
+	obj, err := r.f.Put(r.ctx, bytes.NewBufferString(contents), src)
+	if uploadWait > 0 {
+		time.Sleep(uploadWait)
+	}
+	return obj, err
 }
 
 // check whether normalization is enforced and check whether it is
@@ -144,45 +192,55 @@ func (r *results) checkUTF8Normalization() {
 	}
 }
 
-func (r *results) checkStringPositions(s string) {
+func (r *results) checkStringPositions(k, s string) {
 	fs.Infof(r.f, "Writing position file 0x%0X", s)
-	positionError := positionNone
+	positionError := internal.PositionNone
+	res := internal.ControlResult{
+		Text:       s,
+		WriteError: make(map[internal.Position]string, 3),
+		GetError:   make(map[internal.Position]string, 3),
+		InList:     make(map[internal.Position]internal.Presence, 3),
+	}
 
-	for _, pos := range positionList {
+	for _, pos := range internal.PositionList {
 		path := ""
 		switch pos {
-		case positionMiddle:
+		case internal.PositionMiddle:
 			path = fmt.Sprintf("position-middle-%0X-%s-", s, s)
-		case positionLeft:
+		case internal.PositionLeft:
 			path = fmt.Sprintf("%s-position-left-%0X", s, s)
-		case positionRight:
+		case internal.PositionRight:
 			path = fmt.Sprintf("position-right-%0X-%s", s, s)
 		default:
 			panic("invalid position: " + pos.String())
 		}
-		_, writeErr := r.writeFile(path)
-		if writeErr != nil {
-			fs.Infof(r.f, "Writing %s position file 0x%0X Error: %s", pos.String(), s, writeErr)
+		_, writeError := r.writeFile(path)
+		if writeError != nil {
+			res.WriteError[pos] = writeError.Error()
+			fs.Infof(r.f, "Writing %s position file 0x%0X Error: %s", pos.String(), s, writeError)
 		} else {
 			fs.Infof(r.f, "Writing %s position file 0x%0X OK", pos.String(), s)
 		}
 		obj, getErr := r.f.NewObject(r.ctx, path)
 		if getErr != nil {
+			res.GetError[pos] = getErr.Error()
 			fs.Infof(r.f, "Getting %s position file 0x%0X Error: %s", pos.String(), s, getErr)
 		} else {
 			if obj.Size() != 50 {
+				res.GetError[pos] = fmt.Sprintf("invalid size %d", obj.Size())
 				fs.Infof(r.f, "Getting %s position file 0x%0X Invalid Size: %d", pos.String(), s, obj.Size())
 			} else {
 				fs.Infof(r.f, "Getting %s position file 0x%0X OK", pos.String(), s)
 			}
 		}
-		if writeErr != nil || getErr != nil {
+		if writeError != nil || getErr != nil {
 			positionError += pos
 		}
 	}
 
 	r.mu.Lock()
-	r.stringNeedsEscaping[s] = positionError
+	r.stringNeedsEscaping[k] = positionError
+	r.controlResults[k] = res
 	r.mu.Unlock()
 }
 
@@ -199,28 +257,95 @@ func (r *results) checkControls() {
 		s := string(i)
 		if i == 0 || i == '/' {
 			// We're not even going to check NULL or /
-			r.stringNeedsEscaping[s] = positionAll
+			r.stringNeedsEscaping[s] = internal.PositionAll
 			continue
 		}
 		wg.Add(1)
 		go func(s string) {
 			defer wg.Done()
 			token := <-tokens
-			r.checkStringPositions(s)
+			k := s
+			r.checkStringPositions(k, s)
 			tokens <- token
 		}(s)
 	}
-	for _, s := range []string{"＼", "\xBF", "\xFE"} {
+	for _, s := range []string{"＼", "\u00A0", "\xBF", "\xFE"} {
 		wg.Add(1)
 		go func(s string) {
 			defer wg.Done()
 			token := <-tokens
-			r.checkStringPositions(s)
+			k := s
+			r.checkStringPositions(k, s)
 			tokens <- token
 		}(s)
 	}
 	wg.Wait()
+	r.checkControlsList()
 	fs.Infof(r.f, "Done trying to create control character file names")
+}
+
+func (r *results) checkControlsList() {
+	l, err := r.f.List(context.TODO(), "")
+	if err != nil {
+		fs.Errorf(r.f, "Listing control character file names failed: %s", err)
+		return
+	}
+
+	namesMap := make(map[string]struct{}, len(l))
+	for _, s := range l {
+		namesMap[path.Base(s.Remote())] = struct{}{}
+	}
+
+	for path := range namesMap {
+		var pos internal.Position
+		var hex, value string
+		if g := positionLeftRe.FindStringSubmatch(path); g != nil {
+			pos, hex, value = internal.PositionLeft, g[2], g[1]
+		} else if g := positionMiddleRe.FindStringSubmatch(path); g != nil {
+			pos, hex, value = internal.PositionMiddle, g[1], g[2]
+		} else if g := positionRightRe.FindStringSubmatch(path); g != nil {
+			pos, hex, value = internal.PositionRight, g[1], g[2]
+		} else {
+			fs.Infof(r.f, "Unknown path %q", path)
+			continue
+		}
+		var hexValue []byte
+		for ; len(hex) >= 2; hex = hex[2:] {
+			if b, err := strconv.ParseUint(hex[:2], 16, 8); err != nil {
+				fs.Infof(r.f, "Invalid path %q: %s", path, err)
+				continue
+			} else {
+				hexValue = append(hexValue, byte(b))
+			}
+		}
+		if hex != "" {
+			fs.Infof(r.f, "Invalid path %q", path)
+			continue
+		}
+
+		hexStr := string(hexValue)
+		k := hexStr
+		switch r.controlResults[k].InList[pos] {
+		case internal.Absent:
+			if hexStr == value {
+				r.controlResults[k].InList[pos] = internal.Present
+			} else {
+				r.controlResults[k].InList[pos] = internal.Renamed
+			}
+		case internal.Present:
+			r.controlResults[k].InList[pos] = internal.Multiple
+		case internal.Renamed:
+			r.controlResults[k].InList[pos] = internal.Multiple
+		}
+		delete(namesMap, path)
+	}
+
+	if len(namesMap) > 0 {
+		fs.Infof(r.f, "Found additional control character file names:")
+		for name := range namesMap {
+			fs.Infof(r.f, "%q", name)
+		}
+	}
 }
 
 // find the max file name size we can use
@@ -314,37 +439,6 @@ func readInfo(ctx context.Context, f fs.Fs) error {
 		r.checkStreaming()
 	}
 	r.Print()
+	r.WriteJSON()
 	return nil
-}
-
-func (e position) String() string {
-	switch e {
-	case positionNone:
-		return "none"
-	case positionAll:
-		return "all"
-	}
-	var buf bytes.Buffer
-	if e&positionMiddle != 0 {
-		buf.WriteString("middle")
-		e &= ^positionMiddle
-	}
-	if e&positionLeft != 0 {
-		if buf.Len() != 0 {
-			buf.WriteRune(',')
-		}
-		buf.WriteString("left")
-		e &= ^positionLeft
-	}
-	if e&positionRight != 0 {
-		if buf.Len() != 0 {
-			buf.WriteRune(',')
-		}
-		buf.WriteString("right")
-		e &= ^positionRight
-	}
-	if e != positionNone {
-		panic("invalid position")
-	}
-	return buf.String()
 }
