@@ -318,6 +318,14 @@ which are not under your control, and to which the execution of remote commands
 is prohibited.  Set the configuration option `disable_hashcheck` to `true` to
 disable checksumming.
 
+SFTP also supports `about` if the same login has shell
+access and `df` are in the remote's PATH. `about` will
+return the total space, free space, and used space on the remote
+for the disk of the specified path on the remote or, if not set,
+the disk of the root on the remote.
+`about` will fail if it does not have shell
+access or if `df` is not in the remote's PATH. 
+
 Note that some SFTP servers (eg Synology) the paths are different for
 SSH and SFTP so the hashes can't be calculated properly.  For them
 using `disable_hashcheck` is a good idea.
