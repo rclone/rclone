@@ -369,6 +369,10 @@ func init() {
 				Value:    "s3.us-west-1.wasabisys.com",
 				Help:     "Wasabi US West endpoint",
 				Provider: "Wasabi",
+			}, {
+				Value:    "s3.eu-central-1.wasabisys.com",
+				Help:     "Wasabi EU Central endpoint",
+				Provider: "Wasabi",
 			}},
 		}, {
 			Name:     "location_constraint",
