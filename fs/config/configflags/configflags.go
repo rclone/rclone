@@ -64,6 +64,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &fs.Config.MaxDepth, "max-depth", "", fs.Config.MaxDepth, "If set limits the recursion depth to this.")
 	flags.BoolVarP(flagSet, &fs.Config.IgnoreSize, "ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
 	flags.BoolVarP(flagSet, &fs.Config.IgnoreChecksum, "ignore-checksum", "", fs.Config.IgnoreChecksum, "Skip post copy check of checksums.")
+	flags.BoolVarP(flagSet, &fs.Config.IgnoreCaseSync, "ignore-case-sync", "", fs.Config.IgnoreCaseSync, "Ignore case when synchronizing")
 	flags.BoolVarP(flagSet, &fs.Config.NoTraverse, "no-traverse", "", fs.Config.NoTraverse, "Don't traverse destination file system on copy.")
 	flags.BoolVarP(flagSet, &fs.Config.NoUpdateModTime, "no-update-modtime", "", fs.Config.NoUpdateModTime, "Don't update destination mod-time if files identical.")
 	flags.StringVarP(flagSet, &fs.Config.BackupDir, "backup-dir", "", fs.Config.BackupDir, "Make backups into hierarchy based in DIR.")

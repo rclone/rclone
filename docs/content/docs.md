@@ -500,6 +500,12 @@ Do a trial run with no permanent changes.  Use this to see what rclone
 would do without actually doing it.  Useful when setting up the `sync`
 command which deletes files in the destination.
 
+### --ignore-case-sync ###
+
+Using this option will cause rclone to ignore the case of the files 
+when synchronizing so files will not be copied/synced when the
+existing filenames are the same, even if the casing is different.
+
 ### --ignore-checksum ###
 
 Normally rclone will check that the checksums of transferred files
