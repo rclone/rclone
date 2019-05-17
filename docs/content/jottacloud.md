@@ -25,26 +25,20 @@ n) New remote
 s) Set configuration password
 q) Quit config
 n/s/q> n
-name> remote
+name> jotta
 Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
 [snip]
-13 / JottaCloud
+14 / JottaCloud
    \ "jottacloud"
 [snip]
 Storage> jottacloud
-User Name
+** See help for jottacloud backend at: https://rclone.org/jottacloud/ **
+
+User Name:
 Enter a string value. Press Enter for the default ("").
-user> user
-The mountpoint to use.
-Enter a string value. Press Enter for the default ("").
-Choose a number from below, or type in your own value
- 1 / Will be synced by the official client.
-   \ "Sync"
- 2 / Archive
-   \ "Archive"
-mountpoint> Archive
+user> user@email.tld
 Edit advanced config? (y/n)
 y) Yes
 n) No
@@ -58,16 +52,35 @@ Rclone has it's own Jottacloud API KEY which works fine as long as one only uses
 y) Yes
 n) No
 y/n> y
-Your Jottacloud password is only required during config and will not be stored.
+Your Jottacloud password is only required during setup and will not be stored.
 password:
+
+Do you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?
+
+y) Yes
+n) No
+y/n> y
+Please select the device to use. Normally this will be Jotta
+Choose a number from below, or type in an existing value
+ 1 > DESKTOP-3H31129
+ 2 > test1
+ 3 > Jotta
+Devices> 3
+Please select the mountpoint to user. Normally this will be Archive
+Choose a number from below, or type in an existing value
+ 1 > Archive
+ 2 > Shared
+ 3 > Sync
+Mountpoints> 1
 --------------------
-[remote]
+[jotta]
 type = jottacloud
-user = olihey
-mountpoint = Archive
+user = 0xC4KE@gmail.com
 client_id = .....
 client_secret = ........
 token = {........}
+device = Jotta
+mountpoint = Archive
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -87,6 +100,11 @@ List all the files in your Jottacloud
 To copy a local directory to an Jottacloud directory called backup
 
     rclone copy /home/source remote:backup
+
+### Devices and Mountpoints ###
+
+The official Jottacloud client registers a device for each computer you install it on and then creates a mountpoint for each folder you select for Backup.
+The web interface uses a special device called Jotta for the Archive, Sync and Shared mountpoints. In most cases you'll want to use the Jotta/Archive device/mounpoint however if you want to access files uploaded by the official rclone provides the option to select other devices and mountpoints during config.
 
 ### --fast-list ###
 
@@ -148,20 +166,6 @@ User Name:
 - Env Var:     RCLONE_JOTTACLOUD_USER
 - Type:        string
 - Default:     ""
-
-#### --jottacloud-mountpoint
-
-The mountpoint to use.
-
-- Config:      mountpoint
-- Env Var:     RCLONE_JOTTACLOUD_MOUNTPOINT
-- Type:        string
-- Default:     ""
-- Examples:
-    - "Sync"
-        - Will be synced by the official client.
-    - "Archive"
-        - Archive
 
 ### Advanced Options
 
