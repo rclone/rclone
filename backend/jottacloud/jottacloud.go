@@ -41,7 +41,7 @@ const (
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 	defaultDevice               = "Jotta"
-	defaultMountpoint           = "Sync" // nolint
+	defaultMountpoint           = "Archive"
 	rootURL                     = "https://www.jottacloud.com/jfs/"
 	apiURL                      = "https://api.jottacloud.com/files/v1/"
 	baseURL                     = "https://www.jottacloud.com/"
@@ -53,6 +53,8 @@ const (
 	configUsername              = "user"
 	configClientID              = "client_id"
 	configClientSecret          = "client_secret"
+	configDevice                = "device"
+	configMountpoint            = "mountpoint"
 	charset                     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
@@ -69,6 +71,7 @@ var (
 
 // Register with Fs
 func init() {
+	// needs to be done early so we can use oauth during config
 	fs.Register(&fs.RegInfo{
 		Name:        "jottacloud",
 		Description: "JottaCloud",
@@ -135,7 +138,7 @@ func init() {
 			if !ok {
 				log.Fatalf("No username defined")
 			}
-			password := config.GetPassword("Your Jottacloud password is only required during config and will not be stored.")
+			password := config.GetPassword("Your Jottacloud password is only required during setup and will not be stored.")
 
 			// prepare out token request with username and password
 			values := url.Values{}
@@ -157,7 +160,7 @@ func init() {
 				// if 2fa is enabled the first request is expected to fail. We will do another request with the 2fa code as an additional http header
 				if resp != nil {
 					if resp.Header.Get("X-JottaCloud-OTP") == "required; SMS" {
-						fmt.Printf("This account has 2 factor authentication enabled you will receive a verification code via SMS.\n")
+						fmt.Printf("This account uses 2 factor authentication you will receive a verification code via SMS.\n")
 						fmt.Printf("Enter verification code> ")
 						authCode := config.ReadLine()
 						authCode = strings.Replace(authCode, "-", "", -1) // the sms received contains a pair of 3 digit numbers seperated by '-' but wants a single 6 digit number
@@ -180,23 +183,49 @@ func init() {
 			// finally save them in the config
 			err = oauthutil.PutToken(name, m, &token, true)
 			if err != nil {
-				log.Fatalf("Error while setting token: %s", err)
+				log.Fatalf("Error while saving token: %s", err)
+			}
+
+			fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
+			if config.Confirm() {
+				oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
+				if err != nil {
+					log.Fatalf("Failed to load oAuthClient: %s", err)
+				}
+
+				srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
+
+				acc, err := getAccountInfo(srv, username)
+				if err != nil {
+					log.Fatalf("Error getting devices: %s", err)
+				}
+				fmt.Printf("Please select the device to use. Normally this will be Jotta\n")
+				var deviceNames []string
+				for i := range acc.Devices {
+					deviceNames = append(deviceNames, acc.Devices[i].Name)
+				}
+				result := config.Choose("Devices", deviceNames, nil, false)
+				m.Set(configDevice, result)
+
+				dev, err := getDeviceInfo(srv, path.Join(username, result))
+				if err != nil {
+					log.Fatalf("Error getting Mountpoint: %s", err)
+				}
+				if len(dev.MountPoints) == 0 {
+					log.Fatalf("No Mountpoints found for this device.")
+				}
+				fmt.Printf("Please select the mountpoint to user. Normally this will be Archive\n")
+				var mountpointNames []string
+				for i := range dev.MountPoints {
+					mountpointNames = append(mountpointNames, dev.MountPoints[i].Name)
+				}
+				result = config.Choose("Mountpoints", mountpointNames, nil, false)
+				m.Set(configMountpoint, result)
 			}
 		},
 		Options: []fs.Option{{
 			Name: configUsername,
 			Help: "User Name:",
-		}, {
-			Name:     "mountpoint",
-			Help:     "The mountpoint to use.",
-			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "Sync",
-				Help:  "Will be synced by the official client.",
-			}, {
-				Value: "Archive",
-				Help:  "Archive",
-			}},
 		}, {
 			Name:     "md5_memory_limit",
 			Help:     "Files bigger than this will be cached on disk to calculate the MD5 if required.",
@@ -224,6 +253,7 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	User               string        `config:"user"`
+	Device             string        `config:"device"`
 	Mountpoint         string        `config:"mountpoint"`
 	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
 	HardDelete         bool          `config:"hard_delete"`
@@ -331,18 +361,31 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
 	return &result, nil
 }
 
-// getAccountInfo retrieves account information
-func (f *Fs) getAccountInfo() (info *api.AccountInfo, err error) {
+// getAccountInfo queries general information about the account.
+// Takes rest.Client and username as parameter to be easily usable
+// during config
+func getAccountInfo(srv *rest.Client, username string) (info *api.AccountInfo, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   urlPathEscape(f.user),
+		Path:   urlPathEscape(username),
 	}
 
-	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &info)
-		return shouldRetry(resp, err)
-	})
+	_, err = srv.CallXML(&opts, nil, &info)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
+// getDeviceInfo queries Information about a jottacloud device
+func getDeviceInfo(srv *rest.Client, path string) (info *api.JottaDevice, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   urlPathEscape(path),
+	}
+
+	_, err = srv.CallXML(&opts, nil, &info)
 	if err != nil {
 		return nil, err
 	}
@@ -351,12 +394,18 @@ func (f *Fs) getAccountInfo() (info *api.AccountInfo, err error) {
 }
 
 // setEndpointUrl reads the account id and generates the API endpoint URL
-func (f *Fs) setEndpointURL(mountpoint string) (err error) {
-	info, err := f.getAccountInfo()
+func (f *Fs) setEndpointURL() (err error) {
+	info, err := getAccountInfo(f.srv, f.user)
 	if err != nil {
 		return errors.Wrap(err, "failed to get endpoint url")
 	}
-	f.endpointURL = urlPathEscape(path.Join(info.Username, defaultDevice, mountpoint))
+	if f.opt.Device == "" {
+		f.opt.Device = defaultDevice
+	}
+	if f.opt.Mountpoint == "" {
+		f.opt.Mountpoint = defaultMountpoint
+	}
+	f.endpointURL = urlPathEscape(path.Join(info.Username, f.opt.Device, f.opt.Mountpoint))
 	return nil
 }
 
@@ -443,9 +492,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	oauthConfig.ClientID = clientID
 	oauthConfig.ClientSecret = obscure.MustReveal(clientSecret)
 
-	// add jottacloud to the long list of sites that don't follow the oauth spec correctly
-	oauth2.RegisterBrokenAuthHeaderProvider("https://www.jottacloud.com/")
-
 	// the oauth client for the api servers needs
 	// a filter to fix the grant_type issues (see above)
 	baseClient := fshttp.NewClient(fs.Config)
@@ -484,7 +530,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return err
 	})
 
-	err = f.setEndpointURL(opt.Mountpoint)
+	err = f.setEndpointURL()
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't get account info")
 	}
@@ -742,6 +788,9 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	if f.opt.Device != "Jotta" {
+		return nil, errors.New("upload not supported for devices other than Jotta")
+	}
 	o := f.createObject(src.Remote(), src.ModTime(), src.Size())
 	return o, o.Update(in, src, options...)
 }
@@ -1005,7 +1054,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 
 // About gets quota information
 func (f *Fs) About() (*fs.Usage, error) {
-	info, err := f.getAccountInfo()
+	info, err := getAccountInfo(f.srv, f.user)
 	if err != nil {
 		return nil, err
 	}
