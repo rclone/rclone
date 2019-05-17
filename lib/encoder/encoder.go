@@ -89,11 +89,17 @@ func (mask MultiEncoder) Encode(in string) string {
 		encodeCtl            = uint(mask)&EncodeCtl != 0
 		encodeLeftSpace      = uint(mask)&EncodeLeftSpace != 0
 		encodeLeftTilde      = uint(mask)&EncodeLeftTilde != 0
+		encodeLeftCrLfHtVt   = uint(mask)&EncodeLeftCrLfHtVt != 0
 		encodeRightSpace     = uint(mask)&EncodeRightSpace != 0
 		encodeRightPeriod    = uint(mask)&EncodeRightPeriod != 0
+		encodeRightCrLfHtVt  = uint(mask)&EncodeRightCrLfHtVt != 0
 		encodeInvalidUnicode = uint(mask)&EncodeInvalidUtf8 != 0
 		encodeDot            = uint(mask)&EncodeDot != 0
 	)
+
+	if in == "" {
+		return ""
+	}
 
 	if encodeDot {
 		switch in {
@@ -110,36 +116,61 @@ func (mask MultiEncoder) Encode(in string) string {
 
 	// handle prefix only replacements
 	prefix := ""
-	if encodeLeftSpace && len(in) > 0 { // Leading SPACE
+	if encodeLeftSpace { // Leading SPACE
 		if in[0] == ' ' {
 			prefix, in = "␠", in[1:] // SYMBOL FOR SPACE
 		} else if r, l := utf8.DecodeRuneInString(in); r == '␠' { // SYMBOL FOR SPACE
 			prefix, in = string(QuoteRune)+"␠", in[l:] // SYMBOL FOR SPACE
 		}
 	}
-	if encodeLeftTilde && len(in) > 0 { // Leading ~
+	if encodeLeftTilde && prefix == "" { // Leading ~
 		if in[0] == '~' {
 			prefix, in = string('~'+fullOffset), in[1:] // FULLWIDTH TILDE
 		} else if r, l := utf8.DecodeRuneInString(in); r == '~'+fullOffset {
 			prefix, in = string(QuoteRune)+string('~'+fullOffset), in[l:] // FULLWIDTH TILDE
 		}
 	}
+	if encodeLeftCrLfHtVt && prefix == "" { // Leading CR LF HT VT
+		switch c := in[0]; c {
+		case '\t', '\n', '\v', '\r':
+			prefix, in = string('␀'+rune(c)), in[1:] // SYMBOL FOR NULL
+		default:
+			switch r, l := utf8.DecodeRuneInString(in); r {
+			case '␀' + '\t', '␀' + '\n', '␀' + '\v', '␀' + '\r':
+				prefix, in = string(QuoteRune)+string(r), in[l:]
+			}
+		}
+	}
 	// handle suffix only replacements
 	suffix := ""
-	if encodeRightSpace && len(in) > 0 { // Trailing SPACE
-		if in[len(in)-1] == ' ' {
-			suffix, in = "␠", in[:len(in)-1] // SYMBOL FOR SPACE
-		} else if r, l := utf8.DecodeLastRuneInString(in); r == '␠' {
-			suffix, in = string(QuoteRune)+"␠", in[:len(in)-l] // SYMBOL FOR SPACE
+	if in != "" {
+		if encodeRightSpace { // Trailing SPACE
+			if in[len(in)-1] == ' ' {
+				suffix, in = "␠", in[:len(in)-1] // SYMBOL FOR SPACE
+			} else if r, l := utf8.DecodeLastRuneInString(in); r == '␠' {
+				suffix, in = string(QuoteRune)+"␠", in[:len(in)-l] // SYMBOL FOR SPACE
+			}
+		}
+		if encodeRightPeriod && suffix == "" { // Trailing .
+			if in[len(in)-1] == '.' {
+				suffix, in = "．", in[:len(in)-1] // FULLWIDTH FULL STOP
+			} else if r, l := utf8.DecodeLastRuneInString(in); r == '．' {
+				suffix, in = string(QuoteRune)+"．", in[:len(in)-l] // FULLWIDTH FULL STOP
+			}
+		}
+		if encodeRightCrLfHtVt && suffix == "" { // Trailing .
+			switch c := in[len(in)-1]; c {
+			case '\t', '\n', '\v', '\r':
+				suffix, in = string('␀'+rune(c)), in[:len(in)-1] // FULLWIDTH FULL STOP
+			default:
+				switch r, l := utf8.DecodeLastRuneInString(in); r {
+				case '␀' + '\t', '␀' + '\n', '␀' + '\v', '␀' + '\r':
+					suffix, in = string(QuoteRune)+string(r), in[:len(in)-l]
+				}
+			}
 		}
 	}
-	if encodeRightPeriod && len(in) > 0 { // Trailing .
-		if in[len(in)-1] == '.' {
-			suffix, in = "．", in[:len(in)-1] // FULLWIDTH FULL STOP
-		} else if r, l := utf8.DecodeLastRuneInString(in); r == '．' {
-			suffix, in = string(QuoteRune)+"．", in[:len(in)-l] // FULLWIDTH FULL STOP
-		}
-	}
+
 	index := 0
 	if prefix == "" && suffix == "" {
 		// find the first rune which (most likely) needs to be replaced
@@ -310,8 +341,10 @@ func (mask MultiEncoder) Decode(in string) string {
 		encodeCtl            = uint(mask)&EncodeCtl != 0
 		encodeLeftSpace      = uint(mask)&EncodeLeftSpace != 0
 		encodeLeftTilde      = uint(mask)&EncodeLeftTilde != 0
+		encodeLeftCrLfHtVt   = uint(mask)&EncodeLeftCrLfHtVt != 0
 		encodeRightSpace     = uint(mask)&EncodeRightSpace != 0
 		encodeRightPeriod    = uint(mask)&EncodeRightPeriod != 0
+		encodeRightCrLfHtVt  = uint(mask)&EncodeRightCrLfHtVt != 0
 		encodeInvalidUnicode = uint(mask)&EncodeInvalidUtf8 != 0
 		encodeDot            = uint(mask)&EncodeDot != 0
 	)
@@ -335,11 +368,15 @@ func (mask MultiEncoder) Decode(in string) string {
 		prefix, in = " ", in[l1:]
 	} else if encodeLeftTilde && r == '～' { // FULLWIDTH TILDE
 		prefix, in = "~", in[l1:]
+	} else if encodeLeftCrLfHtVt && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
+		prefix, in = string(r-'␀'), in[l1:]
 	} else if r == QuoteRune {
 		if r, l2 := utf8.DecodeRuneInString(in[l1:]); encodeLeftSpace && r == '␠' { // SYMBOL FOR SPACE
 			prefix, in = "␠", in[l1+l2:]
 		} else if encodeLeftTilde && r == '～' { // FULLWIDTH TILDE
 			prefix, in = "～", in[l1+l2:]
+		} else if encodeLeftCrLfHtVt && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
+			prefix, in = string(r), in[l1+l2:]
 		}
 	}
 
@@ -347,17 +384,24 @@ func (mask MultiEncoder) Decode(in string) string {
 	suffix := ""
 	if r, l := utf8.DecodeLastRuneInString(in); encodeRightSpace && r == '␠' { // SYMBOL FOR SPACE
 		in = in[:len(in)-l]
-		if r, l2 := utf8.DecodeLastRuneInString(in); r == QuoteRune {
+		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
 			suffix, in = "␠", in[:len(in)-l2]
 		} else {
 			suffix = " "
 		}
 	} else if encodeRightPeriod && r == '．' { // FULLWIDTH FULL STOP
 		in = in[:len(in)-l]
-		if r, l2 := utf8.DecodeLastRuneInString(in); r == QuoteRune {
+		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
 			suffix, in = "．", in[:len(in)-l2]
 		} else {
 			suffix = "."
+		}
+	} else if encodeRightCrLfHtVt && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
+		in = in[:len(in)-l]
+		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
+			suffix, in = string(r), in[:len(in)-l2]
+		} else {
+			suffix = string(r - '␀')
 		}
 	}
 	index := 0
