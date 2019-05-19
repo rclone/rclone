@@ -135,6 +135,16 @@ the API so these won't be accurate or used for syncing.
 It does store MD5SUMs so for a more accurate sync, you can use the
 `--checksum` flag.
 
+#### Restricted filename characters
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| /         | 0x2F  | ／          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
+
 ### Deleting files ###
 
 Any files you delete with rclone will end up in the trash.  Amazon

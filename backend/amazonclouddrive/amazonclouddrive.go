@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -38,6 +39,7 @@ import (
 )
 
 const (
+	enc                      = encodings.AmazonCloudDrive
 	folderKind               = "FOLDER"
 	fileKind                 = "FILE"
 	statusAvailable          = "AVAILABLE"
@@ -384,7 +386,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	var resp *http.Response
 	var subFolder *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
-		subFolder, resp, err = folder.GetFolder(leaf)
+		subFolder, resp, err = folder.GetFolder(enc.FromStandardName(leaf))
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -411,7 +413,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	var resp *http.Response
 	var info *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
-		info, resp, err = folder.CreateFolder(leaf)
+		info, resp, err = folder.CreateFolder(enc.FromStandardName(leaf))
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -479,6 +481,7 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 				if !hasValidParent {
 					continue
 				}
+				*node.Name = enc.ToStandardName(*node.Name)
 				// Store the nodes up in case we have to retry the listing
 				out = append(out, node)
 			}
@@ -668,7 +671,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		start := time.Now()
 		f.tokenRenewer.Start()
-		info, resp, err = folder.Put(in, leaf)
+		info, resp, err = folder.Put(in, enc.FromStandardName(leaf))
 		f.tokenRenewer.Stop()
 		var ok bool
 		ok, info, err = f.checkUpload(ctx, resp, in, src, info, err, time.Since(start))
@@ -1038,7 +1041,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	var resp *http.Response
 	var info *acd.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		info, resp, err = folder.GetFile(leaf)
+		info, resp, err = folder.GetFile(enc.FromStandardName(leaf))
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1158,7 +1161,7 @@ func (f *Fs) restoreNode(info *acd.Node) (newInfo *acd.Node, err error) {
 func (f *Fs) renameNode(info *acd.Node, newName string) (newInfo *acd.Node, err error) {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		newInfo, resp, err = info.Rename(newName)
+		newInfo, resp, err = info.Rename(enc.FromStandardName(newName))
 		return f.shouldRetry(resp, err)
 	})
 	return newInfo, err
@@ -1354,10 +1357,11 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), checkpoin
 					if len(node.Parents) > 0 {
 						if path, ok := f.dirCache.GetInv(node.Parents[0]); ok {
 							// and append the drive file name to compute the full file name
+							name := enc.ToStandardName(*node.Name)
 							if len(path) > 0 {
-								path = path + "/" + *node.Name
+								path = path + "/" + name
 							} else {
-								path = *node.Name
+								path = name
 							}
 							// this will now clear the actual file too
 							pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
