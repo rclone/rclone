@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -67,6 +68,8 @@ var (
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 )
+
+const enc = encodings.GoogleCloudStorage
 
 // Register with Fs
 func init() {
@@ -349,7 +352,8 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return enc.FromStandardName(bucketName), enc.FromStandardPath(bucketPath)
 }
 
 // split returns bucket and bucketPath from the object
@@ -438,8 +442,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the object exists
+		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
 		err = f.pacer.Call(func() (bool, error) {
-			_, err = f.svc.Objects.Get(f.rootBucket, f.rootDirectory).Context(ctx).Do()
+			_, err = f.svc.Objects.Get(f.rootBucket, encodedDirectory).Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err == nil {
@@ -522,6 +527,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				if !strings.HasSuffix(remote, "/") {
 					continue
 				}
+				remote = enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -537,11 +543,12 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			}
 		}
 		for _, object := range objects.Items {
-			if !strings.HasPrefix(object.Name, prefix) {
+			remote := enc.ToStandardPath(object.Name)
+			if !strings.HasPrefix(remote, prefix) {
 				fs.Logf(f, "Odd name received %q", object.Name)
 				continue
 			}
-			remote := object.Name[len(prefix):]
+			remote = remote[len(prefix):]
 			isDirectory := strings.HasSuffix(remote, "/")
 			if addBucket {
 				remote = path.Join(bucket, remote)
@@ -613,7 +620,7 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 			return nil, err
 		}
 		for _, bucket := range buckets.Items {
-			d := fs.NewDir(bucket.Name, time.Time{})
+			d := fs.NewDir(enc.ToStandardName(bucket.Name), time.Time{})
 			entries = append(entries, d)
 		}
 		if buckets.NextPageToken == "" {

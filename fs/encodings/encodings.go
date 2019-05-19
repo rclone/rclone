@@ -112,7 +112,7 @@ const Dropbox = encoder.MultiEncoder(
 // GoogleCloudStorage is the encoding used by the googlecloudstorage backend
 const GoogleCloudStorage = encoder.MultiEncoder(
 	uint(Base) |
-		//encoder.EncodeCrLF |
+		encoder.EncodeCrLf |
 		encoder.EncodeInvalidUtf8)
 
 // JottaCloud is the encoding used by the jottacloud backend
