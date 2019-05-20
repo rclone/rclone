@@ -17,6 +17,11 @@ func (ds DirEntries) Swap(i, j int) {
 
 // Less is part of sort.Interface.
 func (ds DirEntries) Less(i, j int) bool {
+	if ds[i].Remote() == ds[j].Remote() {
+		_, idir := ds[i].(*Dir)
+		_, jdir := ds[j].(*Dir)
+		return !idir && jdir
+	}
 	return ds[i].Remote() < ds[j].Remote()
 }
 

@@ -282,23 +282,25 @@ func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []ma
 			break
 		}
 		if src != nil && iSrc > 0 {
-			prev := srcList[iSrc-1].name
-			if srcName == prev {
+			prev := srcList[iSrc-1].entry
+			prevName := srcList[iSrc-1].name
+			if srcName == prevName && fs.DirEntryType(prev) == fs.DirEntryType(src) {
 				fs.Logf(src, "Duplicate %s found in source - ignoring", fs.DirEntryType(src))
 				iDst-- // ignore the src and retry the dst
 				continue
-			} else if srcName < prev {
+			} else if srcName < prevName {
 				// this should never happen since we sort the listings
 				panic("Out of order listing in source")
 			}
 		}
 		if dst != nil && iDst > 0 {
-			prev := dstList[iDst-1].name
-			if dstName == prev {
+			prev := dstList[iDst-1].entry
+			prevName := dstList[iDst-1].name
+			if dstName == prevName && fs.DirEntryType(dst) == fs.DirEntryType(prev) {
 				fs.Logf(dst, "Duplicate %s found in destination - ignoring", fs.DirEntryType(dst))
 				iSrc-- // ignore the dst and retry the src
 				continue
-			} else if dstName < prev {
+			} else if dstName < prevName {
 				// this should never happen since we sort the listings
 				panic("Out of order listing in destination")
 			}
@@ -310,6 +312,9 @@ func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []ma
 			} else if srcName > dstName {
 				src = nil
 				iSrc-- // retry the src
+			} else if fs.DirEntryType(src) != fs.DirEntryType(dst) {
+				dst = nil
+				iDst--
 			}
 		}
 		// Debugf(nil, "src = %v, dst = %v", src, dst)
