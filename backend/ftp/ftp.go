@@ -49,12 +49,17 @@ func init() {
 				Required:   true,
 			}, {
 				Name:    "tls",
-				Help:    "Use FTP over TLS, leave blank for (false)",
+				Help:    "Use FTP over TLS (Implicit)",
 				Default: false,
 			}, {
 				Name:     "concurrency",
 				Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited",
 				Default:  0,
+				Advanced: true,
+			}, {
+				Name:     "no_check_certificate",
+				Help:     "Do not verify the TLS certificate of the server",
+				Default:  false,
 				Advanced: true,
 			},
 		},
@@ -63,12 +68,13 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host        string `config:"host"`
-	User        string `config:"user"`
-	Pass        string `config:"pass"`
-	Port        string `config:"port"`
-	TLS         bool   `config:"tls"`
-	Concurrency int    `config:"concurrency"`
+	Host              string `config:"host"`
+	User              string `config:"user"`
+	Pass              string `config:"pass"`
+	Port              string `config:"port"`
+	TLS               bool   `config:"tls"`
+	Concurrency       int    `config:"concurrency"`
+	SkipVerifyTLSCert bool   `config:"no_check_certificate"`
 }
 
 // Fs represents a remote FTP server
@@ -129,7 +135,8 @@ func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	ftpConfig := []ftp.DialOption{ftp.DialWithTimeout(fs.Config.ConnectTimeout)}
 	if f.opt.TLS {
 		tlsConfig := &tls.Config{
-			ServerName: f.opt.Host,
+			ServerName:         f.opt.Host,
+			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
 		}
 		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
 	}
