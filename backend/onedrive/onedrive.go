@@ -385,9 +385,19 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Respon
 	var dirCacheFoundRoot bool
 	var rootNormalizedID string
 	if f.dirCache != nil {
-		var ok bool
-		if rootNormalizedID, ok = f.dirCache.Get(""); ok {
-			dirCacheFoundRoot = true
+		var dirCacheRootIDExists bool
+		rootNormalizedID, dirCacheRootIDExists = f.dirCache.Get("")
+		if f.root == "" {
+			// if f.root == "", it means f.root is the absolute root of the drive
+			// and its ID should have been found in NewFs
+			dirCacheFoundRoot = dirCacheRootIDExists
+		} else if _, err := f.dirCache.RootParentID(); err == nil {
+			// if root is in a folder, it must have a parent folder, and
+			// if dirCache has found root in NewFs, the parent folder's ID
+			// should be present.
+			// This RootParentID() check is a fix for #3164 which describes
+			// a possible case where the root is not found.
+			dirCacheFoundRoot = dirCacheRootIDExists
 		}
 	}
 
