@@ -1066,6 +1066,58 @@ func (f *Fs) CleanUp() error {
 	return f.purge(true)
 }
 
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+	err := f.Mkdir("")
+	if err != nil {
+		return nil, err
+	}
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+	srcFs := srcObj.fs
+	if srcFs.bucket != f.bucket {
+		fs.Debugf(src, "Can't copy - not same bucket")
+		return nil, fs.ErrorCantCopy
+	}
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_copy_file",
+	}
+	var request = api.CopyFileRequest{
+		SourceID:          srcObj.id,
+		Name:              f.root + remote,
+		MetadataDirective: "COPY",
+	}
+	var response api.FileInfo
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(&opts, &request, &response)
+		return f.shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	o := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	err = o.decodeMetaDataFileInfo(&response)
+	if err != nil {
+		return nil, err
+	}
+	return o, nil
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.SHA1)
@@ -1567,6 +1619,7 @@ func (o *Object) ID() string {
 var (
 	_ fs.Fs          = &Fs{}
 	_ fs.Purger      = &Fs{}
+	_ fs.Copier      = &Fs{}
 	_ fs.PutStreamer = &Fs{}
 	_ fs.CleanUpper  = &Fs{}
 	_ fs.ListRer     = &Fs{}
