@@ -213,7 +213,7 @@ func (es matchEntries) Less(i, j int) bool {
 	ei, ej := &es[i], &es[j]
 	if ei.name == ej.name {
 		if ei.leaf == ej.leaf {
-			return ei.entry.Remote() < ej.entry.Remote()
+			return fs.CompareDirEntries(ei.entry, ej.entry) < 0
 		}
 		return ei.leaf < ej.leaf
 	}
