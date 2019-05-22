@@ -306,13 +306,12 @@ func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []ma
 			}
 		}
 		if src != nil && dst != nil {
-			if srcName < dstName {
-				dst = nil
-				iDst-- // retry the dst
-			} else if srcName > dstName {
+			result := fs.CompareDirEntries(src, dst)
+			switch {
+			case result > 0:
 				src = nil
-				iSrc-- // retry the src
-			} else if fs.DirEntryType(src) != fs.DirEntryType(dst) {
+				iSrc--
+			case result < 0:
 				dst = nil
 				iDst--
 			}

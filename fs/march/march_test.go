@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fstest/mockdir"
 	"github.com/ncw/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,11 +39,13 @@ func TestNewMatchEntries(t *testing.T) {
 
 func TestMatchListings(t *testing.T) {
 	var (
-		a = mockobject.Object("a")
-		A = mockobject.Object("A")
-		b = mockobject.Object("b")
-		c = mockobject.Object("c")
-		d = mockobject.Object("d")
+		a    = mockobject.Object("a")
+		A    = mockobject.Object("A")
+		b    = mockobject.Object("b")
+		c    = mockobject.Object("c")
+		d    = mockobject.Object("d")
+		dirA = mockdir.New("a")
+		dirb = mockdir.New("b")
 	)
 
 	for _, test := range []struct {
@@ -146,6 +149,65 @@ func TestMatchListings(t *testing.T) {
 				{A, A},
 			},
 			transforms: []matchTransformFn{strings.ToLower},
+		},
+		{
+			what: "File and directory are not duplicates",
+			input: fs.DirEntries{
+				A, nil,
+				dirA, nil,
+			},
+			srcOnly: fs.DirEntries{
+				A, dirA,
+			},
+		},
+		{
+			what: "File and directory are not duplicates",
+			input: fs.DirEntries{
+				A, A,
+				dirA, dirA,
+			},
+			matches: []matchPair{
+				{A, A},
+				{dirA, dirA},
+			},
+		},
+		{
+			what: "Sync with directory #1",
+			input: fs.DirEntries{
+				A, nil,
+				dirA, nil,
+				b, b,
+				nil, c,
+				nil, d,
+			},
+			srcOnly: fs.DirEntries{
+				A,
+				dirA,
+			},
+			dstOnly: fs.DirEntries{
+				c, d,
+			},
+			matches: []matchPair{
+				{b, b},
+			},
+		},
+		{
+			what: "Sync with 2 directories",
+			input: fs.DirEntries{
+				A, nil,
+				dirA, dirA,
+				nil, b,
+				nil, dirb,
+			},
+			srcOnly: fs.DirEntries{
+				A,
+			},
+			dstOnly: fs.DirEntries{
+				b, dirb,
+			},
+			matches: []matchPair{
+				{dirA, dirA},
+			},
 		},
 	} {
 		var srcList, dstList fs.DirEntries
