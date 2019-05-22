@@ -380,6 +380,10 @@ If you wish to empty your trash you can use the `rclone cleanup remote:`
 command which will permanently delete all your trashed files. This command
 does not take any path arguments.
 
+Note that Google Drive takes some time (minutes to days) to empty the
+trash even though the command returns within a few seconds.  No output
+is echoed, so there will be no confirmation even using -v or -vv.
+
 ### Quota information ###
 
 To view your current quota you can use the `rclone about remote:`
