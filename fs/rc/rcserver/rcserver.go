@@ -13,6 +13,7 @@ import (
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/serve"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fs/rc"
@@ -222,7 +223,7 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
-	f, err := rc.GetCachedFs(fsName)
+	f, err := cache.Get(fsName)
 	if err != nil {
 		writeError(path, nil, w, errors.Wrap(err, "failed to make Fs"), http.StatusInternalServerError)
 		return

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fstest"
@@ -21,8 +22,8 @@ func rcNewRun(t *testing.T, method string) (*fstest.Run, *rc.Call) {
 	r := fstest.NewRun(t)
 	call := rc.Calls.Get(method)
 	assert.NotNil(t, call)
-	rc.PutCachedFs(r.LocalName, r.Flocal)
-	rc.PutCachedFs(r.FremoteName, r.Fremote)
+	cache.Put(r.LocalName, r.Flocal)
+	cache.Put(r.FremoteName, r.Fremote)
 	return r, call
 }
 
