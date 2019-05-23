@@ -19,6 +19,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
@@ -1475,6 +1476,22 @@ func moveOrCopyFile(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName stri
 	}
 
 	if NeedTransfer(dstObj, srcObj) {
+		// If destination already exists, then we must move it into --backup-dir if required
+		if dstObj != nil && fs.Config.BackupDir != "" {
+			backupDir, err := cache.Get(fs.Config.BackupDir)
+			if err != nil {
+				return errors.Wrap(err, "creating Fs for --backup-dir failed")
+			}
+			remoteWithSuffix := SuffixName(dstObj.Remote())
+			overwritten, _ := backupDir.NewObject(remoteWithSuffix)
+			_, err = Move(backupDir, overwritten, remoteWithSuffix, dstObj)
+			if err != nil {
+				return errors.Wrap(err, "moving to --backup-dir failed")
+			}
+			// If successful zero out the dstObj as it is no longer there
+			dstObj = nil
+		}
+
 		_, err = Op(fdst, dstObj, dstFileName, srcObj)
 	} else {
 		accounting.Stats.Checking(srcFileName)
