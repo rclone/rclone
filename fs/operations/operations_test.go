@@ -739,6 +739,29 @@ func TestMoveFile(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
+func TestMoveFileBackupDir(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	oldBackupDir := fs.Config.BackupDir
+	fs.Config.BackupDir = r.FremoteName + "/backup"
+	defer func() {
+		fs.Config.BackupDir = oldBackupDir
+	}()
+
+	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+
+	file1old := r.WriteObject("dst/file1", "file1 contents old", t1)
+	fstest.CheckItems(t, r.Fremote, file1old)
+
+	err := operations.MoveFile(r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal)
+	file1old.Path = "backup/dst/file1"
+	fstest.CheckItems(t, r.Fremote, file1old, file1)
+}
+
 func TestCopyFile(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -763,6 +786,29 @@ func TestCopyFile(t *testing.T) {
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file2)
+}
+
+func TestCopyFileBackupDir(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	oldBackupDir := fs.Config.BackupDir
+	fs.Config.BackupDir = r.FremoteName + "/backup"
+	defer func() {
+		fs.Config.BackupDir = oldBackupDir
+	}()
+
+	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+
+	file1old := r.WriteObject("dst/file1", "file1 contents old", t1)
+	fstest.CheckItems(t, r.Fremote, file1old)
+
+	err := operations.CopyFile(r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal, file1)
+	file1old.Path = "backup/dst/file1"
+	fstest.CheckItems(t, r.Fremote, file1old, file1)
 }
 
 // testFsInfo is for unit testing fs.Info
