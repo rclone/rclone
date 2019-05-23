@@ -16,6 +16,7 @@ import (
 
 	"github.com/djherbis/times"
 	"github.com/ncw/rclone/fs"
+	fscache "github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/pkg/errors"
 )
@@ -100,7 +101,7 @@ func newCache(ctx context.Context, f fs.Fs, opt *Options) (*cache, error) {
 	root := filepath.Join(config.CacheDir, "vfs", f.Name(), fRoot)
 	fs.Debugf(nil, "vfs cache root is %q", root)
 
-	f, err := fs.NewFs(root)
+	f, err := fscache.Get(root)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cache remote")
 	}

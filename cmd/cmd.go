@@ -22,6 +22,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/config/configflags"
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/filter"
@@ -83,7 +84,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 		fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
-	f, err := fs.NewFs(remote)
+	f, err := cache.Get(remote)
 	switch err {
 	case fs.ErrorIsFile:
 		return f, path.Base(fsPath)
@@ -131,7 +132,7 @@ func NewFsSrc(args []string) fs.Fs {
 //
 // This must point to a directory
 func newFsDir(remote string) fs.Fs {
-	f, err := fs.NewFs(remote)
+	f, err := cache.Get(remote)
 	if err != nil {
 		fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
@@ -180,7 +181,7 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 			log.Fatalf("%q is a directory", args[1])
 		}
 	}
-	fdst, err := fs.NewFs(dstRemote)
+	fdst, err := cache.Get(dstRemote)
 	switch err {
 	case fs.ErrorIsFile:
 		fs.CountError(err)

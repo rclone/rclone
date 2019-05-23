@@ -10,6 +10,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/filter"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
@@ -123,7 +124,7 @@ func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 	// Make Fs for --backup-dir if required
 	if fs.Config.BackupDir != "" {
 		var err error
-		s.backupDir, err = fs.NewFs(fs.Config.BackupDir)
+		s.backupDir, err = cache.Get(fs.Config.BackupDir)
 		if err != nil {
 			return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", fs.Config.BackupDir, err))
 		}

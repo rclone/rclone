@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
 	"github.com/ncw/rclone/fs/hash"
@@ -342,7 +343,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if configName != "local" {
 			rootString = configName + ":" + rootString
 		}
-		myFs, err := fs.NewFs(rootString)
+		myFs, err := cache.Get(rootString)
 		if err != nil {
 			if err == fs.ErrorIsFile {
 				return myFs, err

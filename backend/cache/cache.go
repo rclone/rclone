@@ -20,6 +20,7 @@ import (
 
 	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/ncw/rclone/fs/config/configstruct"
@@ -481,7 +482,7 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 			return nil, errors.Wrapf(err, "failed to create cache directory %v", f.opt.TempWritePath)
 		}
 		f.opt.TempWritePath = filepath.ToSlash(f.opt.TempWritePath)
-		f.tempFs, err = fs.NewFs(f.opt.TempWritePath)
+		f.tempFs, err = cache.Get(f.opt.TempWritePath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to create temp fs: %v", err)
 		}
