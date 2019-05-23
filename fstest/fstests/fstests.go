@@ -1583,6 +1583,27 @@ func Run(t *testing.T, opt *Opt) {
 
 		})
 
+		// TestFsRootCollapse tests if the root of an fs "collapses" to the
+		// absolute root. It creates a new fs of the same backend type with its
+		// root set to a *non-existent* folder, and attempts to read the info of
+		// an object in that folder, whose name is taken from a directory that
+		// exists in the absolute root.
+		// This test is added after
+		// https://github.com/ncw/rclone/issues/3164.
+		t.Run("FsRootCollapse", func(t *testing.T) {
+			deepRemoteName := subRemoteName + "/deeper/nonexisting/directory"
+			deepRemote, err := fs.NewFs(deepRemoteName)
+			require.NoError(t, err)
+
+			colonIndex := strings.IndexRune(deepRemoteName, ':')
+			firstSlashIndex := strings.IndexRune(deepRemoteName, '/')
+			firstDir := deepRemoteName[colonIndex+1 : firstSlashIndex]
+			_, err = deepRemote.NewObject(firstDir)
+			require.Equal(t, fs.ErrorObjectNotFound, err)
+			// If err is not fs.ErrorObjectNotFound, it means the backend is
+			// somehow confused about root and absolute root.
+		})
+
 		// Purge the folder
 		err = operations.Purge(remote, "")
 		require.NoError(t, err)
