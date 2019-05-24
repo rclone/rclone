@@ -1206,17 +1206,8 @@ func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
 	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
 
-// readMetaData gets the metadata if it hasn't already been fetched
-//
-// Sets
-//  o.id
-//  o.modTime
-//  o.size
-//  o.sha1
-func (o *Object) readMetaData() (err error) {
-	if o.id != "" {
-		return nil
-	}
+// getMetaData gets the metadata from the object unconditionally
+func (o *Object) getMetaData() (info *api.File, err error) {
 	maxSearched := 1
 	var timestamp api.Timestamp
 	baseRemote := o.remote
@@ -1224,7 +1215,6 @@ func (o *Object) readMetaData() (err error) {
 		timestamp, baseRemote = api.RemoveVersion(baseRemote)
 		maxSearched = maxVersions
 	}
-	var info *api.File
 	err = o.fs.list("", true, baseRemote, maxSearched, o.fs.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			return nil
@@ -1239,12 +1229,30 @@ func (o *Object) readMetaData() (err error) {
 	})
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
-			return fs.ErrorObjectNotFound
+			return nil, fs.ErrorObjectNotFound
 		}
-		return err
+		return nil, err
 	}
 	if info == nil {
-		return fs.ErrorObjectNotFound
+		return nil, fs.ErrorObjectNotFound
+	}
+	return info, nil
+}
+
+// readMetaData gets the metadata if it hasn't already been fetched
+//
+// Sets
+//  o.id
+//  o.modTime
+//  o.size
+//  o.sha1
+func (o *Object) readMetaData() (err error) {
+	if o.id != "" {
+		return nil
+	}
+	info, err := o.getMetaData()
+	if err != nil {
+		return err
 	}
 	return o.decodeMetaData(info)
 }
@@ -1283,10 +1291,33 @@ func (o *Object) ModTime() (result time.Time) {
 	return o.modTime
 }
 
-// SetModTime sets the modification time of the local fs object
+// SetModTime sets the modification time of the Object
 func (o *Object) SetModTime(modTime time.Time) error {
-	// Not possible with B2
-	return fs.ErrorCantSetModTime
+	info, err := o.getMetaData()
+	if err != nil {
+		return err
+	}
+	info.Info[timeKey] = timeString(modTime)
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_copy_file",
+	}
+	var request = api.CopyFileRequest{
+		SourceID:          o.id,
+		Name:              o.fs.root + o.remote, // copy to same name
+		MetadataDirective: "REPLACE",
+		ContentType:       info.ContentType,
+		Info:              info.Info,
+	}
+	var response api.FileInfo
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(&opts, &request, &response)
+		return o.fs.shouldRetry(resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	return o.decodeMetaDataFileInfo(&response)
 }
 
 // Storable returns if this object is storable
