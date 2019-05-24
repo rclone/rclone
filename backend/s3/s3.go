@@ -47,7 +47,6 @@ import (
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
-	"github.com/ncw/rclone/fs"
 )
 
 // Register with Fs
