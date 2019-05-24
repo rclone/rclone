@@ -81,24 +81,26 @@ func DirEntryType(d DirEntry) string {
 }
 
 // CompareDirEntries returns 1 if a > b, 0 if a == b and -1 if a < b
+// If two dir entries have the same name, compare their types (directories are before objects)
 func CompareDirEntries(a, b DirEntry) int {
-	switch {
-	case a.Remote() > b.Remote():
+	aName := a.Remote()
+	bName := b.Remote()
+
+	if aName > bName {
 		return 1
-	case a.Remote() < b.Remote():
+	} else if aName < bName {
 		return -1
-	default:
-		// same name
-		typeA := DirEntryType(a)
-		typeB := DirEntryType(b)
-		switch {
-		// object before directory
-		case typeA > typeB:
-			return -1
-		case typeA < typeB:
-			return 1
-		default:
-			return 0
-		}
 	}
+
+	typeA := DirEntryType(a)
+	typeB := DirEntryType(b)
+
+	// same name, compare types
+	if typeA > typeB {
+		return 1
+	} else if typeA < typeB {
+		return -1
+	}
+
+	return 0
 }
