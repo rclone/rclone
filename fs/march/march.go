@@ -267,6 +267,7 @@ type matchTransformFn func(name string) string
 func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []matchTransformFn) (srcOnly fs.DirEntries, dstOnly fs.DirEntries, matches []matchPair) {
 	srcList := newMatchEntries(srcListEntries, transforms)
 	dstList := newMatchEntries(dstListEntries, transforms)
+
 	for iSrc, iDst := 0, 0; ; iSrc, iDst = iSrc+1, iDst+1 {
 		var src, dst fs.DirEntry
 		var srcName, dstName string
@@ -306,12 +307,14 @@ func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []ma
 			}
 		}
 		if src != nil && dst != nil {
-			result := fs.CompareDirEntries(src, dst)
-			switch {
-			case result > 0:
+			// we can't use CompareDirEntries because srcName, dstName could
+			// be different then src.Remote() or dst.Remote()
+			srcType := fs.DirEntryType(src)
+			dstType := fs.DirEntryType(dst)
+			if srcName > dstName || (srcName == dstName && srcType > dstType) {
 				src = nil
 				iSrc--
-			case result < 0:
+			} else if srcName < dstName || (srcName == dstName && srcType < dstType) {
 				dst = nil
 				iDst--
 			}
