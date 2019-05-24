@@ -38,7 +38,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pengsrc/go-shared v0.2.0 // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/pkg/sftp v1.10.0
+	github.com/pkg/sftp v1.10.1-0.20190523025818-e98a7bef6829
 	github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46
 	github.com/sevlyar/go-daemon v0.1.4
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e

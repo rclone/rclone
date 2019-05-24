@@ -132,7 +132,7 @@ github.com/pengsrc/go-shared/check
 github.com/pengsrc/go-shared/reopen
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
-# github.com/pkg/sftp v1.10.0
+# github.com/pkg/sftp v1.10.1-0.20190523025818-e98a7bef6829
 github.com/pkg/sftp
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
