@@ -3,6 +3,7 @@
 package march
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -44,7 +45,7 @@ func TestMatchListings(t *testing.T) {
 		b    = mockobject.Object("b")
 		c    = mockobject.Object("c")
 		d    = mockobject.Object("d")
-		dirA = mockdir.New("a")
+		dirA = mockdir.New("A")
 		dirb = mockdir.New("b")
 	)
 
@@ -151,38 +152,39 @@ func TestMatchListings(t *testing.T) {
 			transforms: []matchTransformFn{strings.ToLower},
 		},
 		{
-			what: "File and directory are not duplicates",
+			what: "File and directory are not duplicates - srcOnly",
 			input: fs.DirEntries{
-				A, nil,
 				dirA, nil,
+				A, nil,
 			},
 			srcOnly: fs.DirEntries{
-				A, dirA,
+				dirA,
+				A,
 			},
 		},
 		{
-			what: "File and directory are not duplicates",
+			what: "File and directory are not duplicates - matches",
 			input: fs.DirEntries{
-				A, A,
 				dirA, dirA,
+				A, A,
 			},
 			matches: []matchPair{
-				{A, A},
 				{dirA, dirA},
+				{A, A},
 			},
 		},
 		{
 			what: "Sync with directory #1",
 			input: fs.DirEntries{
-				A, nil,
 				dirA, nil,
+				A, nil,
 				b, b,
 				nil, c,
 				nil, d,
 			},
 			srcOnly: fs.DirEntries{
-				A,
 				dirA,
+				A,
 			},
 			dstOnly: fs.DirEntries{
 				c, d,
@@ -194,40 +196,43 @@ func TestMatchListings(t *testing.T) {
 		{
 			what: "Sync with 2 directories",
 			input: fs.DirEntries{
-				A, nil,
 				dirA, dirA,
-				nil, b,
+				A, nil,
 				nil, dirb,
+				nil, b,
 			},
 			srcOnly: fs.DirEntries{
 				A,
 			},
 			dstOnly: fs.DirEntries{
-				b, dirb,
+				dirb,
+				b,
 			},
 			matches: []matchPair{
 				{dirA, dirA},
 			},
 		},
 	} {
-		var srcList, dstList fs.DirEntries
-		for i := 0; i < len(test.input); i += 2 {
-			src, dst := test.input[i], test.input[i+1]
-			if src != nil {
-				srcList = append(srcList, src)
+		t.Run(fmt.Sprintf("TestMatchListings-%s", test.what), func(t *testing.T) {
+			var srcList, dstList fs.DirEntries
+			for i := 0; i < len(test.input); i += 2 {
+				src, dst := test.input[i], test.input[i+1]
+				if src != nil {
+					srcList = append(srcList, src)
+				}
+				if dst != nil {
+					dstList = append(dstList, dst)
+				}
 			}
-			if dst != nil {
-				dstList = append(dstList, dst)
-			}
-		}
-		srcOnly, dstOnly, matches := matchListings(srcList, dstList, test.transforms)
-		assert.Equal(t, test.srcOnly, srcOnly, test.what)
-		assert.Equal(t, test.dstOnly, dstOnly, test.what)
-		assert.Equal(t, test.matches, matches, test.what)
-		// now swap src and dst
-		dstOnly, srcOnly, matches = matchListings(dstList, srcList, test.transforms)
-		assert.Equal(t, test.srcOnly, srcOnly, test.what)
-		assert.Equal(t, test.dstOnly, dstOnly, test.what)
-		assert.Equal(t, test.matches, matches, test.what)
+			srcOnly, dstOnly, matches := matchListings(srcList, dstList, test.transforms)
+			assert.Equal(t, test.srcOnly, srcOnly, test.what, "srcOnly differ")
+			assert.Equal(t, test.dstOnly, dstOnly, test.what, "dstOnly differ")
+			assert.Equal(t, test.matches, matches, test.what, "matches differ")
+			// now swap src and dst
+			dstOnly, srcOnly, matches = matchListings(dstList, srcList, test.transforms)
+			assert.Equal(t, test.srcOnly, srcOnly, test.what, "srcOnly differ")
+			assert.Equal(t, test.dstOnly, dstOnly, test.what, "dstOnly differ")
+			assert.Equal(t, test.matches, matches, test.what, "matches differ")
+		})
 	}
 }
