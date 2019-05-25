@@ -368,6 +368,14 @@ will download it anyway.`,
 			Help:     "Keep new head revision of each file forever.",
 			Advanced: true,
 		}, {
+			Name:    "size_as_quota",
+			Default: false,
+			Help: `Show storage quota usage for file size.
+
+The storage used by a file is the size of the current version plus any
+older versions that have been set to keep forever.`,
+			Advanced: true,
+		}, {
 			Name:     "v2_download_min_size",
 			Default:  fs.SizeSuffix(-1),
 			Help:     "If Object's are greater, use drive v2 API to download.",
@@ -434,6 +442,7 @@ type Options struct {
 	ChunkSize                 fs.SizeSuffix `config:"chunk_size"`
 	AcknowledgeAbuse          bool          `config:"acknowledge_abuse"`
 	KeepRevisionForever       bool          `config:"keep_revision_forever"`
+	SizeAsQuota               bool          `config:"size_as_quota"`
 	V2DownloadMinSize         fs.SizeSuffix `config:"v2_download_min_size"`
 	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
 	PacerBurst                int           `config:"pacer_burst"`
@@ -642,6 +651,9 @@ func (f *Fs) list(dirIDs []string, title string, directoriesOnly, filesOnly, inc
 	}
 	if f.opt.SkipChecksumGphotos {
 		fields += ",spaces"
+	}
+	if f.opt.SizeAsQuota {
+		fields += ",quotaBytesUsed"
 	}
 
 	fields = fmt.Sprintf("files(%s),nextPageToken", fields)
@@ -1018,13 +1030,17 @@ func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
 	if f.opt.UseCreatedDate {
 		modifiedDate = info.CreatedTime
 	}
+	size := info.Size
+	if f.opt.SizeAsQuota {
+		size = info.QuotaBytesUsed
+	}
 	return baseObject{
 		fs:           f,
 		remote:       remote,
 		id:           info.Id,
 		modifiedDate: modifiedDate,
 		mimeType:     info.MimeType,
-		bytes:        info.Size,
+		bytes:        size,
 	}
 }
 
