@@ -69,45 +69,6 @@ const (
 	serviceControlURL   = "/ctl"
 )
 
-// Groups the service definition with its XML description.
-type service struct {
-	upnp.Service
-	SCPD string
-}
-
-// Exposed UPnP AV services.
-var services = []*service{
-	{
-		Service: upnp.Service{
-			ServiceType: "urn:schemas-upnp-org:service:ContentDirectory:1",
-			ServiceId:   "urn:upnp-org:serviceId:ContentDirectory",
-			ControlURL:  serviceControlURL,
-			SCPDURL:     "/static/ContentDirectory.xml",
-		},
-	},
-	{
-		Service: upnp.Service{
-			ServiceType: "urn:schemas-upnp-org:service:ConnectionManager:1",
-			ServiceId:   "urn:upnp-org:serviceId:ConnectionManager",
-			ControlURL:  serviceControlURL,
-			SCPDURL:     "/static/ConnectionManager.xml",
-		},
-	},
-}
-
-func devices() []string {
-	return []string{
-		"urn:schemas-upnp-org:device:MediaServer:1",
-	}
-}
-
-func serviceTypes() (ret []string) {
-	for _, s := range services {
-		ret = append(ret, s.ServiceType)
-	}
-	return
-}
-
 type server struct {
 	// The service SOAP handler keyed by service URN.
 	services map[string]UPnPService
@@ -116,7 +77,7 @@ type server struct {
 
 	HTTPConn       net.Listener
 	httpListenAddr string
-	httpServeMux   *http.ServeMux
+	handler        http.Handler
 
 	RootDeviceUUID string
 
@@ -142,6 +103,7 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 
 	s := &server{
 		AnnounceInterval: 10 * time.Second,
+		Interfaces:       listInterfaces(),
 		FriendlyName:     "rclone" + hostName,
 
 		httpListenAddr: opt.ListenAddr,
@@ -149,17 +111,22 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 		f:   f,
 		vfs: vfs.New(f, &vfsflags.Opt),
 	}
-
-	s.initServicesMap()
-	s.listInterfaces()
-
-	s.httpServeMux = http.NewServeMux()
-	s.RootDeviceUUID = makeDeviceUUID(s.FriendlyName)
-	if err != nil {
-		// Contents are hardcoded, so this will never happen in production.
-		log.Panicf("Marshal root descriptor XML: %v", err)
+	s.services = map[string]UPnPService{
+		"ContentDirectory": &contentDirectoryService{
+			server: s,
+		},
 	}
-	s.initMux(s.httpServeMux)
+	s.RootDeviceUUID = makeDeviceUUID(s.FriendlyName)
+
+	// Setup the various http routes.
+	r := http.NewServeMux()
+	r.HandleFunc(resPath, s.resourceHandler)
+	r.HandleFunc(rootDescPath, s.rootDescHandler)
+	r.HandleFunc(serviceControlURL, s.serviceControlHandler)
+	r.Handle("/static/", http.StripPrefix("/static/",
+		withHeader("Cache-Control", "public, max-age=86400",
+			http.FileServer(data.Assets))))
+	s.handler = withHeader("Server", serverField, r)
 
 	return s
 }
@@ -234,71 +201,6 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 	buffer.WriteTo(w)
 }
 
-// initServicesMap is called during initialization of the server to prepare some internal datastructures.
-func (s *server) initServicesMap() {
-	urn, err := upnp.ParseServiceType(services[0].ServiceType)
-	if err != nil {
-		// The service type is hardcoded, so this error should never happen.
-		log.Panicf("ParseServiceType: %v", err)
-	}
-	s.services = map[string]UPnPService{
-		urn.Type: &contentDirectoryService{
-			server: s,
-		},
-	}
-	return
-}
-
-// listInterfaces is called during initialization of the server to list the network interfaces
-// on the machine.
-func (s *server) listInterfaces() {
-	ifs, err := net.Interfaces()
-	if err != nil {
-		fs.Errorf(s.f, "list network interfaces: %v", err)
-		return
-	}
-
-	var tmp []net.Interface
-	for _, intf := range ifs {
-		if intf.Flags&net.FlagUp == 0 || intf.MTU <= 0 {
-			continue
-		}
-		s.Interfaces = append(s.Interfaces, intf)
-		tmp = append(tmp, intf)
-	}
-}
-
-func (s *server) initMux(mux *http.ServeMux) {
-	mux.HandleFunc(resPath, func(w http.ResponseWriter, r *http.Request) {
-		remotePath := r.URL.Query().Get("path")
-		node, err := s.vfs.Stat(remotePath)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
-
-		file := node.(*vfs.File)
-		in, err := file.Open(os.O_RDONLY)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		defer fs.CheckClose(in, &err)
-
-		http.ServeContent(w, r, remotePath, node.ModTime(), in)
-		return
-	})
-
-	mux.HandleFunc(rootDescPath, s.rootDescHandler)
-
-	mux.Handle("/static/", http.StripPrefix("/static/",
-		withHeader("Cache-Control", "public, max-age=86400",
-			http.FileServer(data.Assets))))
-
-	mux.HandleFunc(serviceControlURL, s.serviceControlHandler)
-}
-
 // Handle a service control HTTP request.
 func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapActionString := r.Header.Get("SOAPACTION")
@@ -339,6 +241,28 @@ func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte,
 		return nil, upnp.Errorf(upnp.InvalidActionErrorCode, "Invalid service: %s", sa.Type)
 	}
 	return service.Handle(sa.Action, actionRequestXML, r)
+}
+
+// Serves actual resources (media files).
+func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
+	remotePath := r.URL.Query().Get("path")
+	node, err := s.vfs.Stat(remotePath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
+
+	file := node.(*vfs.File)
+	in, err := file.Open(os.O_RDONLY)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	defer fs.CheckClose(in, &err)
+
+	http.ServeContent(w, r, remotePath, node.ModTime(), in)
+	return
 }
 
 // Serve runs the server - returns the error only if
@@ -416,10 +340,15 @@ func (s *server) ssdpInterface(intf net.Interface) {
 		return url.String()
 	}
 
+	// Note that the devices and services advertised here via SSDP should be
+	// in agreement with the rootDesc XML descriptor that is defined above.
 	ssdpServer := ssdp.Server{
-		Interface:      intf,
-		Devices:        devices(),
-		Services:       serviceTypes(),
+		Interface: intf,
+		Devices: []string{
+			"urn:schemas-upnp-org:device:MediaServer:1"},
+		Services: []string{
+			"urn:schemas-upnp-org:service:ContentDirectory:1",
+			"urn:schemas-upnp-org:service:ConnectionManager:1"},
 		Location:       advertiseLocationFn,
 		Server:         serverField,
 		UUID:           s.RootDeviceUUID,
@@ -461,9 +390,7 @@ func (s *server) ssdpInterface(intf net.Interface) {
 
 func (s *server) serveHTTP() error {
 	srv := &http.Server{
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			s.httpServeMux.ServeHTTP(w, r)
-		}),
+		Handler: s.handler,
 	}
 	err := srv.Serve(s.HTTPConn)
 	select {
