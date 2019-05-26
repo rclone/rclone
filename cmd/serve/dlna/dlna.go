@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -53,7 +52,7 @@ players might show files that they are not able to play back correctly.
 		cmd.Run(false, false, command, func() error {
 			s := newServer(f, &dlnaflags.Opt)
 			if err := s.Serve(); err != nil {
-				log.Fatal(err)
+				return err
 			}
 			s.Wait()
 			return nil
@@ -93,23 +92,23 @@ type server struct {
 }
 
 func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
-	hostName, err := os.Hostname()
-	if err != nil {
-		hostName = ""
-	} else {
-		hostName = " (" + hostName + ")"
+	friendlyName := opt.FriendlyName
+	if friendlyName == "" {
+		friendlyName = makeDefaultFriendlyName()
 	}
 
 	s := &server{
 		AnnounceInterval: 10 * time.Second,
+		FriendlyName:     friendlyName,
+		RootDeviceUUID:   makeDeviceUUID(friendlyName),
 		Interfaces:       listInterfaces(),
-		FriendlyName:     "rclone" + hostName,
 
 		httpListenAddr: opt.ListenAddr,
 
 		f:   f,
 		vfs: vfs.New(f, &vfsflags.Opt),
 	}
+
 	s.services = map[string]UPnPService{
 		"ContentDirectory": &contentDirectoryService{
 			server: s,
@@ -118,17 +117,21 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 			server: s,
 		},
 	}
-	s.RootDeviceUUID = makeDeviceUUID(s.FriendlyName)
 
 	// Setup the various http routes.
 	r := http.NewServeMux()
 	r.HandleFunc(resPath, s.resourceHandler)
-	r.HandleFunc(rootDescPath, s.rootDescHandler)
-	r.HandleFunc(serviceControlURL, s.serviceControlHandler)
+	if opt.LogTrace {
+		r.Handle(rootDescPath, traceLogging(http.HandlerFunc(s.rootDescHandler)))
+		r.Handle(serviceControlURL, traceLogging(http.HandlerFunc(s.serviceControlHandler)))
+	} else {
+		r.HandleFunc(rootDescPath, s.rootDescHandler)
+		r.HandleFunc(serviceControlURL, s.serviceControlHandler)
+	}
 	r.Handle("/static/", http.StripPrefix("/static/",
 		withHeader("Cache-Control", "public, max-age=86400",
 			http.FileServer(data.Assets))))
-	s.handler = withHeader("Server", serverField, r)
+	s.handler = logging(withHeader("Server", serverField, r))
 
 	return s
 }
@@ -138,6 +141,11 @@ type UPnPService interface {
 	Handle(action string, argsXML []byte, r *http.Request) (respArgs map[string]string, err error)
 	Subscribe(callback []*url.URL, timeoutSeconds int) (sid string, actualTimeout int, err error)
 	Unsubscribe(sid string) error
+}
+
+// Formats the server as a string (used for logging.)
+func (s *server) String() string {
+	return fmt.Sprintf("DLNA server on %v", s.httpListenAddr)
 }
 
 // Returns rclone version number as the model number.
@@ -223,14 +231,18 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 	buffer := new(bytes.Buffer)
 	err := rootDescTmpl.Execute(buffer, s)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		serveError(s, w, "Failed to create root descriptor XML", err)
 		return
 	}
 
 	w.Header().Set("content-type", `text/xml; charset="utf-8"`)
 	w.Header().Set("cache-control", "private, max-age=60")
 	w.Header().Set("content-length", strconv.FormatInt(int64(buffer.Len()), 10))
-	buffer.WriteTo(w)
+	_, err = buffer.WriteTo(w)
+	if err != nil {
+		// Network error
+		fs.Debugf(s, "Error writing rootDesc: %v", err)
+	}
 }
 
 // Handle a service control HTTP request.
@@ -238,30 +250,30 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapActionString := r.Header.Get("SOAPACTION")
 	soapAction, err := upnp.ParseActionHTTPHeader(soapActionString)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		serveError(s, w, "Could not parse SOAPACTION header", err)
 		return
 	}
 	var env soap.Envelope
 	if err := xml.NewDecoder(r.Body).Decode(&env); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		serveError(s, w, "Could not parse SOAP request body", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", `text/xml; charset="utf-8"`)
 	w.Header().Set("Ext", "")
-	w.Header().Set("server", serverField)
 	soapRespXML, code := func() ([]byte, int) {
 		respArgs, err := s.soapActionResponse(soapAction, env.Body.Action, r)
 		if err != nil {
+			fs.Errorf(s, "Error invoking %v: %v", soapAction, err)
 			upnpErr := upnp.ConvertError(err)
-			return mustMarshalXML(soap.NewFault("UPnPError", upnpErr)), 500
+			return mustMarshalXML(soap.NewFault("UPnPError", upnpErr)), http.StatusInternalServerError
 		}
-		return marshalSOAPResponse(soapAction, respArgs), 200
+		return marshalSOAPResponse(soapAction, respArgs), http.StatusOK
 	}()
 	bodyStr := fmt.Sprintf(`<?xml version="1.0" encoding="utf-8" standalone="yes"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body>%s</s:Body></s:Envelope>`, soapRespXML)
 	w.WriteHeader(code)
 	if _, err := w.Write([]byte(bodyStr)); err != nil {
-		log.Print(err)
+		fs.Infof(s, "Error writing response: %v", err)
 	}
 }
 
@@ -280,7 +292,7 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	remotePath := r.URL.Query().Get("path")
 	node, err := s.vfs.Stat(remotePath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.NotFound(w, r)
 		return
 	}
 
@@ -297,12 +309,12 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	file := node.(*vfs.File)
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(node, w, "Could not open resource", err)
+		return
 	}
 	defer fs.CheckClose(in, &err)
 
 	http.ServeContent(w, r, remotePath, node.ModTime(), in)
-	return
 }
 
 // Serve runs the server - returns the error only if
@@ -410,16 +422,16 @@ func (s *server) ssdpInterface(intf net.Interface) {
 			// good.
 			return
 		}
-		log.Printf("Error creating ssdp server on %s: %s", intf.Name, err)
+		fs.Errorf(s, "Error creating ssdp server on %s: %s", intf.Name, err)
 		return
 	}
 	defer ssdpServer.Close()
-	log.Println("Started SSDP on", intf.Name)
+	fs.Infof(s, "Started SSDP on %v", intf.Name)
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
 		if err := ssdpServer.Serve(); err != nil {
-			log.Printf("%q: %q\n", intf.Name, err)
+			fs.Errorf(s, "%q: %q\n", intf.Name, err)
 		}
 	}()
 	select {

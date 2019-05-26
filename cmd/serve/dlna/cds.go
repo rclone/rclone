@@ -9,11 +9,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 
 	"github.com/anacrolix/dms/dlna"
 	"github.com/anacrolix/dms/upnp"
 	"github.com/anacrolix/dms/upnpav"
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
 )
@@ -26,6 +28,8 @@ type contentDirectoryService struct {
 func (cds *contentDirectoryService) updateIDString() string {
 	return fmt.Sprintf("%d", uint32(os.Getpid()))
 }
+
+var mediaMimeTypeRegexp = regexp.MustCompile("^(video|audio|image)/")
 
 // Turns the given entry and DMS host into a UPnP object. A nil object is
 // returned if the entry is not of interest.
@@ -47,8 +51,13 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 		return
 	}
 
-	// Hardcode "videoItem" so that files show up in VLC.
-	obj.Class = "object.item.videoItem"
+	mimeType := fs.MimeTypeFromName(fileInfo.Name())
+	mediaType := mediaMimeTypeRegexp.FindStringSubmatch(mimeType)
+	if mediaType == nil {
+		return
+	}
+
+	obj.Class = "object.item." + mediaType[1] + "Item"
 	obj.Title = fileInfo.Name()
 
 	item := upnpav.Item{
@@ -65,8 +74,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 				"path": {cdsObject.Path},
 			}.Encode(),
 		}).String(),
-		// Hardcode "video/x-matroska" so that files show up in VLC.
-		ProtocolInfo: fmt.Sprintf("http-get:*:video/x-matroska:%s", dlna.ContentFeatures{
+		ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", mimeType, dlna.ContentFeatures{
 			SupportRange: true,
 		}.String()),
 		Bitrate:    0,
@@ -106,14 +114,14 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 		}
 		obj, err := cds.cdsObjectToUpnpavObject(child, de, host)
 		if err != nil {
-			log.Printf("error with %s: %s", child.FilePath(), err)
+			fs.Errorf(cds, "error with %s: %s", child.FilePath(), err)
 			continue
 		}
-		if obj != nil {
-			ret = append(ret, obj)
-		} else {
-			log.Printf("bad %s", de)
+		if obj == nil {
+			fs.Debugf(cds, "unrecognized file type: %s", de)
+			continue
 		}
+		ret = append(ret, obj)
 	}
 
 	return

@@ -8,10 +8,25 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httptest"
+	"net/http/httputil"
+	"os"
 
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/upnp"
+	"github.com/ncw/rclone/fs"
 )
+
+// Return a default "friendly name" for the server.
+func makeDefaultFriendlyName() string {
+	hostName, err := os.Hostname()
+	if err != nil {
+		hostName = ""
+	} else {
+		hostName = " (" + hostName + ")"
+	}
+	return "rclone" + hostName
+}
 
 func makeDeviceUUID(unique string) string {
 	h := md5.New()
@@ -71,10 +86,98 @@ func marshalSOAPResponse(sa upnp.SoapAction, args map[string]string) []byte {
 		sa.Action, sa.ServiceURN.String(), mustMarshalXML(soapArgs)))
 }
 
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	request   *http.Request
+	committed bool
+}
+
+func (lrw *loggingResponseWriter) logRequest(code int, err interface{}) {
+	// Choose appropriate log level based on response status code.
+	var level fs.LogLevel
+	if code < 400 && err == nil {
+		level = fs.LogLevelInfo
+	} else {
+		level = fs.LogLevelError
+	}
+
+	fs.LogPrintf(level, lrw.request.URL.Path, "%s %s %d %s %s",
+		lrw.request.RemoteAddr, lrw.request.Method, code,
+		lrw.request.Header.Get("SOAPACTION"), err)
+}
+
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.committed = true
+	lrw.logRequest(code, nil)
+	lrw.ResponseWriter.WriteHeader(code)
+}
+
+// HTTP handler that logs requests and any errors or panics.
+func logging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		lrw := &loggingResponseWriter{ResponseWriter: w, request: r}
+		defer func() {
+			err := recover()
+			if err != nil {
+				if !lrw.committed {
+					lrw.logRequest(http.StatusInternalServerError, err)
+					http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+				} else {
+					// Too late to send the error to client, but at least log it.
+					fs.Errorf(r.URL.Path, "Recovered panic: %v", err)
+				}
+			}
+		}()
+		next.ServeHTTP(lrw, r)
+	})
+}
+
+// HTTP handler that logs complete request and response bodies for debugging.
+// Error recovery and general request logging are left to logging().
+func traceLogging(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dump, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			serveError(nil, w, "error dumping request", err)
+			return
+		}
+		fs.Debugf(nil, "%s", dump)
+
+		recorder := httptest.NewRecorder()
+		next.ServeHTTP(recorder, r)
+
+		dump, err = httputil.DumpResponse(recorder.Result(), true)
+		if err != nil {
+			// log the error but ignore it
+			fs.Errorf(nil, "error dumping response: %v", err)
+		} else {
+			fs.Debugf(nil, "%s", dump)
+		}
+
+		// copy from recorder to the real response writer
+		for k, v := range recorder.Header() {
+			w.Header()[k] = v
+		}
+		w.WriteHeader(recorder.Code)
+		_, err = recorder.Body.WriteTo(w)
+		if err != nil {
+			// Network error
+			fs.Debugf(nil, "Error writing response: %v", err)
+		}
+	})
+}
+
 // HTTP handler that sets headers.
 func withHeader(name string, value string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(name, value)
 		next.ServeHTTP(w, r)
 	})
+}
+
+// serveError returns an http.StatusInternalServerError and logs the error
+func serveError(what interface{}, w http.ResponseWriter, text string, err error) {
+	fs.CountError(err)
+	fs.Errorf(what, "%s: %v", text, err)
+	http.Error(w, text+".", http.StatusInternalServerError)
 }
