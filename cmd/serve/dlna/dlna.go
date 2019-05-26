@@ -1,6 +1,7 @@
 package dlna
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/anacrolix/dms/soap"
@@ -116,8 +118,7 @@ type server struct {
 	httpListenAddr string
 	httpServeMux   *http.ServeMux
 
-	rootDeviceUUID string
-	rootDescXML    []byte
+	RootDeviceUUID string
 
 	FriendlyName string
 
@@ -153,30 +154,11 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 	s.listInterfaces()
 
 	s.httpServeMux = http.NewServeMux()
-	s.rootDeviceUUID = makeDeviceUUID(s.FriendlyName)
-	s.rootDescXML, err = xml.MarshalIndent(
-		upnp.DeviceDesc{
-			SpecVersion: upnp.SpecVersion{Major: 1, Minor: 0},
-			Device: upnp.Device{
-				DeviceType:   rootDeviceType,
-				FriendlyName: s.FriendlyName,
-				Manufacturer: "rclone (rclone.org)",
-				ModelName:    rootDeviceModelName,
-				UDN:          s.rootDeviceUUID,
-				ServiceList: func() (ss []upnp.Service) {
-					for _, s := range services {
-						ss = append(ss, s.Service)
-					}
-					return
-				}(),
-			},
-		},
-		" ", "  ")
+	s.RootDeviceUUID = makeDeviceUUID(s.FriendlyName)
 	if err != nil {
 		// Contents are hardcoded, so this will never happen in production.
 		log.Panicf("Marshal root descriptor XML: %v", err)
 	}
-	s.rootDescXML = append([]byte(`<?xml version="1.0"?>`), s.rootDescXML...)
 	s.initMux(s.httpServeMux)
 
 	return s
@@ -187,6 +169,69 @@ type UPnPService interface {
 	Handle(action string, argsXML []byte, r *http.Request) (respArgs map[string]string, err error)
 	Subscribe(callback []*url.URL, timeoutSeconds int) (sid string, actualTimeout int, err error)
 	Unsubscribe(sid string) error
+}
+
+// Returns rclone version number as the model number.
+func (s *server) ModelNumber() string {
+	return fs.Version
+}
+
+// Template used to generate the root device XML descriptor.
+//
+// Due to the use of namespaces and various subtleties with device compatibility,
+// it turns out to be easier to use a template than to marshal XML.
+//
+// For rendering, it is passed the server object for context.
+var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+    <friendlyName>{{.FriendlyName}}</friendlyName>
+    <manufacturer>rclone (rclone.org)</manufacturer>
+    <manufacturerURL>https://rclone.org/</manufacturerURL>
+    <modelDescription>rclone</modelDescription>
+    <modelName>rclone</modelName>
+    <modelNumber>{{.ModelNumber}}</modelNumber>
+    <modelURL>https://rclone.org/</modelURL>
+    <serialNumber>00000000</serialNumber>
+    <UDN>{{.RootDeviceUUID}}</UDN>
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
+        <SCPDURL>/static/ContentDirectory.xml</SCPDURL>
+        <controlURL>/ctl</controlURL>
+        <eventSubURL></eventSubURL>
+      </service>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
+        <SCPDURL>/static/ConnectionManager.xml</SCPDURL>
+        <controlURL>/ctl</controlURL>
+        <eventSubURL></eventSubURL>
+      </service>
+    </serviceList>
+    <presentationURL>/</presentationURL>
+  </device>
+</root>`))
+
+// Renders the root device descriptor.
+func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
+	buffer := new(bytes.Buffer)
+	err := rootDescTmpl.Execute(buffer, s)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("content-type", `text/xml; charset="utf-8"`)
+	w.Header().Set("cache-control", "private, max-age=60")
+	w.Header().Set("content-length", strconv.FormatInt(int64(buffer.Len()), 10))
+	buffer.WriteTo(w)
 }
 
 // initServicesMap is called during initialization of the server to prepare some internal datastructures.
@@ -245,15 +290,7 @@ func (s *server) initMux(mux *http.ServeMux) {
 		return
 	})
 
-	mux.HandleFunc(rootDescPath, func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", `text/xml; charset="utf-8"`)
-		w.Header().Set("content-length", fmt.Sprint(len(s.rootDescXML)))
-		w.Header().Set("server", serverField)
-		_, err := w.Write(s.rootDescXML)
-		if err != nil {
-			fs.Errorf(s, "Failed to serve root descriptor XML: %v", err)
-		}
-	})
+	mux.HandleFunc(rootDescPath, s.rootDescHandler)
 
 	mux.Handle("/static/", http.StripPrefix("/static/",
 		withHeader("Cache-Control", "public, max-age=86400",
@@ -385,7 +422,7 @@ func (s *server) ssdpInterface(intf net.Interface) {
 		Services:       serviceTypes(),
 		Location:       advertiseLocationFn,
 		Server:         serverField,
-		UUID:           s.rootDeviceUUID,
+		UUID:           s.RootDeviceUUID,
 		NotifyInterval: s.AnnounceInterval,
 	}
 
