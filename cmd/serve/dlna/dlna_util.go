@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/upnp"
@@ -49,4 +50,12 @@ func marshalSOAPResponse(sa upnp.SoapAction, args map[string]string) []byte {
 	}
 	return []byte(fmt.Sprintf(`<u:%[1]sResponse xmlns:u="%[2]s">%[3]s</u:%[1]sResponse>`,
 		sa.Action, sa.ServiceURN.String(), mustMarshalXML(soapArgs)))
+}
+
+// HTTP handler that sets headers.
+func withHeader(name string, value string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(name, value)
+		next.ServeHTTP(w, r)
+	})
 }

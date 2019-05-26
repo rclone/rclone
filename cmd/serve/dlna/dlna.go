@@ -1,7 +1,6 @@
 package dlna
 
 import (
-	"bytes"
 	"encoding/xml"
 	"fmt"
 	"log"
@@ -9,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -18,6 +16,7 @@ import (
 	"github.com/anacrolix/dms/ssdp"
 	"github.com/anacrolix/dms/upnp"
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/serve/dlna/data"
 	"github.com/ncw/rclone/cmd/serve/dlna/dlnaflags"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs"
@@ -81,24 +80,17 @@ var services = []*service{
 			ServiceType: "urn:schemas-upnp-org:service:ContentDirectory:1",
 			ServiceId:   "urn:upnp-org:serviceId:ContentDirectory",
 			ControlURL:  serviceControlURL,
+			SCPDURL:     "/static/ContentDirectory.xml",
 		},
-		SCPD: contentDirectoryServiceDescription,
 	},
 	{
 		Service: upnp.Service{
 			ServiceType: "urn:schemas-upnp-org:service:ConnectionManager:1",
 			ServiceId:   "urn:upnp-org:serviceId:ConnectionManager",
 			ControlURL:  serviceControlURL,
+			SCPDURL:     "/static/ConnectionManager.xml",
 		},
-		SCPD: connectionManagerServiceDescription,
 	},
-}
-
-func init() {
-	for _, s := range services {
-		p := path.Join("/scpd", s.ServiceId)
-		s.SCPDURL = p
-	}
 }
 
 func devices() []string {
@@ -263,15 +255,9 @@ func (s *server) initMux(mux *http.ServeMux) {
 		}
 	})
 
-	// Install handlers to serve SCPD for each UPnP service.
-	for _, s := range services {
-		mux.HandleFunc(s.SCPDURL, func(serviceDesc string) http.HandlerFunc {
-			return func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("content-type", `text/xml; charset="utf-8"`)
-				http.ServeContent(w, r, ".xml", time.Time{}, bytes.NewReader([]byte(serviceDesc)))
-			}
-		}(s.SCPD))
-	}
+	mux.Handle("/static/", http.StripPrefix("/static/",
+		withHeader("Cache-Control", "public, max-age=86400",
+			http.FileServer(data.Assets))))
 
 	mux.HandleFunc(serviceControlURL, s.serviceControlHandler)
 }
