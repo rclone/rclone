@@ -14,6 +14,7 @@ import (
 	"text/template"
 	"time"
 
+	dms_dlna "github.com/anacrolix/dms/dlna"
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/ssdp"
 	"github.com/anacrolix/dms/upnp"
@@ -61,12 +62,10 @@ players might show files that they are not able to play back correctly.
 }
 
 const (
-	serverField         = "Linux/3.4 DLNADOC/1.50 UPnP/1.0 DMS/1.0"
-	rootDeviceType      = "urn:schemas-upnp-org:device:MediaServer:1"
-	rootDeviceModelName = "rclone"
-	resPath             = "/res"
-	rootDescPath        = "/rootDesc.xml"
-	serviceControlURL   = "/ctl"
+	serverField       = "Linux/3.4 DLNADOC/1.50 UPnP/1.0 DMS/1.0"
+	rootDescPath      = "/rootDesc.xml"
+	resPath           = "/res"
+	serviceControlURL = "/ctl"
 )
 
 type server struct {
@@ -153,7 +152,9 @@ func (s *server) ModelNumber() string {
 //
 // For rendering, it is passed the server object for context.
 var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="1.0"?>
-<root xmlns="urn:schemas-upnp-org:device-1-0">
+<root xmlns="urn:schemas-upnp-org:device-1-0"
+      xmlns:dlna="urn:schemas-dlna-org:device-1-0"
+      xmlns:sec="http://www.sec.co.kr/dlna">
   <specVersion>
     <major>1</major>
     <minor>0</minor>
@@ -169,6 +170,11 @@ var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="
     <modelURL>https://rclone.org/</modelURL>
     <serialNumber>00000000</serialNumber>
     <UDN>{{.RootDeviceUUID}}</UDN>
+    <dlna:X_DLNACAP/>
+    <dlna:X_DLNADOC>DMS-1.50</dlna:X_DLNADOC>
+    <dlna:X_DLNADOC>M-DMS-1.50</dlna:X_DLNADOC>
+    <sec:ProductCap>smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec</sec:ProductCap>
+    <sec:X_ProductCap>smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec</sec:X_ProductCap>
     <iconList>
       <icon>
         <mimetype>image/png</mimetype>
@@ -184,7 +190,7 @@ var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="
         <depth>8</depth>
         <url>/static/rclone-120x120.png</url>
       </icon>
-	</iconList>
+    </iconList>
     <serviceList>
       <service>
         <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
@@ -206,7 +212,7 @@ var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="
         <SCPDURL>/static/X_MS_MediaReceiverRegistrar.xml</SCPDURL>
         <controlURL>/ctl</controlURL>
         <eventSubURL></eventSubURL>
-	  </service>
+      </service>
     </serviceList>
     <presentationURL>/</presentationURL>
   </device>
@@ -279,6 +285,14 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
+
+	// add some DLNA specific headers
+	if r.Header.Get("getContentFeatures.dlna.org") != "" {
+		w.Header().Set("contentFeatures.dlna.org", dms_dlna.ContentFeatures{
+			SupportRange: true,
+		}.String())
+	}
+	w.Header().Set("transferMode.dlna.org", "Streaming")
 
 	file := node.(*vfs.File)
 	in, err := file.Open(os.O_RDONLY)
