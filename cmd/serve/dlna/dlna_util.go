@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/anacrolix/dms/soap"
@@ -19,6 +20,24 @@ func makeDeviceUUID(unique string) string {
 	}
 	buf := h.Sum(nil)
 	return upnp.FormatUUID(buf)
+}
+
+// Get all available active network interfaces.
+func listInterfaces() []net.Interface {
+	ifs, err := net.Interfaces()
+	if err != nil {
+		log.Printf("list network interfaces: %v", err)
+		return []net.Interface{}
+	}
+
+	var active []net.Interface
+	for _, intf := range ifs {
+		if intf.Flags&net.FlagUp == 0 || intf.MTU <= 0 {
+			continue
+		}
+		active = append(active, intf)
+	}
+	return active
 }
 
 func didlLite(chardata string) string {
