@@ -115,6 +115,9 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 		"ContentDirectory": &contentDirectoryService{
 			server: s,
 		},
+		"ConnectionManager": &connectionManagerService{
+			server: s,
+		},
 	}
 	s.RootDeviceUUID = makeDeviceUUID(s.FriendlyName)
 
@@ -166,6 +169,22 @@ var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="
     <modelURL>https://rclone.org/</modelURL>
     <serialNumber>00000000</serialNumber>
     <UDN>{{.RootDeviceUUID}}</UDN>
+    <iconList>
+      <icon>
+        <mimetype>image/png</mimetype>
+        <width>48</width>
+        <height>48</height>
+        <depth>8</depth>
+        <url>/static/rclone-48x48.png</url>
+      </icon>
+      <icon>
+        <mimetype>image/png</mimetype>
+        <width>120</width>
+        <height>120</height>
+        <depth>8</depth>
+        <url>/static/rclone-120x120.png</url>
+      </icon>
+	</iconList>
     <serviceList>
       <service>
         <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
@@ -181,6 +200,13 @@ var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="
         <controlURL>/ctl</controlURL>
         <eventSubURL></eventSubURL>
       </service>
+      <service>
+        <serviceType>urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1</serviceType>
+        <serviceId>urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar</serviceId>
+        <SCPDURL>/static/X_MS_MediaReceiverRegistrar.xml</SCPDURL>
+        <controlURL>/ctl</controlURL>
+        <eventSubURL></eventSubURL>
+	  </service>
     </serviceList>
     <presentationURL>/</presentationURL>
   </device>
@@ -348,7 +374,8 @@ func (s *server) ssdpInterface(intf net.Interface) {
 			"urn:schemas-upnp-org:device:MediaServer:1"},
 		Services: []string{
 			"urn:schemas-upnp-org:service:ContentDirectory:1",
-			"urn:schemas-upnp-org:service:ConnectionManager:1"},
+			"urn:schemas-upnp-org:service:ConnectionManager:1",
+			"urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1"},
 		Location:       advertiseLocationFn,
 		Server:         serverField,
 		UUID:           s.RootDeviceUUID,
