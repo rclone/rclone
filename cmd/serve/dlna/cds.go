@@ -192,6 +192,14 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 				"Result":         didlLite(string(result)),
 				"UpdateID":       cds.updateIDString(),
 			}, nil
+		case "BrowseMetadata":
+			result, err := xml.Marshal(obj)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{
+				"Result": didlLite(string(result)),
+			}, nil
 		default:
 			return nil, upnp.Errorf(upnp.ArgumentValueInvalidErrorCode, "unhandled browse flag: %v", browse.BrowseFlag)
 		}
@@ -199,6 +207,19 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 		return map[string]string{
 			"SearchCaps": "",
 		}, nil
+	// Samsung Extensions
+	case "X_GetFeatureList":
+		return map[string]string{
+			"FeatureList": `<Features xmlns="urn:schemas-upnp-org:av:avs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schemas-upnp-org:av:avs http://www.upnp.org/schemas/av/avs.xsd">
+	<Feature name="samsung.com_BASICVIEW" version="1">
+		<container id="/" type="object.item.imageItem"/>
+		<container id="/" type="object.item.audioItem"/>
+		<container id="/" type="object.item.videoItem"/>
+	</Feature>
+</Features>`}, nil
+	case "X_SetBookmark":
+		// just ignore
+		return map[string]string{}, nil
 	default:
 		return nil, upnp.InvalidActionError
 	}
