@@ -960,7 +960,10 @@ func HashLister(ht hash.Type, f fs.Fs, w io.Writer) error {
 func Count(f fs.Fs) (objects int64, size int64, err error) {
 	err = ListFn(f, func(o fs.Object) {
 		atomic.AddInt64(&objects, 1)
-		atomic.AddInt64(&size, o.Size())
+		objectSize := o.Size()
+		if objectSize > 0 {
+			atomic.AddInt64(&size, objectSize)
+		}
 	})
 	return
 }
