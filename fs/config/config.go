@@ -214,8 +214,17 @@ var errorConfigFileNotFound = errors.New("config file not found")
 // automatically decrypt it.
 func loadConfigFile() (*goconfig.ConfigFile, error) {
 	b, err := ioutil.ReadFile(ConfigPath)
+	envpw := os.Getenv("RCLONE_CONFIG_PASS")
 	if err != nil {
 		if os.IsNotExist(err) {
+			if len(configKey) == 0 && envpw != "" {
+				err := setConfigPassword(envpw)
+				if err != nil {
+					fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
+				} else {
+					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
+				}
+			}
 			return nil, errorConfigFileNotFound
 		}
 		return nil, err
@@ -254,7 +263,6 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	if len(box) < 24+secretbox.Overhead {
 		return nil, errors.New("Configuration data too short")
 	}
-	envpw := os.Getenv("RCLONE_CONFIG_PASS")
 
 	var out []byte
 	for {
