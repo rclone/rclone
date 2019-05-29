@@ -111,9 +111,10 @@ abnormal situation, for example if you wish to get the public links of
 a directory with hundred of files...  After more or less a week, the
 remote will remote accept rclone logins normally again.
 
-(If you have lots of commands to run one after the other a better way
-of doing this might be to run `rclone rcd` and then use `rclone rc` to
-run the commands over the API.  This will avoid logging in each time.)
+You can mitigate this issue by mounting the remote it with `rclone
+mount`. This will log-in when mounting and a log-out when unmounting
+only. You can also run `rclone rcd` and then use `rclone rc` to run
+the commands over the API to avoid logging in each time.
 
 Rclone does not currently close mega sessions (you can see them in the
 web interface), however closing the sessions does not solve the issue.
