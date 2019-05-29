@@ -1737,8 +1737,8 @@ func (o *Object) SetModTime(modTime time.Time) error {
 		req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyID
 	}
 	if o.fs.opt.StorageClass == "GLACIER" || o.fs.opt.StorageClass == "DEEP_ARCHIVE" {
-		return fs.ErrorCantSetModTime 
-  	}    
+		return fs.ErrorCantSetModTime
+	}
 	if o.fs.opt.StorageClass != "" {
 		req.StorageClass = &o.fs.opt.StorageClass
 	}
