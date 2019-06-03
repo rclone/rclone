@@ -35,10 +35,10 @@ Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
 ...
-17 / Microsoft OneDrive
+18 / Microsoft OneDrive
    \ "onedrive"
 ...
-Storage> 17
+Storage> 18
 Microsoft App Client Id
 Leave blank normally.
 Enter a string value. Press Enter for the default ("").
