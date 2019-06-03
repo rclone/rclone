@@ -105,6 +105,18 @@ func getConfigData() *goconfig.ConfigFile {
 
 // Return the path to the configuration file
 func makeConfigPath() string {
+
+	// Use rclone.conf from rclone executable directory if already existing
+	exe, err := os.Executable()
+	if err == nil {
+		exedir := filepath.Dir(exe)
+		cfgpath := filepath.Join(exedir, configFileName)
+		_, err := os.Stat(cfgpath)
+		if err == nil {
+			return cfgpath
+		}
+	}
+
 	// Find user's home directory
 	homeDir, err := homedir.Dir()
 
