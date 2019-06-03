@@ -1346,6 +1346,33 @@ func TestSyncImmutable(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 }
 
+// Test --ignore-case-sync
+func TestSyncIgnoreCase(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	// Only test if filesystems are case sensitive
+	if r.Fremote.Features().CaseInsensitive || r.Flocal.Features().CaseInsensitive {
+		t.Skip("Skipping test as local or remote are case-insensitive")
+	}
+
+	fs.Config.IgnoreCaseSync = true
+	defer func() { fs.Config.IgnoreCaseSync = false }()
+
+	// Create files with different filename casing
+	file1 := r.WriteFile("existing", "potato", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+	file2 := r.WriteObject("EXISTING", "potato", t1)
+	fstest.CheckItems(t, r.Fremote, file2)
+
+	// Should not copy files that are differently-cased but otherwise identical
+	accounting.Stats.ResetCounters()
+	err := Sync(r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file2)
+}
+
 // Test that aborting on max upload works
 func TestAbort(t *testing.T) {
 	r := fstest.NewRun(t)

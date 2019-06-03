@@ -58,7 +58,7 @@ func (m *March) init() {
 	//                  | Yes | No  | No                 |
 	//                  | No  | Yes | Yes                |
 	//                  | Yes | Yes | Yes                |
-	if m.Fdst.Features().CaseInsensitive {
+	if m.Fdst.Features().CaseInsensitive || fs.Config.IgnoreCaseSync {
 		m.transforms = append(m.transforms, strings.ToLower)
 	}
 }
