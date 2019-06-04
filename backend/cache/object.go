@@ -24,15 +24,16 @@ const (
 type Object struct {
 	fs.Object `json:"-"`
 
-	ParentFs      fs.Fs                `json:"-"`        // parent fs
-	CacheFs       *Fs                  `json:"-"`        // cache fs
-	Name          string               `json:"name"`     // name of the directory
-	Dir           string               `json:"dir"`      // abs path of the object
-	CacheModTime  int64                `json:"modTime"`  // modification or creation time - IsZero for unknown
-	CacheSize     int64                `json:"size"`     // size of directory and contents or -1 if unknown
-	CacheStorable bool                 `json:"storable"` // says whether this object can be stored
-	CacheType     string               `json:"cacheType"`
-	CacheTs       time.Time            `json:"cacheTs"`
+	ParentFs      fs.Fs     `json:"-"`        // parent fs
+	CacheFs       *Fs       `json:"-"`        // cache fs
+	Name          string    `json:"name"`     // name of the directory
+	Dir           string    `json:"dir"`      // abs path of the object
+	CacheModTime  int64     `json:"modTime"`  // modification or creation time - IsZero for unknown
+	CacheSize     int64     `json:"size"`     // size of directory and contents or -1 if unknown
+	CacheStorable bool      `json:"storable"` // says whether this object can be stored
+	CacheType     string    `json:"cacheType"`
+	CacheTs       time.Time `json:"cacheTs"`
+	cacheHashesMu sync.Mutex
 	CacheHashes   map[hash.Type]string // all supported hashes cached
 
 	refreshMutex sync.Mutex
@@ -103,7 +104,9 @@ func (o *Object) updateData(ctx context.Context, source fs.Object) {
 	o.CacheSize = source.Size()
 	o.CacheStorable = source.Storable()
 	o.CacheTs = time.Now()
+	o.cacheHashesMu.Lock()
 	o.CacheHashes = make(map[hash.Type]string)
+	o.cacheHashesMu.Unlock()
 }
 
 // Fs returns its FS info
@@ -268,7 +271,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	o.CacheModTime = src.ModTime(ctx).UnixNano()
 	o.CacheSize = src.Size()
+	o.cacheHashesMu.Lock()
 	o.CacheHashes = make(map[hash.Type]string)
+	o.cacheHashesMu.Unlock()
 	o.CacheTs = time.Now()
 	o.persist()
 
@@ -309,11 +314,12 @@ func (o *Object) Remove(ctx context.Context) error {
 // since it might or might not be called, this is lazy loaded
 func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	_ = o.refresh(ctx)
+	o.cacheHashesMu.Lock()
 	if o.CacheHashes == nil {
 		o.CacheHashes = make(map[hash.Type]string)
 	}
-
 	cachedHash, found := o.CacheHashes[ht]
+	o.cacheHashesMu.Unlock()
 	if found {
 		return cachedHash, nil
 	}
@@ -324,7 +330,9 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	o.cacheHashesMu.Lock()
 	o.CacheHashes[ht] = liveHash
+	o.cacheHashesMu.Unlock()
 
 	o.persist()
 	fs.Debugf(o, "object hash cached: %v", liveHash)
