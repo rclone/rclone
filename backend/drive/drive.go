@@ -382,6 +382,16 @@ will download it anyway.`,
 			Default:  defaultBurst,
 			Help:     "Number of API calls to allow without sleeping.",
 			Advanced: true,
+		}, {
+			Name:    "server_side_across_configs",
+			Default: false,
+			Help: `Allow server side operations (eg copy) to work across different drive configs.
+
+This can be useful if you wish to do a server side copy between two
+different Google drives.  Note that this isn't enabled by default
+because it isn't easy to tell if it will work beween any two
+configurations.`,
+			Advanced: true,
 		}},
 	})
 
@@ -427,6 +437,7 @@ type Options struct {
 	V2DownloadMinSize         fs.SizeSuffix `config:"v2_download_min_size"`
 	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
 	PacerBurst                int           `config:"pacer_burst"`
+	ServerSideAcrossConfigs   bool          `config:"server_side_across_configs"`
 }
 
 // Fs represents a remote drive server
@@ -924,7 +935,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		ReadMimeType:            true,
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
-		ServerSideAcrossConfigs: true,
+		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
 	}).Fill(f)
 
 	// Create a new authorized Drive client.
