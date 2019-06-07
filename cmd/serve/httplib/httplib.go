@@ -2,6 +2,7 @@
 package httplib
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -114,6 +115,11 @@ type Server struct {
 	HTMLTemplate    *template.Template // HTML template for web interface
 }
 
+type contextUserType struct{}
+
+// ContextUserKey is a simple context key
+var ContextUserKey = &contextUserType{}
+
 // singleUserProvider provides the encrypted password for a single user
 func (s *Server) singleUserProvider(user, realm string) string {
 	if user == s.Opt.BasicUser {
@@ -167,6 +173,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 				}
 				authenticator.RequireAuth(w, r)
 			} else {
+				r = r.WithContext(context.WithValue(r.Context(), ContextUserKey, username))
 				oldHandler.ServeHTTP(w, r)
 			}
 		})
