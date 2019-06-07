@@ -10,6 +10,7 @@ import (
 	errorspkg "errors"
 	"sync"
 	"syscall"
+	"time"
 	"unicode/utf16"
 	"unsafe"
 )
@@ -55,6 +56,10 @@ const (
 	FILE_UNICODE_ON_DISK              = 0x00000004
 	FILE_VOLUME_IS_COMPRESSED         = 0x00008000
 	FILE_VOLUME_QUOTAS                = 0x00000020
+
+	// Return values of SleepEx and other APC functions
+	STATUS_USER_APC    = 0x000000C0
+	WAIT_IO_COMPLETION = STATUS_USER_APC
 )
 
 // StringToUTF16 is deprecated. Use UTF16FromString instead.
@@ -134,7 +139,8 @@ func NewCallbackCDecl(fn interface{}) uintptr {
 //sys	GetVersion() (ver uint32, err error)
 //sys	FormatMessage(flags uint32, msgsrc uintptr, msgid uint32, langid uint32, buf []uint16, args *byte) (n uint32, err error) = FormatMessageW
 //sys	ExitProcess(exitcode uint32)
-//sys	CreateFile(name *uint16, access uint32, mode uint32, sa *SecurityAttributes, createmode uint32, attrs uint32, templatefile int32) (handle Handle, err error) [failretval==InvalidHandle] = CreateFileW
+//sys	IsWow64Process(handle Handle, isWow64 *bool) (err error) = IsWow64Process
+//sys	CreateFile(name *uint16, access uint32, mode uint32, sa *SecurityAttributes, createmode uint32, attrs uint32, templatefile Handle) (handle Handle, err error) [failretval==InvalidHandle] = CreateFileW
 //sys	ReadFile(handle Handle, buf []byte, done *uint32, overlapped *Overlapped) (err error)
 //sys	WriteFile(handle Handle, buf []byte, done *uint32, overlapped *Overlapped) (err error)
 //sys	GetOverlappedResult(handle Handle, overlapped *Overlapped, done *uint32, wait bool) (err error)
@@ -167,10 +173,12 @@ func NewCallbackCDecl(fn interface{}) uintptr {
 //sys	CancelIoEx(s Handle, o *Overlapped) (err error)
 //sys	CreateProcess(appName *uint16, commandLine *uint16, procSecurity *SecurityAttributes, threadSecurity *SecurityAttributes, inheritHandles bool, creationFlags uint32, env *uint16, currentDir *uint16, startupInfo *StartupInfo, outProcInfo *ProcessInformation) (err error) = CreateProcessW
 //sys	OpenProcess(da uint32, inheritHandle bool, pid uint32) (handle Handle, err error)
+//sys	ShellExecute(hwnd Handle, verb *uint16, file *uint16, args *uint16, cwd *uint16, showCmd int32) (err error) = shell32.ShellExecuteW
 //sys	TerminateProcess(handle Handle, exitcode uint32) (err error)
 //sys	GetExitCodeProcess(handle Handle, exitcode *uint32) (err error)
 //sys	GetStartupInfo(startupInfo *StartupInfo) (err error) = GetStartupInfoW
 //sys	GetCurrentProcess() (pseudoHandle Handle, err error)
+//sys	GetCurrentThread() (pseudoHandle Handle, err error)
 //sys	GetProcessTimes(handle Handle, creationTime *Filetime, exitTime *Filetime, kernelTime *Filetime, userTime *Filetime) (err error)
 //sys	DuplicateHandle(hSourceProcessHandle Handle, hSourceHandle Handle, hTargetProcessHandle Handle, lpTargetHandle *Handle, dwDesiredAccess uint32, bInheritHandle bool, dwOptions uint32) (err error)
 //sys	WaitForSingleObject(handle Handle, waitMilliseconds uint32) (event uint32, err error) [failretval==0xffffffff]
@@ -185,6 +193,9 @@ func NewCallbackCDecl(fn interface{}) uintptr {
 //sys	FreeEnvironmentStrings(envs *uint16) (err error) = kernel32.FreeEnvironmentStringsW
 //sys	GetEnvironmentVariable(name *uint16, buffer *uint16, size uint32) (n uint32, err error) = kernel32.GetEnvironmentVariableW
 //sys	SetEnvironmentVariable(name *uint16, value *uint16) (err error) = kernel32.SetEnvironmentVariableW
+//sys	CreateEnvironmentBlock(block **uint16, token Token, inheritExisting bool) (err error) = userenv.CreateEnvironmentBlock
+//sys	DestroyEnvironmentBlock(block *uint16) (err error) = userenv.DestroyEnvironmentBlock
+//sys	getTickCount64() (ms uint64) = kernel32.GetTickCount64
 //sys	SetFileTime(handle Handle, ctime *Filetime, atime *Filetime, wtime *Filetime) (err error)
 //sys	GetFileAttributes(name *uint16) (attrs uint32, err error) [failretval==INVALID_FILE_ATTRIBUTES] = kernel32.GetFileAttributesW
 //sys	SetFileAttributes(name *uint16, attrs uint32) (err error) = kernel32.SetFileAttributesW
@@ -243,6 +254,16 @@ func NewCallbackCDecl(fn interface{}) uintptr {
 //sys	SetEvent(event Handle) (err error) = kernel32.SetEvent
 //sys	ResetEvent(event Handle) (err error) = kernel32.ResetEvent
 //sys	PulseEvent(event Handle) (err error) = kernel32.PulseEvent
+//sys	SleepEx(milliseconds uint32, alertable bool) (ret uint32) = kernel32.SleepEx
+//sys	CreateJobObject(jobAttr *SecurityAttributes, name *uint16) (handle Handle, err error) = kernel32.CreateJobObjectW
+//sys	AssignProcessToJobObject(job Handle, process Handle) (err error) = kernel32.AssignProcessToJobObject
+//sys	TerminateJobObject(job Handle, exitCode uint32) (err error) = kernel32.TerminateJobObject
+//sys	SetErrorMode(mode uint32) (ret uint32) = kernel32.SetErrorMode
+//sys	ResumeThread(thread Handle) (ret uint32, err error) [failretval==0xffffffff] = kernel32.ResumeThread
+//sys	SetPriorityClass(process Handle, priorityClass uint32) (err error) = kernel32.SetPriorityClass
+//sys	GetPriorityClass(process Handle) (ret uint32, err error) = kernel32.GetPriorityClass
+//sys	SetInformationJobObject(job Handle, JobObjectInformationClass uint32, JobObjectInformation uintptr, JobObjectInformationLength uint32) (ret int, err error)
+//sys	GenerateConsoleCtrlEvent(ctrlEvent uint32, processGroupID uint32) (err error)
 
 // Volume Management Functions
 //sys	DefineDosDevice(flags uint32, deviceName *uint16, targetPath *uint16) (err error) = DefineDosDeviceW
@@ -264,6 +285,10 @@ func NewCallbackCDecl(fn interface{}) uintptr {
 //sys	QueryDosDevice(deviceName *uint16, targetPath *uint16, max uint32) (n uint32, err error) [failretval==0] = QueryDosDeviceW
 //sys	SetVolumeLabel(rootPathName *uint16, volumeName *uint16) (err error) = SetVolumeLabelW
 //sys	SetVolumeMountPoint(volumeMountPoint *uint16, volumeName *uint16) (err error) = SetVolumeMountPointW
+//sys	MessageBox(hwnd Handle, text *uint16, caption *uint16, boxtype uint32) (ret int32, err error) [failretval==0] = user32.MessageBoxW
+//sys	clsidFromString(lpsz *uint16, pclsid *GUID) (err error) [failretval!=0] = ole32.CLSIDFromString
+//sys	stringFromGUID2(rguid *GUID, lpsz *uint16, cchMax int) (chars int) = ole32.StringFromGUID2
+//sys	coCreateGuid(pguid *GUID) (ret error) = ole32.CoCreateGuid
 
 // syscall interface implementation for other packages
 
@@ -476,6 +501,10 @@ func ComputerName() (name string, err error) {
 		return "", e
 	}
 	return string(utf16.Decode(b[0:n])), nil
+}
+
+func DurationSinceBoot() time.Duration {
+	return time.Duration(getTickCount64()) * time.Millisecond
 }
 
 func Ftruncate(fd Handle, length int64) (err error) {
@@ -1214,4 +1243,40 @@ func Readlink(path string, buf []byte) (n int, err error) {
 	n = copy(buf, []byte(s))
 
 	return n, nil
+}
+
+// GUIDFromString parses a string in the form of
+// "{XXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}" into a GUID.
+func GUIDFromString(str string) (GUID, error) {
+	guid := GUID{}
+	str16, err := syscall.UTF16PtrFromString(str)
+	if err != nil {
+		return guid, err
+	}
+	err = clsidFromString(str16, &guid)
+	if err != nil {
+		return guid, err
+	}
+	return guid, nil
+}
+
+// GenerateGUID creates a new random GUID.
+func GenerateGUID() (GUID, error) {
+	guid := GUID{}
+	err := coCreateGuid(&guid)
+	if err != nil {
+		return guid, err
+	}
+	return guid, nil
+}
+
+// String returns the canonical string form of the GUID,
+// in the form of "{XXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}".
+func (guid GUID) String() string {
+	var str [100]uint16
+	chars := stringFromGUID2(&guid, &str[0], len(str))
+	if chars <= 1 {
+		return ""
+	}
+	return string(utf16.Decode(str[:chars-1]))
 }
