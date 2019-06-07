@@ -42,13 +42,16 @@ The output is an array of Items, where each Item looks like this
       },
       "ID": "y2djkhiujf83u33",
       "OrigID": "UYOJVTUW00Q1RzTDA",
+      "IsBucket" : false,
       "IsDir" : false,
       "MimeType" : "application/octet-stream",
       "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
       "Name" : "file.txt",
       "Encrypted" : "v0qpsdq8anpci8n929v3uu9338",
+      "EncryptedPath" : "kja9098349023498/v0qpsdq8anpci8n929v3uu9338",
       "Path" : "full/path/goes/here/file.txt",
-      "Size" : 6
+      "Size" : 6,
+      "Tier" : "hot",
    }
 
 If --hash is not specified the Hashes property won't be emitted.
@@ -65,6 +68,10 @@ The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
 When used without --recursive the Path will always be the same as Name.
+
+If the directory is a bucket in a bucket based backend, then
+"IsBucket" will be set to true. This key won't be present unless it is
+"true".
 
 The time is in RFC3339 format with up to nanosecond precision.  The
 number of decimal digits in the seconds will depend on the precision

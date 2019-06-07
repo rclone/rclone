@@ -30,7 +30,7 @@ The result is
 - list
     - This is an array of objects as described in the lsjson command
 
-See the lsjson command for more information on the above and examples.
+See the [lsjson command](/commands/rclone_lsjson/) for more information on the above and examples.
 `,
 	})
 }
