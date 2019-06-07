@@ -29,14 +29,16 @@ import (
 )
 
 var (
-	stdio      bool
-	appendOnly bool
+	stdio        bool
+	appendOnly   bool
+	privateRepos bool
 )
 
 func init() {
 	httpflags.AddFlags(Command.Flags())
 	Command.Flags().BoolVar(&stdio, "stdio", false, "run an HTTP2 server on stdin/stdout")
 	Command.Flags().BoolVar(&appendOnly, "append-only", false, "disallow deletion of repository data")
+	Command.Flags().BoolVar(&privateRepos, "private-repos", false, "users can only access their private repo")
 }
 
 // Command definition for cobra
@@ -94,14 +96,14 @@ For example:
     $ export RESTIC_PASSWORD=yourpassword
     $ restic init
     created restic backend 8b1a4b56ae at rest:http://localhost:8080/
-    
+
     Please note that knowledge of your password is required to access
     the repository. Losing your password means that your data is
     irrecoverably lost.
     $ restic backup /path/to/files/to/backup
     scan [/path/to/files/to/backup]
     scanned 189 directories, 312 files in 0:00
-    [0:00] 100.00%  38.128 MiB / 38.128 MiB  501 / 501 items  0 errors  ETA 0:00 
+    [0:00] 100.00%  38.128 MiB / 38.128 MiB  501 / 501 items  0 errors  ETA 0:00
     duration: 0:00
     snapshot 45c8fdd8 saved
 
@@ -116,6 +118,10 @@ these **must** end with /.  Eg
     $ export RESTIC_REPOSITORY=rest:http://localhost:8080/user2repo/
     # backup user2 stuff
 
+#### Private repositories ####
+
+The "--private-repos" flag can be used to limit users to repositories starting
+with a path of "/<username>/".
 ` + httplib.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -208,6 +214,12 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	remote := makeRemote(path)
 	fs.Debugf(s.f, "%s %s", r.Method, path)
+
+	v := r.Context().Value(httplib.ContextUserKey)
+	if privateRepos && (v == nil || !strings.HasPrefix(path, "/"+v.(string)+"/")) {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
 
 	// Dispatch on path then method
 	if strings.HasSuffix(path, "/") {
