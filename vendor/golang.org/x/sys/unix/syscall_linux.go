@@ -109,6 +109,12 @@ func IoctlGetInt(fd int, req uint) (int, error) {
 	return value, err
 }
 
+func IoctlGetUint32(fd int, req uint) (uint32, error) {
+	var value uint32
+	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
+	return value, err
+}
+
 func IoctlGetWinsize(fd int, req uint) (*Winsize, error) {
 	var value Winsize
 	err := ioctl(fd, req, uintptr(unsafe.Pointer(&value)))
@@ -1531,9 +1537,13 @@ func Setgid(uid int) (err error) {
 	return EOPNOTSUPP
 }
 
+func Signalfd(fd int, sigmask *Sigset_t, flags int) (newfd int, err error) {
+	return signalfd(fd, sigmask, _C__NSIG/8, flags)
+}
+
 //sys	Setpriority(which int, who int, prio int) (err error)
 //sys	Setxattr(path string, attr string, data []byte, flags int) (err error)
-//sys	Signalfd(fd int, mask *Sigset_t, flags int) = SYS_SIGNALFD4
+//sys	signalfd(fd int, sigmask *Sigset_t, maskSize uintptr, flags int) (newfd int, err error) = SYS_SIGNALFD4
 //sys	Statx(dirfd int, path string, flags int, mask int, stat *Statx_t) (err error)
 //sys	Sync()
 //sys	Syncfs(fd int) (err error)

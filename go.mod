@@ -52,13 +52,14 @@ require (
 	github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
 	go.etcd.io/bbolt v1.3.2 // indirect
 	go.opencensus.io v0.20.2 // indirect
-	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734
-	golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6
+	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
+	golang.org/x/net v0.0.0-20190606173856-1492cefac77f
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872
+	golang.org/x/sys v0.0.0-20190606203320-7fc4e5ec1444
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
+	golang.org/x/tools v0.0.0-20190606174628-0139d5756a7d // indirect
 	google.golang.org/api v0.3.2
 	google.golang.org/appengine v1.5.0 // indirect
 	google.golang.org/grpc v1.20.0 // indirect

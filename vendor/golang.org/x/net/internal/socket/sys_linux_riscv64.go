@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package windows
+// +build riscv64
 
-//go:generate ./mkerrors.bash zerrors_windows.go
+package socket
+
+const (
+	sysRECVMMSG = 0xf3
+	sysSENDMMSG = 0x10d
+)
