@@ -24,6 +24,7 @@ type ListJSONItem struct {
 	ID            string            `json:",omitempty"`
 	OrigID        string            `json:",omitempty"`
 	Tier          string            `json:",omitempty"`
+	IsBucket      bool              `json:",omitempty"`
 }
 
 // Timestamp a time in the provided format
@@ -92,8 +93,10 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 			return errors.Wrap(err, "ListJSON failed to make new crypt remote")
 		}
 	}
-	canGetTier := fsrc.Features().GetTier
+	features := fsrc.Features()
+	canGetTier := features.GetTier
 	format := formatForPrecision(fsrc.Precision())
+	isBucket := features.BucketBased && remote == "" && fsrc.Root() == "" // if bucket based remote listing the root mark directories as buckets
 	err := walk.ListR(fsrc, remote, false, ConfigMaxDepth(opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
 		for _, entry := range entries {
 			switch entry.(type) {
@@ -152,6 +155,7 @@ func ListJSON(fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJS
 			switch x := entry.(type) {
 			case fs.Directory:
 				item.IsDir = true
+				item.IsBucket = isBucket
 			case fs.Object:
 				item.IsDir = false
 				if opt.ShowHash {
