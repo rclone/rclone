@@ -1750,3 +1750,40 @@ func DirMove(f fs.Fs, srcRemote, dstRemote string) (err error) {
 
 	return nil
 }
+
+// FsInfo provides information about a remote
+type FsInfo struct {
+	// Name of the remote (as passed into NewFs)
+	Name string
+
+	// Root of the remote (as passed into NewFs)
+	Root string
+
+	// String returns a description of the FS
+	String string
+
+	// Precision of the ModTimes in this Fs in Nanoseconds
+	Precision time.Duration
+
+	// Returns the supported hash types of the filesystem
+	Hashes []string
+
+	// Features returns the optional features of this Fs
+	Features map[string]bool
+}
+
+// GetFsInfo gets the information (FsInfo) about a given Fs
+func GetFsInfo(f fs.Fs) *FsInfo {
+	info := &FsInfo{
+		Name:      f.Name(),
+		Root:      f.Root(),
+		String:    f.String(),
+		Precision: f.Precision(),
+		Hashes:    make([]string, 0, 4),
+		Features:  f.Features().Enabled(),
+	}
+	for _, hashType := range f.Hashes().Array() {
+		info.Hashes = append(info.Hashes, hashType.String())
+	}
+	return info
+}

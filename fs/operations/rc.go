@@ -68,9 +68,10 @@ func init() {
 		Help: `This takes the following parameters
 
 - fs - a remote name string eg "drive:"
-- remote - a path within that remote eg "dir"
 
 The result is as returned from rclone about --json
+
+See the [about command](/commands/rclone_size/) command for more information on the above.
 `,
 	})
 }
@@ -288,5 +289,83 @@ func rcPublicLink(in rc.Params) (out rc.Params, err error) {
 	}
 	out = make(rc.Params)
 	out["url"] = url
+	return out, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "operations/fsinfo",
+		Fn:    rcFsInfo,
+		Title: "Return information about the remote",
+		Help: `This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+
+This returns info about the remote passed in;
+
+` + "```" + `
+{
+	// optional features and whether they are available or not
+	"Features": {
+		"About": true,
+		"BucketBased": false,
+		"CanHaveEmptyDirectories": true,
+		"CaseInsensitive": false,
+		"ChangeNotify": false,
+		"CleanUp": false,
+		"Copy": false,
+		"DirCacheFlush": false,
+		"DirMove": true,
+		"DuplicateFiles": false,
+		"GetTier": false,
+		"ListR": false,
+		"MergeDirs": false,
+		"Move": true,
+		"OpenWriterAt": true,
+		"PublicLink": false,
+		"Purge": true,
+		"PutStream": true,
+		"PutUnchecked": false,
+		"ReadMimeType": false,
+		"ServerSideAcrossConfigs": false,
+		"SetTier": false,
+		"SetWrapper": false,
+		"UnWrap": false,
+		"WrapFs": false,
+		"WriteMimeType": false
+	},
+	// Names of hashes available
+	"Hashes": [
+		"MD5",
+		"SHA-1",
+		"DropboxHash",
+		"QuickXorHash"
+	],
+	"Name": "local",	// Name as created
+	"Precision": 1,		// Precision of timestamps in ns
+	"Root": "/",		// Path as created
+	"String": "Local file system at /" // how the remote will appear in logs
+}
+` + "```" + `
+
+This command does not have a command line equivalent so use this instead:
+
+    rclone rc --loopback operations/fsinfo fs=remote:
+
+`,
+	})
+}
+
+// Fsinfo the remote
+func rcFsInfo(in rc.Params) (out rc.Params, err error) {
+	f, err := rc.GetFs(in)
+	if err != nil {
+		return nil, err
+	}
+	info := GetFsInfo(f)
+	err = rc.Reshape(&out, info)
+	if err != nil {
+		return nil, errors.Wrap(err, "fsinfo Reshape failed")
+	}
 	return out, nil
 }
