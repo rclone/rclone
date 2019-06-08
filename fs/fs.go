@@ -618,6 +618,26 @@ func (ft *Features) List() (out []string) {
 	return out
 }
 
+// Enabled returns a map of features with keys showing whether they
+// are enabled or not
+func (ft *Features) Enabled() (features map[string]bool) {
+	v := reflect.ValueOf(ft).Elem()
+	vType := v.Type()
+	features = make(map[string]bool, v.NumField())
+	for i := 0; i < v.NumField(); i++ {
+		vName := vType.Field(i).Name
+		field := v.Field(i)
+		if field.Kind() == reflect.Func {
+			// Can't compare functions
+			features[vName] = !field.IsNil()
+		} else {
+			zero := reflect.Zero(field.Type())
+			features[vName] = field.Interface() != zero.Interface()
+		}
+	}
+	return features
+}
+
 // DisableList nil's out the comma separated list of named features.
 // If it isn't found then it will log a message.
 func (ft *Features) DisableList(list []string) *Features {
