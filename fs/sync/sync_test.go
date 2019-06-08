@@ -972,10 +972,22 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 		fs.Config.ModifyWindow = oldModifyWindow
 	}()
 
-	accounting.GlobalStats().ResetCounters()
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeO, fourF, fiveF)
+
+	if r.Fremote.Hashes().Count() == 0 {
+		t.Logf("Skip test with --checksum as no hashes supported")
+		return
+	}
+
+	// now enable checksum
+	fs.Config.CheckSum = true
+	defer func() { fs.Config.CheckSum = false }()
+
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeF, fourF, fiveF)
 }
 
 // Test with TrackRenames set

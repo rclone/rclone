@@ -1098,20 +1098,24 @@ The default is to run 4 file transfers in parallel.
 This forces rclone to skip any files which exist on the destination
 and have a modified time that is newer than the source file.
 
+This can be useful when transferring to a remote which doesn't support
+mod times directly (or when using `--use-server-mod-time` to avoid extra
+API calls) as it is more accurate than a `--size-only` check and faster
+than using `--checksum`.
+
 If an existing destination file has a modification time equal (within
 the computed modify window precision) to the source file's, it will be
-updated if the sizes are different.
+updated if the sizes are different.  If `--checksum` is set then
+rclone will update the destination if the checksums differ too.
+
+If an existing destination file is older than the source file then
+it will be updated if the size or checksum differs from the source file.
 
 On remotes which don't support mod time directly (or when using
 `--use-server-mod-time`) the time checked will be the uploaded time.
 This means that if uploading to one of these remotes, rclone will skip
 any files which exist on the destination and have an uploaded time that
 is newer than the modification time of the source file.
-
-This can be useful when transferring to a remote which doesn't support
-mod times directly (or when using `--use-server-mod-time` to avoid extra
-API calls) as it is more accurate than a `--size-only` check and faster
-than using `--checksum`.
 
 ### --use-mmap ###
 
