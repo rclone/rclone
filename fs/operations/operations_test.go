@@ -1182,3 +1182,23 @@ func TestDirMove(t *testing.T) {
 	)
 
 }
+
+func TestGetFsInfo(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	f := r.Fremote
+	info := operations.GetFsInfo(f)
+	assert.Equal(t, f.Name(), info.Name)
+	assert.Equal(t, f.Root(), info.Root)
+	assert.Equal(t, f.String(), info.String)
+	assert.Equal(t, f.Precision(), info.Precision)
+	hashSet := hash.NewHashSet()
+	for _, hashName := range info.Hashes {
+		var ht hash.Type
+		require.NoError(t, ht.Set(hashName))
+		hashSet.Add(ht)
+	}
+	assert.Equal(t, f.Hashes(), hashSet)
+	assert.Equal(t, f.Features().Enabled(), info.Features)
+}

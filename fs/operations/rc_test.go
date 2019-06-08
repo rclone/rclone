@@ -370,3 +370,30 @@ func TestRcPublicLink(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "doesn't support public links")
 }
+
+// operations/fsinfo: Return information about the remote
+func TestRcFsInfo(t *testing.T) {
+	r, call := rcNewRun(t, "operations/fsinfo")
+	defer r.Finalise()
+	in := rc.Params{
+		"fs": r.FremoteName,
+	}
+	got, err := call.Fn(in)
+	require.NoError(t, err)
+	want := operations.GetFsInfo(r.Fremote)
+	assert.Equal(t, want.Name, got["Name"])
+	assert.Equal(t, want.Root, got["Root"])
+	assert.Equal(t, want.String, got["String"])
+	assert.Equal(t, float64(want.Precision), got["Precision"])
+	var hashes []interface{}
+	for _, hash := range want.Hashes {
+		hashes = append(hashes, hash)
+	}
+	assert.Equal(t, hashes, got["Hashes"])
+	var features = map[string]interface{}{}
+	for k, v := range want.Features {
+		features[k] = v
+	}
+	assert.Equal(t, features, got["Features"])
+
+}
