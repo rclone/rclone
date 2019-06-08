@@ -41,6 +41,31 @@ func TestFeaturesList(t *testing.T) {
 	assert.True(t, strings.Contains(names, ",Copy,"))
 }
 
+func TestFeaturesEnabled(t *testing.T) {
+	ft := new(Features)
+	ft.CaseInsensitive = true
+	ft.Purge = func() error { return nil }
+	enabled := ft.Enabled()
+
+	flag, ok := enabled["CaseInsensitive"]
+	assert.Equal(t, true, ok)
+	assert.Equal(t, true, flag, enabled)
+
+	flag, ok = enabled["Purge"]
+	assert.Equal(t, true, ok)
+	assert.Equal(t, true, flag, enabled)
+
+	flag, ok = enabled["DuplicateFiles"]
+	assert.Equal(t, true, ok)
+	assert.Equal(t, false, flag, enabled)
+
+	flag, ok = enabled["Copy"]
+	assert.Equal(t, true, ok)
+	assert.Equal(t, false, flag, enabled)
+
+	assert.Equal(t, len(ft.List()), len(enabled))
+}
+
 func TestFeaturesDisableList(t *testing.T) {
 	ft := new(Features)
 	ft.Copy = func(src Object, remote string) (Object, error) {
