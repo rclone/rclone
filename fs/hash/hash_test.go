@@ -75,6 +75,7 @@ var hashTestSet = []hashTest{
 			hash.QuickXorHash: "0110c000085000031c0001095ec00218d0000700",
 			hash.Whirlpool:    "eddf52133d4566d763f716e853d6e4efbabd29e2c2e63f56747b1596172851d34c2df9944beb6640dbdbe3d9b4eb61180720a79e3d15baff31c91e43d63869a4",
 			hash.CRC32:        "a6041d7e",
+			hash.Mailru:       "0102030405060708090a0b0c0d0e000000000000",
 		},
 	},
 	// Empty data set
@@ -87,6 +88,7 @@ var hashTestSet = []hashTest{
 			hash.QuickXorHash: "0000000000000000000000000000000000000000",
 			hash.Whirlpool:    "19fa61d75522a4669b44e39c1d2e1726c530232130d407f89afee0964997f7a73e83be698b288febcf88e3e03c4f0757ea8964e59b63d93708b138cc42a66eb3",
 			hash.CRC32:        "00000000",
+			hash.Mailru:       "0000000000000000000000000000000000000000",
 		},
 	},
 }
