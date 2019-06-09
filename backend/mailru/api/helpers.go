@@ -58,7 +58,7 @@ func (w *BinWriter) WritePu32(val int64) {
 	if val < 0 || val > 4294967295 {
 		log.Fatalf("Invalid UInt32 %v", val)
 	}
-	w.WritePu64(int64(val))
+	w.WritePu64(val)
 }
 
 // WritePu64 writes an unsigned (actually, signed) long as unsigned varint

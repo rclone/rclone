@@ -300,7 +300,7 @@ func (f *Fs) metaServer() (string, error) {
 		return fserrors.ShouldRetry(err), err
 	})
 	if err != nil {
-		res.Body.Close() // ignore error
+		closeBody(res)
 		return "", err
 	}
 	f.metaURL = url
@@ -365,7 +365,7 @@ func (f *Fs) itemToDirEntry(item *api.ListItem) (entry fs.DirEntry, dirSize int,
 	}
 	switch item.Kind {
 	case "folder":
-		dir := fs.NewDir(remote, time.Unix(int64(item.Mtime), 0)).SetSize(item.Size)
+		dir := fs.NewDir(remote, time.Unix(item.Mtime, 0)).SetSize(item.Size)
 		dirSize := item.Count.Files + item.Count.Folders
 		return dir, dirSize, nil
 	case "file":
@@ -373,7 +373,7 @@ func (f *Fs) itemToDirEntry(item *api.ListItem) (entry fs.DirEntry, dirSize int,
 			fs:          f,
 			remote:      remote,
 			hasMetaData: true,
-			size:        int64(item.Size),
+			size:        item.Size,
 			mrHash:      item.Hash,
 			modTime:     time.Unix(item.Mtime, 0),
 		}
@@ -491,12 +491,12 @@ func (f *Fs) listBin(dirPath string, depth int) (entries fs.DirEntries, err erro
 		return shouldRetry(res, err)
 	})
 	if err != nil {
-		res.Body.Close() // ignore error
+		closeBody(res)
 		return nil, err
 	}
 
 	r := api.NewBinReader(res.Body)
-	defer res.Body.Close()
+	defer closeBody(res)
 
 	// read status
 	switch status := r.ReadByteAsInt(); status {
@@ -760,12 +760,12 @@ func (f *Fs) CreateDir(path string) error {
 		return shouldRetry(res, err)
 	})
 	if err != nil {
-		res.Body.Close() // ignore error
+		closeBody(res)
 		return err
 	}
 
 	reply := api.NewBinReader(res.Body)
-	defer res.Body.Close()
+	defer closeBody(res)
 
 	switch status := reply.ReadByteAsInt(); status {
 	case api.MkdirResultOK:
@@ -956,7 +956,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debugf(f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
 		err = f.moveItem(tmpPath, dstPath, "rename temporary file")
 		if err != nil {
-			f.delete(tmpPath, false) // ignore delete errors...
+			_ = f.delete(tmpPath, false) // ignore error
 			return nil, err
 		}
 	}
@@ -1030,12 +1030,12 @@ func (f *Fs) moveItem(srcPath, dstPath, opName string) error {
 		return shouldRetry(res, err)
 	})
 	if err != nil {
-		res.Body.Close() // ignore error
+		closeBody(res)
 		return err
 	}
 
 	reply := api.NewBinReader(res.Body)
-	defer res.Body.Close()
+	defer closeBody(res)
 
 	switch status := reply.ReadByteAsInt(); status {
 	case api.MoveResultOK:
@@ -1198,7 +1198,7 @@ func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) erro
 		return shouldRetry(res, err)
 	})
 	if err != nil {
-		res.Body.Close() // ignore error
+		closeBody(res)
 		return err
 	}
 
@@ -1403,12 +1403,12 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 		return shouldRetry(res, err)
 	})
 	if err != nil {
-		res.Body.Close() // ignore error
+		closeBody(res)
 		return err
 	}
 
 	reply := api.NewBinReader(res.Body)
-	defer res.Body.Close()
+	defer closeBody(res)
 
 	switch status := reply.ReadByteAsInt(); status {
 	case api.AddResultOK, api.AddResultNotModified, api.AddResultDunno04, api.AddResultDunno09:
@@ -1477,7 +1477,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	})
 	if err != nil {
 		if res != nil && res.Body != nil {
-			res.Body.Close() // ignore error
+			closeBody(res)
 		}
 		return nil, err
 	}
@@ -1582,7 +1582,7 @@ func (sl *serverList) take(current string) (string, error) {
 	})
 
 	if err != nil {
-		res.Body.Close() // ignore error
+		closeBody(res)
 		return "", errors.Wrap(err, "Failed to request file server")
 	}
 
@@ -1646,6 +1646,11 @@ func (f *Fs) Hashes() hash.Set {
 // Features returns the optional features of this Fs
 func (f *Fs) Features() *fs.Features {
 	return f.features
+}
+
+// close response body ignoring errors
+func closeBody(res *http.Response) {
+	_ = res.Body.Close()
 }
 
 // Check the interfaces are satisfied

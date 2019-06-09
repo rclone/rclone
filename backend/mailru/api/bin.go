@@ -2,9 +2,9 @@ package api
 
 // BIN protocol constants
 const (
-	BinContentType = "application/x-www-form-urlencoded"
-	TreeIDLength   = 12
-	HashLength     = 20
+	BinContentType    = "application/x-www-form-urlencoded"
+	TreeIDLength      = 12
+	HashLength        = 20
 	DunnoNodeIDLength = 16
 )
 
