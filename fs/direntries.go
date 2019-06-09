@@ -17,7 +17,7 @@ func (ds DirEntries) Swap(i, j int) {
 
 // Less is part of sort.Interface.
 func (ds DirEntries) Less(i, j int) bool {
-	return ds[i].Remote() < ds[j].Remote()
+	return CompareDirEntries(ds[i], ds[j]) < 0
 }
 
 // ForObject runs the function supplied on every object in the entries
@@ -78,4 +78,29 @@ func DirEntryType(d DirEntry) string {
 		return "directory"
 	}
 	return fmt.Sprintf("unknown type %T", d)
+}
+
+// CompareDirEntries returns 1 if a > b, 0 if a == b and -1 if a < b
+// If two dir entries have the same name, compare their types (directories are before objects)
+func CompareDirEntries(a, b DirEntry) int {
+	aName := a.Remote()
+	bName := b.Remote()
+
+	if aName > bName {
+		return 1
+	} else if aName < bName {
+		return -1
+	}
+
+	typeA := DirEntryType(a)
+	typeB := DirEntryType(b)
+
+	// same name, compare types
+	if typeA > typeB {
+		return 1
+	} else if typeA < typeB {
+		return -1
+	}
+
+	return 0
 }
