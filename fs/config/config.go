@@ -225,23 +225,23 @@ var errorConfigFileNotFound = errors.New("config file not found")
 // loadConfigFile will load a config file, and
 // automatically decrypt it.
 func loadConfigFile() (*goconfig.ConfigFile, error) {
-	b, err := ioutil.ReadFile(ConfigPath)
 	envpw := os.Getenv("RCLONE_CONFIG_PASS")
+	if len(configKey) == 0 && envpw != "" {
+		err := setConfigPassword(envpw)
+		if err != nil {
+			fs.Errorf(nil, "Using RCLONE_CONFIG_PASS returned: %v", err)
+		} else {
+			fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
+		}
+	}
+
+	b, err := ioutil.ReadFile(ConfigPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if len(configKey) == 0 && envpw != "" {
-				err := setConfigPassword(envpw)
-				if err != nil {
-					fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
-				} else {
-					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
-				}
-			}
 			return nil, errorConfigFileNotFound
 		}
 		return nil, err
 	}
-
 	// Find first non-empty line
 	r := bufio.NewReader(bytes.NewBuffer(b))
 	for {
@@ -295,14 +295,6 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 			configKey = []byte(obscure.MustReveal(string(obscuredKey)))
 			fs.Debugf(nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
 		} else {
-			if len(configKey) == 0 && envpw != "" {
-				err := setConfigPassword(envpw)
-				if err != nil {
-					fmt.Println("Using RCLONE_CONFIG_PASS returned:", err)
-				} else {
-					fs.Debugf(nil, "Using RCLONE_CONFIG_PASS password.")
-				}
-			}
 			if len(configKey) == 0 {
 				if !fs.Config.AskPassword {
 					return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
@@ -327,7 +319,6 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		// Retry
 		fs.Errorf(nil, "Couldn't decrypt configuration, most likely wrong password.")
 		configKey = nil
-		envpw = ""
 	}
 	return goconfig.LoadFromReader(bytes.NewBuffer(out))
 }
