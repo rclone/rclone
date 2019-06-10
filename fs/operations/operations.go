@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"path"
 	"path/filepath"
 	"sort"
@@ -423,8 +424,8 @@ func Move(fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Ob
 	}
 	// See if we have Move available
 	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && fdst.Features().ServerSideAcrossConfigs)) {
-		// Delete destination if it exists
-		if dst != nil {
+		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
+		if dst != nil && (!fdst.Features().CaseInsensitive || strings.ToLower(dst.Remote()) != strings.ToLower(src.Remote())) {
 			err = DeleteFile(dst)
 			if err != nil {
 				return newDst, err
@@ -1478,6 +1479,31 @@ func moveOrCopyFile(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName stri
 		return err
 	}
 
+	// Special case for changing case of a file on a case insensitive remote
+	// This will move the file to a temporary name then
+	// move it back to the intended destination. This is required
+	// to avoid issues with certain remotes and avoid file deletion.
+	if !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.ToLower(dstFilePath) == strings.ToLower(srcFilePath) {
+		// Create random name to temporarily move file to
+		tmpObjName := dstFileName + "-rclone-move-" + random(8)
+		_, err := fdst.NewObject(tmpObjName)
+		if err != fs.ErrorObjectNotFound {
+			if err == nil {
+				return errors.New("found an already existing file with a randomly generated name. Try the operation again")
+			}
+			return errors.Wrap(err, "error while attempting to move file to a temporary location")
+		}
+		accounting.Stats.Transferring(srcFileName)
+		tmpObj, err := Op(fdst, nil, tmpObjName, srcObj)
+		if err != nil {
+			accounting.Stats.DoneTransferring(srcFileName, false)
+			return errors.Wrap(err, "error while moving file to temporary location")
+		}
+		_, err = Op(fdst, nil, dstFileName, tmpObj)
+		accounting.Stats.DoneTransferring(srcFileName, err == nil)
+		return err
+	}
+
 	if NeedTransfer(dstObj, srcObj) {
 		// If destination already exists, then we must move it into --backup-dir if required
 		if dstObj != nil && fs.Config.BackupDir != "" {
@@ -1504,6 +1530,17 @@ func moveOrCopyFile(fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName stri
 		defer accounting.Stats.DoneChecking(srcFileName)
 	}
 	return err
+}
+
+// random generates a pseudorandom alphanumeric string
+func random(length int) string {
+	randomOutput := make([]byte, length)
+	possibleCharacters := "123567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	rand.Seed(time.Now().Unix())
+	for i := range randomOutput {
+		randomOutput[i] = possibleCharacters[rand.Intn(len(possibleCharacters))]
+	}
+	return string(randomOutput)
 }
 
 // MoveFile moves a single file possibly to a new name
