@@ -118,7 +118,6 @@ func init() {
 			Help: `This takes the following parameters
 
 - name - name of remote
-- type - type of new remote
 ` + extraHelp + `
 
 See the [config ` + name + ` command](/commands/rclone_config_` + name + `/) command for more information on the above.`,

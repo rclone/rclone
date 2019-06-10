@@ -98,6 +98,9 @@ Note that if the config process would normally ask a question the
 default is taken.  Each time that happens rclone will print a message
 saying how to affect the value taken.
 
+If any of the parameters passed is a password field, then rclone will
+automatically obscure them before putting them in the config file.
+
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
@@ -125,9 +128,13 @@ var configUpdateCommand = &cobra.Command{
 Update an existing remote's options. The options should be passed in
 in pairs of <key> <value>.
 
-For example to update the env_auth field of a remote of name myremote you would do:
+For example to update the env_auth field of a remote of name myremote
+you would do:
 
     rclone config update myremote swift env_auth true
+
+If any of the parameters passed is a password field, then rclone will
+automatically obscure them before putting them in the config file.
 
 If the remote uses oauth the token will be updated, if you don't
 require this add an extra parameter thus:
@@ -168,6 +175,9 @@ should be passed in in pairs of <key> <value>.
 For example to set password of a remote of name myremote you would do:
 
     rclone config password myremote fieldname mypassword
+
+This command is obsolete now that "config update" and "config create"
+both support obscuring passwords directly.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(3, 256, command, args)

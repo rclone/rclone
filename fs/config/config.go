@@ -935,9 +935,38 @@ func suppressConfirm() func() {
 // keyValues should be key, value pairs.
 func UpdateRemote(name string, keyValues rc.Params) error {
 	defer suppressConfirm()()
+
+	// Work out which options need to be obscured
+	needsObscure := map[string]struct{}{}
+	if fsType := FileGet(name, "type"); fsType != "" {
+		if ri, err := fs.Find(fsType); err != nil {
+			fs.Debugf(nil, "Couldn't find fs for type %q", fsType)
+		} else {
+			for _, opt := range ri.Options {
+				if opt.IsPassword {
+					needsObscure[opt.Name] = struct{}{}
+				}
+			}
+		}
+	} else {
+		fs.Debugf(nil, "UpdateRemote: Couldn't find fs type")
+	}
+
 	// Set the config
 	for k, v := range keyValues {
-		getConfigData().SetValue(name, k, fmt.Sprint(v))
+		vStr := fmt.Sprint(v)
+		// Obscure parameter if necessary
+		if _, ok := needsObscure[k]; ok {
+			_, err := obscure.Reveal(vStr)
+			if err != nil {
+				// If error => not already obscured, so obscure it
+				vStr, err = obscure.Obscure(vStr)
+				if err != nil {
+					return errors.Wrap(err, "UpdateRemote: obscure failed")
+				}
+			}
+		}
+		getConfigData().SetValue(name, k, vStr)
 	}
 	RemoteConfig(name)
 	SaveConfig()
