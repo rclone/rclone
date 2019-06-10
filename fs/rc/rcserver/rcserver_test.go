@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -229,7 +230,7 @@ func TestRemoteServing(t *testing.T) {
 			Expected: `{
 	"error": "failed to find object: object not found",
 	"input": null,
-	"path": "/notfound",
+	"path": "notfound",
 	"status": 404
 }
 `,
@@ -263,6 +264,14 @@ func TestRemoteServing(t *testing.T) {
 		}, {
 			Name:     "file",
 			URL:      remoteURL + "file.txt",
+			Status:   http.StatusOK,
+			Expected: "this is file1.txt\n",
+			Headers: map[string]string{
+				"Content-Length": "18",
+			},
+		}, {
+			Name:     "file with no slash after ]",
+			URL:      strings.TrimRight(remoteURL, "/") + "file.txt",
 			Status:   http.StatusOK,
 			Expected: "this is file1.txt\n",
 			Headers: map[string]string{
