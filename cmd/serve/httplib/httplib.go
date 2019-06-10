@@ -150,6 +150,11 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		authenticator := auth.NewBasicAuthenticator(s.Opt.Realm, secretProvider)
 		oldHandler := handler
 		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// No auth wanted for OPTIONS method
+			if r.Method == "OPTIONS" {
+				oldHandler.ServeHTTP(w, r)
+				return
+			}
 			if username := authenticator.CheckAuth(r); username == "" {
 				authHeader := r.Header.Get(authenticator.Headers.V().Authorization)
 				if authHeader != "" {
