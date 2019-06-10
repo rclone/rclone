@@ -739,6 +739,41 @@ func TestMoveFile(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
+func TestCaseInsensitiveMoveFile(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	if !r.Fremote.Features().CaseInsensitive {
+		return
+	}
+
+	file1 := r.WriteFile("file1", "file1 contents", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+
+	file2 := file1
+	file2.Path = "sub/file2"
+
+	err := operations.MoveFile(r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal)
+	fstest.CheckItems(t, r.Fremote, file2)
+
+	r.WriteFile("file1", "file1 contents", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+
+	err = operations.MoveFile(r.Fremote, r.Flocal, file2.Path, file1.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal)
+	fstest.CheckItems(t, r.Fremote, file2)
+
+	file2Capitalized := file2
+	file2Capitalized.Path = "sub/File2"
+
+	err = operations.MoveFile(r.Fremote, r.Fremote, file2Capitalized.Path, file2.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal)
+	fstest.CheckItems(t, r.Fremote, file2Capitalized)
+}
+
 func TestMoveFileBackupDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
