@@ -112,7 +112,7 @@ outer:
 			return shouldRetry(resp, err)
 		})
 		delay := defaultDelay
-		why := "unknown"
+		var why string
 		if err != nil {
 			// Sometimes we get 400 Error with
 			// parts_mismatch immediately after uploading
