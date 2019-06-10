@@ -243,6 +243,7 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		}
 		directory.Serve(w, r)
 	} else {
+		path = strings.Trim(path, "/")
 		o, err := f.NewObject(path)
 		if err != nil {
 			writeError(path, nil, w, errors.Wrap(err, "failed to find object"), http.StatusInternalServerError)
