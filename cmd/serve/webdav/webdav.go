@@ -6,8 +6,10 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/ncw/rclone/cmd"
+	rhttp "github.com/ncw/rclone/cmd/serve/http"
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/fs"
@@ -22,12 +24,14 @@ import (
 var (
 	hashName string
 	hashType = hash.None
+	disableGETDir = false
 )
 
 func init() {
 	httpflags.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
 	Command.Flags().StringVar(&hashName, "etag-hash", "", "Which hash to use for the ETag, or auto or blank for off")
+	Command.Flags().BoolVar(&disableGETDir, "disable-dir-list", false, "Disable HTML directory list on GET request for a directory")
 }
 
 // Command definition for cobra
@@ -96,8 +100,10 @@ Use "rclone hashsum" to see the full list.
 // overwriting another existing file or directory is an error is OS-dependent.
 type WebDAV struct {
 	*httplib.Server
-	f   fs.Fs
-	vfs *vfs.VFS
+	f             fs.Fs
+	vfs           *vfs.VFS
+	webdavhandler *webdav.Handler
+	httpserver    *rhttp.Server
 }
 
 // check interface
@@ -109,15 +115,25 @@ func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
 		f:   f,
 		vfs: vfs.New(f, &vfsflags.Opt),
 	}
-
-	handler := &webdav.Handler{
+	webdavHandler := &webdav.Handler{
 		FileSystem: w,
 		LockSystem: webdav.NewMemLS(),
 		Logger:     w.logRequest, // FIXME
 	}
-
-	w.Server = httplib.NewServer(handler, opt)
+	w.webdavhandler = webdavHandler
+	if !disableGETDir {
+		w.httpserver = rhttp.NewServer(f, opt)
+	}
+	w.Server = httplib.NewServer(http.HandlerFunc(w.handler), opt)
 	return w
+}
+
+func (w *WebDAV) handler(rw http.ResponseWriter, r *http.Request) {
+	if !disableGETDir && (r.Method == "GET" || r.Method == "HEAD") && strings.HasSuffix(r.URL.Path, "/") {
+		w.httpserver.Handler(rw, r)
+		return
+	}
+	w.webdavhandler.ServeHTTP(rw, r)
 }
 
 // serve runs the http server in the background.

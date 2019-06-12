@@ -43,7 +43,7 @@ control the stats printing.
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f, &httpflags.Opt)
+			s := NewServer(f, &httpflags.Opt)
 			err := s.Serve()
 			if err != nil {
 				return err
@@ -54,28 +54,29 @@ control the stats printing.
 	},
 }
 
-// server contains everything to run the server
-type server struct {
+// Server contains everything to run the Server
+type Server struct {
 	*httplib.Server
 	f   fs.Fs
 	vfs *vfs.VFS
 }
 
-func newServer(f fs.Fs, opt *httplib.Options) *server {
+// NewServer creates a new http server
+func NewServer(f fs.Fs, opt *httplib.Options) *Server {
 	mux := http.NewServeMux()
-	s := &server{
+	s := &Server{
 		Server: httplib.NewServer(mux, opt),
 		f:      f,
 		vfs:    vfs.New(f, &vfsflags.Opt),
 	}
-	mux.HandleFunc("/", s.handler)
+	mux.HandleFunc("/", s.Handler)
 	return s
 }
 
-// Serve runs the http server in the background.
+// Serve runs the http Server in the background.
 //
-// Use s.Close() and s.Wait() to shutdown server
-func (s *server) Serve() error {
+// Use s.Close() and s.Wait() to shutdown Server
+func (s *Server) Serve() error {
 	err := s.Server.Serve()
 	if err != nil {
 		return err
@@ -84,8 +85,8 @@ func (s *server) Serve() error {
 	return nil
 }
 
-// handler reads incoming requests and dispatches them
-func (s *server) handler(w http.ResponseWriter, r *http.Request) {
+// Handler reads incoming requests and dispatches them
+func (s *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -104,7 +105,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 // serveDir serves a directory index at dirRemote
-func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
+func (s *Server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
 	// List the directory
 	node, err := s.vfs.Stat(dirRemote)
 	if err == vfs.ENOENT {
@@ -135,7 +136,7 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 }
 
 // serveFile serves a file object at remote
-func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *Server) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
 	node, err := s.vfs.Stat(remote)
 	if err == vfs.ENOENT {
 		fs.Infof(remote, "%s: File not found", r.RemoteAddr)
