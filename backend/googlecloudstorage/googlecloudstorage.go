@@ -1003,7 +1003,6 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		Bucket:      o.fs.bucket,
 		Name:        o.fs.root + o.remote,
 		ContentType: fs.MimeType(src),
-		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
 	}
 	var newObject *storage.Object
