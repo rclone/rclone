@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	hashName string
-	hashType = hash.None
+	hashName      string
+	hashType      = hash.None
 	disableGETDir = false
 )
 
