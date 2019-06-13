@@ -19,7 +19,7 @@ import (
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
-	httpServer   *Server
+	httpServer   *server
 	testURL      string
 )
 
@@ -30,7 +30,7 @@ const (
 func startServer(t *testing.T, f fs.Fs) {
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
-	httpServer = NewServer(f, &opt)
+	httpServer = newServer(f, &opt)
 	assert.NoError(t, httpServer.Serve())
 	testURL = httpServer.Server.URL()
 
