@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,7 +45,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.mu.Lock()
 	job.mu.Lock()
-	job.EndTime = time.Now().Add(-expireDuration - 60*time.Second)
+	job.EndTime = time.Now().Add(-fs.Config.RcJobExpireDuration - 60*time.Second)
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()
