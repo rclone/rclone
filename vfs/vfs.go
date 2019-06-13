@@ -51,6 +51,7 @@ var DefaultOpt = Options{
 	ChunkSize:         128 * fs.MebiByte,
 	ChunkSizeLimit:    -1,
 	CacheMaxSize:      -1,
+	CaseInsensitive:   false,
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
@@ -199,6 +200,7 @@ type Options struct {
 	CacheMaxAge       time.Duration
 	CacheMaxSize      fs.SizeSuffix
 	CachePollInterval time.Duration
+	CaseInsensitive   bool
 }
 
 // New creates a new VFS and root directory.  If opt is nil, then

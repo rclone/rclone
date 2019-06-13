@@ -331,6 +331,23 @@ func (d *Dir) stat(leaf string) (Node, error) {
 		return nil, err
 	}
 	item, ok := d.items[leaf]
+
+	if !ok && d.vfs.Opt.CaseInsensitive {
+		leafLower := strings.ToLower(leaf)
+		for name, node := range d.items {
+			if strings.ToLower(name) == leafLower {
+				if ok {
+					// duplicate case insensitive match is an error
+					ok = false
+					break
+				}
+				// found a case insenstive match
+				ok = true
+				item = node
+			}
+		}
+	}
+
 	if !ok {
 		return nil, ENOENT
 	}
