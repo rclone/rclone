@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/ncw/rclone/cmd"
-	rhttp "github.com/ncw/rclone/cmd/serve/http"
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
+	"github.com/ncw/rclone/cmd/serve/httplib/serve"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/log"
@@ -41,8 +41,8 @@ var Command = &cobra.Command{
 	Long: `
 rclone serve webdav implements a basic webdav server to serve the
 remote over HTTP via the webdav protocol. This can be viewed with a
-webdav client or you can make a remote of type webdav to read and
-write it.
+webdav client, through a web browser, or you can make a remote of
+type webdav to read and write it.
 
 ### Webdav options
 
@@ -103,7 +103,6 @@ type WebDAV struct {
 	f             fs.Fs
 	vfs           *vfs.VFS
 	webdavhandler *webdav.Handler
-	httpserver    *rhttp.Server
 }
 
 // check interface
@@ -121,19 +120,51 @@ func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
 		Logger:     w.logRequest, // FIXME
 	}
 	w.webdavhandler = webdavHandler
-	if !disableGETDir {
-		w.httpserver = rhttp.NewServer(f, opt)
-	}
 	w.Server = httplib.NewServer(http.HandlerFunc(w.handler), opt)
 	return w
 }
 
 func (w *WebDAV) handler(rw http.ResponseWriter, r *http.Request) {
-	if !disableGETDir && (r.Method == "GET" || r.Method == "HEAD") && strings.HasSuffix(r.URL.Path, "/") {
-		w.httpserver.Handler(rw, r)
+	urlPath := r.URL.Path
+	isDir := strings.HasSuffix(urlPath, "/")
+	remote := strings.Trim(urlPath, "/")
+	if !disableGETDir && (r.Method == "GET" || r.Method == "HEAD") && isDir {
+		w.serveDir(rw, r, remote)
 		return
 	}
 	w.webdavhandler.ServeHTTP(rw, r)
+}
+
+// serveDir serves a directory index at dirRemote
+// This is similar to serveDir in serve http.
+func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote string) {
+	// List the directory
+	node, err := w.vfs.Stat(dirRemote)
+	if err == vfs.ENOENT {
+		http.Error(rw, "Directory not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		return
+	}
+	if !node.IsDir() {
+		http.Error(rw, "Not a directory", http.StatusNotFound)
+		return
+	}
+	dir := node.(*vfs.Dir)
+	dirEntries, err := dir.ReadDirAll()
+	if err != nil {
+		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		return
+	}
+
+	// Make the entries for display
+	directory := serve.NewDirectory(dirRemote, w.HTMLTemplate)
+	for _, node := range dirEntries {
+		directory.AddEntry(node.Path(), node.IsDir())
+	}
+
+	directory.Serve(rw, r)
 }
 
 // serve runs the http server in the background.
