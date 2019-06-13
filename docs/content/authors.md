@@ -262,3 +262,4 @@ Contributors
   * JorisE <JorisE@users.noreply.github.com>
   * garry415 <garry.415@gmail.com>
   * forgems <forgems@gmail.com>
+  * Florian Apolloner <florian@apolloner.eu>
