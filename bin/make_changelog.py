@@ -12,8 +12,8 @@ from collections import defaultdict
 
 IGNORE_RES = [
     r"^Add .* to contributors$",
-    r"^Start v\d+.\d+-DEV development$",
-    r"^Version v\d.\d+$",
+    r"^Start v\d+\.\d+(\.\d+)?-DEV development$",
+    r"^Version v\d+\.\d+(\.\d+)?$",
 ]
 
 IGNORE_RE = re.compile("(?:" + "|".join(IGNORE_RES) + ")")
