@@ -85,6 +85,14 @@ style.
 
 Default Off.
 
+### --rc-job-expire-duration=DURATION
+
+Expire finished async jobs older than DURATION (default 60s).
+
+### --rc-job-expire-interval=DURATION
+
+Interval duration to check for expired async jobs (default 10s).
+
 ### --rc-no-auth
 
 By default rclone will require authorisation to have been set up on
