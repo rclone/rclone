@@ -7,14 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
-)
-
-const (
-	// expire the job when it is finished and older than this
-	expireDuration = 60 * time.Second
-	// inteval to run the expire cache
-	expireInterval = 10 * time.Second
 )
 
 // Job describes a asynchronous task started via the rc package
@@ -47,7 +41,7 @@ var (
 func newJobs() *Jobs {
 	return &Jobs{
 		jobs:           map[int64]*Job{},
-		expireInterval: expireInterval,
+		expireInterval: fs.Config.RcJobExpireInterval,
 	}
 }
 
@@ -68,7 +62,7 @@ func (jobs *Jobs) Expire() {
 	now := time.Now()
 	for ID, job := range jobs.jobs {
 		job.mu.Lock()
-		if job.Finished && now.Sub(job.EndTime) > expireDuration {
+		if job.Finished && now.Sub(job.EndTime) > fs.Config.RcJobExpireDuration {
 			delete(jobs.jobs, ID)
 		}
 		job.mu.Unlock()

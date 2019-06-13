@@ -96,6 +96,8 @@ type ConfigInfo struct {
 	ClientKey              string // Client Side Key
 	MultiThreadCutoff      SizeSuffix
 	MultiThreadStreams     int
+	RcJobExpireDuration    time.Duration
+	RcJobExpireInterval    time.Duration
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -129,6 +131,8 @@ func NewConfig() *ConfigInfo {
 	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
 	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
 	c.MultiThreadStreams = 4
+	c.RcJobExpireDuration = 60 * time.Second
+	c.RcJobExpireInterval = 10 * time.Second
 
 	return c
 }
