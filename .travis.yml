@@ -31,6 +31,7 @@ install:
 env:
   global:
     - GOTAGS=cmount
+    - GOMAXPROCS=8              # workaround for cmd/mount tests locking up - see #3154
     - GO111MODULE=off
     - GITHUB_USER=ncw
     - secure: gU8gCV9R8Kv/Gn0SmCP37edpfIbPoSvsub48GK7qxJdTU628H0KOMiZW/T0gtV5d67XJZ4eKnhJYlxwwxgSgfejO32Rh5GlYEKT/FuVoH0BD72dM1GDFLSrUiUYOdoHvf/BKIFA3dJFT4lk2ASy4Zh7SEoXHG6goBlqUpYx8hVA=
