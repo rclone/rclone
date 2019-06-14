@@ -6,6 +6,8 @@ require (
 	github.com/Azure/azure-pipeline-go v0.1.8
 	github.com/Azure/azure-storage-blob-go v0.6.0
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
+	github.com/Bowery/prompt v0.0.0-20190419144237-972d0ceb96f5 // indirect
+	github.com/OneOfOne/xxhash v1.2.5
 	github.com/Unknwon/goconfig v0.0.0-20181105214110-56bd8ab18619
 	github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 	github.com/abbot/go-http-auth v0.4.0
@@ -13,15 +15,21 @@ require (
 	github.com/aws/aws-sdk-go v1.19.11
 	github.com/billziss-gh/cgofuse v1.1.0
 	github.com/coreos/bbolt v1.3.2
+	github.com/dchest/safefile v0.0.0-20151022103144-855e8d98f185 // indirect
 	github.com/djherbis/times v1.2.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.4.0+incompatible
+	github.com/gabriel-vasile/mimetype v0.3.8
 	github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 // indirect
 	github.com/goftp/server v0.0.0-20190304020633-eabccc535b5a
 	github.com/golang/protobuf v1.3.1 // indirect
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
 	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190411002643-bd77b112433e // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/jlaffaye/ftp v0.0.0-20190519203911-8f5b34ce006f
+	github.com/id01/go-lz4 v1.0.3
+	github.com/kardianos/govendor v1.0.9 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a
 	github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff

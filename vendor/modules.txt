@@ -11,6 +11,8 @@ github.com/Azure/azure-storage-blob-go/azblob
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
+# github.com/OneOfOne/xxhash v1.2.5
+github.com/OneOfOne/xxhash
 # github.com/Unknwon/goconfig v0.0.0-20181105214110-56bd8ab18619
 github.com/Unknwon/goconfig
 # github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
@@ -84,6 +86,8 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/seen_state
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
+# github.com/gabriel-basile/mimetype v0.3.8
+github.com/gabriel-basile/mimetype
 # github.com/goftp/server v0.0.0-20190304020633-eabccc535b5a
 github.com/goftp/server
 # github.com/golang/protobuf v1.3.1
@@ -92,10 +96,14 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
+github.com/golang/snappy
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
 # github.com/hashicorp/golang-lru v0.5.1
 github.com/hashicorp/golang-lru/simplelru
+# github.com/id01/go-lz4 v1.0.3
+github.com/id01/go-lz4
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/jlaffaye/ftp v0.0.0-20190519203911-8f5b34ce006f
