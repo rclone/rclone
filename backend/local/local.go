@@ -96,6 +96,24 @@ check can be disabled with this flag.`,
 			NoPrefix: true,
 			ShortOpt: "x",
 			Advanced: true,
+		}, {
+			Name: "case_sensitive",
+			Help: `Force the filesystem to report itself as case sensitive.
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "case_insensitive",
+			Help: `Force the filesystem to report itself as case insensitive
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.`,
+			Default:  false,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -110,6 +128,8 @@ type Options struct {
 	NoCheckUpdated    bool `config:"no_check_updated"`
 	NoUNC             bool `config:"nounc"`
 	OneFileSystem     bool `config:"one_file_system"`
+	CaseSensitive     bool `config:"case_sensitive"`
+	CaseInsensitive   bool `config:"case_insensitive"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -228,6 +248,12 @@ func (f *Fs) Features() *fs.Features {
 
 // caseInsensitive returns whether the remote is case insensitive or not
 func (f *Fs) caseInsensitive() bool {
+	if f.opt.CaseSensitive {
+		return false
+	}
+	if f.opt.CaseInsensitive {
+		return true
+	}
 	// FIXME not entirely accurate since you can have case
 	// sensitive Fses on darwin and case insensitive Fses on linux.
 	// Should probably check but that would involve creating a
