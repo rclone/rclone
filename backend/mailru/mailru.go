@@ -180,7 +180,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}).Fill(f)
 
 	// Override few config settings and create a client
-	var clientConfig fs.ConfigInfo = *fs.Config
+	clientConfig := *fs.Config
 	clientConfig.UserAgent = opt.UserAgent
 	if strings.Contains(opt.Debug, "nogzip") {
 		clientConfig.NoGzip = true
@@ -318,7 +318,10 @@ func readBodyWord(res *http.Response) (word string, err error) {
 		line := strings.Trim(string(body), " \r\n")
 		word = strings.Split(line, " ")[0]
 	}
-	return
+	if word == "" {
+		return "", errors.New("Empty reply from dispatcher")
+	}
+	return word, nil
 }
 
 // readItemMetaData returns a file/directory info at given full path
@@ -1195,7 +1198,7 @@ func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) erro
 		if err == nil {
 			o.mrHash, err = readBodyWord(res)
 		}
-		return shouldRetry(res, err)
+		return fserrors.ShouldRetry(err), err
 	})
 	if err != nil {
 		closeBody(res)
@@ -1538,8 +1541,10 @@ func (sl *serverList) take(current string) (string, error) {
 	var server *pendingServer
 	i := 0
 	if current != "" {
+		// avoid current (faulty) server
 		for i < len(sl.list) {
-			if sl.list[i].url == current {
+			srv := &sl.list[i]
+			if srv.url == current {
 				i++
 				break
 			}
@@ -1547,8 +1552,9 @@ func (sl *serverList) take(current string) (string, error) {
 		}
 	}
 	for i < len(sl.list) {
-		if sl.list[i].locks < maxServerLocks {
-			server = &sl.list[i]
+		srv := &sl.list[i]
+		if srv.locks < maxServerLocks && srv.url != "" {
+			server = srv
 			break
 		}
 		i++
@@ -1558,7 +1564,7 @@ func (sl *serverList) take(current string) (string, error) {
 	now := time.Now()
 	if server != nil && (server.locks > 0 || now.Before(server.expiry)) {
 		server.locks++
-		fs.Debugf(f, "Take file server %q with %d locks", server.url, server.locks)
+		fs.Debugf(f, "Take server #%d %q with %d locks", i, server.url, server.locks)
 		return server.url, nil
 	}
 
@@ -1568,34 +1574,65 @@ func (sl *serverList) take(current string) (string, error) {
 		Path:    sl.path,
 	}
 	var (
-		res  *http.Response
-		body []byte
-		err  error
+		res *http.Response
+		url string
+		err error
 	)
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.Call(&opts)
 		if err != nil {
 			return fserrors.ShouldRetry(err), err
 		}
-		body, err = rest.ReadBody(res)
+		url, err = readBodyWord(res)
 		return fserrors.ShouldRetry(err), err
 	})
-
 	if err != nil {
 		closeBody(res)
 		return "", errors.Wrap(err, "Failed to request file server")
 	}
 
 	if server == nil {
-		sl.list = append(sl.list, pendingServer{})
-		server = &sl.list[len(sl.list)-1]
+		// is this server over-locked?
+		for i = 0; i < len(sl.list); i++ {
+			srv := &sl.list[i]
+			if srv.url == url {
+				// Dispatcher approves over-locked file server, reuse.
+				srv.locks++
+				srv.expiry = now.Add(sl.expirySec * time.Second)
+				if fs.Config.LogLevel >= fs.LogLevelInfo {
+					ctime, _ := srv.expiry.MarshalJSON()
+					fs.Infof(sl.fs, "Reuse server #%d %q with %d locks (new expiry %s)", i, url, srv.locks, ctime)
+				}
+				return url, nil
+			}
+		}
 	}
-	line := strings.Trim(string(body), " \r\n")
-	server.url = strings.Split(line, " ")[0]
+
+	if server == nil {
+		// look for a disposed server slot
+		for i = 0; i < len(sl.list); i++ {
+			srv := &sl.list[i]
+			if srv.url == "" {
+				server = srv
+				break
+			}
+		}
+	}
+
+	if server == nil {
+		// no free slots - add new one
+		sl.list = append(sl.list, pendingServer{})
+		i = len(sl.list) - 1
+		server = &sl.list[i]
+	}
+	server.url = url
 	server.locks = 1
 	server.expiry = now.Add(sl.expirySec * time.Second)
-	fs.Debugf(f, "New file server: %s", server.url)
-	return server.url, nil
+	if fs.Config.LogLevel >= fs.LogLevelDebug {
+		ctime, _ := server.expiry.MarshalJSON()
+		fs.Debugf(f, "Allocate server #%d %q (expires %s)", i, server.url, ctime)
+	}
+	return url, nil
 }
 
 func (sl *serverList) free(url string) {
@@ -1609,10 +1646,11 @@ func (sl *serverList) free(url string) {
 		server := &sl.list[i]
 		if server.url == url {
 			if server.locks > 0 {
+				fs.Debugf(sl.fs, "Release server #%d %q with %d locks", i, server.url, server.locks)
 				server.locks--
-				fs.Debugf(sl.fs, "Release file server %q with %d locks", server.url, server.locks)
 			} else {
-				log.Fatalf("Negative lock count for server %q", server.url)
+				fs.Infof(sl.fs, "Dispose of faulty server #%d %q", i, server.url)
+				server.url = ""
 			}
 		}
 	}
