@@ -3,7 +3,6 @@ package mailru
 import (
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"sort"
 	"strconv"
@@ -46,12 +45,23 @@ const (
 	maxInt32        = 2147483647 // used as limit in directory list request
 )
 
-// Errors returned by CreateDir etc
+// Global errors
 var (
 	ErrorDirAlreadyExists              = errors.New("directory already exists")
 	ErrorDirAlreadyExistsDifferentCase = errors.New("directory already exists (different case)")
 	ErrorDirSourceNotExists            = errors.New("directory source does not exist")
 )
+
+// Description of how to authorize
+var oauthConfig = &oauth2.Config{
+	ClientID:     api.OAuthClientID,
+	ClientSecret: "",
+	Endpoint: oauth2.Endpoint{
+		AuthURL:   api.OAuthURL,
+		TokenURL:  api.OAuthURL,
+		AuthStyle: oauth2.AuthStyleInParams,
+	},
+}
 
 // Register with Fs
 func init() {
@@ -109,7 +119,7 @@ func shouldRetry(res *http.Response, err error) (bool, error) {
 
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(res *http.Response) (err error) {
-	// TODO: handle ServerErrorResponse
+	// TODO: also handle api.ServerErrorResponse
 	response := new(api.FileErrorResponse)
 	//body, err := rest.ReadBody(res)
 	//fs.Debugf(nil, "Full error response: %s", string(body))
@@ -133,7 +143,9 @@ type Fs struct {
 	root        string             // root path
 	opt         Options            // parsed options
 	features    *fs.Features       // optional features
-	srv         *rest.Client       // API client (plain HTTP or REST)
+	srv         *rest.Client       // REST API client
+	cli         *http.Client       // underlying HTTP client (for authorize)
+	m           configmap.Mapper   // config reader (for authorize)
 	source      oauth2.TokenSource // OAuth token refresher
 	pacer       *fs.Pacer          // pacer for API calls
 	metaMu      sync.Mutex         // lock for meta server switcher
@@ -168,6 +180,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		name:  name,
 		root:  root,
 		opt:   *opt,
+		m:     m,
 		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer))),
 	}
 
@@ -185,36 +198,19 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if strings.Contains(opt.Debug, "nogzip") {
 		clientConfig.NoGzip = true
 	}
-	client := fshttp.NewClient(&clientConfig)
-	f.srv = rest.NewClient(client).SetRoot(api.APIServerURL)
+	f.cli = fshttp.NewClient(&clientConfig)
+	f.srv = rest.NewClient(f.cli).SetRoot(api.APIServerURL)
 	f.srv.SetErrorHandler(errorHandler)
 
 	if strings.Contains(opt.Debug, "insecure") {
-		transport := client.Transport.(*fshttp.Transport).Transport
+		transport := f.cli.Transport.(*fshttp.Transport).Transport
 		transport.TLSClientConfig.InsecureSkipVerify = true
 		transport.ProxyConnectHeader = http.Header{"User-Agent": {clientConfig.UserAgent}}
 	}
 
-	o2conf := &oauth2.Config{
-		ClientID:     api.OAuthClientID,
-		ClientSecret: "",
-		Endpoint: oauth2.Endpoint{
-			AuthURL:   api.OAuthURL,
-			TokenURL:  api.OAuthURL,
-			AuthStyle: oauth2.AuthStyleInParams,
-		},
-	}
-
-	// Cannot use default oauth2.NewClient, because API server
-	// expects access token in the query string, not in cookies.
-	// TODO: keep tokens in config.
-	ctx := oauthutil.Context(client)
-	token1, err := o2conf.PasswordCredentialsToken(ctx, opt.Username, opt.Password)
-	if err != nil {
-		log.Fatalf("Failed to authenticate with mailru: %v", err)
+	if err = f.authorize(false); err != nil {
 		return nil, err
 	}
-	f.source = o2conf.TokenSource(ctx, token1)
 
 	f.fileServers = serverList{
 		fs:        f,
@@ -238,6 +234,41 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	return f, nil
+}
+
+// Note: authorize() is not safe for concurrent access, as it updates the token source
+func (f *Fs) authorize(force bool) (err error) {
+	var t *oauth2.Token
+	if !force {
+		t, err = oauthutil.GetToken(f.name, f.m)
+	}
+
+	if err != nil || !tokenIsValid(t) {
+		fs.Infof(f, "Valid token not found, authorizing.")
+		ctx := oauthutil.Context(f.cli)
+		t, err = oauthConfig.PasswordCredentialsToken(ctx, f.opt.Username, f.opt.Password)
+	}
+	if err == nil && !tokenIsValid(t) {
+		err = errors.New("Invalid token")
+	}
+	if err != nil {
+		return errors.Wrap(err, "Failed to authenticate")
+	}
+
+	if err = oauthutil.PutToken(f.name, f.m, t, false); err != nil {
+		return err
+	}
+	// Cannot use default oauth2.NewClient, because API server
+	// expects access token in the query string, not in cookies.
+	_, ts, err := oauthutil.NewClientWithBaseClient(f.name, f.m, oauthConfig, f.cli)
+	if err == nil {
+		f.source = ts
+	}
+	return err
+}
+
+func tokenIsValid(t *oauth2.Token) bool {
+	return t.Valid() && t.RefreshToken != "" && t.Type() == "Bearer"
 }
 
 // accessToken() returns OAuth token and possibly refreshes it
