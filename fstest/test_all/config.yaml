@@ -32,6 +32,18 @@ backends:
    remote:   "TestCryptSwift:"
    subdir:   false
    fastlist: false
+ - backend:  "press"
+   remote:   "TestPressLz4:"
+   subdir:   false
+   fastlist: true
+ - backend:  "press"
+   remote:   "TestPressGzip:"
+   subdir:   false
+   fastlist: true
+ - backend:  "press"
+   remote:   "TestPressXZ:"
+   subdir:   false
+   fastlist: true
  - backend:  "drive"
    remote:   "TestDrive:"
    subdir:   false

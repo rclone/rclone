@@ -22,6 +22,7 @@ import (
 	_ "github.com/ncw/rclone/backend/onedrive"
 	_ "github.com/ncw/rclone/backend/opendrive"
 	_ "github.com/ncw/rclone/backend/pcloud"
+	_ "github.com/ncw/rclone/backend/press"
 	_ "github.com/ncw/rclone/backend/qingstor"
 	_ "github.com/ncw/rclone/backend/s3"
 	_ "github.com/ncw/rclone/backend/sftp"
