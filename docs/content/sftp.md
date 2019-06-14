@@ -17,8 +17,9 @@ Paths are specified as `remote:path`. If the path does not begin with
 a `/` it is relative to the home directory of the user.  An empty path
 `remote:` refers to the user's home directory.
 
-Note that some SFTP servers will need the leading `/` - Synology is a
-good example of this.
+"Note that some SFTP servers will need the leading / - Synology is a
+good example of this. rsync.net, on the other hand, requires users to
+OMIT the leading /.
 
 Here is an example of making an SFTP configuration.  First run
 
