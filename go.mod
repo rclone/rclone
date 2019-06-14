@@ -16,9 +16,11 @@ require (
 	github.com/aws/aws-sdk-go v1.35.17
 	github.com/billziss-gh/cgofuse v1.4.0
 	github.com/btcsuite/btcutil v1.0.2 // indirect
+	github.com/buengese/sgzip v0.1.0
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/coreos/go-semver v0.3.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
+	github.com/gabriel-vasile/mimetype v1.1.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3
