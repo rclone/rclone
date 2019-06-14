@@ -258,11 +258,19 @@ func (f *Fs) authorize(force bool) (err error) {
 	if err = oauthutil.PutToken(f.name, f.m, t, false); err != nil {
 		return err
 	}
-	// Cannot use default oauth2.NewClient, because API server
-	// expects access token in the query string, not in cookies.
+
+	// Mailru API server expects access token not in the request header but
+	// in the URL query string, so we must use a bare token source rather than
+	// client provided by oauthutil.
+	//
+	// WARNING: direct use of the returned token source triggers a bug in the
+	// `(*token != *ts.token)` comparison in oauthutil.TokenSource.Token()
+	// crashing with panic `comparing uncomparable type map[string]interface{}`
+	// As a workaround, mimic oauth2.NewClient() wrapping token source in
+	// oauth2.ReuseTokenSource
 	_, ts, err := oauthutil.NewClientWithBaseClient(f.name, f.m, oauthConfig, f.cli)
 	if err == nil {
-		f.source = ts
+		f.source = oauth2.ReuseTokenSource(nil, ts)
 	}
 	return err
 }
