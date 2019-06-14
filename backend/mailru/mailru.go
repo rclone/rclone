@@ -240,15 +240,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	return f, nil
 }
 
-// accessToken() returns OAuth token after possibly refreshing it
-// TODO: this should return an error to support retrying
-func (f *Fs) accessToken() string {
+// accessToken() returns OAuth token and possibly refreshes it
+func (f *Fs) accessToken() (string, error) {
 	token, err := f.source.Token()
 	if err != nil {
-		log.Fatalf("Failed to obtain token: %v", err)
-		return ""
+		return "", errors.Wrap(err, "cannot refresh access token")
 	}
-	return token.AccessToken
+	return token.AccessToken, nil
 }
 
 // absPath converts root-relative remote to absolute home path
@@ -328,15 +326,21 @@ func readBodyWord(res *http.Response) (word string, err error) {
 // If it can't be found it fails with fs.ErrorObjectNotFound
 // For the return value `dirSize` please see Fs.itemToEntry()
 func (f *Fs) readItemMetaData(path string) (entry fs.DirEntry, dirSize int, err error) {
-	opts := rest.Opts{
-		Method:     "GET",
-		Path:       "/api/m1/file",
-		Parameters: url.Values{},
+	token, err := f.accessToken()
+	if err != nil {
+		return nil, -1, err
 	}
-	opts.Parameters.Set("access_token", f.accessToken())
-	opts.Parameters.Set("home", path)
-	opts.Parameters.Set("offset", "0")
-	opts.Parameters.Set("limit", strconv.Itoa(maxInt32))
+
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/api/m1/file",
+		Parameters: url.Values{
+			"access_token": {token},
+			"home":         {path},
+			"offset":       {"0"},
+			"limit":        {strconv.Itoa(maxInt32)},
+		},
+	}
 
 	var info api.ItemInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
@@ -413,8 +417,13 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 
 // list using protocol "m1"
 func (f *Fs) listM1(dirPath string, offset int, limit int) (entries fs.DirEntries, err error) {
+	token, err := f.accessToken()
+	if err != nil {
+		return nil, err
+	}
+
 	params := url.Values{}
-	params.Set("access_token", f.accessToken())
+	params.Set("access_token", token)
 	params.Set("offset", strconv.Itoa(offset))
 	params.Set("limit", strconv.Itoa(limit))
 
@@ -472,6 +481,10 @@ func (f *Fs) listBin(dirPath string, depth int) (entries fs.DirEntries, err erro
 	req.WritePu32(int64(options))
 	req.WritePu32(0)
 
+	token, err := f.accessToken()
+	if err != nil {
+		return nil, err
+	}
 	metaURL, err := f.metaServer()
 	if err != nil {
 		return nil, err
@@ -482,7 +495,7 @@ func (f *Fs) listBin(dirPath string, depth int) (entries fs.DirEntries, err erro
 		RootURL: metaURL,
 		Parameters: url.Values{
 			"client_id": {api.OAuthClientID},
-			"token":     {f.accessToken()},
+			"token":     {token},
 		},
 		ContentType: api.BinContentType,
 		Body:        req.Reader(),
@@ -741,6 +754,10 @@ func (f *Fs) CreateDir(path string) error {
 	req.WriteString(path)
 	req.WritePu32(0)
 
+	token, err := f.accessToken()
+	if err != nil {
+		return err
+	}
 	metaURL, err := f.metaServer()
 	if err != nil {
 		return err
@@ -751,7 +768,7 @@ func (f *Fs) CreateDir(path string) error {
 		RootURL: metaURL,
 		Parameters: url.Values{
 			"client_id": {api.OAuthClientID},
-			"token":     {f.accessToken()},
+			"token":     {token},
 		},
 		ContentType: api.BinContentType,
 		Body:        req.Reader(),
@@ -862,20 +879,25 @@ func (f *Fs) purgeWithCheck(dir string, check bool) error {
 }
 
 func (f *Fs) delete(path string, hardDelete bool) error {
+	token, err := f.accessToken()
+	if err != nil {
+		return err
+	}
+
 	// use POST to send path due to possible unprintable Unicode characters
 	data := url.Values{"home": {path}}
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/api/m1/file/remove",
 		Parameters: url.Values{
-			"access_token": {f.accessToken()},
+			"access_token": {token},
 		},
 		Body:        strings.NewReader(data.Encode()),
 		ContentType: api.BinContentType,
 	}
 
 	var response api.GenericOperationResponse
-	err := f.pacer.Call(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &response)
 		return shouldRetry(res, err)
 	})
@@ -931,11 +953,16 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		data.Set("conflict", "rename")
 	}
 
+	token, err := f.accessToken()
+	if err != nil {
+		return nil, err
+	}
+
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/api/m1/file/copy",
 		Parameters: url.Values{
-			"access_token": {f.accessToken()},
+			"access_token": {token},
 		},
 		Body:        strings.NewReader(data.Encode()),
 		ContentType: api.BinContentType,
@@ -1003,6 +1030,10 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 }
 
 func (f *Fs) moveItem(srcPath, dstPath, opName string) error {
+	token, err := f.accessToken()
+	if err != nil {
+		return err
+	}
 	metaURL, err := f.metaServer()
 	if err != nil {
 		return err
@@ -1021,7 +1052,7 @@ func (f *Fs) moveItem(srcPath, dstPath, opName string) error {
 		RootURL: metaURL,
 		Parameters: url.Values{
 			"client_id": {api.OAuthClientID},
-			"token":     {f.accessToken()},
+			"token":     {token},
 		},
 		ContentType: api.BinContentType,
 		Body:        req.Reader(),
@@ -1097,16 +1128,21 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 // About gets quota information
 func (f *Fs) About() (*fs.Usage, error) {
 	fs.Debugf(f, ">>> About\n")
+
+	token, err := f.accessToken()
+	if err != nil {
+		return nil, err
+	}
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/api/m1/user",
 		Parameters: url.Values{
-			"access_token": {f.accessToken()},
+			"access_token": {token},
 		},
 	}
 
 	var info api.UserInfoResponse
-	err := f.pacer.Call(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &info)
 		return shouldRetry(res, err)
 	})
@@ -1172,6 +1208,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) error {
+	token, err := o.fs.accessToken()
+	if err != nil {
+		return err
+	}
 	shardURL, err := o.fs.uploadShard()
 	if err != nil {
 		return err
@@ -1185,7 +1225,7 @@ func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) erro
 		ContentLength: &size,
 		Parameters: url.Values{
 			"client_id": {api.OAuthClientID},
-			"token":     {o.fs.accessToken()},
+			"token":     {token},
 		},
 		ExtraHeaders: map[string]string{
 			"Accept": "*/*",
@@ -1222,17 +1262,22 @@ func (f *Fs) uploadShard() (string, error) {
 		return f.shardURL, nil
 	}
 
+	token, err := f.accessToken()
+	if err != nil {
+		return "", err
+	}
+
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/api/m1/dispatcher",
 		Parameters: url.Values{
 			"client_id":    {api.OAuthClientID},
-			"access_token": {f.accessToken()},
+			"access_token": {token},
 		},
 	}
 
 	var info api.ShardInfoResponse
-	err := f.pacer.Call(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &info)
 		return shouldRetry(res, err)
 	})
@@ -1365,6 +1410,10 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 		return err
 	}
 
+	token, err := o.fs.accessToken()
+	if err != nil {
+		return err
+	}
 	metaURL, err := o.fs.metaServer()
 	if err != nil {
 		return err
@@ -1394,7 +1443,7 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 		RootURL: metaURL,
 		Parameters: url.Values{
 			"client_id": {api.OAuthClientID},
-			"token":     {o.fs.accessToken()},
+			"token":     {token},
 		},
 		ContentType: api.BinContentType,
 		Body:        req.Reader(),
@@ -1452,6 +1501,11 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		end = o.size
 	}
 
+	token, err := o.fs.accessToken()
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: set custom timeouts
 	opts := rest.Opts{
 		Method:  "GET",
@@ -1459,7 +1513,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		Path:    url.PathEscape(strings.TrimLeft(o.absPath(), "/")),
 		Parameters: url.Values{
 			"client_id": {api.OAuthClientID},
-			"token":     {o.fs.accessToken()},
+			"token":     {token},
 		},
 		ExtraHeaders: map[string]string{
 			"Accept": "*/*",
