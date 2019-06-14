@@ -23,11 +23,12 @@ const (
 
 // CreateDir protocol constants
 const (
-	MkdirResultOK                         = 0
-	MkdirResultSourceNotExists            = 1
-	MkdirResultAlreadyExists              = 4
-	MkdirResultAlreadyExistsDifferentCase = 9
-	MkdirResultFailed254                  = 254
+	MkdirResultOK                  = 0
+	MkdirResultSourceNotExists     = 1
+	MkdirResultAlreadyExists       = 4
+	MkdirResultExistsDifferentCase = 9
+	MkdirResultInvalidName         = 10
+	MkdirResultFailed254           = 254
 )
 
 // Move result codes
@@ -48,6 +49,7 @@ const (
 	AddResultWrongPath   = 5
 	AddResultNoFreeSpace = 7
 	AddResultDunno09     = 9
+	AddResultInvalidName = 10
 	AddResultNotModified = 12
 	AddResultFailedA     = 253
 	AddResultFailedB     = 254

@@ -47,9 +47,9 @@ const (
 
 // Global errors
 var (
-	ErrorDirAlreadyExists              = errors.New("directory already exists")
-	ErrorDirAlreadyExistsDifferentCase = errors.New("directory already exists (different case)")
-	ErrorDirSourceNotExists            = errors.New("directory source does not exist")
+	ErrorDirAlreadyExists   = errors.New("directory already exists")
+	ErrorDirSourceNotExists = errors.New("directory source does not exist")
+	ErrorInvalidName        = errors.New("invalid characters in object name")
 )
 
 // Description of how to authorize
@@ -388,9 +388,14 @@ func (f *Fs) readItemMetaData(path string) (entry fs.DirEntry, dirSize int, err 
 	})
 
 	if err != nil {
-		apiErr, ok := err.(*api.FileErrorResponse)
-		if ok && apiErr.Status == 404 {
-			err = fs.ErrorObjectNotFound
+		if apiErr, ok := err.(*api.FileErrorResponse); ok {
+			switch apiErr.Status {
+			case 404:
+				err = fs.ErrorObjectNotFound
+			case 400:
+				fs.Debugf(f, "object %q status %d (%s)", path, apiErr.Status, apiErr.Message)
+				err = fs.ErrorObjectNotFound
+			}
 		}
 		return
 	}
@@ -829,14 +834,14 @@ func (f *Fs) CreateDir(path string) error {
 	switch status := reply.ReadByteAsInt(); status {
 	case api.MkdirResultOK:
 		return nil
-	case api.MkdirResultAlreadyExists:
+	case api.MkdirResultAlreadyExists, api.MkdirResultExistsDifferentCase:
 		return ErrorDirAlreadyExists
-	case api.MkdirResultAlreadyExistsDifferentCase:
-		return ErrorDirAlreadyExistsDifferentCase
 	case api.MkdirResultSourceNotExists:
 		return ErrorDirSourceNotExists
+	case api.MkdirResultInvalidName:
+		return ErrorInvalidName
 	default:
-		return fmt.Errorf("create directory error %d", status)
+		return fmt.Errorf("mkdir error %d", status)
 	}
 }
 
@@ -849,7 +854,7 @@ func (f *Fs) Mkdir(dir string) error {
 func (f *Fs) mkDirs(path string) error {
 	err := f.CreateDir(path)
 	switch err {
-	case nil, ErrorDirAlreadyExists, ErrorDirAlreadyExistsDifferentCase:
+	case nil, ErrorDirAlreadyExists:
 		return nil
 	case ErrorDirSourceNotExists:
 		fs.Debugf(f, "mkDirs by part %q", path)
@@ -865,7 +870,7 @@ func (f *Fs) mkDirs(path string) error {
 		path += "/" + part
 		err = f.CreateDir(path)
 		switch err {
-		case nil, ErrorDirAlreadyExists, ErrorDirAlreadyExistsDifferentCase:
+		case nil, ErrorDirAlreadyExists:
 			continue
 		default:
 			return err
@@ -890,7 +895,7 @@ func (f *Fs) mkParentDirs(path string) error {
 // Returns an error if it isn't empty.
 func (f *Fs) Rmdir(dir string) error {
 	fs.Debugf(f, ">>> Rmdir %q\n", dir)
-	return f.purgeWithCheck(dir, true)
+	return f.purgeWithCheck(dir, true, "rmdir")
 }
 
 // Purge deletes all the files and the root directory
@@ -898,21 +903,19 @@ func (f *Fs) Rmdir(dir string) error {
 // all the files quicker than just running Remove() on the result of List()
 func (f *Fs) Purge() error {
 	fs.Debugf(f, ">>> Purge\n")
-	return f.purgeWithCheck("", false)
+	return f.purgeWithCheck("", false, "purge")
 }
 
 // purgeWithCheck() removes the root directory.
 // Refuses if `check` is set and directory has anything in.
-func (f *Fs) purgeWithCheck(dir string, check bool) error {
+func (f *Fs) purgeWithCheck(dir string, check bool, opName string) error {
 	path := f.absPath(dir)
-	if check {
-		_, dirSize, err := f.readItemMetaData(path)
-		if err != nil {
-			return errors.Wrap(err, "rmdir failed")
-		}
-		if dirSize > 0 {
-			return fs.ErrorDirectoryNotEmpty
-		}
+	_, dirSize, err := f.readItemMetaData(path)
+	if err != nil {
+		return errors.Wrapf(err, "%s failed", opName)
+	}
+	if check && dirSize > 0 {
+		return fs.ErrorDirectoryNotEmpty
 	}
 	return f.delete(path, false)
 }
@@ -1030,7 +1033,20 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		}
 	}
 
-	return f.NewObject(remote)
+	// fix modification time at destination
+	dstObj := &Object{
+		fs:     f,
+		remote: remote,
+	}
+	err = dstObj.readMetaData(true)
+	if err == nil && dstObj.modTime != srcObj.modTime {
+		dstObj.modTime = srcObj.modTime
+		err = dstObj.addFileMetaData(true)
+	}
+	if err != nil {
+		dstObj = nil
+	}
+	return dstObj, err
 }
 
 // Move src to this remote using server side move operations.
@@ -1344,7 +1360,7 @@ type Object struct {
 // NewObject finds an Object at the remote.
 // If object can't be found it fails with fs.ErrorObjectNotFound
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	fs.Debugf(f, "NewObject %q\n", remote)
+	fs.Debugf(f, ">>> NewObject %q\n", remote)
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -1395,7 +1411,8 @@ func (o *Object) String() string {
 	if o == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("[%s]%q", o.fs.root, o.remote)
+	//return fmt.Sprintf("[%s]%q", o.fs.root, o.remote)
+	return o.remote
 }
 
 // Remote returns the remote path
@@ -1504,6 +1521,8 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 	switch status := reply.ReadByteAsInt(); status {
 	case api.AddResultOK, api.AddResultNotModified, api.AddResultDunno04, api.AddResultDunno09:
 		return nil
+	case api.AddResultInvalidName:
+		return ErrorInvalidName
 	default:
 		return fmt.Errorf("add file error %d", status)
 	}
@@ -1781,7 +1800,9 @@ func (f *Fs) Features() *fs.Features {
 
 // close response body ignoring errors
 func closeBody(res *http.Response) {
-	_ = res.Body.Close()
+	if res != nil {
+		_ = res.Body.Close()
+	}
 }
 
 // Check the interfaces are satisfied

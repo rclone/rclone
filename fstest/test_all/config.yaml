@@ -129,3 +129,7 @@ backends:
    remote:   "TestPutio:"
    subdir:   false
    fastlist: false
+ - backend:  "mailru"
+   remote:   "TestMailru:"
+   subdir:   false
+   fastlist: false
