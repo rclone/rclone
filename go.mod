@@ -8,6 +8,7 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.2
 	github.com/Azure/azure-storage-blob-go v0.10.0
 	github.com/Unknwon/goconfig v0.0.0-20191126170842-860a72fb44fd
+	github.com/OneOfOne/xxhash v1.2.7
 	github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 	github.com/aalpar/deheap v0.0.0-20200318053559-9a0c2883bd56
 	github.com/abbot/go-http-auth v0.4.0
