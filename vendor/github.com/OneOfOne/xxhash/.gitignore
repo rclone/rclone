@@ -1,0 +1,4 @@
+*.txt
+*.pprof
+cmap2/
+cache/
