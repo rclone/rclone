@@ -86,6 +86,15 @@ func init() {
 			Name:     "bearer_token_command",
 			Help:     "Command to run to get a bearer token",
 			Advanced: true,
+		}, {
+			Name:    "delete_on_error",
+			Default: false,
+			Help: `Delete a partially uploaded file on upload failure.
+
+Some webdav backends (eg rclone serve webdav) leave behind half
+written files on error.  This flag causes them to be deleted if the
+upload fails part of the way through.`,
+			Advanced: true,
 		}},
 	})
 }
@@ -98,6 +107,7 @@ type Options struct {
 	Pass               string `config:"pass"`
 	BearerToken        string `config:"bearer_token"`
 	BearerTokenCommand string `config:"bearer_token_command"`
+	DeleteOnError bool   `config:"delete_on_error"`
 }
 
 // Fs represents a remote webdav
@@ -1193,14 +1203,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
-		// Give the WebDAV server a chance to get its internal state in order after the
-		// error.  The error may have been local in which case we closed the connection.
-		// The server may still be dealing with it for a moment. A sleep isn't ideal but I
-		// haven't been able to think of a better method to find out if the server has
-		// finished - ncw
-		time.Sleep(1 * time.Second)
-		// Remove failed upload
-		_ = o.Remove(ctx)
+		if o.fs.opt.DeleteOnError {
+			// Give the WebDAV server a chance to get its internal state in order after the
+			// error.  The error may have been local in which case we closed the connection.
+			// The server may still be dealing with it for a moment. A sleep isn't ideal but I
+			// haven't been able to think of a better method to find out if the server has
+			// finished - ncw
+			time.Sleep(1 * time.Second)
+			// Remove failed upload
+			_ = o.Remove(ctx)
+		}
 		return err
 	}
 	// read metadata from remote

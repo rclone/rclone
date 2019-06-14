@@ -62,11 +62,12 @@ func TestWebDav(t *testing.T) {
 
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
-			"type":   "webdav",
-			"vendor": "other",
-			"url":    w.Server.URL(),
-			"user":   testUser,
-			"pass":   obscure.MustObscure(testPass),
+			"type":            "webdav",
+			"vendor":          "other",
+			"url":             w.Server.URL(),
+			"user":            testUser,
+			"pass":            obscure.MustObscure(testPass),
+			"delete_on_error": "true",
 		}
 
 		return config, func() {
