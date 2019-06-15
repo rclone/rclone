@@ -420,7 +420,7 @@ The remote name is used as the DB file name.
 - Config:      db_path
 - Env Var:     RCLONE_CACHE_DB_PATH
 - Type:        string
-- Default:     "/home/ncw/.cache/rclone/cache-backend"
+- Default:     "$HOME/.cache/rclone/cache-backend"
 
 #### --cache-chunk-path
 
@@ -436,7 +436,7 @@ then "--cache-chunk-path" will use the same path as "--cache-db-path".
 - Config:      chunk_path
 - Env Var:     RCLONE_CACHE_CHUNK_PATH
 - Type:        string
-- Default:     "/home/ncw/.cache/rclone/cache-backend"
+- Default:     "$HOME/.cache/rclone/cache-backend"
 
 #### --cache-db-purge
 

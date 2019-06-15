@@ -260,7 +260,6 @@ Show statistics for the cache remote.
 This takes the following parameters
 
 - name - name of remote
-- type - type of new remote
 - type - type of the new remote
 
 
@@ -311,7 +310,6 @@ Authentication is required for this call.
 This takes the following parameters
 
 - name - name of remote
-- type - type of new remote
 
 
 See the [config password command](/commands/rclone_config_password/) command for more information on the above.
@@ -332,7 +330,6 @@ Authentication is required for this call.
 This takes the following parameters
 
 - name - name of remote
-- type - type of new remote
 
 
 See the [config update command](/commands/rclone_config_update/) command for more information on the above.
@@ -460,9 +457,10 @@ Results
 This takes the following parameters
 
 - fs - a remote name string eg "drive:"
-- remote - a path within that remote eg "dir"
 
 The result is as returned from rclone about --json
+
+See the [about command](/commands/rclone_size/) command for more information on the above.
 
 Authentication is required for this call.
 
@@ -520,6 +518,63 @@ See the [deletefile command](/commands/rclone_deletefile/) command for more info
 
 Authentication is required for this call.
 
+### operations/fsinfo: Return information about the remote
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+
+This returns info about the remote passed in;
+
+```
+{
+	// optional features and whether they are available or not
+	"Features": {
+		"About": true,
+		"BucketBased": false,
+		"CanHaveEmptyDirectories": true,
+		"CaseInsensitive": false,
+		"ChangeNotify": false,
+		"CleanUp": false,
+		"Copy": false,
+		"DirCacheFlush": false,
+		"DirMove": true,
+		"DuplicateFiles": false,
+		"GetTier": false,
+		"ListR": false,
+		"MergeDirs": false,
+		"Move": true,
+		"OpenWriterAt": true,
+		"PublicLink": false,
+		"Purge": true,
+		"PutStream": true,
+		"PutUnchecked": false,
+		"ReadMimeType": false,
+		"ServerSideAcrossConfigs": false,
+		"SetTier": false,
+		"SetWrapper": false,
+		"UnWrap": false,
+		"WrapFs": false,
+		"WriteMimeType": false
+	},
+	// Names of hashes available
+	"Hashes": [
+		"MD5",
+		"SHA-1",
+		"DropboxHash",
+		"QuickXorHash"
+	],
+	"Name": "local",	// Name as created
+	"Precision": 1,		// Precision of timestamps in ns
+	"Root": "/",		// Path as created
+	"String": "Local file system at /" // how the remote will appear in logs
+}
+```
+
+This command does not have a command line equivalent so use this instead:
+
+    rclone rc --loopback operations/fsinfo fs=remote:
+
 ### operations/list: List the given remote and path in JSON format
 
 This takes the following parameters
@@ -538,7 +593,7 @@ The result is
 - list
     - This is an array of objects as described in the lsjson command
 
-See the lsjson command for more information on the above and examples.
+See the [lsjson command](/commands/rclone_lsjson/) for more information on the above and examples.
 
 Authentication is required for this call.
 

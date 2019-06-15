@@ -1,10 +1,95 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-04-13"
+date: "2019-06-15"
 ---
 
 # Changelog
+
+## v1.48.0 - 2019-06-15
+
+* New commands
+    * serve sftp: Serve an rclone remote over SFTP (Nick Craig-Wood)
+* New Features
+    * Multi threaded downloads to local storage (Nick Craig-Wood)
+        * controlled with `--multi-thread-cutoff` and `--multi-thread-streams`
+    * Use rclone.conf from rclone executable directory to enable portable use (albertony)
+    * Allow sync of a file and a directory with the same name (forgems)
+        * this is common on bucket based remotes, eg s3, gcs
+    * Add `--ignore-case-sync` for forced case insensitivity (garry415)
+    * Implement `--stats-one-line-date` and `--stats-one-line-date-format` (Peter Berbec)
+    * Log an ERROR for all commands which exit with non-zero status (Nick Craig-Wood)
+    * Use go-homedir to read the home directory more reliably (Nick Craig-Wood)
+    * Enable creating encrypted config through external script invocation (Wojciech Smigielski)
+    * build: Drop support for go1.8 (Nick Craig-Wood)
+    * config: Make config create/update encrypt passwords where necessary (Nick Craig-Wood)
+    * copyurl: Honor `--no-check-certificate` (Stefan Breunig)
+    * install: Linux skip man pages if no mandb (didil)
+    * lsf: Support showing the Tier of the object (Nick Craig-Wood)
+    * lsjson
+        * Added EncryptedPath to output (calisro)
+        * Support showing the Tier of the object (Nick Craig-Wood)
+        * Add IsBucket field for bucket based remote listing of the root (Nick Craig-Wood)
+    * rc
+        * Add `--loopback` flag to run commands directly without a server (Nick Craig-Wood)
+        * Add operations/fsinfo: Return information about the remote (Nick Craig-Wood)
+        * Skip auth for OPTIONS request (Nick Craig-Wood)
+        * cmd/providers: Add DefaultStr, ValueStr and Type fields (Nick Craig-Wood)
+        * jobs: Make job expiry timeouts configurable (Aleksandar Jankovic)
+    * serve dlna reworked and improved (Dan Walters)
+    * serve ftp: add `--ftp-public-ip` flag to specify public IP (calistri)
+    * serve restic: Add support for `--private-repos` in `serve restic` (Florian Apolloner)
+    * serve webdav: Combine serve webdav and serve http (Gary Kim)
+    * size: Ignore negative sizes when calculating total (Garry McNulty)
+* Bug Fixes
+    * Make move and copy individual files obey `--backup-dir` (Nick Craig-Wood)
+    * If `--ignore-checksum` is in effect, don't calculate checksum (Nick Craig-Wood)
+    * moveto: Fix case-insensitive same remote move (Gary Kim)
+    * rc: Fix serving bucket based objects with `--rc-serve` (Nick Craig-Wood)
+    * serve webdav: Fix serveDir not being updated with changes from webdav (Gary Kim)
+* Mount
+    * Fix poll interval documentation (Animosity022)
+* VFS
+    * Make WriteAt for non cached files work with non-sequential writes (Nick Craig-Wood)
+* Local
+    * Only calculate the required hashes for big speedup (Nick Craig-Wood)
+    * Log errors when listing instead of returning an error (Nick Craig-Wood)
+    * Fix preallocate warning on Linux with ZFS (Nick Craig-Wood)
+* Crypt
+    * Make rclone dedupe work through crypt (Nick Craig-Wood)
+    * Fix wrapping of ChangeNotify to decrypt directories properly (Nick Craig-Wood)
+    * Support PublicLink (rclone link) of underlying backend (Nick Craig-Wood)
+    * Implement Optional methods SetTier, GetTier (Nick Craig-Wood)
+* B2
+    * Implement server side copy (Nick Craig-Wood)
+    * Implement SetModTime (Nick Craig-Wood)
+* Drive
+    * Fix move and copy from TeamDrive to GDrive (Fionera)
+    * Add notes that cleanup works in the background on drive (Nick Craig-Wood)
+    * Add `--drive-server-side-across-configs` to default back to old server side copy semantics by default (Nick Craig-Wood)
+    * Add `--drive-size-as-quota` to show storage quota usage for file size (Garry McNulty)
+* FTP
+    * Add FTP List timeout (Jeff Quinn)
+    * Add FTP over TLS support (Gary Kim)
+    * Add `--ftp-no-check-certificate` option for FTPS (Gary Kim)
+* Google Cloud Storage
+    * Fix upload errors when uploading pre 1970 files (Nick Craig-Wood)
+* Jottacloud
+    * Add support for selecting device and mountpoint. (buengese)
+* Mega
+    * Add cleanup support (Gary Kim)
+* Onedrive
+    * More accurately check if root is found (Cnly)
+* S3
+    * Suppport S3 Accelerated endpoints with `--s3-use-accelerate-endpoint` (Nick Craig-Wood)
+    * Add config info for Wasabi's EU Central endpoint (Robert Marko)
+    * Make SetModTime work for GLACIER while syncing (Philip Harvey)
+* SFTP
+    * Add About support (Gary Kim)
+    * Fix about parsing of `df` results so it can cope with -ve results (Nick Craig-Wood)
+    * Send custom client version and debug server version (Nick Craig-Wood)
+* WebDAV
+    * Retry on 423 Locked errors (Nick Craig-Wood)
 
 ## v1.47.0 - 2019-04-13
 
