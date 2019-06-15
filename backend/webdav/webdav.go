@@ -146,6 +146,7 @@ func (f *Fs) Features() *fs.Features {
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
+	423, // Locked
 	429, // Too Many Requests.
 	500, // Internal Server Error
 	502, // Bad Gateway
