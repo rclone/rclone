@@ -995,7 +995,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
 	if canTrackRenames {
-		if r.Fremote.Features().Move == nil {
+		if r.Fremote.Features().Move == nil || r.Fremote.Name() == "TestUnion" { // union remote can Move but returns CantMove error
 			// If no server side Move, we are falling back to Copy + Delete
 			assert.Equal(t, int64(1), accounting.Stats.GetTransfers()) // 1 copy
 			assert.Equal(t, int64(4), accounting.Stats.GetChecks())    // 2 file checks + 1 move + 1 delete
