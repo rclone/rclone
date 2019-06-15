@@ -402,6 +402,21 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 	return newDst, err
 }
 
+// SameObject returns true if src and dst could be pointing to the
+// same object.
+func SameObject(src, dst fs.Object) bool {
+	if !SameConfig(src.Fs(), dst.Fs()) {
+		return false
+	}
+	srcPath := path.Join(src.Fs().Root(), src.Remote())
+	dstPath := path.Join(dst.Fs().Root(), dst.Remote())
+	if dst.Fs().Features().CaseInsensitive {
+		srcPath = strings.ToLower(srcPath)
+		dstPath = strings.ToLower(dstPath)
+	}
+	return srcPath == dstPath
+}
+
 // Move src object to dst or fdst if nil.  If dst is nil then it uses
 // remote as the name of the new object.
 //
@@ -425,7 +440,7 @@ func Move(fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Ob
 	// See if we have Move available
 	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && fdst.Features().ServerSideAcrossConfigs)) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
-		if dst != nil && (!fdst.Features().CaseInsensitive || strings.ToLower(dst.Remote()) != strings.ToLower(src.Remote())) {
+		if dst != nil && !SameObject(src, dst) {
 			err = DeleteFile(dst)
 			if err != nil {
 				return newDst, err
