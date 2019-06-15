@@ -263,3 +263,4 @@ Contributors
   * garry415 <garry.415@gmail.com>
   * forgems <forgems@gmail.com>
   * Florian Apolloner <florian@apolloner.eu>
+  * Aleksandar Jankovic <office@ajankovic.com>
