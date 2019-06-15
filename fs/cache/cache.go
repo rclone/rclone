@@ -30,7 +30,9 @@ func Get(fsString string) (f fs.Fs, err error) {
 	defer fsCacheMu.Unlock()
 	entry, ok := fsCache[fsString]
 	if !ok {
+		fsCacheMu.Unlock() // Unlock in case Get is called recursively
 		f, err = fsNewFs(fsString)
+		fsCacheMu.Lock()
 		if err != nil && err != fs.ErrorIsFile {
 			return f, err
 		}
