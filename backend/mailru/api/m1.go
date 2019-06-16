@@ -7,10 +7,11 @@ import (
 // M1 protocol constants and structures
 const (
 	APIServerURL      = "https://cloud.mail.ru"
-	OAuthURL          = "https://o2.mail.ru/token"
+	PublicLinkURL     = "https://cloud.mail.ru/public/"
 	DispatchServerURL = "https://dispatcher.cloud.mail.ru"
-	DefaultUserAgent  = "CloudDiskOWindows 17.12.0009 beta WzBbt1Ygbm"
+	OAuthURL          = "https://o2.mail.ru/token"
 	OAuthClientID     = "cloud-win"
+	DefaultUserAgent  = "CloudDiskOWindows 17.12.0009 beta WzBbt1Ygbm"
 )
 
 // ServerErrorResponse represents erroneous API response.
@@ -224,16 +225,16 @@ type ShardInfoResponse struct {
 	Status int   `json:"status"`
 }
 
-// GenericOperationResponse ...
-type GenericOperationResponse struct {
+// GenericResponse ...
+type GenericResponse struct {
 	Email  string `json:"email"`
 	Time   int64  `json:"time"`
 	Status int    `json:"status"`
 	// ignore other fields
 }
 
-// CopyResponse ...
-type CopyResponse struct {
+// GenericBodyResponse ...
+type GenericBodyResponse struct {
 	Email  string `json:"email"`
 	Body   string `json:"body"`
 	Time   int64  `json:"time"`

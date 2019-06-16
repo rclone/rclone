@@ -926,7 +926,6 @@ func (f *Fs) delete(path string, hardDelete bool) error {
 		return err
 	}
 
-	// use POST to send path due to possible unprintable Unicode characters
 	data := url.Values{"home": {path}}
 	opts := rest.Opts{
 		Method: "POST",
@@ -938,7 +937,7 @@ func (f *Fs) delete(path string, hardDelete bool) error {
 		ContentType: api.BinContentType,
 	}
 
-	var response api.GenericOperationResponse
+	var response api.GenericResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &response)
 		return shouldRetry(res, err)
@@ -1010,7 +1009,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		ContentType: api.BinContentType,
 	}
 
-	var response api.CopyResponse
+	var response api.GenericBodyResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &response)
 		return shouldRetry(res, err)
@@ -1026,7 +1025,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	tmpPath := response.Body
 	if tmpPath != dstPath {
 		fs.Debugf(f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
-		err = f.moveItem(tmpPath, dstPath, "rename temporary file")
+		err = f.moveItemBin(tmpPath, dstPath, "rename temporary file")
 		if err != nil {
 			_ = f.delete(tmpPath, false) // ignore error
 			return nil, err
@@ -1076,7 +1075,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	err = f.moveItem(srcPath, dstPath, "move file")
+	err = f.moveItemBin(srcPath, dstPath, "move file")
 	if err != nil {
 		return nil, err
 	}
@@ -1084,7 +1083,8 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	return f.NewObject(remote)
 }
 
-func (f *Fs) moveItem(srcPath, dstPath, opName string) error {
+// move/rename an object using BIN protocol
+func (f *Fs) moveItemBin(srcPath, dstPath, opName string) error {
 	token, err := f.accessToken()
 	if err != nil {
 		return err
@@ -1177,7 +1177,49 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		return err
 	}
 
-	return f.moveItem(srcPath, dstPath, "directory move")
+	return f.moveItemBin(srcPath, dstPath, "directory move")
+}
+
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(remote string) (link string, err error) {
+	fs.Debugf(f, ">>> PublicLink\n")
+
+	token, err := f.accessToken()
+	if err != nil {
+		return "", err
+	}
+
+	data := url.Values{}
+	data.Set("home", f.absPath(remote))
+	data.Set("email", f.opt.Username)
+	data.Set("x-email", f.opt.Username)
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/api/m1/file/publish",
+		Parameters: url.Values{
+			"access_token": {token},
+		},
+		Body:        strings.NewReader(data.Encode()),
+		ContentType: api.BinContentType,
+	}
+
+	var response api.GenericBodyResponse
+	err = f.pacer.Call(func() (bool, error) {
+		res, err := f.srv.CallJSON(&opts, nil, &response)
+		return shouldRetry(res, err)
+	})
+
+	if err == nil && response.Body != "" {
+		return api.PublicLinkURL + response.Body, nil
+	}
+	if err == nil {
+		return "", errors.New("server returned empty link")
+	}
+	if apiErr, ok := err.(*api.FileErrorResponse); ok && apiErr.Status == 404 {
+		return "", fs.ErrorObjectNotFound
+	}
+	return "", err
 }
 
 // About gets quota information
@@ -1807,11 +1849,12 @@ func closeBody(res *http.Response) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs       = (*Fs)(nil)
-	_ fs.Purger   = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Abouter  = (*Fs)(nil)
-	_ fs.Object   = (*Object)(nil)
+	_ fs.Fs           = (*Fs)(nil)
+	_ fs.Purger       = (*Fs)(nil)
+	_ fs.Copier       = (*Fs)(nil)
+	_ fs.Mover        = (*Fs)(nil)
+	_ fs.DirMover     = (*Fs)(nil)
+	_ fs.PublicLinker = (*Fs)(nil)
+	_ fs.Abouter      = (*Fs)(nil)
+	_ fs.Object       = (*Object)(nil)
 )
