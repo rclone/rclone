@@ -1,6 +1,7 @@
 package mailru
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"path"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"encoding/hex"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -119,22 +121,29 @@ func shouldRetry(res *http.Response, err error) (bool, error) {
 
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(res *http.Response) (err error) {
-	// TODO: also handle api.ServerErrorResponse
-	response := new(api.FileErrorResponse)
-	//body, err := rest.ReadBody(res)
-	//fs.Debugf(nil, "Full error response: %s", string(body))
-	err = rest.DecodeJSON(res, &response)
+	data, err := rest.ReadBody(res)
 	if err != nil {
-		fs.Debugf(nil, "Unknown error response: %v", err)
+		return err
 	}
-	response.Message = response.Body.Home.Error
-	if response.Message == "" {
-		response.Message = res.Status
+	fileError := &api.FileErrorResponse{}
+	err = json.NewDecoder(bytes.NewReader(data)).Decode(fileError)
+	if err == nil {
+		fileError.Message = fileError.Body.Home.Error
+		return fileError
 	}
-	if response.Status == 0 {
-		response.Status = res.StatusCode
+	serverError := &api.ServerErrorResponse{}
+	err = json.NewDecoder(bytes.NewReader(data)).Decode(serverError)
+	if err == nil {
+		return serverError
 	}
-	return response
+	//fs.Debugf(nil, "Server error %q %d %q", string(data), res.StatusCode, res.Status)
+	serverError.Message = string(data)
+	if serverError.Message == "" || strings.HasPrefix(serverError.Message, "{") {
+		// Replace empty or JSON response with a human readable text.
+		serverError.Message = res.Status
+	}
+	serverError.Status = res.StatusCode
+	return serverError
 }
 
 // Fs represents a remote mail.ru
@@ -439,7 +448,7 @@ func (f *Fs) itemToDirEntry(item *api.ListItem) (entry fs.DirEntry, dirSize int,
 // dir should be "" to list the root, and should not have trailing slashes.
 // This should return ErrDirNotFound if the directory isn't found.
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	fs.Debugf(f, ">>> List: %q\n", dir)
+	fs.Debugf(f, ">>> List: %q", dir)
 
 	if strings.Contains(f.opt.Debug, "binlist") {
 		entries, err = f.listBin(f.absPath(dir), 1)
@@ -790,7 +799,7 @@ func (rev *treeRevision) Read(data *api.BinReader) error {
 
 // CreateDir makes a directory (parent must exist)
 func (f *Fs) CreateDir(path string) error {
-	fs.Debugf(f, ">>> CreateDir %q\n", path)
+	fs.Debugf(f, ">>> CreateDir %q", path)
 
 	req := api.NewBinWriter()
 	req.WritePu16(api.OperationCreateFolder)
@@ -847,7 +856,7 @@ func (f *Fs) CreateDir(path string) error {
 
 // Mkdir creates the container (and its parents) if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
-	fs.Debugf(f, ">>> Mkdir %q\n", dir)
+	fs.Debugf(f, ">>> Mkdir %q", dir)
 	return f.mkDirs(f.absPath(dir))
 }
 
@@ -894,7 +903,7 @@ func (f *Fs) mkParentDirs(path string) error {
 // Rmdir deletes a directory.
 // Returns an error if it isn't empty.
 func (f *Fs) Rmdir(dir string) error {
-	fs.Debugf(f, ">>> Rmdir %q\n", dir)
+	fs.Debugf(f, ">>> Rmdir %q", dir)
 	return f.purgeWithCheck(dir, true, "rmdir")
 }
 
@@ -902,7 +911,7 @@ func (f *Fs) Rmdir(dir string) error {
 // Optional interface: Only implement this if you have a way of deleting
 // all the files quicker than just running Remove() on the result of List()
 func (f *Fs) Purge() error {
-	fs.Debugf(f, ">>> Purge\n")
+	fs.Debugf(f, ">>> Purge")
 	return f.purgeWithCheck("", false, "purge")
 }
 
@@ -959,7 +968,7 @@ func (f *Fs) delete(path string, hardDelete bool) error {
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	fs.Debugf(f, ">>> Copy %v --> %q\n", src, remote)
+	fs.Debugf(f, ">>> Copy %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1054,7 +1063,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
-	fs.Debugf(f, ">>> Move %v --> %q\n", src, remote)
+	fs.Debugf(f, ">>> Move %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1140,7 +1149,7 @@ func (f *Fs) moveItemBin(srcPath, dstPath, opName string) error {
 // If it isn't possible then return fs.ErrorCantDirMove
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
-	fs.Debugf(f, ">>> DirMove %q --> %q\n", srcRemote, dstRemote)
+	fs.Debugf(f, ">>> DirMove %q %q", srcRemote, dstRemote)
 
 	srcFs, ok := src.(*Fs)
 	if !ok {
@@ -1182,7 +1191,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(remote string) (link string, err error) {
-	fs.Debugf(f, ">>> PublicLink\n")
+	fs.Debugf(f, ">>> PublicLink %q", remote)
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1222,9 +1231,49 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 	return "", err
 }
 
+// CleanUp permanently deletes all trashed files/folders
+func (f *Fs) CleanUp() error {
+	fs.Debugf(f, ">>> CleanUp")
+
+	token, err := f.accessToken()
+	if err != nil {
+		return err
+	}
+
+	data := url.Values{
+		"email":   {f.opt.Username},
+		"x-email": {f.opt.Username},
+	}
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/api/m1/trashbin/empty",
+		Parameters: url.Values{
+			"access_token": {token},
+		},
+		Body:        strings.NewReader(data.Encode()),
+		ContentType: api.BinContentType,
+	}
+
+	var response api.CleanupResponse
+	err = f.pacer.Call(func() (bool, error) {
+		res, err := f.srv.CallJSON(&opts, nil, &response)
+		return shouldRetry(res, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	switch response.StatusStr {
+	case "200":
+		return nil
+	default:
+		return fmt.Errorf("cleanup failed (%s)", response.StatusStr)
+	}
+}
+
 // About gets quota information
 func (f *Fs) About() (*fs.Usage, error) {
-	fs.Debugf(f, ">>> About\n")
+	fs.Debugf(f, ">>> About")
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1268,7 +1317,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 		size:    src.Size(),
 		modTime: src.ModTime(),
 	}
-	fs.Debugf(f, ">>> Put: %q %d '%v'\n", o.remote, o.size, o.modTime)
+	fs.Debugf(f, ">>> Put: %q %d '%v'", o.remote, o.size, o.modTime)
 	return o, o.Update(in, src, options...)
 }
 
@@ -1402,7 +1451,7 @@ type Object struct {
 // NewObject finds an Object at the remote.
 // If object can't be found it fails with fs.ErrorObjectNotFound
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	fs.Debugf(f, ">>> NewObject %q\n", remote)
+	fs.Debugf(f, ">>> NewObject %q", remote)
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -1578,7 +1627,7 @@ func (o *Object) Remove() error {
 
 // Open an object for read and download its content
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	fs.Debugf(o, ">>> Open %q", o.remote)
+	fs.Debugf(o, ">>> Open")
 
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
@@ -1855,6 +1904,7 @@ var (
 	_ fs.Mover        = (*Fs)(nil)
 	_ fs.DirMover     = (*Fs)(nil)
 	_ fs.PublicLinker = (*Fs)(nil)
+	_ fs.CleanUpper   = (*Fs)(nil)
 	_ fs.Abouter      = (*Fs)(nil)
 	_ fs.Object       = (*Object)(nil)
 )

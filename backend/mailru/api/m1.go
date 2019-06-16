@@ -22,7 +22,7 @@ type ServerErrorResponse struct {
 }
 
 func (e *ServerErrorResponse) Error() string {
-	return fmt.Sprintf("%s (%d)", e.Message, e.Status)
+	return fmt.Sprintf("server error %d (%s)", e.Status, e.Message)
 }
 
 // FileErrorResponse represents erroneous API response for a file
@@ -33,14 +33,14 @@ type FileErrorResponse struct {
 			Error string `json:"error"`
 		} `json:"home"`
 	} `json:"body"`
-	Message string
 	Status  int    `json:"status"`
 	Account string `json:"email,omitempty"`
 	Time    int64  `json:"time,omitempty"`
+	Message string // non-json, calculated field
 }
 
 func (e *FileErrorResponse) Error() string {
-	return fmt.Sprintf("%s (%d)", e.Message, e.Status)
+	return fmt.Sprintf("file error %d (%s)", e.Status, e.Body.Home.Error)
 }
 
 // UserInfoResponse contains account metadata
@@ -223,6 +223,13 @@ type ShardInfoResponse struct {
 	} `json:"body"`
 	Time   int64 `json:"time"`
 	Status int   `json:"status"`
+}
+
+// CleanupResponse ...
+type CleanupResponse struct {
+	Email     string `json:"email"`
+	Time      int64  `json:"time"`
+	StatusStr string `json:"status"`
 }
 
 // GenericResponse ...
