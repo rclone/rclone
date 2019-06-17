@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -1733,20 +1734,16 @@ func (o *Object) putByHash(ctx context.Context, mrHash []byte, info fs.ObjectInf
 }
 
 func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.ObjectInfo) (spoolFile fs.Object, mrHash []byte, err error) {
-	// Calculate Mailru hash in transit
-	mrHasher := mrhash.New()
-	wrapIn = io.TeeReader(wrapIn, mrHasher)
-
 	// Local temporary file system must support SHA1
 	hashType := hash.SHA1
-	hashSet := hash.Set(hashType)
 
-	// Calculate SHA1 in transit
-	shaHasher, err := hash.NewMultiHasherTypes(hashSet)
+	// Calculate Mailru and spool verification hashes in transit
+	hashSet := hash.NewHashSet(hash.Mailru, hashType)
+	hasher, err := hash.NewMultiHasherTypes(hashSet)
 	if err != nil {
 		return nil, nil, err
 	}
-	wrapIn = io.TeeReader(wrapIn, shaHasher)
+	wrapIn = io.TeeReader(wrapIn, hasher)
 
 	// Copy stream into spool file
 	tmpInfo := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), src.Size(), false, nil, nil)
@@ -1756,13 +1753,15 @@ func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.Obj
 	}
 
 	// Validate spool file
-	checkSum := shaHasher.Sums()[hashType]
+	sums := hasher.Sums()
+	checkSum := sums[hashType]
 	fileSum, err := spoolFile.Hash(ctx, hashType)
 	if spoolFile.Size() != src.Size() || err != nil || checkSum == "" || fileSum != checkSum {
 		return nil, nil, mrhash.ErrorInvalidHash
 	}
 
-	return spoolFile, mrHasher.Sum(nil), nil
+	mrHash, err = mrhash.DecodeString(sums[hash.Mailru])
+	return
 }
 
 func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) ([]byte, error) {
@@ -1949,6 +1948,9 @@ func (o *Object) Size() int64 {
 // Hash returns the MD5 or SHA1 sum of an object
 // returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
+	if t == hash.Mailru {
+		return hex.EncodeToString(o.mrHash), nil
+	}
 	return "", hash.ErrUnsupported
 }
 
@@ -2327,7 +2329,7 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash sets
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.None)
+	return hash.Set(hash.Mailru)
 }
 
 // Features returns the optional features of this Fs
