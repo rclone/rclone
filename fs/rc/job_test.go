@@ -82,9 +82,15 @@ func TestJobsGet(t *testing.T) {
 }
 
 var longFn = func(ctx context.Context, in Params) (Params, error) {
-	// TODO get execution time from context?
 	time.Sleep(1 * time.Hour)
 	return nil, nil
+}
+
+var ctxFn = func(ctx context.Context, in Params) (Params, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 const (
@@ -184,7 +190,7 @@ func TestJobsNewJob(t *testing.T) {
 	job := jobs.NewJob(noopFn, Params{})
 	assert.Equal(t, int64(1), job.ID)
 	assert.Equal(t, job, jobs.Get(1))
-
+	assert.NotEmpty(t, job.Stop)
 }
 
 func TestStartJob(t *testing.T) {
@@ -233,4 +239,40 @@ func TestRcJobList(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"jobids": []int64{1}}, out)
+}
+
+func TestRcJobStop(t *testing.T) {
+	jobID = 0
+	_, err := StartJob(ctxFn, Params{})
+	assert.NoError(t, err)
+
+	call := Calls.Get("job/stop")
+	assert.NotNil(t, call)
+	in := Params{"jobid": 1}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.Empty(t, out)
+
+	in = Params{"jobid": 123123123}
+	_, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "job not found")
+
+	in = Params{"jobidx": 123123123}
+	_, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Didn't find key")
+
+	time.Sleep(10 * time.Millisecond)
+
+	call = Calls.Get("job/status")
+	assert.NotNil(t, call)
+	in = Params{"jobid": 1}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, float64(1), out["id"])
+	assert.Equal(t, "context canceled", out["error"])
+	assert.Equal(t, true, out["finished"])
+	assert.Equal(t, false, out["success"])
 }

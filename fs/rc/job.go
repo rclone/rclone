@@ -15,15 +15,15 @@ import (
 // Job describes a asynchronous task started via the rc package
 type Job struct {
 	mu        sync.Mutex
-	ID        int64           `json:"id"`
-	StartTime time.Time       `json:"startTime"`
-	EndTime   time.Time       `json:"endTime"`
-	Error     string          `json:"error"`
-	Finished  bool            `json:"finished"`
-	Success   bool            `json:"success"`
-	Duration  float64         `json:"duration"`
-	Output    Params          `json:"output"`
-	Context   context.Context `json:"-"`
+	ID        int64     `json:"id"`
+	StartTime time.Time `json:"startTime"`
+	EndTime   time.Time `json:"endTime"`
+	Error     string    `json:"error"`
+	Finished  bool      `json:"finished"`
+	Success   bool      `json:"success"`
+	Duration  float64   `json:"duration"`
+	Output    Params    `json:"output"`
+	Stop      func()    `json:"-"`
 }
 
 // Jobs describes a collection of running tasks
@@ -117,23 +117,29 @@ func (job *Job) finish(out Params, err error) {
 }
 
 // run the job until completion writing the return status
-func (job *Job) run(fn Func, in Params) {
+func (job *Job) run(ctx context.Context, fn Func, in Params) {
 	defer func() {
 		if r := recover(); r != nil {
 			job.finish(nil, errors.Errorf("panic received: %v", r))
 		}
 	}()
-	job.finish(fn(job.Context, in))
+	job.finish(fn(ctx, in))
 }
 
 // NewJob start a new Job off
 func (jobs *Jobs) NewJob(fn Func, in Params) *Job {
+	ctx, cancel := context.WithCancel(context.Background())
+	stop := func() {
+		cancel()
+		// Wait for cancel to propagate before returning.
+		<-ctx.Done()
+	}
 	job := &Job{
 		ID:        atomic.AddInt64(&jobID, 1),
 		StartTime: time.Now(),
-		Context:   context.Background(),
+		Stop:      stop,
 	}
-	go job.run(fn, in)
+	go job.run(ctx, fn, in)
 	jobs.mu.Lock()
 	jobs.jobs[job.ID] = job
 	jobs.mu.Unlock()
@@ -205,9 +211,37 @@ Results
 	})
 }
 
-// Returns the status of a job
+// Returns list of job ids.
 func rcJobList(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	out["jobids"] = running.IDs()
+	return out, nil
+}
+
+func init() {
+	Add(Call{
+		Path:  "job/stop",
+		Fn:    rcJobStop,
+		Title: "Stop the running job",
+		Help: `Parameters
+- jobid - id of the job (integer)
+`,
+	})
+}
+
+// Stops the running job.
+func rcJobStop(ctx context.Context, in Params) (out Params, err error) {
+	jobID, err := in.GetInt64("jobid")
+	if err != nil {
+		return nil, err
+	}
+	job := running.Get(jobID)
+	if job == nil {
+		return nil, errors.New("job not found")
+	}
+	job.mu.Lock()
+	defer job.mu.Unlock()
+	out = make(Params)
+	job.Stop()
 	return out, nil
 }
