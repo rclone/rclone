@@ -3,6 +3,7 @@
 package cache_test
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -85,11 +86,11 @@ func TestInternalUploadMoveExistingFile(t *testing.T) {
 		map[string]string{"tmp_upload_path": path.Join(runInstance.tmpUploadDir, id), "tmp_wait_time": "3s"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
-	err := rootFs.Mkdir("one")
+	err := rootFs.Mkdir(context.Background(), "one")
 	require.NoError(t, err)
-	err = rootFs.Mkdir("one/test")
+	err = rootFs.Mkdir(context.Background(), "one/test")
 	require.NoError(t, err)
-	err = rootFs.Mkdir("second")
+	err = rootFs.Mkdir(context.Background(), "second")
 	require.NoError(t, err)
 
 	// create some rand test data
@@ -122,11 +123,11 @@ func TestInternalUploadTempPathCleaned(t *testing.T) {
 		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "5s"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
-	err := rootFs.Mkdir("one")
+	err := rootFs.Mkdir(context.Background(), "one")
 	require.NoError(t, err)
-	err = rootFs.Mkdir("one/test")
+	err = rootFs.Mkdir(context.Background(), "one/test")
 	require.NoError(t, err)
-	err = rootFs.Mkdir("second")
+	err = rootFs.Mkdir(context.Background(), "second")
 	require.NoError(t, err)
 
 	// create some rand test data
@@ -165,7 +166,7 @@ func TestInternalUploadQueueMoreFiles(t *testing.T) {
 		map[string]string{"tmp_upload_path": path.Join(runInstance.tmpUploadDir, id), "tmp_wait_time": "1s"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
-	err := rootFs.Mkdir("test")
+	err := rootFs.Mkdir(context.Background(), "test")
 	require.NoError(t, err)
 	minSize := 5242880
 	maxSize := 10485760
@@ -233,9 +234,9 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 	err = runInstance.dirMove(t, rootFs, "test", "second")
 	if err != errNotSupported {
 		require.NoError(t, err)
-		_, err = rootFs.NewObject("test/one")
+		_, err = rootFs.NewObject(context.Background(), "test/one")
 		require.Error(t, err)
-		_, err = rootFs.NewObject("second/one")
+		_, err = rootFs.NewObject(context.Background(), "second/one")
 		require.NoError(t, err)
 		// validate that it exists in temp fs
 		_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test/one")))
@@ -256,7 +257,7 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 	err = runInstance.rm(t, rootFs, "test")
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "directory not empty")
-	_, err = rootFs.NewObject("test/one")
+	_, err = rootFs.NewObject(context.Background(), "test/one")
 	require.NoError(t, err)
 	// validate that it exists in temp fs
 	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test/one")))
@@ -270,9 +271,9 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 	if err != errNotSupported {
 		require.NoError(t, err)
 		// try to read from it
-		_, err = rootFs.NewObject("test/one")
+		_, err = rootFs.NewObject(context.Background(), "test/one")
 		require.Error(t, err)
-		_, err = rootFs.NewObject("test/second")
+		_, err = rootFs.NewObject(context.Background(), "test/second")
 		require.NoError(t, err)
 		data2, err := runInstance.readDataFromRemote(t, rootFs, "test/second", 0, int64(len([]byte("one content"))), false)
 		require.NoError(t, err)
@@ -289,9 +290,9 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 	err = runInstance.copy(t, rootFs, path.Join("test", "one"), path.Join("test", "third"))
 	if err != errNotSupported {
 		require.NoError(t, err)
-		_, err = rootFs.NewObject("test/one")
+		_, err = rootFs.NewObject(context.Background(), "test/one")
 		require.NoError(t, err)
-		_, err = rootFs.NewObject("test/third")
+		_, err = rootFs.NewObject(context.Background(), "test/third")
 		require.NoError(t, err)
 		data2, err := runInstance.readDataFromRemote(t, rootFs, "test/third", 0, int64(len([]byte("one content"))), false)
 		require.NoError(t, err)
@@ -306,7 +307,7 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 	// test Remove -- allowed
 	err = runInstance.rm(t, rootFs, "test/one")
 	require.NoError(t, err)
-	_, err = rootFs.NewObject("test/one")
+	_, err = rootFs.NewObject(context.Background(), "test/one")
 	require.Error(t, err)
 	// validate that it doesn't exist in temp fs
 	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test/one")))
@@ -318,7 +319,7 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 	require.NoError(t, err)
 	err = runInstance.updateData(t, rootFs, "test/one", "one content", " updated")
 	require.NoError(t, err)
-	obj2, err := rootFs.NewObject("test/one")
+	obj2, err := rootFs.NewObject(context.Background(), "test/one")
 	require.NoError(t, err)
 	data2 := runInstance.readDataFromObj(t, obj2, 0, int64(len("one content updated")), false)
 	require.Equal(t, "one content updated", string(data2))
@@ -366,7 +367,7 @@ func TestInternalUploadUploadingFileOperations(t *testing.T) {
 	err = runInstance.dirMove(t, rootFs, "test", "second")
 	if err != errNotSupported {
 		require.Error(t, err)
-		_, err = rootFs.NewObject("test/one")
+		_, err = rootFs.NewObject(context.Background(), "test/one")
 		require.NoError(t, err)
 		// validate that it exists in temp fs
 		_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test/one")))
@@ -378,7 +379,7 @@ func TestInternalUploadUploadingFileOperations(t *testing.T) {
 	// test Rmdir
 	err = runInstance.rm(t, rootFs, "test")
 	require.Error(t, err)
-	_, err = rootFs.NewObject("test/one")
+	_, err = rootFs.NewObject(context.Background(), "test/one")
 	require.NoError(t, err)
 	// validate that it doesn't exist in temp fs
 	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test/one")))
@@ -389,9 +390,9 @@ func TestInternalUploadUploadingFileOperations(t *testing.T) {
 	if err != errNotSupported {
 		require.Error(t, err)
 		// try to read from it
-		_, err = rootFs.NewObject("test/one")
+		_, err = rootFs.NewObject(context.Background(), "test/one")
 		require.NoError(t, err)
-		_, err = rootFs.NewObject("test/second")
+		_, err = rootFs.NewObject(context.Background(), "test/second")
 		require.Error(t, err)
 		// validate that it exists in temp fs
 		_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test/one")))
@@ -404,9 +405,9 @@ func TestInternalUploadUploadingFileOperations(t *testing.T) {
 	err = runInstance.copy(t, rootFs, path.Join("test", "one"), path.Join("test", "third"))
 	if err != errNotSupported {
 		require.NoError(t, err)
-		_, err = rootFs.NewObject("test/one")
+		_, err = rootFs.NewObject(context.Background(), "test/one")
 		require.NoError(t, err)
-		_, err = rootFs.NewObject("test/third")
+		_, err = rootFs.NewObject(context.Background(), "test/third")
 		require.NoError(t, err)
 		data2, err := runInstance.readDataFromRemote(t, rootFs, "test/third", 0, int64(len([]byte("one content"))), false)
 		require.NoError(t, err)
@@ -421,7 +422,7 @@ func TestInternalUploadUploadingFileOperations(t *testing.T) {
 	// test Remove
 	err = runInstance.rm(t, rootFs, "test/one")
 	require.Error(t, err)
-	_, err = rootFs.NewObject("test/one")
+	_, err = rootFs.NewObject(context.Background(), "test/one")
 	require.NoError(t, err)
 	// validate that it doesn't exist in temp fs
 	_, err = os.Stat(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "test/one")))

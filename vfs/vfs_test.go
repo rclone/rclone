@@ -3,6 +3,7 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"testing"
@@ -130,8 +131,8 @@ func TestVFSStat(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	node, err := vfs.Stat("file1")
@@ -167,8 +168,8 @@ func TestVFSStatParent(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	node, leaf, err := vfs.StatParent("file1")
@@ -201,8 +202,8 @@ func TestVFSOpenFile(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	fd, err := vfs.OpenFile("file1", os.O_RDONLY, 0777)
@@ -238,7 +239,7 @@ func TestVFSRename(t *testing.T) {
 	}
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	err := vfs.Rename("dir/file2", "dir/file1")

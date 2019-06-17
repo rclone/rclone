@@ -1,6 +1,7 @@
 package mounttest
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -172,7 +173,7 @@ func TestDirCacheFlush(t *testing.T) {
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
-	err := run.fremote.Mkdir("dir/subdir")
+	err := run.fremote.Mkdir(context.Background(), "dir/subdir")
 	require.NoError(t, err)
 
 	root, err := run.vfs.Root()
@@ -208,7 +209,7 @@ func TestDirCacheFlushOnDirRename(t *testing.T) {
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
 	// expect remotely created directory to not show up
-	err := run.fremote.Mkdir("dir/subdir")
+	err := run.fremote.Mkdir(context.Background(), "dir/subdir")
 	require.NoError(t, err)
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")

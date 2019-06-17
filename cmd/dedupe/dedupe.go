@@ -1,6 +1,7 @@
 package dedupe
 
 import (
+	"context"
 	"log"
 
 	"github.com/ncw/rclone/cmd"
@@ -112,7 +113,7 @@ Or
 		}
 		fdst := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.Deduplicate(fdst, dedupeMode)
+			return operations.Deduplicate(context.Background(), fdst, dedupeMode)
 		})
 	},
 }

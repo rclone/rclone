@@ -1,6 +1,8 @@
 package moveto
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/sync"
@@ -52,9 +54,9 @@ transfer.
 
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.MoveDir(fdst, fsrc, false, false)
+				return sync.MoveDir(context.Background(), fdst, fsrc, false, false)
 			}
-			return operations.MoveFile(fdst, fsrc, dstFileName, srcFileName)
+			return operations.MoveFile(context.Background(), fdst, fsrc, dstFileName, srcFileName)
 		})
 	},
 }

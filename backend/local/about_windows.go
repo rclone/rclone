@@ -3,6 +3,7 @@
 package local
 
 import (
+	"context"
 	"syscall"
 	"unsafe"
 
@@ -13,7 +14,7 @@ import (
 var getFreeDiskSpace = syscall.NewLazyDLL("kernel32.dll").NewProc("GetDiskFreeSpaceExW")
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var available, total, free int64
 	_, _, e1 := getFreeDiskSpace.Call(
 		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(f.root))),

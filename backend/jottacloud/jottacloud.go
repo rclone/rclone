@@ -2,6 +2,7 @@ package jottacloud
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -542,7 +543,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if f.root == "." {
 			f.root = ""
 		}
-		_, err := f.NewObject(remote)
+		_, err := f.NewObject(context.TODO(), remote)
 		if err != nil {
 			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
 				// File doesn't exist so return old f
@@ -580,7 +581,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.JottaFile) (fs.Object, e
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -617,7 +618,7 @@ func (f *Fs) CreateDir(path string) (jf *api.JottaFolder, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	//fmt.Printf("List: %s\n", f.filePath(dir))
 	opts := rest.Opts{
 		Method: "GET",
@@ -734,7 +735,7 @@ func (f *Fs) listFileDir(remoteStartPath string, startFolder *api.JottaFolder, f
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       f.filePath(dir),
@@ -787,17 +788,17 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	if f.opt.Device != "Jotta" {
 		return nil, errors.New("upload not supported for devices other than Jotta")
 	}
-	o := f.createObject(src.Remote(), src.ModTime(), src.Size())
-	return o, o.Update(in, src, options...)
+	o := f.createObject(src.Remote(), src.ModTime(ctx), src.Size())
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // mkParentDir makes the parent of the native path dirPath if
 // necessary and any directories above that
-func (f *Fs) mkParentDir(dirPath string) error {
+func (f *Fs) mkParentDir(ctx context.Context, dirPath string) error {
 	// defer log.Trace(dirPath, "")("")
 	// chop off trailing / if it exists
 	if strings.HasSuffix(dirPath, "/") {
@@ -807,25 +808,25 @@ func (f *Fs) mkParentDir(dirPath string) error {
 	if parent == "." {
 		parent = ""
 	}
-	return f.Mkdir(parent)
+	return f.Mkdir(ctx, parent)
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	_, err := f.CreateDir(dir)
 	return err
 }
 
 // purgeCheck removes the root directory, if check is set then it
 // refuses to do so if it has anything in
-func (f *Fs) purgeCheck(dir string, check bool) (err error) {
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error) {
 	root := path.Join(f.root, dir)
 	if root == "" {
 		return errors.New("can't purge root directory")
 	}
 
 	// check that the directory exists
-	entries, err := f.List(dir)
+	entries, err := f.List(ctx, dir)
 	if err != nil {
 		return err
 	}
@@ -865,8 +866,8 @@ func (f *Fs) purgeCheck(dir string, check bool) (err error) {
 // Rmdir deletes the root folder
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
-	return f.purgeCheck(dir, true)
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, true)
 }
 
 // Precision return the precision of this Fs
@@ -879,8 +880,8 @@ func (f *Fs) Precision() time.Duration {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge() error {
-	return f.purgeCheck("", false)
+func (f *Fs) Purge(ctx context.Context) error {
+	return f.purgeCheck(ctx, "", false)
 }
 
 // copyOrMoves copies or moves directories or files depending on the method parameter
@@ -913,14 +914,14 @@ func (f *Fs) copyOrMove(method, src, dest string) (info *api.JottaFile, err erro
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.mkParentDir(remote)
+	err := f.mkParentDir(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -943,14 +944,14 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
-	err := f.mkParentDir(remote)
+	err := f.mkParentDir(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -972,7 +973,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -989,7 +990,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	//fmt.Printf("Move src: %s (FullPath %s), dst: %s (FullPath: %s)\n", srcRemote, srcPath, dstRemote, dstPath)
 
 	var err error
-	_, err = f.List(dstRemote)
+	_, err = f.List(ctx, dstRemote)
 	if err == fs.ErrorDirNotFound {
 		// OK
 	} else if err != nil {
@@ -1007,7 +1008,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       f.filePath(remote),
@@ -1053,7 +1054,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 }
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	info, err := getAccountInfo(f.srv, f.user)
 	if err != nil {
 		return nil, err
@@ -1095,7 +1096,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the MD5 of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
@@ -1113,7 +1114,7 @@ func (o *Object) Size() int64 {
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
+func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 
@@ -1145,7 +1146,7 @@ func (o *Object) readMetaData(force bool) (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(false)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
@@ -1155,7 +1156,7 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
@@ -1165,7 +1166,7 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	fs.FixRangeOption(options, o.size)
 	var resp *http.Response
 	opts := rest.Opts{
@@ -1249,9 +1250,9 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 // If existing is set then it updates the object rather than creating a new one
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
-	md5String, err := src.Hash(hash.MD5)
+	md5String, err := src.Hash(ctx, hash.MD5)
 	if err != nil || md5String == "" {
 		// unwrap the accounting from the input, we use wrap to put it
 		// back on after the buffering
@@ -1274,7 +1275,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		Path:         "allocate",
 		ExtraHeaders: make(map[string]string),
 	}
-	fileDate := api.Time(src.ModTime()).APIString()
+	fileDate := api.Time(src.ModTime(ctx)).APIString()
 
 	// the allocate request
 	var request = api.AllocateFileRequest{
@@ -1338,7 +1339,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       o.filePath(),

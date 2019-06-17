@@ -22,6 +22,7 @@ of path_display and all will be well.
 */
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -441,7 +442,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *files.FileMetadata) (fs.Obje
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -454,7 +455,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := f.slashRoot
 	if dir != "" {
 		root += "/" + dir
@@ -541,22 +542,22 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
 	}
-	return o, o.Update(in, src, options...)
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	root := path.Join(f.slashRoot, dir)
 
 	// can't create or run metadata on root
@@ -586,7 +587,7 @@ func (f *Fs) Mkdir(dir string) error {
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	root := path.Join(f.slashRoot, dir)
 
 	// can't remove root
@@ -642,7 +643,7 @@ func (f *Fs) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -687,7 +688,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge() (err error) {
+func (f *Fs) Purge(ctx context.Context) (err error) {
 	// Let dropbox delete the filesystem tree
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: f.slashRoot})
@@ -705,7 +706,7 @@ func (f *Fs) Purge() (err error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
@@ -745,7 +746,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
 	absPath := "/" + path.Join(f.Root(), remote)
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
@@ -798,7 +799,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -834,7 +835,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 }
 
 // About gets quota information
-func (f *Fs) About() (usage *fs.Usage, err error) {
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	var q *users.SpaceUsage
 	err = f.pacer.Call(func() (bool, error) {
 		q, err = f.users.GetSpaceUsage()
@@ -886,7 +887,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the dropbox special hash
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.Dropbox {
 		return "", hash.ErrUnsupported
 	}
@@ -948,7 +949,7 @@ func (o *Object) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Debugf(o, "Failed to read metadata: %v", err)
@@ -960,7 +961,7 @@ func (o *Object) ModTime() time.Time {
 // SetModTime sets the modification time of the local fs object
 //
 // Commits the datastore
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	// Dropbox doesn't have a way of doing this so returning this
 	// error will cause the file to be deleted first then
 	// re-uploaded to set the time.
@@ -973,7 +974,7 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	headers := fs.OpenOptionHeaders(options)
 	arg := files.DownloadArg{Path: o.remotePath(), ExtraHeaders: headers}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1099,7 +1100,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
 		fs.Logf(o, "File name disallowed - not uploading")
@@ -1108,7 +1109,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	commitInfo := files.NewCommitInfo(o.remotePath())
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
-	commitInfo.ClientModified = src.ModTime().UTC().Round(time.Second)
+	commitInfo.ClientModified = src.ModTime(ctx).UTC().Round(time.Second)
 
 	size := src.Size()
 	var err error
@@ -1128,7 +1129,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() (err error) {
+func (o *Object) Remove(ctx context.Context) (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{Path: o.remotePath()})
 		return shouldRetry(err)

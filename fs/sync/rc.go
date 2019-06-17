@@ -1,6 +1,8 @@
 package sync
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/fs/rc"
 )
 
@@ -14,8 +16,8 @@ func init() {
 		rc.Add(rc.Call{
 			Path:         "sync/" + name,
 			AuthRequired: true,
-			Fn: func(in rc.Params) (rc.Params, error) {
-				return rcSyncCopyMove(in, name)
+			Fn: func(ctx context.Context, in rc.Params) (rc.Params, error) {
+				return rcSyncCopyMove(ctx, in, name)
 			},
 			Title: name + " a directory from source remote to destination remote",
 			Help: `This takes the following parameters
@@ -30,7 +32,7 @@ See the [` + name + ` command](/commands/rclone_` + name + `/) command for more 
 }
 
 // Sync/Copy/Move a file
-func rcSyncCopyMove(in rc.Params, name string) (out rc.Params, err error) {
+func rcSyncCopyMove(ctx context.Context, in rc.Params, name string) (out rc.Params, err error) {
 	srcFs, err := rc.GetFsNamed(in, "srcFs")
 	if err != nil {
 		return nil, err
@@ -45,15 +47,15 @@ func rcSyncCopyMove(in rc.Params, name string) (out rc.Params, err error) {
 	}
 	switch name {
 	case "sync":
-		return nil, Sync(dstFs, srcFs, createEmptySrcDirs)
+		return nil, Sync(ctx, dstFs, srcFs, createEmptySrcDirs)
 	case "copy":
-		return nil, CopyDir(dstFs, srcFs, createEmptySrcDirs)
+		return nil, CopyDir(ctx, dstFs, srcFs, createEmptySrcDirs)
 	case "move":
 		deleteEmptySrcDirs, err := in.GetBool("deleteEmptySrcDirs")
 		if rc.NotErrParamNotFound(err) {
 			return nil, err
 		}
-		return nil, MoveDir(dstFs, srcFs, deleteEmptySrcDirs, createEmptySrcDirs)
+		return nil, MoveDir(ctx, dstFs, srcFs, deleteEmptySrcDirs, createEmptySrcDirs)
 	}
 	panic("unknown rcSyncCopyMove type")
 }

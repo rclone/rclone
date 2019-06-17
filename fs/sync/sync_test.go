@@ -3,6 +3,7 @@
 package sync
 
 import (
+	"context"
 	"runtime"
 	"testing"
 	"time"
@@ -38,10 +39,10 @@ func TestCopyWithDryRun(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
 	fs.Config.DryRun = true
-	err := CopyDir(r.Fremote, r.Flocal, false)
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
 	fs.Config.DryRun = false
 	require.NoError(t, err)
 
@@ -54,9 +55,9 @@ func TestCopy(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	err := CopyDir(r.Fremote, r.Flocal, false)
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1)
@@ -73,7 +74,7 @@ func TestCopyNoTraverse(t *testing.T) {
 
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 
-	err := CopyDir(r.Fremote, r.Flocal, false)
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1)
@@ -91,7 +92,7 @@ func TestSyncNoTraverse(t *testing.T) {
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1)
@@ -109,7 +110,7 @@ func TestCopyWithDepth(t *testing.T) {
 	fs.Config.MaxDepth = 1
 	defer func() { fs.Config.MaxDepth = -1 }()
 
-	err := CopyDir(r.Fremote, r.Flocal, false)
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1, file2)
@@ -140,7 +141,7 @@ func testCopyWithFilesFrom(t *testing.T, noTraverse bool) {
 	}
 	defer unpatch()
 
-	err = CopyDir(r.Fremote, r.Flocal, false)
+	err = CopyDir(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	unpatch()
 
@@ -155,11 +156,11 @@ func TestCopyEmptyDirectories(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	err := operations.Mkdir(r.Flocal, "sub dir2")
+	err := operations.Mkdir(context.Background(), r.Flocal, "sub dir2")
 	require.NoError(t, err)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	err = CopyDir(r.Fremote, r.Flocal, true)
+	err = CopyDir(context.Background(), r.Fremote, r.Flocal, true)
 	require.NoError(t, err)
 
 	fstest.CheckListingWithPrecision(
@@ -181,11 +182,11 @@ func TestMoveEmptyDirectories(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	err := operations.Mkdir(r.Flocal, "sub dir2")
+	err := operations.Mkdir(context.Background(), r.Flocal, "sub dir2")
 	require.NoError(t, err)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	err = MoveDir(r.Fremote, r.Flocal, false, true)
+	err = MoveDir(context.Background(), r.Fremote, r.Flocal, false, true)
 	require.NoError(t, err)
 
 	fstest.CheckListingWithPrecision(
@@ -207,11 +208,11 @@ func TestSyncEmptyDirectories(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
-	err := operations.Mkdir(r.Flocal, "sub dir2")
+	err := operations.Mkdir(context.Background(), r.Flocal, "sub dir2")
 	require.NoError(t, err)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	err = Sync(r.Fremote, r.Flocal, true)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, true)
 	require.NoError(t, err)
 
 	fstest.CheckListingWithPrecision(
@@ -232,7 +233,7 @@ func TestSyncEmptyDirectories(t *testing.T) {
 func TestServerSideCopy(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
+	file1 := r.WriteObject(context.Background(), "sub dir/hello world", "hello world", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	FremoteCopy, _, finaliseCopy, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
@@ -240,7 +241,7 @@ func TestServerSideCopy(t *testing.T) {
 	defer finaliseCopy()
 	t.Logf("Server side copy (if possible) %v -> %v", r.Fremote, FremoteCopy)
 
-	err = CopyDir(FremoteCopy, r.Fremote, false)
+	err = CopyDir(context.Background(), FremoteCopy, r.Fremote, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, FremoteCopy, file1)
@@ -251,14 +252,14 @@ func TestServerSideCopy(t *testing.T) {
 func TestCopyAfterDelete(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
+	file1 := r.WriteObject(context.Background(), "sub dir/hello world", "hello world", t1)
 	fstest.CheckItems(t, r.Flocal)
 	fstest.CheckItems(t, r.Fremote, file1)
 
-	err := operations.Mkdir(r.Flocal, "")
+	err := operations.Mkdir(context.Background(), r.Flocal, "")
 	require.NoError(t, err)
 
-	err = CopyDir(r.Fremote, r.Flocal, false)
+	err = CopyDir(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal)
@@ -269,10 +270,10 @@ func TestCopyAfterDelete(t *testing.T) {
 func TestCopyRedownload(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
+	file1 := r.WriteObject(context.Background(), "sub dir/hello world", "hello world", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
-	err := CopyDir(r.Flocal, r.Fremote, false)
+	err := CopyDir(context.Background(), r.Flocal, r.Fremote, false)
 	require.NoError(t, err)
 
 	// Test with combined precision of local and remote as we copied it there and back
@@ -292,7 +293,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file1)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
@@ -304,7 +305,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file2)
 
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Fremote, r.Flocal, false)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred no files
@@ -326,7 +327,7 @@ func TestSyncSizeOnly(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file1)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
@@ -338,7 +339,7 @@ func TestSyncSizeOnly(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file2)
 
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Fremote, r.Flocal, false)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred no files
@@ -360,7 +361,7 @@ func TestSyncIgnoreSize(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file1)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
@@ -372,7 +373,7 @@ func TestSyncIgnoreSize(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file2)
 
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Fremote, r.Flocal, false)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred no files
@@ -384,11 +385,11 @@ func TestSyncIgnoreSize(t *testing.T) {
 func TestSyncIgnoreTimes(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteBoth("existing", "potato", t1)
+	file1 := r.WriteBoth(context.Background(), "existing", "potato", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred exactly 0 files because the
@@ -399,7 +400,7 @@ func TestSyncIgnoreTimes(t *testing.T) {
 	defer func() { fs.Config.IgnoreTimes = false }()
 
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Fremote, r.Flocal, false)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file even though the
@@ -419,7 +420,7 @@ func TestSyncIgnoreExisting(t *testing.T) {
 	defer func() { fs.Config.IgnoreExisting = false }()
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -427,7 +428,7 @@ func TestSyncIgnoreExisting(t *testing.T) {
 	// Change everything
 	r.WriteFile("existing", "newpotatoes", t2)
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Fremote, r.Flocal, false)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	// Items should not change
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -441,9 +442,9 @@ func TestSyncIgnoreErrors(t *testing.T) {
 		r.Finalise()
 	}()
 	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
-	require.NoError(t, operations.Mkdir(r.Fremote, "d"))
+	file2 := r.WriteObject(context.Background(), "b/potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth(context.Background(), "c/non empty space", "AhHa!", t2)
+	require.NoError(t, operations.Mkdir(context.Background(), r.Fremote, "d"))
 
 	fstest.CheckListingWithPrecision(
 		t,
@@ -475,7 +476,7 @@ func TestSyncIgnoreErrors(t *testing.T) {
 
 	accounting.Stats.ResetCounters()
 	fs.CountError(errors.New("boom"))
-	assert.NoError(t, Sync(r.Fremote, r.Flocal, false))
+	assert.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
 
 	fstest.CheckListingWithPrecision(
 		t,
@@ -509,7 +510,7 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("empty space", "", t2)
-	file2 := r.WriteObject("empty space", "", t1)
+	file2 := r.WriteObject(context.Background(), "empty space", "", t1)
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file2)
@@ -518,7 +519,7 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	defer func() { fs.Config.DryRun = false }()
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1)
@@ -527,7 +528,7 @@ func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	fs.Config.DryRun = false
 
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Fremote, r.Flocal, false)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1)
@@ -549,13 +550,13 @@ func TestSyncAfterChangingModtimeOnlyWithNoUpdateModTime(t *testing.T) {
 	}()
 
 	file1 := r.WriteFile("empty space", "", t2)
-	file2 := r.WriteObject("empty space", "", t1)
+	file2 := r.WriteObject(context.Background(), "empty space", "", t1)
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file2)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1)
@@ -570,13 +571,13 @@ func TestSyncDoesntUpdateModtime(t *testing.T) {
 	}
 
 	file1 := r.WriteFile("foo", "foo", t2)
-	file2 := r.WriteObject("foo", "bar", t1)
+	file2 := r.WriteObject(context.Background(), "foo", "bar", t1)
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file2)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Flocal, file1)
@@ -589,14 +590,14 @@ func TestSyncDoesntUpdateModtime(t *testing.T) {
 func TestSyncAfterAddingAFile(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteBoth("empty space", "", t2)
+	file1 := r.WriteBoth(context.Background(), "empty space", "", t2)
 	file2 := r.WriteFile("potato", "------------------------------------------------------------", t3)
 
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
@@ -605,13 +606,13 @@ func TestSyncAfterAddingAFile(t *testing.T) {
 func TestSyncAfterChangingFilesSizeOnly(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteObject("potato", "------------------------------------------------------------", t3)
+	file1 := r.WriteObject(context.Background(), "potato", "------------------------------------------------------------", t3)
 	file2 := r.WriteFile("potato", "smaller but same date", t3)
 	fstest.CheckItems(t, r.Fremote, file1)
 	fstest.CheckItems(t, r.Flocal, file2)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file2)
 	fstest.CheckItems(t, r.Fremote, file2)
@@ -625,16 +626,16 @@ func TestSyncAfterChangingContentsOnly(t *testing.T) {
 	var file1 fstest.Item
 	if r.Fremote.Precision() == fs.ModTimeNotSupported {
 		t.Logf("ModTimeNotSupported so forcing file to be a different size")
-		file1 = r.WriteObject("potato", "different size to make sure it syncs", t3)
+		file1 = r.WriteObject(context.Background(), "potato", "different size to make sure it syncs", t3)
 	} else {
-		file1 = r.WriteObject("potato", "smaller but same date", t3)
+		file1 = r.WriteObject(context.Background(), "potato", "smaller but same date", t3)
 	}
 	file2 := r.WriteFile("potato", "SMALLER BUT SAME DATE", t2)
 	fstest.CheckItems(t, r.Fremote, file1)
 	fstest.CheckItems(t, r.Flocal, file2)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file2)
 	fstest.CheckItems(t, r.Fremote, file2)
@@ -645,12 +646,12 @@ func TestSyncAfterRemovingAFileAndAddingAFileDryRun(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteObject("potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth("empty space", "", t2)
+	file2 := r.WriteObject(context.Background(), "potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth(context.Background(), "empty space", "", t2)
 
 	fs.Config.DryRun = true
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	fs.Config.DryRun = false
 	require.NoError(t, err)
 
@@ -663,13 +664,13 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteObject("potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth("empty space", "", t2)
+	file2 := r.WriteObject(context.Background(), "potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth(context.Background(), "empty space", "", t2)
 	fstest.CheckItems(t, r.Fremote, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1, file3)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1, file3)
 	fstest.CheckItems(t, r.Fremote, file1, file3)
@@ -680,10 +681,10 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
-	require.NoError(t, operations.Mkdir(r.Fremote, "d"))
-	require.NoError(t, operations.Mkdir(r.Fremote, "d/e"))
+	file2 := r.WriteObject(context.Background(), "b/potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth(context.Background(), "c/non empty space", "AhHa!", t2)
+	require.NoError(t, operations.Mkdir(context.Background(), r.Fremote, "d"))
+	require.NoError(t, operations.Mkdir(context.Background(), r.Fremote, "d/e"))
 
 	fstest.CheckListingWithPrecision(
 		t,
@@ -715,7 +716,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDir(t *testing.T) {
 	)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckListingWithPrecision(
@@ -751,9 +752,9 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
-	require.NoError(t, operations.Mkdir(r.Fremote, "d"))
+	file2 := r.WriteObject(context.Background(), "b/potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth(context.Background(), "c/non empty space", "AhHa!", t2)
+	require.NoError(t, operations.Mkdir(context.Background(), r.Fremote, "d"))
 
 	fstest.CheckListingWithPrecision(
 		t,
@@ -785,7 +786,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 
 	accounting.Stats.ResetCounters()
 	fs.CountError(errors.New("boom"))
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 
 	fstest.CheckListingWithPrecision(
@@ -856,13 +857,13 @@ func TestCopyDeleteBefore(t *testing.T) {
 		fs.Config.DeleteMode = fs.DeleteModeDefault
 	}()
 
-	file1 := r.WriteObject("potato", "hopefully not deleted", t1)
+	file1 := r.WriteObject(context.Background(), "potato", "hopefully not deleted", t1)
 	file2 := r.WriteFile("potato2", "hopefully copied in", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 	fstest.CheckItems(t, r.Flocal, file2)
 
 	accounting.Stats.ResetCounters()
-	err := CopyDir(r.Fremote, r.Flocal, false)
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file1, file2)
@@ -873,8 +874,8 @@ func TestCopyDeleteBefore(t *testing.T) {
 func TestSyncWithExclude(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth("empty space", "", t2)
+	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
 	file3 := r.WriteFile("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
@@ -885,14 +886,14 @@ func TestSyncWithExclude(t *testing.T) {
 	}()
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Fremote, file2, file1)
 
 	// Now sync the other way round and check enormous doesn't get
 	// deleted as it is excluded from the sync
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Flocal, r.Fremote, false)
+	err = Sync(context.Background(), r.Flocal, r.Fremote, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file2, file1, file3)
 }
@@ -901,9 +902,9 @@ func TestSyncWithExclude(t *testing.T) {
 func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1) // 60 bytes
-	file2 := r.WriteBoth("empty space", "", t2)
-	file3 := r.WriteBoth("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1) // 60 bytes
+	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file3 := r.WriteBoth(context.Background(), "enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
 
@@ -915,14 +916,14 @@ func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 	}()
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Fremote, file2)
 
 	// Check sync the other way round to make sure enormous gets
 	// deleted even though it is excluded
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Flocal, r.Fremote, false)
+	err = Sync(context.Background(), r.Flocal, r.Fremote, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file2)
 }
@@ -942,10 +943,10 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 	fourF := r.WriteFile("four", "four", t2)
 	fiveF := r.WriteFile("five", "five", t2)
 	fstest.CheckItems(t, r.Flocal, oneF, twoF, threeF, fourF, fiveF)
-	oneO := r.WriteObject("one", "ONE", t2)
-	twoO := r.WriteObject("two", "TWO", t2)
-	threeO := r.WriteObject("three", "THREE", t2plus)
-	fourO := r.WriteObject("four", "FOURFOUR", t2minus)
+	oneO := r.WriteObject(context.Background(), "one", "ONE", t2)
+	twoO := r.WriteObject(context.Background(), "two", "TWO", t2)
+	threeO := r.WriteObject(context.Background(), "three", "THREE", t2plus)
+	fourO := r.WriteObject(context.Background(), "four", "FOURFOUR", t2minus)
 	fstest.CheckItems(t, r.Fremote, oneO, twoO, threeO, fourO)
 
 	fs.Config.UpdateOlder = true
@@ -957,7 +958,7 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 	}()
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeO, fourF, fiveF)
 }
@@ -981,7 +982,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	f2 := r.WriteFile("yam", "Yam Content", t2)
 
 	accounting.Stats.ResetCounters()
-	require.NoError(t, Sync(r.Fremote, r.Flocal, false))
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 	fstest.CheckItems(t, r.Flocal, f1, f2)
@@ -990,7 +991,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	f2 = r.RenameFile(f2, "yaml")
 
 	accounting.Stats.ResetCounters()
-	require.NoError(t, Sync(r.Fremote, r.Flocal, false))
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
@@ -1015,12 +1016,12 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	require.NoError(t, err)
 	defer finaliseMove()
 
-	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth("empty space", "", t2)
-	file3u := r.WriteBoth("potato3", "------------------------------------------------------------ UPDATED", t2)
+	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file3u := r.WriteBoth(context.Background(), "potato3", "------------------------------------------------------------ UPDATED", t2)
 
 	if testDeleteEmptyDirs {
-		err := operations.Mkdir(r.Fremote, "tomatoDir")
+		err := operations.Mkdir(context.Background(), r.Fremote, "tomatoDir")
 		require.NoError(t, err)
 	}
 
@@ -1029,13 +1030,13 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	t.Logf("Server side move (if possible) %v -> %v", r.Fremote, FremoteMove)
 
 	// Write just one file in the new remote
-	r.WriteObjectTo(FremoteMove, "empty space", "", t2, false)
-	file3 := r.WriteObjectTo(FremoteMove, "potato3", "------------------------------------------------------------", t1, false)
+	r.WriteObjectTo(context.Background(), FremoteMove, "empty space", "", t2, false)
+	file3 := r.WriteObjectTo(context.Background(), FremoteMove, "potato3", "------------------------------------------------------------", t1, false)
 	fstest.CheckItems(t, FremoteMove, file2, file3)
 
 	// Do server side move
 	accounting.Stats.ResetCounters()
-	err = MoveDir(FremoteMove, r.Fremote, testDeleteEmptyDirs, false)
+	err = MoveDir(context.Background(), FremoteMove, r.Fremote, testDeleteEmptyDirs, false)
 	require.NoError(t, err)
 
 	if withFilter {
@@ -1056,13 +1057,13 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	defer finaliseMove2()
 
 	if testDeleteEmptyDirs {
-		err := operations.Mkdir(FremoteMove, "tomatoDir")
+		err := operations.Mkdir(context.Background(), FremoteMove, "tomatoDir")
 		require.NoError(t, err)
 	}
 
 	// Move it back to a new empty remote, dst does not exist this time
 	accounting.Stats.ResetCounters()
-	err = MoveDir(FremoteMove2, FremoteMove, testDeleteEmptyDirs, false)
+	err = MoveDir(context.Background(), FremoteMove2, FremoteMove, testDeleteEmptyDirs, false)
 	require.NoError(t, err)
 
 	if withFilter {
@@ -1084,10 +1085,10 @@ func TestMoveWithDeleteEmptySrcDirs(t *testing.T) {
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 	file2 := r.WriteFile("nested/sub dir/file", "nested", t1)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
 	// run move with --delete-empty-src-dirs
-	err := MoveDir(r.Fremote, r.Flocal, true, false)
+	err := MoveDir(context.Background(), r.Fremote, r.Flocal, true, false)
 	require.NoError(t, err)
 
 	fstest.CheckListingWithPrecision(
@@ -1105,9 +1106,9 @@ func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	defer r.Finalise()
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 	file2 := r.WriteFile("nested/sub dir/file", "nested", t1)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	err := MoveDir(r.Fremote, r.Flocal, false, false)
+	err := MoveDir(context.Background(), r.Fremote, r.Flocal, false, false)
 	require.NoError(t, err)
 
 	fstest.CheckListingWithPrecision(
@@ -1164,11 +1165,11 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	FremoteMove, err := fs.NewFs(subRemoteName)
 	require.NoError(t, err)
 
-	file1 := r.WriteObject("potato2", "------------------------------------------------------------", t1)
+	file1 := r.WriteObject(context.Background(), "potato2", "------------------------------------------------------------", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Subdir move with no filters should return ErrorCantMoveOverlapping
-	err = MoveDir(FremoteMove, r.Fremote, false, false)
+	err = MoveDir(context.Background(), FremoteMove, r.Fremote, false, false)
 	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
 
 	// Now try with a filter which should also fail with ErrorCantMoveOverlapping
@@ -1176,7 +1177,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	defer func() {
 		filter.Active.Opt.MinSize = -1
 	}()
-	err = MoveDir(FremoteMove, r.Fremote, false, false)
+	err = MoveDir(context.Background(), FremoteMove, r.Fremote, false, false)
 	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
 }
 
@@ -1195,10 +1196,10 @@ func TestSyncOverlap(t *testing.T) {
 		assert.Equal(t, fs.ErrorOverlapping.Error(), err.Error())
 	}
 
-	checkErr(Sync(FremoteSync, r.Fremote, false))
-	checkErr(Sync(r.Fremote, FremoteSync, false))
-	checkErr(Sync(r.Fremote, r.Fremote, false))
-	checkErr(Sync(FremoteSync, FremoteSync, false))
+	checkErr(Sync(context.Background(), FremoteSync, r.Fremote, false))
+	checkErr(Sync(context.Background(), r.Fremote, FremoteSync, false))
+	checkErr(Sync(context.Background(), r.Fremote, r.Fremote, false))
+	checkErr(Sync(context.Background(), FremoteSync, FremoteSync, false))
 }
 
 // Test with BackupDir set
@@ -1209,7 +1210,7 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("Skipping test as remote does not support server side move")
 	}
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
 	fs.Config.BackupDir = r.FremoteName + "/backup"
 	fs.Config.Suffix = suffix
@@ -1222,9 +1223,9 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 
 	// Make the setup so we have one, two, three in the dest
 	// and one (different), two (same) in the source
-	file1 := r.WriteObject("dst/one", "one", t1)
-	file2 := r.WriteObject("dst/two", "two", t1)
-	file3 := r.WriteObject("dst/three.txt", "three", t1)
+	file1 := r.WriteObject(context.Background(), "dst/one", "one", t1)
+	file2 := r.WriteObject(context.Background(), "dst/two", "two", t1)
+	file3 := r.WriteObject(context.Background(), "dst/three.txt", "three", t1)
 	file2a := r.WriteFile("two", "two", t1)
 	file1a := r.WriteFile("one", "oneA", t2)
 
@@ -1235,7 +1236,7 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 	require.NoError(t, err)
 
 	accounting.Stats.ResetCounters()
-	err = Sync(fdst, r.Flocal, false)
+	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
 	// one should be moved to the backup dir and the new one installed
@@ -1253,14 +1254,14 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 
 	// Now check what happens if we do it again
 	// Restore a different three and update one in the source
-	file3a := r.WriteObject("dst/three.txt", "threeA", t2)
+	file3a := r.WriteObject(context.Background(), "dst/three.txt", "threeA", t2)
 	file1b := r.WriteFile("one", "oneBB", t3)
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file1a, file3a)
 
 	// This should delete three and overwrite one again, checking
 	// the files got overwritten correctly in backup-dir
 	accounting.Stats.ResetCounters()
-	err = Sync(fdst, r.Flocal, false)
+	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
 	// one should be moved to the backup dir and the new one installed
@@ -1298,11 +1299,11 @@ func TestSyncUTFNorm(t *testing.T) {
 	file1 := r.WriteFile(Encoding1, "This is a test", t1)
 	fstest.CheckItems(t, r.Flocal, file1)
 
-	file2 := r.WriteObject(Encoding2, "This is a old test", t2)
+	file2 := r.WriteObject(context.Background(), Encoding2, "This is a old test", t2)
 	fstest.CheckItems(t, r.Fremote, file2)
 
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file, but kept the
@@ -1328,7 +1329,7 @@ func TestSyncImmutable(t *testing.T) {
 
 	// Should succeed
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -1340,7 +1341,7 @@ func TestSyncImmutable(t *testing.T) {
 
 	// Should fail with ErrorImmutableModified and not modify local or remote files
 	accounting.Stats.ResetCounters()
-	err = Sync(r.Fremote, r.Flocal, false)
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	assert.EqualError(t, err, fs.ErrorImmutableModified.Error())
 	fstest.CheckItems(t, r.Flocal, file2)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -1362,12 +1363,12 @@ func TestSyncIgnoreCase(t *testing.T) {
 	// Create files with different filename casing
 	file1 := r.WriteFile("existing", "potato", t1)
 	fstest.CheckItems(t, r.Flocal, file1)
-	file2 := r.WriteObject("EXISTING", "potato", t1)
+	file2 := r.WriteObject(context.Background(), "EXISTING", "potato", t1)
 	fstest.CheckItems(t, r.Fremote, file2)
 
 	// Should not copy files that are differently-cased but otherwise identical
 	accounting.Stats.ResetCounters()
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file2)
@@ -1403,6 +1404,6 @@ func TestAbort(t *testing.T) {
 
 	accounting.Stats.ResetCounters()
 
-	err := Sync(r.Fremote, r.Flocal, false)
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	assert.Equal(t, accounting.ErrorMaxTransferLimitReached, err)
 }

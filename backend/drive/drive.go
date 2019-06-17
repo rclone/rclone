@@ -9,6 +9,7 @@ package drive
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -565,7 +566,7 @@ func containsString(slice []string, s string) bool {
 // If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *Fs) list(dirIDs []string, title string, directoriesOnly, filesOnly, includeAll bool, fn listFn) (found bool, err error) {
+func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, includeAll bool, fn listFn) (found bool, err error) {
 	var query []string
 	if !includeAll {
 		q := "trashed=" + strconv.FormatBool(f.opt.TrashedOnly)
@@ -910,6 +911,7 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.Background()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -996,7 +998,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// Find the current root
-	err = f.dirCache.FindRoot(false)
+	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
@@ -1004,12 +1006,12 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		tempF.dirCache = dircache.New(newRoot, f.rootFolderID, &tempF)
 		tempF.root = newRoot
 		// Make new Fs which is the parent
-		err = tempF.dirCache.FindRoot(false)
+		err = tempF.dirCache.FindRoot(ctx, false)
 		if err != nil {
 			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.NewObject(remote)
+		_, err := tempF.NewObject(ctx, remote)
 		if err != nil {
 			// unable to list folder so return old f
 			return f, nil
@@ -1164,8 +1166,8 @@ func (f *Fs) newObjectWithExportInfo(
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	info, extension, exportName, exportMimeType, isDocument, err := f.getRemoteInfoWithExport(remote)
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	info, extension, exportName, exportMimeType, isDocument, err := f.getRemoteInfoWithExport(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -1183,9 +1185,9 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
-func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err error) {
+func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.list([]string{pathID}, leaf, true, false, false, func(item *drive.File) bool {
+	found, err = f.list(ctx, []string{pathID}, leaf, true, false, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			_, exportName, _, isDocument := f.findExportFormat(item)
 			if exportName == leaf {
@@ -1206,7 +1208,7 @@ func (f *Fs) FindLeaf(pathID, leaf string) (pathIDOut string, found bool, err er
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
-func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
 	// fmt.Println("Making", path)
 	// Define the metadata for the directory we are going to create.
 	createInfo := &drive.File{
@@ -1368,18 +1370,18 @@ func (f *Fs) findImportFormat(mimeType string) string {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	err = f.dirCache.FindRoot(false)
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		return nil, err
 	}
-	directoryID, err := f.dirCache.FindDir(dir, false)
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
 	}
 
 	var iErr error
-	_, err = f.list([]string{directoryID}, "", false, false, false, func(item *drive.File) bool {
+	_, err = f.list(ctx, []string{directoryID}, "", false, false, false, func(item *drive.File) bool {
 		entry, err := f.itemToDirEntry(path.Join(dir, item.Name), item)
 		if err != nil {
 			iErr = err
@@ -1432,7 +1434,7 @@ func (s listRSlices) Less(i, j int) bool {
 // In each cycle it will read up to grouping entries from the in channel without blocking.
 // If an error occurs it will be send to the out channel and then return. Once the in channel is closed,
 // nil is send to the out channel and the function returns.
-func (f *Fs) listRRunner(wg *sync.WaitGroup, in <-chan listREntry, out chan<- error, cb func(fs.DirEntry) error, grouping int) {
+func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in <-chan listREntry, out chan<- error, cb func(fs.DirEntry) error, grouping int) {
 	var dirs []string
 	var paths []string
 
@@ -1453,7 +1455,7 @@ func (f *Fs) listRRunner(wg *sync.WaitGroup, in <-chan listREntry, out chan<- er
 		}
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
-		_, err := f.list(dirs, "", false, false, false, func(item *drive.File) bool {
+		_, err := f.list(ctx, dirs, "", false, false, false, func(item *drive.File) bool {
 			for _, parent := range item.Parents {
 				// only handle parents that are in the requested dirs list
 				i := sort.SearchStrings(dirs, parent)
@@ -1508,17 +1510,17 @@ func (f *Fs) listRRunner(wg *sync.WaitGroup, in <-chan listREntry, out chan<- er
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	const (
 		grouping    = 50
 		inputBuffer = 1000
 	)
 
-	err = f.dirCache.FindRoot(false)
+	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		return err
 	}
-	directoryID, err := f.dirCache.FindDir(dir, false)
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
 	}
@@ -1562,7 +1564,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	in <- listREntry{directoryID, dir}
 
 	for i := 0; i < fs.Config.Checkers; i++ {
-		go f.listRRunner(&wg, in, out, cb, grouping)
+		go f.listRRunner(ctx, &wg, in, out, cb, grouping)
 	}
 	go func() {
 		// wait until the all directories are processed
@@ -1636,8 +1638,8 @@ func (f *Fs) itemToDirEntry(remote string, item *drive.File) (fs.DirEntry, error
 // Creates a drive.File info from the parameters passed in.
 //
 // Used to create new objects
-func (f *Fs) createFileInfo(remote string, modTime time.Time) (*drive.File, error) {
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(remote, true)
+func (f *Fs) createFileInfo(ctx context.Context, remote string, modTime time.Time) (*drive.File, error) {
+	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
@@ -1658,32 +1660,32 @@ func (f *Fs) createFileInfo(remote string, modTime time.Time) (*drive.File, erro
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	exisitingObj, err := f.NewObject(src.Remote())
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	exisitingObj, err := f.NewObject(ctx, src.Remote())
 	switch err {
 	case nil:
-		return exisitingObj, exisitingObj.Update(in, src, options...)
+		return exisitingObj, exisitingObj.Update(ctx, in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
-		return f.PutUnchecked(in, src, options...)
+		return f.PutUnchecked(ctx, in, src, options...)
 	default:
 		return nil, err
 	}
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // PutUnchecked uploads the object
 //
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
-func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	size := src.Size()
-	modTime := src.ModTime()
+	modTime := src.ModTime(ctx)
 	srcMimeType := fs.MimeTypeFromName(remote)
 	srcExt := path.Ext(remote)
 	exportExt := ""
@@ -1705,7 +1707,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 		}
 	}
 
-	createInfo, err := f.createFileInfo(remote, modTime)
+	createInfo, err := f.createFileInfo(ctx, remote, modTime)
 	if err != nil {
 		return nil, err
 	}
@@ -1741,7 +1743,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 
 // MergeDirs merges the contents of all the directories passed
 // in into the first one and rmdirs the other directories.
-func (f *Fs) MergeDirs(dirs []fs.Directory) error {
+func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	if len(dirs) < 2 {
 		return nil
 	}
@@ -1749,7 +1751,7 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 	for _, srcDir := range dirs[1:] {
 		// list the the objects
 		infos := []*drive.File{}
-		_, err := f.list([]string{srcDir.ID()}, "", false, false, true, func(info *drive.File) bool {
+		_, err := f.list(ctx, []string{srcDir.ID()}, "", false, false, true, func(info *drive.File) bool {
 			infos = append(infos, info)
 			return false
 		})
@@ -1775,7 +1777,7 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 		}
 		// rmdir (into trash) the now empty source directory
 		fs.Infof(srcDir, "removing empty directory")
-		err = f.rmdir(srcDir.ID(), true)
+		err = f.rmdir(ctx, srcDir.ID(), true)
 		if err != nil {
 			return errors.Wrapf(err, "MergeDirs move failed to rmdir %q", srcDir)
 		}
@@ -1784,19 +1786,19 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
-	err := f.dirCache.FindRoot(true)
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	err := f.dirCache.FindRoot(ctx, true)
 	if err != nil {
 		return err
 	}
 	if dir != "" {
-		_, err = f.dirCache.FindDir(dir, true)
+		_, err = f.dirCache.FindDir(ctx, dir, true)
 	}
 	return err
 }
 
 // Rmdir deletes a directory unconditionally by ID
-func (f *Fs) rmdir(directoryID string, useTrash bool) error {
+func (f *Fs) rmdir(ctx context.Context, directoryID string, useTrash bool) error {
 	return f.pacer.Call(func() (bool, error) {
 		var err error
 		if useTrash {
@@ -1820,15 +1822,15 @@ func (f *Fs) rmdir(directoryID string, useTrash bool) error {
 // Rmdir deletes a directory
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	root := path.Join(f.root, dir)
 	dc := f.dirCache
-	directoryID, err := dc.FindDir(dir, false)
+	directoryID, err := dc.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
 	}
 	var trashedFiles = false
-	found, err := f.list([]string{directoryID}, "", false, false, true, func(item *drive.File) bool {
+	found, err := f.list(ctx, []string{directoryID}, "", false, false, true, func(item *drive.File) bool {
 		if !item.Trashed {
 			fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
 			return true
@@ -1847,7 +1849,7 @@ func (f *Fs) Rmdir(dir string) error {
 		// trash the directory if it had trashed files
 		// in or the user wants to trash, otherwise
 		// delete it.
-		err = f.rmdir(directoryID, trashedFiles || f.opt.UseTrash)
+		err = f.rmdir(ctx, directoryID, trashedFiles || f.opt.UseTrash)
 		if err != nil {
 			return err
 		}
@@ -1873,7 +1875,7 @@ func (f *Fs) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	var srcObj *baseObject
 	ext := ""
 	switch src := src.(type) {
@@ -1897,9 +1899,9 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Look to see if there is an existing object
-	existingObject, _ := f.NewObject(remote)
+	existingObject, _ := f.NewObject(ctx, remote)
 
-	createInfo, err := f.createFileInfo(remote, src.ModTime())
+	createInfo, err := f.createFileInfo(ctx, remote, src.ModTime(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -1926,7 +1928,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	}
 	if existingObject != nil {
-		err = existingObject.Remove()
+		err = existingObject.Remove(ctx)
 		if err != nil {
 			fs.Errorf(existingObject, "Failed to remove existing object after copy: %v", err)
 		}
@@ -1939,11 +1941,11 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	if f.root == "" {
 		return errors.New("can't purge root directory")
 	}
-	err := f.dirCache.FindRoot(false)
+	err := f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		return err
 	}
@@ -1972,7 +1974,7 @@ func (f *Fs) Purge() error {
 }
 
 // CleanUp empties the trash
-func (f *Fs) CleanUp() error {
+func (f *Fs) CleanUp(ctx context.Context) error {
 	err := f.pacer.Call(func() (bool, error) {
 		err := f.svc.Files.EmptyTrash().Do()
 		return shouldRetry(err)
@@ -1985,7 +1987,7 @@ func (f *Fs) CleanUp() error {
 }
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	if f.isTeamDrive {
 		// Teamdrives don't appear to have a usage API so just return empty
 		return &fs.Usage{}, nil
@@ -2021,7 +2023,7 @@ func (f *Fs) About() (*fs.Usage, error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	var srcObj *baseObject
 	ext := ""
 	switch src := src.(type) {
@@ -2044,13 +2046,13 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		remote = remote[:len(remote)-len(ext)]
 	}
 
-	_, srcParentID, err := srcObj.fs.dirCache.FindPath(src.Remote(), false)
+	_, srcParentID, err := srcObj.fs.dirCache.FindPath(ctx, src.Remote(), false)
 	if err != nil {
 		return nil, err
 	}
 
 	// Temporary Object under construction
-	dstInfo, err := f.createFileInfo(remote, src.ModTime())
+	dstInfo, err := f.createFileInfo(ctx, remote, src.ModTime(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -2095,13 +2097,13 @@ func (f *Fs) ShouldSupportTeamDrives(src fs.Object) (bool, error) {
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(remote string) (link string, err error) {
-	id, err := f.dirCache.FindDir(remote, false)
+func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+	id, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
 		fs.Debugf(f, "attempting to share directory '%s'", remote)
 	} else {
 		fs.Debugf(f, "attempting to share single file '%s'", remote)
-		o, err := f.NewObject(remote)
+		o, err := f.NewObject(ctx, remote)
 		if err != nil {
 			return "", err
 		}
@@ -2137,7 +2139,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -2153,14 +2155,14 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	}
 
 	// find the root src directory
-	err := srcFs.dirCache.FindRoot(false)
+	err := srcFs.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		return err
 	}
 
 	// find the root dst directory
 	if dstRemote != "" {
-		err = f.dirCache.FindRoot(true)
+		err = f.dirCache.FindRoot(ctx, true)
 		if err != nil {
 			return err
 		}
@@ -2176,14 +2178,14 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	if dstRemote == "" {
 		findPath = f.root
 	}
-	leaf, dstDirectoryID, err = f.dirCache.FindPath(findPath, true)
+	leaf, dstDirectoryID, err = f.dirCache.FindPath(ctx, findPath, true)
 	if err != nil {
 		return err
 	}
 
 	// Check destination does not exist
 	if dstRemote != "" {
-		_, err = f.dirCache.FindDir(dstRemote, false)
+		_, err = f.dirCache.FindDir(ctx, dstRemote, false)
 		if err == fs.ErrorDirNotFound {
 			// OK
 		} else if err != nil {
@@ -2198,14 +2200,14 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	if srcRemote == "" {
 		srcDirectoryID, err = srcFs.dirCache.RootParentID()
 	} else {
-		_, srcDirectoryID, err = srcFs.dirCache.FindPath(srcRemote, false)
+		_, srcDirectoryID, err = srcFs.dirCache.FindPath(ctx, srcRemote, false)
 	}
 	if err != nil {
 		return err
 	}
 
 	// Find ID of src
-	srcID, err := srcFs.dirCache.FindDir(srcRemote, false)
+	srcID, err := srcFs.dirCache.FindDir(ctx, srcRemote, false)
 	if err != nil {
 		return err
 	}
@@ -2236,7 +2238,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 // Automatically restarts itself in case of unexpected behavior of the remote.
 //
 // Close the returned channel to stop being notified.
-func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	go func() {
 		// get the StartPageToken early so all changes from now on get processed
 		startPageToken, err := f.changeNotifyStartPageToken()
@@ -2411,13 +2413,13 @@ func (o *baseObject) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
 	return o.md5sum, nil
 }
-func (o *baseObject) Hash(t hash.Type) (string, error) {
+func (o *baseObject) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
@@ -2430,15 +2432,15 @@ func (o *baseObject) Size() int64 {
 }
 
 // getRemoteInfo returns a drive.File for the remote
-func (f *Fs) getRemoteInfo(remote string) (info *drive.File, err error) {
-	info, _, _, _, _, err = f.getRemoteInfoWithExport(remote)
+func (f *Fs) getRemoteInfo(ctx context.Context, remote string) (info *drive.File, err error) {
+	info, _, _, _, _, err = f.getRemoteInfoWithExport(ctx, remote)
 	return
 }
 
 // getRemoteInfoWithExport returns a drive.File and the export settings for the remote
-func (f *Fs) getRemoteInfoWithExport(remote string) (
+func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 	info *drive.File, extension, exportName, exportMimeType string, isDocument bool, err error) {
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(remote, false)
+	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return nil, "", "", "", false, fs.ErrorObjectNotFound
@@ -2446,7 +2448,7 @@ func (f *Fs) getRemoteInfoWithExport(remote string) (
 		return nil, "", "", "", false, err
 	}
 
-	found, err := f.list([]string{directoryID}, leaf, false, true, false, func(item *drive.File) bool {
+	found, err := f.list(ctx, []string{directoryID}, leaf, false, true, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			extension, exportName, exportMimeType, isDocument = f.findExportFormat(item)
 			if exportName == leaf {
@@ -2477,7 +2479,7 @@ func (f *Fs) getRemoteInfoWithExport(remote string) (
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *baseObject) ModTime() time.Time {
+func (o *baseObject) ModTime(ctx context.Context) time.Time {
 	modTime, err := time.Parse(timeFormatIn, o.modifiedDate)
 	if err != nil {
 		fs.Debugf(o, "Failed to read mtime from object: %v", err)
@@ -2487,7 +2489,7 @@ func (o *baseObject) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the drive fs object
-func (o *baseObject) SetModTime(modTime time.Time) error {
+func (o *baseObject) SetModTime(ctx context.Context, modTime time.Time) error {
 	// New metadata
 	updateInfo := &drive.File{
 		ModifiedTime: modTime.Format(timeFormatOut),
@@ -2620,7 +2622,7 @@ func (o *baseObject) open(url string, options ...fs.OpenOption) (in io.ReadClose
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.v2Download {
 		var v2File *drive_v2.File
 		err = o.fs.pacer.Call(func() (bool, error) {
@@ -2638,7 +2640,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	}
 	return o.baseObject.open(o.url, options...)
 }
-func (o *documentObject) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *documentObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// Update the size with what we are reading as it can change from
 	// the HEAD in the listing to this GET. This stops rclone marking
 	// the transfer as corrupted.
@@ -2670,7 +2672,7 @@ func (o *documentObject) Open(options ...fs.OpenOption) (in io.ReadCloser, err e
 	}
 	return
 }
-func (o *linkObject) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *linkObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset, limit int64 = 0, -1
 	var data = o.content
 	for _, option := range options {
@@ -2722,11 +2724,11 @@ func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	srcMimeType := fs.MimeType(src)
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	srcMimeType := fs.MimeType(ctx, src)
 	updateInfo := &drive.File{
 		MimeType:     srcMimeType,
-		ModifiedTime: src.ModTime().Format(timeFormatOut),
+		ModifiedTime: src.ModTime(ctx).Format(timeFormatOut),
 	}
 	info, err := o.baseObject.update(updateInfo, srcMimeType, in, src)
 	if err != nil {
@@ -2745,12 +2747,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	return nil
 }
-func (o *documentObject) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	srcMimeType := fs.MimeType(src)
+func (o *documentObject) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	srcMimeType := fs.MimeType(ctx, src)
 	importMimeType := ""
 	updateInfo := &drive.File{
 		MimeType:     srcMimeType,
-		ModifiedTime: src.ModTime().Format(timeFormatOut),
+		ModifiedTime: src.ModTime(ctx).Format(timeFormatOut),
 	}
 
 	if o.fs.importMimeTypes == nil || o.fs.opt.SkipGdocs {
@@ -2787,12 +2789,12 @@ func (o *documentObject) Update(in io.Reader, src fs.ObjectInfo, options ...fs.O
 	return nil
 }
 
-func (o *linkObject) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *linkObject) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	return errors.New("cannot update link files")
 }
 
 // Remove an object
-func (o *baseObject) Remove() error {
+func (o *baseObject) Remove(ctx context.Context) error {
 	var err error
 	err = o.fs.pacer.Call(func() (bool, error) {
 		if o.fs.opt.UseTrash {
@@ -2815,7 +2817,7 @@ func (o *baseObject) Remove() error {
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *baseObject) MimeType() string {
+func (o *baseObject) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 

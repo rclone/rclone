@@ -5,6 +5,7 @@
 package ncdu
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"sort"
@@ -423,6 +424,7 @@ func (u *UI) removeEntry(pos int) {
 
 // delete the entry at the current position
 func (u *UI) delete() {
+	ctx := context.Background()
 	dirPos := u.sortPerm[u.dirPosMap[u.path].entry]
 	entry := u.entries[dirPos]
 	u.boxMenu = []string{"cancel", "confirm"}
@@ -431,7 +433,7 @@ func (u *UI) delete() {
 			if o != 1 {
 				return "Aborted!", nil
 			}
-			err := operations.DeleteFile(obj)
+			err := operations.DeleteFile(ctx, obj)
 			if err != nil {
 				return "", err
 			}
@@ -446,7 +448,7 @@ func (u *UI) delete() {
 			if o != 1 {
 				return "Aborted!", nil
 			}
-			err := operations.Purge(f, entry.String())
+			err := operations.Purge(ctx, f, entry.String())
 			if err != nil {
 				return "", err
 			}
@@ -636,7 +638,7 @@ func (u *UI) Show() error {
 
 	// scan the disk in the background
 	u.listing = true
-	rootChan, errChan, updated := scan.Scan(u.f)
+	rootChan, errChan, updated := scan.Scan(context.Background(), u.f)
 
 	// Poll the events into a channel
 	events := make(chan termbox.Event)

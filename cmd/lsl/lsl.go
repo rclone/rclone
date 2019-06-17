@@ -1,6 +1,7 @@
 package lsl
 
 import (
+	"context"
 	"os"
 
 	"github.com/ncw/rclone/cmd"
@@ -33,7 +34,7 @@ Eg
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.ListLong(fsrc, os.Stdout)
+			return operations.ListLong(context.Background(), fsrc, os.Stdout)
 		})
 	},
 }

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/rc"
 )
@@ -23,7 +25,7 @@ See the [config dump command](/commands/rclone_config_dump/) command for more in
 }
 
 // Return the config file dump
-func rcDump(in rc.Params) (out rc.Params, err error) {
+func rcDump(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	return DumpRcBlob(), nil
 }
 
@@ -43,7 +45,7 @@ See the [config dump command](/commands/rclone_config_dump/) command for more in
 }
 
 // Return the config file get
-func rcGet(in rc.Params) (out rc.Params, err error) {
+func rcGet(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	name, err := in.GetString("name")
 	if err != nil {
 		return nil, err
@@ -67,7 +69,7 @@ See the [listremotes command](/commands/rclone_listremotes/) command for more in
 }
 
 // Return the a list of remotes in the config file
-func rcListRemotes(in rc.Params) (out rc.Params, err error) {
+func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	var remotes = []string{}
 	for _, remote := range getConfigData().GetSectionList() {
 		remotes = append(remotes, remote)
@@ -94,7 +96,7 @@ See the [config providers command](/commands/rclone_config_providers/) command f
 }
 
 // Return the config file providers
-func rcProviders(in rc.Params) (out rc.Params, err error) {
+func rcProviders(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = rc.Params{
 		"providers": fs.Registry,
 	}
@@ -111,8 +113,8 @@ func init() {
 		rc.Add(rc.Call{
 			Path:         "config/" + name,
 			AuthRequired: true,
-			Fn: func(in rc.Params) (rc.Params, error) {
-				return rcConfig(in, name)
+			Fn: func(ctx context.Context, in rc.Params) (rc.Params, error) {
+				return rcConfig(ctx, in, name)
 			},
 			Title: name + " the config for a remote.",
 			Help: `This takes the following parameters
@@ -126,7 +128,7 @@ See the [config ` + name + ` command](/commands/rclone_config_` + name + `/) com
 }
 
 // Manipulate the config file
-func rcConfig(in rc.Params, what string) (out rc.Params, err error) {
+func rcConfig(ctx context.Context, in rc.Params, what string) (out rc.Params, err error) {
 	name, err := in.GetString("name")
 	if err != nil {
 		return nil, err
@@ -167,7 +169,7 @@ See the [config delete command](/commands/rclone_config_delete/) command for mor
 }
 
 // Return the config file delete
-func rcDelete(in rc.Params) (out rc.Params, err error) {
+func rcDelete(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	name, err := in.GetString("name")
 	if err != nil {
 		return nil, err

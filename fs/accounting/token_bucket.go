@@ -132,7 +132,7 @@ func SetBwLimit(bandwidth fs.SizeSuffix) {
 func init() {
 	rc.Add(rc.Call{
 		Path: "core/bwlimit",
-		Fn: func(in rc.Params) (out rc.Params, err error) {
+		Fn: func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			ibwlimit, ok := in["rate"]
 			if !ok {
 				return out, errors.Errorf("parameter rate not found")

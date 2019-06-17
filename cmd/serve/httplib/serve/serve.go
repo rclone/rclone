@@ -28,7 +28,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	}
 
 	// Set content type
-	mimeType := fs.MimeType(o)
+	mimeType := fs.MimeType(r.Context(), o)
 	if mimeType == "application/octet-stream" && path.Ext(o.Remote()) == "" {
 		// Leave header blank so http server guesses
 	} else {
@@ -69,7 +69,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	}
 	w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 
-	file, err := o.Open(options...)
+	file, err := o.Open(r.Context(), options...)
 	if err != nil {
 		fs.Debugf(o, "Get request open error: %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)

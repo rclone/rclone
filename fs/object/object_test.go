@@ -2,6 +2,7 @@ package object_test
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"testing"
@@ -23,26 +24,26 @@ func TestStaticObject(t *testing.T) {
 	assert.Equal(t, object.MemoryFs, o.Fs())
 	assert.Equal(t, remote, o.Remote())
 	assert.Equal(t, remote, o.String())
-	assert.Equal(t, now, o.ModTime())
+	assert.Equal(t, now, o.ModTime(context.Background()))
 	assert.Equal(t, size, o.Size())
 	assert.Equal(t, true, o.Storable())
 
-	Hash, err := o.Hash(hash.MD5)
+	Hash, err := o.Hash(context.Background(), hash.MD5)
 	assert.NoError(t, err)
 	assert.Equal(t, "", Hash)
 
 	o = object.NewStaticObjectInfo(remote, now, size, true, nil, nil)
-	_, err = o.Hash(hash.MD5)
+	_, err = o.Hash(context.Background(), hash.MD5)
 	assert.Equal(t, hash.ErrUnsupported, err)
 
 	hs := map[hash.Type]string{
 		hash.MD5: "potato",
 	}
 	o = object.NewStaticObjectInfo(remote, now, size, true, hs, nil)
-	Hash, err = o.Hash(hash.MD5)
+	Hash, err = o.Hash(context.Background(), hash.MD5)
 	assert.NoError(t, err)
 	assert.Equal(t, "potato", Hash)
-	_, err = o.Hash(hash.SHA1)
+	_, err = o.Hash(context.Background(), hash.SHA1)
 	assert.Equal(t, hash.ErrUnsupported, err)
 }
 
@@ -55,27 +56,27 @@ func TestMemoryFs(t *testing.T) {
 	assert.Equal(t, hash.Supported, f.Hashes())
 	assert.Equal(t, &fs.Features{}, f.Features())
 
-	entries, err := f.List("")
+	entries, err := f.List(context.Background(), "")
 	assert.NoError(t, err)
 	assert.Nil(t, entries)
 
-	o, err := f.NewObject("obj")
+	o, err := f.NewObject(context.Background(), "obj")
 	assert.Equal(t, fs.ErrorObjectNotFound, err)
 	assert.Nil(t, o)
 
 	buf := bytes.NewBufferString("potato")
 	now := time.Now()
 	src := object.NewStaticObjectInfo("remote", now, int64(buf.Len()), true, nil, nil)
-	o, err = f.Put(buf, src)
+	o, err = f.Put(context.Background(), buf, src)
 	assert.NoError(t, err)
-	hash, err := o.Hash(hash.SHA1)
+	hash, err := o.Hash(context.Background(), hash.SHA1)
 	assert.NoError(t, err)
 	assert.Equal(t, "3e2e95f5ad970eadfa7e17eaf73da97024aa5359", hash)
 
-	err = f.Mkdir("dir")
+	err = f.Mkdir(context.Background(), "dir")
 	assert.Error(t, err)
 
-	err = f.Rmdir("dir")
+	err = f.Rmdir(context.Background(), "dir")
 	assert.Equal(t, fs.ErrorDirNotFound, err)
 }
 
@@ -91,22 +92,22 @@ func TestMemoryObject(t *testing.T) {
 	assert.Equal(t, object.MemoryFs, o.Fs())
 	assert.Equal(t, remote, o.Remote())
 	assert.Equal(t, remote, o.String())
-	assert.Equal(t, now, o.ModTime())
+	assert.Equal(t, now, o.ModTime(context.Background()))
 	assert.Equal(t, int64(len(content)), o.Size())
 	assert.Equal(t, true, o.Storable())
 
-	Hash, err := o.Hash(hash.MD5)
+	Hash, err := o.Hash(context.Background(), hash.MD5)
 	assert.NoError(t, err)
 	assert.Equal(t, "8ee2027983915ec78acc45027d874316", Hash)
 
-	Hash, err = o.Hash(hash.SHA1)
+	Hash, err = o.Hash(context.Background(), hash.SHA1)
 	assert.NoError(t, err)
 	assert.Equal(t, "3e2e95f5ad970eadfa7e17eaf73da97024aa5359", Hash)
 
 	newNow := now.Add(time.Minute)
-	err = o.SetModTime(newNow)
+	err = o.SetModTime(context.Background(), newNow)
 	assert.NoError(t, err)
-	assert.Equal(t, newNow, o.ModTime())
+	assert.Equal(t, newNow, o.ModTime(context.Background()))
 
 	checkOpen := func(rc io.ReadCloser, expected string) {
 		actual, err := ioutil.ReadAll(rc)
@@ -117,18 +118,18 @@ func TestMemoryObject(t *testing.T) {
 	}
 
 	checkContent := func(o fs.Object, expected string) {
-		rc, err := o.Open()
+		rc, err := o.Open(context.Background())
 		assert.NoError(t, err)
 		checkOpen(rc, expected)
 	}
 
 	checkContent(o, string(content))
 
-	rc, err := o.Open(&fs.RangeOption{Start: 1, End: 3})
+	rc, err := o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 3})
 	assert.NoError(t, err)
 	checkOpen(rc, "ot")
 
-	rc, err = o.Open(&fs.SeekOption{Offset: 3})
+	rc, err = o.Open(context.Background(), &fs.SeekOption{Offset: 3})
 	assert.NoError(t, err)
 	checkOpen(rc, "ato")
 
@@ -137,10 +138,10 @@ func TestMemoryObject(t *testing.T) {
 	newContent := bytes.NewBufferString("Rutabaga")
 	assert.True(t, newContent.Len() < cap(content)) // fits within cap(content)
 	src := object.NewStaticObjectInfo(remote, newNow, int64(newContent.Len()), true, nil, nil)
-	err = o.Update(newContent, src)
+	err = o.Update(context.Background(), newContent, src)
 	assert.NoError(t, err)
 	checkContent(o, "Rutabaga")
-	assert.Equal(t, newNow, o.ModTime())
+	assert.Equal(t, newNow, o.ModTime(context.Background()))
 	assert.Equal(t, "Rutaba", string(content)) // check we re-used the buffer
 
 	// not within the buffer
@@ -149,7 +150,7 @@ func TestMemoryObject(t *testing.T) {
 	newContent = bytes.NewBufferString(newStr)
 	assert.True(t, newContent.Len() > cap(content)) // does not fit within cap(content)
 	src = object.NewStaticObjectInfo(remote, newNow, int64(newContent.Len()), true, nil, nil)
-	err = o.Update(newContent, src)
+	err = o.Update(context.Background(), newContent, src)
 	assert.NoError(t, err)
 	checkContent(o, newStr)
 	assert.Equal(t, "Rutaba", string(content)) // check we didn't re-use the buffer
@@ -158,7 +159,7 @@ func TestMemoryObject(t *testing.T) {
 	newStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	newContent = bytes.NewBufferString(newStr)
 	src = object.NewStaticObjectInfo(remote, newNow, -1, true, nil, nil)
-	err = o.Update(newContent, src)
+	err = o.Update(context.Background(), newContent, src)
 	assert.NoError(t, err)
 	checkContent(o, newStr)
 
@@ -166,10 +167,10 @@ func TestMemoryObject(t *testing.T) {
 	newStr = ""
 	newContent = bytes.NewBufferString(newStr)
 	src = object.NewStaticObjectInfo(remote, newNow, 0, true, nil, nil)
-	err = o.Update(newContent, src)
+	err = o.Update(context.Background(), newContent, src)
 	assert.NoError(t, err)
 	checkContent(o, newStr)
 
-	err = o.Remove()
+	err = o.Remove(context.Background())
 	assert.Error(t, err)
 }

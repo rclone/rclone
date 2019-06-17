@@ -8,6 +8,7 @@
 package ftp
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -41,7 +42,7 @@ func TestFTP(t *testing.T) {
 	assert.NoError(t, err)
 	defer clean()
 
-	err = fremote.Mkdir("")
+	err = fremote.Mkdir(context.Background(), "")
 	assert.NoError(t, err)
 
 	// Start the server

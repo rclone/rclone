@@ -6,6 +6,7 @@ package b2
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -80,7 +81,7 @@ type largeUpload struct {
 }
 
 // newLargeUpload starts an upload of object o from in with metadata in src
-func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *largeUpload, err error) {
+func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs.ObjectInfo) (up *largeUpload, err error) {
 	remote := o.remote
 	size := src.Size()
 	parts := int64(0)
@@ -98,7 +99,7 @@ func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *lar
 		sha1SliceSize = parts
 	}
 
-	modTime := src.ModTime()
+	modTime := src.ModTime(ctx)
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/b2_start_large_file",
@@ -110,14 +111,14 @@ func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *lar
 	var request = api.StartLargeFileRequest{
 		BucketID:    bucketID,
 		Name:        o.fs.root + remote,
-		ContentType: fs.MimeType(src),
+		ContentType: fs.MimeType(ctx, src),
 		Info: map[string]string{
 			timeKey: timeString(modTime),
 		},
 	}
 	// Set the SHA1 if known
 	if !o.fs.opt.DisableCheckSum {
-		if calculatedSha1, err := src.Hash(hash.SHA1); err == nil && calculatedSha1 != "" {
+		if calculatedSha1, err := src.Hash(ctx, hash.SHA1); err == nil && calculatedSha1 != "" {
 			request.Info[sha1Key] = calculatedSha1
 		}
 	}

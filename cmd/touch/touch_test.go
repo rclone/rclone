@@ -1,6 +1,7 @@
 package touch
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -34,9 +35,9 @@ func TestTouchOneFile(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	err := Touch(r.Fremote, "newFile")
+	err := Touch(context.Background(), r.Fremote, "newFile")
 	require.NoError(t, err)
-	_, err = r.Fremote.NewObject("newFile")
+	_, err = r.Fremote.NewObject(context.Background(), "newFile")
 	require.NoError(t, err)
 }
 
@@ -45,9 +46,9 @@ func TestTouchWithNoCreateFlag(t *testing.T) {
 	defer r.Finalise()
 
 	notCreateNewFile = true
-	err := Touch(r.Fremote, "newFile")
+	err := Touch(context.Background(), r.Fremote, "newFile")
 	require.NoError(t, err)
-	_, err = r.Fremote.NewObject("newFile")
+	_, err = r.Fremote.NewObject(context.Background(), "newFile")
 	require.Error(t, err)
 	notCreateNewFile = false
 }
@@ -58,7 +59,7 @@ func TestTouchWithTimestamp(t *testing.T) {
 
 	timeAsArgument = "060102"
 	srcFileName := "oldFile"
-	err := Touch(r.Fremote, srcFileName)
+	err := Touch(context.Background(), r.Fremote, srcFileName)
 	require.NoError(t, err)
 	checkFile(t, r.Fremote, srcFileName, "")
 }
@@ -69,7 +70,7 @@ func TestTouchWithLognerTimestamp(t *testing.T) {
 
 	timeAsArgument = "2006-01-02T15:04:05"
 	srcFileName := "oldFile"
-	err := Touch(r.Fremote, srcFileName)
+	err := Touch(context.Background(), r.Fremote, srcFileName)
 	require.NoError(t, err)
 	checkFile(t, r.Fremote, srcFileName, "")
 }
@@ -80,11 +81,11 @@ func TestTouchUpdateTimestamp(t *testing.T) {
 
 	srcFileName := "a"
 	content := "aaa"
-	file1 := r.WriteObject(srcFileName, content, t1)
+	file1 := r.WriteObject(context.Background(), srcFileName, content, t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	timeAsArgument = "121212"
-	err := Touch(r.Fremote, "a")
+	err := Touch(context.Background(), r.Fremote, "a")
 	require.NoError(t, err)
 	checkFile(t, r.Fremote, srcFileName, content)
 }
@@ -95,12 +96,12 @@ func TestTouchUpdateTimestampWithCFlag(t *testing.T) {
 
 	srcFileName := "a"
 	content := "aaa"
-	file1 := r.WriteObject(srcFileName, content, t1)
+	file1 := r.WriteObject(context.Background(), srcFileName, content, t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	notCreateNewFile = true
 	timeAsArgument = "121212"
-	err := Touch(r.Fremote, "a")
+	err := Touch(context.Background(), r.Fremote, "a")
 	require.NoError(t, err)
 	checkFile(t, r.Fremote, srcFileName, content)
 	notCreateNewFile = false
@@ -111,7 +112,7 @@ func TestTouchCreateMultipleDirAndFile(t *testing.T) {
 	defer r.Finalise()
 
 	longPath := "a/b/c.txt"
-	err := Touch(r.Fremote, longPath)
+	err := Touch(context.Background(), r.Fremote, longPath)
 	require.NoError(t, err)
 	file1 := fstest.NewItem("a/b/c.txt", "", t1)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"a", "a/b"}, fs.ModTimeNotSupported)

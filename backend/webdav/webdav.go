@@ -9,6 +9,7 @@ package webdav
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -282,6 +283,7 @@ func (o *Object) filePath() string {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.Background()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -343,7 +345,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if f.root == "." {
 			f.root = ""
 		}
-		_, err := f.NewObject(remote)
+		_, err := f.NewObject(ctx, remote)
 		if err != nil {
 			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
 				// File doesn't exist so return old f
@@ -432,7 +434,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.Prop) (fs.Object, error)
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -558,7 +560,7 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, depth str
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	var iErr error
 	_, err = f.listAll(dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
 		if isDir {
@@ -605,19 +607,19 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	o := f.createObject(src.Remote(), src.ModTime(), src.Size())
-	return o, o.Update(in, src, options...)
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	o := f.createObject(src.Remote(), src.ModTime(ctx), src.Size())
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // mkParentDir makes the parent of the native path dirPath if
 // necessary and any directories above that
-func (f *Fs) mkParentDir(dirPath string) error {
+func (f *Fs) mkParentDir(ctx context.Context, dirPath string) error {
 	// defer log.Trace(dirPath, "")("")
 	// chop off trailing / if it exists
 	if strings.HasSuffix(dirPath, "/") {
@@ -627,7 +629,7 @@ func (f *Fs) mkParentDir(dirPath string) error {
 	if parent == "." {
 		parent = ""
 	}
-	return f.mkdir(parent)
+	return f.mkdir(ctx, parent)
 }
 
 // low level mkdir, only makes the directory, doesn't attempt to create parents
@@ -660,13 +662,13 @@ func (f *Fs) _mkdir(dirPath string) error {
 }
 
 // mkdir makes the directory and parents using native paths
-func (f *Fs) mkdir(dirPath string) error {
+func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 	// defer log.Trace(dirPath, "")("")
 	err := f._mkdir(dirPath)
 	if apiErr, ok := err.(*api.Error); ok {
 		// parent does not exist so create it first then try again
 		if apiErr.StatusCode == http.StatusConflict {
-			err = f.mkParentDir(dirPath)
+			err = f.mkParentDir(ctx, dirPath)
 			if err == nil {
 				err = f._mkdir(dirPath)
 			}
@@ -676,9 +678,9 @@ func (f *Fs) mkdir(dirPath string) error {
 }
 
 // Mkdir creates the directory if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	dirPath := f.dirPath(dir)
-	return f.mkdir(dirPath)
+	return f.mkdir(ctx, dirPath)
 }
 
 // dirNotEmpty returns true if the directory exists and is not Empty
@@ -723,7 +725,7 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 // Rmdir deletes the root folder
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.purgeCheck(dir, true)
 }
 
@@ -741,7 +743,7 @@ func (f *Fs) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy/fs.ErrorCantMove
-func (f *Fs) copyOrMove(src fs.Object, remote string, method string) (fs.Object, error) {
+func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, method string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -751,7 +753,7 @@ func (f *Fs) copyOrMove(src fs.Object, remote string, method string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 	dstPath := f.filePath(remote)
-	err := f.mkParentDir(dstPath)
+	err := f.mkParentDir(ctx, dstPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "Copy mkParentDir failed")
 	}
@@ -770,7 +772,7 @@ func (f *Fs) copyOrMove(src fs.Object, remote string, method string) (fs.Object,
 		},
 	}
 	if f.useOCMtime {
-		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime().UnixNano())/1E9)
+		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1E9)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(&opts)
@@ -779,7 +781,7 @@ func (f *Fs) copyOrMove(src fs.Object, remote string, method string) (fs.Object,
 	if err != nil {
 		return nil, errors.Wrap(err, "Copy call failed")
 	}
-	dstObj, err := f.NewObject(remote)
+	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, errors.Wrap(err, "Copy NewObject failed")
 	}
@@ -795,8 +797,8 @@ func (f *Fs) copyOrMove(src fs.Object, remote string, method string) (fs.Object,
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	return f.copyOrMove(src, remote, "COPY")
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	return f.copyOrMove(ctx, src, remote, "COPY")
 }
 
 // Purge deletes all the files and the container
@@ -804,7 +806,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	return f.purgeCheck("", false)
 }
 
@@ -817,8 +819,8 @@ func (f *Fs) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
-	return f.copyOrMove(src, remote, "MOVE")
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	return f.copyOrMove(ctx, src, remote, "MOVE")
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -829,7 +831,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -848,7 +850,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	}
 
 	// Make sure the parent directory exists
-	err = f.mkParentDir(dstPath)
+	err = f.mkParentDir(ctx, dstPath)
 	if err != nil {
 		return errors.Wrap(err, "DirMove mkParentDir dst failed")
 	}
@@ -887,7 +889,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	opts := rest.Opts{
 		Method: "PROPFIND",
 		Path:   "",
@@ -949,7 +951,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the SHA1 or MD5 of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if o.fs.hasChecksums {
 		switch t {
 		case hash.SHA1:
@@ -1002,7 +1004,7 @@ func (o *Object) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
@@ -1012,7 +1014,7 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
@@ -1022,7 +1024,7 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
@@ -1044,8 +1046,8 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // If existing is set then it updates the object rather than creating a new one
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	err = o.fs.mkParentDir(o.filePath())
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	err = o.fs.mkParentDir(ctx, o.filePath())
 	if err != nil {
 		return errors.Wrap(err, "Update mkParentDir failed")
 	}
@@ -1058,21 +1060,21 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		Body:          in,
 		NoResponse:    true,
 		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
-		ContentType:   fs.MimeType(src),
+		ContentType:   fs.MimeType(ctx, src),
 	}
 	if o.fs.useOCMtime || o.fs.hasChecksums {
 		opts.ExtraHeaders = map[string]string{}
 		if o.fs.useOCMtime {
-			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime().UnixNano())/1E9)
+			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1E9)
 		}
 		if o.fs.hasChecksums {
 			// Set an upload checksum - prefer SHA1
 			//
 			// This is used as an upload integrity test. If we set
 			// only SHA1 here, owncloud will calculate the MD5 too.
-			if sha1, _ := src.Hash(hash.SHA1); sha1 != "" {
+			if sha1, _ := src.Hash(ctx, hash.SHA1); sha1 != "" {
 				opts.ExtraHeaders["OC-Checksum"] = "SHA1:" + sha1
-			} else if md5, _ := src.Hash(hash.MD5); md5 != "" {
+			} else if md5, _ := src.Hash(ctx, hash.MD5); md5 != "" {
 				opts.ExtraHeaders["OC-Checksum"] = "MD5:" + md5
 			}
 		}
@@ -1089,7 +1091,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		// finished - ncw
 		time.Sleep(1 * time.Second)
 		// Remove failed upload
-		_ = o.Remove()
+		_ = o.Remove(ctx)
 		return err
 	}
 	// read metadata from remote
@@ -1098,7 +1100,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       o.filePath(),

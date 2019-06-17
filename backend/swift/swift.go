@@ -4,6 +4,7 @@ package swift
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -508,7 +509,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) (fs.Object, er
 
 // NewObject finds the Object at remote.  If it can't be found it
 // returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -652,7 +653,7 @@ func (f *Fs) listContainers(dir string) (entries fs.DirEntries, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	if f.container == "" {
 		return f.listContainers(dir)
 	}
@@ -675,7 +676,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	if f.container == "" {
 		return errors.New("container needed for recursive list")
 	}
@@ -692,7 +693,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 }
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var containers []swift.Container
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
@@ -719,23 +720,23 @@ func (f *Fs) About() (*fs.Usage, error) {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction
 	fs := &Object{
 		fs:      f,
 		remote:  src.Remote(),
 		headers: swift.Headers{}, // Empty object headers to stop readMetaData being called
 	}
-	return fs, fs.Update(in, src, options...)
+	return fs, fs.Update(ctx, in, src, options...)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	f.containerOKMu.Lock()
 	defer f.containerOKMu.Unlock()
 	if f.containerOK {
@@ -773,7 +774,7 @@ func (f *Fs) Mkdir(dir string) error {
 // Rmdir deletes the container if the fs is at the root
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	f.containerOKMu.Lock()
 	defer f.containerOKMu.Unlock()
 	if f.root != "" || dir != "" {
@@ -798,12 +799,12 @@ func (f *Fs) Precision() time.Duration {
 // Purge deletes all the files and directories
 //
 // Implemented here so we can make sure we delete directory markers
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	// Delete all the files including the directory markers
 	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
 	delErr := make(chan error, 1)
 	go func() {
-		delErr <- operations.DeleteFiles(toBeDeleted)
+		delErr <- operations.DeleteFiles(ctx, toBeDeleted)
 	}()
 	err := f.list("", true, func(entry fs.DirEntry) error {
 		if o, ok := entry.(*Object); ok {
@@ -819,7 +820,7 @@ func (f *Fs) Purge() error {
 	if err != nil {
 		return err
 	}
-	return f.Rmdir("")
+	return f.Rmdir(ctx, "")
 }
 
 // Copy src to this remote using server side copy operations.
@@ -831,8 +832,8 @@ func (f *Fs) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	err := f.Mkdir("")
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	err := f.Mkdir(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -850,7 +851,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	return f.NewObject(remote)
+	return f.NewObject(ctx, remote)
 }
 
 // Hashes returns the supported hash sets.
@@ -879,7 +880,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
@@ -976,7 +977,7 @@ func (o *Object) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	if fs.Config.UseServerModTime {
 		return o.lastModified
 	}
@@ -994,7 +995,7 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	err := o.readMetaData()
 	if err != nil {
 		return err
@@ -1026,7 +1027,7 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	headers := fs.OpenOptionHeaders(options)
 	_, isRanging := headers["Range"]
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1170,16 +1171,16 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	if o.fs.container == "" {
 		return fserrors.FatalError(errors.New("container name needed in remote"))
 	}
-	err := o.fs.Mkdir("")
+	err := o.fs.Mkdir(ctx, "")
 	if err != nil {
 		return err
 	}
 	size := src.Size()
-	modTime := src.ModTime()
+	modTime := src.ModTime(ctx)
 
 	// Note whether this is a dynamic large object before starting
 	isDynamicLargeObject, err := o.isDynamicLargeObject()
@@ -1190,7 +1191,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	// Set the mtime
 	m := swift.Metadata{}
 	m.SetModTime(modTime)
-	contentType := fs.MimeType(src)
+	contentType := fs.MimeType(ctx, src)
 	headers := m.ObjectHeaders()
 	uniquePrefix := ""
 	if size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk) {
@@ -1233,7 +1234,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	isDynamicLargeObject, err := o.isDynamicLargeObject()
 	if err != nil {
 		return err
@@ -1257,7 +1258,7 @@ func (o *Object) Remove() error {
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
+func (o *Object) MimeType(ctx context.Context) string {
 	return o.contentType
 }
 

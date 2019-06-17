@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"context"
 	"io"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 
 // reOpen is a wrapper for an object reader which reopens the stream on error
 type reOpen struct {
+	ctx         context.Context
 	mu          sync.Mutex       // mutex to protect the below
 	src         fs.Object        // object to open
 	hashOption  *fs.HashesOption // option to pass to initial open
@@ -33,8 +35,9 @@ var (
 //
 // If rangeOption is set then this will applied when reading from the
 // start, and updated on retries.
-func newReOpen(src fs.Object, hashOption *fs.HashesOption, rangeOption *fs.RangeOption, maxTries int) (rc io.ReadCloser, err error) {
+func newReOpen(ctx context.Context, src fs.Object, hashOption *fs.HashesOption, rangeOption *fs.RangeOption, maxTries int) (rc io.ReadCloser, err error) {
 	h := &reOpen{
+		ctx:         ctx,
 		src:         src,
 		hashOption:  hashOption,
 		rangeOption: rangeOption,
@@ -76,7 +79,7 @@ func (h *reOpen) open() error {
 	if h.tries > h.maxTries {
 		h.err = errorTooManyTries
 	} else {
-		h.rc, h.err = h.src.Open(opts...)
+		h.rc, h.err = h.src.Open(h.ctx, opts...)
 	}
 	if h.err != nil {
 		if h.tries > 1 {

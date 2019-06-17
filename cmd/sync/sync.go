@@ -1,6 +1,8 @@
 package sync
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/sync"
 	"github.com/spf13/cobra"
@@ -44,7 +46,7 @@ go there.
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
 		cmd.Run(true, true, command, func() error {
-			return sync.Sync(fdst, fsrc, createEmptySrcDirs)
+			return sync.Sync(context.Background(), fdst, fsrc, createEmptySrcDirs)
 		})
 	},
 }

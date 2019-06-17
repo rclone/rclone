@@ -1,6 +1,7 @@
 package rcat
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
@@ -50,7 +51,7 @@ a lot of data, you're better off caching locally and then
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)
 		cmd.Run(false, false, command, func() error {
-			_, err := operations.Rcat(fdst, dstFileName, os.Stdin, time.Now())
+			_, err := operations.Rcat(context.Background(), fdst, dstFileName, os.Stdin, time.Now())
 			return err
 		})
 	},

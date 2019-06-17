@@ -1,6 +1,7 @@
 package rc
 
 import (
+	"context"
 	"runtime"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestInternalNoop(t *testing.T) {
 		"String": "hello",
 		"Int":    42,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, in, out)
@@ -28,7 +29,7 @@ func TestInternalError(t *testing.T) {
 	call := Calls.Get("rc/error")
 	assert.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.Error(t, err)
 	require.Nil(t, out)
 }
@@ -37,7 +38,7 @@ func TestInternalList(t *testing.T) {
 	call := Calls.Get("rc/list")
 	assert.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"commands": Calls.List()}, out)
@@ -47,7 +48,7 @@ func TestCorePid(t *testing.T) {
 	call := Calls.Get("core/pid")
 	assert.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	pid := out["pid"]
@@ -60,7 +61,7 @@ func TestCoreMemstats(t *testing.T) {
 	call := Calls.Get("core/memstats")
 	assert.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	sys := out["Sys"]
@@ -73,7 +74,7 @@ func TestCoreGC(t *testing.T) {
 	call := Calls.Get("core/gc")
 	assert.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Nil(t, out)
 	assert.Equal(t, Params(nil), out)
@@ -83,7 +84,7 @@ func TestCoreVersion(t *testing.T) {
 	call := Calls.Get("core/version")
 	assert.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, fs.Version, out["version"])
@@ -101,7 +102,7 @@ func TestCoreObscure(t *testing.T) {
 	in := Params{
 		"clear": "potato",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, in["clear"], obscure.MustReveal(out["obscured"].(string)))

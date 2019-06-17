@@ -2,6 +2,7 @@ package crypt
 
 import (
 	"bytes"
+	"context"
 	"crypto/aes"
 	gocipher "crypto/cipher"
 	"crypto/rand"
@@ -68,7 +69,7 @@ type ReadSeekCloser interface {
 }
 
 // OpenRangeSeek opens the file handle at the offset with the limit given
-type OpenRangeSeek func(offset, limit int64) (io.ReadCloser, error)
+type OpenRangeSeek func(ctx context.Context, offset, limit int64) (io.ReadCloser, error)
 
 // Cipher is used to swap out the encryption implementations
 type Cipher interface {
@@ -85,7 +86,7 @@ type Cipher interface {
 	// DecryptData
 	DecryptData(io.ReadCloser) (io.ReadCloser, error)
 	// DecryptDataSeek decrypt at a given position
-	DecryptDataSeek(open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error)
+	DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error)
 	// EncryptedSize calculates the size of the data when encrypted
 	EncryptedSize(int64) int64
 	// DecryptedSize calculates the size of the data when decrypted
@@ -755,22 +756,22 @@ func (c *cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 }
 
 // newDecrypterSeek creates a new file handle decrypting on the fly
-func (c *cipher) newDecrypterSeek(open OpenRangeSeek, offset, limit int64) (fh *decrypter, err error) {
+func (c *cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (fh *decrypter, err error) {
 	var rc io.ReadCloser
 	doRangeSeek := false
 	setLimit := false
 	// Open initially with no seek
 	if offset == 0 && limit < 0 {
 		// If no offset or limit then open whole file
-		rc, err = open(0, -1)
+		rc, err = open(ctx, 0, -1)
 	} else if offset == 0 {
 		// If no offset open the header + limit worth of the file
 		_, underlyingLimit, _, _ := calculateUnderlying(offset, limit)
-		rc, err = open(0, int64(fileHeaderSize)+underlyingLimit)
+		rc, err = open(ctx, 0, int64(fileHeaderSize)+underlyingLimit)
 		setLimit = true
 	} else {
 		// Otherwise just read the header to start with
-		rc, err = open(0, int64(fileHeaderSize))
+		rc, err = open(ctx, 0, int64(fileHeaderSize))
 		doRangeSeek = true
 	}
 	if err != nil {
@@ -783,7 +784,7 @@ func (c *cipher) newDecrypterSeek(open OpenRangeSeek, offset, limit int64) (fh *
 	}
 	fh.open = open // will be called by fh.RangeSeek
 	if doRangeSeek {
-		_, err = fh.RangeSeek(offset, io.SeekStart, limit)
+		_, err = fh.RangeSeek(ctx, offset, io.SeekStart, limit)
 		if err != nil {
 			_ = fh.Close()
 			return nil, err
@@ -903,7 +904,7 @@ func calculateUnderlying(offset, limit int64) (underlyingOffset, underlyingLimit
 // limiting the total length to limit.
 //
 // RangeSeek with a limit of < 0 is equivalent to a regular Seek.
-func (fh *decrypter) RangeSeek(offset int64, whence int, limit int64) (int64, error) {
+func (fh *decrypter) RangeSeek(ctx context.Context, offset int64, whence int, limit int64) (int64, error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 
@@ -930,7 +931,7 @@ func (fh *decrypter) RangeSeek(offset int64, whence int, limit int64) (int64, er
 	// Can we seek underlying stream directly?
 	if do, ok := fh.rc.(fs.RangeSeeker); ok {
 		// Seek underlying stream directly
-		_, err := do.RangeSeek(underlyingOffset, 0, underlyingLimit)
+		_, err := do.RangeSeek(ctx, underlyingOffset, 0, underlyingLimit)
 		if err != nil {
 			return 0, fh.finish(err)
 		}
@@ -940,7 +941,7 @@ func (fh *decrypter) RangeSeek(offset int64, whence int, limit int64) (int64, er
 		fh.rc = nil
 
 		// Re-open the underlying object with the offset given
-		rc, err := fh.open(underlyingOffset, underlyingLimit)
+		rc, err := fh.open(ctx, underlyingOffset, underlyingLimit)
 		if err != nil {
 			return 0, fh.finish(errors.Wrap(err, "couldn't reopen file with offset and limit"))
 		}
@@ -969,7 +970,7 @@ func (fh *decrypter) RangeSeek(offset int64, whence int, limit int64) (int64, er
 
 // Seek implements the io.Seeker interface
 func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
-	return fh.RangeSeek(offset, whence, -1)
+	return fh.RangeSeek(context.TODO(), offset, whence, -1)
 }
 
 // finish sets the final error and tidies up
@@ -1043,8 +1044,8 @@ func (c *cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 // The open function must return a ReadCloser opened to the offset supplied
 //
 // You must use this form of DecryptData if you might want to Seek the file handle
-func (c *cipher) DecryptDataSeek(open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {
-	out, err := c.newDecrypterSeek(open, offset, limit)
+func (c *cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {
+	out, err := c.newDecrypterSeek(ctx, open, offset, limit)
 	if err != nil {
 		return nil, err
 	}

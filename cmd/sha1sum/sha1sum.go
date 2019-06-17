@@ -1,6 +1,7 @@
 package sha1sum
 
 import (
+	"context"
 	"os"
 
 	"github.com/ncw/rclone/cmd"
@@ -23,7 +24,7 @@ is in the same format as the standard sha1sum tool produces.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.Sha1sum(fsrc, os.Stdout)
+			return operations.Sha1sum(context.Background(), fsrc, os.Stdout)
 		})
 	},
 }

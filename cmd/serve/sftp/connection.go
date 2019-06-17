@@ -3,6 +3,7 @@
 package sftp
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -53,7 +54,7 @@ type conn struct {
 
 // execCommand implements an extrememly limited number of commands to
 // interoperate with the rclone sftp backend
-func (c *conn) execCommand(out io.Writer, command string) (err error) {
+func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (err error) {
 	binary, args := command, ""
 	space := strings.Index(command, " ")
 	if space >= 0 {
@@ -68,7 +69,7 @@ func (c *conn) execCommand(out io.Writer, command string) (err error) {
 		if about == nil {
 			return errors.New("df not supported")
 		}
-		usage, err := about()
+		usage, err := about(ctx)
 		if err != nil {
 			return errors.Wrap(err, "About failed")
 		}
@@ -108,7 +109,7 @@ func (c *conn) execCommand(out io.Writer, command string) (err error) {
 		if !ok {
 			return errors.New("unexpected non file")
 		}
-		hash, err := o.Hash(ht)
+		hash, err := o.Hash(ctx, ht)
 		if err != nil {
 			return errors.Wrap(err, "hash failed")
 		}
@@ -230,7 +231,7 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 		}
 	} else {
 		var rc = uint32(0)
-		err := c.execCommand(channel, command.Command)
+		err := c.execCommand(context.TODO(), channel, command.Command)
 		if err != nil {
 			rc = 1
 			_, errPrint := fmt.Fprintf(channel.Stderr(), "%v\n", err)
