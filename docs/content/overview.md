@@ -26,6 +26,7 @@ Here is an overview of the major features of each cloud storage system.
 | FTP                          | -           | No      | No               | No              | -         |
 | Google Cloud Storage         | MD5         | Yes     | No               | No              | R/W       |
 | Google Drive                 | MD5         | Yes     | No               | Yes             | R/W       |
+| Google Photos                | -           | No      | No               | Yes             | R         |
 | HTTP                         | -           | No      | No               | No              | R         |
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R/W       |
@@ -141,6 +142,7 @@ operations more efficient.
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes         | Yes |
+| Google Photos                | No    | No   | No   | No      | No      | No    | No           | No          | No |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | Yes |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | No      | Yes   | No           | Yes                                                   | Yes |
