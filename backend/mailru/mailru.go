@@ -3,6 +3,7 @@ package mailru
 import (
 	"bytes"
 	"fmt"
+	gohash "hash"
 	"io"
 	"path"
 	"sort"
@@ -18,6 +19,7 @@ import (
 	"net/url"
 
 	"github.com/ncw/rclone/backend/mailru/api"
+	"github.com/ncw/rclone/backend/mailru/mrhash"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config/configmap"
@@ -79,10 +81,22 @@ func init() {
 			Help:       "Password",
 			IsPassword: true,
 		}, {
+			Name:     "check_hash",
+			Default:  true,
+			Advanced: true,
+			Help:     "What should copy do if file checksum is mismatching or invalid",
+			Examples: []fs.OptionExample{{
+				Value: "true",
+				Help:  "Fail with error.",
+			}, {
+				Value: "false",
+				Help:  "Ignore and continue.",
+			}},
+		}, {
 			Name:     "user_agent",
 			Default:  api.DefaultUserAgent,
-			Help:     "User agent used by client (internal)",
 			Advanced: true,
+			Help:     "User agent used by client (internal)",
 			Hide:     fs.OptionHideBoth,
 		}, {
 			Name: "debug",
@@ -100,6 +114,7 @@ type Options struct {
 	Username  string `config:"username"`
 	Password  string `config:"password"`
 	UserAgent string `config:"user_agent"`
+	CheckHash bool   `config:"check_hash"`
 	Debug     string `config:"debug"`
 }
 
@@ -186,12 +201,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	root = strings.Trim(root, "/")
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		m:     m,
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer))),
+		name: name,
+		root: root,
+		opt:  *opt,
+		m:    m,
 	}
+
+	f.pacer = fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer)))
 
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
@@ -429,12 +445,16 @@ func (f *Fs) itemToDirEntry(item *api.ListItem) (entry fs.DirEntry, dirSize int,
 		dirSize := item.Count.Files + item.Count.Folders
 		return dir, dirSize, nil
 	case "file":
+		binHash, err := mrhash.DecodeString(item.Hash)
+		if err != nil {
+			return nil, -1, err
+		}
 		file := &Object{
 			fs:          f,
 			remote:      remote,
 			hasMetaData: true,
 			size:        item.Size,
-			mrHash:      item.Hash,
+			mrHash:      binHash,
 			modTime:     time.Unix(item.Mtime, 0),
 		}
 		return file, -1, nil
@@ -696,7 +716,7 @@ func (t *treeState) NextRecord() (fs.DirEntry, error) {
 		isDir = false
 		modTime = r.ReadDate()
 		size = int64(r.ReadULong())
-		binHash = r.ReadNBytes(api.HashLength)
+		binHash = r.ReadNBytes(mrhash.Size)
 	default:
 		return nil, fmt.Errorf("unknown item type %d", itemType)
 	}
@@ -739,7 +759,7 @@ func (t *treeState) NextRecord() (fs.DirEntry, error) {
 		remote:      remote,
 		hasMetaData: true,
 		size:        size,
-		mrHash:      hex.EncodeToString(binHash),
+		mrHash:      binHash,
 		modTime:     modTime,
 	}
 	return obj, nil
@@ -1343,32 +1363,49 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 
-	if size <= api.HashLength {
-		// do not send upload request if file content fits to hash
-		var b []byte
-		b, err = ioutil.ReadAll(in)
-		o.mrHash = hex.EncodeToString(b) + strings.Repeat("00", api.HashLength-len(b))
+	var (
+		fileBuf  []byte
+		fileHash []byte
+		newHash  []byte
+	)
+
+	if size <= mrhash.Size {
+		// Skip extra upload request if data fits in the hash buffer
+		fileBuf, err = ioutil.ReadAll(in)
+		if err == nil {
+			fileHash = mrhash.Sum(fileBuf)
+		}
+		newHash = fileHash
 	} else {
-		err = o.upload(in, size, options...)
-		// o.mrHash has been calculated by upload server
+		hasher := mrhash.New()
+		wrapIn := io.TeeReader(in, hasher)
+		newHash, err = o.upload(wrapIn, size, options...)
+		fileHash = hasher.Sum(nil)
 	}
 	if err != nil {
 		return err
 	}
 
+	if bytes.Compare(fileHash, newHash) != 0 {
+		if o.fs.opt.CheckHash {
+			return mrhash.ErrorInvalidHash
+		}
+		fs.Infof(o, "hash mismatch on upload: expected %x received %x", fileHash, newHash)
+	}
+	o.mrHash = newHash
 	o.size = size
 	o.modTime = src.ModTime()
 	return o.addFileMetaData(true)
 }
 
-func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) error {
+func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) ([]byte, error) {
 	token, err := o.fs.accessToken()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	shardURL, err := o.fs.uploadShard()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	opts := rest.Opts{
@@ -1386,25 +1423,27 @@ func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) erro
 		},
 	}
 
-	var res *http.Response
+	var (
+		res     *http.Response
+		strHash string
+	)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.srv.Call(&opts)
 		if err == nil {
-			o.mrHash, err = readBodyWord(res)
+			strHash, err = readBodyWord(res)
 		}
 		return fserrors.ShouldRetry(err), err
 	})
 	if err != nil {
 		closeBody(res)
-		return err
+		return nil, err
 	}
 
 	switch res.StatusCode {
 	case 200, 201:
-		fs.Debugf(o, "upload hash %q", o.mrHash)
-		return nil
+		return mrhash.DecodeString(strHash)
 	default:
-		return fmt.Errorf("upload failed with code %s (%d)", res.Status, res.StatusCode)
+		return nil, fmt.Errorf("upload failed with code %s (%d)", res.Status, res.StatusCode)
 	}
 }
 
@@ -1453,7 +1492,7 @@ type Object struct {
 	hasMetaData bool      // whether info below has been set
 	size        int64     // Bytes in the object
 	modTime     time.Time // Modified time of the object
-	mrHash      string    // Mail.ru flavored SHA1 hash of the object
+	mrHash      []byte    // Mail.ru flavored SHA1 hash of the object
 }
 
 // NewObject finds an Object at the remote.
@@ -1560,11 +1599,9 @@ func (o *Object) SetModTime(modTime time.Time) error {
 }
 
 func (o *Object) addFileMetaData(overwrite bool) error {
-	binHash, err := hex.DecodeString(o.mrHash)
-	if err != nil {
-		return err
+	if len(o.mrHash) != mrhash.Size {
+		return mrhash.ErrorInvalidHash
 	}
-
 	token, err := o.fs.accessToken()
 	if err != nil {
 		return err
@@ -1581,7 +1618,7 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 	req.WritePu64(o.size)
 	req.WritePu64(o.modTime.Unix())
 	req.WritePu32(0)
-	req.Write(binHash)
+	req.Write(o.mrHash)
 
 	if overwrite {
 		// overwrite
@@ -1589,7 +1626,7 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 	} else {
 		// don't add if not changed, add with rename if changed
 		req.WritePu32(55)
-		req.Write(binHash)
+		req.Write(o.mrHash)
 		req.WritePu64(o.size)
 	}
 
@@ -1696,39 +1733,66 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		return nil, err
 	}
 
-	bodyWrapper := &serverUnlocker{
-		body:   res.Body,
+	var hasher gohash.Hash
+	if offset == 0 && end == o.size {
+		// Cannot check hash of partial download
+		hasher = mrhash.New()
+	}
+	wrapStream := &endHandler{
+		stream: res.Body,
+		hasher: hasher,
 		o:      o,
 		server: server,
 	}
-	return bodyWrapper, nil
+	return wrapStream, nil
 }
 
-type serverUnlocker struct {
-	body     io.ReadCloser
-	o        *Object
-	server   string
-	unlocked bool
+type endHandler struct {
+	stream io.ReadCloser
+	hasher gohash.Hash
+	o      *Object
+	server string
+	done   bool
 }
 
-func (su *serverUnlocker) Read(p []byte) (n int, err error) {
-	n, err = su.body.Read(p)
+func (e *endHandler) Read(p []byte) (n int, err error) {
+	n, err = e.stream.Read(p)
+	if e.hasher != nil {
+		// hasher will not return an error, just panic
+		_, _ = e.hasher.Write(p[:n])
+	}
 	if err != nil { // io.Error or EOF
-		su.unlockServer()
+		err = e.handle(err)
 	}
 	return
 }
 
-func (su *serverUnlocker) Close() error {
-	su.unlockServer()
-	return su.body.Close()
+func (e *endHandler) Close() error {
+	_ = e.handle(nil) // ignore returned error
+	return e.stream.Close()
 }
 
-func (su *serverUnlocker) unlockServer() {
-	if !su.unlocked {
-		su.unlocked = true
-		su.o.fs.fileServers.free(su.server)
+func (e *endHandler) handle(err error) error {
+	if e.done {
+		return err
 	}
+	e.done = true
+	o := e.o
+
+	o.fs.fileServers.free(e.server)
+	if err != io.EOF || e.hasher == nil {
+		return err
+	}
+
+	newHash := e.hasher.Sum(nil)
+	if bytes.Compare(o.mrHash, newHash) == 0 {
+		return io.EOF
+	}
+	if o.fs.opt.CheckHash {
+		return mrhash.ErrorInvalidHash
+	}
+	fs.Infof(o, "hash mismatch on download: expected %x received %x", o.mrHash, newHash)
+	return io.EOF
 }
 
 type pendingServer struct {
