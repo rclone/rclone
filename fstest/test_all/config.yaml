@@ -44,6 +44,10 @@ backends:
    remote:   "TestGoogleCloudStorage:"
    subdir:   true
    fastlist: true
+ - backend:  "googlephotos"
+   remote:   "TestGooglePhotos:"
+   tests:
+     - backend
  - backend:  "hubic"
    remote:   "TestHubic:"
    subdir:   false

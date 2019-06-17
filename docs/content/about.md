@@ -26,6 +26,7 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
 * {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
 * {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
+* {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}
 * {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
 * {{< provider name="Hubic" home="https://hubic.com/" config="/hubic/" >}}
 * {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}

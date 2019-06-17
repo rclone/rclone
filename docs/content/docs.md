@@ -32,6 +32,7 @@ See the following for detailed instructions for
   * [FTP](/ftp/)
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Google Drive](/drive/)
+  * [Google Photos](/googlephotos/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Jottacloud](/jottacloud/)
