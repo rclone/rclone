@@ -880,11 +880,23 @@ The default is `bytes`.
 
 ### --suffix=SUFFIX ###
 
-This is for use with `--backup-dir` only.  If this isn't set then
-`--backup-dir` will move files with their original name.  If it is set
-then the files will have SUFFIX added on to them.
+When using `sync`, `copy` or `move` any files which would have been
+overwritten or deleted will have the suffix added to them.  If there 
+is a file with the same path (after the suffix has been added), then 
+it will be overwritten.
 
-See `--backup-dir` for more info.
+The remote in use must support server side move or copy and you must
+use the same remote as the destination of the sync.
+
+This is for use with files to add the suffix in the current directory 
+or with `--backup-dir`. See `--backup-dir` for more info.
+
+For example
+
+    rclone sync /path/to/local/file remote:current --suffix .bak
+
+will sync `/path/to/local` to `remote:current`, but for any files
+which would have been updated or deleted have .bak added.
 
 ### --suffix-keep-extension ###
 

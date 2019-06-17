@@ -1280,6 +1280,83 @@ func TestSyncBackupDir(t *testing.T)                        { testSyncBackupDir(
 func TestSyncBackupDirWithSuffix(t *testing.T)              { testSyncBackupDir(t, ".bak", false) }
 func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) { testSyncBackupDir(t, "-2019-01-01", true) }
 
+// Test with Suffix set
+func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("Skipping test as remote does not support server side move")
+	}
+	r.Mkdir(r.Fremote)
+
+	fs.Config.Suffix = suffix
+	fs.Config.SuffixKeepExtension = suffixKeepExtension
+	defer func() {
+		fs.Config.BackupDir = ""
+		fs.Config.Suffix = ""
+		fs.Config.SuffixKeepExtension = false
+	}()
+
+	// Make the setup so we have one, two, three in the dest
+	// and one (different), two (same) in the source
+	file1 := r.WriteObject("dst/one", "one", t1)
+	file2 := r.WriteObject("dst/two", "two", t1)
+	file3 := r.WriteObject("dst/three.txt", "three", t1)
+	file2a := r.WriteFile("two", "two", t1)
+	file1a := r.WriteFile("one", "oneA", t2)
+
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+	fstest.CheckItems(t, r.Flocal, file1a, file2a)
+
+	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	require.NoError(t, err)
+
+	accounting.Stats.ResetCounters()
+	err = Sync(fdst, r.Flocal, false)
+	require.NoError(t, err)
+
+	// one should be moved to the backup dir and the new one installed
+	file1.Path = "dst/one" + suffix
+	file1a.Path = "dst/one"
+	// two should be unchanged
+	// three should be moved to the backup dir
+	if suffixKeepExtension {
+		file3.Path = "dst/three" + suffix + ".txt"
+	} else {
+		file3.Path = "dst/three.txt" + suffix
+	}
+
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file1a)
+
+	// Now check what happens if we do it again
+	// Restore a different three and update one in the source
+	file3a := r.WriteObject("dst/three.txt", "threeA", t2)
+	file1b := r.WriteFile("one", "oneBB", t3)
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file1a, file3a)
+
+	// This should delete three and overwrite one again, checking
+	// the files got overwritten correctly in backup-dir
+	accounting.Stats.ResetCounters()
+	err = Sync(fdst, r.Flocal, false)
+	require.NoError(t, err)
+
+	// one should be moved to the backup dir and the new one installed
+	file1a.Path = "dst/one" + suffix + suffix
+	file1b.Path = "dst/one"
+	// two should be unchanged
+	// three should be moved to the backup dir
+	if suffixKeepExtension {
+		file3a.Path = "dst/three" + suffix + suffix + ".txt"
+	} else {
+		file3a.Path = "dst/three.txt" + suffix + suffix
+	}
+
+	fstest.CheckItems(t, r.Fremote, file1b, file2, file3a, file1a)
+}
+func TestSyncSuffix(t *testing.T)              { testSyncSuffix(t, ".bak", false) }
+func TestSyncSuffixKeepExtension(t *testing.T) { testSyncSuffix(t, "-2019-01-01", true) }
+
 // Check we can sync two files with differing UTF-8 representations
 func TestSyncUTFNorm(t *testing.T) {
 	if runtime.GOOS == "darwin" {

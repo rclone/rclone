@@ -141,6 +141,13 @@ func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 			return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
 		}
 		s.suffix = fs.Config.Suffix
+	} else if fs.Config.Suffix != "" {
+		// --backup-dir is not set but --suffix is - use the destination as the backupDir
+		s.backupDir = fdst
+		s.suffix = fs.Config.Suffix
+		if !operations.CanServerSideMove(s.backupDir) {
+			return nil, fserrors.FatalError(errors.New("can't use --suffix on a remote which doesn't support server side move or copy"))
+		}
 	}
 	return s, nil
 }
