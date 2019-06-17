@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -85,9 +86,9 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 
 // copy an object to or from the remote while accounting for it
 func copyObj(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
-	if operations.NeedTransfer(dst, src) {
+	if operations.NeedTransfer(context.TODO(), dst, src) {
 		accounting.Stats.Transferring(src.Remote())
-		newDst, err = operations.Copy(f, dst, remote, src)
+		newDst, err = operations.Copy(context.TODO(), f, dst, remote, src)
 		accounting.Stats.DoneTransferring(src.Remote(), err == nil)
 	} else {
 		newDst = dst
@@ -115,7 +116,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		// If the remote object exists AND its cached file exists locally AND there are no
 		// other RW handles with it open, then attempt to update it.
 		if o != nil && fh.file.rwOpens() == 0 {
-			cacheObj, err := fh.d.vfs.cache.f.NewObject(fh.remote)
+			cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.remote)
 			if err == nil && cacheObj != nil {
 				_, err = copyObj(fh.d.vfs.cache.f, cacheObj, fh.remote, o)
 				if err != nil {
@@ -296,7 +297,7 @@ func (fh *RWFileHandle) close() (err error) {
 
 	if isCopied {
 		// Transfer the temp file to the remote
-		cacheObj, err := fh.d.vfs.cache.f.NewObject(fh.remote)
+		cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.remote)
 		if err != nil {
 			err = errors.Wrap(err, "failed to find cache file")
 			fs.Errorf(fh.logPrefix(), "%v", err)

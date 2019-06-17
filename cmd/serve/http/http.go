@@ -161,7 +161,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
 
 	// Set content type
-	mimeType := fs.MimeType(obj)
+	mimeType := fs.MimeType(r.Context(), obj)
 	if mimeType == "application/octet-stream" && path.Ext(remote) == "" {
 		// Leave header blank so http server guesses
 	} else {

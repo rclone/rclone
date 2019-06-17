@@ -1,6 +1,7 @@
 package dbhashsum
 
 import (
+	"context"
 	"os"
 
 	"github.com/ncw/rclone/cmd"
@@ -25,7 +26,7 @@ The output is in the same format as md5sum and sha1sum.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.DropboxHashSum(fsrc, os.Stdout)
+			return operations.DropboxHashSum(context.Background(), fsrc, os.Stdout)
 		})
 	},
 }

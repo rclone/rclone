@@ -3,6 +3,7 @@ package mockobject
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -39,13 +40,13 @@ func (o Object) Remote() string {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o Object) Hash(hash.Type) (string, error) {
+func (o Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", errNotImpl
 }
 
 // ModTime returns the modification date of the file
 // It should return a best guess if one isn't available
-func (o Object) ModTime() (t time.Time) {
+func (o Object) ModTime(ctx context.Context) (t time.Time) {
 	return t
 }
 
@@ -58,22 +59,22 @@ func (o Object) Storable() bool {
 }
 
 // SetModTime sets the metadata on the object to set the modification date
-func (o Object) SetModTime(time.Time) error {
+func (o Object) SetModTime(ctx context.Context, t time.Time) error {
 	return errNotImpl
 }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
-func (o Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
+func (o Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	return nil, errNotImpl
 }
 
 // Update in to the object with the modTime given of the given size
-func (o Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	return errNotImpl
 }
 
 // Remove this object
-func (o Object) Remove() error {
+func (o Object) Remove(ctx context.Context) error {
 	return errNotImpl
 }
 
@@ -107,7 +108,7 @@ func (o Object) WithContent(content []byte, mode SeekMode) fs.Object {
 	}
 }
 
-func (o *contentMockObject) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
+func (o *contentMockObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {

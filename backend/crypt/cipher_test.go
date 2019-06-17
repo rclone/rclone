@@ -2,6 +2,7 @@ package crypt
 
 import (
 	"bytes"
+	"context"
 	"encoding/base32"
 	"fmt"
 	"io"
@@ -965,7 +966,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 
 	// Open stream with a seek of underlyingOffset
 	var reader io.ReadCloser
-	open := func(underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
+	open := func(ctx context.Context, underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
 		end := len(ciphertext)
 		if underlyingLimit >= 0 {
 			end = int(underlyingOffset + underlyingLimit)
@@ -1006,7 +1007,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 			if offset+limit > len(plaintext) {
 				continue
 			}
-			rc, err := c.DecryptDataSeek(open, int64(offset), int64(limit))
+			rc, err := c.DecryptDataSeek(context.Background(), open, int64(offset), int64(limit))
 			assert.NoError(t, err)
 
 			check(rc, offset, limit)
@@ -1014,14 +1015,14 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 	}
 
 	// Try decoding it with a single open and lots of seeks
-	fh, err := c.DecryptDataSeek(open, 0, -1)
+	fh, err := c.DecryptDataSeek(context.Background(), open, 0, -1)
 	assert.NoError(t, err)
 	for _, offset := range trials {
 		for _, limit := range limits {
 			if offset+limit > len(plaintext) {
 				continue
 			}
-			_, err := fh.RangeSeek(int64(offset), io.SeekStart, int64(limit))
+			_, err := fh.RangeSeek(context.Background(), int64(offset), io.SeekStart, int64(limit))
 			assert.NoError(t, err)
 
 			check(fh, offset, limit)
@@ -1072,7 +1073,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 	} {
 		what := fmt.Sprintf("offset = %d, limit = %d", test.offset, test.limit)
 		callCount := 0
-		testOpen := func(underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
+		testOpen := func(ctx context.Context, underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
 			switch callCount {
 			case 0:
 				assert.Equal(t, int64(0), underlyingOffset, what)
@@ -1084,11 +1085,11 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 				t.Errorf("Too many calls %d for %s", callCount+1, what)
 			}
 			callCount++
-			return open(underlyingOffset, underlyingLimit)
+			return open(ctx, underlyingOffset, underlyingLimit)
 		}
-		fh, err := c.DecryptDataSeek(testOpen, 0, -1)
+		fh, err := c.DecryptDataSeek(context.Background(), testOpen, 0, -1)
 		assert.NoError(t, err)
-		gotOffset, err := fh.RangeSeek(test.offset, io.SeekStart, test.limit)
+		gotOffset, err := fh.RangeSeek(context.Background(), test.offset, io.SeekStart, test.limit)
 		assert.NoError(t, err)
 		assert.Equal(t, gotOffset, test.offset)
 	}

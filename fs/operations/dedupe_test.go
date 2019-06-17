@@ -1,6 +1,7 @@
 package operations_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -37,12 +38,12 @@ func TestDeduplicateInteractive(t *testing.T) {
 	skipIfCantDedupe(t, r.Fremote)
 	skipIfNoHash(t, r.Fremote)
 
-	file1 := r.WriteUncheckedObject("one", "This is one", t1)
-	file2 := r.WriteUncheckedObject("one", "This is one", t1)
-	file3 := r.WriteUncheckedObject("one", "This is one", t1)
+	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
+	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(r.Fremote, operations.DeduplicateInteractive)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateInteractive)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -54,17 +55,17 @@ func TestDeduplicateSkip(t *testing.T) {
 	skipIfCantDedupe(t, r.Fremote)
 	haveHash := r.Fremote.Hashes().GetOne() != hash.None
 
-	file1 := r.WriteUncheckedObject("one", "This is one", t1)
+	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
 	files := []fstest.Item{file1}
 	if haveHash {
-		file2 := r.WriteUncheckedObject("one", "This is one", t1)
+		file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
 		files = append(files, file2)
 	}
-	file3 := r.WriteUncheckedObject("one", "This is another one", t1)
+	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t1)
 	files = append(files, file3)
 	r.CheckWithDuplicates(t, files...)
 
-	err := operations.Deduplicate(r.Fremote, operations.DeduplicateSkip)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSkip)
 	require.NoError(t, err)
 
 	r.CheckWithDuplicates(t, file1, file3)
@@ -75,18 +76,18 @@ func TestDeduplicateFirst(t *testing.T) {
 	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
-	file1 := r.WriteUncheckedObject("one", "This is one", t1)
-	file2 := r.WriteUncheckedObject("one", "This is one A", t1)
-	file3 := r.WriteUncheckedObject("one", "This is one BB", t1)
+	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one A", t1)
+	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is one BB", t1)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(r.Fremote, operations.DeduplicateFirst)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateFirst)
 	require.NoError(t, err)
 
 	// list until we get one object
 	var objects, size int64
 	for try := 1; try <= *fstest.ListRetries; try++ {
-		objects, size, err = operations.Count(r.Fremote)
+		objects, size, err = operations.Count(context.Background(), r.Fremote)
 		require.NoError(t, err)
 		if objects == 1 {
 			break
@@ -104,12 +105,12 @@ func TestDeduplicateNewest(t *testing.T) {
 	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
-	file1 := r.WriteUncheckedObject("one", "This is one", t1)
-	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
-	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
+	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one too", t2)
+	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(r.Fremote, operations.DeduplicateNewest)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateNewest)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file3)
@@ -120,12 +121,12 @@ func TestDeduplicateOldest(t *testing.T) {
 	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
-	file1 := r.WriteUncheckedObject("one", "This is one", t1)
-	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
-	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
+	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one too", t2)
+	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(r.Fremote, operations.DeduplicateOldest)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateOldest)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -136,12 +137,12 @@ func TestDeduplicateLargest(t *testing.T) {
 	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
-	file1 := r.WriteUncheckedObject("one", "This is one", t1)
-	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
-	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
+	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one too", t2)
+	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(r.Fremote, operations.DeduplicateLargest)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateLargest)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file3)
@@ -152,16 +153,16 @@ func TestDeduplicateRename(t *testing.T) {
 	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
 
-	file1 := r.WriteUncheckedObject("one.txt", "This is one", t1)
-	file2 := r.WriteUncheckedObject("one.txt", "This is one too", t2)
-	file3 := r.WriteUncheckedObject("one.txt", "This is another one", t3)
-	file4 := r.WriteUncheckedObject("one-1.txt", "This is not a duplicate", t1)
+	file1 := r.WriteUncheckedObject(context.Background(), "one.txt", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one.txt", "This is one too", t2)
+	file3 := r.WriteUncheckedObject(context.Background(), "one.txt", "This is another one", t3)
+	file4 := r.WriteUncheckedObject(context.Background(), "one-1.txt", "This is not a duplicate", t1)
 	r.CheckWithDuplicates(t, file1, file2, file3, file4)
 
-	err := operations.Deduplicate(r.Fremote, operations.DeduplicateRename)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateRename)
 	require.NoError(t, err)
 
-	require.NoError(t, walk.ListR(r.Fremote, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+	require.NoError(t, walk.ListR(context.Background(), r.Fremote, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
 			remote := o.Remote()
 			if remote != "one-1.txt" &&
@@ -196,23 +197,23 @@ func TestMergeDirs(t *testing.T) {
 		t.Skip("Can't merge directories")
 	}
 
-	file1 := r.WriteObject("dupe1/one.txt", "This is one", t1)
-	file2 := r.WriteObject("dupe2/two.txt", "This is one too", t2)
-	file3 := r.WriteObject("dupe3/three.txt", "This is another one", t3)
+	file1 := r.WriteObject(context.Background(), "dupe1/one.txt", "This is one", t1)
+	file2 := r.WriteObject(context.Background(), "dupe2/two.txt", "This is one too", t2)
+	file3 := r.WriteObject(context.Background(), "dupe3/three.txt", "This is another one", t3)
 
-	objs, dirs, err := walk.GetAll(r.Fremote, "", true, 1)
+	objs, dirs, err := walk.GetAll(context.Background(), r.Fremote, "", true, 1)
 	require.NoError(t, err)
 	assert.Equal(t, 3, len(dirs))
 	assert.Equal(t, 0, len(objs))
 
-	err = mergeDirs(dirs)
+	err = mergeDirs(context.Background(), dirs)
 	require.NoError(t, err)
 
 	file2.Path = "dupe1/two.txt"
 	file3.Path = "dupe1/three.txt"
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
-	objs, dirs, err = walk.GetAll(r.Fremote, "", true, 1)
+	objs, dirs, err = walk.GetAll(context.Background(), r.Fremote, "", true, 1)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(dirs))
 	assert.Equal(t, 0, len(objs))

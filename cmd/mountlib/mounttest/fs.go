@@ -3,6 +3,7 @@
 package mounttest
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -119,7 +120,7 @@ func newRun() *Run {
 		log.Fatalf("Failed to open remote %q: %v", *fstest.RemoteName, err)
 	}
 
-	err = r.fremote.Mkdir("")
+	err = r.fremote.Mkdir(context.Background(), "")
 	if err != nil {
 		log.Fatalf("Failed to open mkdir %q: %v", *fstest.RemoteName, err)
 	}
@@ -211,7 +212,7 @@ func (r *Run) cacheMode(cacheMode vfs.CacheMode) {
 	r.vfs.WaitForWriters(30 * time.Second)
 	// Empty and remake the remote
 	r.cleanRemote()
-	err := r.fremote.Mkdir("")
+	err := r.fremote.Mkdir(context.Background(), "")
 	if err != nil {
 		log.Fatalf("Failed to open mkdir %q: %v", *fstest.RemoteName, err)
 	}
@@ -296,7 +297,7 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filePath string) {
 
 // reads the remote tree into dir
 func (r *Run) readRemote(t *testing.T, dir dirMap, filepath string) {
-	objs, dirs, err := walk.GetAll(r.fremote, filepath, true, 1)
+	objs, dirs, err := walk.GetAll(context.Background(), r.fremote, filepath, true, 1)
 	if err == fs.ErrorDirNotFound {
 		return
 	}

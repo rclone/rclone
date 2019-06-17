@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"sort"
@@ -16,7 +17,7 @@ import (
 func dirCreate(t *testing.T, r *fstest.Run) (*VFS, *Dir, fstest.Item) {
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("dir/file1", "file1 contents", t1)
+	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	node, err := vfs.Stat("dir")
@@ -142,7 +143,7 @@ func TestDirWalk(t *testing.T) {
 	defer r.Finalise()
 	vfs, _, file1 := dirCreate(t, r)
 
-	file2 := r.WriteObject("fil/a/b/c", "super long file", t1)
+	file2 := r.WriteObject(context.Background(), "fil/a/b/c", "super long file", t1)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	root, err := vfs.Root()
@@ -257,9 +258,9 @@ func TestDirReadDirAll(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("dir/file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2- contents", t2)
-	file3 := r.WriteObject("dir/subdir/file3", "file3-- contents", t3)
+	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2- contents", t2)
+	file3 := r.WriteObject(context.Background(), "dir/subdir/file3", "file3-- contents", t3)
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
 	node, err := vfs.Stat("dir")
@@ -475,7 +476,7 @@ func TestDirRename(t *testing.T) {
 	}
 
 	vfs, dir, file1 := dirCreate(t, r)
-	file3 := r.WriteObject("dir/file3", "file3 contents!", t1)
+	file3 := r.WriteObject(context.Background(), "dir/file3", "file3 contents!", t1)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file3}, []string{"dir"}, r.Fremote.Precision())
 
 	root, err := vfs.Root()

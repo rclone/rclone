@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"testing"
 
 	_ "github.com/ncw/rclone/backend/local"
@@ -24,7 +25,7 @@ func TestRc(t *testing.T) {
 			"test_key": "sausage",
 		},
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Nil(t, out)
 	assert.Equal(t, "local", FileGet(testName, "type"))
@@ -37,7 +38,7 @@ func TestRc(t *testing.T) {
 		call := rc.Calls.Get("config/dump")
 		assert.NotNil(t, call)
 		in := rc.Params{}
-		out, err := call.Fn(in)
+		out, err := call.Fn(context.Background(), in)
 		require.NoError(t, err)
 		require.NotNil(t, out)
 
@@ -54,7 +55,7 @@ func TestRc(t *testing.T) {
 		in := rc.Params{
 			"name": testName,
 		}
-		out, err := call.Fn(in)
+		out, err := call.Fn(context.Background(), in)
 		require.NoError(t, err)
 		require.NotNil(t, out)
 
@@ -66,7 +67,7 @@ func TestRc(t *testing.T) {
 		call := rc.Calls.Get("config/listremotes")
 		assert.NotNil(t, call)
 		in := rc.Params{}
-		out, err := call.Fn(in)
+		out, err := call.Fn(context.Background(), in)
 		require.NoError(t, err)
 		require.NotNil(t, out)
 
@@ -87,7 +88,7 @@ func TestRc(t *testing.T) {
 				"test_key2": "cabbage",
 			},
 		}
-		out, err := call.Fn(in)
+		out, err := call.Fn(context.Background(), in)
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
@@ -106,7 +107,7 @@ func TestRc(t *testing.T) {
 				"test_key2": "cabbage",
 			},
 		}
-		out, err := call.Fn(in)
+		out, err := call.Fn(context.Background(), in)
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
@@ -121,7 +122,7 @@ func TestRc(t *testing.T) {
 	in = rc.Params{
 		"name": testName,
 	}
-	out, err = call.Fn(in)
+	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Nil(t, out)
 	assert.Equal(t, "", FileGet(testName, "type"))
@@ -132,7 +133,7 @@ func TestRcProviders(t *testing.T) {
 	call := rc.Calls.Get("config/providers")
 	assert.NotNil(t, call)
 	in := rc.Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	var registry []*fs.RegInfo

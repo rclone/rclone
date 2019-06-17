@@ -1,6 +1,7 @@
 package dlna
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -39,7 +40,7 @@ func TestInit(t *testing.T) {
 	config.LoadConfig()
 
 	f, err := fs.NewFs("testdata/files")
-	l, _ := f.List("")
+	l, _ := f.List(context.Background(), "")
 	fmt.Println(l)
 	require.NoError(t, err)
 

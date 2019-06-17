@@ -1,6 +1,7 @@
 package walk
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -68,7 +69,7 @@ func (ls *listDirs) SetLevel(maxLevel int) *listDirs {
 }
 
 // ListDir returns the expected listing for the directory
-func (ls *listDirs) ListDir(f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error) {
+func (ls *listDirs) ListDir(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error) {
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
 	assert.Equal(ls.t, ls.fs, f)
@@ -89,7 +90,7 @@ func (ls *listDirs) ListDir(f fs.Fs, includeAll bool, dir string) (entries fs.Di
 }
 
 // ListR returns the expected listing for the directory using ListR
-func (ls *listDirs) ListR(dir string, callback fs.ListRCallback) (err error) {
+func (ls *listDirs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	ls.mu.Lock()
 	defer ls.mu.Unlock()
 
@@ -150,14 +151,14 @@ func (ls *listDirs) WalkFn(dir string, entries fs.DirEntries, err error) error {
 
 // Walk does the walk and tests the expectations
 func (ls *listDirs) Walk() {
-	err := walk(nil, "", ls.includeAll, ls.maxLevel, ls.WalkFn, ls.ListDir)
+	err := walk(context.Background(), nil, "", ls.includeAll, ls.maxLevel, ls.WalkFn, ls.ListDir)
 	assert.Equal(ls.t, ls.finalError, err)
 	ls.IsFinished()
 }
 
 // WalkR does the walkR and tests the expectations
 func (ls *listDirs) WalkR() {
-	err := walkR(nil, "", ls.includeAll, ls.maxLevel, ls.WalkFn, ls.ListR)
+	err := walkR(context.Background(), nil, "", ls.includeAll, ls.maxLevel, ls.WalkFn, ls.ListR)
 	assert.Equal(ls.t, ls.finalError, err)
 	if ls.finalError == nil {
 		ls.IsFinished()
@@ -266,7 +267,7 @@ func TestWalkRLevelsNoRecursive10(t *testing.T) { testWalkLevels(t, 10).WalkR() 
 
 func TestWalkNDirTree(t *testing.T) {
 	ls := testWalkLevels(t, -1)
-	entries, err := walkNDirTree(nil, "", ls.includeAll, ls.maxLevel, ls.ListDir)
+	entries, err := walkNDirTree(context.Background(), nil, "", ls.includeAll, ls.maxLevel, ls.ListDir)
 	require.NoError(t, err)
 	assert.Equal(t, `/
   A
@@ -414,7 +415,7 @@ func TestWalkRMultiErrors(t *testing.T) { testWalkMultiErrors(t).Walk() }
 
 // a very simple listRcallback function
 func makeListRCallback(entries fs.DirEntries, err error) fs.ListRFn {
-	return func(dir string, callback fs.ListRCallback) error {
+	return func(ctx context.Context, dir string, callback fs.ListRCallback) error {
 		if err == nil {
 			err = callback(entries)
 		}
@@ -559,7 +560,7 @@ a/
   b/
 `, nil, "", 2},
 	} {
-		r, err := walkRDirTree(nil, test.root, true, test.level, makeListRCallback(test.entries, test.err))
+		r, err := walkRDirTree(context.Background(), nil, test.root, true, test.level, makeListRCallback(test.entries, test.err))
 		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
 		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
 	}
@@ -630,7 +631,7 @@ b/c/d/
 `, nil, "", -1, "ign", true},
 	} {
 		filter.Active.Opt.ExcludeFile = test.excludeFile
-		r, err := walkRDirTree(nil, test.root, test.includeAll, test.level, makeListRCallback(test.entries, test.err))
+		r, err := walkRDirTree(context.Background(), nil, test.root, test.includeAll, test.level, makeListRCallback(test.entries, test.err))
 		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
 		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
 	}
@@ -701,7 +702,7 @@ func TestListR(t *testing.T) {
 		}
 		return nil
 	}
-	doListR := func(dir string, callback fs.ListRCallback) error {
+	doListR := func(ctx context.Context, dir string, callback fs.ListRCallback) error {
 		var os fs.DirEntries
 		for _, o := range objects {
 			if dir == "" || strings.HasPrefix(o.Remote(), dir+"/") {
@@ -725,43 +726,43 @@ func TestListR(t *testing.T) {
 
 	// Base case
 	clearCallback()
-	err = listR(f, "", true, ListAll, callback, doListR, false)
+	err = listR(context.Background(), f, "", true, ListAll, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "dir", "dir/a", "dir/b", "dir/c"}, got)
 
 	// Base case - with Objects
 	clearCallback()
-	err = listR(f, "", true, ListObjects, callback, doListR, false)
+	err = listR(context.Background(), f, "", true, ListObjects, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "dir/a", "dir/b", "dir/c"}, got)
 
 	// Base case - with Dirs
 	clearCallback()
-	err = listR(f, "", true, ListDirs, callback, doListR, false)
+	err = listR(context.Background(), f, "", true, ListDirs, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir"}, got)
 
 	// With filter
 	clearCallback()
-	err = listR(f, "", false, ListAll, callback, doListR, false)
+	err = listR(context.Background(), f, "", false, ListAll, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"b", "dir", "dir/b"}, got)
 
 	// With filter - with Objects
 	clearCallback()
-	err = listR(f, "", false, ListObjects, callback, doListR, false)
+	err = listR(context.Background(), f, "", false, ListObjects, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"b", "dir/b"}, got)
 
 	// With filter - with Dir
 	clearCallback()
-	err = listR(f, "", false, ListDirs, callback, doListR, false)
+	err = listR(context.Background(), f, "", false, ListDirs, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir"}, got)
 
 	// With filter and subdir
 	clearCallback()
-	err = listR(f, "dir", false, ListAll, callback, doListR, false)
+	err = listR(context.Background(), f, "dir", false, ListAll, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b"}, got)
 
@@ -777,31 +778,31 @@ func TestListR(t *testing.T) {
 
 	// Base case
 	clearCallback()
-	err = listR(f, "", true, ListAll, callback, doListR, true)
+	err = listR(context.Background(), f, "", true, ListAll, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "dir/a", "dir/b", "dir/subdir/c", "dir/subdir", "dir"}, got)
 
 	// With filter
 	clearCallback()
-	err = listR(f, "", false, ListAll, callback, doListR, true)
+	err = listR(context.Background(), f, "", false, ListAll, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"b", "dir/b", "dir/subdir", "dir"}, got)
 
 	// With filter and subdir
 	clearCallback()
-	err = listR(f, "dir", false, ListAll, callback, doListR, true)
+	err = listR(context.Background(), f, "dir", false, ListAll, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b", "dir/subdir"}, got)
 
 	// With filter and subdir - with Objects
 	clearCallback()
-	err = listR(f, "dir", false, ListObjects, callback, doListR, true)
+	err = listR(context.Background(), f, "dir", false, ListObjects, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b"}, got)
 
 	// With filter and subdir - with Dirs
 	clearCallback()
-	err = listR(f, "dir", false, ListDirs, callback, doListR, true)
+	err = listR(context.Background(), f, "dir", false, ListDirs, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/subdir"}, got)
 }

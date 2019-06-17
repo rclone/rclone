@@ -229,7 +229,7 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// Start polling function
 	if do := vfs.f.Features().ChangeNotify; do != nil {
 		vfs.pollChan = make(chan time.Duration)
-		do(vfs.root.ForgetPath, vfs.pollChan)
+		do(context.TODO(), vfs.root.ForgetPath, vfs.pollChan)
 		vfs.pollChan <- vfs.Opt.PollInterval
 	} else {
 		fs.Infof(f, "poll-interval is not supported by this remote")
@@ -480,7 +480,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 	}
 	if vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime {
 		var err error
-		vfs.usage, err = doAbout()
+		vfs.usage, err = doAbout(context.TODO())
 		vfs.usageTime = time.Now()
 		if err != nil {
 			fs.Errorf(vfs.f, "Statfs failed: %v", err)

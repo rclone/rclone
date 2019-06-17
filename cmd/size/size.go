@@ -1,6 +1,7 @@
 package size
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,7 +32,7 @@ var commandDefinition = &cobra.Command{
 				Bytes int64 `json:"bytes"`
 			}
 
-			results.Count, results.Bytes, err = operations.Count(fsrc)
+			results.Count, results.Bytes, err = operations.Count(context.Background(), fsrc)
 			if err != nil {
 				return err
 			}

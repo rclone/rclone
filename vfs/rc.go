@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +15,7 @@ import (
 func (vfs *VFS) addRC() {
 	rc.Add(rc.Call{
 		Path: "vfs/forget",
-		Fn: func(in rc.Params) (out rc.Params, err error) {
+		Fn: func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			root, err := vfs.Root()
 			if err != nil {
 				return nil, err
@@ -65,7 +66,7 @@ starting with dir will forget that dir, eg
 	})
 	rc.Add(rc.Call{
 		Path: "vfs/refresh",
-		Fn: func(in rc.Params) (out rc.Params, err error) {
+		Fn: func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			root, err := vfs.Root()
 			if err != nil {
 				return nil, err
@@ -253,7 +254,7 @@ func rcPollFunc(vfs *VFS) (rcPollFunc rc.Func) {
 			},
 		}, nil
 	}
-	return func(in rc.Params) (out rc.Params, err error) {
+	return func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		interval, intervalPresent, err := getInterval(in)
 		if err != nil {
 			return nil, err

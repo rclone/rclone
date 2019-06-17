@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"sync"
@@ -65,7 +66,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
 		// NB Rcat deals with Stats.Transferring etc
-		o, err := operations.Rcat(fh.file.d.f, fh.remote, pipeReader, time.Now())
+		o, err := operations.Rcat(context.TODO(), fh.file.d.f, fh.remote, pipeReader, time.Now())
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}

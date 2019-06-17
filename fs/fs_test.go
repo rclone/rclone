@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"testing"
@@ -17,7 +18,7 @@ import (
 
 func TestFeaturesDisable(t *testing.T) {
 	ft := new(Features)
-	ft.Copy = func(src Object, remote string) (Object, error) {
+	ft.Copy = func(ctx context.Context, src Object, remote string) (Object, error) {
 		return nil, nil
 	}
 	ft.CaseInsensitive = true
@@ -44,7 +45,7 @@ func TestFeaturesList(t *testing.T) {
 func TestFeaturesEnabled(t *testing.T) {
 	ft := new(Features)
 	ft.CaseInsensitive = true
-	ft.Purge = func() error { return nil }
+	ft.Purge = func(ctx context.Context) error { return nil }
 	enabled := ft.Enabled()
 
 	flag, ok := enabled["CaseInsensitive"]
@@ -68,7 +69,7 @@ func TestFeaturesEnabled(t *testing.T) {
 
 func TestFeaturesDisableList(t *testing.T) {
 	ft := new(Features)
-	ft.Copy = func(src Object, remote string) (Object, error) {
+	ft.Copy = func(ctx context.Context, src Object, remote string) (Object, error) {
 		return nil, nil
 	}
 	ft.CaseInsensitive = true

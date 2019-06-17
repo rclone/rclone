@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"testing"
@@ -43,9 +44,9 @@ func TestDirHandleReaddir(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("dir/file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2- contents", t2)
-	file3 := r.WriteObject("dir/subdir/file3", "file3-- contents", t3)
+	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2- contents", t2)
+	file3 := r.WriteObject(context.Background(), "dir/subdir/file3", "file3-- contents", t3)
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
 	node, err := vfs.Stat("dir")

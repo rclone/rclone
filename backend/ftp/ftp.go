@@ -2,6 +2,7 @@
 package ftp
 
 import (
+	"context"
 	"crypto/tls"
 	"io"
 	"net/textproto"
@@ -202,6 +203,7 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
+	ctx := context.Background()
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
 	// Parse config into Options struct
 	opt := new(Options)
@@ -254,7 +256,7 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 		if f.root == "." {
 			f.root = ""
 		}
-		_, err := f.NewObject(remote)
+		_, err := f.NewObject(ctx, remote)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
 				// File doesn't exist so return old f
@@ -319,7 +321,7 @@ func (f *Fs) findItem(remote string) (entry *ftp.Entry, err error) {
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (o fs.Object, err error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
 	entry, err := f.findItem(remote)
 	if err != nil {
@@ -363,7 +365,7 @@ func (f *Fs) dirExists(remote string) (exists bool, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	// defer fs.Trace(dir, "curlevel=%d", curlevel)("")
 	c, err := f.getFtpConnection()
 	if err != nil {
@@ -453,7 +455,7 @@ func (f *Fs) Precision() time.Duration {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// fs.Debugf(f, "Trying to put file %s", src.Remote())
 	err := f.mkParentDir(src.Remote())
 	if err != nil {
@@ -463,13 +465,13 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 		fs:     f,
 		remote: src.Remote(),
 	}
-	err = o.Update(in, src, options...)
+	err = o.Update(ctx, in, src, options...)
 	return o, err
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // getInfo reads the FileInfo for a path
@@ -547,7 +549,7 @@ func (f *Fs) mkParentDir(remote string) error {
 }
 
 // Mkdir creates the directory if it doesn't exist
-func (f *Fs) Mkdir(dir string) (err error) {
+func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	// defer fs.Trace(dir, "")("err=%v", &err)
 	root := path.Join(f.root, dir)
 	return f.mkdir(root)
@@ -556,7 +558,7 @@ func (f *Fs) Mkdir(dir string) (err error) {
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	c, err := f.getFtpConnection()
 	if err != nil {
 		return errors.Wrap(translateErrorFile(err), "Rmdir")
@@ -567,7 +569,7 @@ func (f *Fs) Rmdir(dir string) error {
 }
 
 // Move renames a remote file object
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
@@ -589,7 +591,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Move Rename failed")
 	}
-	dstObj, err := f.NewObject(remote)
+	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, errors.Wrap(err, "Move NewObject failed")
 	}
@@ -604,7 +606,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -667,7 +669,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the hash of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 
@@ -677,12 +679,12 @@ func (o *Object) Size() int64 {
 }
 
 // ModTime returns the modification time of the object
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.info.ModTime
 }
 
 // SetModTime sets the modification time of the object
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return nil
 }
 
@@ -743,7 +745,7 @@ func (f *ftpReadCloser) Close() error {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	// defer fs.Trace(o, "")("rc=%v, err=%v", &rc, &err)
 	path := path.Join(o.fs.root, o.remote)
 	var offset, limit int64 = 0, -1
@@ -777,7 +779,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	// defer fs.Trace(o, "src=%v", src)("err=%v", &err)
 	path := path.Join(o.fs.root, o.remote)
 	// remove the file if upload failed
@@ -787,7 +789,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		// may still be dealing with it for a moment. A sleep isn't ideal but I haven't been
 		// able to think of a better method to find out if the server has finished - ncw
 		time.Sleep(1 * time.Second)
-		removeErr := o.Remove()
+		removeErr := o.Remove(ctx)
 		if removeErr != nil {
 			fs.Debugf(o, "Failed to remove: %v", removeErr)
 		} else {
@@ -813,7 +815,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() (err error) {
+func (o *Object) Remove(ctx context.Context) (err error) {
 	// defer fs.Trace(o, "")("err=%v", &err)
 	path := path.Join(o.fs.root, o.remote)
 	// Check if it's a directory or a file
@@ -822,7 +824,7 @@ func (o *Object) Remove() (err error) {
 		return err
 	}
 	if info.IsDir {
-		err = o.fs.Rmdir(o.remote)
+		err = o.fs.Rmdir(ctx, o.remote)
 	} else {
 		c, err := o.fs.getFtpConnection()
 		if err != nil {

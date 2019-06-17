@@ -3,6 +3,7 @@
 package cache
 
 import (
+	"context"
 	"path"
 	"time"
 
@@ -55,7 +56,7 @@ func ShallowDirectory(f *Fs, remote string) *Directory {
 }
 
 // DirectoryFromOriginal builds one from a generic fs.Directory
-func DirectoryFromOriginal(f *Fs, d fs.Directory) *Directory {
+func DirectoryFromOriginal(ctx context.Context, f *Fs, d fs.Directory) *Directory {
 	var cd *Directory
 	fullRemote := path.Join(f.Root(), d.Remote())
 
@@ -67,7 +68,7 @@ func DirectoryFromOriginal(f *Fs, d fs.Directory) *Directory {
 		CacheFs:      f,
 		Name:         name,
 		Dir:          dir,
-		CacheModTime: d.ModTime().UnixNano(),
+		CacheModTime: d.ModTime(ctx).UnixNano(),
 		CacheSize:    d.Size(),
 		CacheItems:   d.Items(),
 		CacheType:    "Directory",
@@ -110,7 +111,7 @@ func (d *Directory) parentRemote() string {
 }
 
 // ModTime returns the cached ModTime
-func (d *Directory) ModTime() time.Time {
+func (d *Directory) ModTime(ctx context.Context) time.Time {
 	return time.Unix(0, d.CacheModTime)
 }
 

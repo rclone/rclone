@@ -1,6 +1,7 @@
 package lsjson
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -90,7 +91,7 @@ can be processed line by line as each item is written one to a line.
 		cmd.Run(false, false, command, func() error {
 			fmt.Println("[")
 			first := true
-			err := operations.ListJSON(fsrc, "", &opt, func(item *operations.ListJSONItem) error {
+			err := operations.ListJSON(context.Background(), fsrc, "", &opt, func(item *operations.ListJSONItem) error {
 				out, err := json.Marshal(item)
 				if err != nil {
 					return errors.Wrap(err, "failed to marshal list object")

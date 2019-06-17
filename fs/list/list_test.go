@@ -1,6 +1,7 @@
 package list
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,21 +25,21 @@ func TestFilterAndSortIncludeAll(t *testing.T) {
 	dd := mockdir.New("d")
 	oD := mockobject.Object("D")
 	entries := fs.DirEntries{da, oA, db, oB, dc, oC, dd, oD}
-	includeObject := func(o fs.Object) bool {
+	includeObject := func(ctx context.Context, o fs.Object) bool {
 		return o != oB
 	}
 	includeDirectory := func(remote string) (bool, error) {
 		return remote != "c", nil
 	}
 	// no filter
-	newEntries, err := filterAndSortDir(entries, true, "", includeObject, includeDirectory)
+	newEntries, err := filterAndSortDir(context.Background(), entries, true, "", includeObject, includeDirectory)
 	require.NoError(t, err)
 	assert.Equal(t,
 		newEntries,
 		fs.DirEntries{oA, oB, oC, oD, da, db, dc, dd},
 	)
 	// filter
-	newEntries, err = filterAndSortDir(entries, false, "", includeObject, includeDirectory)
+	newEntries, err = filterAndSortDir(context.Background(), entries, false, "", includeObject, includeDirectory)
 	require.NoError(t, err)
 	assert.Equal(t,
 		newEntries,
@@ -57,7 +58,7 @@ func TestFilterAndSortCheckDir(t *testing.T) {
 	dd := mockdir.New("dir/d")
 	oD := mockobject.Object("dir/D")
 	entries := fs.DirEntries{da, oA, db, oB, dc, oC, dd, oD}
-	newEntries, err := filterAndSortDir(entries, true, "dir", nil, nil)
+	newEntries, err := filterAndSortDir(context.Background(), entries, true, "dir", nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
 		newEntries,
@@ -76,7 +77,7 @@ func TestFilterAndSortCheckDirRoot(t *testing.T) {
 	dd := mockdir.New("d")
 	oD := mockobject.Object("D")
 	entries := fs.DirEntries{da, oA, db, oB, dc, oC, dd, oD}
-	newEntries, err := filterAndSortDir(entries, true, "", nil, nil)
+	newEntries, err := filterAndSortDir(context.Background(), entries, true, "", nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
 		newEntries,
@@ -86,10 +87,10 @@ func TestFilterAndSortCheckDirRoot(t *testing.T) {
 
 type unknownDirEntry string
 
-func (o unknownDirEntry) String() string         { return string(o) }
-func (o unknownDirEntry) Remote() string         { return string(o) }
-func (o unknownDirEntry) ModTime() (t time.Time) { return t }
-func (o unknownDirEntry) Size() int64            { return 0 }
+func (o unknownDirEntry) String() string                            { return string(o) }
+func (o unknownDirEntry) Remote() string                            { return string(o) }
+func (o unknownDirEntry) ModTime(ctx context.Context) (t time.Time) { return t }
+func (o unknownDirEntry) Size() int64                               { return 0 }
 
 func TestFilterAndSortUnknown(t *testing.T) {
 	// Check that an unknown entry produces an error
@@ -98,7 +99,7 @@ func TestFilterAndSortUnknown(t *testing.T) {
 	ub := unknownDirEntry("b")
 	oB := mockobject.Object("B/sub")
 	entries := fs.DirEntries{da, oA, ub, oB}
-	newEntries, err := filterAndSortDir(entries, true, "", nil, nil)
+	newEntries, err := filterAndSortDir(context.Background(), entries, true, "", nil, nil)
 	assert.Error(t, err, "error")
 	assert.Nil(t, newEntries)
 }

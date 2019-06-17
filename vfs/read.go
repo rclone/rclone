@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"sync"
@@ -65,7 +66,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 		return nil
 	}
 	o := fh.file.getObject()
-	r, err := chunkedreader.New(o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit)).Open()
+	r, err := chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit)).Open()
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	}
 	if !reopen {
 		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d (fs.RangeSeeker)", fh.offset, offset)
-		_, err = r.RangeSeek(offset, io.SeekStart, -1)
+		_, err = r.RangeSeek(context.TODO(), offset, io.SeekStart, -1)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read fs.RangeSeeker failed: %v", err)
 			return err
@@ -136,7 +137,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		}
 		// re-open with a seek
 		o := fh.file.getObject()
-		r = chunkedreader.New(o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit))
+		r = chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit))
 		_, err := r.Seek(offset, 0)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
@@ -289,7 +290,7 @@ func (fh *ReadFileHandle) checkHash() error {
 
 	o := fh.file.getObject()
 	for hashType, dstSum := range fh.hash.Sums() {
-		srcSum, err := o.Hash(hashType)
+		srcSum, err := o.Hash(context.TODO(), hashType)
 		if err != nil {
 			return err
 		}

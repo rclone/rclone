@@ -1,6 +1,8 @@
 package settier
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
@@ -48,7 +50,7 @@ Or just provide remote directory and all files in directory will be tiered
 				return errors.Errorf("Remote %s does not support settier", fsrc.Name())
 			}
 
-			return operations.SetTier(fsrc, tier)
+			return operations.SetTier(context.Background(), fsrc, tier)
 		})
 	},
 }

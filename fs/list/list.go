@@ -2,6 +2,7 @@
 package list
 
 import (
+	"context"
 	"sort"
 	"strings"
 
@@ -18,9 +19,9 @@ import (
 // files and directories passing the filter will be added.
 //
 // Files will be returned in sorted order
-func DirSorted(f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error) {
+func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error) {
 	// Get unfiltered entries from the fs
-	entries, err = f.List(dir)
+	entries, err = f.List(ctx, dir)
 	if err != nil {
 		return nil, err
 	}
@@ -31,12 +32,12 @@ func DirSorted(f fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err
 		fs.Debugf(dir, "Excluded")
 		return nil, nil
 	}
-	return filterAndSortDir(entries, includeAll, dir, filter.Active.IncludeObject, filter.Active.IncludeDirectory(f))
+	return filterAndSortDir(ctx, entries, includeAll, dir, filter.Active.IncludeObject, filter.Active.IncludeDirectory(ctx, f))
 }
 
 // filter (if required) and check the entries, then sort them
-func filterAndSortDir(entries fs.DirEntries, includeAll bool, dir string,
-	IncludeObject func(o fs.Object) bool,
+func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll bool, dir string,
+	IncludeObject func(ctx context.Context, o fs.Object) bool,
 	IncludeDirectory func(remote string) (bool, error)) (newEntries fs.DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
 	prefix := ""
@@ -49,7 +50,7 @@ func filterAndSortDir(entries fs.DirEntries, includeAll bool, dir string,
 		switch x := entry.(type) {
 		case fs.Object:
 			// Make sure we don't delete excluded files if not required
-			if !includeAll && !IncludeObject(x) {
+			if !includeAll && !IncludeObject(ctx, x) {
 				ok = false
 				fs.Debugf(x, "Excluded")
 			}

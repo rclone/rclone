@@ -3,6 +3,7 @@
 package rc
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -14,14 +15,15 @@ import (
 // Job describes a asynchronous task started via the rc package
 type Job struct {
 	mu        sync.Mutex
-	ID        int64     `json:"id"`
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
-	Error     string    `json:"error"`
-	Finished  bool      `json:"finished"`
-	Success   bool      `json:"success"`
-	Duration  float64   `json:"duration"`
-	Output    Params    `json:"output"`
+	ID        int64           `json:"id"`
+	StartTime time.Time       `json:"startTime"`
+	EndTime   time.Time       `json:"endTime"`
+	Error     string          `json:"error"`
+	Finished  bool            `json:"finished"`
+	Success   bool            `json:"success"`
+	Duration  float64         `json:"duration"`
+	Output    Params          `json:"output"`
+	Context   context.Context `json:"-"`
 }
 
 // Jobs describes a collection of running tasks
@@ -121,7 +123,7 @@ func (job *Job) run(fn Func, in Params) {
 			job.finish(nil, errors.Errorf("panic received: %v", r))
 		}
 	}()
-	job.finish(fn(in))
+	job.finish(fn(job.Context, in))
 }
 
 // NewJob start a new Job off
@@ -129,6 +131,7 @@ func (jobs *Jobs) NewJob(fn Func, in Params) *Job {
 	job := &Job{
 		ID:        atomic.AddInt64(&jobID, 1),
 		StartTime: time.Now(),
+		Context:   context.Background(),
 	}
 	go job.run(fn, in)
 	jobs.mu.Lock()
@@ -164,12 +167,13 @@ Results
 - startTime - time the job started (eg "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
+- progress - output of the progress related to the underlying job
 `,
 	})
 }
 
 // Returns the status of a job
-func rcJobStatus(in Params) (out Params, err error) {
+func rcJobStatus(ctx context.Context, in Params) (out Params, err error) {
 	jobID, err := in.GetInt64("jobid")
 	if err != nil {
 		return nil, err
@@ -202,7 +206,7 @@ Results
 }
 
 // Returns the status of a job
-func rcJobList(in Params) (out Params, err error) {
+func rcJobList(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	out["jobids"] = running.IDs()
 	return out, nil

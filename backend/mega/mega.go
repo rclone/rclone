@@ -16,6 +16,7 @@ Improvements:
 */
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -403,10 +404,10 @@ func (f *Fs) clearRoot() {
 }
 
 // CleanUp deletes all files currently in trash
-func (f *Fs) CleanUp() (err error) {
+func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	trash := f.srv.FS.GetTrash()
 	items := []*mega.Node{}
-	_, err = f.list(trash, func(item *mega.Node) bool {
+	_, err = f.list(ctx, trash, func(item *mega.Node) bool {
 		items = append(items, item)
 		return false
 	})
@@ -454,7 +455,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *mega.Node) (fs.Object, error
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -469,7 +470,7 @@ type listFn func(*mega.Node) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) list(dir *mega.Node, fn listFn) (found bool, err error) {
+func (f *Fs) list(ctx context.Context, dir *mega.Node, fn listFn) (found bool, err error) {
 	nodes, err := f.srv.FS.GetChildren(dir)
 	if err != nil {
 		return false, errors.Wrapf(err, "list failed")
@@ -492,13 +493,13 @@ func (f *Fs) list(dir *mega.Node, fn listFn) (found bool, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	dirNode, err := f.lookupDir(dir)
 	if err != nil {
 		return nil, err
 	}
 	var iErr error
-	_, err = f.list(dirNode, func(info *mega.Node) bool {
+	_, err = f.list(ctx, dirNode, func(info *mega.Node) bool {
 		remote := path.Join(dir, info.GetName())
 		switch info.GetType() {
 		case mega.FOLDER, mega.ROOT, mega.INBOX, mega.TRASH:
@@ -551,14 +552,14 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 //
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	existingObj, err := f.newObjectWithInfo(src.Remote(), nil)
 	switch err {
 	case nil:
-		return existingObj, existingObj.Update(in, src, options...)
+		return existingObj, existingObj.Update(ctx, in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
-		return f.PutUnchecked(in, src)
+		return f.PutUnchecked(ctx, in, src)
 	default:
 		return nil, err
 	}
@@ -573,20 +574,20 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 //
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
-func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	size := src.Size()
-	modTime := src.ModTime()
+	modTime := src.ModTime(ctx)
 
 	o, _, _, err := f.createObject(remote, modTime, size)
 	if err != nil {
 		return nil, err
 	}
-	return o, o.Update(in, src, options...)
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // Mkdir creates the directory if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	rootNode, err := f.findRoot(true)
 	if err != nil {
 		return err
@@ -648,7 +649,7 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 // Rmdir deletes the root folder
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.purgeCheck(dir, true)
 }
 
@@ -662,7 +663,7 @@ func (f *Fs) Precision() time.Duration {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	return f.purgeCheck("", false)
 }
 
@@ -743,7 +744,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstFs := f
 
 	//log.Printf("Move %q -> %q", src.Remote(), remote)
@@ -776,7 +777,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	dstFs := f
 	srcFs, ok := src.(*Fs)
 	if !ok {
@@ -824,7 +825,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
 	root, err := f.findRoot(false)
 	if err != nil {
 		return "", errors.Wrap(err, "PublicLink failed to find root node")
@@ -842,7 +843,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 
 // MergeDirs merges the contents of all the directories passed
 // in into the first one and rmdirs the other directories.
-func (f *Fs) MergeDirs(dirs []fs.Directory) error {
+func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	if len(dirs) < 2 {
 		return nil
 	}
@@ -861,7 +862,7 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 
 		// list the the objects
 		infos := []*mega.Node{}
-		_, err := f.list(srcDirNode, func(info *mega.Node) bool {
+		_, err := f.list(ctx, srcDirNode, func(info *mega.Node) bool {
 			infos = append(infos, info)
 			return false
 		})
@@ -890,7 +891,7 @@ func (f *Fs) MergeDirs(dirs []fs.Directory) error {
 }
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var q mega.QuotaResp
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
@@ -929,7 +930,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the hashes of an object
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 
@@ -969,12 +970,12 @@ func (o *Object) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.info.GetTimeStamp()
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return fs.ErrorCantSetModTime
 }
 
@@ -1065,7 +1066,7 @@ func (oo *openObject) Close() (err error) {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
@@ -1103,12 +1104,12 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // If existing is set then it updates the object rather than creating a new one
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	size := src.Size()
 	if size < 0 {
 		return errors.New("mega backend can't upload a file of unknown length")
 	}
-	//modTime := src.ModTime()
+	//modTime := src.ModTime(ctx)
 	remote := o.Remote()
 
 	// Create the parent directory
@@ -1171,7 +1172,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	err := o.fs.deleteNode(o.info)
 	if err != nil {
 		return errors.Wrap(err, "Remove object failed")

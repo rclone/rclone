@@ -3,6 +3,7 @@ package filter
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -399,12 +400,12 @@ func (f *Filter) ListContainsExcludeFile(entries fs.DirEntries) bool {
 
 // IncludeDirectory returns a function which checks whether this
 // directory should be included in the sync or not.
-func (f *Filter) IncludeDirectory(fs fs.Fs) func(string) (bool, error) {
+func (f *Filter) IncludeDirectory(ctx context.Context, fs fs.Fs) func(string) (bool, error) {
 	return func(remote string) (bool, error) {
 		remote = strings.Trim(remote, "/")
 		// first check if we need to remove directory based on
 		// the exclude file
-		excl, err := f.DirContainsExcludeFile(fs, remote)
+		excl, err := f.DirContainsExcludeFile(ctx, fs, remote)
 		if err != nil {
 			return false, err
 		}
@@ -431,9 +432,9 @@ func (f *Filter) IncludeDirectory(fs fs.Fs) func(string) (bool, error) {
 // DirContainsExcludeFile checks if exclude file is present in a
 // directroy. If fs is nil, it works properly if ExcludeFile is an
 // empty string (for testing).
-func (f *Filter) DirContainsExcludeFile(fremote fs.Fs, remote string) (bool, error) {
+func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remote string) (bool, error) {
 	if len(f.Opt.ExcludeFile) > 0 {
-		exists, err := fs.FileExists(fremote, path.Join(remote, f.Opt.ExcludeFile))
+		exists, err := fs.FileExists(ctx, fremote, path.Join(remote, f.Opt.ExcludeFile))
 		if err != nil {
 			return false, err
 		}
@@ -470,11 +471,11 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 // IncludeObject returns whether this object should be included into
 // the sync or not. This is a convenience function to avoid calling
 // o.ModTime(), which is an expensive operation.
-func (f *Filter) IncludeObject(o fs.Object) bool {
+func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 	var modTime time.Time
 
 	if !f.ModTimeFrom.IsZero() || !f.ModTimeTo.IsZero() {
-		modTime = o.ModTime()
+		modTime = o.ModTime(ctx)
 	} else {
 		modTime = time.Unix(0, 0)
 	}
@@ -534,8 +535,8 @@ func (f *Filter) HaveFilesFrom() bool {
 var errFilesFromNotSet = errors.New("--files-from not set so can't use Filter.ListR")
 
 // MakeListR makes function to return all the files set using --files-from
-func (f *Filter) MakeListR(NewObject func(remote string) (fs.Object, error)) fs.ListRFn {
-	return func(dir string, callback fs.ListRCallback) error {
+func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Context, remote string) (fs.Object, error)) fs.ListRFn {
+	return func(ctx context.Context, dir string, callback fs.ListRCallback) error {
 		if !f.HaveFilesFrom() {
 			return errFilesFromNotSet
 		}
@@ -547,7 +548,7 @@ func (f *Filter) MakeListR(NewObject func(remote string) (fs.Object, error)) fs.
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {
-					entries[0], err = NewObject(remote)
+					entries[0], err = NewObject(ctx, remote)
 					if err == fs.ErrorObjectNotFound {
 						// Skip files that are not found
 					} else if err != nil {

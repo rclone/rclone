@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"os"
 	"sync"
 	"testing"
@@ -230,11 +231,11 @@ var (
 func canSetModTime(t *testing.T, r *fstest.Run) bool {
 	canSetModTimeOnce.Do(func() {
 		mtime1 := time.Date(2008, time.November, 18, 17, 32, 31, 0, time.UTC)
-		_ = r.WriteObject("time_test", "stuff", mtime1)
-		obj, err := r.Fremote.NewObject("time_test")
+		_ = r.WriteObject(context.Background(), "time_test", "stuff", mtime1)
+		obj, err := r.Fremote.NewObject(context.Background(), "time_test")
 		require.NoError(t, err)
 		mtime2 := time.Date(2009, time.November, 18, 17, 32, 31, 0, time.UTC)
-		err = obj.SetModTime(mtime2)
+		err = obj.SetModTime(context.Background(), mtime2)
 		switch err {
 		case nil:
 			canSetModTimeValue = true
@@ -243,7 +244,7 @@ func canSetModTime(t *testing.T, r *fstest.Run) bool {
 		default:
 			require.NoError(t, err)
 		}
-		require.NoError(t, obj.Remove())
+		require.NoError(t, obj.Remove(context.Background()))
 		fs.Debugf(nil, "Can set mod time: %v", canSetModTimeValue)
 	})
 	return canSetModTimeValue

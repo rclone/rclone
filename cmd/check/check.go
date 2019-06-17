@@ -1,6 +1,8 @@
 package check
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -43,9 +45,9 @@ destination that are not in the source will not trigger an error.
 		fsrc, fdst := cmd.NewFsSrcDst(args)
 		cmd.Run(false, false, command, func() error {
 			if download {
-				return operations.CheckDownload(fdst, fsrc, oneway)
+				return operations.CheckDownload(context.Background(), fdst, fsrc, oneway)
 			}
-			return operations.Check(fdst, fsrc, oneway)
+			return operations.Check(context.Background(), fdst, fsrc, oneway)
 		})
 	},
 }

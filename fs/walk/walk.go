@@ -3,6 +3,7 @@ package walk
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path"
 	"sort"
@@ -58,15 +59,15 @@ type Func func(path string, entries fs.DirEntries, err error) error
 // constructed with just those files in and then walked with WalkR
 //
 // NB (f, path) to be replaced by fs.Dir at some point
-func Walk(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
+func Walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
 	if fs.Config.NoTraverse && filter.Active.HaveFilesFrom() {
-		return walkR(f, path, includeAll, maxLevel, fn, filter.Active.MakeListR(f.NewObject))
+		return walkR(ctx, f, path, includeAll, maxLevel, fn, filter.Active.MakeListR(ctx, f.NewObject))
 	}
 	// FIXME should this just be maxLevel < 0 - why the maxLevel > 1
 	if (maxLevel < 0 || maxLevel > 1) && fs.Config.UseListR && f.Features().ListR != nil {
-		return walkListR(f, path, includeAll, maxLevel, fn)
+		return walkListR(ctx, f, path, includeAll, maxLevel, fn)
 	}
-	return walkListDirSorted(f, path, includeAll, maxLevel, fn)
+	return walkListDirSorted(ctx, f, path, includeAll, maxLevel, fn)
 }
 
 // ListType is uses to choose which combination of files or directories is requires
@@ -137,7 +138,7 @@ func (l ListType) Filter(in *fs.DirEntries) {
 // efficient, otherwise by Walk.
 //
 // NB (f, path) to be replaced by fs.Dir at some point
-func ListR(f fs.Fs, path string, includeAll bool, maxLevel int, listType ListType, fn fs.ListRCallback) error {
+func ListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, listType ListType, fn fs.ListRCallback) error {
 	// FIXME disable this with --no-fast-list ??? `--disable ListR` will do it...
 	doListR := f.Features().ListR
 
@@ -147,15 +148,15 @@ func ListR(f fs.Fs, path string, includeAll bool, maxLevel int, listType ListTyp
 		maxLevel >= 0 || // ...using bounded recursion
 		len(filter.Active.Opt.ExcludeFile) > 0 || // ...using --exclude-file
 		filter.Active.BoundedRecursion() { // ...filters imply bounded recursion
-		return listRwalk(f, path, includeAll, maxLevel, listType, fn)
+		return listRwalk(ctx, f, path, includeAll, maxLevel, listType, fn)
 	}
-	return listR(f, path, includeAll, listType, fn, doListR, listType.Dirs() && f.Features().BucketBased)
+	return listR(ctx, f, path, includeAll, listType, fn, doListR, listType.Dirs() && f.Features().BucketBased)
 }
 
 // listRwalk walks the file tree for ListR using Walk
-func listRwalk(f fs.Fs, path string, includeAll bool, maxLevel int, listType ListType, fn fs.ListRCallback) error {
+func listRwalk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, listType ListType, fn fs.ListRCallback) error {
 	var listErr error
-	walkErr := Walk(f, path, includeAll, maxLevel, func(path string, entries fs.DirEntries, err error) error {
+	walkErr := Walk(ctx, f, path, includeAll, maxLevel, func(path string, entries fs.DirEntries, err error) error {
 		// Carry on listing but return the error at the end
 		if err != nil {
 			listErr = err
@@ -264,8 +265,8 @@ func (dm *dirMap) sendEntries(fn fs.ListRCallback) (err error) {
 }
 
 // listR walks the file tree using ListR
-func listR(f fs.Fs, path string, includeAll bool, listType ListType, fn fs.ListRCallback, doListR fs.ListRFn, synthesizeDirs bool) error {
-	includeDirectory := filter.Active.IncludeDirectory(f)
+func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType ListType, fn fs.ListRCallback, doListR fs.ListRFn, synthesizeDirs bool) error {
+	includeDirectory := filter.Active.IncludeDirectory(ctx, f)
 	if !includeAll {
 		includeAll = filter.Active.InActive()
 	}
@@ -274,7 +275,7 @@ func listR(f fs.Fs, path string, includeAll bool, listType ListType, fn fs.ListR
 		dm = newDirMap(path)
 	}
 	var mu sync.Mutex
-	err := doListR(path, func(entries fs.DirEntries) (err error) {
+	err := doListR(ctx, path, func(entries fs.DirEntries) (err error) {
 		if synthesizeDirs {
 			err = dm.addEntries(entries)
 			if err != nil {
@@ -288,7 +289,7 @@ func listR(f fs.Fs, path string, includeAll bool, listType ListType, fn fs.ListR
 				var include bool
 				switch x := entry.(type) {
 				case fs.Object:
-					include = filter.Active.IncludeObject(x)
+					include = filter.Active.IncludeObject(ctx, x)
 				case fs.Directory:
 					include, err = includeDirectory(x.Remote())
 					if err != nil {
@@ -324,25 +325,25 @@ func listR(f fs.Fs, path string, includeAll bool, listType ListType, fn fs.ListR
 // walkListDirSorted lists the directory.
 //
 // It implements Walk using non recursive directory listing.
-func walkListDirSorted(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
-	return walk(f, path, includeAll, maxLevel, fn, list.DirSorted)
+func walkListDirSorted(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
+	return walk(ctx, f, path, includeAll, maxLevel, fn, list.DirSorted)
 }
 
 // walkListR lists the directory.
 //
 // It implements Walk using recursive directory listing if
 // available, or returns ErrorCantListR if not.
-func walkListR(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
+func walkListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
 	listR := f.Features().ListR
 	if listR == nil {
 		return ErrorCantListR
 	}
-	return walkR(f, path, includeAll, maxLevel, fn, listR)
+	return walkR(ctx, f, path, includeAll, maxLevel, fn, listR)
 }
 
-type listDirFunc func(fs fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error)
+type listDirFunc func(ctx context.Context, fs fs.Fs, includeAll bool, dir string) (entries fs.DirEntries, err error)
 
-func walk(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listDir listDirFunc) error {
+func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listDir listDirFunc) error {
 	var (
 		wg         sync.WaitGroup // sync closing of go routines
 		traversing sync.WaitGroup // running directory traversals
@@ -378,7 +379,7 @@ func walk(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listDir 
 					if !ok {
 						return
 					}
-					entries, err := listDir(f, includeAll, job.remote)
+					entries, err := listDir(ctx, f, includeAll, job.remote)
 					var jobs []listJob
 					if err == nil && job.depth != 0 {
 						entries.ForDir(func(dir fs.Directory) {
@@ -608,14 +609,14 @@ func (dt DirTree) String() string {
 	return out.String()
 }
 
-func walkRDirTree(f fs.Fs, startPath string, includeAll bool, maxLevel int, listR fs.ListRFn) (DirTree, error) {
+func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll bool, maxLevel int, listR fs.ListRFn) (DirTree, error) {
 	dirs := make(DirTree)
 	// Entries can come in arbitrary order. We use toPrune to keep
 	// all directories to exclude later.
 	toPrune := make(map[string]bool)
-	includeDirectory := filter.Active.IncludeDirectory(f)
+	includeDirectory := filter.Active.IncludeDirectory(ctx, f)
 	var mu sync.Mutex
-	err := listR(startPath, func(entries fs.DirEntries) error {
+	err := listR(ctx, startPath, func(entries fs.DirEntries) error {
 		mu.Lock()
 		defer mu.Unlock()
 		for _, entry := range entries {
@@ -623,7 +624,7 @@ func walkRDirTree(f fs.Fs, startPath string, includeAll bool, maxLevel int, list
 			switch x := entry.(type) {
 			case fs.Object:
 				// Make sure we don't delete excluded files if not required
-				if includeAll || filter.Active.IncludeObject(x) {
+				if includeAll || filter.Active.IncludeObject(ctx, x) {
 					if maxLevel < 0 || slashes <= maxLevel-1 {
 						dirs.add(x)
 					} else {
@@ -685,7 +686,7 @@ func walkRDirTree(f fs.Fs, startPath string, includeAll bool, maxLevel int, list
 }
 
 // Create a DirTree using List
-func walkNDirTree(f fs.Fs, path string, includeAll bool, maxLevel int, listDir listDirFunc) (DirTree, error) {
+func walkNDirTree(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, listDir listDirFunc) (DirTree, error) {
 	dirs := make(DirTree)
 	fn := func(dirPath string, entries fs.DirEntries, err error) error {
 		if err == nil {
@@ -693,7 +694,7 @@ func walkNDirTree(f fs.Fs, path string, includeAll bool, maxLevel int, listDir l
 		}
 		return err
 	}
-	err := walk(f, path, includeAll, maxLevel, fn, listDir)
+	err := walk(ctx, f, path, includeAll, maxLevel, fn, listDir)
 	if err != nil {
 		return nil, err
 	}
@@ -715,18 +716,18 @@ func walkNDirTree(f fs.Fs, path string, includeAll bool, maxLevel int, listDir l
 // constructed with just those files in.
 //
 // NB (f, path) to be replaced by fs.Dir at some point
-func NewDirTree(f fs.Fs, path string, includeAll bool, maxLevel int) (DirTree, error) {
+func NewDirTree(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int) (DirTree, error) {
 	if fs.Config.NoTraverse && filter.Active.HaveFilesFrom() {
-		return walkRDirTree(f, path, includeAll, maxLevel, filter.Active.MakeListR(f.NewObject))
+		return walkRDirTree(ctx, f, path, includeAll, maxLevel, filter.Active.MakeListR(ctx, f.NewObject))
 	}
 	if ListR := f.Features().ListR; (maxLevel < 0 || maxLevel > 1) && ListR != nil {
-		return walkRDirTree(f, path, includeAll, maxLevel, ListR)
+		return walkRDirTree(ctx, f, path, includeAll, maxLevel, ListR)
 	}
-	return walkNDirTree(f, path, includeAll, maxLevel, list.DirSorted)
+	return walkNDirTree(ctx, f, path, includeAll, maxLevel, list.DirSorted)
 }
 
-func walkR(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listR fs.ListRFn) error {
-	dirs, err := walkRDirTree(f, path, includeAll, maxLevel, listR)
+func walkR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listR fs.ListRFn) error {
+	dirs, err := walkRDirTree(ctx, f, path, includeAll, maxLevel, listR)
 	if err != nil {
 		return err
 	}
@@ -760,8 +761,8 @@ func walkR(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listR f
 }
 
 // GetAll runs ListR getting all the results
-func GetAll(f fs.Fs, path string, includeAll bool, maxLevel int) (objs []fs.Object, dirs []fs.Directory, err error) {
-	err = ListR(f, path, includeAll, maxLevel, ListAll, func(entries fs.DirEntries) error {
+func GetAll(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int) (objs []fs.Object, dirs []fs.Directory, err error) {
+	err = ListR(ctx, f, path, includeAll, maxLevel, ListAll, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
 			switch x := entry.(type) {
 			case fs.Object:

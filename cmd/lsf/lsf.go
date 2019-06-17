@@ -1,6 +1,7 @@
 package lsf
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -150,14 +151,14 @@ those only (without traversing the whole directory structure):
 			if csv && !separatorFlagSupplied {
 				separator = ","
 			}
-			return Lsf(fsrc, os.Stdout)
+			return Lsf(context.Background(), fsrc, os.Stdout)
 		})
 	},
 }
 
 // Lsf lists all the objects in the path with modification time, size
 // and path in specific format.
-func Lsf(fsrc fs.Fs, out io.Writer) error {
+func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 	var list operations.ListFormat
 	list.SetSeparator(separator)
 	list.SetCSV(csv)
@@ -199,7 +200,7 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 		}
 	}
 
-	return operations.ListJSON(fsrc, "", &opt, func(item *operations.ListJSONItem) error {
+	return operations.ListJSON(ctx, fsrc, "", &opt, func(item *operations.ListJSONItem) error {
 		_, _ = fmt.Fprintln(out, list.Format(item))
 		return nil
 	})

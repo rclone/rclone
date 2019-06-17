@@ -1,6 +1,7 @@
 package memtest
 
 import (
+	"context"
 	"runtime"
 	"sync"
 
@@ -22,7 +23,8 @@ var commandDefintion = &cobra.Command{
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			objects, _, err := operations.Count(fsrc)
+			ctx := context.Background()
+			objects, _, err := operations.Count(ctx, fsrc)
 			if err != nil {
 				return err
 			}
@@ -31,7 +33,7 @@ var commandDefintion = &cobra.Command{
 			runtime.GC()
 			runtime.ReadMemStats(&before)
 			var mu sync.Mutex
-			err = operations.ListFn(fsrc, func(o fs.Object) {
+			err = operations.ListFn(ctx, fsrc, func(o fs.Object) {
 				mu.Lock()
 				objs = append(objs, o)
 				mu.Unlock()

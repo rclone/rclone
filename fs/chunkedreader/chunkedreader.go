@@ -1,6 +1,7 @@
 package chunkedreader
 
 import (
+	"context"
 	"errors"
 	"io"
 	"sync"
@@ -19,6 +20,7 @@ var (
 //
 // A initialChunkSize of <= 0 will disable chunked reading.
 type ChunkedReader struct {
+	ctx              context.Context
 	mu               sync.Mutex    // protects following fields
 	o                fs.Object     // source to read from
 	rc               io.ReadCloser // reader for the current open chunk
@@ -37,7 +39,7 @@ type ChunkedReader struct {
 // If maxChunkSize is greater than initialChunkSize, the chunk size will be
 // doubled after each chunk read with a maximun of maxChunkSize.
 // A Seek or RangeSeek will reset the chunk size to it's initial value
-func New(o fs.Object, initialChunkSize int64, maxChunkSize int64) *ChunkedReader {
+func New(ctx context.Context, o fs.Object, initialChunkSize int64, maxChunkSize int64) *ChunkedReader {
 	if initialChunkSize <= 0 {
 		initialChunkSize = -1
 	}
@@ -45,6 +47,7 @@ func New(o fs.Object, initialChunkSize int64, maxChunkSize int64) *ChunkedReader
 		maxChunkSize = initialChunkSize
 	}
 	return &ChunkedReader{
+		ctx:              ctx,
 		o:                o,
 		offset:           -1,
 		chunkSize:        initialChunkSize,
@@ -129,14 +132,14 @@ func (cr *ChunkedReader) Close() error {
 
 // Seek the file - for details see io.Seeker
 func (cr *ChunkedReader) Seek(offset int64, whence int) (int64, error) {
-	return cr.RangeSeek(offset, whence, -1)
+	return cr.RangeSeek(context.TODO(), offset, whence, -1)
 }
 
 // RangeSeek the file - for details see RangeSeeker
 //
 // The specified length will only apply to the next chunk opened.
 // RangeSeek will not reopen the source until Read is called.
-func (cr *ChunkedReader) RangeSeek(offset int64, whence int, length int64) (int64, error) {
+func (cr *ChunkedReader) RangeSeek(ctx context.Context, offset int64, whence int, length int64) (int64, error) {
 	cr.mu.Lock()
 	defer cr.mu.Unlock()
 
@@ -196,7 +199,7 @@ func (cr *ChunkedReader) openRange() error {
 	}
 
 	if rs, ok := cr.rc.(fs.RangeSeeker); ok {
-		n, err := rs.RangeSeek(offset, io.SeekStart, length)
+		n, err := rs.RangeSeek(cr.ctx, offset, io.SeekStart, length)
 		if err == nil && n == offset {
 			cr.offset = offset
 			return nil
@@ -212,12 +215,12 @@ func (cr *ChunkedReader) openRange() error {
 	var err error
 	if length <= 0 {
 		if offset == 0 {
-			rc, err = cr.o.Open()
+			rc, err = cr.o.Open(cr.ctx)
 		} else {
-			rc, err = cr.o.Open(&fs.RangeOption{Start: offset, End: -1})
+			rc, err = cr.o.Open(cr.ctx, &fs.RangeOption{Start: offset, End: -1})
 		}
 	} else {
-		rc, err = cr.o.Open(&fs.RangeOption{Start: offset, End: offset + length - 1})
+		rc, err = cr.o.Open(cr.ctx, &fs.RangeOption{Start: offset, End: offset + length - 1})
 	}
 	if err != nil {
 		return err

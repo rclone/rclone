@@ -1,6 +1,7 @@
 package yandex
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -330,7 +331,7 @@ func (f *Fs) itemToDirEntry(remote string, object *api.ResourceInfoResponse) (fs
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	root := f.dirPath(dir)
 
 	var limit uint64 = 1000 // max number of objects per request
@@ -410,7 +411,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.ResourceInfoResponse) (f
 
 // NewObject finds the Object at remote.  If it can't be found it
 // returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -434,14 +435,14 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	o := f.createObject(src.Remote(), src.ModTime(), src.Size())
-	return o, o.Update(in, src, options...)
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	o := f.createObject(src.Remote(), src.ModTime(ctx), src.Size())
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // CreateDir makes a directory
@@ -518,7 +519,7 @@ func (f *Fs) mkParentDirs(resPath string) error {
 }
 
 // Mkdir creates the container if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	path := f.filePath(dir)
 	return f.mkDirs(path)
 }
@@ -621,7 +622,7 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.purgeCheck(dir, true)
 }
 
@@ -630,7 +631,7 @@ func (f *Fs) Rmdir(dir string) error {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	return f.purgeCheck("", false)
 }
 
@@ -681,7 +682,7 @@ func (f *Fs) copyOrMove(method, src, dst string, overwrite bool) (err error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
@@ -699,7 +700,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, errors.Wrap(err, "couldn't copy file")
 	}
 
-	return f.NewObject(remote)
+	return f.NewObject(ctx, remote)
 }
 
 // Move src to this remote using server side move operations.
@@ -711,7 +712,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
@@ -729,7 +730,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, errors.Wrap(err, "couldn't move file")
 	}
 
-	return f.NewObject(remote)
+	return f.NewObject(ctx, remote)
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -740,7 +741,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -783,7 +784,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
 	var path string
 	if f.opt.Unlink {
 		path = "/resources/unpublish"
@@ -830,7 +831,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 }
 
 // CleanUp permanently deletes all trashed files/folders
-func (f *Fs) CleanUp() (err error) {
+func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:     "DELETE",
@@ -846,7 +847,7 @@ func (f *Fs) CleanUp() (err error) {
 }
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/",
@@ -941,7 +942,7 @@ func (o *Object) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
@@ -961,7 +962,7 @@ func (o *Object) Size() int64 {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
@@ -998,7 +999,7 @@ func (o *Object) setCustomProperty(property string, value string) (err error) {
 // SetModTime sets the modification time of the local fs object
 //
 // Commits the datastore
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	// set custom_property 'rclone_modified' of object to modTime
 	err := o.setCustomProperty("rclone_modified", modTime.Format(time.RFC3339Nano))
 	if err != nil {
@@ -1009,7 +1010,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// prepare download
 	var resp *http.Response
 	var dl api.AsyncInfo
@@ -1090,9 +1091,9 @@ func (o *Object) upload(in io.Reader, overwrite bool, mimeType string) (err erro
 // Copy the reader into the object updating modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	in1 := readers.NewCountingReader(in)
-	modTime := src.ModTime()
+	modTime := src.ModTime(ctx)
 	remote := o.filePath()
 
 	//create full path to file before upload.
@@ -1102,7 +1103,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	//upload file
-	err = o.upload(in1, true, fs.MimeType(src))
+	err = o.upload(in1, true, fs.MimeType(ctx, src))
 	if err != nil {
 		return err
 	}
@@ -1112,18 +1113,18 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	o.md5sum = ""                   // according to unit tests after put the md5 is empty.
 	o.size = int64(in1.BytesRead()) // better solution o.readMetaData() ?
 	//and set modTime of uploaded file
-	err = o.SetModTime(modTime)
+	err = o.SetModTime(ctx, modTime)
 
 	return err
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	return o.fs.delete(o.filePath(), false)
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
+func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 
