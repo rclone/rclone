@@ -40,7 +40,7 @@ type Marcher interface {
 	// DstOnly is called for a DirEntry found only in the destination
 	DstOnly(dst fs.DirEntry) (recurse bool)
 	// Match is called for a DirEntry found both in the source and destination
-	Match(dst, src fs.DirEntry) (recurse bool)
+	Match(ctx context.Context, dst, src fs.DirEntry) (recurse bool)
 }
 
 // init sets up a march over opt.Fsrc, and opt.Fdst calling back callback for each match
@@ -70,7 +70,7 @@ type listDirFn func(dir string) (entries fs.DirEntries, err error)
 func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
 	if (!fs.Config.UseListR || f.Features().ListR == nil) && !filter.Active.HaveFilesFrom() {
 		return func(dir string) (entries fs.DirEntries, err error) {
-			return list.DirSorted(f, includeAll, dir)
+			return list.DirSorted(m.Ctx, f, includeAll, dir)
 		}
 	}
 	var (
@@ -83,7 +83,7 @@ func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
 		mu.Lock()
 		defer mu.Unlock()
 		if !started {
-			dirs, dirsErr = walk.NewDirTree(f, m.Dir, includeAll, fs.Config.MaxDepth)
+			dirs, dirsErr = walk.NewDirTree(m.Ctx, f, m.Dir, includeAll, fs.Config.MaxDepth)
 			started = true
 		}
 		if dirsErr != nil {
@@ -383,7 +383,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 		for _, src := range srcList {
 			if srcObj, ok := src.(fs.Object); ok {
 				leaf := path.Base(srcObj.Remote())
-				dstObj, err := m.Fdst.NewObject(path.Join(job.dstRemote, leaf))
+				dstObj, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
 				if err == nil {
 					dstList = append(dstList, dstObj)
 				}
@@ -424,7 +424,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 		if m.aborting() {
 			return nil
 		}
-		recurse := m.Callback.Match(match.dst, match.src)
+		recurse := m.Callback.Match(m.Ctx, match.dst, match.src)
 		if recurse && job.srcDepth > 0 && job.dstDepth > 0 {
 			jobs = append(jobs, listDirJob{
 				srcRemote: match.src.Remote(),

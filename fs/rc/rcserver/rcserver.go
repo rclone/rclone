@@ -187,7 +187,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	if isAsync {
 		out, err = rc.StartJob(call.Fn, in)
 	} else {
-		out, err = call.Fn(in)
+		out, err = call.Fn(r.Context(), in)
 	}
 	if err != nil {
 		writeError(path, in, w, err, http.StatusInternalServerError)
@@ -230,7 +230,7 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 	}
 	if path == "" || strings.HasSuffix(path, "/") {
 		path = strings.Trim(path, "/")
-		entries, err := list.DirSorted(f, false, path)
+		entries, err := list.DirSorted(r.Context(), f, false, path)
 		if err != nil {
 			writeError(path, nil, w, errors.Wrap(err, "failed to list directory"), http.StatusInternalServerError)
 			return
@@ -244,7 +244,7 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		directory.Serve(w, r)
 	} else {
 		path = strings.Trim(path, "/")
-		o, err := f.NewObject(path)
+		o, err := f.NewObject(r.Context(), path)
 		if err != nil {
 			writeError(path, nil, w, errors.Wrap(err, "failed to find object"), http.StatusInternalServerError)
 			return

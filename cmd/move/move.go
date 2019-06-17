@@ -1,6 +1,8 @@
 package move
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/sync"
@@ -54,9 +56,9 @@ can speed transfers up greatly.
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.MoveDir(fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
+				return sync.MoveDir(context.Background(), fdst, fsrc, deleteEmptySrcDirs, createEmptySrcDirs)
 			}
-			return operations.MoveFile(fdst, fsrc, srcFileName, srcFileName)
+			return operations.MoveFile(context.Background(), fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }

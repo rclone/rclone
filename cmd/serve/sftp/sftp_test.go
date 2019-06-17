@@ -8,6 +8,7 @@
 package sftp
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"strings"
@@ -43,7 +44,7 @@ func TestSftp(t *testing.T) {
 	assert.NoError(t, err)
 	defer clean()
 
-	err = fremote.Mkdir("")
+	err = fremote.Mkdir(context.Background(), "")
 	assert.NoError(t, err)
 
 	opt := DefaultOpt

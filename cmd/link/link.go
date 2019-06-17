@@ -1,6 +1,7 @@
 package link
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ncw/rclone/cmd"
@@ -30,7 +31,7 @@ without account.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc, remote := cmd.NewFsFile(args[0])
 		cmd.Run(false, false, command, func() error {
-			link, err := operations.PublicLink(fsrc, remote)
+			link, err := operations.PublicLink(context.Background(), fsrc, remote)
 			if err != nil {
 				return err
 			}

@@ -7,6 +7,7 @@ package b2
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"fmt"
 	gohash "hash"
@@ -324,6 +325,7 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 
 // NewFs constructs an Fs from the path, bucket:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.Background()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -398,7 +400,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		} else {
 			f.root += "/"
 		}
-		_, err := f.NewObject(remote)
+		_, err := f.NewObject(ctx, remote)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
 				// File doesn't exist so return old f
@@ -516,7 +518,7 @@ func (f *Fs) putUploadBlock(buf []byte) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *api.File) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.File) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -527,7 +529,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.File) (fs.Object, error)
 			return nil, err
 		}
 	} else {
-		err := o.readMetaData() // reads info and headers, returning an error
+		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err != nil {
 			return nil, err
 		}
@@ -537,8 +539,8 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.File) (fs.Object, error)
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(remote, nil)
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
 // listFn is called from list to handle an object
@@ -562,7 +564,7 @@ var errEndList = errors.New("end list")
 // than 1000)
 //
 // If hidden is set then it will list the hidden (deleted) files too.
-func (f *Fs) list(dir string, recurse bool, prefix string, limit int, hidden bool, fn listFn) error {
+func (f *Fs) list(ctx context.Context, dir string, recurse bool, prefix string, limit int, hidden bool, fn listFn) error {
 	root := f.root
 	if dir != "" {
 		root += dir + "/"
@@ -643,7 +645,7 @@ func (f *Fs) list(dir string, recurse bool, prefix string, limit int, hidden boo
 }
 
 // Convert a list item into a DirEntry
-func (f *Fs) itemToDirEntry(remote string, object *api.File, isDirectory bool, last *string) (fs.DirEntry, error) {
+func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *api.File, isDirectory bool, last *string) (fs.DirEntry, error) {
 	if isDirectory {
 		d := fs.NewDir(remote, time.Time{})
 		return d, nil
@@ -657,7 +659,7 @@ func (f *Fs) itemToDirEntry(remote string, object *api.File, isDirectory bool, l
 	if object.Action == "hide" {
 		return nil, nil
 	}
-	o, err := f.newObjectWithInfo(remote, object)
+	o, err := f.newObjectWithInfo(ctx, remote, object)
 	if err != nil {
 		return nil, err
 	}
@@ -674,10 +676,10 @@ func (f *Fs) markBucketOK() {
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	last := ""
-	err = f.list(dir, false, "", 0, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
-		entry, err := f.itemToDirEntry(remote, object, isDirectory, &last)
+	err = f.list(ctx, dir, false, "", 0, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
+		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory, &last)
 		if err != nil {
 			return err
 		}
@@ -719,11 +721,11 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	if f.bucket == "" {
 		return f.listBuckets(dir)
 	}
-	return f.listDir(dir)
+	return f.listDir(ctx, dir)
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -742,14 +744,14 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	if f.bucket == "" {
 		return fs.ErrorListBucketRequired
 	}
 	list := walk.NewListRHelper(callback)
 	last := ""
-	err = f.list(dir, true, "", 0, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
-		entry, err := f.itemToDirEntry(remote, object, isDirectory, &last)
+	err = f.list(ctx, dir, true, "", 0, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
+		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory, &last)
 		if err != nil {
 			return err
 		}
@@ -834,22 +836,22 @@ func (f *Fs) clearBucketID() {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction
 	fs := &Object{
 		fs:     f,
 		remote: src.Remote(),
 	}
-	return fs, fs.Update(in, src, options...)
+	return fs, fs.Update(ctx, in, src, options...)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // Mkdir creates the bucket if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	f.bucketOKMu.Lock()
 	defer f.bucketOKMu.Unlock()
 	if f.bucketOK {
@@ -895,7 +897,7 @@ func (f *Fs) Mkdir(dir string) error {
 // Rmdir deletes the bucket if the fs is at the root
 //
 // Returns an error if it isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	f.bucketOKMu.Lock()
 	defer f.bucketOKMu.Unlock()
 	if f.root != "" || dir != "" {
@@ -990,7 +992,7 @@ func (f *Fs) deleteByID(ID, Name string) error {
 // if oldOnly is true then it deletes only non current files.
 //
 // Implemented here so we can make sure we delete old versions.
-func (f *Fs) purge(oldOnly bool) error {
+func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 	var errReturn error
 	var checkErrMutex sync.Mutex
 	var checkErr = func(err error) {
@@ -1025,7 +1027,7 @@ func (f *Fs) purge(oldOnly bool) error {
 		}()
 	}
 	last := ""
-	checkErr(f.list("", true, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
+	checkErr(f.list(ctx, "", true, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
 			accounting.Stats.Checking(remote)
 			if oldOnly && last != remote {
@@ -1051,19 +1053,19 @@ func (f *Fs) purge(oldOnly bool) error {
 	wg.Wait()
 
 	if !oldOnly {
-		checkErr(f.Rmdir(""))
+		checkErr(f.Rmdir(ctx, ""))
 	}
 	return errReturn
 }
 
 // Purge deletes all the files and directories including the old versions.
-func (f *Fs) Purge() error {
-	return f.purge(false)
+func (f *Fs) Purge(ctx context.Context) error {
+	return f.purge(ctx, false)
 }
 
 // CleanUp deletes all the hidden files.
-func (f *Fs) CleanUp() error {
-	return f.purge(true)
+func (f *Fs) CleanUp(ctx context.Context) error {
+	return f.purge(ctx, true)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -1075,8 +1077,8 @@ func (f *Fs) CleanUp() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	err := f.Mkdir("")
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	err := f.Mkdir(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -1144,13 +1146,13 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Sha-1 of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.SHA1 {
 		return "", hash.ErrUnsupported
 	}
 	if o.sha1 == "" {
 		// Error is logged in readMetaData
-		err := o.readMetaData()
+		err := o.readMetaData(ctx)
 		if err != nil {
 			return "", err
 		}
@@ -1207,7 +1209,10 @@ func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
 }
 
 // getMetaData gets the metadata from the object unconditionally
-func (o *Object) getMetaData() (info *api.File, err error) {
+func (o *Object) getMetaData(ctx context.Context) (info *api.File, err error) {
+	if o.id != "" {
+		return nil, nil
+	}
 	maxSearched := 1
 	var timestamp api.Timestamp
 	baseRemote := o.remote
@@ -1215,7 +1220,8 @@ func (o *Object) getMetaData() (info *api.File, err error) {
 		timestamp, baseRemote = api.RemoveVersion(baseRemote)
 		maxSearched = maxVersions
 	}
-	err = o.fs.list("", true, baseRemote, maxSearched, o.fs.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
+
+	err = o.fs.list(ctx, "", true, baseRemote, maxSearched, o.fs.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
@@ -1246,11 +1252,11 @@ func (o *Object) getMetaData() (info *api.File, err error) {
 //  o.modTime
 //  o.size
 //  o.sha1
-func (o *Object) readMetaData() (err error) {
+func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.id != "" {
 		return nil
 	}
-	info, err := o.getMetaData()
+	info, err := o.getMetaData(ctx)
 	if err != nil {
 		return err
 	}
@@ -1285,15 +1291,15 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 // LastModified returned in the http headers
 //
 // SHA-1 will also be updated once the request has completed.
-func (o *Object) ModTime() (result time.Time) {
+func (o *Object) ModTime(ctx context.Context) (result time.Time) {
 	// The error is logged in readMetaData
-	_ = o.readMetaData()
+	_ = o.readMetaData(ctx)
 	return o.modTime
 }
 
 // SetModTime sets the modification time of the Object
-func (o *Object) SetModTime(modTime time.Time) error {
-	info, err := o.getMetaData()
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	info, err := o.getMetaData(ctx)
 	if err != nil {
 		return err
 	}
@@ -1386,7 +1392,7 @@ func (file *openFile) Close() (err error) {
 var _ io.ReadCloser = &openFile{}
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	opts := rest.Opts{
 		Method:  "GET",
 		Options: options,
@@ -1477,11 +1483,11 @@ func urlEncode(in string) string {
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	if o.fs.opt.Versions {
 		return errNotWithVersions
 	}
-	err = o.fs.Mkdir("")
+	err = o.fs.Mkdir(ctx, "")
 	if err != nil {
 		return err
 	}
@@ -1499,7 +1505,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 		if err == nil {
 			fs.Debugf(o, "File is big enough for chunked streaming")
-			up, err := o.fs.newLargeUpload(o, in, src)
+			up, err := o.fs.newLargeUpload(ctx, o, in, src)
 			if err != nil {
 				o.fs.putUploadBlock(buf)
 				return err
@@ -1514,16 +1520,16 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 			return err
 		}
 	} else if size > int64(o.fs.opt.UploadCutoff) {
-		up, err := o.fs.newLargeUpload(o, in, src)
+		up, err := o.fs.newLargeUpload(ctx, o, in, src)
 		if err != nil {
 			return err
 		}
 		return up.Upload()
 	}
 
-	modTime := src.ModTime()
+	modTime := src.ModTime(ctx)
 
-	calculatedSha1, _ := src.Hash(hash.SHA1)
+	calculatedSha1, _ := src.Hash(ctx, hash.SHA1)
 	if calculatedSha1 == "" {
 		calculatedSha1 = "hex_digits_at_end"
 		har := newHashAppendingReader(in, sha1.New())
@@ -1601,7 +1607,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		ExtraHeaders: map[string]string{
 			"Authorization":  upload.AuthorizationToken,
 			"X-Bz-File-Name": urlEncode(o.fs.root + o.remote),
-			"Content-Type":   fs.MimeType(src),
+			"Content-Type":   fs.MimeType(ctx, src),
 			sha1Header:       calculatedSha1,
 			timeHeader:       timeString(modTime),
 		},
@@ -1626,7 +1632,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	if o.fs.opt.Versions {
 		return errNotWithVersions
 	}
@@ -1637,7 +1643,7 @@ func (o *Object) Remove() error {
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
+func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 

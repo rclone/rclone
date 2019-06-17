@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -50,20 +51,20 @@ func TestMultithreadCopy(t *testing.T) {
 		t.Run(fmt.Sprintf("%+v", test), func(t *testing.T) {
 			contents := fstest.RandomString(test.size)
 			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
-			file1 := r.WriteObject("file1", contents, t1)
+			file1 := r.WriteObject(context.Background(), "file1", contents, t1)
 			fstest.CheckItems(t, r.Fremote, file1)
 			fstest.CheckItems(t, r.Flocal)
 
-			src, err := r.Fremote.NewObject("file1")
+			src, err := r.Fremote.NewObject(context.Background(), "file1")
 			require.NoError(t, err)
 
-			dst, err := multiThreadCopy(r.Flocal, "file1", src, 2)
+			dst, err := multiThreadCopy(context.Background(), r.Flocal, "file1", src, 2)
 			require.NoError(t, err)
 			assert.Equal(t, src.Size(), dst.Size())
 			assert.Equal(t, "file1", dst.Remote())
 
 			fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
-			require.NoError(t, dst.Remove())
+			require.NoError(t, dst.Remove(context.Background()))
 		})
 	}
 

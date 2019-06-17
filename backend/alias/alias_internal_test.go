@@ -1,6 +1,7 @@
 package alias
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -69,7 +70,7 @@ func TestNewFS(t *testing.T) {
 		prepare(t, remoteRoot)
 		f, err := fs.NewFs(fmt.Sprintf("%s:%s", remoteName, test.fsRoot))
 		require.NoError(t, err, what)
-		gotEntries, err := f.List(test.fsList)
+		gotEntries, err := f.List(context.Background(), test.fsList)
 		require.NoError(t, err, what)
 
 		sort.Sort(gotEntries)

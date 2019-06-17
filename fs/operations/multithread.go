@@ -28,7 +28,7 @@ type multiThreadCopyState struct {
 }
 
 // Copy a single stream into place
-func (mc *multiThreadCopyState) copyStream(stream int) (err error) {
+func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err error) {
 	defer func() {
 		if err != nil {
 			fs.Debugf(mc.src, "multi-thread copy: stream %d/%d failed: %v", stream+1, mc.streams, err)
@@ -45,7 +45,7 @@ func (mc *multiThreadCopyState) copyStream(stream int) (err error) {
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v starting", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
 
-	rc, err := newReOpen(mc.src, nil, &fs.RangeOption{Start: start, End: end - 1}, fs.Config.LowLevelRetries)
+	rc, err := newReOpen(ctx, mc.src, nil, &fs.RangeOption{Start: start, End: end - 1}, fs.Config.LowLevelRetries)
 	if err != nil {
 		return errors.Wrap(err, "multpart copy: failed to open source")
 	}
@@ -110,7 +110,7 @@ func (mc *multiThreadCopyState) calculateChunks() {
 }
 
 // Copy src to (f, remote) using streams download threads and the OpenWriterAt feature
-func multiThreadCopy(f fs.Fs, remote string, src fs.Object, streams int) (newDst fs.Object, err error) {
+func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, streams int) (newDst fs.Object, err error) {
 	openWriterAt := f.Features().OpenWriterAt
 	if openWriterAt == nil {
 		return nil, errors.New("multi-thread copy: OpenWriterAt not supported")
@@ -136,7 +136,7 @@ func multiThreadCopy(f fs.Fs, remote string, src fs.Object, streams int) (newDst
 	defer fs.CheckClose(mc.acc, &err)
 
 	// create write file handle
-	mc.wc, err = openWriterAt(remote, mc.size)
+	mc.wc, err = openWriterAt(ctx, remote, mc.size)
 	if err != nil {
 		return nil, errors.Wrap(err, "multpart copy: failed to open destination")
 	}
@@ -146,7 +146,7 @@ func multiThreadCopy(f fs.Fs, remote string, src fs.Object, streams int) (newDst
 	for stream := 0; stream < mc.streams; stream++ {
 		stream := stream
 		g.Go(func() (err error) {
-			return mc.copyStream(stream)
+			return mc.copyStream(ctx, stream)
 		})
 	}
 	err = g.Wait()
@@ -154,12 +154,12 @@ func multiThreadCopy(f fs.Fs, remote string, src fs.Object, streams int) (newDst
 		return nil, err
 	}
 
-	obj, err := f.NewObject(remote)
+	obj, err := f.NewObject(ctx, remote)
 	if err != nil {
 		return nil, errors.Wrap(err, "multi-thread copy: failed to find object after copy")
 	}
 
-	err = obj.SetModTime(src.ModTime())
+	err = obj.SetModTime(ctx, src.ModTime(ctx))
 	switch err {
 	case nil, fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
 	default:

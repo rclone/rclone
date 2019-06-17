@@ -1,6 +1,7 @@
 package rc
 
 import (
+	"context"
 	"runtime"
 	"testing"
 	"time"
@@ -35,7 +36,7 @@ func TestJobsExpire(t *testing.T) {
 	jobs := newJobs()
 	jobs.expireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
-	job := jobs.NewJob(func(in Params) (Params, error) {
+	job := jobs.NewJob(func(ctx context.Context, in Params) (Params, error) {
 		defer close(wait)
 		return in, nil
 	}, Params{})
@@ -56,7 +57,7 @@ func TestJobsExpire(t *testing.T) {
 	jobs.mu.Unlock()
 }
 
-var noopFn = func(in Params) (Params, error) {
+var noopFn = func(ctx context.Context, in Params) (Params, error) {
 	return nil, nil
 }
 
@@ -80,7 +81,8 @@ func TestJobsGet(t *testing.T) {
 	assert.Nil(t, jobs.Get(123123123123))
 }
 
-var longFn = func(in Params) (Params, error) {
+var longFn = func(ctx context.Context, in Params) (Params, error) {
+	// TODO get execution time from context?
 	time.Sleep(1 * time.Hour)
 	return nil, nil
 }
@@ -144,7 +146,7 @@ func TestJobFinish(t *testing.T) {
 // part of NewJob, now just test the panic catching
 func TestJobRunPanic(t *testing.T) {
 	wait := make(chan struct{})
-	boom := func(in Params) (Params, error) {
+	boom := func(ctx context.Context, in Params) (Params, error) {
 		sleepJob()
 		defer close(wait)
 		panic("boom")
@@ -200,7 +202,7 @@ func TestRcJobStatus(t *testing.T) {
 	call := Calls.Get("job/status")
 	assert.NotNil(t, call)
 	in := Params{"jobid": 1}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, float64(1), out["id"])
@@ -209,12 +211,12 @@ func TestRcJobStatus(t *testing.T) {
 	assert.Equal(t, false, out["success"])
 
 	in = Params{"jobid": 123123123}
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "job not found")
 
 	in = Params{"jobidx": 123123123}
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Didn't find key")
 }
@@ -227,7 +229,7 @@ func TestRcJobList(t *testing.T) {
 	call := Calls.Get("job/list")
 	assert.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"jobids": []int64{1}}, out)

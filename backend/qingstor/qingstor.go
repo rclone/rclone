@@ -6,6 +6,7 @@
 package qingstor
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -407,12 +408,12 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Put created a new object
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	fsObj := &Object{
 		fs:     f,
 		remote: src.Remote(),
 	}
-	return fsObj, fsObj.Update(in, src, options...)
+	return fsObj, fsObj.Update(ctx, in, src, options...)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -424,8 +425,8 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	err := f.Mkdir("")
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	err := f.Mkdir(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -452,12 +453,12 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Debugf(f, "Copy Failed, API Error: %v", err)
 		return nil, err
 	}
-	return f.NewObject(remote)
+	return f.NewObject(ctx, remote)
 }
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -510,7 +511,7 @@ type listFn func(remote string, object *qs.KeyType, isDirectory bool) error
 // dir is the starting directory, "" for root
 //
 // Set recurse to read sub directories
-func (f *Fs) list(dir string, recurse bool, fn listFn) error {
+func (f *Fs) list(ctx context.Context, dir string, recurse bool, fn listFn) error {
 	prefix := f.root
 	if dir != "" {
 		prefix += dir + "/"
@@ -620,9 +621,9 @@ func (f *Fs) markBucketOK() {
 }
 
 // listDir lists files and directories to out
-func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	// List the objects and directories
-	err = f.list(dir, false, func(remote string, object *qs.KeyType, isDirectory bool) error {
+	err = f.list(ctx, dir, false, func(remote string, object *qs.KeyType, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -670,11 +671,11 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	if f.bucket == "" {
 		return f.listBuckets(dir)
 	}
-	return f.listDir(dir)
+	return f.listDir(ctx, dir)
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -693,12 +694,12 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	if f.bucket == "" {
 		return fs.ErrorListBucketRequired
 	}
 	list := walk.NewListRHelper(callback)
-	err = f.list(dir, true, func(remote string, object *qs.KeyType, isDirectory bool) error {
+	err = f.list(ctx, dir, true, func(remote string, object *qs.KeyType, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -734,7 +735,7 @@ func (f *Fs) dirExists() (bool, error) {
 }
 
 // Mkdir creates the bucket if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	f.bucketOKMu.Lock()
 	defer f.bucketOKMu.Unlock()
 	if f.bucketOK {
@@ -810,7 +811,7 @@ func (f *Fs) dirIsEmpty() (bool, error) {
 }
 
 // Rmdir delete a bucket
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	f.bucketOKMu.Lock()
 	defer f.bucketOKMu.Unlock()
 	if f.root != "" || dir != "" {
@@ -913,7 +914,7 @@ func (o *Object) readMetaData() (err error) {
 
 // ModTime returns the modification date of the file
 // It should return a best guess if one isn't available
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata, %v", err)
@@ -924,13 +925,13 @@ func (o *Object) ModTime() time.Time {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	err := o.readMetaData()
 	if err != nil {
 		return err
 	}
 	o.lastModified = modTime
-	mimeType := fs.MimeType(o)
+	mimeType := fs.MimeType(ctx, o)
 
 	if o.size >= maxSizeForCopy {
 		fs.Debugf(o, "SetModTime is unsupported for objects bigger than %v bytes", fs.SizeSuffix(maxSizeForCopy))
@@ -955,7 +956,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
-func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	bucketInit, err := o.fs.svc.Bucket(o.fs.bucket, o.fs.zone)
 	if err != nil {
 		return nil, err
@@ -982,16 +983,16 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 }
 
 // Update in to the object
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	// The maximum size of upload object is multipartUploadSize * MaxMultipleParts
-	err := o.fs.Mkdir("")
+	err := o.fs.Mkdir(ctx, "")
 	if err != nil {
 		return err
 	}
 
 	key := o.fs.root + o.remote
 	// Guess the content type
-	mimeType := fs.MimeType(src)
+	mimeType := fs.MimeType(ctx, src)
 
 	req := uploadInput{
 		body:        in,
@@ -1021,7 +1022,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove this object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	bucketInit, err := o.fs.svc.Bucket(o.fs.bucket, o.fs.zone)
 	if err != nil {
 		return err
@@ -1041,7 +1042,7 @@ var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
@@ -1078,7 +1079,7 @@ func (o *Object) Size() int64 {
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
+func (o *Object) MimeType(ctx context.Context) string {
 	err := o.readMetaData()
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)

@@ -5,6 +5,8 @@
 package rc
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 )
 
@@ -36,7 +38,7 @@ func init() {
 }
 
 // Show the list of all the option blocks
-func rcOptionsBlocks(in Params) (out Params, err error) {
+func rcOptionsBlocks(ctx context.Context, in Params) (out Params, err error) {
 	options := []string{}
 	for name := range optionBlock {
 		options = append(options, name)
@@ -61,7 +63,7 @@ map to the external options very easily with a few exceptions.
 }
 
 // Show the list of all the option blocks
-func rcOptionsGet(in Params) (out Params, err error) {
+func rcOptionsGet(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	for name, options := range optionBlock {
 		out[name] = options
@@ -103,7 +105,7 @@ And this sets NOTICE level logs (normal without -v)
 }
 
 // Set an option in an option block
-func rcOptionsSet(in Params) (out Params, err error) {
+func rcOptionsSet(ctx context.Context, in Params) (out Params, err error) {
 	for name, options := range in {
 		current := optionBlock[name]
 		if current == nil {

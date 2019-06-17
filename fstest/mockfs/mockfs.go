@@ -1,6 +1,7 @@
 package mockfs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -69,13 +70,13 @@ func (f *Fs) Features() *fs.Features {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	return nil, nil
 }
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return nil, fs.ErrorObjectNotFound
 }
 
@@ -84,21 +85,21 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return nil, ErrNotImplemented
 }
 
 // Mkdir makes the directory (container, bucket)
 //
 // Shouldn't return an error if it already exists
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return ErrNotImplemented
 }
 
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return ErrNotImplemented
 }
 

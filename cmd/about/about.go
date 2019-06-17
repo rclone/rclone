@@ -1,6 +1,7 @@
 package about
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -91,7 +92,7 @@ Use the --json flag for a computer readable output, eg
 			if doAbout == nil {
 				return errors.Errorf("%v doesn't support about", f)
 			}
-			u, err := doAbout()
+			u, err := doAbout(context.Background())
 			if err != nil {
 				return errors.Wrap(err, "About call failed")
 			}

@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"os"
 	"path"
 	"sync"
@@ -19,17 +20,17 @@ type File struct {
 	size  int64  // size of file - read and written with atomic int64 - must be 64 bit aligned
 	d     *Dir   // parent directory - read only
 
-	mu                sync.Mutex   // protects the following
-	o                 fs.Object    // NB o may be nil if file is being written
-	leaf              string       // leaf name of the object
-	rwOpenCount       int          // number of open files on this handle
-	writers           []Handle     // writers for this file
-	nwriters          int32        // len(writers) which is read/updated with atomic
-	readWriters       int          // how many RWFileHandle are open for writing
-	readWriterClosing bool         // is a RWFileHandle currently cosing?
-	modified          bool         // has the cache file be modified by a RWFileHandle?
-	pendingModTime    time.Time    // will be applied once o becomes available, i.e. after file was written
-	pendingRenameFun  func() error // will be run/renamed after all writers close
+	mu                sync.Mutex                      // protects the following
+	o                 fs.Object                       // NB o may be nil if file is being written
+	leaf              string                          // leaf name of the object
+	rwOpenCount       int                             // number of open files on this handle
+	writers           []Handle                        // writers for this file
+	nwriters          int32                           // len(writers) which is read/updated with atomic
+	readWriters       int                             // how many RWFileHandle are open for writing
+	readWriterClosing bool                            // is a RWFileHandle currently cosing?
+	modified          bool                            // has the cache file be modified by a RWFileHandle?
+	pendingModTime    time.Time                       // will be applied once o becomes available, i.e. after file was written
+	pendingRenameFun  func(ctx context.Context) error // will be run/renamed after all writers close
 
 	muRW sync.Mutex // synchonize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
 }
@@ -100,7 +101,7 @@ func (f *File) applyPendingRename() {
 		return
 	}
 	fs.Debugf(f.o, "Running delayed rename now")
-	if err := fun(); err != nil {
+	if err := fun(context.TODO()); err != nil {
 		fs.Errorf(f.Path(), "delayed File.Rename error: %v", err)
 	}
 }
@@ -108,17 +109,17 @@ func (f *File) applyPendingRename() {
 // rename attempts to immediately rename a file if there are no open writers.
 // Otherwise it will queue the rename operation on the remote until no writers
 // remain.
-func (f *File) rename(destDir *Dir, newName string) error {
+func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	if features := f.d.f.Features(); features.Move == nil && features.Copy == nil {
 		err := errors.Errorf("Fs %q can't rename files (no server side Move or Copy)", f.d.f)
 		fs.Errorf(f.Path(), "Dir.Rename error: %v", err)
 		return err
 	}
 
-	renameCall := func() error {
+	renameCall := func(ctx context.Context) error {
 		newPath := path.Join(destDir.path, newName)
-		dstOverwritten, _ := f.d.f.NewObject(newPath)
-		newObject, err := operations.Move(f.d.f, dstOverwritten, newPath, f.o)
+		dstOverwritten, _ := f.d.f.NewObject(ctx, newPath)
+		newObject, err := operations.Move(ctx, f.d.f, dstOverwritten, newPath, f.o)
 		if err != nil {
 			fs.Errorf(f.Path(), "File.Rename error: %v", err)
 			return err
@@ -151,7 +152,7 @@ func (f *File) rename(destDir *Dir, newName string) error {
 		return nil
 	}
 
-	return renameCall()
+	return renameCall(ctx)
 }
 
 // addWriter adds a write handle to the file
@@ -252,7 +253,7 @@ func (f *File) ModTime() (modTime time.Time) {
 				return f.pendingModTime
 			}
 		} else {
-			return f.o.ModTime()
+			return f.o.ModTime(context.TODO())
 		}
 	}
 
@@ -310,7 +311,7 @@ func (f *File) applyPendingModTime() error {
 		return errors.New("Cannot apply ModTime, file object is not available")
 	}
 
-	err := f.o.SetModTime(f.pendingModTime)
+	err := f.o.SetModTime(context.TODO(), f.pendingModTime)
 	switch err {
 	case nil:
 		fs.Debugf(f.o, "File.applyPendingModTime OK")
@@ -453,7 +454,7 @@ func (f *File) Remove() error {
 	f.muRW.Lock() // muRW must be locked before mu to avoid
 	f.mu.Lock()   // deadlock in RWFileHandle.openPending and .close
 	if f.o != nil {
-		err := f.o.Remove()
+		err := f.o.Remove(context.TODO())
 		if err != nil {
 			fs.Errorf(f, "File.Remove file error: %v", err)
 			f.mu.Unlock()

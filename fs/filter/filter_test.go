@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -159,7 +160,7 @@ type includeDirTest struct {
 
 func testDirInclude(t *testing.T, f *Filter, tests []includeDirTest) {
 	for _, test := range tests {
-		got, err := f.IncludeDirectory(nil)(test.in)
+		got, err := f.IncludeDirectory(context.Background(), nil)(test.in)
 		require.NoError(t, err)
 		assert.Equal(t, test.want, got, test.in)
 	}
@@ -235,8 +236,8 @@ func TestNewFilterMakeListR(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check error if no files
-	listR := f.MakeListR(nil)
-	err = listR("", nil)
+	listR := f.MakeListR(context.Background(), nil)
+	err = listR(context.Background(), "", nil)
 	assert.EqualError(t, err, errFilesFromNotSet.Error())
 
 	// Add some files
@@ -256,7 +257,7 @@ func TestNewFilterMakeListR(t *testing.T) {
 	// NewObject function for MakeListR
 	newObjects := FilesMap{}
 	var newObjectMu sync.Mutex
-	NewObject := func(remote string) (fs.Object, error) {
+	NewObject := func(ctx context.Context, remote string) (fs.Object, error) {
 		newObjectMu.Lock()
 		defer newObjectMu.Unlock()
 		if remote == "notfound" {
@@ -282,8 +283,8 @@ func TestNewFilterMakeListR(t *testing.T) {
 	}
 
 	// Make the listR and call it
-	listR = f.MakeListR(NewObject)
-	err = listR("", listRcallback)
+	listR = f.MakeListR(context.Background(), NewObject)
+	err = listR(context.Background(), "", listRcallback)
 	require.NoError(t, err)
 
 	// Check that the correct objects were created and listed
@@ -298,7 +299,7 @@ func TestNewFilterMakeListR(t *testing.T) {
 
 	// Now check an error is returned from NewObject
 	require.NoError(t, f.AddFile("error"))
-	err = listR("", listRcallback)
+	err = listR(context.Background(), "", listRcallback)
 	require.EqualError(t, err, assert.AnError.Error())
 }
 

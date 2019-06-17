@@ -1,6 +1,8 @@
 package purge
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -22,7 +24,7 @@ you want to selectively delete files.
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)
 		cmd.Run(true, false, command, func() error {
-			return operations.Purge(fdst, "")
+			return operations.Purge(context.Background(), fdst, "")
 		})
 	},
 }

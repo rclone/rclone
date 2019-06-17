@@ -1,6 +1,7 @@
 package rc
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -47,7 +48,7 @@ func TestOptionsBlocks(t *testing.T) {
 	call := Calls.Get("options/blocks")
 	require.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"options": []string{"potato"}}, out)
@@ -59,7 +60,7 @@ func TestOptionsGet(t *testing.T) {
 	call := Calls.Get("options/get")
 	require.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"potato": &testOptions}, out)
@@ -83,7 +84,7 @@ func TestOptionsSet(t *testing.T) {
 			"Int": 50,
 		},
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Nil(t, out)
 	assert.Equal(t, 50, testOptions.Int)
@@ -91,7 +92,7 @@ func TestOptionsSet(t *testing.T) {
 	assert.Equal(t, 1, reloaded)
 
 	// error from reload
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "error while reloading")
 
@@ -101,7 +102,7 @@ func TestOptionsSet(t *testing.T) {
 			"Int": 50,
 		},
 	}
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown option block")
 
@@ -109,7 +110,7 @@ func TestOptionsSet(t *testing.T) {
 	in = Params{
 		"potato": []string{"a", "b"},
 	}
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to write options")
 

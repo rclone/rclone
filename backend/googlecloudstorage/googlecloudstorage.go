@@ -473,7 +473,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *storage.Object) (fs.Object, 
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -485,7 +485,7 @@ type listFn func(remote string, object *storage.Object, isDirectory bool) error
 // dir is the starting directory, "" for root
 //
 // Set recurse to read sub directories
-func (f *Fs) list(dir string, recurse bool, fn listFn) (err error) {
+func (f *Fs) list(ctx context.Context, dir string, recurse bool, fn listFn) (err error) {
 	root := f.root
 	rootLength := len(root)
 	if dir != "" {
@@ -574,9 +574,9 @@ func (f *Fs) markBucketOK() {
 }
 
 // listDir lists a single directory
-func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	// List the objects
-	err = f.list(dir, false, func(remote string, object *storage.Object, isDirectory bool) error {
+	err = f.list(ctx, dir, false, func(remote string, object *storage.Object, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -633,11 +633,11 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	if f.bucket == "" {
 		return f.listBuckets(dir)
 	}
-	return f.listDir(dir)
+	return f.listDir(ctx, dir)
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -656,12 +656,12 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	if f.bucket == "" {
 		return fs.ErrorListBucketRequired
 	}
 	list := walk.NewListRHelper(callback)
-	err = f.list(dir, true, func(remote string, object *storage.Object, isDirectory bool) error {
+	err = f.list(ctx, dir, true, func(remote string, object *storage.Object, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -681,22 +681,22 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 // Copy the reader in to the new object which is returned
 //
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction
 	o := &Object{
 		fs:     f,
 		remote: src.Remote(),
 	}
-	return o, o.Update(in, src, options...)
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // Mkdir creates the bucket if it doesn't exist
-func (f *Fs) Mkdir(dir string) (err error) {
+func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	f.bucketOKMu.Lock()
 	defer f.bucketOKMu.Unlock()
 	if f.bucketOK {
@@ -755,7 +755,7 @@ func (f *Fs) Mkdir(dir string) (err error) {
 //
 // Returns an error if it isn't empty: Error 409: The bucket you tried
 // to delete was not empty.
-func (f *Fs) Rmdir(dir string) (err error) {
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	f.bucketOKMu.Lock()
 	defer f.bucketOKMu.Unlock()
 	if f.root != "" || dir != "" {
@@ -785,8 +785,8 @@ func (f *Fs) Precision() time.Duration {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
-	err := f.Mkdir("")
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	err := f.Mkdir(ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -845,7 +845,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
@@ -919,7 +919,7 @@ func (o *Object) readMetaData() (err error) {
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData()
 	if err != nil {
 		// fs.Logf(o, "Failed to read metadata: %v", err)
@@ -936,7 +936,7 @@ func metadataFromModTime(modTime time.Time) map[string]string {
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) (err error) {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) {
 	// This only adds metadata so will perserve other metadata
 	object := storage.Object{
 		Bucket:   o.fs.bucket,
@@ -961,7 +961,7 @@ func (o *Object) Storable() bool {
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	req, err := http.NewRequest("GET", o.url, nil)
 	if err != nil {
 		return nil, err
@@ -992,17 +992,17 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	err := o.fs.Mkdir("")
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	err := o.fs.Mkdir(ctx, "")
 	if err != nil {
 		return err
 	}
-	modTime := src.ModTime()
+	modTime := src.ModTime(ctx)
 
 	object := storage.Object{
 		Bucket:      o.fs.bucket,
 		Name:        o.fs.root + o.remote,
-		ContentType: fs.MimeType(src),
+		ContentType: fs.MimeType(ctx, src),
 		Metadata:    metadataFromModTime(modTime),
 	}
 	var newObject *storage.Object
@@ -1023,7 +1023,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 }
 
 // Remove an object
-func (o *Object) Remove() (err error) {
+func (o *Object) Remove(ctx context.Context) (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.svc.Objects.Delete(o.fs.bucket, o.fs.root+o.remote).Do()
 		return shouldRetry(err)
@@ -1032,7 +1032,7 @@ func (o *Object) Remove() (err error) {
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
+func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 

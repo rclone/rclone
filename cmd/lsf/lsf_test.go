@@ -2,6 +2,7 @@ package lsf
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	_ "github.com/ncw/rclone/backend/local"
@@ -19,7 +20,7 @@ func TestDefaultLsf(t *testing.T) {
 	f, err := fs.NewFs("testfiles")
 	require.NoError(t, err)
 
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1
 file2
@@ -36,7 +37,7 @@ func TestRecurseFlag(t *testing.T) {
 	require.NoError(t, err)
 
 	recurse = true
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1
 file2
@@ -58,7 +59,7 @@ func TestDirSlashFlag(t *testing.T) {
 
 	dirSlash = true
 	format = "p"
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1
 file2
@@ -68,7 +69,7 @@ subdir/
 
 	buf = new(bytes.Buffer)
 	dirSlash = false
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1
 file2
@@ -84,7 +85,7 @@ func TestFormat(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	format = "p"
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1
 file2
@@ -94,7 +95,7 @@ subdir
 
 	buf = new(bytes.Buffer)
 	format = "s"
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `0
 321
@@ -104,7 +105,7 @@ subdir
 
 	buf = new(bytes.Buffer)
 	format = "hp"
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `d41d8cd98f00b204e9800998ecf8427e;file1
 409d6c19451dd39d4a94e42d2ff2c834;file2
@@ -115,7 +116,7 @@ subdir
 	buf = new(bytes.Buffer)
 	format = "p"
 	filesOnly = true
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1
 file2
@@ -126,7 +127,7 @@ file3
 	buf = new(bytes.Buffer)
 	format = "p"
 	dirsOnly = true
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `subdir
 `, buf.String())
@@ -134,20 +135,20 @@ file3
 
 	buf = new(bytes.Buffer)
 	format = "t"
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 
-	items, _ := list.DirSorted(f, true, "")
+	items, _ := list.DirSorted(context.Background(), f, true, "")
 	var expectedOutput string
 	for _, item := range items {
-		expectedOutput += item.ModTime().Format("2006-01-02 15:04:05") + "\n"
+		expectedOutput += item.ModTime(context.Background()).Format("2006-01-02 15:04:05") + "\n"
 	}
 
 	assert.Equal(t, expectedOutput, buf.String())
 
 	buf = new(bytes.Buffer)
 	format = "sp"
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `0;file1
 321;file2
@@ -164,7 +165,7 @@ func TestSeparator(t *testing.T) {
 	format = "ps"
 
 	buf := new(bytes.Buffer)
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1;0
 file2;321
@@ -174,7 +175,7 @@ subdir;-1
 
 	separator = "__SEP__"
 	buf = new(bytes.Buffer)
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 	assert.Equal(t, `file1__SEP__0
 file2__SEP__321
@@ -195,17 +196,17 @@ func TestWholeLsf(t *testing.T) {
 	dirSlash = true
 
 	buf := new(bytes.Buffer)
-	err = Lsf(f, buf)
+	err = Lsf(context.Background(), f, buf)
 	require.NoError(t, err)
 
-	items, _ := list.DirSorted(f, true, "")
-	itemsInSubdir, _ := list.DirSorted(f, true, "subdir")
+	items, _ := list.DirSorted(context.Background(), f, true, "")
+	itemsInSubdir, _ := list.DirSorted(context.Background(), f, true, "subdir")
 	var expectedOutput []string
 	for _, item := range items {
-		expectedOutput = append(expectedOutput, item.ModTime().Format("2006-01-02 15:04:05"))
+		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format("2006-01-02 15:04:05"))
 	}
 	for _, item := range itemsInSubdir {
-		expectedOutput = append(expectedOutput, item.ModTime().Format("2006-01-02 15:04:05"))
+		expectedOutput = append(expectedOutput, item.ModTime(context.Background()).Format("2006-01-02 15:04:05"))
 	}
 
 	assert.Equal(t, `file1_+_0_+_`+expectedOutput[0]+`

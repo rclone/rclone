@@ -1,6 +1,7 @@
 package operations_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,7 +32,7 @@ func rcNewRun(t *testing.T, method string) (*fstest.Run, *rc.Call) {
 func TestRcAbout(t *testing.T) {
 	r, call := rcNewRun(t, "operations/about")
 	defer r.Finalise()
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
 	// Will get an error if remote doesn't support About
 	expectedErr := r.Fremote.Features().About == nil
@@ -39,7 +40,7 @@ func TestRcAbout(t *testing.T) {
 	in := rc.Params{
 		"fs": r.FremoteName,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	if expectedErr {
 		assert.Error(t, err)
 		return
@@ -58,7 +59,7 @@ func TestRcCleanup(t *testing.T) {
 	in := rc.Params{
 		"fs": r.LocalName,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 	assert.Contains(t, err.Error(), "doesn't support cleanup")
@@ -69,7 +70,7 @@ func TestRcCopyfile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/copyfile")
 	defer r.Finalise()
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote)
 
@@ -79,7 +80,7 @@ func TestRcCopyfile(t *testing.T) {
 		"dstFs":     r.FremoteName,
 		"dstRemote": "file1-renamed",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -94,7 +95,7 @@ func TestRcCopyurl(t *testing.T) {
 	defer r.Finalise()
 	contents := "file1 contents\n"
 	file1 := r.WriteFile("file1", contents, t1)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 	fstest.CheckItems(t, r.Fremote)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +109,7 @@ func TestRcCopyurl(t *testing.T) {
 		"remote": "file1",
 		"url":    ts.URL,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -120,15 +121,15 @@ func TestRcDelete(t *testing.T) {
 	r, call := rcNewRun(t, "operations/delete")
 	defer r.Finalise()
 
-	file1 := r.WriteObject("small", "1234567890", t2)                                                                                           // 10 bytes
-	file2 := r.WriteObject("medium", "------------------------------------------------------------", t1)                                        // 60 bytes
-	file3 := r.WriteObject("large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	file1 := r.WriteObject(context.Background(), "small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject(context.Background(), "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject(context.Background(), "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
 	in := rc.Params{
 		"fs": r.FremoteName,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -140,15 +141,15 @@ func TestRcDeletefile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/deletefile")
 	defer r.Finalise()
 
-	file1 := r.WriteObject("small", "1234567890", t2)                                                    // 10 bytes
-	file2 := r.WriteObject("medium", "------------------------------------------------------------", t1) // 60 bytes
+	file1 := r.WriteObject(context.Background(), "small", "1234567890", t2)                                                    // 10 bytes
+	file2 := r.WriteObject(context.Background(), "medium", "------------------------------------------------------------", t1) // 60 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	in := rc.Params{
 		"fs":     r.FremoteName,
 		"remote": "small",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -160,8 +161,8 @@ func TestRcList(t *testing.T) {
 	r, call := rcNewRun(t, "operations/list")
 	defer r.Finalise()
 
-	file1 := r.WriteObject("a", "a", t1)
-	file2 := r.WriteObject("subdir/b", "bb", t2)
+	file1 := r.WriteObject(context.Background(), "a", "a", t1)
+	file2 := r.WriteObject(context.Background(), "subdir/b", "bb", t2)
 
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
@@ -169,7 +170,7 @@ func TestRcList(t *testing.T) {
 		"fs":     r.FremoteName,
 		"remote": "",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 
 	list := out["list"].([]*operations.ListJSONItem)
@@ -201,7 +202,7 @@ func TestRcList(t *testing.T) {
 			"recurse": true,
 		},
 	}
-	out, err = call.Fn(in)
+	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 
 	list = out["list"].([]*operations.ListJSONItem)
@@ -224,7 +225,7 @@ func TestRcList(t *testing.T) {
 func TestRcMkdir(t *testing.T) {
 	r, call := rcNewRun(t, "operations/mkdir")
 	defer r.Finalise()
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{}, fs.GetModifyWindow(r.Fremote))
 
@@ -232,7 +233,7 @@ func TestRcMkdir(t *testing.T) {
 		"fs":     r.FremoteName,
 		"remote": "subdir",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -244,7 +245,7 @@ func TestRcMovefile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/movefile")
 	defer r.Finalise()
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote)
 
@@ -254,7 +255,7 @@ func TestRcMovefile(t *testing.T) {
 		"dstFs":     r.FremoteName,
 		"dstRemote": "file1-renamed",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -267,7 +268,7 @@ func TestRcMovefile(t *testing.T) {
 func TestRcPurge(t *testing.T) {
 	r, call := rcNewRun(t, "operations/purge")
 	defer r.Finalise()
-	file1 := r.WriteObject("subdir/file1", "subdir/file1 contents", t1)
+	file1 := r.WriteObject(context.Background(), "subdir/file1", "subdir/file1 contents", t1)
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"subdir"}, fs.GetModifyWindow(r.Fremote))
 
@@ -275,7 +276,7 @@ func TestRcPurge(t *testing.T) {
 		"fs":     r.FremoteName,
 		"remote": "subdir",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -286,8 +287,8 @@ func TestRcPurge(t *testing.T) {
 func TestRcRmdir(t *testing.T) {
 	r, call := rcNewRun(t, "operations/rmdir")
 	defer r.Finalise()
-	r.Mkdir(r.Fremote)
-	assert.NoError(t, r.Fremote.Mkdir("subdir"))
+	r.Mkdir(context.Background(), r.Fremote)
+	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{"subdir"}, fs.GetModifyWindow(r.Fremote))
 
@@ -295,7 +296,7 @@ func TestRcRmdir(t *testing.T) {
 		"fs":     r.FremoteName,
 		"remote": "subdir",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -306,9 +307,9 @@ func TestRcRmdir(t *testing.T) {
 func TestRcRmdirs(t *testing.T) {
 	r, call := rcNewRun(t, "operations/rmdirs")
 	defer r.Finalise()
-	r.Mkdir(r.Fremote)
-	assert.NoError(t, r.Fremote.Mkdir("subdir"))
-	assert.NoError(t, r.Fremote.Mkdir("subdir/subsubdir"))
+	r.Mkdir(context.Background(), r.Fremote)
+	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
+	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir/subsubdir"))
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{"subdir", "subdir/subsubdir"}, fs.GetModifyWindow(r.Fremote))
 
@@ -316,21 +317,21 @@ func TestRcRmdirs(t *testing.T) {
 		"fs":     r.FremoteName,
 		"remote": "subdir",
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{}, fs.GetModifyWindow(r.Fremote))
 
-	assert.NoError(t, r.Fremote.Mkdir("subdir"))
-	assert.NoError(t, r.Fremote.Mkdir("subdir/subsubdir"))
+	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
+	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir/subsubdir"))
 
 	in = rc.Params{
 		"fs":        r.FremoteName,
 		"remote":    "subdir",
 		"leaveRoot": true,
 	}
-	out, err = call.Fn(in)
+	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -342,15 +343,15 @@ func TestRcRmdirs(t *testing.T) {
 func TestRcSize(t *testing.T) {
 	r, call := rcNewRun(t, "operations/size")
 	defer r.Finalise()
-	file1 := r.WriteObject("small", "1234567890", t2)                                                           // 10 bytes
-	file2 := r.WriteObject("subdir/medium", "------------------------------------------------------------", t1) // 60 bytes
-	file3 := r.WriteObject("subdir/subsubdir/large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1)  // 50 bytes
+	file1 := r.WriteObject(context.Background(), "small", "1234567890", t2)                                                           // 10 bytes
+	file2 := r.WriteObject(context.Background(), "subdir/medium", "------------------------------------------------------------", t1) // 60 bytes
+	file3 := r.WriteObject(context.Background(), "subdir/subsubdir/large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1)  // 50 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
 	in := rc.Params{
 		"fs": r.FremoteName,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{
 		"count": int64(3),
@@ -366,7 +367,7 @@ func TestRcPublicLink(t *testing.T) {
 		"fs":     r.FremoteName,
 		"remote": "",
 	}
-	_, err := call.Fn(in)
+	_, err := call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "doesn't support public links")
 }
@@ -378,7 +379,7 @@ func TestRcFsInfo(t *testing.T) {
 	in := rc.Params{
 		"fs": r.FremoteName,
 	}
-	got, err := call.Fn(in)
+	got, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	want := operations.GetFsInfo(r.Fremote)
 	assert.Equal(t, want.Name, got["Name"])

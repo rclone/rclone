@@ -1,6 +1,7 @@
 package hashsum
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -54,7 +55,7 @@ Then
 		}
 		fsrc := cmd.NewFsSrc(args[1:])
 		cmd.Run(false, false, command, func() error {
-			return operations.HashLister(ht, fsrc, os.Stdout)
+			return operations.HashLister(context.Background(), ht, fsrc, os.Stdout)
 		})
 		return nil
 	},

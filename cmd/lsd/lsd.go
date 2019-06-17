@@ -1,6 +1,7 @@
 package lsd
 
 import (
+	"context"
 	"os"
 
 	"github.com/ncw/rclone/cmd"
@@ -52,7 +53,7 @@ If you just want the directory names use "rclone lsf --dirs-only".
 		}
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.ListDir(fsrc, os.Stdout)
+			return operations.ListDir(context.Background(), fsrc, os.Stdout)
 		})
 	},
 }

@@ -1,6 +1,8 @@
 package copyto
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/sync"
@@ -48,9 +50,9 @@ destination.
 		fsrc, srcFileName, fdst, dstFileName := cmd.NewFsSrcDstFiles(args)
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.CopyDir(fdst, fsrc, false)
+				return sync.CopyDir(context.Background(), fdst, fsrc, false)
 			}
-			return operations.CopyFile(fdst, fsrc, dstFileName, srcFileName)
+			return operations.CopyFile(context.Background(), fdst, fsrc, dstFileName, srcFileName)
 		})
 	},
 }

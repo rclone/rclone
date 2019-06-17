@@ -2,6 +2,7 @@ package drive
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -195,7 +196,7 @@ func (f *Fs) InternalTestDocumentImport(t *testing.T) {
 	_, f.importMimeTypes, err = parseExtensions("odt,ods,doc")
 	require.NoError(t, err)
 
-	err = operations.CopyFile(f, testFilesFs, "example2.doc", "example2.doc")
+	err = operations.CopyFile(context.Background(), f, testFilesFs, "example2.doc", "example2.doc")
 	require.NoError(t, err)
 }
 
@@ -209,7 +210,7 @@ func (f *Fs) InternalTestDocumentUpdate(t *testing.T) {
 	_, f.importMimeTypes, err = parseExtensions("odt,ods,doc")
 	require.NoError(t, err)
 
-	err = operations.CopyFile(f, testFilesFs, "example2.xlsx", "example1.ods")
+	err = operations.CopyFile(context.Background(), f, testFilesFs, "example2.xlsx", "example1.ods")
 	require.NoError(t, err)
 }
 
@@ -220,10 +221,10 @@ func (f *Fs) InternalTestDocumentExport(t *testing.T) {
 	f.exportExtensions, _, err = parseExtensions("txt")
 	require.NoError(t, err)
 
-	obj, err := f.NewObject("example2.txt")
+	obj, err := f.NewObject(context.Background(), "example2.txt")
 	require.NoError(t, err)
 
-	rc, err := obj.Open()
+	rc, err := obj.Open(context.Background())
 	require.NoError(t, err)
 	defer func() { require.NoError(t, rc.Close()) }()
 
@@ -246,10 +247,10 @@ func (f *Fs) InternalTestDocumentLink(t *testing.T) {
 	f.exportExtensions, _, err = parseExtensions("link.html")
 	require.NoError(t, err)
 
-	obj, err := f.NewObject("example2.link.html")
+	obj, err := f.NewObject(context.Background(), "example2.link.html")
 	require.NoError(t, err)
 
-	rc, err := obj.Open()
+	rc, err := obj.Open(context.Background())
 	require.NoError(t, err)
 	defer func() { require.NoError(t, rc.Close()) }()
 

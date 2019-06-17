@@ -2,6 +2,7 @@ package rc
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -116,7 +117,7 @@ func doCall(path string, in rc.Params) (out rc.Params, err error) {
 		if call == nil {
 			return nil, errors.Errorf("method %q not found", path)
 		}
-		return call.Fn(in)
+		return call.Fn(context.Background(), in)
 	}
 
 	// Do HTTP request

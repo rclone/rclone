@@ -3,6 +3,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -40,6 +41,7 @@ func initBackgroundUploader(fs *Fs) (*backgroundWriter, error) {
 
 // Handle is managing the read/write/seek operations on an open handle
 type Handle struct {
+	ctx            context.Context
 	cachedObject   *Object
 	cfs            *Fs
 	memory         *Memory
@@ -58,8 +60,9 @@ type Handle struct {
 }
 
 // NewObjectHandle returns a new Handle for an existing Object
-func NewObjectHandle(o *Object, cfs *Fs) *Handle {
+func NewObjectHandle(ctx context.Context, o *Object, cfs *Fs) *Handle {
 	r := &Handle{
+		ctx:           ctx,
 		cachedObject:  o,
 		cfs:           cfs,
 		offset:        0,
@@ -351,7 +354,7 @@ func (w *worker) reader(offset, end int64, closeOpen bool) (io.ReadCloser, error
 	r := w.rc
 	if w.rc == nil {
 		r, err = w.r.cacheFs().openRateLimited(func() (io.ReadCloser, error) {
-			return w.r.cachedObject.Object.Open(&fs.RangeOption{Start: offset, End: end - 1})
+			return w.r.cachedObject.Object.Open(w.r.ctx, &fs.RangeOption{Start: offset, End: end - 1})
 		})
 		if err != nil {
 			return nil, err
@@ -361,7 +364,7 @@ func (w *worker) reader(offset, end int64, closeOpen bool) (io.ReadCloser, error
 
 	if !closeOpen {
 		if do, ok := r.(fs.RangeSeeker); ok {
-			_, err = do.RangeSeek(offset, io.SeekStart, end-offset)
+			_, err = do.RangeSeek(w.r.ctx, offset, io.SeekStart, end-offset)
 			return r, err
 		} else if do, ok := r.(io.Seeker); ok {
 			_, err = do.Seek(offset, io.SeekStart)
@@ -371,7 +374,7 @@ func (w *worker) reader(offset, end int64, closeOpen bool) (io.ReadCloser, error
 
 	_ = w.rc.Close()
 	return w.r.cacheFs().openRateLimited(func() (io.ReadCloser, error) {
-		r, err = w.r.cachedObject.Object.Open(&fs.RangeOption{Start: offset, End: end - 1})
+		r, err = w.r.cachedObject.Object.Open(w.r.ctx, &fs.RangeOption{Start: offset, End: end - 1})
 		if err != nil {
 			return nil, err
 		}
@@ -449,7 +452,7 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 	// we seem to be getting only errors so we abort
 	if err != nil {
 		fs.Errorf(w, "object open failed %v: %v", chunkStart, err)
-		err = w.r.cachedObject.refreshFromSource(true)
+		err = w.r.cachedObject.refreshFromSource(w.r.ctx, true)
 		if err != nil {
 			fs.Errorf(w, "%v", err)
 		}
@@ -462,7 +465,7 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 	sourceRead, err = io.ReadFull(w.rc, data)
 	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		fs.Errorf(w, "failed to read chunk %v: %v", chunkStart, err)
-		err = w.r.cachedObject.refreshFromSource(true)
+		err = w.r.cachedObject.refreshFromSource(w.r.ctx, true)
 		if err != nil {
 			fs.Errorf(w, "%v", err)
 		}
@@ -588,7 +591,7 @@ func (b *backgroundWriter) run() {
 		remote := b.fs.cleanRootFromPath(absPath)
 		b.notify(remote, BackgroundUploadStarted, nil)
 		fs.Infof(remote, "background upload: started upload")
-		err = operations.MoveFile(b.fs.UnWrap(), b.fs.tempFs, remote, remote)
+		err = operations.MoveFile(context.TODO(), b.fs.UnWrap(), b.fs.tempFs, remote, remote)
 		if err != nil {
 			b.notify(remote, BackgroundUploadError, err)
 			_ = b.fs.cache.rollbackPendingUpload(absPath)
@@ -598,14 +601,14 @@ func (b *backgroundWriter) run() {
 		// clean empty dirs up to root
 		thisDir := cleanPath(path.Dir(remote))
 		for thisDir != "" {
-			thisList, err := b.fs.tempFs.List(thisDir)
+			thisList, err := b.fs.tempFs.List(context.TODO(), thisDir)
 			if err != nil {
 				break
 			}
 			if len(thisList) > 0 {
 				break
 			}
-			err = b.fs.tempFs.Rmdir(thisDir)
+			err = b.fs.tempFs.Rmdir(context.TODO(), thisDir)
 			fs.Debugf(thisDir, "cleaned from temp path")
 			if err != nil {
 				break

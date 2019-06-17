@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ncw/rclone/fs/cache"
@@ -26,11 +27,11 @@ func rcNewRun(t *testing.T, method string) (*fstest.Run, *rc.Call) {
 func TestRcCopy(t *testing.T) {
 	r, call := rcNewRun(t, "sync/copy")
 	defer r.Finalise()
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	file1 := r.WriteBoth("file1", "file1 contents", t1)
+	file1 := r.WriteBoth(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteFile("subdir/file2", "file2 contents", t2)
-	file3 := r.WriteObject("subdir/subsubdir/file3", "file3 contents", t3)
+	file3 := r.WriteObject(context.Background(), "subdir/subsubdir/file3", "file3 contents", t3)
 
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, file1, file3)
@@ -39,7 +40,7 @@ func TestRcCopy(t *testing.T) {
 		"srcFs": r.LocalName,
 		"dstFs": r.FremoteName,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -51,11 +52,11 @@ func TestRcCopy(t *testing.T) {
 func TestRcMove(t *testing.T) {
 	r, call := rcNewRun(t, "sync/move")
 	defer r.Finalise()
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	file1 := r.WriteBoth("file1", "file1 contents", t1)
+	file1 := r.WriteBoth(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteFile("subdir/file2", "file2 contents", t2)
-	file3 := r.WriteObject("subdir/subsubdir/file3", "file3 contents", t3)
+	file3 := r.WriteObject(context.Background(), "subdir/subsubdir/file3", "file3 contents", t3)
 
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, file1, file3)
@@ -64,7 +65,7 @@ func TestRcMove(t *testing.T) {
 		"srcFs": r.LocalName,
 		"dstFs": r.FremoteName,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
@@ -76,11 +77,11 @@ func TestRcMove(t *testing.T) {
 func TestRcSync(t *testing.T) {
 	r, call := rcNewRun(t, "sync/sync")
 	defer r.Finalise()
-	r.Mkdir(r.Fremote)
+	r.Mkdir(context.Background(), r.Fremote)
 
-	file1 := r.WriteBoth("file1", "file1 contents", t1)
+	file1 := r.WriteBoth(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteFile("subdir/file2", "file2 contents", t2)
-	file3 := r.WriteObject("subdir/subsubdir/file3", "file3 contents", t3)
+	file3 := r.WriteObject(context.Background(), "subdir/subsubdir/file3", "file3 contents", t3)
 
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, file1, file3)
@@ -89,7 +90,7 @@ func TestRcSync(t *testing.T) {
 		"srcFs": r.LocalName,
 		"dstFs": r.FremoteName,
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 

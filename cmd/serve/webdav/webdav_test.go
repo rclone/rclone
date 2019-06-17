@@ -8,6 +8,7 @@
 package webdav
 
 import (
+	"context"
 	"flag"
 	"io/ioutil"
 	"net/http"
@@ -50,7 +51,7 @@ func TestWebDav(t *testing.T) {
 	assert.NoError(t, err)
 	defer clean()
 
-	err = fremote.Mkdir("")
+	err = fremote.Mkdir(context.Background(), "")
 	assert.NoError(t, err)
 
 	// Start the server

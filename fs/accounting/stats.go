@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -101,7 +102,7 @@ func NewStats() *StatsInfo {
 }
 
 // RemoteStats returns stats for rc
-func (s *StatsInfo) RemoteStats(in rc.Params) (out rc.Params, err error) {
+func (s *StatsInfo) RemoteStats(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	s.mu.RLock()
 	dt := time.Now().Sub(s.start)

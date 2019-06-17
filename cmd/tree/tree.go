@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -117,7 +118,7 @@ short options as they conflict with rclone's short options.
 
 // Tree lists fsrc to outFile using the Options passed in
 func Tree(fsrc fs.Fs, outFile io.Writer, opts *tree.Options) error {
-	dirs, err := walk.NewDirTree(fsrc, "", false, opts.DeepLevel)
+	dirs, err := walk.NewDirTree(context.Background(), fsrc, "", false, opts.DeepLevel)
 	if err != nil {
 		return err
 	}
@@ -165,7 +166,7 @@ func (to *FileInfo) Mode() os.FileMode {
 
 // ModTime is modification time
 func (to *FileInfo) ModTime() time.Time {
-	return to.entry.ModTime()
+	return to.entry.ModTime(context.Background())
 }
 
 // IsDir is abbreviation for Mode().IsDir()

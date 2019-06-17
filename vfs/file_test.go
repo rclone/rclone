@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -13,7 +14,7 @@ import (
 func fileCreate(t *testing.T, r *fstest.Run) (*VFS, *File, fstest.Item) {
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("dir/file1", "file1 contents", t1)
+	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	node, err := vfs.Stat("dir/file1")

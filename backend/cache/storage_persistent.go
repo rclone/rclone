@@ -4,6 +4,7 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -1014,7 +1015,7 @@ func (b *Persistent) SetPendingUploadToStarted(remote string) error {
 }
 
 // ReconcileTempUploads will recursively look for all the files in the temp directory and add them to the queue
-func (b *Persistent) ReconcileTempUploads(cacheFs *Fs) error {
+func (b *Persistent) ReconcileTempUploads(ctx context.Context, cacheFs *Fs) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
 		_ = tx.DeleteBucket([]byte(tempBucket))
 		bucket, err := tx.CreateBucketIfNotExists([]byte(tempBucket))
@@ -1023,7 +1024,7 @@ func (b *Persistent) ReconcileTempUploads(cacheFs *Fs) error {
 		}
 
 		var queuedEntries []fs.Object
-		err = walk.ListR(cacheFs.tempFs, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+		err = walk.ListR(ctx, cacheFs.tempFs, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 			for _, o := range entries {
 				if oo, ok := o.(fs.Object); ok {
 					queuedEntries = append(queuedEntries, oo)

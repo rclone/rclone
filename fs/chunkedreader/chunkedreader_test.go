@@ -1,6 +1,7 @@
 package chunkedreader
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"math/rand"
@@ -38,13 +39,13 @@ func testRead(content []byte, mode mockobject.SeekMode) func(*testing.T) {
 				}
 
 				t.Run(fmt.Sprintf("Chunksize_%d_%d", cs, csMax), func(t *testing.T) {
-					cr := New(o, cs, csMax)
+					cr := New(context.Background(), o, cs, csMax)
 
 					for _, offset := range offsets {
 						for _, limit := range limits {
 							what := fmt.Sprintf("offset %d, limit %d", offset, limit)
 
-							p, err := cr.RangeSeek(offset, io.SeekStart, limit)
+							p, err := cr.RangeSeek(context.Background(), offset, io.SeekStart, limit)
 							if offset >= cl {
 								require.Error(t, err, what)
 								return
@@ -78,27 +79,27 @@ func TestErrorAfterClose(t *testing.T) {
 	o := mockobject.New("test.bin").WithContent(content, mockobject.SeekModeNone)
 
 	// Close
-	cr := New(o, 0, 0)
+	cr := New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
 	require.Error(t, cr.Close())
 
 	// Read
-	cr = New(o, 0, 0)
+	cr = New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
 	var buf [1]byte
 	_, err := cr.Read(buf[:])
 	require.Error(t, err)
 
 	// Seek
-	cr = New(o, 0, 0)
+	cr = New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
 	_, err = cr.Seek(1, io.SeekCurrent)
 	require.Error(t, err)
 
 	// RangeSeek
-	cr = New(o, 0, 0)
+	cr = New(context.Background(), o, 0, 0)
 	require.NoError(t, cr.Close())
-	_, err = cr.RangeSeek(1, io.SeekCurrent, 0)
+	_, err = cr.RangeSeek(context.Background(), 1, io.SeekCurrent, 0)
 	require.Error(t, err)
 }
 

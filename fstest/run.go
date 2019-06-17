@@ -26,6 +26,7 @@ package fstest
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -130,6 +131,7 @@ func retry(t *testing.T, what string, f func() error) {
 //
 // Finalise() will tidy them away when done.
 func newRunIndividual(t *testing.T, individual bool) *Run {
+	ctx := context.Background()
 	var r *Run
 	if individual {
 		r = newRun()
@@ -139,11 +141,11 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 		*r = *oneRun
 		r.cleanRemote = func() {
 			var toDelete []string
-			err := walk.ListR(r.Fremote, "", true, -1, walk.ListAll, func(entries fs.DirEntries) error {
+			err := walk.ListR(ctx, r.Fremote, "", true, -1, walk.ListAll, func(entries fs.DirEntries) error {
 				for _, entry := range entries {
 					switch x := entry.(type) {
 					case fs.Object:
-						retry(t, fmt.Sprintf("removing file %q", x.Remote()), x.Remove)
+						retry(t, fmt.Sprintf("removing file %q", x.Remote()), func() error { return x.Remove(ctx) })
 					case fs.Directory:
 						toDelete = append(toDelete, x.Remote())
 					}
@@ -158,7 +160,7 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 			for i := len(toDelete) - 1; i >= 0; i-- {
 				dir := toDelete[i]
 				retry(t, fmt.Sprintf("removing dir %q", dir), func() error {
-					return r.Fremote.Rmdir(dir)
+					return r.Fremote.Rmdir(ctx, dir)
 				})
 			}
 			// Check remote is empty
@@ -222,8 +224,8 @@ func (r *Run) WriteFile(filePath, content string, t time.Time) Item {
 }
 
 // ForceMkdir creates the remote
-func (r *Run) ForceMkdir(f fs.Fs) {
-	err := f.Mkdir("")
+func (r *Run) ForceMkdir(ctx context.Context, f fs.Fs) {
+	err := f.Mkdir(ctx, "")
 	if err != nil {
 		r.Fatalf("Failed to mkdir %q: %v", f, err)
 	}
@@ -231,14 +233,14 @@ func (r *Run) ForceMkdir(f fs.Fs) {
 }
 
 // Mkdir creates the remote if it hasn't been created already
-func (r *Run) Mkdir(f fs.Fs) {
+func (r *Run) Mkdir(ctx context.Context, f fs.Fs) {
 	if !r.mkdir[f.String()] {
-		r.ForceMkdir(f)
+		r.ForceMkdir(ctx, f)
 	}
 }
 
 // WriteObjectTo writes an object to the fs, remote passed in
-func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, useUnchecked bool) Item {
+func (r *Run) WriteObjectTo(ctx context.Context, f fs.Fs, remote, content string, modTime time.Time, useUnchecked bool) Item {
 	put := f.Put
 	if useUnchecked {
 		put = f.Features().PutUnchecked
@@ -246,12 +248,12 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 			r.Fatalf("Fs doesn't support PutUnchecked")
 		}
 	}
-	r.Mkdir(f)
+	r.Mkdir(ctx, f)
 	const maxTries = 10
 	for tries := 1; ; tries++ {
 		in := bytes.NewBufferString(content)
 		objinfo := object.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
-		_, err := put(in, objinfo)
+		_, err := put(ctx, in, objinfo)
 		if err == nil {
 			break
 		}
@@ -267,19 +269,19 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 }
 
 // WriteObject writes an object to the remote
-func (r *Run) WriteObject(remote, content string, modTime time.Time) Item {
-	return r.WriteObjectTo(r.Fremote, remote, content, modTime, false)
+func (r *Run) WriteObject(ctx context.Context, remote, content string, modTime time.Time) Item {
+	return r.WriteObjectTo(ctx, r.Fremote, remote, content, modTime, false)
 }
 
 // WriteUncheckedObject writes an object to the remote not checking for duplicates
-func (r *Run) WriteUncheckedObject(remote, content string, modTime time.Time) Item {
-	return r.WriteObjectTo(r.Fremote, remote, content, modTime, true)
+func (r *Run) WriteUncheckedObject(ctx context.Context, remote, content string, modTime time.Time) Item {
+	return r.WriteObjectTo(ctx, r.Fremote, remote, content, modTime, true)
 }
 
 // WriteBoth calls WriteObject and WriteFile with the same arguments
-func (r *Run) WriteBoth(remote, content string, modTime time.Time) Item {
+func (r *Run) WriteBoth(ctx context.Context, remote, content string, modTime time.Time) Item {
 	r.WriteFile(remote, content, modTime)
-	return r.WriteObject(remote, content, modTime)
+	return r.WriteObject(ctx, remote, content, modTime)
 }
 
 // CheckWithDuplicates does a test but allows duplicates
@@ -293,7 +295,7 @@ func (r *Run) CheckWithDuplicates(t *testing.T, items ...Item) {
 	sort.Strings(want)
 
 	// do the listing
-	objs, _, err := walk.GetAll(r.Fremote, "", true, -1)
+	objs, _, err := walk.GetAll(context.Background(), r.Fremote, "", true, -1)
 	if err != nil && err != fs.ErrorDirNotFound {
 		t.Fatalf("Error listing: %v", err)
 	}

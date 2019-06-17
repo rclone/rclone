@@ -247,7 +247,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 
 // get the remote
 func (s *server) serveObject(w http.ResponseWriter, r *http.Request, remote string) {
-	o, err := s.f.NewObject(remote)
+	o, err := s.f.NewObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "%s request error: %v", r.Method, err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -260,7 +260,7 @@ func (s *server) serveObject(w http.ResponseWriter, r *http.Request, remote stri
 func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote string) {
 	if appendOnly {
 		// make sure the file does not exist yet
-		_, err := s.f.NewObject(remote)
+		_, err := s.f.NewObject(r.Context(), remote)
 		if err == nil {
 			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -269,7 +269,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 		}
 	}
 
-	_, err := operations.RcatSize(s.f, remote, r.Body, r.ContentLength, time.Now())
+	_, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now())
 	if err != nil {
 		accounting.Stats.Error(err)
 		fs.Errorf(remote, "Post request rcat error: %v", err)
@@ -291,14 +291,14 @@ func (s *server) deleteObject(w http.ResponseWriter, r *http.Request, remote str
 		}
 	}
 
-	o, err := s.f.NewObject(remote)
+	o, err := s.f.NewObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "Delete request error: %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 
-	if err := o.Remove(); err != nil {
+	if err := o.Remove(r.Context()); err != nil {
 		fs.Errorf(remote, "Delete request remove error: %v", err)
 		if err == fs.ErrorObjectNotFound {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -342,7 +342,7 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 	ls := listItems{}
 
 	// if remote supports ListR use that directly, otherwise use recursive Walk
-	err := walk.ListR(s.f, remote, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+	err := walk.ListR(r.Context(), s.f, remote, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
 			ls.add(entry)
 		}
@@ -378,7 +378,7 @@ func (s *server) createRepo(w http.ResponseWriter, r *http.Request, remote strin
 		return
 	}
 
-	err := s.f.Mkdir(remote)
+	err := s.f.Mkdir(r.Context(), remote)
 	if err != nil {
 		fs.Errorf(remote, "Create repo failed to Mkdir: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -387,7 +387,7 @@ func (s *server) createRepo(w http.ResponseWriter, r *http.Request, remote strin
 
 	for _, name := range []string{"data", "index", "keys", "locks", "snapshots"} {
 		dirRemote := path.Join(remote, name)
-		err := s.f.Mkdir(dirRemote)
+		err := s.f.Mkdir(r.Context(), dirRemote)
 		if err != nil {
 			fs.Errorf(dirRemote, "Create repo failed to Mkdir: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

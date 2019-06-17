@@ -284,7 +284,7 @@ func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 	if !ok {
 		return "", webdav.ErrNotImplemented
 	}
-	hash, err := o.Hash(hashType)
+	hash, err := o.Hash(ctx, hashType)
 	if err != nil || hash == "" {
 		return "", webdav.ErrNotImplemented
 	}
@@ -302,7 +302,7 @@ func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err err
 	entry := node.DirEntry()
 	switch x := entry.(type) {
 	case fs.Object:
-		return fs.MimeType(x), nil
+		return fs.MimeType(ctx, x), nil
 	case fs.Directory:
 		return "inode/directory", nil
 	}

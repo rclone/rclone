@@ -1,6 +1,8 @@
 package cryptcheck
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
@@ -55,13 +57,13 @@ destination that are not in the source will not trigger an error.
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
 		cmd.Run(false, true, command, func() error {
-			return cryptCheck(fdst, fsrc)
+			return cryptCheck(context.Background(), fdst, fsrc)
 		})
 	},
 }
 
 // cryptCheck checks the integrity of a crypted remote
-func cryptCheck(fdst, fsrc fs.Fs) error {
+func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 	// Check to see fcrypt is a crypt
 	fcrypt, ok := fdst.(*crypt.Fs)
 	if !ok {
@@ -79,10 +81,10 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 	//
 	// it returns true if differences were found
 	// it also returns whether it couldn't be hashed
-	checkIdentical := func(dst, src fs.Object) (differ bool, noHash bool) {
+	checkIdentical := func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
 		cryptDst := dst.(*crypt.Object)
 		underlyingDst := cryptDst.UnWrap()
-		underlyingHash, err := underlyingDst.Hash(hashType)
+		underlyingHash, err := underlyingDst.Hash(ctx, hashType)
 		if err != nil {
 			fs.CountError(err)
 			fs.Errorf(dst, "Error reading hash from underlying %v: %v", underlyingDst, err)
@@ -91,7 +93,7 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 		if underlyingHash == "" {
 			return false, true
 		}
-		cryptHash, err := fcrypt.ComputeHash(cryptDst, src, hashType)
+		cryptHash, err := fcrypt.ComputeHash(ctx, cryptDst, src, hashType)
 		if err != nil {
 			fs.CountError(err)
 			fs.Errorf(dst, "Error computing hash: %v", err)
@@ -110,5 +112,5 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 		return false, false
 	}
 
-	return operations.CheckFn(fcrypt, fsrc, checkIdentical, oneway)
+	return operations.CheckFn(ctx, fcrypt, fsrc, checkIdentical, oneway)
 }

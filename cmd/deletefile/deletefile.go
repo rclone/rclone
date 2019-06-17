@@ -1,6 +1,8 @@
 package deletefile
 
 import (
+	"context"
+
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
@@ -26,11 +28,11 @@ it will always be removed.
 			if fileName == "" {
 				return errors.Errorf("%s is a directory or doesn't exist", args[0])
 			}
-			fileObj, err := fs.NewObject(fileName)
+			fileObj, err := fs.NewObject(context.Background(), fileName)
 			if err != nil {
 				return err
 			}
-			return operations.DeleteFile(fileObj)
+			return operations.DeleteFile(context.Background(), fileObj)
 		})
 	},
 }
