@@ -6,6 +6,7 @@ import (
 	gohash "hash"
 	"io"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -28,6 +29,8 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/object"
+	"github.com/ncw/rclone/fs/operations"
 
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
@@ -93,6 +96,80 @@ func init() {
 				Help:  "Ignore and continue.",
 			}},
 		}, {
+			Name:     "fastput_enable",
+			Default:  false,
+			Advanced: false,
+			Help: `Let mailru skip upload if another file with the same hash is present.
+
+Please note that this feature requires local memory or disk space
+to calculate content hash and decide whether full upload is required.
+Also note that if rclone does not know file size in advance (e.g. in case of
+streaming uploads), it will not even try this optimization.`,
+			Examples: []fs.OptionExample{{
+				Value: "true",
+				Help:  "Enable",
+			}, {
+				Value: "false",
+				Help:  "Disable",
+			}},
+		}, {
+			Name:     "fastput_patterns",
+			Default:  "*.mkv,*.avi,*.mp4,*.mp3,*.pdf,*.zip,*.gz,*.rar",
+			Advanced: true,
+			Help: `Comma separated list of file name patterns eligible for fast upload.
+Patterns are case insensitive and can contain '*' or '?' meta characters.`,
+			Examples: []fs.OptionExample{{
+				Value: "*",
+				Help:  "Any file name will be allowed for fast upload.",
+			}, {
+				Value: "*.mkv,*.avi,*.mp4",
+				Help:  "Only common video files will be tried for fast upload.",
+			}, {
+				Value: "*.zip,*.gz,*.rar",
+				Help:  "Only common archive formats will be tried for fast upload.",
+			}},
+		}, {
+			Name:     "fastput_min_size",
+			Default:  fs.SizeSuffix(100 * 1024),
+			Advanced: true,
+			Help: `If you upload lots of small files, you can avoid the hassle
+of preliminary hashing required for fast uploads.`,
+			Examples: []fs.OptionExample{{
+				Value: "0",
+				Help:  "Any file size will be allowed for fast upload.",
+			}, {
+				Value: "1M",
+				Help:  "Files smaller than 1Mb will always be uploaded directly.",
+			}},
+		}, {
+			Name:     "fastput_max_size",
+			Default:  fs.SizeSuffix(4 * 1024 * 1024 * 1024),
+			Advanced: true,
+			Help: `Since preliminary hashing can exhaust you RAM or disk space,
+you can disable fast uploads for very large files.`,
+			Examples: []fs.OptionExample{{
+				Value: "1G",
+				Help:  "Files larger that 1Gb will always be uploaded directly.",
+			}, {
+				Value: "4G",
+				Help:  "Choose this option if you have less than 4Gb free on local disk.",
+			}},
+		}, {
+			Name:     "fastput_max_memory",
+			Default:  fs.SizeSuffix(16 * 1024 * 1024),
+			Advanced: true,
+			Help:     `Files larger than the size given below will always be hashed on disk.`,
+			Examples: []fs.OptionExample{{
+				Value: "0",
+				Help:  "Preliminary hash calculation will always be done on disk.",
+			}, {
+				Value: "16M",
+				Help:  "You cannot dedicate more than 10Mb RAM for preliminary hash calculation.",
+			}, {
+				Value: "256M",
+				Help:  "You have at most 256Mb RAM free for hash calculations.",
+			}},
+		}, {
 			Name:     "user_agent",
 			Default:  api.DefaultUserAgent,
 			Advanced: true,
@@ -111,11 +188,16 @@ List of supported options: nogzip, insecure, binlist, lsnames.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Username  string `config:"username"`
-	Password  string `config:"password"`
-	UserAgent string `config:"user_agent"`
-	CheckHash bool   `config:"check_hash"`
-	Debug     string `config:"debug"`
+	Username        string        `config:"username"`
+	Password        string        `config:"password"`
+	UserAgent       string        `config:"user_agent"`
+	CheckHash       bool          `config:"check_hash"`
+	FastputEnable   bool          `config:"fastput_enable"`
+	FastputPatterns string        `config:"fastput_patterns"`
+	FastputMinSize  fs.SizeSuffix `config:"fastput_min_size"`
+	FastputMaxSize  fs.SizeSuffix `config:"fastput_max_size"`
+	FastputMaxMem   fs.SizeSuffix `config:"fastput_max_memory"`
+	Debug           string        `config:"debug"`
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -166,6 +248,7 @@ type Fs struct {
 	name        string
 	root        string             // root path
 	opt         Options            // parsed options
+	fastGlobs   []string           // list of file name patterns eligible for fast put
 	features    *fs.Features       // optional features
 	srv         *rest.Client       // REST API client
 	cli         *http.Client       // underlying HTTP client (for authorize)
@@ -205,6 +288,21 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		root: root,
 		opt:  *opt,
 		m:    m,
+	}
+
+	uniqueValidPatterns := make(map[string]interface{})
+	for _, pattern := range strings.Split(opt.FastputPatterns, ",") {
+		pattern = strings.ToLower(strings.TrimSpace(pattern))
+		if pattern == "" {
+			continue
+		}
+		if _, err := filepath.Match(pattern, ""); err != nil {
+			return nil, fmt.Errorf("invalid file name pattern %q", pattern)
+		}
+		uniqueValidPatterns[pattern] = nil
+	}
+	for pattern := range uniqueValidPatterns {
+		f.fastGlobs = append(f.fastGlobs, pattern)
 	}
 
 	f.pacer = fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer)))
@@ -1353,9 +1451,10 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 // Copy the reader into the object updating modTime and size
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	wrapIn := in
 	size := src.Size()
 	if size < 0 {
-		return errors.New("mail.ru does not support streaming uploads")
+		return errors.New("mailru does not support streaming uploads")
 	}
 
 	err := o.fs.mkParentDirs(o.absPath())
@@ -1369,18 +1468,73 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		newHash  []byte
 	)
 
+	// Check whether file is eligible for fast put
+	tryFast := o.fs.eligibleForFastPut(o.Remote(), size)
+
+	// Attempt to put by hash from memory
+	if tryFast && size <= int64(o.fs.opt.FastputMaxMem) {
+		//fs.Debugf(o, "attempt to put hash from memory")
+		fileBuf, err = ioutil.ReadAll(in)
+		if err != nil {
+			return err
+		}
+		fileHash = mrhash.Sum(fileBuf)
+		if o.putByHash(fileHash, src, "memory") {
+			return nil
+		}
+		fs.Debugf(o, "Cannot put by hash from memory, performing upload")
+		wrapIn = bytes.NewReader(fileBuf)
+		tryFast = false
+	}
+
+	// Attempt to put by hash using a spool file
+	if tryFast {
+		tmpFs, err := fs.TemporaryLocalFs()
+		if err != nil {
+			fs.Infof(tmpFs, "Failed to create spool FS: %v", err)
+		} else {
+			defer func() {
+				if err := operations.Purge(tmpFs, ""); err != nil {
+					fs.Infof(tmpFs, "Failed to cleanup spool FS: %v", err)
+				}
+			}()
+
+			spoolFile, mrHash, err := makeTempFile(tmpFs, wrapIn, src)
+			if err != nil {
+				return errors.Wrap(err, "Failed to create spool file")
+			}
+			if o.putByHash(mrHash, src, "spool") {
+				// If put by hash is successful, ignore transitive error
+				return nil
+			}
+			if wrapIn, err = spoolFile.Open(); err != nil {
+				return err
+			}
+			fileHash = mrHash
+		}
+		fs.Debugf(o, "Cannot put by hash from spool, performing upload")
+	}
+
+	// Upload object data
 	if size <= mrhash.Size {
 		// Skip extra upload request if data fits in the hash buffer
-		fileBuf, err = ioutil.ReadAll(in)
-		if err == nil {
+		if fileBuf == nil {
+			fileBuf, err = ioutil.ReadAll(wrapIn)
+		}
+		if fileHash == nil && err == nil {
 			fileHash = mrhash.Sum(fileBuf)
 		}
 		newHash = fileHash
 	} else {
-		hasher := mrhash.New()
-		wrapIn := io.TeeReader(in, hasher)
+		var hasher gohash.Hash
+		if fileHash == nil {
+			hasher = mrhash.New()
+			wrapIn = io.TeeReader(wrapIn, hasher)
+		}
 		newHash, err = o.upload(wrapIn, size, options...)
-		fileHash = hasher.Sum(nil)
+		if fileHash == nil && err == nil {
+			fileHash = hasher.Sum(nil)
+		}
 	}
 	if err != nil {
 		return err
@@ -1396,6 +1550,70 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	o.size = size
 	o.modTime = src.ModTime()
 	return o.addFileMetaData(true)
+}
+
+func (f *Fs) eligibleForFastPut(remote string, size int64) bool {
+	ok := f.opt.FastputEnable && size > mrhash.Size && size >= int64(f.opt.FastputMinSize) && size <= int64(f.opt.FastputMaxSize)
+	if !ok {
+		return false
+	}
+	if f.fastGlobs == nil {
+		return true
+	}
+	nameLower := strings.ToLower(strings.TrimSpace(path.Base(remote)))
+	for _, pattern := range f.fastGlobs {
+		if matches, _ := filepath.Match(pattern, nameLower); matches {
+			return true
+		}
+	}
+	return false
+}
+
+func (o *Object) putByHash(mrHash []byte, info fs.ObjectInfo, method string) bool {
+	oNew := new(Object)
+	*oNew = *o
+	oNew.mrHash = mrHash
+	oNew.size = info.Size()
+	oNew.modTime = info.ModTime()
+	if err := oNew.addFileMetaData(true); err != nil {
+		return false
+	}
+	*o = *oNew
+	fs.Debugf(o, "has been put by hash from %s", method)
+	return true
+}
+
+func makeTempFile(tmpFs fs.Fs, wrapIn io.Reader, src fs.ObjectInfo) (spoolFile fs.Object, mrHash []byte, err error) {
+	// Calculate Mailru hash in transit
+	mrHasher := mrhash.New()
+	wrapIn = io.TeeReader(wrapIn, mrHasher)
+
+	// Local temporary file system must support SHA1
+	hashType := hash.SHA1
+	hashSet := hash.Set(hashType)
+
+	// Calculate SHA1 in transit
+	shaHasher, err := hash.NewMultiHasherTypes(hashSet)
+	if err != nil {
+		return nil, nil, err
+	}
+	wrapIn = io.TeeReader(wrapIn, shaHasher)
+
+	// Copy stream into spool file
+	tmpInfo := object.NewStaticObjectInfo(src.Remote(), src.ModTime(), src.Size(), false, nil, nil)
+	hashOption := &fs.HashesOption{Hashes: hashSet}
+	if spoolFile, err = tmpFs.Put(wrapIn, tmpInfo, hashOption); err != nil {
+		return nil, nil, err
+	}
+
+	// Validate spool file
+	checkSum := shaHasher.Sums()[hashType]
+	fileSum, err := spoolFile.Hash(hashType)
+	if spoolFile.Size() != src.Size() || err != nil || checkSum == "" || fileSum != checkSum {
+		return nil, nil, mrhash.ErrorInvalidHash
+	}
+
+	return spoolFile, mrHasher.Sum(nil), nil
 }
 
 func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) ([]byte, error) {
