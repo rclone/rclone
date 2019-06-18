@@ -861,6 +861,9 @@ func (f *Fs) Mkdir(dir string) error {
 }
 
 func (f *Fs) mkDirs(path string) error {
+	if path == "/" || path == "" {
+		return nil
+	}
 	err := f.CreateDir(path)
 	switch err {
 	case nil, ErrorDirAlreadyExists:
@@ -919,6 +922,11 @@ func (f *Fs) Purge() error {
 // Refuses if `check` is set and directory has anything in.
 func (f *Fs) purgeWithCheck(dir string, check bool, opName string) error {
 	path := f.absPath(dir)
+	if path == "/" || path == "" {
+		// Mailru will not allow to purge root space returning status 400
+		return fs.ErrorNotDeletingDirs
+	}
+
 	_, dirSize, err := f.readItemMetaData(path)
 	if err != nil {
 		return errors.Wrapf(err, "%s failed", opName)
