@@ -122,7 +122,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, errors.New("multi-thread copy: can't copy zero sized file")
 	}
 
-	g, ctx := errgroup.WithContext(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 	mc := &multiThreadCopyState{
 		ctx:     ctx,
 		size:    src.Size(),
@@ -132,7 +132,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	mc.calculateChunks()
 
 	// Make accounting
-	mc.acc = accounting.NewAccount(nil, src)
+	mc.acc = accounting.Stats.NewAccount(ctx, nil, src)
 	defer fs.CheckClose(mc.acc, &err)
 
 	// create write file handle

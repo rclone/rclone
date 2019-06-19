@@ -17,6 +17,7 @@ import (
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fs/rc"
+	"github.com/ncw/rclone/fs/rc/jobs"
 	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
 )
@@ -185,7 +186,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
 	var out rc.Params
 	if isAsync {
-		out, err = rc.StartJob(call.Fn, in)
+		out, err = jobs.StartJob(call.Fn, in)
 	} else {
 		out, err = call.Fn(r.Context(), in)
 	}

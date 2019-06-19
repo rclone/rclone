@@ -76,21 +76,10 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 		return
 	}
 	accounting.Stats.Transferring(o.Remote())
-	in := accounting.NewAccount(file, o) // account the transfer (no buffering)
 	defer func() {
-		closeErr := in.Close()
-		if closeErr != nil {
-			fs.Errorf(o, "Get request: close failed: %v", closeErr)
-			if err == nil {
-				err = closeErr
-			}
-		}
-		ok := err == nil
-		accounting.Stats.DoneTransferring(o.Remote(), ok)
-		if !ok {
-			accounting.Stats.Error(err)
-		}
+		accounting.Stats.DoneTransferring(r.Context(), o.Remote(), err)
 	}()
+	in := accounting.Stats.NewAccount(r.Context(), file, o) // account the transfer (no buffering)
 
 	w.WriteHeader(code)
 

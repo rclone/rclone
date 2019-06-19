@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -54,7 +55,8 @@ Returns the following values:
 				"percentage": progress of the file transfer in percent,
 				"speed": speed in bytes/sec,
 				"speedAvg": speed in bytes/sec as an exponentially weighted moving average,
-				"size": size of the file in bytes
+				"size": size of the file in bytes,
+				"jobid": id of the job that this transfer belongs to
 			}
 		],
 	"checking": an array of names of currently active file checks
@@ -63,6 +65,38 @@ Returns the following values:
 ` + "```" + `
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
+`,
+	})
+
+	rc.Add(rc.Call{
+		Path:  "core/transferred",
+		Fn:    Stats.Transferred,
+		Title: "Returns stats about completed transfers.",
+		Help: `
+This returns all available stats
+
+	rclone rc core/transferred
+
+Returns the following values:
+
+` + "```" + `
+{
+	"transferred":  an array of completed transfers (including failed ones):
+		[
+			{
+				"name": name of the file,
+				"size": size of the file in bytes,
+				"bytes": total transferred bytes for this file,
+				"checked": if the transfer is only checked (skipped, deleted),
+				"timestamp": integer representing millisecond unix epoch,
+				"error": string description of the error (empty if successfull),
+				"jobid": id of the job that this transfer belongs to
+			}
+		]
+}
+` + "```" + `
+List is checked for outdated items periodically. Configuration for this checks are
+--accounting-transferred-expire-interval and --accounting-transferred-expire-duration
 `,
 	})
 }
@@ -89,6 +123,7 @@ type StatsInfo struct {
 	deletes           int64
 	start             time.Time
 	inProgress        *inProgress
+	transferred       *transferred
 }
 
 // NewStats creates an initialised StatsInfo
@@ -96,6 +131,7 @@ func NewStats() *StatsInfo {
 	return &StatsInfo{
 		checking:     newStringSet(fs.Config.Checkers, "checking"),
 		transferring: newStringSet(fs.Config.Transfers, "transferring"),
+		transferred:  newTransferred(),
 		start:        time.Now(),
 		inProgress:   newInProgress(),
 	}
@@ -146,6 +182,15 @@ func (s *StatsInfo) RemoteStats(ctx context.Context, in rc.Params) (out rc.Param
 	if s.errors > 0 {
 		out["lastError"] = s.lastError
 	}
+	return out, nil
+}
+
+// Transferred returns stats for completed transfers including failed ones.
+func (s *StatsInfo) Transferred(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	out = make(rc.Params)
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out["transferred"] = s.transferred.snapshots()
 	return out, nil
 }
 
@@ -385,6 +430,8 @@ func (s *StatsInfo) ResetCounters() {
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
+	s.transferred.close()
+	s.transferred = newTransferred()
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
@@ -441,9 +488,31 @@ func (s *StatsInfo) Checking(remote string) {
 	s.checking.add(remote)
 }
 
-// DoneChecking removes a check from the stats
-func (s *StatsInfo) DoneChecking(remote string) {
+// DoneChecking removes a check from the stats and adds empty entry to
+// transferred.
+func (s *StatsInfo) DoneChecking(ctx context.Context, remote string) {
 	s.checking.del(remote)
+	snap := NewNamedCheckingSnapshot(remote)
+	jobID, ok := JobIDFromContext(ctx)
+	if ok {
+		snap.JobID = jobID
+	}
+	s.transferred.add(snap)
+	s.mu.Lock()
+	s.checks++
+	s.mu.Unlock()
+}
+
+// DoneCheckingObj removes a check from the stats and adds entry to
+// transferred.
+func (s *StatsInfo) DoneCheckingObj(ctx context.Context, obj fs.Object) {
+	s.checking.del(obj.Remote())
+	snap := NewCheckingSnapshot(obj)
+	jobID, ok := JobIDFromContext(ctx)
+	if ok {
+		snap.JobID = jobID
+	}
+	s.transferred.add(snap)
 	s.mu.Lock()
 	s.checks++
 	s.mu.Unlock()
@@ -464,13 +533,32 @@ func (s *StatsInfo) Transferring(remote string) {
 // DoneTransferring removes a transfer from the stats
 //
 // if ok is true then it increments the transfers count
-func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
+func (s *StatsInfo) DoneTransferring(ctx context.Context, remote string, err error) {
+	if err != nil {
+		s.Error(err)
+	}
 	s.transferring.del(remote)
-	if ok {
+	acc := s.inProgress.get(remote)
+	if acc != nil {
+		if err := acc.Close(); err != nil {
+			fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "can't close account: %+v\n", err)
+		}
+		snap := acc.Snapshot()
+		if err != nil {
+			snap.Error = err
+		}
+		jobID, ok := JobIDFromContext(ctx)
+		if ok {
+			snap.JobID = jobID
+		}
+		s.transferred.add(snap)
+	}
+	if err == nil {
 		s.mu.Lock()
 		s.transfers++
 		s.mu.Unlock()
 	}
+	s.inProgress.clear(remote)
 }
 
 // SetCheckQueue sets the number of queued checks
@@ -495,4 +583,18 @@ func (s *StatsInfo) SetRenameQueue(n int, size int64) {
 	s.renameQueue = n
 	s.renameQueueSize = size
 	s.mu.Unlock()
+}
+
+// NewAccountSizeName makes an Account reader for an io.ReadCloser of the given
+// size and name which is registered with the StatsInfo.
+func (s *StatsInfo) NewAccountSizeName(ctx context.Context, in io.ReadCloser, size int64, name string) *Account {
+	acc := NewAccountSizeName(ctx, in, size, name)
+	s.inProgress.set(acc.name, acc)
+	return acc
+}
+
+// NewAccount makes an Account reader for an object and registers it with
+// StatsInfo.
+func (s *StatsInfo) NewAccount(ctx context.Context, in io.ReadCloser, obj fs.Object) *Account {
+	return s.NewAccountSizeName(ctx, in, obj.Size(), obj.Remote())
 }

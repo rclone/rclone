@@ -100,6 +100,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &fs.Config.MultiThreadStreams, "multi-thread-streams", "", fs.Config.MultiThreadStreams, "Max number of streams to use for multi-thread downloads.")
 	flags.DurationVarP(flagSet, &fs.Config.RcJobExpireDuration, "rc-job-expire-duration", "", fs.Config.RcJobExpireDuration, "expire finished async jobs older than this value")
 	flags.DurationVarP(flagSet, &fs.Config.RcJobExpireInterval, "rc-job-expire-interval", "", fs.Config.RcJobExpireInterval, "interval to check for expired async jobs")
+	flags.DurationVarP(flagSet, &fs.Config.TransferredExpireDuration, "accounting-transferred-expire-duration", "", fs.Config.TransferredExpireDuration, "remove transferred accounting stats older than this value")
+	flags.DurationVarP(flagSet, &fs.Config.TransferredExpireInterval, "accounting-transferred-expire-interval", "", fs.Config.TransferredExpireInterval, "interval to check for expired transferred accounting stats")
 }
 
 // SetFlags converts any flags into config which weren't straight forward

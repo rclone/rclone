@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,36 +28,32 @@ var (
 
 func TestNewAccountSizeName(t *testing.T) {
 	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
-	acc := NewAccountSizeName(in, 1, "test")
+	acc := NewAccountSizeName(context.Background(), in, 1, "test")
 	assert.Equal(t, in, acc.in)
-	assert.Equal(t, acc, Stats.inProgress.get("test"))
 	err := acc.Close()
 	assert.NoError(t, err)
-	assert.Nil(t, Stats.inProgress.get("test"))
 }
 
 func TestNewAccount(t *testing.T) {
 	obj := mockobject.Object("test")
 	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
-	acc := NewAccount(in, obj)
+	acc := NewAccount(context.Background(), in, obj)
 	assert.Equal(t, in, acc.in)
-	assert.Equal(t, acc, Stats.inProgress.get("test"))
 	err := acc.Close()
 	assert.NoError(t, err)
-	assert.Nil(t, Stats.inProgress.get("test"))
 }
 
 func TestAccountWithBuffer(t *testing.T) {
 	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
 
-	acc := NewAccountSizeName(in, -1, "test")
+	acc := Stats.NewAccountSizeName(context.Background(), in, -1, "test")
 	acc.WithBuffer()
 	// should have a buffer for an unknown size
 	_, ok := acc.in.(*asyncreader.AsyncReader)
 	require.True(t, ok)
 	assert.NoError(t, acc.Close())
 
-	acc = NewAccountSizeName(in, 1, "test")
+	acc = NewAccountSizeName(context.Background(), in, 1, "test")
 	acc.WithBuffer()
 	// should not have a buffer for a small size
 	_, ok = acc.in.(*asyncreader.AsyncReader)
@@ -66,7 +63,7 @@ func TestAccountWithBuffer(t *testing.T) {
 
 func TestAccountGetUpdateReader(t *testing.T) {
 	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
-	acc := NewAccountSizeName(in, 1, "test")
+	acc := NewAccountSizeName(context.Background(), in, 1, "test")
 
 	assert.Equal(t, in, acc.GetReader())
 
@@ -80,7 +77,7 @@ func TestAccountGetUpdateReader(t *testing.T) {
 
 func TestAccountRead(t *testing.T) {
 	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
-	acc := NewAccountSizeName(in, 1, "test")
+	acc := NewAccountSizeName(context.Background(), in, 1, "test")
 
 	assert.True(t, acc.start.IsZero())
 	assert.Equal(t, 0, acc.lpBytes)
@@ -112,7 +109,7 @@ func TestAccountRead(t *testing.T) {
 
 func TestAccountString(t *testing.T) {
 	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
-	acc := NewAccountSizeName(in, 3, "test")
+	acc := NewAccountSizeName(context.Background(), in, 3, "test")
 
 	// FIXME not an exhaustive test!
 
@@ -131,7 +128,7 @@ func TestAccountString(t *testing.T) {
 // Test the Accounter interface methods on Account and accountStream
 func TestAccountAccounter(t *testing.T) {
 	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
-	acc := NewAccountSizeName(in, 3, "test")
+	acc := NewAccountSizeName(context.Background(), in, 3, "test")
 
 	assert.True(t, in == acc.OldStream())
 
@@ -195,7 +192,7 @@ func TestAccountMaxTransfer(t *testing.T) {
 	Stats.ResetCounters()
 
 	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
-	acc := NewAccountSizeName(in, 1, "test")
+	acc := NewAccountSizeName(context.Background(), in, 1, "test")
 
 	var b = make([]byte, 10)
 

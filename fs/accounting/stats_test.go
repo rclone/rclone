@@ -1,12 +1,16 @@
 package accounting
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"testing"
 	"time"
 
 	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fstest/mockobject"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -116,4 +120,34 @@ func TestStatsError(t *testing.T) {
 	assert.False(t, s.HadFatalError())
 	assert.False(t, s.HadRetryError())
 	assert.Equal(t, time.Time{}, s.RetryAfter())
+}
+
+func TestStatsNewAccount(t *testing.T) {
+	s := NewStats()
+	obj := mockobject.Object("test")
+	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+	acc := s.NewAccount(context.Background(), in, obj)
+	assert.Equal(t, in, acc.in)
+	assert.Equal(t, acc, s.inProgress.get("test"))
+}
+
+func TestStatsNewAccountSizeName(t *testing.T) {
+	s := NewStats()
+	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+	acc := s.NewAccountSizeName(context.Background(), in, 1, "test")
+	assert.Equal(t, in, acc.in)
+	assert.Equal(t, acc, s.inProgress.get("test"))
+}
+
+func TestStatsDoneTransferring(t *testing.T) {
+	s := NewStats()
+	obj := mockobject.Object("test")
+	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+	acc := s.NewAccount(context.Background(), in, obj)
+	assert.Equal(t, in, acc.in)
+	assert.Equal(t, acc, s.inProgress.get("test"))
+	s.DoneTransferring(context.Background(), "test", nil)
+	assert.Nil(t, s.inProgress.get("test"))
+	assert.Len(t, s.transferred.items, 1)
+	assert.Equal(t, "test", s.transferred.items[0].Name)
 }

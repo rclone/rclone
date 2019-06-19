@@ -255,7 +255,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 				}
 			}
 		}
-		accounting.Stats.DoneChecking(src.Remote())
+		accounting.Stats.DoneCheckingObj(s.ctx, src)
 	}
 }
 
@@ -591,7 +591,7 @@ func (s *syncCopyMove) makeRenameMap() {
 					if hash != "" {
 						s.pushRenameMap(hash, obj)
 					}
-					accounting.Stats.DoneChecking(obj.Remote())
+					accounting.Stats.DoneCheckingObj(s.ctx, obj)
 				}
 			}
 		}()

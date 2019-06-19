@@ -38,66 +38,68 @@ var (
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	LogLevel               LogLevel
-	StatsLogLevel          LogLevel
-	DryRun                 bool
-	CheckSum               bool
-	SizeOnly               bool
-	IgnoreTimes            bool
-	IgnoreExisting         bool
-	IgnoreErrors           bool
-	ModifyWindow           time.Duration
-	Checkers               int
-	Transfers              int
-	ConnectTimeout         time.Duration // Connect timeout
-	Timeout                time.Duration // Data channel timeout
-	Dump                   DumpFlags
-	InsecureSkipVerify     bool // Skip server certificate verification
-	DeleteMode             DeleteMode
-	MaxDelete              int64
-	TrackRenames           bool // Track file renames.
-	LowLevelRetries        int
-	UpdateOlder            bool // Skip files that are newer on the destination
-	NoGzip                 bool // Disable compression
-	MaxDepth               int
-	IgnoreSize             bool
-	IgnoreChecksum         bool
-	IgnoreCaseSync         bool
-	NoTraverse             bool
-	NoUpdateModTime        bool
-	DataRateUnit           string
-	BackupDir              string
-	Suffix                 string
-	SuffixKeepExtension    bool
-	UseListR               bool
-	BufferSize             SizeSuffix
-	BwLimit                BwTimetable
-	TPSLimit               float64
-	TPSLimitBurst          int
-	BindAddr               net.IP
-	DisableFeatures        []string
-	UserAgent              string
-	Immutable              bool
-	AutoConfirm            bool
-	StreamingUploadCutoff  SizeSuffix
-	StatsFileNameLength    int
-	AskPassword            bool
-	UseServerModTime       bool
-	MaxTransfer            SizeSuffix
-	MaxBacklog             int
-	StatsOneLine           bool
-	StatsOneLineDate       bool   // If we want a date prefix at all
-	StatsOneLineDateFormat string // If we want to customize the prefix
-	Progress               bool
-	Cookie                 bool
-	UseMmap                bool
-	CaCert                 string // Client Side CA
-	ClientCert             string // Client Side Cert
-	ClientKey              string // Client Side Key
-	MultiThreadCutoff      SizeSuffix
-	MultiThreadStreams     int
-	RcJobExpireDuration    time.Duration
-	RcJobExpireInterval    time.Duration
+	LogLevel                  LogLevel
+	StatsLogLevel             LogLevel
+	DryRun                    bool
+	CheckSum                  bool
+	SizeOnly                  bool
+	IgnoreTimes               bool
+	IgnoreExisting            bool
+	IgnoreErrors              bool
+	ModifyWindow              time.Duration
+	Checkers                  int
+	Transfers                 int
+	ConnectTimeout            time.Duration // Connect timeout
+	Timeout                   time.Duration // Data channel timeout
+	Dump                      DumpFlags
+	InsecureSkipVerify        bool // Skip server certificate verification
+	DeleteMode                DeleteMode
+	MaxDelete                 int64
+	TrackRenames              bool // Track file renames.
+	LowLevelRetries           int
+	UpdateOlder               bool // Skip files that are newer on the destination
+	NoGzip                    bool // Disable compression
+	MaxDepth                  int
+	IgnoreSize                bool
+	IgnoreChecksum            bool
+	IgnoreCaseSync            bool
+	NoTraverse                bool
+	NoUpdateModTime           bool
+	DataRateUnit              string
+	BackupDir                 string
+	Suffix                    string
+	SuffixKeepExtension       bool
+	UseListR                  bool
+	BufferSize                SizeSuffix
+	BwLimit                   BwTimetable
+	TPSLimit                  float64
+	TPSLimitBurst             int
+	BindAddr                  net.IP
+	DisableFeatures           []string
+	UserAgent                 string
+	Immutable                 bool
+	AutoConfirm               bool
+	StreamingUploadCutoff     SizeSuffix
+	StatsFileNameLength       int
+	AskPassword               bool
+	UseServerModTime          bool
+	MaxTransfer               SizeSuffix
+	MaxBacklog                int
+	StatsOneLine              bool
+	StatsOneLineDate          bool   // If we want a date prefix at all
+	StatsOneLineDateFormat    string // If we want to customize the prefix
+	Progress                  bool
+	Cookie                    bool
+	UseMmap                   bool
+	CaCert                    string // Client Side CA
+	ClientCert                string // Client Side Cert
+	ClientKey                 string // Client Side Key
+	MultiThreadCutoff         SizeSuffix
+	MultiThreadStreams        int
+	RcJobExpireDuration       time.Duration
+	RcJobExpireInterval       time.Duration
+	TransferredExpireDuration time.Duration
+	TransferredExpireInterval time.Duration
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -133,6 +135,8 @@ func NewConfig() *ConfigInfo {
 	c.MultiThreadStreams = 4
 	c.RcJobExpireDuration = 60 * time.Second
 	c.RcJobExpireInterval = 10 * time.Second
+	c.TransferredExpireDuration = 60 * time.Second
+	c.TransferredExpireInterval = 10 * time.Second
 
 	return c
 }

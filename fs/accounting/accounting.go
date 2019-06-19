@@ -2,6 +2,8 @@
 package accounting
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -14,9 +16,71 @@ import (
 	"github.com/pkg/errors"
 )
 
+type jobCtx int64
+
+const jobKey jobCtx = 1
+
+// WithJobID returns copy of the parent with assigned jobID.
+func WithJobID(parent context.Context, jobID int64) context.Context {
+	return context.WithValue(parent, jobKey, jobID)
+}
+
+// JobIDFromContext returns job ID from the context if it's available.
+func JobIDFromContext(ctx context.Context) (int64, bool) {
+	jobID, ok := ctx.Value(jobKey).(int64)
+	return jobID, ok
+}
+
 // ErrorMaxTransferLimitReached is returned from Read when the max
 // transfer limit is reached.
 var ErrorMaxTransferLimitReached = fserrors.FatalError(errors.New("Max transfer limit reached as set by --max-transfer"))
+
+// AccountSnapshot represents state of an account at point in time.
+type AccountSnapshot struct {
+	Name      string `json:"name"`
+	Size      int64  `json:"size"`
+	Bytes     int64  `json:"bytes"`
+	Checked   bool   `json:"checked"`
+	Timestamp msTime `json:"timestamp"`
+	Error     error  `json:"-"`
+	JobID     int64  `json:"jobid"`
+}
+
+// MarshalJSON implements json.Marshaler interface.
+func (as AccountSnapshot) MarshalJSON() ([]byte, error) {
+	err := ""
+	if as.Error != nil {
+		err = as.Error.Error()
+	}
+	type Alias AccountSnapshot
+	return json.Marshal(&struct {
+		Error string `json:"error"`
+		Alias
+	}{
+		Error: err,
+		Alias: (Alias)(as),
+	})
+}
+
+// NewCheckingSnapshot creates snapshot for checked object.
+func NewCheckingSnapshot(obj fs.Object) AccountSnapshot {
+	return AccountSnapshot{
+		Name:      obj.Remote(),
+		Size:      obj.Size(),
+		Bytes:     obj.Size(),
+		Checked:   true,
+		Timestamp: msTime(time.Now().UTC()),
+	}
+}
+
+// NewNamedCheckingSnapshot creates snapshot for checked object.
+func NewNamedCheckingSnapshot(name string) AccountSnapshot {
+	return AccountSnapshot{
+		Name:      name,
+		Checked:   true,
+		Timestamp: msTime(time.Now().UTC()),
+	}
+}
 
 // Account limits and accounts for one transfer
 type Account struct {
@@ -25,12 +89,14 @@ type Account struct {
 	// in http transport calls Read() after Do() returns on
 	// CancelRequest so this race can happen when it apparently
 	// shouldn't.
-	mu      sync.Mutex
-	in      io.Reader
-	origIn  io.ReadCloser
-	close   io.Closer
-	size    int64
-	name    string
+	mu     sync.Mutex
+	in     io.Reader
+	origIn io.ReadCloser
+	close  io.Closer
+	size   int64
+	name   string
+	jobID  int64
+
 	statmu  sync.Mutex    // Separate mutex for stat values.
 	bytes   int64         // Total number of bytes read
 	max     int64         // if >=0 the max number of bytes to transfer
@@ -47,7 +113,8 @@ const averagePeriod = 16 // period to do exponentially weighted averages over
 
 // NewAccountSizeName makes a Account reader for an io.ReadCloser of
 // the given size and name
-func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
+func NewAccountSizeName(ctx context.Context, in io.ReadCloser, size int64, name string) *Account {
+	jobID, _ := JobIDFromContext(ctx)
 	acc := &Account{
 		in:     in,
 		close:  in,
@@ -58,15 +125,15 @@ func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
 		avg:    0,
 		lpTime: time.Now(),
 		max:    int64(fs.Config.MaxTransfer),
+		jobID:  jobID,
 	}
 	go acc.averageLoop()
-	Stats.inProgress.set(acc.name, acc)
 	return acc
 }
 
 // NewAccount makes a Account reader for an object
-func NewAccount(in io.ReadCloser, obj fs.Object) *Account {
-	return NewAccountSizeName(in, obj.Size(), obj.Remote())
+func NewAccount(ctx context.Context, in io.ReadCloser, obj fs.Object) *Account {
+	return NewAccountSizeName(ctx, in, obj.Size(), obj.Remote())
 }
 
 // WithBuffer - If the file is above a certain size it adds an Async reader
@@ -219,7 +286,6 @@ func (acc *Account) Close() error {
 	}
 	acc.closed = true
 	close(acc.exit)
-	Stats.inProgress.clear(acc.name)
 	if acc.close == nil {
 		return nil
 	}
@@ -346,8 +412,22 @@ func (acc *Account) RemoteStats() (out map[string]interface{}) {
 		percentageDone = int(100 * float64(a) / float64(b))
 	}
 	out["percentage"] = percentageDone
+	if acc.jobID > 0 {
+		out["jobid"] = acc.jobID
+	}
 
 	return out
+}
+
+// Snapshot produces stats for this account at point in time.
+func (acc *Account) Snapshot() AccountSnapshot {
+	a, b := acc.progress()
+	return AccountSnapshot{
+		Name:      acc.name,
+		Size:      b,
+		Bytes:     a,
+		Timestamp: msTime(time.Now().UTC()),
+	}
 }
 
 // OldStream returns the top io.Reader
