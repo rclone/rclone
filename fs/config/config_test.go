@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -291,4 +292,22 @@ func TestMatchProvider(t *testing.T) {
 		got := matchProvider(test.config, test.provider)
 		assert.Equal(t, test.want, got, what)
 	}
+}
+
+func TestFileRefresh(t *testing.T) {
+	defer testConfigFile(t, "refresh.conf")()
+	require.NoError(t, CreateRemote("refresh_test", "config_test_remote", rc.Params{
+		"bool": true,
+	}))
+	b, err := ioutil.ReadFile(ConfigPath)
+	assert.NoError(t, err)
+
+	b = bytes.Replace(b, []byte("refresh_test"), []byte("refreshed_test"), 1)
+	err = ioutil.WriteFile(ConfigPath, b, 0644)
+	assert.NoError(t, err)
+
+	assert.NotEqual(t, []string{"refreshed_test"}, configFile.GetSectionList())
+	err = FileRefresh()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"refreshed_test"}, configFile.GetSectionList())
 }
