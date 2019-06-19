@@ -1340,6 +1340,16 @@ func FileDeleteKey(section, key string) bool {
 
 var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.*?)_TYPE=.*$`)
 
+// FileRefresh ensures the latest configFile is loaded from disk
+func FileRefresh() error {
+	reloadedConfigFile, err := loadConfigFile()
+	if err != nil {
+		return err
+	}
+	configFile = reloadedConfigFile
+	return nil
+}
+
 // FileSections returns the sections in the config file
 // including any defined by environment variables.
 func FileSections() []string {
