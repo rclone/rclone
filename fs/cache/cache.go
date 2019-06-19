@@ -27,12 +27,10 @@ type cacheEntry struct {
 // Get gets a fs.Fs named fsString either from the cache or creates it afresh
 func Get(fsString string) (f fs.Fs, err error) {
 	fsCacheMu.Lock()
-	defer fsCacheMu.Unlock()
 	entry, ok := fsCache[fsString]
 	if !ok {
 		fsCacheMu.Unlock() // Unlock in case Get is called recursively
 		f, err = fsNewFs(fsString)
-		fsCacheMu.Lock()
 		if err != nil && err != fs.ErrorIsFile {
 			return f, err
 		}
@@ -41,8 +39,10 @@ func Get(fsString string) (f fs.Fs, err error) {
 			fsString: fsString,
 			err:      err,
 		}
+		fsCacheMu.Lock()
 		fsCache[fsString] = entry
 	}
+	defer fsCacheMu.Unlock()
 	entry.lastUsed = time.Now()
 	if !expireRunning {
 		time.AfterFunc(cacheExpireInterval, cacheExpire)
