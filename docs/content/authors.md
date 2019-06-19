@@ -264,3 +264,4 @@ Contributors
   * forgems <forgems@gmail.com>
   * Florian Apolloner <florian@apolloner.eu>
   * Aleksandar Jankovic <office@ajankovic.com>
+  * Maran <maran@protonmail.com>
