@@ -64,6 +64,20 @@ func TestCopy(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 }
 
+func TestCopyMissingDirectory(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	r.Mkdir(context.Background(), r.Fremote)
+
+	nonExistingFs, err := fs.NewFs("/non-existing")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = CopyDir(context.Background(), r.Fremote, nonExistingFs, false)
+	require.Error(t, err)
+}
+
 // Now with --no-traverse
 func TestCopyNoTraverse(t *testing.T) {
 	r := fstest.NewRun(t)

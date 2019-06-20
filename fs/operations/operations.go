@@ -778,7 +778,7 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 		Callback: c,
 	}
 	fs.Infof(fdst, "Waiting for checks to finish")
-	m.Run()
+	err := m.Run()
 
 	if c.dstFilesMissing > 0 {
 		fs.Logf(fdst, "%d files missing", c.dstFilesMissing)
@@ -797,7 +797,7 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 	if c.differences > 0 {
 		return errors.Errorf("%d differences found", c.differences)
 	}
-	return nil
+	return err
 }
 
 // Check the files in fsrc and fdst according to Size and hash

@@ -666,7 +666,7 @@ func (s *syncCopyMove) run() error {
 		Callback:      s,
 		DstIncludeAll: filter.Active.Opt.DeleteExcluded,
 	}
-	m.Run()
+	s.processError(m.Run())
 
 	s.stopTrackRenames()
 	if s.trackRenames {
