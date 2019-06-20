@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pkg/errors"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/filter"
 	"github.com/ncw/rclone/fs/list"
@@ -110,7 +112,7 @@ type listDirJob struct {
 }
 
 // Run starts the matching process off
-func (m *March) Run() {
+func (m *March) Run() error {
 	m.init()
 
 	srcDepth := fs.Config.MaxDepth
@@ -121,6 +123,10 @@ func (m *March) Run() {
 	if filter.Active.Opt.DeleteExcluded {
 		dstDepth = fs.MaxLevel
 	}
+
+	var mu sync.Mutex // Protects vars below
+	var jobError error
+	var errCount int
 
 	// Start some directory listing go routines
 	var wg sync.WaitGroup         // sync closing of go routines
@@ -138,7 +144,16 @@ func (m *March) Run() {
 					if !ok {
 						return
 					}
-					jobs := m.processJob(job)
+					jobs, err := m.processJob(job)
+					if err != nil {
+						mu.Lock()
+						// Keep reference only to the first encountered error
+						if jobError == nil {
+							jobError = err
+						}
+						errCount++
+						mu.Unlock()
+					}
 					if len(jobs) > 0 {
 						traversing.Add(len(jobs))
 						go func() {
@@ -178,6 +193,11 @@ func (m *March) Run() {
 	traversing.Wait()
 	close(in)
 	wg.Wait()
+
+	if errCount > 1 {
+		return errors.Wrapf(jobError, "march failed with %d error(s): first error", errCount)
+	}
+	return jobError
 }
 
 // Check to see if the context has been cancelled
@@ -339,8 +359,9 @@ func matchListings(srcListEntries, dstListEntries fs.DirEntries, transforms []ma
 // more jobs
 //
 // returns errors using processError
-func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
+func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	var (
+		jobs                   []listDirJob
 		srcList, dstList       fs.DirEntries
 		srcListErr, dstListErr error
 		wg                     sync.WaitGroup
@@ -367,14 +388,14 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 	if srcListErr != nil {
 		fs.Errorf(job.srcRemote, "error reading source directory: %v", srcListErr)
 		fs.CountError(srcListErr)
-		return nil
+		return nil, srcListErr
 	}
 	if dstListErr == fs.ErrorDirNotFound {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
 		fs.Errorf(job.dstRemote, "error reading destination directory: %v", dstListErr)
 		fs.CountError(dstListErr)
-		return nil
+		return nil, dstListErr
 	}
 
 	// If NoTraverse is set, then try to find a matching object
@@ -395,7 +416,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 	srcOnly, dstOnly, matches := matchListings(srcList, dstList, m.transforms)
 	for _, src := range srcOnly {
 		if m.aborting() {
-			return nil
+			return nil, m.Ctx.Err()
 		}
 		recurse := m.Callback.SrcOnly(src)
 		if recurse && job.srcDepth > 0 {
@@ -409,7 +430,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 	}
 	for _, dst := range dstOnly {
 		if m.aborting() {
-			return nil
+			return nil, m.Ctx.Err()
 		}
 		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {
@@ -422,7 +443,7 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 	}
 	for _, match := range matches {
 		if m.aborting() {
-			return nil
+			return nil, m.Ctx.Err()
 		}
 		recurse := m.Callback.Match(m.Ctx, match.dst, match.src)
 		if recurse && job.srcDepth > 0 && job.dstDepth > 0 {
@@ -434,5 +455,5 @@ func (m *March) processJob(job listDirJob) (jobs []listDirJob) {
 			})
 		}
 	}
-	return jobs
+	return jobs, nil
 }

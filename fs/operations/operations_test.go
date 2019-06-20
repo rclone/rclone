@@ -378,6 +378,19 @@ func TestCheck(t *testing.T) {
 	testCheck(t, operations.Check)
 }
 
+func TestCheckFsError(t *testing.T) {
+	dstFs, err := fs.NewFs("non-existent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srcFs, err := fs.NewFs("non-existent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = operations.Check(context.Background(), dstFs, srcFs, false)
+	require.Error(t, err)
+}
+
 func TestCheckDownload(t *testing.T) {
 	testCheck(t, operations.CheckDownload)
 }
