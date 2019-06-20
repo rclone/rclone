@@ -20,6 +20,7 @@ docs = [
     "filtering.md",
     "rc.md",
     "overview.md",
+    "flags.md",
 
     # Keep these alphabetical by full name
     "alias.md",

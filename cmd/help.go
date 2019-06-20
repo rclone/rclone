@@ -33,6 +33,7 @@ documentation, changelog and configuration walkthroughs.
 		atexit.Run()
 	},
 	BashCompletionFunction: bashCompletionFunc,
+	DisableAutoGenTag:      true,
 }
 
 const (
@@ -74,6 +75,10 @@ __rclone_custom_func() {
 `
 )
 
+// GeneratingDocs is set by rclone gendocs to alter the format of the
+// output suitable for the documentation.
+var GeneratingDocs = false
+
 // root help command
 var helpCommand = &cobra.Command{
 	Use:   "help",
@@ -100,7 +105,11 @@ var helpFlags = &cobra.Command{
 			}
 			flagsRe = re
 		}
-		Root.SetOutput(os.Stdout)
+		if GeneratingDocs {
+			Root.SetUsageTemplate(docFlagsTemplate)
+		} else {
+			Root.SetOutput(os.Stdout)
+		}
 		_ = command.Usage()
 	},
 }
@@ -220,6 +229,35 @@ Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
 Use "rclone [command] --help" for more information about a command.
 Use "rclone help flags" for to see the global flags.
 Use "rclone help backends" for a list of supported services.
+`
+
+var docFlagsTemplate = `---
+title: "Global Flags"
+description: "Rclone Global Flags"
+date: "YYYY-MM-DD"
+---
+
+# Global Flags
+
+This describes the global flags available to every rclone command
+split into two groups, non backend and backend flags.
+
+## Non Backend Flags
+
+These flags are available for every command.
+
+` + "```" + `
+{{(backendFlags . false).FlagUsages | trimTrailingWhitespaces}}
+` + "```" + `
+
+## Backend Flags
+
+These flags are available for every command. They control the backends
+and may be set in the config file.
+
+` + "```" + `
+{{(backendFlags . true).FlagUsages | trimTrailingWhitespaces}}
+` + "```" + `
 `
 
 // show all the backends
