@@ -16,6 +16,8 @@ import (
 
 func testConfigFile(t *testing.T, configFileName string) func() {
 	configKey = nil // reset password
+	_ = os.Unsetenv("_RCLONE_CONFIG_KEY_FILE")
+	_ = os.Unsetenv("RCLONE_CONFIG_PASS")
 	// create temp config file
 	tempFile, err := ioutil.TempFile("", configFileName)
 	assert.NoError(t, err)
@@ -63,6 +65,9 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 		ReadLine = oldReadLine
 		fs.Config = oldConfig
 		configFile = oldConfigFile
+
+		_ = os.Unsetenv("_RCLONE_CONFIG_KEY_FILE")
+		_ = os.Unsetenv("RCLONE_CONFIG_PASS")
 	}
 }
 
