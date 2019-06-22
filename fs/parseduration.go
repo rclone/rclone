@@ -78,7 +78,7 @@ func ParseDuration(age string) (time.Duration, error) {
 	return time.Duration(period), nil
 }
 
-// String parses d into a human readable duration.
+// ReadableString parses d into a human readable duration.
 // Based on https://github.com/hako/durafmt
 func (d Duration) ReadableString() string {
 	switch d {
