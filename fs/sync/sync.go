@@ -120,7 +120,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		}
 	}
 	// Make Fs for --backup-dir if required
-	if fs.Config.BackupDir != "" {
+	if fs.Config.BackupDir != "" || fs.Config.Suffix != "" {
 		var err error
 		s.backupDir, err = operations.BackupDir(fdst, fsrc, "")
 		if err != nil {
