@@ -1,0 +1,20 @@
+language: go
+
+go:
+ - go1.4.3
+ - go1.5.4
+ - go1.6.4
+ - go1.7.6
+ - go1.8.7
+ - go1.9.4
+ - go1.10
+
+before_install:
+ - export DISPLAY=:99.0
+ - sh -e /etc/init.d/xvfb start
+
+script:
+ - sudo apt-get install xsel
+ - go test -v .
+ - sudo apt-get install xclip
+ - go test -v .

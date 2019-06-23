@@ -23,6 +23,8 @@ github.com/anacrolix/dms/soap
 github.com/anacrolix/dms/ssdp
 github.com/anacrolix/dms/upnp
 github.com/anacrolix/dms/upnpav
+# github.com/atotto/clipboard v0.1.2
+github.com/atotto/clipboard
 # github.com/aws/aws-sdk-go v1.19.11
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
