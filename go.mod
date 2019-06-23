@@ -10,6 +10,7 @@ require (
 	github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 	github.com/abbot/go-http-auth v0.4.0
 	github.com/anacrolix/dms v0.0.0-20180117034613-8af4925bffb5
+	github.com/atotto/clipboard v0.1.2
 	github.com/aws/aws-sdk-go v1.19.11
 	github.com/billziss-gh/cgofuse v1.1.0
 	github.com/coreos/bbolt v1.3.2
