@@ -8,9 +8,11 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"reflect"
 	"sort"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	runewidth "github.com/mattn/go-runewidth"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/ncdu/scan"
@@ -42,7 +44,7 @@ structure as it goes along.
 
 Here are the keys - press '?' to toggle the help on and off
 
-    ` + strings.Join(helpText[1:], "\n    ") + `
+    ` + strings.Join(helpText()[1:], "\n    ") + `
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
@@ -60,19 +62,28 @@ UI won't respond in the meantime since the deletion is done synchronously.
 	},
 }
 
-// help text
-var helpText = []string{
-	"rclone ncdu",
-	" ↑,↓ or k,j to Move",
-	" →,l to enter",
-	" ←,h to return",
-	" c toggle counts",
-	" g toggle graph",
-	" n,s,C sort by name,size,count",
-	" d delete file/directory",
-	" ^L refresh screen",
-	" ? to toggle help on and off",
-	" q/ESC/c-C to quit",
+// helpText returns help text for ncdu
+func helpText() (tr []string) {
+	tr = []string{
+		"rclone ncdu",
+		" ↑,↓ or k,j to Move",
+		" →,l to enter",
+		" ←,h to return",
+		" c toggle counts",
+		" g toggle graph",
+		" n,s,C sort by name,size,count",
+		" d delete file/directory",
+	}
+	if !clipboard.Unsupported {
+		tr = append(tr, " y copy current path to clipbard")
+	}
+	tr = append(tr, []string{
+		" Y display current path",
+		" ^L refresh screen",
+		" ? to toggle help on and off",
+		" q/ESC/c-C to quit",
+	}...)
+	return
 }
 
 // UI contains the state of the user interface
@@ -462,6 +473,19 @@ func (u *UI) delete() {
 	}
 }
 
+func (u *UI) displayPath() {
+	u.togglePopupBox([]string{
+		"Current Path",
+		u.path,
+	})
+}
+
+func (u *UI) copyPath() {
+	if !clipboard.Unsupported {
+		_ = clipboard.WriteAll(u.path)
+	}
+}
+
 // Sort by the configured sort method
 type ncduSort struct {
 	sortPerm []int
@@ -591,7 +615,7 @@ func (u *UI) popupBox(text []string) {
 
 // togglePopupBox shows a box with the text in
 func (u *UI) togglePopupBox(text []string) {
-	if u.showBox {
+	if u.showBox && reflect.DeepEqual(u.boxText, text) {
 		u.showBox = false
 	} else {
 		u.popupBox(text)
@@ -718,10 +742,14 @@ outer:
 					u.toggleSort(&u.sortBySize)
 				case 'C':
 					u.toggleSort(&u.sortByCount)
+				case 'y':
+					u.copyPath()
+				case 'Y':
+					u.displayPath()
 				case 'd':
 					u.delete()
 				case '?':
-					u.togglePopupBox(helpText)
+					u.togglePopupBox(helpText())
 
 				// Refresh the screen. Not obvious what key to map
 				// this onto, but ^L is a common choice.
