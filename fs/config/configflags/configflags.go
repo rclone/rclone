@@ -68,7 +68,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &fs.Config.NoTraverse, "no-traverse", "", fs.Config.NoTraverse, "Don't traverse destination file system on copy.")
 	flags.BoolVarP(flagSet, &fs.Config.NoUpdateModTime, "no-update-modtime", "", fs.Config.NoUpdateModTime, "Don't update destination mod-time if files identical.")
 	flags.StringVarP(flagSet, &fs.Config.BackupDir, "backup-dir", "", fs.Config.BackupDir, "Make backups into hierarchy based in DIR.")
-	flags.StringVarP(flagSet, &fs.Config.Suffix, "suffix", "", fs.Config.Suffix, "Suffix for use with --backup-dir.")
+	flags.StringVarP(flagSet, &fs.Config.Suffix, "suffix", "", fs.Config.Suffix, "Suffix to add to changed files.")
 	flags.BoolVarP(flagSet, &fs.Config.SuffixKeepExtension, "suffix-keep-extension", "", fs.Config.SuffixKeepExtension, "Preserve the extension when using --suffix.")
 	flags.BoolVarP(flagSet, &fs.Config.UseListR, "fast-list", "", fs.Config.UseListR, "Use recursive list if available. Uses more memory but fewer transactions.")
 	flags.Float64VarP(flagSet, &fs.Config.TPSLimit, "tpslimit", "", fs.Config.TPSLimit, "Limit HTTP transactions per second to this.")
@@ -150,10 +150,6 @@ func SetFlags() {
 
 	if fs.Config.IgnoreSize && fs.Config.SizeOnly {
 		log.Fatalf(`Can't use --size-only and --ignore-size together.`)
-	}
-
-	if fs.Config.Suffix != "" && fs.Config.BackupDir == "" {
-		log.Fatalf(`Can only use --suffix with --backup-dir.`)
 	}
 
 	switch {

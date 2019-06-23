@@ -595,23 +595,39 @@ func Same(fdst, fsrc fs.Info) bool {
 	return SameConfig(fdst, fsrc) && strings.Trim(fdst.Root(), "/") == strings.Trim(fsrc.Root(), "/")
 }
 
+// fixRoot returns the Root with a trailing / if not empty. It is
+// aware of case insensitive filesystems.
+func fixRoot(f fs.Info) string {
+	s := strings.Trim(filepath.ToSlash(f.Root()), "/")
+	if s != "" {
+		s += "/"
+	}
+	if f.Features().CaseInsensitive {
+		s = strings.ToLower(s)
+	}
+	return s
+}
+
 // Overlapping returns true if fdst and fsrc point to the same
 // underlying Fs and they overlap.
 func Overlapping(fdst, fsrc fs.Info) bool {
 	if !SameConfig(fdst, fsrc) {
 		return false
 	}
-	// Return the Root with a trailing / if not empty
-	fixedRoot := func(f fs.Info) string {
-		s := strings.Trim(filepath.ToSlash(f.Root()), "/")
-		if s != "" {
-			s += "/"
-		}
-		return s
-	}
-	fdstRoot := fixedRoot(fdst)
-	fsrcRoot := fixedRoot(fsrc)
+	fdstRoot := fixRoot(fdst)
+	fsrcRoot := fixRoot(fsrc)
 	return strings.HasPrefix(fdstRoot, fsrcRoot) || strings.HasPrefix(fsrcRoot, fdstRoot)
+}
+
+// SameDir returns true if fdst and fsrc point to the same
+// underlying Fs and they are the same directory.
+func SameDir(fdst, fsrc fs.Info) bool {
+	if !SameConfig(fdst, fsrc) {
+		return false
+	}
+	fdstRoot := fixRoot(fdst)
+	fsrcRoot := fixRoot(fsrc)
+	return fdstRoot == fsrcRoot
 }
 
 // checkIdentical checks to see if dst and src are identical
@@ -1461,18 +1477,37 @@ func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string) (d
 
 // BackupDir returns the correctly configured --backup-dir
 func BackupDir(fdst fs.Fs, fsrc fs.Fs, srcFileName string) (backupDir fs.Fs, err error) {
-	backupDir, err = cache.Get(fs.Config.BackupDir)
-	if err != nil {
-		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", fs.Config.BackupDir, err))
-	}
-	if !SameConfig(fdst, backupDir) {
-		return nil, fserrors.FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
-	}
-	if Overlapping(fdst, backupDir) {
-		return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't overlap"))
-	}
-	if Overlapping(fsrc, backupDir) {
-		return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
+	if fs.Config.BackupDir != "" {
+		backupDir, err = cache.Get(fs.Config.BackupDir)
+		if err != nil {
+			return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", fs.Config.BackupDir, err))
+		}
+		if !SameConfig(fdst, backupDir) {
+			return nil, fserrors.FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
+		}
+		if srcFileName == "" {
+			if Overlapping(fdst, backupDir) {
+				return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't overlap"))
+			}
+			if Overlapping(fsrc, backupDir) {
+				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
+			}
+		} else {
+			if fs.Config.Suffix == "" {
+				if SameDir(fdst, backupDir) {
+					return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't be the same"))
+				}
+				if SameDir(fsrc, backupDir) {
+					return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't be the same"))
+				}
+			}
+		}
+	} else {
+		if srcFileName == "" {
+			return nil, fserrors.FatalError(errors.New("--suffix must be used with a file or with --backup-dir"))
+		}
+		// --backup-dir is not set but --suffix is - use the destination as the backupDir
+		backupDir = fdst
 	}
 	if !CanServerSideMove(backupDir) {
 		return nil, fserrors.FatalError(errors.New("can't use --backup-dir on a remote which doesn't support server side move or copy"))
