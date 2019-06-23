@@ -10,7 +10,6 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/cache"
 	"github.com/ncw/rclone/fs/filter"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
@@ -62,7 +61,6 @@ type syncCopyMove struct {
 	trackRenamesCh chan fs.Object         // objects are pumped in here
 	renameCheck    []fs.Object            // accumulate files to check for rename here
 	backupDir      fs.Fs                  // place to store overwrites/deletes
-	suffix         string                 // suffix to add to files placed in backupDir
 }
 
 func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) (*syncCopyMove, error) {
@@ -124,23 +122,10 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	// Make Fs for --backup-dir if required
 	if fs.Config.BackupDir != "" {
 		var err error
-		s.backupDir, err = cache.Get(fs.Config.BackupDir)
+		s.backupDir, err = operations.BackupDir(fdst, fsrc, "")
 		if err != nil {
-			return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", fs.Config.BackupDir, err))
+			return nil, err
 		}
-		if !operations.CanServerSideMove(s.backupDir) {
-			return nil, fserrors.FatalError(errors.New("can't use --backup-dir on a remote which doesn't support server side move or copy"))
-		}
-		if !operations.SameConfig(fdst, s.backupDir) {
-			return nil, fserrors.FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
-		}
-		if operations.Overlapping(fdst, s.backupDir) {
-			return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't overlap"))
-		}
-		if operations.Overlapping(fsrc, s.backupDir) {
-			return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
-		}
-		s.suffix = fs.Config.Suffix
 	}
 	return s, nil
 }
@@ -227,9 +212,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 				} else {
 					// If destination already exists, then we must move it into --backup-dir if required
 					if pair.Dst != nil && s.backupDir != nil {
-						remoteWithSuffix := operations.SuffixName(pair.Dst.Remote())
-						overwritten, _ := s.backupDir.NewObject(s.ctx, remoteWithSuffix)
-						_, err := operations.Move(s.ctx, s.backupDir, overwritten, remoteWithSuffix, pair.Dst)
+						err := operations.MoveBackupDir(s.ctx, s.backupDir, pair.Dst)
 						if err != nil {
 							s.processError(err)
 						} else {

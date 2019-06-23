@@ -513,13 +513,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	if fs.Config.DryRun {
 		fs.Logf(dst, "Not %s as --dry-run", actioning)
 	} else if backupDir != nil {
-		if !SameConfig(dst.Fs(), backupDir) {
-			err = errors.New("parameter to --backup-dir has to be on the same remote as destination")
-		} else {
-			remoteWithSuffix := SuffixName(dst.Remote())
-			overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
-			_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)
-		}
+		err = MoveBackupDir(ctx, backupDir, dst)
 	} else {
 		err = dst.Remove(ctx)
 	}
@@ -1465,6 +1459,35 @@ func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string) (d
 	return RcatSize(ctx, fdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
 }
 
+// BackupDir returns the correctly configured --backup-dir
+func BackupDir(fdst fs.Fs, fsrc fs.Fs, srcFileName string) (backupDir fs.Fs, err error) {
+	backupDir, err = cache.Get(fs.Config.BackupDir)
+	if err != nil {
+		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", fs.Config.BackupDir, err))
+	}
+	if !SameConfig(fdst, backupDir) {
+		return nil, fserrors.FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
+	}
+	if Overlapping(fdst, backupDir) {
+		return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't overlap"))
+	}
+	if Overlapping(fsrc, backupDir) {
+		return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
+	}
+	if !CanServerSideMove(backupDir) {
+		return nil, fserrors.FatalError(errors.New("can't use --backup-dir on a remote which doesn't support server side move or copy"))
+	}
+	return backupDir, nil
+}
+
+// MoveBackupDir moves a file to the backup dir
+func MoveBackupDir(ctx context.Context, backupDir fs.Fs, dst fs.Object) (err error) {
+	remoteWithSuffix := SuffixName(dst.Remote())
+	overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
+	_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dst)
+	return err
+}
+
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName string, srcFileName string, cp bool) (err error) {
 	dstFilePath := path.Join(fdst.Root(), dstFileName)
@@ -1521,14 +1544,12 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 
 	if NeedTransfer(ctx, dstObj, srcObj) {
 		// If destination already exists, then we must move it into --backup-dir if required
-		if dstObj != nil && fs.Config.BackupDir != "" {
-			backupDir, err := cache.Get(fs.Config.BackupDir)
+		if dstObj != nil && (fs.Config.BackupDir != "" || fs.Config.Suffix != "") {
+			backupDir, err := BackupDir(fdst, fsrc, srcFileName)
 			if err != nil {
 				return errors.Wrap(err, "creating Fs for --backup-dir failed")
 			}
-			remoteWithSuffix := SuffixName(dstObj.Remote())
-			overwritten, _ := backupDir.NewObject(ctx, remoteWithSuffix)
-			_, err = Move(ctx, backupDir, overwritten, remoteWithSuffix, dstObj)
+			err = MoveBackupDir(ctx, backupDir, dstObj)
 			if err != nil {
 				return errors.Wrap(err, "moving to --backup-dir failed")
 			}
