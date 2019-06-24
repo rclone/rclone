@@ -38,6 +38,13 @@ var (
 	DaemonTimeout      time.Duration // OSXFUSE only
 )
 
+func init() {
+	// DaemonTimeout defaults to non zero for macOS and freebsd
+	if runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" {
+		DaemonTimeout = 15 * time.Minute
+	}
+}
+
 // Check is folder is empty
 func checkMountEmpty(mountpoint string) error {
 	fp, fpErr := os.Open(mountpoint)
