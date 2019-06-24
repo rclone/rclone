@@ -9,11 +9,9 @@ package pcloud
 // FIXME mime type? Fix overview if implement.
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -1091,21 +1089,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// opts.Body=0), so upload it as a multpart form POST with
 	// Content-Length set.
 	if size == 0 {
-		formReader, contentType, err := rest.MultipartUpload(in, opts.Parameters, "content", leaf)
+		formReader, contentType, length, err := rest.MultipartUpload(in, opts.Parameters, "content", leaf)
 		if err != nil {
 			return errors.Wrap(err, "failed to make multipart upload for 0 length file")
 		}
-		formBody, err := ioutil.ReadAll(formReader)
-		if err != nil {
-			return errors.Wrap(err, "failed to read multipart upload for 0 length file")
-		}
-		length := int64(len(formBody))
+
+		contentLength := *length + size
 
 		opts.ContentType = contentType
-		opts.Body = bytes.NewBuffer(formBody)
+		opts.Body = formReader
 		opts.Method = "POST"
 		opts.Parameters = nil
-		opts.ContentLength = &length
+		opts.ContentLength = &contentLength
 	}
 
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
