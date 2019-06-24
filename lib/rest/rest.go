@@ -291,11 +291,41 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 // fileName - is the name of the attached file
 // contentName - the name of the parameter for the file
 //
+// the *int64 returned is the overhead in addition to the file contents, in case Content-Length is required
+//
 // NB This doesn't allow setting the content type of the attachment
-func MultipartUpload(in io.Reader, params url.Values, contentName, fileName string) (io.ReadCloser, string, error) {
+func MultipartUpload(in io.Reader, params url.Values, contentName, fileName string) (io.ReadCloser, string, int64, error) {
 	bodyReader, bodyWriter := io.Pipe()
 	writer := multipart.NewWriter(bodyWriter)
 	contentType := writer.FormDataContentType()
+
+	// Create a Multipart Writer as base for calculating the Content-Length
+	buf := &bytes.Buffer{}
+	dummyMultipartWriter := multipart.NewWriter(buf)
+	err := dummyMultipartWriter.SetBoundary(writer.Boundary())
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	for key, vals := range params {
+		for _, val := range vals {
+			err := dummyMultipartWriter.WriteField(key, val)
+			if err != nil {
+				return nil, "", 0, err
+			}
+		}
+	}
+	_, err = dummyMultipartWriter.CreateFormFile(contentName, fileName)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	err = dummyMultipartWriter.Close()
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	multipartLength := int64(buf.Len())
 
 	// Pump the data in the background
 	go func() {
@@ -332,7 +362,7 @@ func MultipartUpload(in io.Reader, params url.Values, contentName, fileName stri
 		_ = bodyWriter.Close()
 	}()
 
-	return bodyReader, contentType, nil
+	return bodyReader, contentType, multipartLength, nil
 }
 
 // CallJSON runs Call and decodes the body as a JSON object into response (if not nil)
@@ -403,9 +433,11 @@ func (api *Client) callCodec(opts *Opts, request interface{}, response interface
 			params.Add(opts.MultipartMetadataName, string(requestBody))
 		}
 		opts = opts.Copy()
-		opts.Body, opts.ContentType, err = MultipartUpload(opts.Body, params, opts.MultipartContentName, opts.MultipartFileName)
-		if err != nil {
-			return nil, err
+
+		var overhead int64
+		opts.Body, opts.ContentType, overhead, err = MultipartUpload(opts.Body, params, opts.MultipartContentName, opts.MultipartFileName)
+		if opts.ContentLength != nil {
+			*opts.ContentLength += overhead
 		}
 	}
 	resp, err = api.Call(opts)
