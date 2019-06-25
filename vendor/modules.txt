@@ -102,6 +102,8 @@ github.com/inconshreveable/mousetrap
 github.com/jlaffaye/ftp
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
+# github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
+github.com/jzelinskie/whirlpool
 # github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 github.com/kardianos/osext
 # github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a

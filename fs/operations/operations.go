@@ -947,6 +947,15 @@ func DropboxHashSum(ctx context.Context, f fs.Fs, w io.Writer) error {
 	return HashLister(ctx, hash.Dropbox, f, w)
 }
 
+// WhirlpoolHashSum list the Fs to the supplied writer
+//
+// Obeys includes and excludes
+//
+// Lists in parallel which may get them out of order
+func WhirlpoolHashSum(ctx context.Context, f fs.Fs, w io.Writer) error {
+	return HashLister(ctx, hash.Whirlpool, f, w)
+}
+
 // hashSum returns the human readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR.
 func hashSum(ctx context.Context, ht hash.Type, o fs.Object) string {

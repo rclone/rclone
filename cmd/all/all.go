@@ -55,4 +55,5 @@ import (
 	_ "github.com/ncw/rclone/cmd/touch"
 	_ "github.com/ncw/rclone/cmd/tree"
 	_ "github.com/ncw/rclone/cmd/version"
+	_ "github.com/ncw/rclone/cmd/whirlpoolsum"
 )

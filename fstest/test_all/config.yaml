@@ -110,6 +110,10 @@ backends:
    remote:   "TestBox:"
    subdir:   false
    fastlist: false
+ - backend:  "fichier"
+   remote:   "TestFichier:"
+   subdir:   false
+   fastlist: false
  - backend:  "qingstor"
    remote:   "TestQingStor:"
    subdir:   false
