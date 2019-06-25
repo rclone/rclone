@@ -59,10 +59,11 @@ type dialOptions struct {
 
 // Entry describes a file and is returned by List().
 type Entry struct {
-	Name string
-	Type EntryType
-	Size uint64
-	Time time.Time
+	Name   string
+	Target string // target of symbolic link
+	Type   EntryType
+	Size   uint64
+	Time   time.Time
 }
 
 // Response represents a data-connection
