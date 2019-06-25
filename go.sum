@@ -100,6 +100,8 @@ github.com/jlaffaye/ftp v0.0.0-20190427163646-6a014d5e22e6 h1:L8GOc4DyMAj4NyTq5H
 github.com/jlaffaye/ftp v0.0.0-20190427163646-6a014d5e22e6/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
 github.com/jlaffaye/ftp v0.0.0-20190519203911-8f5b34ce006f h1:oUoY3Lvi7PD1F3CuayxfdJtwmKV7WNQBdXt8fK1breU=
 github.com/jlaffaye/ftp v0.0.0-20190519203911-8f5b34ce006f/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
+github.com/jlaffaye/ftp v0.0.0-20190624084859-c1312a7102bf h1:2IYBd5TD/maMqTU2YUzp2tJL4cNaOYQ9EBullN9t9pk=
+github.com/jlaffaye/ftp v0.0.0-20190624084859-c1312a7102bf/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
