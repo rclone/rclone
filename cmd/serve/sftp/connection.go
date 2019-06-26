@@ -97,22 +97,33 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		if binary == "sha1sum" {
 			ht = hash.SHA1
 		}
-		node, err := c.vfs.Stat(args)
-		if err != nil {
-			return errors.Wrapf(err, "hash failed finding file %q", args)
+		var hashSum string
+		if args == "" {
+			// empty hash for no input
+			if ht == hash.MD5 {
+				hashSum = "d41d8cd98f00b204e9800998ecf8427e"
+			} else {
+				hashSum = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+			}
+			args = "-"
+		} else {
+			node, err := c.vfs.Stat(args)
+			if err != nil {
+				return errors.Wrapf(err, "hash failed finding file %q", args)
+			}
+			if node.IsDir() {
+				return errors.New("can't hash directory")
+			}
+			o, ok := node.DirEntry().(fs.ObjectInfo)
+			if !ok {
+				return errors.New("unexpected non file")
+			}
+			hashSum, err = o.Hash(ctx, ht)
+			if err != nil {
+				return errors.Wrap(err, "hash failed")
+			}
 		}
-		if node.IsDir() {
-			return errors.New("can't hash directory")
-		}
-		o, ok := node.DirEntry().(fs.ObjectInfo)
-		if !ok {
-			return errors.New("unexpected non file")
-		}
-		hash, err := o.Hash(ctx, ht)
-		if err != nil {
-			return errors.Wrap(err, "hash failed")
-		}
-		_, err = fmt.Fprintf(out, "%s  %s\n", hash, args)
+		_, err = fmt.Fprintf(out, "%s  %s\n", hashSum, args)
 		if err != nil {
 			return errors.Wrap(err, "send output failed")
 		}
