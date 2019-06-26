@@ -161,6 +161,8 @@ type Fs struct {
 	poolMu       sync.Mutex
 	pool         []*conn
 	connLimit    *rate.Limiter // for limiting number of connections per second
+	md5sum       string        // command to use for reading md5sum
+	sha1sum      string        // command to use for reading sha1sum
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -772,29 +774,31 @@ func (f *Fs) Hashes() hash.Set {
 		return hash.Set(hash.None)
 	}
 	defer f.putSftpConnection(&c, err)
-	session, err := c.sshClient.NewSession()
-	if err != nil {
-		return hash.Set(hash.None)
-	}
-	sha1Output, _ := session.Output("echo 'abc' | sha1sum")
-	expectedSha1 := "03cfd743661f07975fa2f1220c5194cbaff48451"
-	_ = session.Close()
 
-	session, err = c.sshClient.NewSession()
-	if err != nil {
-		return hash.Set(hash.None)
+	// look for a hash command which works
+	checkHash := func(commands []string, expected string, hashCommand *string) bool {
+		for _, command := range commands {
+			session, err := c.sshClient.NewSession()
+			if err != nil {
+				continue
+			}
+			output, _ := session.Output(command)
+			_ = session.Close()
+			output = bytes.TrimSpace(output)
+			fs.Debugf(f, "checking %q command: %q", command, output)
+			ok := parseHash(output) == expected
+			if ok {
+				*hashCommand = command
+				return true
+			}
+		}
+		return false
 	}
-	md5Output, _ := session.Output("echo 'abc' | md5sum")
-	expectedMd5 := "0bee89b07a248e27c83fc3d5951213c1"
-	_ = session.Close()
 
-	sha1Works := parseHash(sha1Output) == expectedSha1
-	md5Works := parseHash(md5Output) == expectedMd5
+	md5Works := checkHash([]string{"md5sum", "md5 -r"}, "d41d8cd98f00b204e9800998ecf8427e", &f.md5sum)
+	sha1Works := checkHash([]string{"sha1sum", "sha1 -r"}, "da39a3ee5e6b4b0d3255bfef95601890afd80709", &f.sha1sum)
 
 	set := hash.NewHashSet()
-	if !sha1Works && !md5Works {
-		set.Add(hash.None)
-	}
 	if sha1Works {
 		set.Add(hash.SHA1)
 	}
@@ -802,7 +806,6 @@ func (f *Fs) Hashes() hash.Set {
 		set.Add(hash.MD5)
 	}
 
-	_ = session.Close()
 	f.cachedHashes = &set
 	return set
 }
@@ -871,23 +874,27 @@ func (o *Object) Remote() string {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
+	_ = o.fs.Hashes()
+	if o.fs.opt.DisableHashCheck {
+		return "", nil
+	}
+
 	var hashCmd string
 	if r == hash.MD5 {
 		if o.md5sum != nil {
 			return *o.md5sum, nil
 		}
-		hashCmd = "md5sum"
+		hashCmd = o.fs.md5sum
 	} else if r == hash.SHA1 {
 		if o.sha1sum != nil {
 			return *o.sha1sum, nil
 		}
-		hashCmd = "sha1sum"
+		hashCmd = o.fs.sha1sum
 	} else {
 		return "", hash.ErrUnsupported
 	}
-
-	if o.fs.opt.DisableHashCheck {
-		return "", nil
+	if hashCmd == "" {
+		return "", hash.ErrUnsupported
 	}
 
 	c, err := o.fs.getSftpConnection()
