@@ -17,6 +17,7 @@ Here is an overview of the major features of each cloud storage system.
 
 | Name                         | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
 | ---------------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
+| 1Fichier                     | Whirlpool   | No      | No               | Yes             | R         |
 | Amazon Drive                 | MD5         | No      | Yes              | No              | R         |
 | Amazon S3                    | MD5         | Yes     | No               | No              | R/W       |
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
@@ -131,6 +132,7 @@ operations more efficient.
 
 | Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing | About |
 | ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|
+| 1Fichier                     | No    | No   | No   | No      | No      | No    | No           | No           |   No  |
 | Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | No  | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
 | Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |

@@ -23,6 +23,7 @@ docs = [
     "flags.md",
 
     # Keep these alphabetical by full name
+    "fichier.md",
     "alias.md",
     "amazonclouddrive.md",
     "s3.md",

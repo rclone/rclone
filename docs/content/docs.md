@@ -19,6 +19,7 @@ option:
 
 See the following for detailed instructions for
 
+  * [1Fichier](/fichier/)
   * [Alias](/alias/)
   * [Amazon Drive](/amazonclouddrive/)
   * [Amazon S3](/s3/)
