@@ -11,6 +11,7 @@ import (
 	_ "github.com/ncw/rclone/backend/crypt"
 	_ "github.com/ncw/rclone/backend/drive"
 	_ "github.com/ncw/rclone/backend/dropbox"
+	_ "github.com/ncw/rclone/backend/fichier"
 	_ "github.com/ncw/rclone/backend/ftp"
 	_ "github.com/ncw/rclone/backend/googlecloudstorage"
 	_ "github.com/ncw/rclone/backend/http"

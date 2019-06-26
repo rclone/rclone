@@ -12,6 +12,7 @@ TestCryptDrive:
 TestCryptSwift:
 TestDrive:
 TestDropbox:
+TestFichier:
 TestFTP:
 TestGoogleCloudStorage:
 TestHubic:
