@@ -281,7 +281,7 @@ func sendfile(outfd int, infd int, offset *int64, count int) (written int, err e
 }
 
 //sys	getdirent(fd int, buf []byte) (n int, err error)
-func ReadDirent(fd int, buf []byte) (n int, err error) {
+func Getdents(fd int, buf []byte) (n int, err error) {
 	return getdirent(fd, buf)
 }
 

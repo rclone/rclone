@@ -35,7 +35,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"J3WqvAcMk4eQjJXvfSI4Yr8VouA/AVEoPmuw3qKn1b0N_HIutPHT3IQ\"",
+  "etag": "\"VPK3KBfpaEgZ16pozGOoMYfKc0U/Ny-TVwqAdVT7qdK4m-UVr51SKyw\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -121,14 +121,25 @@
           "httpMethod": "GET",
           "id": "drive.changes.getStartPageToken",
           "parameters": {
+            "driveId": {
+              "description": "The ID of the shared drive for which the starting pageToken for listing future changes from that shared drive will be returned.",
+              "location": "query",
+              "type": "string"
+            },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
             "teamDriveId": {
-              "description": "The ID of the Team Drive for which the starting pageToken for listing future changes from that Team Drive will be returned.",
+              "description": "Deprecated use driveId instead.",
               "location": "query",
               "type": "string"
             }
@@ -148,16 +159,27 @@
           ]
         },
         "list": {
-          "description": "Lists the changes for a user or Team Drive.",
+          "description": "Lists the changes for a user or shared drive.",
           "httpMethod": "GET",
           "id": "drive.changes.list",
           "parameterOrder": [
             "pageToken"
           ],
           "parameters": {
+            "driveId": {
+              "description": "The shared drive from which changes will be returned. If specified the change IDs will be reflective of the shared drive; use the combined drive ID and change ID as an identifier.",
+              "location": "query",
+              "type": "string"
+            },
             "includeCorpusRemovals": {
               "default": "false",
               "description": "Whether changes should include the file resource if the file is still accessible by the user at the time of the request, even when a file was removed from the list of changes and there will be no further change entries for this file.",
+              "location": "query",
+              "type": "boolean"
+            },
+            "includeItemsFromAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether both My Drive and shared drive items should be included in results. This parameter will only be effective until June 1, 2020. Afterwards shared drive items will be included in the results.",
               "location": "query",
               "type": "boolean"
             },
@@ -169,7 +191,7 @@
             },
             "includeTeamDriveItems": {
               "default": "false",
-              "description": "Whether Team Drive files or changes should be included in results.",
+              "description": "Deprecated use includeItemsFromAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
@@ -200,14 +222,20 @@
               "location": "query",
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
             "teamDriveId": {
-              "description": "The Team Drive from which changes will be returned. If specified the change IDs will be reflective of the Team Drive; use the combined Team Drive ID and change ID as an identifier.",
+              "description": "Deprecated use driveId instead.",
               "location": "query",
               "type": "string"
             }
@@ -235,9 +263,20 @@
             "pageToken"
           ],
           "parameters": {
+            "driveId": {
+              "description": "The shared drive from which changes will be returned. If specified the change IDs will be reflective of the shared drive; use the combined drive ID and change ID as an identifier.",
+              "location": "query",
+              "type": "string"
+            },
             "includeCorpusRemovals": {
               "default": "false",
               "description": "Whether changes should include the file resource if the file is still accessible by the user at the time of the request, even when a file was removed from the list of changes and there will be no further change entries for this file.",
+              "location": "query",
+              "type": "boolean"
+            },
+            "includeItemsFromAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether both My Drive and shared drive items should be included in results. This parameter will only be effective until June 1, 2020. Afterwards shared drive items will be included in the results.",
               "location": "query",
               "type": "boolean"
             },
@@ -249,7 +288,7 @@
             },
             "includeTeamDriveItems": {
               "default": "false",
-              "description": "Whether Team Drive files or changes should be included in results.",
+              "description": "Deprecated use includeItemsFromAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
@@ -280,14 +319,20 @@
               "location": "query",
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
             "teamDriveId": {
-              "description": "The Team Drive from which changes will be returned. If specified the change IDs will be reflective of the Team Drive; use the combined Team Drive ID and change ID as an identifier.",
+              "description": "Deprecated use driveId instead.",
               "location": "query",
               "type": "string"
             }
@@ -517,6 +562,204 @@
         }
       }
     },
+    "drives": {
+      "methods": {
+        "create": {
+          "description": "Creates a new shared drive.",
+          "httpMethod": "POST",
+          "id": "drive.drives.create",
+          "parameterOrder": [
+            "requestId"
+          ],
+          "parameters": {
+            "requestId": {
+              "description": "An ID, such as a random UUID, which uniquely identifies this user's request for idempotent creation of a shared drive. A repeated request by the same user and with the same request ID will avoid creating duplicates by attempting to create the same shared drive. If the shared drive already exists a 409 error will be returned.",
+              "location": "query",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "drives",
+          "request": {
+            "$ref": "Drive"
+          },
+          "response": {
+            "$ref": "Drive"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/drive"
+          ]
+        },
+        "delete": {
+          "description": "Permanently deletes a shared drive for which the user is an organizer. The shared drive cannot contain any untrashed items.",
+          "httpMethod": "DELETE",
+          "id": "drive.drives.delete",
+          "parameterOrder": [
+            "driveId"
+          ],
+          "parameters": {
+            "driveId": {
+              "description": "The ID of the shared drive.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "drives/{driveId}",
+          "scopes": [
+            "https://www.googleapis.com/auth/drive"
+          ]
+        },
+        "get": {
+          "description": "Gets a shared drive's metadata by ID.",
+          "httpMethod": "GET",
+          "id": "drive.drives.get",
+          "parameterOrder": [
+            "driveId"
+          ],
+          "parameters": {
+            "driveId": {
+              "description": "The ID of the shared drive.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "useDomainAdminAccess": {
+              "default": "false",
+              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if they are an administrator of the domain to which the shared drive belongs.",
+              "location": "query",
+              "type": "boolean"
+            }
+          },
+          "path": "drives/{driveId}",
+          "response": {
+            "$ref": "Drive"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/drive",
+            "https://www.googleapis.com/auth/drive.readonly"
+          ]
+        },
+        "hide": {
+          "description": "Hides a shared drive from the default view.",
+          "httpMethod": "POST",
+          "id": "drive.drives.hide",
+          "parameterOrder": [
+            "driveId"
+          ],
+          "parameters": {
+            "driveId": {
+              "description": "The ID of the shared drive.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "drives/{driveId}/hide",
+          "response": {
+            "$ref": "Drive"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/drive"
+          ]
+        },
+        "list": {
+          "description": "Lists the user's shared drives.",
+          "httpMethod": "GET",
+          "id": "drive.drives.list",
+          "parameters": {
+            "pageSize": {
+              "default": "10",
+              "description": "Maximum number of shared drives to return.",
+              "format": "int32",
+              "location": "query",
+              "maximum": "100",
+              "minimum": "1",
+              "type": "integer"
+            },
+            "pageToken": {
+              "description": "Page token for shared drives.",
+              "location": "query",
+              "type": "string"
+            },
+            "q": {
+              "description": "Query string for searching shared drives.",
+              "location": "query",
+              "type": "string"
+            },
+            "useDomainAdminAccess": {
+              "default": "false",
+              "description": "Issue the request as a domain administrator; if set to true, then all shared drives of the domain in which the requester is an administrator are returned.",
+              "location": "query",
+              "type": "boolean"
+            }
+          },
+          "path": "drives",
+          "response": {
+            "$ref": "DriveList"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/drive",
+            "https://www.googleapis.com/auth/drive.readonly"
+          ]
+        },
+        "unhide": {
+          "description": "Restores a shared drive to the default view.",
+          "httpMethod": "POST",
+          "id": "drive.drives.unhide",
+          "parameterOrder": [
+            "driveId"
+          ],
+          "parameters": {
+            "driveId": {
+              "description": "The ID of the shared drive.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "drives/{driveId}/unhide",
+          "response": {
+            "$ref": "Drive"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/drive"
+          ]
+        },
+        "update": {
+          "description": "Updates the metadate for a shared drive.",
+          "httpMethod": "PATCH",
+          "id": "drive.drives.update",
+          "parameterOrder": [
+            "driveId"
+          ],
+          "parameters": {
+            "driveId": {
+              "description": "The ID of the shared drive.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "useDomainAdminAccess": {
+              "default": "false",
+              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if they are an administrator of the domain to which the shared drive belongs.",
+              "location": "query",
+              "type": "boolean"
+            }
+          },
+          "path": "drives/{driveId}",
+          "request": {
+            "$ref": "Drive"
+          },
+          "response": {
+            "$ref": "Drive"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/drive"
+          ]
+        }
+      }
+    },
     "files": {
       "methods": {
         "copy": {
@@ -541,7 +784,7 @@
             },
             "keepRevisionForever": {
               "default": "false",
-              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Drive.",
+              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive.",
               "location": "query",
               "type": "boolean"
             },
@@ -550,9 +793,15 @@
               "location": "query",
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             }
@@ -600,7 +849,7 @@
             },
             "keepRevisionForever": {
               "default": "false",
-              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Drive.",
+              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive.",
               "location": "query",
               "type": "boolean"
             },
@@ -609,9 +858,15 @@
               "location": "query",
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
@@ -638,7 +893,7 @@
           "supportsSubscription": true
         },
         "delete": {
-          "description": "Permanently deletes a file owned by the user without moving it to the trash. If the file belongs to a Team Drive the user must be an organizer on the parent. If the target is a folder, all descendants owned by the user are also deleted.",
+          "description": "Permanently deletes a file owned by the user without moving it to the trash. If the file belongs to a shared drive the user must be an organizer on the parent. If the target is a folder, all descendants owned by the user are also deleted.",
           "httpMethod": "DELETE",
           "id": "drive.files.delete",
           "parameterOrder": [
@@ -651,9 +906,15 @@
               "required": true,
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             }
@@ -755,9 +1016,15 @@
               "required": true,
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             }
@@ -785,7 +1052,7 @@
           "id": "drive.files.list",
           "parameters": {
             "corpora": {
-              "description": "Comma-separated list of bodies of items (files/documents) to which the query applies. Supported bodies are 'user', 'domain', 'teamDrive' and 'allTeamDrives'. 'allTeamDrives' must be combined with 'user'; all other values must be used in isolation. Prefer 'user' or 'teamDrive' to 'allTeamDrives' for efficiency.",
+              "description": "Bodies of items (files/documents) to which the query applies. Supported bodies are 'user', 'domain', 'drive' and 'allDrives'. Prefer 'user' or 'drive' to 'allDrives' for efficiency.",
               "location": "query",
               "type": "string"
             },
@@ -802,9 +1069,20 @@
               "location": "query",
               "type": "string"
             },
+            "driveId": {
+              "description": "ID of the shared drive to search.",
+              "location": "query",
+              "type": "string"
+            },
+            "includeItemsFromAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether both My Drive and shared drive items should be included in results. This parameter will only be effective until June 1, 2020. Afterwards shared drive items will be included in the results.",
+              "location": "query",
+              "type": "boolean"
+            },
             "includeTeamDriveItems": {
               "default": "false",
-              "description": "Whether Team Drive items should be included in results.",
+              "description": "Deprecated use includeItemsFromAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
@@ -838,14 +1116,20 @@
               "location": "query",
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
             "teamDriveId": {
-              "description": "ID of Team Drive to search.",
+              "description": "Deprecated use driveId instead.",
               "location": "query",
               "type": "string"
             }
@@ -901,7 +1185,7 @@
             },
             "keepRevisionForever": {
               "default": "false",
-              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Drive.",
+              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive.",
               "location": "query",
               "type": "boolean"
             },
@@ -915,9 +1199,15 @@
               "location": "query",
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
@@ -964,9 +1254,15 @@
               "required": true,
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             }
@@ -997,7 +1293,7 @@
     "permissions": {
       "methods": {
         "create": {
-          "description": "Creates a permission for a file or Team Drive.",
+          "description": "Creates a permission for a file or shared drive.",
           "httpMethod": "POST",
           "id": "drive.permissions.create",
           "parameterOrder": [
@@ -1010,7 +1306,7 @@
               "type": "string"
             },
             "fileId": {
-              "description": "The ID of the file or Team Drive.",
+              "description": "The ID of the file or shared drive.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1020,9 +1316,15 @@
               "location": "query",
               "type": "boolean"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
@@ -1034,7 +1336,7 @@
             },
             "useDomainAdminAccess": {
               "default": "false",
-              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if they are an administrator of the domain to which the item belongs.",
+              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if the file ID parameter refers to a shared drive and the requester is an administrator of the domain to which the shared drive belongs.",
               "location": "query",
               "type": "boolean"
             }
@@ -1061,7 +1363,7 @@
           ],
           "parameters": {
             "fileId": {
-              "description": "The ID of the file or Team Drive.",
+              "description": "The ID of the file or shared drive.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1072,15 +1374,21 @@
               "required": true,
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
             "useDomainAdminAccess": {
               "default": "false",
-              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if they are an administrator of the domain to which the item belongs.",
+              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if the file ID parameter refers to a shared drive and the requester is an administrator of the domain to which the shared drive belongs.",
               "location": "query",
               "type": "boolean"
             }
@@ -1112,15 +1420,21 @@
               "required": true,
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
             "useDomainAdminAccess": {
               "default": "false",
-              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if they are an administrator of the domain to which the item belongs.",
+              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if the file ID parameter refers to a shared drive and the requester is an administrator of the domain to which the shared drive belongs.",
               "location": "query",
               "type": "boolean"
             }
@@ -1139,7 +1453,7 @@
           ]
         },
         "list": {
-          "description": "Lists a file's or Team Drive's permissions.",
+          "description": "Lists a file's or shared drive's permissions.",
           "httpMethod": "GET",
           "id": "drive.permissions.list",
           "parameterOrder": [
@@ -1147,13 +1461,13 @@
           ],
           "parameters": {
             "fileId": {
-              "description": "The ID of the file or Team Drive.",
+              "description": "The ID of the file or shared drive.",
               "location": "path",
               "required": true,
               "type": "string"
             },
             "pageSize": {
-              "description": "The maximum number of permissions to return per page. When not set for files in a Team Drive, at most 100 results will be returned. When not set for files that are not in a Team Drive, the entire list will be returned.",
+              "description": "The maximum number of permissions to return per page. When not set for files in a shared drive, at most 100 results will be returned. When not set for files that are not in a shared drive, the entire list will be returned.",
               "format": "int32",
               "location": "query",
               "maximum": "100",
@@ -1165,15 +1479,21 @@
               "location": "query",
               "type": "string"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
             "useDomainAdminAccess": {
               "default": "false",
-              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if they are an administrator of the domain to which the item belongs.",
+              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if the file ID parameter refers to a shared drive and the requester is an administrator of the domain to which the shared drive belongs.",
               "location": "query",
               "type": "boolean"
             }
@@ -1201,7 +1521,7 @@
           ],
           "parameters": {
             "fileId": {
-              "description": "The ID of the file or Team Drive.",
+              "description": "The ID of the file or shared drive.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1218,9 +1538,15 @@
               "location": "query",
               "type": "boolean"
             },
+            "supportsAllDrives": {
+              "default": "false",
+              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "location": "query",
+              "type": "boolean"
+            },
             "supportsTeamDrives": {
               "default": "false",
-              "description": "Whether the requesting application supports Team Drives.",
+              "description": "Deprecated use supportsAllDrives instead.",
               "location": "query",
               "type": "boolean"
             },
@@ -1232,7 +1558,7 @@
             },
             "useDomainAdminAccess": {
               "default": "false",
-              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if they are an administrator of the domain to which the item belongs.",
+              "description": "Issue the request as a domain administrator; if set to true, then the requester will be granted access if the file ID parameter refers to a shared drive and the requester is an administrator of the domain to which the shared drive belongs.",
               "location": "query",
               "type": "boolean"
             }
@@ -1465,7 +1791,7 @@
     "revisions": {
       "methods": {
         "delete": {
-          "description": "Permanently deletes a file version. You can only delete revisions for files with binary content, like images or videos. Revisions for other files, like Google Docs or Sheets, and the last remaining file version can't be deleted.",
+          "description": "Permanently deletes a file version. You can only delete revisions for files with binary content in Google Drive, like images or videos. Revisions for other files, like Google Docs or Sheets, and the last remaining file version can't be deleted.",
           "httpMethod": "DELETE",
           "id": "drive.revisions.delete",
           "parameterOrder": [
@@ -1620,7 +1946,7 @@
     "teamdrives": {
       "methods": {
         "create": {
-          "description": "Creates a new Team Drive.",
+          "description": "Deprecated use drives.create instead.",
           "httpMethod": "POST",
           "id": "drive.teamdrives.create",
           "parameterOrder": [
@@ -1646,7 +1972,7 @@
           ]
         },
         "delete": {
-          "description": "Permanently deletes a Team Drive for which the user is an organizer. The Team Drive cannot contain any untrashed items.",
+          "description": "Deprecated use drives.delete instead.",
           "httpMethod": "DELETE",
           "id": "drive.teamdrives.delete",
           "parameterOrder": [
@@ -1666,7 +1992,7 @@
           ]
         },
         "get": {
-          "description": "Gets a Team Drive's metadata by ID.",
+          "description": "Deprecated use drives.get instead.",
           "httpMethod": "GET",
           "id": "drive.teamdrives.get",
           "parameterOrder": [
@@ -1696,7 +2022,7 @@
           ]
         },
         "list": {
-          "description": "Lists the user's Team Drives.",
+          "description": "Deprecated use drives.list instead.",
           "httpMethod": "GET",
           "id": "drive.teamdrives.list",
           "parameters": {
@@ -1736,7 +2062,7 @@
           ]
         },
         "update": {
-          "description": "Updates a Team Drive's metadata",
+          "description": "Deprecated use drives.update instead",
           "httpMethod": "PATCH",
           "id": "drive.teamdrives.update",
           "parameterOrder": [
@@ -1770,7 +2096,7 @@
       }
     }
   },
-  "revision": "20190311",
+  "revision": "20190501",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -1781,9 +2107,34 @@
           "description": "Whether the user has installed the requesting app.",
           "type": "boolean"
         },
-        "canCreateTeamDrives": {
-          "description": "Whether the user can create Team Drives.",
+        "canCreateDrives": {
+          "description": "Whether the user can create shared drives.",
           "type": "boolean"
+        },
+        "canCreateTeamDrives": {
+          "description": "Deprecated - use canCreateDrives instead.",
+          "type": "boolean"
+        },
+        "driveThemes": {
+          "description": "A list of themes that are supported for shared drives.",
+          "items": {
+            "properties": {
+              "backgroundImageLink": {
+                "description": "A link to this theme's background image.",
+                "type": "string"
+              },
+              "colorRgb": {
+                "description": "The color of this theme as an RGB hex string.",
+                "type": "string"
+              },
+              "id": {
+                "description": "The ID of the theme.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
         },
         "exportFormats": {
           "additionalProperties": {
@@ -1857,19 +2208,19 @@
           "type": "object"
         },
         "teamDriveThemes": {
-          "description": "A list of themes that are supported for Team Drives.",
+          "description": "Deprecated - use driveThemes instead.",
           "items": {
             "properties": {
               "backgroundImageLink": {
-                "description": "A link to this Team Drive theme's background image.",
+                "description": "Deprecated - use driveThemes/backgroundImageLink instead.",
                 "type": "string"
               },
               "colorRgb": {
-                "description": "The color of this Team Drive theme as an RGB hex string.",
+                "description": "Deprecated - use driveThemes/colorRgb instead.",
                 "type": "string"
               },
               "id": {
-                "description": "The ID of the theme.",
+                "description": "Deprecated - use driveThemes/id instead.",
                 "type": "string"
               }
             },
@@ -1885,9 +2236,21 @@
       "type": "object"
     },
     "Change": {
-      "description": "A change to a file or Team Drive.",
+      "description": "A change to a file or shared drive.",
       "id": "Change",
       "properties": {
+        "changeType": {
+          "description": "The type of the change. Possible values are file and drive.",
+          "type": "string"
+        },
+        "drive": {
+          "$ref": "Drive",
+          "description": "The updated state of the shared drive. Present if the changeType is drive, the user is still a member of the shared drive, and the shared drive has not been deleted."
+        },
+        "driveId": {
+          "description": "The ID of the shared drive associated with this change.",
+          "type": "string"
+        },
         "file": {
           "$ref": "File",
           "description": "The updated state of the file. Present if the type is file and the file has not been removed from this list of changes."
@@ -1902,15 +2265,15 @@
           "type": "string"
         },
         "removed": {
-          "description": "Whether the file or Team Drive has been removed from this list of changes, for example by deletion or loss of access.",
+          "description": "Whether the file or shared drive has been removed from this list of changes, for example by deletion or loss of access.",
           "type": "boolean"
         },
         "teamDrive": {
           "$ref": "TeamDrive",
-          "description": "The updated state of the Team Drive. Present if the type is teamDrive, the user is still a member of the Team Drive, and the Team Drive has not been removed."
+          "description": "Deprecated - use drive instead."
         },
         "teamDriveId": {
-          "description": "The ID of the Team Drive associated with this change.",
+          "description": "Deprecated - use driveId instead.",
           "type": "string"
         },
         "time": {
@@ -1919,7 +2282,7 @@
           "type": "string"
         },
         "type": {
-          "description": "The type of the change. Possible values are file and teamDrive.",
+          "description": "Deprecated - use changeType instead.",
           "type": "string"
         }
       },
@@ -2105,6 +2468,195 @@
       },
       "type": "object"
     },
+    "Drive": {
+      "description": "Representation of a shared drive.",
+      "id": "Drive",
+      "properties": {
+        "backgroundImageFile": {
+          "description": "An image file and cropping parameters from which a background image for this shared drive is set. This is a write only field; it can only be set on drive.drives.update requests that don't set themeId. When specified, all fields of the backgroundImageFile must be set.",
+          "properties": {
+            "id": {
+              "description": "The ID of an image file in Google Drive to use for the background image.",
+              "type": "string"
+            },
+            "width": {
+              "description": "The width of the cropped image in the closed range of 0 to 1. This value represents the width of the cropped image divided by the width of the entire image. The height is computed by applying a width to height aspect ratio of 80 to 9. The resulting image must be at least 1280 pixels wide and 144 pixels high.",
+              "format": "float",
+              "type": "number"
+            },
+            "xCoordinate": {
+              "description": "The X coordinate of the upper left corner of the cropping area in the background image. This is a value in the closed range of 0 to 1. This value represents the horizontal distance from the left side of the entire image to the left side of the cropping area divided by the width of the entire image.",
+              "format": "float",
+              "type": "number"
+            },
+            "yCoordinate": {
+              "description": "The Y coordinate of the upper left corner of the cropping area in the background image. This is a value in the closed range of 0 to 1. This value represents the vertical distance from the top side of the entire image to the top side of the cropping area divided by the height of the entire image.",
+              "format": "float",
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "backgroundImageLink": {
+          "description": "A short-lived link to this shared drive's background image.",
+          "type": "string"
+        },
+        "capabilities": {
+          "description": "Capabilities the current user has on this shared drive.",
+          "properties": {
+            "canAddChildren": {
+              "description": "Whether the current user can add children to folders in this shared drive.",
+              "type": "boolean"
+            },
+            "canChangeCopyRequiresWriterPermissionRestriction": {
+              "description": "Whether the current user can change the copyRequiresWriterPermission restriction of this shared drive.",
+              "type": "boolean"
+            },
+            "canChangeDomainUsersOnlyRestriction": {
+              "description": "Whether the current user can change the domainUsersOnly restriction of this shared drive.",
+              "type": "boolean"
+            },
+            "canChangeDriveBackground": {
+              "description": "Whether the current user can change the background of this shared drive.",
+              "type": "boolean"
+            },
+            "canChangeDriveMembersOnlyRestriction": {
+              "description": "Whether the current user can change the driveMembersOnly restriction of this shared drive.",
+              "type": "boolean"
+            },
+            "canComment": {
+              "description": "Whether the current user can comment on files in this shared drive.",
+              "type": "boolean"
+            },
+            "canCopy": {
+              "description": "Whether the current user can copy files in this shared drive.",
+              "type": "boolean"
+            },
+            "canDeleteChildren": {
+              "description": "Whether the current user can delete children from folders in this shared drive.",
+              "type": "boolean"
+            },
+            "canDeleteDrive": {
+              "description": "Whether the current user can delete this shared drive. Attempting to delete the shared drive may still fail if there are untrashed items inside the shared drive.",
+              "type": "boolean"
+            },
+            "canDownload": {
+              "description": "Whether the current user can download files in this shared drive.",
+              "type": "boolean"
+            },
+            "canEdit": {
+              "description": "Whether the current user can edit files in this shared drive",
+              "type": "boolean"
+            },
+            "canListChildren": {
+              "description": "Whether the current user can list the children of folders in this shared drive.",
+              "type": "boolean"
+            },
+            "canManageMembers": {
+              "description": "Whether the current user can add members to this shared drive or remove them or change their role.",
+              "type": "boolean"
+            },
+            "canReadRevisions": {
+              "description": "Whether the current user can read the revisions resource of files in this shared drive.",
+              "type": "boolean"
+            },
+            "canRename": {
+              "description": "Whether the current user can rename files or folders in this shared drive.",
+              "type": "boolean"
+            },
+            "canRenameDrive": {
+              "description": "Whether the current user can rename this shared drive.",
+              "type": "boolean"
+            },
+            "canShare": {
+              "description": "Whether the current user can share files or folders in this shared drive.",
+              "type": "boolean"
+            },
+            "canTrashChildren": {
+              "description": "Whether the current user can trash children from folders in this shared drive.",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "colorRgb": {
+          "description": "The color of this shared drive as an RGB hex string. It can only be set on a drive.drives.update request that does not set themeId.",
+          "type": "string"
+        },
+        "createdTime": {
+          "description": "The time at which the shared drive was created (RFC 3339 date-time).",
+          "format": "date-time",
+          "type": "string"
+        },
+        "hidden": {
+          "description": "Whether the shared drive is hidden from default view.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The ID of this shared drive which is also the ID of the top level folder of this shared drive.",
+          "type": "string"
+        },
+        "kind": {
+          "default": "drive#drive",
+          "description": "Identifies what kind of resource this is. Value: the fixed string \"drive#drive\".",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of this shared drive.",
+          "type": "string"
+        },
+        "restrictions": {
+          "description": "A set of restrictions that apply to this shared drive or items inside this shared drive.",
+          "properties": {
+            "adminManagedRestrictions": {
+              "description": "Whether administrative privileges on this shared drive are required to modify restrictions.",
+              "type": "boolean"
+            },
+            "copyRequiresWriterPermission": {
+              "description": "Whether the options to copy, print, or download files inside this shared drive, should be disabled for readers and commenters. When this restriction is set to true, it will override the similarly named field to true for any file inside this shared drive.",
+              "type": "boolean"
+            },
+            "domainUsersOnly": {
+              "description": "Whether access to this shared drive and items inside this shared drive is restricted to users of the domain to which this shared drive belongs. This restriction may be overridden by other sharing policies controlled outside of this shared drive.",
+              "type": "boolean"
+            },
+            "driveMembersOnly": {
+              "description": "Whether access to items inside this shared drive is restricted to its members.",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "themeId": {
+          "description": "The ID of the theme from which the background image and color will be set. The set of possible driveThemes can be retrieved from a drive.about.get response. When not specified on a drive.drives.create request, a random theme is chosen from which the background image and color are set. This is a write-only field; it can only be set on requests that don't set colorRgb or backgroundImageFile.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DriveList": {
+      "description": "A list of shared drives.",
+      "id": "DriveList",
+      "properties": {
+        "drives": {
+          "description": "The list of shared drives. If nextPageToken is populated, then this list may be incomplete and an additional page of results should be fetched.",
+          "items": {
+            "$ref": "Drive"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "default": "drive#driveList",
+          "description": "Identifies what kind of resource this is. Value: the fixed string \"drive#driveList\".",
+          "type": "string"
+        },
+        "nextPageToken": {
+          "description": "The page token for the next page of shared drives. This will be absent if the end of the list has been reached. If the token is rejected for any reason, it should be discarded, and pagination should be restarted from the first page of results.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "File": {
       "description": "The metadata for a file.",
       "id": "File",
@@ -2136,7 +2688,7 @@
               "type": "boolean"
             },
             "canCopy": {
-              "description": "Whether the current user can copy this file. For a Team Drive item, whether the current user can copy non-folder descendants of this item, or this item itself if it is not a folder.",
+              "description": "Whether the current user can copy this file. For an item in a shared drive, whether the current user can copy non-folder descendants of this item, or this item itself if it is not a folder.",
               "type": "boolean"
             },
             "canDelete": {
@@ -2144,7 +2696,7 @@
               "type": "boolean"
             },
             "canDeleteChildren": {
-              "description": "Whether the current user can delete children of this folder. This is false when the item is not a folder. Only populated for Team Drive items.",
+              "description": "Whether the current user can delete children of this folder. This is false when the item is not a folder. Only populated for items in shared drives.",
               "type": "boolean"
             },
             "canDownload": {
@@ -2159,40 +2711,60 @@
               "description": "Whether the current user can list the children of this folder. This is always false when the item is not a folder.",
               "type": "boolean"
             },
+            "canMoveChildrenOutOfDrive": {
+              "description": "Whether the current user can move children of this folder outside of the shared drive. This is false when the item is not a folder. Only populated for items in shared drives.",
+              "type": "boolean"
+            },
             "canMoveChildrenOutOfTeamDrive": {
-              "description": "Whether the current user can move children of this folder outside of the Team Drive. This is false when the item is not a folder. Only populated for Team Drive items.",
+              "description": "Deprecated - use canMoveChildrenOutOfDrive instead.",
+              "type": "boolean"
+            },
+            "canMoveChildrenWithinDrive": {
+              "description": "Whether the current user can move children of this folder within the shared drive. This is false when the item is not a folder. Only populated for items in shared drives.",
               "type": "boolean"
             },
             "canMoveChildrenWithinTeamDrive": {
-              "description": "Whether the current user can move children of this folder within the Team Drive. This is false when the item is not a folder. Only populated for Team Drive items.",
+              "description": "Deprecated - use canMoveChildrenWithinDrive instead.",
               "type": "boolean"
             },
             "canMoveItemIntoTeamDrive": {
-              "description": "Whether the current user can move this item into a Team Drive. If the item is in a Team Drive, this field is equivalent to canMoveTeamDriveItem.",
+              "description": "Deprecated - use canMoveItemOutOfDrive instead.",
+              "type": "boolean"
+            },
+            "canMoveItemOutOfDrive": {
+              "description": "Whether the current user can move this item outside of this drive by changing its parent. Note that a request to change the parent of the item may still fail depending on the new parent that is being added.",
               "type": "boolean"
             },
             "canMoveItemOutOfTeamDrive": {
-              "description": "Whether the current user can move this Team Drive item outside of this Team Drive by changing its parent. Note that a request to change the parent of the item may still fail depending on the new parent that is being added. Only populated for Team Drive items.",
+              "description": "Deprecated - use canMoveItemOutOfDrive instead.",
+              "type": "boolean"
+            },
+            "canMoveItemWithinDrive": {
+              "description": "Whether the current user can move this item within this shared drive. Note that a request to change the parent of the item may still fail depending on the new parent that is being added. Only populated for items in shared drives.",
               "type": "boolean"
             },
             "canMoveItemWithinTeamDrive": {
-              "description": "Whether the current user can move this Team Drive item within this Team Drive. Note that a request to change the parent of the item may still fail depending on the new parent that is being added. Only populated for Team Drive items.",
+              "description": "Deprecated - use canMoveItemWithinDrive instead.",
               "type": "boolean"
             },
             "canMoveTeamDriveItem": {
-              "description": "Deprecated - use canMoveItemWithinTeamDrive or canMoveItemOutOfTeamDrive instead.",
+              "description": "Deprecated - use canMoveItemWithinDrive or canMoveItemOutOfDrive instead.",
+              "type": "boolean"
+            },
+            "canReadDrive": {
+              "description": "Whether the current user can read the shared drive to which this file belongs. Only populated for items in shared drives.",
               "type": "boolean"
             },
             "canReadRevisions": {
-              "description": "Whether the current user can read the revisions resource of this file. For a Team Drive item, whether revisions of non-folder descendants of this item, or this item itself if it is not a folder, can be read.",
+              "description": "Whether the current user can read the revisions resource of this file. For a shared drive item, whether revisions of non-folder descendants of this item, or this item itself if it is not a folder, can be read.",
               "type": "boolean"
             },
             "canReadTeamDrive": {
-              "description": "Whether the current user can read the Team Drive to which this file belongs. Only populated for Team Drive files.",
+              "description": "Deprecated - use canReadDrive instead.",
               "type": "boolean"
             },
             "canRemoveChildren": {
-              "description": "Whether the current user can remove children from this folder. This is always false when the item is not a folder. For Team Drive items, use canDeleteChildren or canTrashChildren instead.",
+              "description": "Whether the current user can remove children from this folder. This is always false when the item is not a folder. For a folder in a shared drive, use canDeleteChildren or canTrashChildren instead.",
               "type": "boolean"
             },
             "canRename": {
@@ -2208,7 +2780,7 @@
               "type": "boolean"
             },
             "canTrashChildren": {
-              "description": "Whether the current user can trash children of this folder. This is false when the item is not a folder. Only populated for Team Drive items.",
+              "description": "Whether the current user can trash children of this folder. This is false when the item is not a folder. Only populated for items in shared drives.",
               "type": "boolean"
             },
             "canUntrash": {
@@ -2226,7 +2798,7 @@
               "type": "string"
             },
             "thumbnail": {
-              "description": "A thumbnail for the file. This will only be used if Drive cannot generate a standard thumbnail.",
+              "description": "A thumbnail for the file. This will only be used if Google Drive cannot generate a standard thumbnail.",
               "properties": {
                 "image": {
                   "description": "The thumbnail data encoded with URL-safe Base64 (RFC 4648 section 5).",
@@ -2256,6 +2828,10 @@
           "description": "A short description of the file.",
           "type": "string"
         },
+        "driveId": {
+          "description": "ID of the shared drive the file resides in. Only populated for items in shared drives.",
+          "type": "string"
+        },
         "explicitlyTrashed": {
           "description": "Whether the file has been explicitly trashed, as opposed to recursively trashed from a parent folder.",
           "type": "boolean"
@@ -2269,7 +2845,7 @@
           "type": "object"
         },
         "fileExtension": {
-          "description": "The final component of fullFileExtension. This is only available for files with binary content in Drive.",
+          "description": "The final component of fullFileExtension. This is only available for files with binary content in Google Drive.",
           "type": "string"
         },
         "folderColorRgb": {
@@ -2277,11 +2853,11 @@
           "type": "string"
         },
         "fullFileExtension": {
-          "description": "The full file extension extracted from the name field. May contain multiple concatenated extensions, such as \"tar.gz\". This is only available for files with binary content in Drive.\nThis is automatically updated when the name field changes, however it is not cleared if the new name does not contain a valid extension.",
+          "description": "The full file extension extracted from the name field. May contain multiple concatenated extensions, such as \"tar.gz\". This is only available for files with binary content in Google Drive.\nThis is automatically updated when the name field changes, however it is not cleared if the new name does not contain a valid extension.",
           "type": "string"
         },
         "hasAugmentedPermissions": {
-          "description": "Whether any users are granted file access directly on this file. This field is only populated for Team Drive files.",
+          "description": "Whether any users are granted file access directly on this file. This field is only populated for shared drive files.",
           "type": "boolean"
         },
         "hasThumbnail": {
@@ -2289,7 +2865,7 @@
           "type": "boolean"
         },
         "headRevisionId": {
-          "description": "The ID of the file's head revision. This is currently only available for files with binary content in Drive.",
+          "description": "The ID of the file's head revision. This is currently only available for files with binary content in Google Drive.",
           "type": "string"
         },
         "iconLink": {
@@ -2431,11 +3007,11 @@
           "description": "The last user to modify the file."
         },
         "md5Checksum": {
-          "description": "The MD5 checksum for the content of the file. This is only applicable to files with binary content in Drive.",
+          "description": "The MD5 checksum for the content of the file. This is only applicable to files with binary content in Google Drive.",
           "type": "string"
         },
         "mimeType": {
-          "description": "The MIME type of the file.\nDrive will attempt to automatically detect an appropriate value from uploaded content if no value is provided. The value cannot be changed unless a new revision is uploaded.\nIf a file is created with a Google Doc MIME type, the uploaded content will be imported if possible. The supported import formats are published in the About resource.",
+          "description": "The MIME type of the file.\nGoogle Drive will attempt to automatically detect an appropriate value from uploaded content if no value is provided. The value cannot be changed unless a new revision is uploaded.\nIf a file is created with a Google Doc MIME type, the uploaded content will be imported if possible. The supported import formats are published in the About resource.",
           "type": "string"
         },
         "modifiedByMe": {
@@ -2453,19 +3029,19 @@
           "type": "string"
         },
         "name": {
-          "description": "The name of the file. This is not necessarily unique within a folder. Note that for immutable items such as the top level folders of Team Drives, My Drive root folder, and Application Data folder the name is constant.",
+          "description": "The name of the file. This is not necessarily unique within a folder. Note that for immutable items such as the top level folders of shared drives, My Drive root folder, and Application Data folder the name is constant.",
           "type": "string"
         },
         "originalFilename": {
-          "description": "The original filename of the uploaded content if available, or else the original value of the name field. This is only available for files with binary content in Drive.",
+          "description": "The original filename of the uploaded content if available, or else the original value of the name field. This is only available for files with binary content in Google Drive.",
           "type": "string"
         },
         "ownedByMe": {
-          "description": "Whether the user owns the file. Not populated for Team Drive files.",
+          "description": "Whether the user owns the file. Not populated for items in shared drives.",
           "type": "boolean"
         },
         "owners": {
-          "description": "The owners of the file. Currently, only certain legacy files may have more than one owner. Not populated for Team Drive files.",
+          "description": "The owners of the file. Currently, only certain legacy files may have more than one owner. Not populated for items in shared drives.",
           "items": {
             "$ref": "User"
           },
@@ -2486,7 +3062,7 @@
           "type": "array"
         },
         "permissions": {
-          "description": "The full list of permissions for the file. This is only available if the requesting user can share the file. Not populated for Team Drive files.",
+          "description": "The full list of permissions for the file. This is only available if the requesting user can share the file. Not populated for items in shared drives.",
           "items": {
             "$ref": "Permission"
           },
@@ -2505,7 +3081,7 @@
           "type": "string"
         },
         "shared": {
-          "description": "Whether the file has been shared. Not populated for Team Drive files.",
+          "description": "Whether the file has been shared. Not populated for items in shared drives.",
           "type": "boolean"
         },
         "sharedWithMeTime": {
@@ -2518,7 +3094,7 @@
           "description": "The user who shared the file with the requesting user, if applicable."
         },
         "size": {
-          "description": "The size of the file's content in bytes. This is only applicable to files with binary content in Drive.",
+          "description": "The size of the file's content in bytes. This is only applicable to files with binary content in Google Drive.",
           "format": "int64",
           "type": "string"
         },
@@ -2534,7 +3110,7 @@
           "type": "boolean"
         },
         "teamDriveId": {
-          "description": "ID of the Team Drive the file resides in.",
+          "description": "Deprecated - use driveId instead.",
           "type": "string"
         },
         "thumbnailLink": {
@@ -2551,13 +3127,13 @@
           "type": "boolean"
         },
         "trashedTime": {
-          "description": "The time that the item was trashed (RFC 3339 date-time). Only populated for Team Drive files.",
+          "description": "The time that the item was trashed (RFC 3339 date-time). Only populated for items in shared drives.",
           "format": "date-time",
           "type": "string"
         },
         "trashingUser": {
           "$ref": "User",
-          "description": "If the file has been explicitly trashed, the user who trashed it. Only populated for Team Drive files."
+          "description": "If the file has been explicitly trashed, the user who trashed it. Only populated for items in shared drives."
         },
         "version": {
           "description": "A monotonically increasing version number for the file. This reflects every change made to the file on the server, even those not visible to the user.",
@@ -2599,7 +3175,7 @@
           "type": "boolean"
         },
         "webContentLink": {
-          "description": "A link for downloading the content of the file in a browser. This is only available for files with binary content in Drive.",
+          "description": "A link for downloading the content of the file in a browser. This is only available for files with binary content in Google Drive.",
           "type": "string"
         },
         "webViewLink": {
@@ -2607,7 +3183,7 @@
           "type": "string"
         },
         "writersCanShare": {
-          "description": "Whether users with only writer permission can modify the file's permissions. Not populated for Team Drive files.",
+          "description": "Whether users with only writer permission can modify the file's permissions. Not populated for items in shared drives.",
           "type": "boolean"
         }
       },
@@ -2625,7 +3201,7 @@
           "type": "array"
         },
         "incompleteSearch": {
-          "description": "Whether the search process was incomplete. If true, then some search results may be missing, since all documents were not searched. This may occur when searching multiple Team Drives with the \"user,allTeamDrives\" corpora, but all corpora could not be searched. When this happens, it is suggested that clients narrow their query by choosing a different corpus such as \"user\" or \"teamDrive\".",
+          "description": "Whether the search process was incomplete. If true, then some search results may be missing, since all documents were not searched. This may occur when searching multiple drives with the \"allDrives\" corpora, but all corpora could not be searched. When this happens, it is suggested that clients narrow their query by choosing a different corpus such as \"user\" or \"drive\".",
           "type": "boolean"
         },
         "kind": {
@@ -2701,6 +3277,31 @@
           "description": "Identifies what kind of resource this is. Value: the fixed string \"drive#permission\".",
           "type": "string"
         },
+        "permissionDetails": {
+          "description": "Details of whether the permissions on this shared drive item are inherited or directly on this item. This is an output-only field which is present only for shared drive items.",
+          "items": {
+            "properties": {
+              "inherited": {
+                "description": "Whether this permission is inherited. This field is always populated. This is an output-only field.",
+                "type": "boolean"
+              },
+              "inheritedFrom": {
+                "description": "The ID of the item from which this permission is inherited. This is an output-only field and is only populated for members of the shared drive.",
+                "type": "string"
+              },
+              "permissionType": {
+                "description": "The permission type for this user. While new values may be added in future, the following are currently possible:  \n- file \n- member",
+                "type": "string"
+              },
+              "role": {
+                "description": "The primary role for this user. While new values may be added in the future, the following are currently possible:  \n- organizer \n- fileOrganizer \n- writer \n- commenter \n- reader",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
         "photoLink": {
           "description": "A link to the user's profile photo, if available.",
           "type": "string"
@@ -2715,23 +3316,23 @@
           "type": "string"
         },
         "teamDrivePermissionDetails": {
-          "description": "Details of whether the permissions on this Team Drive item are inherited or directly on this item. This is an output-only field which is present only for Team Drive items.",
+          "description": "Deprecated - use permissionDetails instead.",
           "items": {
             "properties": {
               "inherited": {
-                "description": "Whether this permission is inherited. This field is always populated. This is an output-only field.",
+                "description": "Deprecated - use permissionDetails/inherited instead.",
                 "type": "boolean"
               },
               "inheritedFrom": {
-                "description": "The ID of the item from which this permission is inherited. This is an output-only field and is only populated for members of the Team Drive.",
+                "description": "Deprecated - use permissionDetails/inheritedFrom instead.",
                 "type": "string"
               },
               "role": {
-                "description": "The primary role for this user. While new values may be added in the future, the following are currently possible:  \n- organizer \n- fileOrganizer \n- writer \n- commenter \n- reader",
+                "description": "Deprecated - use permissionDetails/role instead.",
                 "type": "string"
               },
               "teamDrivePermissionType": {
-                "description": "The Team Drive permission type for this user. While new values may be added in future, the following are currently possible:  \n- file \n- member",
+                "description": "Deprecated - use permissionDetails/permissionType instead.",
                 "type": "string"
               }
             },
@@ -2953,7 +3554,7 @@
       "type": "object"
     },
     "TeamDrive": {
-      "description": "Representation of a Team Drive.",
+      "description": "Deprecated: use the drive collection instead.",
       "id": "TeamDrive",
       "properties": {
         "backgroundImageFile": {
