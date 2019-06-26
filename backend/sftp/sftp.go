@@ -807,7 +807,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // About gets usage stats
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	c, err := f.getSftpConnection()
 	if err != nil {
 		return nil, errors.Wrap(err, "About get SFTP connection")
@@ -1188,5 +1188,6 @@ var (
 	_ fs.PutStreamer = &Fs{}
 	_ fs.Mover       = &Fs{}
 	_ fs.DirMover    = &Fs{}
+	_ fs.Abouter     = &Fs{}
 	_ fs.Object      = &Object{}
 )
