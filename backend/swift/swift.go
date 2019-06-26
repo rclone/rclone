@@ -1127,6 +1127,7 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 	uniquePrefix := fmt.Sprintf("%s/%d", swift.TimeToFloatString(time.Now()), size)
 	segmentsPath := fmt.Sprintf("%s%s/%s", o.fs.root, o.remote, uniquePrefix)
 	in := bufio.NewReader(in0)
+	segmentInfos := make([]string, 0, ((size / int64(o.fs.opt.ChunkSize)) + 1))
 	for {
 		// can we read at least one byte?
 		if _, err := in.Peek(1); err != nil {
@@ -1148,9 +1149,22 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			var rxHeaders swift.Headers
 			rxHeaders, err = o.fs.c.ObjectPut(o.fs.segmentsContainer, segmentPath, segmentReader, true, "", "", headers)
+			if err == nil {
+				segmentInfos = append(segmentInfos, segmentPath)
+			}
 			return shouldRetryHeaders(rxHeaders, err)
 		})
 		if err != nil {
+			if len(segmentInfos) > 0 {
+				for _, v := range segmentInfos {
+					fs.Debugf(o, "Delete segment file %q on %q", v, o.fs.segmentsContainer)
+					e := o.fs.c.ObjectDelete(o.fs.segmentsContainer, v)
+					if e != nil {
+						fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, o.fs.segmentsContainer, e)
+					}
+				}
+				segmentInfos = nil
+			}
 			return "", err
 		}
 		i++
@@ -1165,6 +1179,18 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 		rxHeaders, err = o.fs.c.ObjectPut(o.fs.container, manifestName, emptyReader, true, "", contentType, headers)
 		return shouldRetryHeaders(rxHeaders, err)
 	})
+	if err != nil {
+		if segmentInfos != nil && len(segmentInfos) > 0 {
+			for _, v := range segmentInfos {
+				fs.Debugf(o, "Delete segment file %q on %q", v, o.fs.segmentsContainer)
+				e := o.fs.c.ObjectDelete(o.fs.segmentsContainer, v)
+				if e != nil {
+					fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, o.fs.segmentsContainer, e)
+				}
+			}
+			segmentInfos = nil
+		}
+	}
 	return uniquePrefix + "/", err
 }
 
