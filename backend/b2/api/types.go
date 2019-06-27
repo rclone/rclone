@@ -329,10 +329,11 @@ type CancelLargeFileResponse struct {
 
 // CopyFileRequest is as passed to b2_copy_file
 type CopyFileRequest struct {
-	SourceID          string            `json:"sourceFileId"`                // The ID of the source file being copied.
-	Name              string            `json:"fileName"`                    // The name of the new file being created.
-	Range             string            `json:"range,omitempty"`             // The range of bytes to copy. If not provided, the whole source file will be copied.
-	MetadataDirective string            `json:"metadataDirective,omitempty"` // The strategy for how to populate metadata for the new file: COPY or REPLACE
-	ContentType       string            `json:"contentType,omitempty"`       // The MIME type of the content of the file (REPLACE only)
-	Info              map[string]string `json:"fileInfo,omitempty"`          // This field stores the metadata that will be stored with the file. (REPLACE only)
+	SourceID          string            `json:"sourceFileId"`                  // The ID of the source file being copied.
+	Name              string            `json:"fileName"`                      // The name of the new file being created.
+	Range             string            `json:"range,omitempty"`               // The range of bytes to copy. If not provided, the whole source file will be copied.
+	MetadataDirective string            `json:"metadataDirective,omitempty"`   // The strategy for how to populate metadata for the new file: COPY or REPLACE
+	ContentType       string            `json:"contentType,omitempty"`         // The MIME type of the content of the file (REPLACE only)
+	Info              map[string]string `json:"fileInfo,omitempty"`            // This field stores the metadata that will be stored with the file. (REPLACE only)
+	DestBucketID      string            `json:"destinationBucketId,omitempty"` // The destination ID of the bucket if set, if not the source bucket will be used
 }
