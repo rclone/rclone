@@ -1155,16 +1155,8 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 			return shouldRetryHeaders(rxHeaders, err)
 		})
 		if err != nil {
-			if len(segmentInfos) > 0 {
-				for _, v := range segmentInfos {
-					fs.Debugf(o, "Delete segment file %q on %q", v, o.fs.segmentsContainer)
-					e := o.fs.c.ObjectDelete(o.fs.segmentsContainer, v)
-					if e != nil {
-						fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, o.fs.segmentsContainer, e)
-					}
-				}
-				segmentInfos = nil
-			}
+			deleteChunks(o, segmentInfos)
+			segmentInfos = nil
 			return "", err
 		}
 		i++
@@ -1180,18 +1172,22 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 		return shouldRetryHeaders(rxHeaders, err)
 	})
 	if err != nil {
-		if segmentInfos != nil && len(segmentInfos) > 0 {
-			for _, v := range segmentInfos {
-				fs.Debugf(o, "Delete segment file %q on %q", v, o.fs.segmentsContainer)
-				e := o.fs.c.ObjectDelete(o.fs.segmentsContainer, v)
-				if e != nil {
-					fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, o.fs.segmentsContainer, e)
-				}
-			}
-			segmentInfos = nil
-		}
+		deleteChunks(o, segmentInfos)
+		segmentInfos = nil
 	}
 	return uniquePrefix + "/", err
+}
+
+func deleteChunks(o *Object, segmentInfos []string) {
+	if segmentInfos != nil && len(segmentInfos) > 0 {
+		for _, v := range segmentInfos {
+			fs.Debugf(o, "Delete segment file %q on %q", v, o.fs.segmentsContainer)
+			e := o.fs.c.ObjectDelete(o.fs.segmentsContainer, v)
+			if e != nil {
+				fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, o.fs.segmentsContainer, e)
+			}
+		}
+	}
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
