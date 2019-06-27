@@ -53,6 +53,11 @@ const (
 	maxUploadCutoff     = 256 * fs.MebiByte
 	defaultAccessTier   = azblob.AccessTierNone
 	maxTryTimeout       = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
+	// Default storage account, key and blob endpoint for emulator support,
+	// though it is a base64 key checked in here, it is publicly available secret.
+	emulatorAccount      = "devstoreaccount1"
+	emulatorAccountKey   = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
 )
 
 // Register with Fs
@@ -63,13 +68,17 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
-			Help: "Storage Account Name (leave blank to use connection string or SAS URL)",
+			Help: "Storage Account Name (leave blank to use connection string or SAS URL or Emulator)",
 		}, {
 			Name: "key",
-			Help: "Storage Account Key (leave blank to use connection string or SAS URL)",
+			Help: "Storage Account Key (leave blank to use connection string or SAS URL or Emulator)",
 		}, {
 			Name: "sas_url",
-			Help: "SAS URL for container level access only\n(leave blank if using account/key or connection string)",
+			Help: "SAS URL for container level access only\n(leave blank if using account/key or connection string or Emulator)",
+		}, {
+			Name:    "use_emulator",
+			Help:    "Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)",
+			Default: false,
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for the service\nLeave blank normally.",
@@ -129,6 +138,7 @@ type Options struct {
 	ChunkSize     fs.SizeSuffix `config:"chunk_size"`
 	ListChunkSize uint          `config:"list_chunk"`
 	AccessTier    string        `config:"access_tier"`
+	UseEmulator   bool          `config:"use_emulator"`
 }
 
 // Fs represents a remote azure server
@@ -366,6 +376,18 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		containerURL azblob.ContainerURL
 	)
 	switch {
+	case opt.UseEmulator:
+		credential, err := azblob.NewSharedKeyCredential(emulatorAccount, emulatorAccountKey)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to parse credentials")
+		}
+		u, err = url.Parse(emulatorBlobEndpoint)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+		}
+		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
+		serviceURL = azblob.NewServiceURL(*u, pipeline)
+		containerURL = serviceURL.NewContainerURL(container)
 	case opt.Account != "" && opt.Key != "":
 		credential, err := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
