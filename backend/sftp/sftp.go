@@ -1022,16 +1022,17 @@ func (o *Object) stat() error {
 //
 // it also updates the info field
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if !o.fs.opt.SetModTime {
+		return nil
+	}
 	c, err := o.fs.getSftpConnection()
 	if err != nil {
 		return errors.Wrap(err, "SetModTime")
 	}
-	if o.fs.opt.SetModTime {
-		err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
-		o.fs.putSftpConnection(&c, err)
-		if err != nil {
-			return errors.Wrap(err, "SetModTime failed")
-		}
+	err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
+	o.fs.putSftpConnection(&c, err)
+	if err != nil {
+		return errors.Wrap(err, "SetModTime failed")
 	}
 	err = o.stat()
 	if err != nil {
