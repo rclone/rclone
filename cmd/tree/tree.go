@@ -13,6 +13,7 @@ import (
 	"github.com/a8m/tree"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/dirtree"
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
@@ -186,10 +187,10 @@ func (to *FileInfo) String() string {
 }
 
 // Fs maps an fs.Fs into a tree.Fs
-type Fs walk.DirTree
+type Fs dirtree.DirTree
 
 // NewFs creates a new tree
-func NewFs(dirs walk.DirTree) Fs {
+func NewFs(dirs dirtree.DirTree) Fs {
 	return Fs(dirs)
 }
 
@@ -201,7 +202,7 @@ func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 	if filePath == "" {
 		return &FileInfo{fs.NewDir("", time.Now())}, nil
 	}
-	_, entry := walk.DirTree(dirs).Find(filePath)
+	_, entry := dirtree.DirTree(dirs).Find(filePath)
 	if entry == nil {
 		return nil, errors.Errorf("Couldn't find %q in directory cache", filePath)
 	}
