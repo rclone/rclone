@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/dirtree"
 	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/walk"
@@ -227,13 +228,13 @@ func (d *Dir) _readDir() error {
 
 // update d.items for each dir in the DirTree below this one and
 // set the last read time - must be called with the lock held
-func (d *Dir) _readDirFromDirTree(dirTree walk.DirTree, when time.Time) error {
+func (d *Dir) _readDirFromDirTree(dirTree dirtree.DirTree, when time.Time) error {
 	return d._readDirFromEntries(dirTree[d.path], dirTree, when)
 }
 
 // update d.items and if dirTree is not nil update each dir in the DirTree below this one and
 // set the last read time - must be called with the lock held
-func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree walk.DirTree, when time.Time) error {
+func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree, when time.Time) error {
 	var err error
 	// Cache the items by name
 	found := make(map[string]struct{})

@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/dirtree"
 	"github.com/ncw/rclone/fs/filter"
 	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fs/walk"
@@ -78,7 +79,7 @@ func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
 	var (
 		mu      sync.Mutex
 		started bool
-		dirs    walk.DirTree
+		dirs    dirtree.DirTree
 		dirsErr error
 	)
 	return func(dir string) (entries fs.DirEntries, err error) {
