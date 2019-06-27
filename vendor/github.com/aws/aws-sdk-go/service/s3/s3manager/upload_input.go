@@ -40,7 +40,8 @@ type UploadInput struct {
 	ContentLanguage *string `location:"header" locationName:"Content-Language" type:"string"`
 
 	// The base64-encoded 128-bit MD5 digest of the part data. This parameter is
-	// auto-populated when using the command from the CLI
+	// auto-populated when using the command from the CLI. This parameted is required
+	// if object lock parameters are specified.
 	ContentMD5 *string `location:"header" locationName:"Content-MD5" type:"string"`
 
 	// A standard MIME type describing the format of the object data.
@@ -72,10 +73,10 @@ type UploadInput struct {
 	// The Legal Hold status that you want to apply to the specified object.
 	ObjectLockLegalHoldStatus *string `location:"header" locationName:"x-amz-object-lock-legal-hold" type:"string" enum:"ObjectLockLegalHoldStatus"`
 
-	// The Object Lock mode that you want to apply to this object.
+	// The object lock mode that you want to apply to this object.
 	ObjectLockMode *string `location:"header" locationName:"x-amz-object-lock-mode" type:"string" enum:"ObjectLockMode"`
 
-	// The date and time when you want this object's Object Lock to expire.
+	// The date and time when you want this object's object lock to expire.
 	ObjectLockRetainUntilDate *time.Time `location:"header" locationName:"x-amz-object-lock-retain-until-date" type:"timestamp" timestampFormat:"iso8601"`
 
 	// Confirms that the requester knows that she or he will be charged for the
@@ -92,7 +93,7 @@ type UploadInput struct {
 	// does not store the encryption key. The key must be appropriate for use with
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption

@@ -50,8 +50,8 @@ func main() {
 	}
 
 	// Intentionally export __val fields in Fsid and Sigset_t
-	valRegex := regexp.MustCompile(`type (Fsid|Sigset_t) struct {(\s+)X__val(\s+\S+\s+)}`)
-	b = valRegex.ReplaceAll(b, []byte("type $1 struct {${2}Val$3}"))
+	valRegex := regexp.MustCompile(`type (Fsid|Sigset_t) struct {(\s+)X__(bits|val)(\s+\S+\s+)}`)
+	b = valRegex.ReplaceAll(b, []byte("type $1 struct {${2}Val$4}"))
 
 	// Intentionally export __fds_bits field in FdSet
 	fdSetRegex := regexp.MustCompile(`type (FdSet) struct {(\s+)X__fds_bits(\s+\S+\s+)}`)

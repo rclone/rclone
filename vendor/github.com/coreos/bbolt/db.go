@@ -121,6 +121,7 @@ type DB struct {
 	AllocSize int
 
 	path     string
+	openFile func(string, int, os.FileMode) (*os.File, error)
 	file     *os.File
 	dataref  []byte // mmap'ed readonly, write throws SEGV
 	data     *[maxMapSize]byte
@@ -199,10 +200,15 @@ func Open(path string, mode os.FileMode, options *Options) (*DB, error) {
 		db.readOnly = true
 	}
 
+	db.openFile = options.OpenFile
+	if db.openFile == nil {
+		db.openFile = os.OpenFile
+	}
+
 	// Open data file and separate sync handler for metadata writes.
 	db.path = path
 	var err error
-	if db.file, err = os.OpenFile(db.path, flag|os.O_CREATE, mode); err != nil {
+	if db.file, err = db.openFile(db.path, flag|os.O_CREATE, mode); err != nil {
 		_ = db.close()
 		return nil, err
 	}
@@ -1054,6 +1060,10 @@ type Options struct {
 	// set directly on the DB itself when returned from Open(), but this option
 	// is useful in APIs which expose Options but not the underlying DB.
 	NoSync bool
+
+	// OpenFile is used to open files. It defaults to os.OpenFile. This option
+	// is useful for writing hermetic tests.
+	OpenFile func(string, int, os.FileMode) (*os.File, error)
 }
 
 // DefaultOptions represent the options used if nil options are passed into Open().

@@ -659,6 +659,16 @@ type ProcessEntry32 struct {
 	ExeFile         [MAX_PATH]uint16
 }
 
+type ThreadEntry32 struct {
+	Size           uint32
+	Usage          uint32
+	ThreadID       uint32
+	OwnerProcessID uint32
+	BasePri        int32
+	DeltaPri       int32
+	Flags          uint32
+}
+
 type Systemtime struct {
 	Year         uint16
 	Month        uint16
@@ -1620,3 +1630,36 @@ const (
 	JobObjectNotificationLimitInformation2      = 34
 	JobObjectSecurityLimitInformation           = 5
 )
+
+const (
+	KF_FLAG_DEFAULT                          = 0x00000000
+	KF_FLAG_FORCE_APP_DATA_REDIRECTION       = 0x00080000
+	KF_FLAG_RETURN_FILTER_REDIRECTION_TARGET = 0x00040000
+	KF_FLAG_FORCE_PACKAGE_REDIRECTION        = 0x00020000
+	KF_FLAG_NO_PACKAGE_REDIRECTION           = 0x00010000
+	KF_FLAG_FORCE_APPCONTAINER_REDIRECTION   = 0x00020000
+	KF_FLAG_NO_APPCONTAINER_REDIRECTION      = 0x00010000
+	KF_FLAG_CREATE                           = 0x00008000
+	KF_FLAG_DONT_VERIFY                      = 0x00004000
+	KF_FLAG_DONT_UNEXPAND                    = 0x00002000
+	KF_FLAG_NO_ALIAS                         = 0x00001000
+	KF_FLAG_INIT                             = 0x00000800
+	KF_FLAG_DEFAULT_PATH                     = 0x00000400
+	KF_FLAG_NOT_PARENT_RELATIVE              = 0x00000200
+	KF_FLAG_SIMPLE_IDLIST                    = 0x00000100
+	KF_FLAG_ALIAS_ONLY                       = 0x80000000
+)
+
+type OsVersionInfoEx struct {
+	osVersionInfoSize uint32
+	MajorVersion      uint32
+	MinorVersion      uint32
+	BuildNumber       uint32
+	PlatformId        uint32
+	CsdVersion        [128]uint16
+	ServicePackMajor  uint16
+	ServicePackMinor  uint16
+	SuiteMask         uint16
+	ProductType       byte
+	_                 byte
+}

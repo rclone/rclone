@@ -97,6 +97,36 @@ type kexDHReplyMsg struct {
 	Signature []byte
 }
 
+// See RFC 4419, section 5.
+const msgKexDHGexGroup = 31
+
+type kexDHGexGroupMsg struct {
+	P *big.Int `sshtype:"31"`
+	G *big.Int
+}
+
+const msgKexDHGexInit = 32
+
+type kexDHGexInitMsg struct {
+	X *big.Int `sshtype:"32"`
+}
+
+const msgKexDHGexReply = 33
+
+type kexDHGexReplyMsg struct {
+	HostKey   []byte `sshtype:"33"`
+	Y         *big.Int
+	Signature []byte
+}
+
+const msgKexDHGexRequest = 34
+
+type kexDHGexRequestMsg struct {
+	MinBits      uint32 `sshtype:"34"`
+	PreferedBits uint32
+	MaxBits      uint32
+}
+
 // See RFC 4253, section 10.
 const msgServiceRequest = 5
 

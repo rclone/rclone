@@ -263,7 +263,7 @@ func (c *ConfigFile) MustValue(section, key string, defaultVal ...string) string
 	return val
 }
 
-// MustValue always returns value without error,
+// MustValueSet always returns value without error,
 // It returns empty string if error occurs, or the default value if given,
 // and a bool value indicates whether default value is returned.
 func (c *ConfigFile) MustValueSet(section, key string, defaultVal ...string) (string, bool) {

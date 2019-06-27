@@ -549,7 +549,7 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 		s.write(recvMsg{err: err})
 		close(s.done)
 		// If headerChan isn't closed, then close it.
-		if atomic.SwapUint32(&s.headerDone, 1) == 0 {
+		if atomic.CompareAndSwapUint32(&s.headerChanClosed, 0, 1) {
 			close(s.headerChan)
 		}
 
@@ -713,7 +713,7 @@ func (t *http2Client) closeStream(s *Stream, err error, rst bool, rstCode http2.
 		s.write(recvMsg{err: err})
 	}
 	// If headerChan isn't closed, then close it.
-	if atomic.SwapUint32(&s.headerDone, 1) == 0 {
+	if atomic.CompareAndSwapUint32(&s.headerChanClosed, 0, 1) {
 		s.noHeaders = true
 		close(s.headerChan)
 	}
@@ -794,21 +794,21 @@ func (t *http2Client) Close() error {
 // stream is closed.  If there are no active streams, the transport is closed
 // immediately.  This does nothing if the transport is already draining or
 // closing.
-func (t *http2Client) GracefulClose() error {
+func (t *http2Client) GracefulClose() {
 	t.mu.Lock()
 	// Make sure we move to draining only from active.
 	if t.state == draining || t.state == closing {
 		t.mu.Unlock()
-		return nil
+		return
 	}
 	t.state = draining
 	active := len(t.activeStreams)
 	t.mu.Unlock()
 	if active == 0 {
-		return t.Close()
+		t.Close()
+		return
 	}
 	t.controlBuf.put(&incomingGoAway{})
-	return nil
 }
 
 // Write formats the data into HTTP2 data frame(s) and sends it out. The caller
@@ -1142,26 +1142,24 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 	}
 	endStream := frame.StreamEnded()
 	atomic.StoreUint32(&s.bytesReceived, 1)
-	initialHeader := atomic.SwapUint32(&s.headerDone, 1) == 0
+	initialHeader := atomic.LoadUint32(&s.headerChanClosed) == 0
 
 	if !initialHeader && !endStream {
-		// As specified by RFC 7540, a HEADERS frame (and associated CONTINUATION frames) can only appear
-		// at the start or end of a stream. Therefore, second HEADERS frame must have EOS bit set.
+		// As specified by gRPC over HTTP2, a HEADERS frame (and associated CONTINUATION frames) can only appear at the start or end of a stream. Therefore, second HEADERS frame must have EOS bit set.
 		st := status.New(codes.Internal, "a HEADERS frame cannot appear in the middle of a stream")
 		t.closeStream(s, st.Err(), true, http2.ErrCodeProtocol, st, nil, false)
 		return
 	}
 
 	state := &decodeState{}
-	// Initialize isGRPC value to be !initialHeader, since if a gRPC ResponseHeader has been received
-	// which indicates peer speaking gRPC, we are in gRPC mode.
+	// Initialize isGRPC value to be !initialHeader, since if a gRPC Response-Headers has already been received, then it means that the peer is speaking gRPC and we are in gRPC mode.
 	state.data.isGRPC = !initialHeader
 	if err := state.decodeHeader(frame); err != nil {
 		t.closeStream(s, err, true, http2.ErrCodeProtocol, status.Convert(err), nil, endStream)
 		return
 	}
 
-	var isHeader bool
+	isHeader := false
 	defer func() {
 		if t.statsHandler != nil {
 			if isHeader {
@@ -1180,10 +1178,10 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 		}
 	}()
 
-	// If headers haven't been received yet.
-	if initialHeader {
+	// If headerChan hasn't been closed yet
+	if atomic.CompareAndSwapUint32(&s.headerChanClosed, 0, 1) {
 		if !endStream {
-			// Headers frame is ResponseHeader.
+			// HEADERS frame block carries a Response-Headers.
 			isHeader = true
 			// These values can be set without any synchronization because
 			// stream goroutine will read it only after seeing a closed
@@ -1192,12 +1190,15 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 			if len(state.data.mdata) > 0 {
 				s.header = state.data.mdata
 			}
-			close(s.headerChan)
-			return
+		} else {
+			// HEADERS frame block carries a Trailers-Only.
+			s.noHeaders = true
 		}
-		// Headers frame is Trailers-only.
-		s.noHeaders = true
 		close(s.headerChan)
+	}
+
+	if !endStream {
+		return
 	}
 
 	// if client received END_STREAM from server while stream was still active, send RST_STREAM

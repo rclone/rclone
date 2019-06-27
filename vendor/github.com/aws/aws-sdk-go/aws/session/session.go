@@ -3,24 +3,21 @@ package session
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/processcreds"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/csm"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/internal/shareddefaults"
 )
 
 const (
@@ -210,6 +207,12 @@ type Options struct {
 	// the config enables assume role wit MFA via the mfa_serial field.
 	AssumeRoleTokenProvider func() (string, error)
 
+	// When the SDK's shared config is configured to assume a role this option
+	// may be provided to set the expiry duration of the STS credentials.
+	// Defaults to 15 minutes if not set as documented in the
+	// stscreds.AssumeRoleProvider.
+	AssumeRoleDuration time.Duration
+
 	// Reader for a custom Credentials Authority (CA) bundle in PEM format that
 	// the SDK will use instead of the default system's root CA bundle. Use this
 	// only if you want to replace the CA bundle the SDK uses for TLS requests.
@@ -224,6 +227,12 @@ type Options struct {
 	// to also enable this feature. CustomCABundle session option field has priority
 	// over the AWS_CA_BUNDLE environment variable, and will be used if both are set.
 	CustomCABundle io.Reader
+
+	// The handlers that the session and all API clients will be created with.
+	// This must be a complete set of handlers. Use the defaults.Handlers()
+	// function to initialize this value before changing the handlers to be
+	// used by the SDK.
+	Handlers request.Handlers
 }
 
 // NewSessionWithOptions returns a new Session created from SDK defaults, config files,
@@ -344,7 +353,11 @@ func enableCSM(handlers *request.Handlers, clientID string, port string, logger 
 
 func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, error) {
 	cfg := defaults.Config()
-	handlers := defaults.Handlers()
+
+	handlers := opts.Handlers
+	if handlers.IsEmpty() {
+		handlers = defaults.Handlers()
+	}
 
 	// Get a merged version of the user provided config to determine if
 	// credentials were.
@@ -443,7 +456,11 @@ func loadCertPool(r io.Reader) (*x509.CertPool, error) {
 	return p, nil
 }
 
-func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg sharedConfig, handlers request.Handlers, sessOpts Options) error {
+func mergeConfigSrcs(cfg, userCfg *aws.Config,
+	envCfg envConfig, sharedCfg sharedConfig,
+	handlers request.Handlers,
+	sessOpts Options,
+) error {
 	// Merge in user provided configuration
 	cfg.MergeIn(userCfg)
 
@@ -464,162 +481,17 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config, envCfg envConfig, sharedCfg share
 		}
 	}
 
-	// Configure credentials if not already set
+	// Configure credentials if not already set by the user when creating the
+	// Session.
 	if cfg.Credentials == credentials.AnonymousCredentials && userCfg.Credentials == nil {
-
-		// inspect the profile to see if a credential source has been specified.
-		if envCfg.EnableSharedConfig && len(sharedCfg.AssumeRole.CredentialSource) > 0 {
-
-			// if both credential_source and source_profile have been set, return an error
-			// as this is undefined behavior.
-			if len(sharedCfg.AssumeRole.SourceProfile) > 0 {
-				return ErrSharedConfigSourceCollision
-			}
-
-			// valid credential source values
-			const (
-				credSourceEc2Metadata  = "Ec2InstanceMetadata"
-				credSourceEnvironment  = "Environment"
-				credSourceECSContainer = "EcsContainer"
-			)
-
-			switch sharedCfg.AssumeRole.CredentialSource {
-			case credSourceEc2Metadata:
-				cfgCp := *cfg
-				p := defaults.RemoteCredProvider(cfgCp, handlers)
-				cfgCp.Credentials = credentials.NewCredentials(p)
-
-				if len(sharedCfg.AssumeRole.MFASerial) > 0 && sessOpts.AssumeRoleTokenProvider == nil {
-					// AssumeRole Token provider is required if doing Assume Role
-					// with MFA.
-					return AssumeRoleTokenProviderNotSetError{}
-				}
-
-				cfg.Credentials = assumeRoleCredentials(cfgCp, handlers, sharedCfg, sessOpts)
-			case credSourceEnvironment:
-				cfg.Credentials = credentials.NewStaticCredentialsFromCreds(
-					envCfg.Creds,
-				)
-			case credSourceECSContainer:
-				if len(os.Getenv(shareddefaults.ECSCredsProviderEnvVar)) == 0 {
-					return ErrSharedConfigECSContainerEnvVarEmpty
-				}
-
-				cfgCp := *cfg
-				p := defaults.RemoteCredProvider(cfgCp, handlers)
-				creds := credentials.NewCredentials(p)
-
-				cfg.Credentials = creds
-			default:
-				return ErrSharedConfigInvalidCredSource
-			}
-
-			return nil
+		creds, err := resolveCredentials(cfg, envCfg, sharedCfg, handlers, sessOpts)
+		if err != nil {
+			return err
 		}
-
-		if len(envCfg.Creds.AccessKeyID) > 0 {
-			cfg.Credentials = credentials.NewStaticCredentialsFromCreds(
-				envCfg.Creds,
-			)
-		} else if envCfg.EnableSharedConfig && len(sharedCfg.AssumeRole.RoleARN) > 0 && sharedCfg.AssumeRoleSource != nil {
-			cfgCp := *cfg
-			cfgCp.Credentials = credentials.NewStaticCredentialsFromCreds(
-				sharedCfg.AssumeRoleSource.Creds,
-			)
-
-			if len(sharedCfg.AssumeRole.MFASerial) > 0 && sessOpts.AssumeRoleTokenProvider == nil {
-				// AssumeRole Token provider is required if doing Assume Role
-				// with MFA.
-				return AssumeRoleTokenProviderNotSetError{}
-			}
-
-			cfg.Credentials = assumeRoleCredentials(cfgCp, handlers, sharedCfg, sessOpts)
-		} else if len(sharedCfg.Creds.AccessKeyID) > 0 {
-			cfg.Credentials = credentials.NewStaticCredentialsFromCreds(
-				sharedCfg.Creds,
-			)
-		} else if len(sharedCfg.CredentialProcess) > 0 {
-			cfg.Credentials = processcreds.NewCredentials(
-				sharedCfg.CredentialProcess,
-			)
-		} else {
-			// Fallback to default credentials provider, include mock errors
-			// for the credential chain so user can identify why credentials
-			// failed to be retrieved.
-			cfg.Credentials = credentials.NewCredentials(&credentials.ChainProvider{
-				VerboseErrors: aws.BoolValue(cfg.CredentialsChainVerboseErrors),
-				Providers: []credentials.Provider{
-					&credProviderError{Err: awserr.New("EnvAccessKeyNotFound", "failed to find credentials in the environment.", nil)},
-					&credProviderError{Err: awserr.New("SharedCredsLoad", fmt.Sprintf("failed to load profile, %s.", envCfg.Profile), nil)},
-					defaults.RemoteCredProvider(*cfg, handlers),
-				},
-			})
-		}
+		cfg.Credentials = creds
 	}
 
 	return nil
-}
-
-func assumeRoleCredentials(cfg aws.Config, handlers request.Handlers, sharedCfg sharedConfig, sessOpts Options) *credentials.Credentials {
-	return stscreds.NewCredentials(
-		&Session{
-			Config:   &cfg,
-			Handlers: handlers.Copy(),
-		},
-		sharedCfg.AssumeRole.RoleARN,
-		func(opt *stscreds.AssumeRoleProvider) {
-			opt.RoleSessionName = sharedCfg.AssumeRole.RoleSessionName
-
-			// Assume role with external ID
-			if len(sharedCfg.AssumeRole.ExternalID) > 0 {
-				opt.ExternalID = aws.String(sharedCfg.AssumeRole.ExternalID)
-			}
-
-			// Assume role with MFA
-			if len(sharedCfg.AssumeRole.MFASerial) > 0 {
-				opt.SerialNumber = aws.String(sharedCfg.AssumeRole.MFASerial)
-				opt.TokenProvider = sessOpts.AssumeRoleTokenProvider
-			}
-		},
-	)
-}
-
-// AssumeRoleTokenProviderNotSetError is an error returned when creating a session when the
-// MFAToken option is not set when shared config is configured load assume a
-// role with an MFA token.
-type AssumeRoleTokenProviderNotSetError struct{}
-
-// Code is the short id of the error.
-func (e AssumeRoleTokenProviderNotSetError) Code() string {
-	return "AssumeRoleTokenProviderNotSetError"
-}
-
-// Message is the description of the error
-func (e AssumeRoleTokenProviderNotSetError) Message() string {
-	return fmt.Sprintf("assume role with MFA enabled, but AssumeRoleTokenProvider session option not set.")
-}
-
-// OrigErr is the underlying error that caused the failure.
-func (e AssumeRoleTokenProviderNotSetError) OrigErr() error {
-	return nil
-}
-
-// Error satisfies the error interface.
-func (e AssumeRoleTokenProviderNotSetError) Error() string {
-	return awserr.SprintError(e.Code(), e.Message(), "", nil)
-}
-
-type credProviderError struct {
-	Err error
-}
-
-var emptyCreds = credentials.Value{}
-
-func (c credProviderError) Retrieve() (credentials.Value, error) {
-	return credentials.Value{}, c.Err
-}
-func (c credProviderError) IsExpired() bool {
-	return true
 }
 
 func initHandlers(s *Session) {
