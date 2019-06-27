@@ -279,3 +279,9 @@ tiering blob to "Hot" or "Cool".
 
 MD5 sums are only uploaded with chunked files if the source has an MD5
 sum.  This will always be the case for a local to azure copy.
+
+### Azure Storage Emulator Support ###
+You can test rlcone with storage emulator locally, to do this make sure azure storage emulator
+installed locally and set up a new remote with `rclone config` follow instructions described in
+introduction, set `use_emulator` config as `true`, you do not need to provide default account name
+or key if using emulator.
