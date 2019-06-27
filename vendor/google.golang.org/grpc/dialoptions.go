@@ -39,8 +39,12 @@ import (
 // dialOptions configure a Dial call. dialOptions are set by the DialOption
 // values passed to Dial.
 type dialOptions struct {
-	unaryInt    UnaryClientInterceptor
-	streamInt   StreamClientInterceptor
+	unaryInt  UnaryClientInterceptor
+	streamInt StreamClientInterceptor
+
+	chainUnaryInts  []UnaryClientInterceptor
+	chainStreamInts []StreamClientInterceptor
+
 	cp          Compressor
 	dc          Decompressor
 	bs          backoff.Strategy
@@ -414,11 +418,33 @@ func WithUnaryInterceptor(f UnaryClientInterceptor) DialOption {
 	})
 }
 
+// WithChainUnaryInterceptor returns a DialOption that specifies the chained
+// interceptor for unary RPCs. The first interceptor will be the outer most,
+// while the last interceptor will be the inner most wrapper around the real call.
+// All interceptors added by this method will be chained, and the interceptor
+// defined by WithUnaryInterceptor will always be prepended to the chain.
+func WithChainUnaryInterceptor(interceptors ...UnaryClientInterceptor) DialOption {
+	return newFuncDialOption(func(o *dialOptions) {
+		o.chainUnaryInts = append(o.chainUnaryInts, interceptors...)
+	})
+}
+
 // WithStreamInterceptor returns a DialOption that specifies the interceptor for
 // streaming RPCs.
 func WithStreamInterceptor(f StreamClientInterceptor) DialOption {
 	return newFuncDialOption(func(o *dialOptions) {
 		o.streamInt = f
+	})
+}
+
+// WithChainStreamInterceptor returns a DialOption that specifies the chained
+// interceptor for unary RPCs. The first interceptor will be the outer most,
+// while the last interceptor will be the inner most wrapper around the real call.
+// All interceptors added by this method will be chained, and the interceptor
+// defined by WithStreamInterceptor will always be prepended to the chain.
+func WithChainStreamInterceptor(interceptors ...StreamClientInterceptor) DialOption {
+	return newFuncDialOption(func(o *dialOptions) {
+		o.chainStreamInts = append(o.chainStreamInts, interceptors...)
 	})
 }
 
@@ -440,12 +466,12 @@ func WithChannelzParentID(id int64) DialOption {
 	})
 }
 
-// WithDisableServiceConfig returns a DialOption that causes grpc to ignore any
+// WithDisableServiceConfig returns a DialOption that causes gRPC to ignore any
 // service config provided by the resolver and provides a hint to the resolver
 // to not fetch service configs.
 //
-// Note that, this dial option only disables service config from resolver. If
-// default service config is provided, grpc will use the default service config.
+// Note that this dial option only disables service config from resolver. If
+// default service config is provided, gRPC will use the default service config.
 func WithDisableServiceConfig() DialOption {
 	return newFuncDialOption(func(o *dialOptions) {
 		o.disableServiceConfig = true

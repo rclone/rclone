@@ -96,7 +96,7 @@ func getMetricException(err awserr.Error) metricException {
 
 	switch code {
 	case "RequestError",
-		"SerializationError",
+		request.ErrCodeSerialization,
 		request.CanceledErrorCode:
 		return sdkException{
 			requestException{exception: code, message: msg},

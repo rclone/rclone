@@ -35,7 +35,7 @@ const (
 )
 
 var reportEvent = func() func(eventType eventType, eventID int32, msg string) {
-	advAPI32 := syscall.MustLoadDLL("AdvAPI32.dll")
+	advAPI32 := syscall.MustLoadDLL("advapi32.dll") // lower case to tie in with Go's sysdll registration
 	registerEventSource := advAPI32.MustFindProc("RegisterEventSourceW")
 
 	sourceName, _ := os.Executable()

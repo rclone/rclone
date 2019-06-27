@@ -138,6 +138,8 @@ type ClientConn interface {
 	ResolveNow(resolver.ResolveNowOption)
 
 	// Target returns the dial target for this ClientConn.
+	//
+	// Deprecated: Use the Target field in the BuildOptions instead.
 	Target() string
 }
 
@@ -155,6 +157,10 @@ type BuildOptions struct {
 	Dialer func(context.Context, string) (net.Conn, error)
 	// ChannelzParentID is the entity parent's channelz unique identification number.
 	ChannelzParentID int64
+	// Target contains the parsed address info of the dial target. It is the same resolver.Target as
+	// passed to the resolver.
+	// See the documentation for the resolver.Target type for details about what it contains.
+	Target resolver.Target
 }
 
 // Builder creates a balancer.

@@ -50,9 +50,10 @@ package credentials
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"sync"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
 // AnonymousCredentials is an empty Credential object that can be used as

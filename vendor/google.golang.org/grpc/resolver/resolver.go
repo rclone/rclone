@@ -132,6 +132,21 @@ type ClientConn interface {
 
 // Target represents a target for gRPC, as specified in:
 // https://github.com/grpc/grpc/blob/master/doc/naming.md.
+// It is parsed from the target string that gets passed into Dial or DialContext by the user. And
+// grpc passes it to the resolver and the balancer.
+//
+// If the target follows the naming spec, and the parsed scheme is registered with grpc, we will
+// parse the target string according to the spec. e.g. "dns://some_authority/foo.bar" will be parsed
+// into &Target{Scheme: "dns", Authority: "some_authority", Endpoint: "foo.bar"}
+//
+// If the target does not contain a scheme, we will apply the default scheme, and set the Target to
+// be the full target string. e.g. "foo.bar" will be parsed into
+// &Target{Scheme: resolver.GetDefaultScheme(), Endpoint: "foo.bar"}.
+//
+// If the parsed scheme is not registered (i.e. no corresponding resolver available to resolve the
+// endpoint), we set the Scheme to be the default scheme, and set the Endpoint to be the full target
+// string. e.g. target string "unknown_scheme://authority/endpoint" will be parsed into
+// &Target{Scheme: resolver.GetDefaultScheme(), Endpoint: "unknown_scheme://authority/endpoint"}.
 type Target struct {
 	Scheme    string
 	Authority string

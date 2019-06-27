@@ -135,7 +135,7 @@ TEXT ·chaCha20_ctr32_vmx(SB),NOSPLIT|NOFRAME,$0
 	MOVD inp+8(FP), INP
 	MOVD len+16(FP), LEN
 	MOVD key+24(FP), KEY
-	MOVD cnt+32(FP), CNT
+	MOVD counter+32(FP), CNT
 
 	MOVD $·consts(SB), CONSTS // point to consts addr
 

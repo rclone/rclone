@@ -156,10 +156,20 @@ func (cfg *sharedConfig) setAssumeRoleSource(origProfile string, files []sharedC
 		if err != nil {
 			return err
 		}
+
+		// Chain if profile depends of other profiles
+		if len(assumeRoleSrc.AssumeRole.SourceProfile) > 0 {
+			err := assumeRoleSrc.setAssumeRoleSource(cfg.AssumeRole.SourceProfile, files)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	if len(assumeRoleSrc.Creds.AccessKeyID) == 0 {
-		return SharedConfigAssumeRoleError{RoleARN: cfg.AssumeRole.RoleARN}
+	if cfg.AssumeRole.SourceProfile == origProfile || len(assumeRoleSrc.AssumeRole.SourceProfile) == 0 {
+		if len(assumeRoleSrc.AssumeRole.CredentialSource) == 0 && len(assumeRoleSrc.Creds.AccessKeyID) == 0 {
+			return SharedConfigAssumeRoleError{RoleARN: cfg.AssumeRole.RoleARN}
+		}
 	}
 
 	cfg.AssumeRoleSource = &assumeRoleSrc
