@@ -9,9 +9,26 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
 )
+
+// retryErrorCodes is a slice of error codes that we will retry
+var retryErrorCodes = []int{
+	429, // Too Many Requests.
+	500, // Internal Server Error
+	502, // Bad Gateway
+	503, // Service Unavailable
+	504, // Gateway Timeout
+	509, // Bandwidth Limit Exceeded
+}
+
+// shouldRetry returns a boolean as to whether this resp and err
+// deserve to be retried.  It returns the err as a convenience
+func shouldRetry(resp *http.Response, err error) (bool, error) {
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
 
 var isAlphaNumeric = regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString
 
@@ -26,13 +43,8 @@ func (f *Fs) getDownloadToken(url string) (*GetTokenResponse, error) {
 
 	var token GetTokenResponse
 	err := f.pacer.Call(func() (bool, error) {
-		_, err := f.rest.CallJSON(&opts, &request, &token)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, &request, &token)
+		return shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list files")
@@ -59,13 +71,8 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 
 	var sharedFiles SharedFolderResponse
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.rest.CallJSON(&opts, nil, &sharedFiles)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, nil, &sharedFiles)
+		return shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list files")
@@ -93,13 +100,8 @@ func (f *Fs) listFiles(directoryID string) (filesList *FilesList, err error) {
 
 	filesList = &FilesList{}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.rest.CallJSON(&opts, &request, filesList)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, &request, filesList)
+		return shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list files")
@@ -122,13 +124,8 @@ func (f *Fs) listFolders(directoryID string) (foldersList *FoldersList, err erro
 
 	foldersList = &FoldersList{}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.rest.CallJSON(&opts, &request, foldersList)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, &request, foldersList)
+		return shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list folders")
@@ -215,12 +212,8 @@ func (f *Fs) makeFolder(name, directoryID string) (response *MakeFolderResponse,
 
 	response = &MakeFolderResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err := f.rest.CallJSON(&opts, &request, response)
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, &request, response)
+		return shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create folder")
@@ -244,22 +237,16 @@ func (f *Fs) removeFolder(name, directoryID string) (response *GenericOKResponse
 	}
 
 	response = &GenericOKResponse{}
+	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.rest.CallJSON(&opts, request, response)
-
-		if err != nil {
-			return true, err
-		}
-
-		if response.Status != "OK" {
-			return true, errors.New("Can't remove non-empty dir")
-		}
-
-		return false, nil
+		resp, err = f.rest.CallJSON(&opts, request, response)
+		return shouldRetry(resp, err)
 	})
-
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't remove folder")
+	}
+	if response.Status != "OK" {
+		return nil, errors.New("Can't remove non-empty dir")
 	}
 
 	fs.Debugf(f, "Removed Folder with id `%s`", directoryID)
@@ -281,13 +268,8 @@ func (f *Fs) deleteFile(url string) (response *GenericOKResponse, err error) {
 
 	response = &GenericOKResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err := f.rest.CallJSON(&opts, request, response)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, request, response)
+		return shouldRetry(resp, err)
 	})
 
 	if err != nil {
@@ -310,13 +292,8 @@ func (f *Fs) getUploadNode() (response *GetUploadNodeResponse, err error) {
 
 	response = &GetUploadNodeResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.rest.CallJSON(&opts, nil, response)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, nil, response)
+		return shouldRetry(resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "didnt got an upload node")
@@ -354,14 +331,9 @@ func (f *Fs) uploadFile(in io.Reader, size int64, fileName, folderID, uploadID, 
 		opts.RootURL = "https://" + node
 	}
 
-	err = f.pacer.Call(func() (bool, error) {
-		response, err = f.rest.CallJSON(&opts, nil, nil)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		resp, err := f.rest.CallJSON(&opts, nil, nil)
+		return shouldRetry(resp, err)
 	})
 
 	if err != nil {
@@ -394,13 +366,8 @@ func (f *Fs) endUpload(uploadID string, nodeurl string) (response *EndFileUpload
 
 	response = &EndFileUploadResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.rest.CallJSON(&opts, nil, response)
-
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		resp, err := f.rest.CallJSON(&opts, nil, response)
+		return shouldRetry(resp, err)
 	})
 
 	if err != nil {

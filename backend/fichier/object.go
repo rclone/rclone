@@ -90,11 +90,7 @@ func (f *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	err = f.fs.pacer.Call(func() (bool, error) {
 		resp, err = f.fs.rest.Call(&opts)
-		if err != nil {
-			return true, err
-		}
-
-		return false, nil
+		return shouldRetry(resp, err)
 	})
 
 	if err != nil {
