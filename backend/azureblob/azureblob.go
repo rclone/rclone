@@ -68,13 +68,13 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
-			Help: "Storage Account Name (leave blank to use connection string or SAS URL or Emulator)",
+			Help: "Storage Account Name (leave blank to use SAS URL or Emulator)",
 		}, {
 			Name: "key",
-			Help: "Storage Account Key (leave blank to use connection string or SAS URL or Emulator)",
+			Help: "Storage Account Key (leave blank to use SAS URL or Emulator)",
 		}, {
 			Name: "sas_url",
-			Help: "SAS URL for container level access only\n(leave blank if using account/key or connection string or Emulator)",
+			Help: "SAS URL for container level access only\n(leave blank if using account/key or Emulator)",
 		}, {
 			Name:    "use_emulator",
 			Help:    "Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)",
