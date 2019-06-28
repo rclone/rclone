@@ -12,7 +12,8 @@ type ListFilesRequest struct {
 
 // DownloadRequest is the request structure of the corresponding request
 type DownloadRequest struct {
-	URL string `json:"url"`
+	URL    string `json:"url"`
+	Single int    `json:"single"`
 }
 
 // RemoveFolderRequest is the request structure of the corresponding request

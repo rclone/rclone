@@ -34,7 +34,8 @@ var isAlphaNumeric = regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString
 
 func (f *Fs) getDownloadToken(url string) (*GetTokenResponse, error) {
 	request := DownloadRequest{
-		URL: url,
+		URL:    url,
+		Single: 5,
 	}
 	opts := rest.Opts{
 		Method: "POST",
