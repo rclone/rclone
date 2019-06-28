@@ -172,6 +172,7 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 			return nil, err
 		}
 
+		folder.Name = restoreReservedChars(folder.Name)
 		fullPath := getRemote(dir, folder.Name)
 		folderID := strconv.Itoa(folder.ID)
 
@@ -200,7 +201,8 @@ func getRemote(dir, fileName string) string {
 	return dir + "/" + fileName
 }
 
-func (f *Fs) makeFolder(name, directoryID string) (response *MakeFolderResponse, err error) {
+func (f *Fs) makeFolder(leaf, directoryID string) (response *MakeFolderResponse, err error) {
+	name := replaceReservedChars(leaf)
 	fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
 
 	request := MakeFolderRequest{
