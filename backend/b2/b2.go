@@ -1210,9 +1210,6 @@ func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
 
 // getMetaData gets the metadata from the object unconditionally
 func (o *Object) getMetaData(ctx context.Context) (info *api.File, err error) {
-	if o.id != "" {
-		return nil, nil
-	}
 	maxSearched := 1
 	var timestamp api.Timestamp
 	baseRemote := o.remote
