@@ -88,7 +88,7 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 }
 
 func (f *Fs) listFiles(directoryID string) (filesList *FilesList, err error) {
-	fs.Debugf(f, "Requesting files for dir `%s`", directoryID)
+	// fs.Debugf(f, "Requesting files for dir `%s`", directoryID)
 	request := ListFilesRequest{
 		FolderID: directoryID,
 	}
@@ -111,7 +111,7 @@ func (f *Fs) listFiles(directoryID string) (filesList *FilesList, err error) {
 }
 
 func (f *Fs) listFolders(directoryID string) (foldersList *FoldersList, err error) {
-	fs.Debugf(f, "Requesting folders for id `%s`", directoryID)
+	// fs.Debugf(f, "Requesting folders for id `%s`", directoryID)
 
 	request := ListFolderRequest{
 		FolderID: directoryID,
@@ -131,7 +131,7 @@ func (f *Fs) listFolders(directoryID string) (foldersList *FoldersList, err erro
 		return nil, errors.Wrap(err, "couldn't list folders")
 	}
 
-	fs.Debugf(f, "Got FoldersList for id `%s`", directoryID)
+	// fs.Debugf(f, "Got FoldersList for id `%s`", directoryID)
 
 	return foldersList, err
 }
@@ -175,7 +175,7 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 
 		entries[len(files.Items)+i] = fs.NewDir(fullPath, createDate).SetID(folderID)
 
-		fs.Debugf(f, "Put Path `%s` for id `%d` into dircache", fullPath, folder.ID)
+		// fs.Debugf(f, "Put Path `%s` for id `%d` into dircache", fullPath, folder.ID)
 		f.dirCache.Put(fullPath, folderID)
 	}
 
@@ -200,7 +200,7 @@ func getRemote(dir, fileName string) string {
 
 func (f *Fs) makeFolder(leaf, directoryID string) (response *MakeFolderResponse, err error) {
 	name := replaceReservedChars(leaf)
-	fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
+	// fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
 
 	request := MakeFolderRequest{
 		FolderID: directoryID,
@@ -221,13 +221,13 @@ func (f *Fs) makeFolder(leaf, directoryID string) (response *MakeFolderResponse,
 		return nil, errors.Wrap(err, "couldn't create folder")
 	}
 
-	fs.Debugf(f, "Created Folder `%s` in id `%s`", name, directoryID)
+	// fs.Debugf(f, "Created Folder `%s` in id `%s`", name, directoryID)
 
 	return response, err
 }
 
 func (f *Fs) removeFolder(name, directoryID string) (response *GenericOKResponse, err error) {
-	fs.Debugf(f, "Removing folder with id `%s`", directoryID)
+	// fs.Debugf(f, "Removing folder with id `%s`", directoryID)
 
 	request := &RemoveFolderRequest{
 		FolderID: directoryID,
@@ -251,7 +251,7 @@ func (f *Fs) removeFolder(name, directoryID string) (response *GenericOKResponse
 		return nil, errors.New("Can't remove non-empty dir")
 	}
 
-	fs.Debugf(f, "Removed Folder with id `%s`", directoryID)
+	// fs.Debugf(f, "Removed Folder with id `%s`", directoryID)
 
 	return response, nil
 }
@@ -278,13 +278,13 @@ func (f *Fs) deleteFile(url string) (response *GenericOKResponse, err error) {
 		return nil, errors.Wrap(err, "couldn't remove file")
 	}
 
-	fs.Debugf(f, "Removed file with url `%s`", url)
+	// fs.Debugf(f, "Removed file with url `%s`", url)
 
 	return response, nil
 }
 
 func (f *Fs) getUploadNode() (response *GetUploadNodeResponse, err error) {
-	fs.Debugf(f, "Requesting Upload node")
+	// fs.Debugf(f, "Requesting Upload node")
 
 	opts := rest.Opts{
 		Method:      "GET",
@@ -301,13 +301,13 @@ func (f *Fs) getUploadNode() (response *GetUploadNodeResponse, err error) {
 		return nil, errors.Wrap(err, "didnt got an upload node")
 	}
 
-	fs.Debugf(f, "Got Upload node")
+	// fs.Debugf(f, "Got Upload node")
 
 	return response, err
 }
 
 func (f *Fs) uploadFile(in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
-	fs.Debugf(f, "Uploading File `%s`", fileName)
+	// fs.Debugf(f, "Uploading File `%s`", fileName)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
 		return nil, errors.New("Invalid UploadID")
@@ -342,13 +342,13 @@ func (f *Fs) uploadFile(in io.Reader, size int64, fileName, folderID, uploadID, 
 		return nil, errors.Wrap(err, "couldn't upload file")
 	}
 
-	fs.Debugf(f, "Uploaded File `%s`", fileName)
+	// fs.Debugf(f, "Uploaded File `%s`", fileName)
 
 	return response, err
 }
 
 func (f *Fs) endUpload(uploadID string, nodeurl string) (response *EndFileUploadResponse, err error) {
-	fs.Debugf(f, "Ending File Upload `%s`", uploadID)
+	// fs.Debugf(f, "Ending File Upload `%s`", uploadID)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
 		return nil, errors.New("Invalid UploadID")

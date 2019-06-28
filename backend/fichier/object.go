@@ -127,7 +127,7 @@ func (f *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove removes this object
 func (f *Object) Remove(ctx context.Context) error {
-	fs.Debugf(f, "Removing file `%s` with url `%s`", f.file.Filename, f.file.URL)
+	// fs.Debugf(f, "Removing file `%s` with url `%s`", f.file.Filename, f.file.URL)
 
 	_, err := f.fs.deleteFile(f.file.URL)
 
