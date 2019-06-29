@@ -9,6 +9,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -114,8 +115,11 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	// it even if we don't write to it
 	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	require.NoError(t, err)
-	assert.NoError(t, h.Close())
-	checkListing(t, root, []string{"file1,0,false"})
+	err = h.Close()
+	if errors.Cause(err) != fs.ErrorCantUploadEmptyFiles {
+		assert.NoError(t, err)
+		checkListing(t, root, []string{"file1,0,false"})
+	}
 
 	// Check opening the file with O_TRUNC and writing does work
 	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
@@ -213,6 +217,10 @@ func TestWriteFileHandleRelease(t *testing.T) {
 
 	// Check Release closes file
 	err := fh.Release()
+	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
+		t.Logf("skipping test: %v", err)
+		return
+	}
 	assert.NoError(t, err)
 	assert.True(t, fh.closed)
 
