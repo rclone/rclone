@@ -289,7 +289,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	fs.Config.CheckSum = true
 	defer func() { fs.Config.CheckSum = false }()
 
-	file1 := r.WriteFile("check sum", "", t1)
+	file1 := r.WriteFile("check sum", "-", t1)
 	fstest.CheckItems(t, r.Flocal, file1)
 
 	accounting.Stats.ResetCounters()
@@ -301,7 +301,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Change last modified date only
-	file2 := r.WriteFile("check sum", "", t2)
+	file2 := r.WriteFile("check sum", "-", t2)
 	fstest.CheckItems(t, r.Flocal, file2)
 
 	accounting.Stats.ResetCounters()
@@ -509,8 +509,8 @@ func TestSyncIgnoreErrors(t *testing.T) {
 func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteFile("empty space", "", t2)
-	file2 := r.WriteObject(context.Background(), "empty space", "", t1)
+	file1 := r.WriteFile("empty space", "-", t2)
+	file2 := r.WriteObject(context.Background(), "empty space", "-", t1)
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file2)
@@ -549,8 +549,8 @@ func TestSyncAfterChangingModtimeOnlyWithNoUpdateModTime(t *testing.T) {
 		fs.Config.NoUpdateModTime = false
 	}()
 
-	file1 := r.WriteFile("empty space", "", t2)
-	file2 := r.WriteObject(context.Background(), "empty space", "", t1)
+	file1 := r.WriteFile("empty space", "-", t2)
+	file2 := r.WriteObject(context.Background(), "empty space", "-", t1)
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file2)
@@ -590,7 +590,7 @@ func TestSyncDoesntUpdateModtime(t *testing.T) {
 func TestSyncAfterAddingAFile(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	file1 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file1 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 	file2 := r.WriteFile("potato", "------------------------------------------------------------", t3)
 
 	fstest.CheckItems(t, r.Flocal, file1, file2)
@@ -647,7 +647,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileDryRun(t *testing.T) {
 	defer r.Finalise()
 	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteObject(context.Background(), "potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file3 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 
 	fs.Config.DryRun = true
 	accounting.Stats.ResetCounters()
@@ -665,7 +665,7 @@ func TestSyncAfterRemovingAFileAndAddingAFile(t *testing.T) {
 	defer r.Finalise()
 	file1 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteObject(context.Background(), "potato", "SMALLER BUT SAME DATE", t2)
-	file3 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file3 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 	fstest.CheckItems(t, r.Fremote, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1, file3)
 
@@ -875,7 +875,7 @@ func TestSyncWithExclude(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 	file3 := r.WriteFile("enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
@@ -903,7 +903,7 @@ func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1) // 60 bytes
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 	file3 := r.WriteBoth(context.Background(), "enormous", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
@@ -1017,7 +1017,7 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	defer finaliseMove()
 
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 	file3u := r.WriteBoth(context.Background(), "potato3", "------------------------------------------------------------ UPDATED", t2)
 
 	if testDeleteEmptyDirs {
@@ -1030,7 +1030,7 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	t.Logf("Server side move (if possible) %v -> %v", r.Fremote, FremoteMove)
 
 	// Write just one file in the new remote
-	r.WriteObjectTo(context.Background(), FremoteMove, "empty space", "", t2, false)
+	r.WriteObjectTo(context.Background(), FremoteMove, "empty space", "-", t2, false)
 	file3 := r.WriteObjectTo(context.Background(), FremoteMove, "potato3", "------------------------------------------------------------", t1, false)
 	fstest.CheckItems(t, FremoteMove, file2, file3)
 
