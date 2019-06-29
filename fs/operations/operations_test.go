@@ -89,7 +89,7 @@ func TestLs(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
@@ -97,7 +97,7 @@ func TestLs(t *testing.T) {
 	err := operations.List(context.Background(), r.Fremote, &buf)
 	require.NoError(t, err)
 	res := buf.String()
-	assert.Contains(t, res, "        0 empty space\n")
+	assert.Contains(t, res, "        1 empty space\n")
 	assert.Contains(t, res, "       60 potato2\n")
 }
 
@@ -105,7 +105,7 @@ func TestLsWithFilesFrom(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
@@ -144,7 +144,7 @@ func TestLsLong(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
@@ -170,7 +170,7 @@ func TestLsLong(t *testing.T) {
 		}
 	}
 
-	m1 := regexp.MustCompile(`(?m)^        0 (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{9}) empty space$`)
+	m1 := regexp.MustCompile(`(?m)^        1 (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{9}) empty space$`)
 	if ms := m1.FindStringSubmatch(res); ms == nil {
 		t.Errorf("empty space missing: %q", res)
 	} else {
@@ -189,7 +189,7 @@ func TestHashSums(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
@@ -276,7 +276,7 @@ func TestCount(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(context.Background(), "potato2", "------------------------------------------------------------", t1)
-	file2 := r.WriteBoth(context.Background(), "empty space", "", t2)
+	file2 := r.WriteBoth(context.Background(), "empty space", "-", t2)
 	file3 := r.WriteBoth(context.Background(), "sub dir/potato3", "hello", t2)
 
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
@@ -288,7 +288,7 @@ func TestCount(t *testing.T) {
 	objects, size, err := operations.Count(context.Background(), r.Fremote)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), objects)
-	assert.Equal(t, int64(60), size)
+	assert.Equal(t, int64(61), size)
 }
 
 func TestDelete(t *testing.T) {
@@ -351,7 +351,7 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, fdst, fsrc 
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	check(2, 1, 1, false)
 
-	file3 := r.WriteObject(context.Background(), "empty space", "", t2)
+	file3 := r.WriteObject(context.Background(), "empty space", "-", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file3)
 	check(3, 2, 1, false)
 
@@ -364,7 +364,7 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, fdst, fsrc 
 	fstest.CheckItems(t, r.Fremote, file1, file2r, file3)
 	check(4, 1, 2, false)
 
-	r.WriteFile("empty space", "", t2)
+	r.WriteFile("empty space", "-", t2)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
 	check(5, 0, 3, false)
 
