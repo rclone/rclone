@@ -10,6 +10,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -416,6 +417,10 @@ func TestRWFileHandleWriteNoWrite(t *testing.T) {
 
 	// Close the file without writing to it
 	err := fh.Close()
+	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
+		t.Logf("skipping test: %v", err)
+		return
+	}
 	assert.NoError(t, err)
 
 	// Create a different file (not in the cache)

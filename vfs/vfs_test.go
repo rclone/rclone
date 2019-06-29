@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	_ "github.com/ncw/rclone/backend/all" // import all the backends
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -223,7 +225,10 @@ func TestVFSOpenFile(t *testing.T) {
 	fd, err = vfs.OpenFile("dir/new_file.txt", os.O_WRONLY|os.O_CREATE, 0777)
 	require.NoError(t, err)
 	assert.NotNil(t, fd)
-	require.NoError(t, fd.Close())
+	err = fd.Close()
+	if errors.Cause(err) != fs.ErrorCantUploadEmptyFiles {
+		require.NoError(t, err)
+	}
 
 	fd, err = vfs.OpenFile("not found/new_file.txt", os.O_WRONLY|os.O_CREATE, 0777)
 	assert.Equal(t, os.ErrNotExist, err)
