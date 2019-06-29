@@ -51,6 +51,7 @@ var (
 	ErrorCantCopy                    = errors.New("can't copy object - incompatible remotes")
 	ErrorCantMove                    = errors.New("can't move object - incompatible remotes")
 	ErrorCantDirMove                 = errors.New("can't move directory - incompatible remotes")
+	ErrorCantUploadEmptyFiles        = errors.New("can't upload empty files to this remote")
 	ErrorDirExists                   = errors.New("can't copy directory - destination already exists")
 	ErrorCantSetModTime              = errors.New("can't set modified time")
 	ErrorCantSetModTimeWithoutDelete = errors.New("can't set modified time without deleting existing object")

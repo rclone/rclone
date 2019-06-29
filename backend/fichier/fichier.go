@@ -288,6 +288,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	if src.Size() > int64(100E9) {
 		return nil, errors.New("File too big, cant upload")
+	} else if src.Size() == 0 {
+		return nil, fs.ErrorCantUploadEmptyFiles
 	}
 
 	nodeResponse, err := f.getUploadNode()
