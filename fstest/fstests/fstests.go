@@ -189,6 +189,9 @@ func testPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
 
 		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 		obj, err = f.Put(context.Background(), in, obji)
+		if file.Size == 0 && err == fs.ErrorCantUploadEmptyFiles {
+			t.Skip("Can't upload zero length files")
+		}
 		return err
 	})
 	file.Hashes = uploadHash.Sums()
@@ -673,6 +676,16 @@ func Run(t *testing.T, opt *Opt) {
 					}
 				})
 			}
+		})
+
+		t.Run("FsPutZeroLength", func(t *testing.T) {
+			skipIfNotOk(t)
+
+			testPutLarge(t, remote, &fstest.Item{
+				ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+				Path:    fmt.Sprintf("zero-length-file"),
+				Size:    int64(0),
+			})
 		})
 
 		t.Run("FsOpenWriterAt", func(t *testing.T) {
