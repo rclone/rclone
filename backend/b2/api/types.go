@@ -189,6 +189,21 @@ type GetUploadURLResponse struct {
 	AuthorizationToken string `json:"authorizationToken"` // The authorizationToken that must be used when uploading files to this bucket, see b2_upload_file.
 }
 
+// GetDownloadAuthorizationRequest is passed to b2_get_download_authorization
+type GetDownloadAuthorizationRequest struct {
+	BucketID               string `json:"bucketId"`                       // The ID of the bucket that you want to upload to.
+	FileNamePrefix         string `json:"fileNamePrefix"`                 // The file name prefix of files the download authorization token will allow access to.
+	ValidDurationInSeconds int64  `json:"validDurationInSeconds"`         // The number of seconds before the authorization token will expire. The minimum value is 1 second. The maximum value is 604800 which is one week in seconds.
+	B2ContentDisposition   string `json:"b2ContentDisposition,omitempty"` // optional - If this is present, download requests using the returned authorization must include the same value for b2ContentDisposition.
+}
+
+// GetDownloadAuthorizationResponse is received from b2_get_download_authorization
+type GetDownloadAuthorizationResponse struct {
+	BucketID           string `json:"bucketId"`           // The unique ID of the bucket.
+	FileNamePrefix     string `json:"fileNamePrefix"`     // The file name prefix of files the download authorization token will allow access to.
+	AuthorizationToken string `json:"authorizationToken"` // The authorizationToken that must be used when downloading files, see b2_download_file_by_name.
+}
+
 // FileInfo is received from b2_upload_file, b2_get_file_info and b2_finish_large_file
 type FileInfo struct {
 	ID              string            `json:"fileId"`          // The unique identifier for this version of this file. Used with b2_get_file_info, b2_download_file_by_id, and b2_delete_file_version.
