@@ -134,42 +134,53 @@ This is usually set to a Cloudflare CDN URL as Backblaze offers
 free egress for data downloaded through the Cloudflare network.
 Leave blank if you want to use the endpoint provided by Backblaze.`,
 			Advanced: true,
+		}, {
+			Name: "download_auth_duration",
+			Help: `Time before the authorization token will expire in s or suffix ms|s|m|h|d.
+
+The duration before the download authorization token will expire.
+The minimum value is 1 second. The maximum value is one week.`,
+			Default:  fs.Duration(7 * 24 * time.Hour),
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account         string        `config:"account"`
-	Key             string        `config:"key"`
-	Endpoint        string        `config:"endpoint"`
-	TestMode        string        `config:"test_mode"`
-	Versions        bool          `config:"versions"`
-	HardDelete      bool          `config:"hard_delete"`
-	UploadCutoff    fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize       fs.SizeSuffix `config:"chunk_size"`
-	DisableCheckSum bool          `config:"disable_checksum"`
-	DownloadURL     string        `config:"download_url"`
+	Account                       string        `config:"account"`
+	Key                           string        `config:"key"`
+	Endpoint                      string        `config:"endpoint"`
+	TestMode                      string        `config:"test_mode"`
+	Versions                      bool          `config:"versions"`
+	HardDelete                    bool          `config:"hard_delete"`
+	UploadCutoff                  fs.SizeSuffix `config:"upload_cutoff"`
+	ChunkSize                     fs.SizeSuffix `config:"chunk_size"`
+	DisableCheckSum               bool          `config:"disable_checksum"`
+	DownloadURL                   string        `config:"download_url"`
+	DownloadAuthorizationDuration fs.Duration   `config:"download_auth_duration"`
 }
 
 // Fs represents a remote b2 server
 type Fs struct {
-	name          string                       // name of this remote
-	root          string                       // the path we are working on if any
-	opt           Options                      // parsed config options
-	features      *fs.Features                 // optional features
-	srv           *rest.Client                 // the connection to the b2 server
-	bucket        string                       // the bucket we are working on
-	bucketOKMu    sync.Mutex                   // mutex to protect bucket OK
-	bucketOK      bool                         // true if we have created the bucket
-	bucketIDMutex sync.Mutex                   // mutex to protect _bucketID
-	_bucketID     string                       // the ID of the bucket we are working on
-	info          api.AuthorizeAccountResponse // result of authorize call
-	uploadMu      sync.Mutex                   // lock for upload variable
-	uploads       []*api.GetUploadURLResponse  // result of get upload URL calls
-	authMu        sync.Mutex                   // lock for authorizing the account
-	pacer         *fs.Pacer                    // To pace and retry the API calls
-	bufferTokens  chan []byte                  // control concurrency of multipart uploads
+	name            string                       // name of this remote
+	root            string                       // the path we are working on if any
+	opt             Options                      // parsed config options
+	features        *fs.Features                 // optional features
+	srv             *rest.Client                 // the connection to the b2 server
+	bucket          string                       // the bucket we are working on
+	bucketOKMu      sync.Mutex                   // mutex to protect bucket OK
+	bucketOK        bool                         // true if we have created the bucket
+	bucketIDMutex   sync.Mutex                   // mutex to protect _bucketID
+	_bucketID       string                       // the ID of the bucket we are working on
+	bucketTypeMutex sync.Mutex                   // mutex to protect _bucketType
+	_bucketType     string                       // the Type of the bucket we are working on
+	info            api.AuthorizeAccountResponse // result of authorize call
+	uploadMu        sync.Mutex                   // lock for upload variable
+	uploads         []*api.GetUploadURLResponse  // result of get upload URL calls
+	authMu          sync.Mutex                   // lock for authorizing the account
+	pacer           *fs.Pacer                    // To pace and retry the API calls
+	bufferTokens    chan []byte                  // control concurrency of multipart uploads
 }
 
 // Object describes a b2 object
@@ -796,6 +807,42 @@ func (f *Fs) listBucketsToFn(fn listBucketFn) error {
 	return nil
 }
 
+// getbucketType finds the bucketType for the current bucket name
+// can be one of allPublic. allPrivate, or snapshot
+func (f *Fs) getbucketType() (bucketType string, err error) {
+	f.bucketTypeMutex.Lock()
+	defer f.bucketTypeMutex.Unlock()
+	if f._bucketType != "" {
+		return f._bucketType, nil
+	}
+	err = f.listBucketsToFn(func(bucket *api.Bucket) error {
+		if bucket.Name == f.bucket {
+			bucketType = bucket.Type
+		}
+		return nil
+
+	})
+	if bucketType == "" {
+		err = fs.ErrorDirNotFound
+	}
+	f._bucketType = bucketType
+	return bucketType, err
+}
+
+// setBucketType sets the Type for the current bucket name
+func (f *Fs) setBucketType(Type string) {
+	f.bucketTypeMutex.Lock()
+	f._bucketType = Type
+	f.bucketTypeMutex.Unlock()
+}
+
+// clearBucketType clears the Type for the current bucket name
+func (f *Fs) clearBucketType() {
+	f.bucketTypeMutex.Lock()
+	f._bucketType = ""
+	f.bucketTypeMutex.Unlock()
+}
+
 // getBucketID finds the ID for the current bucket name
 func (f *Fs) getBucketID() (bucketID string, err error) {
 	f.bucketIDMutex.Lock()
@@ -890,6 +937,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return errors.Wrap(err, "failed to create bucket")
 	}
 	f.setBucketID(response.ID)
+	f.setBucketType(response.Type)
 	f.bucketOK = true
 	return nil
 }
@@ -925,6 +973,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	}
 	f.bucketOK = false
 	f.clearBucketID()
+	f.clearBucketType()
 	f.clearUploadURL()
 	return nil
 }
@@ -1123,6 +1172,61 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.SHA1)
+}
+
+// getDownloadAuthorization returns authorization token for downloading
+// without accout.
+func (f *Fs) getDownloadAuthorization(remote string) (authorization string, err error) {
+	validDurationInSeconds := time.Duration(f.opt.DownloadAuthorizationDuration).Nanoseconds() / 1e9
+	if validDurationInSeconds <= 0 || validDurationInSeconds > 604800 {
+		return "", errors.New("--b2-download-auth-duration must be between 1 sec and 1 week")
+	}
+	bucketID, err := f.getBucketID()
+	if err != nil {
+		return "", err
+	}
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_get_download_authorization",
+	}
+	var request = api.GetDownloadAuthorizationRequest{
+		BucketID:               bucketID,
+		FileNamePrefix:         remote,
+		ValidDurationInSeconds: validDurationInSeconds,
+	}
+	var response api.GetDownloadAuthorizationResponse
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(&opts, &request, &response)
+		return f.shouldRetry(resp, err)
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get download authorization")
+	}
+	return response.AuthorizationToken, nil
+}
+
+// PublicLink returns a link for downloading without accout.
+func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+	var RootURL string
+	if f.opt.DownloadURL == "" {
+		RootURL = f.info.DownloadURL
+	} else {
+		RootURL = f.opt.DownloadURL
+	}
+	absPath := "/" + path.Join(f.root, remote)
+	link = RootURL + "/file/" + urlEncode(f.bucket) + absPath
+	bucketType, err := f.getbucketType()
+	if err != nil {
+		return "", err
+	}
+	if bucketType == "allPrivate" || bucketType == "snapshot" {
+		AuthorizationToken, err := f.getDownloadAuthorization(remote)
+		if err != nil {
+			return "", err
+		}
+		link += "?Authorization=" + AuthorizationToken
+	}
+	return link, nil
 }
 
 // ------------------------------------------------------------
@@ -1651,13 +1755,14 @@ func (o *Object) ID() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.Purger      = &Fs{}
-	_ fs.Copier      = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.CleanUpper  = &Fs{}
-	_ fs.ListRer     = &Fs{}
-	_ fs.Object      = &Object{}
-	_ fs.MimeTyper   = &Object{}
-	_ fs.IDer        = &Object{}
+	_ fs.Fs           = &Fs{}
+	_ fs.Purger       = &Fs{}
+	_ fs.Copier       = &Fs{}
+	_ fs.PutStreamer  = &Fs{}
+	_ fs.CleanUpper   = &Fs{}
+	_ fs.ListRer      = &Fs{}
+	_ fs.PublicLinker = &Fs{}
+	_ fs.Object       = &Object{}
+	_ fs.MimeTyper    = &Object{}
+	_ fs.IDer         = &Object{}
 )
