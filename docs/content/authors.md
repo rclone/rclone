@@ -266,3 +266,4 @@ Contributors
   * Aleksandar Jankovic <office@ajankovic.com>
   * Maran <maran@protonmail.com>
   * nguyenhuuluan434 <nguyenhuuluan434@gmail.com>
+  * Laura <zotan@zotan.pw>
