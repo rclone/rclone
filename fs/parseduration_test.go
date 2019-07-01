@@ -84,6 +84,44 @@ func TestDurationString(t *testing.T) {
 	}
 }
 
+func TestDurationReadableString(t *testing.T) {
+	for _, test := range []struct {
+		negative bool
+		in       time.Duration
+		want     string
+	}{
+		// Edge Cases
+		{false, time.Duration(DurationOff), "off"},
+		// Base Cases
+		{false, time.Duration(0), "0s"},
+		{true, time.Millisecond, "1ms"},
+		{true, time.Second, "1s"},
+		{true, time.Minute, "1m"},
+		{true, (3 * time.Minute) / 2, "1m30s"},
+		{true, time.Hour, "1h"},
+		{true, time.Hour * 24, "1d"},
+		{true, time.Hour * 24 * 7, "1w"},
+		{true, time.Hour * 24 * 365, "1y"},
+		// Composite Cases
+		{true, time.Hour + 2*time.Minute + 3*time.Second, "1h2m3s"},
+		{true, time.Hour * 24 * (365 + 14), "1y2w"},
+		{true, time.Hour*24*4 + time.Hour*3 + time.Minute*2 + time.Second, "4d3h2m1s"},
+		{true, time.Hour * 24 * (365*3 + 7*2 + 1), "3y2w1d"},
+		{true, time.Hour*24*(365*3+7*2+1) + time.Hour*2 + time.Second, "3y2w1d2h1s"},
+		{true, time.Hour*24*(365*3+7*2+1) + time.Second, "3y2w1d1s"},
+		{true, time.Hour*24*(365+7*2+3) + time.Hour*4 + time.Minute*5 + time.Second*6 + time.Millisecond*7, "1y2w3d4h5m6s7ms"},
+	} {
+		got := Duration(test.in).ReadableString()
+		assert.Equal(t, test.want, got)
+
+		// Test Negative Case
+		if test.negative {
+			got = Duration(-test.in).ReadableString()
+			assert.Equal(t, "-"+test.want, got)
+		}
+	}
+}
+
 func TestDurationScan(t *testing.T) {
 	var v Duration
 	n, err := fmt.Sscan(" 17m ", &v)
