@@ -267,3 +267,4 @@ Contributors
   * Maran <maran@protonmail.com>
   * nguyenhuuluan434 <nguyenhuuluan434@gmail.com>
   * Laura Hausmann <zotan@zotan.pw>
+  * yparitcher <y@paritcher.com>
