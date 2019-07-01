@@ -172,7 +172,7 @@ func etaString(done, total int64, rate float64) string {
 	if !ok {
 		return "-"
 	}
-	return d.String()
+	return fs.Duration(d).ReadableString()
 }
 
 // percent returns a/b as a percentage rounded to the nearest integer
