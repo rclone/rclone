@@ -35,6 +35,21 @@ type Backend struct {
 	FastList bool     // set to test with -fast-list
 	OneOnly  bool     // set to run only one backend test at once
 	Ignore   []string // test names to ignore the failure of
+	Tests    []string // paths of tests to run, blank for all
+}
+
+// includeTest returns true if this backend should be included in this
+// test
+func (b *Backend) includeTest(t *Test) bool {
+	if len(b.Tests) == 0 {
+		return true
+	}
+	for _, testPath := range b.Tests {
+		if testPath == t.Path {
+			return true
+		}
+	}
+	return false
 }
 
 // MakeRuns creates Run objects the Backend and Test
@@ -42,6 +57,9 @@ type Backend struct {
 // There can be several created, one for each combination of SubDir
 // and FastList
 func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
+	if !b.includeTest(t) {
+		return runs
+	}
 	subdirs := []bool{false}
 	if b.SubDir && t.SubDir {
 		subdirs = append(subdirs, true)
