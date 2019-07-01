@@ -122,9 +122,9 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, errors.New("multi-thread copy: can't copy zero sized file")
 	}
 
-	g, ctx := errgroup.WithContext(context.Background())
+	g, gCtx := errgroup.WithContext(ctx)
 	mc := &multiThreadCopyState{
-		ctx:     ctx,
+		ctx:     gCtx,
 		size:    src.Size(),
 		src:     src,
 		streams: streams,
@@ -136,7 +136,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	defer fs.CheckClose(mc.acc, &err)
 
 	// create write file handle
-	mc.wc, err = openWriterAt(ctx, remote, mc.size)
+	mc.wc, err = openWriterAt(gCtx, remote, mc.size)
 	if err != nil {
 		return nil, errors.Wrap(err, "multpart copy: failed to open destination")
 	}
@@ -146,7 +146,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	for stream := 0; stream < mc.streams; stream++ {
 		stream := stream
 		g.Go(func() (err error) {
-			return mc.copyStream(ctx, stream)
+			return mc.copyStream(gCtx, stream)
 		})
 	}
 	err = g.Wait()

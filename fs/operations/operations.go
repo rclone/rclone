@@ -1818,18 +1818,18 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		newPath string
 	}
 	renames := make(chan rename, fs.Config.Transfers)
-	g, ctx := errgroup.WithContext(context.Background())
+	g, gCtx := errgroup.WithContext(context.Background())
 	for i := 0; i < fs.Config.Transfers; i++ {
 		g.Go(func() error {
 			for job := range renames {
-				dstOverwritten, _ := f.NewObject(ctx, job.newPath)
-				_, err := Move(ctx, f, dstOverwritten, job.newPath, job.o)
+				dstOverwritten, _ := f.NewObject(gCtx, job.newPath)
+				_, err := Move(gCtx, f, dstOverwritten, job.newPath, job.o)
 				if err != nil {
 					return err
 				}
 				select {
-				case <-ctx.Done():
-					return ctx.Err()
+				case <-gCtx.Done():
+					return gCtx.Err()
 				default:
 				}
 
