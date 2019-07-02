@@ -1060,15 +1060,16 @@ If an existing destination file has a modification time equal (within
 the computed modify window precision) to the source file's, it will be
 updated if the sizes are different.
 
-On remotes which don't support mod time directly the time checked will
-be the uploaded time.  This means that if uploading to one of these
-remotes, rclone will skip any files which exist on the destination and
-have an uploaded time that is newer than the modification time of the
-source file.
+On remotes which don't support mod time directly (or when using
+`--use-server-mod-time`) the time checked will be the uploaded time.
+This means that if uploading to one of these remotes, rclone will skip
+any files which exist on the destination and have an uploaded time that
+is newer than the modification time of the source file.
 
 This can be useful when transferring to a remote which doesn't support
-mod times directly as it is more accurate than a `--size-only` check
-and faster than using `--checksum`.
+mod times directly (or when using `--use-server-mod-time` to avoid extra
+API calls) as it is more accurate than a `--size-only` check and faster
+than using `--checksum`.
 
 ### --use-mmap ###
 
@@ -1093,10 +1094,14 @@ additional metadata on the object. By default it will make an API call to
 retrieve the metadata when the modtime is needed by an operation.
 
 Use this flag to disable the extra API call and rely instead on the server's
-modified time. In cases such as a local to remote sync, knowing the local file
-is newer than the time it was last uploaded to the remote is sufficient. In
-those cases, this flag can speed up the process and reduce the number of API
-calls necessary.
+modified time. In cases such as a local to remote sync using `--update`,
+knowing the local file is newer than the time it was last uploaded to the
+remote is sufficient. In those cases, this flag can speed up the process and
+reduce the number of API calls necessary.
+
+Using this flag on a sync operation without also using `--update` would cause
+all files modified at any time other than the last upload time to be uploaded
+again, which is probably not what you want.
 
 ### -v, -vv, --verbose ###
 
