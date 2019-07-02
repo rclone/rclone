@@ -167,16 +167,6 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
-BUILD_FLAGS := -exclude "^(windows|darwin)/"
-ifeq ($(TRAVIS_OS_NAME),osx)
-	BUILD_FLAGS := -include "^darwin/" -cgo
-endif
-ifeq ($(TRAVIS_OS_NAME),windows)
-# BUILD_FLAGS := -include "^windows/" -cgo
-# 386 doesn't build yet
-	BUILD_FLAGS := -include "^windows/amd64" -cgo
-endif
-
 travis_beta:
 ifeq ($(TRAVIS_OS_NAME),linux)
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*\.tar.gz'
