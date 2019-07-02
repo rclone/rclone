@@ -60,25 +60,36 @@ matrix:
       script:
         - make quicktest
     - go: 1.12.x
+      name: Linux
       env:
         - GOTAGS=cmount
+        - BUILD_FLAGS='-include "^linux/"'
         - DEPLOY=true
       script:
         - make build_dep
         - make check
         - make quicktest
         - make racequicktest
-        - make compile_all
     - go: 1.12.x
-      name: Go modules
+      name: Go Modules
       env:
         - GO111MODULE=on
       script:
         - make quicktest
-    - os: osx
-      go: 1.12.x
+    - go: 1.12.x
+      name: Other OS
+      env:
+        - DEPLOY=true
+        - BUILD_FLAGS='-exclude "^(windows|darwin|linux)/"'
+      script:
+        - make
+        - make compile_all
+    - go: 1.12.x
+      name: macOS
+      os: osx
       env:
         - GOTAGS=  # cmount doesn't work on osx travis for some reason
+        - BUILD_FLAGS='-include "^darwin/" -cgo'
         - DEPLOY=true
       cache:
         directories:
@@ -88,10 +99,12 @@ matrix:
         - make quicktest
         - make racequicktest
     # - os: windows
+    #   name: Windows
     #   go: 1.12.x
     #   env:
     #     - GOTAGS=cmount
     #     - CPATH='C:\Program Files (x86)\WinFsp\inc\fuse'
+    #     - BUILD_FLAGS='-include "^windows/amd64" -cgo' # 386 doesn't build yet
     #   #filter_secrets: false     # works around a problem with secrets under windows
     #   cache:
     #     directories:
