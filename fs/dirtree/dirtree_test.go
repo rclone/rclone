@@ -119,6 +119,7 @@ func TestDirTreeCheckParents(t *testing.T) {
 	dt.Add(mockobject.New("dir/subdir2/sausage2"))
 
 	dt.CheckParents("")
+	dt.Sort() // sort since the exact order of adding parents is not defined
 
 	assert.Equal(t, `/
   dir/
