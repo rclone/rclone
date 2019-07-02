@@ -270,3 +270,4 @@ Contributors
   * yparitcher <y@paritcher.com>
   * AbelThar <abela.tharen@gmail.com>
   * Matti Niemenmaa <matti.niemenmaa+git@iki.fi>
+  * Russell Davis <russelldavis@users.noreply.github.com>
