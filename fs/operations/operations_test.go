@@ -791,7 +791,7 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 func TestMoveFileBackupDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	if !CanServerSideMove(r.Fremote) {
+	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("Skipping test as remote does not support server side move or copy")
 	}
 
@@ -843,7 +843,7 @@ func TestCopyFile(t *testing.T) {
 func TestCopyFileBackupDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	if !CanServerSideMove(r.Fremote) {
+	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("Skipping test as remote does not support server side move or copy")
 	}
 
