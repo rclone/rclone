@@ -269,3 +269,4 @@ Contributors
   * Laura Hausmann <zotan@zotan.pw>
   * yparitcher <y@paritcher.com>
   * AbelThar <abela.tharen@gmail.com>
+  * Matti Niemenmaa <matti.niemenmaa+git@iki.fi>
