@@ -62,6 +62,7 @@ matrix:
     - go: 1.12.x
       env:
         - GOTAGS=cmount
+        - DEPLOY=true
       script:
         - make build_dep
         - make check
@@ -78,6 +79,7 @@ matrix:
       go: 1.12.x
       env:
         - GOTAGS=  # cmount doesn't work on osx travis for some reason
+        - DEPLOY=true
       cache:
         directories:
           - $HOME/Library/Caches/go-build
@@ -109,5 +111,4 @@ deploy:
   on:
     repo: ncw/rclone
     all_branches: true
-    go: 1.12.x
-    condition: $TRAVIS_PULL_REQUEST == false && $TRAVIS_OS_NAME != "windows"
+    condition: $TRAVIS_PULL_REQUEST == false && $DEPLOY == true
