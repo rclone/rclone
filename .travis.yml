@@ -68,6 +68,12 @@ matrix:
         - make quicktest
         - make racequicktest
         - make compile_all
+    - go: 1.12.x
+      name: Go modules
+      env:
+        - GO111MODULE=on
+      script:
+        - make quicktest
     - os: osx
       go: 1.12.x
       env:
