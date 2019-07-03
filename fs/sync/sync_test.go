@@ -1352,7 +1352,7 @@ func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {
 
 	// Now check what happens if we do it again
 	// Restore a different three and update one in the source
-	file3b := r.WriteFile("three.txt", "threeB", t3)
+	file3b := r.WriteFile("three.txt", "threeBDifferentSize", t3)
 	file1b := r.WriteFile("one", "oneBB", t3)
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file1a, file3a)
 
