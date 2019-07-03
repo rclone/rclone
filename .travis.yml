@@ -69,14 +69,14 @@ matrix:
         - make build_dep
         - make check
         - make quicktest
-        - make racequicktest
     - go: 1.12.x
-      name: Go Modules
+      name: Go Modules / Race
       env:
         - GO111MODULE=on
         - GOPROXY=https://proxy.golang.org
       script:
         - make quicktest
+        - make racequicktest
     - go: 1.12.x
       name: Other OS
       env:
