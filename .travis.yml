@@ -74,6 +74,7 @@ matrix:
       name: Go Modules
       env:
         - GO111MODULE=on
+        - GOPROXY=https://proxy.golang.org
       script:
         - make quicktest
     - go: 1.12.x
