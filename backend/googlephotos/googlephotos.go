@@ -150,9 +150,11 @@ type Fs struct {
 	srv        *rest.Client     // the connection to the one drive server
 	pacer      *fs.Pacer        // To pace the API calls
 	startTime  time.Time        // time Fs was started - used for datestamps
+	albumsMu   sync.Mutex       // protect albums (but not contents)
 	albums     map[bool]*albums // albums, shared or not
 	uploadedMu sync.Mutex       // to protect the below
 	uploaded   dirtree.DirTree  // record of uploaded items
+	createMu   sync.Mutex       // held when creating albums to prevent dupes
 }
 
 // Object describes a storage object
@@ -334,6 +336,8 @@ func findID(name string) string {
 // list the albums into an internal cache
 // FIXME cache invalidation
 func (f *Fs) listAlbums(shared bool) (all *albums, err error) {
+	f.albumsMu.Lock()
+	defer f.albumsMu.Unlock()
 	all, ok := f.albums[shared]
 	if ok && all != nil {
 		return all, nil
@@ -532,7 +536,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 }
 
 // createAlbum creates the album
-func (f *Fs) createAlbum(ctx context.Context, albumName string) (album *api.Album, err error) {
+func (f *Fs) createAlbum(ctx context.Context, albumTitle string) (album *api.Album, err error) {
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       "/albums",
@@ -540,7 +544,7 @@ func (f *Fs) createAlbum(ctx context.Context, albumName string) (album *api.Albu
 	}
 	var request = api.CreateAlbum{
 		Album: &api.Album{
-			Title: albumName,
+			Title: albumTitle,
 		},
 	}
 	var result api.Album
@@ -554,6 +558,23 @@ func (f *Fs) createAlbum(ctx context.Context, albumName string) (album *api.Albu
 	}
 	f.albums[false].add(&result)
 	return &result, nil
+}
+
+// getOrCreateAlbum gets an existing album or creates a new one
+//
+// It does the creation with the lock held to avoid duplicates
+func (f *Fs) getOrCreateAlbum(ctx context.Context, albumTitle string) (album *api.Album, err error) {
+	f.createMu.Lock()
+	defer f.createMu.Unlock()
+	albums, err := f.listAlbums(false)
+	if err != nil {
+		return nil, err
+	}
+	album, ok := albums.get(albumTitle)
+	if ok {
+		return album, nil
+	}
+	return f.createAlbum(ctx, albumTitle)
 }
 
 // Mkdir creates the album if it doesn't exist
@@ -573,16 +594,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 		f.uploadedMu.Unlock()
 		return nil
 	}
-	albumName := match[1]
-	allAlbums, err := f.listAlbums(false)
-	if err != nil {
-		return err
-	}
-	_, ok := allAlbums.get(albumName)
-	if ok {
-		return nil
-	}
-	_, err = f.createAlbum(ctx, albumName)
+	albumTitle := match[1]
+	_, err = f.getOrCreateAlbum(ctx, albumTitle)
 	return err
 }
 
@@ -606,12 +619,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 		f.uploadedMu.Unlock()
 		return err
 	}
-	albumName := match[1]
+	albumTitle := match[1]
 	allAlbums, err := f.listAlbums(false)
 	if err != nil {
 		return err
 	}
-	album, ok := allAlbums.get(albumName)
+	album, ok := allAlbums.get(albumTitle)
 	if !ok {
 		return fs.ErrorDirNotFound
 	}
@@ -825,19 +838,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if pattern.isUpload {
 		fileName = match[1]
 	} else {
-		var albumName string
-		albumName, fileName = match[1], match[2]
+		var albumTitle string
+		albumTitle, fileName = match[1], match[2]
 
-		// Create album if not found
-		album, ok := o.fs.albums[false].get(albumName)
-		if !ok {
-			album, err = o.fs.createAlbum(ctx, albumName)
-			if err != nil {
-				return err
-			}
+		album, err := o.fs.getOrCreateAlbum(ctx, albumTitle)
+		if err != nil {
+			return err
 		}
 
-		// Check we can write to this album
 		if !album.IsWriteable {
 			return errOwnAlbums
 		}
@@ -919,10 +927,10 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	if pattern == nil || !pattern.isFile || !pattern.canUpload || pattern.isUpload {
 		return errRemove
 	}
-	albumName, fileName := match[1], match[2]
-	album, ok := o.fs.albums[false].get(albumName)
+	albumTitle, fileName := match[1], match[2]
+	album, ok := o.fs.albums[false].get(albumTitle)
 	if !ok {
-		return errors.Errorf("couldn't file %q in album %q for delete", fileName, albumName)
+		return errors.Errorf("couldn't file %q in album %q for delete", fileName, albumTitle)
 	}
 	opts := rest.Opts{
 		Method:     "POST",
