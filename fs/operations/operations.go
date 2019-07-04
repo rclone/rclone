@@ -261,28 +261,63 @@ func removeFailedCopy(ctx context.Context, dst fs.Object) bool {
 	return true
 }
 
-// Wrapper to override the remote for an object
-type overrideRemoteObject struct {
-	fs.Object
+// OverrideRemote is a wrapper to override the Remote for an
+// ObjectInfo
+type OverrideRemote struct {
+	fs.ObjectInfo
 	remote string
 }
 
+// NewOverrideRemote returns an OverrideRemoteObject which will
+// return the remote specified
+func NewOverrideRemote(oi fs.ObjectInfo, remote string) *OverrideRemote {
+	return &OverrideRemote{
+		ObjectInfo: oi,
+		remote:     remote,
+	}
+}
+
 // Remote returns the overridden remote name
-func (o *overrideRemoteObject) Remote() string {
+func (o *OverrideRemote) Remote() string {
 	return o.remote
 }
 
 // MimeType returns the mime type of the underlying object or "" if it
 // can't be worked out
-func (o *overrideRemoteObject) MimeType(ctx context.Context) string {
-	if do, ok := o.Object.(fs.MimeTyper); ok {
+func (o *OverrideRemote) MimeType(ctx context.Context) string {
+	if do, ok := o.ObjectInfo.(fs.MimeTyper); ok {
 		return do.MimeType(ctx)
 	}
 	return ""
 }
 
-// Check interface is satisfied
-var _ fs.MimeTyper = (*overrideRemoteObject)(nil)
+// ID returns the ID of the Object if known, or "" if not
+func (o *OverrideRemote) ID() string {
+	if do, ok := o.ObjectInfo.(fs.IDer); ok {
+		return do.ID()
+	}
+	return ""
+}
+
+// UnWrap returns the Object that this Object is wrapping or nil if it
+// isn't wrapping anything
+func (o *OverrideRemote) UnWrap() fs.Object {
+	if o, ok := o.ObjectInfo.(fs.Object); ok {
+		return o
+	}
+	return nil
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *OverrideRemote) GetTier() string {
+	if do, ok := o.ObjectInfo.(fs.GetTierer); ok {
+		return do.GetTier()
+	}
+	return ""
+}
+
+// Check all optional interfaces satisfied
+var _ fs.FullObjectInfo = (*OverrideRemote)(nil)
 
 // Copy src object to dst or f if nil.  If dst is nil then it uses
 // remote as the name of the new object.
@@ -378,7 +413,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						var wrappedSrc fs.ObjectInfo = src
 						// We try to pass the original object if possible
 						if src.Remote() != remote {
-							wrappedSrc = &overrideRemoteObject{Object: src, remote: remote}
+							wrappedSrc = NewOverrideRemote(src, remote)
 						}
 						if doUpdate {
 							actionTaken = "Copied (replaced existing)"
