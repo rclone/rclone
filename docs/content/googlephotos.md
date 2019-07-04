@@ -81,7 +81,7 @@ Got code
 --------------------
 [remote]
 type = google photos
-token = {"access_token":"ya29.Gls1B-tkDOExu0hSWK0UdQ-6fgixD1Rvs3jlzqWgAKvQD5w995leAeiY96_fIccnOeW1jn8KboLTNUSp1kkXGPohBZAHjN1nygUiNGimZlwgs91JDmtf5JHNC2RV","token_type":"Bearer","refresh_token":"1/wTok2SVTqtmu6BcrUI7LUOu7MnvUN52m-rGFfanE50c","expiry":"2019-06-28T17:38:04.644930156+01:00"}
+token = {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2019-06-28T17:38:04.644930156+01:00"}
 --------------------
 y) Yes this is OK
 e) Edit this remote
