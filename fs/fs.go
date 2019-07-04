@@ -412,6 +412,29 @@ type GetTierer interface {
 	GetTier() string
 }
 
+// FullObjectInfo contains all the read-only optional interfaces
+//
+// Use for checking making wrapping ObjectInfos implement everything
+type FullObjectInfo interface {
+	ObjectInfo
+	MimeTyper
+	IDer
+	ObjectUnWrapper
+	GetTierer
+}
+
+// FullObject contains all the optional interfaces for Object
+//
+// Use for checking making wrapping Objects implement everything
+type FullObject interface {
+	Object
+	MimeTyper
+	IDer
+	ObjectUnWrapper
+	GetTierer
+	SetTierer
+}
+
 // ObjectOptionalInterfaces returns the names of supported and
 // unsupported optional interfaces for an Object
 func ObjectOptionalInterfaces(o Object) (supported, unsupported []string) {
