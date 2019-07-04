@@ -132,6 +132,7 @@ minimum size.`,
 
 This is usually set to a Cloudflare CDN URL as Backblaze offers
 free egress for data downloaded through the Cloudflare network.
+This is probably only useful for a public bucket.
 Leave blank if you want to use the endpoint provided by Backblaze.`,
 			Advanced: true,
 		}, {
@@ -448,6 +449,16 @@ func (f *Fs) authorizeAccount() error {
 	}
 	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
 	return nil
+}
+
+// hasPermission returns if the current AuthorizationToken has the selected permission
+func (f *Fs) hasPermission(permission string) bool {
+	for _, capability := range f.info.Allowed.Capabilities {
+		if capability == permission {
+			return true
+		}
+	}
+	return false
 }
 
 // getUploadURL returns the upload info with the UploadURL and the AuthorizationToken
@@ -1181,6 +1192,9 @@ func (f *Fs) getDownloadAuthorization(remote string) (authorization string, err 
 	if validDurationInSeconds <= 0 || validDurationInSeconds > 604800 {
 		return "", errors.New("--b2-download-auth-duration must be between 1 sec and 1 week")
 	}
+	if !f.hasPermission("shareFiles") {
+		return "", errors.New("sharing a file link requires the shareFiles permission")
+	}
 	bucketID, err := f.getBucketID()
 	if err != nil {
 		return "", err
@@ -1191,7 +1205,7 @@ func (f *Fs) getDownloadAuthorization(remote string) (authorization string, err 
 	}
 	var request = api.GetDownloadAuthorizationRequest{
 		BucketID:               bucketID,
-		FileNamePrefix:         remote,
+		FileNamePrefix:         path.Join(f.root, remote),
 		ValidDurationInSeconds: validDurationInSeconds,
 	}
 	var response api.GetDownloadAuthorizationResponse
