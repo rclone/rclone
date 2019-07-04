@@ -1649,7 +1649,6 @@ func (f *Fs) createFileInfo(ctx context.Context, remote string, modTime time.Tim
 		Name:         leaf,
 		Description:  leaf,
 		Parents:      []string{directoryID},
-		MimeType:     fs.MimeTypeFromName(remote),
 		ModifiedTime: modTime.Format(timeFormatOut),
 	}
 	return createInfo, nil
@@ -1713,6 +1712,8 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	}
 	if importMimeType != "" {
 		createInfo.MimeType = importMimeType
+	} else {
+		createInfo.MimeType = fs.MimeTypeFromName(remote)
 	}
 
 	var info *drive.File
