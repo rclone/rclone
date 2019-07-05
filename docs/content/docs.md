@@ -43,6 +43,7 @@ See the following for detailed instructions for
   * [Openstack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)
   * [Pcloud](/pcloud/)
+  * [premiumize.me](/premiumizeme/)
   * [QingStor](/qingstor/)
   * [SFTP](/sftp/)
   * [Union](/union/)

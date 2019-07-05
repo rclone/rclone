@@ -37,6 +37,7 @@ Here is an overview of the major features of each cloud storage system.
 | OpenDrive                    | MD5         | Yes     | Yes              | No              | -         |
 | Openstack Swift              | MD5         | Yes     | No               | No              | R/W       |
 | pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
+| premiumize.me                | -           | No      | Yes              | No              | R         |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
 | SFTP                         | MD5, SHA1 ‡ | Yes     | Depends          | No              | -         |
 | WebDAV                       | MD5, SHA1 ††| Yes ††† | Depends          | No              | -         |
@@ -152,6 +153,7 @@ operations more efficient.
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                                                    | No  |
 | Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes |
+| premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes         | Yes |
 | QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes  |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes  |
