@@ -157,3 +157,7 @@ backends:
    remote:   "TestKoofr:"
    subdir:   false
    fastlist: false
+ - backend:  "premiumizeme"
+   remote:   "TestPremiumizeMe:"
+   subdir:   false
+   fastlist: false
