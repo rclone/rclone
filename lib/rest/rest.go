@@ -286,12 +286,12 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 // MultipartUpload creates an io.Reader which produces an encoded a
 // multipart form upload from the params passed in and the  passed in
 //
-// in - the body of the file
+// in - the body of the file (may be nil)
 // params - the form parameters
 // fileName - is the name of the attached file
 // contentName - the name of the parameter for the file
 //
-// the *int64 returned is the overhead in addition to the file contents, in case Content-Length is required
+// the int64 returned is the overhead in addition to the file contents, in case Content-Length is required
 //
 // NB This doesn't allow setting the content type of the attachment
 func MultipartUpload(in io.Reader, params url.Values, contentName, fileName string) (io.ReadCloser, string, int64, error) {
@@ -315,9 +315,11 @@ func MultipartUpload(in io.Reader, params url.Values, contentName, fileName stri
 			}
 		}
 	}
-	_, err = dummyMultipartWriter.CreateFormFile(contentName, fileName)
-	if err != nil {
-		return nil, "", 0, err
+	if in != nil {
+		_, err = dummyMultipartWriter.CreateFormFile(contentName, fileName)
+		if err != nil {
+			return nil, "", 0, err
+		}
 	}
 
 	err = dummyMultipartWriter.Close()
@@ -341,16 +343,18 @@ func MultipartUpload(in io.Reader, params url.Values, contentName, fileName stri
 			}
 		}
 
-		part, err := writer.CreateFormFile(contentName, fileName)
-		if err != nil {
-			_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to create form file"))
-			return
-		}
+		if in != nil {
+			part, err := writer.CreateFormFile(contentName, fileName)
+			if err != nil {
+				_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to create form file"))
+				return
+			}
 
-		_, err = io.Copy(part, in)
-		if err != nil {
-			_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to copy data"))
-			return
+			_, err = io.Copy(part, in)
+			if err != nil {
+				_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to copy data"))
+				return
+			}
 		}
 
 		err = writer.Close()
@@ -423,8 +427,7 @@ func (api *Client) callCodec(opts *Opts, request interface{}, response interface
 			opts.Body = bytes.NewBuffer(requestBody)
 		}
 	}
-	isMultipart := (opts.MultipartParams != nil || opts.MultipartContentName != "") && opts.Body != nil
-	if isMultipart {
+	if opts.MultipartParams != nil || opts.MultipartContentName != "" {
 		params := opts.MultipartParams
 		if params == nil {
 			params = url.Values{}
