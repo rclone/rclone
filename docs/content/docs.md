@@ -328,6 +328,8 @@ If running rclone from a script you might want to use today's date as
 the directory name passed to `--backup-dir` to store the old files, or
 you might want to pass `--suffix` with today's date.
 
+See `--compare-dest` and `--copy-dest`.
+
 ### --bind string ###
 
 Local address to bind to for outgoing connections.  This can be an
@@ -447,6 +449,18 @@ quicker than without the `--checksum` flag.
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
 
+### --compare-dest=DIR ###
+
+When using `sync`, `copy` or `move` DIR is checked in addition to the 
+destination for files. If a file identical to the source is found that 
+file is NOT copied from source. This is useful to copy just files that 
+have changed since the last backup.
+
+You must use the same remote as the destination of the sync.  The 
+compare directory must not overlap the destination directory.
+
+See `--copy-dest` and `--backup-dir`.
+
 ### --config=CONFIG_FILE ###
 
 Specify the location of the rclone config file.
@@ -474,6 +488,19 @@ looks like `5s` for 5 seconds, `10m` for 10 minutes, or `3h30m`.
 The connection timeout is the amount of time rclone will wait for a
 connection to go through to a remote object storage system.  It is
 `1m` by default.
+
+### --copy-dest=DIR ###
+
+When using `sync`, `copy` or `move` DIR is checked in addition to the 
+destination for files. If a file identical to the source is found that 
+file is server side copied from DIR to the destination. This is useful 
+for incremental backup.
+
+The remote in use must support server side copy and you must
+use the same remote as the destination of the sync.  The compare
+directory must not overlap the destination directory.
+
+See `--compare-dest` and `--backup-dir`.
 
 ### --dedupe-mode MODE ###
 

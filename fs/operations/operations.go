@@ -96,7 +96,7 @@ func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal b
 // Otherwise the file is considered to be not equal including if there
 // were errors reading info.
 func Equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object) bool {
-	return equal(ctx, src, dst, fs.Config.SizeOnly, fs.Config.CheckSum)
+	return equal(ctx, src, dst, fs.Config.SizeOnly, fs.Config.CheckSum, !fs.Config.NoUpdateModTime)
 }
 
 // sizeDiffers compare the size of src and dst taking into account the
@@ -110,7 +110,7 @@ func sizeDiffers(src, dst fs.ObjectInfo) bool {
 
 var checksumWarning sync.Once
 
-func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
+func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum, UpdateModTime bool) bool {
 	if sizeDiffers(src, dst) {
 		fs.Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
 		return false
@@ -169,7 +169,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, sizeOnly, chec
 	}
 
 	// mod time differs but hash is the same to reset mod time if required
-	if !fs.Config.NoUpdateModTime {
+	if UpdateModTime {
 		if fs.Config.DryRun {
 			fs.Logf(src, "Not updating modification time as --dry-run")
 		} else {
@@ -1360,6 +1360,115 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	return nil
 }
 
+// GetCompareDest sets up --compare-dest
+func GetCompareDest() (CompareDest fs.Fs, err error) {
+	CompareDest, err = cache.Get(fs.Config.CompareDest)
+	if err != nil {
+		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --compare-dest %q: %v", fs.Config.CompareDest, err))
+	}
+	return CompareDest, nil
+}
+
+// compareDest checks --compare-dest to see if src needs to
+// be copied
+//
+// Returns True if src is in --compare-dest
+func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (NoNeedTransfer bool, err error) {
+	var remote string
+	if dst == nil {
+		remote = src.Remote()
+	} else {
+		remote = dst.Remote()
+	}
+	CompareDestFile, err := CompareDest.NewObject(ctx, remote)
+	switch err {
+	case fs.ErrorObjectNotFound:
+		return false, nil
+	case nil:
+		break
+	default:
+		return false, err
+	}
+	if Equal(ctx, src, CompareDestFile) {
+		fs.Debugf(src, "Destination found in --compare-dest, skipping")
+		return true, nil
+	}
+	return false, nil
+}
+
+// GetCopyDest sets up --copy-dest
+func GetCopyDest(fdst fs.Fs) (CopyDest fs.Fs, err error) {
+	CopyDest, err = cache.Get(fs.Config.CopyDest)
+	if err != nil {
+		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --copy-dest %q: %v", fs.Config.CopyDest, err))
+	}
+	if !SameConfig(fdst, CopyDest) {
+		return nil, fserrors.FatalError(errors.New("parameter to --copy-dest has to be on the same remote as destination"))
+	}
+	if CopyDest.Features().Copy == nil {
+		return nil, fserrors.FatalError(errors.New("can't use --copy-dest on a remote which doesn't support server side copy"))
+	}
+	return CopyDest, nil
+}
+
+// copyDest checks --copy-dest to see if src needs to
+// be copied
+//
+// Returns True if src was copied from --copy-dest
+func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, backupDir fs.Fs) (NoNeedTransfer bool, err error) {
+	var remote string
+	if dst == nil {
+		remote = src.Remote()
+	} else {
+		remote = dst.Remote()
+	}
+	CopyDestFile, err := CopyDest.NewObject(ctx, remote)
+	switch err {
+	case fs.ErrorObjectNotFound:
+		return false, nil
+	case nil:
+		break
+	default:
+		return false, err
+	}
+	if equal(ctx, src, CopyDestFile, fs.Config.SizeOnly, fs.Config.CheckSum, false) {
+		if dst == nil || !Equal(ctx, src, dst) {
+			if dst != nil && backupDir != nil {
+				err = MoveBackupDir(ctx, backupDir, dst)
+				if err != nil {
+					return false, errors.Wrap(err, "moving to --backup-dir failed")
+				}
+				// If successful zero out the dstObj as it is no longer there
+				dst = nil
+			}
+			_, err := Copy(ctx, fdst, dst, remote, CopyDestFile)
+			if err != nil {
+				fs.Errorf(src, "Destination found in --copy-dest, error copying")
+				return false, nil
+			}
+			fs.Debugf(src, "Destination found in --copy-dest, using server side copy")
+			return true, nil
+		}
+		fs.Debugf(src, "Unchanged skipping")
+		return true, nil
+	}
+	fs.Debugf(src, "Destination not found in --copy-dest")
+	return false, nil
+}
+
+// CompareOrCopyDest checks --compare-dest and --copy-dest to see if src
+// does not need to be copied
+//
+// Returns True if src does not need to be copied
+func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CompareOrCopyDest, backupDir fs.Fs) (NoNeedTransfer bool, err error) {
+	if fs.Config.CompareDest != "" {
+		return compareDest(ctx, dst, src, CompareOrCopyDest)
+	} else if fs.Config.CopyDest != "" {
+		return copyDest(ctx, fdst, dst, src, CompareOrCopyDest, backupDir)
+	}
+	return false, nil
+}
+
 // NeedTransfer checks to see if src needs to be copied to dst using
 // the current config.
 //
@@ -1577,13 +1686,31 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		return err
 	}
 
-	if NeedTransfer(ctx, dstObj, srcObj) {
+	var backupDir, copyDestDir fs.Fs
+	if fs.Config.BackupDir != "" || fs.Config.Suffix != "" {
+		backupDir, err = BackupDir(fdst, fsrc, srcFileName)
+		if err != nil {
+			return errors.Wrap(err, "creating Fs for --backup-dir failed")
+		}
+	}
+	if fs.Config.CompareDest != "" {
+		copyDestDir, err = GetCompareDest()
+		if err != nil {
+			return err
+		}
+	} else if fs.Config.CopyDest != "" {
+		copyDestDir, err = GetCopyDest(fdst)
+		if err != nil {
+			return err
+		}
+	}
+	NoNeedTransfer, err := CompareOrCopyDest(ctx, fdst, dstObj, srcObj, copyDestDir, backupDir)
+	if err != nil {
+		return err
+	}
+	if !NoNeedTransfer && NeedTransfer(ctx, dstObj, srcObj) {
 		// If destination already exists, then we must move it into --backup-dir if required
-		if dstObj != nil && (fs.Config.BackupDir != "" || fs.Config.Suffix != "") {
-			backupDir, err := BackupDir(fdst, fsrc, srcFileName)
-			if err != nil {
-				return errors.Wrap(err, "creating Fs for --backup-dir failed")
-			}
+		if dstObj != nil && backupDir != nil {
 			err = MoveBackupDir(ctx, backupDir, dstObj)
 			if err != nil {
 				return errors.Wrap(err, "moving to --backup-dir failed")

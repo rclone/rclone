@@ -866,6 +866,183 @@ func TestCopyFileBackupDir(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1old, file1)
 }
 
+// Test with CompareDest set
+func TestCopyFileCompareDest(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.CompareDest = r.FremoteName + "/CompareDest"
+	defer func() {
+		fs.Config.CompareDest = ""
+	}()
+	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	require.NoError(t, err)
+
+	// check empty dest, empty compare
+	file1 := r.WriteFile("one", "one", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+
+	file1dst := file1
+	file1dst.Path = "dst/one"
+
+	fstest.CheckItems(t, r.Fremote, file1dst)
+
+	// check old dest, empty compare
+	file1b := r.WriteFile("one", "onet2", t2)
+	fstest.CheckItems(t, r.Fremote, file1dst)
+	fstest.CheckItems(t, r.Flocal, file1b)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file1b.Path, file1b.Path)
+	require.NoError(t, err)
+
+	file1bdst := file1b
+	file1bdst.Path = "dst/one"
+
+	fstest.CheckItems(t, r.Fremote, file1bdst)
+
+	// check old dest, new compare
+	file3 := r.WriteObject(context.Background(), "dst/one", "one", t1)
+	file2 := r.WriteObject(context.Background(), "CompareDest/one", "onet2", t2)
+	file1c := r.WriteFile("one", "onet2", t2)
+	fstest.CheckItems(t, r.Fremote, file2, file3)
+	fstest.CheckItems(t, r.Flocal, file1c)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file1c.Path, file1c.Path)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Fremote, file2, file3)
+
+	// check empty dest, new compare
+	file4 := r.WriteObject(context.Background(), "CompareDest/two", "two", t2)
+	file5 := r.WriteFile("two", "two", t2)
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+	fstest.CheckItems(t, r.Flocal, file1c, file5)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file5.Path, file5.Path)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+
+	// check new dest, new compare
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file5.Path, file5.Path)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+
+	// check empty dest, old compare
+	file5b := r.WriteFile("two", "twot3", t3)
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+	fstest.CheckItems(t, r.Flocal, file1c, file5b)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file5b.Path, file5b.Path)
+	require.NoError(t, err)
+
+	file5bdst := file5b
+	file5bdst.Path = "dst/two"
+
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4, file5bdst)
+}
+
+// Test with CopyDest set
+func TestCopyFileCopyDest(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	if r.Fremote.Features().Copy == nil {
+		t.Skip("Skipping test as remote does not support server side copy")
+	}
+
+	fs.Config.CopyDest = r.FremoteName + "/CopyDest"
+	defer func() {
+		fs.Config.CopyDest = ""
+	}()
+
+	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	require.NoError(t, err)
+
+	// check empty dest, empty copy
+	file1 := r.WriteFile("one", "one", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+
+	file1dst := file1
+	file1dst.Path = "dst/one"
+
+	fstest.CheckItems(t, r.Fremote, file1dst)
+
+	// check old dest, empty copy
+	file1b := r.WriteFile("one", "onet2", t2)
+	fstest.CheckItems(t, r.Fremote, file1dst)
+	fstest.CheckItems(t, r.Flocal, file1b)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file1b.Path, file1b.Path)
+	require.NoError(t, err)
+
+	file1bdst := file1b
+	file1bdst.Path = "dst/one"
+
+	fstest.CheckItems(t, r.Fremote, file1bdst)
+
+	// check old dest, new copy, backup-dir
+
+	fs.Config.BackupDir = r.FremoteName + "/BackupDir"
+
+	file3 := r.WriteObject(context.Background(), "dst/one", "one", t1)
+	file2 := r.WriteObject(context.Background(), "CopyDest/one", "onet2", t2)
+	file1c := r.WriteFile("one", "onet2", t2)
+	fstest.CheckItems(t, r.Fremote, file2, file3)
+	fstest.CheckItems(t, r.Flocal, file1c)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file1c.Path, file1c.Path)
+	require.NoError(t, err)
+
+	file2dst := file2
+	file2dst.Path = "dst/one"
+	file3.Path = "BackupDir/one"
+
+	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3)
+	fs.Config.BackupDir = ""
+
+	// check empty dest, new copy
+	file4 := r.WriteObject(context.Background(), "CopyDest/two", "two", t2)
+	file5 := r.WriteFile("two", "two", t2)
+	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4)
+	fstest.CheckItems(t, r.Flocal, file1c, file5)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file5.Path, file5.Path)
+	require.NoError(t, err)
+
+	file4dst := file4
+	file4dst.Path = "dst/two"
+
+	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst)
+
+	// check new dest, new copy
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file5.Path, file5.Path)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst)
+
+	// check empty dest, old copy
+	file6 := r.WriteObject(context.Background(), "CopyDest/three", "three", t2)
+	file7 := r.WriteFile("three", "threet3", t3)
+	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst, file6)
+	fstest.CheckItems(t, r.Flocal, file1c, file5, file7)
+
+	err = operations.CopyFile(context.Background(), fdst, r.Flocal, file7.Path, file7.Path)
+	require.NoError(t, err)
+
+	file7dst := file7
+	file7dst.Path = "dst/three"
+
+	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst, file6, file7dst)
+}
+
 // testFsInfo is for unit testing fs.Info
 type testFsInfo struct {
 	name      string
