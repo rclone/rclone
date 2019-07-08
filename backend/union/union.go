@@ -23,11 +23,18 @@ func init() {
 		Name:        "union",
 		Description: "A stackable unification remote, which can appear to merge the contents of several remotes",
 		NewFs:       NewFs,
-		Options: []fs.Option{{
-			Name:     "remotes",
-			Help:     "List of space separated remotes.\nCan be 'remotea:test/dir remoteb:', '\"remotea:test/space dir\" remoteb:', etc.\nThe last remote is used to write to.",
-			Required: true,
-		}},
+		Options: []fs.Option{
+			{
+				Name:     "remotes",
+				Help:     "List of space separated remotes.\nCan be 'remotea:test/dir remoteb:', '\"remotea:test/space dir\" remoteb:', etc.\nThe last remote is used to write to.",
+				Required: true,
+			},
+			{
+				Name:     "mirror",
+				Help:     "Mirror operations to all remotes",
+				Advanced: true,
+			},
+		},
 	}
 	fs.Register(fsi)
 }
@@ -35,6 +42,7 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	Remotes fs.SpaceSepList `config:"remotes"`
+	Mirror  bool            `config:"mirror"`
 }
 
 // Fs represents a union of remotes
@@ -91,6 +99,16 @@ func (f *Fs) Features() *fs.Features {
 
 // Rmdir removes the root directory of the Fs object
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	var err error
+	if f.opt.Mirror {
+		for _, remote := range f.remotes {
+			remoteError := remote.Rmdir(ctx, dir)
+			if remoteError != nil {
+				err = remoteError
+			}
+		}
+		return err
+	}
 	return f.wr.Rmdir(ctx, dir)
 }
 
@@ -101,6 +119,16 @@ func (f *Fs) Hashes() hash.Set {
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	var err error
+	if f.opt.Mirror {
+		for _, remote := range f.remotes {
+			remoteError := remote.Mkdir(ctx, dir)
+			if remoteError != nil {
+				err = remoteError
+			}
+		}
+		return err
+	}
 	return f.wr.Mkdir(ctx, dir)
 }
 
@@ -111,6 +139,16 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // Return an error if it doesn't exist
 func (f *Fs) Purge(ctx context.Context) error {
+	var err error
+	if f.opt.Mirror {
+		for _, remote := range f.remotes {
+			remoteError := remote.Features().Purge(ctx)
+			if remoteError != nil {
+				err = remoteError
+			}
+		}
+		return err
+	}
 	return f.wr.Features().Purge(ctx)
 }
 
