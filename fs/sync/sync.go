@@ -28,39 +28,40 @@ type syncCopyMove struct {
 	deleteEmptySrcDirs bool
 	dir                string
 	// internal state
-	ctx            context.Context        // internal context for controlling go-routines
-	cancel         func()                 // cancel the context
-	noTraverse     bool                   // if set don't traverse the dst
-	deletersWg     sync.WaitGroup         // for delete before go routine
-	deleteFilesCh  chan fs.Object         // channel to receive deletes if delete before
-	trackRenames   bool                   // set if we should do server side renames
-	dstFilesMu     sync.Mutex             // protect dstFiles
-	dstFiles       map[string]fs.Object   // dst files, always filled
-	srcFiles       map[string]fs.Object   // src files, only used if deleteBefore
-	srcFilesChan   chan fs.Object         // passes src objects
-	srcFilesResult chan error             // error result of src listing
-	dstFilesResult chan error             // error result of dst listing
-	dstEmptyDirsMu sync.Mutex             // protect dstEmptyDirs
-	dstEmptyDirs   map[string]fs.DirEntry // potentially empty directories
-	srcEmptyDirsMu sync.Mutex             // protect srcEmptyDirs
-	srcEmptyDirs   map[string]fs.DirEntry // potentially empty directories
-	checkerWg      sync.WaitGroup         // wait for checkers
-	toBeChecked    *pipe                  // checkers channel
-	transfersWg    sync.WaitGroup         // wait for transfers
-	toBeUploaded   *pipe                  // copiers channel
-	errorMu        sync.Mutex             // Mutex covering the errors variables
-	err            error                  // normal error from copy process
-	noRetryErr     error                  // error with NoRetry set
-	fatalErr       error                  // fatal error
-	commonHash     hash.Type              // common hash type between src and dst
-	renameMapMu    sync.Mutex             // mutex to protect the below
-	renameMap      map[string][]fs.Object // dst files by hash - only used by trackRenames
-	renamerWg      sync.WaitGroup         // wait for renamers
-	toBeRenamed    *pipe                  // renamers channel
-	trackRenamesWg sync.WaitGroup         // wg for background track renames
-	trackRenamesCh chan fs.Object         // objects are pumped in here
-	renameCheck    []fs.Object            // accumulate files to check for rename here
-	backupDir      fs.Fs                  // place to store overwrites/deletes
+	ctx             context.Context        // internal context for controlling go-routines
+	cancel          func()                 // cancel the context
+	noTraverse      bool                   // if set don't traverse the dst
+	deletersWg      sync.WaitGroup         // for delete before go routine
+	deleteFilesCh   chan fs.Object         // channel to receive deletes if delete before
+	trackRenames    bool                   // set if we should do server side renames
+	dstFilesMu      sync.Mutex             // protect dstFiles
+	dstFiles        map[string]fs.Object   // dst files, always filled
+	srcFiles        map[string]fs.Object   // src files, only used if deleteBefore
+	srcFilesChan    chan fs.Object         // passes src objects
+	srcFilesResult  chan error             // error result of src listing
+	dstFilesResult  chan error             // error result of dst listing
+	dstEmptyDirsMu  sync.Mutex             // protect dstEmptyDirs
+	dstEmptyDirs    map[string]fs.DirEntry // potentially empty directories
+	srcEmptyDirsMu  sync.Mutex             // protect srcEmptyDirs
+	srcEmptyDirs    map[string]fs.DirEntry // potentially empty directories
+	checkerWg       sync.WaitGroup         // wait for checkers
+	toBeChecked     *pipe                  // checkers channel
+	transfersWg     sync.WaitGroup         // wait for transfers
+	toBeUploaded    *pipe                  // copiers channel
+	errorMu         sync.Mutex             // Mutex covering the errors variables
+	err             error                  // normal error from copy process
+	noRetryErr      error                  // error with NoRetry set
+	fatalErr        error                  // fatal error
+	commonHash      hash.Type              // common hash type between src and dst
+	renameMapMu     sync.Mutex             // mutex to protect the below
+	renameMap       map[string][]fs.Object // dst files by hash - only used by trackRenames
+	renamerWg       sync.WaitGroup         // wait for renamers
+	toBeRenamed     *pipe                  // renamers channel
+	trackRenamesWg  sync.WaitGroup         // wg for background track renames
+	trackRenamesCh  chan fs.Object         // objects are pumped in here
+	renameCheck     []fs.Object            // accumulate files to check for rename here
+	compareCopyDest fs.Fs                  // place to check for files to server side copy
+	backupDir       fs.Fs                  // place to store overwrites/deletes
 }
 
 func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) (*syncCopyMove, error) {
@@ -123,6 +124,19 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if fs.Config.BackupDir != "" || fs.Config.Suffix != "" {
 		var err error
 		s.backupDir, err = operations.BackupDir(fdst, fsrc, "")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if fs.Config.CompareDest != "" {
+		var err error
+		s.compareCopyDest, err = operations.GetCompareDest()
+		if err != nil {
+			return nil, err
+		}
+	} else if fs.Config.CopyDest != "" {
+		var err error
+		s.compareCopyDest, err = operations.GetCopyDest(fdst)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +218,11 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 		accounting.Stats.Checking(src.Remote())
 		// Check to see if can store this
 		if src.Storable() {
-			if operations.NeedTransfer(s.ctx, pair.Dst, pair.Src) {
+			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
+			if err != nil {
+				s.processError(err)
+			}
+			if !NoNeedTransfer && operations.NeedTransfer(s.ctx, pair.Dst, pair.Src) {
 				// If files are treated as immutable, fail if destination exists and does not match
 				if fs.Config.Immutable && pair.Dst != nil {
 					fs.Errorf(pair.Dst, "Source and destination exist but do not match: immutable file modified")
@@ -764,10 +782,17 @@ func (s *syncCopyMove) SrcOnly(src fs.DirEntry) (recurse bool) {
 			case s.trackRenamesCh <- x:
 			}
 		} else {
-			// No need to check since doesn't exist
-			ok := s.toBeUploaded.Put(s.ctx, fs.ObjectPair{Src: x, Dst: nil})
-			if !ok {
-				return
+			// Check CompareDest && CopyDest
+			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, nil, x, s.compareCopyDest, s.backupDir)
+			if err != nil {
+				s.processError(err)
+			}
+			if !NoNeedTransfer {
+				// No need to check since doesn't exist
+				ok := s.toBeUploaded.Put(s.ctx, fs.ObjectPair{Src: x, Dst: nil})
+				if !ok {
+					return
+				}
 			}
 		}
 	case fs.Directory:

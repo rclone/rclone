@@ -66,6 +66,8 @@ type ConfigInfo struct {
 	NoTraverse             bool
 	NoUpdateModTime        bool
 	DataRateUnit           string
+	CompareDest            string
+	CopyDest               string
 	BackupDir              string
 	Suffix                 string
 	SuffixKeepExtension    bool
