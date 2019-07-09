@@ -423,6 +423,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		if recurse && job.srcDepth > 0 {
 			jobs = append(jobs, listDirJob{
 				srcRemote: src.Remote(),
+				dstRemote: src.Remote(),
 				srcDepth:  job.srcDepth - 1,
 				noDst:     true,
 			})
@@ -436,6 +437,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		recurse := m.Callback.DstOnly(dst)
 		if recurse && job.dstDepth > 0 {
 			jobs = append(jobs, listDirJob{
+				srcRemote: dst.Remote(),
 				dstRemote: dst.Remote(),
 				dstDepth:  job.dstDepth - 1,
 				noSrc:     true,
