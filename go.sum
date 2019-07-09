@@ -108,6 +108,10 @@ github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a h1:W+gnfphB7Wp
 github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a/go.mod h1:3xszwh+rNrYk1r9SStc4iJ326gne1OaBcrdB1ACsbzI=
 github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff h1:GlfzG8bgyoJYz+5sMvGpYnHrg4veNVNnDGuE9hTEMHk=
 github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff/go.mod h1:MRAz4Gsxd+OzrZ0owwrUHc0zLESL+1Y5syqK/sJxK2A=
+github.com/koofr/go-koofrclient v0.0.0-20190709111939-f0a2ec1400c2 h1:KM4PvoDa6iAmRoKHRauXmIi4jmTXGn9c4mz2mscQQMw=
+github.com/koofr/go-koofrclient v0.0.0-20190709111939-f0a2ec1400c2/go.mod h1:MRAz4Gsxd+OzrZ0owwrUHc0zLESL+1Y5syqK/sJxK2A=
+github.com/koofr/go-koofrclient v0.0.0-20190715104037-2c5813f3c29c h1:MaVra5jrE7MxT4k0v0JD2Gh6h94BFu2DgDYq+zMGBW0=
+github.com/koofr/go-koofrclient v0.0.0-20190715104037-2c5813f3c29c/go.mod h1:MRAz4Gsxd+OzrZ0owwrUHc0zLESL+1Y5syqK/sJxK2A=
 github.com/kr/fs v0.1.0 h1:Jskdu9ieNAYnjxsi0LbQp1ulIKZV1LAFgK1tWhpZgl8=
 github.com/kr/fs v0.1.0/go.mod h1:FFnZGqtBN9Gxj7eW1uZ42v5BccTP0vu6NEaFoC2HwRg=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=

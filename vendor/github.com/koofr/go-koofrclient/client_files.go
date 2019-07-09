@@ -83,25 +83,25 @@ func (c *KoofrClient) FilesDelete(mountId string, path string) (err error) {
 	return c.filesDelete(mountId, path, nil)
 }
 
-func (c *KoofrClient) FilesDeleteIf(mountId string, path string, deleteFilter *DeleteFilter) (err error) {
-	return c.filesDelete(mountId, path, deleteFilter)
+func (c *KoofrClient) FilesDeleteWithOptions(mountId string, path string, deleteOptions *DeleteOptions) (err error) {
+	return c.filesDelete(mountId, path, deleteOptions)
 }
 
-func (c *KoofrClient) filesDelete(mountId string, path string, deleteFilter *DeleteFilter) (err error) {
+func (c *KoofrClient) filesDelete(mountId string, path string, deleteOptions *DeleteOptions) (err error) {
 	params := url.Values{}
 	params.Set("path", path)
 
-	if deleteFilter != nil {
-		if deleteFilter.Size != nil {
-			params.Set("removeIfSize", fmt.Sprintf("%d", *deleteFilter.Size))
+	if deleteOptions != nil {
+		if deleteOptions.RemoveIfSize != nil {
+			params.Set("removeIfSize", fmt.Sprintf("%d", *deleteOptions.RemoveIfSize))
 		}
-		if deleteFilter.Modified != nil {
-			params.Set("removeIfModified", fmt.Sprintf("%d", *deleteFilter.Modified))
+		if deleteOptions.RemoveIfModified != nil {
+			params.Set("removeIfModified", fmt.Sprintf("%d", *deleteOptions.RemoveIfModified))
 		}
-		if deleteFilter.Hash != nil {
-			params.Set("removeIfHash", fmt.Sprintf("%s", *deleteFilter.Hash))
+		if deleteOptions.RemoveIfHash != nil {
+			params.Set("removeIfHash", fmt.Sprintf("%s", *deleteOptions.RemoveIfHash))
 		}
-		if deleteFilter.IfEmpty {
+		if deleteOptions.RemoveIfEmpty {
 			params.Set("removeIfEmpty", "")
 		}
 	}
@@ -152,8 +152,8 @@ func (c *KoofrClient) FilesNewFolder(mountId string, path string, name string) (
 	return
 }
 
-func (c *KoofrClient) FilesCopy(mountId string, path string, toMountId string, toPath string) (err error) {
-	reqData := FileCopy{toMountId, toPath}
+func (c *KoofrClient) FilesCopy(mountId string, path string, toMountId string, toPath string, options CopyOptions) (err error) {
+	reqData := FileCopy{toMountId, toPath, options.SetModified}
 
 	params := url.Values{}
 	params.Set("path", path)
@@ -230,34 +230,40 @@ func (c *KoofrClient) FilesGet(mountId string, path string) (reader io.ReadClose
 }
 
 func (c *KoofrClient) FilesPut(mountId string, path string, name string, reader io.Reader) (newName string, err error) {
-	info, err := c.FilesPutOptions(mountId, path, name, reader, nil)
+	info, err := c.FilesPutWithOptions(mountId, path, name, reader, nil)
 	return info.Name, err
 }
 
-func (c *KoofrClient) FilesPutOptions(mountId string, path string, name string, reader io.Reader, putFilter *PutFilter) (fileInfo *FileInfo, err error) {
+func (c *KoofrClient) FilesPutWithOptions(mountId string, path string, name string, reader io.Reader, putOptions *PutOptions) (fileInfo *FileInfo, err error) {
 	params := url.Values{}
 	params.Set("path", path)
 	params.Set("filename", name)
 	params.Set("info", "true")
 
-	if putFilter != nil {
-		if putFilter.Size != nil {
-			params.Set("overwriteIfSize", fmt.Sprintf("%d", *putFilter.Size))
+	if putOptions != nil {
+		if putOptions.OverwriteIfSize != nil {
+			params.Set("overwriteIfSize", fmt.Sprintf("%d", *putOptions.OverwriteIfSize))
 		}
-		if putFilter.Modified != nil {
-			params.Set("overwriteIfModified", fmt.Sprintf("%d", *putFilter.Modified))
+		if putOptions.OverwriteIfModified != nil {
+			params.Set("overwriteIfModified", fmt.Sprintf("%d", *putOptions.OverwriteIfModified))
 		}
-		if putFilter.Hash != nil {
-			params.Set("overwriteIfHash", fmt.Sprintf("%s", *putFilter.Hash))
+		if putOptions.OverwriteIfHash != nil {
+			params.Set("overwriteIfHash", fmt.Sprintf("%s", *putOptions.OverwriteIfHash))
 		}
-		if putFilter.IgnoreNonExisting {
+		if putOptions.OverwriteIfHash != nil {
+			params.Set("overwriteIfHash", fmt.Sprintf("%s", *putOptions.OverwriteIfHash))
+		}
+		if putOptions.OverwriteIgnoreNonExisting {
 			params.Set("overwriteIgnoreNonexisting", "")
 		}
-		if putFilter.NoRename {
+		if putOptions.NoRename {
 			params.Set("autorename", "false")
 		}
-		if putFilter.ForceOverwrite {
+		if putOptions.ForceOverwrite {
 			params.Set("overwrite", "true")
+		}
+		if putOptions.SetModified != nil {
+			params.Set("modified", fmt.Sprintf("%d", *putOptions.SetModified))
 		}
 	}
 

@@ -24,7 +24,7 @@ require (
 	github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a
-	github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff
+	github.com/koofr/go-koofrclient v0.0.0-20190715104037-2c5813f3c29c
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.4
