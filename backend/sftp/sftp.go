@@ -86,7 +86,7 @@ when the ssh-agent contains many keys.`,
 			Default: false,
 		}, {
 			Name:    "use_insecure_cipher",
-			Help:    "Enable the use of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.",
+			Help:    "Enable the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange. Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.",
 			Default: false,
 			Examples: []fs.OptionExample{
 				{
@@ -94,7 +94,7 @@ when the ssh-agent contains many keys.`,
 					Help:  "Use default Cipher list.",
 				}, {
 					Value: "true",
-					Help:  "Enables the use of the aes128-cbc cipher.",
+					Help:  "Enables the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange.",
 				},
 			},
 		}, {
@@ -345,6 +345,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.UseInsecureCipher {
 		sshConfig.Config.SetDefaults()
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc")
+		sshConfig.Config.KeyExchanges = append(sshConfig.Config.KeyExchanges, "diffie-hellman-group-exchange-sha1", "diffie-hellman-group-exchange-sha256")
 	}
 
 	keyFile := env.ShellExpand(opt.KeyFile)
