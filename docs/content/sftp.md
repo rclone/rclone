@@ -75,22 +75,22 @@ host> example.com
 SSH username, leave blank for current username, ncw
 user> sftpuser
 SSH port, leave blank to use default (22)
-port> 
+port>
 SSH password, leave blank to use ssh-agent.
 y) Yes type in my own password
 g) Generate random password
 n) No leave this optional password blank
 y/g/n> n
 Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.
-key_file> 
+key_file>
 Remote config
 --------------------
 [remote]
 host = example.com
 user = sftpuser
-port = 
-pass = 
-key_file = 
+port =
+pass =
+key_file =
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -243,7 +243,7 @@ when the ssh-agent contains many keys.
 
 #### --sftp-use-insecure-cipher
 
-Enable the use of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.
+Enable the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange. Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
 
 - Config:      use_insecure_cipher
 - Env Var:     RCLONE_SFTP_USE_INSECURE_CIPHER
@@ -253,7 +253,7 @@ Enable the use of the aes128-cbc cipher. This cipher is insecure and may allow p
     - "false"
         - Use default Cipher list.
     - "true"
-        - Enables the use of the aes128-cbc cipher.
+        - Enables the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange.
 
 #### --sftp-disable-hashcheck
 
@@ -325,7 +325,7 @@ return the total space, free space, and used space on the remote
 for the disk of the specified path on the remote or, if not set,
 the disk of the root on the remote.
 `about` will fail if it does not have shell
-access or if `df` is not in the remote's PATH. 
+access or if `df` is not in the remote's PATH.
 
 Note that some SFTP servers (eg Synology) the paths are different for
 SSH and SFTP so the hashes can't be calculated properly.  For them
