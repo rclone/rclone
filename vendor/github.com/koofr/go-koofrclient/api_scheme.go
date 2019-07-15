@@ -102,6 +102,7 @@ type FolderCreate struct {
 type FileCopy struct {
 	ToMountId string `json:"toMountId"`
 	TPath     string `json:"toPath"`
+	Modified  *int64 `json:"modified,omitempty"`
 }
 
 type FileMove struct {
@@ -118,20 +119,25 @@ type FileUpload struct {
 	Name string `json:"name"`
 }
 
-type PutFilter struct {
-	Modified          *int64
-	Size              *int64
-	Hash              *string
-	IgnoreNonExisting bool
-	NoRename          bool
-	ForceOverwrite    bool
+type PutOptions struct {
+	OverwriteIfModified        *int64
+	OverwriteIfSize            *int64
+	OverwriteIfHash            *string
+	OverwriteIgnoreNonExisting bool
+	NoRename                   bool
+	ForceOverwrite             bool
+	SetModified                *int64
 }
 
-type DeleteFilter struct {
-	Modified *int64
-	Size     *int64
-	Hash     *string
-	IfEmpty  bool
+type CopyOptions struct {
+	SetModified *int64
+}
+
+type DeleteOptions struct {
+	RemoveIfModified *int64
+	RemoveIfSize     *int64
+	RemoveIfHash     *string
+	RemoveIfEmpty    bool
 }
 
 type FileInfo struct {

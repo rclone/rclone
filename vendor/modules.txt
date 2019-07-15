@@ -111,7 +111,7 @@ github.com/jzelinskie/whirlpool
 github.com/kardianos/osext
 # github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a
 github.com/koofr/go-httpclient
-# github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff
+# github.com/koofr/go-koofrclient v0.0.0-20190715104037-2c5813f3c29c
 github.com/koofr/go-koofrclient
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
