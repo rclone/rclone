@@ -41,6 +41,12 @@ func init() {
 				Default:  "",
 				Advanced: true,
 			}, {
+				Name:     "setmtime",
+				Help:     "Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
+				Default:  true,
+				Required: true,
+				Advanced: true,
+			}, {
 				Name:     "user",
 				Help:     "Your Koofr user name",
 				Required: true,
@@ -60,6 +66,7 @@ type Options struct {
 	MountID  string `config:"mountid"`
 	User     string `config:"user"`
 	Password string `config:"password"`
+	SetMTime bool   `config:"setmtime"`
 }
 
 // A Fs is a representation of a remote Koofr Fs
@@ -140,7 +147,7 @@ func (o *Object) Storable() bool {
 
 // SetModTime is not supported
 func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
-	return nil
+	return fs.ErrorCantSetModTimeWithoutDelete
 }
 
 // Open opens the Object for reading
@@ -179,10 +186,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update updates the Object contents
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	putopts := &koofrclient.PutFilter{
-		ForceOverwrite:    true,
-		NoRename:          true,
-		IgnoreNonExisting: true,
+	mtime := src.ModTime(ctx).UnixNano() / 1000 / 1000
+	putopts := &koofrclient.PutOptions{
+		ForceOverwrite:             true,
+		NoRename:                   true,
+		OverwriteIgnoreNonExisting: true,
+		SetModified:                &mtime,
 	}
 	fullPath := o.fullPath()
 	dirPath := dir(fullPath)
@@ -191,7 +200,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	info, err := o.fs.client.FilesPutOptions(o.fs.mountID, dirPath, name, in, putopts)
+	info, err := o.fs.client.FilesPutWithOptions(o.fs.mountID, dirPath, name, in, putopts)
 	if err != nil {
 		return err
 	}
@@ -226,7 +235,11 @@ func (f *Fs) Features() *fs.Features {
 
 // Precision denotes that setting modification times is not supported
 func (f *Fs) Precision() time.Duration {
-	return fs.ModTimeNotSupported
+	if f.opt.SetMTime {
+		return time.Millisecond
+	} else {
+		return fs.ModTimeNotSupported
+	}
 }
 
 // Hashes returns a set of hashes are Provided by the Fs
@@ -336,10 +349,12 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (obj fs.Object, err e
 
 // Put updates a remote Object
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (obj fs.Object, err error) {
-	putopts := &koofrclient.PutFilter{
-		ForceOverwrite:    true,
-		NoRename:          true,
-		IgnoreNonExisting: true,
+	mtime := src.ModTime(ctx).UnixNano() / 1000 / 1000
+	putopts := &koofrclient.PutOptions{
+		ForceOverwrite:             true,
+		NoRename:                   true,
+		OverwriteIgnoreNonExisting: true,
+		SetModified:                &mtime,
 	}
 	fullPath := f.fullPath(src.Remote())
 	dirPath := dir(fullPath)
@@ -348,7 +363,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if err != nil {
 		return nil, err
 	}
-	info, err := f.client.FilesPutOptions(f.mountID, dirPath, name, in, putopts)
+	info, err := f.client.FilesPutWithOptions(f.mountID, dirPath, name, in, putopts)
 	if err != nil {
 		return nil, translateErrorsObject(err)
 	}
@@ -466,9 +481,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, fs.ErrorCantCopy
 	}
+	mtime := src.ModTime(ctx).UnixNano() / 1000 / 1000
 	err = f.client.FilesCopy((src.(*Object)).fs.mountID,
 		(src.(*Object)).fs.fullPath((src.(*Object)).remote),
-		f.mountID, dstFullPath)
+		f.mountID, dstFullPath, koofrclient.CopyOptions{&mtime})
 	if err != nil {
 		return nil, fs.ErrorCantCopy
 	}
