@@ -251,9 +251,9 @@ var _ fs.MimeTyper = (*overrideRemoteObject)(nil)
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
-	accounting.Stats.Transferring(src.Remote())
+	tr := accounting.Stats.NewTransfer(src)
 	defer func() {
-		accounting.Stats.DoneTransferring(src.Remote(), err == nil)
+		tr.Done(err)
 	}()
 	newDst = dst
 	if fs.Config.DryRun {
@@ -304,7 +304,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				if streams < 2 {
 					streams = 2
 				}
-				dst, err = multiThreadCopy(ctx, f, remote, src, int(streams))
+				dst, err = multiThreadCopy(ctx, f, remote, src, int(streams), tr)
 				if doUpdate {
 					actionTaken = "Multi-thread Copied (replaced existing)"
 				} else {
@@ -326,7 +326,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx))
 						newDst = dst
 					} else {
-						in := accounting.NewAccount(in0, src).WithBuffer() // account and buffer the transfer
+						in := tr.Account(in0).WithBuffer() // account and buffer the transfer
 						var wrappedSrc fs.ObjectInfo = src
 						// We try to pass the original object if possible
 						if src.Remote() != remote {
@@ -854,17 +854,25 @@ func CheckIdentical(ctx context.Context, dst, src fs.Object) (differ bool, err e
 	if err != nil {
 		return true, errors.Wrapf(err, "failed to open %q", dst)
 	}
-	in1 = accounting.NewAccount(in1, dst).WithBuffer() // account and buffer the transfer
-	defer fs.CheckClose(in1, &err)
+	tr1 := accounting.Stats.NewTransfer(dst)
+	defer func() {
+		tr1.Done(err)
+	}()
+	in1 = tr1.Account(in1).WithBuffer() // account and buffer the transfer
 
 	in2, err := src.Open(ctx)
 	if err != nil {
 		return true, errors.Wrapf(err, "failed to open %q", src)
 	}
-	in2 = accounting.NewAccount(in2, src).WithBuffer() // account and buffer the transfer
-	defer fs.CheckClose(in2, &err)
+	tr2 := accounting.Stats.NewTransfer(dst)
+	defer func() {
+		tr2.Done(err)
+	}()
+	in2 = tr2.Account(in2).WithBuffer() // account and buffer the transfer
 
-	return CheckEqualReaders(in1, in2)
+	// To assign err variable before defer.
+	differ, err = CheckEqualReaders(in1, in2)
+	return
 }
 
 // CheckDownload checks the files in fsrc and fdst according to Size
@@ -1159,9 +1167,9 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 	var mu sync.Mutex
 	return ListFn(ctx, f, func(o fs.Object) {
 		var err error
-		accounting.Stats.Transferring(o.Remote())
+		tr := accounting.Stats.NewTransfer(o)
 		defer func() {
-			accounting.Stats.DoneTransferring(o.Remote(), err == nil)
+			tr.Done(err)
 		}()
 		opt := fs.RangeOption{Start: offset, End: -1}
 		size := o.Size()
@@ -1183,19 +1191,8 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		}
 		if count >= 0 {
 			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
-			// reduce remaining size to count
-			if size > count {
-				size = count
-			}
 		}
-		in = accounting.NewAccountSizeName(in, size, o.Remote()).WithBuffer() // account and buffer the transfer
-		defer func() {
-			err = in.Close()
-			if err != nil {
-				fs.CountError(err)
-				fs.Errorf(o, "Failed to close: %v", err)
-			}
-		}()
+		in = tr.Account(in).WithBuffer() // account and buffer the transfer
 		// take the lock just before we output stuff, so at the last possible moment
 		mu.Lock()
 		defer mu.Unlock()
@@ -1209,14 +1206,11 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
 func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst fs.Object, err error) {
-	accounting.Stats.Transferring(dstFileName)
-	in = accounting.NewAccountSizeName(in, -1, dstFileName).WithBuffer()
+	tr := accounting.Stats.NewTransferRemoteSize(dstFileName, -1)
 	defer func() {
-		accounting.Stats.DoneTransferring(dstFileName, err == nil)
-		if otherErr := in.Close(); otherErr != nil {
-			fs.Debugf(fdst, "Rcat: failed to close source: %v", err)
-		}
+		tr.Done(err)
 	}()
+	in = tr.Account(in).WithBuffer()
 
 	hashOption := &fs.HashesOption{Hashes: fdst.Hashes()}
 	hash, err := hash.NewMultiHasherTypes(fdst.Hashes())
@@ -1531,10 +1525,14 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 	var obj fs.Object
 
 	if size >= 0 {
+		var err error
 		// Size known use Put
-		accounting.Stats.Transferring(dstFileName)
-		body := ioutil.NopCloser(in)                                 // we let the server close the body
-		in := accounting.NewAccountSizeName(body, size, dstFileName) // account the transfer (no buffering)
+		tr := accounting.Stats.NewTransferRemoteSize(dstFileName, size)
+		defer func() {
+			tr.Done(err)
+		}()
+		body := ioutil.NopCloser(in) // we let the server close the body
+		in := tr.Account(body)       // account the transfer (no buffering)
 
 		if fs.Config.DryRun {
 			fs.Logf("stdin", "Not uploading as --dry-run")
@@ -1543,15 +1541,6 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 			return nil, err
 		}
 
-		var err error
-		defer func() {
-			closeErr := in.Close()
-			if closeErr != nil {
-				accounting.Stats.Error(closeErr)
-				fs.Errorf(dstFileName, "Post request: close failed: %v", closeErr)
-			}
-			accounting.Stats.DoneTransferring(dstFileName, err == nil)
-		}()
 		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst)
 		obj, err = fdst.Put(ctx, in, info)
 		if err != nil {
@@ -1675,14 +1664,15 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			}
 			return errors.Wrap(err, "error while attempting to move file to a temporary location")
 		}
-		accounting.Stats.Transferring(srcFileName)
+		tr := accounting.Stats.NewTransfer(srcObj)
+		defer func() {
+			tr.Done(err)
+		}()
 		tmpObj, err := Op(ctx, fdst, nil, tmpObjName, srcObj)
 		if err != nil {
-			accounting.Stats.DoneTransferring(srcFileName, false)
 			return errors.Wrap(err, "error while moving file to temporary location")
 		}
 		_, err = Op(ctx, fdst, nil, dstFileName, tmpObj)
-		accounting.Stats.DoneTransferring(srcFileName, err == nil)
 		return err
 	}
 

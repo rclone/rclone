@@ -87,9 +87,11 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 // copy an object to or from the remote while accounting for it
 func copyObj(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	if operations.NeedTransfer(context.TODO(), dst, src) {
-		accounting.Stats.Transferring(src.Remote())
+		tr := accounting.Stats.NewTransfer(src)
+		defer func() {
+			tr.Done(err)
+		}()
 		newDst, err = operations.Copy(context.TODO(), f, dst, remote, src)
-		accounting.Stats.DoneTransferring(src.Remote(), err == nil)
 	} else {
 		newDst = dst
 	}

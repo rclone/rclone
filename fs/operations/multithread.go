@@ -110,7 +110,7 @@ func (mc *multiThreadCopyState) calculateChunks() {
 }
 
 // Copy src to (f, remote) using streams download threads and the OpenWriterAt feature
-func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, streams int) (newDst fs.Object, err error) {
+func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object, streams int, tr *accounting.Transfer) (newDst fs.Object, err error) {
 	openWriterAt := f.Features().OpenWriterAt
 	if openWriterAt == nil {
 		return nil, errors.New("multi-thread copy: OpenWriterAt not supported")
@@ -132,8 +132,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	mc.calculateChunks()
 
 	// Make accounting
-	mc.acc = accounting.NewAccount(nil, src)
-	defer fs.CheckClose(mc.acc, &err)
+	mc.acc = tr.Account(nil)
 
 	// create write file handle
 	mc.wc, err = openWriterAt(gCtx, remote, mc.size)

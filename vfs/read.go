@@ -16,6 +16,7 @@ import (
 // ReadFileHandle is an open for read file handle on a File
 type ReadFileHandle struct {
 	baseHandle
+	done       func(err error)
 	mu         sync.Mutex
 	closed     bool // set if handle has been closed
 	r          *accounting.Account
@@ -70,9 +71,11 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	if err != nil {
 		return err
 	}
-	fh.r = accounting.NewAccount(r, o).WithBuffer() // account the transfer
+	tr := accounting.Stats.NewTransfer(o)
+	fh.done = tr.Done
+	fh.r = tr.Account(r).WithBuffer() // account the transfer
 	fh.opened = true
-	accounting.Stats.Transferring(o.Remote())
+
 	return nil
 }
 
@@ -347,9 +350,12 @@ func (fh *ReadFileHandle) close() error {
 	fh.closed = true
 
 	if fh.opened {
-		accounting.Stats.DoneTransferring(fh.remote, true)
+		var err error
+		defer func() {
+			fh.done(err)
+		}()
 		// Close first so that we have hashes
-		err := fh.r.Close()
+		err = fh.r.Close()
 		if err != nil {
 			return err
 		}
