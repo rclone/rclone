@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -87,8 +88,8 @@ type StatsInfo struct {
 	renameQueue       int
 	renameQueueSize   int64
 	deletes           int64
-	start             time.Time
 	inProgress        *inProgress
+	startedTransfers  []*Transfer
 }
 
 // NewStats creates an initialised StatsInfo
@@ -96,7 +97,6 @@ func NewStats() *StatsInfo {
 	return &StatsInfo{
 		checking:     newStringSet(fs.Config.Checkers, "checking"),
 		transferring: newStringSet(fs.Config.Transfers, "transferring"),
-		start:        time.Now(),
 		inProgress:   newInProgress(),
 	}
 }
@@ -105,7 +105,7 @@ func NewStats() *StatsInfo {
 func (s *StatsInfo) RemoteStats(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	s.mu.RLock()
-	dt := time.Now().Sub(s.start)
+	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
@@ -147,6 +147,52 @@ func (s *StatsInfo) RemoteStats(ctx context.Context, in rc.Params) (out rc.Param
 		out["lastError"] = s.lastError
 	}
 	return out, nil
+}
+
+type timeRange struct {
+	start time.Time
+	end   time.Time
+}
+
+// Total duration is union of durations of all transfers belonging to this
+// object.
+// Needs to be protected by mutex.
+func (s *StatsInfo) totalDuration() time.Duration {
+	now := time.Now()
+	// Extract time ranges of all transfers.
+	timeRanges := make([]timeRange, len(s.startedTransfers))
+	for i := range s.startedTransfers {
+		start, end := s.startedTransfers[i].TimeRange()
+		if end.IsZero() {
+			end = now
+		}
+		timeRanges[i] = timeRange{start, end}
+	}
+
+	// Sort by the starting time.
+	sort.Slice(timeRanges, func(i, j int) bool {
+		return timeRanges[i].start.Before(timeRanges[j].start)
+	})
+
+	// Merge overlaps and add distinctive ranges together for total.
+	var total time.Duration
+	var i, j = 0, 1
+	for i < len(timeRanges) {
+		if j < len(timeRanges)-1 {
+			if timeRanges[j].start.Before(timeRanges[i].end) {
+				if timeRanges[i].end.Before(timeRanges[j].end) {
+					timeRanges[i].end = timeRanges[j].end
+				}
+				j++
+				continue
+			}
+		}
+		total += timeRanges[i].end.Sub(timeRanges[i].start)
+		i = j
+		j++
+	}
+
+	return total
 }
 
 // eta returns the ETA of the current operation,
@@ -195,7 +241,7 @@ func (s *StatsInfo) String() string {
 
 	s.mu.RLock()
 
-	dt := time.Now().Sub(s.start)
+	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
@@ -456,9 +502,16 @@ func (s *StatsInfo) GetTransfers() int64 {
 	return s.transfers
 }
 
-// Transferring adds a transfer into the stats
-func (s *StatsInfo) Transferring(remote string) {
+// NewTransfer adds a transfer to the stats from the object.
+func (s *StatsInfo) NewTransfer(obj fs.Object) *Transfer {
+	s.transferring.add(obj.Remote())
+	return newTransfer(s, obj)
+}
+
+// NewTransferRemoteSize adds a transfer to the stats based on remote and size.
+func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
 	s.transferring.add(remote)
+	return newTransferRemoteSize(s, remote, size)
 }
 
 // DoneTransferring removes a transfer from the stats
@@ -494,5 +547,12 @@ func (s *StatsInfo) SetRenameQueue(n int, size int64) {
 	s.mu.Lock()
 	s.renameQueue = n
 	s.renameQueueSize = size
+	s.mu.Unlock()
+}
+
+// AddTransfer adds reference to the started transfer.
+func (s *StatsInfo) AddTransfer(transfer *Transfer) {
+	s.mu.Lock()
+	s.startedTransfers = append(s.startedTransfers, transfer)
 	s.mu.Unlock()
 }
