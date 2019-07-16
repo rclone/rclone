@@ -20,6 +20,7 @@ var ErrorMaxTransferLimitReached = fserrors.FatalError(errors.New("Max transfer 
 
 // Account limits and accounts for one transfer
 type Account struct {
+	stats *StatsInfo
 	// The mutex is to make sure Read() and Close() aren't called
 	// concurrently.  Unfortunately the persistent connection loop
 	// in http transport calls Read() after Do() returns on
@@ -45,10 +46,11 @@ type Account struct {
 
 const averagePeriod = 16 // period to do exponentially weighted averages over
 
-// NewAccountSizeName makes a Account reader for an io.ReadCloser of
+// newAccountSizeName makes a Account reader for an io.ReadCloser of
 // the given size and name
-func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
+func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name string) *Account {
 	acc := &Account{
+		stats:  stats,
 		in:     in,
 		close:  in,
 		origIn: in,
@@ -60,13 +62,8 @@ func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
 		max:    int64(fs.Config.MaxTransfer),
 	}
 	go acc.averageLoop()
-	Stats.inProgress.set(acc.name, acc)
+	stats.inProgress.set(acc.name, acc)
 	return acc
-}
-
-// NewAccount makes a Account reader for an object
-func NewAccount(in io.ReadCloser, obj fs.Object) *Account {
-	return NewAccountSizeName(in, obj.Size(), obj.Remote())
 }
 
 // WithBuffer - If the file is above a certain size it adds an Async reader
@@ -157,7 +154,7 @@ func (acc *Account) averageLoop() {
 // Check the read is valid
 func (acc *Account) checkRead() (err error) {
 	acc.statmu.Lock()
-	if acc.max >= 0 && Stats.GetBytes() >= acc.max {
+	if acc.max >= 0 && acc.stats.GetBytes() >= acc.max {
 		acc.statmu.Unlock()
 		return ErrorMaxTransferLimitReached
 	}
@@ -177,7 +174,7 @@ func (acc *Account) accountRead(n int) {
 	acc.bytes += int64(n)
 	acc.statmu.Unlock()
 
-	Stats.Bytes(int64(n))
+	acc.stats.Bytes(int64(n))
 
 	limitBandwidth(n)
 }
@@ -219,7 +216,7 @@ func (acc *Account) Close() error {
 	}
 	acc.closed = true
 	close(acc.exit)
-	Stats.inProgress.clear(acc.name)
+	acc.stats.inProgress.clear(acc.name)
 	if acc.close == nil {
 		return nil
 	}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ncw/rclone/fs/accounting"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
@@ -49,6 +51,7 @@ func TestMultithreadCopy(t *testing.T) {
 		{size: multithreadChunkSize*2 + 1, streams: 2},
 	} {
 		t.Run(fmt.Sprintf("%+v", test), func(t *testing.T) {
+			var err error
 			contents := fstest.RandomString(test.size)
 			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
 			file1 := r.WriteObject(context.Background(), "file1", contents, t1)
@@ -57,8 +60,13 @@ func TestMultithreadCopy(t *testing.T) {
 
 			src, err := r.Fremote.NewObject(context.Background(), "file1")
 			require.NoError(t, err)
+			accounting.Stats.ResetCounters()
+			tr := accounting.Stats.NewTransfer(src)
 
-			dst, err := multiThreadCopy(context.Background(), r.Flocal, "file1", src, 2)
+			defer func() {
+				tr.Done(err)
+			}()
+			dst, err := multiThreadCopy(context.Background(), r.Flocal, "file1", src, 2, tr)
 			require.NoError(t, err)
 			assert.Equal(t, src.Size(), dst.Size())
 			assert.Equal(t, "file1", dst.Remote())
