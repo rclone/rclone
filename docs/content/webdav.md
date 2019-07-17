@@ -63,7 +63,7 @@ password:
 Confirm the password:
 password:
 Bearer token instead of user/pass (eg a Macaroon)
-bearer_token> 
+bearer_token>
 Remote config
 --------------------
 [remote]
@@ -72,7 +72,7 @@ url = https://example.com/remote.php/webdav/
 vendor = nextcloud
 user = user
 pass = *** ENCRYPTED ***
-bearer_token = 
+bearer_token =
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -189,8 +189,13 @@ pass = encryptedpassword
 
 ### dCache ###
 
-dCache is a storage system with WebDAV doors that support, beside basic and x509, 
-authentication with [Macaroons](https://www.dcache.org/manuals/workshop-2017-05-29-Umea/000-Final/anupam_macaroons_v02.pdf) (bearer tokens).
+dCache is a storage system that supports many protocols and
+authentication/authorisation schemes.  For WebDAV clients, it allows
+users to authenticate with username and password (BASIC), X.509,
+Kerberos, and various bearer tokens, including
+[Macaroons](https://www.dcache.org/manuals/workshop-2017-05-29-Umea/000-Final/anupam_macaroons_v02.pdf)
+and [OpenID-Connect](https://en.wikipedia.org/wiki/OpenID_Connect)
+access tokens.
 
 Configure as normal using the `other` type.  Don't enter a username or
 password, instead enter your Macaroon as the `bearer_token`.
@@ -209,3 +214,52 @@ bearer_token = your-macaroon
 
 There is a [script](https://github.com/onnozweers/dcache-scripts/blob/master/get-share-link) that
 obtains a Macaroon from a dCache WebDAV endpoint, and creates an rclone config file.
+
+Macaroons may also be obtained from the dCacheView
+web-browser/JavaScript client that comes with dCache.
+
+### OpenID-Connect ###
+
+dCache also supports authenticating with OpenID-Connect access tokens.
+OpenID-Connect is a protocol (based on OAuth 2.0) that allows services
+to identify users who have authenticated with some central service.
+
+Support for OpenID-Connect in rclone is currently achieved using
+another software package called
+[oidc-agent](https://github.com/indigo-dc/oidc-agent).  This is a
+command-line tool that facilitates obtaining an access token.  Once
+installed and configured, an access token is obtained by running the
+`oidc-token` command.  The following example shows a (shortened)
+access token obtained from the *XDC* OIDC Provider.
+
+```
+paul@celebrimbor:~$ oidc-token XDC
+eyJraWQ[...]QFXDt0
+paul@celebrimbor:~$
+```
+
+**Note** Before the `oidc-token` command will work, the refresh token
+must be loaded into the oidc agent.  This is done with the `oidc-add`
+command (e.g., `oidc-add XDC`).  This is typically done once per login
+session.  Full details on this and how to register oidc-agent with
+your OIDC Provider are provided in the [oidc-agent
+documentation](https://indigo-dc.gitbooks.io/oidc-agent/).
+
+The rclone `bearer_token_command` configuration option is used to
+fetch the access token from oidc-agent.
+
+Configure as a normal WebDAV endpoint, using the 'other' vendor,
+leaving the username and password empty.  When prompted, choose to
+edit the advanced config and enter the command to get a bearer token
+(e.g., `oidc-agent XDC`).
+
+The following example config shows a WebDAV endpoint that uses
+oidc-agent to supply an access token from the *XDC* OIDC Provider.
+
+```
+[dcache]
+type = webdav
+url = https://dcache.example.org/
+vendor = other
+bearer_token_command = oidc-token XDC
+```
