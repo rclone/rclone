@@ -211,8 +211,13 @@ var retryErrorCodes = []int{
 }
 
 // shouldRetry returns a boolean as to whether this response and err
-// deserve to be retried.  It returns the err as a convenience
-func shouldRetry(res *http.Response, err error) (bool, error) {
+// deserve to be retried. It returns the err as a convenience.
+// Retries password authorization (once) in a special case of access denied.
+func shouldRetry(res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, error) {
+	if res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
+		reAuthErr := f.reAuthorize(opts, err)
+		return reAuthErr == nil, err // return an original error
+	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(res, retryErrorCodes), err
 }
 
@@ -262,6 +267,8 @@ type Fs struct {
 	shardURL    string             // URL of upload shard
 	shardExpiry time.Time          // time to refresh upload shard
 	fileServers serverList         // file server switcher
+	authMu      sync.Mutex         // mutex for authorize()
+	passFailed  bool               // true if authorize() failed after 403
 }
 
 // NewFs constructs an Fs from the path, container:path
@@ -375,7 +382,7 @@ func (f *Fs) authorize(force bool) (err error) {
 		err = errors.New("Invalid token")
 	}
 	if err != nil {
-		return errors.Wrap(err, "Failed to authenticate")
+		return errors.Wrap(err, "Failed to authorize")
 	}
 
 	if err = oauthutil.PutToken(f.name, f.m, t, false); err != nil {
@@ -400,6 +407,43 @@ func (f *Fs) authorize(force bool) (err error) {
 
 func tokenIsValid(t *oauth2.Token) bool {
 	return t.Valid() && t.RefreshToken != "" && t.Type() == "Bearer"
+}
+
+// reAuthorize is called after getting 403 (access denied) from the server.
+// It handles the case when user has changed password since a previous
+// rclone invocation and obtains a new access token, if needed.
+func (f *Fs) reAuthorize(opts *rest.Opts, origErr error) error {
+	// lock and recheck the flag to ensure authorize() is attempted only once
+	f.authMu.Lock()
+	defer f.authMu.Unlock()
+	if f.passFailed {
+		return origErr
+	}
+
+	fs.Debugf(f, "re-authorize with new password")
+	if err := f.authorize(true); err != nil {
+		f.passFailed = true
+		return err
+	}
+
+	// obtain new token, if needed
+	tokenParameter := ""
+	if opts != nil && opts.Parameters.Get("token") != "" {
+		tokenParameter = "token"
+	}
+	if opts != nil && opts.Parameters.Get("access_token") != "" {
+		tokenParameter = "access_token"
+	}
+	if tokenParameter != "" {
+		token, err := f.accessToken()
+		if err != nil {
+			f.passFailed = true
+			return err
+		}
+		opts.Parameters.Set(tokenParameter, token)
+	}
+
+	return nil
 }
 
 // accessToken() returns OAuth token and possibly refreshes it
@@ -507,7 +551,7 @@ func (f *Fs) readItemMetaData(path string) (entry fs.DirEntry, dirSize int, err 
 	var info api.ItemInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &info)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 
 	if err != nil {
@@ -615,7 +659,7 @@ func (f *Fs) listM1(dirPath string, offset int, limit int) (entries fs.DirEntrie
 	)
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.CallJSON(&opts, nil, &info)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 
 	if err != nil {
@@ -675,7 +719,7 @@ func (f *Fs) listBin(dirPath string, depth int) (entries fs.DirEntries, err erro
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.Call(&opts)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -948,7 +992,7 @@ func (f *Fs) CreateDir(path string) error {
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.Call(&opts)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -1075,7 +1119,7 @@ func (f *Fs) delete(path string, hardDelete bool) error {
 	var response api.GenericResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &response)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 
 	switch {
@@ -1147,7 +1191,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	var response api.GenericBodyResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &response)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 
 	if err != nil {
@@ -1251,7 +1295,7 @@ func (f *Fs) moveItemBin(srcPath, dstPath, opName string) error {
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.Call(&opts)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -1342,7 +1386,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 	var response api.GenericBodyResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &response)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 
 	if err == nil && response.Body != "" {
@@ -1383,7 +1427,7 @@ func (f *Fs) CleanUp() error {
 	var response api.CleanupResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &response)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
 		return err
@@ -1416,7 +1460,7 @@ func (f *Fs) About() (*fs.Usage, error) {
 	var info api.UserInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &info)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
 		return nil, err
@@ -1690,7 +1734,7 @@ func (f *Fs) uploadShard() (string, error) {
 	var info api.ShardInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(&opts, nil, &info)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
 		return "", err
@@ -1862,7 +1906,7 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 	var res *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.srv.Call(&opts)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, o.fs, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -1942,7 +1986,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		}
 		opts.RootURL = server
 		res, err = o.fs.srv.Call(&opts)
-		return shouldRetry(res, err)
+		return shouldRetry(res, err, o.fs, &opts)
 	})
 	if err != nil {
 		if res != nil && res.Body != nil {
