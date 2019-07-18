@@ -38,6 +38,17 @@ func (ss *stringSet) del(remote string) {
 	ss.mu.Unlock()
 }
 
+// merge adds items from another set
+func (ss *stringSet) merge(m *stringSet) {
+	ss.mu.Lock()
+	m.mu.Lock()
+	for item := range m.items {
+		ss.items[item] = struct{}{}
+	}
+	m.mu.Unlock()
+	ss.mu.Unlock()
+}
+
 // empty returns whether the set has any items
 func (ss *stringSet) empty() bool {
 	ss.mu.RLock()
@@ -52,14 +63,14 @@ func (ss *stringSet) count() int {
 	return len(ss.items)
 }
 
-// Strings returns all the strings in the stringSet
-func (ss *stringSet) Strings() []string {
+// String returns string representation of set items.
+func (ss *stringSet) String(progress *inProgress) string {
 	ss.mu.RLock()
 	defer ss.mu.RUnlock()
-	strings := make([]string, 0, len(ss.items))
+	strngs := make([]string, 0, len(ss.items))
 	for name := range ss.items {
 		var out string
-		if acc := Stats.inProgress.get(name); acc != nil {
+		if acc := progress.get(name); acc != nil {
 			out = acc.String()
 		} else {
 			out = fmt.Sprintf("%*s: %s",
@@ -68,24 +79,19 @@ func (ss *stringSet) Strings() []string {
 				ss.name,
 			)
 		}
-		strings = append(strings, " * "+out)
+		strngs = append(strngs, " * "+out)
 	}
-	sorted := sort.StringSlice(strings)
+	sorted := sort.StringSlice(strngs)
 	sorted.Sort()
-	return sorted
-}
-
-// String returns all the file names in the stringSet joined by newline
-func (ss *stringSet) String() string {
-	return strings.Join(ss.Strings(), "\n")
+	return strings.Join(sorted, "\n")
 }
 
 // progress returns total bytes read as well as the size.
-func (ss *stringSet) progress() (totalBytes, totalSize int64) {
+func (ss *stringSet) progress(stats *StatsInfo) (totalBytes, totalSize int64) {
 	ss.mu.RLock()
 	defer ss.mu.RUnlock()
 	for name := range ss.items {
-		if acc := Stats.inProgress.get(name); acc != nil {
+		if acc := stats.inProgress.get(name); acc != nil {
 			bytes, size := acc.progress()
 			if size >= 0 && bytes >= 0 {
 				totalBytes += bytes

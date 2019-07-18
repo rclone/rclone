@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/lib/file"
@@ -87,10 +86,6 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 // copy an object to or from the remote while accounting for it
 func copyObj(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	if operations.NeedTransfer(context.TODO(), dst, src) {
-		tr := accounting.Stats.NewTransfer(src)
-		defer func() {
-			tr.Done(err)
-		}()
 		newDst, err = operations.Copy(context.TODO(), f, dst, remote, src)
 	} else {
 		newDst = dst

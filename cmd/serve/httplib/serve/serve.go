@@ -75,7 +75,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	tr := accounting.Stats.NewTransfer(o)
+	tr := accounting.Stats(r.Context()).NewTransfer(o)
 	defer func() {
 		tr.Done(err)
 	}()

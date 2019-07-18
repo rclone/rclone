@@ -214,7 +214,7 @@ func (d *Driver) ListDir(path string, callback func(ftp.FileInfo) error) (err er
 	}
 
 	// Account the transfer
-	tr := accounting.Stats.NewTransferRemoteSize(path, node.Size())
+	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size())
 	defer func() {
 		tr.Done(err)
 	}()
@@ -313,7 +313,7 @@ func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadClose
 	}
 
 	// Account the transfer
-	tr := accounting.Stats.NewTransferRemoteSize(path, node.Size())
+	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size())
 	defer tr.Done(nil)
 
 	return node.Size(), handle, nil
