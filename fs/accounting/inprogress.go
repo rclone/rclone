@@ -39,3 +39,14 @@ func (ip *inProgress) get(name string) *Account {
 	defer ip.mu.Unlock()
 	return ip.m[name]
 }
+
+// merge adds items from another inProgress
+func (ip *inProgress) merge(m *inProgress) {
+	ip.mu.Lock()
+	defer ip.mu.Unlock()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for key, val := range m.m {
+		ip.m[key] = val
+	}
+}

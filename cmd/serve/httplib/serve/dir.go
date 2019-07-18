@@ -75,7 +75,7 @@ func Error(what interface{}, w http.ResponseWriter, text string, err error) {
 // Serve serves a directory
 func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	// Account the transfer
-	tr := accounting.Stats.NewTransferRemoteSize(d.DirRemote, -1)
+	tr := accounting.Stats(r.Context()).NewTransferRemoteSize(d.DirRemote, -1)
 	defer tr.Done(nil)
 
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)

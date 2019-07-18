@@ -14,7 +14,7 @@
 // fstest.CheckItems() before use.  This make sure the directory
 // listing is now consistent and stops cascading errors.
 //
-// Call accounting.Stats.ResetCounters() before every fs.Sync() as it
+// Call accounting.GlobalStats().ResetCounters() before every fs.Sync() as it
 // uses the error count internally.
 
 package operations_test
@@ -315,15 +315,15 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, fdst, fsrc 
 
 	check := func(i int, wantErrors int64, wantChecks int64, oneway bool) {
 		fs.Debugf(r.Fremote, "%d: Starting check test", i)
-		accounting.Stats.ResetCounters()
+		accounting.GlobalStats().ResetCounters()
 		var buf bytes.Buffer
 		log.SetOutput(&buf)
 		defer func() {
 			log.SetOutput(os.Stderr)
 		}()
 		err := checkFunction(context.Background(), r.Fremote, r.Flocal, oneway)
-		gotErrors := accounting.Stats.GetErrors()
-		gotChecks := accounting.Stats.GetChecks()
+		gotErrors := accounting.GlobalStats().GetErrors()
+		gotChecks := accounting.GlobalStats().GetChecks()
 		if wantErrors == 0 && err != nil {
 			t.Errorf("%d: Got error when not expecting one: %v", i, err)
 		}

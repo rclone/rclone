@@ -2,7 +2,6 @@ package accounting
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -13,60 +12,6 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/rc"
 )
-
-var (
-	// Stats is global statistics counter
-	Stats = NewStats()
-)
-
-func init() {
-	// Set the function pointer up in fs
-	fs.CountError = Stats.Error
-
-	rc.Add(rc.Call{
-		Path:  "core/stats",
-		Fn:    Stats.RemoteStats,
-		Title: "Returns stats about current transfers.",
-		Help: `
-This returns all available stats
-
-	rclone rc core/stats
-
-Returns the following values:
-
-` + "```" + `
-{
-	"speed": average speed in bytes/sec since start of the process,
-	"bytes": total transferred bytes since the start of the process,
-	"errors": number of errors,
-	"fatalError": whether there has been at least one FatalError,
-	"retryError": whether there has been at least one non-NoRetryError,
-	"checks": number of checked files,
-	"transfers": number of transferred files,
-	"deletes" : number of deleted files,
-	"elapsedTime": time in seconds since the start of the process,
-	"lastError": last occurred error,
-	"transferring": an array of currently active file transfers:
-		[
-			{
-				"bytes": total transferred bytes for this file,
-				"eta": estimated time in seconds until file transfer completion
-				"name": name of the file,
-				"percentage": progress of the file transfer in percent,
-				"speed": speed in bytes/sec,
-				"speedAvg": speed in bytes/sec as an exponentially weighted moving average,
-				"size": size of the file in bytes
-			}
-		],
-	"checking": an array of names of currently active file checks
-		[]
-}
-` + "```" + `
-Values for "transferring", "checking" and "lastError" are only assigned if data is available.
-The value for "eta" is null if an eta cannot be determined.
-`,
-	})
-}
 
 // StatsInfo accounts all transfers
 type StatsInfo struct {
@@ -102,7 +47,7 @@ func NewStats() *StatsInfo {
 }
 
 // RemoteStats returns stats for rc
-func (s *StatsInfo) RemoteStats(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out = make(rc.Params)
 	s.mu.RLock()
 	dt := s.totalDuration()
@@ -237,7 +182,7 @@ func (s *StatsInfo) String() string {
 	// checking and transferring have their own locking so read
 	// here before lock to prevent deadlock on GetBytes
 	transferring, checking := s.transferring.count(), s.checking.count()
-	transferringBytesDone, transferringBytesTotal := s.transferring.progress()
+	transferringBytesDone, transferringBytesTotal := s.transferring.progress(s)
 
 	s.mu.RLock()
 
@@ -325,10 +270,10 @@ Elapsed time:  %10v
 	// Add per transfer stats if required
 	if !fs.Config.StatsOneLine {
 		if !s.checking.empty() {
-			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
+			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.inProgress))
 		}
 		if !s.transferring.empty() {
-			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
+			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.inProgress))
 		}
 	}
 

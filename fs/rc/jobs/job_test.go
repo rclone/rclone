@@ -1,4 +1,4 @@
-package rc
+package jobs
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,10 +37,10 @@ func TestJobsExpire(t *testing.T) {
 	jobs := newJobs()
 	jobs.expireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
-	job := jobs.NewJob(func(ctx context.Context, in Params) (Params, error) {
+	job := jobs.NewAsyncJob(func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		defer close(wait)
 		return in, nil
-	}, Params{})
+	}, rc.Params{})
 	<-wait
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.Expire()
@@ -57,14 +58,14 @@ func TestJobsExpire(t *testing.T) {
 	jobs.mu.Unlock()
 }
 
-var noopFn = func(ctx context.Context, in Params) (Params, error) {
+var noopFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 	return nil, nil
 }
 
 func TestJobsIDs(t *testing.T) {
 	jobs := newJobs()
-	job1 := jobs.NewJob(noopFn, Params{})
-	job2 := jobs.NewJob(noopFn, Params{})
+	job1 := jobs.NewAsyncJob(noopFn, rc.Params{})
+	job2 := jobs.NewAsyncJob(noopFn, rc.Params{})
 	wantIDs := []int64{job1.ID, job2.ID}
 	gotIDs := jobs.IDs()
 	require.Equal(t, 2, len(gotIDs))
@@ -76,17 +77,22 @@ func TestJobsIDs(t *testing.T) {
 
 func TestJobsGet(t *testing.T) {
 	jobs := newJobs()
-	job := jobs.NewJob(noopFn, Params{})
+	job := jobs.NewAsyncJob(noopFn, rc.Params{})
 	assert.Equal(t, job, jobs.Get(job.ID))
 	assert.Nil(t, jobs.Get(123123123123))
 }
 
-var longFn = func(ctx context.Context, in Params) (Params, error) {
+var longFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 	time.Sleep(1 * time.Hour)
 	return nil, nil
 }
 
-var ctxFn = func(ctx context.Context, in Params) (Params, error) {
+var shortFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
+	time.Sleep(time.Millisecond)
+	return nil, nil
+}
+
+var ctxFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -105,17 +111,17 @@ func sleepJob() {
 
 func TestJobFinish(t *testing.T) {
 	jobs := newJobs()
-	job := jobs.NewJob(longFn, Params{})
+	job := jobs.NewAsyncJob(longFn, rc.Params{})
 	sleepJob()
 
 	assert.Equal(t, true, job.EndTime.IsZero())
-	assert.Equal(t, Params(nil), job.Output)
+	assert.Equal(t, rc.Params(nil), job.Output)
 	assert.Equal(t, 0.0, job.Duration)
 	assert.Equal(t, "", job.Error)
 	assert.Equal(t, false, job.Success)
 	assert.Equal(t, false, job.Finished)
 
-	wantOut := Params{"a": 1}
+	wantOut := rc.Params{"a": 1}
 	job.finish(wantOut, nil)
 
 	assert.Equal(t, false, job.EndTime.IsZero())
@@ -125,18 +131,18 @@ func TestJobFinish(t *testing.T) {
 	assert.Equal(t, true, job.Success)
 	assert.Equal(t, true, job.Finished)
 
-	job = jobs.NewJob(longFn, Params{})
+	job = jobs.NewAsyncJob(longFn, rc.Params{})
 	sleepJob()
 	job.finish(nil, nil)
 
 	assert.Equal(t, false, job.EndTime.IsZero())
-	assert.Equal(t, Params{}, job.Output)
+	assert.Equal(t, rc.Params{}, job.Output)
 	assert.True(t, job.Duration >= floatSleepTime)
 	assert.Equal(t, "", job.Error)
 	assert.Equal(t, true, job.Success)
 	assert.Equal(t, true, job.Finished)
 
-	job = jobs.NewJob(longFn, Params{})
+	job = jobs.NewAsyncJob(longFn, rc.Params{})
 	sleepJob()
 	job.finish(wantOut, errors.New("potato"))
 
@@ -152,14 +158,14 @@ func TestJobFinish(t *testing.T) {
 // part of NewJob, now just test the panic catching
 func TestJobRunPanic(t *testing.T) {
 	wait := make(chan struct{})
-	boom := func(ctx context.Context, in Params) (Params, error) {
+	boom := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		sleepJob()
 		defer close(wait)
 		panic("boom")
 	}
 
 	jobs := newJobs()
-	job := jobs.NewJob(boom, Params{})
+	job := jobs.NewAsyncJob(boom, rc.Params{})
 	<-wait
 	runtime.Gosched() // yield to make sure job is updated
 
@@ -176,7 +182,7 @@ func TestJobRunPanic(t *testing.T) {
 
 	job.mu.Lock()
 	assert.Equal(t, false, job.EndTime.IsZero())
-	assert.Equal(t, Params{}, job.Output)
+	assert.Equal(t, rc.Params{}, job.Output)
 	assert.True(t, job.Duration >= floatSleepTime)
 	assert.Equal(t, "panic received: boom", job.Error)
 	assert.Equal(t, false, job.Success)
@@ -187,7 +193,7 @@ func TestJobRunPanic(t *testing.T) {
 func TestJobsNewJob(t *testing.T) {
 	jobID = 0
 	jobs := newJobs()
-	job := jobs.NewJob(noopFn, Params{})
+	job := jobs.NewAsyncJob(noopFn, rc.Params{})
 	assert.Equal(t, int64(1), job.ID)
 	assert.Equal(t, job, jobs.Get(1))
 	assert.NotEmpty(t, job.Stop)
@@ -195,19 +201,26 @@ func TestJobsNewJob(t *testing.T) {
 
 func TestStartJob(t *testing.T) {
 	jobID = 0
-	out, err := StartJob(longFn, Params{})
+	out, err := StartAsyncJob(longFn, rc.Params{})
 	assert.NoError(t, err)
-	assert.Equal(t, Params{"jobid": int64(1)}, out)
+	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
+}
+
+func TestExecuteJob(t *testing.T) {
+	jobID = 0
+	_, id, err := ExecuteJob(context.Background(), shortFn, rc.Params{})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), id)
 }
 
 func TestRcJobStatus(t *testing.T) {
 	jobID = 0
-	_, err := StartJob(longFn, Params{})
+	_, err := StartAsyncJob(longFn, rc.Params{})
 	assert.NoError(t, err)
 
-	call := Calls.Get("job/status")
+	call := rc.Calls.Get("job/status")
 	assert.NotNil(t, call)
-	in := Params{"jobid": 1}
+	in := rc.Params{"jobid": 1}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
@@ -216,12 +229,12 @@ func TestRcJobStatus(t *testing.T) {
 	assert.Equal(t, false, out["finished"])
 	assert.Equal(t, false, out["success"])
 
-	in = Params{"jobid": 123123123}
+	in = rc.Params{"jobid": 123123123}
 	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "job not found")
 
-	in = Params{"jobidx": 123123123}
+	in = rc.Params{"jobidx": 123123123}
 	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Didn't find key")
@@ -229,45 +242,88 @@ func TestRcJobStatus(t *testing.T) {
 
 func TestRcJobList(t *testing.T) {
 	jobID = 0
-	_, err := StartJob(longFn, Params{})
+	_, err := StartAsyncJob(longFn, rc.Params{})
 	assert.NoError(t, err)
 
-	call := Calls.Get("job/list")
+	call := rc.Calls.Get("job/list")
 	assert.NotNil(t, call)
-	in := Params{}
+	in := rc.Params{}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
-	assert.Equal(t, Params{"jobids": []int64{1}}, out)
+	assert.Equal(t, rc.Params{"jobids": []int64{1}}, out)
 }
 
-func TestRcJobStop(t *testing.T) {
+func TestRcAsyncJobStop(t *testing.T) {
 	jobID = 0
-	_, err := StartJob(ctxFn, Params{})
+	_, err := StartAsyncJob(ctxFn, rc.Params{})
 	assert.NoError(t, err)
 
-	call := Calls.Get("job/stop")
+	call := rc.Calls.Get("job/stop")
 	assert.NotNil(t, call)
-	in := Params{"jobid": 1}
+	in := rc.Params{"jobid": 1}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Empty(t, out)
 
-	in = Params{"jobid": 123123123}
+	in = rc.Params{"jobid": 123123123}
 	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "job not found")
 
-	in = Params{"jobidx": 123123123}
+	in = rc.Params{"jobidx": 123123123}
 	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Didn't find key")
 
 	time.Sleep(10 * time.Millisecond)
 
-	call = Calls.Get("job/status")
+	call = rc.Calls.Get("job/status")
 	assert.NotNil(t, call)
-	in = Params{"jobid": 1}
+	in = rc.Params{"jobid": 1}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, float64(1), out["id"])
+	assert.Equal(t, "context canceled", out["error"])
+	assert.Equal(t, true, out["finished"])
+	assert.Equal(t, false, out["success"])
+}
+
+func TestRcSyncJobStop(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		jobID = 0
+		_, id, err := ExecuteJob(ctx, ctxFn, rc.Params{})
+		assert.Error(t, err)
+		assert.Equal(t, int64(1), id)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	call := rc.Calls.Get("job/stop")
+	assert.NotNil(t, call)
+	in := rc.Params{"jobid": 1}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.Empty(t, out)
+
+	in = rc.Params{"jobid": 123123123}
+	_, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "job not found")
+
+	in = rc.Params{"jobidx": 123123123}
+	_, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Didn't find key")
+
+	cancel()
+	time.Sleep(10 * time.Millisecond)
+
+	call = rc.Calls.Get("job/status")
+	assert.NotNil(t, call)
+	in = rc.Params{"jobid": 1}
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)

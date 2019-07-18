@@ -251,7 +251,7 @@ var _ fs.MimeTyper = (*overrideRemoteObject)(nil)
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
-	tr := accounting.Stats.NewTransfer(src)
+	tr := accounting.Stats(ctx).NewTransfer(src)
 	defer func() {
 		tr.Done(err)
 	}()
@@ -281,13 +281,13 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		actionTaken = "Copied (server side copy)"
 		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && f.Features().ServerSideAcrossConfigs)) {
 			// Check transfer limit for server side copies
-			if fs.Config.MaxTransfer >= 0 && accounting.Stats.GetBytes() >= int64(fs.Config.MaxTransfer) {
+			if fs.Config.MaxTransfer >= 0 && accounting.Stats(ctx).GetBytes() >= int64(fs.Config.MaxTransfer) {
 				return nil, accounting.ErrorMaxTransferLimitReached
 			}
 			newDst, err = doCopy(ctx, src, remote)
 			if err == nil {
 				dst = newDst
-				accounting.Stats.Bytes(dst.Size()) // account the bytes for the server side transfer
+				accounting.Stats(ctx).Bytes(dst.Size()) // account the bytes for the server side transfer
 			}
 		} else {
 			err = fs.ErrorCantCopy
@@ -428,9 +428,9 @@ func SameObject(src, dst fs.Object) bool {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
-	accounting.Stats.Checking(src.Remote())
+	accounting.Stats(ctx).Checking(src.Remote())
 	defer func() {
-		accounting.Stats.DoneChecking(src.Remote())
+		accounting.Stats(ctx).DoneChecking(src.Remote())
 	}()
 	newDst = dst
 	if fs.Config.DryRun {
@@ -501,8 +501,8 @@ func SuffixName(remote string) string {
 // If backupDir is set then it moves the file to there instead of
 // deleting
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
-	accounting.Stats.Checking(dst.Remote())
-	numDeletes := accounting.Stats.Deletes(1)
+	accounting.Stats(ctx).Checking(dst.Remote())
+	numDeletes := accounting.Stats(ctx).Deletes(1)
 	if fs.Config.MaxDelete != -1 && numDeletes > fs.Config.MaxDelete {
 		return fserrors.FatalError(errors.New("--max-delete threshold reached"))
 	}
@@ -523,7 +523,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	} else if !fs.Config.DryRun {
 		fs.Infof(dst, actioned)
 	}
-	accounting.Stats.DoneChecking(dst.Remote())
+	accounting.Stats(ctx).DoneChecking(dst.Remote())
 	return err
 }
 
@@ -709,8 +709,8 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 
 // check to see if two objects are identical using the check function
 func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
-	accounting.Stats.Checking(src.Remote())
-	defer accounting.Stats.DoneChecking(src.Remote())
+	accounting.Stats(ctx).Checking(src.Remote())
+	defer accounting.Stats(ctx).DoneChecking(src.Remote())
 	if sizeDiffers(src, dst) {
 		err := errors.Errorf("Sizes differ")
 		fs.Errorf(src, "%v", err)
@@ -797,7 +797,7 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 		fs.Logf(fsrc, "%d files missing", c.srcFilesMissing)
 	}
 
-	fs.Logf(fdst, "%d differences found", accounting.Stats.GetErrors())
+	fs.Logf(fdst, "%d differences found", accounting.Stats(ctx).GetErrors())
 	if c.noHashes > 0 {
 		fs.Logf(fdst, "%d hashes could not be checked", c.noHashes)
 	}
@@ -854,7 +854,7 @@ func CheckIdentical(ctx context.Context, dst, src fs.Object) (differ bool, err e
 	if err != nil {
 		return true, errors.Wrapf(err, "failed to open %q", dst)
 	}
-	tr1 := accounting.Stats.NewTransfer(dst)
+	tr1 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
 		tr1.Done(err)
 	}()
@@ -864,7 +864,7 @@ func CheckIdentical(ctx context.Context, dst, src fs.Object) (differ bool, err e
 	if err != nil {
 		return true, errors.Wrapf(err, "failed to open %q", src)
 	}
-	tr2 := accounting.Stats.NewTransfer(dst)
+	tr2 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
 		tr2.Done(err)
 	}()
@@ -930,9 +930,9 @@ func List(ctx context.Context, f fs.Fs, w io.Writer) error {
 // Lists in parallel which may get them out of order
 func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 	return ListFn(ctx, f, func(o fs.Object) {
-		accounting.Stats.Checking(o.Remote())
+		accounting.Stats(ctx).Checking(o.Remote())
 		modTime := o.ModTime(ctx)
-		accounting.Stats.DoneChecking(o.Remote())
+		accounting.Stats(ctx).DoneChecking(o.Remote())
 		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
@@ -968,9 +968,9 @@ func DropboxHashSum(ctx context.Context, f fs.Fs, w io.Writer) error {
 // hashSum returns the human readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR.
 func hashSum(ctx context.Context, ht hash.Type, o fs.Object) string {
-	accounting.Stats.Checking(o.Remote())
+	accounting.Stats(ctx).Checking(o.Remote())
 	sum, err := o.Hash(ctx, ht)
-	accounting.Stats.DoneChecking(o.Remote())
+	accounting.Stats(ctx).DoneChecking(o.Remote())
 	if err == hash.ErrUnsupported {
 		sum = "UNSUPPORTED"
 	} else if err != nil {
@@ -1167,7 +1167,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 	var mu sync.Mutex
 	return ListFn(ctx, f, func(o fs.Object) {
 		var err error
-		tr := accounting.Stats.NewTransfer(o)
+		tr := accounting.Stats(ctx).NewTransfer(o)
 		defer func() {
 			tr.Done(err)
 		}()
@@ -1206,7 +1206,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
 func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst fs.Object, err error) {
-	tr := accounting.Stats.NewTransferRemoteSize(dstFileName, -1)
+	tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, -1)
 	defer func() {
 		tr.Done(err)
 	}()
@@ -1527,7 +1527,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 	if size >= 0 {
 		var err error
 		// Size known use Put
-		tr := accounting.Stats.NewTransferRemoteSize(dstFileName, size)
+		tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, size)
 		defer func() {
 			tr.Done(err)
 		}()
@@ -1664,7 +1664,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			}
 			return errors.Wrap(err, "error while attempting to move file to a temporary location")
 		}
-		tr := accounting.Stats.NewTransfer(srcObj)
+		tr := accounting.Stats(ctx).NewTransfer(srcObj)
 		defer func() {
 			tr.Done(err)
 		}()
@@ -1711,11 +1711,11 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 
 		_, err = Op(ctx, fdst, dstObj, dstFileName, srcObj)
 	} else {
-		accounting.Stats.Checking(srcFileName)
+		accounting.Stats(ctx).Checking(srcFileName)
 		if !cp {
 			err = DeleteFile(ctx, srcObj)
 		}
-		defer accounting.Stats.DoneChecking(srcFileName)
+		defer accounting.Stats(ctx).DoneChecking(srcFileName)
 	}
 	return err
 }

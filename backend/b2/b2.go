@@ -1080,16 +1080,16 @@ func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {
-				accounting.Stats.Checking(object.Name)
+				accounting.Stats(ctx).Checking(object.Name)
 				checkErr(f.deleteByID(object.ID, object.Name))
-				accounting.Stats.DoneChecking(object.Name)
+				accounting.Stats(ctx).DoneChecking(object.Name)
 			}
 		}()
 	}
 	last := ""
 	checkErr(f.list(ctx, "", true, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
-			accounting.Stats.Checking(remote)
+			accounting.Stats(ctx).Checking(remote)
 			if oldOnly && last != remote {
 				if object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
@@ -1105,7 +1105,7 @@ func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 				toBeDeleted <- object
 			}
 			last = remote
-			accounting.Stats.DoneChecking(remote)
+			accounting.Stats(ctx).DoneChecking(remote)
 		}
 		return nil
 	}))

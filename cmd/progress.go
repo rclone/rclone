@@ -93,7 +93,7 @@ func printProgress(logMessage string) {
 		w, h = 80, 25
 	}
 	_ = h
-	stats := strings.TrimSpace(accounting.Stats.String())
+	stats := strings.TrimSpace(accounting.GlobalStats().String())
 	logMessage = strings.TrimSpace(logMessage)
 
 	out := func(s string) {
