@@ -60,8 +60,8 @@ func TestMultithreadCopy(t *testing.T) {
 
 			src, err := r.Fremote.NewObject(context.Background(), "file1")
 			require.NoError(t, err)
-			accounting.Stats.ResetCounters()
-			tr := accounting.Stats.NewTransfer(src)
+			accounting.GlobalStats().ResetCounters()
+			tr := accounting.GlobalStats().NewTransfer(src)
 
 			defer func() {
 				tr.Done(err)
