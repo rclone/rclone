@@ -88,7 +88,7 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 	return entries, nil
 }
 
-func (f *Fs) listFiles(directoryID string) (filesList *FilesList, err error) {
+func (f *Fs) listFiles(directoryID int) (filesList *FilesList, err error) {
 	// fs.Debugf(f, "Requesting files for dir `%s`", directoryID)
 	request := ListFilesRequest{
 		FolderID: directoryID,
@@ -111,7 +111,7 @@ func (f *Fs) listFiles(directoryID string) (filesList *FilesList, err error) {
 	return filesList, nil
 }
 
-func (f *Fs) listFolders(directoryID string) (foldersList *FoldersList, err error) {
+func (f *Fs) listFolders(directoryID int) (foldersList *FoldersList, err error) {
 	// fs.Debugf(f, "Requesting folders for id `%s`", directoryID)
 
 	request := ListFolderRequest{
@@ -148,12 +148,17 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 		return nil, err
 	}
 
-	files, err := f.listFiles(directoryID)
+	folderID, err := strconv.Atoi(directoryID)
 	if err != nil {
 		return nil, err
 	}
 
-	folders, err := f.listFolders(directoryID)
+	files, err := f.listFiles(folderID)
+	if err != nil {
+		return nil, err
+	}
+
+	folders, err := f.listFolders(folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -199,12 +204,12 @@ func getRemote(dir, fileName string) string {
 	return dir + "/" + fileName
 }
 
-func (f *Fs) makeFolder(leaf, directoryID string) (response *MakeFolderResponse, err error) {
+func (f *Fs) makeFolder(leaf string, folderID int) (response *MakeFolderResponse, err error) {
 	name := replaceReservedChars(leaf)
 	// fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
 
 	request := MakeFolderRequest{
-		FolderID: directoryID,
+		FolderID: folderID,
 		Name:     name,
 	}
 
@@ -227,11 +232,11 @@ func (f *Fs) makeFolder(leaf, directoryID string) (response *MakeFolderResponse,
 	return response, err
 }
 
-func (f *Fs) removeFolder(name, directoryID string) (response *GenericOKResponse, err error) {
+func (f *Fs) removeFolder(name string, folderID int) (response *GenericOKResponse, err error) {
 	// fs.Debugf(f, "Removing folder with id `%s`", directoryID)
 
 	request := &RemoveFolderRequest{
-		FolderID: directoryID,
+		FolderID: folderID,
 	}
 
 	opts := rest.Opts{
