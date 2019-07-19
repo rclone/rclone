@@ -63,9 +63,15 @@ func init() {
 		Fn:    remoteStats,
 		Title: "Returns stats about current transfers.",
 		Help: `
-This returns all available stats
+This returns all available stats:
 
 	rclone rc core/stats
+
+If group is not provided then summed up stats for all groups will be
+returned.
+
+Parameters
+- group - name of the stats group (string)
 
 Returns the following values:
 
