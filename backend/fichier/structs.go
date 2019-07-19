@@ -2,12 +2,12 @@ package fichier
 
 // ListFolderRequest is the request structure of the corresponding request
 type ListFolderRequest struct {
-	FolderID string `json:"folder_id"`
+	FolderID int `json:"folder_id"`
 }
 
 // ListFilesRequest is the request structure of the corresponding request
 type ListFilesRequest struct {
-	FolderID string `json:"folder_id"`
+	FolderID int `json:"folder_id"`
 }
 
 // DownloadRequest is the request structure of the corresponding request
@@ -18,7 +18,7 @@ type DownloadRequest struct {
 
 // RemoveFolderRequest is the request structure of the corresponding request
 type RemoveFolderRequest struct {
-	FolderID string `json:"folder_id"`
+	FolderID int `json:"folder_id"`
 }
 
 // RemoveFileRequest is the request structure of the corresponding request
@@ -40,7 +40,7 @@ type GenericOKResponse struct {
 // MakeFolderRequest is the request structure of the corresponding request
 type MakeFolderRequest struct {
 	Name     string `json:"name"`
-	FolderID string `json:"folder_id"`
+	FolderID int    `json:"folder_id"`
 }
 
 // MakeFolderResponse is the response structure of the corresponding request
@@ -108,12 +108,12 @@ type Folder struct {
 	CreateDate string `json:"create_date"`
 	ID         int    `json:"id"`
 	Name       string `json:"name"`
-	Pass       string `json:"pass"`
+	Pass       int    `json:"pass"`
 }
 
 // FoldersList is the structure how 1Fichier returns a list of Folders
 type FoldersList struct {
-	FolderID   string   `json:"folder_id"`
+	FolderID   int      `json:"folder_id"`
 	Name       string   `json:"name"`
 	Status     string   `json:"Status"`
 	SubFolders []Folder `json:"sub_folders"`
