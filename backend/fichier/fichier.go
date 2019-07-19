@@ -70,7 +70,11 @@ type Fs struct {
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
-	folders, err := f.listFolders(pathID)
+	folderID, err := strconv.Atoi(pathID)
+	if err != nil {
+		return "", false, err
+	}
+	folders, err := f.listFolders(folderID)
 	if err != nil {
 		return "", false, err
 	}
@@ -87,7 +91,11 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	resp, err := f.makeFolder(leaf, pathID)
+	folderID, err := strconv.Atoi(pathID)
+	if err != nil {
+		return "", err
+	}
+	resp, err := f.makeFolder(leaf, folderID)
 	if err != nil {
 		return "", err
 	}
@@ -239,7 +247,11 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	files, err := f.listFiles(directoryID)
+	folderID, err := strconv.Atoi(directoryID)
+	if err != nil {
+		return nil, err
+	}
+	files, err := f.listFiles(folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -371,12 +383,17 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 
-	did, err := f.dirCache.FindDir(ctx, dir, false)
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.removeFolder(dir, did)
+	folderID, err := strconv.Atoi(directoryID)
+	if err != nil {
+		return err
+	}
+
+	_, err = f.removeFolder(dir, folderID)
 	if err != nil {
 		return err
 	}
