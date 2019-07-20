@@ -182,6 +182,8 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		return
 	}
 
+	delete(in, "_async") // remove the async parameter after parsing so vfs operations don't get confused
+
 	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
 	var out rc.Params
 	if isAsync {
