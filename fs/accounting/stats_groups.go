@@ -26,6 +26,23 @@ func remoteStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 	return groups.sum().RemoteStats()
 }
 
+func transferredStats(ctx context.Context, in rc.Params) (rc.Params, error) {
+	// Check to see if we should filter by group.
+	group, err := in.GetString("group")
+	if rc.NotErrParamNotFound(err) {
+		return rc.Params{}, err
+	}
+
+	out := make(rc.Params)
+	if group != "" {
+		out["transferred"] = StatsGroup(group).Transferred()
+	} else {
+		out["transferred"] = groups.sum().Transferred()
+	}
+
+	return out, nil
+}
+
 func init() {
 	// Init stats container
 	groups = newStatsGroups()
@@ -74,6 +91,40 @@ Returns the following values:
 ` + "```" + `
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
+`,
+	})
+
+	rc.Add(rc.Call{
+		Path:  "core/transferred",
+		Fn:    transferredStats,
+		Title: "Returns stats about completed transfers.",
+		Help: `
+This returns stats about completed transfers:
+
+	rclone rc core/transferred
+
+If group is not provided then completed transfers for all groups will be
+returned.
+
+Parameters
+- group - name of the stats group (string)
+
+Returns the following values:
+` + "```" + `
+{
+	"transferred":  an array of completed transfers (including failed ones):
+		[
+			{
+				"name": name of the file,
+				"size": size of the file in bytes,
+				"bytes": total transferred bytes for this file,
+				"checked": if the transfer is only checked (skipped, deleted),
+				"timestamp": integer representing millisecond unix epoch,
+				"error": string description of the error (empty if successfull),
+				"jobid": id of the job that this transfer belongs to
+			}
+		]
+}
 `,
 	})
 }
@@ -184,6 +235,7 @@ func (sg *statsGroups) sum() *StatsInfo {
 		if sum.lastError == nil && stats.lastError != nil {
 			sum.lastError = stats.lastError
 		}
+		sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
 	}
 	return sum
 }
