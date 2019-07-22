@@ -151,7 +151,7 @@ log_since_last_release:
 	git log $(LAST_TAG)..
 
 compile_all:
-	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go -compile-only $(BUILDTAGS) $(TAG)
 
 appveyor_upload:
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
@@ -172,7 +172,7 @@ ifeq ($(TRAVIS_OS_NAME),linux)
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*\.tar.gz'
 endif
 	git log $(LAST_TAG).. > /tmp/git-log.txt
-	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) -parallel 8 $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifndef BRANCH_PATH
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
