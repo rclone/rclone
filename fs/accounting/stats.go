@@ -280,6 +280,20 @@ Elapsed time:  %10v
 	return buf.String()
 }
 
+// Transferred returns list of all completed transfers including checked and
+// failed ones.
+func (s *StatsInfo) Transferred() []TransferSnapshot {
+	ts := make([]TransferSnapshot, 0, len(s.startedTransfers))
+
+	for _, tr := range s.startedTransfers {
+		if tr.IsDone() {
+			ts = append(ts, tr.Snapshot())
+		}
+	}
+
+	return ts
+}
+
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
 	fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v\n", s)
@@ -376,6 +390,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
+	s.startedTransfers = nil
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
@@ -427,9 +442,10 @@ func (s *StatsInfo) RetryAfter() time.Time {
 	return s.retryAfter
 }
 
-// Checking adds a check into the stats
-func (s *StatsInfo) Checking(remote string) {
-	s.checking.add(remote)
+// NewCheckingTransfer adds a checking transfer to the stats, from the object.
+func (s *StatsInfo) NewCheckingTransfer(obj fs.Object) *Transfer {
+	s.checking.add(obj.Remote())
+	return newCheckingTransfer(s, obj)
 }
 
 // DoneChecking removes a check from the stats
@@ -456,7 +472,7 @@ func (s *StatsInfo) NewTransfer(obj fs.Object) *Transfer {
 // NewTransferRemoteSize adds a transfer to the stats based on remote and size.
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
 	s.transferring.add(remote)
-	return newTransferRemoteSize(s, remote, size)
+	return newTransferRemoteSize(s, remote, size, false)
 }
 
 // DoneTransferring removes a transfer from the stats

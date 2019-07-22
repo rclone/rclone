@@ -548,12 +548,12 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 	if info != nil {
 		err := o.decodeMetaData(info)
 		if err != nil {
-			return nil, err
+			return o, err
 		}
 	} else {
 		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err != nil {
-			return nil, err
+			return o, err
 		}
 	}
 	return o, nil
@@ -1084,16 +1084,25 @@ func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {
-				accounting.Stats(ctx).Checking(object.Name)
-				checkErr(f.deleteByID(object.ID, object.Name))
-				accounting.Stats(ctx).DoneChecking(object.Name)
+				oi, err := f.newObjectWithInfo(ctx, object.Name, object)
+				if err != nil {
+					fs.Errorf(object, "Can't create object %+v", err)
+				}
+				tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
+				err = f.deleteByID(object.ID, object.Name)
+				checkErr(err)
+				tr.Done(err)
 			}
 		}()
 	}
 	last := ""
 	checkErr(f.list(ctx, "", true, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
-			accounting.Stats(ctx).Checking(remote)
+			oi, err := f.newObjectWithInfo(ctx, object.Name, object)
+			if err != nil {
+				fs.Errorf(object, "Can't create object %+v", err)
+			}
+			tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
 			if oldOnly && last != remote {
 				if object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
@@ -1109,7 +1118,7 @@ func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 				toBeDeleted <- object
 			}
 			last = remote
-			accounting.Stats(ctx).DoneChecking(remote)
+			tr.Done(nil)
 		}
 		return nil
 	}))

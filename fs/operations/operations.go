@@ -176,7 +176,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, sizeOnly, chec
 			// Size and hash the same but mtime different
 			// Error if objects are treated as immutable
 			if fs.Config.Immutable {
-				fs.Errorf(dst, "Timestamp mismatch between immutable objects")
+				fs.Errorf(dst, "StartedAt mismatch between immutable objects")
 				return false
 			}
 			// Update the mtime of the dst object here
@@ -428,9 +428,9 @@ func SameObject(src, dst fs.Object) bool {
 // It returns the destination object if possible.  Note that this may
 // be nil.
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
-	accounting.Stats(ctx).Checking(src.Remote())
+	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
-		accounting.Stats(ctx).DoneChecking(src.Remote())
+		tr.Done(err)
 	}()
 	newDst = dst
 	if fs.Config.DryRun {
@@ -501,7 +501,10 @@ func SuffixName(remote string) string {
 // If backupDir is set then it moves the file to there instead of
 // deleting
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
-	accounting.Stats(ctx).Checking(dst.Remote())
+	tr := accounting.Stats(ctx).NewCheckingTransfer(dst)
+	defer func() {
+		tr.Done(err)
+	}()
 	numDeletes := accounting.Stats(ctx).Deletes(1)
 	if fs.Config.MaxDelete != -1 && numDeletes > fs.Config.MaxDelete {
 		return fserrors.FatalError(errors.New("--max-delete threshold reached"))
@@ -523,7 +526,6 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	} else if !fs.Config.DryRun {
 		fs.Infof(dst, actioned)
 	}
-	accounting.Stats(ctx).DoneChecking(dst.Remote())
 	return err
 }
 
@@ -709,10 +711,13 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 
 // check to see if two objects are identical using the check function
 func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
-	accounting.Stats(ctx).Checking(src.Remote())
-	defer accounting.Stats(ctx).DoneChecking(src.Remote())
+	var err error
+	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
+	defer func() {
+		tr.Done(err)
+	}()
 	if sizeDiffers(src, dst) {
-		err := errors.Errorf("Sizes differ")
+		err = errors.Errorf("Sizes differ")
 		fs.Errorf(src, "%v", err)
 		fs.CountError(err)
 		return true, false
@@ -930,9 +935,11 @@ func List(ctx context.Context, f fs.Fs, w io.Writer) error {
 // Lists in parallel which may get them out of order
 func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 	return ListFn(ctx, f, func(o fs.Object) {
-		accounting.Stats(ctx).Checking(o.Remote())
+		tr := accounting.Stats(ctx).NewCheckingTransfer(o)
+		defer func() {
+			tr.Done(nil)
+		}()
 		modTime := o.ModTime(ctx)
-		accounting.Stats(ctx).DoneChecking(o.Remote())
 		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
@@ -968,9 +975,12 @@ func DropboxHashSum(ctx context.Context, f fs.Fs, w io.Writer) error {
 // hashSum returns the human readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR.
 func hashSum(ctx context.Context, ht hash.Type, o fs.Object) string {
-	accounting.Stats(ctx).Checking(o.Remote())
+	var err error
+	tr := accounting.Stats(ctx).NewCheckingTransfer(o)
+	defer func() {
+		tr.Done(err)
+	}()
 	sum, err := o.Hash(ctx, ht)
-	accounting.Stats(ctx).DoneChecking(o.Remote())
 	if err == hash.ErrUnsupported {
 		sum = "UNSUPPORTED"
 	} else if err != nil {
@@ -1711,11 +1721,11 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 
 		_, err = Op(ctx, fdst, dstObj, dstFileName, srcObj)
 	} else {
-		accounting.Stats(ctx).Checking(srcFileName)
+		tr := accounting.Stats(ctx).NewCheckingTransfer(srcObj)
 		if !cp {
 			err = DeleteFile(ctx, srcObj)
 		}
-		defer accounting.Stats(ctx).DoneChecking(srcFileName)
+		tr.Done(err)
 	}
 	return err
 }

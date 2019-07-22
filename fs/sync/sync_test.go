@@ -1233,7 +1233,7 @@ func TestSyncCompareDest(t *testing.T) {
 	file1 := r.WriteFile("one", "one", t1)
 	fstest.CheckItems(t, r.Flocal, file1)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1247,7 +1247,7 @@ func TestSyncCompareDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1dst)
 	fstest.CheckItems(t, r.Flocal, file1b)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1263,7 +1263,7 @@ func TestSyncCompareDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1c)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1275,14 +1275,14 @@ func TestSyncCompareDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
 	fstest.CheckItems(t, r.Flocal, file1c, file5)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
 
 	// check new dest, new compare
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1293,7 +1293,7 @@ func TestSyncCompareDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
 	fstest.CheckItems(t, r.Flocal, file1c, file5b)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1324,7 +1324,7 @@ func TestSyncCopyDest(t *testing.T) {
 	file1 := r.WriteFile("one", "one", t1)
 	fstest.CheckItems(t, r.Flocal, file1)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1338,7 +1338,7 @@ func TestSyncCopyDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1dst)
 	fstest.CheckItems(t, r.Flocal, file1b)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1357,7 +1357,7 @@ func TestSyncCopyDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1c)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1374,7 +1374,7 @@ func TestSyncCopyDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4)
 	fstest.CheckItems(t, r.Flocal, file1c, file5)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1384,7 +1384,7 @@ func TestSyncCopyDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst)
 
 	// check new dest, new copy
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
@@ -1396,7 +1396,7 @@ func TestSyncCopyDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst, file6)
 	fstest.CheckItems(t, r.Flocal, file1c, file5, file7)
 
-	accounting.Stats.ResetCounters()
+	accounting.GlobalStats().ResetCounters()
 	err = Sync(context.Background(), fdst, r.Flocal, false)
 	require.NoError(t, err)
 
