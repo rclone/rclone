@@ -215,7 +215,8 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 			return
 		}
 		src := pair.Src
-		accounting.Stats(s.ctx).Checking(src.Remote())
+		var err error
+		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src)
 		// Check to see if can store this
 		if src.Storable() {
 			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
@@ -256,7 +257,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 				}
 			}
 		}
-		accounting.Stats(s.ctx).DoneChecking(src.Remote())
+		tr.Done(err)
 	}
 }
 
@@ -587,12 +588,12 @@ func (s *syncCopyMove) makeRenameMap() {
 			for obj := range in {
 				// only create hash for dst fs.Object if its size could match
 				if _, found := possibleSizes[obj.Size()]; found {
-					accounting.Stats(s.ctx).Checking(obj.Remote())
+					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj)
 					hash := s.renameHash(obj)
 					if hash != "" {
 						s.pushRenameMap(hash, obj)
 					}
-					accounting.Stats(s.ctx).DoneChecking(obj.Remote())
+					tr.Done(nil)
 				}
 			}
 		}()
