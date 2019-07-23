@@ -87,6 +87,7 @@ type ConfigInfo struct {
 	UseServerModTime       bool
 	MaxTransfer            SizeSuffix
 	MaxBacklog             int
+	MaxStatsGroups         int
 	StatsOneLine           bool
 	StatsOneLineDate       bool   // If we want a date prefix at all
 	StatsOneLineDateFormat string // If we want to customize the prefix
@@ -124,6 +125,7 @@ func NewConfig() *ConfigInfo {
 	c.BufferSize = SizeSuffix(16 << 20)
 	c.UserAgent = "rclone/" + Version
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
+	c.MaxStatsGroups = 1000
 	c.StatsFileNameLength = 45
 	c.AskPassword = true
 	c.TPSLimitBurst = 1
