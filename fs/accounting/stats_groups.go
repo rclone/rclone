@@ -13,6 +13,14 @@ const globalStats = "global_stats"
 
 var groups *statsGroups
 
+func listStats(ctx context.Context, in rc.Params) (rc.Params, error) {
+	out := make(rc.Params)
+
+	out["groups"] = groups.names()
+
+	return out, nil
+}
+
 func remoteStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 	// Check to see if we should filter by group.
 	group, err := in.GetString("group")
@@ -127,6 +135,26 @@ Returns the following values:
 }
 `,
 	})
+
+	rc.Add(rc.Call{
+		Path:  "core/group_list",
+		Fn:    listStats,
+		Title: "Returns list of stats.",
+		Help: `
+This returns list of stats groups currently in memory. 
+
+Returns the following values:
+` + "```" + `
+{
+	"groups":  an array of group names:
+		[
+			"group1",
+			"group2",
+			...
+		]
+}
+`,
+	})
 }
 
 type statsGroupCtx int64
@@ -180,8 +208,9 @@ func NewStatsGroup(group string) *StatsInfo {
 
 // statsGroups holds a synchronized map of stats
 type statsGroups struct {
-	mu sync.Mutex
-	m  map[string]*StatsInfo
+	mu    sync.Mutex
+	m     map[string]*StatsInfo
+	order []string
 }
 
 // newStatsGroups makes a new statsGroups object
@@ -192,17 +221,24 @@ func newStatsGroups() *statsGroups {
 }
 
 // set marks the stats as belonging to a group
-func (sg *statsGroups) set(group string, acc *StatsInfo) {
+func (sg *statsGroups) set(group string, stats *StatsInfo) {
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
-	sg.m[group] = acc
-}
 
-// clear discards reference to group
-func (sg *statsGroups) clear(group string) {
-	sg.mu.Lock()
-	defer sg.mu.Unlock()
-	delete(sg.m, group)
+	// Limit number of groups kept in memory.
+	if len(sg.order) >= fs.Config.MaxStatsGroups {
+		group := sg.order[0]
+		fs.LogPrintf(fs.LogLevelInfo, nil, "Max number of stats groups reached removing %s", group)
+		delete(sg.m, group)
+		r := (len(sg.order) - fs.Config.MaxStatsGroups) + 1
+		sg.order = sg.order[r:]
+	}
+
+	// Exclude global stats from
+	if group != globalStats {
+		sg.order = append(sg.order, group)
+	}
+	sg.m[group] = stats
 }
 
 // get gets the stats for group, or nil if not found
@@ -214,6 +250,12 @@ func (sg *statsGroups) get(group string) *StatsInfo {
 		return nil
 	}
 	return stats
+}
+
+func (sg *statsGroups) names() []string {
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+	return sg.order
 }
 
 // get gets the stats for group, or nil if not found
