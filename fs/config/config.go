@@ -1085,7 +1085,9 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 						continue
 					}
 				}
-				FileSet(name, option.Name, ChooseOption(&option, name))
+				if option.Hide&fs.OptionHideConfigurator == 0 {
+					FileSet(name, option.Name, ChooseOption(&option, name))
+				}
 			}
 		}
 	}
