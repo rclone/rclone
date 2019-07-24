@@ -68,6 +68,7 @@ var (
 	ErrorDirectoryNotEmpty           = errors.New("directory not empty")
 	ErrorImmutableModified           = errors.New("immutable file modified")
 	ErrorPermissionDenied            = errors.New("permission denied")
+	ErrorCantShareDirectories        = errors.New("this backend can't share directories with link")
 )
 
 // RegInfo provides information about a filesystem

@@ -1410,27 +1410,31 @@ func Run(t *testing.T, opt *Opt) {
 				// sharing directory for the first time
 				path := path.Dir(file2.Path)
 				link3, err := doPublicLink(context.Background(), path)
-				require.NoError(t, err)
-				require.NotEqual(t, "", link3, "Link should not be empty")
+				if err != nil && errors.Cause(err) == fs.ErrorCantShareDirectories {
+					t.Log("skipping directory tests as not supported on this backend")
+				} else {
+					require.NoError(t, err)
+					require.NotEqual(t, "", link3, "Link should not be empty")
 
-				// sharing directory for the second time
-				link3, err = doPublicLink(context.Background(), path)
-				require.NoError(t, err)
-				require.NotEqual(t, "", link3, "Link should not be empty")
+					// sharing directory for the second time
+					link3, err = doPublicLink(context.Background(), path)
+					require.NoError(t, err)
+					require.NotEqual(t, "", link3, "Link should not be empty")
 
-				// sharing the "root" directory in a subremote
-				subRemote, _, removeSubRemote, err := fstest.RandomRemote(remoteName, false)
-				require.NoError(t, err)
-				defer removeSubRemote()
-				// ensure sub remote isn't empty
-				buf := bytes.NewBufferString("somecontent")
-				obji := object.NewStaticObjectInfo("somefile", time.Now(), int64(buf.Len()), true, nil, nil)
-				_, err = subRemote.Put(context.Background(), buf, obji)
-				require.NoError(t, err)
+					// sharing the "root" directory in a subremote
+					subRemote, _, removeSubRemote, err := fstest.RandomRemote(remoteName, false)
+					require.NoError(t, err)
+					defer removeSubRemote()
+					// ensure sub remote isn't empty
+					buf := bytes.NewBufferString("somecontent")
+					obji := object.NewStaticObjectInfo("somefile", time.Now(), int64(buf.Len()), true, nil, nil)
+					_, err = subRemote.Put(context.Background(), buf, obji)
+					require.NoError(t, err)
 
-				link4, err := subRemote.Features().PublicLink(context.Background(), "")
-				require.NoError(t, err, "Sharing root in a sub-remote should work")
-				require.NotEqual(t, "", link4, "Link should not be empty")
+					link4, err := subRemote.Features().PublicLink(context.Background(), "")
+					require.NoError(t, err, "Sharing root in a sub-remote should work")
+					require.NotEqual(t, "", link4, "Link should not be empty")
+				}
 			})
 
 			// TestSetTier tests SetTier and GetTier functionality
