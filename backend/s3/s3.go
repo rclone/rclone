@@ -753,6 +753,17 @@ Use this only if v4 signatures don't work, eg pre Jewel/v10 CEPH.`,
 See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration-examples.html)`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     "leave_parts_on_error",
+			Provider: "AWS",
+			Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
+
+It should be set to true for resuming uploads across different sessions.
+
+WARNING: Storing parts of an incomplete multipart upload counts towards space usage on S3 and will add additional costs if not cleaned up.
+`,
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -793,6 +804,7 @@ type Options struct {
 	ForcePathStyle        bool          `config:"force_path_style"`
 	V2Auth                bool          `config:"v2_auth"`
 	UseAccelerateEndpoint bool          `config:"use_accelerate_endpoint"`
+	LeavePartsOnError     bool          `config:"leave_parts_on_error"`
 }
 
 // Fs represents a remote s3 server
@@ -1880,7 +1892,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if multipart {
 		uploader = s3manager.NewUploader(o.fs.ses, func(u *s3manager.Uploader) {
 			u.Concurrency = o.fs.opt.UploadConcurrency
-			u.LeavePartsOnError = false
+			u.LeavePartsOnError = o.fs.opt.LeavePartsOnError
 			u.S3 = o.fs.c
 			u.PartSize = int64(o.fs.opt.ChunkSize)
 
