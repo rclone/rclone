@@ -7,6 +7,7 @@ import (
 	"path"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
@@ -102,7 +103,14 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if err != nil {
 		return nil, err
 	}
-	s.ctx, s.cancel = context.WithCancel(ctx)
+	// If a max session duration has been defined add a deadline to the context
+	if fs.Config.MaxDuration > 0 {
+		endTime := time.Now().Add(fs.Config.MaxDuration)
+		fs.Infof(s.fdst, "Transfer session deadline: %s", endTime.Format("2006/01/02 15:04:05"))
+		s.ctx, s.cancel = context.WithDeadline(ctx, endTime)
+	} else {
+		s.ctx, s.cancel = context.WithCancel(ctx)
+	}
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
 		fs.Errorf(nil, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
@@ -194,6 +202,9 @@ outer:
 func (s *syncCopyMove) processError(err error) {
 	if err == nil {
 		return
+	}
+	if err == context.DeadlineExceeded {
+		err = fserrors.NoRetryError(err)
 	}
 	s.errorMu.Lock()
 	defer s.errorMu.Unlock()
@@ -741,6 +752,9 @@ func (s *syncCopyMove) run() error {
 		//delete empty subdirectories that were part of the move
 		s.processError(deleteEmptyDirectories(s.ctx, s.fsrc, s.srcEmptyDirs))
 	}
+
+	// Read the error out of the context if there is one
+	s.processError(s.ctx.Err())
 
 	// cancel the context to free resources
 	s.cancel()
