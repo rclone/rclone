@@ -4,6 +4,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"strings"
 	"testing"
@@ -988,6 +989,48 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeF, fourF, fiveF)
+}
+
+// Test with a max transfer duration
+func TestSyncWithMaxDuration(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	maxDuration := 250 * time.Millisecond
+	fs.Config.MaxDuration = maxDuration
+	bytesPerSecond := 300
+	accounting.SetBwLimit(fs.SizeSuffix(bytesPerSecond))
+	oldTransfers := fs.Config.Transfers
+	fs.Config.Transfers = 1
+	defer func() {
+		fs.Config.MaxDuration = 0 // reset back to default
+		fs.Config.Transfers = oldTransfers
+		accounting.SetBwLimit(fs.SizeSuffix(0))
+	}()
+
+	// 5 files of 60 bytes at 60 bytes/s 5 seconds
+	testFiles := make([]fstest.Item, 5)
+	for i := 0; i < len(testFiles); i++ {
+		testFiles[i] = r.WriteFile(fmt.Sprintf("file%d", i), "------------------------------------------------------------", t1)
+	}
+
+	fstest.CheckListing(t, r.Flocal, testFiles)
+
+	accounting.GlobalStats().ResetCounters()
+	startTime := time.Now()
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
+	require.Equal(t, context.DeadlineExceeded, errors.Cause(err))
+	err = accounting.GlobalStats().GetLastError()
+	require.NoError(t, err)
+
+	elapsed := time.Since(startTime)
+	maxTransferTime := (time.Duration(len(testFiles)) * 60 * time.Second) / time.Duration(bytesPerSecond)
+
+	what := fmt.Sprintf("expecting elapsed time %v between %v and %v", elapsed, maxDuration, maxTransferTime)
+	require.True(t, elapsed >= maxDuration, what)
+	require.True(t, elapsed < 5*time.Second, what)
+	// we must not have transferred all files during the session
+	require.True(t, accounting.GlobalStats().GetTransfers() < int64(len(testFiles)))
 }
 
 // Test with TrackRenames set
