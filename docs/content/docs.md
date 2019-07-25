@@ -716,6 +716,17 @@ files not recursed through are considered excluded and will be deleted
 on the destination.  Test first with `--dry-run` if you are not sure
 what will happen.
 
+### --max-duration=TIME ###
+
+Rclone will stop scheduling new transfers when it has run for the
+duration specified.
+
+Defaults to off.
+
+When the limit is reached any existing transfers will complete.
+
+Rclone won't exit with an error if the transfer limit is reached.
+
 ### --max-transfer=SIZE ###
 
 Rclone will stop transferring when it has reached the size specified.
