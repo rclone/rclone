@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
@@ -117,12 +118,12 @@ func objsToNames(objs []fs.Object) []string {
 }
 
 // findObject finds the object on the remote
-func findObject(t *testing.T, f fs.Fs, Name string) fs.Object {
+func findObject(ctx context.Context, t *testing.T, f fs.Fs, Name string) fs.Object {
 	var obj fs.Object
 	var err error
 	sleepTime := 1 * time.Second
 	for i := 1; i <= *fstest.ListRetries; i++ {
-		obj, err = f.NewObject(context.Background(), Name)
+		obj, err = f.NewObject(ctx, Name)
 		if err == nil {
 			break
 		}
@@ -151,7 +152,7 @@ func retry(t *testing.T, what string, f func() error) {
 }
 
 // testPut puts file to the remote
-func testPut(t *testing.T, f fs.Fs, file *fstest.Item) (string, fs.Object) {
+func testPut(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) (string, fs.Object) {
 	var (
 		err        error
 		obj        fs.Object
@@ -166,19 +167,19 @@ func testPut(t *testing.T, f fs.Fs, file *fstest.Item) (string, fs.Object) {
 
 		file.Size = int64(buf.Len())
 		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-		obj, err = f.Put(context.Background(), in, obji)
+		obj, err = f.Put(ctx, in, obji)
 		return err
 	})
 	file.Hashes = uploadHash.Sums()
 	file.Check(t, obj, f.Precision())
 	// Re-read the object and check again
-	obj = findObject(t, f, file.Path)
+	obj = findObject(ctx, t, f, file.Path)
 	file.Check(t, obj, f.Precision())
 	return contents, obj
 }
 
 // TestPutLarge puts file to the remote, checks it and removes it on success.
-func TestPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
+func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) {
 	var (
 		err        error
 		obj        fs.Object
@@ -190,7 +191,7 @@ func TestPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
 		in := io.TeeReader(r, uploadHash)
 
 		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-		obj, err = f.Put(context.Background(), in, obji)
+		obj, err = f.Put(ctx, in, obji)
 		if file.Size == 0 && err == fs.ErrorCantUploadEmptyFiles {
 			t.Skip("Can't upload zero length files")
 		}
@@ -200,12 +201,12 @@ func TestPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
 	file.Check(t, obj, f.Precision())
 
 	// Re-read the object and check again
-	obj = findObject(t, f, file.Path)
+	obj = findObject(ctx, t, f, file.Path)
 	file.Check(t, obj, f.Precision())
 
 	// Download the object and check it is OK
 	downloadHash := hash.NewMultiHasher()
-	download, err := obj.Open(context.Background())
+	download, err := obj.Open(ctx)
 	require.NoError(t, err)
 	n, err := io.Copy(downloadHash, download)
 	require.NoError(t, err)
@@ -214,7 +215,7 @@ func TestPutLarge(t *testing.T, f fs.Fs, file *fstest.Item) {
 	assert.Equal(t, file.Hashes, downloadHash.Sums())
 
 	// Remove the object
-	require.NoError(t, obj.Remove(context.Background()))
+	require.NoError(t, obj.Remove(ctx))
 }
 
 // errorReader just returns an error on Read
@@ -228,9 +229,9 @@ func (er errorReader) Read(p []byte) (n int, err error) {
 }
 
 // read the contents of an object as a string
-func readObject(t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
+func readObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
 	what := fmt.Sprintf("readObject(%q) limit=%d, options=%+v", obj, limit, options)
-	in, err := obj.Open(context.Background(), options...)
+	in, err := obj.Open(ctx, options...)
 	require.NoError(t, err, what)
 	var r io.Reader = in
 	if limit >= 0 {
@@ -295,6 +296,7 @@ func Run(t *testing.T, opt *Opt) {
 		}
 		isLocalRemote bool
 		purged        bool // whether the dir has been purged or not
+		ctx           = context.Background()
 	)
 
 	// Skip the test if the remote isn't configured
@@ -408,12 +410,12 @@ func Run(t *testing.T, opt *Opt) {
 		if isBucketBasedButNotRoot(remote) {
 			t.Skip("Skipping test as non root bucket based remote")
 		}
-		err := remote.Rmdir(context.Background(), "")
+		err := remote.Rmdir(ctx, "")
 		assert.Error(t, err, "Expecting error on Rmdir non existent")
 	})
 
 	// Make the directory
-	err = remote.Mkdir(context.Background(), "")
+	err = remote.Mkdir(ctx, "")
 	require.NoError(t, err)
 	fstest.CheckListing(t, remote, []fstest.Item{})
 
@@ -451,7 +453,7 @@ func Run(t *testing.T, opt *Opt) {
 	// TestFsRmdirEmpty tests deleting an empty directory
 	t.Run("FsRmdirEmpty", func(t *testing.T) {
 		skipIfNotOk(t)
-		err := remote.Rmdir(context.Background(), "")
+		err := remote.Rmdir(ctx, "")
 		require.NoError(t, err)
 	})
 
@@ -461,26 +463,26 @@ func Run(t *testing.T, opt *Opt) {
 	t.Run("FsMkdir", func(t *testing.T) {
 		skipIfNotOk(t)
 
-		err := remote.Mkdir(context.Background(), "")
+		err := remote.Mkdir(ctx, "")
 		require.NoError(t, err)
 		fstest.CheckListing(t, remote, []fstest.Item{})
 
-		err = remote.Mkdir(context.Background(), "")
+		err = remote.Mkdir(ctx, "")
 		require.NoError(t, err)
 
 		// TestFsMkdirRmdirSubdir tests making and removing a sub directory
 		t.Run("FsMkdirRmdirSubdir", func(t *testing.T) {
 			skipIfNotOk(t)
 			dir := "dir/subdir"
-			err := operations.Mkdir(context.Background(), remote, dir)
+			err := operations.Mkdir(ctx, remote, dir)
 			require.NoError(t, err)
 			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir", "dir/subdir"}, fs.GetModifyWindow(remote))
 
-			err = operations.Rmdir(context.Background(), remote, dir)
+			err = operations.Rmdir(ctx, remote, dir)
 			require.NoError(t, err)
 			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir"}, fs.GetModifyWindow(remote))
 
-			err = operations.Rmdir(context.Background(), remote, "dir")
+			err = operations.Rmdir(ctx, remote, "dir")
 			require.NoError(t, err)
 			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(remote))
 		})
@@ -494,7 +496,7 @@ func Run(t *testing.T, opt *Opt) {
 		// TestFsListDirEmpty tests listing the directories from an empty directory
 		TestFsListDirEmpty := func(t *testing.T) {
 			skipIfNotOk(t)
-			objs, dirs, err := walk.GetAll(context.Background(), remote, "", true, 1)
+			objs, dirs, err := walk.GetAll(ctx, remote, "", true, 1)
 			if !remote.Features().CanHaveEmptyDirectories {
 				if err != fs.ErrorDirNotFound {
 					require.NoError(t, err)
@@ -516,7 +518,7 @@ func Run(t *testing.T, opt *Opt) {
 		// TestFsListDirNotFound tests listing the directories from an empty directory
 		TestFsListDirNotFound := func(t *testing.T) {
 			skipIfNotOk(t)
-			objs, dirs, err := walk.GetAll(context.Background(), remote, "does not exist", true, 1)
+			objs, dirs, err := walk.GetAll(ctx, remote, "does not exist", true, 1)
 			if !remote.Features().CanHaveEmptyDirectories {
 				if err != fs.ErrorDirNotFound {
 					assert.NoError(t, err)
@@ -534,15 +536,66 @@ func Run(t *testing.T, opt *Opt) {
 			TestFsListDirNotFound(t)
 		})
 
+		// FsEncoding tests that file name encodings are
+		// working by uploading a series of unusual files
+		// Must be run in an empty directory
+		t.Run("FsEncoding", func(t *testing.T) {
+			skipIfNotOk(t)
+
+			// check no files or dirs as pre-requisite
+			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(remote))
+
+			for _, test := range []struct {
+				name string
+				path string
+			}{
+				// See lib/encoder/encoder.go for list of things that go here
+				{"control chars", "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F"},
+				{"dot", "."},
+				{"dot dot", ".."},
+				{"punctuation", "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"},
+				{"leading space", " leading space"},
+				{"leading tilde", "~leading tilde"},
+				{"leading CR", "\rleading CR"},
+				{"leading LF", "\nleading LF"},
+				{"leading HT", "\tleading HT"},
+				{"leading VT", "\vleading VT"},
+				{"trailing space", "trailing space "},
+				{"trailing CR", "trailing CR\r"},
+				{"trailing LF", "trailing LF\n"},
+				{"trailing HT", "trailing HT\t"},
+				{"trailing VT", "trailing VT\v"},
+				{"trailing dot", "trailing dot."},
+				{"invalid UTF-8", "invalid utf-8\xfe"},
+			} {
+				t.Run(test.name, func(t *testing.T) {
+					// turn raw strings into Standard encoding
+					fileName := encoder.Standard.Encode(test.path)
+					dirName := fileName
+					t.Logf("testing %q", fileName)
+					assert.NoError(t, remote.Mkdir(ctx, dirName))
+					file := fstest.Item{
+						ModTime: time.Now(),
+						Path:    dirName + "/" + fileName, // test creating a file and dir with that name
+					}
+					_, o := testPut(context.Background(), t, remote, &file)
+					fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file}, []string{dirName}, fs.GetModifyWindow(remote))
+					assert.NoError(t, o.Remove(ctx))
+					assert.NoError(t, remote.Rmdir(ctx, dirName))
+					fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(remote))
+				})
+			}
+		})
+
 		// TestFsNewObjectNotFound tests not finding a object
 		t.Run("FsNewObjectNotFound", func(t *testing.T) {
 			skipIfNotOk(t)
 			// Object in an existing directory
-			o, err := remote.NewObject(context.Background(), "potato")
+			o, err := remote.NewObject(ctx, "potato")
 			assert.Nil(t, o)
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
 			// Now try an object in a non existing directory
-			o, err = remote.NewObject(context.Background(), "directory/not/found/potato")
+			o, err = remote.NewObject(ctx, "directory/not/found/potato")
 			assert.Nil(t, o)
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
 		})
@@ -569,11 +622,11 @@ func Run(t *testing.T, opt *Opt) {
 			in := io.MultiReader(buf, er)
 
 			obji := object.NewStaticObjectInfo(file2.Path, file2.ModTime, 2*N, true, nil, nil)
-			_, err := remote.Put(context.Background(), in, obji)
+			_, err := remote.Put(ctx, in, obji)
 			// assert.Nil(t, obj) - FIXME some remotes return the object even on nil
 			assert.NotNil(t, err)
 
-			obj, err := remote.NewObject(context.Background(), file2.Path)
+			obj, err := remote.NewObject(ctx, file2.Path)
 			assert.Nil(t, obj)
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
 		})
@@ -581,7 +634,7 @@ func Run(t *testing.T, opt *Opt) {
 		t.Run("FsPutZeroLength", func(t *testing.T) {
 			skipIfNotOk(t)
 
-			TestPutLarge(t, remote, &fstest.Item{
+			TestPutLarge(ctx, t, remote, &fstest.Item{
 				ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 				Path:    fmt.Sprintf("zero-length-file"),
 				Size:    int64(0),
@@ -595,7 +648,7 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skip("FS has no OpenWriterAt interface")
 			}
 			path := "writer-at-subdir/writer-at-file"
-			out, err := openWriterAt(context.Background(), path, -1)
+			out, err := openWriterAt(ctx, path, -1)
 			require.NoError(t, err)
 
 			var n int
@@ -611,11 +664,11 @@ func Run(t *testing.T, opt *Opt) {
 
 			assert.NoError(t, out.Close())
 
-			obj := findObject(t, remote, path)
-			assert.Equal(t, "abcdefghi", readObject(t, obj, -1), "contents of file differ")
+			obj := findObject(ctx, t, remote, path)
+			assert.Equal(t, "abcdefghi", readObject(ctx, t, obj, -1), "contents of file differ")
 
-			assert.NoError(t, obj.Remove(context.Background()))
-			assert.NoError(t, remote.Rmdir(context.Background(), "writer-at-subdir"))
+			assert.NoError(t, obj.Remove(ctx))
+			assert.NoError(t, remote.Rmdir(ctx, "writer-at-subdir"))
 		})
 
 		// TestFsChangeNotify tests that changes are properly
@@ -631,13 +684,13 @@ func Run(t *testing.T, opt *Opt) {
 				t.Skip("FS has no ChangeNotify interface")
 			}
 
-			err := operations.Mkdir(context.Background(), remote, "dir")
+			err := operations.Mkdir(ctx, remote, "dir")
 			require.NoError(t, err)
 
 			pollInterval := make(chan time.Duration)
 			dirChanges := map[string]struct{}{}
 			objChanges := map[string]struct{}{}
-			doChangeNotify(context.Background(), func(x string, e fs.EntryType) {
+			doChangeNotify(ctx, func(x string, e fs.EntryType) {
 				fs.Debugf(nil, "doChangeNotify(%q, %+v)", x, e)
 				if strings.HasPrefix(x, file1.Path[:5]) || strings.HasPrefix(x, file2.Path[:5]) {
 					fs.Debugf(nil, "Ignoring notify for file1 or file2: %q, %v", x, e)
@@ -655,7 +708,7 @@ func Run(t *testing.T, opt *Opt) {
 			var dirs []string
 			for _, idx := range []int{1, 3, 2} {
 				dir := fmt.Sprintf("dir/subdir%d", idx)
-				err = operations.Mkdir(context.Background(), remote, dir)
+				err = operations.Mkdir(ctx, remote, dir)
 				require.NoError(t, err)
 				dirs = append(dirs, dir)
 			}
@@ -666,7 +719,7 @@ func Run(t *testing.T, opt *Opt) {
 					ModTime: time.Now(),
 					Path:    fmt.Sprintf("dir/file%d", idx),
 				}
-				_, o := testPut(t, remote, &file)
+				_, o := testPut(ctx, t, remote, &file)
 				objs = append(objs, o)
 			}
 
@@ -700,11 +753,11 @@ func Run(t *testing.T, opt *Opt) {
 
 			// tidy up afterwards
 			for _, o := range objs {
-				assert.NoError(t, o.Remove(context.Background()))
+				assert.NoError(t, o.Remove(ctx))
 			}
 			dirs = append(dirs, "dir")
 			for _, dir := range dirs {
-				assert.NoError(t, remote.Rmdir(context.Background(), dir))
+				assert.NoError(t, remote.Rmdir(ctx, dir))
 			}
 		})
 
@@ -713,9 +766,9 @@ func Run(t *testing.T, opt *Opt) {
 		// Tests that require file1, file2 are within this
 		t.Run("FsPutFiles", func(t *testing.T) {
 			skipIfNotOk(t)
-			file1Contents, _ = testPut(t, remote, &file1)
-			/* file2Contents = */ testPut(t, remote, &file2)
-			file1Contents, _ = testPut(t, remote, &file1)
+			file1Contents, _ = testPut(ctx, t, remote, &file1)
+			/* file2Contents = */ testPut(ctx, t, remote, &file2)
+			file1Contents, _ = testPut(ctx, t, remote, &file1)
 			// Note that the next test will check there are no duplicated file names
 
 			// TestFsListDirFile2 tests the files are correctly uploaded by doing
@@ -725,9 +778,9 @@ func Run(t *testing.T, opt *Opt) {
 				list := func(dir string, expectedDirNames, expectedObjNames []string) {
 					var objNames, dirNames []string
 					for i := 1; i <= *fstest.ListRetries; i++ {
-						objs, dirs, err := walk.GetAll(context.Background(), remote, dir, true, 1)
+						objs, dirs, err := walk.GetAll(ctx, remote, dir, true, 1)
 						if errors.Cause(err) == fs.ErrorDirNotFound {
-							objs, dirs, err = walk.GetAll(context.Background(), remote, fstest.WinPath(dir), true, 1)
+							objs, dirs, err = walk.GetAll(ctx, remote, fstest.WinPath(dir), true, 1)
 						}
 						require.NoError(t, err)
 						objNames = objsToNames(objs)
@@ -773,7 +826,7 @@ func Run(t *testing.T, opt *Opt) {
 			// Test the files are all there with walk.ListR recursive listings
 			t.Run("FsListR", func(t *testing.T) {
 				skipIfNotOk(t)
-				objs, dirs, err := walk.GetAll(context.Background(), remote, "", true, -1)
+				objs, dirs, err := walk.GetAll(ctx, remote, "", true, -1)
 				require.NoError(t, err)
 				assert.Equal(t, []string{
 					"hello_ sausage",
@@ -791,7 +844,7 @@ func Run(t *testing.T, opt *Opt) {
 			// walk.ListR recursive listings on a sub dir
 			t.Run("FsListRSubdir", func(t *testing.T) {
 				skipIfNotOk(t)
-				objs, dirs, err := walk.GetAll(context.Background(), remote, path.Dir(path.Dir(path.Dir(path.Dir(file2.Path)))), true, -1)
+				objs, dirs, err := walk.GetAll(ctx, remote, path.Dir(path.Dir(path.Dir(path.Dir(file2.Path)))), true, -1)
 				require.NoError(t, err)
 				assert.Equal(t, []string{
 					"hello_ sausage/êé",
@@ -808,7 +861,7 @@ func Run(t *testing.T, opt *Opt) {
 				skipIfNotOk(t)
 				rootRemote, err := fs.NewFs(remoteName)
 				require.NoError(t, err)
-				_, dirs, err := walk.GetAll(context.Background(), rootRemote, "", true, 1)
+				_, dirs, err := walk.GetAll(ctx, rootRemote, "", true, 1)
 				require.NoError(t, err)
 				assert.Contains(t, dirsToNames(dirs), subRemoteLeaf, "Remote leaf not found")
 			}
@@ -830,7 +883,7 @@ func Run(t *testing.T, opt *Opt) {
 				for i := 0; i < 2; i++ {
 					dir, _ := path.Split(fileName)
 					dir = dir[:len(dir)-1]
-					objs, dirs, err = walk.GetAll(context.Background(), remote, dir, true, -1)
+					objs, dirs, err = walk.GetAll(ctx, remote, dir, true, -1)
 				}
 				require.NoError(t, err)
 				require.Len(t, objs, 1)
@@ -848,7 +901,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestFsListLevel2 tests List works for 2 levels
 			TestFsListLevel2 := func(t *testing.T) {
 				skipIfNotOk(t)
-				objs, dirs, err := walk.GetAll(context.Background(), remote, "", true, 2)
+				objs, dirs, err := walk.GetAll(ctx, remote, "", true, 2)
 				if err == fs.ErrorLevelNotSupported {
 					return
 				}
@@ -873,7 +926,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestFsNewObject tests NewObject
 			t.Run("FsNewObject", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				file1.Check(t, obj, remote.Precision())
 			})
 
@@ -887,7 +940,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("FsNewObjectDir", func(t *testing.T) {
 				skipIfNotOk(t)
 				dir := path.Dir(file2.Path)
-				obj, err := remote.NewObject(context.Background(), dir)
+				obj, err := remote.NewObject(ctx, dir)
 				assert.Nil(t, obj)
 				assert.NotNil(t, err)
 			})
@@ -907,8 +960,8 @@ func Run(t *testing.T, opt *Opt) {
 				file2Copy.Path += "-copy"
 
 				// do the copy
-				src := findObject(t, remote, file2.Path)
-				dst, err := doCopy(context.Background(), src, file2Copy.Path)
+				src := findObject(ctx, t, remote, file2.Path)
+				dst, err := doCopy(ctx, src, file2Copy.Path)
 				if err == fs.ErrorCantCopy {
 					t.Skip("FS can't copy")
 				}
@@ -921,7 +974,7 @@ func Run(t *testing.T, opt *Opt) {
 				assert.Equal(t, file2Copy.Path, dst.Remote())
 
 				// Delete copy
-				err = dst.Remove(context.Background())
+				err = dst.Remove(ctx)
 				require.NoError(t, err)
 
 			})
@@ -946,8 +999,8 @@ func Run(t *testing.T, opt *Opt) {
 				// check happy path, i.e. no naming conflicts when rename and move are two
 				// separate operations
 				file2Move.Path = "other.txt"
-				src := findObject(t, remote, file2.Path)
-				dst, err := doMove(context.Background(), src, file2Move.Path)
+				src := findObject(ctx, t, remote, file2.Path)
+				dst, err := doMove(ctx, src, file2Move.Path)
 				if err == fs.ErrorCantMove {
 					t.Skip("FS can't move")
 				}
@@ -961,30 +1014,30 @@ func Run(t *testing.T, opt *Opt) {
 
 				// Check conflict on "rename, then move"
 				file1Move.Path = "moveTest/other.txt"
-				src = findObject(t, remote, file1.Path)
-				_, err = doMove(context.Background(), src, file1Move.Path)
+				src = findObject(ctx, t, remote, file1.Path)
+				_, err = doMove(ctx, src, file1Move.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, remote, []fstest.Item{file1Move, file2Move})
 				// 1: moveTest/other.txt
 				// 2: other.txt
 
 				// Check conflict on "move, then rename"
-				src = findObject(t, remote, file1Move.Path)
-				_, err = doMove(context.Background(), src, file1.Path)
+				src = findObject(ctx, t, remote, file1Move.Path)
+				_, err = doMove(ctx, src, file1.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, remote, []fstest.Item{file1, file2Move})
 				// 1: file name.txt
 				// 2: other.txt
 
-				src = findObject(t, remote, file2Move.Path)
-				_, err = doMove(context.Background(), src, file2.Path)
+				src = findObject(ctx, t, remote, file2Move.Path)
+				_, err = doMove(ctx, src, file2.Path)
 				require.NoError(t, err)
 				fstest.CheckListing(t, remote, []fstest.Item{file1, file2})
 				// 1: file name.txt
 				// 2: hello sausage?/../z.txt
 
 				// Tidy up moveTest directory
-				require.NoError(t, remote.Rmdir(context.Background(), "moveTest"))
+				require.NoError(t, remote.Rmdir(ctx, "moveTest"))
 			})
 
 			// Move src to this remote using server side move operations.
@@ -1008,7 +1061,7 @@ func Run(t *testing.T, opt *Opt) {
 				}
 
 				// Check it can't move onto itself
-				err := doDirMove(context.Background(), remote, "", "")
+				err := doDirMove(ctx, remote, "", "")
 				require.Equal(t, fs.ErrorDirExists, err)
 
 				// new remote
@@ -1018,12 +1071,12 @@ func Run(t *testing.T, opt *Opt) {
 
 				const newName = "new_name/sub_new_name"
 				// try the move
-				err = newRemote.Features().DirMove(context.Background(), remote, "", newName)
+				err = newRemote.Features().DirMove(ctx, remote, "", newName)
 				require.NoError(t, err)
 
 				// check remotes
 				// remote should not exist here
-				_, err = remote.List(context.Background(), "")
+				_, err = remote.List(ctx, "")
 				assert.Equal(t, fs.ErrorDirNotFound, errors.Cause(err))
 				//fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, remote.Precision())
 				file1Copy := file1
@@ -1040,7 +1093,7 @@ func Run(t *testing.T, opt *Opt) {
 				}, newRemote.Precision())
 
 				// move it back
-				err = doDirMove(context.Background(), newRemote, newName, "")
+				err = doDirMove(ctx, newRemote, newName, "")
 				require.NoError(t, err)
 
 				// check remotes
@@ -1061,7 +1114,7 @@ func Run(t *testing.T, opt *Opt) {
 				if isBucketBasedButNotRoot(remote) {
 					t.Skip("Skipping test as non root bucket based remote")
 				}
-				err := remote.Rmdir(context.Background(), "")
+				err := remote.Rmdir(ctx, "")
 				require.Error(t, err, "Expecting error on RMdir on non empty remote")
 			})
 
@@ -1081,7 +1134,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectString tests the Object String method
 			t.Run("ObjectString", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				assert.Equal(t, file1.Path, obj.String())
 				if opt.NilObject != nil {
 					assert.Equal(t, "<nil>", opt.NilObject.String())
@@ -1091,7 +1144,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectFs tests the object can be found
 			t.Run("ObjectFs", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				// If this is set we don't do the direct comparison of
 				// the Fs from the object as it may be different
 				if opt.SkipFsMatch {
@@ -1110,34 +1163,34 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectRemote tests the Remote is correct
 			t.Run("ObjectRemote", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				assert.Equal(t, file1.Path, obj.Remote())
 			})
 
 			// TestObjectHashes checks all the hashes the object supports
 			t.Run("ObjectHashes", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				file1.CheckHashes(t, obj)
 			})
 
 			// TestObjectModTime tests the ModTime of the object is correct
 			TestObjectModTime := func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
-				file1.CheckModTime(t, obj, obj.ModTime(context.Background()), remote.Precision())
+				obj := findObject(ctx, t, remote, file1.Path)
+				file1.CheckModTime(t, obj, obj.ModTime(ctx), remote.Precision())
 			}
 			t.Run("ObjectModTime", TestObjectModTime)
 
 			// TestObjectMimeType tests the MimeType of the object is correct
 			t.Run("ObjectMimeType", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				do, ok := obj.(fs.MimeTyper)
 				if !ok {
 					t.Skip("MimeType method not supported")
 				}
-				mimeType := do.MimeType(context.Background())
+				mimeType := do.MimeType(ctx)
 				if strings.ContainsRune(mimeType, ';') {
 					assert.Equal(t, "text/plain; charset=utf-8", mimeType)
 				} else {
@@ -1149,15 +1202,15 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectSetModTime", func(t *testing.T) {
 				skipIfNotOk(t)
 				newModTime := fstest.Time("2011-12-13T14:15:16.999999999Z")
-				obj := findObject(t, remote, file1.Path)
-				err := obj.SetModTime(context.Background(), newModTime)
+				obj := findObject(ctx, t, remote, file1.Path)
+				err := obj.SetModTime(ctx, newModTime)
 				if err == fs.ErrorCantSetModTime || err == fs.ErrorCantSetModTimeWithoutDelete {
 					t.Log(err)
 					return
 				}
 				require.NoError(t, err)
 				file1.ModTime = newModTime
-				file1.CheckModTime(t, obj, obj.ModTime(context.Background()), remote.Precision())
+				file1.CheckModTime(t, obj, obj.ModTime(ctx), remote.Precision())
 				// And make a new object and read it from there too
 				TestObjectModTime(t)
 			})
@@ -1165,22 +1218,22 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectSize tests that Size works
 			t.Run("ObjectSize", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				assert.Equal(t, file1.Size, obj.Size())
 			})
 
 			// TestObjectOpen tests that Open works
 			t.Run("ObjectOpen", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
-				assert.Equal(t, file1Contents, readObject(t, obj, -1), "contents of file1 differ")
+				obj := findObject(ctx, t, remote, file1.Path)
+				assert.Equal(t, file1Contents, readObject(ctx, t, obj, -1), "contents of file1 differ")
 			})
 
 			// TestObjectOpenSeek tests that Open works with SeekOption
 			t.Run("ObjectOpenSeek", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
-				assert.Equal(t, file1Contents[50:], readObject(t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
+				obj := findObject(ctx, t, remote, file1.Path)
+				assert.Equal(t, file1Contents[50:], readObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
 			})
 
 			// TestObjectOpenRange tests that Open works with RangeOption
@@ -1188,7 +1241,7 @@ func Run(t *testing.T, opt *Opt) {
 			// go test -v -run 'TestIntegration/Test(Setup|Init|FsMkdir|FsPutFile1|FsPutFile2|FsUpdateFile1|ObjectOpenRange)$'
 			t.Run("ObjectOpenRange", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				for _, test := range []struct {
 					ro                 fs.RangeOption
 					wantStart, wantEnd int
@@ -1199,7 +1252,7 @@ func Run(t *testing.T, opt *Opt) {
 					{fs.RangeOption{Start: -1, End: 20}, 80, 100}, // if start is omitted this means get the final bytes
 					// {fs.RangeOption{Start: -1, End: -1}, 0, 100}, - this seems to work but the RFC doesn't define it
 				} {
-					got := readObject(t, obj, -1, &test.ro)
+					got := readObject(ctx, t, obj, -1, &test.ro)
 					foundAt := strings.Index(file1Contents, got)
 					help := fmt.Sprintf("%#v failed want [%d:%d] got [%d:%d]", test.ro, test.wantStart, test.wantEnd, foundAt, foundAt+len(got))
 					assert.Equal(t, file1Contents[test.wantStart:test.wantEnd], got, help)
@@ -1209,8 +1262,8 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectPartialRead tests that reading only part of the object does the correct thing
 			t.Run("ObjectPartialRead", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
-				assert.Equal(t, file1Contents[:50], readObject(t, obj, 50), "contents of file1 differ after limited read")
+				obj := findObject(ctx, t, remote, file1.Path)
+				assert.Equal(t, file1Contents[:50], readObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
 			})
 
 			// TestObjectUpdate tests that Update works
@@ -1222,9 +1275,9 @@ func Run(t *testing.T, opt *Opt) {
 				in := io.TeeReader(buf, hash)
 
 				file1.Size = int64(buf.Len())
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				obji := object.NewStaticObjectInfo(file1.Path, file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
-				err := obj.Update(context.Background(), in, obji)
+				err := obj.Update(ctx, in, obji)
 				require.NoError(t, err)
 				file1.Hashes = hash.Sums()
 
@@ -1232,18 +1285,18 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, remote.Precision())
 
 				// Re-read the object and check again
-				obj = findObject(t, remote, file1.Path)
+				obj = findObject(ctx, t, remote, file1.Path)
 				file1.Check(t, obj, remote.Precision())
 
 				// check contents correct
-				assert.Equal(t, contents, readObject(t, obj, -1), "contents of updated file1 differ")
+				assert.Equal(t, contents, readObject(ctx, t, obj, -1), "contents of updated file1 differ")
 				file1Contents = contents
 			})
 
 			// TestObjectStorable tests that Storable works
 			t.Run("ObjectStorable", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				require.NotNil(t, !obj.Storable(), "Expecting object to be storable")
 			})
 
@@ -1363,7 +1416,7 @@ func Run(t *testing.T, opt *Opt) {
 						ModTime: time.Now(),
 						Path:    path.Join(configLeaf, "created from root.txt"),
 					}
-					_, file3Obj := testPut(t, rootRemote, &file3Root)
+					_, file3Obj := testPut(ctx, t, rootRemote, &file3Root)
 					fstest.CheckListingWithRoot(t, rootRemote, configLeaf, []fstest.Item{file1Root, file2Root, file3Root}, nil, rootRemote.Precision())
 
 					// And then remove it
@@ -1385,29 +1438,29 @@ func Run(t *testing.T, opt *Opt) {
 				}
 
 				// if object not found
-				link, err := doPublicLink(context.Background(), file1.Path+"_does_not_exist")
+				link, err := doPublicLink(ctx, file1.Path+"_does_not_exist")
 				require.Error(t, err, "Expected to get error when file doesn't exist")
 				require.Equal(t, "", link, "Expected link to be empty on error")
 
 				// sharing file for the first time
-				link1, err := doPublicLink(context.Background(), file1.Path)
+				link1, err := doPublicLink(ctx, file1.Path)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link1, "Link should not be empty")
 
-				link2, err := doPublicLink(context.Background(), file2.Path)
+				link2, err := doPublicLink(ctx, file2.Path)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link2, "Link should not be empty")
 
 				require.NotEqual(t, link1, link2, "Links to different files should differ")
 
 				// sharing file for the 2nd time
-				link1, err = doPublicLink(context.Background(), file1.Path)
+				link1, err = doPublicLink(ctx, file1.Path)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link1, "Link should not be empty")
 
 				// sharing directory for the first time
 				path := path.Dir(file2.Path)
-				link3, err := doPublicLink(context.Background(), path)
+				link3, err := doPublicLink(ctx, path)
 				if err != nil && errors.Cause(err) == fs.ErrorCantShareDirectories {
 					t.Log("skipping directory tests as not supported on this backend")
 				} else {
@@ -1415,7 +1468,7 @@ func Run(t *testing.T, opt *Opt) {
 					require.NotEqual(t, "", link3, "Link should not be empty")
 
 					// sharing directory for the second time
-					link3, err = doPublicLink(context.Background(), path)
+					link3, err = doPublicLink(ctx, path)
 					require.NoError(t, err)
 					require.NotEqual(t, "", link3, "Link should not be empty")
 
@@ -1426,10 +1479,10 @@ func Run(t *testing.T, opt *Opt) {
 					// ensure sub remote isn't empty
 					buf := bytes.NewBufferString("somecontent")
 					obji := object.NewStaticObjectInfo("somefile", time.Now(), int64(buf.Len()), true, nil, nil)
-					_, err = subRemote.Put(context.Background(), buf, obji)
+					_, err = subRemote.Put(ctx, buf, obji)
 					require.NoError(t, err)
 
-					link4, err := subRemote.Features().PublicLink(context.Background(), "")
+					link4, err := subRemote.Features().PublicLink(ctx, "")
 					require.NoError(t, err, "Sharing root in a sub-remote should work")
 					require.NotEqual(t, "", link4, "Link should not be empty")
 				}
@@ -1438,7 +1491,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestSetTier tests SetTier and GetTier functionality
 			t.Run("SetTier", func(t *testing.T) {
 				skipIfNotSetTier(t)
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				setter, ok := obj.(fs.SetTierer)
 				assert.NotNil(t, ok)
 				getter, ok := obj.(fs.GetTierer)
@@ -1466,7 +1519,7 @@ func Run(t *testing.T, opt *Opt) {
 				if ft.UnWrap == nil {
 					t.Skip("Not a wrapping Fs")
 				}
-				obj := findObject(t, remote, file1.Path)
+				obj := findObject(ctx, t, remote, file1.Path)
 				_, unsupported := fs.ObjectOptionalInterfaces(obj)
 				for _, name := range unsupported {
 					if !stringsContains(name, opt.UnimplementableObjectMethods) {
@@ -1478,8 +1531,9 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectRemove tests Remove
 			t.Run("ObjectRemove", func(t *testing.T) {
 				skipIfNotOk(t)
-				obj := findObject(t, remote, file1.Path)
-				err := obj.Remove(context.Background())
+				// remove file1
+				obj := findObject(ctx, t, remote, file1.Path)
+				err := obj.Remove(ctx)
 				require.NoError(t, err)
 				// check listing without modtime as TestPublicLink may change the modtime
 				fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file2}, nil, fs.ModTimeNotSupported)
@@ -1501,6 +1555,8 @@ func Run(t *testing.T, opt *Opt) {
 				require.NotNil(t, usage)
 				assert.NotEqual(t, int64(0), usage.Total)
 			})
+
+			// Just file2 remains for Purge to clean up
 
 			// TestFsPutStream tests uploading files when size isn't known in advance.
 			// This may trigger large buffer allocation in some backends, keep it
@@ -1531,15 +1587,16 @@ func Run(t *testing.T, opt *Opt) {
 
 					file.Size = -1
 					obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
-					obj, err = remote.Features().PutStream(context.Background(), in, obji)
+					obj, err = remote.Features().PutStream(ctx, in, obji)
 					return err
 				})
 				file.Hashes = uploadHash.Sums()
 				file.Size = int64(contentSize) // use correct size when checking
 				file.Check(t, obj, remote.Precision())
 				// Re-read the object and check again
-				obj = findObject(t, remote, file.Path)
+				obj = findObject(ctx, t, remote, file.Path)
 				file.Check(t, obj, remote.Precision())
+				require.NoError(t, obj.Remove(ctx))
 			})
 
 			// TestInternal calls InternalTest() on the Fs
@@ -1652,7 +1709,7 @@ func Run(t *testing.T, opt *Opt) {
 
 					for _, fileSize := range testChunks {
 						t.Run(fmt.Sprintf("%d", fileSize), func(t *testing.T) {
-							TestPutLarge(t, remote, &fstest.Item{
+							TestPutLarge(ctx, t, remote, &fstest.Item{
 								ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 								Path:    fmt.Sprintf("chunked-%s-%s.bin", cs.String(), fileSize.String()),
 								Size:    int64(fileSize),
@@ -1680,9 +1737,9 @@ func Run(t *testing.T, opt *Opt) {
 				in := bytes.NewBufferString(contents)
 
 				obji := object.NewStaticObjectInfo("unknown-size-put.txt", fstest.Time("2002-02-03T04:05:06.499999999Z"), -1, true, nil, nil)
-				obj, err := remote.Put(context.Background(), in, obji)
+				obj, err := remote.Put(ctx, in, obji)
 				if err == nil {
-					require.NoError(t, obj.Remove(context.Background()), "successfully uploaded unknown-sized file but failed to remove")
+					require.NoError(t, obj.Remove(ctx), "successfully uploaded unknown-sized file but failed to remove")
 				}
 				// if err != nil: it's okay as long as no panic
 			})
@@ -1693,7 +1750,7 @@ func Run(t *testing.T, opt *Opt) {
 					Path:    "unknown-size-update.txt",
 				}
 
-				testPut(t, remote, &unknownSizeUpdateFile)
+				testPut(ctx, t, remote, &unknownSizeUpdateFile)
 
 				defer func() {
 					assert.Nil(t, recover(), "Object.Update() should not panic when src.Size() == -1")
@@ -1702,11 +1759,11 @@ func Run(t *testing.T, opt *Opt) {
 				newContents := random.String(200)
 				in := bytes.NewBufferString(newContents)
 
-				obj := findObject(t, remote, unknownSizeUpdateFile.Path)
+				obj := findObject(ctx, t, remote, unknownSizeUpdateFile.Path)
 				obji := object.NewStaticObjectInfo(unknownSizeUpdateFile.Path, unknownSizeUpdateFile.ModTime, -1, true, nil, obj.Fs())
-				err := obj.Update(context.Background(), in, obji)
+				err := obj.Update(ctx, in, obji)
 				if err == nil {
-					require.NoError(t, obj.Remove(context.Background()), "successfully updated object with unknown-sized source but failed to remove")
+					require.NoError(t, obj.Remove(ctx), "successfully updated object with unknown-sized source but failed to remove")
 				}
 				// if err != nil: it's okay as long as no panic
 			})
@@ -1728,21 +1785,21 @@ func Run(t *testing.T, opt *Opt) {
 			colonIndex := strings.IndexRune(deepRemoteName, ':')
 			firstSlashIndex := strings.IndexRune(deepRemoteName, '/')
 			firstDir := deepRemoteName[colonIndex+1 : firstSlashIndex]
-			_, err = deepRemote.NewObject(context.Background(), firstDir)
+			_, err = deepRemote.NewObject(ctx, firstDir)
 			require.Equal(t, fs.ErrorObjectNotFound, err)
 			// If err is not fs.ErrorObjectNotFound, it means the backend is
 			// somehow confused about root and absolute root.
 		})
 
 		// Purge the folder
-		err = operations.Purge(context.Background(), remote, "")
+		err = operations.Purge(ctx, remote, "")
 		require.NoError(t, err)
 		purged = true
 		fstest.CheckListing(t, remote, []fstest.Item{})
 
 		// Check purging again if not bucket based
 		if !isBucketBasedButNotRoot(remote) {
-			err = operations.Purge(context.Background(), remote, "")
+			err = operations.Purge(ctx, remote, "")
 			assert.Error(t, err, "Expecting error after on second purge")
 		}
 
@@ -1750,7 +1807,7 @@ func Run(t *testing.T, opt *Opt) {
 
 	// Check directory is purged
 	if !purged {
-		_ = operations.Purge(context.Background(), remote, "")
+		_ = operations.Purge(ctx, remote, "")
 	}
 
 	// Remove the local directory so we don't clutter up /tmp

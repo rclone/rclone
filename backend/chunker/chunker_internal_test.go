@@ -1,6 +1,7 @@
 package chunker
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"testing"
@@ -19,7 +20,7 @@ var (
 // test that chunking does not break large uploads
 func (f *Fs) InternalTestPutLarge(t *testing.T, kilobytes int) {
 	t.Run(fmt.Sprintf("PutLarge%dk", kilobytes), func(t *testing.T) {
-		fstests.TestPutLarge(t, f, &fstest.Item{
+		fstests.TestPutLarge(context.Background(), t, f, &fstest.Item{
 			ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 			Path:    fmt.Sprintf("chunker-upload-%dk", kilobytes),
 			Size:    int64(kilobytes) * int64(fs.KibiByte),

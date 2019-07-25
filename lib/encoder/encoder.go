@@ -31,6 +31,8 @@ const (
 	QuoteRune = '‛' // SINGLE HIGH-REVERSED-9 QUOTATION MARK
 )
 
+// NB keep the tests in fstests/fstests/fstests.go FsEncoding up to date with this
+
 // Possible flags for the MultiEncoder
 const (
 	EncodeZero          uint = 0         // NUL(0x00)
