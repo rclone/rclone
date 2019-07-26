@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/ncw/rclone/fs/rc"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/asyncreader"
 	"github.com/ncw/rclone/fs/fserrors"
@@ -318,8 +320,8 @@ func (acc *Account) String() string {
 }
 
 // RemoteStats produces stats for this file
-func (acc *Account) RemoteStats() (out map[string]interface{}) {
-	out = make(map[string]interface{})
+func (acc *Account) RemoteStats() (out rc.Params) {
+	out = make(rc.Params)
 	a, b := acc.progress()
 	out["bytes"] = a
 	out["size"] = b
