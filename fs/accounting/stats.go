@@ -76,22 +76,37 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 		out["checking"] = c
 	}
 	if !s.transferring.empty() {
-		var t []interface{}
 		s.transferring.mu.RLock()
-		defer s.transferring.mu.RUnlock()
+
+		var t []rc.Params
 		for name := range s.transferring.items {
 			if acc := s.inProgress.get(name); acc != nil {
 				t = append(t, acc.RemoteStats())
 			} else {
-				t = append(t, name)
+				t = append(t, s.transferRemoteStats(name))
 			}
 		}
 		out["transferring"] = t
+		s.transferring.mu.RUnlock()
 	}
 	if s.errors > 0 {
-		out["lastError"] = s.lastError
+		out["lastError"] = s.lastError.Error()
 	}
 	return out, nil
+}
+
+func (s *StatsInfo) transferRemoteStats(name string) rc.Params {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, tr := range s.startedTransfers {
+		if tr.remote == name {
+			return rc.Params{
+				"name": name,
+				"size": tr.size,
+			}
+		}
+	}
+	return rc.Params{"name": name}
 }
 
 type timeRange struct {
