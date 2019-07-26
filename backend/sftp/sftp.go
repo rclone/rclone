@@ -950,6 +950,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		escapedPath = shellEscape(path.Join(o.fs.opt.PathOverride, o.remote))
 	}
 	err = session.Run(hashCmd + " " + escapedPath)
+	fs.Debugf(nil, "sftp cmd = %s", escapedPath)
 	if err != nil {
 		_ = session.Close()
 		fs.Debugf(o, "Failed to calculate %v hash: %v (%s)", r, err, bytes.TrimSpace(stderr.Bytes()))
@@ -957,7 +958,10 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	}
 
 	_ = session.Close()
-	str := parseHash(stdout.Bytes())
+	b := stdout.Bytes()
+	fs.Debugf(nil, "sftp output = %q", b)
+	str := parseHash(b)
+	fs.Debugf(nil, "sftp hash = %q", str)
 	if r == hash.MD5 {
 		o.md5sum = &str
 	} else if r == hash.SHA1 {
@@ -966,7 +970,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return str, nil
 }
 
-var shellEscapeRegex = regexp.MustCompile(`[^A-Za-z0-9_.,:/@\n-]`)
+var shellEscapeRegex = regexp.MustCompile("[^A-Za-z0-9_.,:/\\@\u0080-\uFFFFFFFF\n-]")
 
 // Escape a string s.t. it cannot cause unintended behavior
 // when sending it to a shell.
@@ -979,7 +983,9 @@ func shellEscape(str string) string {
 // an invocation of md5sum/sha1sum to a hash string
 // as expected by the rest of this application
 func parseHash(bytes []byte) string {
-	return strings.Split(string(bytes), " ")[0] // Split at hash / filename separator
+	// For strings with backslash *sum writes a leading \
+	// https://unix.stackexchange.com/q/313733/94054
+	return strings.Split(strings.TrimLeft(string(bytes), "\\"), " ")[0] // Split at hash / filename separator
 }
 
 // Parses the byte array output from the SSH session
