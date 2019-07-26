@@ -635,6 +635,11 @@ warnings and significant events.
 
 `ERROR` is equivalent to `-q`. It only outputs error messages.
 
+### --use-json-log ###
+
+This switches the log format to JSON for rclone. The fields of json log 
+are level, msg, source, time.
+
 ### --low-level-retries NUMBER ###
 
 This controls the number of low level retries rclone does.

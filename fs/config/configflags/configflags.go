@@ -12,7 +12,9 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	fsLog "github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/fs/rc"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
 
@@ -102,6 +104,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &fs.Config.MultiThreadStreams, "multi-thread-streams", "", fs.Config.MultiThreadStreams, "Max number of streams to use for multi-thread downloads.")
 	flags.DurationVarP(flagSet, &fs.Config.RcJobExpireDuration, "rc-job-expire-duration", "", fs.Config.RcJobExpireDuration, "expire finished async jobs older than this value")
 	flags.DurationVarP(flagSet, &fs.Config.RcJobExpireInterval, "rc-job-expire-interval", "", fs.Config.RcJobExpireInterval, "interval to check for expired async jobs")
+	flags.BoolVarP(flagSet, &fs.Config.UseJSONLog, "use-json-log", "", fs.Config.UseJSONLog, "Use json log format.")
 }
 
 // SetFlags converts any flags into config which weren't straight forward
@@ -124,6 +127,27 @@ func SetFlags() {
 		}
 		if quiet {
 			log.Fatalf("Can't set -q and --log-level")
+		}
+	}
+	if fs.Config.UseJSONLog {
+		logrus.AddHook(fsLog.NewCallerHook())
+		logrus.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: "2006-01-02T15:04:05.999999-07:00",
+		})
+		logrus.SetLevel(logrus.DebugLevel)
+		switch fs.Config.LogLevel {
+		case fs.LogLevelEmergency, fs.LogLevelAlert:
+			logrus.SetLevel(logrus.PanicLevel)
+		case fs.LogLevelCritical:
+			logrus.SetLevel(logrus.FatalLevel)
+		case fs.LogLevelError:
+			logrus.SetLevel(logrus.ErrorLevel)
+		case fs.LogLevelWarning, fs.LogLevelNotice:
+			logrus.SetLevel(logrus.WarnLevel)
+		case fs.LogLevelInfo:
+			logrus.SetLevel(logrus.InfoLevel)
+		case fs.LogLevelDebug:
+			logrus.SetLevel(logrus.DebugLevel)
 		}
 	}
 
