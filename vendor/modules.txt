@@ -109,6 +109,8 @@ github.com/jmespath/go-jmespath
 github.com/jzelinskie/whirlpool
 # github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 github.com/kardianos/osext
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+github.com/konsorten/go-windows-terminal-sequences
 # github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a
 github.com/koofr/go-httpclient
 # github.com/koofr/go-koofrclient v0.0.0-20190715104037-2c5813f3c29c
@@ -147,6 +149,8 @@ github.com/rfjakob/eme
 github.com/russross/blackfriday
 # github.com/sevlyar/go-daemon v0.1.5
 github.com/sevlyar/go-daemon
+# github.com/sirupsen/logrus v1.4.2
+github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 github.com/skratchdot/open-golang/open
 # github.com/spf13/cobra v0.0.5
