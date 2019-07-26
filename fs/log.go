@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
@@ -79,7 +80,24 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 	if o != nil {
 		out = fmt.Sprintf("%v: %s", o, out)
 	}
-	LogPrint(level, out)
+	if Config.UseJSONLog {
+		switch level {
+		case LogLevelDebug:
+			logrus.Debug(out)
+		case LogLevelInfo:
+			logrus.Info(out)
+		case LogLevelNotice, LogLevelWarning:
+			logrus.Warn(out)
+		case LogLevelError:
+			logrus.Error(out)
+		case LogLevelCritical:
+			logrus.Fatal(out)
+		case LogLevelEmergency, LogLevelAlert:
+			logrus.Panic(out)
+		}
+	} else {
+		LogPrint(level, out)
+	}
 }
 
 // LogLevelPrintf writes logs at the given level
