@@ -40,6 +40,7 @@ var (
 type ConfigInfo struct {
 	LogLevel               LogLevel
 	StatsLogLevel          LogLevel
+	UseJSONLog             bool
 	DryRun                 bool
 	CheckSum               bool
 	SizeOnly               bool
