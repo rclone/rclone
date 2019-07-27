@@ -21,6 +21,13 @@ const Display = encoder.Standard
 // LocalUnix is the encoding used by the local backend for non windows platforms
 const LocalUnix = Base
 
+// LocalMacOS is the encoding used by the local backend for macOS
+//
+// macOS can't store invalid UTF-8, it converts them into %XX encoding
+const LocalMacOS = encoder.MultiEncoder(
+	uint(Base) |
+		encoder.EncodeInvalidUtf8)
+
 // LocalWindows is the encoding used by the local backend for windows platforms
 //
 // List of replaced characters:
@@ -267,6 +274,8 @@ func ByName(name string) encoder.Encoder {
 		return LocalWindows
 	case "local-unix", "unix":
 		return LocalUnix
+	case "local-macos", "macos":
+		return LocalMacOS
 	case "mega":
 		return Mega
 	case "onedrive":
@@ -309,6 +318,7 @@ func Names() []string {
 		"koofr",
 		"local-unix",
 		"local-windows",
+		"local-macos",
 		"local",
 		"mega",
 		"onedrive",
