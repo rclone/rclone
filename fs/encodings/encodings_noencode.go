@@ -19,6 +19,7 @@ const (
 	Box                = Base
 	Drive              = Base
 	Dropbox            = Base
+	FTP                = Base
 	GoogleCloudStorage = Base
 	JottaCloud         = Base
 	Koofr              = Base
