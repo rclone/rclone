@@ -334,7 +334,7 @@ You could then use it like this:
 This will transfer these files only (if they exist)
 
     /home/me/pics/file1.jpg        → remote:pics/file1.jpg
-    /home/me/pics/subdir/file2.jpg → remote:pics/subdirfile1.jpg
+    /home/me/pics/subdir/file2.jpg → remote:pics/subdir/file2.jpg
 
 To take a more complicated example, let's say you had a few files you
 want to back up regularly with these absolute paths:
@@ -360,7 +360,7 @@ The 3 files will arrive in `remote:backup` with the paths as in the
 
     /home/user1/important → remote:backup/user1/important
     /home/user1/dir/file  → remote:backup/user1/dir/file
-    /home/user2/stuff     → remote:backup/stuff
+    /home/user2/stuff     → remote:backup/user2/stuff
 
 You could of course choose `/` as the root too in which case your
 `files-from.txt` might look like this.
@@ -375,9 +375,9 @@ And you would transfer it like this
 
 In this case there will be an extra `home` directory on the remote:
 
-    /home/user1/important → remote:home/backup/user1/important
-    /home/user1/dir/file  → remote:home/backup/user1/dir/file
-    /home/user2/stuff     → remote:home/backup/stuff
+    /home/user1/important → remote:backup/home/user1/important
+    /home/user1/dir/file  → remote:backup/home/user1/dir/file
+    /home/user2/stuff     → remote:backup/home/user2/stuff
 
 ### `--min-size` - Don't transfer any file smaller than this ###
 
