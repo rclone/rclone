@@ -103,6 +103,25 @@ will be time of upload.
 
 FTP does not support any checksums.
 
+#### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+File names can also not end with the following characters.
+These only get replaced if they are last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+
+Note that not all FTP servers can have all characters in file names, for example:
+
+| FTP Server| Forbidden characters |
+| --------- |:--------------------:|
+| proftpd   | `*`                  |
+| pureftpd  | `\ [ ]`              |
+
 ### Implicit TLS ###
 
 FTP supports implicit FTP over TLS servers (FTPS). This has to be enabled

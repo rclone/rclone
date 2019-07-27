@@ -222,6 +222,17 @@ const Pcloud = encoder.MultiEncoder(
 		encoder.EncodeBackSlash |
 		encoder.EncodeInvalidUtf8)
 
+// FTP is the encoding used by the ftp backend
+//
+// The FTP protocal can't handle trailing spaces (for instance
+// pureftpd turns them into _)
+//
+// proftpd can't handle '*' in file names
+// pureftpd can't handle '[', ']' or '*'
+const FTP = encoder.MultiEncoder(
+	uint(Display) |
+		encoder.EncodeRightSpace)
+
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
 	switch strings.ToLower(name) {

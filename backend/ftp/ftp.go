@@ -17,10 +17,13 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 )
+
+const enc = encodings.FTP
 
 // Register with Fs
 func init() {
@@ -295,6 +298,25 @@ func translateErrorDir(err error) error {
 	return err
 }
 
+// entryToStandard converts an incoming ftp.Entry to Standard encoding
+func entryToStandard(entry *ftp.Entry) {
+	// Skip . and .. as we don't want these encoded
+	if entry.Name == "." || entry.Name == ".." {
+		return
+	}
+	entry.Name = enc.ToStandardName(entry.Name)
+	entry.Target = enc.ToStandardPath(entry.Target)
+}
+
+// dirFromStandardPath returns dir in encoded form.
+func dirFromStandardPath(dir string) string {
+	// Skip . and .. as we don't want these encoded
+	if dir == "." || dir == ".." {
+		return dir
+	}
+	return enc.FromStandardPath(dir)
+}
+
 // findItem finds a directory entry for the name in its parent directory
 func (f *Fs) findItem(remote string) (entry *ftp.Entry, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
@@ -314,12 +336,13 @@ func (f *Fs) findItem(remote string) (entry *ftp.Entry, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "findItem")
 	}
-	files, err := c.List(dir)
+	files, err := c.List(dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
 	}
 	for _, file := range files {
+		entryToStandard(file)
 		if file.Name == base {
 			return file, nil
 		}
@@ -386,7 +409,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	resultchan := make(chan []*ftp.Entry, 1)
 	errchan := make(chan error, 1)
 	go func() {
-		result, err := c.List(path.Join(f.root, dir))
+		result, err := c.List(dirFromStandardPath(path.Join(f.root, dir)))
 		f.putFtpConnection(&c, err)
 		if err != nil {
 			errchan <- err
@@ -423,6 +446,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	for i := range files {
 		object := files[i]
+		entryToStandard(object)
 		newremote := path.Join(dir, object.Name)
 		switch object.Type {
 		case ftp.EntryTypeFolder:
@@ -492,19 +516,21 @@ func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "getInfo")
 	}
-	files, err := c.List(dir)
+	files, err := c.List(dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
 	}
 
 	for i := range files {
-		if files[i].Name == base {
+		file := files[i]
+		entryToStandard(file)
+		if file.Name == base {
 			info := &FileInfo{
 				Name:    remote,
-				Size:    files[i].Size,
-				ModTime: files[i].Time,
-				IsDir:   files[i].Type == ftp.EntryTypeFolder,
+				Size:    file.Size,
+				ModTime: file.Time,
+				IsDir:   file.Type == ftp.EntryTypeFolder,
 			}
 			return info, nil
 		}
@@ -514,6 +540,7 @@ func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
 
 // mkdir makes the directory and parents using unrooted paths
 func (f *Fs) mkdir(abspath string) error {
+	abspath = path.Clean(abspath)
 	if abspath == "." || abspath == "/" {
 		return nil
 	}
@@ -535,7 +562,7 @@ func (f *Fs) mkdir(abspath string) error {
 	if connErr != nil {
 		return errors.Wrap(connErr, "mkdir")
 	}
-	err = c.MakeDir(abspath)
+	err = c.MakeDir(dirFromStandardPath(abspath))
 	f.putFtpConnection(&c, err)
 	switch errX := err.(type) {
 	case *textproto.Error:
@@ -571,7 +598,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return errors.Wrap(translateErrorFile(err), "Rmdir")
 	}
-	err = c.RemoveDir(path.Join(f.root, dir))
+	err = c.RemoveDir(dirFromStandardPath(path.Join(f.root, dir)))
 	f.putFtpConnection(&c, err)
 	return translateErrorDir(err)
 }
@@ -592,8 +619,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, errors.Wrap(err, "Move")
 	}
 	err = c.Rename(
-		path.Join(srcObj.fs.root, srcObj.remote),
-		path.Join(f.root, remote),
+		enc.FromStandardPath(path.Join(srcObj.fs.root, srcObj.remote)),
+		enc.FromStandardPath(path.Join(f.root, remote)),
 	)
 	f.putFtpConnection(&c, err)
 	if err != nil {
@@ -646,8 +673,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return errors.Wrap(err, "DirMove")
 	}
 	err = c.Rename(
-		srcPath,
-		dstPath,
+		dirFromStandardPath(srcPath),
+		dirFromStandardPath(dstPath),
 	)
 	f.putFtpConnection(&c, err)
 	if err != nil {
@@ -773,7 +800,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 	if err != nil {
 		return nil, errors.Wrap(err, "open")
 	}
-	fd, err := c.RetrFrom(path, uint64(offset))
+	fd, err := c.RetrFrom(enc.FromStandardPath(path), uint64(offset))
 	if err != nil {
 		o.fs.putFtpConnection(&c, err)
 		return nil, errors.Wrap(err, "open")
@@ -808,7 +835,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return errors.Wrap(err, "Update")
 	}
-	err = c.Stor(path, in)
+	err = c.Stor(enc.FromStandardPath(path), in)
 	if err != nil {
 		_ = c.Quit() // toss this connection to avoid sync errors
 		remove()
@@ -838,7 +865,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "Remove")
 		}
-		err = c.Delete(path)
+		err = c.Delete(enc.FromStandardPath(path))
 		o.fs.putFtpConnection(&c, err)
 	}
 	return err
