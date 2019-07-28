@@ -16,7 +16,7 @@ environment:
   PATHCC32: C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin;%NOCCPATH%
   PATH: '%PATHCC64%'
   RCLONE_CONFIG_PASS:
-    secure: HbzxSy9zQ8NYWN9NNPf6ALQO9Q0mwRNqwehsLcOEHy0=
+    secure: sq9CPBbwaeKJv+yd24U44neORYPQVy6jsjnQptC+5yk=
 
 install:
 - choco install winfsp -y
