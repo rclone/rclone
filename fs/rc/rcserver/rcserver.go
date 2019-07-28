@@ -56,6 +56,9 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		s.files = http.FileServer(http.Dir(opt.Files))
 	}
+	if opt.WebUI {
+		s.files = http.FileServer(http.Dir("webui/build"))
+	}
 	return s
 }
 
@@ -115,8 +118,9 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 
 	// echo back access control headers client needs
-	reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
-	w.Header().Add("Access-Control-Allow-Headers", reqAccessHeaders)
+	//reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
+	w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
+	w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 
 	switch r.Method {
 	case "POST":

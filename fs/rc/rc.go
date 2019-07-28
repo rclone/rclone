@@ -22,6 +22,7 @@ type Options struct {
 	Serve       bool   // set to serve files from remotes
 	Files       string // set to enable serving files locally
 	NoAuth      bool   // set to disable auth checks on AuthRequired methods
+	WebUI       bool   // set to launch the web ui.
 }
 
 // DefaultOpt is the default values used for Options
