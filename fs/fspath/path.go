@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ncw/rclone/fs/driveletter"
+	"github.com/rclone/rclone/fs/driveletter"
 )
 
 // Matcher is a pattern to match an rclone URL

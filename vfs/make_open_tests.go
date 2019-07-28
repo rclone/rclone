@@ -16,7 +16,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ncw/rclone/lib/file"
+	"github.com/rclone/rclone/lib/file"
 )
 
 // Interprets err into a vfs error

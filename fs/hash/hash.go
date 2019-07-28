@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/jzelinskie/whirlpool"
-	"github.com/ncw/rclone/backend/dropbox/dbhash"
-	"github.com/ncw/rclone/backend/onedrive/quickxorhash"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/dropbox/dbhash"
+	"github.com/rclone/rclone/backend/onedrive/quickxorhash"
 )
 
 // Type indicates a standard hashing algorithm

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs"
 )
 
 // Func defines a type for a remote control function

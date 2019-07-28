@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs"
 	"golang.org/x/net/publicsuffix"
 	"golang.org/x/time/rate"
 )

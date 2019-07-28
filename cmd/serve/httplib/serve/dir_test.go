@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ncw/rclone/cmd/serve/httplib/serve/data"
+	"github.com/rclone/rclone/cmd/serve/httplib/serve/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

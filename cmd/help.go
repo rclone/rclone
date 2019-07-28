@@ -7,11 +7,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/configflags"
-	"github.com/ncw/rclone/fs/filter/filterflags"
-	"github.com/ncw/rclone/fs/rc/rcflags"
-	"github.com/ncw/rclone/lib/atexit"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configflags"
+	"github.com/rclone/rclone/fs/filter/filterflags"
+	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

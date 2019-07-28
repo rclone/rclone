@@ -166,7 +166,7 @@ Install from source
 Make sure you have at least Go 1.7 installed. Download go if necessary.
 The latest release is recommended. Then
 
-    git clone https://github.com/ncw/rclone.git
+    git clone https://github.com/rclone/rclone.git
     cd rclone
     go build
     ./rclone version
@@ -174,11 +174,11 @@ The latest release is recommended. Then
 You can also build and install rclone in the GOPATH (which defaults to
 ~/go) with:
 
-    go get -u -v github.com/ncw/rclone
+    go get -u -v github.com/rclone/rclone
 
 and this will build the binary in $GOPATH/bin (~/go/bin/rclone by
 default) after downloading the source to
-$GOPATH/src/github.com/ncw/rclone (~/go/src/github.com/ncw/rclone by
+$GOPATH/src/github.com/rclone/rclone (~/go/src/github.com/rclone/rclone by
 default).
 
 
@@ -6859,14 +6859,14 @@ You can also use the -text flag to produce a textual summary
     $ go tool pprof -text http://localhost:5572/debug/pprof/heap
     Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
           flat  flat%   sum%        cum   cum%
-     1024.03kB 66.62% 66.62%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
+     1024.03kB 66.62% 66.62%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
          513kB 33.38%   100%      513kB 33.38%  net/http.newBufioWriterSize
-             0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/all.init
-             0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve.init
-             0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve/restic.init
-             0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2.init
-             0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init
-             0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init.0
+             0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/all.init
+             0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/serve.init
+             0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/serve/restic.init
+             0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2.init
+             0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init
+             0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init.0
              0     0%   100%  1024.03kB 66.62%  main.init
              0     0%   100%      513kB 33.38%  net/http.(*conn).readRequest
              0     0%   100%      513kB 33.38%  net/http.(*conn).serve
@@ -10186,9 +10186,9 @@ on them.
 Any reports or feedback on how cache behaves on this OS is greatly
 appreciated.
 
--   https://github.com/ncw/rclone/issues/1935
--   https://github.com/ncw/rclone/issues/1907
--   https://github.com/ncw/rclone/issues/1834
+-   https://github.com/rclone/rclone/issues/1935
+-   https://github.com/rclone/rclone/issues/1907
+-   https://github.com/rclone/rclone/issues/1834
 
 Risk of throttling
 
@@ -10208,8 +10208,8 @@ the file in the cache at the same time if configured to do so.
 
 Future enhancements:
 
--   https://github.com/ncw/rclone/issues/1937
--   https://github.com/ncw/rclone/issues/1936
+-   https://github.com/rclone/rclone/issues/1937
+-   https://github.com/rclone/rclone/issues/1936
 
 cache and crypt
 
@@ -19523,7 +19523,7 @@ Gitub project
 
 The project website is at:
 
--   https://github.com/ncw/rclone
+-   https://github.com/rclone/rclone
 
 There you can file bug reports or contribute pull requests.
 

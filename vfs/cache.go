@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
-	"github.com/ncw/rclone/fs"
-	fscache "github.com/ncw/rclone/fs/cache"
-	"github.com/ncw/rclone/fs/config"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	fscache "github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
 )
 
 // CacheMode controls the functionality of the cache

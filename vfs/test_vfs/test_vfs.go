@@ -17,7 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ncw/rclone/lib/file"
+	"github.com/rclone/rclone/lib/file"
 )
 
 var (

@@ -14,12 +14,12 @@ import (
 
 	"github.com/atotto/clipboard"
 	runewidth "github.com/mattn/go-runewidth"
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/ncdu/scan"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/operations"
 	termbox "github.com/nsf/termbox-go"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/ncdu/scan"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 

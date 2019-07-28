@@ -6,8 +6,8 @@ import (
 	"context"
 	"syscall"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 )
 
 // About gets quota information

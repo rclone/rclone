@@ -249,7 +249,7 @@ The entire path, including the file name, must contain fewer than 400 characters
 OneDrive seems to be OK with at least 50,000 files in a folder, but at
 100,000 rclone will get errors listing the directory like `couldn’t
 list files: UnknownError:`.  See
-[#2707](https://github.com/ncw/rclone/issues/2707) for more info.
+[#2707](https://github.com/rclone/rclone/issues/2707) for more info.
 
 An official document about the limitations for different types of OneDrive can be found [here](https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa). 
 

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/ncw/swift"
+	"github.com/rclone/rclone/fs"
 )
 
 // auth is an authenticator for swift

@@ -52,7 +52,7 @@ converted to the UNC path `\\?\c:\files` in the output,
 and `\\server\share` is converted to `\\?\UNC\server\share`.
 
 However, in rare cases this may cause problems with buggy file
-system drivers like [EncFS](https://github.com/ncw/rclone/issues/261).
+system drivers like [EncFS](https://github.com/rclone/rclone/issues/261).
 To disable UNC conversion globally, add this to your `.rclone.conf` file:
 
 ```
@@ -301,7 +301,7 @@ are being uploaded and aborts with a message which starts "can't copy
 - source file is being updated" if the file changes during upload.
 
 However on some file systems this modification time check may fail (eg
-[Glusterfs #2206](https://github.com/ncw/rclone/issues/2206)) so this
+[Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
 check can be disabled with this flag.
 
 - Config:      no_check_updated

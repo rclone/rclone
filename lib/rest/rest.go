@@ -14,8 +14,8 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 )
 
 // Client contains the info to sustain the API

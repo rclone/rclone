@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/dirtree"
-	"github.com/ncw/rclone/fs/filter"
-	"github.com/ncw/rclone/fs/list"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/dirtree"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/list"
 )
 
 // ErrorSkipDir is used as a return value from Walk to indicate that the

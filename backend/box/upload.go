@@ -14,11 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/backend/box/api"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/box/api"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // createUploadSession creates an upload session for the object
@@ -97,7 +97,7 @@ func (o *Object) commitUpload(SessionID string, parts []api.Part, modTime time.T
 	var body []byte
 	var resp *http.Response
 	// For discussion of this value see:
-	// https://github.com/ncw/rclone/issues/2054
+	// https://github.com/rclone/rclone/issues/2054
 	maxTries := o.fs.opt.CommitRetries
 	const defaultDelay = 10
 	var tries int

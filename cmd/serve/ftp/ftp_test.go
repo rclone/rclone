@@ -15,9 +15,9 @@ import (
 	"testing"
 
 	ftp "github.com/goftp/server"
-	_ "github.com/ncw/rclone/backend/local"
-	"github.com/ncw/rclone/cmd/serve/ftp/ftpopt"
-	"github.com/ncw/rclone/fstest"
+	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/ftp/ftpopt"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 )
 

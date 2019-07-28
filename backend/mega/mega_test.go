@@ -4,8 +4,8 @@ package mega_test
 import (
 	"testing"
 
-	"github.com/ncw/rclone/backend/mega"
-	"github.com/ncw/rclone/fstest/fstests"
+	"github.com/rclone/rclone/backend/mega"
+	"github.com/rclone/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote
