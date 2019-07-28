@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ncw/rclone/backend/crypt/pkcs7"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

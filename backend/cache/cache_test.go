@@ -7,9 +7,9 @@ package cache_test
 import (
 	"testing"
 
-	"github.com/ncw/rclone/backend/cache"
-	_ "github.com/ncw/rclone/backend/local"
-	"github.com/ncw/rclone/fstest/fstests"
+	"github.com/rclone/rclone/backend/cache"
+	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote

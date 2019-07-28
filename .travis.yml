@@ -4,7 +4,7 @@ sudo: required
 dist: xenial
 os:
   - linux
-go_import_path: github.com/ncw/rclone
+go_import_path: github.com/rclone/rclone
 before_install:
   - git fetch --unshallow --tags
   - |

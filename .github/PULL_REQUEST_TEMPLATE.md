@@ -22,8 +22,8 @@ Link issues and relevant forum posts here.
 
 #### Checklist
 
-- [ ] I have read the [contribution guidelines](https://github.com/ncw/rclone/blob/master/CONTRIBUTING.md#submitting-a-pull-request).
+- [ ] I have read the [contribution guidelines](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#submitting-a-pull-request).
 - [ ] I have added tests for all changes in this PR if appropriate.
 - [ ] I have added documentation for the changes if appropriate.
-- [ ] All commit messages are in [house style](https://github.com/ncw/rclone/blob/master/CONTRIBUTING.md#commit-messages).
+- [ ] All commit messages are in [house style](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#commit-messages).
 - [ ] I'm done, this Pull Request is ready for review :-)

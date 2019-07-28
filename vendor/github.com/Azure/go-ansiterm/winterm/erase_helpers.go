@@ -2,7 +2,7 @@
 
 package winterm
 
-import "github.com/Azure/go-ansiterm"
+import ansiterm "github.com/Azure/go-ansiterm"
 
 func (h *windowsAnsiEventHandler) clearRange(attributes uint16, fromCoord COORD, toCoord COORD) error {
 	// Ignore an invalid (negative area) request

@@ -17,12 +17,12 @@ import (
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
-	"github.com/ncw/rclone/cmd/mountlib"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/okzk/sdnotify"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 func init() {

@@ -29,12 +29,12 @@ You'll need a Go environment set up with GOPATH set.  See [the Go
 getting started docs](https://golang.org/doc/install) for more info.
 
 First in your web browser press the fork button on [rclone's GitHub
-page](https://github.com/ncw/rclone).
+page](https://github.com/rclone/rclone).
 
 Now in your terminal
 
-    go get -u github.com/ncw/rclone
-    cd $GOPATH/src/github.com/ncw/rclone
+    go get -u github.com/rclone/rclone
+    cd $GOPATH/src/github.com/rclone/rclone
     git remote rename origin upstream
     git remote add origin git@github.com:YOURUSER/rclone.git
 
@@ -127,7 +127,7 @@ If you want to use the integration test framework to run these tests
 all together with an HTML report and test retries then from the
 project root:
 
-    go install github.com/ncw/rclone/fstest/test_all
+    go install github.com/rclone/rclone/fstest/test_all
     test_all -backend drive
 
 If you want to run all the integration tests against all the remotes,

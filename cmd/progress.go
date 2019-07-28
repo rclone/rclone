@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/log"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/log"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

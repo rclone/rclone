@@ -7,8 +7,8 @@ import (
 	"html/template"
 	"io/ioutil"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 )
 
 // GetTemplate returns the HTML template for serving directories via HTTP

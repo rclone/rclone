@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Azure/go-ansiterm"
+	ansiterm "github.com/Azure/go-ansiterm"
 )
 
 type windowsAnsiEventHandler struct {

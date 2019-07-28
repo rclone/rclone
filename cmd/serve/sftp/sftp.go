@@ -5,11 +5,11 @@
 package sftp
 
 import (
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/config/flags"
-	"github.com/ncw/rclone/fs/rc"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

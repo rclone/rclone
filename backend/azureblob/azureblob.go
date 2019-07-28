@@ -24,16 +24,16 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/fshttp"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/walk"
-	"github.com/ncw/rclone/lib/pacer"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/pacer"
 )
 
 const (
@@ -1427,7 +1427,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// FIXME Until https://github.com/Azure/azure-storage-blob-go/pull/75
 	// is merged the SDK can't upload a single blob of exactly the chunk
 	// size, so upload with a multpart upload to work around.
-	// See: https://github.com/ncw/rclone/issues/2653
+	// See: https://github.com/rclone/rclone/issues/2653
 	multipartUpload := size >= int64(o.fs.opt.UploadCutoff)
 	if size == int64(o.fs.opt.ChunkSize) {
 		multipartUpload = true

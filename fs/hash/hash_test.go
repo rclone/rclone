@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/ncw/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

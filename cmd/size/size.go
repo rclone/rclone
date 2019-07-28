@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/operations"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 

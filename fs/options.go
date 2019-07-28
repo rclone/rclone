@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs/hash"
 )
 
 // OpenOption is an interface describing options for Open

@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/ncw/rclone/backend/all" // import all the backends
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fstest"
 	"github.com/pkg/errors"
+	_ "github.com/rclone/rclone/backend/all" // import all the backends
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

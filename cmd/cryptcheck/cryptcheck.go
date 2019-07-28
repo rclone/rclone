@@ -3,12 +3,12 @@ package cryptcheck
 import (
 	"context"
 
-	"github.com/ncw/rclone/backend/crypt"
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/crypt"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 

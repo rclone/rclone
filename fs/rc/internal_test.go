@@ -5,9 +5,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/obscure"
-	"github.com/ncw/rclone/fs/version"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

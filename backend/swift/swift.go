@@ -14,17 +14,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/fshttp"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/operations"
-	"github.com/ncw/rclone/fs/walk"
-	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/pacer"
 )
 
 // Constants

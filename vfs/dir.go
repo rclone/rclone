@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/dirtree"
-	"github.com/ncw/rclone/fs/list"
-	"github.com/ncw/rclone/fs/operations"
-	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/dirtree"
+	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 )
 
 // Dir represents a directory entry

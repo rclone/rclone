@@ -15,14 +15,14 @@ import (
 	"sync"
 
 	ftp "github.com/goftp/server"
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/serve/ftp/ftpflags"
-	"github.com/ncw/rclone/cmd/serve/ftp/ftpopt"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/ftp/ftpflags"
+	"github.com/rclone/rclone/cmd/serve/ftp/ftpopt"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 

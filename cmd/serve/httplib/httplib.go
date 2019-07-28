@@ -16,9 +16,9 @@ import (
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
-	"github.com/ncw/rclone/cmd/serve/httplib/serve/data"
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/serve/httplib/serve/data"
+	"github.com/rclone/rclone/fs"
 )
 
 // Globals

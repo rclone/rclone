@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/backend/googlephotos/api"
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/googlephotos/api"
+	"github.com/rclone/rclone/fs"
 )
 
 // lister describes the subset of the interfaces on Fs needed for the

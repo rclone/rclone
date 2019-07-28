@@ -8,14 +8,14 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/filter"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/march"
-	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/march"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 type syncCopyMove struct {

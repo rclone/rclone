@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ncw/rclone/fstest/mockobject"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 )
 

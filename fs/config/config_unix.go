@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs"
 )
 
 // attemptCopyGroups tries to keep the group the same. User will be the one

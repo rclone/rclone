@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/operations"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 

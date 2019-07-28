@@ -1,8 +1,9 @@
 package koofrclient
 
 import (
-	"github.com/koofr/go-httpclient"
 	"net/http"
+
+	httpclient "github.com/koofr/go-httpclient"
 )
 
 func (c *KoofrClient) UserInfo() (user User, err error) {

@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
-	"github.com/ncw/rclone/cmd/serve/httplib/serve"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
+	"github.com/rclone/rclone/cmd/serve/httplib/serve"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 

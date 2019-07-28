@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/config/obscure"
-	"github.com/ncw/rclone/fs/fspath"
-	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fspath"
+	"github.com/rclone/rclone/fs/hash"
 )
 
 // Globals

@@ -3,9 +3,9 @@
 package sftp
 
 import (
+	"fmt"
 	"os"
 	"time"
-	"fmt"
 )
 
 func runLs(dirname string, dirent os.FileInfo) string {

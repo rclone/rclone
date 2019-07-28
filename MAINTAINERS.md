@@ -51,7 +51,7 @@ The milestones have these meanings:
 * Help wanted - blue sky stuff that might get moved up, or someone could help with
 * Known bugs - bugs waiting on external factors or we aren't going to fix for the moment
 
-Tickets [with no milestone](https://github.com/ncw/rclone/issues?utf8=✓&q=is%3Aissue%20is%3Aopen%20no%3Amile) are good candidates for ones that have slipped between the gaps and need following up.
+Tickets [with no milestone](https://github.com/rclone/rclone/issues?utf8=✓&q=is%3Aissue%20is%3Aopen%20no%3Amile) are good candidates for ones that have slipped between the gaps and need following up.
 
 ## Closing Tickets ##
 

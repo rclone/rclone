@@ -28,8 +28,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/log"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/log"
 )
 
 // DefaultOpt is the default values uses for Opt

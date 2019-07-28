@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs"
 )
 
 // TransferSnapshot represents state of an account at point in time.

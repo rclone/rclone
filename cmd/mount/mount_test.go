@@ -5,7 +5,7 @@ package mount
 import (
 	"testing"
 
-	"github.com/ncw/rclone/cmd/mountlib/mounttest"
+	"github.com/rclone/rclone/cmd/mountlib/mounttest"
 )
 
 func TestMount(t *testing.T) {
