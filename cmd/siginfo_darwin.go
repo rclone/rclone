@@ -17,7 +17,7 @@ func SigInfoHandler() {
 	signal.Notify(signals, syscall.SIGINFO)
 	go func() {
 		for range signals {
-			log.Printf("%v\n", accounting.Stats)
+			log.Printf("%v\n", accounting.GlobalStats())
 		}
 	}()
 }
