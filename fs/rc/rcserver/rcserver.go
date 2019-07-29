@@ -60,8 +60,7 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 	if opt.Files != "" {
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		s.files = http.FileServer(http.Dir(opt.Files))
-	}
-	if opt.WebUI {
+	} else if opt.WebUI {
 		s.files = http.FileServer(http.Dir("webui/build"))
 	}
 	return s
