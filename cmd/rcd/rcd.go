@@ -85,8 +85,8 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 	},
 }
 
-/**
-Get the latest release details of the rclone-webui-react
+/*
+GetLatestReleaseURL returns the latest release details of the rclone-webui-react
 */
 func GetLatestReleaseURL() (string, string, int) {
 	resp, err := http.Get("https://api.github.com/repos/negative0/rclone-webui-react/releases/latest")
@@ -107,7 +107,7 @@ func GetLatestReleaseURL() (string, string, int) {
 
 }
 
-/**
+/*
 DownloadFile is a helper function to download a file from url to the filepath
 */
 func DownloadFile(filepath string, url string) error {
