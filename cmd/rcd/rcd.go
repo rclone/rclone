@@ -2,11 +2,15 @@ package rcd
 
 import (
 	"archive/zip"
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/rc/rcflags"
@@ -44,16 +48,23 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			rcflags.Opt.Files = args[0]
 		}
 
-		webUiUrl := "https://github.com/negative0/rclone-webui-react/releases/download/v0.0.1/currentbuild.zip"
 		if rcflags.Opt.WebUI {
+
+			// Get the latest release details
+			webUiURL, tag, size := GetLatestReleaseURL()
+
 			// Load the file
-			exists := exists("currentbuild.zip")
+			exists := exists(tag + ".zip")
 			if !exists {
-				if err := DownloadFile("currentbuild.zip", webUiUrl); err != nil {
+				fmt.Println("Downloading webui binary. Please wait Size :" + strconv.Itoa(size))
+				if err := DownloadFile(tag+".zip", webUiURL); err != nil {
 					panic(err)
 				} else {
 					println("Unzipping")
-					if err := Unzip("currentbuild.zip", "webui"); err != nil {
+					if err := os.RemoveAll("/webui"); err != nil {
+						fmt.Println("No previous downloads to remove")
+					}
+					if err := Unzip(tag+".zip", "webui"); err != nil {
 						panic("Error extracting file")
 					}
 				}
@@ -74,6 +85,31 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 	},
 }
 
+/**
+Get the latest release details of the rclone-webui-react
+*/
+func GetLatestReleaseURL() (string, string, int) {
+	resp, err := http.Get("https://api.github.com/repos/negative0/rclone-webui-react/releases/latest")
+	if err != nil {
+		panic("Error getting latest release of rclone-webui")
+	}
+	results := GitHubRequest{}
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		panic("Could not decode results from http request")
+	}
+
+	res := results.Assets[0].BrowserDownloadURL
+	tag := results.TagName
+	size := results.Assets[0].Size
+	//fmt.Println( "URL:" + res)
+
+	return res, tag, size
+
+}
+
+/**
+Helper function to download a file from url to the filepath
+*/
 func DownloadFile(filepath string, url string) error {
 
 	// Get the data
@@ -81,20 +117,31 @@ func DownloadFile(filepath string, url string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	// Create the file
 	out, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() {
+		if err := out.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
 
+/**
+Helper function to unzip a file specified in src to path dest
+*/
 func Unzip(src, dest string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
@@ -106,7 +153,9 @@ func Unzip(src, dest string) error {
 		}
 	}()
 
-	os.MkdirAll(dest, 0755)
+	if err := os.MkdirAll(dest, 0755); err != nil {
+		return err
+	}
 
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
@@ -123,9 +172,11 @@ func Unzip(src, dest string) error {
 		path := filepath.Join(dest, f.Name)
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(path, f.Mode())
+			if err := os.MkdirAll(path, f.Mode()); err != nil {
+				return err
+			}
 		} else {
-			os.MkdirAll(filepath.Dir(path), f.Mode())
+			err := os.MkdirAll(filepath.Dir(path), f.Mode())
 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
 				return err
@@ -164,4 +215,33 @@ func exists(path string) bool {
 		return false
 	}
 	return true
+}
+
+/**
+Map the GitHub API request to structure
+*/
+type GitHubRequest struct {
+	URL string `json:"url"`
+
+	Prerelease  bool      `json:"prerelease"`
+	CreatedAt   time.Time `json:"created_at"`
+	PublishedAt time.Time `json:"published_at"`
+	TagName     string    `json:"tag_name"`
+	Assets      []struct {
+		URL                string    `json:"url"`
+		ID                 int       `json:"id"`
+		NodeID             string    `json:"node_id"`
+		Name               string    `json:"name"`
+		Label              string    `json:"label"`
+		ContentType        string    `json:"content_type"`
+		State              string    `json:"state"`
+		Size               int       `json:"size"`
+		DownloadCount      int       `json:"download_count"`
+		CreatedAt          time.Time `json:"created_at"`
+		UpdatedAt          time.Time `json:"updated_at"`
+		BrowserDownloadURL string    `json:"browser_download_url"`
+	} `json:"assets"`
+	TarballURL string `json:"tarball_url"`
+	ZipballURL string `json:"zipball_url"`
+	Body       string `json:"body"`
 }
