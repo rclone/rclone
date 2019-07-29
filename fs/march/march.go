@@ -10,11 +10,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/dirtree"
-	"github.com/ncw/rclone/fs/filter"
-	"github.com/ncw/rclone/fs/list"
-	"github.com/ncw/rclone/fs/walk"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/dirtree"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/walk"
 	"golang.org/x/text/unicode/norm"
 )
 

@@ -20,18 +20,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/backend/b2/api"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/fshttp"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/walk"
-	"github.com/ncw/rclone/lib/pacer"
-	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/b2/api"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 const (
@@ -548,12 +548,12 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 	if info != nil {
 		err := o.decodeMetaData(info)
 		if err != nil {
-			return nil, err
+			return o, err
 		}
 	} else {
 		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err != nil {
-			return nil, err
+			return o, err
 		}
 	}
 	return o, nil
@@ -1084,16 +1084,25 @@ func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {
-				accounting.Stats.Checking(object.Name)
-				checkErr(f.deleteByID(object.ID, object.Name))
-				accounting.Stats.DoneChecking(object.Name)
+				oi, err := f.newObjectWithInfo(ctx, object.Name, object)
+				if err != nil {
+					fs.Errorf(object, "Can't create object %+v", err)
+				}
+				tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
+				err = f.deleteByID(object.ID, object.Name)
+				checkErr(err)
+				tr.Done(err)
 			}
 		}()
 	}
 	last := ""
 	checkErr(f.list(ctx, "", true, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
-			accounting.Stats.Checking(remote)
+			oi, err := f.newObjectWithInfo(ctx, object.Name, object)
+			if err != nil {
+				fs.Errorf(object, "Can't create object %+v", err)
+			}
+			tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
 			if oldOnly && last != remote {
 				if object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
@@ -1109,7 +1118,7 @@ func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 				toBeDeleted <- object
 			}
 			last = remote
-			accounting.Stats.DoneChecking(remote)
+			tr.Done(nil)
 		}
 		return nil
 	}))

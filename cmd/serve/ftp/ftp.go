@@ -15,14 +15,14 @@ import (
 	"sync"
 
 	ftp "github.com/goftp/server"
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/serve/ftp/ftpflags"
-	"github.com/ncw/rclone/cmd/serve/ftp/ftpopt"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/ftp/ftpflags"
+	"github.com/rclone/rclone/cmd/serve/ftp/ftpopt"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
@@ -214,8 +214,10 @@ func (d *Driver) ListDir(path string, callback func(ftp.FileInfo) error) (err er
 	}
 
 	// Account the transfer
-	accounting.Stats.Transferring(path)
-	defer accounting.Stats.DoneTransferring(path, true)
+	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size())
+	defer func() {
+		tr.Done(err)
+	}()
 
 	for _, file := range dirEntries {
 		err = callback(&FileInfo{file, file.Mode(), d.vfs.Opt.UID, d.vfs.Opt.GID})
@@ -311,8 +313,8 @@ func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadClose
 	}
 
 	// Account the transfer
-	accounting.Stats.Transferring(path)
-	defer accounting.Stats.DoneTransferring(path, true)
+	tr := accounting.GlobalStats().NewTransferRemoteSize(path, node.Size())
+	defer tr.Done(nil)
 
 	return node.Size(), handle, nil
 }

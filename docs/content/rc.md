@@ -150,6 +150,9 @@ The rc interface supports some special parameters which apply to
 
 ### Running asynchronous jobs with _async = true
 
+Each rc call is classified as a job and it is assigned its own id. By default
+jobs are executed immediately as they are created or synchronously.
+
 If `_async` has a true value when supplied to an rc call then it will
 return immediately with a job id and the task will be run in the
 background.  The `job/status` call can be used to get information of
@@ -207,6 +210,25 @@ $ rclone rc job/list
 	"jobids": [
 		2
 	]
+}
+```
+
+### Assigning operations to groups with _group = <value>
+
+Each rc call has it's own stats group for tracking it's metrics. By default
+grouping is done by the composite group name from prefix `job/` and  id of the
+job like so `job/1`.
+
+If `_group` has a value then stats for that request will be grouped under that
+value. This allows caller to group stats under their own name.
+
+Stats for specific group can be accessed by passing `group` to `core/stats`:
+
+```
+$ rclone rc --json '{ "group": "job/1" }' core/stats
+{
+	"speed": 12345
+	...
 }
 ```
 
@@ -342,17 +364,52 @@ This sets the bandwidth limit to that passed in.
 
 Eg
 
-    rclone rc core/bwlimit rate=1M
     rclone rc core/bwlimit rate=off
+    {
+        "bytesPerSecond": -1,
+        "rate": "off"
+    }
+    rclone rc core/bwlimit rate=1M
+    {
+        "bytesPerSecond": 1048576,
+        "rate": "1M"
+    }
+
+
+If the rate parameter is not suppied then the bandwidth is queried
+
+    rclone rc core/bwlimit
+    {
+        "bytesPerSecond": 1048576,
+        "rate": "1M"
+    }
 
 The format of the parameter is exactly the same as passed to --bwlimit
 except only one bandwidth may be specified.
+
+In either case "rate" is returned as a human readable string, and
+"bytesPerSecond" is returned as a number.
 
 ### core/gc: Runs a garbage collection.
 
 This tells the go runtime to do a garbage collection run.  It isn't
 necessary to call this normally, but it can be useful for debugging
 memory problems.
+
+### core/group_list: Returns list of stats.
+
+This returns list of stats groups currently in memory. 
+
+Returns the following values:
+```
+{
+	"groups":  an array of group names:
+		[
+			"group1",
+			"group2",
+			...
+		]
+}
 
 ### core/memstats: Returns the memory statistics
 
@@ -381,9 +438,15 @@ Useful for stopping rclone process.
 
 ### core/stats: Returns stats about current transfers.
 
-This returns all available stats
+This returns all available stats:
 
 	rclone rc core/stats
+
+If group is not provided then summed up stats for all groups will be
+returned.
+
+Parameters
+- group - name of the stats group (string)
 
 Returns the following values:
 
@@ -418,6 +481,35 @@ Returns the following values:
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
 
+### core/transferred: Returns stats about completed transfers.
+
+This returns stats about completed transfers:
+
+	rclone rc core/transferred
+
+If group is not provided then completed transfers for all groups will be
+returned.
+
+Parameters
+- group - name of the stats group (string)
+
+Returns the following values:
+```
+{
+	"transferred":  an array of completed transfers (including failed ones):
+		[
+			{
+				"name": name of the file,
+				"size": size of the file in bytes,
+				"bytes": total transferred bytes for this file,
+				"checked": if the transfer is only checked (skipped, deleted),
+				"timestamp": integer representing millisecond unix epoch,
+				"error": string description of the error (empty if successfull),
+				"jobid": id of the job that this transfer belongs to
+			}
+		]
+}
+
 ### core/version: Shows the current version of rclone and the go runtime.
 
 This shows the current version of go and the go runtime
@@ -451,6 +543,12 @@ Results
 - startTime - time the job started (eg "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
+- progress - output of the progress related to the underlying job
+
+### job/stop: Stop the running job
+
+Parameters
+- jobid - id of the job (integer)
 
 ### operations/about: Return the space used on the remote
 
@@ -1012,14 +1110,14 @@ You can also use the `-text` flag to produce a textual summary
 $ go tool pprof -text http://localhost:5572/debug/pprof/heap
 Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       flat  flat%   sum%        cum   cum%
- 1024.03kB 66.62% 66.62%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
+ 1024.03kB 66.62% 66.62%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
      513kB 33.38%   100%      513kB 33.38%  net/http.newBufioWriterSize
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/all.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve/restic.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init.0
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/all.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/serve.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/serve/restic.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init.0
          0     0%   100%  1024.03kB 66.62%  main.init
          0     0%   100%      513kB 33.38%  net/http.(*conn).readRequest
          0     0%   100%      513kB 33.38%  net/http.(*conn).serve

@@ -8,14 +8,14 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/filter"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/march"
-	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/march"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 type syncCopyMove struct {
@@ -82,12 +82,12 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		dstEmptyDirs:       make(map[string]fs.DirEntry),
 		srcEmptyDirs:       make(map[string]fs.DirEntry),
 		noTraverse:         fs.Config.NoTraverse,
-		toBeChecked:        newPipe(accounting.Stats.SetCheckQueue, fs.Config.MaxBacklog),
-		toBeUploaded:       newPipe(accounting.Stats.SetTransferQueue, fs.Config.MaxBacklog),
+		toBeChecked:        newPipe(accounting.Stats(ctx).SetCheckQueue, fs.Config.MaxBacklog),
+		toBeUploaded:       newPipe(accounting.Stats(ctx).SetTransferQueue, fs.Config.MaxBacklog),
 		deleteFilesCh:      make(chan fs.Object, fs.Config.Checkers),
 		trackRenames:       fs.Config.TrackRenames,
 		commonHash:         fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
-		toBeRenamed:        newPipe(accounting.Stats.SetRenameQueue, fs.Config.MaxBacklog),
+		toBeRenamed:        newPipe(accounting.Stats(ctx).SetRenameQueue, fs.Config.MaxBacklog),
 		trackRenamesCh:     make(chan fs.Object, fs.Config.Checkers),
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
@@ -215,7 +215,8 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 			return
 		}
 		src := pair.Src
-		accounting.Stats.Checking(src.Remote())
+		var err error
+		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src)
 		// Check to see if can store this
 		if src.Storable() {
 			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
@@ -256,7 +257,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 				}
 			}
 		}
-		accounting.Stats.DoneChecking(src.Remote())
+		tr.Done(err)
 	}
 }
 
@@ -401,7 +402,7 @@ func (s *syncCopyMove) stopDeleters() {
 // checkSrcMap is clear then it assumes that the any source files that
 // have been found have been removed from dstFiles already.
 func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
-	if accounting.Stats.Errored() && !fs.Config.IgnoreErrors {
+	if accounting.Stats(s.ctx).Errored() && !fs.Config.IgnoreErrors {
 		fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
 		return fs.ErrorNotDeleting
 	}
@@ -437,7 +438,7 @@ func deleteEmptyDirectories(ctx context.Context, f fs.Fs, entriesMap map[string]
 	if len(entriesMap) == 0 {
 		return nil
 	}
-	if accounting.Stats.Errored() && !fs.Config.IgnoreErrors {
+	if accounting.Stats(ctx).Errored() && !fs.Config.IgnoreErrors {
 		fs.Errorf(f, "%v", fs.ErrorNotDeletingDirs)
 		return fs.ErrorNotDeletingDirs
 	}
@@ -497,8 +498,8 @@ func copyEmptyDirectories(ctx context.Context, f fs.Fs, entries map[string]fs.Di
 		}
 	}
 
-	if accounting.Stats.Errored() {
-		fs.Debugf(f, "failed to copy %d directories", accounting.Stats.GetErrors())
+	if accounting.Stats(ctx).Errored() {
+		fs.Debugf(f, "failed to copy %d directories", accounting.Stats(ctx).GetErrors())
 	}
 
 	if okCount > 0 {
@@ -587,12 +588,12 @@ func (s *syncCopyMove) makeRenameMap() {
 			for obj := range in {
 				// only create hash for dst fs.Object if its size could match
 				if _, found := possibleSizes[obj.Size()]; found {
-					accounting.Stats.Checking(obj.Remote())
+					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj)
 					hash := s.renameHash(obj)
 					if hash != "" {
 						s.pushRenameMap(hash, obj)
 					}
-					accounting.Stats.DoneChecking(obj.Remote())
+					tr.Done(nil)
 				}
 			}
 		}()

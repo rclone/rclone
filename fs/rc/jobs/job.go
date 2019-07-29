@@ -1,28 +1,34 @@
 // Manage background jobs that the rc is running
 
-package rc
+package jobs
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs/rc"
+
+	"github.com/rclone/rclone/fs/accounting"
+
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 )
 
 // Job describes a asynchronous task started via the rc package
 type Job struct {
 	mu        sync.Mutex
 	ID        int64     `json:"id"`
+	Group     string    `json:"group"`
 	StartTime time.Time `json:"startTime"`
 	EndTime   time.Time `json:"endTime"`
 	Error     string    `json:"error"`
 	Finished  bool      `json:"finished"`
 	Success   bool      `json:"success"`
 	Duration  float64   `json:"duration"`
-	Output    Params    `json:"output"`
+	Output    rc.Params `json:"output"`
 	Stop      func()    `json:"-"`
 }
 
@@ -96,11 +102,11 @@ func (jobs *Jobs) Get(ID int64) *Job {
 }
 
 // mark the job as finished
-func (job *Job) finish(out Params, err error) {
+func (job *Job) finish(out rc.Params, err error) {
 	job.mu.Lock()
 	job.EndTime = time.Now()
 	if out == nil {
-		out = make(Params)
+		out = make(rc.Params)
 	}
 	job.Output = out
 	job.Duration = job.EndTime.Sub(job.StartTime).Seconds()
@@ -117,7 +123,7 @@ func (job *Job) finish(out Params, err error) {
 }
 
 // run the job until completion writing the return status
-func (job *Job) run(ctx context.Context, fn Func, in Params) {
+func (job *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
 	defer func() {
 		if r := recover(); r != nil {
 			job.finish(nil, errors.Errorf("panic received: %v", r))
@@ -126,37 +132,93 @@ func (job *Job) run(ctx context.Context, fn Func, in Params) {
 	job.finish(fn(ctx, in))
 }
 
-// NewJob start a new Job off
-func (jobs *Jobs) NewJob(fn Func, in Params) *Job {
-	ctx, cancel := context.WithCancel(context.Background())
+func getGroup(in rc.Params) string {
+	// Check to see if the group is set
+	group, err := in.GetString("_group")
+	if rc.NotErrParamNotFound(err) {
+		fs.Errorf(nil, "Can't get _group param %+v", err)
+	}
+	delete(in, "_group")
+	return group
+}
+
+// NewAsyncJob start a new asynchronous Job off
+func (jobs *Jobs) NewAsyncJob(fn rc.Func, in rc.Params) *Job {
+	id := atomic.AddInt64(&jobID, 1)
+
+	group := getGroup(in)
+	if group == "" {
+		group = fmt.Sprintf("job/%d", id)
+	}
+	ctx := accounting.WithStatsGroup(context.Background(), group)
+	ctx, cancel := context.WithCancel(ctx)
 	stop := func() {
 		cancel()
 		// Wait for cancel to propagate before returning.
 		<-ctx.Done()
 	}
 	job := &Job{
-		ID:        atomic.AddInt64(&jobID, 1),
+		ID:        id,
+		Group:     group,
 		StartTime: time.Now(),
 		Stop:      stop,
 	}
-	go job.run(ctx, fn, in)
 	jobs.mu.Lock()
 	jobs.jobs[job.ID] = job
 	jobs.mu.Unlock()
+	go job.run(ctx, fn, in)
 	return job
-
 }
 
-// StartJob starts a new job and returns a Param suitable for output
-func StartJob(fn Func, in Params) (Params, error) {
-	job := running.NewJob(fn, in)
-	out := make(Params)
+// NewSyncJob start a new synchronous Job off
+func (jobs *Jobs) NewSyncJob(ctx context.Context, in rc.Params) (*Job, context.Context) {
+	id := atomic.AddInt64(&jobID, 1)
+	group := getGroup(in)
+	if group == "" {
+		group = fmt.Sprintf("job/%d", id)
+	}
+	ctxG := accounting.WithStatsGroup(ctx, fmt.Sprintf("job/%d", id))
+	ctx, cancel := context.WithCancel(ctxG)
+	stop := func() {
+		cancel()
+		// Wait for cancel to propagate before returning.
+		<-ctx.Done()
+	}
+	job := &Job{
+		ID:        id,
+		Group:     group,
+		StartTime: time.Now(),
+		Stop:      stop,
+	}
+	jobs.mu.Lock()
+	jobs.jobs[job.ID] = job
+	jobs.mu.Unlock()
+	return job, ctx
+}
+
+// StartAsyncJob starts a new job asynchronously and returns a Param suitable
+// for output.
+func StartAsyncJob(fn rc.Func, in rc.Params) (rc.Params, error) {
+	job := running.NewAsyncJob(fn, in)
+	out := make(rc.Params)
 	out["jobid"] = job.ID
 	return out, nil
 }
 
+// ExecuteJob executes new job synchronously and returns a Param suitable for
+// output.
+func ExecuteJob(ctx context.Context, fn rc.Func, in rc.Params) (rc.Params, int64, error) {
+	job, ctx := running.NewSyncJob(ctx, in)
+	job.run(ctx, fn, in)
+	var err error
+	if !job.Success {
+		err = errors.New(job.Error)
+	}
+	return job.Output, job.ID, err
+}
+
 func init() {
-	Add(Call{
+	rc.Add(rc.Call{
 		Path:  "job/status",
 		Fn:    rcJobStatus,
 		Title: "Reads the status of the job ID",
@@ -179,7 +241,7 @@ Results
 }
 
 // Returns the status of a job
-func rcJobStatus(ctx context.Context, in Params) (out Params, err error) {
+func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	jobID, err := in.GetInt64("jobid")
 	if err != nil {
 		return nil, err
@@ -190,8 +252,8 @@ func rcJobStatus(ctx context.Context, in Params) (out Params, err error) {
 	}
 	job.mu.Lock()
 	defer job.mu.Unlock()
-	out = make(Params)
-	err = Reshape(&out, job)
+	out = make(rc.Params)
+	err = rc.Reshape(&out, job)
 	if err != nil {
 		return nil, errors.Wrap(err, "reshape failed in job status")
 	}
@@ -199,7 +261,7 @@ func rcJobStatus(ctx context.Context, in Params) (out Params, err error) {
 }
 
 func init() {
-	Add(Call{
+	rc.Add(rc.Call{
 		Path:  "job/list",
 		Fn:    rcJobList,
 		Title: "Lists the IDs of the running jobs",
@@ -212,14 +274,14 @@ Results
 }
 
 // Returns list of job ids.
-func rcJobList(ctx context.Context, in Params) (out Params, err error) {
-	out = make(Params)
+func rcJobList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	out = make(rc.Params)
 	out["jobids"] = running.IDs()
 	return out, nil
 }
 
 func init() {
-	Add(Call{
+	rc.Add(rc.Call{
 		Path:  "job/stop",
 		Fn:    rcJobStop,
 		Title: "Stop the running job",
@@ -230,7 +292,7 @@ func init() {
 }
 
 // Stops the running job.
-func rcJobStop(ctx context.Context, in Params) (out Params, err error) {
+func rcJobStop(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	jobID, err := in.GetInt64("jobid")
 	if err != nil {
 		return nil, err
@@ -241,7 +303,7 @@ func rcJobStop(ctx context.Context, in Params) (out Params, err error) {
 	}
 	job.mu.Lock()
 	defer job.mu.Unlock()
-	out = make(Params)
+	out = make(rc.Params)
 	job.Stop()
 	return out, nil
 }

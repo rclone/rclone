@@ -7,9 +7,9 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/lib/rest"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/lib/rest"
 )
 
 // DirEntry is a directory entry
@@ -75,8 +75,8 @@ func Error(what interface{}, w http.ResponseWriter, text string, err error) {
 // Serve serves a directory
 func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	// Account the transfer
-	accounting.Stats.Transferring(d.DirRemote)
-	defer accounting.Stats.DoneTransferring(d.DirRemote, true)
+	tr := accounting.Stats(r.Context()).NewTransferRemoteSize(d.DirRemote, -1)
+	defer tr.Done(nil)
 
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
 

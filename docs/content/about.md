@@ -74,6 +74,6 @@ Features
 Links
 
   * <i class="fa fa-home"></i> [Home page](https://rclone.org/)
-  * <i class="fa fa-github"></i> [GitHub project page for source and bug tracker](https://github.com/ncw/rclone)
+  * <i class="fa fa-github"></i> [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
   * <i class="fa fa-comments"></i> [Rclone Forum](https://forum.rclone.org)
   * <i class="fa fa-cloud-download"></i>[Downloads](/downloads/)

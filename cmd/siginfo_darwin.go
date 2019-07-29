@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ncw/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/accounting"
 )
 
 // SigInfoHandler creates SigInfo handler
@@ -17,7 +17,7 @@ func SigInfoHandler() {
 	signal.Notify(signals, syscall.SIGINFO)
 	go func() {
 		for range signals {
-			log.Printf("%v\n", accounting.Stats)
+			log.Printf("%v\n", accounting.GlobalStats())
 		}
 	}()
 }

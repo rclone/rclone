@@ -22,11 +22,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/walk"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
@@ -274,7 +274,8 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 		expectedDirs = filterEmptyDirs(t, items, expectedDirs)
 	}
 	is := NewItems(items)
-	oldErrors := accounting.Stats.GetErrors()
+	ctx := context.Background()
+	oldErrors := accounting.Stats(ctx).GetErrors()
 	var objs []fs.Object
 	var dirs []fs.Directory
 	var err error
@@ -283,7 +284,6 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	wantListing1, wantListing2 := makeListingFromItems(items)
 	gotListing := "<unset>"
 	listingOK := false
-	ctx := context.Background()
 	for i := 1; i <= retries; i++ {
 		objs, dirs, err = walk.GetAll(ctx, f, "", true, -1)
 		if err != nil && err != fs.ErrorDirNotFound {
@@ -317,8 +317,8 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	}
 	is.Done(t)
 	// Don't notice an error when listing an empty directory
-	if len(items) == 0 && oldErrors == 0 && accounting.Stats.GetErrors() == 1 {
-		accounting.Stats.ResetErrors()
+	if len(items) == 0 && oldErrors == 0 && accounting.Stats(ctx).GetErrors() == 1 {
+		accounting.Stats(ctx).ResetErrors()
 	}
 	// Check the directories
 	if expectedDirs != nil {

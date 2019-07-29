@@ -17,9 +17,9 @@ import (
 	"time"
 
 	bolt "github.com/coreos/bbolt"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/walk"
 )
 
 // Constants

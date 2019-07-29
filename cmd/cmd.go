@@ -20,20 +20,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/cache"
-	"github.com/ncw/rclone/fs/config/configflags"
-	"github.com/ncw/rclone/fs/config/flags"
-	"github.com/ncw/rclone/fs/filter"
-	"github.com/ncw/rclone/fs/filter/filterflags"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/fspath"
-	fslog "github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/fs/rc/rcflags"
-	"github.com/ncw/rclone/fs/rc/rcserver"
-	"github.com/ncw/rclone/lib/atexit"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configflags"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/filter/filterflags"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fspath"
+	fslog "github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fs/rc/rcserver"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -232,25 +232,25 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	for try := 1; try <= *retries; try++ {
 		err = f()
 		fs.CountError(err)
-		lastErr := accounting.Stats.GetLastError()
+		lastErr := accounting.GlobalStats().GetLastError()
 		if err == nil {
 			err = lastErr
 		}
-		if !Retry || !accounting.Stats.Errored() {
+		if !Retry || !accounting.GlobalStats().Errored() {
 			if try > 1 {
 				fs.Errorf(nil, "Attempt %d/%d succeeded", try, *retries)
 			}
 			break
 		}
-		if accounting.Stats.HadFatalError() {
+		if accounting.GlobalStats().HadFatalError() {
 			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
-		if accounting.Stats.Errored() && !accounting.Stats.HadRetryError() {
+		if accounting.GlobalStats().Errored() && !accounting.GlobalStats().HadRetryError() {
 			fs.Errorf(nil, "Can't retry this error - not attempting retries")
 			break
 		}
-		if retryAfter := accounting.Stats.RetryAfter(); !retryAfter.IsZero() {
+		if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
 			d := retryAfter.Sub(time.Now())
 			if d > 0 {
 				fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
@@ -258,12 +258,12 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			}
 		}
 		if lastErr != nil {
-			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.Stats.GetErrors(), lastErr)
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.GlobalStats().GetErrors(), lastErr)
 		} else {
-			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, *retries, accounting.Stats.GetErrors())
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, *retries, accounting.GlobalStats().GetErrors())
 		}
 		if try < *retries {
-			accounting.Stats.ResetErrors()
+			accounting.GlobalStats().ResetErrors()
 		}
 		if *retriesInterval > 0 {
 			time.Sleep(*retriesInterval)
@@ -271,7 +271,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	}
 	stopStats()
 	if err != nil {
-		nerrs := accounting.Stats.GetErrors()
+		nerrs := accounting.GlobalStats().GetErrors()
 		if nerrs <= 1 {
 			log.Printf("Failed to %s: %v", cmd.Name(), err)
 		} else {
@@ -279,8 +279,8 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 		resolveExitCode(err)
 	}
-	if showStats && (accounting.Stats.Errored() || *statsInterval > 0) {
-		accounting.Stats.Log()
+	if showStats && (accounting.GlobalStats().Errored() || *statsInterval > 0) {
+		accounting.GlobalStats().Log()
 	}
 	fs.Debugf(nil, "%d go routines active\n", runtime.NumGoroutine())
 
@@ -303,8 +303,8 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 	}
 
-	if accounting.Stats.Errored() {
-		resolveExitCode(accounting.Stats.GetLastError())
+	if accounting.GlobalStats().Errored() {
+		resolveExitCode(accounting.GlobalStats().GetLastError())
 	}
 }
 
@@ -337,7 +337,7 @@ func StartStats() func() {
 		for {
 			select {
 			case <-ticker.C:
-				accounting.Stats.Log()
+				accounting.GlobalStats().Log()
 			case <-stopStats:
 				ticker.Stop()
 				return

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -127,4 +127,55 @@ func TestStatsError(t *testing.T) {
 	assert.False(t, s.HadFatalError())
 	assert.False(t, s.HadRetryError())
 	assert.Equal(t, time.Time{}, s.RetryAfter())
+}
+
+func TestStatsTotalDuration(t *testing.T) {
+	time1 := time.Now().Add(-40 * time.Second)
+	time2 := time1.Add(10 * time.Second)
+	time3 := time2.Add(10 * time.Second)
+	time4 := time3.Add(10 * time.Second)
+	s := NewStats()
+	s.AddTransfer(&Transfer{
+		startedAt:   time2,
+		completedAt: time3,
+	})
+	s.AddTransfer(&Transfer{
+		startedAt:   time2,
+		completedAt: time2.Add(time.Second),
+	})
+	s.AddTransfer(&Transfer{
+		startedAt:   time1,
+		completedAt: time3,
+	})
+	s.AddTransfer(&Transfer{
+		startedAt:   time3,
+		completedAt: time4,
+	})
+	s.AddTransfer(&Transfer{
+		startedAt: time.Now(),
+	})
+
+	time.Sleep(time.Millisecond)
+
+	s.mu.Lock()
+	total := s.totalDuration()
+	s.mu.Unlock()
+
+	assert.True(t, 30*time.Second < total && total < 31*time.Second, total)
+}
+
+func TestStatsTotalDuration2(t *testing.T) {
+	time1 := time.Now().Add(-40 * time.Second)
+	time2 := time1.Add(10 * time.Second)
+	s := NewStats()
+	s.AddTransfer(&Transfer{
+		startedAt:   time1,
+		completedAt: time2,
+	})
+
+	s.mu.Lock()
+	total := s.totalDuration()
+	s.mu.Unlock()
+
+	assert.Equal(t, 10*time.Second, total)
 }

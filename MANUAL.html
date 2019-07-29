@@ -82,7 +82,7 @@
 <p>Links</p>
 <ul>
 <li><a href="https://rclone.org/">Home page</a></li>
-<li><a href="https://github.com/ncw/rclone">GitHub project page for source and bug tracker</a></li>
+<li><a href="https://github.com/rclone/rclone">GitHub project page for source and bug tracker</a></li>
 <li><a href="https://forum.rclone.org">Rclone Forum</a></li>
 <li><a href="https://rclone.org/downloads/">Downloads</a></li>
 </ul>
@@ -132,13 +132,13 @@ sudo mv rclone /usr/local/bin/</code></pre>
 <pre><code>rclone config</code></pre>
 <h2 id="install-from-source">Install from source</h2>
 <p>Make sure you have at least <a href="https://golang.org/">Go</a> 1.7 installed. <a href="https://golang.org/dl/">Download go</a> if necessary. The latest release is recommended. Then</p>
-<pre><code>git clone https://github.com/ncw/rclone.git
+<pre><code>git clone https://github.com/rclone/rclone.git
 cd rclone
 go build
 ./rclone version</code></pre>
 <p>You can also build and install rclone in the <a href="https://github.com/golang/go/wiki/GOPATH">GOPATH</a> (which defaults to <code>~/go</code>) with:</p>
-<pre><code>go get -u -v github.com/ncw/rclone</code></pre>
-<p>and this will build the binary in <code>$GOPATH/bin</code> (<code>~/go/bin/rclone</code> by default) after downloading the source to <code>$GOPATH/src/github.com/ncw/rclone</code> (<code>~/go/src/github.com/ncw/rclone</code> by default).</p>
+<pre><code>go get -u -v github.com/rclone/rclone</code></pre>
+<p>and this will build the binary in <code>$GOPATH/bin</code> (<code>~/go/bin/rclone</code> by default) after downloading the source to <code>$GOPATH/src/github.com/rclone/rclone</code> (<code>~/go/src/github.com/rclone/rclone</code> by default).</p>
 <h2 id="installation-with-ansible">Installation with Ansible</h2>
 <p>This can be done with <a href="https://github.com/stefangweichinger/ansible-rclone">Stefan Weichinger’s ansible role</a>.</p>
 <p>Instructions</p>
@@ -1189,7 +1189,7 @@ umount /path/to/local/mount</code></pre>
 <h3 id="attribute-caching">Attribute caching</h3>
 <p>You can use the flag –attr-timeout to set the time the kernel caches the attributes (size, modification time etc) for directory entries.</p>
 <p>The default is “1s” which caches files just long enough to avoid too many callbacks to rclone from the kernel.</p>
-<p>In theory 0s should be the correct value for filesystems which can change outside the control of the kernel. However this causes quite a few problems such as <a href="https://github.com/ncw/rclone/issues/2157">rclone using too much memory</a>, <a href="https://forum.rclone.org/t/rclone-1-39-vs-1-40-mount-issue/5112">rclone not serving files to samba</a> and <a href="https://github.com/ncw/rclone/issues/2095#issuecomment-371141147">excessive time listing directories</a>.</p>
+<p>In theory 0s should be the correct value for filesystems which can change outside the control of the kernel. However this causes quite a few problems such as <a href="https://github.com/rclone/rclone/issues/2157">rclone using too much memory</a>, <a href="https://forum.rclone.org/t/rclone-1-39-vs-1-40-mount-issue/5112">rclone not serving files to samba</a> and <a href="https://github.com/rclone/rclone/issues/2095#issuecomment-371141147">excessive time listing directories</a>.</p>
 <p>The kernel can cache the info about a file for the time given by “–attr-timeout”. You may see corruption if the remote file changes length during this window. It will show up as either a truncated file or a file with garbage on the end. With “–attr-timeout 1s” this is very unlikely but not impossible. The higher you set “–attr-timeout” the more likely it is. The default setting of “1s” is the lowest setting which mitigates the problems above.</p>
 <p>If you set it higher (‘10s’ or ‘1m’ say) then the kernel will call back to rclone less often making it more efficient, however there is more chance of the corruption issue above.</p>
 <p>If files don’t change on the remote outside of the control of rclone then there is no chance of corruption.</p>
@@ -2183,7 +2183,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <h3 id="windows">Windows</h3>
 <p>If your names have spaces in you need to put them in <code>&quot;</code>, eg</p>
 <pre><code>rclone copy &quot;E:\folder name\folder name\folder name&quot; remote:backup</code></pre>
-<p>If you are using the root directory on its own then don’t quote it (see <a href="https://github.com/ncw/rclone/issues/464">#464</a> for why), eg</p>
+<p>If you are using the root directory on its own then don’t quote it (see <a href="https://github.com/rclone/rclone/issues/464">#464</a> for why), eg</p>
 <pre><code>rclone copy E:\ remote:backup</code></pre>
 <h2 id="copying-files-or-directories-with-in-the-names">Copying files or directories with <code>:</code> in the names</h2>
 <p>rclone uses <code>:</code> to mark a remote name. This is, however, a valid filename component in non-Windows OSes. The remote name parser will only search for a <code>:</code> up to the first <code>/</code> so if you need to act on a file or directory like this then use the full path starting with a <code>/</code>, or use <code>./</code> as a current directory prefix.</p>
@@ -2285,7 +2285,7 @@ rclone sync /path/to/files remote:current-backup</code></pre>
 <h3 id="ignore-size">–ignore-size</h3>
 <p>Normally rclone will look at modification time and size of files to see if they are equal. If you set this flag then rclone will check only the modification time. If <code>--checksum</code> is set then it only checks the checksum.</p>
 <p>It will also cause rclone to skip verifying the sizes are the same after transfer.</p>
-<p>This can be useful for transferring files to and from OneDrive which occasionally misreports the size of image files (see <a href="https://github.com/ncw/rclone/issues/399">#399</a> for more info).</p>
+<p>This can be useful for transferring files to and from OneDrive which occasionally misreports the size of image files (see <a href="https://github.com/rclone/rclone/issues/399">#399</a> for more info).</p>
 <h3 id="i-ignore-times">-I, –ignore-times</h3>
 <p>Using this option will cause rclone to unconditionally upload all files regardless of the state of files on the destination.</p>
 <p>Normally rclone would skip any files that have the same modification time and are the same size (or have the same checksum if using <code>--checksum</code>).</p>
@@ -3507,14 +3507,14 @@ $ echo $?
 <pre><code>$ go tool pprof -text http://localhost:5572/debug/pprof/heap
 Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       flat  flat%   sum%        cum   cum%
- 1024.03kB 66.62% 66.62%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
+ 1024.03kB 66.62% 66.62%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
      513kB 33.38%   100%      513kB 33.38%  net/http.newBufioWriterSize
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/all.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/cmd/serve/restic.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init
-         0     0%   100%  1024.03kB 66.62%  github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init.0
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/all.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/serve.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/cmd/serve/restic.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init
+         0     0%   100%  1024.03kB 66.62%  github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init.0
          0     0%   100%  1024.03kB 66.62%  main.init
          0     0%   100%      513kB 33.38%  net/http.(*conn).readRequest
          0     0%   100%      513kB 33.38%  net/http.(*conn).serve
@@ -3790,10 +3790,10 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/575">#575</a></td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="even">
@@ -3805,7 +3805,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="odd">
@@ -3817,7 +3817,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="even">
@@ -3826,7 +3826,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/575">#575</a></td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -3838,7 +3838,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/575">#575</a></td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
@@ -3853,7 +3853,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="odd">
@@ -3865,7 +3865,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="even">
@@ -3889,7 +3889,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="even">
@@ -3901,7 +3901,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">Yes</td>
 </tr>
 <tr class="odd">
@@ -3925,7 +3925,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">Yes</td>
 </tr>
 <tr class="odd">
@@ -3937,7 +3937,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="even">
@@ -3946,7 +3946,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/575">#575</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/575">#575</a></td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
@@ -3973,7 +3973,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">Yes</td>
 </tr>
 <tr class="odd">
@@ -3985,7 +3985,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">Yes</td>
 </tr>
 <tr class="even">
@@ -3997,7 +3997,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">No</td>
 </tr>
 <tr class="odd">
@@ -4009,7 +4009,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">Yes</td>
 </tr>
 <tr class="even">
@@ -4021,7 +4021,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes ‡</td>
-<td style="text-align: center;">No <a href="https://github.com/ncw/rclone/issues/2178">#2178</a></td>
+<td style="text-align: center;">No <a href="https://github.com/rclone/rclone/issues/2178">#2178</a></td>
 <td style="text-align: center;">Yes</td>
 </tr>
 <tr class="odd">
@@ -4666,7 +4666,7 @@ In the case the object is larger than 5Gb or is in Glacier or Glacier Deep Archi
 <p>For reference, <a href="https://gist.github.com/ebridges/ebfc9042dd7c756cd101cfa807b7ae2b">here’s an Ansible script</a> that will generate one or more buckets that will work with <code>rclone sync</code>.</p>
 <h3 id="key-management-system-kms">Key Management System (KMS)</h3>
 <p>If you are using server side encryption with KMS then you will find you can’t transfer small objects. As a work-around you can use the <code>--ignore-checksum</code> flag.</p>
-<p>A proper fix is being worked on in <a href="https://github.com/ncw/rclone/issues/1824">issue #1824</a>.</p>
+<p>A proper fix is being worked on in <a href="https://github.com/rclone/rclone/issues/1824">issue #1824</a>.</p>
 <h3 id="glacier-and-glacier-deep-archive">Glacier and Glacier Deep Archive</h3>
 <p>You can upload objects using the glacier storage class or transition them to glacier using a <a href="http://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html">lifecycle policy</a>. The bucket can still be synced or copied into normally, but if rclone tries to access data from the glacier storage class you will see an error like below.</p>
 <pre><code>2017/09/11 19:07:43 Failed to sync: failed to open source object: Object in GLACIER, restore first: path/to/file</code></pre>
@@ -6233,7 +6233,7 @@ y/e/d&gt; y</code></pre>
 <p>The SHA1 checksums of the files are checked on upload and download and will be used in the syncing process.</p>
 <p>Large files (bigger than the limit in <code>--b2-upload-cutoff</code>) which are uploaded in chunks will store their SHA1 on the object as <code>X-Bz-Info-large_file_sha1</code> as recommended by Backblaze.</p>
 <p>For a large file to be uploaded with an SHA1 checksum, the source needs to support SHA1 checksums. The local disk supports SHA1 checksums so large file transfers from local disk will have an SHA1. See <a href="/overview/#features">the overview</a> for exactly which remotes support SHA1.</p>
-<p>Sources which don’t support SHA1, in particular <code>crypt</code> will upload large files without SHA1 checksums. This may be fixed in the future (see <a href="https://github.com/ncw/rclone/issues/1767">#1767</a>).</p>
+<p>Sources which don’t support SHA1, in particular <code>crypt</code> will upload large files without SHA1 checksums. This may be fixed in the future (see <a href="https://github.com/rclone/rclone/issues/1767">#1767</a>).</p>
 <p>Files sizes below <code>--b2-upload-cutoff</code> will always have an SHA1 regardless of the source.</p>
 <h3 id="transfers">Transfers</h3>
 <p>Backblaze recommends that you do lots of transfers simultaneously for maximum speed. In tests from my SSD equipped laptop the optimum setting is about <code>--transfers 32</code> though higher numbers may be used for a slight speed improvement. The optimum number for you may vary depending on your hardware, how big the files are, how much you want to load your computer, etc. The default of <code>--transfers 4</code> is definitely too low for Backblaze B2 though.</p>
@@ -6241,7 +6241,7 @@ y/e/d&gt; y</code></pre>
 <h3 id="versions">Versions</h3>
 <p>When rclone uploads a new version of a file it creates a <a href="https://www.backblaze.com/b2/docs/file_versions.html">new version of it</a>. Likewise when you delete a file, the old version will be marked hidden and still be available. Conversely, you may opt in to a “hard delete” of files with the <code>--b2-hard-delete</code> flag which would permanently remove the file instead of hiding it.</p>
 <p>Old versions of files, where available, are visible using the <code>--b2-versions</code> flag.</p>
-<p><strong>NB</strong> Note that <code>--b2-versions</code> does not work with crypt at the moment <a href="https://github.com/ncw/rclone/issues/1627">#1627</a>. Using <a href="/docs/#backup-dir-dir">–backup-dir</a> with rclone is the recommended way of working around this.</p>
+<p><strong>NB</strong> Note that <code>--b2-versions</code> does not work with crypt at the moment <a href="https://github.com/rclone/rclone/issues/1627">#1627</a>. Using <a href="/docs/#backup-dir-dir">–backup-dir</a> with rclone is the recommended way of working around this.</p>
 <p>If you wish to remove all the old versions then you can use the <code>rclone cleanup remote:bucket</code> command which will delete all the old versions of files, leaving the current ones intact. You can also supply a path and only old versions under that path will be deleted, eg <code>rclone cleanup remote:bucket/path/to/stuff</code>.</p>
 <p>Note that <code>cleanup</code> will remove partially uploaded files from the bucket if they are more than a day old.</p>
 <p>When you <code>purge</code> a bucket, the current and the old versions will be deleted then the bucket will be deleted.</p>
@@ -6276,7 +6276,7 @@ $ rclone -q --b2-versions ls b2:cleanup-test
 /b2api/v1/b2_create_bucket
 /b2api/v1/b2_list_buckets
 /b2api/v1/b2_list_file_names</code></pre>
-<p>The <code>b2_list_file_names</code> request will be sent once for every 1k files in the remote path, providing the checksum and modification time of the listed files. As of version 1.33 issue <a href="https://github.com/ncw/rclone/issues/818">#818</a> causes extra requests to be sent when using B2 with Crypt. When a copy operation does not require any files to be uploaded, no more requests will be sent.</p>
+<p>The <code>b2_list_file_names</code> request will be sent once for every 1k files in the remote path, providing the checksum and modification time of the listed files. As of version 1.33 issue <a href="https://github.com/rclone/rclone/issues/818">#818</a> causes extra requests to be sent when using B2 with Crypt. When a copy operation does not require any files to be uploaded, no more requests will be sent.</p>
 <p>Uploading files that do not require chunking, will send 2 requests per file upload:</p>
 <pre><code>/b2api/v1/b2_get_upload_url
 /b2api/v1/b2_upload_file/</code></pre>
@@ -6731,9 +6731,9 @@ chunk_total_size = 10G</code></pre>
 <p>Most of the issues seem to be related to the difference between filesystems on Linux flavors and Windows as cache is heavily dependant on them.</p>
 <p>Any reports or feedback on how cache behaves on this OS is greatly appreciated.</p>
 <ul>
-<li>https://github.com/ncw/rclone/issues/1935</li>
-<li>https://github.com/ncw/rclone/issues/1907</li>
-<li>https://github.com/ncw/rclone/issues/1834</li>
+<li>https://github.com/rclone/rclone/issues/1935</li>
+<li>https://github.com/rclone/rclone/issues/1907</li>
+<li>https://github.com/rclone/rclone/issues/1834</li>
 </ul>
 <h4 id="risk-of-throttling">Risk of throttling</h4>
 <p>Future iterations of the cache backend will make use of the pooling functionality of the cloud provider to synchronize and at the same time make writing through it more tolerant to failures.</p>
@@ -6741,8 +6741,8 @@ chunk_total_size = 10G</code></pre>
 <p>Some recommendations: - don’t use a very small interval for entry informations (<code>--cache-info-age</code>) - while writes aren’t yet optimised, you can still write through <code>cache</code> which gives you the advantage of adding the file in the cache at the same time if configured to do so.</p>
 <p>Future enhancements:</p>
 <ul>
-<li>https://github.com/ncw/rclone/issues/1937</li>
-<li>https://github.com/ncw/rclone/issues/1936</li>
+<li>https://github.com/rclone/rclone/issues/1937</li>
+<li>https://github.com/rclone/rclone/issues/1936</li>
 </ul>
 <h4 id="cache-and-crypt">cache and crypt</h4>
 <p>One common scenario is to keep your data encrypted in the cloud provider using the <code>crypt</code> remote. <code>crypt</code> uses a similar technique to wrap around an existing remote and handles this translation in a seamless way.</p>
@@ -8661,7 +8661,7 @@ trashed=false and &#39;c&#39; in parents</code></pre>
 <h4 id="drive-alternate-export">–drive-alternate-export</h4>
 <p>Use alternate export URLs for google documents export.,</p>
 <p>If this option is set this instructs rclone to use an alternate set of export URLs for drive documents. Users have reported that the official export URLs can’t export large documents, whereas these unofficial ones can.</p>
-<p>See rclone issue <a href="https://github.com/ncw/rclone/issues/2243">#2243</a> for background, <a href="https://issuetracker.google.com/issues/36761333">this google drive issue</a> and <a href="https://www.labnol.org/internet/direct-links-for-google-drive/28356/">this helpful post</a>.</p>
+<p>See rclone issue <a href="https://github.com/rclone/rclone/issues/2243">#2243</a> for background, <a href="https://issuetracker.google.com/issues/36761333">this google drive issue</a> and <a href="https://www.labnol.org/internet/direct-links-for-google-drive/28356/">this helpful post</a>.</p>
 <ul>
 <li>Config: alternate_export</li>
 <li>Env Var: RCLONE_DRIVE_ALTERNATE_EXPORT</li>
@@ -9780,7 +9780,7 @@ y/e/d&gt; y</code></pre>
 <p>There are quite a few characters that can’t be in OneDrive file names. These can’t occur on Windows platforms, but on non-Windows platforms they are common. Rclone will map these names to and from an identical looking unicode equivalent. For example if a file has a <code>?</code> in it will be mapped to <code>？</code> instead.</p>
 <p>The largest allowed file sizes are 15GB for OneDrive for Business and 35GB for OneDrive Personal (Updated 4 Jan 2019).</p>
 <p>The entire path, including the file name, must contain fewer than 400 characters for OneDrive, OneDrive for Business and SharePoint Online. If you are encrypting file and folder names with rclone, you may want to pay attention to this limitation because the encrypted names are typically longer than the original ones.</p>
-<p>OneDrive seems to be OK with at least 50,000 files in a folder, but at 100,000 rclone will get errors listing the directory like <code>couldn’t list files: UnknownError:</code>. See <a href="https://github.com/ncw/rclone/issues/2707">#2707</a> for more info.</p>
+<p>OneDrive seems to be OK with at least 50,000 files in a folder, but at 100,000 rclone will get errors listing the directory like <code>couldn’t list files: UnknownError:</code>. See <a href="https://github.com/rclone/rclone/issues/2707">#2707</a> for more info.</p>
 <p>An official document about the limitations for different types of OneDrive can be found <a href="https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa">here</a>.</p>
 <h3 id="versioning-issue">Versioning issue</h3>
 <p>Every change in OneDrive causes the service to create a new version. This counts against a users quota. For example changing the modification time of a file creates a second version, so the file is using twice the space.</p>
@@ -11214,7 +11214,7 @@ pass = encryptedpassword</code></pre>
 <p>If you are using <code>put.io</code> with <code>rclone mount</code> then use the <code>--read-only</code> flag to signal to the OS that it can’t write to the mount.</p>
 <p>For more help see <a href="http://help.put.io/apps-and-integrations/ftp-and-webdav">the put.io webdav docs</a>.</p>
 <h3 id="sharepoint">Sharepoint</h3>
-<p>Rclone can be used with Sharepoint provided by OneDrive for Business or Office365 Education Accounts. This feature is only needed for a few of these Accounts, mostly Office365 Education ones. These accounts are sometimes not verified by the domain owner <a href="https://github.com/ncw/rclone/issues/1975">github#1975</a></p>
+<p>Rclone can be used with Sharepoint provided by OneDrive for Business or Office365 Education Accounts. This feature is only needed for a few of these Accounts, mostly Office365 Education ones. These accounts are sometimes not verified by the domain owner <a href="https://github.com/rclone/rclone/issues/1975">github#1975</a></p>
 <p>This means that these accounts can’t be added using the official API (other Accounts should work with the “onedrive” option). However, it is possible to access them using webdav.</p>
 <p>To use a sharepoint remote with rclone, add it like this: First, you need to get your remote’s URL:</p>
 <ul>
@@ -11373,7 +11373,7 @@ y/e/d&gt; y</code></pre>
 <h3 id="long-paths-on-windows">Long paths on Windows</h3>
 <p>Rclone handles long paths automatically, by converting all paths to long <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath">UNC paths</a> which allows paths up to 32,767 characters.</p>
 <p>This is why you will see that your paths, for instance <code>c:\files</code> is converted to the UNC path <code>\\?\c:\files</code> in the output, and <code>\\server\share</code> is converted to <code>\\?\UNC\server\share</code>.</p>
-<p>However, in rare cases this may cause problems with buggy file system drivers like <a href="https://github.com/ncw/rclone/issues/261">EncFS</a>. To disable UNC conversion globally, add this to your <code>.rclone.conf</code> file:</p>
+<p>However, in rare cases this may cause problems with buggy file system drivers like <a href="https://github.com/rclone/rclone/issues/261">EncFS</a>. To disable UNC conversion globally, add this to your <code>.rclone.conf</code> file:</p>
 <pre><code>[local]
 nounc = true</code></pre>
 <p>If you want to selectively disable UNC, you can add it to a separate entry like this:</p>
@@ -11521,7 +11521,7 @@ $ tree /tmp/b
 <h4 id="local-no-check-updated">–local-no-check-updated</h4>
 <p>Don’t check to see if the files change during upload</p>
 <p>Normally rclone checks the size and modification time of files as they are being uploaded and aborts with a message which starts “can’t copy - source file is being updated” if the file changes during upload.</p>
-<p>However on some file systems this modification time check may fail (eg <a href="https://github.com/ncw/rclone/issues/2206">Glusterfs #2206</a>) so this check can be disabled with this flag.</p>
+<p>However on some file systems this modification time check may fail (eg <a href="https://github.com/rclone/rclone/issues/2206">Glusterfs #2206</a>) so this check can be disabled with this flag.</p>
 <ul>
 <li>Config: no_check_updated</li>
 <li>Env Var: RCLONE_LOCAL_NO_CHECK_UPDATED</li>
@@ -14292,7 +14292,7 @@ $ tree /tmp/b
 <p>With remotes that have a concept of directory, eg Local and Drive, empty directories may be left behind, or not created when one was expected.</p>
 <p>This is because rclone doesn’t have a concept of a directory - it only works on objects. Most of the object storage systems can’t actually store a directory so there is nowhere for rclone to store anything about directories.</p>
 <p>You can work round this to some extent with the<code>purge</code> command which will delete everything under the path, <strong>inluding</strong> empty directories.</p>
-<p>This may be fixed at some point in <a href="https://github.com/ncw/rclone/issues/100">Issue #100</a></p>
+<p>This may be fixed at some point in <a href="https://github.com/rclone/rclone/issues/100">Issue #100</a></p>
 <h3 id="directory-timestamps-arent-preserved">Directory timestamps aren’t preserved</h3>
 <p>For the same reason as the above, rclone doesn’t have a concept of a directory - it only works on objects, therefore it can’t preserve the timestamps of directories.</p>
 <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
@@ -14659,7 +14659,7 @@ THE SOFTWARE.</code></pre>
 <h2 id="gitub-project">Gitub project</h2>
 <p>The project website is at:</p>
 <ul>
-<li>https://github.com/ncw/rclone</li>
+<li>https://github.com/rclone/rclone</li>
 </ul>
 <p>There you can file bug reports or contribute pull requests.</p>
 <h2 id="twitter">Twitter</h2>

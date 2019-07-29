@@ -127,7 +127,7 @@ Links
 Home page (https://rclone.org/)
 .IP \[bu] 2
 GitHub project page for source and bug
-tracker (https://github.com/ncw/rclone)
+tracker (https://github.com/rclone/rclone)
 .IP \[bu] 2
 Rclone Forum (https://forum.rclone.org)
 .IP \[bu] 2
@@ -265,7 +265,7 @@ Then
 .IP
 .nf
 \f[C]
-git\ clone\ https://github.com/ncw/rclone.git
+git\ clone\ https://github.com/rclone/rclone.git
 cd\ rclone
 go\ build
 \&./rclone\ version
@@ -278,14 +278,14 @@ GOPATH (https://github.com/golang/go/wiki/GOPATH) (which defaults to
 .IP
 .nf
 \f[C]
-go\ get\ \-u\ \-v\ github.com/ncw/rclone
+go\ get\ \-u\ \-v\ github.com/rclone/rclone
 \f[]
 .fi
 .PP
 and this will build the binary in \f[C]$GOPATH/bin\f[]
 (\f[C]~/go/bin/rclone\f[] by default) after downloading the source to
-\f[C]$GOPATH/src/github.com/ncw/rclone\f[]
-(\f[C]~/go/src/github.com/ncw/rclone\f[] by default).
+\f[C]$GOPATH/src/github.com/rclone/rclone\f[]
+(\f[C]~/go/src/github.com/rclone/rclone\f[] by default).
 .SS Installation with Ansible
 .PP
 This can be done with Stefan Weichinger's ansible
@@ -2716,11 +2716,11 @@ too many callbacks to rclone from the kernel.
 In theory 0s should be the correct value for filesystems which can
 change outside the control of the kernel.
 However this causes quite a few problems such as rclone using too much
-memory (https://github.com/ncw/rclone/issues/2157), rclone not serving
+memory (https://github.com/rclone/rclone/issues/2157), rclone not serving
 files to
 samba (https://forum.rclone.org/t/rclone-1-39-vs-1-40-mount-issue/5112)
 and excessive time listing
-directories (https://github.com/ncw/rclone/issues/2095#issuecomment-371141147).
+directories (https://github.com/rclone/rclone/issues/2095#issuecomment-371141147).
 .PP
 The kernel can cache the info about a file for the time given by
 \[lq]\[en]attr\-timeout\[rq].
@@ -5105,7 +5105,7 @@ rclone\ copy\ "E:\\folder\ name\\folder\ name\\folder\ name"\ remote:backup
 .fi
 .PP
 If you are using the root directory on its own then don't quote it (see
-#464 (https://github.com/ncw/rclone/issues/464) for why), eg
+#464 (https://github.com/rclone/rclone/issues/464) for why), eg
 .IP
 .nf
 \f[C]
@@ -5476,7 +5476,7 @@ transfer.
 .PP
 This can be useful for transferring files to and from OneDrive which
 occasionally misreports the size of image files (see
-#399 (https://github.com/ncw/rclone/issues/399) for more info).
+#399 (https://github.com/rclone/rclone/issues/399) for more info).
 .SS \-I, \[en]ignore\-times
 .PP
 Using this option will cause rclone to unconditionally upload all files
@@ -8292,14 +8292,14 @@ You can also use the \f[C]\-text\f[] flag to produce a textual summary
 $\ go\ tool\ pprof\ \-text\ http://localhost:5572/debug/pprof/heap
 Showing\ nodes\ accounting\ for\ 1537.03kB,\ 100%\ of\ 1537.03kB\ total
 \ \ \ \ \ \ flat\ \ flat%\ \ \ sum%\ \ \ \ \ \ \ \ cum\ \ \ cum%
-\ 1024.03kB\ 66.62%\ 66.62%\ \ 1024.03kB\ 66.62%\ \ github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
+\ 1024.03kB\ 66.62%\ 66.62%\ \ 1024.03kB\ 66.62%\ \ github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.addDecoderNode
 \ \ \ \ \ 513kB\ 33.38%\ \ \ 100%\ \ \ \ \ \ 513kB\ 33.38%\ \ net/http.newBufioWriterSize
-\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/ncw/rclone/cmd/all.init
-\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/ncw/rclone/cmd/serve.init
-\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/ncw/rclone/cmd/serve/restic.init
-\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/ncw/rclone/vendor/golang.org/x/net/http2.init
-\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init
-\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/ncw/rclone/vendor/golang.org/x/net/http2/hpack.init.0
+\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/rclone/rclone/cmd/all.init
+\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/rclone/rclone/cmd/serve.init
+\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/rclone/rclone/cmd/serve/restic.init
+\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/rclone/rclone/vendor/golang.org/x/net/http2.init
+\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init
+\ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ github.com/rclone/rclone/vendor/golang.org/x/net/http2/hpack.init.0
 \ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ 1024.03kB\ 66.62%\ \ main.init
 \ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ \ \ \ \ 513kB\ 33.38%\ \ net/http.(*conn).readRequest
 \ \ \ \ \ \ \ \ \ 0\ \ \ \ \ 0%\ \ \ 100%\ \ \ \ \ \ 513kB\ 33.38%\ \ net/http.(*conn).serve
@@ -8798,13 +8798,13 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #575 (https://github.com/ncw/rclone/issues/575)
+No #575 (https://github.com/rclone/rclone/issues/575)
 T}@T{
 No
 T}@T{
 No
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -8825,7 +8825,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -8846,7 +8846,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -8861,7 +8861,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #575 (https://github.com/ncw/rclone/issues/575)
+No #575 (https://github.com/rclone/rclone/issues/575)
 T}@T{
 No
 T}@T{
@@ -8882,7 +8882,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #575 (https://github.com/ncw/rclone/issues/575)
+No #575 (https://github.com/rclone/rclone/issues/575)
 T}@T{
 No
 T}@T{
@@ -8909,7 +8909,7 @@ No
 T}@T{
 Yes
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -8930,7 +8930,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -8972,7 +8972,7 @@ No
 T}@T{
 No
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -8993,7 +8993,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 Yes
 T}
@@ -9035,7 +9035,7 @@ No
 T}@T{
 No
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 Yes
 T}
@@ -9056,7 +9056,7 @@ Yes
 T}@T{
 No
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -9071,7 +9071,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #575 (https://github.com/ncw/rclone/issues/575)
+No #575 (https://github.com/rclone/rclone/issues/575)
 T}@T{
 No
 T}@T{
@@ -9119,7 +9119,7 @@ Yes
 T}@T{
 Yes
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 Yes
 T}
@@ -9140,7 +9140,7 @@ No
 T}@T{
 No
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 Yes
 T}
@@ -9161,7 +9161,7 @@ Yes
 T}@T{
 No
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 No
 T}
@@ -9182,7 +9182,7 @@ No
 T}@T{
 Yes
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 Yes
 T}
@@ -9203,7 +9203,7 @@ No
 T}@T{
 Yes ‡
 T}@T{
-No #2178 (https://github.com/ncw/rclone/issues/2178)
+No #2178 (https://github.com/rclone/rclone/issues/2178)
 T}@T{
 Yes
 T}
@@ -10279,7 +10279,7 @@ can't transfer small objects.
 As a work\-around you can use the \f[C]\-\-ignore\-checksum\f[] flag.
 .PP
 A proper fix is being worked on in issue
-#1824 (https://github.com/ncw/rclone/issues/1824).
+#1824 (https://github.com/rclone/rclone/issues/1824).
 .SS Glacier and Glacier Deep Archive
 .PP
 You can upload objects using the glacier storage class or transition
@@ -12694,7 +12694,7 @@ SHA1.
 Sources which don't support SHA1, in particular \f[C]crypt\f[] will
 upload large files without SHA1 checksums.
 This may be fixed in the future (see
-#1767 (https://github.com/ncw/rclone/issues/1767)).
+#1767 (https://github.com/rclone/rclone/issues/1767)).
 .PP
 Files sizes below \f[C]\-\-b2\-upload\-cutoff\f[] will always have an
 SHA1 regardless of the source.
@@ -12728,7 +12728,7 @@ Old versions of files, where available, are visible using the
 \f[C]\-\-b2\-versions\f[] flag.
 .PP
 \f[B]NB\f[] Note that \f[C]\-\-b2\-versions\f[] does not work with crypt
-at the moment #1627 (https://github.com/ncw/rclone/issues/1627).
+at the moment #1627 (https://github.com/rclone/rclone/issues/1627).
 Using \[en]backup\-dir (/docs/#backup-dir-dir) with rclone is the
 recommended way of working around this.
 .PP
@@ -12809,7 +12809,7 @@ All copy commands send the following 4 requests:
 The \f[C]b2_list_file_names\f[] request will be sent once for every 1k
 files in the remote path, providing the checksum and modification time
 of the listed files.
-As of version 1.33 issue #818 (https://github.com/ncw/rclone/issues/818)
+As of version 1.33 issue #818 (https://github.com/rclone/rclone/issues/818)
 causes extra requests to be sent when using B2 with Crypt.
 When a copy operation does not require any files to be uploaded, no more
 requests will be sent.
@@ -13584,11 +13584,11 @@ on them.
 Any reports or feedback on how cache behaves on this OS is greatly
 appreciated.
 .IP \[bu] 2
-https://github.com/ncw/rclone/issues/1935
+https://github.com/rclone/rclone/issues/1935
 .IP \[bu] 2
-https://github.com/ncw/rclone/issues/1907
+https://github.com/rclone/rclone/issues/1907
 .IP \[bu] 2
-https://github.com/ncw/rclone/issues/1834
+https://github.com/rclone/rclone/issues/1834
 .SS Risk of throttling
 .PP
 Future iterations of the cache backend will make use of the pooling
@@ -13608,9 +13608,9 @@ configured to do so.
 .PP
 Future enhancements:
 .IP \[bu] 2
-https://github.com/ncw/rclone/issues/1937
+https://github.com/rclone/rclone/issues/1937
 .IP \[bu] 2
-https://github.com/ncw/rclone/issues/1936
+https://github.com/rclone/rclone/issues/1936
 .SS cache and crypt
 .PP
 One common scenario is to keep your data encrypted in the cloud provider
@@ -16840,7 +16840,7 @@ export URLs for drive documents.
 Users have reported that the official export URLs can't export large
 documents, whereas these unofficial ones can.
 .PP
-See rclone issue #2243 (https://github.com/ncw/rclone/issues/2243) for
+See rclone issue #2243 (https://github.com/rclone/rclone/issues/2243) for
 background, this google drive
 issue (https://issuetracker.google.com/issues/36761333) and this helpful
 post (https://www.labnol.org/internet/direct-links-for-google-drive/28356/).
@@ -18807,7 +18807,7 @@ typically longer than the original ones.
 OneDrive seems to be OK with at least 50,000 files in a folder, but at
 100,000 rclone will get errors listing the directory like
 \f[C]couldn't\ list\ files:\ UnknownError:\f[].
-See #2707 (https://github.com/ncw/rclone/issues/2707) for more info.
+See #2707 (https://github.com/rclone/rclone/issues/2707) for more info.
 .PP
 An official document about the limitations for different types of
 OneDrive can be found
@@ -21159,7 +21159,7 @@ Office365 Education Accounts.
 This feature is only needed for a few of these Accounts, mostly
 Office365 Education ones.
 These accounts are sometimes not verified by the domain owner
-github#1975 (https://github.com/ncw/rclone/issues/1975)
+github#1975 (https://github.com/rclone/rclone/issues/1975)
 .PP
 This means that these accounts can't be added using the official API
 (other Accounts should work with the \[lq]onedrive\[rq] option).
@@ -21483,7 +21483,7 @@ This is why you will see that your paths, for instance
 is converted to \f[C]\\\\?\\UNC\\server\\share\f[].
 .PP
 However, in rare cases this may cause problems with buggy file system
-drivers like EncFS (https://github.com/ncw/rclone/issues/261).
+drivers like EncFS (https://github.com/rclone/rclone/issues/261).
 To disable UNC conversion globally, add this to your
 \f[C]\&.rclone.conf\f[] file:
 .IP
@@ -21780,7 +21780,7 @@ copy \- source file is being updated\[rq] if the file changes during
 upload.
 .PP
 However on some file systems this modification time check may fail (eg
-Glusterfs #2206 (https://github.com/ncw/rclone/issues/2206)) so this
+Glusterfs #2206 (https://github.com/rclone/rclone/issues/2206)) so this
 check can be disabled with this flag.
 .IP \[bu] 2
 Config: no_check_updated
@@ -26443,7 +26443,7 @@ which will delete everything under the path, \f[B]inluding\f[] empty
 directories.
 .PP
 This may be fixed at some point in Issue
-#100 (https://github.com/ncw/rclone/issues/100)
+#100 (https://github.com/rclone/rclone/issues/100)
 .SS Directory timestamps aren't preserved
 .PP
 For the same reason as the above, rclone doesn't have a concept of a
@@ -27251,7 +27251,7 @@ https://forum.rclone.org
 .PP
 The project website is at:
 .IP \[bu] 2
-https://github.com/ncw/rclone
+https://github.com/rclone/rclone
 .PP
 There you can file bug reports or contribute pull requests.
 .SS Twitter

@@ -5,10 +5,10 @@ import (
 	"path"
 	"time"
 
-	"github.com/ncw/rclone/backend/crypt"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/crypt"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/walk"
 )
 
 // ListJSONItem in the struct which gets marshalled for each line

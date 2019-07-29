@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 )
 
 // DirCache caches paths to directory IDs and vice versa

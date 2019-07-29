@@ -3,6 +3,8 @@ package rcserver
 
 import (
 	"encoding/json"
+	"flag"
+	"fmt"
 	"mime"
 	"net/http"
 	"net/url"
@@ -10,15 +12,18 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/cmd/serve/httplib/serve"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/cache"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/list"
-	"github.com/ncw/rclone/fs/rc"
-	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
+
+	"github.com/rclone/rclone/fs/rc/jobs"
+
+	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/cmd/serve/httplib/serve"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 // Start the remote control server if configured
@@ -82,7 +87,10 @@ func (s *Server) Serve() error {
 		if user != "" || pass != "" {
 			openURL.User = url.UserPassword(user, pass)
 		}
-		_ = open.Start(openURL.String())
+		// Don't open browser if serving in testing environment.
+		if flag.Lookup("test.v") == nil {
+			_ = open.Start(openURL.String())
+		}
 	}
 	return nil
 }
@@ -185,15 +193,16 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		writeError(path, in, w, err, http.StatusBadRequest)
 		return
 	}
-
 	delete(in, "_async") // remove the async parameter after parsing so vfs operations don't get confused
 
 	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
 	var out rc.Params
 	if isAsync {
-		out, err = rc.StartJob(call.Fn, in)
+		out, err = jobs.StartAsyncJob(call.Fn, in)
 	} else {
-		out, err = call.Fn(r.Context(), in)
+		var jobID int64
+		out, jobID, err = jobs.ExecuteJob(r.Context(), call.Fn, in)
+		w.Header().Add("x-rclone-jobid", fmt.Sprintf("%d", jobID))
 	}
 	if err != nil {
 		writeError(path, in, w, err, http.StatusInternalServerError)

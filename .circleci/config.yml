@@ -6,7 +6,7 @@ jobs:
   build:
     machine: true
 
-    working_directory: ~/.go_workspace/src/github.com/ncw/rclone
+    working_directory: ~/.go_workspace/src/github.com/rclone/rclone
 
     steps:
     - checkout

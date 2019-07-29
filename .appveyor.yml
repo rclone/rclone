@@ -2,7 +2,7 @@ version: "{build}"
 
 os: Windows Server 2012 R2
 
-clone_folder: c:\gopath\src\github.com\ncw\rclone
+clone_folder: c:\gopath\src\github.com\rclone\rclone
 
 cache:
   - '%LocalAppData%\go-build'
@@ -16,7 +16,7 @@ environment:
   PATHCC32: C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin;%NOCCPATH%
   PATH: '%PATHCC64%'
   RCLONE_CONFIG_PASS:
-    secure: HbzxSy9zQ8NYWN9NNPf6ALQO9Q0mwRNqwehsLcOEHy0=
+    secure: sq9CPBbwaeKJv+yd24U44neORYPQVy6jsjnQptC+5yk=
 
 install:
 - choco install winfsp -y
@@ -46,4 +46,4 @@ artifacts:
 - path: build/*-v*.zip
 
 deploy_script:
-- IF "%APPVEYOR_REPO_NAME%" == "ncw/rclone" IF "%APPVEYOR_PULL_REQUEST_NUMBER%" == "" make appveyor_upload
+- IF "%APPVEYOR_REPO_NAME%" == "rclone/rclone" IF "%APPVEYOR_PULL_REQUEST_NUMBER%" == "" make appveyor_upload

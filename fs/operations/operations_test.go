@@ -14,7 +14,7 @@
 // fstest.CheckItems() before use.  This make sure the directory
 // listing is now consistent and stops cascading errors.
 //
-// Call accounting.Stats.ResetCounters() before every fs.Sync() as it
+// Call accounting.GlobalStats().ResetCounters() before every fs.Sync() as it
 // uses the error count internally.
 
 package operations_test
@@ -35,14 +35,14 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/ncw/rclone/backend/all" // import all backends
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/filter"
-	"github.com/ncw/rclone/fs/fshttp"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/operations"
-	"github.com/ncw/rclone/fstest"
+	_ "github.com/rclone/rclone/backend/all" // import all backends
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -315,15 +315,15 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, fdst, fsrc 
 
 	check := func(i int, wantErrors int64, wantChecks int64, oneway bool) {
 		fs.Debugf(r.Fremote, "%d: Starting check test", i)
-		accounting.Stats.ResetCounters()
+		accounting.GlobalStats().ResetCounters()
 		var buf bytes.Buffer
 		log.SetOutput(&buf)
 		defer func() {
 			log.SetOutput(os.Stderr)
 		}()
 		err := checkFunction(context.Background(), r.Fremote, r.Flocal, oneway)
-		gotErrors := accounting.Stats.GetErrors()
-		gotChecks := accounting.Stats.GetChecks()
+		gotErrors := accounting.GlobalStats().GetErrors()
+		gotChecks := accounting.GlobalStats().GetChecks()
 		if wantErrors == 0 && err != nil {
 			t.Errorf("%d: Got error when not expecting one: %v", i, err)
 		}

@@ -9,12 +9,11 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/fs/operations"
-	"github.com/ncw/rclone/lib/file"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/file"
 )
 
 // RWFileHandle is a handle that can be open for read and write.
@@ -87,9 +86,7 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 // copy an object to or from the remote while accounting for it
 func copyObj(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	if operations.NeedTransfer(context.TODO(), dst, src) {
-		accounting.Stats.Transferring(src.Remote())
 		newDst, err = operations.Copy(context.TODO(), f, dst, remote, src)
-		accounting.Stats.DoneTransferring(src.Remote(), err == nil)
 	} else {
 		newDst = dst
 	}

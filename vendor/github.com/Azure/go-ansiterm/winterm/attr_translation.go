@@ -2,7 +2,7 @@
 
 package winterm
 
-import "github.com/Azure/go-ansiterm"
+import ansiterm "github.com/Azure/go-ansiterm"
 
 const (
 	FOREGROUND_COLOR_MASK = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE
