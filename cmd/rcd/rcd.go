@@ -51,13 +51,13 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		if rcflags.Opt.WebUI {
 
 			// Get the latest release details
-			webUiURL, tag, size := GetLatestReleaseURL()
+			WebUIURL, tag, size := GetLatestReleaseURL()
 
 			// Load the file
 			exists := exists(tag + ".zip")
 			if !exists {
 				fmt.Println("Downloading webui binary. Please wait Size :" + strconv.Itoa(size))
-				if err := DownloadFile(tag+".zip", webUiURL); err != nil {
+				if err := DownloadFile(tag+".zip", WebUIURL); err != nil {
 					panic(err)
 				} else {
 					println("Unzipping")
@@ -108,7 +108,7 @@ func GetLatestReleaseURL() (string, string, int) {
 }
 
 /**
-Helper function to download a file from url to the filepath
+DownloadFile is a helper function to download a file from url to the filepath
 */
 func DownloadFile(filepath string, url string) error {
 
@@ -139,8 +139,8 @@ func DownloadFile(filepath string, url string) error {
 	return err
 }
 
-/**
-Helper function to unzip a file specified in src to path dest
+/*
+Unzip is a helper function to unzip a file specified in src to path dest
 */
 func Unzip(src, dest string) error {
 	r, err := zip.OpenReader(src)
@@ -176,7 +176,9 @@ func Unzip(src, dest string) error {
 				return err
 			}
 		} else {
-			err := os.MkdirAll(filepath.Dir(path), f.Mode())
+			if err := os.MkdirAll(filepath.Dir(path), f.Mode()); err != nil {
+				return err
+			}
 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 			if err != nil {
 				return err
@@ -217,8 +219,8 @@ func exists(path string) bool {
 	return true
 }
 
-/**
-Map the GitHub API request to structure
+/*
+GitHubRequest Maps the GitHub API request to structure
 */
 type GitHubRequest struct {
 	URL string `json:"url"`
