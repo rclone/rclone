@@ -56,9 +56,7 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType, fileID, remote string
 		"uploadType": {"resumable"},
 		"fields":     {partialFields},
 	}
-	if f.isTeamDrive {
-		params.Set("supportsTeamDrives", "true")
-	}
+	params.Set("supportsAllDrives", "true")
 	if f.opt.KeepRevisionForever {
 		params.Set("keepRevisionForever", "true")
 	}
