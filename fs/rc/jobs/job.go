@@ -5,6 +5,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -126,7 +127,7 @@ func (job *Job) finish(out rc.Params, err error) {
 func (job *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
 	defer func() {
 		if r := recover(); r != nil {
-			job.finish(nil, errors.Errorf("panic received: %v", r))
+			job.finish(nil, errors.Errorf("panic received: %v \n%s", r, string(debug.Stack())))
 		}
 	}()
 	job.finish(fn(ctx, in))

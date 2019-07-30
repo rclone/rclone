@@ -184,7 +184,7 @@ func TestJobRunPanic(t *testing.T) {
 	assert.Equal(t, false, job.EndTime.IsZero())
 	assert.Equal(t, rc.Params{}, job.Output)
 	assert.True(t, job.Duration >= floatSleepTime)
-	assert.Equal(t, "panic received: boom", job.Error)
+	assert.Contains(t, job.Error, "panic received: boom")
 	assert.Equal(t, false, job.Success)
 	assert.Equal(t, true, job.Finished)
 	job.mu.Unlock()

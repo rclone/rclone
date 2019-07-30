@@ -396,7 +396,7 @@ This tells the go runtime to do a garbage collection run.  It isn't
 necessary to call this normally, but it can be useful for debugging
 memory problems.
 
-### core/group_list: Returns list of stats.
+### core/group-list: Returns list of stats.
 
 This returns list of stats groups currently in memory. 
 
@@ -480,6 +480,14 @@ Returns the following values:
 ```
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
+
+### core/stats-reset: Reset stats.
+
+This clears counters and errors for all stats or specific stats group if group
+is provided.
+
+Parameters
+- group - name of the stats group (string)
 
 ### core/transferred: Returns stats about completed transfers.
 
