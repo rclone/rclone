@@ -51,6 +51,23 @@ func transferredStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 	return out, nil
 }
 
+func resetStats(ctx context.Context, in rc.Params) (rc.Params, error) {
+	// Check to see if we should filter by group.
+	group, err := in.GetString("group")
+	if rc.NotErrParamNotFound(err) {
+		return rc.Params{}, err
+	}
+
+	if group != "" {
+		groups.get(group).ResetCounters()
+		groups.get(group).ResetErrors()
+	} else {
+		groups.clear()
+	}
+
+	return rc.Params{}, nil
+}
+
 func init() {
 	// Init stats container
 	groups = newStatsGroups()
@@ -143,7 +160,7 @@ Returns the following values:
 	})
 
 	rc.Add(rc.Call{
-		Path:  "core/group_list",
+		Path:  "core/group-list",
 		Fn:    listStats,
 		Title: "Returns list of stats.",
 		Help: `
@@ -159,6 +176,19 @@ Returns the following values:
 			...
 		]
 }
+`,
+	})
+
+	rc.Add(rc.Call{
+		Path:  "core/stats-reset",
+		Fn:    resetStats,
+		Title: "Reset stats.",
+		Help: `
+This clears counters and errors for all stats or specific stats group if group
+is provided.
+
+Parameters
+- group - name of the stats group (string)
 `,
 	})
 }
@@ -286,4 +316,17 @@ func (sg *statsGroups) sum() *StatsInfo {
 		sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
 	}
 	return sum
+}
+
+func (sg *statsGroups) clear() {
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+
+	for _, stats := range sg.m {
+		stats.ResetErrors()
+		stats.ResetCounters()
+	}
+
+	sg.m = make(map[string]*StatsInfo)
+	sg.order = nil
 }
