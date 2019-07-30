@@ -634,11 +634,11 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	if f.opt.ListChunk > 0 {
 		list.PageSize(f.opt.ListChunk)
 	}
+	list.SupportsAllDrives(true)
+	list.IncludeItemsFromAllDrives(true)
 	if f.isTeamDrive {
-		list.TeamDriveId(f.opt.TeamDriveID)
-		list.SupportsTeamDrives(true)
-		list.IncludeTeamDriveItems(true)
-		list.Corpora("teamDrive")
+		list.DriveId(f.opt.TeamDriveID)
+		list.Corpora("drive")
 	}
 	// If using appDataFolder then need to add Spaces
 	if f.rootFolderID == "appDataFolder" {
@@ -1221,7 +1221,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Create(createInfo).
 			Fields("id").
-			SupportsTeamDrives(f.isTeamDrive).
+			SupportsAllDrives(true).
 			Do()
 		return shouldRetry(err)
 	})
@@ -1529,7 +1529,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		err = f.pacer.CallNoRetry(func() (bool, error) {
 			info, err = f.svc.Files.Get("root").
 				Fields("id").
-				SupportsTeamDrives(f.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 			return shouldRetry(err)
 		})
@@ -1724,7 +1724,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 			info, err = f.svc.Files.Create(createInfo).
 				Media(in, googleapi.ContentType(srcMimeType)).
 				Fields(partialFields).
-				SupportsTeamDrives(f.isTeamDrive).
+				SupportsAllDrives(true).
 				KeepRevisionForever(f.opt.KeepRevisionForever).
 				Do()
 			return shouldRetry(err)
@@ -1768,7 +1768,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 					RemoveParents(srcDir.ID()).
 					AddParents(dstDir.ID()).
 					Fields("").
-					SupportsTeamDrives(f.isTeamDrive).
+					SupportsAllDrives(true).
 					Do()
 				return shouldRetry(err)
 			})
@@ -1808,12 +1808,12 @@ func (f *Fs) rmdir(ctx context.Context, directoryID string, useTrash bool) error
 			}
 			_, err = f.svc.Files.Update(directoryID, &info).
 				Fields("").
-				SupportsTeamDrives(f.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 		} else {
 			err = f.svc.Files.Delete(directoryID).
 				Fields("").
-				SupportsTeamDrives(f.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 		}
 		return shouldRetry(err)
@@ -1907,16 +1907,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	supportTeamDrives, err := f.ShouldSupportTeamDrives(src)
-	if err != nil {
-		return nil, err
-	}
-
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Copy(srcObj.id, createInfo).
 			Fields(partialFields).
-			SupportsTeamDrives(supportTeamDrives).
+			SupportsAllDrives(true).
 			KeepRevisionForever(f.opt.KeepRevisionForever).
 			Do()
 		return shouldRetry(err)
@@ -1957,12 +1952,12 @@ func (f *Fs) Purge(ctx context.Context) error {
 			}
 			_, err = f.svc.Files.Update(f.dirCache.RootID(), &info).
 				Fields("").
-				SupportsTeamDrives(f.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 		} else {
 			err = f.svc.Files.Delete(f.dirCache.RootID()).
 				Fields("").
-				SupportsTeamDrives(f.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 		}
 		return shouldRetry(err)
@@ -2060,11 +2055,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstParents := strings.Join(dstInfo.Parents, ",")
 	dstInfo.Parents = nil
 
-	supportTeamDrives, err := f.ShouldSupportTeamDrives(src)
-	if err != nil {
-		return nil, err
-	}
-
 	// Do the move
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
@@ -2072,7 +2062,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			RemoveParents(srcParentID).
 			AddParents(dstParents).
 			Fields(partialFields).
-			SupportsTeamDrives(supportTeamDrives).
+			SupportsAllDrives(true).
 			Do()
 		return shouldRetry(err)
 	})
@@ -2081,20 +2071,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	return f.newObjectWithInfo(remote, info)
-}
-
-// ShouldSupportTeamDrives returns the request should support TeamDrives
-func (f *Fs) ShouldSupportTeamDrives(src fs.Object) (bool, error) {
-	srcIsTeamDrive := false
-	if srcFs, ok := src.Fs().(*Fs); ok {
-		srcIsTeamDrive = srcFs.isTeamDrive
-	}
-
-	if f.isTeamDrive {
-		return true, nil
-	}
-
-	return srcIsTeamDrive, nil
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
@@ -2122,7 +2098,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		// Need to either check `canShare` attribute on the object or see if a sufficient permission is already present.
 		_, err = f.svc.Permissions.Create(id, permission).
 			Fields("").
-			SupportsTeamDrives(f.isTeamDrive).
+			SupportsAllDrives(true).
 			Do()
 		return shouldRetry(err)
 	})
@@ -2222,7 +2198,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			RemoveParents(srcDirectoryID).
 			AddParents(dstDirectoryID).
 			Fields("").
-			SupportsTeamDrives(f.isTeamDrive).
+			SupportsAllDrives(true).
 			Do()
 		return shouldRetry(err)
 	})
@@ -2286,7 +2262,7 @@ func (f *Fs) changeNotifyStartPageToken() (pageToken string, err error) {
 	var startPageToken *drive.StartPageToken
 	err = f.pacer.Call(func() (bool, error) {
 		startPageToken, err = f.svc.Changes.GetStartPageToken().
-			SupportsTeamDrives(f.isTeamDrive).
+			SupportsAllDrives(true).
 			Do()
 		return shouldRetry(err)
 	})
@@ -2307,10 +2283,10 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPage
 			if f.opt.ListChunk > 0 {
 				changesCall.PageSize(f.opt.ListChunk)
 			}
+			changesCall.SupportsAllDrives(true)
+			changesCall.IncludeItemsFromAllDrives(true)
 			if f.isTeamDrive {
 				changesCall.TeamDriveId(f.opt.TeamDriveID)
-				changesCall.SupportsTeamDrives(true)
-				changesCall.IncludeTeamDriveItems(true)
 			}
 			changeList, err = changesCall.Do()
 			return shouldRetry(err)
@@ -2501,7 +2477,7 @@ func (o *baseObject) SetModTime(ctx context.Context, modTime time.Time) error {
 		var err error
 		info, err = o.fs.svc.Files.Update(o.id, updateInfo).
 			Fields(partialFields).
-			SupportsTeamDrives(o.fs.isTeamDrive).
+			SupportsAllDrives(true).
 			Do()
 		return shouldRetry(err)
 	})
@@ -2629,7 +2605,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		err = o.fs.pacer.Call(func() (bool, error) {
 			v2File, err = o.fs.v2Svc.Files.Get(o.id).
 				Fields("downloadUrl").
-				SupportsTeamDrives(o.fs.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 			return shouldRetry(err)
 		})
@@ -2709,7 +2685,7 @@ func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io
 			info, err = o.fs.svc.Files.Update(o.id, updateInfo).
 				Media(in, googleapi.ContentType(uploadMimeType)).
 				Fields(partialFields).
-				SupportsTeamDrives(o.fs.isTeamDrive).
+				SupportsAllDrives(true).
 				KeepRevisionForever(o.fs.opt.KeepRevisionForever).
 				Do()
 			return shouldRetry(err)
@@ -2804,12 +2780,12 @@ func (o *baseObject) Remove(ctx context.Context) error {
 			}
 			_, err = o.fs.svc.Files.Update(o.id, &info).
 				Fields("").
-				SupportsTeamDrives(o.fs.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 		} else {
 			err = o.fs.svc.Files.Delete(o.id).
 				Fields("").
-				SupportsTeamDrives(o.fs.isTeamDrive).
+				SupportsAllDrives(true).
 				Do()
 		}
 		return shouldRetry(err)
