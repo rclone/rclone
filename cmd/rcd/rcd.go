@@ -3,9 +3,6 @@ package rcd
 import (
 	"archive/zip"
 	"encoding/json"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/lib/errors"
 	"io"
 	"log"
 	"net/http"
@@ -15,8 +12,11 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
+	"github.com/rclone/rclone/lib/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -92,10 +92,11 @@ func checkRelease(shouldUpdate bool) (err error) {
 	if !exists || shouldUpdate {
 		fs.Logf(nil, "A new release for gui is present at "+WebUIURL)
 		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
-		if err := downloadFile(zipPath, WebUIURL); err != nil {
+		err := downloadFile(zipPath, WebUIURL)
+
+		if err != nil {
 			return err
 		} else {
-
 			if err := os.RemoveAll(extractPath); err != nil {
 				fs.Logf(nil, "No previous downloads to remove")
 			}
