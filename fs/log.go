@@ -80,14 +80,10 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 
 	if Config.UseJSONLog {
 		fields := logrus.Fields{}
-		switch o.(type) {
-		case string:
-		default:
-			if o != nil {
-				fields = logrus.Fields{
-					"object":     fmt.Sprintf("%+v", o),
-					"objectType": fmt.Sprintf("%T", o),
-				}
+		if o != nil {
+			fields = logrus.Fields{
+				"object":     fmt.Sprintf("%+v", o),
+				"objectType": fmt.Sprintf("%T", o),
 			}
 		}
 
