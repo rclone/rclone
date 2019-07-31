@@ -47,7 +47,6 @@ func shellUnEscape(str string) string {
 // Info about the current connection
 type conn struct {
 	vfs      *vfs.VFS
-	f        fs.Fs
 	handlers sftp.Handlers
 	what     string
 }
@@ -65,7 +64,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 	fs.Debugf(c.what, "exec command: binary = %q, args = %q", binary, args)
 	switch binary {
 	case "df":
-		about := c.f.Features().About
+		about := c.vfs.Fs().Features().About
 		if about == nil {
 			return errors.New("df not supported")
 		}
@@ -121,7 +120,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		// special cases for rclone command detection
 		switch args {
 		case "'abc' | md5sum":
-			if c.f.Hashes().Contains(hash.MD5) {
+			if c.vfs.Fs().Hashes().Contains(hash.MD5) {
 				_, err = fmt.Fprintf(out, "0bee89b07a248e27c83fc3d5951213c1  -\n")
 				if err != nil {
 					return errors.Wrap(err, "send output failed")
@@ -130,7 +129,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 				return errors.New("md5 hash not supported")
 			}
 		case "'abc' | sha1sum":
-			if c.f.Hashes().Contains(hash.SHA1) {
+			if c.vfs.Fs().Hashes().Contains(hash.SHA1) {
 				_, err = fmt.Fprintf(out, "03cfd743661f07975fa2f1220c5194cbaff48451  -\n")
 				if err != nil {
 					return errors.Wrap(err, "send output failed")

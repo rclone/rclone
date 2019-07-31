@@ -6,6 +6,9 @@ package sftp
 
 import (
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/proxy"
+	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
@@ -46,6 +49,7 @@ func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 
 func init() {
 	vfsflags.AddFlags(Command.Flags())
+	proxyflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags(), &Opt)
 }
 
@@ -84,10 +88,15 @@ reachable externally then supply "--addr :2022" for example.
 Note that the default of "--vfs-cache-mode off" is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 
-` + vfs.Help,
+` + vfs.Help + proxy.Help,
 	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(1, 1, command, args)
-		f := cmd.NewFsSrc(args)
+		var f fs.Fs
+		if proxyflags.Opt.AuthProxy == "" {
+			cmd.CheckArgs(1, 1, command, args)
+			f = cmd.NewFsSrc(args)
+		} else {
+			cmd.CheckArgs(0, 0, command, args)
+		}
 		cmd.Run(false, true, command, func() error {
 			s := newServer(f, &Opt)
 			err := s.Serve()
