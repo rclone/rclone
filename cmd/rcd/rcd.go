@@ -3,7 +3,9 @@ package rcd
 import (
 	"archive/zip"
 	"encoding/json"
-	"fmt"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/lib/errors"
 	"io"
 	"log"
 	"net/http"
@@ -49,27 +51,8 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		}
 
 		if rcflags.Opt.WebUI {
-
-			// Get the latest release details
-			WebUIURL, tag, size := GetLatestReleaseURL()
-
-			// Load the file
-			exists := exists(tag + ".zip")
-			if !exists {
-				fmt.Println("Downloading webui binary. Please wait Size :" + strconv.Itoa(size))
-				if err := DownloadFile(tag+".zip", WebUIURL); err != nil {
-					panic(err)
-				} else {
-					println("Unzipping")
-					if err := os.RemoveAll("/webui"); err != nil {
-						fmt.Println("No previous downloads to remove")
-					}
-					if err := Unzip(tag+".zip", "webui"); err != nil {
-						panic("Error extracting file")
-					}
-				}
-			} else {
-				println("Files already exists. Skipping download")
+			if err := checkRelease(rcflags.Opt.WebGUIUpdate); err != nil {
+				log.Fatalf("Error while fetching the latest release of rclone-webui-react %v", err)
 			}
 		}
 
@@ -85,17 +68,57 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 	},
 }
 
-/*
-GetLatestReleaseURL returns the latest release details of the rclone-webui-react
-*/
-func GetLatestReleaseURL() (string, string, int) {
-	resp, err := http.Get("https://api.github.com/repos/negative0/rclone-webui-react/releases/latest")
+//checkRelease is a helper function to download and setup latest release of rclone-webui-react
+func checkRelease(shouldUpdate bool) (err error) {
+	// Get the latest release details
+	WebUIURL, tag, size, err := getLatestReleaseURL()
 	if err != nil {
-		panic("Error getting latest release of rclone-webui")
+		return err
 	}
-	results := GitHubRequest{}
+
+	zipName := tag + ".zip"
+	cachePath := filepath.Join(config.CacheDir, "webgui")
+	zipPath := filepath.Join(cachePath, zipName)
+	extractPath := filepath.Join(cachePath, "current")
+
+	if !exists(cachePath) {
+		if err := os.MkdirAll(cachePath, 755); err != nil {
+			fs.Logf(nil, "Error creating cache directory: %s", cachePath)
+		}
+	}
+	// Load the file
+	exists := exists(zipPath)
+	// if the zipFile does not exist or forced update is enforced.
+	if !exists || shouldUpdate {
+		fs.Logf(nil, "A new release for gui is present at "+WebUIURL)
+		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
+		if err := downloadFile(zipPath, WebUIURL); err != nil {
+			return err
+		} else {
+
+			if err := os.RemoveAll(extractPath); err != nil {
+				fs.Logf(nil, "No previous downloads to remove")
+			}
+			fs.Logf(nil, "Unzipping")
+			if err := unzip(zipPath, extractPath); err != nil {
+				return err
+			}
+		}
+	} else {
+		fs.Logf(nil, "Required files exist. Skipping download")
+	}
+	return nil
+}
+
+// getLatestReleaseURL returns the latest release details of the rclone-webui-react
+func getLatestReleaseURL() (string, string, int, error) {
+	resp, err := http.Get(rcflags.Opt.WebGUIFetchURL)
+	if err != nil {
+		return "", "", 0, errors.New("Error getting latest release of rclone-webui")
+	}
+	results := gitHubRequest{}
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		panic("Could not decode results from http request")
+		return "", "", 0, errors.New("Could not decode results from http request")
 	}
 
 	res := results.Assets[0].BrowserDownloadURL
@@ -103,55 +126,39 @@ func GetLatestReleaseURL() (string, string, int) {
 	size := results.Assets[0].Size
 	//fmt.Println( "URL:" + res)
 
-	return res, tag, size
+	return res, tag, size, nil
 
 }
 
-/*
-DownloadFile is a helper function to download a file from url to the filepath
-*/
-func DownloadFile(filepath string, url string) error {
+// downloadFile is a helper function to download a file from url to the filepath
+func downloadFile(filepath string, url string) error {
 
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer fs.CheckClose(resp.Body, &err)
 
 	// Create the file
 	out, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := out.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer fs.CheckClose(out, &err)
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
 
-/*
-Unzip is a helper function to unzip a file specified in src to path dest
-*/
-func Unzip(src, dest string) error {
+// unzip is a helper function to unzip a file specified in src to path dest
+func unzip(src, dest string) (err error) {
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := r.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	defer fs.CheckClose(r, &err)
 
 	if err := os.MkdirAll(dest, 0755); err != nil {
 		return err
@@ -163,11 +170,7 @@ func Unzip(src, dest string) error {
 		if err != nil {
 			return err
 		}
-		defer func() {
-			if err := rc.Close(); err != nil {
-				panic(err)
-			}
-		}()
+		defer fs.CheckClose(rc, &err)
 
 		path := filepath.Join(dest, f.Name)
 
@@ -183,11 +186,7 @@ func Unzip(src, dest string) error {
 			if err != nil {
 				return err
 			}
-			defer func() {
-				if err := f.Close(); err != nil {
-					panic(err)
-				}
-			}()
+			defer fs.CheckClose(f, &err)
 
 			_, err = io.Copy(f, rc)
 			if err != nil {
@@ -219,10 +218,8 @@ func exists(path string) bool {
 	return true
 }
 
-/*
-GitHubRequest Maps the GitHub API request to structure
-*/
-type GitHubRequest struct {
+// gitHubRequest Maps the GitHub API request to structure
+type gitHubRequest struct {
 	URL string `json:"url"`
 
 	Prerelease  bool      `json:"prerelease"`

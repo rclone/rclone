@@ -8,6 +8,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -56,12 +57,17 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 	_ = mime.AddExtensionType(".wasm", "application/wasm")
 	_ = mime.AddExtensionType(".js", "application/javascript")
 
+	cachePath := filepath.Join(config.CacheDir, "webgui")
+	extractPath := filepath.Join(cachePath, "current/build")
 	// File handling
 	if opt.Files != "" {
+		if opt.WebUI {
+			fs.Logf(nil, "--rc-files overrides --rc-web-gui command\n")
+		}
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		s.files = http.FileServer(http.Dir(opt.Files))
 	} else if opt.WebUI {
-		s.files = http.FileServer(http.Dir("webui/build"))
+		s.files = http.FileServer(http.Dir(extractPath))
 	}
 	return s
 }
