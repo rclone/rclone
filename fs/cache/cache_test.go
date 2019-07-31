@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/mockfs"
@@ -17,10 +16,9 @@ var (
 	errSentinel = errors.New("an error")
 )
 
-func mockNewFs(t *testing.T) func() {
+func mockNewFs(t *testing.T) (func(), func(path string) (fs.Fs, error)) {
 	called = 0
-	oldFsNewFs := fsNewFs
-	fsNewFs = func(path string) (fs.Fs, error) {
+	create := func(path string) (fs.Fs, error) {
 		assert.Equal(t, 0, called)
 		called++
 		switch path {
@@ -33,115 +31,74 @@ func mockNewFs(t *testing.T) func() {
 		}
 		panic(fmt.Sprintf("Unknown path %q", path))
 	}
-	return func() {
-		fsNewFs = oldFsNewFs
-		fsCacheMu.Lock()
-		fsCache = map[string]*cacheEntry{}
-		expireRunning = false
-		fsCacheMu.Unlock()
+	cleanup := func() {
+		c.Clear()
 	}
+	return cleanup, create
 }
 
 func TestGet(t *testing.T) {
-	defer mockNewFs(t)()
+	cleanup, create := mockNewFs(t)
+	defer cleanup()
 
-	assert.Equal(t, 0, len(fsCache))
+	assert.Equal(t, 0, c.Entries())
 
-	f, err := Get("/")
+	f, err := GetFn("/", create)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, len(fsCache))
+	assert.Equal(t, 1, c.Entries())
 
-	f2, err := Get("/")
+	f2, err := GetFn("/", create)
 	require.NoError(t, err)
 
 	assert.Equal(t, f, f2)
 }
 
 func TestGetFile(t *testing.T) {
-	defer mockNewFs(t)()
+	cleanup, create := mockNewFs(t)
+	defer cleanup()
 
-	assert.Equal(t, 0, len(fsCache))
+	assert.Equal(t, 0, c.Entries())
 
-	f, err := Get("/file.txt")
+	f, err := GetFn("/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
 
-	assert.Equal(t, 1, len(fsCache))
+	assert.Equal(t, 1, c.Entries())
 
-	f2, err := Get("/file.txt")
+	f2, err := GetFn("/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
 
 	assert.Equal(t, f, f2)
 }
 
 func TestGetError(t *testing.T) {
-	defer mockNewFs(t)()
+	cleanup, create := mockNewFs(t)
+	defer cleanup()
 
-	assert.Equal(t, 0, len(fsCache))
+	assert.Equal(t, 0, c.Entries())
 
-	f, err := Get("/error")
+	f, err := GetFn("/error", create)
 	require.Equal(t, errSentinel, err)
 	require.Equal(t, nil, f)
 
-	assert.Equal(t, 0, len(fsCache))
+	assert.Equal(t, 0, c.Entries())
 }
 
 func TestPut(t *testing.T) {
-	defer mockNewFs(t)()
+	cleanup, create := mockNewFs(t)
+	defer cleanup()
 
 	f := mockfs.NewFs("mock", "mock")
 
-	assert.Equal(t, 0, len(fsCache))
+	assert.Equal(t, 0, c.Entries())
 
 	Put("/alien", f)
 
-	assert.Equal(t, 1, len(fsCache))
+	assert.Equal(t, 1, c.Entries())
 
-	fNew, err := Get("/alien")
+	fNew, err := GetFn("/alien", create)
 	require.NoError(t, err)
 	require.Equal(t, f, fNew)
 
-	assert.Equal(t, 1, len(fsCache))
-}
-
-func TestCacheExpire(t *testing.T) {
-	defer mockNewFs(t)()
-
-	cacheExpireInterval = time.Millisecond
-	assert.Equal(t, false, expireRunning)
-
-	_, err := Get("/")
-	require.NoError(t, err)
-
-	fsCacheMu.Lock()
-	entry := fsCache["/"]
-
-	assert.Equal(t, 1, len(fsCache))
-	fsCacheMu.Unlock()
-	cacheExpire()
-	fsCacheMu.Lock()
-	assert.Equal(t, 1, len(fsCache))
-	entry.lastUsed = time.Now().Add(-cacheExpireDuration - 60*time.Second)
-	assert.Equal(t, true, expireRunning)
-	fsCacheMu.Unlock()
-	time.Sleep(10 * time.Millisecond)
-	fsCacheMu.Lock()
-	assert.Equal(t, false, expireRunning)
-	assert.Equal(t, 0, len(fsCache))
-	fsCacheMu.Unlock()
-}
-
-func TestClear(t *testing.T) {
-	defer mockNewFs(t)()
-
-	assert.Equal(t, 0, len(fsCache))
-
-	_, err := Get("/")
-	require.NoError(t, err)
-
-	assert.Equal(t, 1, len(fsCache))
-
-	Clear()
-
-	assert.Equal(t, 0, len(fsCache))
+	assert.Equal(t, 1, c.Entries())
 }
