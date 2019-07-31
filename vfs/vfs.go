@@ -242,6 +242,11 @@ func New(f fs.Fs, opt *Options) *VFS {
 	return vfs
 }
 
+// Fs returns the Fs passed into the New call
+func (vfs *VFS) Fs() fs.Fs {
+	return vfs.f
+}
+
 // SetCacheMode change the cache mode
 func (vfs *VFS) SetCacheMode(cacheMode CacheMode) {
 	vfs.Shutdown()
