@@ -77,18 +77,17 @@ var LogPrint = func(level LogLevel, text string) {
 // LogPrintf produces a log string from the arguments passed in
 func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
 	out := fmt.Sprintf(text, args...)
-	if o != nil {
-		out = fmt.Sprintf("%v: %s", o, out)
-	}
 
 	if Config.UseJSONLog {
 		fields := logrus.Fields{}
 		switch o.(type) {
 		case string:
 		default:
-			fields = logrus.Fields{
-				"object":     o,
-				"objectType": fmt.Sprintf("%T", o),
+			if o != nil {
+				fields = logrus.Fields{
+					"object":     fmt.Sprintf("%+v", o),
+					"objectType": fmt.Sprintf("%T", o),
+				}
 			}
 		}
 
@@ -107,6 +106,9 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 			logrus.WithFields(fields).Panic(out)
 		}
 	} else {
+		if o != nil {
+			out = fmt.Sprintf("%v: %s", o, out)
+		}
 		LogPrint(level, out)
 	}
 }
