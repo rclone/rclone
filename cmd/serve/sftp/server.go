@@ -18,7 +18,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/pkg/sftp"
+	"github.com/rclone/rclone/cmd/serve/proxy"
+	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/env"
@@ -33,19 +34,45 @@ type server struct {
 	opt      Options
 	vfs      *vfs.VFS
 	config   *ssh.ServerConfig
-	handlers sftp.Handlers
 	listener net.Listener
 	waitChan chan struct{} // for waiting on the listener to close
+	proxy    *proxy.Proxy
 }
 
 func newServer(f fs.Fs, opt *Options) *server {
 	s := &server{
 		f:        f,
-		vfs:      vfs.New(f, &vfsflags.Opt),
 		opt:      *opt,
 		waitChan: make(chan struct{}),
 	}
+	if proxyflags.Opt.AuthProxy != "" {
+		s.proxy = proxy.New(&proxyflags.Opt)
+	} else {
+		s.vfs = vfs.New(f, &vfsflags.Opt)
+	}
 	return s
+}
+
+// getVFS gets the vfs from s or the proxy
+func (s *server) getVFS(what string, sshConn *ssh.ServerConn) (VFS *vfs.VFS) {
+	if s.proxy == nil {
+		return s.vfs
+	}
+	if sshConn.Permissions == nil && sshConn.Permissions.Extensions == nil {
+		fs.Infof(what, "SSH Permissions Extensions not found")
+		return nil
+	}
+	key := sshConn.Permissions.Extensions["_vfsKey"]
+	if key == "" {
+		fs.Infof(what, "VFS key not found")
+		return nil
+	}
+	VFS = s.proxy.Get(key)
+	if VFS == nil {
+		fs.Infof(what, "failed to read VFS from cache")
+		return nil
+	}
+	return VFS
 }
 
 func (s *server) acceptConnections() {
@@ -73,11 +100,15 @@ func (s *server) acceptConnections() {
 		go ssh.DiscardRequests(reqs)
 
 		c := &conn{
-			vfs:      s.vfs,
-			f:        s.f,
-			handlers: s.handlers,
-			what:     what,
+			what: what,
+			vfs:  s.getVFS(what, sshConn),
 		}
+		if c.vfs == nil {
+			fs.Infof(what, "Closing unauthenticated connection (couldn't find VFS)")
+			_ = nConn.Close()
+			continue
+		}
+		c.handlers = newVFSHandler(c.vfs)
 
 		// Accept all channels
 		go c.handleChannels(chans)
@@ -109,7 +140,19 @@ func (s *server) serve() (err error) {
 		ServerVersion: "SSH-2.0-" + fs.Config.UserAgent,
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 			fs.Debugf(describeConn(c), "Password login attempt for %s", c.User())
-			if s.opt.User != "" && s.opt.Pass != "" {
+			if s.proxy != nil {
+				// query the proxy for the config
+				_, vfsKey, err := s.proxy.Call(c.User(), string(pass))
+				if err != nil {
+					return nil, err
+				}
+				// just return the Key so we can get it back from the cache
+				return &ssh.Permissions{
+					Extensions: map[string]string{
+						"_vfsKey": vfsKey,
+					},
+				}, nil
+			} else if s.opt.User != "" && s.opt.Pass != "" {
 				userOK := subtle.ConstantTimeCompare([]byte(c.User()), []byte(s.opt.User))
 				passOK := subtle.ConstantTimeCompare(pass, []byte(s.opt.Pass))
 				if (userOK & passOK) == 1 {
@@ -120,6 +163,9 @@ func (s *server) serve() (err error) {
 		},
 		PublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey) (*ssh.Permissions, error) {
 			fs.Debugf(describeConn(c), "Public key login attempt for %s", c.User())
+			if s.proxy != nil {
+				return nil, errors.New("public key login not allowed when using auth proxy")
+			}
 			if _, ok := authorizedKeysMap[string(pubKey.Marshal())]; ok {
 				return &ssh.Permissions{
 					// Record the public key used for authentication.
@@ -177,11 +223,6 @@ func (s *server) serve() (err error) {
 		log.Fatal("failed to listen for connection", err)
 	}
 	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
-
-	s.handlers, err = newVFSHandler(s.vfs)
-	if err != nil {
-		return errors.Wrap(err, "serve sftp: failed to create fs")
-	}
 
 	go s.acceptConnections()
 

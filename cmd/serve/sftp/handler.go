@@ -19,14 +19,14 @@ type vfsHandler struct {
 }
 
 // vfsHandler returns a Handlers object with the test handlers.
-func newVFSHandler(vfs *vfs.VFS) (sftp.Handlers, error) {
+func newVFSHandler(vfs *vfs.VFS) sftp.Handlers {
 	v := vfsHandler{VFS: vfs}
 	return sftp.Handlers{
 		FileGet:  v,
 		FilePut:  v,
 		FileCmd:  v,
 		FileList: v,
-	}, nil
+	}
 }
 
 func (v vfsHandler) Fileread(r *sftp.Request) (io.ReaderAt, error) {
