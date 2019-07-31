@@ -629,10 +629,6 @@ func (f *Fs) list(ctx context.Context, dir string, recurse bool, prefix string, 
 		if err != nil {
 			return err
 		}
-		// Check that there are matching files
-		if len(response.Files) == 0 {
-			return fs.ErrorDirNotFound
-		}
 		for i := range response.Files {
 			file := &response.Files[i]
 			// Finish if file name no longer has prefix
@@ -1242,9 +1238,13 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 	}
 	_, err = f.NewObject(ctx, remote)
 	if err == fs.ErrorObjectNotFound || err == fs.ErrorNotAFile {
-		err = f.list(ctx, remote, false, "", 1, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
-			return errEndList
+		err2 := f.list(ctx, remote, false, "", 1, f.opt.Versions, func(remote string, object *api.File, isDirectory bool) error {
+			err = nil
+			return nil
 		})
+		if err2 != nil {
+			return "", err2
+		}
 	}
 	if err != nil {
 		return "", err
