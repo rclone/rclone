@@ -16,19 +16,52 @@ import (
 
 	ftp "github.com/goftp/server"
 	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/serve/ftp/ftpflags"
-	"github.com/rclone/rclone/cmd/serve/ftp/ftpopt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
+// Options contains options for the http Server
+type Options struct {
+	//TODO add more options
+	ListenAddr   string // Port to listen on
+	PublicIP     string // Passive ports range
+	PassivePorts string // Passive ports range
+	BasicUser    string // single username for basic auth if not using Htpasswd
+	BasicPass    string // password for BasicUser
+}
+
+// DefaultOpt is the default values used for Options
+var DefaultOpt = Options{
+	ListenAddr:   "localhost:2121",
+	PublicIP:     "",
+	PassivePorts: "30000-32000",
+	BasicUser:    "anonymous",
+	BasicPass:    "",
+}
+
+// Opt is options set by command line flags
+var Opt = DefaultOpt
+
+// AddFlags adds flags for ftp
+func AddFlags(flagSet *pflag.FlagSet) {
+	rc.AddOption("ftp", &Opt)
+	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to.")
+	flags.StringVarP(flagSet, &Opt.PublicIP, "public-ip", "", Opt.PublicIP, "Public IP address to advertise for passive connections.")
+	flags.StringVarP(flagSet, &Opt.PassivePorts, "passive-port", "", Opt.PassivePorts, "Passive port range to use.")
+	flags.StringVarP(flagSet, &Opt.BasicUser, "user", "", Opt.BasicUser, "User name for authentication.")
+	flags.StringVarP(flagSet, &Opt.BasicPass, "pass", "", Opt.BasicPass, "Password for authentication. (empty value allow every password)")
+}
+
 func init() {
-	ftpflags.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
+	AddFlags(Command.Flags())
 }
 
 // Command definition for cobra
@@ -39,12 +72,28 @@ var Command = &cobra.Command{
 rclone serve ftp implements a basic ftp server to serve the
 remote over FTP protocol. This can be viewed with a ftp client
 or you can make a remote of type ftp to read and write it.
-` + ftpopt.Help + vfs.Help,
+
+### Server options
+
+Use --addr to specify which IP address and port the server should
+listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
+IPs.  By default it only listens on localhost.  You can use port
+:0 to let the OS choose an available port.
+
+If you set --addr to listen on a public or LAN accessible IP address
+then using Authentication is advised - see the next section for info.
+
+#### Authentication
+
+By default this will serve files without needing a login.
+
+You can set a single username and password with the --user and --pass flags.
+` + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			s, err := newServer(f, &ftpflags.Opt)
+			s, err := newServer(f, &Opt)
 			if err != nil {
 				return err
 			}
@@ -57,10 +106,11 @@ or you can make a remote of type ftp to read and write it.
 type server struct {
 	f   fs.Fs
 	srv *ftp.Server
+	opt Options
 }
 
 // Make a new FTP to serve the remote
-func newServer(f fs.Fs, opt *ftpopt.Options) (*server, error) {
+func newServer(f fs.Fs, opt *Options) (*server, error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
 		return nil, errors.New("Failed to parse host:port")
@@ -70,6 +120,10 @@ func newServer(f fs.Fs, opt *ftpopt.Options) (*server, error) {
 		return nil, errors.New("Failed to parse host:port")
 	}
 
+	s := &server{
+		f:   f,
+		opt: *opt,
+	}
 	ftpopt := &ftp.ServerOpts{
 		Name:           "Rclone FTP Server",
 		WelcomeMessage: "Welcome on Rclone FTP Server",
@@ -80,17 +134,12 @@ func newServer(f fs.Fs, opt *ftpopt.Options) (*server, error) {
 		Port:         portNum,
 		PublicIp:     opt.PublicIP,
 		PassivePorts: opt.PassivePorts,
-		Auth: &Auth{
-			BasicUser: opt.BasicUser,
-			BasicPass: opt.BasicPass,
-		},
-		Logger: &Logger{},
+		Auth:         &Auth{s},
+		Logger:       &Logger{},
 		//TODO implement a maximum of https://godoc.org/github.com/goftp/server#ServerOpts
 	}
-	return &server{
-		f:   f,
-		srv: ftp.NewServer(ftpopt),
-	}, nil
+	s.srv = ftp.NewServer(ftpopt)
+	return s, nil
 }
 
 // serve runs the ftp server
@@ -134,13 +183,12 @@ func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 
 //Auth struct to handle ftp auth (temporary simple for POC)
 type Auth struct {
-	BasicUser string
-	BasicPass string
+	s *server
 }
 
 //CheckPasswd handle auth based on configuration
 func (a *Auth) CheckPasswd(user, pass string) (bool, error) {
-	return a.BasicUser == user && (a.BasicPass == "" || a.BasicPass == pass), nil
+	return a.s.opt.BasicUser == user && (a.s.opt.BasicPass == "" || a.s.opt.BasicPass == pass), nil
 }
 
 //DriverFactory factory of ftp driver for each session

@@ -16,7 +16,6 @@ import (
 
 	ftp "github.com/goftp/server"
 	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/ftp/ftpopt"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,7 +29,7 @@ const (
 // TestFTP runs the ftp server then runs the unit tests for the
 // ftp remote against it.
 func TestFTP(t *testing.T) {
-	opt := ftpopt.DefaultOpt
+	opt := DefaultOpt
 	opt.ListenAddr = testHOST + ":" + testPORT
 	opt.PassivePorts = testPASSIVEPORTRANGE
 	opt.BasicUser = "rclone"
