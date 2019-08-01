@@ -86,7 +86,6 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 				"objectType": fmt.Sprintf("%T", o),
 			}
 		}
-
 		switch level {
 		case LogLevelDebug:
 			logrus.WithFields(fields).Debug(out)
