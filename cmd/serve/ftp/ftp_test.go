@@ -18,6 +18,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -86,4 +87,11 @@ func TestFTP(t *testing.T) {
 		t.Logf("\n----------\n%s----------\n", string(out))
 	}
 	assert.NoError(t, err, "Running ftp integration tests")
+}
+
+func TestFindID(t *testing.T) {
+	id, err := findID([]byte("TestFindID("))
+	require.NoError(t, err)
+	// id should be the argument to this function
+	assert.Equal(t, fmt.Sprintf("%p", t), id)
 }

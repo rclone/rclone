@@ -5,17 +5,21 @@
 package ftp
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"os/user"
+	"runtime"
 	"strconv"
 	"sync"
 
 	ftp "github.com/goftp/server"
+	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/proxy"
+	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -61,6 +65,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 
 func init() {
 	vfsflags.AddFlags(Command.Flags())
+	proxyflags.AddFlags(Command.Flags())
 	AddFlags(Command.Flags())
 }
 
@@ -88,10 +93,15 @@ then using Authentication is advised - see the next section for info.
 By default this will serve files without needing a login.
 
 You can set a single username and password with the --user and --pass flags.
-` + vfs.Help,
+` + vfs.Help + proxy.Help,
 	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(1, 1, command, args)
-		f := cmd.NewFsSrc(args)
+		var f fs.Fs
+		if proxyflags.Opt.AuthProxy == "" {
+			cmd.CheckArgs(1, 1, command, args)
+			f = cmd.NewFsSrc(args)
+		} else {
+			cmd.CheckArgs(0, 0, command, args)
+		}
 		cmd.Run(false, false, command, func() error {
 			s, err := newServer(f, &Opt)
 			if err != nil {
@@ -104,9 +114,13 @@ You can set a single username and password with the --user and --pass flags.
 
 // server contains everything to run the server
 type server struct {
-	f   fs.Fs
-	srv *ftp.Server
-	opt Options
+	f         fs.Fs
+	srv       *ftp.Server
+	opt       Options
+	vfs       *vfs.VFS
+	proxy     *proxy.Proxy
+	pendingMu sync.Mutex
+	pending   map[string]*Driver // pending Driver~s that haven't got their VFS
 }
 
 // Make a new FTP to serve the remote
@@ -121,21 +135,26 @@ func newServer(f fs.Fs, opt *Options) (*server, error) {
 	}
 
 	s := &server{
-		f:   f,
-		opt: *opt,
+		f:       f,
+		opt:     *opt,
+		pending: make(map[string]*Driver),
 	}
+	if proxyflags.Opt.AuthProxy != "" {
+		s.proxy = proxy.New(&proxyflags.Opt)
+	} else {
+		s.vfs = vfs.New(f, &vfsflags.Opt)
+	}
+
 	ftpopt := &ftp.ServerOpts{
 		Name:           "Rclone FTP Server",
-		WelcomeMessage: "Welcome on Rclone FTP Server",
-		Factory: &DriverFactory{
-			vfs: vfs.New(f, &vfsflags.Opt),
-		},
-		Hostname:     host,
-		Port:         portNum,
-		PublicIp:     opt.PublicIP,
-		PassivePorts: opt.PassivePorts,
-		Auth:         &Auth{s},
-		Logger:       &Logger{},
+		WelcomeMessage: "Welcome to Rclone " + fs.Version + " FTP Server",
+		Factory:        s, // implemented by NewDriver method
+		Hostname:       host,
+		Port:           portNum,
+		PublicIp:       opt.PublicIP,
+		PassivePorts:   opt.PassivePorts,
+		Auth:           s, // implemented by CheckPasswd method
+		Logger:         &Logger{},
 		//TODO implement a maximum of https://godoc.org/github.com/goftp/server#ServerOpts
 	}
 	s.srv = ftp.NewServer(ftpopt)
@@ -181,38 +200,106 @@ func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 	fs.Infof(sessionID, "< %d %s", code, message)
 }
 
-//Auth struct to handle ftp auth (temporary simple for POC)
-type Auth struct {
-	s *server
+// findID finds the connection ID of the calling program.  It does
+// this in an incredibly hacky way by looking in the stack trace.
+//
+// callerName should be the name of the function that we are looking
+// for with a trailing '('
+//
+// What is really needed is a change of calling protocol so
+// CheckPassword is called with the connection.
+func findID(callerName []byte) (string, error) {
+	// Dump the stack in this format
+	// github.com/rclone/rclone/vendor/github.com/goftp/server.(*Conn).Serve(0xc0000b2680)
+	// 	/home/ncw/go/src/github.com/rclone/rclone/vendor/github.com/goftp/server/conn.go:116 +0x11d
+	buf := make([]byte, 4096)
+	n := runtime.Stack(buf, false)
+	buf = buf[:n]
+
+	// look for callerName first
+	i := bytes.Index(buf, callerName)
+	if i < 0 {
+		return "", errors.Errorf("findID: caller name not found in:\n%s", buf)
+	}
+	buf = buf[i+len(callerName):]
+
+	// find next ')'
+	i = bytes.IndexByte(buf, ')')
+	if i < 0 {
+		return "", errors.Errorf("findID: end of args not found in:\n%s", buf)
+	}
+	buf = buf[:i]
+
+	// trim off first argument
+	// find next ','
+	i = bytes.IndexByte(buf, ',')
+	if i >= 0 {
+		buf = buf[:i]
+	}
+
+	return string(buf), nil
 }
 
-//CheckPasswd handle auth based on configuration
-func (a *Auth) CheckPasswd(user, pass string) (bool, error) {
-	return a.s.opt.BasicUser == user && (a.s.opt.BasicPass == "" || a.s.opt.BasicPass == pass), nil
+var connServeFunction = []byte("(*Conn).Serve(")
+
+// CheckPasswd handle auth based on configuration
+func (s *server) CheckPasswd(user, pass string) (ok bool, err error) {
+	var VFS *vfs.VFS
+	if s.proxy != nil {
+		VFS, _, err = s.proxy.Call(user, pass)
+		if err != nil {
+			fs.Infof(nil, "proxy login failed: %v", err)
+			return false, nil
+		}
+		id, err := findID(connServeFunction)
+		if err != nil {
+			fs.Infof(nil, "proxy login failed: failed to read ID from stack: %v", err)
+			return false, nil
+		}
+		s.pendingMu.Lock()
+		d := s.pending[id]
+		delete(s.pending, id)
+		s.pendingMu.Unlock()
+		if d == nil {
+			return false, errors.Errorf("proxy login failed: failed to find pending Driver under ID %q", id)
+		}
+		d.vfs = VFS
+	} else {
+		ok = s.opt.BasicUser == user && (s.opt.BasicPass == "" || s.opt.BasicPass == pass)
+		if !ok {
+			fs.Infof(nil, "login failed: bad credentials")
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
-//DriverFactory factory of ftp driver for each session
-type DriverFactory struct {
-	vfs *vfs.VFS
-}
-
-//NewDriver start a new session
-func (f *DriverFactory) NewDriver() (ftp.Driver, error) {
+// NewDriver starts a new session for each client connection
+func (s *server) NewDriver() (ftp.Driver, error) {
 	log.Trace("", "Init driver")("")
-	return &Driver{
-		vfs: f.vfs,
-	}, nil
+	d := &Driver{
+		s:   s,
+		vfs: s.vfs, // this can be nil if proxy set
+	}
+	return d, nil
 }
 
 //Driver implementation of ftp server
 type Driver struct {
+	s    *server
 	vfs  *vfs.VFS
 	lock sync.Mutex
 }
 
 //Init a connection
-func (d *Driver) Init(*ftp.Conn) {
+func (d *Driver) Init(c *ftp.Conn) {
 	defer log.Trace("", "Init session")("")
+	if d.s.proxy != nil {
+		id := fmt.Sprintf("%p", c)
+		d.s.pendingMu.Lock()
+		d.s.pending[id] = d
+		d.s.pendingMu.Unlock()
+	}
 }
 
 //Stat get information on file or folder
