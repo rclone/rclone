@@ -97,11 +97,12 @@ func checkRelease(shouldUpdate bool) (err error) {
 		if err != nil {
 			return err
 		} else {
-			if err := os.RemoveAll(extractPath); err != nil {
+			err := os.RemoveAll(extractPath)
+			if err != nil {
 				fs.Logf(nil, "No previous downloads to remove")
 			}
 			fs.Logf(nil, "Unzipping")
-			err := unzip(zipPath, extractPath)
+			err = unzip(zipPath, extractPath)
 			if err != nil {
 				return err
 			}
