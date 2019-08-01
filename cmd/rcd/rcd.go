@@ -95,17 +95,17 @@ func checkRelease(shouldUpdate bool) (err error) {
 		err := downloadFile(zipPath, WebUIURL)
 		if err != nil {
 			return err
-		} else {
-			err := os.RemoveAll(extractPath)
-			if err != nil {
-				fs.Logf(nil, "No previous downloads to remove")
-			}
-			fs.Logf(nil, "Unzipping")
-			err = unzip(zipPath, extractPath)
-			if err != nil {
-				return err
-			}
 		}
+		err = os.RemoveAll(extractPath)
+		if err != nil {
+			fs.Logf(nil, "No previous downloads to remove")
+		}
+		fs.Logf(nil, "Unzipping")
+		err = unzip(zipPath, extractPath)
+		if err != nil {
+			return err
+		}
+
 	} else {
 		fs.Logf(nil, "Required files exist. Skipping download")
 	}
