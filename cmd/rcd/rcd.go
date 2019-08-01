@@ -93,7 +93,6 @@ func checkRelease(shouldUpdate bool) (err error) {
 		fs.Logf(nil, "A new release for gui is present at "+WebUIURL)
 		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
 		err := downloadFile(zipPath, WebUIURL)
-
 		if err != nil {
 			return err
 		} else {
