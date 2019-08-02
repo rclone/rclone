@@ -77,10 +77,10 @@ func init() {
 		Description: "Mail.ru Cloud",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name: "username",
-			Help: "User name",
+			Name: "user",
+			Help: "User name (usually email)",
 		}, {
-			Name:       "password",
+			Name:       "pass",
 			Help:       "Password",
 			IsPassword: true,
 		}, {
@@ -96,14 +96,14 @@ func init() {
 				Help:  "Ignore and continue.",
 			}},
 		}, {
-			Name:     "fastput_enable",
+			Name:     "speedup_enable",
 			Default:  false,
 			Advanced: false,
 			Help: `Let mailru skip upload if another file with the same hash is present.
 
 Please note that this feature requires local memory or disk space
 to calculate content hash and decide whether full upload is required.
-Also note that if rclone does not know file size in advance (e.g. in case of
+Also, if rclone does not know file size in advance (e.g. in case of
 streaming uploads), it will not even try this optimization.`,
 			Examples: []fs.OptionExample{{
 				Value: "true",
@@ -113,49 +113,55 @@ streaming uploads), it will not even try this optimization.`,
 				Help:  "Disable",
 			}},
 		}, {
-			Name:     "fastput_patterns",
+			Name:     "speedup_patterns",
 			Default:  "*.mkv,*.avi,*.mp4,*.mp3,*.pdf,*.zip,*.gz,*.rar",
 			Advanced: true,
-			Help: `Comma separated list of file name patterns eligible for fast upload.
+			Help: `Comma separated list of file name patterns eligible for put by hash.
 Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Examples: []fs.OptionExample{{
-				Value: "*",
-				Help:  "Any file name will be allowed for fast upload.",
+				Value: "",
+				Help:  "Empty list disables put by hash.",
 			}, {
-				Value: "*.mkv,*.avi,*.mp4",
-				Help:  "Only common video files will be tried for fast upload.",
+				Value: "*",
+				Help:  "Any file name will be allowed for put by hash.",
+			}, {
+				Value: "*.mkv,*.avi,*.mp4,*.mp3",
+				Help:  "Only common audio/video files will be tried for put by hash.",
 			}, {
 				Value: "*.zip,*.gz,*.rar",
-				Help:  "Only common archive formats will be tried for fast upload.",
+				Help:  "Only common archive formats will be tried for put by hash.",
 			}},
 		}, {
-			Name:     "fastput_min_size",
+			Name:     "speedup_min_size",
 			Default:  fs.SizeSuffix(100 * 1024),
 			Advanced: true,
 			Help: `If you upload lots of small files, you can avoid the hassle
-of preliminary hashing required for fast uploads.`,
+of preliminary hashing required for put by hash.`,
 			Examples: []fs.OptionExample{{
 				Value: "0",
-				Help:  "Any file size will be allowed for fast upload.",
+				Help:  "Any file size will be allowed for put by hash.",
 			}, {
 				Value: "1M",
 				Help:  "Files smaller than 1Mb will always be uploaded directly.",
 			}},
 		}, {
-			Name:     "fastput_max_size",
+			Name:     "speedup_max_size",
 			Default:  fs.SizeSuffix(4 * 1024 * 1024 * 1024),
 			Advanced: true,
-			Help: `Since preliminary hashing can exhaust you RAM or disk space,
-you can disable fast uploads for very large files.`,
+			Help: `This option allows you to disable put by hash for large files
+(because preliminary hashing can exhaust you RAM or disk space)`,
 			Examples: []fs.OptionExample{{
+				Value: "0",
+				Help:  "Disables speedup (put by hash).",
+			}, {
 				Value: "1G",
-				Help:  "Files larger that 1Gb will always be uploaded directly.",
+				Help:  "Files larger that 1Gb will be uploaded directly.",
 			}, {
 				Value: "4G",
 				Help:  "Choose this option if you have less than 4Gb free on local disk.",
 			}},
 		}, {
-			Name:     "fastput_max_memory",
+			Name:     "speedup_max_memory",
 			Default:  fs.SizeSuffix(16 * 1024 * 1024),
 			Advanced: true,
 			Help:     `Files larger than the size given below will always be hashed on disk.`,
@@ -188,15 +194,15 @@ List of supported options: nogzip, insecure, binlist, lsnames.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Username        string        `config:"username"`
-	Password        string        `config:"password"`
+	Username        string        `config:"user"`
+	Password        string        `config:"pass"`
 	UserAgent       string        `config:"user_agent"`
 	CheckHash       bool          `config:"check_hash"`
-	FastputEnable   bool          `config:"fastput_enable"`
-	FastputPatterns string        `config:"fastput_patterns"`
-	FastputMinSize  fs.SizeSuffix `config:"fastput_min_size"`
-	FastputMaxSize  fs.SizeSuffix `config:"fastput_max_size"`
-	FastputMaxMem   fs.SizeSuffix `config:"fastput_max_memory"`
+	SpeedupEnable   bool          `config:"speedup_enable"`
+	SpeedupPatterns string        `config:"speedup_patterns"`
+	SpeedupMinSize  fs.SizeSuffix `config:"speedup_min_size"`
+	SpeedupMaxSize  fs.SizeSuffix `config:"speedup_max_size"`
+	SpeedupMaxMem   fs.SizeSuffix `config:"speedup_max_memory"`
 	Debug           string        `config:"debug"`
 }
 
@@ -298,7 +304,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	uniqueValidPatterns := make(map[string]interface{})
-	for _, pattern := range strings.Split(opt.FastputPatterns, ",") {
+	for _, pattern := range strings.Split(opt.SpeedupPatterns, ",") {
 		pattern = strings.ToLower(strings.TrimSpace(pattern))
 		if pattern == "" {
 			continue
@@ -1512,12 +1518,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		newHash  []byte
 	)
 
-	// Check whether file is eligible for fast put
-	tryFast := o.fs.eligibleForFastPut(o.Remote(), size)
+	// Check whether file is eligible for put by hash
+	tryFast := o.fs.eligibleForSpeedup(o.Remote(), size)
 
 	// Attempt to put by hash from memory
-	if tryFast && size <= int64(o.fs.opt.FastputMaxMem) {
-		//fs.Debugf(o, "attempt to put hash from memory")
+	if tryFast && size <= int64(o.fs.opt.SpeedupMaxMem) {
+		//fs.Debugf(o, "attempt to put by hash from memory")
 		fileBuf, err = ioutil.ReadAll(in)
 		if err != nil {
 			return err
@@ -1596,8 +1602,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	return o.addFileMetaData(true)
 }
 
-func (f *Fs) eligibleForFastPut(remote string, size int64) bool {
-	ok := f.opt.FastputEnable && size > mrhash.Size && size >= int64(f.opt.FastputMinSize) && size <= int64(f.opt.FastputMaxSize)
+func (f *Fs) eligibleForSpeedup(remote string, size int64) bool {
+	ok := f.opt.SpeedupEnable && size > mrhash.Size && size >= int64(f.opt.SpeedupMinSize) && size <= int64(f.opt.SpeedupMaxSize)
 	if !ok {
 		return false
 	}
