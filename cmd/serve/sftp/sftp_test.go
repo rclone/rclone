@@ -8,16 +8,15 @@
 package sftp
 
 import (
-	"context"
-	"os"
-	"os/exec"
 	"strings"
 	"testing"
 
 	"github.com/pkg/sftp"
 	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/servetest"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,58 +37,35 @@ var (
 // TestSftp runs the sftp server then runs the unit tests for the
 // sftp remote against it.
 func TestSftp(t *testing.T) {
-	fstest.Initialise()
+	// Configure and start the server
+	start := func(f fs.Fs) (configmap.Simple, func()) {
+		opt := DefaultOpt
+		opt.ListenAddr = testBindAddress
+		opt.User = testUser
+		opt.Pass = testPass
 
-	fremote, _, clean, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
-	assert.NoError(t, err)
-	defer clean()
+		w := newServer(f, &opt)
+		assert.NoError(t, w.serve())
 
-	err = fremote.Mkdir(context.Background(), "")
-	assert.NoError(t, err)
+		// Read the host and port we started on
+		addr := w.Addr()
+		colon := strings.LastIndex(addr, ":")
 
-	opt := DefaultOpt
-	opt.ListenAddr = testBindAddress
-	opt.User = testUser
-	opt.Pass = testPass
+		// Config for the backend we'll use to connect to the server
+		config := configmap.Simple{
+			"type": "sftp",
+			"user": testUser,
+			"pass": obscure.MustObscure(testPass),
+			"host": addr[:colon],
+			"port": addr[colon+1:],
+		}
 
-	// Start the server
-	w := newServer(fremote, &opt)
-	assert.NoError(t, w.serve())
-	defer func() {
-		w.Close()
-		w.Wait()
-	}()
-
-	// Change directory to run the tests
-	err = os.Chdir("../../../backend/sftp")
-	assert.NoError(t, err, "failed to cd to sftp backend")
-
-	// Run the sftp tests with an on the fly remote
-	args := []string{"test"}
-	if testing.Verbose() {
-		args = append(args, "-v")
+		// return a stop function
+		return config, func() {
+			w.Close()
+			w.Wait()
+		}
 	}
-	if *fstest.Verbose {
-		args = append(args, "-verbose")
-	}
-	args = append(args, "-remote", "sftptest:")
-	cmd := exec.Command("go", args...)
-	addr := w.Addr()
-	colon := strings.LastIndex(addr, ":")
-	if colon < 0 {
-		panic("need a : in the address: " + addr)
-	}
-	host, port := addr[:colon], addr[colon+1:]
-	cmd.Env = append(os.Environ(),
-		"RCLONE_CONFIG_SFTPTEST_TYPE=sftp",
-		"RCLONE_CONFIG_SFTPTEST_HOST="+host,
-		"RCLONE_CONFIG_SFTPTEST_PORT="+port,
-		"RCLONE_CONFIG_SFTPTEST_USER="+testUser,
-		"RCLONE_CONFIG_SFTPTEST_PASS="+obscure.MustObscure(testPass),
-	)
-	out, err := cmd.CombinedOutput()
-	if len(out) != 0 {
-		t.Logf("\n----------\n%s----------\n", string(out))
-	}
-	assert.NoError(t, err, "Running sftp integration tests")
+
+	servetest.Run(t, "sftp", start)
 }

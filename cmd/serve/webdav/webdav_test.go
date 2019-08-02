@@ -8,21 +8,22 @@
 package webdav
 
 import (
-	"context"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/filter"
-	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/webdav"
@@ -30,6 +31,8 @@ import (
 
 const (
 	testBindAddress = "localhost:0"
+	testUser        = "user"
+	testPass        = "pass"
 )
 
 // check interfaces
@@ -42,50 +45,34 @@ var (
 // TestWebDav runs the webdav server then runs the unit tests for the
 // webdav remote against it.
 func TestWebDav(t *testing.T) {
-	opt := httplib.DefaultOpt
-	opt.ListenAddr = testBindAddress
+	// Configure and start the server
+	start := func(f fs.Fs) (configmap.Simple, func()) {
+		opt := httplib.DefaultOpt
+		opt.ListenAddr = testBindAddress
+		opt.BasicUser = testUser
+		opt.BasicPass = testPass
+		hashType = hash.MD5
 
-	fstest.Initialise()
+		// Start the server
+		w := newWebDAV(f, &opt)
+		assert.NoError(t, w.serve())
 
-	fremote, _, clean, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
-	assert.NoError(t, err)
-	defer clean()
+		// Config for the backend we'll use to connect to the server
+		config := configmap.Simple{
+			"type":   "webdav",
+			"vendor": "other",
+			"url":    w.Server.URL(),
+			"user":   testUser,
+			"pass":   obscure.MustObscure(testPass),
+		}
 
-	err = fremote.Mkdir(context.Background(), "")
-	assert.NoError(t, err)
-
-	// Start the server
-	w := newWebDAV(fremote, &opt)
-	assert.NoError(t, w.serve())
-	defer func() {
-		w.Close()
-		w.Wait()
-	}()
-
-	// Change directory to run the tests
-	err = os.Chdir("../../../backend/webdav")
-	assert.NoError(t, err, "failed to cd to webdav remote")
-
-	// Run the webdav tests with an on the fly remote
-	args := []string{"test"}
-	if testing.Verbose() {
-		args = append(args, "-v")
+		return config, func() {
+			w.Close()
+			w.Wait()
+		}
 	}
-	if *fstest.Verbose {
-		args = append(args, "-verbose")
-	}
-	args = append(args, "-remote", "webdavtest:")
-	cmd := exec.Command("go", args...)
-	cmd.Env = append(os.Environ(),
-		"RCLONE_CONFIG_WEBDAVTEST_TYPE=webdav",
-		"RCLONE_CONFIG_WEBDAVTEST_URL="+w.Server.URL(),
-		"RCLONE_CONFIG_WEBDAVTEST_VENDOR=other",
-	)
-	out, err := cmd.CombinedOutput()
-	if len(out) != 0 {
-		t.Logf("\n----------\n%s----------\n", string(out))
-	}
-	assert.NoError(t, err, "Running webdav integration tests")
+
+	servetest.Run(t, "webdav", start)
 }
 
 // Test serve http functionality in serve webdav
@@ -97,10 +84,6 @@ var (
 )
 
 func TestHTTPFunction(t *testing.T) {
-	// cd to correct directory for testing
-	err := os.Chdir("../../cmd/serve/webdav")
-	assert.NoError(t, err, "failed to cd to webdav cmd directory")
-
 	// exclude files called hidden.txt and directories called hidden
 	require.NoError(t, filter.Active.AddRule("- hidden.txt"))
 	require.NoError(t, filter.Active.AddRule("- hidden/**"))
