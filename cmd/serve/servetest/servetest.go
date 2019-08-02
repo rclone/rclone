@@ -8,22 +8,27 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// StartFn describes the callback which should start the server,
-// return a config and a clean up function
+// StartFn describes the callback which should start the server with
+// the Fs passed in.
+// It should return a config for the backend used to connect to the
+// server and a clean up function
 type StartFn func(f fs.Fs) (configmap.Simple, func())
 
-// Run runs the server then runs the unit tests for the remote against
+// run runs the server then runs the unit tests for the remote against
 // it.
-func Run(t *testing.T, name string, start StartFn) {
+func run(t *testing.T, name string, start StartFn, useProxy bool) {
 	fstest.Initialise()
 
 	fremote, _, clean, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
@@ -33,12 +38,34 @@ func Run(t *testing.T, name string, start StartFn) {
 	err = fremote.Mkdir(context.Background(), "")
 	assert.NoError(t, err)
 
-	config, cleanup := start(fremote)
+	f := fremote
+	if useProxy {
+		// If using a proxy don't pass in the backend
+		f = nil
+
+		// the backend config will be made by the proxy
+		prog, err := filepath.Abs("../servetest/proxy_code.go")
+		require.NoError(t, err)
+		cmd := "go run " + prog + " " + fremote.Root()
+
+		// FIXME this is untidy setting a global variable!
+		proxyflags.Opt.AuthProxy = cmd
+		defer func() {
+			proxyflags.Opt.AuthProxy = ""
+		}()
+	}
+	config, cleanup := start(f)
 	defer cleanup()
 
 	// Change directory to run the tests
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
 	err = os.Chdir("../../../backend/" + name)
-	assert.NoError(t, err, "failed to cd to "+name+" backend")
+	require.NoError(t, err, "failed to cd to "+name+" backend")
+	defer func() {
+		// Change back to the old directory
+		require.NoError(t, os.Chdir(cwd))
+	}()
 
 	// Run the backend tests with an on the fly remote
 	args := []string{"test"}
@@ -66,4 +93,15 @@ func Run(t *testing.T, name string, start StartFn) {
 		t.Logf("\n----------\n%s----------\n", string(out))
 	}
 	assert.NoError(t, err, "Running "+name+" integration tests")
+}
+
+// Run runs the server then runs the unit tests for the remote against
+// it.
+func Run(t *testing.T, name string, start StartFn) {
+	t.Run("Normal", func(t *testing.T) {
+		run(t, name, start, false)
+	})
+	t.Run("AuthProxy", func(t *testing.T) {
+		run(t, name, start, true)
+	})
 }
