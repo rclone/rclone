@@ -548,12 +548,12 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Fil
 	if info != nil {
 		err := o.decodeMetaData(info)
 		if err != nil {
-			return o, err
+			return nil, err
 		}
 	} else {
 		err := o.readMetaData(ctx) // reads info and headers, returning an error
 		if err != nil {
-			return o, err
+			return nil, err
 		}
 	}
 	return o, nil
@@ -1082,7 +1082,8 @@ func (f *Fs) purge(ctx context.Context, oldOnly bool) error {
 			for object := range toBeDeleted {
 				oi, err := f.newObjectWithInfo(ctx, object.Name, object)
 				if err != nil {
-					fs.Errorf(object, "Can't create object %+v", err)
+					fs.Errorf(object.Name, "Can't create object %v", err)
+					continue
 				}
 				tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
 				err = f.deleteByID(object.ID, object.Name)
