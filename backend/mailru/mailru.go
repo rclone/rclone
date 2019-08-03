@@ -1518,8 +1518,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		newHash  []byte
 	)
 
-	// Check whether file is eligible for put by hash
-	tryFast := o.fs.eligibleForSpeedup(o.Remote(), size)
+	// Check whether file is eligible for speedup method (put by hash)
+	tryFast := o.fs.eligibleForSpeedup(o.Remote(), size, options...)
 
 	// Attempt to put by hash from memory
 	if tryFast && size <= int64(o.fs.opt.SpeedupMaxMem) {
@@ -1602,9 +1602,14 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	return o.addFileMetaData(true)
 }
 
-func (f *Fs) eligibleForSpeedup(remote string, size int64) bool {
+// eligibleForSpeedup checks whether file is eligible for speedup method (put by hash)
+func (f *Fs) eligibleForSpeedup(remote string, size int64, options ...fs.OpenOption) bool {
 	ok := f.opt.SpeedupEnable && size > mrhash.Size && size >= int64(f.opt.SpeedupMinSize) && size <= int64(f.opt.SpeedupMaxSize)
 	if !ok {
+		return false
+	}
+	_, _, partial := getTransferRange(size, options...)
+	if partial {
 		return false
 	}
 	if f.fastGlobs == nil {
@@ -1938,35 +1943,43 @@ func (o *Object) Remove() error {
 	return o.fs.delete(o.absPath(), false)
 }
 
-// Open an object for read and download its content
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	fs.Debugf(o, ">>> Open")
-
+// getTransferRange detects partial transfers and calculates start/end offsets into file
+func getTransferRange(size int64, options ...fs.OpenOption) (start int64, end int64, partial bool) {
 	var offset, limit int64 = 0, -1
+
 	for _, option := range options {
 		switch opt := option.(type) {
 		case *fs.SeekOption:
 			offset = opt.Offset
 		case *fs.RangeOption:
-			offset, limit = opt.Decode(o.Size())
+			offset, limit = opt.Decode(size)
 		default:
 			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
+				fs.Errorf(nil, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
 	if limit < 0 {
-		limit = o.size - offset
+		limit = size - offset
 	}
-	end := offset + limit
-	if end > o.size {
-		end = o.size
+	end = offset + limit
+	if end > size {
+		end = size
 	}
+	partial = !(offset == 0 && end == size)
+	return offset, end, partial
+}
+
+// Open an object for read and download its content
+func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	fs.Debugf(o, ">>> Open")
 
 	token, err := o.fs.accessToken()
 	if err != nil {
 		return nil, err
 	}
+
+	start, end, partial := getTransferRange(o.size, options...)
 
 	// TODO: set custom timeouts
 	opts := rest.Opts{
@@ -1979,7 +1992,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		},
 		ExtraHeaders: map[string]string{
 			"Accept": "*/*",
-			"Range":  fmt.Sprintf("bytes=%d-%d", offset, end-1),
+			"Range":  fmt.Sprintf("bytes=%d-%d", start, end-1),
 		},
 	}
 
@@ -2002,7 +2015,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	}
 
 	var hasher gohash.Hash
-	if offset == 0 && end == o.size {
+	if !partial {
 		// Cannot check hash of partial download
 		hasher = mrhash.New()
 	}
