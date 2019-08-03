@@ -113,10 +113,10 @@ streaming uploads), it will not even try this optimization.`,
 				Help:  "Disable",
 			}},
 		}, {
-			Name:     "speedup_patterns",
+			Name:     "speedup_file_patterns",
 			Default:  "*.mkv,*.avi,*.mp4,*.mp3,*.pdf,*.zip,*.gz,*.rar",
 			Advanced: true,
-			Help: `Comma separated list of file name patterns eligible for put by hash.
+			Help: `Comma separated list of file name patterns eligible for put by hash (speedup).
 Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -199,7 +199,7 @@ type Options struct {
 	UserAgent       string        `config:"user_agent"`
 	CheckHash       bool          `config:"check_hash"`
 	SpeedupEnable   bool          `config:"speedup_enable"`
-	SpeedupPatterns string        `config:"speedup_patterns"`
+	SpeedupPatterns string        `config:"speedup_file_patterns"`
 	SpeedupMinSize  fs.SizeSuffix `config:"speedup_min_size"`
 	SpeedupMaxSize  fs.SizeSuffix `config:"speedup_max_size"`
 	SpeedupMaxMem   fs.SizeSuffix `config:"speedup_max_memory"`
@@ -256,25 +256,26 @@ func errorHandler(res *http.Response) (err error) {
 
 // Fs represents a remote mail.ru
 type Fs struct {
-	name        string
-	root        string             // root path
-	opt         Options            // parsed options
-	fastGlobs   []string           // list of file name patterns eligible for fast put
-	features    *fs.Features       // optional features
-	srv         *rest.Client       // REST API client
-	cli         *http.Client       // underlying HTTP client (for authorize)
-	m           configmap.Mapper   // config reader (for authorize)
-	source      oauth2.TokenSource // OAuth token refresher
-	pacer       *fs.Pacer          // pacer for API calls
-	metaMu      sync.Mutex         // lock for meta server switcher
-	metaURL     string             // URL of meta server
-	metaExpiry  time.Time          // time to refresh meta server
-	shardMu     sync.Mutex         // lock for upload shard switcher
-	shardURL    string             // URL of upload shard
-	shardExpiry time.Time          // time to refresh upload shard
-	fileServers serverList         // file server switcher
-	authMu      sync.Mutex         // mutex for authorize()
-	passFailed  bool               // true if authorize() failed after 403
+	name         string
+	root         string             // root path
+	opt          Options            // parsed options
+	speedupGlobs []string           // list of file name patterns eligible for speedup
+	speedupAny   bool               // true if all file names are aligible for speedup
+	features     *fs.Features       // optional features
+	srv          *rest.Client       // REST API client
+	cli          *http.Client       // underlying HTTP client (for authorize)
+	m            configmap.Mapper   // config reader (for authorize)
+	source       oauth2.TokenSource // OAuth token refresher
+	pacer        *fs.Pacer          // pacer for API calls
+	metaMu       sync.Mutex         // lock for meta server switcher
+	metaURL      string             // URL of meta server
+	metaExpiry   time.Time          // time to refresh meta server
+	shardMu      sync.Mutex         // lock for upload shard switcher
+	shardURL     string             // URL of upload shard
+	shardExpiry  time.Time          // time to refresh upload shard
+	fileServers  serverList         // file server switcher
+	authMu       sync.Mutex         // mutex for authorize()
+	passFailed   bool               // true if authorize() failed after 403
 }
 
 // NewFs constructs an Fs from the path, container:path
@@ -303,19 +304,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		m:    m,
 	}
 
-	uniqueValidPatterns := make(map[string]interface{})
-	for _, pattern := range strings.Split(opt.SpeedupPatterns, ",") {
-		pattern = strings.ToLower(strings.TrimSpace(pattern))
-		if pattern == "" {
-			continue
-		}
-		if _, err := filepath.Match(pattern, ""); err != nil {
-			return nil, fmt.Errorf("invalid file name pattern %q", pattern)
-		}
-		uniqueValidPatterns[pattern] = nil
-	}
-	for pattern := range uniqueValidPatterns {
-		f.fastGlobs = append(f.fastGlobs, pattern)
+	if err := f.parseSpeedupPatterns(opt.SpeedupPatterns); err != nil {
+		return nil, err
 	}
 
 	f.pacer = fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer)))
@@ -1604,24 +1594,55 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 // eligibleForSpeedup checks whether file is eligible for speedup method (put by hash)
 func (f *Fs) eligibleForSpeedup(remote string, size int64, options ...fs.OpenOption) bool {
-	ok := f.opt.SpeedupEnable && size > mrhash.Size && size >= int64(f.opt.SpeedupMinSize) && size <= int64(f.opt.SpeedupMaxSize)
-	if !ok {
+	if !f.opt.SpeedupEnable {
+		return false
+	}
+	sizeOK := size > mrhash.Size && size >= int64(f.opt.SpeedupMinSize) && size <= int64(f.opt.SpeedupMaxSize)
+	if !sizeOK {
 		return false
 	}
 	_, _, partial := getTransferRange(size, options...)
 	if partial {
 		return false
 	}
-	if f.fastGlobs == nil {
+	if f.speedupAny {
 		return true
 	}
+	if f.speedupGlobs == nil {
+		return false
+	}
 	nameLower := strings.ToLower(strings.TrimSpace(path.Base(remote)))
-	for _, pattern := range f.fastGlobs {
+	for _, pattern := range f.speedupGlobs {
 		if matches, _ := filepath.Match(pattern, nameLower); matches {
 			return true
 		}
 	}
 	return false
+}
+
+// parseSpeedupPatterns converts pattern string into list of unique glob patterns
+func (f *Fs) parseSpeedupPatterns(patternString string) (err error) {
+	f.speedupGlobs = nil
+	f.speedupAny = false
+	uniqueValidPatterns := make(map[string]interface{})
+
+	for _, pattern := range strings.Split(patternString, ",") {
+		pattern = strings.ToLower(strings.TrimSpace(pattern))
+		if pattern == "" {
+			continue
+		}
+		if pattern == "*" {
+			f.speedupAny = true
+		}
+		if _, err := filepath.Match(pattern, ""); err != nil {
+			return fmt.Errorf("invalid file name pattern %q", pattern)
+		}
+		uniqueValidPatterns[pattern] = nil
+	}
+	for pattern := range uniqueValidPatterns {
+		f.speedupGlobs = append(f.speedupGlobs, pattern)
+	}
+	return nil
 }
 
 func (o *Object) putByHash(mrHash []byte, info fs.ObjectInfo, method string) bool {
