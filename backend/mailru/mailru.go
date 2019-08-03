@@ -176,8 +176,8 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Hide:     fs.OptionHideBoth,
 		}, {
 			Name: "debug",
-			Help: `Comma separated list of debugging options. This is for debugging purposes only.
-List of supported options: nogzip, insecure, binlist, lsnames.`,
+			Help: `Comma separated list of debugging options. This is for development purposes only.
+List of supported options: nogzip, insecure, binlist, lsnames, atomicmkdir.`,
 			Default:  "",
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
@@ -1004,22 +1004,33 @@ func (f *Fs) CreateDir(path string) error {
 	}
 }
 
-// Mkdir creates the container (and its parents) if it doesn't exist
+// Mkdir creates the container (and its parents) if it doesn't exist.
+// Normally it ignores the ErrorDirAlreadyExist, as required by rclone tests.
+// Nevertheless, such programs as borgbackup or restic use mkdir as a locking
+// primitive and depend on its atomicity, i.e. mkdir should fail if directory
+// already exists. As a workaround, users can add string "atomicmkdir" in the
+// hidden `quirks` parameter or in the `--mailru-quirks` command-line option.
 func (f *Fs) Mkdir(dir string) error {
 	fs.Debugf(f, ">>> Mkdir %q", dir)
-	return f.mkDirs(f.absPath(dir))
+	err := f.mkDirs(f.absPath(dir))
+	if err == ErrorDirAlreadyExists && !strings.Contains(f.opt.Debug, "atomicmkdir") {
+		return nil
+	}
+	return err
 }
 
+// mkDirs creates container and its parents by absolute path,
+// fails with ErrorDirAlreadyExists if it already exists.
 func (f *Fs) mkDirs(path string) error {
 	if path == "/" || path == "" {
 		return nil
 	}
-	err := f.CreateDir(path)
-	switch err {
-	case nil, ErrorDirAlreadyExists:
+	switch err := f.CreateDir(path); err {
+	case nil:
 		return nil
 	case ErrorDirSourceNotExists:
 		fs.Debugf(f, "mkDirs by part %q", path)
+		// fall thru...
 	default:
 		return err
 	}
@@ -1030,8 +1041,7 @@ func (f *Fs) mkDirs(path string) error {
 			continue
 		}
 		path += "/" + part
-		err = f.CreateDir(path)
-		switch err {
+		switch err := f.CreateDir(path); err {
 		case nil, ErrorDirAlreadyExists:
 			continue
 		default:
@@ -1049,8 +1059,14 @@ func parentDir(absPath string) string {
 	return parent
 }
 
+// mkParentDirs creates parent containers by absolute path,
+// ignores the ErrorDirAlreadyExists
 func (f *Fs) mkParentDirs(path string) error {
-	return f.mkDirs(parentDir(path))
+	err := f.mkDirs(parentDir(path))
+	if err == ErrorDirAlreadyExists {
+		return nil
+	}
+	return err
 }
 
 // Rmdir deletes a directory.
