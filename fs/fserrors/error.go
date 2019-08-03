@@ -266,6 +266,7 @@ var retriableErrorStrings = []string{
 	"transport connection broken",      // net/http/transport.go
 	"http: ContentLength=",             // net/http/transfer.go
 	"server closed idle connection",    // net/http/transport.go
+	"bad record MAC",                   // crypto/tls/alert.go
 }
 
 // Errors which indicate networking errors which should be retried
