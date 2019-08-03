@@ -50,6 +50,7 @@ const (
 	shardExpirySec  = 30 * 60    // upload server expiration time
 	maxServerLocks  = 8          // maximum number of locks per single download server
 	maxInt32        = 2147483647 // used as limit in directory list request
+	speedupMinSize  = 512        // speedup is not optimal if data is smaller than average packet
 )
 
 // Global errors
@@ -77,34 +78,27 @@ func init() {
 		Description: "Mail.ru Cloud",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Name: "user",
-			Help: "User name (usually email)",
+			Name:     "user",
+			Help:     "User name (usually email)",
+			Required: true,
 		}, {
 			Name:       "pass",
 			Help:       "Password",
+			Required:   true,
 			IsPassword: true,
 		}, {
-			Name:     "check_hash",
-			Default:  true,
-			Advanced: true,
-			Help:     "What should copy do if file checksum is mismatching or invalid",
-			Examples: []fs.OptionExample{{
-				Value: "true",
-				Help:  "Fail with error.",
-			}, {
-				Value: "false",
-				Help:  "Ignore and continue.",
-			}},
-		}, {
 			Name:     "speedup_enable",
-			Default:  false,
+			Default:  true,
 			Advanced: false,
-			Help: `Let mailru skip upload if another file with the same hash is present.
+			Help: `Skip full upload if there is another file with same data hash.
 
-Please note that this feature requires local memory or disk space
-to calculate content hash and decide whether full upload is required.
+This feature is called "speedup" or "put by hash". It is especially efficient
+in case of generally available files like popular books, video or audio clips,
+because files are searched by hash in all accounts of all mailru users.
+Please note that rclone needs local memory and disk space to calculate
+content hash in advance and decide whether full upload is required.
 Also, if rclone does not know file size in advance (e.g. in case of
-streaming uploads), it will not even try this optimization.`,
+streaming or partial uploads), it will not even try this optimization.`,
 			Examples: []fs.OptionExample{{
 				Value: "true",
 				Help:  "Enable",
@@ -114,66 +108,65 @@ streaming uploads), it will not even try this optimization.`,
 			}},
 		}, {
 			Name:     "speedup_file_patterns",
-			Default:  "*.mkv,*.avi,*.mp4,*.mp3,*.pdf,*.zip,*.gz,*.rar",
+			Default:  "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf",
 			Advanced: true,
-			Help: `Comma separated list of file name patterns eligible for put by hash (speedup).
+			Help: `Comma separated list of file name patterns eligible for speedup (put by hash).
 Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Examples: []fs.OptionExample{{
 				Value: "",
-				Help:  "Empty list disables put by hash.",
+				Help:  "Empty list completely disables speedup (put by hash).",
 			}, {
 				Value: "*",
-				Help:  "Any file name will be allowed for put by hash.",
+				Help:  "All files will be attempted for speedup.",
 			}, {
 				Value: "*.mkv,*.avi,*.mp4,*.mp3",
 				Help:  "Only common audio/video files will be tried for put by hash.",
 			}, {
-				Value: "*.zip,*.gz,*.rar",
-				Help:  "Only common archive formats will be tried for put by hash.",
+				Value: "*.zip,*.gz,*.rar,*.pdf",
+				Help:  "Only common archives or PDF books will be tried for speedup.",
 			}},
 		}, {
-			Name:     "speedup_min_size",
-			Default:  fs.SizeSuffix(100 * 1024),
+			Name:     "speedup_max_disk",
+			Default:  fs.SizeSuffix(3 * 1024 * 1024 * 1024),
 			Advanced: true,
-			Help: `If you upload lots of small files, you can avoid the hassle
-of preliminary hashing required for put by hash.`,
-			Examples: []fs.OptionExample{{
-				Value: "0",
-				Help:  "Any file size will be allowed for put by hash.",
-			}, {
-				Value: "1M",
-				Help:  "Files smaller than 1Mb will always be uploaded directly.",
-			}},
-		}, {
-			Name:     "speedup_max_size",
-			Default:  fs.SizeSuffix(4 * 1024 * 1024 * 1024),
-			Advanced: true,
-			Help: `This option allows you to disable put by hash for large files
+			Help: `This option allows you to disable speedup (put by hash) for large files
 (because preliminary hashing can exhaust you RAM or disk space)`,
 			Examples: []fs.OptionExample{{
 				Value: "0",
-				Help:  "Disables speedup (put by hash).",
+				Help:  "Completely disable speedup (put by hash).",
 			}, {
 				Value: "1G",
-				Help:  "Files larger that 1Gb will be uploaded directly.",
+				Help:  "Files larger than 1Gb will be uploaded directly.",
 			}, {
-				Value: "4G",
-				Help:  "Choose this option if you have less than 4Gb free on local disk.",
+				Value: "3G",
+				Help:  "Choose this option if you have less than 3Gb free on local disk.",
 			}},
 		}, {
 			Name:     "speedup_max_memory",
-			Default:  fs.SizeSuffix(16 * 1024 * 1024),
+			Default:  fs.SizeSuffix(32 * 1024 * 1024),
 			Advanced: true,
 			Help:     `Files larger than the size given below will always be hashed on disk.`,
 			Examples: []fs.OptionExample{{
 				Value: "0",
-				Help:  "Preliminary hash calculation will always be done on disk.",
+				Help:  "Preliminary hashing will always be done in a temporary disk location.",
 			}, {
-				Value: "16M",
-				Help:  "You cannot dedicate more than 10Mb RAM for preliminary hash calculation.",
+				Value: "32M",
+				Help:  "Do not dedicate more than 32Mb RAM for preliminary hashing.",
 			}, {
 				Value: "256M",
 				Help:  "You have at most 256Mb RAM free for hash calculations.",
+			}},
+		}, {
+			Name:     "check_hash",
+			Default:  true,
+			Advanced: true,
+			Help:     "What should copy do if file checksum is mismatched or invalid",
+			Examples: []fs.OptionExample{{
+				Value: "true",
+				Help:  "Fail with error.",
+			}, {
+				Value: "false",
+				Help:  "Ignore and continue.",
 			}},
 		}, {
 			Name:     "user_agent",
@@ -200,8 +193,7 @@ type Options struct {
 	CheckHash       bool          `config:"check_hash"`
 	SpeedupEnable   bool          `config:"speedup_enable"`
 	SpeedupPatterns string        `config:"speedup_file_patterns"`
-	SpeedupMinSize  fs.SizeSuffix `config:"speedup_min_size"`
-	SpeedupMaxSize  fs.SizeSuffix `config:"speedup_max_size"`
+	SpeedupMaxDisk  fs.SizeSuffix `config:"speedup_max_disk"`
 	SpeedupMaxMem   fs.SizeSuffix `config:"speedup_max_memory"`
 	Debug           string        `config:"debug"`
 }
@@ -1597,8 +1589,7 @@ func (f *Fs) eligibleForSpeedup(remote string, size int64, options ...fs.OpenOpt
 	if !f.opt.SpeedupEnable {
 		return false
 	}
-	sizeOK := size > mrhash.Size && size >= int64(f.opt.SpeedupMinSize) && size <= int64(f.opt.SpeedupMaxSize)
-	if !sizeOK {
+	if size <= mrhash.Size || size < speedupMinSize || size >= int64(f.opt.SpeedupMaxDisk) {
 		return false
 	}
 	_, _, partial := getTransferRange(size, options...)
