@@ -212,6 +212,10 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
+// dumpErrorDetails is a remote troubleshooting aid.
+// Globally affects all backend instances.
+var dumpErrorDetails bool
+
 // shouldRetry returns a boolean as to whether this response and err
 // deserve to be retried. It returns the err as a convenience.
 // Retries password authorization (once) in a special case of access denied.
@@ -219,6 +223,9 @@ func shouldRetry(res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, e
 	if res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
 		reAuthErr := f.reAuthorize(opts, err)
 		return reAuthErr == nil, err // return an original error
+	}
+	if f.quirks.retry400 && res.StatusCode == 400 {
+		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(res, retryErrorCodes), err
 }
@@ -228,6 +235,9 @@ func errorHandler(res *http.Response) (err error) {
 	data, err := rest.ReadBody(res)
 	if err != nil {
 		return err
+	}
+	if dumpErrorDetails {
+		fs.Errorf(nil, "Detailed mailru error: %d %q %q", res.StatusCode, res.Status, string(data))
 	}
 	fileError := &api.FileErrorResponse{}
 	err = json.NewDecoder(bytes.NewReader(data)).Decode(fileError)
@@ -240,7 +250,6 @@ func errorHandler(res *http.Response) (err error) {
 	if err == nil {
 		return serverError
 	}
-	//fs.Debugf(nil, "Server error %q %d %q", string(data), res.StatusCode, res.Status)
 	serverError.Message = string(data)
 	if serverError.Message == "" || strings.HasPrefix(serverError.Message, "{") {
 		// Replace empty or JSON response with a human readable text.
@@ -325,6 +334,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f.cli = fshttp.NewClient(&clientConfig)
 	f.srv = rest.NewClient(f.cli).SetRoot(api.APIServerURL)
 	f.srv.SetErrorHandler(errorHandler)
+	if f.quirks.dumperr {
+		dumpErrorDetails = true
+	}
 
 	if f.quirks.insecure {
 		transport := f.cli.Transport.(*fshttp.Transport).Transport
@@ -368,6 +380,8 @@ type quirks struct {
 	binlist     bool
 	lsnames     bool
 	atomicmkdir bool
+	dumperr     bool
+	retry400    bool
 }
 
 func (q *quirks) parseQuirks(option string) {
@@ -412,6 +426,16 @@ func (q *quirks) parseQuirks(option string) {
 			// atomicity. This quirk is a workaround. It can be removed
 			// when the above issue is investigated.
 			q.atomicmkdir = true
+		case "dumperr":
+			// This quirk is a duplicate of the --dump-headers / --dump-bodies
+			// command-line options.
+			q.dumperr = true
+		case "retry400":
+			// This quirk will help in troubleshooting a very rare "Error 400"
+			// issue. It can be removed if the problem does not show up
+			// for a year or so. See the below issue:
+			// https://github.com/ivandeex/rclone/issues/14
+			q.retry400 = true
 		default:
 			// Just ignore all unknown flags
 		}
