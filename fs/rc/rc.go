@@ -17,11 +17,15 @@ import (
 
 // Options contains options for the remote control server
 type Options struct {
-	HTTPOptions httplib.Options
-	Enabled     bool   // set to enable the server
-	Serve       bool   // set to serve files from remotes
-	Files       string // set to enable serving files locally
-	NoAuth      bool   // set to disable auth checks on AuthRequired methods
+	HTTPOptions    httplib.Options
+	Enabled        bool   // set to enable the server
+	Serve          bool   // set to serve files from remotes
+	Files          string // set to enable serving files locally
+	NoAuth         bool   // set to disable auth checks on AuthRequired methods
+	WebUI          bool   // set to launch the web ui
+	WebGUIUpdate   bool   // set to download new update
+	WebGUIFetchURL string // set the default url for fetching webgui
+
 }
 
 // DefaultOpt is the default values used for Options

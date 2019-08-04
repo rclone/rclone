@@ -1,19 +1,30 @@
 package rcd
 
 import (
+	"archive/zip"
+	"encoding/json"
+	"io"
 	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
+	"github.com/rclone/rclone/lib/errors"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "rcd <path to files to serve>*",
 	Short: `Run rclone listening to remote control commands only.`,
 	Long: `
@@ -32,11 +43,19 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		if rcflags.Opt.Enabled {
 			log.Fatalf("Don't supply --rc flag when using rcd")
 		}
+
 		// Start the rc
 		rcflags.Opt.Enabled = true
 		if len(args) > 0 {
 			rcflags.Opt.Files = args[0]
 		}
+
+		if rcflags.Opt.WebUI {
+			if err := checkRelease(rcflags.Opt.WebGUIUpdate); err != nil {
+				log.Fatalf("Error while fetching the latest release of rclone-webui-react %v", err)
+			}
+		}
+
 		s, err := rcserver.Start(&rcflags.Opt)
 		if err != nil {
 			log.Fatalf("Failed to start remote control: %v", err)
@@ -44,6 +63,186 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 		if s == nil {
 			log.Fatal("rc server not configured")
 		}
+
 		s.Wait()
 	},
+}
+
+//checkRelease is a helper function to download and setup latest release of rclone-webui-react
+func checkRelease(shouldUpdate bool) (err error) {
+	// Get the latest release details
+	WebUIURL, tag, size, err := getLatestReleaseURL()
+	if err != nil {
+		return err
+	}
+
+	zipName := tag + ".zip"
+	cachePath := filepath.Join(config.CacheDir, "webgui")
+	zipPath := filepath.Join(cachePath, zipName)
+	extractPath := filepath.Join(cachePath, "current")
+
+	if !exists(cachePath) {
+		if err := os.MkdirAll(cachePath, 755); err != nil {
+			fs.Logf(nil, "Error creating cache directory: %s", cachePath)
+		}
+	}
+	// Load the file
+	exists := exists(zipPath)
+	// if the zipFile does not exist or forced update is enforced.
+	if !exists || shouldUpdate {
+		fs.Logf(nil, "A new release for gui is present at "+WebUIURL)
+		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
+		err := downloadFile(zipPath, WebUIURL)
+		if err != nil {
+			return err
+		}
+		err = os.RemoveAll(extractPath)
+		if err != nil {
+			fs.Logf(nil, "No previous downloads to remove")
+		}
+		fs.Logf(nil, "Unzipping")
+		err = unzip(zipPath, extractPath)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		fs.Logf(nil, "Required files exist. Skipping download")
+	}
+	return nil
+}
+
+// getLatestReleaseURL returns the latest release details of the rclone-webui-react
+func getLatestReleaseURL() (string, string, int, error) {
+	resp, err := http.Get(rcflags.Opt.WebGUIFetchURL)
+	if err != nil {
+		return "", "", 0, errors.New("Error getting latest release of rclone-webui")
+	}
+	results := gitHubRequest{}
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		return "", "", 0, errors.New("Could not decode results from http request")
+	}
+
+	res := results.Assets[0].BrowserDownloadURL
+	tag := results.TagName
+	size := results.Assets[0].Size
+	//fmt.Println( "URL:" + res)
+
+	return res, tag, size, nil
+
+}
+
+// downloadFile is a helper function to download a file from url to the filepath
+func downloadFile(filepath string, url string) error {
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(resp.Body, &err)
+
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(out, &err)
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
+
+// unzip is a helper function to unzip a file specified in src to path dest
+func unzip(src, dest string) (err error) {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(r, &err)
+
+	if err := os.MkdirAll(dest, 0755); err != nil {
+		return err
+	}
+
+	// Closure to address file descriptors issue with all the deferred .Close() methods
+	extractAndWriteFile := func(f *zip.File) error {
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		defer fs.CheckClose(rc, &err)
+
+		path := filepath.Join(dest, f.Name)
+
+		if f.FileInfo().IsDir() {
+			if err := os.MkdirAll(path, f.Mode()); err != nil {
+				return err
+			}
+		} else {
+			if err := os.MkdirAll(filepath.Dir(path), f.Mode()); err != nil {
+				return err
+			}
+			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			if err != nil {
+				return err
+			}
+			defer fs.CheckClose(f, &err)
+
+			_, err = io.Copy(f, rc)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for _, f := range r.File {
+		err := extractAndWriteFile(f)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// exists returns whether the given file or directory exists
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+// gitHubRequest Maps the GitHub API request to structure
+type gitHubRequest struct {
+	URL string `json:"url"`
+
+	Prerelease  bool      `json:"prerelease"`
+	CreatedAt   time.Time `json:"created_at"`
+	PublishedAt time.Time `json:"published_at"`
+	TagName     string    `json:"tag_name"`
+	Assets      []struct {
+		URL                string    `json:"url"`
+		ID                 int       `json:"id"`
+		NodeID             string    `json:"node_id"`
+		Name               string    `json:"name"`
+		Label              string    `json:"label"`
+		ContentType        string    `json:"content_type"`
+		State              string    `json:"state"`
+		Size               int       `json:"size"`
+		DownloadCount      int       `json:"download_count"`
+		CreatedAt          time.Time `json:"created_at"`
+		UpdatedAt          time.Time `json:"updated_at"`
+		BrowserDownloadURL string    `json:"browser_download_url"`
+	} `json:"assets"`
+	TarballURL string `json:"tarball_url"`
+	ZipballURL string `json:"zipball_url"`
+	Body       string `json:"body"`
 }

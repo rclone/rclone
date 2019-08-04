@@ -458,8 +458,9 @@ func TestMethods(t *testing.T) {
 		Status:   http.StatusOK,
 		Expected: "",
 		Headers: map[string]string{
-			"Access-Control-Allow-Origin":  "*",
-			"Access-Control-Allow-Headers": "",
+			"Access-Control-Allow-Origin":   "*",
+			"Access-Control-Request-Method": "POST, OPTIONS, GET, HEAD",
+			"Access-Control-Allow-Headers":  "authorization, Content-Type",
 		},
 	}, {
 		Name:   "bad",
