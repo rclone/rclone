@@ -3,4 +3,4 @@
 /rclone.1 linguist-generated=true
 
 # Don't auto CRLF test data
-testdata/** text eol=lf
+**/testdata/** text eol=lf
