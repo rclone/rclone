@@ -79,14 +79,6 @@ variables:
   CPATH: ''
 
 steps:
-  - task: CacheBeta@0
-    inputs:
-      key: |
-        go-build-cache
-        $(Agent.JobName)
-        path: $(HOME)/.cache/go-build
-      displayName: Cache go build
-
   - bash: |
       latestGo=$(curl "https://golang.org/VERSION?m=text")
       echo "##vso[task.setvariable variable=GO_VERSION]$latestGo"
@@ -103,7 +95,16 @@ steps:
       shopt -s extglob
       shopt -s dotglob
       mv !(gopath) '$(modulePath)'
+      mkdir -p $(HOME)/.cache/go-build
     displayName: Remove old Go, set GOBIN/GOROOT, and move project into GOPATH
+
+  - task: CacheBeta@0
+    inputs:
+      key: |
+        go-build-cache
+        $(Agent.JobName)
+        path: $(HOME)/.cache/go-build
+      displayName: Cache go build
 
   # Install Libraries (varies by platform)
 
