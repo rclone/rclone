@@ -79,6 +79,14 @@ variables:
   CPATH: ''
 
 steps:
+  - task: CacheBeta@0
+    inputs:
+      key: |
+        go-build-cache
+        $(Agent.JobName)
+        path: $(HOME)/.cache/go-build
+      displayName: Cache go build
+
   - bash: |
       latestGo=$(curl "https://golang.org/VERSION?m=text")
       echo "##vso[task.setvariable variable=GO_VERSION]$latestGo"
@@ -144,6 +152,8 @@ steps:
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
     displayName: Install Go on Windows
 
+  # Display environment for debugging
+
   - bash: |
       printf "Using go at: $(which go)\n"
       printf "Go version: $(go version)\n"
@@ -156,7 +166,9 @@ steps:
     workingDirectory: '$(modulePath)'
     displayName: Print Go version and environment
 
-  - script: |
+  # Run Tests
+
+  - bash: |
       make
       make quicktest
     workingDirectory: '$(modulePath)'
