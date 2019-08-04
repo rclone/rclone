@@ -114,18 +114,22 @@ func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
 		f:   f,
 		vfs: vfs.New(f, &vfsflags.Opt),
 	}
+	w.Server = httplib.NewServer(http.HandlerFunc(w.handler), opt)
 	webdavHandler := &webdav.Handler{
+		Prefix:     w.Server.Opt.Prefix,
 		FileSystem: w,
 		LockSystem: webdav.NewMemLS(),
 		Logger:     w.logRequest, // FIXME
 	}
 	w.webdavhandler = webdavHandler
-	w.Server = httplib.NewServer(http.HandlerFunc(w.handler), opt)
 	return w
 }
 
 func (w *WebDAV) handler(rw http.ResponseWriter, r *http.Request) {
-	urlPath := r.URL.Path
+	urlPath, ok := w.Path(rw, r)
+	if !ok {
+		return
+	}
 	isDir := strings.HasSuffix(urlPath, "/")
 	remote := strings.Trim(urlPath, "/")
 	if !disableGETDir && (r.Method == "GET" || r.Method == "HEAD") && isDir {

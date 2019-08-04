@@ -68,7 +68,7 @@ func newServer(f fs.Fs, opt *httplib.Options) *server {
 		f:      f,
 		vfs:    vfs.New(f, &vfsflags.Opt),
 	}
-	mux.HandleFunc("/", s.handler)
+	mux.HandleFunc(s.Opt.Prefix+"/", s.handler)
 	return s
 }
 
@@ -93,7 +93,10 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Server", "rclone/"+fs.Version)
 
-	urlPath := r.URL.Path
+	urlPath, ok := s.Path(w, r)
+	if !ok {
+		return
+	}
 	isDir := strings.HasSuffix(urlPath, "/")
 	remote := strings.Trim(urlPath, "/")
 	if isDir {

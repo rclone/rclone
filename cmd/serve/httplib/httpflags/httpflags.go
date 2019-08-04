@@ -26,6 +26,9 @@ func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *httplib.Options)
 	flags.StringVarP(flagSet, &Opt.Realm, prefix+"realm", "", Opt.Realm, "realm for authentication")
 	flags.StringVarP(flagSet, &Opt.BasicUser, prefix+"user", "", Opt.BasicUser, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.BasicPass, prefix+"pass", "", Opt.BasicPass, "Password for authentication.")
+	if prefix == "" {
+		flags.StringVarP(flagSet, &Opt.Prefix, prefix+"prefix", "", Opt.Prefix, "Prefix for URLs.")
+	}
 }
 
 // AddFlags adds flags for the httplib

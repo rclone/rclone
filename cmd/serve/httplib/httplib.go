@@ -44,6 +44,11 @@ for a transfer.
 --max-header-bytes controls the maximum number of bytes the server will
 accept in the HTTP header.
 
+--prefix controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used --prefix "rclone" then
+rclone would serve from a URL starting with "/rclone/".  This is
+useful if you wish to proxy rclone serve.
+
 #### Authentication
 
 By default this will serve files without needing a login.
@@ -81,6 +86,7 @@ certificate authority certificate.
 // Options contains options for the http Server
 type Options struct {
 	ListenAddr         string        // Port to listen on
+	Prefix             string        // prefix to strip from URLs
 	ServerReadTimeout  time.Duration // Timeout for server reading data
 	ServerWriteTimeout time.Duration // Timeout for server writing data
 	MaxHeaderBytes     int           // Maximum size of request header
@@ -188,6 +194,14 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 	s.useSSL = s.Opt.SslKey != ""
 	if (s.Opt.SslCert != "") != s.useSSL {
 		log.Fatalf("Need both -cert and -key to use SSL")
+	}
+
+	// If a Path is set then serve from there
+	if strings.HasSuffix(s.Opt.Prefix, "/") {
+		s.Opt.Prefix = s.Opt.Prefix[:len(s.Opt.Prefix)-1]
+	}
+	if s.Opt.Prefix != "" && !strings.HasPrefix(s.Opt.Prefix, "/") {
+		s.Opt.Prefix = "/" + s.Opt.Prefix
 	}
 
 	// FIXME make a transport?
@@ -299,10 +313,27 @@ func (s *Server) URL() string {
 		// (i.e. port assigned by operating system)
 		addr = s.listener.Addr().String()
 	}
-	return fmt.Sprintf("%s://%s/", proto, addr)
+	return fmt.Sprintf("%s://%s%s/", proto, addr, s.Opt.Prefix)
 }
 
 // UsingAuth returns true if authentication is required
 func (s *Server) UsingAuth() bool {
 	return s.usingAuth
+}
+
+// Path returns the current path with the Prefix stripped
+//
+// If it returns false, then the path was invalid and the handler
+// should exit as the error response has already been sent
+func (s *Server) Path(w http.ResponseWriter, r *http.Request) (Path string, ok bool) {
+	Path = r.URL.Path
+	if s.Opt.Prefix == "" {
+		return Path, true
+	}
+	if !strings.HasPrefix(Path, s.Opt.Prefix+"/") {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return Path, false
+	}
+	Path = Path[len(s.Opt.Prefix):]
+	return Path, true
 }
