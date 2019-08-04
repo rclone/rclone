@@ -1,3 +1,6 @@
 # Ignore generated files in GitHub language statistics and diffs
 /MANUAL.* linguist-generated=true
 /rclone.1 linguist-generated=true
+
+# Don't auto CRLF test data
+testdata/** text eol=lf
