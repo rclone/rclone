@@ -8,6 +8,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -56,10 +57,17 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 	_ = mime.AddExtensionType(".wasm", "application/wasm")
 	_ = mime.AddExtensionType(".js", "application/javascript")
 
+	cachePath := filepath.Join(config.CacheDir, "webgui")
+	extractPath := filepath.Join(cachePath, "current/build")
 	// File handling
 	if opt.Files != "" {
+		if opt.WebUI {
+			fs.Logf(nil, "--rc-files overrides --rc-web-gui command\n")
+		}
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		s.files = http.FileServer(http.Dir(opt.Files))
+	} else if opt.WebUI {
+		s.files = http.FileServer(http.Dir(extractPath))
 	}
 	return s
 }
@@ -123,8 +131,9 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 
 	// echo back access control headers client needs
-	reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
-	w.Header().Add("Access-Control-Allow-Headers", reqAccessHeaders)
+	//reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
+	w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
+	w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 
 	switch r.Method {
 	case "POST":
