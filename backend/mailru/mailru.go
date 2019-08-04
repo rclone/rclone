@@ -175,9 +175,13 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Help:     "User agent used by client (internal)",
 			Hide:     fs.OptionHideBoth,
 		}, {
-			Name: "debug",
-			Help: `Comma separated list of debugging options. This is for development purposes only.
-List of supported options: nogzip, insecure, binlist, lsnames, atomicmkdir.`,
+			Name: "quirks",
+			Help: `Comma separated list of internal maintenance flags.
+This option must not be used by an ordinary user. It is intended only to
+facilitate remote troubleshooting of backend issues. Strict meaning of
+flags is not documented and not guaranteed to persist between releases.
+Quirks will be removed when the backend grows stable.
+Supported quirks: nogzip insecure binlist lsnames atomicmkdir dumperr retry400.`,
 			Default:  "",
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
@@ -195,7 +199,7 @@ type Options struct {
 	SpeedupPatterns string        `config:"speedup_file_patterns"`
 	SpeedupMaxDisk  fs.SizeSuffix `config:"speedup_max_disk"`
 	SpeedupMaxMem   fs.SizeSuffix `config:"speedup_max_memory"`
-	Debug           string        `config:"debug"`
+	Quirks          string        `config:"quirks"`
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -268,6 +272,7 @@ type Fs struct {
 	fileServers  serverList         // file server switcher
 	authMu       sync.Mutex         // mutex for authorize()
 	passFailed   bool               // true if authorize() failed after 403
+	quirks       quirks             // internal maintenance flags
 }
 
 // NewFs constructs an Fs from the path, container:path
@@ -299,6 +304,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err := f.parseSpeedupPatterns(opt.SpeedupPatterns); err != nil {
 		return nil, err
 	}
+	f.quirks.parseQuirks(opt.Quirks)
 
 	f.pacer = fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer)))
 
@@ -313,14 +319,14 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Override few config settings and create a client
 	clientConfig := *fs.Config
 	clientConfig.UserAgent = opt.UserAgent
-	if strings.Contains(opt.Debug, "nogzip") {
+	if f.quirks.nogzip {
 		clientConfig.NoGzip = true
 	}
 	f.cli = fshttp.NewClient(&clientConfig)
 	f.srv = rest.NewClient(f.cli).SetRoot(api.APIServerURL)
 	f.srv.SetErrorHandler(errorHandler)
 
-	if strings.Contains(opt.Debug, "insecure") {
+	if f.quirks.insecure {
 		transport := f.cli.Transport.(*fshttp.Transport).Transport
 		transport.TLSClientConfig.InsecureSkipVerify = true
 		transport.ProxyConnectHeader = http.Header{"User-Agent": {clientConfig.UserAgent}}
@@ -354,7 +360,65 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	return f, nil
 }
 
-// Note: authorize() is not safe for concurrent access, as it updates the token source
+// Internal maintenance flags (to be removed when the backend matures).
+// Primarily intended to facilitate remote support and troubleshooting.
+type quirks struct {
+	nogzip      bool
+	insecure    bool
+	binlist     bool
+	lsnames     bool
+	atomicmkdir bool
+}
+
+func (q *quirks) parseQuirks(option string) {
+	for _, flag := range strings.Split(option, ",") {
+		switch strings.ToLower(strings.TrimSpace(flag)) {
+		case "nogzip":
+			// The official Mailru client normally sends the "Accept: */*"
+			// request header, which allows all kinds of compression and
+			// speeds up transfers. We should do the same for the sake of
+			// compatibility, yet this mode needs more testing and profiling.
+			// Currently the backend defaults to "Accept: gzip".
+			// It can be helpful to dump uncompressed stream during
+			// troubleshooting, which is accomplished by this quirk.
+			// This quirk can be removed when the backend reaches maturity.
+			// The "Accept: */*" impact will be investigated when the below
+			// issue is resolved: https://github.com/rclone/rclone/issues/59
+			q.nogzip = true
+		case "insecure":
+			// The mailru disk-o protocol is not documented. To compare HTTP
+			// stream against the official client one can use Telerik Fiddler,
+			// which introduces a self-signed certificate. This quirk forces
+			// the Go http layer to accept it.
+			// This quirk can be removed when the backend reaches maturity.
+			q.insecure = true
+		case "binlist":
+			// The official client sometimes uses a so called "bin" protocol,
+			// implemented in the listBin file system method below. This method
+			// is generally faster than non-recursive listM1 but results in
+			// sporadic deserialization failures if total size of tree data
+			// approaches 8Kb (?). The recursive method is normally disabled.
+			// This quirk can be used to enable it for further investigation.
+			// This quirk can be removed when the "bin" support is finished.
+			q.binlist = true
+		case "lsnames":
+			// This quirk should be used as "-vvv --mailru-quirks=lsnames".
+			// It slightly extends the "ls" subcommand debug logs.
+			q.lsnames = true
+		case "atomicmkdir":
+			// At the moment rclone requires Mkdir to return success if the
+			// directory already exists. However, such programs as borgbackup
+			// or restic use mkdir as a locking primitive and depend on its
+			// atomicity. This quirk is a workaround. It can be removed
+			// when the above issue is investigated.
+			q.atomicmkdir = true
+		default:
+			// Just ignore all unknown flags
+		}
+	}
+}
+
+// Note: authorize() is not safe for concurrent access as it updates token source
 func (f *Fs) authorize(force bool) (err error) {
 	var t *oauth2.Token
 	if !force {
@@ -600,13 +664,13 @@ func (f *Fs) itemToDirEntry(item *api.ListItem) (entry fs.DirEntry, dirSize int,
 func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	fs.Debugf(f, ">>> List: %q", dir)
 
-	if strings.Contains(f.opt.Debug, "binlist") {
+	if f.quirks.binlist {
 		entries, err = f.listBin(f.absPath(dir), 1)
 	} else {
 		entries, err = f.listM1(f.absPath(dir), 0, maxInt32)
 	}
 
-	if err == nil && strings.Contains(f.opt.Debug, "lsnames") {
+	if err == nil && f.quirks.lsnames {
 		names := []string{}
 		for _, entry := range entries {
 			names = append(names, entry.Remote())
@@ -1013,7 +1077,7 @@ func (f *Fs) CreateDir(path string) error {
 func (f *Fs) Mkdir(dir string) error {
 	fs.Debugf(f, ">>> Mkdir %q", dir)
 	err := f.mkDirs(f.absPath(dir))
-	if err == ErrorDirAlreadyExists && !strings.Contains(f.opt.Debug, "atomicmkdir") {
+	if err == ErrorDirAlreadyExists && !f.quirks.atomicmkdir {
 		return nil
 	}
 	return err
