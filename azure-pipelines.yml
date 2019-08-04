@@ -9,30 +9,61 @@ trigger:
 
 strategy:
   matrix:
-    linux:
-      imageName: ubuntu-16.04
-      gorootDir: /usr/local
-      GO_VERSION: latest
-    mac:
-      imageName: macos-10.13
-      gorootDir: /usr/local
-      GO_VERSION: latest
-    windows:
-      imageName: windows-2019
-      gorootDir: C:\
-      GO_VERSION: latest
-    go1.11:
-      imageName: ubuntu-16.04
-      gorootDir: /usr/local
-      GO_VERSION: go1.11.8
-    go1.10:
-      imageName: ubuntu-16.04
-      gorootDir: /usr/local
-      GO_VERSION: go1.10.8
     go1.9:
       imageName: ubuntu-16.04
       gorootDir: /usr/local
       GO_VERSION: go1.9.7
+      MAKE_QUICKTEST: true
+    go1.10:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.10.8
+      MAKE_QUICKTEST: true
+    go1.11:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.11.8
+      MAKE_QUICKTEST: true
+    linux:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: latest
+      GOTAGS: cmount
+      BUILD_FLAGS: '-include "^linux/"'
+      MAKE_CHECK: true
+      MAKE_QUICKTEST: true
+      DEPLOY: true
+    other_os:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: latest
+      BUILD_FLAGS: '-exclude "^(windows|darwin|linux)/"'
+      MAKE_COMPILE_ALL: true
+      DEPLOY: true
+    modules_race:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: latest
+      GO111MODULE: on
+      GOPROXY: https://proxy.golang.org
+      MAKE_QUICKTEST: true
+      RACEMAKE_QUICKTEST: true
+    mac:
+      imageName: macos-10.13
+      gorootDir: /usr/local
+      GO_VERSION: latest
+      GOTAGS: ""  # cmount doesn't work on osx travis for some reason
+      BUILD_FLAGS: '-include "^darwin/" -cgo'
+      MAKE_QUICKTEST: true
+      RACEMAKE_QUICKTEST: true
+      DEPLOY: true
+    windows:
+      imageName: windows-2019
+      gorootDir: C:\
+      GO_VERSION: latest
+      BUILD_FLAGS: '-include "^windows/amd64" -cgo' # 386 doesn't build yet
+      MAKE_QUICKTEST: true
+      DEPLOY: true
 
 pool:
   vmImage: $(imageName)
@@ -130,24 +161,29 @@ steps:
       make quicktest
     workingDirectory: '$(modulePath)'
     displayName: Run tests
+    condition: eq( variables['MAKE_QUICKTEST'], 'true' )
 
   - bash: |
       make racequicktest
     workingDirectory: '$(modulePath)'
     displayName: Race test
-    condition: eq( variables['GO_LATEST'], 'true' )
+    condition: eq( variables['RACEMAKE_QUICKTEST'], 'true' )
 
   - bash: |
       make build_dep
       make check
-    condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['GO_LATEST'], 'true' ) )
     workingDirectory: '$(modulePath)'
     displayName: Code quality test
+    condition: eq( variables['MAKE_CHECK'], 'true' )
 
   - bash: |
       make compile_all
-    condition: and( eq( variables['Agent.OS'], 'Linux' ), eq( variables['GO_LATEST'], 'true' ) )
     workingDirectory: '$(modulePath)'
     displayName: Compile all architectures test
+    condition: eq( variables['MAKE_COMPILE_ALL'], 'true' )
 
-# FIXME deploy
+  - bash: |
+      make vars # FIXME travis_beta
+    workingDirectory: '$(modulePath)'
+    displayName: Deploy built binaries
+    condition: and( eq( variables['DEPLOY'], 'true' ), ne( variables['Build.Reason'], 'PullRequest' ) )
