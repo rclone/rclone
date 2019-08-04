@@ -4,3 +4,4 @@
 
 # Don't fiddle with the line endings of test data
 **/testdata/** -text
+**/test/** -text

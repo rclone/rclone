@@ -9,21 +9,6 @@ trigger:
 
 strategy:
   matrix:
-    go1.9:
-      imageName: ubuntu-16.04
-      gorootDir: /usr/local
-      GO_VERSION: go1.9.7
-      MAKE_QUICKTEST: true
-    go1.10:
-      imageName: ubuntu-16.04
-      gorootDir: /usr/local
-      GO_VERSION: go1.10.8
-      MAKE_QUICKTEST: true
-    go1.11:
-      imageName: ubuntu-16.04
-      gorootDir: /usr/local
-      GO_VERSION: go1.11.8
-      MAKE_QUICKTEST: true
     linux:
       imageName: ubuntu-16.04
       gorootDir: /usr/local
@@ -31,6 +16,22 @@ strategy:
       GOTAGS: cmount
       BUILD_FLAGS: '-include "^linux/"'
       MAKE_CHECK: true
+      MAKE_QUICKTEST: true
+      DEPLOY: true
+    mac:
+      imageName: macos-10.13
+      gorootDir: /usr/local
+      GO_VERSION: latest
+      GOTAGS: ""  # cmount doesn't work on osx travis for some reason
+      BUILD_FLAGS: '-include "^darwin/" -cgo'
+      MAKE_QUICKTEST: true
+      RACEMAKE_QUICKTEST: true
+      DEPLOY: true
+    windows:
+      imageName: windows-2019
+      gorootDir: C:\
+      GO_VERSION: latest
+      BUILD_FLAGS: '-include "^windows/amd64" -cgo' # 386 doesn't build yet
       MAKE_QUICKTEST: true
       DEPLOY: true
     other_os:
@@ -48,22 +49,21 @@ strategy:
       GOPROXY: https://proxy.golang.org
       MAKE_QUICKTEST: true
       RACEMAKE_QUICKTEST: true
-    mac:
-      imageName: macos-10.13
+    go1.9:
+      imageName: ubuntu-16.04
       gorootDir: /usr/local
-      GO_VERSION: latest
-      GOTAGS: ""  # cmount doesn't work on osx travis for some reason
-      BUILD_FLAGS: '-include "^darwin/" -cgo'
+      GO_VERSION: go1.9.7
       MAKE_QUICKTEST: true
-      RACEMAKE_QUICKTEST: true
-      DEPLOY: true
-    windows:
-      imageName: windows-2019
-      gorootDir: C:\
-      GO_VERSION: latest
-      BUILD_FLAGS: '-include "^windows/amd64" -cgo' # 386 doesn't build yet
+    go1.10:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.10.8
       MAKE_QUICKTEST: true
-      DEPLOY: true
+    go1.11:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.11.8
+      MAKE_QUICKTEST: true
 
 pool:
   vmImage: $(imageName)
