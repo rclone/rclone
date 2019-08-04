@@ -2,5 +2,5 @@
 /MANUAL.* linguist-generated=true
 /rclone.1 linguist-generated=true
 
-# Don't auto CRLF test data
-**/testdata/** text eol=lf
+# Don't fiddle with the line endings of test data
+**/testdata/** -text
