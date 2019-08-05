@@ -695,7 +695,11 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote)
 
 	// check when reading from regular HTTP server
+	status := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if status != 0 {
+			http.Error(w, "an error ocurred", status)
+		}
 		_, err := w.Write([]byte(contents))
 		assert.NoError(t, err)
 	})
@@ -707,6 +711,14 @@ func TestCopyURL(t *testing.T) {
 	assert.Equal(t, int64(len(contents)), o.Size())
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
+
+	// Check an error is returned for a 404
+	status = http.StatusNotFound
+	o, err = operations.CopyURL(context.Background(), r.Fremote, "file1", ts.URL)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Not Found")
+	assert.Nil(t, o)
+	status = 0
 
 	// check when reading from unverified HTTPS server
 	fs.Config.InsecureSkipVerify = true

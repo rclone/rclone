@@ -1575,11 +1575,13 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string) (dst fs.Object, err error) {
 	client := fshttp.NewClient(fs.Config)
 	resp, err := client.Get(url)
-
 	if err != nil {
 		return nil, err
 	}
 	defer fs.CheckClose(resp.Body, &err)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, errors.Errorf("CopyURL failed: %s", resp.Status)
+	}
 	return RcatSize(ctx, fdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
 }
 
