@@ -99,12 +99,11 @@ steps:
     displayName: Remove old Go, set GOBIN/GOROOT, and move project into GOPATH
 
   - task: CacheBeta@0
+    continueOnError: true
     inputs:
-      key: |
-        go-build-cache
-        $(Agent.JobName)
-        path: $(HOME)/.cache/go-build
-      displayName: Cache go build
+      key: go-build-cache | $(Agent.JobName)
+      path: $(HOME)/.cache/go-build
+    displayName: Cache go build
 
   # Install Libraries (varies by platform)
 
