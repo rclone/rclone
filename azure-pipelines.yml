@@ -52,6 +52,7 @@ strategy:
     go1.9:
       imageName: ubuntu-16.04
       gorootDir: /usr/local
+      GOCACHE: ''               # build caching only came in go1.10
       GO_VERSION: go1.9.7
       MAKE_QUICKTEST: true
     go1.10:
@@ -104,7 +105,17 @@ steps:
       key: go-build-cache | $(Agent.JobName)
       path: $(GOCACHE)
     displayName: Cache go build
+    condition: ne( variables['GOCACHE'], '' )
 
+  - bash: |
+      mkdir -p $(GOCACHE)
+      echo "not empty" > $(GOCACHE)/not_empty.txt
+      echo "GOCACHE=" $(GOCACHE)
+      ls -R $(GOCACHE)
+    continueOnError: true
+    displayName: Create cache dir
+    condition: ne( variables['GOCACHE'], '' )
+    
   # Install Libraries (varies by platform)
 
   - bash: |
@@ -163,8 +174,6 @@ steps:
       env
       printf "\n\nRclone environment:\n\n"
       make vars
-      mkdir -p $(GOCACHE)
-      echo > $(GOCACHE)/.nonempty
     workingDirectory: '$(modulePath)'
     displayName: Print Go version and environment
 
