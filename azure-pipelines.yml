@@ -96,7 +96,6 @@ steps:
       shopt -s extglob
       shopt -s dotglob
       mv !(gopath) '$(modulePath)'
-      mkdir -p $(GOCACHE)
     displayName: Remove old Go, set GOBIN/GOROOT, and move project into GOPATH
 
   - task: CacheBeta@0
@@ -164,7 +163,8 @@ steps:
       env
       printf "\n\nRclone environment:\n\n"
       make vars
-      touch $(GOCACHE)/.empty
+      mkdir -p $(GOCACHE)
+      echo > $(GOCACHE)/.nonempty
     workingDirectory: '$(modulePath)'
     displayName: Print Go version and environment
 
