@@ -164,6 +164,7 @@ steps:
       env
       printf "\n\nRclone environment:\n\n"
       make vars
+      touch $(GOCACHE)/.empty
     workingDirectory: '$(modulePath)'
     displayName: Print Go version and environment
 
