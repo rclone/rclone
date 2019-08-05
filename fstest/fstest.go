@@ -349,6 +349,49 @@ func CheckItems(t *testing.T, f fs.Fs, items ...Item) {
 	CheckListingWithPrecision(t, f, items, nil, fs.GetModifyWindow(f))
 }
 
+// CompareItems compares a set of DirEntries to a slice of items and a lit of dirs
+func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDirs []string, what string) {
+	is := NewItems(items)
+	precision, _ := time.ParseDuration("1s")
+	var objs []fs.Object
+	var dirs []fs.Directory
+	wantListing1, wantListing2 := makeListingFromItems(items)
+	for _, entry := range entries {
+		switch x := entry.(type) {
+		case fs.Directory:
+			dirs = append(dirs, x)
+		case fs.Object:
+			objs = append(objs, x)
+			// do nothing
+		default:
+			t.Fatalf("unknown object type %T", entry)
+		}
+	}
+
+	gotListing := makeListingFromObjects(objs)
+	listingOK := wantListing1 == gotListing || wantListing2 == gotListing
+	assert.True(t, listingOK, fmt.Sprintf("%s not equal, want\n  %s or\n  %s got\n  %s", what, wantListing1, wantListing2, gotListing))
+	for _, obj := range objs {
+		require.NotNil(t, obj)
+		is.Find(t, obj, precision)
+	}
+	is.Done(t)
+	// Check the directories
+	if expectedDirs != nil {
+		expectedDirsCopy := make([]string, len(expectedDirs))
+		for i, dir := range expectedDirs {
+			expectedDirsCopy[i] = WinPath(Normalize(dir))
+		}
+		actualDirs := []string{}
+		for _, dir := range dirs {
+			actualDirs = append(actualDirs, WinPath(Normalize(dir.Remote())))
+		}
+		sort.Strings(actualDirs)
+		sort.Strings(expectedDirsCopy)
+		assert.Equal(t, expectedDirsCopy, actualDirs, "directories not equal")
+	}
+}
+
 // Time parses a time string or logs a fatal error
 func Time(timeString string) time.Time {
 	t, err := time.Parse(time.RFC3339Nano, timeString)
