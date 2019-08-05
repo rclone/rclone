@@ -71,6 +71,7 @@ pool:
 variables:
   GOROOT: $(gorootDir)/go
   GOPATH: $(system.defaultWorkingDirectory)/gopath
+  GOCACHE: $(system.defaultWorkingDirectory)/gocache
   GOBIN: $(GOPATH)/bin
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)'
   GO111MODULE: 'off'
@@ -95,14 +96,14 @@ steps:
       shopt -s extglob
       shopt -s dotglob
       mv !(gopath) '$(modulePath)'
-      mkdir -p $(HOME)/.cache/go-build
+      mkdir -p $(GOCACHE)
     displayName: Remove old Go, set GOBIN/GOROOT, and move project into GOPATH
 
   - task: CacheBeta@0
     continueOnError: true
     inputs:
       key: go-build-cache | $(Agent.JobName)
-      path: $(HOME)/.cache/go-build
+      path: $(GOCACHE)
     displayName: Cache go build
 
   # Install Libraries (varies by platform)
