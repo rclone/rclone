@@ -3,15 +3,281 @@
 package march
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
+	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockdir"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// Some times used in the tests
+var (
+	t1 = fstest.Time("2001-02-03T04:05:06.499999999Z")
+)
+
+func TestMain(m *testing.M) {
+	fstest.TestMain(m)
+}
+
+type marchTester struct {
+	ctx        context.Context // internal context for controlling go-routines
+	cancel     func()          // cancel the context
+	srcOnly    fs.DirEntries
+	dstOnly    fs.DirEntries
+	match      fs.DirEntries
+	entryMutex sync.Mutex
+	errorMu    sync.Mutex // Mutex covering the error variables
+	err        error
+	noRetryErr error
+	fatalErr   error
+	noTraverse bool
+}
+
+// DstOnly have an object which is in the destination only
+func (mt *marchTester) DstOnly(dst fs.DirEntry) (recurse bool) {
+	mt.entryMutex.Lock()
+	mt.dstOnly = append(mt.dstOnly, dst)
+	mt.entryMutex.Unlock()
+
+	switch dst.(type) {
+	case fs.Object:
+		return false
+	case fs.Directory:
+		return true
+	default:
+		panic("Bad object in DirEntries")
+	}
+}
+
+// SrcOnly have an object which is in the source only
+func (mt *marchTester) SrcOnly(src fs.DirEntry) (recurse bool) {
+	mt.entryMutex.Lock()
+	mt.srcOnly = append(mt.srcOnly, src)
+	mt.entryMutex.Unlock()
+
+	switch src.(type) {
+	case fs.Object:
+		return false
+	case fs.Directory:
+		return true
+	default:
+		panic("Bad object in DirEntries")
+	}
+}
+
+// Match is called when src and dst are present, so sync src to dst
+func (mt *marchTester) Match(ctx context.Context, dst, src fs.DirEntry) (recurse bool) {
+	mt.entryMutex.Lock()
+	mt.match = append(mt.match, src)
+	mt.entryMutex.Unlock()
+
+	switch src.(type) {
+	case fs.Object:
+		return false
+	case fs.Directory:
+		// Do the same thing to the entire contents of the directory
+		_, ok := dst.(fs.Directory)
+		if ok {
+			return true
+		}
+		// FIXME src is dir, dst is file
+		err := errors.New("can't overwrite file with directory")
+		fs.Errorf(dst, "%v", err)
+		mt.processError(err)
+	default:
+		panic("Bad object in DirEntries")
+	}
+	return false
+}
+
+func (mt *marchTester) processError(err error) {
+	if err == nil {
+		return
+	}
+	mt.errorMu.Lock()
+	defer mt.errorMu.Unlock()
+	switch {
+	case fserrors.IsFatalError(err):
+		if !mt.aborting() {
+			fs.Errorf(nil, "Cancelling sync due to fatal error: %v", err)
+			mt.cancel()
+		}
+		mt.fatalErr = err
+	case fserrors.IsNoRetryError(err):
+		mt.noRetryErr = err
+	default:
+		mt.err = err
+	}
+}
+
+func (mt *marchTester) currentError() error {
+	mt.errorMu.Lock()
+	defer mt.errorMu.Unlock()
+	if mt.fatalErr != nil {
+		return mt.fatalErr
+	}
+	if mt.err != nil {
+		return mt.err
+	}
+	return mt.noRetryErr
+}
+
+func (mt *marchTester) aborting() bool {
+	return mt.ctx.Err() != nil
+}
+
+func TestMarch(t *testing.T) {
+	for _, test := range []struct {
+		what        string
+		fileSrcOnly []string
+		dirSrcOnly  []string
+		fileDstOnly []string
+		dirDstOnly  []string
+		fileMatch   []string
+		dirMatch    []string
+	}{
+		{
+			what:        "source only",
+			fileSrcOnly: []string{"test", "test2", "test3", "sub dir/test4"},
+			dirSrcOnly:  []string{"sub dir"},
+		},
+		{
+			what:      "identical",
+			fileMatch: []string{"test", "test2", "sub dir/test3", "sub dir/sub sub dir/test4"},
+			dirMatch:  []string{"sub dir", "sub dir/sub sub dir"},
+		},
+		{
+			what:        "typical sync",
+			fileSrcOnly: []string{"srcOnly", "srcOnlyDir/sub"},
+			dirSrcOnly:  []string{"srcOnlyDir"},
+			fileMatch:   []string{"match", "matchDir/match file"},
+			dirMatch:    []string{"matchDir"},
+			fileDstOnly: []string{"dstOnly", "dstOnlyDir/sub"},
+			dirDstOnly:  []string{"dstOnlyDir"},
+		},
+	} {
+		t.Run(fmt.Sprintf("TestMarch-%s", test.what), func(t *testing.T) {
+			r := fstest.NewRun(t)
+			defer r.Finalise()
+
+			var srcOnly []fstest.Item
+			var dstOnly []fstest.Item
+			var match []fstest.Item
+
+			ctx, cancel := context.WithCancel(context.Background())
+
+			for _, f := range test.fileSrcOnly {
+				srcOnly = append(srcOnly, r.WriteFile(f, "hello world", t1))
+			}
+			for _, f := range test.fileDstOnly {
+				dstOnly = append(dstOnly, r.WriteObject(ctx, f, "hello world", t1))
+			}
+			for _, f := range test.fileMatch {
+				match = append(match, r.WriteBoth(ctx, f, "hello world", t1))
+			}
+
+			mt := &marchTester{
+				ctx:        ctx,
+				cancel:     cancel,
+				noTraverse: false,
+			}
+			m := &March{
+				Ctx:           ctx,
+				Fdst:          r.Fremote,
+				Fsrc:          r.Flocal,
+				Dir:           "",
+				NoTraverse:    mt.noTraverse,
+				Callback:      mt,
+				DstIncludeAll: filter.Active.Opt.DeleteExcluded,
+			}
+
+			mt.processError(m.Run())
+			mt.cancel()
+			err := mt.currentError()
+			require.NoError(t, err)
+
+			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, "srcOnly")
+			fstest.CompareItems(t, mt.dstOnly, dstOnly, test.dirDstOnly, "dstOnly")
+			fstest.CompareItems(t, mt.match, match, test.dirMatch, "match")
+		})
+	}
+}
+
+func TestMarchNoTraverse(t *testing.T) {
+	for _, test := range []struct {
+		what        string
+		fileSrcOnly []string
+		dirSrcOnly  []string
+		fileMatch   []string
+		dirMatch    []string
+	}{
+		{
+			what:        "source only",
+			fileSrcOnly: []string{"test", "test2", "test3", "sub dir/test4"},
+			dirSrcOnly:  []string{"sub dir"},
+		},
+		{
+			what:      "identical",
+			fileMatch: []string{"test", "test2", "sub dir/test3", "sub dir/sub sub dir/test4"},
+		},
+		{
+			what:        "typical sync",
+			fileSrcOnly: []string{"srcOnly", "srcOnlyDir/sub"},
+			fileMatch:   []string{"match", "matchDir/match file"},
+		},
+	} {
+		t.Run(fmt.Sprintf("TestMarch-%s", test.what), func(t *testing.T) {
+			r := fstest.NewRun(t)
+			defer r.Finalise()
+
+			var srcOnly []fstest.Item
+			var match []fstest.Item
+
+			ctx, cancel := context.WithCancel(context.Background())
+
+			for _, f := range test.fileSrcOnly {
+				srcOnly = append(srcOnly, r.WriteFile(f, "hello world", t1))
+			}
+			for _, f := range test.fileMatch {
+				match = append(match, r.WriteBoth(ctx, f, "hello world", t1))
+			}
+
+			mt := &marchTester{
+				ctx:        ctx,
+				cancel:     cancel,
+				noTraverse: true,
+			}
+			m := &March{
+				Ctx:           ctx,
+				Fdst:          r.Fremote,
+				Fsrc:          r.Flocal,
+				Dir:           "",
+				NoTraverse:    mt.noTraverse,
+				Callback:      mt,
+				DstIncludeAll: filter.Active.Opt.DeleteExcluded,
+			}
+
+			mt.processError(m.Run())
+			mt.cancel()
+			err := mt.currentError()
+			require.NoError(t, err)
+
+			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, "srcOnly")
+			fstest.CompareItems(t, mt.match, match, test.dirMatch, "match")
+		})
+	}
+}
 
 func TestNewMatchEntries(t *testing.T) {
 	var (
