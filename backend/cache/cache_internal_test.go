@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/stretchr/testify/assert"
@@ -355,8 +356,8 @@ func TestInternalCachedUpdatedContentMatches(t *testing.T) {
 		testData2, err = base64.StdEncoding.DecodeString(cryptedText2Base64)
 		require.NoError(t, err)
 	} else {
-		testData1 = []byte(fstest.RandomString(100))
-		testData2 = []byte(fstest.RandomString(200))
+		testData1 = []byte(random.String(100))
+		testData2 = []byte(random.String(200))
 	}
 
 	// write the object

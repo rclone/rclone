@@ -31,6 +31,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -157,7 +158,7 @@ func testPut(t *testing.T, f fs.Fs, file *fstest.Item) (string, fs.Object) {
 		contents   string
 	)
 	retry(t, "Put", func() error {
-		contents = fstest.RandomString(100)
+		contents = random.String(100)
 		buf := bytes.NewBufferString(contents)
 		uploadHash = hash.NewMultiHasher()
 		in := io.TeeReader(buf, uploadHash)
@@ -557,7 +558,7 @@ func Run(t *testing.T, opt *Opt) {
 
 			const N = 5 * 1024
 			// Read N bytes then produce an error
-			contents := fstest.RandomString(N)
+			contents := random.String(N)
 			buf := bytes.NewBufferString(contents)
 			er := &errorReader{errors.New("potato")}
 			in := io.MultiReader(buf, er)
@@ -1322,7 +1323,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestObjectUpdate tests that Update works
 			t.Run("ObjectUpdate", func(t *testing.T) {
 				skipIfNotOk(t)
-				contents := fstest.RandomString(200)
+				contents := random.String(200)
 				buf := bytes.NewBufferString(contents)
 				hash := hash.NewMultiHasher()
 				in := io.TeeReader(buf, hash)
@@ -1507,7 +1508,7 @@ func Run(t *testing.T, opt *Opt) {
 					contentSize = 100
 				)
 				retry(t, "PutStream", func() error {
-					contents := fstest.RandomString(contentSize)
+					contents := random.String(contentSize)
 					buf := bytes.NewBufferString(contents)
 					uploadHash = hash.NewMultiHasher()
 					in := io.TeeReader(buf, uploadHash)
@@ -1564,7 +1565,7 @@ func Run(t *testing.T, opt *Opt) {
 					assert.Nil(t, recover(), "Fs.Put() should not panic when src.Size() == -1")
 				}()
 
-				contents := fstest.RandomString(100)
+				contents := random.String(100)
 				in := bytes.NewBufferString(contents)
 
 				obji := object.NewStaticObjectInfo("unknown-size-put.txt", fstest.Time("2002-02-03T04:05:06.499999999Z"), -1, true, nil, nil)
@@ -1587,7 +1588,7 @@ func Run(t *testing.T, opt *Opt) {
 					assert.Nil(t, recover(), "Object.Update() should not panic when src.Size() == -1")
 				}()
 
-				newContents := fstest.RandomString(200)
+				newContents := random.String(200)
 				in := bytes.NewBufferString(newContents)
 
 				obj := findObject(t, remote, unknownSizeUpdateFile.Path)

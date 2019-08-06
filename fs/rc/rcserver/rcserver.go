@@ -95,6 +95,8 @@ func (s *Server) Serve() error {
 		// Don't open browser if serving in testing environment.
 		if flag.Lookup("test.v") == nil {
 			_ = open.Start(openURL.String())
+		} else {
+			fs.Errorf(nil, "Not opening browser in testing environment")
 		}
 	}
 	return nil

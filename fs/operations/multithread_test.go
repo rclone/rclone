@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/lib/random"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
@@ -52,7 +53,7 @@ func TestMultithreadCopy(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("%+v", test), func(t *testing.T) {
 			var err error
-			contents := fstest.RandomString(test.size)
+			contents := random.String(test.size)
 			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
 			file1 := r.WriteObject(context.Background(), "file1", contents, t1)
 			fstest.CheckItems(t, r.Fremote, file1)
