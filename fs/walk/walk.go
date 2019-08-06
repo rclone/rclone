@@ -51,7 +51,7 @@ type Func func(path string, entries fs.DirEntries, err error) error
 //
 // Parent directories are always listed before their children
 //
-// This is implemented by WalkR if Config.UseUseListR is true
+// This is implemented by WalkR if Config.UseListR is true
 // and f supports it and level > 1, or WalkN otherwise.
 //
 // If --files-from and --no-traverse is set then a DirTree will be
@@ -146,7 +146,7 @@ func ListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel 
 		filter.Active.HaveFilesFrom() || // ...using --files-from
 		maxLevel >= 0 || // ...using bounded recursion
 		len(filter.Active.Opt.ExcludeFile) > 0 || // ...using --exclude-file
-		filter.Active.BoundedRecursion() { // ...filters imply bounded recursion
+		filter.Active.UsesDirectoryFilters() { // ...using any directory filters
 		return listRwalk(ctx, f, path, includeAll, maxLevel, listType, fn)
 	}
 	return listR(ctx, f, path, includeAll, listType, fn, doListR, listType.Dirs() && f.Features().BucketBased)
