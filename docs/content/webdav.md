@@ -189,31 +189,6 @@ Owncloud does. This [may be
 fixed](https://github.com/nextcloud/nextcloud-snap/issues/365) in the
 future.
 
-### Put.io ###
-
-put.io can be accessed in a read only way using webdav.
-
-Configure the `url` as `https://webdav.put.io` and use your normal
-account username and password for `user` and `pass`.  Set the `vendor`
-to `other`.
-
-Your config file should end up looking like this:
-
-```
-[putio]
-type = webdav
-url = https://webdav.put.io
-vendor = other
-user = YourUserName
-pass = encryptedpassword
-```
-
-If you are using `put.io` with `rclone mount` then use the
-`--read-only` flag to signal to the OS that it can't write to the
-mount.
-
-For more help see [the put.io webdav docs](http://help.put.io/apps-and-integrations/ftp-and-webdav).
-
 ### Sharepoint ###
 
 Rclone can be used with Sharepoint provided by OneDrive for Business

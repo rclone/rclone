@@ -125,3 +125,7 @@ backends:
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
+ - backend:  "putio"
+   remote:   "TestPutio:"
+   subdir:   false
+   fastlist: false
