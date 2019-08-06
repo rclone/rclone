@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -288,12 +289,19 @@ func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
 	}
 }
 
-func TestFileZeroLength(t *testing.T) {
+func testFileReadAt(t *testing.T, n int) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	vfs, fh := writeHandleCreate(t, r)
 
-	// Close the file without writing to it
+	contents := []byte(random.String(n))
+	if n != 0 {
+		written, err := fh.Write(contents)
+		require.NoError(t, err)
+		assert.Equal(t, n, written)
+	}
+
+	// Close the file without writing to it if n==0
 	err := fh.Close()
 	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
 		t.Logf("skipping test: %v", err)
@@ -301,18 +309,27 @@ func TestFileZeroLength(t *testing.T) {
 	}
 	assert.NoError(t, err)
 
-	// read the 0 length file back in using ReadAt into a buffer
+	// read the file back in using ReadAt into a buffer
 	// this simulates what mount does
 	rd, err := vfs.OpenFile("file1", os.O_RDONLY, 0)
 	require.NoError(t, err)
 
 	buf := make([]byte, 1024)
-	n, err := rd.ReadAt(buf, 0)
+	read, err := rd.ReadAt(buf, 0)
 	if err != io.EOF {
 		assert.NoError(t, err)
 	}
-	assert.Equal(t, 0, n)
+	assert.Equal(t, read, n)
+	assert.Equal(t, contents, buf[:read])
 
 	err = rd.Close()
 	assert.NoError(t, err)
+}
+
+func TestFileReadAtZeroLength(t *testing.T) {
+	testFileReadAt(t, 0)
+}
+
+func TestFileReadAtNonZeroLength(t *testing.T) {
+	testFileReadAt(t, 100)
 }

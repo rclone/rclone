@@ -966,6 +966,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, err
 	}
+	fs.FixRangeOption(options, o.bytes)
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	var res *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {

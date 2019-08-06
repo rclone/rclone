@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -1185,7 +1186,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.AccessTier() == azblob.AccessTierArchive {
 		return nil, errors.Errorf("Blob in archive tier, you need to set tier to hot or cool first")
 	}
-
+	fs.FixRangeOption(options, o.size)
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.RangeOption:
@@ -1205,6 +1206,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	ac := azblob.BlobAccessConditions{}
 	var dowloadResponse *azblob.DownloadResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
+		log.Printf("offset=%d, count=%v", offset, count)
 		dowloadResponse, err = blob.Download(ctx, offset, count, ac, false)
 		return o.fs.shouldRetry(err)
 	})

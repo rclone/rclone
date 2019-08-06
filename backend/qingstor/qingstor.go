@@ -964,6 +964,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	key := o.fs.root + o.remote
 	req := qs.GetObjectInput{}
+	fs.FixRangeOption(options, o.size)
 	for _, option := range options {
 		switch option.(type) {
 		case *fs.RangeOption, *fs.SeekOption:
