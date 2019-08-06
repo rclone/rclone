@@ -1765,6 +1765,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Bucket: &o.fs.bucket,
 		Key:    &key,
 	}
+	fs.FixRangeOption(options, o.bytes)
 	for _, option := range options {
 		switch option.(type) {
 		case *fs.RangeOption, *fs.SeekOption:

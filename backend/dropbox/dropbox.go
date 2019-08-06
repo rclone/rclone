@@ -975,6 +975,7 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	fs.FixRangeOption(options, o.bytes)
 	headers := fs.OpenOptionHeaders(options)
 	arg := files.DownloadArg{Path: o.remotePath(), ExtraHeaders: headers}
 	err = o.fs.pacer.Call(func() (bool, error) {

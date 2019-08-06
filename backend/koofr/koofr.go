@@ -154,6 +154,7 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	var sOff, eOff int64 = 0, -1
 
+	fs.FixRangeOption(options, o.Size())
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
@@ -169,13 +170,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 	if sOff == 0 && eOff < 0 {
 		return o.fs.client.FilesGet(o.fs.mountID, o.fullPath())
-	}
-	if sOff < 0 {
-		sOff = o.Size() - eOff
-		eOff = o.Size()
-	}
-	if eOff > o.Size() {
-		eOff = o.Size()
 	}
 	span := &koofrclient.FileSpan{
 		Start: sOff,
