@@ -48,6 +48,7 @@ docs = [
     "swift.md",
     "pcloud.md",
     "premiumize.md",
+    "putio.md",
     "sftp.md",
     "union.md",
     "webdav.md",
