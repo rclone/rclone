@@ -10,6 +10,7 @@
 
 [![Build Status](https://travis-ci.org/rclone/rclone.svg?branch=master)](https://travis-ci.org/rclone/rclone)
 [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/rclone/rclone?branch=master&passingText=windows%20-%20ok&svg=true)](https://ci.appveyor.com/project/rclone/rclone)
+[![Build Status](https://dev.azure.com/rclone/rclone/_apis/build/status/rclone.rclone?branchName=master)](https://dev.azure.com/rclone/rclone/_build/latest?definitionId=2&branchName=master)
 [![CircleCI](https://circleci.com/gh/rclone/rclone/tree/master.svg?style=svg)](https://circleci.com/gh/rclone/rclone/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rclone/rclone)](https://goreportcard.com/report/github.com/rclone/rclone)
 [![GoDoc](https://godoc.org/github.com/rclone/rclone?status.svg)](https://godoc.org/github.com/rclone/rclone) 
