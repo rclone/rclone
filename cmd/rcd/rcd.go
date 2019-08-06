@@ -82,7 +82,7 @@ func checkRelease(shouldUpdate bool) (err error) {
 	extractPath := filepath.Join(cachePath, "current")
 
 	if !exists(cachePath) {
-		if err := os.MkdirAll(cachePath, 755); err != nil {
+		if err := os.MkdirAll(cachePath, 0755); err != nil {
 			fs.Logf(nil, "Error creating cache directory: %s", cachePath)
 		}
 	}
@@ -177,14 +177,14 @@ func unzip(src, dest string) (err error) {
 		path := filepath.Join(dest, f.Name)
 
 		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(path, f.Mode()); err != nil {
+			if err := os.MkdirAll(path, 0755); err != nil {
 				return err
 			}
 		} else {
-			if err := os.MkdirAll(filepath.Dir(path), f.Mode()); err != nil {
+			if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 				return err
 			}
-			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 			if err != nil {
 				return err
 			}
