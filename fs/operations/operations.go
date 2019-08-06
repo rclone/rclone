@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"path"
 	"path/filepath"
 	"sort"
@@ -28,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/sync/errgroup"
 )
@@ -1666,7 +1666,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	// to avoid issues with certain remotes and avoid file deletion.
 	if !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.ToLower(dstFilePath) == strings.ToLower(srcFilePath) {
 		// Create random name to temporarily move file to
-		tmpObjName := dstFileName + "-rclone-move-" + random(8)
+		tmpObjName := dstFileName + "-rclone-move-" + random.String(8)
 		_, err := fdst.NewObject(ctx, tmpObjName)
 		if err != fs.ErrorObjectNotFound {
 			if err == nil {
@@ -1728,17 +1728,6 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		tr.Done(err)
 	}
 	return err
-}
-
-// random generates a pseudorandom alphanumeric string
-func random(length int) string {
-	randomOutput := make([]byte, length)
-	possibleCharacters := "123567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	rand.Seed(time.Now().Unix())
-	for i := range randomOutput {
-		randomOutput[i] = possibleCharacters[rand.Intn(len(possibleCharacters))]
-	}
-	return string(randomOutput)
 }
 
 // MoveFile moves a single file possibly to a new name

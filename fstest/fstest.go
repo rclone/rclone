@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
@@ -357,24 +358,6 @@ func Time(timeString string) time.Time {
 	return t
 }
 
-// RandomString create a random string for test purposes
-func RandomString(n int) string {
-	const (
-		vowel     = "aeiou"
-		consonant = "bcdfghjklmnpqrstvwxyz"
-		digit     = "0123456789"
-	)
-	pattern := []string{consonant, vowel, consonant, vowel, consonant, vowel, consonant, digit}
-	out := make([]byte, n)
-	p := 0
-	for i := range out {
-		source := pattern[p]
-		p = (p + 1) % len(pattern)
-		out[i] = source[rand.Intn(len(source))]
-	}
-	return string(out)
-}
-
 // LocalRemote creates a temporary directory name for local remotes
 func LocalRemote() (path string, err error) {
 	path, err = ioutil.TempDir("", "rclone")
@@ -403,7 +386,7 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 		if !strings.HasSuffix(remoteName, ":") {
 			remoteName += "/"
 		}
-		leafName = "rclone-test-" + RandomString(24)
+		leafName = "rclone-test-" + random.String(24)
 		if !MatchTestRemote.MatchString(leafName) {
 			log.Fatalf("%q didn't match the test remote name regexp", leafName)
 		}
@@ -432,7 +415,7 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error)
 		if err != nil {
 			return nil, "", nil, err
 		}
-		remoteName += "/rclone-test-subdir-" + RandomString(8)
+		remoteName += "/rclone-test-subdir-" + random.String(8)
 	}
 
 	remote, err := fs.NewFs(remoteName)

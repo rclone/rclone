@@ -18,7 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
-	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
 )
 
@@ -118,7 +118,7 @@ func (r *results) Print() {
 
 // writeFile writes a file with some random contents
 func (r *results) writeFile(path string) (fs.Object, error) {
-	contents := fstest.RandomString(50)
+	contents := random.String(50)
 	src := object.NewStaticObjectInfo(path, time.Now(), int64(len(contents)), true, nil, r.f)
 	return r.f.Put(r.ctx, bytes.NewBufferString(contents), src)
 }
