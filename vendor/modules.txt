@@ -143,6 +143,8 @@ github.com/pkg/errors
 github.com/pkg/sftp
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
+# github.com/putdotio/go-putio v0.0.0-20190731220109-37c0795af843
+github.com/putdotio/go-putio/putio
 # github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46
 github.com/rfjakob/eme
 # github.com/russross/blackfriday v1.5.2

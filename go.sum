@@ -151,6 +151,8 @@ github.com/pkg/sftp v1.10.1-0.20190523025818-e98a7bef6829 h1:I+1BDgqX1nXLUL5Uio2
 github.com/pkg/sftp v1.10.1-0.20190523025818-e98a7bef6829/go.mod h1:NxmoDg/QLVWluQDUYG7XBZTLUpKeFa8e3aMf1BfjyHk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/putdotio/go-putio v0.0.0-20190731220109-37c0795af843 h1:Hf9Zw1N+0gQolpRwWOwisCombJ/9anLxUwFkLMQL22c=
+github.com/putdotio/go-putio v0.0.0-20190731220109-37c0795af843/go.mod h1:EWtDL88jJLLWZzywr0QaPO+mGP8gFpvl8dcox8qTk3Y=
 github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46 h1:w2CpS5muK+jyydnmlkqpAhzKmHmMBzBkfYUDjQNS1Dk=
 github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46/go.mod h1:U2bmx0hDj8EyDdcxmD5t3XHDnBFnyNNc22n1R4008eM=
 github.com/russross/blackfriday v1.5.2 h1:HyvC0ARfnZBqnXwABFeSZHpKvJHJJfPz81GNueLj0oo=
