@@ -75,7 +75,7 @@ var LogPrint = func(level LogLevel, text string) {
 }
 
 // LogPrintf produces a log string from the arguments passed in
-func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
+var LogPrintf = func(level LogLevel, o interface{}, text string, args ...interface{}) {
 	out := fmt.Sprintf(text, args...)
 
 	if Config.UseJSONLog {
