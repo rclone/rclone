@@ -16,6 +16,7 @@ variables:
   GOPATH: $(system.defaultWorkingDirectory)/gopath
   GOCACHE: $(system.defaultWorkingDirectory)/gocache
   GOBIN: $(GOPATH)/bin
+  GOMAXPROCS: 8  # workaround for cmd/mount tests locking up - see #3154
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)'
   GO111MODULE: 'off'
   GOTAGS: cmount
@@ -26,7 +27,7 @@ variables:
 strategy:
   matrix:
     linux:
-      imageName: ubuntu-16.04
+      imageName: ubuntu-latest
       gorootDir: /usr/local
       GO_VERSION: latest
       GOTAGS: cmount
@@ -35,7 +36,7 @@ strategy:
       MAKE_QUICKTEST: true
       DEPLOY: true
     mac:
-      imageName: macos-10.13
+      imageName: macos-latest
       gorootDir: /usr/local
       GO_VERSION: latest
       GOTAGS: ""  # cmount doesn't work on osx travis for some reason
@@ -44,14 +45,14 @@ strategy:
       MAKE_RACEQUICKTEST: true
       DEPLOY: true
     windows_amd64:
-      imageName: windows-2019
+      imageName: windows-latest
       gorootDir: C:\
       GO_VERSION: latest
       BUILD_FLAGS: '-include "^windows/amd64" -cgo'
       MAKE_QUICKTEST: true
       DEPLOY: true
     windows_386:
-      imageName: windows-2019
+      imageName: windows-latest
       gorootDir: C:\
       GO_VERSION: latest
       GO_INSTALL_ARCH: 386
@@ -59,14 +60,13 @@ strategy:
       MAKE_QUICKTEST: true
       DEPLOY: true
     other_os:
-      imageName: ubuntu-16.04
+      imageName: ubuntu-latest
       gorootDir: /usr/local
       GO_VERSION: latest
       BUILD_FLAGS: '-exclude "^(windows|darwin|linux)/"'
-      MAKE_COMPILE_ALL: true
       DEPLOY: true
     modules_race:
-      imageName: ubuntu-16.04
+      imageName: ubuntu-latest
       gorootDir: /usr/local
       GO_VERSION: latest
       GO111MODULE: on
@@ -74,18 +74,18 @@ strategy:
       MAKE_QUICKTEST: true
       MAKE_RACEQUICKTEST: true
     go1.9:
-      imageName: ubuntu-16.04
+      imageName: ubuntu-latest
       gorootDir: /usr/local
       GOCACHE: ''               # build caching only came in go1.10
       GO_VERSION: go1.9.7
       MAKE_QUICKTEST: true
     go1.10:
-      imageName: ubuntu-16.04
+      imageName: ubuntu-latest
       gorootDir: /usr/local
       GO_VERSION: go1.10.8
       MAKE_QUICKTEST: true
     go1.11:
-      imageName: ubuntu-16.04
+      imageName: ubuntu-latest
       gorootDir: /usr/local
       GO_VERSION: go1.11.12
       MAKE_QUICKTEST: true
@@ -195,7 +195,6 @@ steps:
   # Run Tests
 
   - bash: |
-      make
       make quicktest
     workingDirectory: '$(modulePath)'
     displayName: Run tests
@@ -215,17 +214,21 @@ steps:
     condition: eq( variables['MAKE_CHECK'], 'true' )
 
   - bash: |
-      make
-      make compile_all
+      make beta
     workingDirectory: '$(modulePath)'
-    displayName: Compile all architectures test
-    condition: eq( variables['MAKE_COMPILE_ALL'], 'true' )
+    displayName: Do release build
+    condition: eq( variables['DEPLOY'], 'true' )
 
   - bash: |
-      make travis_beta
+      make upload_beta
     env:
       RCLONE_CONFIG_PASS: $(RCLONE_CONFIG_PASS)
       BETA_SUBDIR: 'azure_pipelines'  # FIXME remove when removing travis/appveyor
     workingDirectory: '$(modulePath)'
-    displayName: Deploy built binaries
+    displayName: Upload built binaries
     condition: and( eq( variables['DEPLOY'], 'true' ), ne( variables['Build.Reason'], 'PullRequest' ) )
+
+  - publish: $(modulePath)/build
+    artifact: "rclone-build-$(Agent.JobName)"
+    displayName: Publish built binaries
+    condition: eq( variables['DEPLOY'], 'true' )

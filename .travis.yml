@@ -84,7 +84,6 @@ matrix:
         - BUILD_FLAGS='-exclude "^(windows|darwin|linux)/"'
       script:
         - make
-        - make compile_all
     - go: 1.12.x
       name: macOS
       os: osx
@@ -120,9 +119,11 @@ matrix:
 
 deploy:
   provider: script
-  script: make travis_beta
+  script:
+    - make beta
+    - [[ "$TRAVIS_PULL_REQUEST" == "false" ]] && make upload_beta
   skip_cleanup: true
   on:
     repo: rclone/rclone
     all_branches: true
-    condition: $TRAVIS_PULL_REQUEST == false && $DEPLOY == true
+    condition: $DEPLOY == true

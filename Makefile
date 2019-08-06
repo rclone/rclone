@@ -145,7 +145,7 @@ upload_github:
 cross:	doc
 	go run bin/cross-compile.go -release current $(BUILDTAGS) $(TAG)
 
-beta:
+test_beta:
 	go run bin/cross-compile.go $(BUILDTAGS) $(TAG)
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
@@ -156,13 +156,6 @@ log_since_last_release:
 compile_all:
 	go run bin/cross-compile.go -compile-only $(BUILDTAGS) $(TAG)
 
-appveyor_upload:
-	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
-ifndef BRANCH_PATH
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
-endif
-	@echo Beta release ready at $(BETA_URL)
-
 circleci_upload:
 	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
 ifndef BRANCH_PATH
@@ -170,12 +163,14 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
-travis_beta:
+beta:
 ifeq (linux,$(filter linux,$(subst Linux,linux,$(TRAVIS_OS_NAME) $(AGENT_OS))))
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*\.tar.gz'
 endif
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(TAG)
+
+upload_beta: rclone
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifndef BRANCH_PATH
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
