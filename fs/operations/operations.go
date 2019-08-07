@@ -1222,8 +1222,9 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	}()
 	in = tr.Account(in).WithBuffer()
 
-	hashOption := &fs.HashesOption{Hashes: fdst.Hashes()}
-	hash, err := hash.NewMultiHasherTypes(fdst.Hashes())
+	hashes := hash.NewHashSet(fdst.Hashes().GetOne()) // just pick one hash
+	hashOption := &fs.HashesOption{Hashes: hashes}
+	hash, err := hash.NewMultiHasherTypes(hashes)
 	if err != nil {
 		return nil, err
 	}
