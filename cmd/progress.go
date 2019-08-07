@@ -84,9 +84,6 @@ var (
 
 // printProgress prints the progress with an optional log
 func printProgress(logMessage string) {
-	progressMu.Lock()
-	defer progressMu.Unlock()
-
 	var buf bytes.Buffer
 	w, h, err := terminal.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
@@ -99,6 +96,10 @@ func printProgress(logMessage string) {
 	out := func(s string) {
 		buf.WriteString(s)
 	}
+
+	// Lock from here to prevent terminal corruption
+	progressMu.Lock()
+	progressMu.Unlock()
 
 	if logMessage != "" {
 		out("\n")
