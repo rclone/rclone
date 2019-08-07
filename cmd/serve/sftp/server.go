@@ -130,8 +130,8 @@ func (s *server) serve() (err error) {
 		fs.Logf(nil, "Loaded %d authorized keys from %q", len(authorizedKeysMap), authKeysFile)
 	}
 
-	if !s.opt.NoAuth && len(authorizedKeysMap) == 0 && s.opt.User == "" && s.opt.Pass == "" {
-		return errors.New("no authorization found, use --user/--pass or --authorized-keys or --no-auth")
+	if !s.opt.NoAuth && len(authorizedKeysMap) == 0 && s.opt.User == "" && s.opt.Pass == "" && s.proxy == nil {
+		return errors.New("no authorization found, use --user/--pass or --authorized-keys or --no-auth or --auth-proxy")
 	}
 
 	// An SSH server is represented by a ServerConfig, which holds
