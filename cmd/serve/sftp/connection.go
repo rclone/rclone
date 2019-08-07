@@ -167,7 +167,7 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 	}
 	defer func() {
 		err := channel.Close()
-		if err != nil {
+		if err != nil && err != io.EOF {
 			fs.Debugf(c.what, "Failed to close channel: %v", err)
 		}
 	}()
@@ -218,7 +218,7 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 		server := sftp.NewRequestServer(channel, c.handlers)
 		defer func() {
 			err := server.Close()
-			if err != nil {
+			if err != nil && err != io.EOF {
 				fs.Debugf(c.what, "Failed to close server: %v", err)
 			}
 		}()
