@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/readers"
 )
 
 // Constants
@@ -1224,8 +1225,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		o.headers = nil // wipe old metadata
 	} else {
+		var inCount *readers.CountingReader
 		if size >= 0 {
 			headers["Content-Length"] = strconv.FormatInt(size, 10) // set Content-Length if we know it
+		} else {
+			// otherwise count the size for later
+			inCount = readers.NewCountingReader(in)
+			in = inCount
 		}
 		var rxHeaders swift.Headers
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
@@ -1242,6 +1248,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		o.md5 = rxHeaders["ETag"]
 		o.contentType = contentType
 		o.headers = headers
+		if inCount != nil {
+			// update the size if streaming from the reader
+			o.size = int64(inCount.BytesRead())
+		}
 	}
 
 	// If file was a dynamic large object then remove old/all segments
