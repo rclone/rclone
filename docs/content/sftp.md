@@ -10,6 +10,9 @@ date: "2017-02-01"
 SFTP is the [Secure (or SSH) File Transfer
 Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
 
+The SFTP backend can be used with a number of different providers:
+
+* {{< provider name="C14" home="https://www.online.net/en/storage/c14-cold-storage" config="/sftp/#c14" >}}
 SFTP runs over SSH v2 and is installed as standard with most modern
 SSH installations.
 
@@ -347,3 +350,10 @@ Note that since SFTP isn't HTTP based the following flags don't work
 with it: `--dump-headers`, `--dump-bodies`, `--dump-auth`
 
 Note that `--timeout` isn't supported (but `--contimeout` is).
+
+
+## C14 {#c14}
+
+C14 is supported through the SFTP backend.
+
+See [C14's documentation](https://www.online.net/en/storage/c14-cold-storage)
