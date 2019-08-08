@@ -570,3 +570,19 @@ func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Conte
 		return g.Wait()
 	}
 }
+
+// UsesDirectoryFilters returns true if the filter uses directory
+// filters and false if it doesn't.
+//
+// This is used in deciding whether to walk directories or use ListR
+func (f *Filter) UsesDirectoryFilters() bool {
+	if len(f.dirRules.rules) == 0 {
+		return false
+	}
+	rule := f.dirRules.rules[0]
+	re := rule.Regexp.String()
+	if rule.Include == true && re == "^.*$" {
+		return false
+	}
+	return true
+}
