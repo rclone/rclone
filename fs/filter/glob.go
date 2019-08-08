@@ -167,15 +167,3 @@ func globToDirGlobs(glob string) (out []string) {
 
 	return out
 }
-
-// globBoundedRecursion returns true if the glob only needs bounded
-// recursion in the file tree to evaluate.
-func globBoundedRecursion(glob string) bool {
-	if strings.Contains(glob, "**") {
-		return false
-	}
-	if strings.HasPrefix(glob, "/") {
-		return true
-	}
-	return false
-}
