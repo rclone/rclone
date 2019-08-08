@@ -22,9 +22,8 @@ var Active = mustNewFilter(nil)
 
 // rule is one filter rule
 type rule struct {
-	Include          bool
-	Regexp           *regexp.Regexp
-	boundedRecursion bool
+	Include bool
+	Regexp  *regexp.Regexp
 }
 
 // Match returns true if rule matches path
@@ -48,14 +47,13 @@ type rules struct {
 }
 
 // add adds a rule if it doesn't exist already
-func (rs *rules) add(Include bool, re *regexp.Regexp, boundedRecursion bool) {
+func (rs *rules) add(Include bool, re *regexp.Regexp) {
 	if rs.existing == nil {
 		rs.existing = make(map[string]struct{})
 	}
 	newRule := rule{
-		Include:          Include,
-		Regexp:           re,
-		boundedRecursion: boundedRecursion,
+		Include: Include,
+		Regexp:  re,
 	}
 	newRuleString := newRule.String()
 	if _, ok := rs.existing[newRuleString]; ok {
@@ -74,23 +72,6 @@ func (rs *rules) clear() {
 // len returns the number of rules
 func (rs *rules) len() int {
 	return len(rs.rules)
-}
-
-// boundedRecursion returns true if the set of filters would only
-// need bounded recursion to evaluate
-func (rs *rules) boundedRecursion() bool {
-	var (
-		excludeAll       = false
-		boundedRecursion = true
-	)
-	for _, rule := range rs.rules {
-		if rule.Include {
-			boundedRecursion = boundedRecursion && rule.boundedRecursion
-		} else if rule.Regexp.String() == `^.*$` {
-			excludeAll = true
-		}
-	}
-	return excludeAll && boundedRecursion
 }
 
 // FilesMap describes the map of files to transfer
@@ -252,8 +233,7 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 		if err != nil {
 			return err
 		}
-		boundedRecursion := globBoundedRecursion(dirGlob)
-		f.dirRules.add(Include, dirRe, boundedRecursion)
+		f.dirRules.add(Include, dirRe)
 	}
 	return nil
 }
@@ -269,9 +249,8 @@ func (f *Filter) Add(Include bool, glob string) error {
 	if err != nil {
 		return err
 	}
-	boundedRecursion := globBoundedRecursion(glob)
 	if isFileRule {
-		f.fileRules.add(Include, re, boundedRecursion)
+		f.fileRules.add(Include, re)
 		// If include rule work out what directories are needed to scan
 		// if exclude rule, we can't rule anything out
 		// Unless it is `*` which matches everything
@@ -284,7 +263,7 @@ func (f *Filter) Add(Include bool, glob string) error {
 		}
 	}
 	if isDirRule {
-		f.dirRules.add(Include, re, boundedRecursion)
+		f.dirRules.add(Include, re)
 	}
 	return nil
 }
@@ -363,12 +342,6 @@ func (f *Filter) InActive() bool {
 		f.fileRules.len() == 0 &&
 		f.dirRules.len() == 0 &&
 		len(f.Opt.ExcludeFile) == 0)
-}
-
-// BoundedRecursion returns true if the filter can be evaluated with
-// bounded recursion only.
-func (f *Filter) BoundedRecursion() bool {
-	return f.fileRules.boundedRecursion()
 }
 
 // includeRemote returns whether this remote passes the filter rules.
