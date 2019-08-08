@@ -470,6 +470,7 @@ type Features struct {
 	WriteMimeType           bool // can set the mime type of objects
 	CanHaveEmptyDirectories bool // can have empty directories
 	BucketBased             bool // is bucket based (like s3, swift etc)
+	BucketBasedRootOK       bool // is bucket based and can use from root
 	SetTier                 bool // allows set tier functionality on objects
 	GetTier                 bool // allows to retrieve storage tier of objects
 	ServerSideAcrossConfigs bool // can server side copy between different remotes of the same type
@@ -734,6 +735,7 @@ func (ft *Features) Mask(f Fs) *Features {
 	ft.WriteMimeType = ft.WriteMimeType && mask.WriteMimeType
 	ft.CanHaveEmptyDirectories = ft.CanHaveEmptyDirectories && mask.CanHaveEmptyDirectories
 	ft.BucketBased = ft.BucketBased && mask.BucketBased
+	ft.BucketBasedRootOK = ft.BucketBasedRootOK && mask.BucketBasedRootOK
 	ft.SetTier = ft.SetTier && mask.SetTier
 	ft.GetTier = ft.GetTier && mask.GetTier
 
