@@ -35,7 +35,7 @@ func TestRestic(t *testing.T) {
 
 	fstest.Initialise()
 
-	fremote, _, clean, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	fremote, _, clean, err := fstest.RandomRemote()
 	assert.NoError(t, err)
 	defer clean()
 

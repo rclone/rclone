@@ -118,7 +118,7 @@ but they can be run against any of the remotes.
 
     cd fs/sync
     go test -v -remote TestDrive:
-    go test -v -remote TestDrive: -subdir
+    go test -v -remote TestDrive: -fast-list
 
     cd fs/operations
     go test -v -remote TestDrive:
@@ -362,9 +362,7 @@ Or if you want to run the integration tests manually:
       * `go test -v -remote TestRemote:`
       * `cd fs/sync`
       * `go test -v -remote TestRemote:`
-  * If you are making a bucket based remote, then check with this also
-      * `go test -v -remote TestRemote: -subdir`
-  * And if your remote defines `ListR` this also
+  * If your remote defines `ListR` check with this also
       * `go test -v -remote TestRemote: -fast-list`
 
 See the [testing](#testing) section for more information on integration tests.

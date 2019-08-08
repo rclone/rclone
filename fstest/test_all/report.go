@@ -208,7 +208,6 @@ a:focus {
 <th>Backend</th>
 <th>Remote</th>
 <th>Test</th>
-<th>SubDir</th>
 <th>FastList</th>
 <th>Failed</th>
 <th>Logs</th>
@@ -220,7 +219,6 @@ a:focus {
 <td>{{ if ne $prevBackend .Backend }}{{ .Backend }}{{ end }}{{ $prevBackend = .Backend }}</td>
 <td>{{ if ne $prevRemote .Remote }}{{ .Remote }}{{ end }}{{ $prevRemote = .Remote }}</td>
 <td>{{ .Path }}</td>
-<td><span class="{{ .SubDir }}">{{ .SubDir }}</span></td>
 <td><span class="{{ .FastList }}">{{ .FastList }}</span></td>
 <td>{{ .FailedTests }}</td>
 <td>{{ range $i, $v := .Logs }}<a href="{{ $v }}">#{{ $i }}</a> {{ end }}</td>

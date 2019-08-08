@@ -349,6 +349,7 @@ func Run(t *testing.T, opt *Opt) {
 	if *fstest.RemoteName != "" {
 		remoteName = *fstest.RemoteName
 	}
+	fstest.RemoteName = &remoteName
 	t.Logf("Using remote %q", remoteName)
 	var err error
 	if remoteName == "" {
@@ -1117,7 +1118,7 @@ func Run(t *testing.T, opt *Opt) {
 				require.Equal(t, fs.ErrorDirExists, err)
 
 				// new remote
-				newRemote, _, removeNewRemote, err := fstest.RandomRemote(remoteName, false)
+				newRemote, _, removeNewRemote, err := fstest.RandomRemote()
 				require.NoError(t, err)
 				defer removeNewRemote()
 
@@ -1422,7 +1423,7 @@ func Run(t *testing.T, opt *Opt) {
 					require.NotEqual(t, "", link3, "Link should not be empty")
 
 					// sharing the "root" directory in a subremote
-					subRemote, _, removeSubRemote, err := fstest.RandomRemote(remoteName, false)
+					subRemote, _, removeSubRemote, err := fstest.RandomRemote()
 					require.NoError(t, err)
 					defer removeSubRemote()
 					// ensure sub remote isn't empty
