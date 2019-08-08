@@ -31,7 +31,7 @@ type StartFn func(f fs.Fs) (configmap.Simple, func())
 func run(t *testing.T, name string, start StartFn, useProxy bool) {
 	fstest.Initialise()
 
-	fremote, _, clean, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	fremote, _, clean, err := fstest.RandomRemote()
 	assert.NoError(t, err)
 	defer clean()
 

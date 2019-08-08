@@ -17,7 +17,6 @@ import (
 // Test describes an integration test to run with `go test`
 type Test struct {
 	Path       string // path to the source directory
-	SubDir     bool   // if it is possible to add -sub-dir to tests
 	FastList   bool   // if it is possible to add -fast-list to tests
 	AddBackend bool   // set if Path needs the current backend appending
 	NoRetries  bool   // set if no retries should be performed
@@ -31,7 +30,6 @@ type Test struct {
 type Backend struct {
 	Backend  string   // name of the backend directory
 	Remote   string   // name of the test remote
-	SubDir   bool     // set to test with -sub-dir
 	FastList bool     // set to test with -fast-list
 	OneOnly  bool     // set to run only one backend test at once
 	Ignore   []string // test names to ignore the failure of
@@ -54,15 +52,11 @@ func (b *Backend) includeTest(t *Test) bool {
 
 // MakeRuns creates Run objects the Backend and Test
 //
-// There can be several created, one for each combination of SubDir
-// and FastList
+// There can be several created, one for each combination of optionl
+// flags (eg FastList)
 func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	if !b.includeTest(t) {
 		return runs
-	}
-	subdirs := []bool{false}
-	if b.SubDir && t.SubDir {
-		subdirs = append(subdirs, true)
 	}
 	fastlists := []bool{false}
 	if b.FastList && t.FastList {
@@ -72,27 +66,24 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	for _, item := range b.Ignore {
 		ignore[item] = struct{}{}
 	}
-	for _, subdir := range subdirs {
-		for _, fastlist := range fastlists {
-			if t.LocalOnly && b.Backend != "local" {
-				continue
-			}
-			run := &Run{
-				Remote:    b.Remote,
-				Backend:   b.Backend,
-				Path:      t.Path,
-				SubDir:    subdir,
-				FastList:  fastlist,
-				NoRetries: t.NoRetries,
-				OneOnly:   b.OneOnly,
-				NoBinary:  t.NoBinary,
-				Ignore:    ignore,
-			}
-			if t.AddBackend {
-				run.Path = path.Join(run.Path, b.Backend)
-			}
-			runs = append(runs, run)
+	for _, fastlist := range fastlists {
+		if t.LocalOnly && b.Backend != "local" {
+			continue
 		}
+		run := &Run{
+			Remote:    b.Remote,
+			Backend:   b.Backend,
+			Path:      t.Path,
+			FastList:  fastlist,
+			NoRetries: t.NoRetries,
+			OneOnly:   b.OneOnly,
+			NoBinary:  t.NoBinary,
+			Ignore:    ignore,
+		}
+		if t.AddBackend {
+			run.Path = path.Join(run.Path, b.Backend)
+		}
+		runs = append(runs, run)
 	}
 	return runs
 }

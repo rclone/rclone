@@ -115,7 +115,7 @@ func newRun() *Run {
 	fstest.Initialise()
 
 	var err error
-	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote()
 	if err != nil {
 		log.Fatalf("Failed to open remote %q: %v", *fstest.RemoteName, err)
 	}

@@ -90,7 +90,7 @@ func newRun() *Run {
 	Initialise()
 
 	var err error
-	r.Fremote, r.FremoteName, r.cleanRemote, err = RandomRemote(*RemoteName, *SubDir)
+	r.Fremote, r.FremoteName, r.cleanRemote, err = RandomRemote()
 	if err != nil {
 		r.Fatalf("Failed to open remote %q: %v", *RemoteName, err)
 	}

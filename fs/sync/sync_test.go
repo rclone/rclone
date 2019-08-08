@@ -250,7 +250,7 @@ func TestServerSideCopy(t *testing.T) {
 	file1 := r.WriteObject(context.Background(), "sub dir/hello world", "hello world", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
-	FremoteCopy, _, finaliseCopy, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	FremoteCopy, _, finaliseCopy, err := fstest.RandomRemote()
 	require.NoError(t, err)
 	defer finaliseCopy()
 	t.Logf("Server side copy (if possible) %v -> %v", r.Fremote, FremoteCopy)
@@ -1026,7 +1026,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 // Test a server side move if possible, or the backup path if not
 func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmptyDirs bool) {
-	FremoteMove, _, finaliseMove, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	FremoteMove, _, finaliseMove, err := fstest.RandomRemote()
 	require.NoError(t, err)
 	defer finaliseMove()
 
@@ -1066,7 +1066,7 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	fstest.CheckItems(t, FremoteMove, file2, file1, file3u)
 
 	// Create a new empty remote for stuff to be moved into
-	FremoteMove2, _, finaliseMove2, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	FremoteMove2, _, finaliseMove2, err := fstest.RandomRemote()
 	require.NoError(t, err)
 	defer finaliseMove2()
 

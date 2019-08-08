@@ -36,7 +36,6 @@ import (
 // Globals
 var (
 	RemoteName      = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
-	SubDir          = flag.Bool("subdir", false, "Set to test with a sub directory")
 	Verbose         = flag.Bool("verbose", false, "Set to enable logging")
 	DumpHeaders     = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
 	DumpBodies      = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
@@ -439,26 +438,20 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 }
 
 // RandomRemote makes a random bucket or subdirectory on the remote
+// from the -remote parameter
 //
 // Call the finalise function returned to Purge the fs at the end (and
 // the parent if necessary)
 //
 // Returns the remote, its url, a finaliser and an error
-func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error) {
+func RandomRemote() (fs.Fs, string, func(), error) {
 	var err error
 	var parentRemote fs.Fs
+	remoteName := *RemoteName
 
 	remoteName, _, err = RandomRemoteName(remoteName)
 	if err != nil {
 		return nil, "", nil, err
-	}
-
-	if subdir {
-		parentRemote, err = fs.NewFs(remoteName)
-		if err != nil {
-			return nil, "", nil, err
-		}
-		remoteName += "/rclone-test-subdir-" + random.String(8)
 	}
 
 	remote, err := fs.NewFs(remoteName)
