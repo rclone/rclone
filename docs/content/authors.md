@@ -277,3 +277,4 @@ Contributors
   * EliEron <subanimehd@gmail.com>
   * justina777 <chiahuei.lin@gmail.com>
   * Chaitanya Bankanhal <bchaitanya15@gmail.com>
+  * Michał Matczuk <michal@scylladb.com>
