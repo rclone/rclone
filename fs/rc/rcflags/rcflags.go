@@ -23,5 +23,6 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.WebUI, "rc-web-gui", "", false, "Launch WebGUI on localhost")
 	flags.BoolVarP(flagSet, &Opt.WebGUIUpdate, "rc-web-gui-update", "", false, "Update / Force update to latest version of web gui")
 	flags.StringVarP(flagSet, &Opt.WebGUIFetchURL, "rc-web-fetch-url", "", "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest", "URL to fetch the releases for webgui.")
+	flags.StringVarP(flagSet, &Opt.AccessControlAllowOrigin, "rc-allow-origin", "", "", "Set the allowed origin for CORS.")
 	httpflags.AddFlagsPrefix(flagSet, "rc-", &Opt.HTTPOptions)
 }
