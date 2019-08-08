@@ -40,16 +40,17 @@ func (as TransferSnapshot) MarshalJSON() ([]byte, error) {
 // accounting functions.
 // Transfer needs to be closed on completion.
 type Transfer struct {
-	stats    *StatsInfo
-	remote   string
-	size     int64
-	checking bool
+	// these are initialised at creation and may be accessed without locking
+	stats     *StatsInfo
+	remote    string
+	size      int64
+	startedAt time.Time
+	checking  bool
 
-	// Protects all bellow
-	mu          sync.Mutex
+	// Protects all below
+	mu          sync.RWMutex
 	acc         *Account
 	err         error
-	startedAt   time.Time
 	completedAt time.Time
 }
 
@@ -79,7 +80,6 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 // Must be called after transfer is finished to run proper cleanups.
 func (tr *Transfer) Done(err error) {
 	tr.mu.Lock()
-	defer tr.mu.Unlock()
 
 	if err != nil {
 		tr.stats.Error(err)
@@ -90,46 +90,47 @@ func (tr *Transfer) Done(err error) {
 			fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "can't close account: %+v\n", err)
 		}
 	}
+
+	tr.completedAt = time.Now()
+
+	tr.mu.Unlock()
+
 	if tr.checking {
 		tr.stats.DoneChecking(tr.remote)
 	} else {
 		tr.stats.DoneTransferring(tr.remote, err == nil)
 	}
-
-	tr.completedAt = time.Now()
 }
 
 // Account returns reader that knows how to keep track of transfer progress.
 func (tr *Transfer) Account(in io.ReadCloser) *Account {
 	tr.mu.Lock()
-	defer tr.mu.Unlock()
-
 	if tr.acc == nil {
 		tr.acc = newAccountSizeName(tr.stats, in, tr.size, tr.remote)
-
 	}
+	tr.mu.Unlock()
 	return tr.acc
 }
 
 // TimeRange returns the time transfer started and ended at. If not completed
 // it will return zero time for end time.
 func (tr *Transfer) TimeRange() (time.Time, time.Time) {
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
 	return tr.startedAt, tr.completedAt
 }
 
 // IsDone returns true if transfer is completed.
 func (tr *Transfer) IsDone() bool {
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
 	return !tr.completedAt.IsZero()
 }
 
 // Snapshot produces stats for this account at point in time.
 func (tr *Transfer) Snapshot() TransferSnapshot {
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
+	tr.mu.RLock()
+	defer tr.mu.RUnlock()
 
 	var s, b int64 = tr.size, 0
 	if tr.acc != nil {
