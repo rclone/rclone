@@ -589,3 +589,76 @@ func TestFilterMatchesFromDocs(t *testing.T) {
 		}
 	}
 }
+
+func TestNewFilterUsesDirectoryFilters(t *testing.T) {
+	for i, test := range []struct {
+		rules []string
+		want  bool
+	}{
+		{
+			rules: []string{},
+			want:  false,
+		},
+		{
+			rules: []string{
+				"+ *",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"+ *.jpg",
+				"- *",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"- *.jpg",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"- *.jpg",
+				"+ *",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"+ dir/*.jpg",
+				"- *",
+			},
+			want: true,
+		},
+		{
+			rules: []string{
+				"+ dir/**",
+			},
+			want: true,
+		},
+		{
+			rules: []string{
+				"- dir/**",
+			},
+			want: true,
+		},
+		{
+			rules: []string{
+				"- /dir/**",
+			},
+			want: true,
+		},
+	} {
+		what := fmt.Sprintf("#%d", i)
+		f, err := NewFilter(nil)
+		require.NoError(t, err)
+		for _, rule := range test.rules {
+			err := f.AddRule(rule)
+			require.NoError(t, err, what)
+		}
+		got := f.UsesDirectoryFilters()
+		assert.Equal(t, test.want, got, fmt.Sprintf("%s: %s", what, f.DumpFilters()))
+	}
+}
