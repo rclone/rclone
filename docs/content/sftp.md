@@ -13,6 +13,8 @@ Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
 The SFTP backend can be used with a number of different providers:
 
 * {{< provider name="C14" home="https://www.online.net/en/storage/c14-cold-storage" config="/sftp/#c14" >}}
+* {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
+
 SFTP runs over SSH v2 and is installed as standard with most modern
 SSH installations.
 
@@ -357,3 +359,9 @@ Note that `--timeout` isn't supported (but `--contimeout` is).
 C14 is supported through the SFTP backend.
 
 See [C14's documentation](https://www.online.net/en/storage/c14-cold-storage)
+
+## rsync.net {#rsync-net}
+
+rsync.net is supported through the SFTP backend.
+
+See [rsync.net's documentation of rclone examples](https://www.rsync.net/products/rclone.html).
