@@ -263,13 +263,15 @@ func filterEmptyDirs(t *testing.T, items []Item, expectedDirs []string) (newExpe
 	return newExpectedDirs
 }
 
-// CheckListingWithPrecision checks the fs to see if it has the
+// CheckListingWithRoot checks the fs to see if it has the
 // expected contents with the given precision.
 //
 // If expectedDirs is non nil then we check those too.  Note that no
 // directories returned is also OK as some remotes don't return
 // directories.
-func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs []string, precision time.Duration) {
+//
+// dir is the directory used for the listing.
+func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expectedDirs []string, precision time.Duration) {
 	if expectedDirs != nil && !f.Features().CanHaveEmptyDirectories {
 		expectedDirs = filterEmptyDirs(t, items, expectedDirs)
 	}
@@ -285,7 +287,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	gotListing := "<unset>"
 	listingOK := false
 	for i := 1; i <= retries; i++ {
-		objs, dirs, err = walk.GetAll(ctx, f, "", true, -1)
+		objs, dirs, err = walk.GetAll(ctx, f, dir, true, -1)
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
@@ -334,6 +336,16 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 		sort.Strings(expectedDirsCopy)
 		assert.Equal(t, expectedDirsCopy, actualDirs, "directories")
 	}
+}
+
+// CheckListingWithPrecision checks the fs to see if it has the
+// expected contents with the given precision.
+//
+// If expectedDirs is non nil then we check those too.  Note that no
+// directories returned is also OK as some remotes don't return
+// directories.
+func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs []string, precision time.Duration) {
+	CheckListingWithRoot(t, f, "", items, expectedDirs, precision)
 }
 
 // CheckListing checks the fs to see if it has the expected contents

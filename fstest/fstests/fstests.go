@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -1375,6 +1376,105 @@ func Run(t *testing.T, opt *Opt) {
 				fileRemote, err := fs.NewFs(remoteName)
 				require.NoError(t, err)
 				fstest.CheckListing(t, fileRemote, []fstest.Item{})
+			})
+
+			// Test that things work from the root
+			t.Run("FromRoot", func(t *testing.T) {
+				if features := remote.Features(); features.BucketBased && !features.BucketBasedRootOK {
+					t.Skip("Can't list from root on this remote")
+				}
+
+				configName, configLeaf := fspath.Parse(subRemoteName)
+				if configName == "" {
+					configName, configLeaf = path.Split(subRemoteName)
+				} else {
+					configName += ":"
+				}
+				t.Logf("Opening root remote %q path %q from %q", configName, configLeaf, subRemoteName)
+				rootRemote, err := fs.NewFs(configName)
+				require.NoError(t, err)
+
+				file1Root := file1
+				file1Root.Path = path.Join(configLeaf, file1Root.Path)
+				file2Root := file2
+				file2Root.Path = path.Join(configLeaf, file2Root.Path)
+				file2Root.WinPath = path.Join(configLeaf, file2Root.WinPath)
+				var dirs []string
+				dir := file2.Path
+				for {
+					dir = path.Dir(dir)
+					if dir == "" || dir == "." || dir == "/" {
+						break
+					}
+					dirs = append(dirs, path.Join(configLeaf, dir))
+				}
+
+				// Check that we can see file1 and file2 from the root
+				t.Run("List", func(t *testing.T) {
+					fstest.CheckListingWithRoot(t, rootRemote, configLeaf, []fstest.Item{file1Root, file2Root}, dirs, rootRemote.Precision())
+				})
+
+				// Check that that listing the entries is OK
+				t.Run("ListEntries", func(t *testing.T) {
+					entries, err := rootRemote.List(context.Background(), configLeaf)
+					require.NoError(t, err)
+					fstest.CompareItems(t, entries, []fstest.Item{file1Root}, dirs[len(dirs)-1:], rootRemote.Precision(), "ListEntries")
+				})
+
+				// List the root with ListR
+				t.Run("ListR", func(t *testing.T) {
+					doListR := rootRemote.Features().ListR
+					if doListR == nil {
+						t.Skip("FS has no ListR interface")
+					}
+					file1Found, file2Found := false, false
+					stopTime := time.Now().Add(10 * time.Second)
+					errTooMany := errors.New("too many files")
+					errFound := errors.New("found")
+					err := doListR(context.Background(), "", func(entries fs.DirEntries) error {
+						for _, entry := range entries {
+							remote := entry.Remote()
+							if remote == file1Root.Path {
+								file1Found = true
+							}
+							if remote == file2Root.Path {
+								file2Found = true
+							}
+							if file1Found && file2Found {
+								return errFound
+							}
+						}
+						if time.Now().After(stopTime) {
+							return errTooMany
+						}
+						return nil
+					})
+					if err != errFound && err != errTooMany {
+						assert.NoError(t, err)
+					}
+					if err != errTooMany {
+						assert.True(t, file1Found, "file1Root not found")
+						assert.True(t, file2Found, "file2Root not found")
+					} else {
+						t.Logf("Too many files to list - giving up")
+					}
+				})
+
+				// Create a new file
+				t.Run("Put", func(t *testing.T) {
+					file3Root := fstest.Item{
+						ModTime: time.Now(),
+						Path:    path.Join(configLeaf, "created from root.txt"),
+					}
+					_, file3Obj := testPut(t, rootRemote, &file3Root)
+					fstest.CheckListingWithRoot(t, rootRemote, configLeaf, []fstest.Item{file1Root, file2Root, file3Root}, nil, rootRemote.Precision())
+
+					// And then remove it
+					t.Run("Remove", func(t *testing.T) {
+						require.NoError(t, file3Obj.Remove(context.Background()))
+						fstest.CheckListingWithRoot(t, rootRemote, configLeaf, []fstest.Item{file1Root, file2Root}, nil, rootRemote.Precision())
+					})
+				})
 			})
 
 			// TestPublicLink tests creation of sharable, public links
