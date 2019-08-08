@@ -13,10 +13,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/skratchdot/open-golang/open"
-
-	"github.com/rclone/rclone/fs/rc/jobs"
-
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/serve/httplib"
 	"github.com/rclone/rclone/cmd/serve/httplib/serve"
@@ -25,6 +21,9 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fs/rc/jobs"
+	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/skratchdot/open-golang/open"
 )
 
 // Start the remote control server if configured
@@ -130,7 +129,15 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimLeft(r.URL.Path, "/")
 
-	w.Header().Add("Access-Control-Allow-Origin", "*")
+	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
+	if allowOrigin != "" {
+		if allowOrigin == "*" {
+			fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
+		}
+		w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
+	} else {
+		w.Header().Add("Access-Control-Allow-Origin", s.URL())
+	}
 
 	// echo back access control headers client needs
 	//reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
