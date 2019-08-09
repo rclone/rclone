@@ -62,11 +62,13 @@ func TestGetFile(t *testing.T) {
 
 	f, err := GetFn("/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
+	require.NotNil(t, f)
 
 	assert.Equal(t, 1, c.Entries())
 
 	f2, err := GetFn("/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
+	require.NotNil(t, f2)
 
 	assert.Equal(t, f, f2)
 }
