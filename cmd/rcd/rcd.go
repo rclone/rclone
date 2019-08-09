@@ -70,29 +70,34 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 
 //checkRelease is a helper function to download and setup latest release of rclone-webui-react
 func checkRelease(shouldUpdate bool) (err error) {
-	// Get the latest release details
-	WebUIURL, tag, size, err := getLatestReleaseURL()
-	if err != nil {
-		return err
-	}
-
-	zipName := tag + ".zip"
 	cachePath := filepath.Join(config.CacheDir, "webgui")
-	zipPath := filepath.Join(cachePath, zipName)
 	extractPath := filepath.Join(cachePath, "current")
+	oldUpdateExists := exists(extractPath)
 
-	if !exists(cachePath) {
-		if err := os.MkdirAll(cachePath, 0755); err != nil {
-			fs.Logf(nil, "Error creating cache directory: %s", cachePath)
+	// if the old file exists does not exist or forced update is enforced.
+	// TODO: Add hashing to check integrity of the previous update.
+	if !oldUpdateExists || shouldUpdate {
+		// Get the latest release details
+		WebUIURL, tag, size, err := getLatestReleaseURL()
+		if err != nil {
+			return err
 		}
-	}
-	// Load the file
-	exists := exists(zipPath)
-	// if the zipFile does not exist or forced update is enforced.
-	if !exists || shouldUpdate {
+
+		zipName := tag + ".zip"
+		zipPath := filepath.Join(cachePath, zipName)
+
+		if !exists(cachePath) {
+			if err := os.MkdirAll(cachePath, 0755); err != nil {
+				fs.Logf(nil, "Error creating cache directory: %s", cachePath)
+				return err
+			}
+		}
+
 		fs.Logf(nil, "A new release for gui is present at "+WebUIURL)
 		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
-		err := downloadFile(zipPath, WebUIURL)
+
+		// download the zip from latest url
+		err = downloadFile(zipPath, WebUIURL)
 		if err != nil {
 			return err
 		}
