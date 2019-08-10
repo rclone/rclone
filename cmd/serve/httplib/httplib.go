@@ -97,7 +97,7 @@ type Options struct {
 	Realm              string        // realm for authentication
 	BasicUser          string        // single username for basic auth if not using Htpasswd
 	BasicPass          string        // password for BasicUser
-	Auth               AuthFn        // custom Auth (not set by command line flags)
+	Auth               AuthFn        `json:"-"` // custom Auth (not set by command line flags)
 }
 
 // AuthFn if used will be used to authenticate user, pass. If an error
