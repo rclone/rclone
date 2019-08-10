@@ -1072,12 +1072,13 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 			}
 		}
 		for _, option := range ri.Options {
-			hasAdvanced = hasAdvanced || option.Advanced
+			isVisible := option.Hide&fs.OptionHideConfigurator == 0
+			hasAdvanced = hasAdvanced || (option.Advanced && isVisible)
 			if option.Advanced != advanced {
 				continue
 			}
 			subProvider := getConfigData().MustValue(name, fs.ConfigProvider, "")
-			if matchProvider(option.Provider, subProvider) {
+			if matchProvider(option.Provider, subProvider) && isVisible {
 				if !isNew {
 					fmt.Printf("Value %q = %q\n", option.Name, FileGet(name, option.Name))
 					fmt.Printf("Edit? (y/n)>\n")
@@ -1085,9 +1086,7 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 						continue
 					}
 				}
-				if option.Hide&fs.OptionHideConfigurator == 0 {
-					FileSet(name, option.Name, ChooseOption(&option, name))
-				}
+				FileSet(name, option.Name, ChooseOption(&option, name))
 			}
 		}
 	}
