@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func TestNewJobs(t *testing.T) {
 
 func TestJobsKickExpire(t *testing.T) {
 	jobs := newJobs()
-	jobs.expireInterval = time.Millisecond
+	jobs.opt.JobExpireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
 	jobs.kickExpire()
 	jobs.mu.Lock()
@@ -35,7 +35,7 @@ func TestJobsKickExpire(t *testing.T) {
 func TestJobsExpire(t *testing.T) {
 	wait := make(chan struct{})
 	jobs := newJobs()
-	jobs.expireInterval = time.Millisecond
+	jobs.opt.JobExpireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
 	job := jobs.NewAsyncJob(func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		defer close(wait)
@@ -47,7 +47,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.mu.Lock()
 	job.mu.Lock()
-	job.EndTime = time.Now().Add(-fs.Config.RcJobExpireDuration - 60*time.Second)
+	job.EndTime = time.Now().Add(-rcflags.Opt.JobExpireDuration - 60*time.Second)
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()

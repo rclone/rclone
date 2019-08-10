@@ -30,6 +30,7 @@ import (
 //
 // If the server wasn't configured the *Server returned may be nil
 func Start(opt *rc.Options) (*Server, error) {
+	jobs.SetOpt(opt) // set the defaults for jobs
 	if opt.Enabled {
 		// Serve on the DefaultServeMux so can have global registrations appear
 		s := newServer(opt, http.DefaultServeMux)

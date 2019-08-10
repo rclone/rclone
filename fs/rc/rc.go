@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"io"
 	_ "net/http/pprof" // install the pprof http handlers
+	"time"
 
 	"github.com/rclone/rclone/cmd/serve/httplib"
 )
@@ -26,13 +27,16 @@ type Options struct {
 	WebGUIUpdate             bool   // set to download new update
 	WebGUIFetchURL           string // set the default url for fetching webgui
 	AccessControlAllowOrigin string // set the access control for CORS configuration
-
+	JobExpireDuration        time.Duration
+	JobExpireInterval        time.Duration
 }
 
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
-	HTTPOptions: httplib.DefaultOpt,
-	Enabled:     false,
+	HTTPOptions:       httplib.DefaultOpt,
+	Enabled:           false,
+	JobExpireDuration: 60 * time.Second,
+	JobExpireInterval: 10 * time.Second,
 }
 
 func init() {
