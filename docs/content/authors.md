@@ -278,3 +278,4 @@ Contributors
   * justina777 <chiahuei.lin@gmail.com>
   * Chaitanya Bankanhal <bchaitanya15@gmail.com>
   * Michał Matczuk <michal@scylladb.com>
+  * Macavirus <macavirus@zoho.com>
