@@ -229,7 +229,8 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	err = rc.WriteJSON(w, out)
 	if err != nil {
-		// can't return the error at this point
+		// can't return the error at this point - but have a go anyway
+		writeError(path, in, w, err, http.StatusInternalServerError)
 		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
 	}
 }
