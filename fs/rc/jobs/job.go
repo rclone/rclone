@@ -35,10 +35,10 @@ type Job struct {
 
 // Jobs describes a collection of running tasks
 type Jobs struct {
-	mu             sync.RWMutex
-	jobs           map[int64]*Job
-	expireInterval time.Duration
-	expireRunning  bool
+	mu            sync.RWMutex
+	jobs          map[int64]*Job
+	opt           *rc.Options
+	expireRunning bool
 }
 
 var (
@@ -49,9 +49,14 @@ var (
 // newJobs makes a new Jobs structure
 func newJobs() *Jobs {
 	return &Jobs{
-		jobs:           map[int64]*Job{},
-		expireInterval: fs.Config.RcJobExpireInterval,
+		jobs: map[int64]*Job{},
+		opt:  &rc.DefaultOpt,
 	}
+}
+
+// SetOpt sets the options when they are known
+func SetOpt(opt *rc.Options) {
+	running.opt = opt
 }
 
 // kickExpire makes sure Expire is running
@@ -59,7 +64,7 @@ func (jobs *Jobs) kickExpire() {
 	jobs.mu.Lock()
 	defer jobs.mu.Unlock()
 	if !jobs.expireRunning {
-		time.AfterFunc(jobs.expireInterval, jobs.Expire)
+		time.AfterFunc(jobs.opt.JobExpireInterval, jobs.Expire)
 		jobs.expireRunning = true
 	}
 }
@@ -71,13 +76,13 @@ func (jobs *Jobs) Expire() {
 	now := time.Now()
 	for ID, job := range jobs.jobs {
 		job.mu.Lock()
-		if job.Finished && now.Sub(job.EndTime) > fs.Config.RcJobExpireDuration {
+		if job.Finished && now.Sub(job.EndTime) > jobs.opt.JobExpireDuration {
 			delete(jobs.jobs, ID)
 		}
 		job.mu.Unlock()
 	}
 	if len(jobs.jobs) != 0 {
-		time.AfterFunc(jobs.expireInterval, jobs.Expire)
+		time.AfterFunc(jobs.opt.JobExpireInterval, jobs.Expire)
 		jobs.expireRunning = true
 	} else {
 		jobs.expireRunning = false
