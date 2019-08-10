@@ -279,3 +279,4 @@ Contributors
   * Chaitanya Bankanhal <bchaitanya15@gmail.com>
   * Michał Matczuk <michal@scylladb.com>
   * Macavirus <macavirus@zoho.com>
+  * Abhinav Sharma <abhi18av@users.noreply.github.com>
