@@ -917,7 +917,7 @@ func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset, limit int64 = 0, -1
-	hashes := hash.Supported
+	var hasher *hash.MultiHasher
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
@@ -925,7 +925,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.size)
 		case *fs.HashesOption:
-			hashes = x.Hashes
+			if x.Hashes.Count() > 0 {
+				hasher, err = hash.NewMultiHasherTypes(x.Hashes)
+				if err != nil {
+					return nil, err
+				}
+			}
 		default:
 			if option.Mandatory() {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
@@ -949,15 +954,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		// don't attempt to make checksums
 		return wrappedFd, err
 	}
-	hash, err := hash.NewMultiHasherTypes(hashes)
-	if err != nil {
-		return nil, err
+	if hasher == nil {
+		// no need to wrap since we don't need checksums
+		return wrappedFd, nil
 	}
-	// Update the md5sum as we go along
+	// Update the hashes as we go along
 	in = &localOpenFile{
 		o:    o,
 		in:   wrappedFd,
-		hash: hash,
+		hash: hasher,
 		fd:   fd,
 	}
 	return in, nil
@@ -979,18 +984,23 @@ func (nwc nopWriterCloser) Close() error {
 }
 
 // Update the object from in with modTime and size
-func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	var out io.WriteCloser
+	var hasher *hash.MultiHasher
 
-	hashes := hash.Supported
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.HashesOption:
-			hashes = x.Hashes
+			if x.Hashes.Count() > 0 {
+				hasher, err = hash.NewMultiHasherTypes(x.Hashes)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
-	err := o.mkdirAll()
+	err = o.mkdirAll()
 	if err != nil {
 		return err
 	}
@@ -1015,11 +1025,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// Calculate the hash of the object we are reading as we go along
-	hash, err := hash.NewMultiHasherTypes(hashes)
-	if err != nil {
-		return err
+	if hasher != nil {
+		in = io.TeeReader(in, hasher)
 	}
-	in = io.TeeReader(in, hash)
 
 	_, err = io.Copy(out, in)
 	closeErr := out.Close()
@@ -1055,9 +1063,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// All successful so update the hashes
-	o.fs.objectHashesMu.Lock()
-	o.hashes = hash.Sums()
-	o.fs.objectHashesMu.Unlock()
+	if hasher != nil {
+		o.fs.objectHashesMu.Lock()
+		o.hashes = hasher.Sums()
+		o.fs.objectHashesMu.Unlock()
+	}
 
 	// Set the mtime
 	err = o.SetModTime(ctx, src.ModTime(ctx))
