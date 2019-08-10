@@ -282,7 +282,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	// work out which hash to use - limit to 1 hash in common
 	var common hash.Set
 	hashType := hash.None
-	if !fs.Config.SizeOnly {
+	if !fs.Config.SizeOnly && !fs.Config.IgnoreChecksum {
 		common = src.Fs().Hashes().Overlap(f.Hashes())
 		if common.Count() > 0 {
 			hashType = common.GetOne()
@@ -392,7 +392,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	}
 
 	// Verify hashes are the same after transfer - ignoring blank hashes
-	if !fs.Config.IgnoreChecksum && hashType != hash.None {
+	if hashType != hash.None {
 		// checkHashes has logged and counted errors
 		equal, _, srcSum, dstSum, _ := checkHashes(ctx, src, dst, hashType)
 		if !equal {
