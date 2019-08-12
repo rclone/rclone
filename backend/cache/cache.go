@@ -1864,6 +1864,24 @@ func cleanPath(p string) string {
 	return p
 }
 
+// UserInfo returns info about the connected user
+func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
+	do := f.Fs.Features().UserInfo
+	if do == nil {
+		return nil, fs.ErrorNotImplemented
+	}
+	return do(ctx)
+}
+
+// Disconnect the current user
+func (f *Fs) Disconnect(ctx context.Context) error {
+	do := f.Fs.Features().Disconnect
+	if do == nil {
+		return fs.ErrorNotImplemented
+	}
+	return do(ctx)
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = (*Fs)(nil)
@@ -1879,4 +1897,6 @@ var (
 	_ fs.ListRer        = (*Fs)(nil)
 	_ fs.ChangeNotifier = (*Fs)(nil)
 	_ fs.Abouter        = (*Fs)(nil)
+	_ fs.UserInfoer     = (*Fs)(nil)
+	_ fs.Disconnecter   = (*Fs)(nil)
 )

@@ -69,6 +69,7 @@ var (
 	ErrorImmutableModified           = errors.New("immutable file modified")
 	ErrorPermissionDenied            = errors.New("permission denied")
 	ErrorCantShareDirectories        = errors.New("this backend can't share directories with link")
+	ErrorNotImplemented              = errors.New("optional feature not implemented")
 )
 
 // RegInfo provides information about a filesystem
@@ -588,6 +589,12 @@ type Features struct {
 	//
 	// It truncates any existing object
 	OpenWriterAt func(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+
+	// UserInfo returns info about the connected user
+	UserInfo func(ctx context.Context) (map[string]string, error)
+
+	// Disconnect the current user
+	Disconnect func(ctx context.Context) error
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -703,6 +710,12 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(OpenWriterAter); ok {
 		ft.OpenWriterAt = do.OpenWriterAt
 	}
+	if do, ok := f.(UserInfoer); ok {
+		ft.UserInfo = do.UserInfo
+	}
+	if do, ok := f.(Disconnecter); ok {
+		ft.Disconnect = do.Disconnect
+	}
 	return ft.DisableList(Config.DisableFeatures)
 }
 
@@ -770,6 +783,12 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.OpenWriterAt == nil {
 		ft.OpenWriterAt = nil
+	}
+	if mask.UserInfo == nil {
+		ft.UserInfo = nil
+	}
+	if mask.Disconnect == nil {
+		ft.Disconnect = nil
 	}
 	return ft.DisableList(Config.DisableFeatures)
 }
@@ -978,6 +997,18 @@ type OpenWriterAter interface {
 	//
 	// It truncates any existing object
 	OpenWriterAt(ctx context.Context, remote string, size int64) (WriterAtCloser, error)
+}
+
+// UserInfoer is an optional interface for Fs
+type UserInfoer interface {
+	// UserInfo returns info about the connected user
+	UserInfo(ctx context.Context) (map[string]string, error)
+}
+
+// Disconnecter is an optional interface for Fs
+type Disconnecter interface {
+	// Disconnect the current user
+	Disconnect(ctx context.Context) error
 }
 
 // ObjectsChan is a channel of Objects
