@@ -100,6 +100,7 @@ type ConfigInfo struct {
 	ClientKey              string // Client Side Key
 	MultiThreadCutoff      SizeSuffix
 	MultiThreadStreams     int
+	MultiThreadSet         bool // whether MultiThreadStreams was set (set in fs/config/configflags)
 }
 
 // NewConfig creates a new config with everything set to the default

@@ -743,6 +743,10 @@ above.
 **NB** that this **only** works for a local destination but will work
 with any source.
 
+**NB** that multi thread copies are disabled for local to local copies
+as they are faster without unless `--multi-thread-streams` is set
+explicitly.
+
 ### --multi-thread-streams=N ###
 
 When using multi thread downloads (see above `--multi-thread-cutoff`)

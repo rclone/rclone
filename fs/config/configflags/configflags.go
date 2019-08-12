@@ -213,4 +213,9 @@ func SetFlags() {
 	if err == nil {
 		config.ConfigPath = configPath
 	}
+
+	// Set whether multi-thread-streams was set
+	multiThreadStreamsFlag := pflag.Lookup("multi-thread-streams")
+	fs.Config.MultiThreadSet = multiThreadStreamsFlag != nil && multiThreadStreamsFlag.Changed
+
 }
