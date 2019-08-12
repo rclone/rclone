@@ -1023,6 +1023,38 @@ type ObjectPair struct {
 	Src, Dst Object
 }
 
+// UnWrapFs unwraps f as much as possible and returns the base Fs
+func UnWrapFs(f Fs) Fs {
+	for {
+		unwrap := f.Features().UnWrap
+		if unwrap == nil {
+			break // not a wrapped Fs, use current
+		}
+		next := unwrap()
+		if next == nil {
+			break // no base Fs found, use current
+		}
+		f = next
+	}
+	return f
+}
+
+// UnWrapObject unwraps o as much as possible and returns the base object
+func UnWrapObject(o Object) Object {
+	for {
+		u, ok := o.(ObjectUnWrapper)
+		if !ok {
+			break // not a wrapped object, use current
+		}
+		next := u.UnWrap()
+		if next == nil {
+			break // no base object found, use current
+		}
+		o = next
+	}
+	return o
+}
+
 // Find looks for an RegInfo object for the name passed in.  The name
 // can be either the Name or the Prefix.
 //
