@@ -802,6 +802,24 @@ func (f *Fs) newDir(ctx context.Context, dir fs.Directory) fs.Directory {
 	return newDir
 }
 
+// UserInfo returns info about the connected user
+func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
+	do := f.Fs.Features().UserInfo
+	if do == nil {
+		return nil, fs.ErrorNotImplemented
+	}
+	return do(ctx)
+}
+
+// Disconnect the current user
+func (f *Fs) Disconnect(ctx context.Context) error {
+	do := f.Fs.Features().Disconnect
+	if do == nil {
+		return fs.ErrorNotImplemented
+	}
+	return do(ctx)
+}
+
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source
 //
 // This encrypts the remote name and adjusts the size
@@ -888,6 +906,8 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.UserInfoer      = (*Fs)(nil)
+	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)
