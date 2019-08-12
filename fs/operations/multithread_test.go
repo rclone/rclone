@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fstest/mockfs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/rclone/rclone/lib/random"
 
 	"github.com/rclone/rclone/fs"
@@ -13,6 +15,67 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestDoMultiThreadCopy(t *testing.T) {
+	f := mockfs.NewFs("potato", "")
+	src := mockobject.New("file.txt").WithContent([]byte(random.String(100)), mockobject.SeekModeNone)
+	srcFs := mockfs.NewFs("sausage", "")
+	src.SetFs(srcFs)
+
+	oldStreams := fs.Config.MultiThreadStreams
+	oldCutoff := fs.Config.MultiThreadCutoff
+	oldIsSet := fs.Config.MultiThreadSet
+	defer func() {
+		fs.Config.MultiThreadStreams = oldStreams
+		fs.Config.MultiThreadCutoff = oldCutoff
+		fs.Config.MultiThreadSet = oldIsSet
+	}()
+
+	fs.Config.MultiThreadStreams, fs.Config.MultiThreadCutoff = 4, 50
+	fs.Config.MultiThreadSet = false
+
+	nullWriterAt := func(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+		panic("don't call me")
+	}
+	f.Features().OpenWriterAt = nullWriterAt
+
+	assert.True(t, doMultiThreadCopy(f, src))
+
+	fs.Config.MultiThreadStreams = 0
+	assert.False(t, doMultiThreadCopy(f, src))
+	fs.Config.MultiThreadStreams = 1
+	assert.False(t, doMultiThreadCopy(f, src))
+	fs.Config.MultiThreadStreams = 2
+	assert.True(t, doMultiThreadCopy(f, src))
+
+	fs.Config.MultiThreadCutoff = 200
+	assert.False(t, doMultiThreadCopy(f, src))
+	fs.Config.MultiThreadCutoff = 101
+	assert.False(t, doMultiThreadCopy(f, src))
+	fs.Config.MultiThreadCutoff = 100
+	assert.True(t, doMultiThreadCopy(f, src))
+
+	f.Features().OpenWriterAt = nil
+	assert.False(t, doMultiThreadCopy(f, src))
+	f.Features().OpenWriterAt = nullWriterAt
+	assert.True(t, doMultiThreadCopy(f, src))
+
+	f.Features().IsLocal = true
+	srcFs.Features().IsLocal = true
+	assert.False(t, doMultiThreadCopy(f, src))
+	fs.Config.MultiThreadSet = true
+	assert.True(t, doMultiThreadCopy(f, src))
+	fs.Config.MultiThreadSet = false
+	assert.False(t, doMultiThreadCopy(f, src))
+	srcFs.Features().IsLocal = false
+	assert.True(t, doMultiThreadCopy(f, src))
+	srcFs.Features().IsLocal = true
+	assert.False(t, doMultiThreadCopy(f, src))
+	f.Features().IsLocal = false
+	assert.True(t, doMultiThreadCopy(f, src))
+	srcFs.Features().IsLocal = false
+	assert.True(t, doMultiThreadCopy(f, src))
+}
 
 func TestMultithreadCalculateChunks(t *testing.T) {
 	for _, test := range []struct {

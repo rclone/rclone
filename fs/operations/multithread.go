@@ -16,6 +16,32 @@ const (
 	multithreadBufferSize    = 32 * 1024
 )
 
+// Return a boolean as to whether we should use multi thread copy for
+// this transfer
+func doMultiThreadCopy(f fs.Fs, src fs.Object) bool {
+	// Disable multi thread if...
+
+	// ...it isn't configured
+	if fs.Config.MultiThreadStreams <= 1 {
+		return false
+	}
+	// ...size of object is less than cutoff
+	if src.Size() < int64(fs.Config.MultiThreadCutoff) {
+		return false
+	}
+	// ...source doesn't support it
+	dstFeatures := f.Features()
+	if dstFeatures.OpenWriterAt == nil {
+		return false
+	}
+	// ...if --multi-thread-streams not in use and source and
+	// destination are both local
+	if !fs.Config.MultiThreadSet && dstFeatures.IsLocal && src.Fs().Features().IsLocal {
+		return false
+	}
+	return true
+}
+
 // state for a multi-thread copy
 type multiThreadCopyState struct {
 	ctx      context.Context
