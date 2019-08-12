@@ -166,6 +166,7 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 	entries = make([]fs.DirEntry, len(files.Items)+len(folders.SubFolders))
 
 	for i, item := range files.Items {
+		item.Filename = restoreReservedChars(item.Filename)
 		entries[i] = f.newObjectFromFile(ctx, dir, item)
 	}
 
@@ -314,6 +315,8 @@ func (f *Fs) getUploadNode() (response *GetUploadNodeResponse, err error) {
 
 func (f *Fs) uploadFile(in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
 	// fs.Debugf(f, "Uploading File `%s`", fileName)
+
+	fileName = replaceReservedChars(fileName)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
 		return nil, errors.New("Invalid UploadID")
