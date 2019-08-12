@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -60,6 +61,8 @@ var (
 	// Description of how to auth for this app
 	oauthConfig = &oauth2.Config{
 		Scopes: []string{
+			"openid",
+			"profile",
 			scopeReadWrite,
 		},
 		Endpoint:     google.Endpoint,
@@ -143,18 +146,20 @@ type Options struct {
 
 // Fs represents a remote storage server
 type Fs struct {
-	name       string           // name of this remote
-	root       string           // the path we are working on if any
-	opt        Options          // parsed options
-	features   *fs.Features     // optional features
-	srv        *rest.Client     // the connection to the one drive server
-	pacer      *fs.Pacer        // To pace the API calls
-	startTime  time.Time        // time Fs was started - used for datestamps
-	albumsMu   sync.Mutex       // protect albums (but not contents)
-	albums     map[bool]*albums // albums, shared or not
-	uploadedMu sync.Mutex       // to protect the below
-	uploaded   dirtree.DirTree  // record of uploaded items
-	createMu   sync.Mutex       // held when creating albums to prevent dupes
+	name       string                 // name of this remote
+	root       string                 // the path we are working on if any
+	opt        Options                // parsed options
+	features   *fs.Features           // optional features
+	unAuth     *rest.Client           // unauthenticated http client
+	srv        *rest.Client           // the connection to the one drive server
+	ts         *oauthutil.TokenSource // token source for oauth2
+	pacer      *fs.Pacer              // To pace the API calls
+	startTime  time.Time              // time Fs was started - used for datestamps
+	albumsMu   sync.Mutex             // protect albums (but not contents)
+	albums     map[bool]*albums       // albums, shared or not
+	uploadedMu sync.Mutex             // to protect the below
+	uploaded   dirtree.DirTree        // record of uploaded items
+	createMu   sync.Mutex             // held when creating albums to prevent dupes
 }
 
 // Object describes a storage object
@@ -241,7 +246,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, err
 	}
 
-	oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
+	baseClient := fshttp.NewClient(fs.Config)
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, m, oauthConfig, baseClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure Box")
 	}
@@ -250,11 +256,14 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if root == "." || root == "/" {
 		root = ""
 	}
+
 	f := &Fs{
 		name:      name,
 		root:      root,
 		opt:       *opt,
+		unAuth:    rest.NewClient(baseClient),
 		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
+		ts:        ts,
 		pacer:     fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(minSleep))),
 		startTime: time.Now(),
 		albums:    map[bool]*albums{},
@@ -278,6 +287,85 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		f.root = oldRoot
 	}
 	return f, nil
+}
+
+// fetchEndpoint gets the openid endpoint named from the Google config
+func (f *Fs) fetchEndpoint(name string) (endpoint string, err error) {
+	// Get openID config without auth
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: "https://accounts.google.com/.well-known/openid-configuration",
+	}
+	var openIDconfig map[string]interface{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.unAuth.CallJSON(&opts, nil, &openIDconfig)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't read openID config")
+	}
+
+	// Find userinfo endpoint
+	endpoint, ok := openIDconfig[name].(string)
+	if !ok {
+		return "", errors.Errorf("couldn't find %q from openID config", name)
+	}
+
+	return endpoint, nil
+}
+
+// UserInfo fetches info about the current user with oauth2
+func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err error) {
+	endpoint, err := f.fetchEndpoint("userinfo_endpoint")
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the user info with auth
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: endpoint,
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(&opts, nil, &userInfo)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't read user info")
+	}
+	return userInfo, nil
+}
+
+// Disconnect kills the token and refresh token
+func (f *Fs) Disconnect(ctx context.Context) (err error) {
+	endpoint, err := f.fetchEndpoint("revocation_endpoint")
+	if err != nil {
+		return err
+	}
+	token, err := f.ts.Token()
+	if err != nil {
+		return err
+	}
+
+	// Revoke the token and the refresh token
+	opts := rest.Opts{
+		Method:  "POST",
+		RootURL: endpoint,
+		MultipartParams: url.Values{
+			"token":           []string{token.AccessToken},
+			"token_type_hint": []string{"access_token"},
+		},
+	}
+	var res interface{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(&opts, nil, &res)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return errors.Wrap(err, "couldn't revoke token")
+	}
+	fs.Infof(f, "res = %+v", res)
+	return nil
 }
 
 // Return an Object from a path
@@ -963,8 +1051,10 @@ func (o *Object) ID() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = &Fs{}
-	_ fs.Object    = &Object{}
-	_ fs.MimeTyper = &Object{}
-	_ fs.IDer      = &Object{}
+	_ fs.Fs           = &Fs{}
+	_ fs.UserInfoer   = &Fs{}
+	_ fs.Disconnecter = &Fs{}
+	_ fs.Object       = &Object{}
+	_ fs.MimeTyper    = &Object{}
+	_ fs.IDer         = &Object{}
 )
