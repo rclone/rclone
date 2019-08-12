@@ -47,6 +47,21 @@ func init() {
 				Help:  "Connect to example.com using a username and password",
 			}},
 		}, {
+			Name: "headers",
+			Help: `Set HTTP headers for all transactions
+
+Use this to set additional HTTP headers for all transactions
+
+The input format is comma separated list of key,value pairs.  Standard
+[CSV encoding](https://godoc.org/encoding/csv) may be used.
+
+For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+
+You can set multiple headers, eg '"Cookie","name=value","Authorization","xxx"'.
+`,
+			Default:  fs.CommaSepList{},
+			Advanced: true,
+		}, {
 			Name: "no_slash",
 			Help: `Set this if the site doesn't end directories with /
 
@@ -69,8 +84,9 @@ directories.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Endpoint string `config:"url"`
-	NoSlash  bool   `config:"no_slash"`
+	Endpoint string          `config:"url"`
+	NoSlash  bool            `config:"no_slash"`
+	Headers  fs.CommaSepList `config:"headers"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -115,6 +131,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, err
 	}
 
+	if len(opt.Headers)%2 != 0 {
+		return nil, errors.New("odd number of headers supplied")
+	}
+
 	if !strings.HasSuffix(opt.Endpoint, "/") {
 		opt.Endpoint += "/"
 	}
@@ -140,10 +160,14 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 			return http.ErrUseLastResponse
 		}
 		// check to see if points to a file
-		res, err := noRedir.Head(u.String())
-		err = statusError(res, err)
+		req, err := http.NewRequest("HEAD", u.String(), nil)
 		if err == nil {
-			isFile = true
+			addHeaders(req, opt)
+			res, err := noRedir.Do(req)
+			err = statusError(res, err)
+			if err == nil {
+				isFile = true
+			}
 		}
 	}
 
@@ -316,6 +340,20 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 	return names, nil
 }
 
+// Adds the configured headers to the request if any
+func addHeaders(req *http.Request, opt *Options) {
+	for i := 0; i < len(opt.Headers); i += 2 {
+		key := opt.Headers[i]
+		value := opt.Headers[i+1]
+		req.Header.Add(key, value)
+	}
+}
+
+// Adds the configured headers to the request if any
+func (f *Fs) addHeaders(req *http.Request) {
+	addHeaders(req, &f.opt)
+}
+
 // Read the directory passed in
 func (f *Fs) readDir(dir string) (names []string, err error) {
 	URL := f.url(dir)
@@ -326,7 +364,13 @@ func (f *Fs) readDir(dir string) (names []string, err error) {
 	if !strings.HasSuffix(URL, "/") {
 		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", URL)
 	}
-	res, err := f.httpClient.Get(URL)
+	// Do the request
+	req, err := http.NewRequest("GET", URL, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "readDir failed")
+	}
+	f.addHeaders(req)
+	res, err := f.httpClient.Do(req)
 	if err == nil {
 		defer fs.CheckClose(res.Body, &err)
 		if res.StatusCode == http.StatusNotFound {
@@ -450,7 +494,12 @@ func (o *Object) url() string {
 // stat updates the info field in the Object
 func (o *Object) stat() error {
 	url := o.url()
-	res, err := o.fs.httpClient.Head(url)
+	req, err := http.NewRequest("HEAD", url, nil)
+	if err != nil {
+		return errors.Wrap(err, "stat failed")
+	}
+	o.fs.addHeaders(req)
+	res, err := o.fs.httpClient.Do(req)
 	if err == nil && res.StatusCode == http.StatusNotFound {
 		return fs.ErrorObjectNotFound
 	}
@@ -502,6 +551,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	for k, v := range fs.OpenOptionHeaders(options) {
 		req.Header.Add(k, v)
 	}
+	o.fs.addHeaders(req)
 
 	// Do the request
 	res, err := o.fs.httpClient.Do(req)

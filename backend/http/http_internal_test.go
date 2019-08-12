@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ var (
 	remoteName = "TestHTTP"
 	testPath   = "test"
 	filesPath  = filepath.Join(testPath, "files")
+	headers    = []string{"X-Potato", "sausage", "X-Rhubarb", "cucumber"}
 )
 
 // prepareServer the test server and return a function to tidy it up afterwards
@@ -33,8 +35,16 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// file server for test/files
 	fileServer := http.FileServer(http.Dir(filesPath))
 
+	// test the headers are there then pass on to fileServer
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		what := fmt.Sprintf("%s %s: Header ", r.Method, r.URL.Path)
+		assert.Equal(t, headers[1], r.Header.Get(headers[0]), what+headers[0])
+		assert.Equal(t, headers[3], r.Header.Get(headers[2]), what+headers[2])
+		fileServer.ServeHTTP(w, r)
+	})
+
 	// Make the test server
-	ts := httptest.NewServer(fileServer)
+	ts := httptest.NewServer(handler)
 
 	// Configure the remote
 	config.LoadConfig()
@@ -45,8 +55,9 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// config.FileSet(remoteName, "url", ts.URL)
 
 	m := configmap.Simple{
-		"type": "http",
-		"url":  ts.URL,
+		"type":    "http",
+		"url":     ts.URL,
+		"headers": strings.Join(headers, ","),
 	}
 
 	// return a function to tidy up
