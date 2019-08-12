@@ -85,6 +85,32 @@ style.
 
 Default Off.
 
+### --rc-web-gui
+
+Set this flag to serve the default web gui on the same port as rclone.
+
+Default Off.
+
+### --rc-allow-origin
+
+Set the allowed Access-Control-Allow-Origin for rc requests.
+
+Can be used with --rc-web-gui if the rclone is running on different IP than the web-gui.
+
+Default is IP address on which rc is running.
+
+### --rc-web-fetch-url
+
+Set the URL to fetch the rclone-web-gui files from.
+
+Default https://api.github.com/repos/rclone/rclone-webui-react/releases/latest.
+
+### --rc-web-gui-update
+
+Set this flag to Download / Force update rclone-webui-react from the rc-web-fetch-url.
+
+Default Off.
+
 ### --rc-job-expire-duration=DURATION
 
 Expire finished async jobs older than DURATION (default 60s).
