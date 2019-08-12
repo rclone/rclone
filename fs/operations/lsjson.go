@@ -136,20 +136,8 @@ func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, 
 			if do, ok := entry.(fs.IDer); ok {
 				item.ID = do.ID()
 			}
-			if opt.ShowOrigIDs {
-				cur := entry
-				for {
-					u, ok := cur.(fs.ObjectUnWrapper)
-					if !ok {
-						break // not a wrapped object, use current id
-					}
-					next := u.UnWrap()
-					if next == nil {
-						break // no base object found, use current id
-					}
-					cur = next
-				}
-				if do, ok := cur.(fs.IDer); ok {
+			if o, ok := entry.(fs.Object); opt.ShowOrigIDs && ok {
+				if do, ok := fs.UnWrapObject(o).(fs.IDer); ok {
 					item.OrigID = do.ID()
 				}
 			}

@@ -330,14 +330,7 @@ func Run(t *testing.T, opt *Opt) {
 	// Return true if f (or any of the things it wraps) is bucket
 	// based but not at the root.
 	isBucketBasedButNotRoot := func(f fs.Fs) bool {
-		for {
-			doUnWrap := f.Features().UnWrap
-			if doUnWrap == nil {
-				break
-			}
-			f = doUnWrap()
-		}
-		return f.Features().BucketBased && strings.Contains(strings.Trim(f.Root(), "/"), "/")
+		return fs.UnWrapFs(f).Features().BucketBased && strings.Contains(strings.Trim(f.Root(), "/"), "/")
 	}
 
 	// Remove bad characters from Windows file name if set
