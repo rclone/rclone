@@ -494,7 +494,13 @@ func Run(t *testing.T, opt *Opt) {
 		TestFsListDirEmpty := func(t *testing.T) {
 			skipIfNotOk(t)
 			objs, dirs, err := walk.GetAll(context.Background(), remote, "", true, 1)
-			require.NoError(t, err)
+			if !remote.Features().CanHaveEmptyDirectories {
+				if err != fs.ErrorDirNotFound {
+					require.NoError(t, err)
+				}
+			} else {
+				require.NoError(t, err)
+			}
 			assert.Equal(t, []string{}, objsToNames(objs))
 			assert.Equal(t, []string{}, dirsToNames(dirs))
 		}
