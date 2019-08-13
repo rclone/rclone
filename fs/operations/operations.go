@@ -89,6 +89,8 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	if srcHash != dstHash {
 		fs.Debugf(src, "%v = %s (%v)", ht, srcHash, src.Fs())
 		fs.Debugf(dst, "%v = %s (%v)", ht, dstHash, dst.Fs())
+	} else {
+		fs.Debugf(src, "%v = %s OK", ht, srcHash)
 	}
 	return srcHash == dstHash, ht, srcHash, dstHash, nil
 }
