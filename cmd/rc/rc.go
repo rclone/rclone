@@ -117,7 +117,16 @@ func doCall(path string, in rc.Params) (out rc.Params, err error) {
 		if call == nil {
 			return nil, errors.Errorf("method %q not found", path)
 		}
-		return call.Fn(context.Background(), in)
+		out, err = call.Fn(context.Background(), in)
+		if err != nil {
+			return nil, errors.Wrap(err, "loopback call failed")
+		}
+		// Reshape (serialize then deserialize) the data so it is in the form expected
+		err = rc.Reshape(&out, out)
+		if err != nil {
+			return nil, errors.Wrap(err, "loopback reshape failed")
+		}
+		return out, nil
 	}
 
 	// Do HTTP request
