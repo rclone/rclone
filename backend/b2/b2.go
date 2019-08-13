@@ -630,7 +630,7 @@ func (f *Fs) list(ctx context.Context, dir string, recurse bool, prefix string, 
 			return err
 		}
 		// Check that there are matching files
-		if len(response.Files) == 0 {
+		if len(response.Files) == 0 && (dir != "" || prefix != "") {
 			return fs.ErrorDirNotFound
 		}
 		for i := range response.Files {
