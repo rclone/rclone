@@ -44,7 +44,7 @@ const (
 	defaultDevice               = "Jotta"
 	defaultMountpoint           = "Archive"
 	rootURL                     = "https://www.jottacloud.com/jfs/"
-	apiURL                      = "https://api.jottacloud.com/files/v1/"
+	apiURL                      = "https://api.jottacloud.com/"
 	baseURL                     = "https://www.jottacloud.com/"
 	tokenURL                    = "https://api.jottacloud.com/auth/v1/token"
 	registerURL                 = "https://api.jottacloud.com/auth/v1/register"
@@ -88,7 +88,6 @@ func init() {
 
 			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 
-			// ask if we should create a device specifc token: https://github.com/rclone/rclone/issues/2995
 			fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
 			if config.Confirm() {
 				// random generator to generate random device names
@@ -195,8 +194,14 @@ func init() {
 				}
 
 				srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
+				apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
-				acc, err := getAccountInfo(srv, username)
+				cust, err := getCustomerInfo(apiSrv)
+				if err != nil {
+					log.Fatalf("Error getting customer info: %s", err)
+				}
+
+				acc, err := getDriveInfo(srv, cust.Username)
 				if err != nil {
 					log.Fatalf("Error getting devices: %s", err)
 				}
@@ -208,7 +213,7 @@ func init() {
 				result := config.Choose("Devices", deviceNames, nil, false)
 				m.Set(configDevice, result)
 
-				dev, err := getDeviceInfo(srv, path.Join(username, result))
+				dev, err := getDeviceInfo(srv, path.Join(cust.Username, result))
 				if err != nil {
 					log.Fatalf("Error getting Mountpoint: %s", err)
 				}
@@ -226,7 +231,8 @@ func init() {
 		},
 		Options: []fs.Option{{
 			Name: configUsername,
-			Help: "User Name:",
+			Help: "Username:",
+			Hide: fs.OptionHideCommandLine,
 		}, {
 			Name:     "md5_memory_limit",
 			Help:     "Files bigger than this will be cached on disk to calculate the MD5 if required.",
@@ -362,13 +368,27 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
 	return &result, nil
 }
 
-// getAccountInfo queries general information about the account.
-// Takes rest.Client and username as parameter to be easily usable
-// during config
-func getAccountInfo(srv *rest.Client, username string) (info *api.AccountInfo, err error) {
+func getCustomerInfo(srv *rest.Client) (info *api.CustomerInfo, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   urlPathEscape(username),
+		Path:   "account/v1/customer",
+	}
+
+	_, err = srv.CallJSON(&opts, nil, &info)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
+// getDriveInfo queries general information about the account.
+// Takes rest.Client and username as parameter to be easily usable
+// during config
+func getDriveInfo(srv *rest.Client, username string) (info *api.DriveInfo, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   username,
 	}
 
 	_, err = srv.CallXML(&opts, nil, &info)
@@ -395,19 +415,14 @@ func getDeviceInfo(srv *rest.Client, path string) (info *api.JottaDevice, err er
 }
 
 // setEndpointUrl reads the account id and generates the API endpoint URL
-func (f *Fs) setEndpointURL() (err error) {
-	info, err := getAccountInfo(f.srv, f.user)
-	if err != nil {
-		return errors.Wrap(err, "failed to get endpoint url")
-	}
+func (f *Fs) setEndpointURL() {
 	if f.opt.Device == "" {
 		f.opt.Device = defaultDevice
 	}
 	if f.opt.Mountpoint == "" {
 		f.opt.Mountpoint = defaultMountpoint
 	}
-	f.endpointURL = urlPathEscape(path.Join(info.Username, f.opt.Device, f.opt.Mountpoint))
-	return nil
+	f.endpointURL = urlPathEscape(path.Join(f.user, f.opt.Device, f.opt.Mountpoint))
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -531,10 +546,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return err
 	})
 
-	err = f.setEndpointURL()
+	cust, err := getCustomerInfo(f.apiSrv)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't get account info")
+		return nil, errors.Wrap(err, "couldn't get customer info")
 	}
+	f.user = cust.Username
+	f.setEndpointURL()
 
 	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file
@@ -1055,7 +1072,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	info, err := getAccountInfo(f.srv, f.user)
+	info, err := getDriveInfo(f.srv, f.user)
 	if err != nil {
 		return nil, err
 	}
@@ -1272,7 +1289,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:       "POST",
-		Path:         "allocate",
+		Path:         "files/v1/allocate",
 		ExtraHeaders: make(map[string]string),
 	}
 	fileDate := api.Time(src.ModTime(ctx)).APIString()
