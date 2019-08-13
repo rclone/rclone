@@ -473,6 +473,7 @@ type Features struct {
 	SetTier                 bool // allows set tier functionality on objects
 	GetTier                 bool // allows to retrieve storage tier of objects
 	ServerSideAcrossConfigs bool // can server side copy between different remotes of the same type
+	IsLocal                 bool // is the local backend
 
 	// Purge all files in the root and the root directory
 	//
