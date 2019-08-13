@@ -102,8 +102,8 @@ GET http://www.jottacloud.com/JFS/<account>
 </user>
 */
 
-// AccountInfo represents a Jottacloud account
-type AccountInfo struct {
+// DriveInfo represents a Jottacloud account
+type DriveInfo struct {
 	Username          string        `xml:"username"`
 	AccountType       string        `xml:"account-type"`
 	Locked            bool          `xml:"locked"`
@@ -319,4 +319,27 @@ type UploadResponse struct {
 type DeviceRegistrationResponse struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
+}
+
+// CustomerInfo provides general information about the account. Required for finding the correct internal username.
+type CustomerInfo struct {
+	Username          string      `json:"username"`
+	Email             string      `json:"email"`
+	Name              string      `json:"name"`
+	CountryCode       string      `json:"country_code"`
+	LanguageCode      string      `json:"language_code"`
+	CustomerGroupCode string      `json:"customer_group_code"`
+	BrandCode         string      `json:"brand_code"`
+	AccountType       string      `json:"account_type"`
+	SubscriptionType  string      `json:"subscription_type"`
+	Usage             int64       `json:"usage"`
+	Qouta             int64       `json:"quota"`
+	BusinessUsage     int64       `json:"business_usage"`
+	BusinessQouta     int64       `json:"business_quota"`
+	WriteLocked       bool        `json:"write_locked"`
+	ReadLocked        bool        `json:"read_locked"`
+	LockedCause       interface{} `json:"locked_cause"`
+	WebHash           string      `json:"web_hash"`
+	AndroidHash       string      `json:"android_hash"`
+	IOSHash           string      `json:"ios_hash"`
 }
