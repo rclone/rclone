@@ -236,7 +236,7 @@ func list() error {
 		if !ok {
 			return errors.New("bad JSON")
 		}
-		fmt.Printf("### %s: %s\n\n", info["Path"], info["Title"])
+		fmt.Printf("### %s: %s {#%s}\n\n", info["Path"], info["Title"], info["Path"])
 		fmt.Printf("%s\n\n", info["Help"])
 		if authRequired := info["AuthRequired"]; authRequired != nil {
 			if authRequired.(bool) {
