@@ -32,7 +32,7 @@ import (
 
 	"github.com/pengsrc/go-shared/convert"
 
-	sdk "github.com/yunify/qingstor-sdk-go"
+	"github.com/yunify/qingstor-sdk-go"
 	"github.com/yunify/qingstor-sdk-go/logger"
 	"github.com/yunify/qingstor-sdk-go/request/data"
 	"github.com/yunify/qingstor-sdk-go/utils"

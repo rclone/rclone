@@ -108,8 +108,6 @@ github.com/konsorten/go-windows-terminal-sequences v1.0.1 h1:mweAR1A6xJ3oS2pRaGi
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a h1:W+gnfphB7WpRj0rbTF40e3edULfri4fou2kUFw6AF3A=
 github.com/koofr/go-httpclient v0.0.0-20180104120329-03786175608a/go.mod h1:3xszwh+rNrYk1r9SStc4iJ326gne1OaBcrdB1ACsbzI=
-github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff h1:GlfzG8bgyoJYz+5sMvGpYnHrg4veNVNnDGuE9hTEMHk=
-github.com/koofr/go-koofrclient v0.0.0-20190131164641-7f327592caff/go.mod h1:MRAz4Gsxd+OzrZ0owwrUHc0zLESL+1Y5syqK/sJxK2A=
 github.com/koofr/go-koofrclient v0.0.0-20190715104037-2c5813f3c29c h1:MaVra5jrE7MxT4k0v0JD2Gh6h94BFu2DgDYq+zMGBW0=
 github.com/koofr/go-koofrclient v0.0.0-20190715104037-2c5813f3c29c/go.mod h1:MRAz4Gsxd+OzrZ0owwrUHc0zLESL+1Y5syqK/sJxK2A=
 github.com/kr/fs v0.1.0 h1:Jskdu9ieNAYnjxsi0LbQp1ulIKZV1LAFgK1tWhpZgl8=

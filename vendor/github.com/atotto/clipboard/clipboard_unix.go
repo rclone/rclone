@@ -15,8 +15,8 @@ import (
 const (
 	xsel               = "xsel"
 	xclip              = "xclip"
-	wlcopy             = "wl-copy"
-	wlpaste            = "wl-paste"
+	wlcopy = "wl-copy"
+	wlpaste = "wl-paste"
 	termuxClipboardGet = "termux-clipboard-get"
 	termuxClipboardSet = "termux-clipboard-set"
 )
@@ -34,7 +34,7 @@ var (
 	xclipCopyArgs  = []string{xclip, "-in", "-selection", "clipboard"}
 
 	wlpasteArgs = []string{wlpaste, "--no-newline"}
-	wlcopyArgs  = []string{wlcopy}
+	wlcopyArgs = []string{wlcopy}
 
 	termuxPasteArgs = []string{termuxClipboardGet}
 	termuxCopyArgs  = []string{termuxClipboardSet}
@@ -44,8 +44,8 @@ var (
 
 func init() {
 	if os.Getenv("WAYLAND_DISPLAY") != "" {
-		pasteCmdArgs = wlpasteArgs
-		copyCmdArgs = wlcopyArgs
+		pasteCmdArgs = wlpasteArgs;
+		copyCmdArgs = wlcopyArgs;
 
 		if _, err := exec.LookPath(wlcopy); err == nil {
 			if _, err := exec.LookPath(wlpaste); err == nil {

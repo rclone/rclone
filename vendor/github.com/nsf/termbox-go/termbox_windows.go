@@ -4,7 +4,7 @@ import "math"
 import "syscall"
 import "unsafe"
 import "unicode/utf16"
-import runewidth "github.com/mattn/go-runewidth"
+import "github.com/mattn/go-runewidth"
 
 type (
 	wchar     uint16

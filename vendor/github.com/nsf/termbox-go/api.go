@@ -2,16 +2,13 @@
 
 package termbox
 
-import (
-	"fmt"
-	"os"
-	"os/signal"
-	"runtime"
-	"syscall"
-	"time"
-
-	runewidth "github.com/mattn/go-runewidth"
-)
+import "github.com/mattn/go-runewidth"
+import "fmt"
+import "os"
+import "os/signal"
+import "syscall"
+import "runtime"
+import "time"
 
 // public API
 
