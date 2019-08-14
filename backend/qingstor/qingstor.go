@@ -24,9 +24,9 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
-	qsConfig "github.com/yunify/qingstor-sdk-go/config"
-	qsErr "github.com/yunify/qingstor-sdk-go/request/errors"
-	qs "github.com/yunify/qingstor-sdk-go/service"
+	qsConfig "github.com/yunify/qingstor-sdk-go/v3/config"
+	qsErr "github.com/yunify/qingstor-sdk-go/v3/request/errors"
+	qs "github.com/yunify/qingstor-sdk-go/v3/service"
 )
 
 // Register with Fs
@@ -582,9 +582,12 @@ func (f *Fs) list(ctx context.Context, dir string, recurse bool, fn listFn) erro
 				return err
 			}
 		}
+		if resp.HasMore != nil && !*resp.HasMore {
+			break
+		}
 		// Use NextMarker if set, otherwise use last Key
 		if resp.NextMarker == nil || *resp.NextMarker == "" {
-			//marker = resp.Keys[len(resp.Keys)-1].Key
+			fs.Errorf(f, "Expecting NextMarker but didn't find one")
 			break
 		} else {
 			marker = resp.NextMarker
