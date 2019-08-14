@@ -17,7 +17,7 @@
 package data
 
 import (
-	"github.com/yunify/qingstor-sdk-go/config"
+	"github.com/yunify/qingstor-sdk-go/v3/config"
 )
 
 // Operation stores information of an operation.

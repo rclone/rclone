@@ -19,11 +19,13 @@ package unpacker
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"reflect"
 
-	"github.com/yunify/qingstor-sdk-go/request/data"
-	"github.com/yunify/qingstor-sdk-go/request/errors"
+	"github.com/yunify/qingstor-sdk-go/v3/logger"
+	"github.com/yunify/qingstor-sdk-go/v3/request/data"
+	"github.com/yunify/qingstor-sdk-go/v3/request/errors"
 )
 
 // QingStorUnpacker is the response unpacker for QingStor service.
@@ -58,27 +60,43 @@ func (qu *QingStorUnpacker) UnpackHTTPRequest(o *data.Operation, r *http.Respons
 }
 
 func (qu *QingStorUnpacker) parseError() error {
-	if !qu.baseUnpacker.isResponseRight() {
-		if qu.baseUnpacker.httpResponse.Header.Get("Content-Type") == "application/json" {
-			buffer := &bytes.Buffer{}
-			buffer.ReadFrom(qu.baseUnpacker.httpResponse.Body)
-			qu.baseUnpacker.httpResponse.Body.Close()
-
-			qsError := &errors.QingStorError{}
-			if buffer.Len() > 0 {
-				err := json.Unmarshal(buffer.Bytes(), qsError)
-				if err != nil {
-					return err
-				}
-			}
-			qsError.StatusCode = qu.baseUnpacker.httpResponse.StatusCode
-			if qsError.RequestID == "" {
-				qsError.RequestID = qu.baseUnpacker.httpResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
-			}
-
-			return qsError
-		}
+	if qu.baseUnpacker.isResponseRight() {
+		return nil
 	}
 
-	return nil
+	// QingStor nginx could refuse user's request directly and only return status code.
+	// We should handle this and build a qingstor error with message.
+	if qu.baseUnpacker.httpResponse.Header.Get("Content-Type") != "application/json" {
+		qsError := &errors.QingStorError{
+			StatusCode: qu.baseUnpacker.httpResponse.StatusCode,
+			Message:    http.StatusText(qu.baseUnpacker.httpResponse.StatusCode),
+		}
+		return qsError
+	}
+
+	buffer := &bytes.Buffer{}
+	_, err := io.Copy(buffer, qu.baseUnpacker.httpResponse.Body)
+	if err != nil {
+		logger.Errorf(nil, "Copy from error response body failed for %v", err)
+		return err
+	}
+	err = qu.baseUnpacker.httpResponse.Body.Close()
+	if err != nil {
+		logger.Errorf(nil, "Close error response body failed for %v", err)
+		return err
+	}
+
+	qsError := &errors.QingStorError{}
+	if buffer.Len() > 0 {
+		err := json.Unmarshal(buffer.Bytes(), qsError)
+		if err != nil {
+			return err
+		}
+	}
+	qsError.StatusCode = qu.baseUnpacker.httpResponse.StatusCode
+	if qsError.RequestID == "" {
+		qsError.RequestID = qu.baseUnpacker.httpResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	}
+
+	return qsError
 }

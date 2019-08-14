@@ -36,7 +36,6 @@ require (
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pengsrc/go-shared v0.2.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.10.1-0.20190523025818-e98a7bef6829
 	github.com/rfjakob/eme v0.0.0-20171028163933-2222dbd4ba46
@@ -47,10 +46,10 @@ require (
 	github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709
 	github.com/t3rm1n4l/go-mega v0.0.0-20190528125457-55e675378686
 	github.com/xanzy/ssh-agent v0.2.1
-	github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
+	github.com/yunify/qingstor-sdk-go/v3 v3.0.2
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4

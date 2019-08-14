@@ -3,11 +3,8 @@ package utils
 import (
 	"context"
 	"net"
-	"sync"
 	"time"
 )
-
-var connPool sync.Pool
 
 type netConn net.Conn
 type netDialer net.Dialer
@@ -71,10 +68,7 @@ func NewConn(c netConn) *Conn {
 	if ok {
 		return conn
 	}
-	conn, ok = connPool.Get().(*Conn)
-	if !ok {
-		conn = new(Conn)
-	}
+	conn = new(Conn)
 	conn.netConn = c
 	return conn
 }
@@ -119,7 +113,6 @@ func (c Conn) Close() (err error) {
 		return nil
 	}
 	err = c.netConn.Close()
-	connPool.Put(c)
 	c.netConn = nil
 	c.readTimeout = 0
 	c.writeTimeout = 0

@@ -131,7 +131,7 @@ github.com/nsf/termbox-go
 github.com/okzk/sdnotify
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 github.com/patrickmn/go-cache
-# github.com/pengsrc/go-shared v0.2.0
+# github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14
 github.com/pengsrc/go-shared/log
 github.com/pengsrc/go-shared/convert
 github.com/pengsrc/go-shared/buffer
@@ -158,25 +158,25 @@ github.com/spf13/cobra
 github.com/spf13/cobra/doc
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/stretchr/testify v1.3.0
+# github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/t3rm1n4l/go-mega v0.0.0-20190528125457-55e675378686
 github.com/t3rm1n4l/go-mega
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
-# github.com/yunify/qingstor-sdk-go v2.2.15+incompatible
-github.com/yunify/qingstor-sdk-go/config
-github.com/yunify/qingstor-sdk-go/request/errors
-github.com/yunify/qingstor-sdk-go/service
-github.com/yunify/qingstor-sdk-go/logger
-github.com/yunify/qingstor-sdk-go/utils
-github.com/yunify/qingstor-sdk-go/request
-github.com/yunify/qingstor-sdk-go/request/data
-github.com/yunify/qingstor-sdk-go/request/builder
-github.com/yunify/qingstor-sdk-go/request/signer
-github.com/yunify/qingstor-sdk-go/request/unpacker
-github.com/yunify/qingstor-sdk-go
+# github.com/yunify/qingstor-sdk-go/v3 v3.0.2
+github.com/yunify/qingstor-sdk-go/v3/config
+github.com/yunify/qingstor-sdk-go/v3/request/errors
+github.com/yunify/qingstor-sdk-go/v3/service
+github.com/yunify/qingstor-sdk-go/v3/logger
+github.com/yunify/qingstor-sdk-go/v3/utils
+github.com/yunify/qingstor-sdk-go/v3/request
+github.com/yunify/qingstor-sdk-go/v3/request/data
+github.com/yunify/qingstor-sdk-go/v3/request/builder
+github.com/yunify/qingstor-sdk-go/v3/request/signer
+github.com/yunify/qingstor-sdk-go/v3/request/unpacker
+github.com/yunify/qingstor-sdk-go/v3
 # go.opencensus.io v0.22.0
 go.opencensus.io/plugin/ochttp
 go.opencensus.io/plugin/ochttp/propagation/b3
