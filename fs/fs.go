@@ -1150,7 +1150,10 @@ type setConfigFile string
 // Set a config item into the config file
 func (section setConfigFile) Set(key, value string) {
 	Debugf(nil, "Saving config %q = %q in section %q of the config file", key, value, section)
-	ConfigFileSet(string(section), key, value)
+	err := ConfigFileSet(string(section), key, value)
+	if err != nil {
+		Errorf(nil, "Failed saving config %q = %q in section %q of the config file: %v", key, value, section, err)
+	}
 }
 
 // A configmap.Getter to read from the config file

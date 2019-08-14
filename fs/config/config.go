@@ -93,7 +93,7 @@ var (
 func init() {
 	// Set the function pointers up in fs
 	fs.ConfigFileGet = FileGetFlag
-	fs.ConfigFileSet = FileSet
+	fs.ConfigFileSet = SetValueAndSave
 }
 
 func getConfigData() *goconfig.ConfigFile {

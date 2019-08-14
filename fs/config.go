@@ -4,6 +4,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Global
@@ -17,12 +19,12 @@ var (
 	// implementation from the fs
 	ConfigFileGet = func(section, key string) (string, bool) { return "", false }
 
-	// Set a value into the config file
+	// Set a value into the config file and persist it
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	ConfigFileSet = func(section, key, value string) {
-		Errorf(nil, "No config handler to set %q = %q in section %q of the config file", key, value, section)
+	ConfigFileSet = func(section, key, value string) (err error) {
+		return errors.New("no config file set handler")
 	}
 
 	// CountError counts an error.  If any errors have been
