@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	httpclient "github.com/koofr/go-httpclient"
+	"github.com/koofr/go-httpclient"
 )
 
 type KoofrClient struct {

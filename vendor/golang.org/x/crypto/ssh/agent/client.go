@@ -26,7 +26,6 @@ import (
 	"sync"
 
 	"crypto"
-
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/ssh"
 )

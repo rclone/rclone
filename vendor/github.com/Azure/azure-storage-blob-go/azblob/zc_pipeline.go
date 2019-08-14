@@ -41,5 +41,6 @@ func NewPipeline(c Credential, o PipelineOptions) pipeline.Pipeline {
 		NewRequestLogPolicyFactory(o.RequestLog),
 		pipeline.MethodFactoryMarker()) // indicates at what stage in the pipeline the method factory is invoked
 
+
 	return pipeline.NewPipeline(f, pipeline.Options{HTTPSender: o.HTTPSender, Log: o.Log})
 }

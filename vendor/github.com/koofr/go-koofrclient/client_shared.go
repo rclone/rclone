@@ -3,7 +3,7 @@ package koofrclient
 import (
 	"net/http"
 
-	httpclient "github.com/koofr/go-httpclient"
+	"github.com/koofr/go-httpclient"
 )
 
 func (c *KoofrClient) Shared() (shared []Shared, err error) {
