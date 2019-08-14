@@ -51,7 +51,6 @@ const (
 	cachePrefix                 = "rclone-jcmd5-"
 	rcloneClientID              = "nibfk8biu12ju7hpqomr8b1e40"
 	rcloneEncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
-	configUsername              = "user"
 	configClientID              = "client_id"
 	configClientSecret          = "client_secret"
 	configDevice                = "device"
@@ -87,33 +86,9 @@ func init() {
 			}
 
 			srv := rest.NewClient(fshttp.NewClient(fs.Config))
-
 			fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
 			if config.Confirm() {
-				// random generator to generate random device names
-				seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
-				randonDeviceNamePartLength := 21
-				randomDeviceNamePart := make([]byte, randonDeviceNamePartLength)
-				for i := range randomDeviceNamePart {
-					randomDeviceNamePart[i] = charset[seededRand.Intn(len(charset))]
-				}
-				randomDeviceName := "rclone-" + string(randomDeviceNamePart)
-				fs.Debugf(nil, "Trying to register device '%s'", randomDeviceName)
-
-				values := url.Values{}
-				values.Set("device_id", randomDeviceName)
-
-				// all information comes from https://github.com/ttyridal/aiojotta/wiki/Jotta-protocol-3.-Authentication#token-authentication
-				opts := rest.Opts{
-					Method:       "POST",
-					RootURL:      registerURL,
-					ContentType:  "application/x-www-form-urlencoded",
-					ExtraHeaders: map[string]string{"Authorization": "Bearer c2xrZmpoYWRsZmFramhkc2xma2phaHNkbGZramhhc2xkZmtqaGFzZGxrZmpobGtq"},
-					Parameters:   values,
-				}
-
-				var deviceRegistration api.DeviceRegistrationResponse
-				_, err := srv.CallJSON(&opts, nil, &deviceRegistration)
+				deviceRegistration, err := registerDevice(srv)
 				if err != nil {
 					log.Fatalf("Failed to register device: %v", err)
 				}
@@ -134,53 +109,14 @@ func init() {
 			oauthConfig.ClientID = clientID
 			oauthConfig.ClientSecret = obscure.MustReveal(clientSecret)
 
-			username, ok := m.Get(configUsername)
-			if !ok {
-				log.Fatalf("No username defined")
-			}
+			fmt.Printf("Username> ")
+			username := config.ReadLine()
 			password := config.GetPassword("Your Jottacloud password is only required during setup and will not be stored.")
 
-			// prepare out token request with username and password
-			values := url.Values{}
-			values.Set("grant_type", "PASSWORD")
-			values.Set("password", password)
-			values.Set("username", username)
-			values.Set("client_id", oauthConfig.ClientID)
-			values.Set("client_secret", oauthConfig.ClientSecret)
-			opts := rest.Opts{
-				Method:      "POST",
-				RootURL:     oauthConfig.Endpoint.AuthURL,
-				ContentType: "application/x-www-form-urlencoded",
-				Parameters:  values,
-			}
-
-			var jsonToken api.TokenJSON
-			resp, err := srv.CallJSON(&opts, nil, &jsonToken)
+			token, err := doAuth(srv, username, password)
 			if err != nil {
-				// if 2fa is enabled the first request is expected to fail. We will do another request with the 2fa code as an additional http header
-				if resp != nil {
-					if resp.Header.Get("X-JottaCloud-OTP") == "required; SMS" {
-						fmt.Printf("This account uses 2 factor authentication you will receive a verification code via SMS.\n")
-						fmt.Printf("Enter verification code> ")
-						authCode := config.ReadLine()
-						authCode = strings.Replace(authCode, "-", "", -1) // the sms received contains a pair of 3 digit numbers seperated by '-' but wants a single 6 digit number
-						opts.ExtraHeaders = make(map[string]string)
-						opts.ExtraHeaders["X-Jottacloud-Otp"] = authCode
-						resp, err = srv.CallJSON(&opts, nil, &jsonToken)
-					}
-				}
-				if err != nil {
-					log.Fatalf("Failed to get resource token: %v", err)
-				}
+				log.Fatalf("Failed to get oauth token: %s", err)
 			}
-
-			var token oauth2.Token
-			token.AccessToken = jsonToken.AccessToken
-			token.RefreshToken = jsonToken.RefreshToken
-			token.TokenType = jsonToken.TokenType
-			token.Expiry = time.Now().Add(time.Duration(jsonToken.ExpiresIn) * time.Second)
-
-			// finally save them in the config
 			err = oauthutil.PutToken(name, m, &token, true)
 			if err != nil {
 				log.Fatalf("Error while saving token: %s", err)
@@ -196,44 +132,15 @@ func init() {
 				srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
 				apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
-				cust, err := getCustomerInfo(apiSrv)
+				device, mountpoint, err := setupMountpoint(srv, apiSrv)
 				if err != nil {
-					log.Fatalf("Error getting customer info: %s", err)
+					log.Fatalf("Failed to setup mountpoint: %s", err)
 				}
-
-				acc, err := getDriveInfo(srv, cust.Username)
-				if err != nil {
-					log.Fatalf("Error getting devices: %s", err)
-				}
-				fmt.Printf("Please select the device to use. Normally this will be Jotta\n")
-				var deviceNames []string
-				for i := range acc.Devices {
-					deviceNames = append(deviceNames, acc.Devices[i].Name)
-				}
-				result := config.Choose("Devices", deviceNames, nil, false)
-				m.Set(configDevice, result)
-
-				dev, err := getDeviceInfo(srv, path.Join(cust.Username, result))
-				if err != nil {
-					log.Fatalf("Error getting Mountpoint: %s", err)
-				}
-				if len(dev.MountPoints) == 0 {
-					log.Fatalf("No Mountpoints found for this device.")
-				}
-				fmt.Printf("Please select the mountpoint to user. Normally this will be Archive\n")
-				var mountpointNames []string
-				for i := range dev.MountPoints {
-					mountpointNames = append(mountpointNames, dev.MountPoints[i].Name)
-				}
-				result = config.Choose("Mountpoints", mountpointNames, nil, false)
-				m.Set(configMountpoint, result)
+				m.Set(configDevice, device)
+				m.Set(configMountpoint, mountpoint)
 			}
 		},
 		Options: []fs.Option{{
-			Name: configUsername,
-			Help: "Username:",
-			Hide: fs.OptionHideCommandLine,
-		}, {
 			Name:     "md5_memory_limit",
 			Help:     "Files bigger than this will be cached on disk to calculate the MD5 if required.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
@@ -259,7 +166,6 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	User               string        `config:"user"`
 	Device             string        `config:"device"`
 	Mountpoint         string        `config:"mountpoint"`
 	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
@@ -339,6 +245,167 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
+// registerDevice register a new device for use with the jottacloud API
+func registerDevice(srv *rest.Client) (reg *api.DeviceRegistrationResponse, err error) {
+	// random generator to generate random device names
+	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	randonDeviceNamePartLength := 21
+	randomDeviceNamePart := make([]byte, randonDeviceNamePartLength)
+	for i := range randomDeviceNamePart {
+		randomDeviceNamePart[i] = charset[seededRand.Intn(len(charset))]
+	}
+	randomDeviceName := "rclone-" + string(randomDeviceNamePart)
+	fs.Debugf(nil, "Trying to register device '%s'", randomDeviceName)
+
+	values := url.Values{}
+	values.Set("device_id", randomDeviceName)
+
+	opts := rest.Opts{
+		Method:       "POST",
+		RootURL:      registerURL,
+		ContentType:  "application/x-www-form-urlencoded",
+		ExtraHeaders: map[string]string{"Authorization": "Bearer c2xrZmpoYWRsZmFramhkc2xma2phaHNkbGZramhhc2xkZmtqaGFzZGxrZmpobGtq"},
+		Parameters:   values,
+	}
+
+	var deviceRegistration *api.DeviceRegistrationResponse
+	_, err = srv.CallJSON(&opts, nil, &deviceRegistration)
+	return deviceRegistration, err
+}
+
+// doAuth runs the actual token request
+func doAuth(srv *rest.Client, username, password string) (token oauth2.Token, err error) {
+	// prepare out token request with username and password
+	values := url.Values{}
+	values.Set("grant_type", "PASSWORD")
+	values.Set("password", password)
+	values.Set("username", username)
+	values.Set("client_id", oauthConfig.ClientID)
+	values.Set("client_secret", oauthConfig.ClientSecret)
+	opts := rest.Opts{
+		Method:      "POST",
+		RootURL:     oauthConfig.Endpoint.AuthURL,
+		ContentType: "application/x-www-form-urlencoded",
+		Parameters:  values,
+	}
+
+	// do the first request
+	var jsonToken api.TokenJSON
+	resp, err := srv.CallJSON(&opts, nil, &jsonToken)
+	if err != nil {
+		// if 2fa is enabled the first request is expected to fail. We will do another request with the 2fa code as an additional http header
+		if resp != nil {
+			if resp.Header.Get("X-JottaCloud-OTP") == "required; SMS" {
+				fmt.Printf("This account uses 2 factor authentication you will receive a verification code via SMS.\n")
+				fmt.Printf("Enter verification code> ")
+				authCode := config.ReadLine()
+
+				authCode = strings.Replace(authCode, "-", "", -1) // remove any "-" contained in the code so we have a 6 digit number
+				opts.ExtraHeaders = make(map[string]string)
+				opts.ExtraHeaders["X-Jottacloud-Otp"] = authCode
+				resp, err = srv.CallJSON(&opts, nil, &jsonToken)
+			}
+		}
+	}
+
+	token.AccessToken = jsonToken.AccessToken
+	token.RefreshToken = jsonToken.RefreshToken
+	token.TokenType = jsonToken.TokenType
+	token.Expiry = time.Now().Add(time.Duration(jsonToken.ExpiresIn) * time.Second)
+	return token, err
+}
+
+// setupMountpoint sets up a custom device and mountpoint if desired by the user
+func setupMountpoint(srv *rest.Client, apiSrv *rest.Client) (device, mountpoint string, err error) {
+	cust, err := getCustomerInfo(apiSrv)
+	if err != nil {
+		return "", "", err
+	}
+
+	acc, err := getDriveInfo(srv, cust.Username)
+	if err != nil {
+		return "", "", err
+	}
+	var deviceNames []string
+	for i := range acc.Devices {
+		deviceNames = append(deviceNames, acc.Devices[i].Name)
+	}
+	fmt.Printf("Please select the device to use. Normally this will be Jotta\n")
+	device = config.Choose("Devices", deviceNames, nil, false)
+
+	dev, err := getDeviceInfo(srv, path.Join(cust.Username, device))
+	if err != nil {
+		return "", "", err
+	}
+	if len(dev.MountPoints) == 0 {
+		return "", "", errors.New("no mountpoints for selected device")
+	}
+	var mountpointNames []string
+	for i := range dev.MountPoints {
+		mountpointNames = append(mountpointNames, dev.MountPoints[i].Name)
+	}
+	fmt.Printf("Please select the mountpoint to user. Normally this will be Archive\n")
+	mountpoint = config.Choose("Mountpoints", mountpointNames, nil, false)
+
+	return device, mountpoint, err
+}
+
+// getCustomerInfo queries general information about the account
+func getCustomerInfo(srv *rest.Client) (info *api.CustomerInfo, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "account/v1/customer",
+	}
+
+	_, err = srv.CallJSON(&opts, nil, &info)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't get customer info")
+	}
+
+	return info, nil
+}
+
+// getDriveInfo queries general information about the account and the available devices and mountpoints.
+func getDriveInfo(srv *rest.Client, username string) (info *api.DriveInfo, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   username,
+	}
+
+	_, err = srv.CallXML(&opts, nil, &info)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't get drive info")
+	}
+
+	return info, nil
+}
+
+// getDeviceInfo queries Information about a jottacloud device
+func getDeviceInfo(srv *rest.Client, path string) (info *api.JottaDevice, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   urlPathEscape(path),
+	}
+
+	_, err = srv.CallXML(&opts, nil, &info)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't get device info")
+	}
+
+	return info, nil
+}
+
+// setEndpointURL generates the API endpoint URL
+func (f *Fs) setEndpointURL() {
+	if f.opt.Device == "" {
+		f.opt.Device = defaultDevice
+	}
+	if f.opt.Mountpoint == "" {
+		f.opt.Mountpoint = defaultMountpoint
+	}
+	f.endpointURL = urlPathEscape(path.Join(f.user, f.opt.Device, f.opt.Mountpoint))
+}
+
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
@@ -366,63 +433,6 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
 		return nil, fs.ErrorNotAFile
 	}
 	return &result, nil
-}
-
-func getCustomerInfo(srv *rest.Client) (info *api.CustomerInfo, err error) {
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "account/v1/customer",
-	}
-
-	_, err = srv.CallJSON(&opts, nil, &info)
-	if err != nil {
-		return nil, err
-	}
-
-	return info, nil
-}
-
-// getDriveInfo queries general information about the account.
-// Takes rest.Client and username as parameter to be easily usable
-// during config
-func getDriveInfo(srv *rest.Client, username string) (info *api.DriveInfo, err error) {
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   username,
-	}
-
-	_, err = srv.CallXML(&opts, nil, &info)
-	if err != nil {
-		return nil, err
-	}
-
-	return info, nil
-}
-
-// getDeviceInfo queries Information about a jottacloud device
-func getDeviceInfo(srv *rest.Client, path string) (info *api.JottaDevice, err error) {
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   urlPathEscape(path),
-	}
-
-	_, err = srv.CallXML(&opts, nil, &info)
-	if err != nil {
-		return nil, err
-	}
-
-	return info, nil
-}
-
-// setEndpointUrl reads the account id and generates the API endpoint URL
-func (f *Fs) setEndpointURL() {
-	if f.opt.Device == "" {
-		f.opt.Device = defaultDevice
-	}
-	if f.opt.Mountpoint == "" {
-		f.opt.Mountpoint = defaultMountpoint
-	}
-	f.endpointURL = urlPathEscape(path.Join(f.user, f.opt.Device, f.opt.Mountpoint))
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -455,11 +465,6 @@ func (f *Fs) filePathRaw(file string) string {
 // filePath returns a escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
 	return urlPathEscape(f.filePathRaw(file))
-}
-
-// filePath returns a escaped file path (f.root, remote)
-func (o *Object) filePath() string {
-	return o.fs.filePath(o.remote)
 }
 
 // Jottacloud requires the grant_type 'refresh_token' string
@@ -526,7 +531,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f := &Fs{
 		name:   name,
 		root:   root,
-		user:   opt.User,
 		opt:    *opt,
 		srv:    rest.NewClient(oAuthClient).SetRoot(rootURL),
 		apiSrv: rest.NewClient(oAuthClient).SetRoot(apiURL),
@@ -548,7 +552,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	cust, err := getCustomerInfo(f.apiSrv)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't get customer info")
+		return nil, err
 	}
 	f.user = cust.Username
 	f.setEndpointURL()
@@ -636,7 +640,6 @@ func (f *Fs) CreateDir(path string) (jf *api.JottaFolder, err error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	//fmt.Printf("List: %s\n", f.filePath(dir))
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   f.filePath(dir),
@@ -685,7 +688,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 		entries = append(entries, o)
 	}
-	//fmt.Printf("Entries: %+v\n", entries)
 	return entries, nil
 }
 
@@ -741,17 +743,6 @@ func (f *Fs) listFileDir(remoteStartPath string, startFolder *api.JottaFolder, f
 //
 // dir should be "" to start from the root, and should not
 // have trailing slashes.
-//
-// This should return ErrDirNotFound if the directory isn't
-// found.
-//
-// It should call callback for each tranche of entries read.
-// These need not be returned in any particular order.  If
-// callback returns an error then the listing will stop
-// immediately.
-//
-// Don't implement this unless you have a more efficient way
-// of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	opts := rest.Opts{
 		Method:     "GET",
@@ -876,7 +867,6 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		return errors.Wrap(err, "couldn't purge directory")
 	}
 
-	// TODO: Parse response?
 	return nil
 }
 
@@ -893,10 +883,6 @@ func (f *Fs) Precision() time.Duration {
 }
 
 // Purge deletes all the files and the container
-//
-// Optional interface: Only implement this if you have a way of
-// deleting all the files quicker than just running Remove() on the
-// result of List()
 func (f *Fs) Purge(ctx context.Context) error {
 	return f.purgeCheck(ctx, "", false)
 }
@@ -1112,6 +1098,11 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
+// filePath returns a escaped file path (f.root, remote)
+func (o *Object) filePath() string {
+	return o.fs.filePath(o.remote)
+}
+
 // Hash returns the MD5 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
@@ -1145,6 +1136,7 @@ func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	return nil
 }
 
+// readMetaData reads and updates the metadata for an object
 func (o *Object) readMetaData(force bool) (err error) {
 	if o.hasMetaData && !force {
 		return nil
@@ -1348,7 +1340,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		o.md5 = result.Md5
 		o.modTime = time.Unix(result.Modified/1000, 0)
 	} else {
-		// If the file state is COMPLETE we don't need to upload it because the file was allready found but we still ned to update our metadata
+		// If the file state is COMPLETE we don't need to upload it because the file was already found but we still ned to update our metadata
 		return o.readMetaData(true)
 	}
 
