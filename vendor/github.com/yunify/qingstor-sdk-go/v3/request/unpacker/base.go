@@ -27,8 +27,8 @@ import (
 
 	"github.com/pengsrc/go-shared/convert"
 
-	"github.com/yunify/qingstor-sdk-go/logger"
-	"github.com/yunify/qingstor-sdk-go/request/data"
+	"github.com/yunify/qingstor-sdk-go/v3/logger"
+	"github.com/yunify/qingstor-sdk-go/v3/request/data"
 )
 
 // BaseUnpacker is the base unpacker for all services.

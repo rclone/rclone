@@ -41,8 +41,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/yunify/qingstor-sdk-go/config"
-	qs "github.com/yunify/qingstor-sdk-go/service"
+	"github.com/yunify/qingstor-sdk-go/v3/config"
+	qs "github.com/yunify/qingstor-sdk-go/v3/service"
 )
 
 func main() {

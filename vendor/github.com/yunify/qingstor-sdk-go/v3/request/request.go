@@ -26,11 +26,11 @@ import (
 
 	"github.com/pengsrc/go-shared/convert"
 
-	"github.com/yunify/qingstor-sdk-go/logger"
-	"github.com/yunify/qingstor-sdk-go/request/builder"
-	"github.com/yunify/qingstor-sdk-go/request/data"
-	"github.com/yunify/qingstor-sdk-go/request/signer"
-	"github.com/yunify/qingstor-sdk-go/request/unpacker"
+	"github.com/yunify/qingstor-sdk-go/v3/logger"
+	"github.com/yunify/qingstor-sdk-go/v3/request/builder"
+	"github.com/yunify/qingstor-sdk-go/v3/request/data"
+	"github.com/yunify/qingstor-sdk-go/v3/request/signer"
+	"github.com/yunify/qingstor-sdk-go/v3/request/unpacker"
 )
 
 // A Request can build, sign, send and unpack API request.
@@ -168,7 +168,7 @@ func (r *Request) check() error {
 }
 
 func (r *Request) build() error {
-	b := &builder.QingStorBuilder{}
+	b := &builder.Builder{}
 	httpRequest, err := b.BuildHTTPRequest(r.Operation, r.Input)
 	if err != nil {
 		return err

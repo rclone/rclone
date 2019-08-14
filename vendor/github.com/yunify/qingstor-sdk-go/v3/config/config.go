@@ -26,8 +26,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/yunify/qingstor-sdk-go/logger"
-	"github.com/yunify/qingstor-sdk-go/utils"
+	"github.com/yunify/qingstor-sdk-go/v3/logger"
+	"github.com/yunify/qingstor-sdk-go/v3/utils"
 )
 
 // A Config stores a configuration of this sdk.

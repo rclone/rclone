@@ -23,10 +23,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yunify/qingstor-sdk-go/config"
-	"github.com/yunify/qingstor-sdk-go/request"
-	"github.com/yunify/qingstor-sdk-go/request/data"
-	"github.com/yunify/qingstor-sdk-go/request/errors"
+	"github.com/yunify/qingstor-sdk-go/v3/config"
+	"github.com/yunify/qingstor-sdk-go/v3/request"
+	"github.com/yunify/qingstor-sdk-go/v3/request/data"
+	"github.com/yunify/qingstor-sdk-go/v3/request/errors"
 )
 
 var _ fmt.State
@@ -1080,6 +1080,8 @@ type ListObjectsOutput struct {
 	CommonPrefixes []*string `json:"common_prefixes,omitempty" name:"common_prefixes" location:"elements"`
 	// Delimiter that specified in request parameters
 	Delimiter *string `json:"delimiter,omitempty" name:"delimiter" location:"elements"`
+	// Indicate if these are more results in the next page
+	HasMore *bool `json:"has_more,omitempty" name:"has_more" location:"elements"`
 	// Object keys
 	Keys []*KeyType `json:"keys,omitempty" name:"keys" location:"elements"`
 	// Limit that specified in request parameters
