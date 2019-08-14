@@ -266,7 +266,7 @@ Contributors
   * Aleksandar Jankovic <office@ajankovic.com>
   * Maran <maran@protonmail.com>
   * nguyenhuuluan434 <nguyenhuuluan434@gmail.com>
-  * Laura Hausmann <zotan@zotan.pw>
+  * Laura Hausmann <zotan@zotan.pw> <laura@hausmann.dev>
   * yparitcher <y@paritcher.com>
   * AbelThar <abela.tharen@gmail.com>
   * Matti Niemenmaa <matti.niemenmaa+git@iki.fi>
