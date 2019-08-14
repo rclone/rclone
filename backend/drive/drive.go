@@ -1941,6 +1941,9 @@ func (f *Fs) Purge(ctx context.Context) error {
 	if f.root == "" {
 		return errors.New("can't purge root directory")
 	}
+	if f.opt.TrashedOnly {
+		return errors.New("Can't purge with --drive-trashed-only. Use delete if you want to selectively delete files")
+	}
 	err := f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		return err
