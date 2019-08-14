@@ -45,6 +45,35 @@ type fadvise struct {
 	lastPos    int64
 	curPos     int64
 	windowSize int64
+
+	freePagesCh chan offsetLength
+	doneCh      chan struct{}
+}
+
+type offsetLength struct {
+	offset int64
+	length int64
+}
+
+const (
+	defaultAllowPages      = 32
+	defaultWorkerQueueSize = 64
+)
+
+func newFadvise(o *Object, fd int, offset int64) *fadvise {
+	f := &fadvise{
+		o:          o,
+		fd:         fd,
+		lastPos:    offset,
+		curPos:     offset,
+		windowSize: int64(os.Getpagesize()) * defaultAllowPages,
+
+		freePagesCh: make(chan offsetLength, defaultWorkerQueueSize),
+		doneCh:      make(chan struct{}),
+	}
+	go f.worker()
+
+	return f
 }
 
 // sequential configures readahead strategy in Linux kernel.
@@ -77,18 +106,29 @@ func (f *fadvise) freePagesIfNeeded() {
 }
 
 func (f *fadvise) freePages() {
-	if err := unix.Fadvise(f.fd, f.lastPos, f.curPos-f.lastPos, unix.FADV_DONTNEED); err != nil {
-		fs.Debugf(f.o, "fadvise dontneed failed on file descriptor %d: %s", f.fd, err)
-	}
+	f.freePagesCh <- offsetLength{f.lastPos, f.curPos - f.lastPos}
 	f.lastPos = f.curPos
+}
+
+func (f *fadvise) worker() {
+	for p := range f.freePagesCh {
+		if err := unix.Fadvise(f.fd, p.offset, p.length, unix.FADV_DONTNEED); err != nil {
+			fs.Debugf(f.o, "fadvise dontneed failed on file descriptor %d: %s", f.fd, err)
+		}
+	}
+
+	close(f.doneCh)
+}
+
+func (f *fadvise) wait() {
+	close(f.freePagesCh)
+	<-f.doneCh
 }
 
 type fadviseReadCloser struct {
 	*fadvise
 	inner io.ReadCloser
 }
-
-var defaultWindowSize = int64(32 * os.Getpagesize())
 
 // newFadviseReadCloser wraps os.File so that reading from that file would
 // remove already consumed pages from kernel page cache.
@@ -97,20 +137,15 @@ var defaultWindowSize = int64(32 * os.Getpagesize())
 // See also fadvise.
 func newFadviseReadCloser(o *Object, f *os.File, offset, limit int64) io.ReadCloser {
 	r := fadviseReadCloser{
-		fadvise: &fadvise{
-			o:          o,
-			fd:         int(f.Fd()),
-			lastPos:    offset,
-			curPos:     offset,
-			windowSize: defaultWindowSize,
-		},
-		inner: f,
+		fadvise: newFadvise(o, int(f.Fd()), offset),
+		inner:   f,
 	}
 
 	// If syscall failed it's likely that the subsequent syscalls to that
 	// file descriptor would also fail. In that case return the provided os.File
 	// pointer.
 	if !r.sequential(limit) {
+		r.wait()
 		return f
 	}
 
@@ -125,5 +160,6 @@ func (f fadviseReadCloser) Read(p []byte) (n int, err error) {
 
 func (f fadviseReadCloser) Close() error {
 	f.freePages()
+	f.wait()
 	return f.inner.Close()
 }
