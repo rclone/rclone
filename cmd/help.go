@@ -300,6 +300,7 @@ func showBackend(name string) {
 	optionsType := "standard"
 	for _, opts := range []fs.Options{standardOptions, advancedOptions} {
 		if len(opts) == 0 {
+			optionsType = "advanced"
 			continue
 		}
 		fmt.Printf("### %s Options\n\n", strings.Title(optionsType))
