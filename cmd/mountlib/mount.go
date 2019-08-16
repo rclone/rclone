@@ -161,10 +161,7 @@ applications won't work with their files on an rclone mount without
 Caching](#file-caching) section for more info.
 
 The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
-Hubic) won't work from the root - you will need to specify a bucket,
-or a path within the bucket.  So ` + "`swift:`" + ` won't work whereas
-` + "`swift:bucket`" + ` will as will ` + "`swift:bucket/path`" + `.
-None of these support the concept of directories, so empty
+Hubic) do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
 
