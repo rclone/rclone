@@ -47,10 +47,9 @@ func listInterfaces() []net.Interface {
 
 	var active []net.Interface
 	for _, intf := range ifs {
-		if intf.Flags&net.FlagUp == 0 || intf.MTU <= 0 {
-			continue
+		if intf.Flags&net.FlagUp != 0 && intf.Flags&net.FlagMulticast != 0 && intf.MTU > 0 {
+			active = append(active, intf)
 		}
-		active = append(active, intf)
 	}
 	return active
 }
