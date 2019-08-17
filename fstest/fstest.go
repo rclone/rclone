@@ -348,10 +348,10 @@ func CheckItems(t *testing.T, f fs.Fs, items ...Item) {
 	CheckListingWithPrecision(t, f, items, nil, fs.GetModifyWindow(f))
 }
 
-// CompareItems compares a set of DirEntries to a slice of items and a lit of dirs
-func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDirs []string, what string) {
+// CompareItems compares a set of DirEntries to a slice of items and a list of dirs
+// The modtimes are compared with the precision supplied
+func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDirs []string, precision time.Duration, what string) {
 	is := NewItems(items)
-	precision, _ := time.ParseDuration("1s")
 	var objs []fs.Object
 	var dirs []fs.Directory
 	wantListing1, wantListing2 := makeListingFromItems(items)

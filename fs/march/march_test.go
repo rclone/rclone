@@ -207,9 +207,10 @@ func TestMarch(t *testing.T) {
 			err := mt.currentError()
 			require.NoError(t, err)
 
-			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, "srcOnly")
-			fstest.CompareItems(t, mt.dstOnly, dstOnly, test.dirDstOnly, "dstOnly")
-			fstest.CompareItems(t, mt.match, match, test.dirMatch, "match")
+			precision := fs.GetModifyWindow(r.Fremote, r.Flocal)
+			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, precision, "srcOnly")
+			fstest.CompareItems(t, mt.dstOnly, dstOnly, test.dirDstOnly, precision, "dstOnly")
+			fstest.CompareItems(t, mt.match, match, test.dirMatch, precision, "match")
 		})
 	}
 }
@@ -273,8 +274,9 @@ func TestMarchNoTraverse(t *testing.T) {
 			err := mt.currentError()
 			require.NoError(t, err)
 
-			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, "srcOnly")
-			fstest.CompareItems(t, mt.match, match, test.dirMatch, "match")
+			precision := fs.GetModifyWindow(r.Fremote, r.Flocal)
+			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, precision, "srcOnly")
+			fstest.CompareItems(t, mt.match, match, test.dirMatch, precision, "match")
 		})
 	}
 }
