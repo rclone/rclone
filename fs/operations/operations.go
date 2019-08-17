@@ -1581,7 +1581,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 }
 
 // CopyURL copies the data from the url to (fdst, dstFileName)
-func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string) (dst fs.Object, err error) {
+func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, dstFileNameFromURL bool) (dst fs.Object, err error) {
 	client := fshttp.NewClient(fs.Config)
 	resp, err := client.Get(url)
 	if err != nil {
@@ -1591,6 +1591,14 @@ func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string) (d
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, errors.Errorf("CopyURL failed: %s", resp.Status)
 	}
+
+	if dstFileNameFromURL {
+		dstFileName = path.Base(resp.Request.URL.Path)
+		if dstFileName == "." || dstFileName == "/" {
+			return nil, errors.Errorf("CopyURL failed: file name wasn't found in url")
+		}
+	}
+
 	return RcatSize(ctx, fdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
 }
 

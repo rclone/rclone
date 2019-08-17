@@ -22,7 +22,8 @@ rclone copyurl https://example.com dest:path [flags]
 ### Options
 
 ```
-  -h, --help   help for copyurl
+  -a, --auto-filename   Get the file name from the url and use it for destination file path
+  -h, --help            help for copyurl
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
