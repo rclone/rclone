@@ -2,6 +2,7 @@
 package rcserver
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -89,8 +90,17 @@ func (s *Server) Serve() error {
 		}
 		// Add username, password into the URL if they are set
 		user, pass := s.opt.HTTPOptions.BasicUser, s.opt.HTTPOptions.BasicPass
-		if user != "" || pass != "" {
+		if user != "" && pass != "" {
 			openURL.User = url.UserPassword(user, pass)
+
+			// Base64 encode username and password to be sent through url
+			loginToken := user + ":" + pass
+			parameters := url.Values{}
+			encodedToken := base64.URLEncoding.EncodeToString([]byte(loginToken))
+			fs.Debugf(nil, "login_token %q", encodedToken)
+			parameters.Add("login_token", encodedToken)
+			openURL.RawQuery = parameters.Encode()
+			openURL.RawPath = "/#/login"
 		}
 		// Don't open browser if serving in testing environment.
 		if flag.Lookup("test.v") == nil {
