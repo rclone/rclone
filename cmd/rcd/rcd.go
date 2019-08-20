@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
 	"github.com/rclone/rclone/lib/errors"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
 )
 
@@ -54,6 +55,20 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			if err := checkRelease(rcflags.Opt.WebGUIUpdate); err != nil {
 				log.Fatalf("Error while fetching the latest release of rclone-webui-react %v", err)
 			}
+			if rcflags.Opt.NoAuth {
+				rcflags.Opt.NoAuth = false
+				fs.Infof(nil, "Cannot run web-gui without authentication, using default auth")
+			}
+			if rcflags.Opt.HTTPOptions.BasicUser == "" {
+				rcflags.Opt.HTTPOptions.BasicUser = "gui"
+				fs.Infof("Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
+			}
+			if rcflags.Opt.HTTPOptions.BasicPass == "" {
+				randomPass := random.String(16)
+				rcflags.Opt.HTTPOptions.BasicPass = randomPass
+				fs.Infof("No password specified. Using random password: %s \n", randomPass)
+			}
+			rcflags.Opt.Serve = true
 		}
 
 		s, err := rcserver.Start(&rcflags.Opt)
