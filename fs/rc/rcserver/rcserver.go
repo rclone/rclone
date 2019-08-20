@@ -138,7 +138,11 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 
 // handler reads incoming requests and dispatches them
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, "/")
+	urlPath, ok := s.Path(w, r)
+	if !ok {
+		return
+	}
+	path := strings.TrimLeft(urlPath, "/")
 
 	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
 	if allowOrigin != "" {
@@ -311,6 +315,7 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		return
 	case s.files != nil:
 		// Serve the files
+		r.URL.Path = "/" + path
 		s.files.ServeHTTP(w, r)
 		return
 	case path == "" && s.opt.Serve:
