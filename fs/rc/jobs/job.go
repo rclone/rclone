@@ -59,6 +59,13 @@ func SetOpt(opt *rc.Options) {
 	running.opt = opt
 }
 
+// SetInitialJobID allows for setting jobID before starting any jobs.
+func SetInitialJobID(id int64) {
+	if !atomic.CompareAndSwapInt64(&jobID, 0, id) {
+		panic("Setting jobID is only possible before starting any jobs")
+	}
+}
+
 // kickExpire makes sure Expire is running
 func (jobs *Jobs) kickExpire() {
 	jobs.mu.Lock()
