@@ -10,12 +10,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc"
-
-	"github.com/rclone/rclone/fs/accounting"
-
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 // Job describes a asynchronous task started via the rc package
@@ -57,6 +55,13 @@ func newJobs() *Jobs {
 // SetOpt sets the options when they are known
 func SetOpt(opt *rc.Options) {
 	running.opt = opt
+}
+
+// SetInitialJobID allows for setting jobID before starting any jobs.
+func SetInitialJobID(id int64) {
+	if !atomic.CompareAndSwapInt64(&jobID, 0, id) {
+		panic("Setting jobID is only possible before starting any jobs")
+	}
 }
 
 // kickExpire makes sure Expire is running
