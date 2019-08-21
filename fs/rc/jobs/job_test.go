@@ -213,6 +213,17 @@ func TestExecuteJob(t *testing.T) {
 	assert.Equal(t, int64(1), id)
 }
 
+func TestExecuteJobErrorPropagation(t *testing.T) {
+	jobID = 0
+
+	testErr := errors.New("test error")
+	errorFn := func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+		return nil, testErr
+	}
+	_, _, err := ExecuteJob(context.Background(), errorFn, rc.Params{})
+	assert.Equal(t, testErr, err)
+}
+
 func TestRcJobStatus(t *testing.T) {
 	jobID = 0
 	_, err := StartAsyncJob(longFn, rc.Params{})
