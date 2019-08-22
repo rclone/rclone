@@ -4,7 +4,9 @@ package dircache
 // _methods are called without the lock
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -45,6 +47,31 @@ func New(root string, trueRootID string, fs DirCacher) *DirCache {
 	d.Flush()
 	d.ResetRoot()
 	return d
+}
+
+// String returns the directory cache in string form for debugging
+func (dc *DirCache) String() string {
+	dc.cacheMu.RLock()
+	defer dc.cacheMu.RUnlock()
+	var buf bytes.Buffer
+	_, _ = buf.WriteString("DirCache{\n")
+	_, _ = fmt.Fprintf(&buf, "\ttrueRootID: %q,\n", dc.trueRootID)
+	_, _ = fmt.Fprintf(&buf, "\troot: %q,\n", dc.root)
+	_, _ = fmt.Fprintf(&buf, "\trootID: %q,\n", dc.rootID)
+	_, _ = fmt.Fprintf(&buf, "\trootParentID: %q,\n", dc.rootParentID)
+	_, _ = fmt.Fprintf(&buf, "\tfoundRoot: %v,\n", dc.foundRoot)
+	_, _ = buf.WriteString("\tcache: {\n")
+	for k, v := range dc.cache {
+		_, _ = fmt.Fprintf(&buf, "\t\t%q: %q,\n", k, v)
+	}
+	_, _ = buf.WriteString("\t},\n")
+	_, _ = buf.WriteString("\tinvCache: {\n")
+	for k, v := range dc.invCache {
+		_, _ = fmt.Fprintf(&buf, "\t\t%q: %q,\n", k, v)
+	}
+	_, _ = buf.WriteString("\t},\n")
+	_, _ = buf.WriteString("}\n")
+	return buf.String()
 }
 
 // Get an ID given a path
