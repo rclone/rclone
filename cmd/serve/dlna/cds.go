@@ -1,6 +1,7 @@
 package dlna
 
 import (
+	"context"
 	"encoding/xml"
 	"fmt"
 	"log"
@@ -33,7 +34,7 @@ var mediaMimeTypeRegexp = regexp.MustCompile("^(video|audio|image)/")
 
 // Turns the given entry and DMS host into a UPnP object. A nil object is
 // returned if the entry is not of interest.
-func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fileInfo os.FileInfo, host string) (ret interface{}, err error) {
+func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fileInfo vfs.Node, host string) (ret interface{}, err error) {
 	obj := upnpav.Object{
 		ID:         cdsObject.ID(),
 		Restricted: 1,
@@ -51,7 +52,15 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 		return
 	}
 
-	mimeType := fs.MimeTypeFromName(fileInfo.Name())
+	// Read the mime type from the fs.Object if possible,
+	// otherwise fall back to working out what it is from the file path.
+	var mimeType string
+	if o, ok := fileInfo.DirEntry().(fs.Object); ok {
+		mimeType = fs.MimeType(context.TODO(), o)
+	} else {
+		mimeType = fs.MimeTypeFromName(fileInfo.Name())
+	}
+
 	mediaType := mediaMimeTypeRegexp.FindStringSubmatch(mimeType)
 	if mediaType == nil {
 		return
