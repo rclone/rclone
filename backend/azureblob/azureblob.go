@@ -654,10 +654,7 @@ func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, a
 }
 
 // listContainers returns all the containers to out
-func (f *Fs) listContainers(dir string) (entries fs.DirEntries, err error) {
-	if dir != "" {
-		return nil, fs.ErrorListBucketRequired
-	}
+func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err error) {
 	if f.isLimited {
 		f.cntURLcacheMu.Lock()
 		for container := range f.cntURLcache {
@@ -691,7 +688,10 @@ func (f *Fs) listContainers(dir string) (entries fs.DirEntries, err error) {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	container, directory := f.split(dir)
 	if container == "" {
-		return f.listContainers(directory)
+		if directory != "" {
+			return nil, fs.ErrorListBucketRequired
+		}
+		return f.listContainers(ctx)
 	}
 	return f.listDir(ctx, container, directory, f.rootDirectory, f.rootContainer == "")
 }
@@ -725,7 +725,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		})
 	}
 	if container == "" {
-		entries, err := f.listContainers("")
+		entries, err := f.listContainers(ctx)
 		if err != nil {
 			return err
 		}
@@ -739,15 +739,17 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			if err != nil {
 				return err
 			}
+			// container must be present if listing succeeded
+			f.cache.MarkOK(container)
 		}
 	} else {
 		err = listR(container, directory, f.rootDirectory, f.rootContainer == "")
 		if err != nil {
 			return err
 		}
+		// container must be present if listing succeeded
+		f.cache.MarkOK(container)
 	}
-	// container must be present if listing succeeded
-	f.cache.MarkOK(container)
 	return list.Flush()
 }
 
@@ -800,6 +802,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	container, _ := f.split(dir)
+	return f.makeContainer(ctx, container)
+}
+
+// makeContainer creates the container if it doesn't exist
+func (f *Fs) makeContainer(ctx context.Context, container string) error {
 	return f.cache.Create(container, func() error {
 		// now try to create the container
 		return f.pacer.Call(func() (bool, error) {
@@ -913,7 +920,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstContainer, dstPath := f.split(remote)
-	err := f.Mkdir(ctx, "")
+	err := f.makeContainer(ctx, dstContainer)
 	if err != nil {
 		return nil, err
 	}
@@ -1362,7 +1369,8 @@ outer:
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	err = o.fs.Mkdir(ctx, "")
+	container, _ := o.split()
+	err = o.fs.makeContainer(ctx, container)
 	if err != nil {
 		return err
 	}
