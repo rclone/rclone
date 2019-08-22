@@ -726,10 +726,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 }
 
 // listBuckets returns all the buckets to out
-func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
-	if dir != "" {
-		return nil, fs.ErrorListBucketRequired
-	}
+func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
 	err = f.listBucketsToFn(func(bucket *api.Bucket) error {
 		d := fs.NewDir(bucket.Name, time.Time{})
 		entries = append(entries, d)
@@ -753,7 +750,10 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	bucket, directory := f.split(dir)
 	if bucket == "" {
-		return f.listBuckets(directory)
+		if directory != "" {
+			return nil, fs.ErrorListBucketRequired
+		}
+		return f.listBuckets(ctx)
 	}
 	return f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "")
 }
@@ -788,7 +788,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		})
 	}
 	if bucket == "" {
-		entries, err := f.listBuckets("")
+		entries, err := f.listBuckets(ctx)
 		if err != nil {
 			return err
 		}
@@ -802,15 +802,17 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			if err != nil {
 				return err
 			}
+			// bucket must be present if listing succeeded
+			f.cache.MarkOK(bucket)
 		}
 	} else {
 		err = listR(bucket, directory, f.rootDirectory, f.rootBucket == "")
 		if err != nil {
 			return err
 		}
+		// bucket must be present if listing succeeded
+		f.cache.MarkOK(bucket)
 	}
-	// bucket must be present if listing succeeded
-	f.cache.MarkOK(bucket)
 	return list.Flush()
 }
 
@@ -951,6 +953,11 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	bucket, _ := f.split(dir)
+	return f.makeBucket(ctx, bucket)
+}
+
+// makeBucket creates the bucket if it doesn't exist
+func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	return f.cache.Create(bucket, func() error {
 		opts := rest.Opts{
 			Method: "POST",
@@ -1189,7 +1196,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstBucket, dstPath := f.split(remote)
-	err := f.Mkdir(ctx, "")
+	err := f.makeBucket(ctx, dstBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -1670,13 +1677,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if o.fs.opt.Versions {
 		return errNotWithVersions
 	}
-	err = o.fs.Mkdir(ctx, "")
-	if err != nil {
-		return err
-	}
 	size := src.Size()
 
 	bucket, bucketPath := o.split()
+	err = o.fs.makeBucket(ctx, bucket)
+	if err != nil {
+		return err
+	}
 	if size == -1 {
 		// Check if the file is large enough for a chunked upload (needs to be at least two chunks)
 		buf := o.fs.getUploadBlock()

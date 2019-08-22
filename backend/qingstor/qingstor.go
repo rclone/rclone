@@ -426,7 +426,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstBucket, dstPath := f.split(remote)
-	err := f.Mkdir(ctx, "")
+	err := f.makeBucket(ctx, dstBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -636,11 +636,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 }
 
 // listBuckets lists the buckets to out
-func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
-	if dir != "" {
-		return nil, fs.ErrorListBucketRequired
-	}
-
+func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
 	req := qs.ListBucketsInput{
 		Location: &f.zone,
 	}
@@ -668,7 +664,10 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	bucket, directory := f.split(dir)
 	if bucket == "" {
-		return f.listBuckets(dir)
+		if directory != "" {
+			return nil, fs.ErrorListBucketRequired
+		}
+		return f.listBuckets(ctx)
 	}
 	return f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "")
 }
@@ -702,7 +701,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		})
 	}
 	if bucket == "" {
-		entries, err := f.listBuckets("")
+		entries, err := f.listBuckets(ctx)
 		if err != nil {
 			return err
 		}
@@ -716,21 +715,28 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			if err != nil {
 				return err
 			}
+			// bucket must be present if listing succeeded
+			f.cache.MarkOK(bucket)
 		}
 	} else {
 		err = listR(bucket, directory, f.rootDirectory, f.rootBucket == "")
 		if err != nil {
 			return err
 		}
+		// bucket must be present if listing succeeded
+		f.cache.MarkOK(bucket)
 	}
-	// bucket must be present if listing succeeded
-	f.cache.MarkOK(bucket)
 	return list.Flush()
 }
 
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	bucket, _ := f.split(dir)
+	return f.makeBucket(ctx, bucket)
+}
+
+// makeBucket creates the bucket if it doesn't exist
+func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	return f.cache.Create(bucket, func() error {
 		bucketInit, err := f.svc.Bucket(bucket, f.zone)
 		if err != nil {
@@ -967,7 +973,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	// The maximum size of upload object is multipartUploadSize * MaxMultipleParts
 	bucket, bucketPath := o.split()
-	err := o.fs.Mkdir(ctx, "")
+	err := o.fs.makeBucket(ctx, bucket)
 	if err != nil {
 		return err
 	}
