@@ -39,6 +39,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
@@ -165,6 +166,8 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 			}
 			// Check remote is empty
 			CheckListingWithPrecision(t, r.Fremote, []Item{}, []string{}, r.Fremote.Precision())
+			// Clear the remote cache
+			cache.Clear()
 		}
 	}
 	r.Logf = t.Logf
@@ -323,4 +326,6 @@ func (r *Run) Finalise() {
 	r.cleanRemote()
 	// r.Logf("Cleaning local %q", r.LocalName)
 	r.cleanTempDir()
+	// Clear the remote cache
+	cache.Clear()
 }
