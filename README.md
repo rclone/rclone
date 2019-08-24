@@ -1,4 +1,4 @@
-[![Logo](https://rclone.org/img/rclone-120x120.png)](https://rclone.org/)
+[<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/)
 
 [Website](https://rclone.org) |
 [Documentation](https://rclone.org/docs/) |
@@ -6,7 +6,7 @@
 [Contributing](CONTRIBUTING.md) |
 [Changelog](https://rclone.org/changelog/) |
 [Installation](https://rclone.org/install/) |
-[Forum](https://forum.rclone.org/) | 
+[Forum](https://forum.rclone.org/)
 
 [![Build Status](https://travis-ci.org/rclone/rclone.svg?branch=master)](https://travis-ci.org/rclone/rclone)
 [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/rclone/rclone?branch=master&passingText=windows%20-%20ok&svg=true)](https://ci.appveyor.com/project/rclone/rclone)
