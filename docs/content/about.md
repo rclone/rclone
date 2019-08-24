@@ -6,10 +6,7 @@ date: "2017-09-25"
 groups: ["about"]
 ---
 
-Rclone
-======
-
-[![Logo](/img/rclone-120x120.png)](https://rclone.org/)
+# Rclone - rsync for cloud storage
 
 Rclone is a command line program to sync files and directories to and from:
 
