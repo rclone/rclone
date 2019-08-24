@@ -171,7 +171,7 @@ func newServer(f fs.Fs, opt *httplib.Options) *server {
 		Server: httplib.NewServer(mux, opt),
 		f:      f,
 	}
-	mux.HandleFunc(s.Opt.Prefix+"/", s.handler)
+	mux.HandleFunc(s.Opt.BaseURL+"/", s.handler)
 	return s
 }
 

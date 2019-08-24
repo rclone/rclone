@@ -68,7 +68,7 @@ func newServer(f fs.Fs, opt *httplib.Options) *server {
 		f:      f,
 		vfs:    vfs.New(f, &vfsflags.Opt),
 	}
-	mux.HandleFunc(s.Opt.Prefix+"/", s.handler)
+	mux.HandleFunc(s.Opt.BaseURL+"/", s.handler)
 	return s
 }
 
