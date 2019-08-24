@@ -4,7 +4,7 @@ description: "Rclone docs for Google Cloud Storage"
 date: "2017-07-18"
 ---
 
-<i class="fa fa-google"></i> Google Cloud Storage
+<i class="fab fa-google"></i> Google Cloud Storage
 -------------------------------------------------
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`

@@ -4,7 +4,7 @@ description: "Rclone docs for Microsoft OneDrive"
 date: "2015-10-14"
 ---
 
-<i class="fa fa-windows"></i> Microsoft OneDrive
+<i class="fab fa-windows"></i> Microsoft OneDrive
 -----------------------------------------
 
 Paths are specified as `remote:path`

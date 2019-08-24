@@ -4,7 +4,7 @@ description: "Rclone docs for Microsoft Azure Blob Storage"
 date: "2017-07-30"
 ---
 
-<i class="fa fa-windows"></i> Microsoft Azure Blob Storage
+<i class="fab fa-windows"></i> Microsoft Azure Blob Storage
 -----------------------------------------
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`

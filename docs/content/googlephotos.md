@@ -4,7 +4,7 @@ description: "Rclone docs for Google Photos"
 date: "2019-06-25"
 ---
 
-<i class="fa fa-photo"></i> Google Photos
+<i class="fa fa-images"></i> Google Photos
 -------------------------------------------------
 
 The rclone backend for [Google Photos](https://www.google.com/photos/about/) is

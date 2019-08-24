@@ -4,7 +4,7 @@ description: "Rclone docs for QingStor Object Storage"
 date: "2017-06-26"
 ---
 
-<i class="fa fa-hdd-o"></i> QingStor
+<i class="fas fa-hdd"></i> QingStor
 ---------------------------------------
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
