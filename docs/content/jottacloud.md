@@ -4,7 +4,7 @@ description: "Rclone docs for Jottacloud"
 date: "2018-08-07"
 ---
 
-<i class="fa fa-archive"></i> Jottacloud
+<i class="fa fa-cloud"></i> Jottacloud
 -----------------------------------------
 
 Paths are specified as `remote:path`

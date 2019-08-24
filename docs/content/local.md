@@ -4,7 +4,7 @@ description: "Rclone docs for the local filesystem"
 date: "2014-04-26"
 ---
 
-<i class="fa fa-file"></i> Local Filesystem
+<i class="fas fa-hdd"></i> Local Filesystem
 -------------------------------------------
 
 Local paths are specified as normal filesystem paths, eg `/path/to/wherever`, so

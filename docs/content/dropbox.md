@@ -4,7 +4,7 @@ description: "Rclone docs for Dropbox"
 date: "2016-02-21"
 ---
 
-<i class="fa fa-dropbox"></i> Dropbox
+<i class="fab fa-dropbox"></i> Dropbox
 ---------------------------------
 
 Paths are specified as `remote:path`

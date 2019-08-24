@@ -4,7 +4,7 @@ description: "Rclone docs for Amazon Drive"
 date: "2017-06-10"
 ---
 
-<i class="fa fa-amazon"></i> Amazon Drive
+<i class="fab fa-amazon"></i> Amazon Drive
 -----------------------------------------
 
 Amazon Drive, formerly known as Amazon Cloud Drive, is a cloud storage
