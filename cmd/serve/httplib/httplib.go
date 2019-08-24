@@ -44,10 +44,13 @@ for a transfer.
 --max-header-bytes controls the maximum number of bytes the server will
 accept in the HTTP header.
 
---prefix controls the URL prefix that rclone serves from.  By default
-rclone will serve from the root.  If you used --prefix "rclone" then
+--baseurl controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used --baseurl "/rclone" then
 rclone would serve from a URL starting with "/rclone/".  This is
-useful if you wish to proxy rclone serve.
+useful if you wish to proxy rclone serve.  Rclone automatically
+inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
+--baseurl "/rclone" and --baseurl "/rclone/" are all treated
+identically.
 
 #### Authentication
 
@@ -86,7 +89,7 @@ certificate authority certificate.
 // Options contains options for the http Server
 type Options struct {
 	ListenAddr         string        // Port to listen on
-	Prefix             string        // prefix to strip from URLs
+	BaseURL            string        // prefix to strip from URLs
 	ServerReadTimeout  time.Duration // Timeout for server reading data
 	ServerWriteTimeout time.Duration // Timeout for server writing data
 	MaxHeaderBytes     int           // Maximum size of request header
@@ -242,12 +245,10 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		log.Fatalf("Need both -cert and -key to use SSL")
 	}
 
-	// If a Path is set then serve from there
-	if strings.HasSuffix(s.Opt.Prefix, "/") {
-		s.Opt.Prefix = s.Opt.Prefix[:len(s.Opt.Prefix)-1]
-	}
-	if s.Opt.Prefix != "" && !strings.HasPrefix(s.Opt.Prefix, "/") {
-		s.Opt.Prefix = "/" + s.Opt.Prefix
+	// If a Base URL is set then serve from there
+	s.Opt.BaseURL = strings.Trim(s.Opt.BaseURL, "/")
+	if s.Opt.BaseURL != "" {
+		s.Opt.BaseURL = "/" + s.Opt.BaseURL
 	}
 
 	// FIXME make a transport?
@@ -359,7 +360,7 @@ func (s *Server) URL() string {
 		// (i.e. port assigned by operating system)
 		addr = s.listener.Addr().String()
 	}
-	return fmt.Sprintf("%s://%s%s/", proto, addr, s.Opt.Prefix)
+	return fmt.Sprintf("%s://%s%s/", proto, addr, s.Opt.BaseURL)
 }
 
 // UsingAuth returns true if authentication is required
@@ -373,13 +374,13 @@ func (s *Server) UsingAuth() bool {
 // should exit as the error response has already been sent
 func (s *Server) Path(w http.ResponseWriter, r *http.Request) (Path string, ok bool) {
 	Path = r.URL.Path
-	if s.Opt.Prefix == "" {
+	if s.Opt.BaseURL == "" {
 		return Path, true
 	}
-	if !strings.HasPrefix(Path, s.Opt.Prefix+"/") {
+	if !strings.HasPrefix(Path, s.Opt.BaseURL+"/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return Path, false
 	}
-	Path = Path[len(s.Opt.Prefix):]
+	Path = Path[len(s.Opt.BaseURL):]
 	return Path, true
 }

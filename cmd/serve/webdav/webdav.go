@@ -133,7 +133,7 @@ func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
 	}
 	w.Server = httplib.NewServer(http.HandlerFunc(w.handler), opt)
 	webdavHandler := &webdav.Handler{
-		Prefix:     w.Server.Opt.Prefix,
+		Prefix:     w.Server.Opt.BaseURL,
 		FileSystem: w,
 		LockSystem: webdav.NewMemLS(),
 		Logger:     w.logRequest, // FIXME
