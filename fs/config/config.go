@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/random"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
 )
@@ -860,16 +861,10 @@ func ChooseOption(o *fs.Option, name string) string {
 			for {
 				fmt.Printf("Password strength in bits.\n64 is just about memorable\n128 is secure\n1024 is the maximum\n")
 				bits := ChooseNumber("Bits", 64, 1024)
-				bytes := bits / 8
-				if bits%8 != 0 {
-					bytes++
+				password, err := random.Password(bits)
+				if err != nil {
+					log.Fatalf("Failed to make password: %v", err)
 				}
-				var pw = make([]byte, bytes)
-				n, _ := rand.Read(pw)
-				if n != bytes {
-					log.Fatalf("password short read: %d", n)
-				}
-				password = base64.RawURLEncoding.EncodeToString(pw)
 				fmt.Printf("Your password is: %s\n", password)
 				fmt.Printf("Use this password? Please note that an obscured version of this \npassword (and not the " +
 					"password itself) will be stored under your \nconfiguration file, so keep this generated password " +

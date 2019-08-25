@@ -64,7 +64,10 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 				fs.Infof("Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
 			}
 			if rcflags.Opt.HTTPOptions.BasicPass == "" {
-				randomPass := random.String(16)
+				randomPass, err := random.Password(128)
+				if err != nil {
+					log.Fatalf("Failed to make password: %v", err)
+				}
 				rcflags.Opt.HTTPOptions.BasicPass = randomPass
 				fs.Infof("No password specified. Using random password: %s \n", randomPass)
 			}
