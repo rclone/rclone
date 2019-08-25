@@ -69,6 +69,7 @@ Features
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
   * Multi-threaded downloads to local disk
   * Can [serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[dlna](/commands/rclone_serve_dlna/)
+  * Experimental [Web based GUI](/gui/)
 
 Links
 

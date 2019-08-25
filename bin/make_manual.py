@@ -18,6 +18,7 @@ docs = [
     "docs.md",
     "remote_setup.md",
     "filtering.md",
+    "gui.md",
     "rc.md",
     "overview.md",
     "flags.md",
