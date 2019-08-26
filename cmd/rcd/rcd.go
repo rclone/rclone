@@ -61,7 +61,7 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			}
 			if rcflags.Opt.HTTPOptions.BasicUser == "" {
 				rcflags.Opt.HTTPOptions.BasicUser = "gui"
-				fs.Infof("Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
+				fs.Infof(nil, "Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
 			}
 			if rcflags.Opt.HTTPOptions.BasicPass == "" {
 				randomPass, err := random.Password(128)
@@ -69,7 +69,7 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 					log.Fatalf("Failed to make password: %v", err)
 				}
 				rcflags.Opt.HTTPOptions.BasicPass = randomPass
-				fs.Infof("No password specified. Using random password: %s \n", randomPass)
+				fs.Infof(nil, "No password specified. Using random password: %s \n", randomPass)
 			}
 			rcflags.Opt.Serve = true
 		}
