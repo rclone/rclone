@@ -31,8 +31,9 @@ Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
 [snip]
-30 / premiumize.me
+XX / premiumize.me
    \ "premiumizeme"
+[snip]
 Storage> premiumizeme
 ** See help for premiumizeme backend at: https://rclone.org/premiumizeme/ **
 

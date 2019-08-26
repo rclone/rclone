@@ -34,11 +34,11 @@ name> remote
 Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
-...
-18 / Microsoft OneDrive
+[snip]
+XX / Microsoft OneDrive
    \ "onedrive"
-...
-Storage> 18
+[snip]
+Storage> onedrive
 Microsoft App Client Id
 Leave blank normally.
 Enter a string value. Press Enter for the default ("").

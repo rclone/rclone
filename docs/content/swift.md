@@ -34,48 +34,10 @@ n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Drive
-   \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 3 / Backblaze B2
-   \ "b2"
- 4 / Box
-   \ "box"
- 5 / Cache a remote
-   \ "cache"
- 6 / Dropbox
-   \ "dropbox"
- 7 / Encrypt/Decrypt a remote
-   \ "crypt"
- 8 / FTP Connection
-   \ "ftp"
- 9 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
-10 / Google Drive
-   \ "drive"
-11 / Hubic
-   \ "hubic"
-12 / Local Disk
-   \ "local"
-13 / Microsoft Azure Blob Storage
-   \ "azureblob"
-14 / Microsoft OneDrive
-   \ "onedrive"
-15 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+[snip]
+XX / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
    \ "swift"
-16 / Pcloud
-   \ "pcloud"
-17 / QingCloud Object Storage
-   \ "qingstor"
-18 / SSH/SFTP Connection
-   \ "sftp"
-19 / Webdav
-   \ "webdav"
-20 / Yandex Disk
-   \ "yandex"
-21 / http Connection
-   \ "http"
+[snip]
 Storage> swift
 Get swift credentials from environment variables in standard OpenStack form.
 Choose a number from below, or type in your own value

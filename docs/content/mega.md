@@ -35,14 +35,10 @@ n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Alias for an existing remote
-   \ "alias"
 [snip]
-14 / Mega
+XX / Mega
    \ "mega"
 [snip]
-23 / http Connection
-   \ "http"
 Storage> mega
 User name
 user> you@example.com

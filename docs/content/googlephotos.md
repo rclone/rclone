@@ -38,7 +38,7 @@ Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
 [snip]
-13 / Google Photos
+XX / Google Photos
    \ "google photos"
 [snip]
 Storage> google photos
