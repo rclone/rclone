@@ -101,7 +101,7 @@ func NextMultipleOf(m fs.SizeSuffix) func(fs.SizeSuffix) fs.SizeSuffix {
 func dirsToNames(dirs []fs.Directory) []string {
 	names := []string{}
 	for _, dir := range dirs {
-		names = append(names, fstest.WinPath(fstest.Normalize(dir.Remote())))
+		names = append(names, fstest.Normalize(dir.Remote()))
 	}
 	sort.Strings(names)
 	return names
@@ -111,7 +111,7 @@ func dirsToNames(dirs []fs.Directory) []string {
 func objsToNames(objs []fs.Object) []string {
 	names := []string{}
 	for _, obj := range objs {
-		names = append(names, fstest.WinPath(fstest.Normalize(obj.Remote())))
+		names = append(names, fstest.Normalize(obj.Remote()))
 	}
 	sort.Strings(names)
 	return names
@@ -333,12 +333,6 @@ func Run(t *testing.T, opt *Opt) {
 	// based but not at the root.
 	isBucketBasedButNotRoot := func(f fs.Fs) bool {
 		return fs.UnWrapFs(f).Features().BucketBased && strings.Contains(strings.Trim(f.Root(), "/"), "/")
-	}
-
-	// Remove bad characters from Windows file name if set
-	if opt.SkipBadWindowsCharacters {
-		t.Logf("Removing bad windows characters from test file")
-		file2.Path = fstest.WinPath(file2.Path)
 	}
 
 	// Initialise the remote
@@ -780,7 +774,7 @@ func Run(t *testing.T, opt *Opt) {
 					for i := 1; i <= *fstest.ListRetries; i++ {
 						objs, dirs, err := walk.GetAll(ctx, remote, dir, true, 1)
 						if errors.Cause(err) == fs.ErrorDirNotFound {
-							objs, dirs, err = walk.GetAll(ctx, remote, fstest.WinPath(dir), true, 1)
+							objs, dirs, err = walk.GetAll(ctx, remote, dir, true, 1)
 						}
 						require.NoError(t, err)
 						objNames = objsToNames(objs)
@@ -803,13 +797,13 @@ func Run(t *testing.T, opt *Opt) {
 					dir = path.Dir(dir)
 					if dir == "." {
 						dir = ""
-						expectedObjNames = append(expectedObjNames, fstest.WinPath(file1.Path))
+						expectedObjNames = append(expectedObjNames, file1.Path)
 					}
 					if deepest {
-						expectedObjNames = append(expectedObjNames, fstest.WinPath(file2.Path))
+						expectedObjNames = append(expectedObjNames, file2.Path)
 						deepest = false
 					} else {
-						expectedDirNames = append(expectedDirNames, fstest.WinPath(child))
+						expectedDirNames = append(expectedDirNames, child)
 					}
 					list(dir, expectedDirNames, expectedObjNames)
 				}
@@ -829,14 +823,14 @@ func Run(t *testing.T, opt *Opt) {
 				objs, dirs, err := walk.GetAll(ctx, remote, "", true, -1)
 				require.NoError(t, err)
 				assert.Equal(t, []string{
-					"hello_ sausage",
-					"hello_ sausage/êé",
-					"hello_ sausage/êé/Hello, 世界",
-					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠",
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
 				}, dirsToNames(dirs))
 				assert.Equal(t, []string{
 					"file name.txt",
-					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠/z.txt",
 				}, objsToNames(objs))
 			})
 
@@ -847,12 +841,12 @@ func Run(t *testing.T, opt *Opt) {
 				objs, dirs, err := walk.GetAll(ctx, remote, path.Dir(path.Dir(path.Dir(path.Dir(file2.Path)))), true, -1)
 				require.NoError(t, err)
 				assert.Equal(t, []string{
-					"hello_ sausage/êé",
-					"hello_ sausage/êé/Hello, 世界",
-					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
 				}, dirsToNames(dirs))
 				assert.Equal(t, []string{
-					"hello_ sausage/êé/Hello, 世界/ _ ' @ _ _ & _ + ≠/z.txt",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠/z.txt",
 				}, objsToNames(objs))
 			})
 
@@ -907,7 +901,7 @@ func Run(t *testing.T, opt *Opt) {
 				}
 				require.NoError(t, err)
 				assert.Equal(t, []string{file1.Path}, objsToNames(objs))
-				assert.Equal(t, []string{`hello_ sausage`, `hello_ sausage/êé`}, dirsToNames(dirs))
+				assert.Equal(t, []string{"hello? sausage", "hello? sausage/êé"}, dirsToNames(dirs))
 			}
 			t.Run("FsListLevel2", TestFsListLevel2)
 
