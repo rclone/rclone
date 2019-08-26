@@ -29,38 +29,10 @@ n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Drive
-   \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 3 / Backblaze B2
-   \ "b2"
- 4 / Box
+[snip]
+XX / Box
    \ "box"
- 5 / Dropbox
-   \ "dropbox"
- 6 / Encrypt/Decrypt a remote
-   \ "crypt"
- 7 / FTP Connection
-   \ "ftp"
- 8 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
- 9 / Google Drive
-   \ "drive"
-10 / Hubic
-   \ "hubic"
-11 / Local Disk
-   \ "local"
-12 / Microsoft OneDrive
-   \ "onedrive"
-13 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-   \ "swift"
-14 / SSH/SFTP Connection
-   \ "sftp"
-15 / Yandex Disk
-   \ "yandex"
-16 / http Connection
-   \ "http"
+[snip]
 Storage> box
 Box App Client Id - leave blank normally.
 client_id> 

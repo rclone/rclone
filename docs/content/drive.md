@@ -33,7 +33,7 @@ name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-10 / Google Drive
+XX / Google Drive
    \ "drive"
 [snip]
 Storage> drive

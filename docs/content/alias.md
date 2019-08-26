@@ -41,51 +41,11 @@ n/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Alias for an existing remote
+[snip]
+XX / Alias for an existing remote
    \ "alias"
- 2 / Amazon Drive
-   \ "amazon cloud drive"
- 3 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 4 / Backblaze B2
-   \ "b2"
- 5 / Box
-   \ "box"
- 6 / Cache a remote
-   \ "cache"
- 7 / Dropbox
-   \ "dropbox"
- 8 / Encrypt/Decrypt a remote
-   \ "crypt"
- 9 / FTP Connection
-   \ "ftp"
-10 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
-11 / Google Drive
-   \ "drive"
-12 / Hubic
-   \ "hubic"
-13 / Local Disk
-   \ "local"
-14 / Microsoft Azure Blob Storage
-   \ "azureblob"
-15 / Microsoft OneDrive
-   \ "onedrive"
-16 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-   \ "swift"
-17 / Pcloud
-   \ "pcloud"
-18 / QingCloud Object Storage
-   \ "qingstor"
-19 / SSH/SFTP Connection
-   \ "sftp"
-20 / Webdav
-   \ "webdav"
-21 / Yandex Disk
-   \ "yandex"
-22 / http Connection
-   \ "http"
-Storage> 1
+[snip]
+Storage> alias
 Remote or path to alias.
 Can be "myremote:path/to/dir", "myremote:bucket", "myremote:" or "/local/path".
 remote> /mnt/storage/backup

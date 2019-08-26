@@ -34,9 +34,10 @@ name> remote
 Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
-  1 / 1Fichier
-    \ "fichier"
-...
+[snip]
+XX / 1Fichier
+   \ "fichier"
+[snip]
 Storage> fichier
 ** See help for fichier backend at: https://rclone.org/fichier/ **
 

@@ -31,7 +31,7 @@ name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-22 / Webdav
+XX / Webdav
    \ "webdav"
 [snip]
 Storage> webdav
