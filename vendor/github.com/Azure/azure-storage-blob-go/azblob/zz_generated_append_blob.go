@@ -130,28 +130,31 @@ func (client appendBlobClient) appendBlockResponder(resp pipeline.Response) (pip
 // source data in the specified range. sourceContentMD5 is specify the md5 calculated for the range of bytes that must
 // be read from the copy source. timeout is the timeout parameter is expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> transactionalContentMD5 is specify the transactional md5 for the body, to
-// be validated by the service. leaseID is if specified, the operation only succeeds if the resource's lease is active
-// and matches this ID. maxSize is optional conditional header. The max length in bytes permitted for the append blob.
-// If the Append Block operation would cause the blob to exceed that limit or if the blob size is already greater than
-// the value specified in this header, the request will fail with MaxBlobSizeConditionNotMet error (HTTP status code
-// 412 - Precondition Failed). appendPosition is optional conditional header, used only for the Append Block operation.
-// A number indicating the byte offset to compare. Append Block will succeed only if the append position is equal to
-// this number. If it is not, the request will fail with the AppendPositionConditionNotMet error (HTTP status code 412
-// - Precondition Failed). ifModifiedSince is specify this header value to operate only on a blob if it has been
-// modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if
-// it has not been modified since the specified date/time. ifMatch is specify an ETag value to operate only on blobs
-// with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching value.
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
+// lease is active and matches this ID. maxSize is optional conditional header. The max length in bytes permitted for
+// the append blob. If the Append Block operation would cause the blob to exceed that limit or if the blob size is
+// already greater than the value specified in this header, the request will fail with MaxBlobSizeConditionNotMet error
+// (HTTP status code 412 - Precondition Failed). appendPosition is optional conditional header, used only for the
+// Append Block operation. A number indicating the byte offset to compare. Append Block will succeed only if the append
+// position is equal to this number. If it is not, the request will fail with the AppendPositionConditionNotMet error
+// (HTTP status code 412 - Precondition Failed). ifModifiedSince is specify this header value to operate only on a blob
+// if it has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate
+// only on a blob if it has not been modified since the specified date/time. ifMatch is specify an ETag value to
+// operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a
+// matching value. sourceIfModifiedSince is specify this header value to operate only on a blob if it has been modified
+// since the specified date/time. sourceIfUnmodifiedSince is specify this header value to operate only on a blob if it
+// has not been modified since the specified date/time. sourceIfMatch is specify an ETag value to operate only on blobs
+// with a matching value. sourceIfNoneMatch is specify an ETag value to operate only on blobs without a matching value.
 // requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics
 // logs when storage analytics logging is enabled.
-func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, timeout *int32, transactionalContentMD5 []byte, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobAppendBlockFromURLResponse, error) {
+func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (*AppendBlobAppendBlockFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.appendBlockFromURLPreparer(sourceURL, contentLength, sourceRange, sourceContentMD5, timeout, transactionalContentMD5, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, requestID)
+	req, err := client.appendBlockFromURLPreparer(sourceURL, contentLength, sourceRange, sourceContentMD5, timeout, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +166,7 @@ func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL
 }
 
 // appendBlockFromURLPreparer prepares the AppendBlockFromURL request.
-func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, timeout *int32, transactionalContentMD5 []byte, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -182,9 +185,6 @@ func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, cont
 		req.Header.Set("x-ms-source-content-md5", base64.StdEncoding.EncodeToString(sourceContentMD5))
 	}
 	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
-	if transactionalContentMD5 != nil {
-		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(transactionalContentMD5))
-	}
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
@@ -205,6 +205,18 @@ func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, cont
 	}
 	if ifNoneMatch != nil {
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	if sourceIfModifiedSince != nil {
+		req.Header.Set("x-ms-source-if-modified-since", (*sourceIfModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if sourceIfUnmodifiedSince != nil {
+		req.Header.Set("x-ms-source-if-unmodified-since", (*sourceIfUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if sourceIfMatch != nil {
+		req.Header.Set("x-ms-source-if-match", string(*sourceIfMatch))
+	}
+	if sourceIfNoneMatch != nil {
+		req.Header.Set("x-ms-source-if-none-match", string(*sourceIfNoneMatch))
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {

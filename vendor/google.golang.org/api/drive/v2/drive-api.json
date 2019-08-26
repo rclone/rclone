@@ -38,7 +38,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"VPK3KBfpaEgZ16pozGOoMYfKc0U/sPg4ftiBD1CFuyJFjn6aWg4p7EE\"",
+  "etag": "\"9eZ1uxVRThTDhLJCZHhqs3eQWz4/bzjWBZSIb8SwDXXw1rx-RVKTulk\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -1263,7 +1263,7 @@
           "supportsMediaDownload": true
         },
         "generateIds": {
-          "description": "Generates a set of file IDs which can be provided in insert requests.",
+          "description": "Generates a set of file IDs which can be provided in insert or copy requests.",
           "httpMethod": "GET",
           "id": "drive.files.generateIds",
           "parameters": {
@@ -3459,7 +3459,7 @@
       }
     }
   },
-  "revision": "20190501",
+  "revision": "20190620",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -4021,7 +4021,7 @@
         },
         "kind": {
           "default": "api#channel",
-          "description": "Identifies this as a notification channel used to watch for changes to a resource. Value: the fixed string \"api#channel\".",
+          "description": "Identifies this as a notification channel used to watch for changes to a resource, which is \"api#channel\".",
           "type": "string"
         },
         "params": {

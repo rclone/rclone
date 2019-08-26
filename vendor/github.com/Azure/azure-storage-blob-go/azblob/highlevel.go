@@ -66,7 +66,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 	if o.BlockSize == 0 {
 		// If bufferSize > (BlockBlobMaxStageBlockBytes * BlockBlobMaxBlocks), then error
 		if bufferSize > BlockBlobMaxStageBlockBytes*BlockBlobMaxBlocks {
-			return nil, errors.New("Buffer is too large to upload to a block blob")
+			return nil, errors.New("buffer is too large to upload to a block blob")
 		}
 		// If bufferSize <= BlockBlobMaxUploadBlobBytes, then Upload should be used with just 1 I/O request
 		if bufferSize <= BlockBlobMaxUploadBlobBytes {
@@ -76,7 +76,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 			if o.BlockSize < BlobDefaultDownloadBlockSize { // If the block size is smaller than 4MB, round up to 4MB
 				o.BlockSize = BlobDefaultDownloadBlockSize
 			}
-			// StageBlock will be called with blockSize blocks and a parallelism of (BufferSize / BlockSize).
+			// StageBlock will be called with blockSize blocks and a Parallelism of (BufferSize / BlockSize).
 		}
 	}
 
@@ -95,12 +95,12 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 	progress := int64(0)
 	progressLock := &sync.Mutex{}
 
-	err := doBatchTransfer(ctx, batchTransferOptions{
-		operationName: "UploadBufferToBlockBlob",
-		transferSize:  bufferSize,
-		chunkSize:     o.BlockSize,
-		parallelism:   o.Parallelism,
-		operation: func(offset int64, count int64) error {
+	err := DoBatchTransfer(ctx, BatchTransferOptions{
+		OperationName: "UploadBufferToBlockBlob",
+		TransferSize:  bufferSize,
+		ChunkSize:     o.BlockSize,
+		Parallelism:   o.Parallelism,
+		Operation: func(offset int64, count int64, ctx context.Context) error {
 			// This function is called once per block.
 			// It is passed this block's offset within the buffer and its count of bytes
 			// Prepare to read the proper block/section of the buffer
@@ -198,13 +198,16 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 	progress := int64(0)
 	progressLock := &sync.Mutex{}
 
-	err := doBatchTransfer(ctx, batchTransferOptions{
-		operationName: "downloadBlobToBuffer",
-		transferSize:  count,
-		chunkSize:     o.BlockSize,
-		parallelism:   o.Parallelism,
-		operation: func(chunkStart int64, count int64) error {
+	err := DoBatchTransfer(ctx, BatchTransferOptions{
+		OperationName: "downloadBlobToBuffer",
+		TransferSize:  count,
+		ChunkSize:     o.BlockSize,
+		Parallelism:   o.Parallelism,
+		Operation: func(chunkStart int64, count int64, ctx context.Context) error {
 			dr, err := blobURL.Download(ctx, chunkStart+offset, count, o.AccessConditions, false)
+			if err != nil {
+				return err
+			}
 			body := dr.Body(o.RetryReaderOptionsPerBlock)
 			if o.Progress != nil {
 				rangeProgress := int64(0)
@@ -282,64 +285,69 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// BatchTransferOptions identifies options used by doBatchTransfer.
-type batchTransferOptions struct {
-	transferSize  int64
-	chunkSize     int64
-	parallelism   uint16
-	operation     func(offset int64, chunkSize int64) error
-	operationName string
+// BatchTransferOptions identifies options used by DoBatchTransfer.
+type BatchTransferOptions struct {
+	TransferSize  int64
+	ChunkSize     int64
+	Parallelism   uint16
+	Operation     func(offset int64, chunkSize int64, ctx context.Context) error
+	OperationName string
 }
 
-// doBatchTransfer helps to execute operations in a batch manner.
-func doBatchTransfer(ctx context.Context, o batchTransferOptions) error {
+// DoBatchTransfer helps to execute operations in a batch manner.
+// Can be used by users to customize batch works (for other scenarios that the SDK does not provide)
+func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
+	if o.ChunkSize == 0 {
+		return errors.New("ChunkSize cannot be 0")
+	}
+
 	// Prepare and do parallel operations.
-	numChunks := uint16(((o.transferSize - 1) / o.chunkSize) + 1)
-	operationChannel := make(chan func() error, o.parallelism) // Create the channel that release 'parallelism' goroutines concurrently
+	numChunks := uint16(((o.TransferSize - 1) / o.ChunkSize) + 1)
+	operationChannel := make(chan func() error, o.Parallelism) // Create the channel that release 'Parallelism' goroutines concurrently
 	operationResponseChannel := make(chan error, numChunks)    // Holds each response
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	// Create the goroutines that process each operation (in parallel).
-	if o.parallelism == 0 {
-		o.parallelism = 5 // default parallelism
+	if o.Parallelism == 0 {
+		o.Parallelism = 5 // default Parallelism
 	}
-	for g := uint16(0); g < o.parallelism; g++ {
+	for g := uint16(0); g < o.Parallelism; g++ {
 		//grIndex := g
 		go func() {
 			for f := range operationChannel {
-				//fmt.Printf("[%s] gr-%d start action\n", o.operationName, grIndex)
 				err := f()
 				operationResponseChannel <- err
-				//fmt.Printf("[%s] gr-%d end action\n", o.operationName, grIndex)
 			}
 		}()
 	}
 
 	// Add each chunk's operation to the channel.
 	for chunkNum := uint16(0); chunkNum < numChunks; chunkNum++ {
-		curChunkSize := o.chunkSize
+		curChunkSize := o.ChunkSize
 
 		if chunkNum == numChunks-1 { // Last chunk
-			curChunkSize = o.transferSize - (int64(chunkNum) * o.chunkSize) // Remove size of all transferred chunks from total
+			curChunkSize = o.TransferSize - (int64(chunkNum) * o.ChunkSize) // Remove size of all transferred chunks from total
 		}
-		offset := int64(chunkNum) * o.chunkSize
+		offset := int64(chunkNum) * o.ChunkSize
 
 		operationChannel <- func() error {
-			return o.operation(offset, curChunkSize)
+			return o.Operation(offset, curChunkSize, ctx)
 		}
 	}
 	close(operationChannel)
 
 	// Wait for the operations to complete.
+	var firstErr error = nil
 	for chunkNum := uint16(0); chunkNum < numChunks; chunkNum++ {
 		responseError := <-operationResponseChannel
-		if responseError != nil {
-			cancel()             // As soon as any operation fails, cancel all remaining operation calls
-			return responseError // No need to process anymore responses
+		// record the first error (the original error which should cause the other chunks to fail with canceled context)
+		if responseError != nil && firstErr == nil {
+			cancel() // As soon as any operation fails, cancel all remaining operation calls
+			firstErr = responseError
 		}
 	}
-	return nil
+	return firstErr
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

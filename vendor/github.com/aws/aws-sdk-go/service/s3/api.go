@@ -8516,6 +8516,11 @@ type CopyObjectInput struct {
 	// key was transmitted without error.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 
+	// Specifies the AWS KMS Encryption Context to use for object encryption. The
+	// value of this header is a base64-encoded UTF-8 string holding JSON with the
+	// encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
+
 	// Specifies the AWS KMS key ID to use for object encryption. All GET and PUT
 	// requests for an object protected by AWS KMS will fail if not made via SSL
 	// or using SigV4. Documentation on configuring any of the officially supported
@@ -8780,6 +8785,12 @@ func (s *CopyObjectInput) SetSSECustomerKeyMD5(v string) *CopyObjectInput {
 	return s
 }
 
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CopyObjectInput) SetSSEKMSEncryptionContext(v string) *CopyObjectInput {
+	s.SSEKMSEncryptionContext = &v
+	return s
+}
+
 // SetSSEKMSKeyId sets the SSEKMSKeyId field's value.
 func (s *CopyObjectInput) SetSSEKMSKeyId(v string) *CopyObjectInput {
 	s.SSEKMSKeyId = &v
@@ -8840,6 +8851,11 @@ type CopyObjectOutput struct {
 	// verification of the customer-provided encryption key.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 
+	// If present, specifies the AWS KMS Encryption Context to use for object encryption.
+	// The value of this header is a base64-encoded UTF-8 string holding JSON with
+	// the encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
+
 	// If present, specifies the ID of the AWS Key Management Service (KMS) master
 	// encryption key that was used for the object.
 	SSEKMSKeyId *string `location:"header" locationName:"x-amz-server-side-encryption-aws-kms-key-id" type:"string" sensitive:"true"`
@@ -8895,6 +8911,12 @@ func (s *CopyObjectOutput) SetSSECustomerAlgorithm(v string) *CopyObjectOutput {
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
 func (s *CopyObjectOutput) SetSSECustomerKeyMD5(v string) *CopyObjectOutput {
 	s.SSECustomerKeyMD5 = &v
+	return s
+}
+
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CopyObjectOutput) SetSSEKMSEncryptionContext(v string) *CopyObjectOutput {
+	s.SSEKMSEncryptionContext = &v
 	return s
 }
 
@@ -9220,6 +9242,11 @@ type CreateMultipartUploadInput struct {
 	// key was transmitted without error.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 
+	// Specifies the AWS KMS Encryption Context to use for object encryption. The
+	// value of this header is a base64-encoded UTF-8 string holding JSON with the
+	// encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
+
 	// Specifies the AWS KMS key ID to use for object encryption. All GET and PUT
 	// requests for an object protected by AWS KMS will fail if not made via SSL
 	// or using SigV4. Documentation on configuring any of the officially supported
@@ -9414,6 +9441,12 @@ func (s *CreateMultipartUploadInput) SetSSECustomerKeyMD5(v string) *CreateMulti
 	return s
 }
 
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CreateMultipartUploadInput) SetSSEKMSEncryptionContext(v string) *CreateMultipartUploadInput {
+	s.SSEKMSEncryptionContext = &v
+	return s
+}
+
 // SetSSEKMSKeyId sets the SSEKMSKeyId field's value.
 func (s *CreateMultipartUploadInput) SetSSEKMSKeyId(v string) *CreateMultipartUploadInput {
 	s.SSEKMSKeyId = &v
@@ -9473,6 +9506,11 @@ type CreateMultipartUploadOutput struct {
 	// the response will include this header to provide round trip message integrity
 	// verification of the customer-provided encryption key.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
+
+	// If present, specifies the AWS KMS Encryption Context to use for object encryption.
+	// The value of this header is a base64-encoded UTF-8 string holding JSON with
+	// the encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
 
 	// If present, specifies the ID of the AWS Key Management Service (KMS) master
 	// encryption key that was used for the object.
@@ -9542,6 +9580,12 @@ func (s *CreateMultipartUploadOutput) SetSSECustomerAlgorithm(v string) *CreateM
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
 func (s *CreateMultipartUploadOutput) SetSSECustomerKeyMD5(v string) *CreateMultipartUploadOutput {
 	s.SSECustomerKeyMD5 = &v
+	return s
+}
+
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CreateMultipartUploadOutput) SetSSEKMSEncryptionContext(v string) *CreateMultipartUploadOutput {
+	s.SSEKMSEncryptionContext = &v
 	return s
 }
 
@@ -20372,6 +20416,11 @@ type PutObjectInput struct {
 	// key was transmitted without error.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 
+	// Specifies the AWS KMS Encryption Context to use for object encryption. The
+	// value of this header is a base64-encoded UTF-8 string holding JSON with the
+	// encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
+
 	// Specifies the AWS KMS key ID to use for object encryption. All GET and PUT
 	// requests for an object protected by AWS KMS will fail if not made via SSL
 	// or using SigV4. Documentation on configuring any of the officially supported
@@ -20582,6 +20631,12 @@ func (s *PutObjectInput) getSSECustomerKey() (v string) {
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
 func (s *PutObjectInput) SetSSECustomerKeyMD5(v string) *PutObjectInput {
 	s.SSECustomerKeyMD5 = &v
+	return s
+}
+
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *PutObjectInput) SetSSEKMSEncryptionContext(v string) *PutObjectInput {
+	s.SSEKMSEncryptionContext = &v
 	return s
 }
 
@@ -20861,6 +20916,11 @@ type PutObjectOutput struct {
 	// verification of the customer-provided encryption key.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 
+	// If present, specifies the AWS KMS Encryption Context to use for object encryption.
+	// The value of this header is a base64-encoded UTF-8 string holding JSON with
+	// the encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
+
 	// If present, specifies the ID of the AWS Key Management Service (KMS) master
 	// encryption key that was used for the object.
 	SSEKMSKeyId *string `location:"header" locationName:"x-amz-server-side-encryption-aws-kms-key-id" type:"string" sensitive:"true"`
@@ -20910,6 +20970,12 @@ func (s *PutObjectOutput) SetSSECustomerAlgorithm(v string) *PutObjectOutput {
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
 func (s *PutObjectOutput) SetSSECustomerKeyMD5(v string) *PutObjectOutput {
 	s.SSECustomerKeyMD5 = &v
+	return s
+}
+
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *PutObjectOutput) SetSSEKMSEncryptionContext(v string) *PutObjectOutput {
+	s.SSEKMSEncryptionContext = &v
 	return s
 }
 

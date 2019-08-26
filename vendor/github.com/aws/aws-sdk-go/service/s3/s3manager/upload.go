@@ -363,7 +363,9 @@ type uploader struct {
 // internal logic for deciding whether to upload a single part or use a
 // multipart upload.
 func (u *uploader) upload() (*UploadOutput, error) {
-	u.init()
+	if err := u.init(); err != nil {
+		return nil, awserr.New("ReadRequestBody", "unable to initialize upload", err)
+	}
 
 	if u.cfg.PartSize < MinUploadPartSize {
 		msg := fmt.Sprintf("part size must be at least %d bytes", MinUploadPartSize)
@@ -383,7 +385,7 @@ func (u *uploader) upload() (*UploadOutput, error) {
 }
 
 // init will initialize all default options.
-func (u *uploader) init() {
+func (u *uploader) init() error {
 	if u.cfg.Concurrency == 0 {
 		u.cfg.Concurrency = DefaultUploadConcurrency
 	}
@@ -399,19 +401,19 @@ func (u *uploader) init() {
 	}
 
 	// Try to get the total size for some optimizations
-	u.initSize()
+	return u.initSize()
 }
 
 // initSize tries to detect the total stream size, setting u.totalSize. If
 // the size is not known, totalSize is set to -1.
-func (u *uploader) initSize() {
+func (u *uploader) initSize() error {
 	u.totalSize = -1
 
 	switch r := u.in.Body.(type) {
 	case io.Seeker:
 		n, err := aws.SeekerLen(r)
 		if err != nil {
-			return
+			return err
 		}
 		u.totalSize = n
 
@@ -423,6 +425,8 @@ func (u *uploader) initSize() {
 			u.cfg.PartSize = (u.totalSize / int64(u.cfg.MaxUploadParts)) + 1
 		}
 	}
+
+	return nil
 }
 
 // nextReader returns a seekable reader representing the next packet of data.

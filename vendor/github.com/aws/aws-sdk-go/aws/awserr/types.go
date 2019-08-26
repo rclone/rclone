@@ -208,7 +208,7 @@ func (e errorList) Error() string {
 	// How do we want to handle the array size being zero
 	if size := len(e); size > 0 {
 		for i := 0; i < size; i++ {
-			msg += fmt.Sprintf("%s", e[i].Error())
+			msg += e[i].Error()
 			// We check the next index to see if it is within the slice.
 			// If it is, then we append a newline. We do this, because unit tests
 			// could be broken with the additional '\n'

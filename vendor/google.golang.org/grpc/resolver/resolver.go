@@ -20,6 +20,10 @@
 // All APIs in this package are experimental.
 package resolver
 
+import (
+	"google.golang.org/grpc/serviceconfig"
+)
+
 var (
 	// m is a map from scheme to resolver builder.
 	m = make(map[string]Builder)
@@ -100,11 +104,12 @@ type BuildOption struct {
 
 // State contains the current Resolver state relevant to the ClientConn.
 type State struct {
-	Addresses     []Address // Resolved addresses for the target
-	ServiceConfig string    // JSON representation of the service config
+	Addresses []Address // Resolved addresses for the target
+	// ServiceConfig is the parsed service config; obtained from
+	// serviceconfig.Parse.
+	ServiceConfig serviceconfig.Config
 
 	// TODO: add Err error
-	// TODO: add ParsedServiceConfig interface{}
 }
 
 // ClientConn contains the callbacks for resolver to notify any updates

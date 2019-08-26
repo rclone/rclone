@@ -1,3 +1,3 @@
 package azblob
 
-const serviceLibVersion = "0.6"
+const serviceLibVersion = "0.7"

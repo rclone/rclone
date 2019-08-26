@@ -4,6 +4,10 @@
 
 package server
 
+import (
+	"crypto/subtle"
+)
+
 // Auth is an interface to auth your ftp user login.
 type Auth interface {
 	CheckPasswd(string, string) (bool, error)
@@ -21,8 +25,9 @@ type SimpleAuth struct {
 
 // CheckPasswd will check user's password
 func (a *SimpleAuth) CheckPasswd(name, pass string) (bool, error) {
-	if name != a.Name || pass != a.Password {
-		return false, nil
-	}
-	return true, nil
+	return constantTimeEquals(name, a.Name) && constantTimeEquals(pass, a.Password), nil
+}
+
+func constantTimeEquals(a, b string) bool {
+	return len(a) == len(b) && subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
 }

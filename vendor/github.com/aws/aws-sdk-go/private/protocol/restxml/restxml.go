@@ -39,7 +39,7 @@ func Build(r *request.Request) {
 			r.Error = awserr.NewRequestFailure(
 				awserr.New(request.ErrCodeSerialization,
 					"failed to encode rest XML request", err),
-				r.HTTPResponse.StatusCode,
+				0,
 				r.RequestID,
 			)
 			return

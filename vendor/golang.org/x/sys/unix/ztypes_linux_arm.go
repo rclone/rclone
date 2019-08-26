@@ -2475,3 +2475,40 @@ const (
 	LINUX_CAPABILITY_VERSION_2 = 0x20071026
 	LINUX_CAPABILITY_VERSION_3 = 0x20080522
 )
+
+const (
+	LO_FLAGS_READ_ONLY = 0x1
+	LO_FLAGS_AUTOCLEAR = 0x4
+	LO_FLAGS_PARTSCAN  = 0x8
+	LO_FLAGS_DIRECT_IO = 0x10
+)
+
+type LoopInfo struct {
+	Number           int32
+	Device           uint16
+	Inode            uint32
+	Rdevice          uint16
+	Offset           int32
+	Encrypt_type     int32
+	Encrypt_key_size int32
+	Flags            int32
+	Name             [64]uint8
+	Encrypt_key      [32]uint8
+	Init             [2]uint32
+	Reserved         [4]uint8
+}
+type LoopInfo64 struct {
+	Device           uint64
+	Inode            uint64
+	Rdevice          uint64
+	Offset           uint64
+	Sizelimit        uint64
+	Number           uint32
+	Encrypt_type     uint32
+	Encrypt_key_size uint32
+	Flags            uint32
+	File_name        [64]uint8
+	Crypt_name       [64]uint8
+	Encrypt_key      [32]uint8
+	Init             [2]uint64
+}

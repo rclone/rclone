@@ -984,13 +984,14 @@ func (c *Connection) ContainerNamesAll(opts *ContainersOpts) ([]string, error) {
 
 // ObjectOpts is options for Objects() and ObjectNames()
 type ObjectsOpts struct {
-	Limit     int     // For an integer value n, limits the number of results to at most n values.
-	Marker    string  // Given a string value x, return object names greater in value than the  specified marker.
-	EndMarker string  // Given a string value x, return object names less in value than the specified marker
-	Prefix    string  // For a string value x, causes the results to be limited to object names beginning with the substring x.
-	Path      string  // For a string value x, return the object names nested in the pseudo path
-	Delimiter rune    // For a character c, return all the object names nested in the container
-	Headers   Headers // Any additional HTTP headers - can be nil
+	Limit      int     // For an integer value n, limits the number of results to at most n values.
+	Marker     string  // Given a string value x, return object names greater in value than the  specified marker.
+	EndMarker  string  // Given a string value x, return object names less in value than the specified marker
+	Prefix     string  // For a string value x, causes the results to be limited to object names beginning with the substring x.
+	Path       string  // For a string value x, return the object names nested in the pseudo path
+	Delimiter  rune    // For a character c, return all the object names nested in the container
+	Headers    Headers // Any additional HTTP headers - can be nil
+	KeepMarker bool    // Do not reset Marker when using ObjectsAll or ObjectNamesAll
 }
 
 // parse reads values out of ObjectsOpts
@@ -1106,6 +1107,7 @@ func (c *Connection) Objects(container string, opts *ObjectsOpts) ([]Object, err
 
 // objectsAllOpts makes a copy of opts if set or makes a new one and
 // overrides Limit and Marker
+// Marker is not overriden if KeepMarker is set
 func objectsAllOpts(opts *ObjectsOpts, Limit int) *ObjectsOpts {
 	var newOpts ObjectsOpts
 	if opts != nil {
@@ -1114,7 +1116,9 @@ func objectsAllOpts(opts *ObjectsOpts, Limit int) *ObjectsOpts {
 	if newOpts.Limit == 0 {
 		newOpts.Limit = Limit
 	}
-	newOpts.Marker = ""
+	if !newOpts.KeepMarker {
+		newOpts.Marker = ""
+	}
 	return &newOpts
 }
 
@@ -1183,7 +1187,8 @@ func (c *Connection) ObjectsAll(container string, opts *ObjectsOpts) ([]Object, 
 
 // ObjectNamesAll is like ObjectNames but it returns all the Objects
 //
-// It calls ObjectNames multiple times using the Marker parameter
+// It calls ObjectNames multiple times using the Marker parameter. Marker is
+// reset unless KeepMarker is set
 //
 // It has a default Limit parameter but you may pass in your own
 func (c *Connection) ObjectNamesAll(container string, opts *ObjectsOpts) ([]string, error) {
