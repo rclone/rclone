@@ -21,7 +21,7 @@ func fileCreate(t *testing.T, r *fstest.Run) (*VFS, *File, fstest.Item) {
 
 	node, err := vfs.Stat("dir/file1")
 	require.NoError(t, err)
-	require.True(t, node.IsFile())
+	require.True(t, node.Mode().IsRegular())
 
 	return vfs, node.(*File), file1
 }
