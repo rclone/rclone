@@ -1,5 +1,5 @@
 ---
-date: 2019-06-20T16:09:42+01:00
+date: 2019-08-26T15:19:45+01:00
 title: "rclone serve http"
 slug: rclone_serve_http
 url: /commands/rclone_serve_http/
@@ -38,6 +38,14 @@ for a transfer.
 
 --max-header-bytes controls the maximum number of bytes the server will
 accept in the HTTP header.
+
+--baseurl controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used --baseurl "/rclone" then
+rclone would serve from a URL starting with "/rclone/".  This is
+useful if you wish to proxy rclone serve.  Rclone automatically
+inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
+--baseurl "/rclone" and --baseurl "/rclone/" are all treated
+identically.
 
 #### Authentication
 
@@ -215,6 +223,7 @@ rclone serve http remote:path [flags]
 
 ```
       --addr string                            IPaddress:Port or :Port to bind server to. (default "localhost:8080")
+      --baseurl string                         Prefix for URLs - leave blank for root.
       --cert string                            SSL PEM key (concatenation of certificate and CA certificate)
       --client-ca string                       Client certificate authority to verify clients with
       --dir-cache-time duration                Time to cache directory entries for. (default 5m0s)

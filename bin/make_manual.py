@@ -48,7 +48,7 @@ docs = [
     "qingstor.md",
     "swift.md",
     "pcloud.md",
-    "premiumize.md",
+    "premiumizeme.md",
     "putio.md",
     "sftp.md",
     "union.md",
