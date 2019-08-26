@@ -124,6 +124,14 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 			fs.Errorf(f.Path(), "File.Rename error: %v", err)
 			return err
 		}
+
+		// Rename in the cache too if it exists
+		if f.d.vfs.Opt.CacheMode >= CacheModeWrites && f.d.vfs.cache.exists(f.Path()) {
+			if ok := f.d.vfs.cache.rename(f.Path(), newPath); !ok {
+				fs.Infof(f.Path(), "File.Rename failed in Cache")
+			}
+		}
+
 		// newObject can be nil here for example if --dry-run
 		if newObject == nil {
 			err = errors.New("rename failed: nil object returned")
