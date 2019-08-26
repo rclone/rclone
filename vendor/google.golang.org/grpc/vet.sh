@@ -105,12 +105,14 @@ if go help mod >& /dev/null; then
 fi
 
 # - Collection of static analysis checks
-# TODO(menghanl): fix errors in transport_test.
+# TODO(dfawley): don't use deprecated functions in examples.
 staticcheck -go 1.9 -checks 'inherit,-ST1015' -ignore '
 google.golang.org/grpc/balancer.go:SA1019
+google.golang.org/grpc/balancer/grpclb/grpclb_remote_balancer.go:SA1019
 google.golang.org/grpc/balancer/roundrobin/roundrobin_test.go:SA1019
-google.golang.org/grpc/balancer/xds/edsbalancer/balancergroup.go:SA1019
-google.golang.org/grpc/balancer/xds/xds.go:SA1019
+google.golang.org/grpc/xds/internal/balancer/edsbalancer/balancergroup.go:SA1019
+google.golang.org/grpc/xds/internal/balancer/xds.go:SA1019
+google.golang.org/grpc/xds/internal/balancer/xds_client.go:SA1019
 google.golang.org/grpc/balancer_conn_wrappers.go:SA1019
 google.golang.org/grpc/balancer_test.go:SA1019
 google.golang.org/grpc/benchmark/benchmain/main.go:SA1019
@@ -118,10 +120,13 @@ google.golang.org/grpc/benchmark/worker/benchmark_client.go:SA1019
 google.golang.org/grpc/clientconn.go:S1024
 google.golang.org/grpc/clientconn_state_transition_test.go:SA1019
 google.golang.org/grpc/clientconn_test.go:SA1019
+google.golang.org/grpc/examples/features/debugging/client/main.go:SA1019
+google.golang.org/grpc/examples/features/load_balancing/client/main.go:SA1019
 google.golang.org/grpc/internal/transport/handler_server.go:SA1019
 google.golang.org/grpc/internal/transport/handler_server_test.go:SA1019
 google.golang.org/grpc/resolver/dns/dns_resolver.go:SA1019
 google.golang.org/grpc/stats/stats_test.go:SA1019
+google.golang.org/grpc/test/balancer_test.go:SA1019
 google.golang.org/grpc/test/channelz_test.go:SA1019
 google.golang.org/grpc/test/end2end_test.go:SA1019
 google.golang.org/grpc/test/healthcheck_test.go:SA1019

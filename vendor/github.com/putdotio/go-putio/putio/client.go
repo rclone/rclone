@@ -173,7 +173,7 @@ func checkResponse(r *http.Response) error {
 	if len(data) > 0 {
 		err = json.Unmarshal(data, errorResponse)
 		if err != nil {
-			return fmt.Errorf("json decod error: %s. status: %v. Details: %v:", err, status, string(data[:250]))
+			return fmt.Errorf("json decode error: %s. status: %v. Details: %v:", err, status, string(data[:250]))
 		}
 	}
 	return errorResponse

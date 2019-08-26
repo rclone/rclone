@@ -113,6 +113,17 @@ func Errorf(t TestingT, err error, msg string, args ...interface{}) bool {
 	return Error(t, err, append([]interface{}{msg}, args...)...)
 }
 
+// Eventuallyf asserts that given condition will be met in waitFor time,
+// periodically checking target function each tick.
+//
+//    assert.Eventuallyf(t, func() bool { return true; }, time.Second, 10*time.Millisecond, "error message %s", "formatted")
+func Eventuallyf(t TestingT, condition func() bool, waitFor time.Duration, tick time.Duration, msg string, args ...interface{}) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+	return Eventually(t, condition, waitFor, tick, append([]interface{}{msg}, args...)...)
+}
+
 // Exactlyf asserts that two objects are equal in value and type.
 //
 //    assert.Exactlyf(t, int32(123, "error message %s", "formatted"), int64(123))
@@ -169,7 +180,7 @@ func Greaterf(t TestingT, e1 interface{}, e2 interface{}, msg string, args ...in
 	return Greater(t, e1, e2, append([]interface{}{msg}, args...)...)
 }
 
-// GreaterOrEqualf asserts that the first element in greater or equal than the second
+// GreaterOrEqualf asserts that the first element is greater than or equal to the second
 //
 //    assert.GreaterOrEqualf(t, 2, 1, "error message %s", "formatted")
 //    assert.GreaterOrEqualf(t, 2, 2, "error message %s", "formatted")
@@ -314,6 +325,14 @@ func JSONEqf(t TestingT, expected string, actual string, msg string, args ...int
 	return JSONEq(t, expected, actual, append([]interface{}{msg}, args...)...)
 }
 
+// YAMLEqf asserts that two YAML strings are equivalent.
+func YAMLEqf(t TestingT, expected string, actual string, msg string, args ...interface{}) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+	return YAMLEq(t, expected, actual, append([]interface{}{msg}, args...)...)
+}
+
 // Lenf asserts that the specified object has specific length.
 // Lenf also fails if the object has a type that len() not accept.
 //
@@ -325,7 +344,7 @@ func Lenf(t TestingT, object interface{}, length int, msg string, args ...interf
 	return Len(t, object, length, append([]interface{}{msg}, args...)...)
 }
 
-// Lessf asserts that the first element in less than the second
+// Lessf asserts that the first element is less than the second
 //
 //    assert.Lessf(t, 1, 2, "error message %s", "formatted")
 //    assert.Lessf(t, float64(1, "error message %s", "formatted"), float64(2))
@@ -337,7 +356,7 @@ func Lessf(t TestingT, e1 interface{}, e2 interface{}, msg string, args ...inter
 	return Less(t, e1, e2, append([]interface{}{msg}, args...)...)
 }
 
-// LessOrEqualf asserts that the first element in greater or equal than the second
+// LessOrEqualf asserts that the first element is less than or equal to the second
 //
 //    assert.LessOrEqualf(t, 1, 2, "error message %s", "formatted")
 //    assert.LessOrEqualf(t, 2, 2, "error message %s", "formatted")

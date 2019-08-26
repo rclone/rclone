@@ -802,7 +802,7 @@ func (p *sshFxpDataPacket) UnmarshalBinary(b []byte) error {
 	} else if p.Length, b, err = unmarshalUint32Safe(b); err != nil {
 		return err
 	} else if uint32(len(b)) < p.Length {
-		return errors.New("truncated packet")
+		return errShortPacket
 	}
 
 	p.Data = make([]byte, p.Length)

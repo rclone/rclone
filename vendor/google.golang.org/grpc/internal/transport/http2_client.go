@@ -117,6 +117,8 @@ type http2Client struct {
 
 	onGoAway func(GoAwayReason)
 	onClose  func()
+
+	bufferPool *bufferPool
 }
 
 func dial(ctx context.Context, fn func(context.Context, string) (net.Conn, error), addr string) (net.Conn, error) {
@@ -249,6 +251,7 @@ func newHTTP2Client(connectCtx, ctx context.Context, addr TargetInfo, opts Conne
 		onGoAway:              onGoAway,
 		onClose:               onClose,
 		keepaliveEnabled:      keepaliveEnabled,
+		bufferPool:            newBufferPool(),
 	}
 	t.controlBuf = newControlBuffer(t.ctxDone)
 	if opts.InitialWindowSize >= defaultWindowSize {
@@ -367,6 +370,7 @@ func (t *http2Client) newStream(ctx context.Context, callHdr *CallHdr) *Stream {
 			closeStream: func(err error) {
 				t.CloseStream(s, err)
 			},
+			freeBuffer: t.bufferPool.put,
 		},
 		windowHandler: func(n int) {
 			t.updateWindow(s, uint32(n))
@@ -437,6 +441,15 @@ func (t *http2Client) createHeaderFields(ctx context.Context, callHdr *CallHdr) 
 
 	if md, added, ok := metadata.FromOutgoingContextRaw(ctx); ok {
 		var k string
+		for k, vv := range md {
+			// HTTP doesn't allow you to set pseudoheaders after non pseudoheaders were set.
+			if isReservedHeader(k) {
+				continue
+			}
+			for _, v := range vv {
+				headerFields = append(headerFields, hpack.HeaderField{Name: k, Value: encodeMetadataHeader(k, v)})
+			}
+		}
 		for _, vv := range added {
 			for i, v := range vv {
 				if i%2 == 0 {
@@ -448,15 +461,6 @@ func (t *http2Client) createHeaderFields(ctx context.Context, callHdr *CallHdr) 
 					continue
 				}
 				headerFields = append(headerFields, hpack.HeaderField{Name: strings.ToLower(k), Value: encodeMetadataHeader(k, v)})
-			}
-		}
-		for k, vv := range md {
-			// HTTP doesn't allow you to set pseudoheaders after non pseudoheaders were set.
-			if isReservedHeader(k) {
-				continue
-			}
-			for _, v := range vv {
-				headerFields = append(headerFields, hpack.HeaderField{Name: k, Value: encodeMetadataHeader(k, v)})
 			}
 		}
 	}
@@ -489,6 +493,9 @@ func (t *http2Client) createAudience(callHdr *CallHdr) string {
 }
 
 func (t *http2Client) getTrAuthData(ctx context.Context, audience string) (map[string]string, error) {
+	if len(t.perRPCCreds) == 0 {
+		return nil, nil
+	}
 	authData := map[string]string{}
 	for _, c := range t.perRPCCreds {
 		data, err := c.GetRequestMetadata(ctx, audience)
@@ -509,7 +516,7 @@ func (t *http2Client) getTrAuthData(ctx context.Context, audience string) (map[s
 }
 
 func (t *http2Client) getCallAuthData(ctx context.Context, audience string, callHdr *CallHdr) (map[string]string, error) {
-	callAuthData := map[string]string{}
+	var callAuthData map[string]string
 	// Check if credentials.PerRPCCredentials were provided via call options.
 	// Note: if these credentials are provided both via dial options and call
 	// options, then both sets of credentials will be applied.
@@ -521,6 +528,7 @@ func (t *http2Client) getCallAuthData(ctx context.Context, audience string, call
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "transport: %v", err)
 		}
+		callAuthData = make(map[string]string, len(data))
 		for k, v := range data {
 			// Capital header names are illegal in HTTP/2
 			k = strings.ToLower(k)
@@ -552,7 +560,6 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 		if atomic.CompareAndSwapUint32(&s.headerChanClosed, 0, 1) {
 			close(s.headerChan)
 		}
-
 	}
 	hdr := &headerFrame{
 		hf:        headerFields,
@@ -765,6 +772,9 @@ func (t *http2Client) Close() error {
 		t.mu.Unlock()
 		return nil
 	}
+	// Call t.onClose before setting the state to closing to prevent the client
+	// from attempting to create new streams ASAP.
+	t.onClose()
 	t.state = closing
 	streams := t.activeStreams
 	t.activeStreams = nil
@@ -785,7 +795,6 @@ func (t *http2Client) Close() error {
 		}
 		t.statsHandler.HandleConn(t.ctx, connEnd)
 	}
-	t.onClose()
 	return err
 }
 
@@ -946,9 +955,10 @@ func (t *http2Client) handleData(f *http2.DataFrame) {
 		// guarantee f.Data() is consumed before the arrival of next frame.
 		// Can this copy be eliminated?
 		if len(f.Data()) > 0 {
-			data := make([]byte, len(f.Data()))
-			copy(data, f.Data())
-			s.write(recvMsg{data: data})
+			buffer := t.bufferPool.get()
+			buffer.Reset()
+			buffer.Write(f.Data())
+			s.write(recvMsg{buffer: buffer})
 		}
 	}
 	// The server has closed the stream without sending trailers.  Record that
@@ -973,9 +983,9 @@ func (t *http2Client) handleRSTStream(f *http2.RSTStreamFrame) {
 		statusCode = codes.Unknown
 	}
 	if statusCode == codes.Canceled {
-		// Our deadline was already exceeded, and that was likely the cause of
-		// this cancelation.  Alter the status code accordingly.
-		if d, ok := s.ctx.Deadline(); ok && d.After(time.Now()) {
+		if d, ok := s.ctx.Deadline(); ok && !d.After(time.Now()) {
+			// Our deadline was already exceeded, and that was likely the cause
+			// of this cancelation.  Alter the status code accordingly.
 			statusCode = codes.DeadlineExceeded
 		}
 	}
@@ -1080,11 +1090,12 @@ func (t *http2Client) handleGoAway(f *http2.GoAwayFrame) {
 	default:
 		t.setGoAwayReason(f)
 		close(t.goAway)
-		t.state = draining
 		t.controlBuf.put(&incomingGoAway{})
-
-		// This has to be a new goroutine because we're still using the current goroutine to read in the transport.
+		// Notify the clientconn about the GOAWAY before we set the state to
+		// draining, to allow the client to stop attempting to create streams
+		// before disallowing new streams on this connection.
 		t.onGoAway(t.goAwayReason)
+		t.state = draining
 	}
 	// All streams with IDs greater than the GoAwayId
 	// and smaller than the previous GoAway ID should be killed.
@@ -1234,6 +1245,7 @@ func (t *http2Client) reader() {
 
 	// loop to keep reading incoming messages on this transport.
 	for {
+		t.controlBuf.throttle()
 		frame, err := t.framer.fr.ReadFrame()
 		if t.keepaliveEnabled {
 			atomic.CompareAndSwapUint32(&t.activity, 0, 1)
@@ -1321,6 +1333,7 @@ func (t *http2Client) keepalive() {
 					timer.Reset(t.kp.Time)
 					continue
 				}
+				infof("transport: closing client transport due to idleness.")
 				t.Close()
 				return
 			case <-t.ctx.Done():

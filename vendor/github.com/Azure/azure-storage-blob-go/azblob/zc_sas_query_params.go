@@ -22,7 +22,7 @@ const (
 
 // FormatTimesForSASSigning converts a time.Time to a snapshotTimeFormat string suitable for a
 // SASField's StartTime or ExpiryTime fields. Returns "" if value.IsZero().
-func FormatTimesForSASSigning(startTime, expiryTime time.Time) (string, string) {
+func FormatTimesForSASSigning(startTime, expiryTime, snapshotTime time.Time) (string, string, string) {
 	ss := ""
 	if !startTime.IsZero() {
 		ss = startTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
@@ -31,7 +31,11 @@ func FormatTimesForSASSigning(startTime, expiryTime time.Time) (string, string) 
 	if !expiryTime.IsZero() {
 		se = expiryTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
 	}
-	return ss, se
+	sh := ""
+	if !snapshotTime.IsZero() {
+		sh = snapshotTime.Format(SnapshotTimeFormat)
+	}
+	return ss, se, sh
 }
 
 // SASTimeFormat represents the format of a SAS start or expiry time. Use it when formatting/parsing a time.Time.
@@ -53,6 +57,7 @@ type SASQueryParameters struct {
 	protocol           SASProtocol `param:"spr"`
 	startTime          time.Time   `param:"st"`
 	expiryTime         time.Time   `param:"se"`
+	snapshotTime       time.Time   `param:"snapshot"`
 	ipRange            IPRange     `param:"sip"`
 	identifier         string      `param:"si"`
 	resource           string      `param:"sr"`
@@ -63,6 +68,40 @@ type SASQueryParameters struct {
 	contentEncoding    string      `param:"rsce"`
 	contentLanguage    string      `param:"rscl"`
 	contentType        string      `param:"rsct"`
+	signedOid          string      `param:"skoid"`
+	signedTid          string      `param:"sktid"`
+	signedStart        time.Time   `param:"skt"`
+	signedExpiry       time.Time   `param:"ske"`
+	signedService      string      `param:"sks"`
+	signedVersion      string      `param:"skv"`
+}
+
+func (p *SASQueryParameters) SignedOid() string {
+	return p.signedOid
+}
+
+func (p *SASQueryParameters) SignedTid() string {
+	return p.signedTid
+}
+
+func (p *SASQueryParameters) SignedStart() time.Time {
+	return p.signedStart
+}
+
+func (p *SASQueryParameters) SignedExpiry() time.Time {
+	return p.signedExpiry
+}
+
+func (p *SASQueryParameters) SignedService() string {
+	return p.signedService
+}
+
+func (p *SASQueryParameters) SignedVersion() string {
+	return p.signedVersion
+}
+
+func (p *SASQueryParameters) SnapshotTime() time.Time {
+	return p.snapshotTime
 }
 
 func (p *SASQueryParameters) Version() string {
@@ -160,6 +199,8 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 			p.resourceTypes = val
 		case "spr":
 			p.protocol = SASProtocol(val)
+		case "snapshot":
+			p.snapshotTime, _ = time.Parse(SnapshotTimeFormat, val)
 		case "st":
 			p.startTime, _ = time.Parse(SASTimeFormat, val)
 		case "se":
@@ -190,6 +231,18 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 			p.contentLanguage = val
 		case "rsct":
 			p.contentType = val
+		case "skoid":
+			p.signedOid = val
+		case "sktid":
+			p.signedTid = val
+		case "skt":
+			p.signedStart, _ = time.Parse(SASTimeFormat, val)
+		case "ske":
+			p.signedExpiry, _ = time.Parse(SASTimeFormat, val)
+		case "sks":
+			p.signedService = val
+		case "skv":
+			p.signedVersion = val
 		default:
 			isSASKey = false // We didn't recognize the query parameter
 		}
@@ -231,6 +284,14 @@ func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
 	}
 	if p.permissions != "" {
 		v.Add("sp", p.permissions)
+	}
+	if p.signedOid != "" {
+		v.Add("skoid", p.signedOid)
+		v.Add("sktid", p.signedTid)
+		v.Add("skt", p.signedStart.Format(SASTimeFormat))
+		v.Add("ske", p.signedExpiry.Format(SASTimeFormat))
+		v.Add("sks", p.signedService)
+		v.Add("skv", p.signedVersion)
 	}
 	if p.signature != "" {
 		v.Add("sig", p.signature)

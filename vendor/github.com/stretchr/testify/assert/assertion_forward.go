@@ -215,6 +215,28 @@ func (a *Assertions) Errorf(err error, msg string, args ...interface{}) bool {
 	return Errorf(a.t, err, msg, args...)
 }
 
+// Eventually asserts that given condition will be met in waitFor time,
+// periodically checking target function each tick.
+//
+//    a.Eventually(func() bool { return true; }, time.Second, 10*time.Millisecond)
+func (a *Assertions) Eventually(condition func() bool, waitFor time.Duration, tick time.Duration, msgAndArgs ...interface{}) bool {
+	if h, ok := a.t.(tHelper); ok {
+		h.Helper()
+	}
+	return Eventually(a.t, condition, waitFor, tick, msgAndArgs...)
+}
+
+// Eventuallyf asserts that given condition will be met in waitFor time,
+// periodically checking target function each tick.
+//
+//    a.Eventuallyf(func() bool { return true; }, time.Second, 10*time.Millisecond, "error message %s", "formatted")
+func (a *Assertions) Eventuallyf(condition func() bool, waitFor time.Duration, tick time.Duration, msg string, args ...interface{}) bool {
+	if h, ok := a.t.(tHelper); ok {
+		h.Helper()
+	}
+	return Eventuallyf(a.t, condition, waitFor, tick, msg, args...)
+}
+
 // Exactly asserts that two objects are equal in value and type.
 //
 //    a.Exactly(int32(123), int64(123))
@@ -315,7 +337,7 @@ func (a *Assertions) Greater(e1 interface{}, e2 interface{}, msgAndArgs ...inter
 	return Greater(a.t, e1, e2, msgAndArgs...)
 }
 
-// GreaterOrEqual asserts that the first element in greater or equal than the second
+// GreaterOrEqual asserts that the first element is greater than or equal to the second
 //
 //    a.GreaterOrEqual(2, 1)
 //    a.GreaterOrEqual(2, 2)
@@ -328,7 +350,7 @@ func (a *Assertions) GreaterOrEqual(e1 interface{}, e2 interface{}, msgAndArgs .
 	return GreaterOrEqual(a.t, e1, e2, msgAndArgs...)
 }
 
-// GreaterOrEqualf asserts that the first element in greater or equal than the second
+// GreaterOrEqualf asserts that the first element is greater than or equal to the second
 //
 //    a.GreaterOrEqualf(2, 1, "error message %s", "formatted")
 //    a.GreaterOrEqualf(2, 2, "error message %s", "formatted")
@@ -617,6 +639,22 @@ func (a *Assertions) JSONEqf(expected string, actual string, msg string, args ..
 	return JSONEqf(a.t, expected, actual, msg, args...)
 }
 
+// YAMLEq asserts that two YAML strings are equivalent.
+func (a *Assertions) YAMLEq(expected string, actual string, msgAndArgs ...interface{}) bool {
+	if h, ok := a.t.(tHelper); ok {
+		h.Helper()
+	}
+	return YAMLEq(a.t, expected, actual, msgAndArgs...)
+}
+
+// YAMLEqf asserts that two YAML strings are equivalent.
+func (a *Assertions) YAMLEqf(expected string, actual string, msg string, args ...interface{}) bool {
+	if h, ok := a.t.(tHelper); ok {
+		h.Helper()
+	}
+	return YAMLEqf(a.t, expected, actual, msg, args...)
+}
+
 // Len asserts that the specified object has specific length.
 // Len also fails if the object has a type that len() not accept.
 //
@@ -639,7 +677,7 @@ func (a *Assertions) Lenf(object interface{}, length int, msg string, args ...in
 	return Lenf(a.t, object, length, msg, args...)
 }
 
-// Less asserts that the first element in less than the second
+// Less asserts that the first element is less than the second
 //
 //    a.Less(1, 2)
 //    a.Less(float64(1), float64(2))
@@ -651,7 +689,7 @@ func (a *Assertions) Less(e1 interface{}, e2 interface{}, msgAndArgs ...interfac
 	return Less(a.t, e1, e2, msgAndArgs...)
 }
 
-// LessOrEqual asserts that the first element in greater or equal than the second
+// LessOrEqual asserts that the first element is less than or equal to the second
 //
 //    a.LessOrEqual(1, 2)
 //    a.LessOrEqual(2, 2)
@@ -664,7 +702,7 @@ func (a *Assertions) LessOrEqual(e1 interface{}, e2 interface{}, msgAndArgs ...i
 	return LessOrEqual(a.t, e1, e2, msgAndArgs...)
 }
 
-// LessOrEqualf asserts that the first element in greater or equal than the second
+// LessOrEqualf asserts that the first element is less than or equal to the second
 //
 //    a.LessOrEqualf(1, 2, "error message %s", "formatted")
 //    a.LessOrEqualf(2, 2, "error message %s", "formatted")
@@ -677,7 +715,7 @@ func (a *Assertions) LessOrEqualf(e1 interface{}, e2 interface{}, msg string, ar
 	return LessOrEqualf(a.t, e1, e2, msg, args...)
 }
 
-// Lessf asserts that the first element in less than the second
+// Lessf asserts that the first element is less than the second
 //
 //    a.Lessf(1, 2, "error message %s", "formatted")
 //    a.Lessf(float64(1, "error message %s", "formatted"), float64(2))

@@ -27,6 +27,17 @@ func NewServiceURL(primaryURL url.URL, p pipeline.Pipeline) ServiceURL {
 	return ServiceURL{client: client}
 }
 
+//GetUserDelegationCredential obtains a UserDelegationKey object using the base ServiceURL object.
+//OAuth is required for this call, as well as any role that can delegate access to the storage account.
+func (s ServiceURL) GetUserDelegationCredential(ctx context.Context, info KeyInfo, timeout *int32, requestID *string) (UserDelegationCredential, error) {
+	sc := newServiceClient(s.client.url, s.client.p)
+	udk, err := sc.GetUserDelegationKey(ctx, info, timeout, requestID)
+	if err != nil {
+		return UserDelegationCredential{}, err
+	}
+	return NewUserDelegationCredential(strings.Split(s.client.url.Host, ".")[0], *udk), nil
+}
+
 // URL returns the URL endpoint used by the ServiceURL object.
 func (s ServiceURL) URL() url.URL {
 	return s.client.URL()

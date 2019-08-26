@@ -216,13 +216,13 @@ func Greater(t TestingT, e1 interface{}, e2 interface{}, msgAndArgs ...interface
 	}
 
 	if res != -1 {
-		return Fail(t, fmt.Sprintf("\"%s\" is not greater than \"%s\"", e1, e2), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("\"%v\" is not greater than \"%v\"", e1, e2), msgAndArgs...)
 	}
 
 	return true
 }
 
-// GreaterOrEqual asserts that the first element in greater or equal than the second
+// GreaterOrEqual asserts that the first element is greater than or equal to the second
 //
 //    assert.GreaterOrEqual(t, 2, 1)
 //    assert.GreaterOrEqual(t, 2, 2)
@@ -245,13 +245,13 @@ func GreaterOrEqual(t TestingT, e1 interface{}, e2 interface{}, msgAndArgs ...in
 	}
 
 	if res != -1 && res != 0 {
-		return Fail(t, fmt.Sprintf("\"%s\" is not greater or equal than \"%s\"", e1, e2), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("\"%v\" is not greater than or equal to \"%v\"", e1, e2), msgAndArgs...)
 	}
 
 	return true
 }
 
-// Less asserts that the first element in less than the second
+// Less asserts that the first element is less than the second
 //
 //    assert.Less(t, 1, 2)
 //    assert.Less(t, float64(1), float64(2))
@@ -273,13 +273,13 @@ func Less(t TestingT, e1 interface{}, e2 interface{}, msgAndArgs ...interface{})
 	}
 
 	if res != 1 {
-		return Fail(t, fmt.Sprintf("\"%s\" is not less than \"%s\"", e1, e2), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("\"%v\" is not less than \"%v\"", e1, e2), msgAndArgs...)
 	}
 
 	return true
 }
 
-// LessOrEqual asserts that the first element in greater or equal than the second
+// LessOrEqual asserts that the first element is less than or equal to the second
 //
 //    assert.LessOrEqual(t, 1, 2)
 //    assert.LessOrEqual(t, 2, 2)
@@ -302,7 +302,7 @@ func LessOrEqual(t TestingT, e1 interface{}, e2 interface{}, msgAndArgs ...inter
 	}
 
 	if res != 1 && res != 0 {
-		return Fail(t, fmt.Sprintf("\"%s\" is not less or equal than \"%s\"", e1, e2), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("\"%v\" is not less than or equal to \"%v\"", e1, e2), msgAndArgs...)
 	}
 
 	return true

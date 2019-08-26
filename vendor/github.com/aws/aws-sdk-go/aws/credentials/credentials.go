@@ -84,6 +84,12 @@ type Value struct {
 	ProviderName string
 }
 
+// HasKeys returns if the credentials Value has both AccessKeyID and
+// SecretAccessKey value set.
+func (v Value) HasKeys() bool {
+	return len(v.AccessKeyID) != 0 && len(v.SecretAccessKey) != 0
+}
+
 // A Provider is the interface for any component which will provide credentials
 // Value. A provider is required to manage its own Expired state, and what to
 // be expired means.
