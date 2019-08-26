@@ -270,10 +270,48 @@ func (c *cache) exists(name string) bool {
 	if err != nil {
 		return false
 	}
-	if fi.IsDir() {
+	// checks for non-regular files (e.g. directories, symlinks, devices, etc.)
+	if !fi.Mode().IsRegular() {
 		return false
 	}
 	return true
+}
+
+// renames the file in cache
+func (c *cache) rename(name string, newName string) (err error) {
+	osOldPath := c.toOSPath(name)
+	osNewPath := c.toOSPath(newName)
+	sfi, err := os.Stat(osOldPath)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to stat source: %s", osOldPath)
+	}
+	if !sfi.Mode().IsRegular() {
+		// cannot copy non-regular files (e.g., directories, symlinks, devices, etc.)
+		return errors.Errorf("Non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
+	}
+	dfi, err := os.Stat(osNewPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return errors.Wrapf(err, "Failed to stat destination: %s", osNewPath)
+		}
+		parent := findParent(osNewPath)
+		err = os.MkdirAll(parent, 0700)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to create parent dir: %s", parent)
+		}
+	} else {
+		if !(dfi.Mode().IsRegular()) {
+			return errors.Errorf("Non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
+		}
+		if os.SameFile(sfi, dfi) {
+			return nil
+		}
+	}
+	if err = os.Rename(osOldPath, osNewPath); err != nil {
+		return errors.Wrapf(err, "Failed to rename in cache: %s to %s", osOldPath, osNewPath)
+	}
+	fs.Infof(name, "Renamed in cache")
+	return nil
 }
 
 // _close marks name as closed - must be called with the lock held
