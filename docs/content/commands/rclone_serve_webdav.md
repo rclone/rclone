@@ -1,5 +1,5 @@
 ---
-date: 2019-06-20T16:09:42+01:00
+date: 2019-08-26T15:19:45+01:00
 title: "rclone serve webdav"
 slug: rclone_serve_webdav
 url: /commands/rclone_serve_webdav/
@@ -46,6 +46,14 @@ for a transfer.
 
 --max-header-bytes controls the maximum number of bytes the server will
 accept in the HTTP header.
+
+--baseurl controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used --baseurl "/rclone" then
+rclone would serve from a URL starting with "/rclone/".  This is
+useful if you wish to proxy rclone serve.  Rclone automatically
+inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
+--baseurl "/rclone" and --baseurl "/rclone/" are all treated
+identically.
 
 #### Authentication
 
@@ -214,6 +222,72 @@ This mode should support all normal file system operations.
 If an upload or download fails it will be retried up to
 --low-level-retries times.
 
+### Auth Proxy
+
+If you supply the parameter `--auth-proxy /path/to/program` then
+rclone will use that program to generate backends on the fly which
+then are used to authenticate incoming requests.  This uses a simple
+JSON based protocl with input on STDIN and output on STDOUT.
+
+There is an example program
+[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/test_proxy.py)
+in the rclone source code.
+
+The program's job is to take a `user` and `pass` on the input and turn
+those into the config for a backend on STDOUT in JSON format.  This
+config will have any default parameters for the backend added, but it
+won't use configuration from environment variables or command line
+options - it is the job of the proxy program to make a complete
+config.
+
+This config generated must have this extra parameter
+- `_root` - root to use for the backend
+
+And it may have this parameter
+- `_obscure` - comma separated strings for parameters to obscure
+
+For example the program might take this on STDIN
+
+```
+{
+	"user": "me",
+	"pass": "mypassword"
+}
+```
+
+And return this on STDOUT
+
+```
+{
+	"type": "sftp",
+	"_root": "",
+	"_obscure": "pass",
+	"user": "me",
+	"pass": "mypassword",
+	"host": "sftp.example.com"
+}
+```
+
+This would mean that an SFTP backend would be created on the fly for
+the `user` and `pass` returned in the output to the host given.  Note
+that since `_obscure` is set to `pass`, rclone will obscure the `pass`
+parameter before creating the backend (which is required for sftp
+backends).
+
+The progam can manipulate the supplied `user` in any way, for example
+to make proxy to many different sftp backends, you could make the
+`user` be `user@example.com` and then set the `host` to `example.com`
+in the output and the user to `user`. For security you'd probably want
+to restrict the `host` to a limited list.
+
+Note that an internal cache is keyed on `user` so only use that for
+configuration, don't use `pass`.  This also means that if a user's
+password is changed the cache will need to expire (which takes 5 mins)
+before it takes effect.
+
+This can be used to build general purpose proxies to any kind of
+backend that rclone supports.  
+
 
 ```
 rclone serve webdav remote:path [flags]
@@ -223,6 +297,8 @@ rclone serve webdav remote:path [flags]
 
 ```
       --addr string                            IPaddress:Port or :Port to bind server to. (default "localhost:8080")
+      --auth-proxy string                      A program to use to create the backend from the auth.
+      --baseurl string                         Prefix for URLs - leave blank for root.
       --cert string                            SSL PEM key (concatenation of certificate and CA certificate)
       --client-ca string                       Client certificate authority to verify clients with
       --dir-cache-time duration                Time to cache directory entries for. (default 5m0s)

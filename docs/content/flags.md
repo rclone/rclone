@@ -1,12 +1,13 @@
 ---
 title: "Global Flags"
 description: "Rclone Global Flags"
-date: "2019-06-20T16:09:42+01:00"
+date: "2019-08-26T15:19:45+01:00"
 ---
 
 # Global Flags
 
-This describes the global flags available to every rclone command.
+This describes the global flags available to every rclone command
+split into two groups, non backend and backend flags.
 
 ## Non Backend Flags
 
@@ -25,8 +26,10 @@ These flags are available for every command.
   -c, --checksum                             Skip based on checksum (if available) & size, not mod-time & size
       --client-cert string                   Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                    Client SSL private key (PEM) for mutual TLS auth
+      --compare-dest string                  use DIR to server side copy flies from.
       --config string                        Config file. (default "$HOME/.config/rclone/rclone.conf")
       --contimeout duration                  Connect timeout (default 1m0s)
+      --copy-dest string                     Compare dest to DIR also.
       --cpuprofile string                    Write cpu profile to file
       --delete-after                         When synchronizing, delete files on destination after transferring (default)
       --delete-before                        When synchronizing, delete files on destination before transferring
@@ -63,6 +66,7 @@ These flags are available for every command.
       --max-delete int                       When synchronizing, limit the number of deletes (default -1)
       --max-depth int                        If set limits the recursion depth to this. (default -1)
       --max-size SizeSuffix                  Only transfer files smaller than this in k or suffix b|k|M|G (default off)
+      --max-stats-groups int                 Maximum number of stats groups to keep in memory. On max oldest is discarded. (default 1000)
       --max-transfer SizeSuffix              Maximum size of data to transfer. (default off)
       --memprofile string                    Write memory profile to file
       --min-age Duration                     Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
@@ -78,6 +82,8 @@ These flags are available for every command.
   -q, --quiet                                Print as little stuff as possible
       --rc                                   Enable the remote control server.
       --rc-addr string                       IPaddress:Port or :Port to bind server to. (default "localhost:5572")
+      --rc-allow-origin string               Set the allowed origin for CORS.
+      --rc-baseurl string                    Prefix for URLs - leave blank for root.
       --rc-cert string                       SSL PEM key (concatenation of certificate and CA certificate)
       --rc-client-ca string                  Client certificate authority to verify clients with
       --rc-files string                      Path to local files to serve on the HTTP server.
@@ -93,6 +99,9 @@ These flags are available for every command.
       --rc-server-read-timeout duration      Timeout for server reading data (default 1h0m0s)
       --rc-server-write-timeout duration     Timeout for server writing data (default 1h0m0s)
       --rc-user string                       User name for authentication.
+      --rc-web-fetch-url string              URL to fetch the releases for webgui. (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
+      --rc-web-gui                           Launch WebGUI on localhost
+      --rc-web-gui-update                    Update / Force update to latest version of web gui
       --retries int                          Retry operations this many times if they fail (default 3)
       --retries-sleep duration               Interval between retrying operations if they fail, e.g 500ms, 60s, 5m. (0 to disable)
       --size-only                            Skip based on size only, not mod-time or checksum
@@ -104,7 +113,7 @@ These flags are available for every command.
       --stats-one-line-date-format string    Enables --stats-one-line-date and uses custom formatted date. Enclose date string in double quotes ("). See https://golang.org/pkg/time/#Time.Format
       --stats-unit string                    Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
       --streaming-upload-cutoff SizeSuffix   Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends. (default 100k)
-      --suffix string                        Suffix for use with --backup-dir.
+      --suffix string                        Suffix to add to changed files.
       --suffix-keep-extension                Preserve the extension when using --suffix.
       --syslog                               Use Syslog for logging
       --syslog-facility string               Facility for syslog, eg KERN,USER,... (default "DAEMON")
@@ -115,9 +124,10 @@ These flags are available for every command.
       --transfers int                        Number of file transfers to run in parallel. (default 4)
   -u, --update                               Skip files that are newer on the destination.
       --use-cookies                          Enable session cookiejar.
+      --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.48.0-012-g2192f468-gphotos-beta")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -135,16 +145,18 @@ and may be set in the config file.
       --acd-upload-wait-per-gb Duration              Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s)
       --alias-remote string                          Remote or path to alias.
       --azureblob-access-tier string                 Access tier of blob: hot, cool or archive.
-      --azureblob-account string                     Storage Account Name (leave blank to use connection string or SAS URL)
+      --azureblob-account string                     Storage Account Name (leave blank to use SAS URL or Emulator)
       --azureblob-chunk-size SizeSuffix              Upload chunk size (<= 100MB). (default 4M)
       --azureblob-endpoint string                    Endpoint for the service
-      --azureblob-key string                         Storage Account Key (leave blank to use connection string or SAS URL)
+      --azureblob-key string                         Storage Account Key (leave blank to use SAS URL or Emulator)
       --azureblob-list-chunk int                     Size of blob list. (default 5000)
       --azureblob-sas-url string                     SAS URL for container level access only
       --azureblob-upload-cutoff SizeSuffix           Cutoff for switching to chunked upload (<= 256MB). (default 256M)
+      --azureblob-use-emulator                       Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
       --b2-account string                            Account ID or Application Key ID
       --b2-chunk-size SizeSuffix                     Upload chunk size. Must fit in memory. (default 96M)
       --b2-disable-checksum                          Disable checksums for large (> upload cutoff) files
+      --b2-download-auth-duration Duration           Time before the authorization token will expire in s or suffix ms|s|m|h|d. (default 1w)
       --b2-download-url string                       Custom endpoint for downloads.
       --b2-endpoint string                           Endpoint for the service.
       --b2-hard-delete                               Permanently delete files on remote removal, otherwise hide files.
@@ -217,6 +229,8 @@ and may be set in the config file.
       --dropbox-client-id string                     Dropbox App Client Id
       --dropbox-client-secret string                 Dropbox App Client Secret
       --dropbox-impersonate string                   Impersonate this user when using a business account.
+      --fichier-api-key string                       Your API Key, get it from https://1fichier.com/console/params.pl
+      --fichier-shared-folder string                 If you want to download a shared folder, add this parameter
       --ftp-concurrency int                          Maximum number of FTP simultaneous connections, 0 for unlimited
       --ftp-host string                              FTP host to connect to
       --ftp-no-check-certificate                     Do not verify the TLS certificate of the server
@@ -235,7 +249,9 @@ and may be set in the config file.
       --gcs-storage-class string                     The storage class to use when storing objects in Google Cloud Storage.
       --gphotos-client-id string                     Google Application Client Id
       --gphotos-client-secret string                 Google Application Client Secret
+      --gphotos-read-only                            Set to make the Google Photos backend read only.
       --gphotos-read-size                            Set to read the size of media items.
+      --http-headers CommaSepList                    Set HTTP headers for all transactions
       --http-no-slash                                Set this if the site doesn't end directories with /
       --http-url string                              URL of http host to connect to
       --hubic-chunk-size SizeSuffix                  Above this size files will be chunked into a _segments container. (default 5G)
@@ -246,10 +262,10 @@ and may be set in the config file.
       --jottacloud-md5-memory-limit SizeSuffix       Files bigger than this will be cached on disk to calculate the MD5 if required. (default 10M)
       --jottacloud-unlink                            Remove existing public link to file/folder with link command rather than creating.
       --jottacloud-upload-resume-limit SizeSuffix    Files bigger than this can be resumed if the upload fail's. (default 10M)
-      --jottacloud-user string                       User Name:
       --koofr-endpoint string                        The Koofr API endpoint to use (default "https://app.koofr.net")
       --koofr-mountid string                         Mount ID of the mount to use. If omitted, the primary mount is used.
       --koofr-password string                        Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
+      --koofr-setmtime                               Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend. (default true)
       --koofr-user string                            Your Koofr user name
   -l, --links                                        Translate symlinks to/from regular files with a '.rclonelink' extension
       --local-case-insensitive                       Force the filesystem to report itself as case insensitive
@@ -307,11 +323,13 @@ and may be set in the config file.
       --sftp-key-file string                         Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.
       --sftp-key-file-pass string                    The passphrase to decrypt the PEM-encoded private key file.
       --sftp-key-use-agent                           When set forces the usage of the ssh-agent.
+      --sftp-md5sum-command string                   The command used to read md5 hashes. Leave blank for autodetect.
       --sftp-pass string                             SSH password, leave blank to use ssh-agent.
       --sftp-path-override string                    Override path used by SSH connection.
       --sftp-port string                             SSH port, leave blank to use default (22)
       --sftp-set-modtime                             Set the modified time on the remote if set. (default true)
-      --sftp-use-insecure-cipher                     Enable the use of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker.
+      --sftp-sha1sum-command string                  The command used to read sha1 hashes. Leave blank for autodetect.
+      --sftp-use-insecure-cipher                     Enable the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange. Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
       --sftp-user string                             SSH username, leave blank for current username, ncw
       --skip-links                                   Don't warn about skipped symlinks.
       --swift-application-credential-id string       Application Credential ID (OS_APPLICATION_CREDENTIAL_ID)
@@ -336,6 +354,7 @@ and may be set in the config file.
       --swift-user-id string                         User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
       --union-remotes string                         List of space separated remotes.
       --webdav-bearer-token string                   Bearer token instead of user/pass (eg a Macaroon)
+      --webdav-bearer-token-command string           Command to run to get a bearer token
       --webdav-pass string                           Password.
       --webdav-url string                            URL of http host to connect to
       --webdav-user string                           User name

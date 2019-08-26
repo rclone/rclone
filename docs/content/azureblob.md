@@ -145,7 +145,7 @@ Here are the standard options specific to azureblob (Microsoft Azure Blob Storag
 
 #### --azureblob-account
 
-Storage Account Name (leave blank to use connection string or SAS URL)
+Storage Account Name (leave blank to use SAS URL or Emulator)
 
 - Config:      account
 - Env Var:     RCLONE_AZUREBLOB_ACCOUNT
@@ -154,7 +154,7 @@ Storage Account Name (leave blank to use connection string or SAS URL)
 
 #### --azureblob-key
 
-Storage Account Key (leave blank to use connection string or SAS URL)
+Storage Account Key (leave blank to use SAS URL or Emulator)
 
 - Config:      key
 - Env Var:     RCLONE_AZUREBLOB_KEY
@@ -164,12 +164,21 @@ Storage Account Key (leave blank to use connection string or SAS URL)
 #### --azureblob-sas-url
 
 SAS URL for container level access only
-(leave blank if using account/key or connection string)
+(leave blank if using account/key or Emulator)
 
 - Config:      sas_url
 - Env Var:     RCLONE_AZUREBLOB_SAS_URL
 - Type:        string
 - Default:     ""
+
+#### --azureblob-use-emulator
+
+Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
+
+- Config:      use_emulator
+- Env Var:     RCLONE_AZUREBLOB_USE_EMULATOR
+- Type:        bool
+- Default:     false
 
 ### Advanced Options
 

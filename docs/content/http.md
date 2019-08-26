@@ -123,6 +123,25 @@ URL of http host to connect to
 
 Here are the advanced options specific to http (http Connection).
 
+#### --http-headers
+
+Set HTTP headers for all transactions
+
+Use this to set additional HTTP headers for all transactions
+
+The input format is comma separated list of key,value pairs.  Standard
+[CSV encoding](https://godoc.org/encoding/csv) may be used.
+
+For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+
+You can set multiple headers, eg '"Cookie","name=value","Authorization","xxx"'.
+
+
+- Config:      headers
+- Env Var:     RCLONE_HTTP_HEADERS
+- Type:        CommaSepList
+- Default:     
+
 #### --http-no-slash
 
 Set this if the site doesn't end directories with /
