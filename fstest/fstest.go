@@ -142,17 +142,6 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.CheckModTime(t, obj, obj.ModTime(context.Background()), precision)
 }
 
-// WinPath converts a path into a windows safe path
-func WinPath(s string) string {
-	return strings.Map(func(r rune) rune {
-		switch r {
-		case '<', '>', '"', '|', '?', '*', ':':
-			return '_'
-		}
-		return r
-	}, s)
-}
-
 // Normalize runs a utf8 normalization on the string if running on OS
 // X.  This is because OS X denormalizes file names it writes to the
 // local file system.
@@ -318,11 +307,11 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 	if expectedDirs != nil {
 		expectedDirsCopy := make([]string, len(expectedDirs))
 		for i, dir := range expectedDirs {
-			expectedDirsCopy[i] = WinPath(Normalize(dir))
+			expectedDirsCopy[i] = Normalize(dir)
 		}
 		actualDirs := []string{}
 		for _, dir := range dirs {
-			actualDirs = append(actualDirs, WinPath(Normalize(dir.Remote())))
+			actualDirs = append(actualDirs, Normalize(dir.Remote()))
 		}
 		sort.Strings(actualDirs)
 		sort.Strings(expectedDirsCopy)
@@ -383,11 +372,11 @@ func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDir
 	if expectedDirs != nil {
 		expectedDirsCopy := make([]string, len(expectedDirs))
 		for i, dir := range expectedDirs {
-			expectedDirsCopy[i] = WinPath(Normalize(dir))
+			expectedDirsCopy[i] = Normalize(dir)
 		}
 		actualDirs := []string{}
 		for _, dir := range dirs {
-			actualDirs = append(actualDirs, WinPath(Normalize(dir.Remote())))
+			actualDirs = append(actualDirs, Normalize(dir.Remote()))
 		}
 		sort.Strings(actualDirs)
 		sort.Strings(expectedDirsCopy)
