@@ -29,6 +29,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * Backblaze B2 [:page_facing_up:](https://rclone.org/b2/)
   * Box [:page_facing_up:](https://rclone.org/box/)
   * Ceph [:page_facing_up:](https://rclone.org/s3/#ceph)
+  * Citrix ShareFile [:page_facing_up:](https://rclone.org/sharefile/)
   * DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
   * Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)

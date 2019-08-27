@@ -32,6 +32,7 @@ docs = [
     "box.md",
     "cache.md",
     "chunker.md",
+    "sharefile.md",
     "crypt.md",
     "dropbox.md",
     "ftp.md",
