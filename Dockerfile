@@ -4,7 +4,9 @@ COPY . /go/src/github.com/rclone/rclone/
 WORKDIR /go/src/github.com/rclone/rclone/
 
 RUN make quicktest
-RUN go build -v
+RUN \
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+  go build -v
 RUN ./rclone version
 
 # Begin final image
