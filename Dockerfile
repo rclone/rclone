@@ -3,6 +3,7 @@ FROM golang AS builder
 COPY . /go/src/github.com/rclone/rclone/
 WORKDIR /go/src/github.com/rclone/rclone/
 
+RUN make quicktest
 RUN go build -v
 RUN ./rclone version
 
