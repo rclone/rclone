@@ -22,6 +22,7 @@ Here is an overview of the major features of each cloud storage system.
 | Amazon S3                    | MD5         | Yes     | No               | No              | R/W       |
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
 | Box                          | SHA1        | Yes     | Yes              | No              | -         |
+| Citrix ShareFile             | MD5         | Yes     | Yes              | No              | -         |
 | Dropbox                      | DBHASH †    | Yes     | Yes              | No              | -         |
 | FTP                          | -           | No      | No               | No              | -         |
 | Google Cloud Storage         | MD5         | Yes     | No               | No              | R/W       |
@@ -143,6 +144,7 @@ operations more efficient.
 | Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
 | Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes | No  | No |
 | Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No  | Yes | Yes | No  | Yes |
+| Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No          | No  | Yes |
 | Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No  | Yes | Yes | Yes | Yes |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |

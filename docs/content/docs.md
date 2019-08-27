@@ -27,6 +27,7 @@ See the following for detailed instructions for
   * [Box](/box/)
   * [Cache](/cache/)
   * [Chunker](/chunker/) - transparently splits large files for other remotes
+  * [Citrix ShareFile](/sharefile/)
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Dropbox](/dropbox/)
