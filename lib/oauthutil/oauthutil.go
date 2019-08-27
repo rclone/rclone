@@ -42,6 +42,10 @@ const (
 	// RedirectLocalhostURL is redirect to local webserver when active with localhost
 	RedirectLocalhostURL = "http://localhost:" + bindPort + "/"
 
+	// RedirectPublicSecureURL is a public https URL which
+	// redirects to the local webserver
+	RedirectPublicSecureURL = "https://oauth.rclone.org/"
+
 	// AuthResponse is a template to handle the redirect URL for oauth requests
 	AuthResponse = `<!DOCTYPE html>
 <html lang="en">
@@ -380,7 +384,7 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 	// Detect whether we should use internal web server
 	useWebServer := false
 	switch oauthConfig.RedirectURL {
-	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
+	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL, RedirectPublicSecureURL:
 		if changed {
 			fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
 		}
