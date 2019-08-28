@@ -956,7 +956,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.Call(&opts)
 		if err != nil {
-			_ = resp.Body.Close()
 			return shouldRetry(resp, err)
 		}
 		token, err = rest.ReadBody(resp)
