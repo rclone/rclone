@@ -181,7 +181,7 @@ This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
-Supported quirks: nogzip insecure binlist lsnames atomicmkdir retry400.`,
+Supported quirks: nogzip insecure binlist atomicmkdir retry400.`,
 			Default:  "",
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
@@ -368,7 +368,6 @@ type quirks struct {
 	nogzip      bool
 	insecure    bool
 	binlist     bool
-	lsnames     bool
 	atomicmkdir bool
 	retry400    bool
 }
@@ -404,10 +403,6 @@ func (q *quirks) parseQuirks(option string) {
 			// This quirk can be used to enable it for further investigation.
 			// This quirk can be removed when the "bin" support is finished.
 			q.binlist = true
-		case "lsnames":
-			// This quirk should be used as "-vvv --mailru-quirks=lsnames".
-			// It slightly extends the "ls" subcommand debug logs.
-			q.lsnames = true
 		case "atomicmkdir":
 			// At the moment rclone requires Mkdir to return success if the
 			// directory already exists. However, such programs as borgbackup
@@ -679,7 +674,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		entries, err = f.listM1(f.absPath(dir), 0, maxInt32)
 	}
 
-	if err == nil && f.quirks.lsnames {
+	if err == nil && fs.Config.LogLevel >= fs.LogLevelDebug {
 		names := []string{}
 		for _, entry := range entries {
 			names = append(names, entry.Remote())
