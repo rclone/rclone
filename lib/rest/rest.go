@@ -46,7 +46,7 @@ func ReadBody(resp *http.Response) (result []byte, err error) {
 }
 
 // defaultErrorHandler doesn't attempt to parse the http body, just
-// returns it in the error message
+// returns it in the error message closing resp.Body
 func defaultErrorHandler(resp *http.Response) (err error) {
 	body, err := ReadBody(resp)
 	if err != nil {
@@ -178,8 +178,10 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 
 // Call makes the call and returns the http.Response
 //
-// if err != nil then resp.Body will need to be closed unless
+// if err == nil then resp.Body will need to be closed unless
 // opt.NoResponse is set
+//
+// if err != nil then resp.Body will have been closed
 //
 // it will return resp if at all possible, even if err is set
 func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
