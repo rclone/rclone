@@ -10,7 +10,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/ncw/rclone/lib/readers"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/pkg/errors"
 )
 
