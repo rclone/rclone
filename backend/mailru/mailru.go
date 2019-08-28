@@ -181,7 +181,7 @@ This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
-Supported quirks: nogzip insecure binlist lsnames atomicmkdir dumperr retry400.`,
+Supported quirks: nogzip insecure binlist lsnames atomicmkdir retry400.`,
 			Default:  "",
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
@@ -212,10 +212,6 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
-// dumpErrorDetails is a remote troubleshooting aid.
-// Globally affects all backend instances.
-var dumpErrorDetails bool
-
 // shouldRetry returns a boolean as to whether this response and err
 // deserve to be retried. It returns the err as a convenience.
 // Retries password authorization (once) in a special case of access denied.
@@ -235,9 +231,6 @@ func errorHandler(res *http.Response) (err error) {
 	data, err := rest.ReadBody(res)
 	if err != nil {
 		return err
-	}
-	if dumpErrorDetails {
-		fs.Errorf(nil, "Detailed mailru error: %d %q %q", res.StatusCode, res.Status, string(data))
 	}
 	fileError := &api.FileErrorResponse{}
 	err = json.NewDecoder(bytes.NewReader(data)).Decode(fileError)
@@ -334,9 +327,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f.cli = fshttp.NewClient(&clientConfig)
 	f.srv = rest.NewClient(f.cli).SetRoot(api.APIServerURL)
 	f.srv.SetErrorHandler(errorHandler)
-	if f.quirks.dumperr {
-		dumpErrorDetails = true
-	}
 
 	if f.quirks.insecure {
 		transport := f.cli.Transport.(*fshttp.Transport).Transport
@@ -380,7 +370,6 @@ type quirks struct {
 	binlist     bool
 	lsnames     bool
 	atomicmkdir bool
-	dumperr     bool
 	retry400    bool
 }
 
@@ -426,10 +415,6 @@ func (q *quirks) parseQuirks(option string) {
 			// atomicity. This quirk is a workaround. It can be removed
 			// when the above issue is investigated.
 			q.atomicmkdir = true
-		case "dumperr":
-			// This quirk is a duplicate of the --dump-headers / --dump-bodies
-			// command-line options.
-			q.dumperr = true
 		case "retry400":
 			// This quirk will help in troubleshooting a very rare "Error 400"
 			// issue. It can be removed if the problem does not show up
