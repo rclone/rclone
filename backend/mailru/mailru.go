@@ -1549,7 +1549,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	// Upload object data
 	if size <= mrhash.Size {
-		// Skip extra upload request if data fits in the hash buffer
+		// Optimize upload: skip extra request if data fits in the hash buffer.
 		if fileBuf == nil {
 			fileBuf, err = ioutil.ReadAll(wrapIn)
 		}

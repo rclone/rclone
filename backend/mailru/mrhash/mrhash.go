@@ -1,6 +1,8 @@
-// Package mrhash implements the mailru hash, which is
-// slightly augmented SHA1.
-// TODO describe it
+// Package mrhash implements the mailru hash, which is a modified SHA1.
+// If file size is less than or equal to the SHA1 block size (20 bytes),
+// its hash is simply its data right-padded with zero bytes.
+// Hash sum of a larger file is computed as a SHA1 sum of the file data
+// bytes concatenated with a decimal representation of the data length.
 package mrhash
 
 import (
