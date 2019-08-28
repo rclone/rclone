@@ -4,7 +4,7 @@ description: "Rclone docs for the local filesystem"
 date: "2014-04-26"
 ---
 
-<i class="fa fa-file"></i> Local Filesystem
+<i class="fas fa-hdd"></i> Local Filesystem
 -------------------------------------------
 
 Local paths are specified as normal filesystem paths, eg `/path/to/wherever`, so
@@ -315,6 +315,32 @@ Don't cross filesystem boundaries (unix/macOS only).
 
 - Config:      one_file_system
 - Env Var:     RCLONE_LOCAL_ONE_FILE_SYSTEM
+- Type:        bool
+- Default:     false
+
+#### --local-case-sensitive
+
+Force the filesystem to report itself as case sensitive.
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.
+
+- Config:      case_sensitive
+- Env Var:     RCLONE_LOCAL_CASE_SENSITIVE
+- Type:        bool
+- Default:     false
+
+#### --local-case-insensitive
+
+Force the filesystem to report itself as case insensitive
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.
+
+- Config:      case_insensitive
+- Env Var:     RCLONE_LOCAL_CASE_INSENSITIVE
 - Type:        bool
 - Default:     false
 

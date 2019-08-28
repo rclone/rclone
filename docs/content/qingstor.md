@@ -4,7 +4,7 @@ description: "Rclone docs for QingStor Object Storage"
 date: "2017-06-26"
 ---
 
-<i class="fa fa-hdd-o"></i> QingStor
+<i class="fas fa-hdd"></i> QingStor
 ---------------------------------------
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
@@ -27,37 +27,11 @@ n/r/c/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Drive
-   \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 3 / Backblaze B2
-   \ "b2"
- 4 / Dropbox
-   \ "dropbox"
- 5 / Encrypt/Decrypt a remote
-   \ "crypt"
- 6 / FTP Connection
-   \ "ftp"
- 7 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
- 8 / Google Drive
-   \ "drive"
- 9 / Hubic
-   \ "hubic"
-10 / Local Disk
-   \ "local"
-11 / Microsoft OneDrive
-   \ "onedrive"
-12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-   \ "swift"
-13 / QingStor Object Storage
+[snip]
+XX / QingStor Object Storage
    \ "qingstor"
-14 / SSH/SFTP Connection
-   \ "sftp"
-15 / Yandex Disk
-   \ "yandex"
-Storage> 13
+[snip]
+Storage> qingstor
 Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.
 Choose a number from below, or type in your own value
  1 / Enter QingStor credentials in the next step

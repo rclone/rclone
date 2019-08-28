@@ -4,7 +4,7 @@ description: "Rclone docs for Microsoft OneDrive"
 date: "2015-10-14"
 ---
 
-<i class="fa fa-windows"></i> Microsoft OneDrive
+<i class="fab fa-windows"></i> Microsoft OneDrive
 -----------------------------------------
 
 Paths are specified as `remote:path`
@@ -34,11 +34,11 @@ name> remote
 Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
-...
-18 / Microsoft OneDrive
+[snip]
+XX / Microsoft OneDrive
    \ "onedrive"
-...
-Storage> 18
+[snip]
+Storage> onedrive
 Microsoft App Client Id
 Leave blank normally.
 Enter a string value. Press Enter for the default ("").

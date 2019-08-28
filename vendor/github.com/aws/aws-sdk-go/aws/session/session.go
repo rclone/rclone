@@ -3,6 +3,7 @@ package session
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -103,8 +104,20 @@ func New(cfgs ...*aws.Config) *Session {
 	}
 
 	s := deprecatedNewSession(cfgs...)
-	if envCfg.CSMEnabled {
-		enableCSM(&s.Handlers, envCfg.CSMClientID, envCfg.CSMPort, s.Config.Logger)
+
+	if csmCfg, err := loadCSMConfig(envCfg, []string{}); err != nil {
+		if l := s.Config.Logger; l != nil {
+			l.Log(fmt.Sprintf("ERROR: failed to load CSM configuration, %v", err))
+		}
+	} else if csmCfg.Enabled {
+		err := enableCSM(&s.Handlers, csmCfg, s.Config.Logger)
+		if err != nil {
+			err = fmt.Errorf("failed to enable CSM, %v", err)
+			s.Config.Logger.Log("ERROR:", err.Error())
+			s.Handlers.Validate.PushBack(func(r *request.Request) {
+				r.Error = err
+			})
+		}
 	}
 
 	return s
@@ -272,7 +285,7 @@ func NewSessionWithOptions(opts Options) (*Session, error) {
 		envCfg = loadEnvConfig()
 	}
 
-	if len(opts.Profile) > 0 {
+	if len(opts.Profile) != 0 {
 		envCfg.Profile = opts.Profile
 	}
 
@@ -338,17 +351,18 @@ func deprecatedNewSession(cfgs ...*aws.Config) *Session {
 	return s
 }
 
-func enableCSM(handlers *request.Handlers, clientID string, port string, logger aws.Logger) {
-	logger.Log("Enabling CSM")
-	if len(port) == 0 {
-		port = csm.DefaultPort
+func enableCSM(handlers *request.Handlers, cfg csmConfig, logger aws.Logger) error {
+	if logger != nil {
+		logger.Log("Enabling CSM")
 	}
 
-	r, err := csm.Start(clientID, "127.0.0.1:"+port)
+	r, err := csm.Start(cfg.ClientID, csm.AddressWithDefaults(cfg.Host, cfg.Port))
 	if err != nil {
-		return
+		return err
 	}
 	r.InjectHandlers(handlers)
+
+	return nil
 }
 
 func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, error) {
@@ -363,6 +377,7 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 	// credentials were.
 	userCfg := &aws.Config{}
 	userCfg.MergeIn(cfgs...)
+	cfg.MergeIn(userCfg)
 
 	// Ordered config files will be loaded in with later files overwriting
 	// previous config file values.
@@ -379,9 +394,17 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 	}
 
 	// Load additional config from file(s)
-	sharedCfg, err := loadSharedConfig(envCfg.Profile, cfgFiles)
+	sharedCfg, err := loadSharedConfig(envCfg.Profile, cfgFiles, envCfg.EnableSharedConfig)
 	if err != nil {
-		return nil, err
+		if len(envCfg.Profile) == 0 && !envCfg.EnableSharedConfig && (envCfg.Creds.HasKeys() || userCfg.Credentials != nil) {
+			// Special case where the user has not explicitly specified an AWS_PROFILE,
+			// or session.Options.profile, shared config is not enabled, and the
+			// environment has credentials, allow the shared config file to fail to
+			// load since the user has already provided credentials, and nothing else
+			// is required to be read file. Github(aws/aws-sdk-go#2455)
+		} else if _, ok := err.(SharedConfigProfileNotExistsError); !ok {
+			return nil, err
+		}
 	}
 
 	if err := mergeConfigSrcs(cfg, userCfg, envCfg, sharedCfg, handlers, opts); err != nil {
@@ -394,8 +417,16 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 	}
 
 	initHandlers(s)
-	if envCfg.CSMEnabled {
-		enableCSM(&s.Handlers, envCfg.CSMClientID, envCfg.CSMPort, s.Config.Logger)
+
+	if csmCfg, err := loadCSMConfig(envCfg, cfgFiles); err != nil {
+		if l := s.Config.Logger; l != nil {
+			l.Log(fmt.Sprintf("ERROR: failed to load CSM configuration, %v", err))
+		}
+	} else if csmCfg.Enabled {
+		err = enableCSM(&s.Handlers, csmCfg, s.Config.Logger)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Setup HTTP client with custom cert bundle if enabled
@@ -406,6 +437,46 @@ func newSession(opts Options, envCfg envConfig, cfgs ...*aws.Config) (*Session, 
 	}
 
 	return s, nil
+}
+
+type csmConfig struct {
+	Enabled  bool
+	Host     string
+	Port     string
+	ClientID string
+}
+
+var csmProfileName = "aws_csm"
+
+func loadCSMConfig(envCfg envConfig, cfgFiles []string) (csmConfig, error) {
+	if envCfg.CSMEnabled != nil {
+		if *envCfg.CSMEnabled {
+			return csmConfig{
+				Enabled:  true,
+				ClientID: envCfg.CSMClientID,
+				Host:     envCfg.CSMHost,
+				Port:     envCfg.CSMPort,
+			}, nil
+		}
+		return csmConfig{}, nil
+	}
+
+	sharedCfg, err := loadSharedConfig(csmProfileName, cfgFiles, false)
+	if err != nil {
+		if _, ok := err.(SharedConfigProfileNotExistsError); !ok {
+			return csmConfig{}, err
+		}
+	}
+	if sharedCfg.CSMEnabled != nil && *sharedCfg.CSMEnabled == true {
+		return csmConfig{
+			Enabled:  true,
+			ClientID: sharedCfg.CSMClientID,
+			Host:     sharedCfg.CSMHost,
+			Port:     sharedCfg.CSMPort,
+		}, nil
+	}
+
+	return csmConfig{}, nil
 }
 
 func loadCustomCABundle(s *Session, bundle io.Reader) error {
@@ -461,8 +532,6 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config,
 	handlers request.Handlers,
 	sessOpts Options,
 ) error {
-	// Merge in user provided configuration
-	cfg.MergeIn(userCfg)
 
 	// Region if not already set by user
 	if len(aws.StringValue(cfg.Region)) == 0 {

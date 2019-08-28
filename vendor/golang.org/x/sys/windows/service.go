@@ -159,6 +159,10 @@ type SERVICE_DESCRIPTION struct {
 	Description *uint16
 }
 
+type SERVICE_DELAYED_AUTO_START_INFO struct {
+	IsDelayedAutoStartUp uint32
+}
+
 type SERVICE_STATUS_PROCESS struct {
 	ServiceType             uint32
 	CurrentState            uint32

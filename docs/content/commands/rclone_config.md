@@ -1,5 +1,5 @@
 ---
-date: 2019-06-20T16:09:42+01:00
+date: 2019-08-26T15:19:45+01:00
 title: "rclone config"
 slug: rclone_config
 url: /commands/rclone_config/
@@ -32,11 +32,14 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone config create](/commands/rclone_config_create/)	 - Create a new remote with name, type and options.
 * [rclone config delete](/commands/rclone_config_delete/)	 - Delete an existing remote <name>.
+* [rclone config disconnect](/commands/rclone_config_disconnect/)	 - Disconnects user from remote
 * [rclone config dump](/commands/rclone_config_dump/)	 - Dump the config file as JSON.
 * [rclone config edit](/commands/rclone_config_edit/)	 - Enter an interactive configuration session.
 * [rclone config file](/commands/rclone_config_file/)	 - Show path of configuration file in use.
 * [rclone config password](/commands/rclone_config_password/)	 - Update password in an existing remote.
 * [rclone config providers](/commands/rclone_config_providers/)	 - List in JSON format all the providers and options.
+* [rclone config reconnect](/commands/rclone_config_reconnect/)	 - Re-authenticates user with remote.
 * [rclone config show](/commands/rclone_config_show/)	 - Print (decrypted) config file, or the config for a single remote.
 * [rclone config update](/commands/rclone_config_update/)	 - Update options in an existing remote.
+* [rclone config userinfo](/commands/rclone_config_userinfo/)	 - Prints info about logged in user of remote.
 

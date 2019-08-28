@@ -4,7 +4,7 @@ description: "Rclone docs for Google Photos"
 date: "2019-06-25"
 ---
 
-<i class="fa fa-photo"></i> Google Photos
+<i class="fa fa-images"></i> Google Photos
 -------------------------------------------------
 
 The rclone backend for [Google Photos](https://www.google.com/photos/about/) is
@@ -38,7 +38,7 @@ Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
 [snip]
-13 / Google Photos
+XX / Google Photos
    \ "google photos"
 [snip]
 Storage> google photos

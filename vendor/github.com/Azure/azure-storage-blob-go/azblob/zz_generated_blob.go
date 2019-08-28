@@ -6,14 +6,13 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // blobClient is the client for the Blob methods of the Azblob service.
@@ -325,6 +324,111 @@ func (client blobClient) changeLeaseResponder(resp pipeline.Response) (pipeline.
 	io.Copy(ioutil.Discard, resp.Response().Body)
 	resp.Response().Body.Close()
 	return &BlobChangeLeaseResponse{rawResponse: resp.Response()}, err
+}
+
+// CopyFromURL the Copy From URL operation copies a blob or an internet resource to a new blob. It will not return a
+// response until the copy is complete.
+//
+// copySource is specifies the name of the source page blob snapshot. This value is a URL of up to 2 KB in length that
+// specifies a page blob snapshot. The value should be URL-encoded as it would appear in a request URI. The source blob
+// must either be public or must be authenticated via a shared access signature. timeout is the timeout parameter is
+// expressed in seconds. For more information, see <a
+// href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
+// Timeouts for Blob Service Operations.</a> metadata is optional. Specifies a user-defined name-value pair associated
+// with the blob. If no name-value pairs are specified, the operation will copy the metadata from the source blob or
+// file to the destination blob. If one or more name-value pairs are specified, the destination blob is created with
+// the specified metadata, and metadata is not copied from the source blob or file. Note that beginning with version
+// 2009-09-19, metadata names must adhere to the naming rules for C# identifiers. See Naming and Referencing
+// Containers, Blobs, and Metadata for more information. sourceIfModifiedSince is specify this header value to operate
+// only on a blob if it has been modified since the specified date/time. sourceIfUnmodifiedSince is specify this header
+// value to operate only on a blob if it has not been modified since the specified date/time. sourceIfMatch is specify
+// an ETag value to operate only on blobs with a matching value. sourceIfNoneMatch is specify an ETag value to operate
+// only on blobs without a matching value. ifModifiedSince is specify this header value to operate only on a blob if it
+// has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only on a
+// blob if it has not been modified since the specified date/time. ifMatch is specify an ETag value to operate only on
+// blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching value.
+// leaseID is if specified, the operation only succeeds if the resource's lease is active and matches this ID.
+// requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics
+// logs when storage analytics logging is enabled.
+func (client blobClient) CopyFromURL(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (*BlobCopyFromURLResponse, error) {
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
+	req, err := client.copyFromURLPreparer(copySource, timeout, metadata, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, leaseID, requestID)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.copyFromURLResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*BlobCopyFromURLResponse), err
+}
+
+// copyFromURLPreparer prepares the CopyFromURL request.
+func (client blobClient) copyFromURLPreparer(copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("PUT", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
+	}
+	req.URL.RawQuery = params.Encode()
+	if metadata != nil {
+		for k, v := range metadata {
+			req.Header.Set("x-ms-meta-"+k, v)
+		}
+	}
+	if sourceIfModifiedSince != nil {
+		req.Header.Set("x-ms-source-if-modified-since", (*sourceIfModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if sourceIfUnmodifiedSince != nil {
+		req.Header.Set("x-ms-source-if-unmodified-since", (*sourceIfUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if sourceIfMatch != nil {
+		req.Header.Set("x-ms-source-if-match", string(*sourceIfMatch))
+	}
+	if sourceIfNoneMatch != nil {
+		req.Header.Set("x-ms-source-if-none-match", string(*sourceIfNoneMatch))
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatch != nil {
+		req.Header.Set("If-Match", string(*ifMatch))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-copy-source", copySource)
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	req.Header.Set("x-ms-requires-sync", "true")
+	return req, nil
+}
+
+// copyFromURLResponder handles the response to the CopyFromURL request.
+func (client blobClient) copyFromURLResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlobCopyFromURLResponse{rawResponse: resp.Response()}, err
 }
 
 // CreateSnapshot the Create Snapshot operation creates a read-only snapshot of a blob

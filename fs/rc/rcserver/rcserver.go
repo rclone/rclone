@@ -2,6 +2,7 @@
 package rcserver
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -89,8 +90,17 @@ func (s *Server) Serve() error {
 		}
 		// Add username, password into the URL if they are set
 		user, pass := s.opt.HTTPOptions.BasicUser, s.opt.HTTPOptions.BasicPass
-		if user != "" || pass != "" {
+		if user != "" && pass != "" {
 			openURL.User = url.UserPassword(user, pass)
+
+			// Base64 encode username and password to be sent through url
+			loginToken := user + ":" + pass
+			parameters := url.Values{}
+			encodedToken := base64.URLEncoding.EncodeToString([]byte(loginToken))
+			fs.Debugf(nil, "login_token %q", encodedToken)
+			parameters.Add("login_token", encodedToken)
+			openURL.RawQuery = parameters.Encode()
+			openURL.RawPath = "/#/login"
 		}
 		// Don't open browser if serving in testing environment.
 		if flag.Lookup("test.v") == nil {
@@ -128,7 +138,11 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 
 // handler reads incoming requests and dispatches them
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, "/")
+	urlPath, ok := s.Path(w, r)
+	if !ok {
+		return
+	}
+	path := strings.TrimLeft(urlPath, "/")
 
 	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
 	if allowOrigin != "" {
@@ -301,6 +315,7 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		return
 	case s.files != nil:
 		// Serve the files
+		r.URL.Path = "/" + path
 		s.files.ServeHTTP(w, r)
 		return
 	case path == "" && s.opt.Serve:

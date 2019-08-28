@@ -78,15 +78,15 @@ type (
 //
 // If f returns an error we assume the bucket was not created
 func (c *Cache) Create(bucket string, create CreateFn, exists ExistsFn) (err error) {
-	c.createMu.Lock()
-	defer c.createMu.Unlock()
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	// if we are at the root, then it is OK
 	if bucket == "" {
 		return nil
 	}
+
+	c.createMu.Lock()
+	defer c.createMu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	// if have exists fuction and bucket has been deleted, check
 	// it still exists
@@ -124,15 +124,15 @@ func (c *Cache) Create(bucket string, create CreateFn, exists ExistsFn) (err err
 //
 // If the bucket has already been deleted it returns ErrAlreadyDeleted
 func (c *Cache) Remove(bucket string, f func() error) error {
-	c.removeMu.Lock()
-	defer c.removeMu.Unlock()
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	// if we are at the root, then it is OK
 	if bucket == "" {
 		return nil
 	}
+
+	c.removeMu.Lock()
+	defer c.removeMu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	// If bucket already deleted then it is OK
 	if created, ok := c.status[bucket]; ok && !created {

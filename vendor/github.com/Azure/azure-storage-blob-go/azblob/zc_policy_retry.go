@@ -176,7 +176,8 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 				}
 
 				if !tryingPrimary {
-					requestCopy.Request.URL.Host = o.retryReadsFromSecondaryHost()
+					requestCopy.URL.Host = o.retryReadsFromSecondaryHost()
+					requestCopy.Host = o.retryReadsFromSecondaryHost()
 				}
 
 				// Set the server-side timeout query parameter "timeout=[seconds]"
@@ -211,7 +212,7 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 				switch {
 				case ctx.Err() != nil:
 					action = "NoRetry: Op timeout"
-				case !tryingPrimary && response != nil && response.Response().StatusCode == http.StatusNotFound:
+				case !tryingPrimary && response != nil && response.Response() != nil && response.Response().StatusCode == http.StatusNotFound:
 					// If attempt was against the secondary & it returned a StatusNotFound (404), then
 					// the resource was not found. This may be due to replication delay. So, in this
 					// case, we'll never try the secondary again for this operation.

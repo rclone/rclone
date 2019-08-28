@@ -197,8 +197,11 @@ const (
 	FILE_MAP_READ    = 0x04
 	FILE_MAP_EXECUTE = 0x20
 
-	CTRL_C_EVENT     = 0
-	CTRL_BREAK_EVENT = 1
+	CTRL_C_EVENT        = 0
+	CTRL_BREAK_EVENT    = 1
+	CTRL_CLOSE_EVENT    = 2
+	CTRL_LOGOFF_EVENT   = 5
+	CTRL_SHUTDOWN_EVENT = 6
 
 	// Windows reserves errors >= 1<<29 for application use.
 	APPLICATION_ERROR = 1 << 29

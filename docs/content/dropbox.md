@@ -4,7 +4,7 @@ description: "Rclone docs for Dropbox"
 date: "2016-02-21"
 ---
 
-<i class="fa fa-dropbox"></i> Dropbox
+<i class="fab fa-dropbox"></i> Dropbox
 ---------------------------------
 
 Paths are specified as `remote:path`
@@ -30,33 +30,11 @@ e/n/d/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Drive
-   \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 3 / Backblaze B2
-   \ "b2"
- 4 / Dropbox
+[snip]
+XX / Dropbox
    \ "dropbox"
- 5 / Encrypt/Decrypt a remote
-   \ "crypt"
- 6 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
- 7 / Google Drive
-   \ "drive"
- 8 / Hubic
-   \ "hubic"
- 9 / Local Disk
-   \ "local"
-10 / Microsoft OneDrive
-   \ "onedrive"
-11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-   \ "swift"
-12 / SSH/SFTP Connection
-   \ "sftp"
-13 / Yandex Disk
-   \ "yandex"
-Storage> 4
+[snip]
+Storage> dropbox
 Dropbox App Key - leave blank normally.
 app_key>
 Dropbox App Secret - leave blank normally.

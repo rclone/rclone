@@ -77,13 +77,14 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 // The destOffset specifies the start offset of data in page blob will be written to.
 // The count must be a multiple of 512 bytes.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page-from-url.
-func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL, sourceOffset int64, destOffset int64, count int64, ac PageBlobAccessConditions, transactionalMD5 []byte) (*PageBlobUploadPagesFromURLResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
-	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.SequenceNumberAccessConditions.pointers()
+func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL, sourceOffset int64, destOffset int64, count int64, transactionalMD5 []byte, destinationAccessConditions PageBlobAccessConditions, sourceAccessConditions ModifiedAccessConditions) (*PageBlobUploadPagesFromURLResponse, error) {
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := destinationAccessConditions.ModifiedAccessConditions.pointers()
+	sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag := sourceAccessConditions.pointers()
+	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := destinationAccessConditions.SequenceNumberAccessConditions.pointers()
 	return pb.pbClient.UploadPagesFromURL(ctx, sourceURL.String(), *PageRange{Start: sourceOffset, End: sourceOffset + count - 1}.pointers(), 0,
-		*PageRange{Start: destOffset, End: destOffset + count - 1}.pointers(), transactionalMD5, nil, ac.LeaseAccessConditions.pointers(),
+		*PageRange{Start: destOffset, End: destOffset + count - 1}.pointers(), transactionalMD5, nil, destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 
 // ClearPages frees the specified pages from the page blob.

@@ -597,10 +597,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 }
 
 // listBuckets lists the buckets
-func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
-	if dir != "" {
-		return nil, fs.ErrorListBucketRequired
-	}
+func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
 	if f.opt.ProjectNumber == "" {
 		return nil, errors.New("can't list buckets without project number")
 	}
@@ -638,7 +635,10 @@ func (f *Fs) listBuckets(dir string) (entries fs.DirEntries, err error) {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	bucket, directory := f.split(dir)
 	if bucket == "" {
-		return f.listBuckets(dir)
+		if directory != "" {
+			return nil, fs.ErrorListBucketRequired
+		}
+		return f.listBuckets(ctx)
 	}
 	return f.listDir(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "")
 }
@@ -672,7 +672,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		})
 	}
 	if bucket == "" {
-		entries, err := f.listBuckets("")
+		entries, err := f.listBuckets(ctx)
 		if err != nil {
 			return err
 		}
@@ -686,15 +686,17 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			if err != nil {
 				return err
 			}
+			// bucket must be present if listing succeeded
+			f.cache.MarkOK(bucket)
 		}
 	} else {
 		err = listR(bucket, directory, f.rootDirectory, f.rootBucket == "")
 		if err != nil {
 			return err
 		}
+		// bucket must be present if listing succeeded
+		f.cache.MarkOK(bucket)
 	}
-	// bucket must be present if listing succeeded
-	f.cache.MarkOK(bucket)
 	return list.Flush()
 }
 
@@ -720,6 +722,11 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	bucket, _ := f.split(dir)
+	return f.makeBucket(ctx, bucket)
+}
+
+// makeBucket creates the bucket if it doesn't exist
+func (f *Fs) makeBucket(ctx context.Context, bucket string) (err error) {
 	return f.cache.Create(bucket, func() error {
 		// List something from the bucket to see if it exists.  Doing it like this enables the use of a
 		// service account that only has the "Storage Object Admin" role.  See #2193 for details.
@@ -798,7 +805,7 @@ func (f *Fs) Precision() time.Duration {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstBucket, dstPath := f.split(remote)
-	err := f.Mkdir(ctx, "")
+	err := f.makeBucket(ctx, dstBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -1006,7 +1013,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	bucket, bucketPath := o.split()
-	err := o.fs.Mkdir(ctx, "")
+	err := o.fs.makeBucket(ctx, bucket)
 	if err != nil {
 		return err
 	}

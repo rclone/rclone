@@ -1,4 +1,4 @@
-[![Logo](https://rclone.org/img/rclone-120x120.png)](https://rclone.org/)
+[<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/)
 
 [Website](https://rclone.org) |
 [Documentation](https://rclone.org/docs/) |
@@ -6,7 +6,7 @@
 [Contributing](CONTRIBUTING.md) |
 [Changelog](https://rclone.org/changelog/) |
 [Installation](https://rclone.org/install/) |
-[Forum](https://forum.rclone.org/) | 
+[Forum](https://forum.rclone.org/)
 
 [![Build Status](https://travis-ci.org/rclone/rclone.svg?branch=master)](https://travis-ci.org/rclone/rclone)
 [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/rclone/rclone?branch=master&passingText=windows%20-%20ok&svg=true)](https://ci.appveyor.com/project/rclone/rclone)
@@ -53,7 +53,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * ownCloud [:page_facing_up:](https://rclone.org/webdav/#owncloud)
   * pCloud [:page_facing_up:](https://rclone.org/pcloud/)
   * premiumize.me [:page_facing_up:](https://rclone.org/premiumizeme/)
-  * put.io [:page_facing_up:](https://rclone.org/webdav/#put-io)
+  * put.io [:page_facing_up:](https://rclone.org/putio/)
   * QingStor [:page_facing_up:](https://rclone.org/qingstor/)
   * Rackspace Cloud Files [:page_facing_up:](https://rclone.org/swift/)
   * Scaleway [:page_facing_up:](https://rclone.org/s3/#scaleway)

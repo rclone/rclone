@@ -4,7 +4,7 @@ description: "Rclone docs for Jottacloud"
 date: "2018-08-07"
 ---
 
-<i class="fa fa-archive"></i> Jottacloud
+<i class="fa fa-cloud"></i> Jottacloud
 -----------------------------------------
 
 Paths are specified as `remote:path`
@@ -30,7 +30,7 @@ Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
 [snip]
-14 / JottaCloud
+XX / JottaCloud
    \ "jottacloud"
 [snip]
 Storage> jottacloud

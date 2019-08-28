@@ -263,6 +263,19 @@ func (c *cache) cacheDir(name string) {
 	}
 }
 
+// exists checks to see if the file exists in the cache or not
+func (c *cache) exists(name string) bool {
+	osPath := c.toOSPath(name)
+	fi, err := os.Stat(osPath)
+	if err != nil {
+		return false
+	}
+	if fi.IsDir() {
+		return false
+	}
+	return true
+}
+
 // _close marks name as closed - must be called with the lock held
 func (c *cache) _close(isFile bool, name string) {
 	for {

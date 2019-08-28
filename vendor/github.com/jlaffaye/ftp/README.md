@@ -32,3 +32,25 @@ if err := c.Quit(); err != nil {
     log.Fatal(err)
 }
 ```
+
+## Store a file example ##
+
+```go
+data := bytes.NewBufferString("Hello World")
+err = c.Stor("test-file.txt", data)
+if err != nil {
+	panic(err)
+}
+```
+
+## Read a file example ##
+
+```go
+r, err := c.Retr("test-file.txt")
+if err != nil {
+	panic(err)
+}
+
+buf, err := ioutil.ReadAll(r)
+println(string(buf))
+```

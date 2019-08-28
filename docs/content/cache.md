@@ -30,11 +30,11 @@ n/r/c/s/q> n
 name> test-cache
 Type of storage to configure.
 Choose a number from below, or type in your own value
-...
- 5 / Cache a remote
+[snip]
+XX / Cache a remote
    \ "cache"
-...
-Storage> 5
+[snip]
+Storage> cache
 Remote to cache.
 Normally should contain a ':' and a path, eg "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).

@@ -1,7 +1,7 @@
 ---
 title: "Licence"
 description: "Rclone Licence"
-date: "2015-06-06"
+date: "2019-08-24"
 ---
 
 License
@@ -11,7 +11,7 @@ This is free software under the terms of MIT the license (check the
 COPYING file included with the source code).
 
 ```
-Copyright (C) 2012 by Nick Craig-Wood https://www.craig-wood.com/nick/
+Copyright (C) 2019 by Nick Craig-Wood https://www.craig-wood.com/nick/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

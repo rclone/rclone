@@ -6,10 +6,7 @@ date: "2017-09-25"
 groups: ["about"]
 ---
 
-Rclone
-======
-
-[![Logo](/img/rclone-120x120.png)](https://rclone.org/)
+# Rclone - rsync for cloud storage
 
 Rclone is a command line program to sync files and directories to and from:
 
@@ -46,7 +43,7 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="ownCloud" home="https://owncloud.org/" config="/webdav/#owncloud" >}}
 * {{< provider name="pCloud" home="https://www.pcloud.com/" config="/pcloud/" >}}
 * {{< provider name="premiumize.me" home="https://premiumize.me/" config="/premiumizeme/" >}}
-* {{< provider name="put.io" home="https://put.io/" config="/webdav/#put-io" >}}
+* {{< provider name="put.io" home="https://put.io/" config="/putio/" >}}
 * {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 * {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 * {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
@@ -72,10 +69,11 @@ Features
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
   * Multi-threaded downloads to local disk
   * Can [serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[dlna](/commands/rclone_serve_dlna/)
+  * Experimental [Web based GUI](/gui/)
 
 Links
 
   * <i class="fa fa-home"></i> [Home page](https://rclone.org/)
-  * <i class="fa fa-github"></i> [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+  * <i class="fab fa-github"></i> [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
   * <i class="fa fa-comments"></i> [Rclone Forum](https://forum.rclone.org)
-  * <i class="fa fa-cloud-download"></i>[Downloads](/downloads/)
+  * <i class="fas fa-cloud-download-alt"></i>[Downloads](/downloads/)

@@ -1464,22 +1464,24 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 	}
 	//	var response api.UploadFragmentResponse
 	var resp *http.Response
+	var body []byte
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, _ = chunk.Seek(0, io.SeekStart)
 		resp, err = o.fs.srv.Call(&opts)
-		if resp != nil {
-			defer fs.CheckClose(resp.Body, &err)
+		if err != nil {
+			return shouldRetry(resp, err)
 		}
-		retry, err := shouldRetry(resp, err)
-		if !retry && resp != nil {
-			if resp.StatusCode == 200 || resp.StatusCode == 201 {
-				// we are done :)
-				// read the item
-				info = &api.Item{}
-				return false, json.NewDecoder(resp.Body).Decode(info)
-			}
+		body, err = rest.ReadBody(resp)
+		if err != nil {
+			return shouldRetry(resp, err)
 		}
-		return retry, err
+		if resp.StatusCode == 200 || resp.StatusCode == 201 {
+			// we are done :)
+			// read the item
+			info = &api.Item{}
+			return false, json.Unmarshal(body, info)
+		}
+		return false, nil
 	})
 	return info, err
 }

@@ -26,7 +26,7 @@
   "description": "Stores and retrieves potentially large, immutable data objects.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/storage/docs/json_api/",
-  "etag": "\"VPK3KBfpaEgZ16pozGOoMYfKc0U/g26t9M1iNI-j1-5ry7bpKWNPs60\"",
+  "etag": "\"9eZ1uxVRThTDhLJCZHhqs3eQWz4/m18VxIxuaQHJN-C1B3-yQYvta24\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/cloud_storage-16.png",
     "x32": "https://www.google.com/images/icons/product/cloud_storage-32.png"
@@ -3196,7 +3196,7 @@
       }
     }
   },
-  "revision": "20190523",
+  "revision": "20190624",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "Bucket": {
@@ -3292,11 +3292,26 @@
               "description": "The bucket's Bucket Policy Only configuration.",
               "properties": {
                 "enabled": {
-                  "description": "If set, access checks only use bucket-level IAM policies or above.",
+                  "description": "If set, access is controlled only by bucket-level or above IAM policies.",
                   "type": "boolean"
                 },
                 "lockedTime": {
-                  "description": "The deadline time for changing iamConfiguration.bucketPolicyOnly.enabled from true to false in RFC 3339 format. iamConfiguration.bucketPolicyOnly.enabled may be changed from true to false until the locked time, after which the field is immutable.",
+                  "description": "The deadline for changing iamConfiguration.bucketPolicyOnly.enabled from true to false in RFC 3339 format. iamConfiguration.bucketPolicyOnly.enabled may be changed from true to false until the locked time, after which the field is immutable.",
+                  "format": "date-time",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "uniformBucketLevelAccess": {
+              "description": "The bucket's uniform bucket-level access configuration.",
+              "properties": {
+                "enabled": {
+                  "description": "If set, access is controlled only by bucket-level or above IAM policies.",
+                  "type": "boolean"
+                },
+                "lockedTime": {
+                  "description": "The deadline for changing iamConfiguration.uniformBucketLevelAccess.enabled from true to false in RFC 3339  format. iamConfiguration.uniformBucketLevelAccess.enabled may be changed from true to false until the locked time, after which the field is immutable.",
                   "format": "date-time",
                   "type": "string"
                 }
@@ -3641,7 +3656,7 @@
         },
         "kind": {
           "default": "api#channel",
-          "description": "Identifies this as a notification channel used to watch for changes to a resource. Value: the fixed string \"api#channel\".",
+          "description": "Identifies this as a notification channel used to watch for changes to a resource, which is \"api#channel\".",
           "type": "string"
         },
         "params": {

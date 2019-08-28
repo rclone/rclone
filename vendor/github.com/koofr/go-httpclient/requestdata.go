@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,6 +16,7 @@ const (
 )
 
 type RequestData struct {
+	Context          context.Context
 	Method           string
 	Path             string
 	Params           url.Values

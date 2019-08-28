@@ -11,10 +11,9 @@ require (
 	golang.org/x/lint v0.0.0-20190313153728-d0100b6bd8b3
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
-	golang.org/x/tools v0.0.0-20190311212946-11955173bddd
+	golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135
 	google.golang.org/appengine v1.1.0 // indirect
 	google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
-	honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099
+	honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc
 )

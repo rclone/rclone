@@ -39,6 +39,15 @@ func (f SharedKeyCredential) AccountName() string {
 	return f.accountName
 }
 
+func (f SharedKeyCredential) getAccountKey() []byte {
+	return f.accountKey
+}
+
+// noop function to satisfy StorageAccountCredential interface
+func (f SharedKeyCredential) getUDKParams() *UserDelegationKey {
+	return nil
+}
+
 // New creates a credential policy object.
 func (f *SharedKeyCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return pipeline.PolicyFunc(func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
@@ -88,7 +97,7 @@ const (
 )
 
 // ComputeHMACSHA256 generates a hash signature for an HTTP request or for a SAS.
-func (f *SharedKeyCredential) ComputeHMACSHA256(message string) (base64String string) {
+func (f SharedKeyCredential) ComputeHMACSHA256(message string) (base64String string) {
 	h := hmac.New(sha256.New, f.accountKey)
 	h.Write([]byte(message))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))

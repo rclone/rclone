@@ -19,8 +19,6 @@ canStream = false
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -44,6 +42,7 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
@@ -664,7 +663,7 @@ func (f *Fs) move(ctx context.Context, isFile bool, id, oldLeaf, newLeaf, oldDir
 	// another directory to make sure we don't overwrite something
 	// in the destination directory by accident
 	if doRenameLeaf && doMove {
-		tmpLeaf := newLeaf + "." + randomString(8)
+		tmpLeaf := newLeaf + "." + random.String(8)
 		err = f.renameLeaf(ctx, isFile, id, tmpLeaf)
 		if err != nil {
 			return errors.Wrap(err, "Move rename leaf")
@@ -1010,13 +1009,6 @@ func (o *Object) metaHash() string {
 	return fmt.Sprintf("remote=%q, size=%d, modTime=%v, id=%q, mimeType=%q", o.remote, o.size, o.modTime, o.id, o.mimeType)
 }
 
-// randomString returns a string with 8*bytes bits of entropy
-func randomString(bytes int) string {
-	var pw = make([]byte, bytes)
-	_, _ = rand.Read(pw)
-	return base64.RawURLEncoding.EncodeToString(pw)
-}
-
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // If existing is set then it updates the object rather than creating a new one
@@ -1073,7 +1065,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	uploaded := false
 	var oldID = o.id
 	if o.hasMetaData {
-		newLeaf := leaf + "." + randomString(8)
+		newLeaf := leaf + "." + random.String(8)
 		fs.Debugf(o, "Moving old file out the way to %q", newLeaf)
 		err = o.fs.renameLeaf(ctx, true, oldID, newLeaf)
 		if err != nil {

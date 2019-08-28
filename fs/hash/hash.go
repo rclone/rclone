@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash"
+	"hash/crc32"
 	"io"
 	"strings"
 
@@ -40,13 +41,16 @@ const (
 	// Whirlpool indicates Whirlpool support
 	Whirlpool
 
+	// CRC32 indicates CRC-32 support
+	CRC32
+
 	// None indicates no hashes are supported
 	None Type = 0
 )
 
 // Supported returns a set of all the supported hashes by
 // HashStream and MultiHasher.
-var Supported = NewHashSet(MD5, SHA1, Dropbox, QuickXorHash, Whirlpool)
+var Supported = NewHashSet(MD5, SHA1, Dropbox, QuickXorHash, Whirlpool, CRC32)
 
 // Width returns the width in characters for any HashType
 var Width = map[Type]int{
@@ -55,6 +59,7 @@ var Width = map[Type]int{
 	Dropbox:      64,
 	QuickXorHash: 40,
 	Whirlpool:    128,
+	CRC32:        8,
 }
 
 // Stream will calculate hashes of all supported hash types.
@@ -96,6 +101,8 @@ func (h Type) String() string {
 		return "QuickXorHash"
 	case Whirlpool:
 		return "Whirlpool"
+	case CRC32:
+		return "CRC-32"
 	default:
 		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
 		panic(err)
@@ -117,6 +124,8 @@ func (h *Type) Set(s string) error {
 		*h = QuickXorHash
 	case "Whirlpool":
 		*h = Whirlpool
+	case "CRC-32":
+		*h = CRC32
 	default:
 		return errors.Errorf("Unknown hash type %q", s)
 	}
@@ -149,6 +158,8 @@ func fromTypes(set Set) (map[Type]hash.Hash, error) {
 			hashers[t] = quickxorhash.New()
 		case Whirlpool:
 			hashers[t] = whirlpool.New()
+		case CRC32:
+			hashers[t] = crc32.NewIEEE()
 		default:
 			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
 			panic(err)

@@ -281,3 +281,6 @@ Contributors
   * Macavirus <macavirus@zoho.com>
   * Abhinav Sharma <abhi18av@users.noreply.github.com>
   * ginvine <34869051+ginvine@users.noreply.github.com>
+  * Patrick Wang <mail6543210@yahoo.com.tw>
+  * Cenk Alti <cenkalti@gmail.com>
+  * Andreas Chlupka <andy@chlupka.com>

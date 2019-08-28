@@ -44,6 +44,7 @@ See the following for detailed instructions for
   * [OpenDrive](/opendrive/)
   * [Pcloud](/pcloud/)
   * [premiumize.me](/premiumizeme/)
+  * [put.io](/putio/)
   * [QingStor](/qingstor/)
   * [SFTP](/sftp/)
   * [Union](/union/)

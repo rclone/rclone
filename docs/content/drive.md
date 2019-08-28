@@ -4,7 +4,7 @@ description: "Rclone docs for Google drive"
 date: "2016-04-12"
 ---
 
-<i class="fa fa-google"></i> Google Drive
+<i class="fab fa-google"></i> Google Drive
 -----------------------------------------
 
 Paths are specified as `drive:path`
@@ -33,7 +33,7 @@ name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-10 / Google Drive
+XX / Google Drive
    \ "drive"
 [snip]
 Storage> drive

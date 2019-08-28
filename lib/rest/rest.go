@@ -16,6 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/readers"
 )
 
 // Client contains the info to sustain the API
@@ -45,7 +46,7 @@ func ReadBody(resp *http.Response) (result []byte, err error) {
 }
 
 // defaultErrorHandler doesn't attempt to parse the http body, just
-// returns it in the error message
+// returns it in the error message closing resp.Body
 func defaultErrorHandler(resp *http.Response) (err error) {
 	body, err := ReadBody(resp)
 	if err != nil {
@@ -177,8 +178,10 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 
 // Call makes the call and returns the http.Response
 //
-// if err != nil then resp.Body will need to be closed unless
+// if err == nil then resp.Body will need to be closed unless
 // opt.NoResponse is set
+//
+// if err != nil then resp.Body will have been closed
 //
 // it will return resp if at all possible, even if err is set
 func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
@@ -198,7 +201,7 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if opts.Parameters != nil && len(opts.Parameters) > 0 {
 		url += "?" + opts.Parameters.Encode()
 	}
-	body := opts.Body
+	body := readers.NoCloser(opts.Body)
 	// If length is set and zero then nil out the body to stop use
 	// use of chunked encoding and insert a "Content-Length: 0"
 	// header.

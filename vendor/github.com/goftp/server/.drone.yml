@@ -1,0 +1,10 @@
+kind: pipeline
+name: default
+
+steps:
+- name: test
+  image: golang:1.12
+  commands:
+  - go get -t -d -v ./...
+  - go build -v
+  - go test -v -race -coverprofile=coverage.txt -covermode=atomic

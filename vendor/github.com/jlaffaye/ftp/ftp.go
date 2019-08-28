@@ -73,7 +73,7 @@ type Response struct {
 	closed bool
 }
 
-// Dial connects to the specified address with optinal options
+// Dial connects to the specified address with optional options
 func Dial(addr string, options ...DialOption) (*ServerConn, error) {
 	do := &dialOptions{}
 	for _, option := range options {
@@ -91,7 +91,7 @@ func Dial(addr string, options ...DialOption) (*ServerConn, error) {
 		if do.dialFunc != nil {
 			tconn, err = do.dialFunc("tcp", addr)
 		} else if do.tlsConfig != nil {
-			tconn, err = tls.DialWithDialer(&do.dialer , "tcp", addr, do.tlsConfig)
+			tconn, err = tls.DialWithDialer(&do.dialer, "tcp", addr, do.tlsConfig)
 		} else {
 			ctx := do.context
 
@@ -172,7 +172,7 @@ func DialWithDisabledEPSV(disabled bool) DialOption {
 }
 
 // DialWithLocation returns a DialOption that configures the ServerConn with specified time.Location
-// The lococation is used to parse the dates sent by the server which are in server's timezone
+// The location is used to parse the dates sent by the server which are in server's timezone
 func DialWithLocation(location *time.Location) DialOption {
 	return DialOption{func(do *dialOptions) {
 		do.location = location
@@ -188,7 +188,7 @@ func DialWithContext(ctx context.Context) DialOption {
 }
 
 // DialWithTLS returns a DialOption that configures the ServerConn with specified TLS config
-// 
+//
 // If called together with the DialWithDialFunc option, the DialWithDialFunc function
 // will be used when dialing new connections but regardless of the function,
 // the connection will be treated as a TLS connection.
