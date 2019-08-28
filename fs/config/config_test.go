@@ -30,6 +30,7 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 	oldConfig := fs.Config
 	oldConfigFile := configFile
 	oldReadLine := ReadLine
+	oldPassword := Password
 	os.Stdout = nil
 	ConfigPath = path
 	fs.Config = &fs.ConfigInfo{}
@@ -63,6 +64,7 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 		os.Stdout = oldOsStdout
 		ConfigPath = oldConfigPath
 		ReadLine = oldReadLine
+		Password = oldPassword
 		fs.Config = oldConfig
 		configFile = oldConfigFile
 
@@ -71,24 +73,28 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 	}
 }
 
-func TestCRUD(t *testing.T) {
-	defer testConfigFile(t, "crud.conf")()
-
-	// expect script for creating remote
+// makeReadLine makes a simple readLine which returns a fixed list of
+// strings
+func makeReadLine(answers []string) func() string {
 	i := 0
-	ReadLine = func() string {
-		answers := []string{
-			"config_test_remote", // type
-			"true",               // bool value
-			"y",                  // type my own password
-			"secret",             // password
-			"secret",             // repeat
-			"y",                  // looks good, save
-		}
+	return func() string {
 		i = i + 1
 		return answers[i-1]
 	}
+}
 
+func TestCRUD(t *testing.T) {
+	defer testConfigFile(t, "crud.conf")()
+
+	// script for creating remote
+	ReadLine = makeReadLine([]string{
+		"config_test_remote", // type
+		"true",               // bool value
+		"y",                  // type my own password
+		"secret",             // password
+		"secret",             // repeat
+		"y",                  // looks good, save
+	})
 	NewRemote("test")
 
 	assert.Equal(t, []string{"test"}, configFile.GetSectionList())
@@ -97,7 +103,11 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, "secret", obscure.MustReveal(FileGet("test", "pass")))
 
 	// normal rename, test → asdf
-	ReadLine = func() string { return "asdf" }
+	ReadLine = makeReadLine([]string{
+		"asdf",
+		"asdf",
+		"asdf",
+	})
 	RenameRemote("test")
 
 	assert.Equal(t, []string{"asdf"}, configFile.GetSectionList())
@@ -116,6 +126,41 @@ func TestCRUD(t *testing.T) {
 	// delete remote
 	DeleteRemote("asdf")
 	assert.Equal(t, []string{}, configFile.GetSectionList())
+}
+
+func TestChooseOption(t *testing.T) {
+	defer testConfigFile(t, "crud.conf")()
+
+	// script for creating remote
+	ReadLine = makeReadLine([]string{
+		"config_test_remote", // type
+		"false",              // bool value
+		"x",                  // bad choice
+		"g",                  // generate password
+		"1024",               // very big
+		"y",                  // password OK
+		"y",                  // looks good, save
+	})
+	Password = func(bits int) (string, error) {
+		assert.Equal(t, 1024, bits)
+		return "not very random password", nil
+	}
+	NewRemote("test")
+
+	assert.Equal(t, "false", FileGet("test", "bool"))
+	assert.Equal(t, "not very random password", obscure.MustReveal(FileGet("test", "pass")))
+
+	// script for creating remote
+	ReadLine = makeReadLine([]string{
+		"config_test_remote", // type
+		"true",               // bool value
+		"n",                  // not required
+		"y",                  // looks good, save
+	})
+	NewRemote("test")
+
+	assert.Equal(t, "true", FileGet("test", "bool"))
+	assert.Equal(t, "", FileGet("test", "pass"))
 }
 
 func TestCreateUpatePasswordRemote(t *testing.T) {
