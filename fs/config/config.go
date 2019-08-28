@@ -89,6 +89,9 @@ var (
 	// For security reasons, the temp file is deleted once the configKey is successfully loaded.
 	// This can be used to pass the configKey to a child process.
 	PassConfigKeyForDaemonization = false
+
+	// Password can be used to configure the random password generator
+	Password = random.Password
 )
 
 func init() {
@@ -854,6 +857,7 @@ func ChooseOption(o *fs.Option, name string) string {
 			actions = append(actions, "nNo leave this optional password blank")
 		}
 		var password string
+		var err error
 		switch i := Command(actions); i {
 		case 'y':
 			password = ChangePassword("the")
@@ -861,7 +865,7 @@ func ChooseOption(o *fs.Option, name string) string {
 			for {
 				fmt.Printf("Password strength in bits.\n64 is just about memorable\n128 is secure\n1024 is the maximum\n")
 				bits := ChooseNumber("Bits", 64, 1024)
-				password, err := random.Password(bits)
+				password, err = Password(bits)
 				if err != nil {
 					log.Fatalf("Failed to make password: %v", err)
 				}
