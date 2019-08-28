@@ -1,10 +1,22 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-08-26"
+date: "2019-08-28"
 ---
 
 # Changelog
+
+## v1.49.1 - 2019-08-28
+
+Point release to fix config bug and google photos backend.
+
+* Bug Fixes
+    * config: Fix generated passwords being stored as empty password (Nick Craig-Wood)
+    * rcd: Added missing parameter for web-gui info logs. (Chaitanya)
+* Googlephotos
+    * Fix crash on error response (Nick Craig-Wood)
+* Onedrive
+    * Fix crash on error response (Nick Craig-Wood)
 
 ## v1.49.0 - 2019-08-26
 

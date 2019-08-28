@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Aug 26, 2019
+% Aug 28, 2019
 
 # Rclone - rsync for cloud storage
 
@@ -8245,7 +8245,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -18466,6 +18466,18 @@ to override the default choice.
 
 # Changelog
 
+## v1.49.1 - 2019-08-28
+
+Point release to fix config bug and google photos backend.
+
+* Bug Fixes
+    * config: Fix generated passwords being stored as empty password (Nick Craig-Wood)
+    * rcd: Added missing parameter for web-gui info logs. (Chaitanya)
+* Googlephotos
+    * Fix crash on error response (Nick Craig-Wood)
+* Onedrive
+    * Fix crash on error response (Nick Craig-Wood)
+
 ## v1.49.0 - 2019-08-26
 
 * New backends
@@ -18477,8 +18489,10 @@ to override the default choice.
     * Experimental [web GUI](https://rclone.org/gui/) (Chaitanya Bankanhal)
     * Implement `--compare-dest` & `--copy-dest` (yparitcher)
     * Implement `--suffix` without `--backup-dir` for backup to current dir (yparitcher)
+    * `config reconnect` to re-login (re-run the oauth login) for the backend. (Nick Craig-Wood)
+    * `config userinfo` to discover which user you are logged in as. (Nick Craig-Wood)
+    * `config disconnect` to disconnect you (log out) from the backend. (Nick Craig-Wood)
     * Add `--use-json-log` for JSON logging (justinalin)
-    * Add `config reconnect`, `config userinfo` and `config disconnect` subcommands. (Nick Craig-Wood)
     * Add context propagation to rclone (Aleksandar Jankovic)
     * Reworking internal statistics interfaces so they work with rc jobs (Aleksandar Jankovic)
     * Add Higher units for ETA (AbelThar)
