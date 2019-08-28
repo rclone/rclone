@@ -168,6 +168,28 @@ func (acc *Account) checkRead() (err error) {
 	return nil
 }
 
+// ServerSideCopyStart should be called at the start of a server side copy
+//
+// This pretends a transfer has started
+func (acc *Account) ServerSideCopyStart() {
+	acc.statmu.Lock()
+	// Set start time.
+	if acc.start.IsZero() {
+		acc.start = time.Now()
+	}
+	acc.statmu.Unlock()
+}
+
+// ServerSideCopyEnd accounts for a read of n bytes in a sever side copy
+func (acc *Account) ServerSideCopyEnd(n int64) {
+	// Update Stats
+	acc.statmu.Lock()
+	acc.bytes += n
+	acc.statmu.Unlock()
+
+	acc.stats.Bytes(n)
+}
+
 // Account the read and limit bandwidth
 func (acc *Account) accountRead(n int) {
 	// Update Stats

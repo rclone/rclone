@@ -302,10 +302,15 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			if fs.Config.MaxTransfer >= 0 && accounting.Stats(ctx).GetBytes() >= int64(fs.Config.MaxTransfer) {
 				return nil, accounting.ErrorMaxTransferLimitReached
 			}
+			in := tr.Account(nil) // account the transfer
+			in.ServerSideCopyStart()
 			newDst, err = doCopy(ctx, src, remote)
 			if err == nil {
 				dst = newDst
-				accounting.Stats(ctx).Bytes(dst.Size()) // account the bytes for the server side transfer
+				in.ServerSideCopyEnd(dst.Size()) // account the bytes for the server side transfer
+				err = in.Close()
+			} else {
+				_ = in.Close()
 			}
 		} else {
 			err = fs.ErrorCantCopy
