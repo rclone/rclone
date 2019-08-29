@@ -824,7 +824,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	var newObject *storage.Object
 	err = f.pacer.Call(func() (bool, error) {
-		newObject, err = f.svc.Objects.Copy(srcBucket, srcPath, dstBucket, dstPath, nil).Do()
+		copyObject := f.svc.Objects.Copy(srcBucket, srcPath, dstBucket, dstPath, nil)
+		if !f.opt.BucketPolicyOnly {
+			copyObject.DestinationPredefinedAcl(f.opt.ObjectACL)
+		}
+		newObject, err = copyObject.Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -907,15 +911,9 @@ func (o *Object) setMetaData(info *storage.Object) {
 	}
 }
 
-// readMetaData gets the metadata if it hasn't already been fetched
-//
-// it also sets the info
-func (o *Object) readMetaData() (err error) {
-	if !o.modTime.IsZero() {
-		return nil
-	}
+// readObjectInfo reads the definition for an object
+func (o *Object) readObjectInfo() (object *storage.Object, err error) {
 	bucket, bucketPath := o.split()
-	var object *storage.Object
 	err = o.fs.pacer.Call(func() (bool, error) {
 		object, err = o.fs.svc.Objects.Get(bucket, bucketPath).Do()
 		return shouldRetry(err)
@@ -923,9 +921,23 @@ func (o *Object) readMetaData() (err error) {
 	if err != nil {
 		if gErr, ok := err.(*googleapi.Error); ok {
 			if gErr.Code == http.StatusNotFound {
-				return fs.ErrorObjectNotFound
+				return nil, fs.ErrorObjectNotFound
 			}
 		}
+		return nil, err
+	}
+	return object, nil
+}
+
+// readMetaData gets the metadata if it hasn't already been fetched
+//
+// it also sets the info
+func (o *Object) readMetaData() (err error) {
+	if !o.modTime.IsZero() {
+		return nil
+	}
+	object, err := o.readObjectInfo()
+	if err != nil {
 		return err
 	}
 	o.setMetaData(object)
@@ -954,16 +966,27 @@ func metadataFromModTime(modTime time.Time) map[string]string {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) {
-	// This only adds metadata so will perserve other metadata
-	bucket, bucketPath := o.split()
-	object := storage.Object{
-		Bucket:   bucket,
-		Name:     bucketPath,
-		Metadata: metadataFromModTime(modTime),
+	// read the complete existing object first
+	object, err := o.readObjectInfo()
+	if err != nil {
+		return err
 	}
+	// Add the mtime to the existing metadata
+	mtime := modTime.Format(timeFormatOut)
+	if object.Metadata == nil {
+		object.Metadata = make(map[string]string, 1)
+	}
+	object.Metadata[metaMtime] = mtime
+	// Copy the object to itself to update the metadata
+	// Using PATCH requires too many permissions
+	bucket, bucketPath := o.split()
 	var newObject *storage.Object
 	err = o.fs.pacer.Call(func() (bool, error) {
-		newObject, err = o.fs.svc.Objects.Patch(bucket, bucketPath, &object).Do()
+		copyObject := o.fs.svc.Objects.Copy(bucket, bucketPath, bucket, bucketPath, object)
+		if !o.fs.opt.BucketPolicyOnly {
+			copyObject.DestinationPredefinedAcl(o.fs.opt.ObjectACL)
+		}
+		newObject, err = copyObject.Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
