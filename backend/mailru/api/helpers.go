@@ -10,8 +10,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/rclone/rclone/lib/readers"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/lib/readers"
 )
 
 // protocol errors
