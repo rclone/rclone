@@ -2,6 +2,7 @@ package mailru
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	gohash "hash"
 	"io"
@@ -665,7 +666,7 @@ func (f *Fs) itemToDirEntry(item *api.ListItem) (entry fs.DirEntry, dirSize int,
 // The entries can be returned in any order but should be for a complete directory.
 // dir should be "" to list the root, and should not have trailing slashes.
 // This should return ErrDirNotFound if the directory isn't found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	fs.Debugf(f, ">>> List: %q", dir)
 
 	if f.quirks.binlist {
@@ -1078,7 +1079,7 @@ func (f *Fs) CreateDir(path string) error {
 // primitive and depend on its atomicity, i.e. mkdir should fail if directory
 // already exists. As a workaround, users can add string "atomicmkdir" in the
 // hidden `quirks` parameter or in the `--mailru-quirks` command-line option.
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, ">>> Mkdir %q", dir)
 	err := f.mkDirs(f.absPath(dir))
 	if err == ErrorDirAlreadyExists && !f.quirks.atomicmkdir {
@@ -1139,7 +1140,7 @@ func (f *Fs) mkParentDirs(path string) error {
 
 // Rmdir deletes a directory.
 // Returns an error if it isn't empty.
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, ">>> Rmdir %q", dir)
 	return f.purgeWithCheck(dir, true, "rmdir")
 }
@@ -1147,7 +1148,7 @@ func (f *Fs) Rmdir(dir string) error {
 // Purge deletes all the files and the root directory
 // Optional interface: Only implement this if you have a way of deleting
 // all the files quicker than just running Remove() on the result of List()
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	fs.Debugf(f, ">>> Purge")
 	return f.purgeWithCheck("", false, "purge")
 }
@@ -1209,7 +1210,7 @@ func (f *Fs) delete(path string, hardDelete bool) error {
 // It returns the destination Object and a possible error.
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	fs.Debugf(f, ">>> Copy %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
@@ -1276,7 +1277,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	tmpPath := response.Body
 	if tmpPath != dstPath {
 		fs.Debugf(f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
-		err = f.moveItemBin(tmpPath, dstPath, "rename temporary file")
+		err = f.moveItemBin(ctx, tmpPath, dstPath, "rename temporary file")
 		if err != nil {
 			_ = f.delete(tmpPath, false) // ignore error
 			return nil, err
@@ -1304,7 +1305,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // It returns the destination Object and a possible error.
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	fs.Debugf(f, ">>> Move %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
@@ -1326,16 +1327,16 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	err = f.moveItemBin(srcPath, dstPath, "move file")
+	err = f.moveItemBin(ctx, srcPath, dstPath, "move file")
 	if err != nil {
 		return nil, err
 	}
 
-	return f.NewObject(remote)
+	return f.NewObject(ctx, remote)
 }
 
 // move/rename an object using BIN protocol
-func (f *Fs) moveItemBin(srcPath, dstPath, opName string) error {
+func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) error {
 	token, err := f.accessToken()
 	if err != nil {
 		return err
@@ -1390,7 +1391,7 @@ func (f *Fs) moveItemBin(srcPath, dstPath, opName string) error {
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantDirMove
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	fs.Debugf(f, ">>> DirMove %q %q", srcRemote, dstRemote)
 
 	srcFs, ok := src.(*Fs)
@@ -1428,11 +1429,11 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		return err
 	}
 
-	return f.moveItemBin(srcPath, dstPath, "directory move")
+	return f.moveItemBin(ctx, srcPath, dstPath, "directory move")
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
 	fs.Debugf(f, ">>> PublicLink %q", remote)
 
 	token, err := f.accessToken()
@@ -1474,7 +1475,7 @@ func (f *Fs) PublicLink(remote string) (link string, err error) {
 }
 
 // CleanUp permanently deletes all trashed files/folders
-func (f *Fs) CleanUp() error {
+func (f *Fs) CleanUp(ctx context.Context) error {
 	fs.Debugf(f, ">>> CleanUp")
 
 	token, err := f.accessToken()
@@ -1514,7 +1515,7 @@ func (f *Fs) CleanUp() error {
 }
 
 // About gets quota information
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	fs.Debugf(f, ">>> About")
 
 	token, err := f.accessToken()
@@ -1552,21 +1553,21 @@ func (f *Fs) About() (*fs.Usage, error) {
 // Put the object
 // Copy the reader in to the new object which is returned
 // The new object may have been created if an error is returned
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	o := &Object{
 		fs:      f,
 		remote:  src.Remote(),
 		size:    src.Size(),
-		modTime: src.ModTime(),
+		modTime: src.ModTime(ctx),
 	}
 	fs.Debugf(f, ">>> Put: %q %d '%v'", o.remote, o.size, o.modTime)
-	return o, o.Update(in, src, options...)
+	return o, o.Update(ctx, in, src, options...)
 }
 
 // Update an existing object
 // Copy the reader into the object updating modTime and size
 // The new object may have been created if an error is returned
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	wrapIn := in
 	size := src.Size()
 	if size < 0 {
@@ -1595,7 +1596,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 			return err
 		}
 		fileHash = mrhash.Sum(fileBuf)
-		if o.putByHash(fileHash, src, "memory") {
+		if o.putByHash(ctx, fileHash, src, "memory") {
 			return nil
 		}
 		fs.Debugf(o, "Cannot put by hash from memory, performing upload")
@@ -1610,20 +1611,20 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 			fs.Infof(tmpFs, "Failed to create spool FS: %v", err)
 		} else {
 			defer func() {
-				if err := operations.Purge(tmpFs, ""); err != nil {
+				if err := operations.Purge(ctx, tmpFs, ""); err != nil {
 					fs.Infof(tmpFs, "Failed to cleanup spool FS: %v", err)
 				}
 			}()
 
-			spoolFile, mrHash, err := makeTempFile(tmpFs, wrapIn, src)
+			spoolFile, mrHash, err := makeTempFile(ctx, tmpFs, wrapIn, src)
 			if err != nil {
 				return errors.Wrap(err, "Failed to create spool file")
 			}
-			if o.putByHash(mrHash, src, "spool") {
+			if o.putByHash(ctx, mrHash, src, "spool") {
 				// If put by hash is successful, ignore transitive error
 				return nil
 			}
-			if wrapIn, err = spoolFile.Open(); err != nil {
+			if wrapIn, err = spoolFile.Open(ctx); err != nil {
 				return err
 			}
 			fileHash = mrHash
@@ -1664,7 +1665,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 	o.mrHash = newHash
 	o.size = size
-	o.modTime = src.ModTime()
+	o.modTime = src.ModTime(ctx)
 	return o.addFileMetaData(true)
 }
 
@@ -1720,12 +1721,12 @@ func (f *Fs) parseSpeedupPatterns(patternString string) (err error) {
 	return nil
 }
 
-func (o *Object) putByHash(mrHash []byte, info fs.ObjectInfo, method string) bool {
+func (o *Object) putByHash(ctx context.Context, mrHash []byte, info fs.ObjectInfo, method string) bool {
 	oNew := new(Object)
 	*oNew = *o
 	oNew.mrHash = mrHash
 	oNew.size = info.Size()
-	oNew.modTime = info.ModTime()
+	oNew.modTime = info.ModTime(ctx)
 	if err := oNew.addFileMetaData(true); err != nil {
 		return false
 	}
@@ -1734,7 +1735,7 @@ func (o *Object) putByHash(mrHash []byte, info fs.ObjectInfo, method string) boo
 	return true
 }
 
-func makeTempFile(tmpFs fs.Fs, wrapIn io.Reader, src fs.ObjectInfo) (spoolFile fs.Object, mrHash []byte, err error) {
+func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.ObjectInfo) (spoolFile fs.Object, mrHash []byte, err error) {
 	// Calculate Mailru hash in transit
 	mrHasher := mrhash.New()
 	wrapIn = io.TeeReader(wrapIn, mrHasher)
@@ -1751,15 +1752,15 @@ func makeTempFile(tmpFs fs.Fs, wrapIn io.Reader, src fs.ObjectInfo) (spoolFile f
 	wrapIn = io.TeeReader(wrapIn, shaHasher)
 
 	// Copy stream into spool file
-	tmpInfo := object.NewStaticObjectInfo(src.Remote(), src.ModTime(), src.Size(), false, nil, nil)
+	tmpInfo := object.NewStaticObjectInfo(src.Remote(), src.ModTime(ctx), src.Size(), false, nil, nil)
 	hashOption := &fs.HashesOption{Hashes: hashSet}
-	if spoolFile, err = tmpFs.Put(wrapIn, tmpInfo, hashOption); err != nil {
+	if spoolFile, err = tmpFs.Put(ctx, wrapIn, tmpInfo, hashOption); err != nil {
 		return nil, nil, err
 	}
 
 	// Validate spool file
 	checkSum := shaHasher.Sums()[hashType]
-	fileSum, err := spoolFile.Hash(hashType)
+	fileSum, err := spoolFile.Hash(ctx, hashType)
 	if spoolFile.Size() != src.Size() || err != nil || checkSum == "" || fileSum != checkSum {
 		return nil, nil, mrhash.ErrorInvalidHash
 	}
@@ -1866,7 +1867,7 @@ type Object struct {
 
 // NewObject finds an Object at the remote.
 // If object can't be found it fails with fs.ErrorObjectNotFound
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	fs.Debugf(f, ">>> NewObject %q", remote)
 	o := &Object{
 		fs:     f,
@@ -1930,7 +1931,7 @@ func (o *Object) Remote() string {
 // ModTime returns the modification time of the object
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	err := o.readMetaData(false)
 	if err != nil {
 		fs.Errorf(o, "%v", err)
@@ -1949,7 +1950,7 @@ func (o *Object) Size() int64 {
 
 // Hash returns the MD5 or SHA1 sum of an object
 // returning a lowercase hex string
-func (o *Object) Hash(t hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 
@@ -1961,7 +1962,7 @@ func (o *Object) Storable() bool {
 // SetModTime sets the modification time of the local fs object
 //
 // Commits the datastore
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	fs.Debugf(o, ">>> SetModTime [%v]", modTime)
 	o.modTime = modTime
 	return o.addFileMetaData(true)
@@ -2034,7 +2035,7 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	fs.Debugf(o, ">>> Remove")
 	return o.fs.delete(o.absPath(), false)
 }
@@ -2067,7 +2068,7 @@ func getTransferRange(size int64, options ...fs.OpenOption) (start int64, end in
 }
 
 // Open an object for read and download its content
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	fs.Debugf(o, ">>> Open")
 
 	token, err := o.fs.accessToken()
