@@ -39,6 +39,7 @@ type Run struct {
 	Backend   string // name of the backend
 	Path      string // path to the source directory
 	FastList  bool   // add -fast-list to tests
+	Short     bool   // add -short
 	NoRetries bool   // don't retry if set
 	OneOnly   bool   // only run test for this backend at once
 	NoBinary  bool   // set to not build a binary
@@ -334,6 +335,9 @@ func (r *Run) Init() {
 	}
 	if r.FastList {
 		r.cmdLine = append(r.cmdLine, "-fast-list")
+	}
+	if r.Short {
+		r.cmdLine = append(r.cmdLine, "-short")
 	}
 	r.cmdString = toShell(r.cmdLine)
 }

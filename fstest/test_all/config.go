@@ -18,6 +18,7 @@ import (
 type Test struct {
 	Path       string // path to the source directory
 	FastList   bool   // if it is possible to add -fast-list to tests
+	Short      bool   // if it is possible to run the test with -short
 	AddBackend bool   // set if Path needs the current backend appending
 	NoRetries  bool   // set if no retries should be performed
 	NoBinary   bool   // set to not build a binary in advance
@@ -31,6 +32,7 @@ type Backend struct {
 	Backend  string   // name of the backend directory
 	Remote   string   // name of the test remote
 	FastList bool     // set to test with -fast-list
+	Short    bool     // set to test with -short
 	OneOnly  bool     // set to run only one backend test at once
 	Ignore   []string // test names to ignore the failure of
 	Tests    []string // paths of tests to run, blank for all
@@ -75,6 +77,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 			Backend:   b.Backend,
 			Path:      t.Path,
 			FastList:  fastlist,
+			Short:     (b.Short && t.Short),
 			NoRetries: t.NoRetries,
 			OneOnly:   b.OneOnly,
 			NoBinary:  t.NoBinary,
