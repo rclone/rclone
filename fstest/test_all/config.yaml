@@ -2,6 +2,7 @@ tests:
  - path: backend
    addbackend: true
    nobinary:   true
+   short:      true
  - path: fs/operations
    fastlist: true
  - path: fs/sync
