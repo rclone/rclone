@@ -66,6 +66,7 @@ Features
   * Can sync to and from network, eg two different cloud accounts
   * [Encryption](/crypt/) backend
   * [Cache](/cache/) backend
+  * [Chunking](/chunker/) backend
   * [Union](/union/) backend
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
   * Multi-threaded downloads to local disk
