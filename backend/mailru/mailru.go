@@ -281,6 +281,7 @@ type Fs struct {
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	fs.Debugf(nil, ">>> NewFs %q %q", name, root)
+	ctx := context.Background() // Note: NewFs does not pass context!
 
 	// Parse config into Options struct
 	opt := new(Options)
@@ -335,7 +336,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		transport.ProxyConnectHeader = http.Header{"User-Agent": {clientConfig.UserAgent}}
 	}
 
-	if err = f.authorize(false); err != nil {
+	if err = f.authorize(ctx, false); err != nil {
 		return nil, err
 	}
 
@@ -346,7 +347,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	if !rootIsDir {
-		_, dirSize, err := f.readItemMetaData(f.root)
+		_, dirSize, err := f.readItemMetaData(ctx, f.root)
 		rootIsDir = (dirSize >= 0)
 		// Ignore non-existing item and other errors
 		if err == nil && !rootIsDir {
@@ -424,7 +425,7 @@ func (q *quirks) parseQuirks(option string) {
 }
 
 // Note: authorize() is not safe for concurrent access as it updates token source
-func (f *Fs) authorize(force bool) (err error) {
+func (f *Fs) authorize(ctx context.Context, force bool) (err error) {
 	var t *oauth2.Token
 	if !force {
 		t, err = oauthutil.GetToken(f.name, f.m)
@@ -476,9 +477,10 @@ func (f *Fs) reAuthorize(opts *rest.Opts, origErr error) error {
 	if f.passFailed {
 		return origErr
 	}
+	ctx := context.Background() // Note: reAuthorize is called by ShouldRetry, no context!
 
 	fs.Debugf(f, "re-authorize with new password")
-	if err := f.authorize(true); err != nil {
+	if err := f.authorize(ctx, true); err != nil {
 		f.passFailed = true
 		return err
 	}
@@ -588,7 +590,7 @@ func readBodyWord(res *http.Response) (word string, err error) {
 // readItemMetaData returns a file/directory info at given full path
 // If it can't be found it fails with fs.ErrorObjectNotFound
 // For the return value `dirSize` please see Fs.itemToEntry()
-func (f *Fs) readItemMetaData(path string) (entry fs.DirEntry, dirSize int, err error) {
+func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEntry, dirSize int, err error) {
 	token, err := f.accessToken()
 	if err != nil {
 		return nil, -1, err
@@ -624,7 +626,7 @@ func (f *Fs) readItemMetaData(path string) (entry fs.DirEntry, dirSize int, err 
 		return
 	}
 
-	entry, dirSize, err = f.itemToDirEntry(&info.Body)
+	entry, dirSize, err = f.itemToDirEntry(ctx, &info.Body)
 	return
 }
 
@@ -633,7 +635,7 @@ func (f *Fs) readItemMetaData(path string) (entry fs.DirEntry, dirSize int, err 
 //   <0 - for a file or in case of error
 //   =0 - for an empty directory
 //   >0 - for a non-empty directory
-func (f *Fs) itemToDirEntry(item *api.ListItem) (entry fs.DirEntry, dirSize int, err error) {
+func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.DirEntry, dirSize int, err error) {
 	remote, err := f.relPath(item.Home)
 	if err != nil {
 		return nil, -1, err
@@ -670,9 +672,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	fs.Debugf(f, ">>> List: %q", dir)
 
 	if f.quirks.binlist {
-		entries, err = f.listBin(f.absPath(dir), 1)
+		entries, err = f.listBin(ctx, f.absPath(dir), 1)
 	} else {
-		entries, err = f.listM1(f.absPath(dir), 0, maxInt32)
+		entries, err = f.listM1(ctx, f.absPath(dir), 0, maxInt32)
 	}
 
 	if err == nil && fs.Config.LogLevel >= fs.LogLevelDebug {
@@ -688,7 +690,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 // list using protocol "m1"
-func (f *Fs) listM1(dirPath string, offset int, limit int) (entries fs.DirEntries, err error) {
+func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) (entries fs.DirEntries, err error) {
 	token, err := f.accessToken()
 	if err != nil {
 		return nil, err
@@ -732,7 +734,7 @@ func (f *Fs) listM1(dirPath string, offset int, limit int) (entries fs.DirEntrie
 	}
 
 	for _, item := range info.Body.List {
-		entry, _, err := f.itemToDirEntry(&item)
+		entry, _, err := f.itemToDirEntry(ctx, &item)
 		if err == nil {
 			entries = append(entries, entry)
 		} else {
@@ -743,7 +745,7 @@ func (f *Fs) listM1(dirPath string, offset int, limit int) (entries fs.DirEntrie
 }
 
 // list using protocol "bin"
-func (f *Fs) listBin(dirPath string, depth int) (entries fs.DirEntries, err error) {
+func (f *Fs) listBin(ctx context.Context, dirPath string, depth int) (entries fs.DirEntries, err error) {
 	options := api.ListOptDefaults
 
 	req := api.NewBinWriter()
@@ -1017,7 +1019,7 @@ func (rev *treeRevision) Read(data *api.BinReader) error {
 }
 
 // CreateDir makes a directory (parent must exist)
-func (f *Fs) CreateDir(path string) error {
+func (f *Fs) CreateDir(ctx context.Context, path string) error {
 	fs.Debugf(f, ">>> CreateDir %q", path)
 
 	req := api.NewBinWriter()
@@ -1081,7 +1083,7 @@ func (f *Fs) CreateDir(path string) error {
 // hidden `quirks` parameter or in the `--mailru-quirks` command-line option.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, ">>> Mkdir %q", dir)
-	err := f.mkDirs(f.absPath(dir))
+	err := f.mkDirs(ctx, f.absPath(dir))
 	if err == ErrorDirAlreadyExists && !f.quirks.atomicmkdir {
 		return nil
 	}
@@ -1090,11 +1092,11 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // mkDirs creates container and its parents by absolute path,
 // fails with ErrorDirAlreadyExists if it already exists.
-func (f *Fs) mkDirs(path string) error {
+func (f *Fs) mkDirs(ctx context.Context, path string) error {
 	if path == "/" || path == "" {
 		return nil
 	}
-	switch err := f.CreateDir(path); err {
+	switch err := f.CreateDir(ctx, path); err {
 	case nil:
 		return nil
 	case ErrorDirSourceNotExists:
@@ -1110,7 +1112,7 @@ func (f *Fs) mkDirs(path string) error {
 			continue
 		}
 		path += "/" + part
-		switch err := f.CreateDir(path); err {
+		switch err := f.CreateDir(ctx, path); err {
 		case nil, ErrorDirAlreadyExists:
 			continue
 		default:
@@ -1130,8 +1132,8 @@ func parentDir(absPath string) string {
 
 // mkParentDirs creates parent containers by absolute path,
 // ignores the ErrorDirAlreadyExists
-func (f *Fs) mkParentDirs(path string) error {
-	err := f.mkDirs(parentDir(path))
+func (f *Fs) mkParentDirs(ctx context.Context, path string) error {
+	err := f.mkDirs(ctx, parentDir(path))
 	if err == ErrorDirAlreadyExists {
 		return nil
 	}
@@ -1142,7 +1144,7 @@ func (f *Fs) mkParentDirs(path string) error {
 // Returns an error if it isn't empty.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	fs.Debugf(f, ">>> Rmdir %q", dir)
-	return f.purgeWithCheck(dir, true, "rmdir")
+	return f.purgeWithCheck(ctx, dir, true, "rmdir")
 }
 
 // Purge deletes all the files and the root directory
@@ -1150,29 +1152,29 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // all the files quicker than just running Remove() on the result of List()
 func (f *Fs) Purge(ctx context.Context) error {
 	fs.Debugf(f, ">>> Purge")
-	return f.purgeWithCheck("", false, "purge")
+	return f.purgeWithCheck(ctx, "", false, "purge")
 }
 
 // purgeWithCheck() removes the root directory.
 // Refuses if `check` is set and directory has anything in.
-func (f *Fs) purgeWithCheck(dir string, check bool, opName string) error {
+func (f *Fs) purgeWithCheck(ctx context.Context, dir string, check bool, opName string) error {
 	path := f.absPath(dir)
 	if path == "/" || path == "" {
 		// Mailru will not allow to purge root space returning status 400
 		return fs.ErrorNotDeletingDirs
 	}
 
-	_, dirSize, err := f.readItemMetaData(path)
+	_, dirSize, err := f.readItemMetaData(ctx, path)
 	if err != nil {
 		return errors.Wrapf(err, "%s failed", opName)
 	}
 	if check && dirSize > 0 {
 		return fs.ErrorDirectoryNotEmpty
 	}
-	return f.delete(path, false)
+	return f.delete(ctx, path, false)
 }
 
-func (f *Fs) delete(path string, hardDelete bool) error {
+func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) error {
 	token, err := f.accessToken()
 	if err != nil {
 		return err
@@ -1229,7 +1231,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	overwrite := false
 	fs.Debugf(f, "copy %q -> %q\n", srcPath, dstPath)
 
-	err := f.mkParentDirs(dstPath)
+	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return nil, err
 	}
@@ -1279,7 +1281,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
 		err = f.moveItemBin(ctx, tmpPath, dstPath, "rename temporary file")
 		if err != nil {
-			_ = f.delete(tmpPath, false) // ignore error
+			_ = f.delete(ctx, tmpPath, false) // ignore error
 			return nil, err
 		}
 	}
@@ -1289,10 +1291,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs:     f,
 		remote: remote,
 	}
-	err = dstObj.readMetaData(true)
+	err = dstObj.readMetaData(ctx, true)
 	if err == nil && dstObj.modTime != srcObj.modTime {
 		dstObj.modTime = srcObj.modTime
-		err = dstObj.addFileMetaData(true)
+		err = dstObj.addFileMetaData(ctx, true)
 	}
 	if err != nil {
 		dstObj = nil
@@ -1322,7 +1324,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcPath := srcObj.absPath()
 	dstPath := f.absPath(remote)
 
-	err := f.mkParentDirs(dstPath)
+	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return nil, err
 	}
@@ -1414,12 +1416,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return errors.New("can't move root directory")
 	}
 
-	err := f.mkParentDirs(dstPath)
+	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return err
 	}
 
-	_, _, err = f.readItemMetaData(dstPath)
+	_, _, err = f.readItemMetaData(ctx, dstPath)
 	switch err {
 	case fs.ErrorObjectNotFound:
 		// OK!
@@ -1574,7 +1576,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.New("mailru does not support streaming uploads")
 	}
 
-	err := o.fs.mkParentDirs(o.absPath())
+	err := o.fs.mkParentDirs(ctx, o.absPath())
 	if err != nil {
 		return err
 	}
@@ -1666,7 +1668,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.mrHash = newHash
 	o.size = size
 	o.modTime = src.ModTime(ctx)
-	return o.addFileMetaData(true)
+	return o.addFileMetaData(ctx, true)
 }
 
 // eligibleForSpeedup checks whether file is eligible for speedup method (put by hash)
@@ -1727,7 +1729,7 @@ func (o *Object) putByHash(ctx context.Context, mrHash []byte, info fs.ObjectInf
 	oNew.mrHash = mrHash
 	oNew.size = info.Size()
 	oNew.modTime = info.ModTime(ctx)
-	if err := oNew.addFileMetaData(true); err != nil {
+	if err := oNew.addFileMetaData(ctx, true); err != nil {
 		return false
 	}
 	*o = *oNew
@@ -1873,7 +1875,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		fs:     f,
 		remote: remote,
 	}
-	err := o.readMetaData(true)
+	err := o.readMetaData(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -1887,11 +1889,11 @@ func (o *Object) absPath() string {
 
 // Object.readMetaData reads and fills a file info
 // If object can't be found it fails with fs.ErrorObjectNotFound
-func (o *Object) readMetaData(force bool) error {
+func (o *Object) readMetaData(ctx context.Context, force bool) error {
 	if o.hasMetaData && !force {
 		return nil
 	}
-	entry, dirSize, err := o.fs.readItemMetaData(o.absPath())
+	entry, dirSize, err := o.fs.readItemMetaData(ctx, o.absPath())
 	if err != nil {
 		return err
 	}
@@ -1932,7 +1934,7 @@ func (o *Object) Remote() string {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	err := o.readMetaData(false)
+	err := o.readMetaData(ctx, false)
 	if err != nil {
 		fs.Errorf(o, "%v", err)
 	}
@@ -1941,7 +1943,8 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData(false)
+	ctx := context.Background() // Note: Object.Size does not pass context!
+	err := o.readMetaData(ctx, false)
 	if err != nil {
 		fs.Errorf(o, "%v", err)
 	}
@@ -1965,10 +1968,10 @@ func (o *Object) Storable() bool {
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	fs.Debugf(o, ">>> SetModTime [%v]", modTime)
 	o.modTime = modTime
-	return o.addFileMetaData(true)
+	return o.addFileMetaData(ctx, true)
 }
 
-func (o *Object) addFileMetaData(overwrite bool) error {
+func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 	if len(o.mrHash) != mrhash.Size {
 		return mrhash.ErrorInvalidHash
 	}
@@ -2037,7 +2040,7 @@ func (o *Object) addFileMetaData(overwrite bool) error {
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
 	fs.Debugf(o, ">>> Remove")
-	return o.fs.delete(o.absPath(), false)
+	return o.fs.delete(ctx, o.absPath(), false)
 }
 
 // getTransferRange detects partial transfers and calculates start/end offsets into file
@@ -2117,6 +2120,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		hasher = mrhash.New()
 	}
 	wrapStream := &endHandler{
+		ctx:    ctx,
 		stream: res.Body,
 		hasher: hasher,
 		o:      o,
@@ -2126,6 +2130,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 }
 
 type endHandler struct {
+	ctx    context.Context
 	stream io.ReadCloser
 	hasher gohash.Hash
 	o      *Object
