@@ -31,6 +31,7 @@ docs = [
     "b2.md",
     "box.md",
     "cache.md",
+    "chunker.md",
     "crypt.md",
     "dropbox.md",
     "ftp.md",
