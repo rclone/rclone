@@ -14,6 +14,7 @@
 [![CircleCI](https://circleci.com/gh/rclone/rclone/tree/master.svg?style=svg)](https://circleci.com/gh/rclone/rclone/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rclone/rclone)](https://goreportcard.com/report/github.com/rclone/rclone)
 [![GoDoc](https://godoc.org/github.com/rclone/rclone?status.svg)](https://godoc.org/github.com/rclone/rclone) 
+[![Docker Pulls](https://img.shields.io/docker/pulls/rclone/rclone)](https://hub.docker.com/r/rclone/rclone)
 
 # Rclone
 
