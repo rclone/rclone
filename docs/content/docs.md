@@ -26,6 +26,7 @@ See the following for detailed instructions for
   * [Backblaze B2](/b2/)
   * [Box](/box/)
   * [Cache](/cache/)
+  * [Chunker](/chunker/) - transparently splits large files for other remotes
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Dropbox](/dropbox/)

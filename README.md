@@ -76,6 +76,7 @@ Please see [the full list of all storage providers and their features](https://r
   * [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
   * [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, e.g. two different cloud accounts
+  * Optional large file chunking ([Chunker](https://rclone.org/chunker/))
   * Optional encryption ([Crypt](https://rclone.org/crypt/))
   * Optional cache ([Cache](https://rclone.org/cache/))
   * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
