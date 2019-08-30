@@ -624,6 +624,16 @@ var ReadLine = func() string {
 	return strings.TrimSpace(line)
 }
 
+// ReadNonEmptyLine prints prompt and calls Readline until non empty
+func ReadNonEmptyLine(prompt string) string {
+	result := ""
+	for result == "" {
+		fmt.Print(prompt)
+		result = strings.TrimSpace(ReadLine())
+	}
+	return result
+}
+
 // Command - choose one
 func Command(commands []string) byte {
 	opts := []string{}
