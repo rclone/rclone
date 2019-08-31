@@ -182,7 +182,7 @@ This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
-Supported quirks: nogzip insecure binlist atomicmkdir retry400.`,
+Supported quirks: atomicmkdir binlist gzip insecure retry400`,
 			Default:  "",
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
@@ -323,11 +323,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Override few config settings and create a client
 	clientConfig := *fs.Config
 	clientConfig.UserAgent = opt.UserAgent
-	if f.quirks.nogzip {
-		clientConfig.NoGzip = true
-	}
+	clientConfig.NoGzip = !f.quirks.gzip // Send not "Accept-Encoding: gzip" like official client
 	f.cli = fshttp.NewClient(&clientConfig)
-	f.srv = rest.NewClient(f.cli).SetRoot(api.APIServerURL)
+
+	f.srv = rest.NewClient(f.cli)
+	f.srv.SetRoot(api.APIServerURL)
+	f.srv.SetHeader("Accept", "*/*") // Send "Accept: */*" with every request like official client
 	f.srv.SetErrorHandler(errorHandler)
 
 	if f.quirks.insecure {
@@ -367,7 +368,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 // Internal maintenance flags (to be removed when the backend matures).
 // Primarily intended to facilitate remote support and troubleshooting.
 type quirks struct {
-	nogzip      bool
+	gzip        bool
 	insecure    bool
 	binlist     bool
 	atomicmkdir bool
@@ -377,24 +378,19 @@ type quirks struct {
 func (q *quirks) parseQuirks(option string) {
 	for _, flag := range strings.Split(option, ",") {
 		switch strings.ToLower(strings.TrimSpace(flag)) {
-		case "nogzip":
-			// The official Mailru client normally sends the "Accept: */*"
-			// request header, which allows all kinds of compression and
-			// speeds up transfers. We should do the same for the sake of
-			// compatibility, yet this mode needs more testing and profiling.
-			// Currently the backend defaults to "Accept: gzip".
-			// It can be helpful to dump uncompressed stream during
-			// troubleshooting, which is accomplished by this quirk.
-			// This quirk can be removed when the backend reaches maturity.
-			// The "Accept: */*" impact will be investigated when the below
-			// issue is resolved: https://github.com/rclone/rclone/issues/59
-			q.nogzip = true
+		case "gzip":
+			// This backend mimics the official client which never sends the
+			// "Accept-Encoding: gzip" header. However, enabling compression
+			// might be good for performance.
+			// Use this quirk to investigate the performance impact.
+			// Remove this quirk if perfomance does not improve.
+			q.gzip = true
 		case "insecure":
 			// The mailru disk-o protocol is not documented. To compare HTTP
 			// stream against the official client one can use Telerik Fiddler,
 			// which introduces a self-signed certificate. This quirk forces
 			// the Go http layer to accept it.
-			// This quirk can be removed when the backend reaches maturity.
+			// Remove this quirk when the backend reaches maturity.
 			q.insecure = true
 		case "binlist":
 			// The official client sometimes uses a so called "bin" protocol,
@@ -403,7 +399,7 @@ func (q *quirks) parseQuirks(option string) {
 			// sporadic deserialization failures if total size of tree data
 			// approaches 8Kb (?). The recursive method is normally disabled.
 			// This quirk can be used to enable it for further investigation.
-			// This quirk can be removed when the "bin" support is finished.
+			// Remove this quirk when the "bin" protocol support is complete.
 			q.binlist = true
 		case "atomicmkdir":
 			// At the moment rclone requires Mkdir to return success if the
