@@ -49,7 +49,7 @@ const (
 	metaExpirySec   = 20 * 60    // meta server expiration time
 	serverExpirySec = 3 * 60     // download server expiration time
 	shardExpirySec  = 30 * 60    // upload server expiration time
-	maxServerLocks  = 8          // maximum number of locks per single download server
+	maxServerLocks  = 4          // maximum number of locks per single download server
 	maxInt32        = 2147483647 // used as limit in directory list request
 	speedupMinSize  = 512        // speedup is not optimal if data is smaller than average packet
 )
@@ -2099,7 +2099,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var res *http.Response
 	server := ""
 	err = o.fs.pacer.Call(func() (bool, error) {
-		server, err = o.fs.fileServers.take(server)
+		server, err = o.fs.fileServers.dispatch(server)
 		if err != nil {
 			return false, err
 		}
@@ -2192,40 +2192,34 @@ type serverList struct {
 	fs        *Fs
 }
 
-func (sl *serverList) take(current string) (string, error) {
+// Dispatch a next download server
+func (sl *serverList) dispatch(current string) (string, error) {
 	sl.mu.Lock()
 	defer sl.mu.Unlock()
 
-	var server *pendingServer
-	i := 0
-	if current != "" {
-		// avoid current (faulty) server
-		for i < len(sl.list) {
-			srv := &sl.list[i]
-			if srv.url == current {
-				i++
-				break
-			}
-			i++
-		}
-	}
-	for i < len(sl.list) {
-		srv := &sl.list[i]
-		if srv.locks < maxServerLocks && srv.url != "" {
-			server = srv
-			break
-		}
-		i++
-	}
-
 	f := sl.fs
 	now := time.Now()
-	if server != nil && (server.locks > 0 || now.Before(server.expiry)) {
-		server.locks++
-		fs.Debugf(f, "Take server #%d %q with %d locks", i, server.url, server.locks)
-		return server.url, nil
+	num := len(sl.list)
+
+	// Find an underlocked server.
+	// Avoid "current" server because it may be overloaded/slow (or just prefer switching).
+	for i := 0; i < num; i++ {
+		srv := &sl.list[i]
+		if srv.url == "" || srv.locks < 0 {
+			continue // Free server slot.
+		}
+		if srv.url == current {
+			continue // "current" server (possibly overloaded or stalled).
+		}
+		if srv.locks > maxServerLocks || now.After(srv.expiry) {
+			continue // Overlocked or expired server.
+		}
+		srv.locks++
+		fs.Debugf(f, "Lock server #%d %q with %d locks", i, srv.url, srv.locks)
+		return srv.url, nil
 	}
 
+	// Server not found - ask Mailru dispatcher.
 	opts := rest.Opts{
 		Method:  "GET",
 		RootURL: api.DispatchServerURL,
@@ -2244,52 +2238,51 @@ func (sl *serverList) take(current string) (string, error) {
 		url, err = readBodyWord(res)
 		return fserrors.ShouldRetry(err), err
 	})
-	if err != nil {
+	if err != nil || url == "" {
 		closeBody(res)
 		return "", errors.Wrap(err, "Failed to request file server")
 	}
 
-	if server == nil {
-		// is this server over-locked?
-		for i = 0; i < len(sl.list); i++ {
-			srv := &sl.list[i]
-			if srv.url == url {
-				// Dispatcher approves over-locked file server, reuse.
-				srv.locks++
-				srv.expiry = now.Add(sl.expirySec * time.Second)
-				if fs.Config.LogLevel >= fs.LogLevelInfo {
-					ctime, _ := srv.expiry.MarshalJSON()
-					fs.Infof(sl.fs, "Reuse server #%d %q with %d locks (new expiry %s)", i, url, srv.locks, ctime)
-				}
-				return url, nil
-			}
+	// Attach to a server proposed by dispatcher.
+	for i := 0; i < num; i++ {
+		srv := &sl.list[i]
+		if srv.url != url {
+			continue // Not a proposed server.
 		}
+		srv.locks++
+		srv.expiry = now.Add(sl.expirySec * time.Second)
+		if fs.Config.LogLevel >= fs.LogLevelInfo {
+			ctime, _ := srv.expiry.MarshalJSON()
+			fs.Debugf(f, "Attach server #%d %q with %d locks (new expiry %s)", i, url, srv.locks, ctime)
+		}
+		return url, nil
 	}
 
-	if server == nil {
-		// look for a disposed server slot
-		for i = 0; i < len(sl.list); i++ {
-			srv := &sl.list[i]
-			if srv.url == "" {
-				server = srv
-				break
-			}
+	// Find a free or unused server slot.
+	var server *pendingServer
+	var i int
+	for i = 0; i < num; i++ {
+		srv := &sl.list[i]
+		if srv.url == "" || srv.locks <= 0 {
+			server = srv
+			break
 		}
 	}
-
 	if server == nil {
-		// no free slots - add new one
+		// No free slots - extend the array.
 		sl.list = append(sl.list, pendingServer{})
-		i = len(sl.list) - 1
+		num = len(sl.list)
+		i = num - 1
 		server = &sl.list[i]
 	}
-	server.url = url
-	server.locks = 1
+
 	server.expiry = now.Add(sl.expirySec * time.Second)
 	if fs.Config.LogLevel >= fs.LogLevelDebug {
 		ctime, _ := server.expiry.MarshalJSON()
-		fs.Debugf(f, "Allocate server #%d %q (expires %s)", i, server.url, ctime)
+		fs.Debugf(f, "Switch server #%d %q -> %q with locks %d -> 1 (expires %s)", i, server.url, url, server.locks, ctime)
 	}
+	server.url = url
+	server.locks = 1
 	return url, nil
 }
 
@@ -2301,15 +2294,18 @@ func (sl *serverList) free(url string) {
 	defer sl.mu.Unlock()
 
 	for i := 0; i < len(sl.list); i++ {
-		server := &sl.list[i]
-		if server.url == url {
-			if server.locks > 0 {
-				fs.Debugf(sl.fs, "Release server #%d %q with %d locks", i, server.url, server.locks)
-				server.locks--
-			} else {
-				fs.Infof(sl.fs, "Dispose of faulty server #%d %q", i, server.url)
-				server.url = ""
-			}
+		srv := &sl.list[i]
+		if srv.url != url {
+			continue // Not our server
+		}
+		if srv.locks > 0 {
+			fs.Debugf(sl.fs, "Unlock server #%d %q with %d locks", i, srv.url, srv.locks)
+			srv.locks--
+		} else {
+			// Getting here indicates possible race
+			fs.Infof(sl.fs, "Free server #%d %q", i, srv.url)
+			srv.url = ""
+			srv.locks = 0
 		}
 	}
 }
