@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
