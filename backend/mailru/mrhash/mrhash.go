@@ -7,7 +7,6 @@ package mrhash
 
 import (
 	"crypto/sha1"
-	"encoding"
 	"encoding/hex"
 	"errors"
 	"hash"
@@ -69,23 +68,15 @@ func (d *digest) Sum(b []byte) []byte {
 		copy(padded, d.small)
 		return append(b, padded...)
 	}
-	// Make a copy of underlying hash
-	state, err := d.sha.(encoding.BinaryMarshaler).MarshalBinary()
-	if err != nil {
-		panic(hashError)
-	}
-	hashCopy := sha1.New()
-	err = hashCopy.(encoding.BinaryUnmarshaler).UnmarshalBinary(state)
-	if err != nil {
-		panic(hashError)
-	}
-
 	endString := strconv.Itoa(d.total)
-	_, err = hashCopy.Write([]byte(endString))
+	copy, err := cloneSHA1(d.sha)
+	if err == nil {
+		_, err = copy.Write([]byte(endString))
+	}
 	if err != nil {
 		panic(hashError)
 	}
-	return hashCopy.Sum(b)
+	return copy.Sum(b)
 }
 
 // Reset resets the Hash to its initial state.
