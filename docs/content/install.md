@@ -81,6 +81,36 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
+## Install with docker ##
+
+The rclone maintains a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
+These images are autobuilt by docker hub from the rclone source based
+on a minimal Alpine linux image.
+
+The `:latest` tag will always point to the latest stable release.  You
+can use the `:beta` tag to get the latest build from master.  You can
+also use version tags, eg `:1.49.1`, `:1.49` or `:1`.
+
+```
+$ docker pull rclone/rclone:latest
+latest: Pulling from rclone/rclone
+Digest: sha256:0e0ced72671989bb837fea8e88578b3fc48371aa45d209663683e24cfdaa0e11
+...
+$ docker run --rm rclone/rclone:latest version
+rclone v1.49.1
+- os/arch: linux/amd64
+- go version: go1.12.9
+```
+
+You will probably want to mount rclone's config file directory or file
+from the host, or configure rclone with environment variables.
+
+Eg to share your local config with the container
+
+```
+docker run  -v ~/.config/rclone:/root/.config/rclone rclone/rclone:latest listremotes
+```
+
 ## Install from source ##
 
 Make sure you have at least [Go](https://golang.org/) 1.7
