@@ -69,3 +69,16 @@ horrendous bug, then
   * make TAG=v1.43.1 upload_github
   * NB this overwrites the current beta so after the release, rebuild the last travis build
   * Announce!
+
+## Making a manual build of docker
+
+The rclone docker image should autobuild on docker hub.  If it doesn't
+or needs to be updated then rebuild like this.
+
+```
+docker build -t rclone/rclone:1.49.1 -t rclone/rclone:1.49 -t rclone/rclone:1 -t rclone/rclone:latest .
+docker push rclone/rclone:1.49.1
+docker push rclone/rclone:1.49
+docker push rclone/rclone:1
+docker push rclone/rclone:latest
+```
