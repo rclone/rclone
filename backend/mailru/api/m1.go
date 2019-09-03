@@ -11,7 +11,6 @@ const (
 	DispatchServerURL = "https://dispatcher.cloud.mail.ru"
 	OAuthURL          = "https://o2.mail.ru/token"
 	OAuthClientID     = "cloud-win"
-	DefaultUserAgent  = "CloudDiskOWindows 19.05.0047 beta WC6njVyiWq"
 )
 
 // ServerErrorResponse represents erroneous API response.

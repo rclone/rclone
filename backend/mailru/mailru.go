@@ -92,7 +92,6 @@ func init() {
 			Default:  true,
 			Advanced: false,
 			Help: `Skip full upload if there is another file with same data hash.
-
 This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
@@ -171,21 +170,22 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			}},
 		}, {
 			Name:     "user_agent",
-			Default:  api.DefaultUserAgent,
+			Default:  "",
 			Advanced: true,
-			Help:     "User agent used by client (internal)",
 			Hide:     fs.OptionHideBoth,
+			Help: `HTTP user agent used internally by client.
+Defaults to "rclone/VERSION" or "--user-agent" provided on command line.`,
 		}, {
-			Name: "quirks",
+			Name:     "quirks",
+			Default:  "",
+			Advanced: true,
+			Hide:     fs.OptionHideBoth,
 			Help: `Comma separated list of internal maintenance flags.
 This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
 Supported quirks: atomicmkdir binlist gzip insecure retry400`,
-			Default:  "",
-			Advanced: true,
-			Hide:     fs.OptionHideBoth,
 		}},
 	})
 }
@@ -322,7 +322,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	// Override few config settings and create a client
 	clientConfig := *fs.Config
-	clientConfig.UserAgent = opt.UserAgent
+	if opt.UserAgent != "" {
+		clientConfig.UserAgent = opt.UserAgent
+	}
 	clientConfig.NoGzip = !f.quirks.gzip // Send not "Accept-Encoding: gzip" like official client
 	f.cli = fshttp.NewClient(&clientConfig)
 
