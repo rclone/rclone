@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -51,7 +52,7 @@ var DefaultOpt = Options{
 	ChunkSize:         128 * fs.MebiByte,
 	ChunkSizeLimit:    -1,
 	CacheMaxSize:      -1,
-	CaseInsensitive:   false,
+	CaseInsensitive:   runtime.GOOS == "windows", // default to true on windows, false otherwise
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
