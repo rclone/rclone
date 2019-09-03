@@ -323,6 +323,8 @@ func (d *Dir) readDir() error {
 // stat a single item in the directory
 //
 // returns ENOENT if not found.
+// returns a custom error if directory on a case-insensitive file system
+// contains files with names that differ only by case.
 func (d *Dir) stat(leaf string) (Node, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -338,8 +340,7 @@ func (d *Dir) stat(leaf string) (Node, error) {
 			if strings.ToLower(name) == leafLower {
 				if ok {
 					// duplicate case insensitive match is an error
-					ok = false
-					break
+					return nil, errors.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
 				}
 				// found a case insenstive match
 				ok = true
