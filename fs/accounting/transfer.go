@@ -48,6 +48,10 @@ type Transfer struct {
 	checking  bool
 
 	// Protects all below
+	//
+	// NB to avoid deadlocks we must release this lock before
+	// calling any methods on Transfer.stats.  This is because
+	// StatsInfo calls back into Transfer.
 	mu          sync.RWMutex
 	acc         *Account
 	err         error
@@ -79,20 +83,26 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 // Done ends the transfer.
 // Must be called after transfer is finished to run proper cleanups.
 func (tr *Transfer) Done(err error) {
-	tr.mu.Lock()
-
 	if err != nil {
 		tr.stats.Error(err)
+
+		tr.mu.Lock()
 		tr.err = err
+		tr.mu.Unlock()
 	}
-	if tr.acc != nil {
-		if err := tr.acc.Close(); err != nil {
+
+	tr.mu.RLock()
+	acc := tr.acc
+	tr.mu.RUnlock()
+
+	if acc != nil {
+		if err := acc.Close(); err != nil {
 			fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "can't close account: %+v\n", err)
 		}
 	}
 
+	tr.mu.Lock()
 	tr.completedAt = time.Now()
-
 	tr.mu.Unlock()
 
 	if tr.checking {
