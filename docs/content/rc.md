@@ -308,6 +308,7 @@ Show statistics for the cache remote.
 This takes the following parameters
 
 - name - name of remote
+- parameters - a map of \{ "key": "value" \} pairs
 - type - type of the new remote
 
 
@@ -318,6 +319,7 @@ Authentication is required for this call.
 ### config/delete: Delete a remote in the config file. {#config/delete}
 
 Parameters:
+
 - name - name of remote to delete
 
 See the [config delete command](/commands/rclone_config_delete/) command for more information on the above.
@@ -358,6 +360,7 @@ Authentication is required for this call.
 This takes the following parameters
 
 - name - name of remote
+- parameters - a map of \{ "key": "value" \} pairs
 
 
 See the [config password command](/commands/rclone_config_password/) command for more information on the above.
@@ -378,6 +381,7 @@ Authentication is required for this call.
 This takes the following parameters
 
 - name - name of remote
+- parameters - a map of \{ "key": "value" \} pairs
 
 
 See the [config update command](/commands/rclone_config_update/) command for more information on the above.
