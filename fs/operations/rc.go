@@ -149,7 +149,7 @@ func init() {
 		{name: "rmdirs", title: "Remove all the empty directories in the path", help: "- leaveRoot - boolean, set to true not to delete the root\n"},
 		{name: "delete", title: "Remove files in the path", noRemote: true},
 		{name: "deletefile", title: "Remove the single file pointed to"},
-		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n"},
+		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url"},
 		{name: "cleanup", title: "Remove trashed files in the remote or path", noRemote: true},
 	} {
 		op := op
@@ -214,7 +214,9 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 		if err != nil {
 			return nil, err
 		}
-		_, err = CopyURL(ctx, f, remote, url)
+		autoFilename, _ := in.GetBool("autoFilename")
+
+		_, err = CopyURL(ctx, f, remote, url, autoFilename)
 		return nil, err
 	case "cleanup":
 		return nil, CleanUp(ctx, f)
