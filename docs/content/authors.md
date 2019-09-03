@@ -284,3 +284,4 @@ Contributors
   * Patrick Wang <mail6543210@yahoo.com.tw>
   * Cenk Alti <cenkalti@gmail.com>
   * Andreas Chlupka <andy@chlupka.com>
+  * Alfonso Montero <amontero@tinet.org>
