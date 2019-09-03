@@ -105,15 +105,37 @@ func TestRcCopyurl(t *testing.T) {
 	defer ts.Close()
 
 	in := rc.Params{
-		"fs":     r.FremoteName,
-		"remote": "file1",
-		"url":    ts.URL,
+		"fs":           r.FremoteName,
+		"remote":       "file1",
+		"url":          ts.URL,
+		"autoFilename": false,
 	}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
-	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
+	urlFileName := "filename.txt"
+	in = rc.Params{
+		"fs":           r.FremoteName,
+		"remote":       "",
+		"url":          ts.URL + "/" + urlFileName,
+		"autoFilename": true,
+	}
+	out, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+	in = rc.Params{
+		"fs":           r.FremoteName,
+		"remote":       "",
+		"url":          ts.URL,
+		"autoFilename": true,
+	}
+	out, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, fstest.NewItem(urlFileName, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
 // operations/delete: Remove files in the path
