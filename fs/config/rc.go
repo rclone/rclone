@@ -120,6 +120,7 @@ func init() {
 			Help: `This takes the following parameters
 
 - name - name of remote
+- parameters - a map of \{ "key": "value" \} pairs
 ` + extraHelp + `
 
 See the [config ` + name + ` command](/commands/rclone_config_` + name + `/) command for more information on the above.`,
@@ -161,6 +162,7 @@ func init() {
 		AuthRequired: true,
 		Help: `
 Parameters:
+
 - name - name of remote to delete
 
 See the [config delete command](/commands/rclone_config_delete/) command for more information on the above.
