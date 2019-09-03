@@ -49,6 +49,7 @@ strategy:
       GO_VERSION: latest
       BUILD_FLAGS: '-include "^windows/amd64" -cgo'
       MAKE_QUICKTEST: true
+      MAKE_RACEQUICKTEST: true
       DEPLOY: true
     windows_386:
       imageName: windows-2019
@@ -57,6 +58,7 @@ strategy:
       GO_INSTALL_ARCH: 386
       BUILD_FLAGS: '-include "^windows/386" -cgo'
       MAKE_QUICKTEST: true
+      MAKE_RACEQUICKTEST: true
       DEPLOY: true
     other_os:
       imageName: ubuntu-16.04
