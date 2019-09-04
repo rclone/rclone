@@ -73,12 +73,6 @@ strategy:
       GOPROXY: https://proxy.golang.org
       MAKE_QUICKTEST: true
       MAKE_RACEQUICKTEST: true
-    go1.9:
-      imageName: ubuntu-16.04
-      gorootDir: /usr/local
-      GOCACHE: ''               # build caching only came in go1.10
-      GO_VERSION: go1.9.7
-      MAKE_QUICKTEST: true
     go1.10:
       imageName: ubuntu-16.04
       gorootDir: /usr/local
@@ -87,7 +81,12 @@ strategy:
     go1.11:
       imageName: ubuntu-16.04
       gorootDir: /usr/local
-      GO_VERSION: go1.11.12
+      GO_VERSION: go1.11.13
+      MAKE_QUICKTEST: true
+    go1.12:
+      imageName: ubuntu-16.04
+      gorootDir: /usr/local
+      GO_VERSION: go1.12.9
       MAKE_QUICKTEST: true
 
 pool:
