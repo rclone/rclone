@@ -1,5 +1,4 @@
-//+build go1.9
-
+// Package webdav implements a WebDAV server backed by rclone VFS
 package webdav
 
 import (
