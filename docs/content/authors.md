@@ -285,3 +285,4 @@ Contributors
   * Cenk Alti <cenkalti@gmail.com>
   * Andreas Chlupka <andy@chlupka.com>
   * Alfonso Montero <amontero@tinet.org>
+  * Ivan Andreev <ivandeex@gmail.com>
