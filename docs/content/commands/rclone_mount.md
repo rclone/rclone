@@ -291,16 +291,19 @@ If an upload or download fails it will be retried up to
 rclone mount remote:path /path/to/mountpoint [flags]
 ```
 
-### Case Insensitive Mounts
+### Case Sensitivity
 
-Windows is not like other operating systems supported by rclone.
-Linux and MacOS file systems are case-sensitive: two files can differ
-only by case, and the exact case must be used when opening a file.
+Linux file systems are case-sensitive: two files can differ only
+by case, and the exact case must be used when opening a file.
 
+Windows is not like most other operating systems supported by rclone.
 File systems in modern Windows are case-insensitive but case-preserving:
 although existing files can be opened using any case, the exact case used
 to create the file is preserved and available for programs to query.
 It is not allowed for two files in the same directory to differ only by case.
+
+Usually file systems on MacOS are case-insensitive. It is possible to make MacOS
+file systems case-sensitive but that is not the default
 
 The `--vfs-case-insensitive` mount flag controls how rclone handles these
 two cases. If its value is `false`, rclone passes file names to the mounted
@@ -316,9 +319,13 @@ transparently fixup the name. This fixup happens only when an existing file
 is requested. Case sensitivity of file names created anew by rclone is
 controlled by an underlying mounted file system.
 
-If the flag is not provided on command line, then its default value depends on
-the operating system running rclone: `true` on Windows and `false` otherwise.
-If the flag is provided without a parameter, then its value is `true`.
+Note that case sensitivity of the operating system running rclone (the target)
+may differ from case sensitivity of a file system mounted by rclone (the source).
+The flag controls whether "fixup" is performed to satisfy the target.
+
+If the flag is not provided on command line, then its default value depends
+on the operating system where rclone runs: `true` on Windows and MacOS, `false`
+otherwise. If the flag is provided without a value, then it is `true`.
 
 ### Options
 

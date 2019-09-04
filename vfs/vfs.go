@@ -52,7 +52,7 @@ var DefaultOpt = Options{
 	ChunkSize:         128 * fs.MebiByte,
 	ChunkSizeLimit:    -1,
 	CacheMaxSize:      -1,
-	CaseInsensitive:   runtime.GOOS == "windows", // default to true on windows, false otherwise
+	CaseInsensitive:   runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
