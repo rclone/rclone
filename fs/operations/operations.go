@@ -1522,7 +1522,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 		case dt <= -modifyWindow:
 			fs.Debugf(src, "Destination is older than source, transferring")
 		default:
-			if src.Size() == dst.Size() {
+			if !sizeDiffers(src, dst) {
 				fs.Debugf(src, "Destination mod time is within %v of source and sizes identical, skipping", modifyWindow)
 				return false
 			}
