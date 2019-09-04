@@ -124,6 +124,7 @@ func statusError(res *http.Response, err error) error {
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.TODO()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -162,6 +163,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		// check to see if points to a file
 		req, err := http.NewRequest("HEAD", u.String(), nil)
 		if err == nil {
+			req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 			addHeaders(req, opt)
 			res, err := noRedir.Do(req)
 			err = statusError(res, err)
@@ -237,7 +239,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		fs:     f,
 		remote: remote,
 	}
-	err := o.stat()
+	err := o.stat(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +357,7 @@ func (f *Fs) addHeaders(req *http.Request) {
 }
 
 // Read the directory passed in
-func (f *Fs) readDir(dir string) (names []string, err error) {
+func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error) {
 	URL := f.url(dir)
 	u, err := url.Parse(URL)
 	if err != nil {
@@ -369,6 +371,7 @@ func (f *Fs) readDir(dir string) (names []string, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "readDir failed")
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	f.addHeaders(req)
 	res, err := f.httpClient.Do(req)
 	if err == nil {
@@ -408,7 +411,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if !strings.HasSuffix(dir, "/") && dir != "" {
 		dir += "/"
 	}
-	names, err := f.readDir(dir)
+	names, err := f.readDir(ctx, dir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error listing %q", dir)
 	}
@@ -424,7 +427,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				fs:     f,
 				remote: remote,
 			}
-			switch err = file.stat(); err {
+			switch err = file.stat(ctx); err {
 			case nil:
 				entries = append(entries, file)
 			case fs.ErrorNotAFile:
@@ -492,12 +495,13 @@ func (o *Object) url() string {
 }
 
 // stat updates the info field in the Object
-func (o *Object) stat() error {
+func (o *Object) stat(ctx context.Context) error {
 	url := o.url()
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return errors.Wrap(err, "stat failed")
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	o.fs.addHeaders(req)
 	res, err := o.fs.httpClient.Do(req)
 	if err == nil && res.StatusCode == http.StatusNotFound {
@@ -546,6 +550,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 	// Add optional headers
 	for k, v := range fs.OpenOptionHeaders(options) {
