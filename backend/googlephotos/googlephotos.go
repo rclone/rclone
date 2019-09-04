@@ -290,7 +290,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 }
 
 // fetchEndpoint gets the openid endpoint named from the Google config
-func (f *Fs) fetchEndpoint(name string) (endpoint string, err error) {
+func (f *Fs) fetchEndpoint(ctx context.Context, name string) (endpoint string, err error) {
 	// Get openID config without auth
 	opts := rest.Opts{
 		Method:  "GET",
@@ -298,7 +298,7 @@ func (f *Fs) fetchEndpoint(name string) (endpoint string, err error) {
 	}
 	var openIDconfig map[string]interface{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.unAuth.CallJSON(&opts, nil, &openIDconfig)
+		resp, err := f.unAuth.CallJSON(ctx, &opts, nil, &openIDconfig)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -316,7 +316,7 @@ func (f *Fs) fetchEndpoint(name string) (endpoint string, err error) {
 
 // UserInfo fetches info about the current user with oauth2
 func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err error) {
-	endpoint, err := f.fetchEndpoint("userinfo_endpoint")
+	endpoint, err := f.fetchEndpoint(ctx, "userinfo_endpoint")
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 		RootURL: endpoint,
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(&opts, nil, &userInfo)
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &userInfo)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -338,7 +338,7 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 
 // Disconnect kills the token and refresh token
 func (f *Fs) Disconnect(ctx context.Context) (err error) {
-	endpoint, err := f.fetchEndpoint("revocation_endpoint")
+	endpoint, err := f.fetchEndpoint(ctx, "revocation_endpoint")
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,7 @@ func (f *Fs) Disconnect(ctx context.Context) (err error) {
 	}
 	var res interface{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(&opts, nil, &res)
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &res)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -423,7 +423,7 @@ func findID(name string) string {
 
 // list the albums into an internal cache
 // FIXME cache invalidation
-func (f *Fs) listAlbums(shared bool) (all *albums, err error) {
+func (f *Fs) listAlbums(ctx context.Context, shared bool) (all *albums, err error) {
 	f.albumsMu.Lock()
 	defer f.albumsMu.Unlock()
 	all, ok := f.albums[shared]
@@ -445,7 +445,7 @@ func (f *Fs) listAlbums(shared bool) (all *albums, err error) {
 		var result api.ListAlbums
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(&opts, nil, &result)
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 			return shouldRetry(resp, err)
 		})
 		if err != nil {
@@ -482,7 +482,7 @@ type listFn func(remote string, object *api.MediaItem, isDirectory bool) error
 // dir is the starting directory, "" for root
 //
 // Set recurse to read sub directories
-func (f *Fs) list(filter api.SearchFilter, fn listFn) (err error) {
+func (f *Fs) list(ctx context.Context, filter api.SearchFilter, fn listFn) (err error) {
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/mediaItems:search",
@@ -494,7 +494,7 @@ func (f *Fs) list(filter api.SearchFilter, fn listFn) (err error) {
 		var result api.MediaItems
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(&opts, &filter, &result)
+			resp, err = f.srv.CallJSON(ctx, &opts, &filter, &result)
 			return shouldRetry(resp, err)
 		})
 		if err != nil {
@@ -543,7 +543,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, item *api.MediaI
 // listDir lists a single directory
 func (f *Fs) listDir(ctx context.Context, prefix string, filter api.SearchFilter) (entries fs.DirEntries, err error) {
 	// List the objects
-	err = f.list(filter, func(remote string, item *api.MediaItem, isDirectory bool) error {
+	err = f.list(ctx, filter, func(remote string, item *api.MediaItem, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, prefix+remote, item, isDirectory)
 		if err != nil {
 			return err
@@ -638,7 +638,7 @@ func (f *Fs) createAlbum(ctx context.Context, albumTitle string) (album *api.Alb
 	var result api.Album
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, request, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, request, &result)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -654,7 +654,7 @@ func (f *Fs) createAlbum(ctx context.Context, albumTitle string) (album *api.Alb
 func (f *Fs) getOrCreateAlbum(ctx context.Context, albumTitle string) (album *api.Album, err error) {
 	f.createMu.Lock()
 	defer f.createMu.Unlock()
-	albums, err := f.listAlbums(false)
+	albums, err := f.listAlbums(ctx, false)
 	if err != nil {
 		return nil, err
 	}
@@ -708,7 +708,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 		return err
 	}
 	albumTitle := match[1]
-	allAlbums, err := f.listAlbums(false)
+	allAlbums, err := f.listAlbums(ctx, false)
 	if err != nil {
 		return err
 	}
@@ -773,7 +773,7 @@ func (o *Object) Size() int64 {
 		RootURL: o.downloadURL(),
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -824,7 +824,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		var item api.MediaItem
 		var resp *http.Response
 		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err = o.fs.srv.CallJSON(&opts, nil, &item)
+			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &item)
 			return shouldRetry(resp, err)
 		})
 		if err != nil {
@@ -901,7 +901,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -954,7 +954,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var token []byte
 	var resp *http.Response
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		if err != nil {
 			return shouldRetry(resp, err)
 		}
@@ -986,7 +986,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	var result api.BatchCreateResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, request, &result)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, request, &result)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1029,7 +1029,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, &request, nil)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {

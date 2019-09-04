@@ -4,6 +4,7 @@ package box
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
@@ -22,7 +23,7 @@ import (
 )
 
 // createUploadSession creates an upload session for the object
-func (o *Object) createUploadSession(leaf, directoryID string, size int64) (response *api.UploadSessionResponse, err error) {
+func (o *Object) createUploadSession(ctx context.Context, leaf, directoryID string, size int64) (response *api.UploadSessionResponse, err error) {
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/files/upload_sessions",
@@ -41,7 +42,7 @@ func (o *Object) createUploadSession(leaf, directoryID string, size int64) (resp
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, &request, &response)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, &response)
 		return shouldRetry(resp, err)
 	})
 	return
@@ -53,7 +54,7 @@ func sha1Digest(digest []byte) string {
 }
 
 // uploadPart uploads a part in an upload session
-func (o *Object) uploadPart(SessionID string, offset, totalSize int64, chunk []byte, wrap accounting.WrapFn) (response *api.UploadPartResponse, err error) {
+func (o *Object) uploadPart(ctx context.Context, SessionID string, offset, totalSize int64, chunk []byte, wrap accounting.WrapFn) (response *api.UploadPartResponse, err error) {
 	chunkSize := int64(len(chunk))
 	sha1sum := sha1.Sum(chunk)
 	opts := rest.Opts{
@@ -70,7 +71,7 @@ func (o *Object) uploadPart(SessionID string, offset, totalSize int64, chunk []b
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		opts.Body = wrap(bytes.NewReader(chunk))
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &response)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &response)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -80,7 +81,7 @@ func (o *Object) uploadPart(SessionID string, offset, totalSize int64, chunk []b
 }
 
 // commitUpload finishes an upload session
-func (o *Object) commitUpload(SessionID string, parts []api.Part, modTime time.Time, sha1sum []byte) (result *api.FolderItems, err error) {
+func (o *Object) commitUpload(ctx context.Context, SessionID string, parts []api.Part, modTime time.Time, sha1sum []byte) (result *api.FolderItems, err error) {
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/files/upload_sessions/" + SessionID + "/commit",
@@ -104,7 +105,7 @@ func (o *Object) commitUpload(SessionID string, parts []api.Part, modTime time.T
 outer:
 	for tries = 0; tries < maxTries; tries++ {
 		err = o.fs.pacer.Call(func() (bool, error) {
-			resp, err = o.fs.srv.CallJSON(&opts, &request, nil)
+			resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
 			if err != nil {
 				return shouldRetry(resp, err)
 			}
@@ -154,7 +155,7 @@ outer:
 }
 
 // abortUpload cancels an upload session
-func (o *Object) abortUpload(SessionID string) (err error) {
+func (o *Object) abortUpload(ctx context.Context, SessionID string) (err error) {
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       "/files/upload_sessions/" + SessionID,
@@ -163,16 +164,16 @@ func (o *Object) abortUpload(SessionID string) (err error) {
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	return err
 }
 
 // uploadMultipart uploads a file using multipart upload
-func (o *Object) uploadMultipart(in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, directoryID string, size int64, modTime time.Time) (err error) {
 	// Create upload session
-	session, err := o.createUploadSession(leaf, directoryID, size)
+	session, err := o.createUploadSession(ctx, leaf, directoryID, size)
 	if err != nil {
 		return errors.Wrap(err, "multipart upload create session failed")
 	}
@@ -183,7 +184,7 @@ func (o *Object) uploadMultipart(in io.Reader, leaf, directoryID string, size in
 	defer func() {
 		if err != nil {
 			fs.Debugf(o, "Cancelling multipart upload: %v", err)
-			cancelErr := o.abortUpload(session.ID)
+			cancelErr := o.abortUpload(ctx, session.ID)
 			if cancelErr != nil {
 				fs.Logf(o, "Failed to cancel multipart upload: %v", err)
 			}
@@ -235,7 +236,7 @@ outer:
 			defer wg.Done()
 			defer o.fs.uploadToken.Put()
 			fs.Debugf(o, "Uploading part %d/%d offset %v/%v part size %v", part+1, session.TotalParts, fs.SizeSuffix(position), fs.SizeSuffix(size), fs.SizeSuffix(chunkSize))
-			partResponse, err := o.uploadPart(session.ID, position, size, buf, wrap)
+			partResponse, err := o.uploadPart(ctx, session.ID, position, size, buf, wrap)
 			if err != nil {
 				err = errors.Wrap(err, "multipart upload failed to upload part")
 				select {
@@ -263,7 +264,7 @@ outer:
 	}
 
 	// Finalise the upload session
-	result, err := o.commitUpload(session.ID, parts, modTime, hash.Sum(nil))
+	result, err := o.commitUpload(ctx, session.ID, parts, modTime, hash.Sum(nil))
 	if err != nil {
 		return errors.Wrap(err, "multipart upload failed to finalize")
 	}

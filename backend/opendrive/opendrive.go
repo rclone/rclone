@@ -161,7 +161,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 			Method: "POST",
 			Path:   "/session/login.json",
 		}
-		resp, err = f.srv.CallJSON(&opts, &account, &f.session)
+		resp, err = f.srv.CallJSON(ctx, &opts, &account, &f.session)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -246,7 +246,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 }
 
 // deleteObject removes an object by ID
-func (f *Fs) deleteObject(id string) error {
+func (f *Fs) deleteObject(ctx context.Context, id string) error {
 	return f.pacer.Call(func() (bool, error) {
 		removeDirData := removeFolder{SessionID: f.session.SessionID, FolderID: id}
 		opts := rest.Opts{
@@ -254,7 +254,7 @@ func (f *Fs) deleteObject(id string) error {
 			NoResponse: true,
 			Path:       "/folder/remove.json",
 		}
-		resp, err := f.srv.CallJSON(&opts, &removeDirData, nil)
+		resp, err := f.srv.CallJSON(ctx, &opts, &removeDirData, nil)
 		return f.shouldRetry(resp, err)
 	})
 }
@@ -275,14 +275,14 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	if err != nil {
 		return err
 	}
-	item, err := f.readMetaDataForFolderID(rootID)
+	item, err := f.readMetaDataForFolderID(ctx, rootID)
 	if err != nil {
 		return err
 	}
 	if check && len(item.Files) != 0 {
 		return errors.New("folder not empty")
 	}
-	err = f.deleteObject(rootID)
+	err = f.deleteObject(ctx, rootID)
 	if err != nil {
 		return err
 	}
@@ -353,7 +353,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			Method: "POST",
 			Path:   "/file/move_copy.json",
 		}
-		resp, err = f.srv.CallJSON(&opts, &copyFileData, &response)
+		resp, err = f.srv.CallJSON(ctx, &opts, &copyFileData, &response)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -410,7 +410,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			Method: "POST",
 			Path:   "/file/move_copy.json",
 		}
-		resp, err = f.srv.CallJSON(&opts, &copyFileData, &response)
+		resp, err = f.srv.CallJSON(ctx, &opts, &copyFileData, &response)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -509,7 +509,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			Method: "POST",
 			Path:   "/folder/move_copy.json",
 		}
-		resp, err = f.srv.CallJSON(&opts, &moveFolderData, &response)
+		resp, err = f.srv.CallJSON(ctx, &opts, &moveFolderData, &response)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -589,14 +589,14 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 }
 
 // readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForFolderID(id string) (info *FolderList, err error) {
+func (f *Fs) readMetaDataForFolderID(ctx context.Context, id string) (info *FolderList, err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/folder/list.json/" + f.session.SessionID + "/" + id,
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -641,7 +641,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 				Method: "POST",
 				Path:   "/upload/create_file.json",
 			}
-			resp, err = o.fs.srv.CallJSON(&opts, &createFileData, &response)
+			resp, err = o.fs.srv.CallJSON(ctx, &opts, &createFileData, &response)
 			return o.fs.shouldRetry(resp, err)
 		})
 		if err != nil {
@@ -694,7 +694,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 			Method: "POST",
 			Path:   "/folder.json",
 		}
-		resp, err = f.srv.CallJSON(&opts, &createDirData, &response)
+		resp, err = f.srv.CallJSON(ctx, &opts, &createDirData, &response)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -722,7 +722,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 			Method: "GET",
 			Path:   "/folder/list.json/" + f.session.SessionID + "/" + pathID,
 		}
-		resp, err = f.srv.CallJSON(&opts, nil, &folderList)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &folderList)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -769,7 +769,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	folderList := FolderList{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &folderList)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &folderList)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -853,7 +853,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	}
 	update := modTimeFile{SessionID: o.fs.session.SessionID, FileID: o.id, FileModificationTime: strconv.FormatInt(modTime.Unix(), 10)}
 	err := o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(&opts, &update, nil)
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &update, nil)
 		return o.fs.shouldRetry(resp, err)
 	})
 
@@ -873,7 +873,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -892,7 +892,7 @@ func (o *Object) Remove(ctx context.Context) error {
 			NoResponse: true,
 			Path:       "/file.json/" + o.fs.session.SessionID + "/" + o.id,
 		}
-		resp, err := o.fs.srv.Call(&opts)
+		resp, err := o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(resp, err)
 	})
 }
@@ -920,7 +920,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			Method: "POST",
 			Path:   "/upload/open_file_upload.json",
 		}
-		resp, err := o.fs.srv.CallJSON(&opts, &openUploadData, &openResponse)
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &openUploadData, &openResponse)
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -966,7 +966,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				MultipartFileName:    o.remote,    // ..name of the file for the attached file
 
 			}
-			resp, err = o.fs.srv.CallJSON(&opts, nil, &reply)
+			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &reply)
 			return o.fs.shouldRetry(resp, err)
 		})
 		if err != nil {
@@ -989,7 +989,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			Method: "POST",
 			Path:   "/upload/close_file_upload.json",
 		}
-		resp, err = o.fs.srv.CallJSON(&opts, &closeUploadData, &closeResponse)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, &closeUploadData, &closeResponse)
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1015,7 +1015,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			NoResponse: true,
 			Path:       "/file/access.json",
 		}
-		resp, err = o.fs.srv.CallJSON(&opts, &update, nil)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, &update, nil)
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1040,7 +1040,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 			Method: "GET",
 			Path:   "/folder/itembyname.json/" + o.fs.session.SessionID + "/" + directoryID + "?name=" + url.QueryEscape(replaceReservedChars(leaf)),
 		}
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &folderList)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &folderList)
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {

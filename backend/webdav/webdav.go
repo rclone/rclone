@@ -205,7 +205,7 @@ func itemIsDir(item *api.Response) bool {
 }
 
 // readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(path string, depth string) (info *api.Prop, err error) {
+func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string) (info *api.Prop, err error) {
 	// FIXME how do we read back additional properties?
 	opts := rest.Opts{
 		Method: "PROPFIND",
@@ -221,7 +221,7 @@ func (f *Fs) readMetaDataForPath(path string, depth string) (info *api.Prop, err
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &result)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
 		return f.shouldRetry(resp, err)
 	})
 	if apiErr, ok := err.(*api.Error); ok {
@@ -229,7 +229,7 @@ func (f *Fs) readMetaDataForPath(path string, depth string) (info *api.Prop, err
 		switch apiErr.StatusCode {
 		case http.StatusNotFound:
 			if f.retryWithZeroDepth && depth != "0" {
-				return f.readMetaDataForPath(path, "0")
+				return f.readMetaDataForPath(ctx, path, "0")
 			}
 			return nil, fs.ErrorObjectNotFound
 		case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther:
@@ -477,7 +477,7 @@ func (f *Fs) setQuirks(vendor string) error {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *api.Prop) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Prop) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -487,7 +487,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.Prop) (fs.Object, error)
 		// Set info
 		err = o.setMetaData(info)
 	} else {
-		err = o.readMetaData() // reads info and meta, returning an error
+		err = o.readMetaData(ctx) // reads info and meta, returning an error
 	}
 	if err != nil {
 		return nil, err
@@ -498,7 +498,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.Prop) (fs.Object, error)
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(remote, nil)
+	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
 // Read the normal props, plus the checksums
@@ -528,7 +528,7 @@ type listAllFn func(string, bool, *api.Prop) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, depth string, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, filesOnly bool, depth string, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method: "PROPFIND",
 		Path:   f.dirPath(dir), // FIXME Should not start with /
@@ -542,7 +542,7 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, depth str
 	var result api.Multistatus
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &result)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -550,7 +550,7 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, depth str
 			// does not exist
 			if apiErr.StatusCode == http.StatusNotFound {
 				if f.retryWithZeroDepth && depth != "0" {
-					return f.listAll(dir, directoriesOnly, filesOnly, "0", fn)
+					return f.listAll(ctx, dir, directoriesOnly, filesOnly, "0", fn)
 				}
 				return found, fs.ErrorDirNotFound
 			}
@@ -625,14 +625,14 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, depth str
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	var iErr error
-	_, err = f.listAll(dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
+	_, err = f.listAll(ctx, dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
 		if isDir {
 			d := fs.NewDir(remote, time.Time(info.Modified))
 			// .SetID(info.ID)
 			// FIXME more info from dir? can set size, items?
 			entries = append(entries, d)
 		} else {
-			o, err := f.newObjectWithInfo(remote, info)
+			o, err := f.newObjectWithInfo(ctx, remote, info)
 			if err != nil {
 				iErr = err
 				return true
@@ -696,7 +696,7 @@ func (f *Fs) mkParentDir(ctx context.Context, dirPath string) error {
 }
 
 // low level mkdir, only makes the directory, doesn't attempt to create parents
-func (f *Fs) _mkdir(dirPath string) error {
+func (f *Fs) _mkdir(ctx context.Context, dirPath string) error {
 	// We assume the root is already created
 	if dirPath == "" {
 		return nil
@@ -711,7 +711,7 @@ func (f *Fs) _mkdir(dirPath string) error {
 		NoResponse: true,
 	}
 	err := f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.Call(&opts)
+		resp, err := f.srv.Call(ctx, &opts)
 		return f.shouldRetry(resp, err)
 	})
 	if apiErr, ok := err.(*api.Error); ok {
@@ -727,13 +727,13 @@ func (f *Fs) _mkdir(dirPath string) error {
 // mkdir makes the directory and parents using native paths
 func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 	// defer log.Trace(dirPath, "")("")
-	err := f._mkdir(dirPath)
+	err := f._mkdir(ctx, dirPath)
 	if apiErr, ok := err.(*api.Error); ok {
 		// parent does not exist so create it first then try again
 		if apiErr.StatusCode == http.StatusConflict {
 			err = f.mkParentDir(ctx, dirPath)
 			if err == nil {
-				err = f._mkdir(dirPath)
+				err = f._mkdir(ctx, dirPath)
 			}
 		}
 	}
@@ -749,17 +749,17 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // dirNotEmpty returns true if the directory exists and is not Empty
 //
 // if the directory does not exist then err will be ErrorDirNotFound
-func (f *Fs) dirNotEmpty(dir string) (found bool, err error) {
-	return f.listAll(dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
+func (f *Fs) dirNotEmpty(ctx context.Context, dir string) (found bool, err error) {
+	return f.listAll(ctx, dir, false, false, defaultDepth, func(remote string, isDir bool, info *api.Prop) bool {
 		return true
 	})
 }
 
 // purgeCheck removes the root directory, if check is set then it
 // refuses to do so if it has anything in
-func (f *Fs) purgeCheck(dir string, check bool) error {
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	if check {
-		notEmpty, err := f.dirNotEmpty(dir)
+		notEmpty, err := f.dirNotEmpty(ctx, dir)
 		if err != nil {
 			return err
 		}
@@ -775,7 +775,7 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 	var resp *http.Response
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, nil)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, nil)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -789,7 +789,7 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return f.purgeCheck(dir, true)
+	return f.purgeCheck(ctx, dir, true)
 }
 
 // Precision return the precision of this Fs
@@ -838,7 +838,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1e9)
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -870,7 +870,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge(ctx context.Context) error {
-	return f.purgeCheck("", false)
+	return f.purgeCheck(ctx, "", false)
 }
 
 // Move src to this remote using server side move operations.
@@ -904,7 +904,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	dstPath := f.filePath(dstRemote)
 
 	// Check if destination exists
-	_, err := f.dirNotEmpty(dstRemote)
+	_, err := f.dirNotEmpty(ctx, dstRemote)
 	if err == nil {
 		return fs.ErrorDirExists
 	}
@@ -934,7 +934,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		},
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -975,7 +975,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var resp *http.Response
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &q)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &q)
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1028,7 +1028,8 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData()
+	ctx := context.TODO()
+	err := o.readMetaData(ctx)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
@@ -1052,11 +1053,11 @@ func (o *Object) setMetaData(info *api.Prop) (err error) {
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
-func (o *Object) readMetaData() (err error) {
+func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.hasMetaData {
 		return nil
 	}
-	info, err := o.fs.readMetaDataForPath(o.remote, defaultDepth)
+	info, err := o.fs.readMetaDataForPath(ctx, o.remote, defaultDepth)
 	if err != nil {
 		return err
 	}
@@ -1068,7 +1069,7 @@ func (o *Object) readMetaData() (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	err := o.readMetaData()
+	err := o.readMetaData(ctx)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
@@ -1095,7 +1096,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1143,7 +1144,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1159,7 +1160,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	// read metadata from remote
 	o.hasMetaData = false
-	return o.readMetaData()
+	return o.readMetaData(ctx)
 }
 
 // Remove an object
@@ -1170,7 +1171,7 @@ func (o *Object) Remove(ctx context.Context) error {
 		NoResponse: true,
 	}
 	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.Call(&opts)
+		resp, err := o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(resp, err)
 	})
 }

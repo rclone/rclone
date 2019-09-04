@@ -74,7 +74,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	if err != nil {
 		return "", false, err
 	}
-	folders, err := f.listFolders(folderID)
+	folders, err := f.listFolders(ctx, folderID)
 	if err != nil {
 		return "", false, err
 	}
@@ -95,7 +95,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	if err != nil {
 		return "", err
 	}
-	resp, err := f.makeFolder(leaf, folderID)
+	resp, err := f.makeFolder(ctx, leaf, folderID)
 	if err != nil {
 		return "", err
 	}
@@ -251,7 +251,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	files, err := f.listFiles(folderID)
+	files, err := f.listFiles(ctx, folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, fs.ErrorCantUploadEmptyFiles
 	}
 
-	nodeResponse, err := f.getUploadNode()
+	nodeResponse, err := f.getUploadNode(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -314,12 +314,12 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 
-	_, err = f.uploadFile(in, size, leaf, directoryID, nodeResponse.ID, nodeResponse.URL)
+	_, err = f.uploadFile(ctx, in, size, leaf, directoryID, nodeResponse.ID, nodeResponse.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	fileUploadResponse, err := f.endUpload(nodeResponse.ID, nodeResponse.URL)
+	fileUploadResponse, err := f.endUpload(ctx, nodeResponse.ID, nodeResponse.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -393,7 +393,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 
-	_, err = f.removeFolder(dir, folderID)
+	_, err = f.removeFolder(ctx, dir, folderID)
 	if err != nil {
 		return err
 	}

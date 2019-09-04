@@ -535,7 +535,7 @@ func (f *Fs) relPath(absPath string) (string, error) {
 }
 
 // metaServer ...
-func (f *Fs) metaServer() (string, error) {
+func (f *Fs) metaServer(ctx context.Context) (string, error) {
 	f.metaMu.Lock()
 	defer f.metaMu.Unlock()
 
@@ -555,7 +555,7 @@ func (f *Fs) metaServer() (string, error) {
 		err error
 	)
 	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.Call(&opts)
+		res, err = f.srv.Call(ctx, &opts)
 		if err == nil {
 			url, err = readBodyWord(res)
 		}
@@ -608,7 +608,7 @@ func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEnt
 
 	var info api.ItemInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(&opts, nil, &info)
+		res, err := f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(res, err, f, &opts)
 	})
 
@@ -716,7 +716,7 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 		res  *http.Response
 	)
 	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.CallJSON(&opts, nil, &info)
+		res, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(res, err, f, &opts)
 	})
 
@@ -758,7 +758,7 @@ func (f *Fs) listBin(ctx context.Context, dirPath string, depth int) (entries fs
 	if err != nil {
 		return nil, err
 	}
-	metaURL, err := f.metaServer()
+	metaURL, err := f.metaServer(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -776,7 +776,7 @@ func (f *Fs) listBin(ctx context.Context, dirPath string, depth int) (entries fs
 
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.Call(&opts)
+		res, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
@@ -1031,7 +1031,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) error {
 	if err != nil {
 		return err
 	}
-	metaURL, err := f.metaServer()
+	metaURL, err := f.metaServer(ctx)
 	if err != nil {
 		return err
 	}
@@ -1049,7 +1049,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) error {
 
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.Call(&opts)
+		res, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
@@ -1192,7 +1192,7 @@ func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) error {
 
 	var response api.GenericResponse
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(&opts, nil, &response)
+		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
 		return shouldRetry(res, err, f, &opts)
 	})
 
@@ -1264,7 +1264,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	var response api.GenericBodyResponse
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(&opts, nil, &response)
+		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
 		return shouldRetry(res, err, f, &opts)
 	})
 
@@ -1342,7 +1342,7 @@ func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) e
 	if err != nil {
 		return err
 	}
-	metaURL, err := f.metaServer()
+	metaURL, err := f.metaServer(ctx)
 	if err != nil {
 		return err
 	}
@@ -1368,7 +1368,7 @@ func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) e
 
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.Call(&opts)
+		res, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
@@ -1459,7 +1459,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 
 	var response api.GenericBodyResponse
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(&opts, nil, &response)
+		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
 		return shouldRetry(res, err, f, &opts)
 	})
 
@@ -1500,7 +1500,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 
 	var response api.CleanupResponse
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(&opts, nil, &response)
+		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
 		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
@@ -1533,7 +1533,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 
 	var info api.UserInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(&opts, nil, &info)
+		res, err := f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
@@ -1664,7 +1664,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			hasher = mrhash.New()
 			wrapIn = io.TeeReader(wrapIn, hasher)
 		}
-		newHash, err = o.upload(wrapIn, size, options...)
+		newHash, err = o.upload(ctx, wrapIn, size, options...)
 		if fileHash == nil && err == nil {
 			fileHash = hasher.Sum(nil)
 		}
@@ -1783,12 +1783,12 @@ func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.Obj
 	return
 }
 
-func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) ([]byte, error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, size int64, options ...fs.OpenOption) ([]byte, error) {
 	token, err := o.fs.accessToken()
 	if err != nil {
 		return nil, err
 	}
-	shardURL, err := o.fs.uploadShard()
+	shardURL, err := o.fs.uploadShard(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1813,7 +1813,7 @@ func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) ([]b
 		strHash string
 	)
 	err = o.fs.pacer.Call(func() (bool, error) {
-		res, err = o.fs.srv.Call(&opts)
+		res, err = o.fs.srv.Call(ctx, &opts)
 		if err == nil {
 			strHash, err = readBodyWord(res)
 		}
@@ -1832,7 +1832,7 @@ func (o *Object) upload(in io.Reader, size int64, options ...fs.OpenOption) ([]b
 	}
 }
 
-func (f *Fs) uploadShard() (string, error) {
+func (f *Fs) uploadShard(ctx context.Context) (string, error) {
 	f.shardMu.Lock()
 	defer f.shardMu.Unlock()
 
@@ -1856,7 +1856,7 @@ func (f *Fs) uploadShard() (string, error) {
 
 	var info api.ShardInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(&opts, nil, &info)
+		res, err := f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(res, err, f, &opts)
 	})
 	if err != nil {
@@ -1995,7 +1995,7 @@ func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 	if err != nil {
 		return err
 	}
-	metaURL, err := o.fs.metaServer()
+	metaURL, err := o.fs.metaServer(ctx)
 	if err != nil {
 		return err
 	}
@@ -2032,7 +2032,7 @@ func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 
 	var res *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		res, err = o.fs.srv.Call(&opts)
+		res, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(res, err, o.fs, &opts)
 	})
 	if err != nil {
@@ -2115,12 +2115,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var res *http.Response
 	server := ""
 	err = o.fs.pacer.Call(func() (bool, error) {
-		server, err = o.fs.fileServers.Dispatch(server)
+		server, err = o.fs.fileServers.Dispatch(ctx, server)
 		if err != nil {
 			return false, err
 		}
 		opts.RootURL = server
-		res, err = o.fs.srv.Call(&opts)
+		res, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(res, err, o.fs, &opts)
 	})
 	if err != nil {
@@ -2213,7 +2213,7 @@ type pendingServer struct {
 // Dispatch dispatches next download server.
 // It prefers switching and tries to avoid current server
 // in use by caller because it may be overloaded or slow.
-func (p *serverPool) Dispatch(current string) (string, error) {
+func (p *serverPool) Dispatch(ctx context.Context, current string) (string, error) {
 	now := time.Now()
 	url := p.getServer(current, now)
 	if url != "" {
@@ -2231,7 +2231,7 @@ func (p *serverPool) Dispatch(current string) (string, error) {
 		err error
 	)
 	err = p.fs.pacer.Call(func() (bool, error) {
-		res, err = p.fs.srv.Call(&opts)
+		res, err = p.fs.srv.Call(ctx, &opts)
 		if err != nil {
 			return fserrors.ShouldRetry(err), err
 		}
