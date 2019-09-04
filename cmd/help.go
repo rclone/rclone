@@ -39,7 +39,7 @@ documentation, changelog and configuration walkthroughs.
 const (
 	bashCompletionFunc = `
 __rclone_custom_func() {
-    if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
+    if [[ ${#COMPREPLY[@]} -eq 0 && :$SHELLOPTS: != *:posix:* ]]; then
         local cur cword prev words
         if declare -F _init_completion > /dev/null; then
             _init_completion -n : || return
