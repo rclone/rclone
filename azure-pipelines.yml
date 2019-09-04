@@ -49,6 +49,7 @@ strategy:
       GO_VERSION: latest
       BUILD_FLAGS: '-include "^windows/amd64" -cgo'
       MAKE_QUICKTEST: true
+      MAKE_RACEQUICKTEST: true
       DEPLOY: true
     windows_386:
       imageName: windows-2019
