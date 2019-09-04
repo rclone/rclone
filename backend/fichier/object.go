@@ -75,7 +75,7 @@ func (o *Object) SetModTime(context.Context, time.Time) error {
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
 	fs.FixRangeOption(options, int64(o.file.Size))
-	downloadToken, err := o.fs.getDownloadToken(o.file.URL)
+	downloadToken, err := o.fs.getDownloadToken(ctx, o.file.URL)
 
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.rest.Call(&opts)
+		resp, err = o.fs.rest.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 
@@ -131,7 +131,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 func (o *Object) Remove(ctx context.Context) error {
 	// fs.Debugf(f, "Removing file `%s` with url `%s`", o.file.Filename, o.file.URL)
 
-	_, err := o.fs.deleteFile(o.file.URL)
+	_, err := o.fs.deleteFile(ctx, o.file.URL)
 
 	if err != nil {
 		return err

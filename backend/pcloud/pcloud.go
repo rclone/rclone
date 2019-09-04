@@ -201,7 +201,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return nil, err
 	}
 
-	found, err := f.listAll(directoryID, false, true, func(item *api.Item) bool {
+	found, err := f.listAll(ctx, directoryID, false, true, func(item *api.Item) bool {
 		if item.Name == leaf {
 			info = item
 			return true
@@ -334,7 +334,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(pathID, true, false, func(item *api.Item) bool {
+	found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
 		if item.Name == leaf {
 			pathIDOut = item.ID
 			return true
@@ -357,7 +357,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	opts.Parameters.Set("name", replaceReservedChars(leaf))
 	opts.Parameters.Set("folderid", dirIDtoNumber(pathID))
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -400,7 +400,7 @@ type listAllFn func(*api.Item) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/listfolder",
@@ -412,7 +412,7 @@ func (f *Fs) listAll(dirID string, directoriesOnly bool, filesOnly bool, fn list
 	var result api.ItemResult
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -458,7 +458,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 	var iErr error
-	_, err = f.listAll(directoryID, false, false, func(info *api.Item) bool {
+	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
 		remote := path.Join(dir, info.Name)
 		if info.IsFolder {
 			// cache the directory ID for later lookups
@@ -563,7 +563,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	var resp *http.Response
 	var result api.ItemResult
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -628,7 +628,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var resp *http.Response
 	var result api.ItemResult
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -666,7 +666,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	var resp *http.Response
 	var result api.Error
 	return f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -706,7 +706,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var resp *http.Response
 	var result api.ItemResult
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -803,7 +803,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	var resp *http.Response
 	var result api.ItemResult
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -830,7 +830,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	var resp *http.Response
 	var q api.UserInfo
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &q)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &q)
 		err = q.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -881,7 +881,7 @@ func (o *Object) getHashes(ctx context.Context) (err error) {
 	}
 	opts.Parameters.Set("fileid", fileIDtoNumber(o.id))
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &result)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -984,7 +984,7 @@ func (o *Object) Storable() bool {
 }
 
 // downloadURL fetches the download link
-func (o *Object) downloadURL() (URL string, err error) {
+func (o *Object) downloadURL(ctx context.Context) (URL string, err error) {
 	if o.id == "" {
 		return "", errors.New("can't download - no id")
 	}
@@ -1000,7 +1000,7 @@ func (o *Object) downloadURL() (URL string, err error) {
 	}
 	opts.Parameters.Set("fileid", fileIDtoNumber(o.id))
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &result)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -1016,7 +1016,7 @@ func (o *Object) downloadURL() (URL string, err error) {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	url, err := o.downloadURL()
+	url, err := o.downloadURL(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1027,7 +1027,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1104,7 +1104,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &result)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})
@@ -1134,7 +1134,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	var result api.ItemResult
 	opts.Parameters.Set("fileid", fileIDtoNumber(o.id))
 	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(&opts, nil, &result)
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
 	})

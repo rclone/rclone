@@ -72,6 +72,7 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			ctx := context.TODO()
 			err := oauthutil.Config("onedrive", name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
@@ -143,7 +144,7 @@ func init() {
 				}
 
 				sites := siteResponse{}
-				_, err := srv.CallJSON(&opts, nil, &sites)
+				_, err := srv.CallJSON(ctx, &opts, nil, &sites)
 				if err != nil {
 					log.Fatalf("Failed to query available sites: %v", err)
 				}
@@ -172,7 +173,7 @@ func init() {
 			// query Microsoft Graph
 			if finalDriveID == "" {
 				drives := drivesResponse{}
-				_, err := srv.CallJSON(&opts, nil, &drives)
+				_, err := srv.CallJSON(ctx, &opts, nil, &drives)
 				if err != nil {
 					log.Fatalf("Failed to query available drives: %v", err)
 				}
@@ -194,7 +195,7 @@ func init() {
 				RootURL: graphURL,
 				Path:    "/drives/" + finalDriveID + "/root"}
 			var rootItem api.Item
-			_, err = srv.CallJSON(&opts, nil, &rootItem)
+			_, err = srv.CallJSON(ctx, &opts, nil, &rootItem)
 			if err != nil {
 				log.Fatalf("Failed to query root for drive %s: %v", finalDriveID, err)
 			}
@@ -343,10 +344,10 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 // instead of simply using `drives/driveID/root:/itemPath` because it works for
 // "shared with me" folders in OneDrive Personal (See #2536, #2778)
 // This path pattern comes from https://github.com/OneDrive/onedrive-api-docs/issues/908#issuecomment-417488480
-func (f *Fs) readMetaDataForPathRelativeToID(normalizedID string, relPath string) (info *api.Item, resp *http.Response, err error) {
+func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID string, relPath string) (info *api.Item, resp *http.Response, err error) {
 	opts := newOptsCall(normalizedID, "GET", ":/"+withTrailingColon(rest.URLPathEscape(replaceReservedChars(relPath))))
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(resp, err)
 	})
 
@@ -371,7 +372,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 			}
 		}
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(&opts, nil, &info)
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 			return shouldRetry(resp, err)
 		})
 		return info, resp, err
@@ -426,7 +427,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		}
 	}
 
-	return f.readMetaDataForPathRelativeToID(baseNormalizedID, relPath)
+	return f.readMetaDataForPathRelativeToID(ctx, baseNormalizedID, relPath)
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -592,7 +593,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	if !ok {
 		return "", false, errors.New("couldn't find parent ID")
 	}
-	info, resp, err := f.readMetaDataForPathRelativeToID(pathID, leaf)
+	info, resp, err := f.readMetaDataForPathRelativeToID(ctx, pathID, leaf)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return "", false, nil
@@ -619,7 +620,7 @@ func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, e
 		ConflictBehavior: "fail",
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, &mkdir, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &info)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -642,7 +643,7 @@ type listAllFn func(*api.Item) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	// Top parameter asks for bigger pages of data
 	// https://dev.onedrive.com/odata/optional-query-parameters.htm
 	opts := newOptsCall(dirID, "GET", "/children?$top=1000")
@@ -651,7 +652,7 @@ OUTER:
 		var result api.ListChildrenResponse
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(&opts, nil, &result)
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
 			return shouldRetry(resp, err)
 		})
 		if err != nil {
@@ -709,7 +710,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 	var iErr error
-	_, err = f.listAll(directoryID, false, false, func(info *api.Item) bool {
+	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
 		if !f.opt.ExposeOneNoteFiles && info.GetPackageType() == api.PackageTypeOneNote {
 			fs.Debugf(info.Name, "OneNote file not shown in directory listing")
 			return false
@@ -793,12 +794,12 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 }
 
 // deleteObject removes an object by ID
-func (f *Fs) deleteObject(id string) error {
+func (f *Fs) deleteObject(ctx context.Context, id string) error {
 	opts := newOptsCall(id, "DELETE", "")
 	opts.NoResponse = true
 
 	return f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.Call(&opts)
+		resp, err := f.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 }
@@ -821,7 +822,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 	if check {
 		// check to see if there are any items
-		found, err := f.listAll(rootID, false, false, func(item *api.Item) bool {
+		found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
 			return true
 		})
 		if err != nil {
@@ -831,7 +832,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 			return fs.ErrorDirectoryNotEmpty
 		}
 	}
-	err = f.deleteObject(rootID)
+	err = f.deleteObject(ctx, rootID)
 	if err != nil {
 		return err
 	}
@@ -941,7 +942,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, &copyReq, nil)
+		resp, err = f.srv.CallJSON(ctx, &opts, &copyReq, nil)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1029,7 +1030,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var resp *http.Response
 	var info api.Item
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, &move, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, &move, &info)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1122,7 +1123,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// Get timestamps of src so they can be preserved
-	srcInfo, _, err := srcFs.readMetaDataForPathRelativeToID(srcID, "")
+	srcInfo, _, err := srcFs.readMetaDataForPathRelativeToID(ctx, srcID, "")
 	if err != nil {
 		return err
 	}
@@ -1144,7 +1145,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	var resp *http.Response
 	var info api.Item
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, &move, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, &move, &info)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1170,7 +1171,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &drive)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &drive)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1210,7 +1211,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 	var resp *http.Response
 	var result api.CreateShareLinkResponse
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, &share, &result)
+		resp, err = f.srv.CallJSON(ctx, &opts, &share, &result)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1370,7 +1371,7 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.Item, 
 	}
 	var info *api.Item
 	err := o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(&opts, &update, &info)
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, &update, &info)
 		return shouldRetry(resp, err)
 	})
 	return info, err
@@ -1405,7 +1406,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	opts.Options = options
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1441,7 +1442,7 @@ func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (re
 	createRequest.Item.FileSystemInfo.LastModifiedDateTime = api.Timestamp(modTime)
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, &createRequest, &response)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, &createRequest, &response)
 		if apiErr, ok := err.(*api.Error); ok {
 			if apiErr.ErrorInfo.Code == "nameAlreadyExists" {
 				// Make the error more user-friendly
@@ -1454,7 +1455,7 @@ func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (re
 }
 
 // uploadFragment uploads a part
-func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64) (info *api.Item, err error) {
+func (o *Object) uploadFragment(ctx context.Context, url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64) (info *api.Item, err error) {
 	opts := rest.Opts{
 		Method:        "PUT",
 		RootURL:       url,
@@ -1467,7 +1468,7 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 	var body []byte
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, _ = chunk.Seek(0, io.SeekStart)
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		if err != nil {
 			return shouldRetry(resp, err)
 		}
@@ -1487,7 +1488,7 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 }
 
 // cancelUploadSession cancels an upload session
-func (o *Object) cancelUploadSession(url string) (err error) {
+func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error) {
 	opts := rest.Opts{
 		Method:     "DELETE",
 		RootURL:    url,
@@ -1495,7 +1496,7 @@ func (o *Object) cancelUploadSession(url string) (err error) {
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	return
@@ -1517,7 +1518,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 		}
 
 		fs.Debugf(o, "Cancelling multipart upload")
-		cancelErr := o.cancelUploadSession(uploadURL)
+		cancelErr := o.cancelUploadSession(ctx, uploadURL)
 		if cancelErr != nil {
 			fs.Logf(o, "Failed to cancel multipart upload: %v", cancelErr)
 		}
@@ -1553,7 +1554,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 		}
 		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		info, err = o.uploadFragment(uploadURL, position, size, seg, n)
+		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n)
 		if err != nil {
 			return nil, err
 		}
@@ -1594,7 +1595,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &info)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &info)
 		if apiErr, ok := err.(*api.Error); ok {
 			if apiErr.ErrorInfo.Code == "nameAlreadyExists" {
 				// Make the error more user-friendly
@@ -1646,7 +1647,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	return o.fs.deleteObject(o.id)
+	return o.fs.deleteObject(ctx, o.id)
 }
 
 // MimeType of an Object if known, "" otherwise

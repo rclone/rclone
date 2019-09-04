@@ -200,7 +200,7 @@ func (f *Fs) dirPath(file string) string {
 	return path.Join(f.diskRoot, file) + "/"
 }
 
-func (f *Fs) readMetaDataForPath(path string, options *api.ResourceInfoRequestOptions) (*api.ResourceInfoResponse, error) {
+func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.ResourceInfoRequestOptions) (*api.ResourceInfoResponse, error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/resources",
@@ -226,7 +226,7 @@ func (f *Fs) readMetaDataForPath(path string, options *api.ResourceInfoRequestOp
 	var info api.ResourceInfoResponse
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(resp, err)
 	})
 
@@ -239,6 +239,7 @@ func (f *Fs) readMetaDataForPath(path string, options *api.ResourceInfoRequestOp
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.TODO()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -284,7 +285,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	//request object meta info
 	// Check to see if the object exists and is a file
 	//request object meta info
-	if info, err := f.readMetaDataForPath(f.diskRoot, &api.ResourceInfoRequestOptions{}); err != nil {
+	if info, err := f.readMetaDataForPath(ctx, f.diskRoot, &api.ResourceInfoRequestOptions{}); err != nil {
 
 	} else {
 		if info.ResourceType == "file" {
@@ -301,7 +302,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 }
 
 // Convert a list item into a DirEntry
-func (f *Fs) itemToDirEntry(remote string, object *api.ResourceInfoResponse) (fs.DirEntry, error) {
+func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *api.ResourceInfoResponse) (fs.DirEntry, error) {
 	switch object.ResourceType {
 	case "dir":
 		t, err := time.Parse(time.RFC3339Nano, object.Modified)
@@ -311,7 +312,7 @@ func (f *Fs) itemToDirEntry(remote string, object *api.ResourceInfoResponse) (fs
 		d := fs.NewDir(remote, t).SetSize(object.Size)
 		return d, nil
 	case "file":
-		o, err := f.newObjectWithInfo(remote, object)
+		o, err := f.newObjectWithInfo(ctx, remote, object)
 		if err != nil {
 			return nil, err
 		}
@@ -343,7 +344,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			Limit:  limit,
 			Offset: offset,
 		}
-		info, err := f.readMetaDataForPath(root, opts)
+		info, err := f.readMetaDataForPath(ctx, root, opts)
 
 		if err != nil {
 			if apiErr, ok := err.(*api.ErrorResponse); ok {
@@ -360,7 +361,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			//list all subdirs
 			for _, element := range info.Embedded.Items {
 				remote := path.Join(dir, element.Name)
-				entry, err := f.itemToDirEntry(remote, &element)
+				entry, err := f.itemToDirEntry(ctx, remote, &element)
 				if err != nil {
 					return nil, err
 				}
@@ -386,7 +387,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *api.ResourceInfoResponse) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.ResourceInfoResponse) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -395,7 +396,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.ResourceInfoResponse) (f
 	if info != nil {
 		err = o.setMetaData(info)
 	} else {
-		err = o.readMetaData()
+		err = o.readMetaData(ctx)
 		if apiErr, ok := err.(*api.ErrorResponse); ok {
 			// does not exist
 			if apiErr.ErrorName == "DiskNotFoundError" {
@@ -412,7 +413,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.ResourceInfoResponse) (f
 // NewObject finds the Object at remote.  If it can't be found it
 // returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(remote, nil)
+	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -446,7 +447,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 }
 
 // CreateDir makes a directory
-func (f *Fs) CreateDir(path string) (err error) {
+func (f *Fs) CreateDir(ctx context.Context, path string) (err error) {
 	//fmt.Printf("CreateDir: %s\n", path)
 
 	var resp *http.Response
@@ -460,7 +461,7 @@ func (f *Fs) CreateDir(path string) (err error) {
 	opts.Parameters.Set("path", path)
 
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -474,7 +475,7 @@ func (f *Fs) CreateDir(path string) (err error) {
 // This really needs improvement and especially proper error checking
 // but Yandex does not publish a List of possible errors and when they're
 // expected to occur.
-func (f *Fs) mkDirs(path string) (err error) {
+func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 	//trim filename from path
 	//dirString := strings.TrimSuffix(path, filepath.Base(path))
 	//trim "disk:" from path
@@ -483,7 +484,7 @@ func (f *Fs) mkDirs(path string) (err error) {
 		return nil
 	}
 
-	if err = f.CreateDir(dirString); err != nil {
+	if err = f.CreateDir(ctx, dirString); err != nil {
 		if apiErr, ok := err.(*api.ErrorResponse); ok {
 			// allready exists
 			if apiErr.ErrorName != "DiskPathPointsToExistentDirectoryError" {
@@ -493,7 +494,7 @@ func (f *Fs) mkDirs(path string) (err error) {
 				for _, element := range dirs {
 					if element != "" {
 						mkdirpath += element + "/" //path separator /
-						if err = f.CreateDir(mkdirpath); err != nil {
+						if err = f.CreateDir(ctx, mkdirpath); err != nil {
 							// ignore errors while creating dirs
 						}
 					}
@@ -505,7 +506,7 @@ func (f *Fs) mkDirs(path string) (err error) {
 	return err
 }
 
-func (f *Fs) mkParentDirs(resPath string) error {
+func (f *Fs) mkParentDirs(ctx context.Context, resPath string) error {
 	// defer log.Trace(dirPath, "")("")
 	// chop off trailing / if it exists
 	if strings.HasSuffix(resPath, "/") {
@@ -515,17 +516,17 @@ func (f *Fs) mkParentDirs(resPath string) error {
 	if parent == "." {
 		parent = ""
 	}
-	return f.mkDirs(parent)
+	return f.mkDirs(ctx, parent)
 }
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	path := f.filePath(dir)
-	return f.mkDirs(path)
+	return f.mkDirs(ctx, path)
 }
 
 // waitForJob waits for the job with status in url to complete
-func (f *Fs) waitForJob(location string) (err error) {
+func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 	opts := rest.Opts{
 		RootURL: location,
 		Method:  "GET",
@@ -535,7 +536,7 @@ func (f *Fs) waitForJob(location string) (err error) {
 		var resp *http.Response
 		var body []byte
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.Call(&opts)
+			resp, err = f.srv.Call(ctx, &opts)
 			if err != nil {
 				return fserrors.ShouldRetry(err), err
 			}
@@ -564,7 +565,7 @@ func (f *Fs) waitForJob(location string) (err error) {
 	return errors.Errorf("async operation didn't complete after %v", fs.Config.Timeout)
 }
 
-func (f *Fs) delete(path string, hardDelete bool) (err error) {
+func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) (err error) {
 	opts := rest.Opts{
 		Method:     "DELETE",
 		Path:       "/resources",
@@ -577,7 +578,7 @@ func (f *Fs) delete(path string, hardDelete bool) (err error) {
 	var resp *http.Response
 	var body []byte
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		if err != nil {
 			return fserrors.ShouldRetry(err), err
 		}
@@ -595,19 +596,19 @@ func (f *Fs) delete(path string, hardDelete bool) (err error) {
 		if err != nil {
 			return errors.Wrapf(err, "async info result not JSON: %q", body)
 		}
-		return f.waitForJob(info.HRef)
+		return f.waitForJob(ctx, info.HRef)
 	}
 	return nil
 }
 
 // purgeCheck remotes the root directory, if check is set then it
 // refuses to do so if it has anything in
-func (f *Fs) purgeCheck(dir string, check bool) error {
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	root := f.filePath(dir)
 	if check {
 		//to comply with rclone logic we check if the directory is empty before delete.
 		//send request to get list of objects in this directory.
-		info, err := f.readMetaDataForPath(root, &api.ResourceInfoRequestOptions{})
+		info, err := f.readMetaDataForPath(ctx, root, &api.ResourceInfoRequestOptions{})
 		if err != nil {
 			return errors.Wrap(err, "rmdir failed")
 		}
@@ -616,14 +617,14 @@ func (f *Fs) purgeCheck(dir string, check bool) error {
 		}
 	}
 	//delete directory
-	return f.delete(root, false)
+	return f.delete(ctx, root, false)
 }
 
 // Rmdir deletes the container
 //
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return f.purgeCheck(dir, true)
+	return f.purgeCheck(ctx, dir, true)
 }
 
 // Purge deletes all the files and the container
@@ -632,11 +633,11 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // deleting all the files quicker than just running Remove() on the
 // result of List()
 func (f *Fs) Purge(ctx context.Context) error {
-	return f.purgeCheck("", false)
+	return f.purgeCheck(ctx, "", false)
 }
 
 // copyOrMoves copies or moves directories or files depending on the method parameter
-func (f *Fs) copyOrMove(method, src, dst string, overwrite bool) (err error) {
+func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite bool) (err error) {
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       "/resources/" + method,
@@ -650,7 +651,7 @@ func (f *Fs) copyOrMove(method, src, dst string, overwrite bool) (err error) {
 	var resp *http.Response
 	var body []byte
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		if err != nil {
 			return fserrors.ShouldRetry(err), err
 		}
@@ -668,7 +669,7 @@ func (f *Fs) copyOrMove(method, src, dst string, overwrite bool) (err error) {
 		if err != nil {
 			return errors.Wrapf(err, "async info result not JSON: %q", body)
 		}
-		return f.waitForJob(info.HRef)
+		return f.waitForJob(ctx, info.HRef)
 	}
 	return nil
 }
@@ -690,11 +691,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	dstPath := f.filePath(remote)
-	err := f.mkParentDirs(dstPath)
+	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return nil, err
 	}
-	err = f.copyOrMove("copy", srcObj.filePath(), dstPath, false)
+	err = f.copyOrMove(ctx, "copy", srcObj.filePath(), dstPath, false)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't copy file")
@@ -720,11 +721,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	dstPath := f.filePath(remote)
-	err := f.mkParentDirs(dstPath)
+	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return nil, err
 	}
-	err = f.copyOrMove("move", srcObj.filePath(), dstPath, false)
+	err = f.copyOrMove(ctx, "move", srcObj.filePath(), dstPath, false)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't move file")
@@ -758,12 +759,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return errors.New("can't move root directory")
 	}
 
-	err := f.mkParentDirs(dstPath)
+	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.readMetaDataForPath(dstPath, &api.ResourceInfoRequestOptions{})
+	_, err = f.readMetaDataForPath(ctx, dstPath, &api.ResourceInfoRequestOptions{})
 	if apiErr, ok := err.(*api.ErrorResponse); ok {
 		// does not exist
 		if apiErr.ErrorName == "DiskNotFoundError" {
@@ -775,7 +776,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	err = f.copyOrMove("move", srcPath, dstPath, false)
+	err = f.copyOrMove(ctx, "move", srcPath, dstPath, false)
 
 	if err != nil {
 		return errors.Wrap(err, "couldn't move directory")
@@ -802,7 +803,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 
@@ -819,7 +820,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		return "", errors.Wrap(err, "couldn't create public link")
 	}
 
-	info, err := f.readMetaDataForPath(f.filePath(remote), &api.ResourceInfoRequestOptions{})
+	info, err := f.readMetaDataForPath(ctx, f.filePath(remote), &api.ResourceInfoRequestOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -840,7 +841,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	return err
@@ -857,7 +858,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var info api.DiskInfo
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(&opts, nil, &info)
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(resp, err)
 	})
 
@@ -924,11 +925,11 @@ func (o *Object) setMetaData(info *api.ResourceInfoResponse) (err error) {
 }
 
 // readMetaData reads ands sets the new metadata for a storage.Object
-func (o *Object) readMetaData() (err error) {
+func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.hasMetaData {
 		return nil
 	}
-	info, err := o.fs.readMetaDataForPath(o.filePath(), &api.ResourceInfoRequestOptions{})
+	info, err := o.fs.readMetaDataForPath(ctx, o.filePath(), &api.ResourceInfoRequestOptions{})
 	if err != nil {
 		return err
 	}
@@ -943,7 +944,7 @@ func (o *Object) readMetaData() (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	err := o.readMetaData()
+	err := o.readMetaData(ctx)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
@@ -953,7 +954,8 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData()
+	ctx := context.TODO()
+	err := o.readMetaData(ctx)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
@@ -974,7 +976,7 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-func (o *Object) setCustomProperty(property string, value string) (err error) {
+func (o *Object) setCustomProperty(ctx context.Context, property string, value string) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:     "PATCH",
@@ -990,7 +992,7 @@ func (o *Object) setCustomProperty(property string, value string) (err error) {
 	cpr := api.CustomPropertyResponse{CustomProperties: rcm}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, &cpr, nil)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, &cpr, nil)
 		return shouldRetry(resp, err)
 	})
 	return err
@@ -1001,7 +1003,7 @@ func (o *Object) setCustomProperty(property string, value string) (err error) {
 // Commits the datastore
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	// set custom_property 'rclone_modified' of object to modTime
-	err := o.setCustomProperty("rclone_modified", modTime.Format(time.RFC3339Nano))
+	err := o.setCustomProperty(ctx, "rclone_modified", modTime.Format(time.RFC3339Nano))
 	if err != nil {
 		return err
 	}
@@ -1023,7 +1025,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	opts.Parameters.Set("path", o.filePath())
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &dl)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &dl)
 		return shouldRetry(resp, err)
 	})
 
@@ -1038,7 +1040,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1047,7 +1049,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return resp.Body, err
 }
 
-func (o *Object) upload(in io.Reader, overwrite bool, mimeType string) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeType string) (err error) {
 	// prepare upload
 	var resp *http.Response
 	var ur api.AsyncInfo
@@ -1061,7 +1063,7 @@ func (o *Object) upload(in io.Reader, overwrite bool, mimeType string) (err erro
 	opts.Parameters.Set("overwrite", strconv.FormatBool(overwrite))
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &ur)
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &ur)
 		return shouldRetry(resp, err)
 	})
 
@@ -1079,7 +1081,7 @@ func (o *Object) upload(in io.Reader, overwrite bool, mimeType string) (err erro
 	}
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 
@@ -1097,13 +1099,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	remote := o.filePath()
 
 	//create full path to file before upload.
-	err := o.fs.mkParentDirs(remote)
+	err := o.fs.mkParentDirs(ctx, remote)
 	if err != nil {
 		return err
 	}
 
 	//upload file
-	err = o.upload(in1, true, fs.MimeType(ctx, src))
+	err = o.upload(ctx, in1, true, fs.MimeType(ctx, src))
 	if err != nil {
 		return err
 	}
@@ -1120,7 +1122,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	return o.fs.delete(o.filePath(), false)
+	return o.fs.delete(ctx, o.filePath(), false)
 }
 
 // MimeType of an Object if known, "" otherwise

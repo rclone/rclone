@@ -44,7 +44,7 @@ func (f *testLister) listDir(ctx context.Context, prefix string, filter api.Sear
 }
 
 // mock listAlbums for testing
-func (f *testLister) listAlbums(shared bool) (all *albums, err error) {
+func (f *testLister) listAlbums(ctx context.Context, shared bool) (all *albums, err error) {
 	return f.albums, nil
 }
 
