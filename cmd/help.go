@@ -67,9 +67,9 @@ __rclone_custom_func() {
                 local reply=${prefix:+$prefix/}$line
                 [[ $reply != $path* ]] || COMPREPLY+=("$reply")
             done < <(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null)
-	    [[ ! ${COMPREPLY[@]} ]] || compopt -o filenames
+	    [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o filenames
         fi
-        [[ ! ${COMPREPLY[@]} ]] || compopt -o nospace
+        [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o nospace
     fi
 }
 `
