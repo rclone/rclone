@@ -1,7 +1,4 @@
 // Package restic serves a remote suitable for use with restic
-
-// +build go1.9
-
 package restic
 
 import (
