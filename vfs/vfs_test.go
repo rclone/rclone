@@ -6,7 +6,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -311,108 +310,4 @@ func TestVFSStatfs(t *testing.T) {
 	assert.Equal(t, used, used2)
 	assert.Equal(t, free, free2)
 	assert.Equal(t, oldTime, vfs.usageTime)
-}
-
-func TestVFSCaseInsensitive(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-
-	if runtime.GOOS == "windows" {
-		t.Logf("Skip TestVFSCaseInsensitive as failure is expected on Windows")
-		return
-	}
-
-	ctx := context.Background()
-	file1 := r.WriteObject(ctx, "FiLeA", "data1", t1)
-	file2 := r.WriteObject(ctx, "FiLeB", "data2", t2)
-	file3 := r.WriteObject(ctx, "FilEb", "data3", t3) // Windows will fail here as these two are local files
-	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
-
-	// See how VFS handles case-insensitive flag
-	CaseInsensitiveOpt := DefaultOpt
-	CaseInsensitiveOpt.CaseInsensitive = true
-	vfsCI := New(r.Fremote, &CaseInsensitiveOpt)
-
-	fd, err := vfsCI.OpenFile("FiLeA", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data1")
-
-	fd, err = vfsCI.OpenFile("fileA", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data1")
-
-	fd, err = vfsCI.OpenFile("filea", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data1")
-
-	fd, err = vfsCI.OpenFile("FILEA", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data1")
-
-	fd, err = vfsCI.OpenFile("FiLeB", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data2")
-
-	fd, err = vfsCI.OpenFile("FilEb", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data3")
-
-	fd, err = vfsCI.OpenFile("fileb", os.O_RDONLY, 0777)
-	assert.Nil(t, fd)
-	assert.Error(t, err)
-	assert.NotEqual(t, err, ENOENT)
-
-	fd, err = vfsCI.OpenFile("FILEB", os.O_RDONLY, 0777)
-	assert.Nil(t, fd)
-	assert.Error(t, err)
-	assert.NotEqual(t, err, ENOENT)
-
-	// Run the same tests with case-sensitive VFS for comparison
-	CaseSensitiveOpt := DefaultOpt
-	CaseSensitiveOpt.CaseInsensitive = false
-	vfsCS := New(r.Fremote, &CaseSensitiveOpt)
-
-	fd, err = vfsCS.OpenFile("FiLeA", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data1")
-
-	fd, err = vfsCS.OpenFile("fileA", os.O_RDONLY, 0777)
-	assert.Nil(t, fd)
-	assert.Error(t, err)
-	assert.Equal(t, err, ENOENT)
-
-	fd, err = vfsCS.OpenFile("filea", os.O_RDONLY, 0777)
-	assert.Nil(t, fd)
-	assert.Error(t, err)
-	assert.Equal(t, err, ENOENT)
-
-	fd, err = vfsCS.OpenFile("FILEA", os.O_RDONLY, 0777)
-	assert.Nil(t, fd)
-	assert.Error(t, err)
-	assert.Equal(t, err, ENOENT)
-
-	fd, err = vfsCS.OpenFile("FiLeB", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data2")
-
-	fd, err = vfsCS.OpenFile("FilEb", os.O_RDONLY, 0777)
-	assertFileData(t, fd, err, "data3")
-
-	fd, err = vfsCS.OpenFile("fileb", os.O_RDONLY, 0777)
-	assert.Nil(t, fd)
-	assert.Error(t, err)
-	assert.Equal(t, err, ENOENT)
-
-	fd, err = vfsCS.OpenFile("FILEB", os.O_RDONLY, 0777)
-	assert.Nil(t, fd)
-	assert.Error(t, err)
-	assert.Equal(t, err, ENOENT)
-}
-
-func assertFileData(t *testing.T, fd Handle, err error, data string) {
-	assert.NotNil(t, fd)
-	assert.NoError(t, err)
-
-	fh, ok := fd.(*ReadFileHandle)
-	require.True(t, ok)
-
-	size := len(data)
-	buf := make([]byte, size)
-	num, err := fh.Read(buf)
-	assert.NoError(t, err)
-	assert.Equal(t, num, size)
-
-	assert.Equal(t, string(buf), data)
 }
