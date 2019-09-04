@@ -353,7 +353,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		}
 	}
 	f.srv.SetErrorHandler(errorHandler)
-	err = f.setQuirks(opt.Vendor)
+	err = f.setQuirks(ctx, opt.Vendor)
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +424,7 @@ func (f *Fs) fetchAndSetBearerToken() error {
 }
 
 // setQuirks adjusts the Fs for the vendor passed in
-func (f *Fs) setQuirks(vendor string) error {
+func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 	switch vendor {
 	case "owncloud":
 		f.canStream = true
@@ -440,13 +440,13 @@ func (f *Fs) setQuirks(vendor string) error {
 		// They have to be set instead of BasicAuth
 		f.srv.RemoveHeader("Authorization") // We don't need this Header if using cookies
 		spCk := odrvcookie.New(f.opt.User, f.opt.Pass, f.endpointURL)
-		spCookies, err := spCk.Cookies()
+		spCookies, err := spCk.Cookies(ctx)
 		if err != nil {
 			return err
 		}
 
 		odrvcookie.NewRenew(12*time.Hour, func() {
-			spCookies, err := spCk.Cookies()
+			spCookies, err := spCk.Cookies(ctx)
 			if err != nil {
 				fs.Errorf("could not renew cookies: %s", err.Error())
 				return

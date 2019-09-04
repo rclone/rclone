@@ -3,6 +3,7 @@ package odrvcookie
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"html/template"
 	"net/http"
@@ -91,8 +92,8 @@ func New(pUser, pPass, pEndpoint string) CookieAuth {
 
 // Cookies creates a CookieResponse. It fetches the auth token and then
 // retrieves the Cookies
-func (ca *CookieAuth) Cookies() (*CookieResponse, error) {
-	tokenResp, err := ca.getSPToken()
+func (ca *CookieAuth) Cookies(ctx context.Context) (*CookieResponse, error) {
+	tokenResp, err := ca.getSPToken(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +141,7 @@ func (ca *CookieAuth) getSPCookie(conf *SuccessResponse) (*CookieResponse, error
 	return &cookieResponse, nil
 }
 
-func (ca *CookieAuth) getSPToken() (conf *SuccessResponse, err error) {
+func (ca *CookieAuth) getSPToken(ctx context.Context) (conf *SuccessResponse, err error) {
 	reqData := map[string]interface{}{
 		"Username": ca.user,
 		"Password": ca.pass,
@@ -160,6 +161,7 @@ func (ca *CookieAuth) getSPToken() (conf *SuccessResponse, err error) {
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 	client := fshttp.NewClient(fs.Config)
 	resp, err := client.Do(req)

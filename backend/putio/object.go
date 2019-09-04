@@ -223,7 +223,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var resp *http.Response
 	headers := fs.OpenOptionHeaders(options)
 	err = o.fs.pacer.Call(func() (bool, error) {
-		req, _ := http.NewRequest(http.MethodGet, storageURL, nil)
+		req, err := http.NewRequest(http.MethodGet, storageURL, nil)
+		if err != nil {
+			return shouldRetry(err)
+		}
+		req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 		req.Header.Set("User-Agent", o.fs.client.UserAgent)
 
 		// merge headers with extra headers

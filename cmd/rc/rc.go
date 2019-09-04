@@ -71,11 +71,12 @@ Use "rclone rc" to see a list of all possible commands.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1e9, command, args)
 		cmd.Run(false, false, command, func() error {
+			ctx := context.Background()
 			parseFlags()
 			if len(args) == 0 {
-				return list()
+				return list(ctx)
 			}
-			return run(args)
+			return run(ctx, args)
 		})
 	},
 }
@@ -110,7 +111,7 @@ func setAlternateFlag(flagName string, output *string) {
 // do a call from (path, in) to (out, err).
 //
 // if err is set, out may be a valid error return or it may be nil
-func doCall(path string, in rc.Params) (out rc.Params, err error) {
+func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err error) {
 	// If loopback set, short circuit HTTP request
 	if loopback {
 		call := rc.Calls.Get(path)
@@ -141,6 +142,7 @@ func doCall(path string, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make request")
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 	req.Header.Set("Content-Type", "application/json")
 	if authUser != "" || authPass != "" {
@@ -182,7 +184,7 @@ func doCall(path string, in rc.Params) (out rc.Params, err error) {
 }
 
 // Run the remote control command passed in
-func run(args []string) (err error) {
+func run(ctx context.Context, args []string) (err error) {
 	path := strings.Trim(args[0], "/")
 
 	// parse input
@@ -208,7 +210,7 @@ func run(args []string) (err error) {
 	}
 
 	// Do the call
-	out, callErr := doCall(path, in)
+	out, callErr := doCall(ctx, path, in)
 
 	// Write the JSON blob to stdout if required
 	if out != nil && !noOutput {
@@ -222,8 +224,8 @@ func run(args []string) (err error) {
 }
 
 // List the available commands to stdout
-func list() error {
-	list, err := doCall("rc/list", nil)
+func list(ctx context.Context) error {
+	list, err := doCall(ctx, "rc/list", nil)
 	if err != nil {
 		return errors.Wrap(err, "failed to list")
 	}

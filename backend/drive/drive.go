@@ -1734,7 +1734,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = f.Upload(in, size, srcMimeType, "", remote, createInfo)
+		info, err = f.Upload(ctx, in, size, srcMimeType, "", remote, createInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -2499,7 +2499,7 @@ func (o *baseObject) Storable() bool {
 
 // httpResponse gets an http.Response object for the object
 // using the url and method passed in
-func (o *baseObject) httpResponse(url, method string, options []fs.OpenOption) (req *http.Request, res *http.Response, err error) {
+func (o *baseObject) httpResponse(ctx context.Context, url, method string, options []fs.OpenOption) (req *http.Request, res *http.Response, err error) {
 	if url == "" {
 		return nil, nil, errors.New("forbidden to download - check sharing permission")
 	}
@@ -2507,6 +2507,7 @@ func (o *baseObject) httpResponse(url, method string, options []fs.OpenOption) (
 	if err != nil {
 		return req, nil, err
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	if o.bytes == 0 {
 		// Don't supply range requests for 0 length objects as they always fail
@@ -2577,8 +2578,8 @@ func isGoogleError(err error, what string) bool {
 }
 
 // open a url for reading
-func (o *baseObject) open(url string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	_, res, err := o.httpResponse(url, "GET", options)
+func (o *baseObject) open(ctx context.Context, url string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	_, res, err := o.httpResponse(ctx, url, "GET", options)
 	if err != nil {
 		if isGoogleError(err, "cannotDownloadAbusiveFile") {
 			if o.fs.opt.AcknowledgeAbuse {
@@ -2589,7 +2590,7 @@ func (o *baseObject) open(url string, options ...fs.OpenOption) (in io.ReadClose
 					url += "?"
 				}
 				url += "acknowledgeAbuse=true"
-				_, res, err = o.httpResponse(url, "GET", options)
+				_, res, err = o.httpResponse(ctx, url, "GET", options)
 			} else {
 				err = errors.Wrap(err, "Use the --drive-acknowledge-abuse flag to download this file")
 			}
@@ -2618,7 +2619,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			o.v2Download = false
 		}
 	}
-	return o.baseObject.open(o.url, options...)
+	return o.baseObject.open(ctx, o.url, options...)
 }
 func (o *documentObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// Update the size with what we are reading as it can change from
@@ -2643,7 +2644,7 @@ func (o *documentObject) Open(ctx context.Context, options ...fs.OpenOption) (in
 	if offset != 0 {
 		return nil, errors.New("partial downloads are not supported while exporting Google Documents")
 	}
-	in, err = o.baseObject.open(o.url, options...)
+	in, err = o.baseObject.open(ctx, o.url, options...)
 	if in != nil {
 		in = &openDocumentFile{o: o, in: in}
 	}
@@ -2678,7 +2679,7 @@ func (o *linkObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.
 	return ioutil.NopCloser(bytes.NewReader(data)), nil
 }
 
-func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io.Reader,
+func (o *baseObject) update(ctx context.Context, updateInfo *drive.File, uploadMimeType string, in io.Reader,
 	src fs.ObjectInfo) (info *drive.File, err error) {
 	// Make the API request to upload metadata and file data.
 	size := src.Size()
@@ -2696,7 +2697,7 @@ func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io
 		return
 	}
 	// Upload the file in chunks
-	return o.fs.Upload(in, size, uploadMimeType, o.id, o.remote, updateInfo)
+	return o.fs.Upload(ctx, in, size, uploadMimeType, o.id, o.remote, updateInfo)
 }
 
 // Update the already existing object
@@ -2710,7 +2711,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		MimeType:     srcMimeType,
 		ModifiedTime: src.ModTime(ctx).Format(timeFormatOut),
 	}
-	info, err := o.baseObject.update(updateInfo, srcMimeType, in, src)
+	info, err := o.baseObject.update(ctx, updateInfo, srcMimeType, in, src)
 	if err != nil {
 		return err
 	}
@@ -2747,7 +2748,7 @@ func (o *documentObject) Update(ctx context.Context, in io.Reader, src fs.Object
 	}
 	updateInfo.MimeType = importMimeType
 
-	info, err := o.baseObject.update(updateInfo, srcMimeType, in, src)
+	info, err := o.baseObject.update(ctx, updateInfo, srcMimeType, in, src)
 	if err != nil {
 		return err
 	}
