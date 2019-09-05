@@ -835,7 +835,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		},
 	}
 	if f.useOCMtime {
-		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1E9)
+		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1e9)
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(&opts)
@@ -1128,7 +1128,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if o.fs.useOCMtime || o.fs.hasChecksums {
 		opts.ExtraHeaders = map[string]string{}
 		if o.fs.useOCMtime {
-			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1E9)
+			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1e9)
 		}
 		if o.fs.hasChecksums {
 			// Set an upload checksum - prefer SHA1

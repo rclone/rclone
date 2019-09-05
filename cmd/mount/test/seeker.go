@@ -16,7 +16,7 @@ import (
 
 var (
 	// Flags
-	iterations   = flag.Int("n", 1E6, "Iterations to try")
+	iterations   = flag.Int("n", 1e6, "Iterations to try")
 	maxBlockSize = flag.Int("b", 1024*1024, "Max block size to read")
 )
 

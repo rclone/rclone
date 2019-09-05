@@ -58,8 +58,8 @@ func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.Sta
 	resp.Blocks = fsBlocks  // Total data blocks in file system.
 	resp.Bfree = fsBlocks   // Free blocks in file system.
 	resp.Bavail = fsBlocks  // Free blocks in file system if you're not root.
-	resp.Files = 1E9        // Total files in file system.
-	resp.Ffree = 1E9        // Free files in file system.
+	resp.Files = 1e9        // Total files in file system.
+	resp.Ffree = 1e9        // Free files in file system.
 	resp.Bsize = blockSize  // Block size
 	resp.Namelen = 255      // Maximum file name length?
 	resp.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.

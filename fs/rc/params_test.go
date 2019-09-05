@@ -100,8 +100,8 @@ func TestParamsGetInt64(t *testing.T) {
 		{int(12), 12, ""},
 		{int64(13), 13, ""},
 		{float64(14), 14, ""},
-		{float64(9.3E18), 0, "overflows int64"},
-		{float64(-9.3E18), 0, "overflows int64"},
+		{float64(9.3e18), 0, "overflows int64"},
+		{float64(-9.3e18), 0, "overflows int64"},
 	} {
 		t.Run(fmt.Sprintf("%T=%v", test.value, test.value), func(t *testing.T) {
 			in := Params{

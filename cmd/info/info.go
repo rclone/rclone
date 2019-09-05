@@ -58,7 +58,7 @@ a bit of go code for each one.
 `,
 	Hidden: true,
 	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(1, 1E6, command, args)
+		cmd.CheckArgs(1, 1e6, command, args)
 		for i := range args {
 			f := cmd.NewFsDir(args[i : i+1])
 			cmd.Run(false, false, command, func() error {

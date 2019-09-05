@@ -705,16 +705,16 @@ var (
 
 // Test test infrastructure first!
 func TestRandomSource(t *testing.T) {
-	source := newRandomSource(1E8)
-	sink := newRandomSource(1E8)
+	source := newRandomSource(1e8)
+	sink := newRandomSource(1e8)
 	n, err := io.Copy(sink, source)
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1E8), n)
+	assert.Equal(t, int64(1e8), n)
 
-	source = newRandomSource(1E8)
+	source = newRandomSource(1e8)
 	buf := make([]byte, 16)
 	_, _ = source.Read(buf)
-	sink = newRandomSource(1E8)
+	sink = newRandomSource(1e8)
 	_, err = io.Copy(sink, source)
 	assert.Error(t, err, "Error in stream")
 }
@@ -754,23 +754,23 @@ func testEncryptDecrypt(t *testing.T, bufSize int, copySize int64) {
 }
 
 func TestEncryptDecrypt1(t *testing.T) {
-	testEncryptDecrypt(t, 1, 1E7)
+	testEncryptDecrypt(t, 1, 1e7)
 }
 
 func TestEncryptDecrypt32(t *testing.T) {
-	testEncryptDecrypt(t, 32, 1E8)
+	testEncryptDecrypt(t, 32, 1e8)
 }
 
 func TestEncryptDecrypt4096(t *testing.T) {
-	testEncryptDecrypt(t, 4096, 1E8)
+	testEncryptDecrypt(t, 4096, 1e8)
 }
 
 func TestEncryptDecrypt65536(t *testing.T) {
-	testEncryptDecrypt(t, 65536, 1E8)
+	testEncryptDecrypt(t, 65536, 1e8)
 }
 
 func TestEncryptDecrypt65537(t *testing.T) {
-	testEncryptDecrypt(t, 65537, 1E8)
+	testEncryptDecrypt(t, 65537, 1e8)
 }
 
 var (
@@ -803,7 +803,7 @@ func TestEncryptData(t *testing.T) {
 	} {
 		c, err := newCipher(NameEncryptionStandard, "", "", true)
 		assert.NoError(t, err)
-		c.cryptoRand = newRandomSource(1E8) // nodge the crypto rand generator
+		c.cryptoRand = newRandomSource(1e8) // nodge the crypto rand generator
 
 		// Check encode works
 		buf := bytes.NewBuffer(test.in)
@@ -826,7 +826,7 @@ func TestEncryptData(t *testing.T) {
 func TestNewEncrypter(t *testing.T) {
 	c, err := newCipher(NameEncryptionStandard, "", "", true)
 	assert.NoError(t, err)
-	c.cryptoRand = newRandomSource(1E8) // nodge the crypto rand generator
+	c.cryptoRand = newRandomSource(1e8) // nodge the crypto rand generator
 
 	z := &zeroes{}
 
@@ -853,7 +853,7 @@ func TestNewEncrypterErrUnexpectedEOF(t *testing.T) {
 	fh, err := c.newEncrypter(in, nil)
 	assert.NoError(t, err)
 
-	n, err := io.CopyN(ioutil.Discard, fh, 1E6)
+	n, err := io.CopyN(ioutil.Discard, fh, 1e6)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 	assert.Equal(t, int64(32), n)
 }
@@ -885,7 +885,7 @@ func (c *closeDetector) Close() error {
 func TestNewDecrypter(t *testing.T) {
 	c, err := newCipher(NameEncryptionStandard, "", "", true)
 	assert.NoError(t, err)
-	c.cryptoRand = newRandomSource(1E8) // nodge the crypto rand generator
+	c.cryptoRand = newRandomSource(1e8) // nodge the crypto rand generator
 
 	cd := newCloseDetector(bytes.NewBuffer(file0))
 	fh, err := c.newDecrypter(cd)
@@ -936,7 +936,7 @@ func TestNewDecrypterErrUnexpectedEOF(t *testing.T) {
 	fh, err := c.newDecrypter(in)
 	assert.NoError(t, err)
 
-	n, err := io.CopyN(ioutil.Discard, fh, 1E6)
+	n, err := io.CopyN(ioutil.Discard, fh, 1e6)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 	assert.Equal(t, int64(16), n)
 }

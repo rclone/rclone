@@ -101,7 +101,7 @@ var ctxFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 
 const (
 	sleepTime      = 100 * time.Millisecond
-	floatSleepTime = float64(sleepTime) / 1E9 / 2
+	floatSleepTime = float64(sleepTime) / 1e9 / 2
 )
 
 // sleep for some time so job.Duration is non-0
