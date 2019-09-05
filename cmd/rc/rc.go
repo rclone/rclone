@@ -69,7 +69,7 @@ rclone rc server, eg:
 
 Use "rclone rc" to see a list of all possible commands.`,
 	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(0, 1E9, command, args)
+		cmd.CheckArgs(0, 1e9, command, args)
 		cmd.Run(false, false, command, func() error {
 			parseFlags()
 			if len(args) == 0 {

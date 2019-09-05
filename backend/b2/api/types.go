@@ -50,7 +50,7 @@ type Timestamp time.Time
 // MarshalJSON turns a Timestamp into JSON (in UTC)
 func (t *Timestamp) MarshalJSON() (out []byte, err error) {
 	timestamp := (*time.Time)(t).UTC().UnixNano()
-	return []byte(strconv.FormatInt(timestamp/1E6, 10)), nil
+	return []byte(strconv.FormatInt(timestamp/1e6, 10)), nil
 }
 
 // UnmarshalJSON turns JSON into a Timestamp
@@ -59,7 +59,7 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*t = Timestamp(time.Unix(timestamp/1E3, (timestamp%1E3)*1E6).UTC())
+	*t = Timestamp(time.Unix(timestamp/1e3, (timestamp%1e3)*1e6).UTC())
 	return nil
 }
 

@@ -1115,7 +1115,7 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return err
 	}
-	o.modTime = time.Unix(unixMilliseconds/1E3, (unixMilliseconds%1E3)*1E6).UTC()
+	o.modTime = time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
 	return nil
 }
 

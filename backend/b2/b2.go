@@ -1453,7 +1453,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 // timeString returns modTime as the number of milliseconds
 // elapsed since January 1, 1970 UTC as a decimal string.
 func timeString(modTime time.Time) string {
-	return strconv.FormatInt(modTime.UnixNano()/1E6, 10)
+	return strconv.FormatInt(modTime.UnixNano()/1e6, 10)
 }
 
 // parseTimeString converts a decimal string number of milliseconds
@@ -1468,7 +1468,7 @@ func (o *Object) parseTimeString(timeString string) (err error) {
 		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
 		return nil
 	}
-	o.modTime = time.Unix(unixMilliseconds/1E3, (unixMilliseconds%1E3)*1E6).UTC()
+	o.modTime = time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
 	return nil
 }
 

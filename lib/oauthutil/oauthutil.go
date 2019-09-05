@@ -248,7 +248,7 @@ func (ts *TokenSource) timeToExpiry() time.Duration {
 		return 0
 	}
 	if t.Expiry.IsZero() {
-		return 3E9 * time.Second // ~95 years
+		return 3e9 * time.Second // ~95 years
 	}
 	return t.Expiry.Sub(time.Now())
 }
