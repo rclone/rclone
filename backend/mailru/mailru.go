@@ -313,7 +313,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f.pacer = fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer)))
 
 	f.features = (&fs.Features{
-		CaseInsensitive:         false,
+		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
 		// Can copy/move across mailru configs (almost, thus true here), but
 		// only when they share common account (this is checked in Copy/Move).
