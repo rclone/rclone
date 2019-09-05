@@ -944,6 +944,10 @@ func suppressConfirm() func() {
 // UpdateRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
 func UpdateRemote(name string, keyValues rc.Params) error {
+	err := fspath.CheckConfigName(name)
+	if err != nil {
+		return err
+	}
 	defer suppressConfirm()()
 
 	// Work out which options need to be obscured
@@ -987,6 +991,10 @@ func UpdateRemote(name string, keyValues rc.Params) error {
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
 func CreateRemote(name string, provider string, keyValues rc.Params) error {
+	err := fspath.CheckConfigName(name)
+	if err != nil {
+		return err
+	}
 	// Delete the old config if it exists
 	getConfigData().DeleteSection(name)
 	// Set the type
@@ -998,6 +1006,10 @@ func CreateRemote(name string, provider string, keyValues rc.Params) error {
 // PasswordRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
 func PasswordRemote(name string, keyValues rc.Params) error {
+	err := fspath.CheckConfigName(name)
+	if err != nil {
+		return err
+	}
 	defer suppressConfirm()()
 	for k, v := range keyValues {
 		keyValues[k] = obscure.MustObscure(fmt.Sprint(v))
@@ -1041,14 +1053,14 @@ func NewRemoteName() (name string) {
 	for {
 		fmt.Printf("name> ")
 		name = ReadLine()
-		parts := fspath.Matcher.FindStringSubmatch(name + ":")
+		err := fspath.CheckConfigName(name)
 		switch {
 		case name == "":
 			fmt.Printf("Can't use empty name.\n")
 		case driveletter.IsDriveLetter(name):
 			fmt.Printf("Can't use %q as it can be confused with a drive letter.\n", name)
-		case parts == nil:
-			fmt.Printf("Can't use %q as it has invalid characters in it.\n", name)
+		case err != nil:
+			fmt.Printf("Can't use %q as %v.\n", name, err)
 		default:
 			return name
 		}

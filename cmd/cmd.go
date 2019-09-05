@@ -174,7 +174,11 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 	// If file exists then srcFileName != "", however if the file
 	// doesn't exist then we assume it is a directory...
 	if srcFileName != "" {
-		dstRemote, dstFileName = fspath.Split(dstRemote)
+		var err error
+		dstRemote, dstFileName, err = fspath.Split(dstRemote)
+		if err != nil {
+			log.Fatalf("Parsing %q failed: %v", args[1], err)
+		}
 		if dstRemote == "" {
 			dstRemote = "."
 		}
@@ -197,7 +201,10 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 
 // NewFsDstFile creates a new dst fs with a destination file name from the arguments
 func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
-	dstRemote, dstFileName := fspath.Split(args[0])
+	dstRemote, dstFileName, err := fspath.Split(args[0])
+	if err != nil {
+		log.Fatalf("Parsing %q failed: %v", args[0], err)
+	}
 	if dstRemote == "" {
 		dstRemote = "."
 	}

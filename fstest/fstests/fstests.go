@@ -1384,7 +1384,8 @@ func Run(t *testing.T, opt *Opt) {
 					t.Skip("Can't list from root on this remote")
 				}
 
-				configName, configLeaf := fspath.Parse(subRemoteName)
+				configName, configLeaf, err := fspath.Parse(subRemoteName)
+				require.NoError(t, err)
 				if configName == "" {
 					configName, configLeaf = path.Split(subRemoteName)
 				} else {
