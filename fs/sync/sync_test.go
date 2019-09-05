@@ -5,6 +5,7 @@ package sync
 import (
 	"context"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -311,7 +312,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Change last modified date only
@@ -345,7 +346,7 @@ func TestSyncSizeOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Update mtime, md5sum but not length of file
@@ -379,7 +380,7 @@ func TestSyncIgnoreSize(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Update size but not date of file
@@ -419,7 +420,7 @@ func TestSyncIgnoreTimes(t *testing.T) {
 
 	// We should have transferred exactly one file even though the
 	// files were identical.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -598,7 +599,7 @@ func TestSyncDoesntUpdateModtime(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// We should have transferred exactly one file, not set the mod time
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 }
 
 func TestSyncAfterAddingAFile(t *testing.T) {
@@ -1019,9 +1020,44 @@ func TestSyncWithTrackRenames(t *testing.T) {
 			assert.Equal(t, int64(3), accounting.GlobalStats().GetChecks())    // 2 file checks + 1 move
 		}
 	} else {
-		assert.Equal(t, int64(2), accounting.GlobalStats().GetChecks())    // 2 file checks
-		assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers()) // 0 copy
+		if toyFileChecks(r) != -1 {
+			assert.Equal(t, toyFileChecks(r), accounting.GlobalStats().GetChecks())
+		}
+		assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	}
+}
+
+func toyFileChecks(r *fstest.Run) int64 {
+	remote := r.Fremote.Name()
+	// Numbers below are calculated for a 14 byte file.
+	if !strings.HasPrefix(remote, "TestChunker") {
+		return 2
+	}
+	// Chunker makes more internal checks.
+	var checks int
+	switch {
+	case strings.Contains(remote, "Chunk3b"): // chunk 3 bytes
+		checks = 6
+	case strings.Contains(remote, "Chunk50b"): // chunk 50 bytes
+		checks = 3
+	case strings.Contains(remote, "ChunkerChunk"): // unknown chunk size
+		return -1
+	default:
+		checks = 3 // large chunks (eventually no chunking)
+	}
+	if strings.HasSuffix(remote, "S3") {
+		checks++ // Extra check because S3 emulates Move as Copy+Delete.
+	}
+	return int64(checks)
+}
+
+func toyFileTransfers(r *fstest.Run) int64 {
+	remote := r.Fremote.Name()
+	transfers := 1
+	if strings.HasPrefix(remote, "TestChunker") && strings.HasSuffix(remote, "S3") {
+		transfers++ // Extra Copy because S3 emulates Move as Copy+Delete.
+	}
+	return int64(transfers)
 }
 
 // Test a server side move if possible, or the backup path if not
@@ -1600,7 +1636,7 @@ func TestSyncUTFNorm(t *testing.T) {
 
 	// We should have transferred exactly one file, but kept the
 	// normalized state of the file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Flocal, file1)
 	file1.Path = file2.Path
 	fstest.CheckItems(t, r.Fremote, file1)
