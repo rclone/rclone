@@ -172,7 +172,7 @@ Skip full upload if there is another file with same data hash.
 This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
-Please note that rclone needs local memory and disk space to calculate
+Please note that rclone may need local memory and disk space to calculate
 content hash in advance and decide whether full upload is required.
 Also, if rclone does not know file size in advance (e.g. in case of
 streaming or partial uploads), it will not even try this optimization.

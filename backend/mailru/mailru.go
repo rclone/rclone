@@ -95,7 +95,7 @@ func init() {
 This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
-Please note that rclone needs local memory and disk space to calculate
+Please note that rclone may need local memory and disk space to calculate
 content hash in advance and decide whether full upload is required.
 Also, if rclone does not know file size in advance (e.g. in case of
 streaming or partial uploads), it will not even try this optimization.`,
@@ -1585,11 +1585,27 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		newHash  []byte
 	)
 
-	// Check whether file is eligible for speedup method (put by hash)
-	tryFast := o.fs.eligibleForSpeedup(o.Remote(), size, options...)
+	// Request hash from source
+	if srcHash, err := src.Hash(ctx, hash.Mailru); err == nil && srcHash != "" {
+		fileHash, _ = mrhash.DecodeString(srcHash)
+	}
 
-	// Attempt to put by hash from memory
-	if tryFast && size <= int64(o.fs.opt.SpeedupMaxMem) {
+	// Try speedup method if it's globally enabled and source hash is available
+	trySpeedup := o.fs.opt.SpeedupEnable
+	if trySpeedup && fileHash != nil {
+		if o.putByHash(ctx, fileHash, src, "source") {
+			return nil
+		}
+		trySpeedup = false // speedup failed, force upload
+	}
+
+	// Need to calculate hash, check whether file is still eligible for speedup
+	if trySpeedup {
+		trySpeedup = o.fs.eligibleForSpeedup(o.Remote(), size, options...)
+	}
+
+	// Attempt to put by calculating hash in memory
+	if trySpeedup && size <= int64(o.fs.opt.SpeedupMaxMem) {
 		//fs.Debugf(o, "attempt to put by hash from memory")
 		fileBuf, err = ioutil.ReadAll(in)
 		if err != nil {
@@ -1599,13 +1615,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if o.putByHash(ctx, fileHash, src, "memory") {
 			return nil
 		}
-		fs.Debugf(o, "Cannot put by hash from memory, performing upload")
 		wrapIn = bytes.NewReader(fileBuf)
-		tryFast = false
+		trySpeedup = false // speedup failed, force upload
 	}
 
 	// Attempt to put by hash using a spool file
-	if tryFast {
+	if trySpeedup {
 		tmpFs, err := fs.TemporaryLocalFs()
 		if err != nil {
 			fs.Infof(tmpFs, "Failed to create spool FS: %v", err)
@@ -1629,7 +1644,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			}
 			fileHash = mrHash
 		}
-		fs.Debugf(o, "Cannot put by hash from spool, performing upload")
 	}
 
 	// Upload object data
@@ -1645,6 +1659,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	} else {
 		var hasher gohash.Hash
 		if fileHash == nil {
+			// Calculate hash in transit
 			hasher = mrhash.New()
 			wrapIn = io.TeeReader(wrapIn, hasher)
 		}
@@ -1728,10 +1743,11 @@ func (o *Object) putByHash(ctx context.Context, mrHash []byte, info fs.ObjectInf
 	oNew.size = info.Size()
 	oNew.modTime = info.ModTime(ctx)
 	if err := oNew.addFileMetaData(ctx, true); err != nil {
+		fs.Debugf(o, "Cannot put by hash from %s, performing upload", method)
 		return false
 	}
 	*o = *oNew
-	fs.Debugf(o, "has been put by hash from %s", method)
+	fs.Debugf(o, "File has been put by hash from %s", method)
 	return true
 }
 
