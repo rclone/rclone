@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Update the authors.md file with the authors from the git log
 """
@@ -23,13 +23,14 @@ def add_email(name, email):
     """
     adds the email passed in to the end of authors.md
     """
-    print "Adding %s <%s>" % (name, email)
+    print("Adding %s <%s>" % (name, email))
     with open(AUTHORS, "a+") as fd:
-        print >>fd, "  * %s <%s>" % (name, email)
+        print("  * %s <%s>" % (name, email), file=fd)
     subprocess.check_call(["git", "commit", "-m", "Add %s to contributors" % name, AUTHORS])
     
 def main():
     out = subprocess.check_output(["git", "log", '--reverse', '--format=%an|%ae', "master"])
+    out = out.decode("utf-8")
 
     previous = load()
     for line in out.split("\n"):

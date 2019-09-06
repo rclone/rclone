@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """
 Generate a markdown changelog for the rclone project
 """
@@ -99,10 +99,11 @@ def process_log(log):
 
 def main():
     if len(sys.argv) != 3:
-        print >>sys.stderr, "Syntax: %s vX.XX vX.XY" % sys.argv[0]
+        print("Syntax: %s vX.XX vX.XY" % sys.argv[0], file=sys.stderr)
         sys.exit(1)
     version, next_version = sys.argv[1], sys.argv[2]
     log = subprocess.check_output(["git", "log", '''--pretty=format:%H|%an|%aI|%s'''] + [version+".."+next_version])
+    log = log.decode("utf-8")
     by_category = process_log(log)
 
     # Output backends first so remaining in by_category are core items
@@ -112,7 +113,7 @@ def main():
     out("local", title="Local")
     out("cache", title="Cache")
     out("crypt", title="Crypt")
-    backend_names = sorted(x for x in by_category.keys() if x in backends)
+    backend_names = sorted(x for x in list(by_category.keys()) if x in backends)
     for backend_name in backend_names:
         if backend_name in backend_titles:
             backend_title = backend_titles[backend_name]
@@ -123,7 +124,7 @@ def main():
     # Split remaining in by_category into new features and fixes
     new_features = defaultdict(list)
     bugfixes = defaultdict(list)
-    for name, messages in by_category.iteritems():
+    for name, messages in by_category.items():
         for message in messages:
             if IS_FIX_RE.search(message):
                 bugfixes[name].append(message)

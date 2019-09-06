@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Make backend documentation
 """
@@ -52,9 +52,9 @@ if __name__ == "__main__":
     for backend in find_backends():
         try:
             alter_doc(backend)
-        except Exception, e:
-            print "Failed adding docs for %s backend: %s" % (backend, e)
+        except Exception as e:
+            print("Failed adding docs for %s backend: %s" % (backend, e))
             failed += 1
         else:
             success += 1
-    print "Added docs for %d backends with %d failures" % (success, failed)
+    print("Added docs for %d backends with %d failures" % (success, failed))
