@@ -156,6 +156,7 @@ func init() {
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			ctx := context.TODO()
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
@@ -177,7 +178,7 @@ func init() {
 					log.Fatalf("Failed to configure token: %v", err)
 				}
 			}
-			err = configTeamDrive(opt, m, name)
+			err = configTeamDrive(ctx, opt, m, name)
 			if err != nil {
 				log.Fatalf("Failed to configure team drive: %v", err)
 			}
@@ -663,7 +664,7 @@ OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields(googleapi.Field(fields)).Do()
+			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -778,7 +779,7 @@ func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, er
 }
 
 // Figure out if the user wants to use a team drive
-func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
+func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name string) error {
 	// Stop if we are running non-interactive config
 	if fs.Config.AutoConfirm {
 		return nil
@@ -806,7 +807,7 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 	for {
 		var teamDrives *drive.TeamDriveList
 		err = newPacer(opt).Call(func() (bool, error) {
-			teamDrives, err = listTeamDrives.Do()
+			teamDrives, err = listTeamDrives.Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -1975,7 +1976,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) error {
 	err := f.pacer.Call(func() (bool, error) {
-		err := f.svc.Files.EmptyTrash().Do()
+		err := f.svc.Files.EmptyTrash().Context(ctx).Do()
 		return shouldRetry(err)
 	})
 
@@ -1994,7 +1995,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var about *drive.About
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		about, err = f.svc.About.Get().Fields("storageQuota").Do()
+		about, err = f.svc.About.Get().Fields("storageQuota").Context(ctx).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -2253,7 +2254,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					}
 				}
 				fs.Debugf(f, "Checking for changes on remote")
-				startPageToken, err = f.changeNotifyRunner(notifyFunc, startPageToken)
+				startPageToken, err = f.changeNotifyRunner(ctx, notifyFunc, startPageToken)
 				if err != nil {
 					fs.Infof(f, "Change notify listener failure: %s", err)
 				}
@@ -2275,7 +2276,7 @@ func (f *Fs) changeNotifyStartPageToken() (pageToken string, err error) {
 	return startPageToken.StartPageToken, nil
 }
 
-func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPageToken string) (newStartPageToken string, err error) {
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), startPageToken string) (newStartPageToken string, err error) {
 	pageToken := startPageToken
 	for {
 		var changeList *drive.ChangeList
@@ -2291,7 +2292,7 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPage
 			if f.isTeamDrive {
 				changesCall.TeamDriveId(f.opt.TeamDriveID)
 			}
-			changeList, err = changesCall.Do()
+			changeList, err = changesCall.Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
