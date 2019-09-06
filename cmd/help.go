@@ -39,7 +39,7 @@ documentation, changelog and configuration walkthroughs.
 const (
 	bashCompletionFunc = `
 __rclone_custom_func() {
-    if [[ ${#COMPREPLY[@]} -eq 0 && :$SHELLOPTS: != *:posix:* ]]; then
+    if [[ ${#COMPREPLY[@]} -eq 0 ]]; then
         local cur cword prev words
         if declare -F _init_completion > /dev/null; then
             _init_completion -n : || return
@@ -47,10 +47,14 @@ __rclone_custom_func() {
             __rclone_init_completion -n : || return
         fi
         if [[ $cur != *:* ]]; then
+            local ifs=$IFS
+            IFS=$'\n'
+            local remotes=($(command rclone listremotes))
+            IFS=$ifs
             local remote
-            while IFS= read -r remote; do
+            for remote in "${remotes[@]}"; do
                 [[ $remote != $cur* ]] || COMPREPLY+=("$remote")
-            done < <(command rclone listremotes)
+            done
             if [[ ${COMPREPLY[@]} ]]; then
                 local paths=("$cur"*)
                 [[ ! -f ${paths[0]} ]] || COMPREPLY+=("${paths[@]}")
@@ -62,11 +66,15 @@ __rclone_custom_func() {
             else
                 local prefix=
             fi
+            local ifs=$IFS
+            IFS=$'\n'
+            local lines=($(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null))
+            IFS=$ifs
             local line
-            while IFS= read -r line; do
+            for line in "${lines[@]}"; do
                 local reply=${prefix:+$prefix/}$line
                 [[ $reply != $path* ]] || COMPREPLY+=("$reply")
-            done < <(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null)
+            done
 	    [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o filenames
         fi
         [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o nospace
