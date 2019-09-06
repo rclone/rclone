@@ -88,6 +88,9 @@ Now
   * NB this overwrites the current beta so we need to do this
   * git co master
   * make LAST_TAG=${NEW_TAG} startdev
+  * # cherry pick the changes to the changelog
+  * git checkout ${BASE_TAG}-fixes docs/content/changelog.md
+  * git commit --amend
   * git push
   * Announce!
 
