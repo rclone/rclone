@@ -272,7 +272,7 @@ type Fs struct {
 	shardMu      sync.Mutex         // lock for upload shard switcher
 	shardURL     string             // URL of upload shard
 	shardExpiry  time.Time          // time to refresh upload shard
-	fileServers  serverList         // file server switcher
+	fileServers  serverPool         // file server dispatcher
 	authMu       sync.Mutex         // mutex for authorize()
 	passFailed   bool               // true if authorize() failed after 403
 	quirks       quirks             // internal maintenance flags
@@ -343,7 +343,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, err
 	}
 
-	f.fileServers = serverList{
+	f.fileServers = serverPool{
+		pool:      make(pendingServerMap),
 		fs:        f,
 		path:      "/d",
 		expirySec: serverExpirySec,
@@ -2114,7 +2115,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var res *http.Response
 	server := ""
 	err = o.fs.pacer.Call(func() (bool, error) {
-		server, err = o.fs.fileServers.dispatch(server)
+		server, err = o.fs.fileServers.Dispatch(server)
 		if err != nil {
 			return false, err
 		}
@@ -2177,7 +2178,7 @@ func (e *endHandler) handle(err error) error {
 	e.done = true
 	o := e.o
 
-	o.fs.fileServers.free(e.server)
+	o.fs.fileServers.Free(e.server)
 	if err != io.EOF || e.hasher == nil {
 		return err
 	}
@@ -2193,60 +2194,44 @@ func (e *endHandler) handle(err error) error {
 	return io.EOF
 }
 
-type pendingServer struct {
-	url    string
-	locks  int
-	expiry time.Time
-}
-
-type serverList struct {
-	list      []pendingServer
+// serverPool backs server dispacher
+type serverPool struct {
+	pool      pendingServerMap
 	mu        sync.Mutex
 	path      string
 	expirySec time.Duration
 	fs        *Fs
 }
 
-// Dispatch a next download server
-func (sl *serverList) dispatch(current string) (string, error) {
-	sl.mu.Lock()
-	defer sl.mu.Unlock()
+type pendingServerMap map[string]*pendingServer
 
-	f := sl.fs
+type pendingServer struct {
+	locks  int
+	expiry time.Time
+}
+
+// Dispatch dispatches next download server.
+// It prefers switching and tries to avoid current server
+// in use by caller because it may be overloaded or slow.
+func (p *serverPool) Dispatch(current string) (string, error) {
 	now := time.Now()
-	num := len(sl.list)
-
-	// Find an underlocked server.
-	// Avoid "current" server because it may be overloaded/slow (or just prefer switching).
-	for i := 0; i < num; i++ {
-		srv := &sl.list[i]
-		if srv.url == "" || srv.locks < 0 {
-			continue // Free server slot.
-		}
-		if srv.url == current {
-			continue // "current" server (possibly overloaded or stalled).
-		}
-		if srv.locks > maxServerLocks || now.After(srv.expiry) {
-			continue // Overlocked or expired server.
-		}
-		srv.locks++
-		fs.Debugf(f, "Lock server #%d %q with %d locks", i, srv.url, srv.locks)
-		return srv.url, nil
+	url := p.getServer(current, now)
+	if url != "" {
+		return url, nil
 	}
 
 	// Server not found - ask Mailru dispatcher.
 	opts := rest.Opts{
 		Method:  "GET",
 		RootURL: api.DispatchServerURL,
-		Path:    sl.path,
+		Path:    p.path,
 	}
 	var (
 		res *http.Response
-		url string
 		err error
 	)
-	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.Call(&opts)
+	err = p.fs.pacer.Call(func() (bool, error) {
+		res, err = p.fs.srv.Call(&opts)
 		if err != nil {
 			return fserrors.ShouldRetry(err), err
 		}
@@ -2258,71 +2243,88 @@ func (sl *serverList) dispatch(current string) (string, error) {
 		return "", errors.Wrap(err, "Failed to request file server")
 	}
 
-	// Attach to a server proposed by dispatcher.
-	for i := 0; i < num; i++ {
-		srv := &sl.list[i]
-		if srv.url != url {
-			continue // Not a proposed server.
-		}
-		srv.locks++
-		srv.expiry = now.Add(sl.expirySec * time.Second)
-		if fs.Config.LogLevel >= fs.LogLevelInfo {
-			ctime, _ := srv.expiry.MarshalJSON()
-			fs.Debugf(f, "Attach server #%d %q with %d locks (new expiry %s)", i, url, srv.locks, ctime)
-		}
-		return url, nil
-	}
-
-	// Find a free or unused server slot.
-	var server *pendingServer
-	var i int
-	for i = 0; i < num; i++ {
-		srv := &sl.list[i]
-		if srv.url == "" || srv.locks <= 0 {
-			server = srv
-			break
-		}
-	}
-	if server == nil {
-		// No free slots - extend the array.
-		sl.list = append(sl.list, pendingServer{})
-		num = len(sl.list)
-		i = num - 1
-		server = &sl.list[i]
-	}
-
-	server.expiry = now.Add(sl.expirySec * time.Second)
-	if fs.Config.LogLevel >= fs.LogLevelDebug {
-		ctime, _ := server.expiry.MarshalJSON()
-		fs.Debugf(f, "Switch server #%d %q -> %q with locks %d -> 1 (expires %s)", i, server.url, url, server.locks, ctime)
-	}
-	server.url = url
-	server.locks = 1
+	p.addServer(url, now)
 	return url, nil
 }
 
-func (sl *serverList) free(url string) {
+func (p *serverPool) Free(url string) {
 	if url == "" {
 		return
 	}
-	sl.mu.Lock()
-	defer sl.mu.Unlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	for i := 0; i < len(sl.list); i++ {
-		srv := &sl.list[i]
-		if srv.url != url {
-			continue // Not our server
-		}
-		if srv.locks > 0 {
-			fs.Debugf(sl.fs, "Unlock server #%d %q with %d locks", i, srv.url, srv.locks)
-			srv.locks--
-		} else {
-			// Getting here indicates possible race
-			fs.Infof(sl.fs, "Free server #%d %q", i, srv.url)
-			srv.url = ""
-			srv.locks = 0
-		}
+	srv := p.pool[url]
+	if srv == nil {
+		return
 	}
+
+	if srv.locks <= 0 {
+		// Getting here indicates possible race
+		fs.Infof(p.fs, "Purge file server:  locks -, url %s", url)
+		delete(p.pool, url)
+		return
+	}
+
+	srv.locks--
+	if srv.locks == 0 && time.Now().After(srv.expiry) {
+		delete(p.pool, url)
+		fs.Debugf(p.fs, "Free file server:   locks 0, url %s", url)
+		return
+	}
+	fs.Debugf(p.fs, "Unlock file server: locks %d, url %s", srv.locks, url)
+}
+
+// Find an underlocked server
+func (p *serverPool) getServer(current string, now time.Time) string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for url, srv := range p.pool {
+		if url == "" || srv.locks < 0 {
+			continue // Purged server slot
+		}
+		if url == current {
+			continue // Current server - prefer another
+		}
+		if srv.locks >= maxServerLocks {
+			continue // Overlocked server
+		}
+		if now.After(srv.expiry) {
+			continue // Expired server
+		}
+
+		srv.locks++
+		fs.Debugf(p.fs, "Lock file server:   locks %d, url %s", srv.locks, url)
+		return url
+	}
+
+	return ""
+}
+
+func (p *serverPool) addServer(url string, now time.Time) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	expiry := now.Add(p.expirySec * time.Second)
+
+	expiryStr := []byte("-")
+	if fs.Config.LogLevel >= fs.LogLevelInfo {
+		expiryStr, _ = expiry.MarshalJSON()
+	}
+
+	// Attach to a server proposed by dispatcher
+	srv := p.pool[url]
+	if srv != nil {
+		srv.locks++
+		srv.expiry = expiry
+		fs.Debugf(p.fs, "Reuse file server:  locks %d, url %s, expiry %s", srv.locks, url, expiryStr)
+		return
+	}
+
+	// Add new server
+	p.pool[url] = &pendingServer{locks: 1, expiry: expiry}
+	fs.Debugf(p.fs, "Switch file server: locks 1, url %s, expiry %s", url, expiryStr)
 }
 
 // Name of the remote (as passed into NewFs)
