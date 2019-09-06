@@ -14,6 +14,10 @@ func TestCaseSensitivity(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
+	if r.Fremote.Features().CaseInsensitive {
+		t.Skip("Can't test case sensitivity - this remote is officially not case-sensitive")
+	}
+
 	// Create test files
 	ctx := context.Background()
 	file1 := r.WriteObject(ctx, "FiLeA", "data1", t1)
@@ -24,6 +28,7 @@ func TestCaseSensitivity(t *testing.T) {
 	// On a case-Sensitive remote this will be a separate file.
 	// On a case-INsensitive remote this file will either not exist
 	// or overwrite file2 depending on how file system diverges.
+	// On a box.com remote this step will even fail.
 	file3 := r.WriteObject(ctx, "FilEb", "data3", t3)
 
 	// Create a case-Sensitive and case-INsensitive VFS
@@ -53,8 +58,7 @@ func TestCaseSensitivity(t *testing.T) {
 
 	// The remaining test is only meaningful on a case-Sensitive file system.
 	if !remoteIsOK {
-		t.Logf("SKIP: TestCaseSensitivity - remote is not fully case-sensitive")
-		return
+		t.Skip("Can't test case sensitivity - this remote doesn't comply as case-sensitive")
 	}
 
 	// Continue with test as the underlying remote is fully case-Sensitive.
