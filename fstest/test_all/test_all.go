@@ -145,6 +145,7 @@ func main() {
 	// Log and exit
 	report.End()
 	report.LogSummary()
+	report.LogJSON()
 	report.LogHTML()
 	report.EmailHTML()
 	report.Upload()
