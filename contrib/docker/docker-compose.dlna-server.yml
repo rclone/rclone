@@ -1,0 +1,30 @@
+rclone-dlna-server:
+  container_name: rclone-dlna-server
+
+  image: rclone/rclone
+  command:
+# Tweak here rclone's command line switches:
+#    - "--config"
+#    - "/path/to/mounted/rclone.conf"
+    - "--verbose"
+    - "serve"
+    - "dlna"
+    - "remote:/"
+    - "--name"
+    - "myDLNA server"
+    - "--read-only"
+#    - "--no-modtime"
+#    - "--no-checksum"
+
+  restart: unless-stopped
+
+  # Use host networking for simplicity with DLNA broadcasts
+  # and to avoid having to do port mapping.
+  net: host
+
+  # Here you have to map your host's rclone.conf directory to
+  # container's /root/.config/rclone/ dir (R/O).
+  # If you have any remote referencing local files, you have to
+  # map them here, too.
+  volumes:
+    - ~/.config/rclone/:/root/.config/rclone/:ro
