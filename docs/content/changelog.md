@@ -1,10 +1,22 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-08-28"
+date: "2019-09-08"
 ---
 
 # Changelog
+
+## v1.49.2 - 2019-09-08
+
+* New Features
+    * build: Add Docker workflow support (Alfonso Montero)
+* Bug Fixes
+    * accounting: Fix locking in Transfer to avoid deadlock with --progress (Nick Craig-Wood)
+    * docs: Fix template argument for mktemp in install.sh (Cnly)
+    * operations: Fix -u/--update with google photos / files of unknown size (Nick Craig-Wood)
+    * rc: Fix docs for config/create /update /password (Nick Craig-Wood)
+* Google Cloud Storage
+    * Fix need for elevated permissions on SetModTime (Nick Craig-Wood)
 
 ## v1.49.1 - 2019-08-28
 

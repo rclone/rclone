@@ -62,8 +62,9 @@ point release is necessary.
 First make the release branch.  If this is a second point release then
 this will be done already.
 
-  * BASE_TAG=${BASE_TAG}  # eg v1.49
-  * NEW_TAG=${BASE_TAG}.Y # eg v1.49.1
+  * BASE_TAG=v1.XX          # eg v1.49
+  * NEW_TAG=${BASE_TAG}.Y   # eg v1.49.1
+  * echo $BASE_TAG $NEW_TAG # v1.49 v1.49.1
   * git branch ${BASE_TAG} ${BASE_TAG}-fixes
 
 Now
@@ -75,9 +76,10 @@ Now
   * edit docs/content/changelog.md
   * make TAG=${NEW_TAG} doc
   * git commit -a -v -m "Version ${NEW_TAG}"
-  * git tag -d -${NEW_TAG}
+  * git tag -d ${NEW_TAG}
   * git tag -s -m "Version ${NEW_TAG}" ${NEW_TAG}
   * git push --tags -u origin ${BASE_TAG}-fixes
+  * Wait for builds to complete
   * make BRANCH_PATH= TAG=${NEW_TAG} fetch_binaries
   * make TAG=${NEW_TAG} tarball
   * make TAG=${NEW_TAG} sign_upload
