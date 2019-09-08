@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Aug 28, 2019
+Sep 08, 2019
 
 
 
@@ -162,6 +162,33 @@ Remove the leftover files.
 Run rclone config to setup. See rclone config docs for more details.
 
     rclone config
+
+
+Install with docker
+
+The rclone maintains a docker image for rclone. These images are
+autobuilt by docker hub from the rclone source based on a minimal Alpine
+linux image.
+
+The :latest tag will always point to the latest stable release. You can
+use the :beta tag to get the latest build from master. You can also use
+version tags, eg :1.49.1, :1.49 or :1.
+
+    $ docker pull rclone/rclone:latest
+    latest: Pulling from rclone/rclone
+    Digest: sha256:0e0ced72671989bb837fea8e88578b3fc48371aa45d209663683e24cfdaa0e11
+    ...
+    $ docker run --rm rclone/rclone:latest version
+    rclone v1.49.1
+    - os/arch: linux/amd64
+    - go version: go1.12.9
+
+You will probably want to mount rclone’s config file directory or file
+from the host, or configure rclone with environment variables.
+
+Eg to share your local config with the container
+
+    docker run  -v ~/.config/rclone:/root/.config/rclone rclone/rclone:latest listremotes
 
 
 Install from source
@@ -6650,6 +6677,7 @@ config/create: create the config for a remote. {#config/create}
 This takes the following parameters
 
 -   name - name of remote
+-   parameters - a map of { “key”: “value” } pairs
 -   type - type of the new remote
 
 See the config create command command for more information on the above.
@@ -6658,7 +6686,9 @@ Authentication is required for this call.
 
 config/delete: Delete a remote in the config file. {#config/delete}
 
-Parameters: - name - name of remote to delete
+Parameters:
+
+-   name - name of remote to delete
 
 See the config delete command command for more information on the above.
 
@@ -6695,6 +6725,7 @@ config/password: password the config for a remote. {#config/password}
 This takes the following parameters
 
 -   name - name of remote
+-   parameters - a map of { “key”: “value” } pairs
 
 See the config password command command for more information on the
 above.
@@ -6715,6 +6746,7 @@ config/update: update the config for a remote. {#config/update}
 This takes the following parameters
 
 -   name - name of remote
+-   parameters - a map of { “key”: “value” } pairs
 
 See the config update command command for more information on the above.
 
@@ -7824,7 +7856,7 @@ These flags are available for every command.
           --use-json-log                         Use json log format.
           --use-mmap                             Use mmap allocator (see docs).
           --use-server-modtime                   Use server modified time instead of object metadata
-          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.1")
+          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.2")
       -v, --verbose count                        Print lots more stuff (repeat for more)
 
 
@@ -17921,6 +17953,23 @@ override the default choice.
 
 
 CHANGELOG
+
+
+v1.49.2 - 2019-09-08
+
+-   New Features
+    -   build: Add Docker workflow support (Alfonso Montero)
+-   Bug Fixes
+    -   accounting: Fix locking in Transfer to avoid deadlock with
+        –progress (Nick Craig-Wood)
+    -   docs: Fix template argument for mktemp in install.sh (Cnly)
+    -   operations: Fix -u/–update with google photos / files of unknown
+        size (Nick Craig-Wood)
+    -   rc: Fix docs for config/create /update /password (Nick
+        Craig-Wood)
+-   Google Cloud Storage
+    -   Fix need for elevated permissions on SetModTime (Nick
+        Craig-Wood)
 
 
 v1.49.1 - 2019-08-28

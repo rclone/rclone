@@ -1,5 +1,5 @@
 ---
-date: 2019-08-28T17:50:40+01:00
+date: 2019-09-08T16:48:33+01:00
 title: "rclone lsd"
 slug: rclone_lsd
 url: /commands/rclone_lsd/
