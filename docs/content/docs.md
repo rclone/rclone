@@ -37,6 +37,7 @@ See the following for detailed instructions for
   * [Hubic](/hubic/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
+  * [Mail.ru Cloud](/mailru/)
   * [Mega](/mega/)
   * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)

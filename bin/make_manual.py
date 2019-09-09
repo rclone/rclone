@@ -41,6 +41,7 @@ docs = [
     "hubic.md",
     "jottacloud.md",
     "koofr.md",
+    "mailru.md",
     "mega.md",
     "azureblob.md",
     "onedrive.md",
