@@ -13,6 +13,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -415,30 +416,49 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, errors.Wrapf(err, "error listing %q", dir)
 	}
+	var (
+		entriesMu sync.Mutex // to protect entries
+		wg        sync.WaitGroup
+		in        = make(chan string, fs.Config.Checkers)
+	)
+	add := func(entry fs.DirEntry) {
+		entriesMu.Lock()
+		entries = append(entries, entry)
+		entriesMu.Unlock()
+	}
+	for i := 0; i < fs.Config.Checkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for remote := range in {
+				file := &Object{
+					fs:     f,
+					remote: remote,
+				}
+				switch err = file.stat(ctx); err {
+				case nil:
+					add(file)
+				case fs.ErrorNotAFile:
+					// ...found a directory not a file
+					add(fs.NewDir(remote, timeUnset))
+				default:
+					fs.Debugf(remote, "skipping because of error: %v", err)
+				}
+			}
+		}()
+	}
 	for _, name := range names {
 		isDir := name[len(name)-1] == '/'
 		name = strings.TrimRight(name, "/")
 		remote := path.Join(dir, name)
 		if isDir {
-			dir := fs.NewDir(remote, timeUnset)
-			entries = append(entries, dir)
+			add(fs.NewDir(remote, timeUnset))
 		} else {
-			file := &Object{
-				fs:     f,
-				remote: remote,
-			}
-			switch err = file.stat(ctx); err {
-			case nil:
-				entries = append(entries, file)
-			case fs.ErrorNotAFile:
-				// ...found a directory not a file
-				dir := fs.NewDir(remote, timeUnset)
-				entries = append(entries, dir)
-			default:
-				fs.Debugf(remote, "skipping because of error: %v", err)
-			}
+			in <- remote
 		}
 	}
+	close(in)
+	wg.Wait()
 	return entries, nil
 }
 
