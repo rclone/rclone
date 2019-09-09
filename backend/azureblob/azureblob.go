@@ -1508,4 +1508,6 @@ var (
 	_ fs.ListRer   = &Fs{}
 	_ fs.Object    = &Object{}
 	_ fs.MimeTyper = &Object{}
+	_ fs.GetTierer = &Object{}
+	_ fs.SetTierer = &Object{}
 )
