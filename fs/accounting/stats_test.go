@@ -130,52 +130,90 @@ func TestStatsError(t *testing.T) {
 }
 
 func TestStatsTotalDuration(t *testing.T) {
-	time1 := time.Now().Add(-40 * time.Second)
+	startTime := time.Now()
+	time1 := startTime.Add(-40 * time.Second)
 	time2 := time1.Add(10 * time.Second)
 	time3 := time2.Add(10 * time.Second)
 	time4 := time3.Add(10 * time.Second)
-	s := NewStats()
-	s.AddTransfer(&Transfer{
-		startedAt:   time2,
-		completedAt: time3,
-	})
-	s.AddTransfer(&Transfer{
-		startedAt:   time2,
-		completedAt: time2.Add(time.Second),
-	})
-	s.AddTransfer(&Transfer{
-		startedAt:   time1,
-		completedAt: time3,
-	})
-	s.AddTransfer(&Transfer{
-		startedAt:   time3,
-		completedAt: time4,
-	})
-	s.AddTransfer(&Transfer{
-		startedAt: time.Now(),
+
+	t.Run("Single completed transfer", func(t *testing.T) {
+		s := NewStats()
+		s.AddTransfer(&Transfer{
+			startedAt:   time1,
+			completedAt: time2,
+		})
+
+		s.mu.Lock()
+		total := s.totalDuration()
+		s.mu.Unlock()
+
+		assert.Equal(t, 10*time.Second, total)
 	})
 
-	time.Sleep(time.Millisecond)
+	t.Run("Single uncompleted transfer", func(t *testing.T) {
+		s := NewStats()
+		s.AddTransfer(&Transfer{
+			startedAt: time1,
+		})
 
-	s.mu.Lock()
-	total := s.totalDuration()
-	s.mu.Unlock()
+		s.mu.Lock()
+		total := s.totalDuration()
+		s.mu.Unlock()
 
-	assert.True(t, 30*time.Second < total && total < 31*time.Second, total)
-}
-
-func TestStatsTotalDuration2(t *testing.T) {
-	time1 := time.Now().Add(-40 * time.Second)
-	time2 := time1.Add(10 * time.Second)
-	s := NewStats()
-	s.AddTransfer(&Transfer{
-		startedAt:   time1,
-		completedAt: time2,
+		assert.Equal(t, time.Since(time1)/time.Second, total/time.Second)
 	})
 
-	s.mu.Lock()
-	total := s.totalDuration()
-	s.mu.Unlock()
+	t.Run("Overlapping without ending", func(t *testing.T) {
+		s := NewStats()
+		s.AddTransfer(&Transfer{
+			startedAt:   time2,
+			completedAt: time3,
+		})
+		s.AddTransfer(&Transfer{
+			startedAt:   time2,
+			completedAt: time2.Add(time.Second),
+		})
+		s.AddTransfer(&Transfer{
+			startedAt:   time1,
+			completedAt: time3,
+		})
+		s.AddTransfer(&Transfer{
+			startedAt:   time3,
+			completedAt: time4,
+		})
+		s.AddTransfer(&Transfer{
+			startedAt: time.Now(),
+		})
 
-	assert.Equal(t, 10*time.Second, total)
+		time.Sleep(time.Millisecond)
+
+		s.mu.Lock()
+		total := s.totalDuration()
+		s.mu.Unlock()
+
+		assert.Equal(t, time.Duration(30), total/time.Second)
+	})
+
+	t.Run("Mixed completed and uncompleted transfers", func(t *testing.T) {
+		s := NewStats()
+		s.AddTransfer(&Transfer{
+			startedAt:   time1,
+			completedAt: time2,
+		})
+		s.AddTransfer(&Transfer{
+			startedAt: time2,
+		})
+		s.AddTransfer(&Transfer{
+			startedAt: time3,
+		})
+		s.AddTransfer(&Transfer{
+			startedAt: time3,
+		})
+
+		s.mu.Lock()
+		total := s.totalDuration()
+		s.mu.Unlock()
+
+		assert.Equal(t, startTime.Sub(time1)/time.Second, total/time.Second)
+	})
 }
