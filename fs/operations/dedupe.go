@@ -226,7 +226,8 @@ func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]fs
 			fs.Infof(dirs[0], "Merging contents of duplicate directories")
 			err := mergeDirs(ctx, dirs)
 			if err != nil {
-				return errors.Wrap(err, "merge duplicate dirs")
+				fs.CountError(err)
+				fs.Errorf(nil, "merge duplicate dirs: %s", err)
 			}
 		} else {
 			fs.Infof(dirs[0], "NOT Merging contents of duplicate directories as --dry-run")
@@ -242,22 +243,15 @@ func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]fs
 func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode) error {
 	fs.Infof(f, "Looking for duplicates using %v mode.", mode)
 
-	// Find duplicate directories first and fix them - repeat
-	// until all fixed
-	for {
-		duplicateDirs, err := dedupeFindDuplicateDirs(ctx, f)
-		if err != nil {
-			return err
-		}
-		if len(duplicateDirs) == 0 {
-			break
-		}
+	// Find duplicate directories first and fix them
+	duplicateDirs, err := dedupeFindDuplicateDirs(ctx, f)
+	if err != nil {
+		return err
+	}
+	if len(duplicateDirs) != 0 {
 		err = dedupeMergeDuplicateDirs(ctx, f, duplicateDirs)
 		if err != nil {
 			return err
-		}
-		if fs.Config.DryRun {
-			break
 		}
 	}
 
@@ -266,7 +260,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode) error {
 
 	// Now find duplicate files
 	files := map[string][]fs.Object{}
-	err := walk.ListR(ctx, f, "", true, fs.Config.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
+	err = walk.ListR(ctx, f, "", true, fs.Config.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
 			remote := o.Remote()
 			files[remote] = append(files[remote], o)
