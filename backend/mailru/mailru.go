@@ -1581,23 +1581,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var (
-		fileBuf  []byte
-		fileHash []byte
-		newHash  []byte
+		fileBuf    []byte
+		fileHash   []byte
+		newHash    []byte
+		trySpeedup bool
 	)
 
-	// Request hash from source
-	if srcHash, err := src.Hash(ctx, hash.Mailru); err == nil && srcHash != "" {
-		fileHash, _ = mrhash.DecodeString(srcHash)
-	}
-
-	// Try speedup method if it's globally enabled and source hash is available
-	trySpeedup := o.fs.opt.SpeedupEnable
-	if trySpeedup && fileHash != nil {
-		if o.putByHash(ctx, fileHash, src, "source") {
-			return nil
+	// Don't disturb the source if file fits in hash.
+	// Skip an extra speedup request if file fits in hash.
+	if size > mrhash.Size {
+		// Request hash from source.
+		if srcHash, err := src.Hash(ctx, hash.Mailru); err == nil && srcHash != "" {
+			fileHash, _ = mrhash.DecodeString(srcHash)
 		}
-		trySpeedup = false // speedup failed, force upload
+
+		// Try speedup if it's globally enabled and source hash is available.
+		trySpeedup = o.fs.opt.SpeedupEnable
+		if trySpeedup && fileHash != nil {
+			if o.putByHash(ctx, fileHash, src, "source") {
+				return nil
+			}
+			trySpeedup = false // speedup failed, force upload
+		}
 	}
 
 	// Need to calculate hash, check whether file is still eligible for speedup
