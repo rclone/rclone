@@ -1,14 +1,15 @@
 package operations
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"testing"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fstest/mockobject"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,8 +30,8 @@ type reOpenTestObject struct {
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 //
 // This will break after reading the number of bytes in breaks
-func (o *reOpenTestObject) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
-	rc, err := o.Object.Open(options...)
+func (o *reOpenTestObject) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
+	rc, err := o.Object.Open(ctx, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,85 +61,99 @@ func (er errorReader) Read(p []byte) (n int, err error) {
 	return 0, er.err
 }
 
-// Contents for the mock object
-var reOpenTestcontents = []byte("0123456789")
+func TestReOpen(t *testing.T) {
+	for testIndex, testName := range []string{"Seek", "Range"} {
+		t.Run(testName, func(t *testing.T) {
+			// Contents for the mock object
+			var (
+				reOpenTestcontents = []byte("0123456789")
+				expectedRead       = reOpenTestcontents
+				rangeOption        *fs.RangeOption
+			)
+			if testIndex > 0 {
+				rangeOption = &fs.RangeOption{Start: 1, End: 7}
+				expectedRead = reOpenTestcontents[1:8]
+			}
 
-// Start the test with the given breaks
-func testReOpen(breaks []int64, maxRetries int) (io.ReadCloser, error) {
-	srcOrig := mockobject.New("potato").WithContent(reOpenTestcontents, mockobject.SeekModeRegular)
-	src := &reOpenTestObject{
-		Object: srcOrig,
-		breaks: breaks,
+			// Start the test with the given breaks
+			testReOpen := func(breaks []int64, maxRetries int) (io.ReadCloser, error) {
+				srcOrig := mockobject.New("potato").WithContent(reOpenTestcontents, mockobject.SeekModeNone)
+				src := &reOpenTestObject{
+					Object: srcOrig,
+					breaks: breaks,
+				}
+				hashOption := &fs.HashesOption{Hashes: hash.NewHashSet(hash.MD5)}
+				return newReOpen(context.Background(), src, hashOption, rangeOption, maxRetries)
+			}
+
+			t.Run("Basics", func(t *testing.T) {
+				// open
+				h, err := testReOpen(nil, 10)
+				assert.NoError(t, err)
+
+				// Check contents read correctly
+				got, err := ioutil.ReadAll(h)
+				assert.NoError(t, err)
+				assert.Equal(t, expectedRead, got)
+
+				// Check read after end
+				var buf = make([]byte, 1)
+				n, err := h.Read(buf)
+				assert.Equal(t, 0, n)
+				assert.Equal(t, io.EOF, err)
+
+				// Check close
+				assert.NoError(t, h.Close())
+
+				// Check double close
+				assert.Equal(t, errorFileClosed, h.Close())
+
+				// Check read after close
+				n, err = h.Read(buf)
+				assert.Equal(t, 0, n)
+				assert.Equal(t, errorFileClosed, err)
+			})
+
+			t.Run("ErrorAtStart", func(t *testing.T) {
+				// open with immediate breaking
+				h, err := testReOpen([]int64{0}, 10)
+				assert.Equal(t, errorTestError, err)
+				assert.Nil(t, h)
+			})
+
+			t.Run("WithErrors", func(t *testing.T) {
+				// open with a few break points but less than the max
+				h, err := testReOpen([]int64{2, 1, 3}, 10)
+				assert.NoError(t, err)
+
+				// check contents
+				got, err := ioutil.ReadAll(h)
+				assert.NoError(t, err)
+				assert.Equal(t, expectedRead, got)
+
+				// check close
+				assert.NoError(t, h.Close())
+			})
+
+			t.Run("TooManyErrors", func(t *testing.T) {
+				// open with a few break points but >= the max
+				h, err := testReOpen([]int64{2, 1, 3}, 3)
+				assert.NoError(t, err)
+
+				// check contents
+				got, err := ioutil.ReadAll(h)
+				assert.Equal(t, errorTestError, err)
+				assert.Equal(t, expectedRead[:6], got)
+
+				// check old error is returned
+				var buf = make([]byte, 1)
+				n, err := h.Read(buf)
+				assert.Equal(t, 0, n)
+				assert.Equal(t, errorTooManyTries, err)
+
+				// Check close
+				assert.Equal(t, errorFileClosed, h.Close())
+			})
+		})
 	}
-	hashOption := &fs.HashesOption{Hashes: hash.NewHashSet(hash.MD5)}
-	return newReOpen(src, hashOption, maxRetries)
-}
-
-func TestReOpenBasics(t *testing.T) {
-	// open
-	h, err := testReOpen(nil, 10)
-	assert.NoError(t, err)
-
-	// Check contents read correctly
-	got, err := ioutil.ReadAll(h)
-	assert.NoError(t, err)
-	assert.Equal(t, reOpenTestcontents, got)
-
-	// Check read after end
-	var buf = make([]byte, 1)
-	n, err := h.Read(buf)
-	assert.Equal(t, 0, n)
-	assert.Equal(t, io.EOF, err)
-
-	// Check close
-	assert.NoError(t, h.Close())
-
-	// Check double close
-	assert.Equal(t, errorFileClosed, h.Close())
-
-	// Check read after close
-	n, err = h.Read(buf)
-	assert.Equal(t, 0, n)
-	assert.Equal(t, errorFileClosed, err)
-}
-
-func TestReOpenErrorAtStart(t *testing.T) {
-	// open with immediate breaking
-	h, err := testReOpen([]int64{0}, 10)
-	assert.Equal(t, errorTestError, err)
-	assert.Nil(t, h)
-}
-
-func TestReOpenError(t *testing.T) {
-	// open with a few break points but less than the max
-	h, err := testReOpen([]int64{2, 1, 3}, 10)
-	assert.NoError(t, err)
-
-	// check contents
-	got, err := ioutil.ReadAll(h)
-	assert.NoError(t, err)
-	assert.Equal(t, reOpenTestcontents, got)
-
-	// check close
-	assert.NoError(t, h.Close())
-}
-
-func TestReOpenFail(t *testing.T) {
-	// open with a few break points but >= the max
-	h, err := testReOpen([]int64{2, 1, 3}, 3)
-	assert.NoError(t, err)
-
-	// check contents
-	got, err := ioutil.ReadAll(h)
-	assert.Equal(t, errorTestError, err)
-	assert.Equal(t, reOpenTestcontents[:6], got)
-
-	// check old error is returned
-	var buf = make([]byte, 1)
-	n, err := h.Read(buf)
-	assert.Equal(t, 0, n)
-	assert.Equal(t, errorTooManyTries, err)
-
-	// Check close
-	assert.Equal(t, errorFileClosed, h.Close())
 }

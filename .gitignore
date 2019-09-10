@@ -5,3 +5,6 @@ build
 docs/public
 rclone.iml
 .idea
+.history
+*.test
+*.log

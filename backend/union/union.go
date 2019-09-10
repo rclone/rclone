@@ -1,6 +1,7 @@
 package union
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -8,18 +9,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/hash"
 )
 
 // Register with Fs
 func init() {
 	fsi := &fs.RegInfo{
 		Name:        "union",
-		Description: "A stackable unification remote, which can appear to merge the contents of several remotes",
+		Description: "Union merges the contents of several remotes",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "remotes",
@@ -88,8 +90,8 @@ func (f *Fs) Features() *fs.Features {
 }
 
 // Rmdir removes the root directory of the Fs object
-func (f *Fs) Rmdir(dir string) error {
-	return f.wr.Rmdir(dir)
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.wr.Rmdir(ctx, dir)
 }
 
 // Hashes returns hash.HashNone to indicate remote hashing is unavailable
@@ -98,8 +100,8 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // Mkdir makes the root directory of the Fs object
-func (f *Fs) Mkdir(dir string) error {
-	return f.wr.Mkdir(dir)
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	return f.wr.Mkdir(ctx, dir)
 }
 
 // Purge all files in the root and the root directory
@@ -108,8 +110,8 @@ func (f *Fs) Mkdir(dir string) error {
 // quicker than just running Remove() on the result of List()
 //
 // Return an error if it doesn't exist
-func (f *Fs) Purge() error {
-	return f.wr.Features().Purge()
+func (f *Fs) Purge(ctx context.Context) error {
+	return f.wr.Features().Purge(ctx)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -121,12 +123,12 @@ func (f *Fs) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	if src.Fs() != f.wr {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	o, err := f.wr.Features().Copy(src, remote)
+	o, err := f.wr.Features().Copy(ctx, src, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -142,12 +144,12 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	if src.Fs() != f.wr {
 		fs.Debugf(src, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
-	o, err := f.wr.Features().Move(src, remote)
+	o, err := f.wr.Features().Move(ctx, src, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -162,13 +164,13 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	return f.wr.Features().DirMove(srcFs.wr, srcRemote, dstRemote)
+	return f.wr.Features().DirMove(ctx, srcFs.wr, srcRemote, dstRemote)
 }
 
 // ChangeNotify calls the passed function with a path
@@ -180,14 +182,14 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 // The ChangeNotify implementation must empty the channel
 // regularly. When the channel gets closed, the implementation
 // should stop polling and release resources.
-func (f *Fs) ChangeNotify(fn func(string, fs.EntryType), ch <-chan time.Duration) {
+func (f *Fs) ChangeNotify(ctx context.Context, fn func(string, fs.EntryType), ch <-chan time.Duration) {
 	var remoteChans []chan time.Duration
 
 	for _, remote := range f.remotes {
 		if ChangeNotify := remote.Features().ChangeNotify; ChangeNotify != nil {
 			ch := make(chan time.Duration)
 			remoteChans = append(remoteChans, ch)
-			ChangeNotify(fn, ch)
+			ChangeNotify(ctx, fn, ch)
 		}
 	}
 
@@ -218,8 +220,8 @@ func (f *Fs) DirCacheFlush() {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	o, err := f.wr.Features().PutStream(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	o, err := f.wr.Features().PutStream(ctx, in, src, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -227,8 +229,8 @@ func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption
 }
 
 // About gets quota information from the Fs
-func (f *Fs) About() (*fs.Usage, error) {
-	return f.wr.Features().About()
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	return f.wr.Features().About(ctx)
 }
 
 // Put in to the remote path with the modTime given of the given size
@@ -236,8 +238,8 @@ func (f *Fs) About() (*fs.Usage, error) {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	o, err := f.wr.Put(in, src, options...)
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	o, err := f.wr.Put(ctx, in, src, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -253,11 +255,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	set := make(map[string]fs.DirEntry)
 	found := false
 	for _, remote := range f.remotes {
-		var remoteEntries, err = remote.List(dir)
+		var remoteEntries, err = remote.List(ctx, dir)
 		if err == fs.ErrorDirNotFound {
 			continue
 		}
@@ -282,10 +284,10 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 }
 
 // NewObject creates a new remote union file object based on the first Object it finds (reverse remote order)
-func (f *Fs) NewObject(path string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, path string) (fs.Object, error) {
 	for i := range f.remotes {
 		var remote = f.remotes[len(f.remotes)-i-1]
-		var obj, err = remote.NewObject(path)
+		var obj, err = remote.NewObject(ctx, path)
 		if err == fs.ErrorObjectNotFound {
 			continue
 		}
@@ -342,7 +344,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if configName != "local" {
 			rootString = configName + ":" + rootString
 		}
-		myFs, err := fs.NewFs(rootString)
+		myFs, err := cache.Get(rootString)
 		if err != nil {
 			if err == fs.ErrorIsFile {
 				return myFs, err

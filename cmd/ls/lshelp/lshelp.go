@@ -2,7 +2,7 @@ package lshelp
 
 // Help describes the common help for all the list commands
 var Help = `
-Any of the filtering options can be applied to this commmand.
+Any of the filtering options can be applied to this command.
 
 There are several related list commands
 

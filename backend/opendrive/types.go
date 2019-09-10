@@ -212,3 +212,7 @@ type permissions struct {
 	FileID       string `json:"file_id"`
 	FileIsPublic int64  `json:"file_ispublic"`
 }
+
+type uploadFileChunkReply struct {
+	TotalWritten int64 `json:"TotalWritten"`
+}

@@ -23,13 +23,14 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/log"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/log"
 )
 
 // DefaultOpt is the default values uses for Opt
@@ -51,6 +52,7 @@ var DefaultOpt = Options{
 	ChunkSize:         128 * fs.MebiByte,
 	ChunkSizeLimit:    -1,
 	CacheMaxSize:      -1,
+	CaseInsensitive:   runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
@@ -199,6 +201,7 @@ type Options struct {
 	CacheMaxAge       time.Duration
 	CacheMaxSize      fs.SizeSuffix
 	CachePollInterval time.Duration
+	CaseInsensitive   bool
 }
 
 // New creates a new VFS and root directory.  If opt is nil, then
@@ -229,7 +232,7 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// Start polling function
 	if do := vfs.f.Features().ChangeNotify; do != nil {
 		vfs.pollChan = make(chan time.Duration)
-		do(vfs.root.ForgetPath, vfs.pollChan)
+		do(context.TODO(), vfs.root.ForgetPath, vfs.pollChan)
 		vfs.pollChan <- vfs.Opt.PollInterval
 	} else {
 		fs.Infof(f, "poll-interval is not supported by this remote")
@@ -240,6 +243,11 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// add the remote control
 	vfs.addRC()
 	return vfs
+}
+
+// Fs returns the Fs passed into the New call
+func (vfs *VFS) Fs() fs.Fs {
+	return vfs.f
 }
 
 // SetCacheMode change the cache mode
@@ -480,7 +488,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 	}
 	if vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime {
 		var err error
-		vfs.usage, err = doAbout()
+		vfs.usage, err = doAbout(context.TODO())
 		vfs.usageTime = time.Now()
 		if err != nil {
 			fs.Errorf(vfs.f, "Statfs failed: %v", err)

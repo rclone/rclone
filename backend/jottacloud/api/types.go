@@ -46,6 +46,82 @@ func (t Time) String() string { return time.Time(t).Format(timeFormat) }
 // APIString returns Time string in Jottacloud API format
 func (t Time) APIString() string { return time.Time(t).Format(apiTimeFormat) }
 
+// TokenJSON is the struct representing the HTTP response from OAuth2
+// providers returning a token in JSON form.
+type TokenJSON struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int32  `json:"expires_in"` // at least PayPal returns string, while most return number
+}
+
+// JSON structures returned by new API
+
+// AllocateFileRequest to prepare an upload to Jottacloud
+type AllocateFileRequest struct {
+	Bytes    int64  `json:"bytes"`
+	Created  string `json:"created"`
+	Md5      string `json:"md5"`
+	Modified string `json:"modified"`
+	Path     string `json:"path"`
+}
+
+// AllocateFileResponse for upload requests
+type AllocateFileResponse struct {
+	Name      string `json:"name"`
+	Path      string `json:"path"`
+	State     string `json:"state"`
+	UploadID  string `json:"upload_id"`
+	UploadURL string `json:"upload_url"`
+	Bytes     int64  `json:"bytes"`
+	ResumePos int64  `json:"resume_pos"`
+}
+
+// UploadResponse after an upload
+type UploadResponse struct {
+	Name      string      `json:"name"`
+	Path      string      `json:"path"`
+	Kind      string      `json:"kind"`
+	ContentID string      `json:"content_id"`
+	Bytes     int64       `json:"bytes"`
+	Md5       string      `json:"md5"`
+	Created   int64       `json:"created"`
+	Modified  int64       `json:"modified"`
+	Deleted   interface{} `json:"deleted"`
+	Mime      string      `json:"mime"`
+}
+
+// DeviceRegistrationResponse is the response to registering a device
+type DeviceRegistrationResponse struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+}
+
+// CustomerInfo provides general information about the account. Required for finding the correct internal username.
+type CustomerInfo struct {
+	Username          string      `json:"username"`
+	Email             string      `json:"email"`
+	Name              string      `json:"name"`
+	CountryCode       string      `json:"country_code"`
+	LanguageCode      string      `json:"language_code"`
+	CustomerGroupCode string      `json:"customer_group_code"`
+	BrandCode         string      `json:"brand_code"`
+	AccountType       string      `json:"account_type"`
+	SubscriptionType  string      `json:"subscription_type"`
+	Usage             int64       `json:"usage"`
+	Qouta             int64       `json:"quota"`
+	BusinessUsage     int64       `json:"business_usage"`
+	BusinessQouta     int64       `json:"business_quota"`
+	WriteLocked       bool        `json:"write_locked"`
+	ReadLocked        bool        `json:"read_locked"`
+	LockedCause       interface{} `json:"locked_cause"`
+	WebHash           string      `json:"web_hash"`
+	AndroidHash       string      `json:"android_hash"`
+	IOSHash           string      `json:"ios_hash"`
+}
+
+// XML structures returned by the old API
+
 // Flag is a hacky type for checking if an attribute is present
 type Flag bool
 
@@ -62,15 +138,6 @@ func (f *Flag) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 		Value: "false",
 	}
 	return attr, errors.New("unimplemented")
-}
-
-// TokenJSON is the struct representing the HTTP response from OAuth2
-// providers returning a token in JSON form.
-type TokenJSON struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int32  `json:"expires_in"` // at least PayPal returns string, while most return number
 }
 
 /*
@@ -102,8 +169,8 @@ GET http://www.jottacloud.com/JFS/<account>
 </user>
 */
 
-// AccountInfo represents a Jottacloud account
-type AccountInfo struct {
+// DriveInfo represents a Jottacloud account
+type DriveInfo struct {
 	Username          string        `xml:"username"`
 	AccountType       string        `xml:"account-type"`
 	Locked            bool          `xml:"locked"`
@@ -279,44 +346,4 @@ func (e *Error) Error() string {
 		out += fmt.Sprintf(" (%+v)", e.Reason)
 	}
 	return out
-}
-
-// AllocateFileRequest to prepare an upload to Jottacloud
-type AllocateFileRequest struct {
-	Bytes    int64  `json:"bytes"`
-	Created  string `json:"created"`
-	Md5      string `json:"md5"`
-	Modified string `json:"modified"`
-	Path     string `json:"path"`
-}
-
-// AllocateFileResponse for upload requests
-type AllocateFileResponse struct {
-	Name      string `json:"name"`
-	Path      string `json:"path"`
-	State     string `json:"state"`
-	UploadID  string `json:"upload_id"`
-	UploadURL string `json:"upload_url"`
-	Bytes     int64  `json:"bytes"`
-	ResumePos int64  `json:"resume_pos"`
-}
-
-// UploadResponse after an upload
-type UploadResponse struct {
-	Name      string      `json:"name"`
-	Path      string      `json:"path"`
-	Kind      string      `json:"kind"`
-	ContentID string      `json:"content_id"`
-	Bytes     int64       `json:"bytes"`
-	Md5       string      `json:"md5"`
-	Created   int64       `json:"created"`
-	Modified  int64       `json:"modified"`
-	Deleted   interface{} `json:"deleted"`
-	Mime      string      `json:"mime"`
-}
-
-// DeviceRegistrationResponse is the response to registering a device
-type DeviceRegistrationResponse struct {
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
 }

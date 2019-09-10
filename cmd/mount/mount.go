@@ -12,13 +12,13 @@ import (
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/cmd/mountlib"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/lib/atexit"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/okzk/sdnotify"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 func init() {
@@ -70,7 +70,7 @@ func mountOptions(device string) (options []fuse.MountOption) {
 	if len(mountlib.ExtraOptions) > 0 {
 		fs.Errorf(nil, "-o/--option not supported with this FUSE backend")
 	}
-	if len(mountlib.ExtraOptions) > 0 {
+	if len(mountlib.ExtraFlags) > 0 {
 		fs.Errorf(nil, "--fuse-flag not supported with this FUSE backend")
 	}
 	return options

@@ -13,11 +13,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
 )
@@ -154,7 +154,7 @@ type TokenSource struct {
 }
 
 // If token has expired then first try re-reading it from the config
-// file in case a concurrently runnng rclone has updated it already
+// file in case a concurrently running rclone has updated it already
 func (ts *TokenSource) reReadToken() bool {
 	tokenString, err := config.FileGetFresh(ts.name, config.ConfigToken)
 	if err != nil {
@@ -248,7 +248,7 @@ func (ts *TokenSource) timeToExpiry() time.Duration {
 		return 0
 	}
 	if t.Expiry.IsZero() {
-		return 3E9 * time.Second // ~95 years
+		return 3e9 * time.Second // ~95 years
 	}
 	return t.Expiry.Sub(time.Now())
 }
@@ -391,7 +391,7 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 		}
 		if !isLocal() {
 			fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
-			fmt.Printf("Execute the following on your machine:\n")
+			fmt.Printf("Execute the following on your machine (same rclone version recommended) :\n")
 			if changed {
 				fmt.Printf("\trclone authorize %q %q %q\n", id, oauthConfig.ClientID, oauthConfig.ClientSecret)
 			} else {

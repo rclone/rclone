@@ -4,6 +4,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Global
@@ -17,12 +19,12 @@ var (
 	// implementation from the fs
 	ConfigFileGet = func(section, key string) (string, bool) { return "", false }
 
-	// Set a value into the config file
+	// Set a value into the config file and persist it
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	ConfigFileSet = func(section, key, value string) {
-		Errorf(nil, "No config handler to set %q = %q in section %q of the config file", key, value, section)
+	ConfigFileSet = func(section, key, value string) (err error) {
+		return errors.New("no config file set handler")
 	}
 
 	// CountError counts an error.  If any errors have been
@@ -38,63 +40,73 @@ var (
 
 // ConfigInfo is filesystem config options
 type ConfigInfo struct {
-	LogLevel              LogLevel
-	StatsLogLevel         LogLevel
-	DryRun                bool
-	CheckSum              bool
-	SizeOnly              bool
-	IgnoreTimes           bool
-	IgnoreExisting        bool
-	IgnoreErrors          bool
-	ModifyWindow          time.Duration
-	Checkers              int
-	Transfers             int
-	ConnectTimeout        time.Duration // Connect timeout
-	Timeout               time.Duration // Data channel timeout
-	Dump                  DumpFlags
-	InsecureSkipVerify    bool // Skip server certificate verification
-	DeleteMode            DeleteMode
-	MaxDelete             int64
-	TrackRenames          bool // Track file renames.
-	LowLevelRetries       int
-	UpdateOlder           bool // Skip files that are newer on the destination
-	NoGzip                bool // Disable compression
-	MaxDepth              int
-	IgnoreSize            bool
-	IgnoreChecksum        bool
-	NoTraverse            bool
-	NoUpdateModTime       bool
-	DataRateUnit          string
-	BackupDir             string
-	Suffix                string
-	SuffixKeepExtension   bool
-	UseListR              bool
-	BufferSize            SizeSuffix
-	BwLimit               BwTimetable
-	TPSLimit              float64
-	TPSLimitBurst         int
-	BindAddr              net.IP
-	DisableFeatures       []string
-	UserAgent             string
-	Immutable             bool
-	AutoConfirm           bool
-	StreamingUploadCutoff SizeSuffix
-	StatsFileNameLength   int
-	AskPassword           bool
-	UseServerModTime      bool
-	MaxTransfer           SizeSuffix
-	MaxBacklog            int
-	StatsOneLine          bool
-	Progress              bool
-	Cookie                bool
-	UseMmap               bool
-	CaCert                string // Client Side CA
-	ClientCert            string // Client Side Cert
-	ClientKey             string // Client Side Key
+	LogLevel               LogLevel
+	StatsLogLevel          LogLevel
+	UseJSONLog             bool
+	DryRun                 bool
+	CheckSum               bool
+	SizeOnly               bool
+	IgnoreTimes            bool
+	IgnoreExisting         bool
+	IgnoreErrors           bool
+	ModifyWindow           time.Duration
+	Checkers               int
+	Transfers              int
+	ConnectTimeout         time.Duration // Connect timeout
+	Timeout                time.Duration // Data channel timeout
+	Dump                   DumpFlags
+	InsecureSkipVerify     bool // Skip server certificate verification
+	DeleteMode             DeleteMode
+	MaxDelete              int64
+	TrackRenames           bool // Track file renames.
+	LowLevelRetries        int
+	UpdateOlder            bool // Skip files that are newer on the destination
+	NoGzip                 bool // Disable compression
+	MaxDepth               int
+	IgnoreSize             bool
+	IgnoreChecksum         bool
+	IgnoreCaseSync         bool
+	NoTraverse             bool
+	NoUpdateModTime        bool
+	DataRateUnit           string
+	CompareDest            string
+	CopyDest               string
+	BackupDir              string
+	Suffix                 string
+	SuffixKeepExtension    bool
+	UseListR               bool
+	BufferSize             SizeSuffix
+	BwLimit                BwTimetable
+	TPSLimit               float64
+	TPSLimitBurst          int
+	BindAddr               net.IP
+	DisableFeatures        []string
+	UserAgent              string
+	Immutable              bool
+	AutoConfirm            bool
+	StreamingUploadCutoff  SizeSuffix
+	StatsFileNameLength    int
+	AskPassword            bool
+	UseServerModTime       bool
+	MaxTransfer            SizeSuffix
+	MaxBacklog             int
+	MaxStatsGroups         int
+	StatsOneLine           bool
+	StatsOneLineDate       bool   // If we want a date prefix at all
+	StatsOneLineDateFormat string // If we want to customize the prefix
+	Progress               bool
+	Cookie                 bool
+	UseMmap                bool
+	CaCert                 string // Client Side CA
+	ClientCert             string // Client Side Cert
+	ClientKey              string // Client Side Key
+	MultiThreadCutoff      SizeSuffix
+	MultiThreadStreams     int
+	MultiThreadSet         bool // whether MultiThreadStreams was set (set in fs/config/configflags)
 }
 
 // NewConfig creates a new config with everything set to the default
-// value.  These are the ultimate defaults and are overriden by the
+// value.  These are the ultimate defaults and are overridden by the
 // config module.
 func NewConfig() *ConfigInfo {
 	c := new(ConfigInfo)
@@ -115,11 +127,16 @@ func NewConfig() *ConfigInfo {
 	c.BufferSize = SizeSuffix(16 << 20)
 	c.UserAgent = "rclone/" + Version
 	c.StreamingUploadCutoff = SizeSuffix(100 * 1024)
+	c.MaxStatsGroups = 1000
 	c.StatsFileNameLength = 45
 	c.AskPassword = true
 	c.TPSLimitBurst = 1
 	c.MaxTransfer = -1
 	c.MaxBacklog = 10000
+	// We do not want to set the default here. We use this variable being empty as part of the fall-through of options.
+	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
+	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
+	c.MultiThreadStreams = 4
 
 	return c
 }

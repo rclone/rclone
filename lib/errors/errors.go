@@ -62,7 +62,7 @@ func Walk(err error, f WalkFunc) {
 				}
 			}
 		}
-		if err == prev {
+		if reflect.DeepEqual(err, prev) {
 			break
 		}
 	}

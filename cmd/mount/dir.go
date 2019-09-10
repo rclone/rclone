@@ -3,16 +3,16 @@
 package mount
 
 import (
+	"context"
 	"os"
 	"time"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/cmd/mountlib"
-	"github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.8
+	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/vfs"
 )
 
 // Dir represents a directory entry
@@ -20,7 +20,7 @@ type Dir struct {
 	*vfs.Dir
 }
 
-// Check interface satsified
+// Check interface satisfied
 var _ fusefs.Node = (*Dir)(nil)
 
 // Attr updates the attributes of a directory

@@ -2,19 +2,20 @@
 package crypt
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/config/obscure"
-	"github.com/ncw/rclone/fs/fspath"
-	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fspath"
+	"github.com/rclone/rclone/fs/hash"
 )
 
 // Globals
@@ -232,7 +233,7 @@ func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) {
 }
 
 // Encrypt an directory file name to entries.
-func (f *Fs) addDir(entries *fs.DirEntries, dir fs.Directory) {
+func (f *Fs) addDir(ctx context.Context, entries *fs.DirEntries, dir fs.Directory) {
 	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
@@ -242,18 +243,18 @@ func (f *Fs) addDir(entries *fs.DirEntries, dir fs.Directory) {
 	if f.opt.ShowMapping {
 		fs.Logf(decryptedRemote, "Encrypts to %q", remote)
 	}
-	*entries = append(*entries, f.newDir(dir))
+	*entries = append(*entries, f.newDir(ctx, dir))
 }
 
 // Encrypt some directory entries.  This alters entries returning it as newEntries.
-func (f *Fs) encryptEntries(entries fs.DirEntries) (newEntries fs.DirEntries, err error) {
+func (f *Fs) encryptEntries(ctx context.Context, entries fs.DirEntries) (newEntries fs.DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
 	for _, entry := range entries {
 		switch x := entry.(type) {
 		case fs.Object:
 			f.add(&newEntries, x)
 		case fs.Directory:
-			f.addDir(&newEntries, x)
+			f.addDir(ctx, &newEntries, x)
 		default:
 			return nil, errors.Errorf("Unknown object type %T", entry)
 		}
@@ -270,12 +271,12 @@ func (f *Fs) encryptEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
-	entries, err = f.Fs.List(f.cipher.EncryptDirName(dir))
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	entries, err = f.Fs.List(ctx, f.cipher.EncryptDirName(dir))
 	if err != nil {
 		return nil, err
 	}
-	return f.encryptEntries(entries)
+	return f.encryptEntries(ctx, entries)
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -294,9 +295,9 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 //
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
-func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
-	return f.Fs.Features().ListR(f.cipher.EncryptDirName(dir), func(entries fs.DirEntries) error {
-		newEntries, err := f.encryptEntries(entries)
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	return f.Fs.Features().ListR(ctx, f.cipher.EncryptDirName(dir), func(entries fs.DirEntries) error {
+		newEntries, err := f.encryptEntries(ctx, entries)
 		if err != nil {
 			return err
 		}
@@ -305,18 +306,18 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 }
 
 // NewObject finds the Object at remote.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	o, err := f.Fs.NewObject(f.cipher.EncryptFileName(remote))
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
+	o, err := f.Fs.NewObject(ctx, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
 	return f.newObject(o), nil
 }
 
-type putFn func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
+type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
 
 // put implements Put or PutStream
-func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
+func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
 	// Encrypt the data into wrappedIn
 	wrappedIn, err := f.cipher.EncryptData(in)
 	if err != nil {
@@ -342,7 +343,7 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	}
 
 	// Transfer the data
-	o, err := put(wrappedIn, f.newObjectInfo(src), options...)
+	o, err := put(ctx, wrappedIn, f.newObjectInfo(src), options...)
 	if err != nil {
 		return nil, err
 	}
@@ -351,13 +352,13 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	if ht != hash.None && hasher != nil {
 		srcHash := hasher.Sums()[ht]
 		var dstHash string
-		dstHash, err = o.Hash(ht)
+		dstHash, err = o.Hash(ctx, ht)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read destination hash")
 		}
 		if srcHash != "" && dstHash != "" && srcHash != dstHash {
 			// remove object
-			err = o.Remove()
+			err = o.Remove(ctx)
 			if err != nil {
 				fs.Errorf(o, "Failed to remove corrupted object: %v", err)
 			}
@@ -373,13 +374,13 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.put(in, src, options, f.Fs.Put)
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.put(ctx, in, src, options, f.Fs.Put)
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.put(in, src, options, f.Fs.Features().PutStream)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.put(ctx, in, src, options, f.Fs.Features().PutStream)
 }
 
 // Hashes returns the supported hash sets.
@@ -390,15 +391,15 @@ func (f *Fs) Hashes() hash.Set {
 // Mkdir makes the directory (container, bucket)
 //
 // Shouldn't return an error if it already exists
-func (f *Fs) Mkdir(dir string) error {
-	return f.Fs.Mkdir(f.cipher.EncryptDirName(dir))
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	return f.Fs.Mkdir(ctx, f.cipher.EncryptDirName(dir))
 }
 
 // Rmdir removes the directory (container, bucket) if empty
 //
 // Return an error if it doesn't exist or isn't empty
-func (f *Fs) Rmdir(dir string) error {
-	return f.Fs.Rmdir(f.cipher.EncryptDirName(dir))
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.Fs.Rmdir(ctx, f.cipher.EncryptDirName(dir))
 }
 
 // Purge all files in the root and the root directory
@@ -407,12 +408,12 @@ func (f *Fs) Rmdir(dir string) error {
 // quicker than just running Remove() on the result of List()
 //
 // Return an error if it doesn't exist
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	do := f.Fs.Features().Purge
 	if do == nil {
 		return fs.ErrorCantPurge
 	}
-	return do()
+	return do(ctx)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -424,7 +425,7 @@ func (f *Fs) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	do := f.Fs.Features().Copy
 	if do == nil {
 		return nil, fs.ErrorCantCopy
@@ -433,7 +434,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	oResult, err := do(o.Object, f.cipher.EncryptFileName(remote))
+	oResult, err := do(ctx, o.Object, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +450,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	do := f.Fs.Features().Move
 	if do == nil {
 		return nil, fs.ErrorCantMove
@@ -458,7 +459,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
-	oResult, err := do(o.Object, f.cipher.EncryptFileName(remote))
+	oResult, err := do(ctx, o.Object, f.cipher.EncryptFileName(remote))
 	if err != nil {
 		return nil, err
 	}
@@ -473,7 +474,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	do := f.Fs.Features().DirMove
 	if do == nil {
 		return fs.ErrorCantDirMove
@@ -483,14 +484,14 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	return do(srcFs.Fs, f.cipher.EncryptDirName(srcRemote), f.cipher.EncryptDirName(dstRemote))
+	return do(ctx, srcFs.Fs, f.cipher.EncryptDirName(srcRemote), f.cipher.EncryptDirName(dstRemote))
 }
 
 // PutUnchecked uploads the object
 //
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
-func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	do := f.Fs.Features().PutUnchecked
 	if do == nil {
 		return nil, errors.New("can't PutUnchecked")
@@ -499,7 +500,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 	if err != nil {
 		return nil, err
 	}
-	o, err := do(wrappedIn, f.newObjectInfo(src))
+	o, err := do(ctx, wrappedIn, f.newObjectInfo(src))
 	if err != nil {
 		return nil, err
 	}
@@ -510,21 +511,21 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 //
 // Implement this if you have a way of emptying the trash or
 // otherwise cleaning up old versions of files.
-func (f *Fs) CleanUp() error {
+func (f *Fs) CleanUp(ctx context.Context) error {
 	do := f.Fs.Features().CleanUp
 	if do == nil {
 		return errors.New("can't CleanUp")
 	}
-	return do()
+	return do(ctx)
 }
 
 // About gets quota information from the Fs
-func (f *Fs) About() (*fs.Usage, error) {
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	do := f.Fs.Features().About
 	if do == nil {
 		return nil, errors.New("About not supported")
 	}
-	return do()
+	return do(ctx)
 }
 
 // UnWrap returns the Fs that this Fs is wrapping
@@ -556,10 +557,10 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 // src with it, and calculates the hash given by HashType on the fly
 //
 // Note that we break lots of encapsulation in this function.
-func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
+func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
 	// Read the nonce - opening the file is sufficient to read the nonce in
 	// use a limited read so we only read the header
-	in, err := o.Object.Open(&fs.RangeOption{Start: 0, End: int64(fileHeaderSize) - 1})
+	in, err := o.Object.Open(ctx, &fs.RangeOption{Start: 0, End: int64(fileHeaderSize) - 1})
 	if err != nil {
 		return "", errors.Wrap(err, "failed to open object to read nonce")
 	}
@@ -589,7 +590,7 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr 
 	}
 
 	// Open the src for input
-	in, err = src.Open()
+	in, err = src.Open(ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to open src")
 	}
@@ -616,16 +617,16 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr 
 
 // MergeDirs merges the contents of all the directories passed
 // in into the first one and rmdirs the other directories.
-func (f *Fs) MergeDirs(dirs []fs.Directory) error {
+func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	do := f.Fs.Features().MergeDirs
 	if do == nil {
 		return errors.New("MergeDirs not supported")
 	}
 	out := make([]fs.Directory, len(dirs))
 	for i, dir := range dirs {
-		out[i] = fs.NewDirCopy(dir).SetRemote(f.cipher.EncryptDirName(dir.Remote()))
+		out[i] = fs.NewDirCopy(ctx, dir).SetRemote(f.cipher.EncryptDirName(dir.Remote()))
 	}
-	return do(out)
+	return do(ctx, out)
 }
 
 // DirCacheFlush resets the directory cache - used in testing
@@ -638,29 +639,29 @@ func (f *Fs) DirCacheFlush() {
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(remote string) (string, error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string) (string, error) {
 	do := f.Fs.Features().PublicLink
 	if do == nil {
 		return "", errors.New("PublicLink not supported")
 	}
-	o, err := f.NewObject(remote)
+	o, err := f.NewObject(ctx, remote)
 	if err != nil {
 		// assume it is a directory
-		return do(f.cipher.EncryptDirName(remote))
+		return do(ctx, f.cipher.EncryptDirName(remote))
 	}
-	return do(o.(*Object).Object.Remote())
+	return do(ctx, o.(*Object).Object.Remote())
 }
 
 // ChangeNotify calls the passed function with a path
 // that has had changes. If the implementation
 // uses polling, it should adhere to the given interval.
-func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
+func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	do := f.Fs.Features().ChangeNotify
 	if do == nil {
 		return
 	}
 	wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
-		fs.Logf(f, "path %q entryType %d", path, entryType)
+		// fs.Debugf(f, "ChangeNotify: path %q entryType %d", path, entryType)
 		var (
 			err       error
 			decrypted string
@@ -680,7 +681,7 @@ func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollIntervalCha
 		}
 		notifyFunc(decrypted, entryType)
 	}
-	do(wrappedNotifyFunc, pollIntervalChan)
+	do(ctx, wrappedNotifyFunc, pollIntervalChan)
 }
 
 // Object describes a wrapped for being read from the Fs
@@ -733,7 +734,7 @@ func (o *Object) Size() int64 {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *Object) Hash(ht hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 
@@ -743,7 +744,7 @@ func (o *Object) UnWrap() fs.Object {
 }
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
-func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	var openOptions []fs.OpenOption
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
@@ -757,10 +758,10 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 			openOptions = append(openOptions, option)
 		}
 	}
-	rc, err = o.f.cipher.DecryptDataSeek(func(underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
+	rc, err = o.f.cipher.DecryptDataSeek(ctx, func(ctx context.Context, underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
 		if underlyingOffset == 0 && underlyingLimit < 0 {
 			// Open with no seek
-			return o.Object.Open(openOptions...)
+			return o.Object.Open(ctx, openOptions...)
 		}
 		// Open stream with a range of underlyingOffset, underlyingLimit
 		end := int64(-1)
@@ -771,7 +772,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 			}
 		}
 		newOpenOptions := append(openOptions, &fs.RangeOption{Start: underlyingOffset, End: end})
-		return o.Object.Open(newOpenOptions...)
+		return o.Object.Open(ctx, newOpenOptions...)
 	}, offset, limit)
 	if err != nil {
 		return nil, err
@@ -780,17 +781,17 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 }
 
 // Update in to the object with the modTime given of the given size
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	update := func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-		return o.Object, o.Object.Update(in, src, options...)
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	update := func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+		return o.Object, o.Object.Update(ctx, in, src, options...)
 	}
-	_, err := o.f.put(in, src, options, update)
+	_, err := o.f.put(ctx, in, src, options, update)
 	return err
 }
 
 // newDir returns a dir with the Name decrypted
-func (f *Fs) newDir(dir fs.Directory) fs.Directory {
-	newDir := fs.NewDirCopy(dir)
+func (f *Fs) newDir(ctx context.Context, dir fs.Directory) fs.Directory {
+	newDir := fs.NewDirCopy(ctx, dir)
 	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
 	if err != nil {
@@ -799,6 +800,24 @@ func (f *Fs) newDir(dir fs.Directory) fs.Directory {
 		newDir.SetRemote(decryptedRemote)
 	}
 	return newDir
+}
+
+// UserInfo returns info about the connected user
+func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
+	do := f.Fs.Features().UserInfo
+	if do == nil {
+		return nil, fs.ErrorNotImplemented
+	}
+	return do(ctx)
+}
+
+// Disconnect the current user
+func (f *Fs) Disconnect(ctx context.Context) error {
+	do := f.Fs.Features().Disconnect
+	if do == nil {
+		return fs.ErrorNotImplemented
+	}
+	return do(ctx)
 }
 
 // ObjectInfo describes a wrapped fs.ObjectInfo for being the source
@@ -837,7 +856,7 @@ func (o *ObjectInfo) Size() int64 {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *ObjectInfo) Hash(hash hash.Type) (string, error) {
+func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 	return "", nil
 }
 
@@ -887,6 +906,8 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.UserInfoer      = (*Fs)(nil)
+	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)

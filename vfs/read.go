@@ -1,20 +1,22 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/chunkedreader"
-	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/chunkedreader"
+	"github.com/rclone/rclone/fs/hash"
 )
 
 // ReadFileHandle is an open for read file handle on a File
 type ReadFileHandle struct {
 	baseHandle
+	done       func(err error)
 	mu         sync.Mutex
 	closed     bool // set if handle has been closed
 	r          *accounting.Account
@@ -65,13 +67,15 @@ func (fh *ReadFileHandle) openPending() (err error) {
 		return nil
 	}
 	o := fh.file.getObject()
-	r, err := chunkedreader.New(o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit)).Open()
+	r, err := chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit)).Open()
 	if err != nil {
 		return err
 	}
-	fh.r = accounting.NewAccount(r, o).WithBuffer() // account the transfer
+	tr := accounting.GlobalStats().NewTransfer(o)
+	fh.done = tr.Done
+	fh.r = tr.Account(r).WithBuffer() // account the transfer
 	fh.opened = true
-	accounting.Stats.Transferring(o.Remote())
+
 	return nil
 }
 
@@ -122,7 +126,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	}
 	if !reopen {
 		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d (fs.RangeSeeker)", fh.offset, offset)
-		_, err = r.RangeSeek(offset, io.SeekStart, -1)
+		_, err = r.RangeSeek(context.TODO(), offset, io.SeekStart, -1)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read fs.RangeSeeker failed: %v", err)
 			return err
@@ -136,7 +140,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		}
 		// re-open with a seek
 		o := fh.file.getObject()
-		r = chunkedreader.New(o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit))
+		r = chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit))
 		_, err := r.Seek(offset, 0)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
@@ -289,7 +293,7 @@ func (fh *ReadFileHandle) checkHash() error {
 
 	o := fh.file.getObject()
 	for hashType, dstSum := range fh.hash.Sums() {
-		srcSum, err := o.Hash(hashType)
+		srcSum, err := o.Hash(context.TODO(), hashType)
 		if err != nil {
 			return err
 		}
@@ -346,9 +350,12 @@ func (fh *ReadFileHandle) close() error {
 	fh.closed = true
 
 	if fh.opened {
-		accounting.Stats.DoneTransferring(fh.remote, true)
+		var err error
+		defer func() {
+			fh.done(err)
+		}()
 		// Close first so that we have hashes
-		err := fh.r.Close()
+		err = fh.r.Close()
 		if err != nil {
 			return err
 		}

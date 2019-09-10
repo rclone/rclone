@@ -4,24 +4,25 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
+	dms_dlna "github.com/anacrolix/dms/dlna"
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/ssdp"
 	"github.com/anacrolix/dms/upnp"
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/serve/dlna/dlnaflags"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/dlna/data"
+	"github.com/rclone/rclone/cmd/serve/dlna/dlnaflags"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +52,7 @@ players might show files that they are not able to play back correctly.
 		cmd.Run(false, false, command, func() error {
 			s := newServer(f, &dlnaflags.Opt)
 			if err := s.Serve(); err != nil {
-				log.Fatal(err)
+				return err
 			}
 			s.Wait()
 			return nil
@@ -60,59 +61,11 @@ players might show files that they are not able to play back correctly.
 }
 
 const (
-	serverField         = "Linux/3.4 DLNADOC/1.50 UPnP/1.0 DMS/1.0"
-	rootDeviceType      = "urn:schemas-upnp-org:device:MediaServer:1"
-	rootDeviceModelName = "rclone"
-	resPath             = "/res"
-	rootDescPath        = "/rootDesc.xml"
-	serviceControlURL   = "/ctl"
+	serverField       = "Linux/3.4 DLNADOC/1.50 UPnP/1.0 DMS/1.0"
+	rootDescPath      = "/rootDesc.xml"
+	resPath           = "/res"
+	serviceControlURL = "/ctl"
 )
-
-// Groups the service definition with its XML description.
-type service struct {
-	upnp.Service
-	SCPD string
-}
-
-// Exposed UPnP AV services.
-var services = []*service{
-	{
-		Service: upnp.Service{
-			ServiceType: "urn:schemas-upnp-org:service:ContentDirectory:1",
-			ServiceId:   "urn:upnp-org:serviceId:ContentDirectory",
-			ControlURL:  serviceControlURL,
-		},
-		SCPD: contentDirectoryServiceDescription,
-	},
-	{
-		Service: upnp.Service{
-			ServiceType: "urn:schemas-upnp-org:service:ConnectionManager:1",
-			ServiceId:   "urn:upnp-org:serviceId:ConnectionManager",
-			ControlURL:  serviceControlURL,
-		},
-		SCPD: connectionManagerServiceDescription,
-	},
-}
-
-func init() {
-	for _, s := range services {
-		p := path.Join("/scpd", s.ServiceId)
-		s.SCPDURL = p
-	}
-}
-
-func devices() []string {
-	return []string{
-		"urn:schemas-upnp-org:device:MediaServer:1",
-	}
-}
-
-func serviceTypes() (ret []string) {
-	for _, s := range services {
-		ret = append(ret, s.ServiceType)
-	}
-	return
-}
 
 type server struct {
 	// The service SOAP handler keyed by service URN.
@@ -122,10 +75,9 @@ type server struct {
 
 	HTTPConn       net.Listener
 	httpListenAddr string
-	httpServeMux   *http.ServeMux
+	handler        http.Handler
 
-	rootDeviceUUID string
-	rootDescXML    []byte
+	RootDeviceUUID string
 
 	FriendlyName string
 
@@ -140,16 +92,16 @@ type server struct {
 }
 
 func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
-	hostName, err := os.Hostname()
-	if err != nil {
-		hostName = ""
-	} else {
-		hostName = " (" + hostName + ")"
+	friendlyName := opt.FriendlyName
+	if friendlyName == "" {
+		friendlyName = makeDefaultFriendlyName()
 	}
 
 	s := &server{
 		AnnounceInterval: 10 * time.Second,
-		FriendlyName:     "rclone" + hostName,
+		FriendlyName:     friendlyName,
+		RootDeviceUUID:   makeDeviceUUID(friendlyName),
+		Interfaces:       listInterfaces(),
 
 		httpListenAddr: opt.ListenAddr,
 
@@ -157,35 +109,29 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 		vfs: vfs.New(f, &vfsflags.Opt),
 	}
 
-	s.initServicesMap()
-	s.listInterfaces()
-
-	s.httpServeMux = http.NewServeMux()
-	s.rootDeviceUUID = makeDeviceUUID(s.FriendlyName)
-	s.rootDescXML, err = xml.MarshalIndent(
-		upnp.DeviceDesc{
-			SpecVersion: upnp.SpecVersion{Major: 1, Minor: 0},
-			Device: upnp.Device{
-				DeviceType:   rootDeviceType,
-				FriendlyName: s.FriendlyName,
-				Manufacturer: "rclone (rclone.org)",
-				ModelName:    rootDeviceModelName,
-				UDN:          s.rootDeviceUUID,
-				ServiceList: func() (ss []upnp.Service) {
-					for _, s := range services {
-						ss = append(ss, s.Service)
-					}
-					return
-				}(),
-			},
+	s.services = map[string]UPnPService{
+		"ContentDirectory": &contentDirectoryService{
+			server: s,
 		},
-		" ", "  ")
-	if err != nil {
-		// Contents are hardcoded, so this will never happen in production.
-		log.Panicf("Marshal root descriptor XML: %v", err)
+		"ConnectionManager": &connectionManagerService{
+			server: s,
+		},
 	}
-	s.rootDescXML = append([]byte(`<?xml version="1.0"?>`), s.rootDescXML...)
-	s.initMux(s.httpServeMux)
+
+	// Setup the various http routes.
+	r := http.NewServeMux()
+	r.HandleFunc(resPath, s.resourceHandler)
+	if opt.LogTrace {
+		r.Handle(rootDescPath, traceLogging(http.HandlerFunc(s.rootDescHandler)))
+		r.Handle(serviceControlURL, traceLogging(http.HandlerFunc(s.serviceControlHandler)))
+	} else {
+		r.HandleFunc(rootDescPath, s.rootDescHandler)
+		r.HandleFunc(serviceControlURL, s.serviceControlHandler)
+	}
+	r.Handle("/static/", http.StripPrefix("/static/",
+		withHeader("Cache-Control", "public, max-age=86400",
+			http.FileServer(data.Assets))))
+	s.handler = logging(withHeader("Server", serverField, r))
 
 	return s
 }
@@ -197,83 +143,106 @@ type UPnPService interface {
 	Unsubscribe(sid string) error
 }
 
-// initServicesMap is called during initialization of the server to prepare some internal datastructures.
-func (s *server) initServicesMap() {
-	urn, err := upnp.ParseServiceType(services[0].ServiceType)
-	if err != nil {
-		// The service type is hardcoded, so this error should never happen.
-		log.Panicf("ParseServiceType: %v", err)
-	}
-	s.services = map[string]UPnPService{
-		urn.Type: &contentDirectoryService{
-			server: s,
-		},
-	}
-	return
+// Formats the server as a string (used for logging.)
+func (s *server) String() string {
+	return fmt.Sprintf("DLNA server on %v", s.httpListenAddr)
 }
 
-// listInterfaces is called during initialization of the server to list the network interfaces
-// on the machine.
-func (s *server) listInterfaces() {
-	ifs, err := net.Interfaces()
+// Returns rclone version number as the model number.
+func (s *server) ModelNumber() string {
+	return fs.Version
+}
+
+// Template used to generate the root device XML descriptor.
+//
+// Due to the use of namespaces and various subtleties with device compatibility,
+// it turns out to be easier to use a template than to marshal XML.
+//
+// For rendering, it is passed the server object for context.
+var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0"
+      xmlns:dlna="urn:schemas-dlna-org:device-1-0"
+      xmlns:sec="http://www.sec.co.kr/dlna">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+    <friendlyName>{{.FriendlyName}}</friendlyName>
+    <manufacturer>rclone (rclone.org)</manufacturer>
+    <manufacturerURL>https://rclone.org/</manufacturerURL>
+    <modelDescription>rclone</modelDescription>
+    <modelName>rclone</modelName>
+    <modelNumber>{{.ModelNumber}}</modelNumber>
+    <modelURL>https://rclone.org/</modelURL>
+    <serialNumber>00000000</serialNumber>
+    <UDN>{{.RootDeviceUUID}}</UDN>
+    <dlna:X_DLNACAP/>
+    <dlna:X_DLNADOC>DMS-1.50</dlna:X_DLNADOC>
+    <dlna:X_DLNADOC>M-DMS-1.50</dlna:X_DLNADOC>
+    <sec:ProductCap>smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec</sec:ProductCap>
+    <sec:X_ProductCap>smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec</sec:X_ProductCap>
+    <iconList>
+      <icon>
+        <mimetype>image/png</mimetype>
+        <width>48</width>
+        <height>48</height>
+        <depth>8</depth>
+        <url>/static/rclone-48x48.png</url>
+      </icon>
+      <icon>
+        <mimetype>image/png</mimetype>
+        <width>120</width>
+        <height>120</height>
+        <depth>8</depth>
+        <url>/static/rclone-120x120.png</url>
+      </icon>
+    </iconList>
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
+        <SCPDURL>/static/ContentDirectory.xml</SCPDURL>
+        <controlURL>/ctl</controlURL>
+        <eventSubURL></eventSubURL>
+      </service>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
+        <SCPDURL>/static/ConnectionManager.xml</SCPDURL>
+        <controlURL>/ctl</controlURL>
+        <eventSubURL></eventSubURL>
+      </service>
+      <service>
+        <serviceType>urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1</serviceType>
+        <serviceId>urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar</serviceId>
+        <SCPDURL>/static/X_MS_MediaReceiverRegistrar.xml</SCPDURL>
+        <controlURL>/ctl</controlURL>
+        <eventSubURL></eventSubURL>
+      </service>
+    </serviceList>
+    <presentationURL>/</presentationURL>
+  </device>
+</root>`))
+
+// Renders the root device descriptor.
+func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
+	buffer := new(bytes.Buffer)
+	err := rootDescTmpl.Execute(buffer, s)
 	if err != nil {
-		fs.Errorf(s.f, "list network interfaces: %v", err)
+		serveError(s, w, "Failed to create root descriptor XML", err)
 		return
 	}
 
-	var tmp []net.Interface
-	for _, intf := range ifs {
-		if intf.Flags&net.FlagUp == 0 || intf.MTU <= 0 {
-			continue
-		}
-		s.Interfaces = append(s.Interfaces, intf)
-		tmp = append(tmp, intf)
+	w.Header().Set("content-type", `text/xml; charset="utf-8"`)
+	w.Header().Set("cache-control", "private, max-age=60")
+	w.Header().Set("content-length", strconv.FormatInt(int64(buffer.Len()), 10))
+	_, err = buffer.WriteTo(w)
+	if err != nil {
+		// Network error
+		fs.Debugf(s, "Error writing rootDesc: %v", err)
 	}
-}
-
-func (s *server) initMux(mux *http.ServeMux) {
-	mux.HandleFunc(resPath, func(w http.ResponseWriter, r *http.Request) {
-		remotePath := r.URL.Query().Get("path")
-		node, err := s.vfs.Stat(remotePath)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
-
-		file := node.(*vfs.File)
-		in, err := file.Open(os.O_RDONLY)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		defer fs.CheckClose(in, &err)
-
-		http.ServeContent(w, r, remotePath, node.ModTime(), in)
-		return
-	})
-
-	mux.HandleFunc(rootDescPath, func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", `text/xml; charset="utf-8"`)
-		w.Header().Set("content-length", fmt.Sprint(len(s.rootDescXML)))
-		w.Header().Set("server", serverField)
-		_, err := w.Write(s.rootDescXML)
-		if err != nil {
-			fs.Errorf(s, "Failed to serve root descriptor XML: %v", err)
-		}
-	})
-
-	// Install handlers to serve SCPD for each UPnP service.
-	for _, s := range services {
-		mux.HandleFunc(s.SCPDURL, func(serviceDesc string) http.HandlerFunc {
-			return func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("content-type", `text/xml; charset="utf-8"`)
-				http.ServeContent(w, r, ".xml", time.Time{}, bytes.NewReader([]byte(serviceDesc)))
-			}
-		}(s.SCPD))
-	}
-
-	mux.HandleFunc(serviceControlURL, s.serviceControlHandler)
 }
 
 // Handle a service control HTTP request.
@@ -281,30 +250,30 @@ func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapActionString := r.Header.Get("SOAPACTION")
 	soapAction, err := upnp.ParseActionHTTPHeader(soapActionString)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		serveError(s, w, "Could not parse SOAPACTION header", err)
 		return
 	}
 	var env soap.Envelope
 	if err := xml.NewDecoder(r.Body).Decode(&env); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		serveError(s, w, "Could not parse SOAP request body", err)
 		return
 	}
 
 	w.Header().Set("Content-Type", `text/xml; charset="utf-8"`)
 	w.Header().Set("Ext", "")
-	w.Header().Set("server", serverField)
 	soapRespXML, code := func() ([]byte, int) {
 		respArgs, err := s.soapActionResponse(soapAction, env.Body.Action, r)
 		if err != nil {
+			fs.Errorf(s, "Error invoking %v: %v", soapAction, err)
 			upnpErr := upnp.ConvertError(err)
-			return mustMarshalXML(soap.NewFault("UPnPError", upnpErr)), 500
+			return mustMarshalXML(soap.NewFault("UPnPError", upnpErr)), http.StatusInternalServerError
 		}
-		return marshalSOAPResponse(soapAction, respArgs), 200
+		return marshalSOAPResponse(soapAction, respArgs), http.StatusOK
 	}()
 	bodyStr := fmt.Sprintf(`<?xml version="1.0" encoding="utf-8" standalone="yes"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body>%s</s:Body></s:Envelope>`, soapRespXML)
 	w.WriteHeader(code)
 	if _, err := w.Write([]byte(bodyStr)); err != nil {
-		log.Print(err)
+		fs.Infof(s, "Error writing response: %v", err)
 	}
 }
 
@@ -316,6 +285,36 @@ func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte,
 		return nil, upnp.Errorf(upnp.InvalidActionErrorCode, "Invalid service: %s", sa.Type)
 	}
 	return service.Handle(sa.Action, actionRequestXML, r)
+}
+
+// Serves actual resources (media files).
+func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
+	remotePath := r.URL.Query().Get("path")
+	node, err := s.vfs.Stat(remotePath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
+
+	// add some DLNA specific headers
+	if r.Header.Get("getContentFeatures.dlna.org") != "" {
+		w.Header().Set("contentFeatures.dlna.org", dms_dlna.ContentFeatures{
+			SupportRange: true,
+		}.String())
+	}
+	w.Header().Set("transferMode.dlna.org", "Streaming")
+
+	file := node.(*vfs.File)
+	in, err := file.Open(os.O_RDONLY)
+	if err != nil {
+		serveError(node, w, "Could not open resource", err)
+		return
+	}
+	defer fs.CheckClose(in, &err)
+
+	http.ServeContent(w, r, remotePath, node.ModTime(), in)
 }
 
 // Serve runs the server - returns the error only if
@@ -393,13 +392,19 @@ func (s *server) ssdpInterface(intf net.Interface) {
 		return url.String()
 	}
 
+	// Note that the devices and services advertised here via SSDP should be
+	// in agreement with the rootDesc XML descriptor that is defined above.
 	ssdpServer := ssdp.Server{
-		Interface:      intf,
-		Devices:        devices(),
-		Services:       serviceTypes(),
+		Interface: intf,
+		Devices: []string{
+			"urn:schemas-upnp-org:device:MediaServer:1"},
+		Services: []string{
+			"urn:schemas-upnp-org:service:ContentDirectory:1",
+			"urn:schemas-upnp-org:service:ConnectionManager:1",
+			"urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1"},
 		Location:       advertiseLocationFn,
 		Server:         serverField,
-		UUID:           s.rootDeviceUUID,
+		UUID:           s.RootDeviceUUID,
 		NotifyInterval: s.AnnounceInterval,
 	}
 
@@ -417,16 +422,16 @@ func (s *server) ssdpInterface(intf net.Interface) {
 			// good.
 			return
 		}
-		log.Printf("Error creating ssdp server on %s: %s", intf.Name, err)
+		fs.Errorf(s, "Error creating ssdp server on %s: %s", intf.Name, err)
 		return
 	}
 	defer ssdpServer.Close()
-	log.Println("Started SSDP on", intf.Name)
+	fs.Infof(s, "Started SSDP on %v", intf.Name)
 	stopped := make(chan struct{})
 	go func() {
 		defer close(stopped)
 		if err := ssdpServer.Serve(); err != nil {
-			log.Printf("%q: %q\n", intf.Name, err)
+			fs.Errorf(s, "%q: %q\n", intf.Name, err)
 		}
 	}()
 	select {
@@ -438,9 +443,7 @@ func (s *server) ssdpInterface(intf net.Interface) {
 
 func (s *server) serveHTTP() error {
 	srv := &http.Server{
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			s.httpServeMux.ServeHTTP(w, r)
-		}),
+		Handler: s.handler,
 	}
 	err := srv.Serve(s.HTTPConn)
 	select {

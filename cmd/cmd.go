@@ -9,6 +9,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path"
@@ -20,19 +21,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config/configflags"
-	"github.com/ncw/rclone/fs/config/flags"
-	"github.com/ncw/rclone/fs/filter"
-	"github.com/ncw/rclone/fs/filter/filterflags"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/fspath"
-	fslog "github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/fs/rc/rcflags"
-	"github.com/ncw/rclone/fs/rc/rcserver"
-	"github.com/ncw/rclone/lib/atexit"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configflags"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/filter"
+	"github.com/rclone/rclone/fs/filter/filterflags"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fspath"
+	fslog "github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fs/rc/rcserver"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -83,7 +85,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 		fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
-	f, err := fs.NewFs(remote)
+	f, err := cache.Get(remote)
 	switch err {
 	case fs.ErrorIsFile:
 		return f, path.Base(fsPath)
@@ -131,7 +133,7 @@ func NewFsSrc(args []string) fs.Fs {
 //
 // This must point to a directory
 func newFsDir(remote string) fs.Fs {
-	f, err := fs.NewFs(remote)
+	f, err := cache.Get(remote)
 	if err != nil {
 		fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
@@ -172,7 +174,11 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 	// If file exists then srcFileName != "", however if the file
 	// doesn't exist then we assume it is a directory...
 	if srcFileName != "" {
-		dstRemote, dstFileName = fspath.Split(dstRemote)
+		var err error
+		dstRemote, dstFileName, err = fspath.Split(dstRemote)
+		if err != nil {
+			log.Fatalf("Parsing %q failed: %v", args[1], err)
+		}
 		if dstRemote == "" {
 			dstRemote = "."
 		}
@@ -180,7 +186,7 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 			log.Fatalf("%q is a directory", args[1])
 		}
 	}
-	fdst, err := fs.NewFs(dstRemote)
+	fdst, err := cache.Get(dstRemote)
 	switch err {
 	case fs.ErrorIsFile:
 		fs.CountError(err)
@@ -195,7 +201,10 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 
 // NewFsDstFile creates a new dst fs with a destination file name from the arguments
 func NewFsDstFile(args []string) (fdst fs.Fs, dstFileName string) {
-	dstRemote, dstFileName := fspath.Split(args[0])
+	dstRemote, dstFileName, err := fspath.Split(args[0])
+	if err != nil {
+		log.Fatalf("Parsing %q failed: %v", args[0], err)
+	}
 	if dstRemote == "" {
 		dstRemote = "."
 	}
@@ -231,35 +240,38 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	for try := 1; try <= *retries; try++ {
 		err = f()
 		fs.CountError(err)
-		if !Retry || !accounting.Stats.Errored() {
+		lastErr := accounting.GlobalStats().GetLastError()
+		if err == nil {
+			err = lastErr
+		}
+		if !Retry || !accounting.GlobalStats().Errored() {
 			if try > 1 {
 				fs.Errorf(nil, "Attempt %d/%d succeeded", try, *retries)
 			}
 			break
 		}
-		if accounting.Stats.HadFatalError() {
+		if accounting.GlobalStats().HadFatalError() {
 			fs.Errorf(nil, "Fatal error received - not attempting retries")
 			break
 		}
-		if accounting.Stats.Errored() && !accounting.Stats.HadRetryError() {
+		if accounting.GlobalStats().Errored() && !accounting.GlobalStats().HadRetryError() {
 			fs.Errorf(nil, "Can't retry this error - not attempting retries")
 			break
 		}
-		if retryAfter := accounting.Stats.RetryAfter(); !retryAfter.IsZero() {
+		if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
 			d := retryAfter.Sub(time.Now())
 			if d > 0 {
 				fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
 				time.Sleep(d)
 			}
 		}
-		lastErr := accounting.Stats.GetLastError()
 		if lastErr != nil {
-			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.Stats.GetErrors(), lastErr)
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors and: %v", try, *retries, accounting.GlobalStats().GetErrors(), lastErr)
 		} else {
-			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, *retries, accounting.Stats.GetErrors())
+			fs.Errorf(nil, "Attempt %d/%d failed with %d errors", try, *retries, accounting.GlobalStats().GetErrors())
 		}
 		if try < *retries {
-			accounting.Stats.ResetErrors()
+			accounting.GlobalStats().ResetErrors()
 		}
 		if *retriesInterval > 0 {
 			time.Sleep(*retriesInterval)
@@ -267,11 +279,16 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	}
 	stopStats()
 	if err != nil {
-		log.Printf("Failed to %s: %v", cmd.Name(), err)
+		nerrs := accounting.GlobalStats().GetErrors()
+		if nerrs <= 1 {
+			log.Printf("Failed to %s: %v", cmd.Name(), err)
+		} else {
+			log.Printf("Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, err)
+		}
 		resolveExitCode(err)
 	}
-	if showStats && (accounting.Stats.Errored() || *statsInterval > 0) {
-		accounting.Stats.Log()
+	if showStats && (accounting.GlobalStats().Errored() || *statsInterval > 0) {
+		accounting.GlobalStats().Log()
 	}
 	fs.Debugf(nil, "%d go routines active\n", runtime.NumGoroutine())
 
@@ -294,8 +311,8 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 	}
 
-	if accounting.Stats.Errored() {
-		resolveExitCode(accounting.Stats.GetLastError())
+	if accounting.GlobalStats().Errored() {
+		resolveExitCode(accounting.GlobalStats().GetLastError())
 	}
 }
 
@@ -328,7 +345,7 @@ func StartStats() func() {
 		for {
 			select {
 			case <-ticker.C:
-				accounting.Stats.Log()
+				accounting.GlobalStats().Log()
 			case <-stopStats:
 				ticker.Stop()
 				return
@@ -483,6 +500,7 @@ func AddBackendFlags() {
 
 // Main runs rclone interpreting flags and commands out of os.Args
 func Main() {
+	rand.Seed(time.Now().Unix())
 	setupRootCommand(Root)
 	AddBackendFlags()
 	if err := Root.Execute(); err != nil {

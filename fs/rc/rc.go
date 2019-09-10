@@ -11,23 +11,32 @@ import (
 	"encoding/json"
 	"io"
 	_ "net/http/pprof" // install the pprof http handlers
+	"time"
 
-	"github.com/ncw/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/cmd/serve/httplib"
 )
 
 // Options contains options for the remote control server
 type Options struct {
-	HTTPOptions httplib.Options
-	Enabled     bool   // set to enable the server
-	Serve       bool   // set to serve files from remotes
-	Files       string // set to enable serving files locally
-	NoAuth      bool   // set to disable auth checks on AuthRequired methods
+	HTTPOptions              httplib.Options
+	Enabled                  bool   // set to enable the server
+	Serve                    bool   // set to serve files from remotes
+	Files                    string // set to enable serving files locally
+	NoAuth                   bool   // set to disable auth checks on AuthRequired methods
+	WebUI                    bool   // set to launch the web ui
+	WebGUIUpdate             bool   // set to download new update
+	WebGUIFetchURL           string // set the default url for fetching webgui
+	AccessControlAllowOrigin string // set the access control for CORS configuration
+	JobExpireDuration        time.Duration
+	JobExpireInterval        time.Duration
 }
 
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
-	HTTPOptions: httplib.DefaultOpt,
-	Enabled:     false,
+	HTTPOptions:       httplib.DefaultOpt,
+	Enabled:           false,
+	JobExpireDuration: 60 * time.Second,
+	JobExpireInterval: 10 * time.Second,
 }
 
 func init() {

@@ -44,6 +44,7 @@ There are also some interesting projects using termbox-go:
  - [cointop](https://github.com/miguelmota/cointop) is an interactive terminal based UI application for tracking cryptocurrencies.
  - [pexpo](https://github.com/nnao45/pexpo) is a terminal sending ping tool written in Go.
  - [jid](https://github.com/simeji/jid) is an interactive JSON drill down tool using filtering queries like jq.
+ - [nonograminGo](https://github.com/N0RM4L15T/nonograminGo) is a nonogram(aka. picross) in Go
 
 ### API reference
 [godoc.org/github.com/nsf/termbox-go](http://godoc.org/github.com/nsf/termbox-go)

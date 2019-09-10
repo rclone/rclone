@@ -1,9 +1,11 @@
 package settier
 
 import (
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/operations"
+	"context"
+
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +22,7 @@ Few cloud storage services provides different storage classes on objects,
 for example AWS S3 and Glacier, Azure Blob storage - Hot, Cool and Archive,
 Google Cloud Storage, Regional Storage, Nearline, Coldline etc.
 
-Note that, certain tier chages make objects not available to access immediately.
+Note that, certain tier changes make objects not available to access immediately.
 For example tiering to archive in azure blob storage makes objects in frozen state,
 user can restore by setting tier to Hot/Cool, similarly S3 to Glacier makes object
 inaccessible.true
@@ -48,7 +50,7 @@ Or just provide remote directory and all files in directory will be tiered
 				return errors.Errorf("Remote %s does not support settier", fsrc.Name())
 			}
 
-			return operations.SetTier(fsrc, tier)
+			return operations.SetTier(context.Background(), fsrc, tier)
 		})
 	},
 }

@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/ncw/rclone/backend/all" // import all fs
-	"github.com/ncw/rclone/lib/pacer"
+	_ "github.com/rclone/rclone/backend/all" // import all fs
+	"github.com/rclone/rclone/lib/pacer"
 )
 
 var (
@@ -145,6 +145,7 @@ func main() {
 	// Log and exit
 	report.End()
 	report.LogSummary()
+	report.LogJSON()
 	report.LogHTML()
 	report.EmailHTML()
 	report.Upload()

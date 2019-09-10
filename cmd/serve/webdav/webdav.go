@@ -1,33 +1,39 @@
-//+build go1.9
-
+// Package webdav implements a WebDAV server backed by rclone VFS
 package webdav
 
 import (
+	"context"
 	"net/http"
 	"os"
+	"strings"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
+	"github.com/rclone/rclone/cmd/serve/httplib/serve"
+	"github.com/rclone/rclone/cmd/serve/proxy"
+	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/errors"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.8
 	"golang.org/x/net/webdav"
 )
 
 var (
-	hashName string
-	hashType = hash.None
+	hashName      string
+	hashType      = hash.None
+	disableGETDir = false
 )
 
 func init() {
 	httpflags.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
+	proxyflags.AddFlags(Command.Flags())
 	Command.Flags().StringVar(&hashName, "etag-hash", "", "Which hash to use for the ETag, or auto or blank for off")
+	Command.Flags().BoolVar(&disableGETDir, "disable-dir-list", false, "Disable HTML directory list on GET request for a directory")
 }
 
 // Command definition for cobra
@@ -37,8 +43,8 @@ var Command = &cobra.Command{
 	Long: `
 rclone serve webdav implements a basic webdav server to serve the
 remote over HTTP via the webdav protocol. This can be viewed with a
-webdav client or you can make a remote of type webdav to read and
-write it.
+webdav client, through a web browser, or you can make a remote of
+type webdav to read and write it.
 
 ### Webdav options
 
@@ -53,10 +59,15 @@ supported hash on the backend or you can use a named hash such as
 
 Use "rclone hashsum" to see the full list.
 
-` + httplib.Help + vfs.Help,
+` + httplib.Help + vfs.Help + proxy.Help,
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(1, 1, command, args)
-		f := cmd.NewFsSrc(args)
+		var f fs.Fs
+		if proxyflags.Opt.AuthProxy == "" {
+			cmd.CheckArgs(1, 1, command, args)
+			f = cmd.NewFsSrc(args)
+		} else {
+			cmd.CheckArgs(0, 0, command, args)
+		}
 		hashType = hash.None
 		if hashName == "auto" {
 			hashType = f.Hashes().GetOne()
@@ -96,8 +107,10 @@ Use "rclone hashsum" to see the full list.
 // overwriting another existing file or directory is an error is OS-dependent.
 type WebDAV struct {
 	*httplib.Server
-	f   fs.Fs
-	vfs *vfs.VFS
+	f             fs.Fs
+	_vfs          *vfs.VFS // don't use directly, use getVFS
+	webdavhandler *webdav.Handler
+	proxy         *proxy.Proxy
 }
 
 // check interface
@@ -106,18 +119,103 @@ var _ webdav.FileSystem = (*WebDAV)(nil)
 // Make a new WebDAV to serve the remote
 func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
 	w := &WebDAV{
-		f:   f,
-		vfs: vfs.New(f, &vfsflags.Opt),
+		f: f,
 	}
-
-	handler := &webdav.Handler{
+	if proxyflags.Opt.AuthProxy != "" {
+		w.proxy = proxy.New(&proxyflags.Opt)
+		// override auth
+		copyOpt := *opt
+		copyOpt.Auth = w.auth
+		opt = &copyOpt
+	} else {
+		w._vfs = vfs.New(f, &vfsflags.Opt)
+	}
+	w.Server = httplib.NewServer(http.HandlerFunc(w.handler), opt)
+	webdavHandler := &webdav.Handler{
+		Prefix:     w.Server.Opt.BaseURL,
 		FileSystem: w,
 		LockSystem: webdav.NewMemLS(),
 		Logger:     w.logRequest, // FIXME
 	}
-
-	w.Server = httplib.NewServer(handler, opt)
+	w.webdavhandler = webdavHandler
 	return w
+}
+
+// Gets the VFS in use for this request
+func (w *WebDAV) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
+	if w._vfs != nil {
+		return w._vfs, nil
+	}
+	value := ctx.Value(httplib.ContextAuthKey)
+	if value == nil {
+		return nil, errors.New("no VFS found in context")
+	}
+	VFS, ok := value.(*vfs.VFS)
+	if !ok {
+		return nil, errors.Errorf("context value is not VFS: %#v", value)
+	}
+	return VFS, nil
+}
+
+// auth does proxy authorization
+func (w *WebDAV) auth(user, pass string) (value interface{}, err error) {
+	VFS, _, err := w.proxy.Call(user, pass)
+	if err != nil {
+		return nil, err
+	}
+	return VFS, err
+}
+
+func (w *WebDAV) handler(rw http.ResponseWriter, r *http.Request) {
+	urlPath, ok := w.Path(rw, r)
+	if !ok {
+		return
+	}
+	isDir := strings.HasSuffix(urlPath, "/")
+	remote := strings.Trim(urlPath, "/")
+	if !disableGETDir && (r.Method == "GET" || r.Method == "HEAD") && isDir {
+		w.serveDir(rw, r, remote)
+		return
+	}
+	w.webdavhandler.ServeHTTP(rw, r)
+}
+
+// serveDir serves a directory index at dirRemote
+// This is similar to serveDir in serve http.
+func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote string) {
+	VFS, err := w.getVFS(r.Context())
+	if err != nil {
+		http.Error(rw, "Root directory not found", http.StatusNotFound)
+		fs.Errorf(nil, "Failed to serve directory: %v", err)
+		return
+	}
+	// List the directory
+	node, err := VFS.Stat(dirRemote)
+	if err == vfs.ENOENT {
+		http.Error(rw, "Directory not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		return
+	}
+	if !node.IsDir() {
+		http.Error(rw, "Not a directory", http.StatusNotFound)
+		return
+	}
+	dir := node.(*vfs.Dir)
+	dirEntries, err := dir.ReadDirAll()
+	if err != nil {
+		serve.Error(dirRemote, rw, "Failed to list directory", err)
+		return
+	}
+
+	// Make the entries for display
+	directory := serve.NewDirectory(dirRemote, w.HTMLTemplate)
+	for _, node := range dirEntries {
+		directory.AddEntry(node.Path(), node.IsDir())
+	}
+
+	directory.Serve(rw, r)
 }
 
 // serve runs the http server in the background.
@@ -139,8 +237,12 @@ func (w *WebDAV) logRequest(r *http.Request, err error) {
 
 // Mkdir creates a directory
 func (w *WebDAV) Mkdir(ctx context.Context, name string, perm os.FileMode) (err error) {
-	defer log.Trace(name, "perm=%v", perm)("err = %v", &err)
-	dir, leaf, err := w.vfs.StatParent(name)
+	// defer log.Trace(name, "perm=%v", perm)("err = %v", &err)
+	VFS, err := w.getVFS(ctx)
+	if err != nil {
+		return err
+	}
+	dir, leaf, err := VFS.StatParent(name)
 	if err != nil {
 		return err
 	}
@@ -150,8 +252,12 @@ func (w *WebDAV) Mkdir(ctx context.Context, name string, perm os.FileMode) (err 
 
 // OpenFile opens a file or a directory
 func (w *WebDAV) OpenFile(ctx context.Context, name string, flags int, perm os.FileMode) (file webdav.File, err error) {
-	defer log.Trace(name, "flags=%v, perm=%v", flags, perm)("err = %v", &err)
-	f, err := w.vfs.OpenFile(name, flags, perm)
+	// defer log.Trace(name, "flags=%v, perm=%v", flags, perm)("err = %v", &err)
+	VFS, err := w.getVFS(ctx)
+	if err != nil {
+		return nil, err
+	}
+	f, err := VFS.OpenFile(name, flags, perm)
 	if err != nil {
 		return nil, err
 	}
@@ -160,8 +266,12 @@ func (w *WebDAV) OpenFile(ctx context.Context, name string, flags int, perm os.F
 
 // RemoveAll removes a file or a directory and its contents
 func (w *WebDAV) RemoveAll(ctx context.Context, name string) (err error) {
-	defer log.Trace(name, "")("err = %v", &err)
-	node, err := w.vfs.Stat(name)
+	// defer log.Trace(name, "")("err = %v", &err)
+	VFS, err := w.getVFS(ctx)
+	if err != nil {
+		return err
+	}
+	node, err := VFS.Stat(name)
 	if err != nil {
 		return err
 	}
@@ -174,14 +284,22 @@ func (w *WebDAV) RemoveAll(ctx context.Context, name string) (err error) {
 
 // Rename a file or a directory
 func (w *WebDAV) Rename(ctx context.Context, oldName, newName string) (err error) {
-	defer log.Trace(oldName, "newName=%q", newName)("err = %v", &err)
-	return w.vfs.Rename(oldName, newName)
+	// defer log.Trace(oldName, "newName=%q", newName)("err = %v", &err)
+	VFS, err := w.getVFS(ctx)
+	if err != nil {
+		return err
+	}
+	return VFS.Rename(oldName, newName)
 }
 
 // Stat returns info about the file or directory
 func (w *WebDAV) Stat(ctx context.Context, name string) (fi os.FileInfo, err error) {
-	defer log.Trace(name, "")("fi=%+v, err = %v", &fi, &err)
-	fi, err = w.vfs.Stat(name)
+	// defer log.Trace(name, "")("fi=%+v, err = %v", &fi, &err)
+	VFS, err := w.getVFS(ctx)
+	if err != nil {
+		return nil, err
+	}
+	fi, err = VFS.Stat(name)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +341,7 @@ type FileInfo struct {
 
 // ETag returns an ETag for the FileInfo
 func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
-	defer log.Trace(fi, "")("etag=%q, err=%v", &etag, &err)
+	// defer log.Trace(fi, "")("etag=%q, err=%v", &etag, &err)
 	if hashType == hash.None {
 		return "", webdav.ErrNotImplemented
 	}
@@ -237,7 +355,7 @@ func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 	if !ok {
 		return "", webdav.ErrNotImplemented
 	}
-	hash, err := o.Hash(hashType)
+	hash, err := o.Hash(ctx, hashType)
 	if err != nil || hash == "" {
 		return "", webdav.ErrNotImplemented
 	}
@@ -246,7 +364,7 @@ func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 
 // ContentType returns a content type for the FileInfo
 func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err error) {
-	defer log.Trace(fi, "")("etag=%q, err=%v", &contentType, &err)
+	// defer log.Trace(fi, "")("etag=%q, err=%v", &contentType, &err)
 	node, ok := (fi.FileInfo).(vfs.Node)
 	if !ok {
 		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
@@ -255,7 +373,7 @@ func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err err
 	entry := node.DirEntry()
 	switch x := entry.(type) {
 	case fs.Object:
-		return fs.MimeType(x), nil
+		return fs.MimeType(ctx, x), nil
 	case fs.Directory:
 		return "inode/directory", nil
 	}

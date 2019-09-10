@@ -19,6 +19,7 @@ option:
 
 See the following for detailed instructions for
 
+  * [1Fichier](/fichier/)
   * [Alias](/alias/)
   * [Amazon Drive](/amazonclouddrive/)
   * [Amazon S3](/s3/)
@@ -31,16 +32,20 @@ See the following for detailed instructions for
   * [FTP](/ftp/)
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Google Drive](/drive/)
+  * [Google Photos](/googlephotos/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
+  * [Mail.ru Cloud](/mailru/)
   * [Mega](/mega/)
   * [Microsoft Azure Blob Storage](/azureblob/)
   * [Microsoft OneDrive](/onedrive/)
   * [Openstack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)
   * [Pcloud](/pcloud/)
+  * [premiumize.me](/premiumizeme/)
+  * [put.io](/putio/)
   * [QingStor](/qingstor/)
   * [SFTP](/sftp/)
   * [Union](/union/)
@@ -221,7 +226,7 @@ If your names have spaces in you need to put them in `"`, eg
     rclone copy "E:\folder name\folder name\folder name" remote:backup
 
 If you are using the root directory on its own then don't quote it
-(see [#464](https://github.com/ncw/rclone/issues/464) for why), eg
+(see [#464](https://github.com/rclone/rclone/issues/464) for why), eg
 
     rclone copy E:\ remote:backup
 
@@ -325,6 +330,8 @@ which would have been updated or deleted will be stored in
 If running rclone from a script you might want to use today's date as
 the directory name passed to `--backup-dir` to store the old files, or
 you might want to pass `--suffix` with today's date.
+
+See `--compare-dest` and `--copy-dest`.
 
 ### --bind string ###
 
@@ -445,6 +452,18 @@ quicker than without the `--checksum` flag.
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
 
+### --compare-dest=DIR ###
+
+When using `sync`, `copy` or `move` DIR is checked in addition to the 
+destination for files. If a file identical to the source is found that 
+file is NOT copied from source. This is useful to copy just files that 
+have changed since the last backup.
+
+You must use the same remote as the destination of the sync.  The 
+compare directory must not overlap the destination directory.
+
+See `--copy-dest` and `--backup-dir`.
+
 ### --config=CONFIG_FILE ###
 
 Specify the location of the rclone config file.
@@ -452,7 +471,11 @@ Specify the location of the rclone config file.
 Normally the config file is in your home directory as a file called
 `.config/rclone/rclone.conf` (or `.rclone.conf` if created with an
 older version). If `$XDG_CONFIG_HOME` is set it will be at
-`$XDG_CONFIG_HOME/rclone/rclone.conf`
+`$XDG_CONFIG_HOME/rclone/rclone.conf`.
+
+If there is a file `rclone.conf` in the same directory as the rclone
+executable it will be preferred. This file must be created manually
+for Rclone to use it, it will never be created automatically.
 
 If you run `rclone config file` you will see where the default
 location is for you.
@@ -468,6 +491,19 @@ looks like `5s` for 5 seconds, `10m` for 10 minutes, or `3h30m`.
 The connection timeout is the amount of time rclone will wait for a
 connection to go through to a remote object storage system.  It is
 `1m` by default.
+
+### --copy-dest=DIR ###
+
+When using `sync`, `copy` or `move` DIR is checked in addition to the 
+destination for files. If a file identical to the source is found that 
+file is server side copied from DIR to the destination. This is useful 
+for incremental backup.
+
+The remote in use must support server side copy and you must
+use the same remote as the destination of the sync.  The compare
+directory must not overlap the destination directory.
+
+See `--compare-dest` and `--backup-dir`.
 
 ### --dedupe-mode MODE ###
 
@@ -500,6 +536,12 @@ Do a trial run with no permanent changes.  Use this to see what rclone
 would do without actually doing it.  Useful when setting up the `sync`
 command which deletes files in the destination.
 
+### --ignore-case-sync ###
+
+Using this option will cause rclone to ignore the case of the files 
+when synchronizing so files will not be copied/synced when the
+existing filenames are the same, even if the casing is different.
+
 ### --ignore-checksum ###
 
 Normally rclone will check that the checksums of transferred files
@@ -530,7 +572,7 @@ after transfer.
 
 This can be useful for transferring files to and from OneDrive which
 occasionally misreports the size of image files (see
-[#399](https://github.com/ncw/rclone/issues/399) for more info).
+[#399](https://github.com/rclone/rclone/issues/399) for more info).
 
 ### -I, --ignore-times ###
 
@@ -595,6 +637,11 @@ outputs very little when things are working normally. It outputs
 warnings and significant events.
 
 `ERROR` is equivalent to `-q`. It only outputs error messages.
+
+### --use-json-log ###
+
+This switches the log format to JSON for rclone. The fields of json log 
+are level, msg, source, time.
 
 ### --low-level-retries NUMBER ###
 
@@ -673,6 +720,53 @@ if you are reading and writing to an OS X filing system this will be
 `1s` by default.
 
 This command line flag allows you to override that computed default.
+
+### --multi-thread-cutoff=SIZE ###
+
+When downloading files to the local backend above this size, rclone
+will use multiple threads to download the file. (default 250M)
+
+Rclone preallocates the file (using `fallocate(FALLOC_FL_KEEP_SIZE)`
+on unix or `NTSetInformationFile` on Windows both of which takes no
+time) then each thread writes directly into the file at the correct
+place.  This means that rclone won't create fragmented or sparse files
+and there won't be any assembly time at the end of the transfer.
+
+The number of threads used to dowload is controlled by
+`--multi-thread-streams`.
+
+Use `-vv` if you wish to see info about the threads.
+
+This will work with the `sync`/`copy`/`move` commands and friends
+`copyto`/`moveto`.  Multi thread downloads will be used with `rclone
+mount` and `rclone serve` if `--vfs-cache-mode` is set to `writes` or
+above.
+
+**NB** that this **only** works for a local destination but will work
+with any source.
+
+**NB** that multi thread copies are disabled for local to local copies
+as they are faster without unless `--multi-thread-streams` is set
+explicitly.
+
+### --multi-thread-streams=N ###
+
+When using multi thread downloads (see above `--multi-thread-cutoff`)
+this sets the maximum number of streams to use.  Set to `0` to disable
+multi thread downloads. (Default 4)
+
+Exactly how many streams rclone uses for the download depends on the
+size of the file. To calculate the number of download streams Rclone
+divides the size of the file by the `--multi-thread-cutoff` and rounds
+up, up to the maximum set with `--multi-thread-streams`.
+
+So if `--multi-thread-cutoff 250MB` and `--multi-thread-streams 4` are
+in effect (the defaults):
+
+- 0MB.250MB files will be downloaded with 1 stream
+- 250MB..500MB files will be downloaded with 2 streams
+- 500MB..750MB files will be downloaded with 3 streams
+- 750MB+ files will be downloaded with 4 streams
 
 ### --no-gzip-encoding ###
 
@@ -800,6 +894,18 @@ section](#logging) for more info on log levels.
 When this is specified, rclone condenses the stats into a single line
 showing the most important stats only.
 
+### --stats-one-line-date ###
+
+When this is specified, rclone enables the single-line stats and prepends
+the display with a date string. The default is `2006/01/02 15:04:05 - `
+
+### --stats-one-line-date-format ###
+
+When this is specified, rclone enables the single-line stats and prepends
+the display with a user-supplied date string. The date string MUST be
+enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
+date formatting syntax.
+
 ### --stats-unit=bits|bytes ###
 
 By default, data transfer rates will be printed in bytes/second.
@@ -815,11 +921,23 @@ The default is `bytes`.
 
 ### --suffix=SUFFIX ###
 
-This is for use with `--backup-dir` only.  If this isn't set then
-`--backup-dir` will move files with their original name.  If it is set
-then the files will have SUFFIX added on to them.
+When using `sync`, `copy` or `move` any files which would have been
+overwritten or deleted will have the suffix added to them.  If there 
+is a file with the same path (after the suffix has been added), then 
+it will be overwritten.
 
-See `--backup-dir` for more info.
+The remote in use must support server side move or copy and you must
+use the same remote as the destination of the sync.
+
+This is for use with files to add the suffix in the current directory 
+or with `--backup-dir`. See `--backup-dir` for more info.
+
+For example
+
+    rclone sync /path/to/local/file remote:current --suffix .bak
+
+will sync `/path/to/local` to `remote:current`, but for any files
+which would have been updated or deleted have .bak added.
 
 ### --suffix-keep-extension ###
 
@@ -982,15 +1100,16 @@ If an existing destination file has a modification time equal (within
 the computed modify window precision) to the source file's, it will be
 updated if the sizes are different.
 
-On remotes which don't support mod time directly the time checked will
-be the uploaded time.  This means that if uploading to one of these
-remotes, rclone will skip any files which exist on the destination and
-have an uploaded time that is newer than the modification time of the
-source file.
+On remotes which don't support mod time directly (or when using
+`--use-server-mod-time`) the time checked will be the uploaded time.
+This means that if uploading to one of these remotes, rclone will skip
+any files which exist on the destination and have an uploaded time that
+is newer than the modification time of the source file.
 
 This can be useful when transferring to a remote which doesn't support
-mod times directly as it is more accurate than a `--size-only` check
-and faster than using `--checksum`.
+mod times directly (or when using `--use-server-mod-time` to avoid extra
+API calls) as it is more accurate than a `--size-only` check and faster
+than using `--checksum`.
 
 ### --use-mmap ###
 
@@ -1015,10 +1134,14 @@ additional metadata on the object. By default it will make an API call to
 retrieve the metadata when the modtime is needed by an operation.
 
 Use this flag to disable the extra API call and rely instead on the server's
-modified time. In cases such as a local to remote sync, knowing the local file
-is newer than the time it was last uploaded to the remote is sufficient. In
-those cases, this flag can speed up the process and reduce the number of API
-calls necessary.
+modified time. In cases such as a local to remote sync using `--update`,
+knowing the local file is newer than the time it was last uploaded to the
+remote is sufficient. In those cases, this flag can speed up the process and
+reduce the number of API calls necessary.
+
+Using this flag on a sync operation without also using `--update` would cause
+all files modified at any time other than the last upload time to be uploaded
+again, which is probably not what you want.
 
 ### -v, -vv, --verbose ###
 

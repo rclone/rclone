@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Make single page versions of the documentation for release and
 conversion into man pages etc.
@@ -18,10 +18,13 @@ docs = [
     "docs.md",
     "remote_setup.md",
     "filtering.md",
+    "gui.md",
     "rc.md",
     "overview.md",
+    "flags.md",
 
     # Keep these alphabetical by full name
+    "fichier.md",
     "alias.md",
     "amazonclouddrive.md",
     "s3.md",
@@ -33,10 +36,12 @@ docs = [
     "ftp.md",
     "googlecloudstorage.md",
     "drive.md",
+    "googlephotos.md",
     "http.md",
     "hubic.md",
     "jottacloud.md",
     "koofr.md",
+    "mailru.md",
     "mega.md",
     "azureblob.md",
     "onedrive.md",
@@ -44,6 +49,8 @@ docs = [
     "qingstor.md",
     "swift.md",
     "pcloud.md",
+    "premiumizeme.md",
+    "putio.md",
     "sftp.md",
     "union.md",
     "webdav.md",
@@ -112,8 +119,8 @@ def check_docs(docpath):
     docs_set = set(docs)
     if files == docs_set:
         return
-    print "Files on disk but not in docs variable: %s" % ", ".join(files - docs_set)
-    print "Files in docs variable but not on disk: %s" % ", ".join(docs_set - files)
+    print("Files on disk but not in docs variable: %s" % ", ".join(files - docs_set))
+    print("Files in docs variable but not on disk: %s" % ", ".join(docs_set - files))
     raise ValueError("Missing files")
 
 def read_command(command):
@@ -136,7 +143,7 @@ def read_commands(docpath):
     
 def main():
     check_docs(docpath)
-    command_docs = read_commands(docpath)
+    command_docs = read_commands(docpath).replace("\\", "\\\\") # escape \ so we can use command_docs in re.sub
     with open(outfile, "w") as out:
         out.write("""\
 %% rclone(1) User Manual
@@ -150,7 +157,7 @@ def main():
             if doc == "docs.md":
                 contents = re.sub(r"The main rclone commands.*?for the full list.", command_docs, contents, 0, re.S)
             out.write(contents)
-    print "Written '%s'" % outfile
+    print("Written '%s'" % outfile)
 
 if __name__ == "__main__":
     main()

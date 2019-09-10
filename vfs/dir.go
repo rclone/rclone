@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"context"
 	"os"
 	"path"
 	"sort"
@@ -8,11 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/list"
-	"github.com/ncw/rclone/fs/operations"
-	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/dirtree"
+	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 )
 
 // Dir represents a directory entry
@@ -36,7 +38,7 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		parent:  parent,
 		entry:   fsDir,
 		path:    fsDir.Remote(),
-		modTime: fsDir.ModTime(),
+		modTime: fsDir.ModTime(context.TODO()),
 		inode:   newInode(),
 		items:   make(map[string]Node),
 	}
@@ -177,7 +179,7 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.parent = newParent
 	d.entry = fsDir
 	d.path = fsDir.Remote()
-	d.modTime = fsDir.ModTime()
+	d.modTime = fsDir.ModTime(context.TODO())
 	d.read = time.Time{}
 }
 
@@ -207,7 +209,7 @@ func (d *Dir) _readDir() error {
 	} else {
 		return nil
 	}
-	entries, err := list.DirSorted(d.f, false, d.path)
+	entries, err := list.DirSorted(context.TODO(), d.f, false, d.path)
 	if err == fs.ErrorDirNotFound {
 		// We treat directory not found as empty because we
 		// create directories on the fly
@@ -226,13 +228,13 @@ func (d *Dir) _readDir() error {
 
 // update d.items for each dir in the DirTree below this one and
 // set the last read time - must be called with the lock held
-func (d *Dir) _readDirFromDirTree(dirTree walk.DirTree, when time.Time) error {
+func (d *Dir) _readDirFromDirTree(dirTree dirtree.DirTree, when time.Time) error {
 	return d._readDirFromEntries(dirTree[d.path], dirTree, when)
 }
 
 // update d.items and if dirTree is not nil update each dir in the DirTree below this one and
 // set the last read time - must be called with the lock held
-func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree walk.DirTree, when time.Time) error {
+func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree, when time.Time) error {
 	var err error
 	// Cache the items by name
 	found := make(map[string]struct{})
@@ -294,7 +296,7 @@ func (d *Dir) readDirTree() error {
 	d.mu.Unlock()
 	when := time.Now()
 	fs.Debugf(path, "Reading directory tree")
-	dt, err := walk.NewDirTree(f, path, false, -1)
+	dt, err := walk.NewDirTree(context.TODO(), f, path, false, -1)
 	if err != nil {
 		return err
 	}
@@ -321,6 +323,8 @@ func (d *Dir) readDir() error {
 // stat a single item in the directory
 //
 // returns ENOENT if not found.
+// returns a custom error if directory on a case-insensitive file system
+// contains files with names that differ only by case.
 func (d *Dir) stat(leaf string) (Node, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -329,6 +333,22 @@ func (d *Dir) stat(leaf string) (Node, error) {
 		return nil, err
 	}
 	item, ok := d.items[leaf]
+
+	if !ok && d.vfs.Opt.CaseInsensitive {
+		leafLower := strings.ToLower(leaf)
+		for name, node := range d.items {
+			if strings.ToLower(name) == leafLower {
+				if ok {
+					// duplicate case insensitive match is an error
+					return nil, errors.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
+				}
+				// found a case insenstive match
+				ok = true
+				item = node
+			}
+		}
+	}
+
 	if !ok {
 		return nil, ENOENT
 	}
@@ -477,7 +497,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 		return nil, err
 	}
 	// fs.Debugf(path, "Dir.Mkdir")
-	err = d.f.Mkdir(path)
+	err = d.f.Mkdir(context.TODO(), path)
 	if err != nil {
 		fs.Errorf(d, "Dir.Mkdir failed to create directory: %v", err)
 		return nil, err
@@ -505,7 +525,7 @@ func (d *Dir) Remove() error {
 		return ENOTEMPTY
 	}
 	// remove directory
-	err = d.f.Rmdir(d.path)
+	err = d.f.Rmdir(context.TODO(), d.path)
 	if err != nil {
 		fs.Errorf(d, "Dir.Remove failed to remove directory: %v", err)
 		return err
@@ -575,7 +595,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
 		if oldFile, ok := oldNode.(*File); ok {
-			if err = oldFile.rename(destDir, newName); err != nil {
+			if err = oldFile.rename(context.TODO(), destDir, newName); err != nil {
 				fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 				return err
 			}
@@ -585,7 +605,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		}
 	case fs.Object:
 		if oldFile, ok := oldNode.(*File); ok {
-			if err = oldFile.rename(destDir, newName); err != nil {
+			if err = oldFile.rename(context.TODO(), destDir, newName); err != nil {
 				fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 				return err
 			}
@@ -603,12 +623,12 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		}
 		srcRemote := x.Remote()
 		dstRemote := newPath
-		err = operations.DirMove(d.f, srcRemote, dstRemote)
+		err = operations.DirMove(context.TODO(), d.f, srcRemote, dstRemote)
 		if err != nil {
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		newDir := fs.NewDirCopy(x).SetRemote(newPath)
+		newDir := fs.NewDirCopy(context.TODO(), x).SetRemote(newPath)
 		// Update the node with the new details
 		if oldNode != nil {
 			if oldDir, ok := oldNode.(*Dir); ok {

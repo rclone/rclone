@@ -7,14 +7,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
-	"github.com/ncw/rclone/cmd/serve/httplib/serve"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
+	"github.com/rclone/rclone/cmd/serve/httplib/serve"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +68,7 @@ func newServer(f fs.Fs, opt *httplib.Options) *server {
 		f:      f,
 		vfs:    vfs.New(f, &vfsflags.Opt),
 	}
-	mux.HandleFunc("/", s.handler)
+	mux.HandleFunc(s.Opt.BaseURL+"/", s.handler)
 	return s
 }
 
@@ -93,7 +93,10 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Server", "rclone/"+fs.Version)
 
-	urlPath := r.URL.Path
+	urlPath, ok := s.Path(w, r)
+	if !ok {
+		return
+	}
 	isDir := strings.HasSuffix(urlPath, "/")
 	remote := strings.Trim(urlPath, "/")
 	if isDir {
@@ -161,7 +164,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
 
 	// Set content type
-	mimeType := fs.MimeType(obj)
+	mimeType := fs.MimeType(r.Context(), obj)
 	if mimeType == "application/octet-stream" && path.Ext(remote) == "" {
 		// Leave header blank so http server guesses
 	} else {
@@ -187,8 +190,8 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	}()
 
 	// Account the transfer
-	accounting.Stats.Transferring(remote)
-	defer accounting.Stats.DoneTransferring(remote, true)
+	tr := accounting.Stats(r.Context()).NewTransfer(obj)
+	defer tr.Done(nil)
 	// FIXME in = fs.NewAccount(in, obj).WithBuffer() // account the transfer
 
 	// Serve the file

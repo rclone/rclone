@@ -73,8 +73,10 @@ func parseRFC3659ListLine(line string, now time.Time, loc *time.Location) (*Entr
 // the UNIX ls command.
 func parseLsListLine(line string, now time.Time, loc *time.Location) (*Entry, error) {
 
-	// Has the first field a length of 10 bytes?
-	if strings.IndexByte(line, ' ') != 10 {
+	// Has the first field a length of exactly 10 bytes
+	// - or 10 bytes with an additional '+' character for indicating ACLs?
+	// If not, return.
+	if i := strings.IndexByte(line, ' '); !(i == 10 || (i == 11 && line[10] == '+')) {
 		return nil, errUnsupportedListLine
 	}
 
@@ -133,6 +135,12 @@ func parseLsListLine(line string, now time.Time, loc *time.Location) (*Entry, er
 		e.Type = EntryTypeFolder
 	case 'l':
 		e.Type = EntryTypeLink
+
+		// Split link name and target
+		if i := strings.Index(e.Name, " -> "); i > 0 {
+			e.Target = e.Name[i+4:]
+			e.Name = e.Name[:i]
+		}
 	default:
 		return nil, errUnknownListEntryType
 	}

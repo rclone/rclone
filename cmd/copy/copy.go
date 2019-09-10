@@ -1,9 +1,11 @@
 package copy
 
 import (
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/operations"
-	"github.com/ncw/rclone/fs/sync"
+	"context"
+
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -74,9 +76,9 @@ changed recently very efficiently like this:
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return sync.CopyDir(fdst, fsrc, createEmptySrcDirs)
+				return sync.CopyDir(context.Background(), fdst, fsrc, createEmptySrcDirs)
 			}
-			return operations.CopyFile(fdst, fsrc, srcFileName, srcFileName)
+			return operations.CopyFile(context.Background(), fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }

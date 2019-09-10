@@ -25,7 +25,7 @@ fi
 
 
 #create tmp directory and move to it with macOS compatibility fallback
-tmp_dir=`mktemp -d 2>/dev/null || mktemp -d -t 'rclone-install'`; cd $tmp_dir
+tmp_dir=`mktemp -d 2>/dev/null || mktemp -d -t 'rclone-install.XXXXXXXXXX'`; cd $tmp_dir
 
 
 #make sure unzip tool is available and choose one to work with
@@ -152,9 +152,13 @@ case $OS in
     chown root:root /usr/bin/rclone.new
     mv /usr/bin/rclone.new /usr/bin/rclone
     #manuals
-    mkdir -p /usr/local/share/man/man1
-    cp rclone.1 /usr/local/share/man/man1/
-    mandb
+    if ! [ -x "$(command -v mandb)" ]; then
+        echo 'mandb not found. The rclone man docs will not be installed.'
+    else 
+        mkdir -p /usr/local/share/man/man1
+        cp rclone.1 /usr/local/share/man/man1/
+        mandb
+    fi
     ;;
   'freebsd'|'openbsd'|'netbsd')
     #bin

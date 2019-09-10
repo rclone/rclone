@@ -7,11 +7,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/configflags"
-	"github.com/ncw/rclone/fs/filter/filterflags"
-	"github.com/ncw/rclone/fs/rc/rcflags"
-	"github.com/ncw/rclone/lib/atexit"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configflags"
+	"github.com/rclone/rclone/fs/filter/filterflags"
+	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -33,6 +33,7 @@ documentation, changelog and configuration walkthroughs.
 		atexit.Run()
 	},
 	BashCompletionFunction: bashCompletionFunc,
+	DisableAutoGenTag:      true,
 }
 
 const (
@@ -46,10 +47,14 @@ __rclone_custom_func() {
             __rclone_init_completion -n : || return
         fi
         if [[ $cur != *:* ]]; then
+            local ifs=$IFS
+            IFS=$'\n'
+            local remotes=($(command rclone listremotes))
+            IFS=$ifs
             local remote
-            while IFS= read -r remote; do
+            for remote in "${remotes[@]}"; do
                 [[ $remote != $cur* ]] || COMPREPLY+=("$remote")
-            done < <(command rclone listremotes)
+            done
             if [[ ${COMPREPLY[@]} ]]; then
                 local paths=("$cur"*)
                 [[ ! -f ${paths[0]} ]] || COMPREPLY+=("${paths[@]}")
@@ -61,18 +66,26 @@ __rclone_custom_func() {
             else
                 local prefix=
             fi
+            local ifs=$IFS
+            IFS=$'\n'
+            local lines=($(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null))
+            IFS=$ifs
             local line
-            while IFS= read -r line; do
+            for line in "${lines[@]}"; do
                 local reply=${prefix:+$prefix/}$line
                 [[ $reply != $path* ]] || COMPREPLY+=("$reply")
-            done < <(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null)
-	    [[ ! ${COMPREPLY[@]} ]] || compopt -o filenames
+            done
+	    [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o filenames
         fi
-        [[ ! ${COMPREPLY[@]} ]] || compopt -o nospace
+        [[ ! ${COMPREPLY[@]} || $(type -t compopt) != builtin ]] || compopt -o nospace
     fi
 }
 `
 )
+
+// GeneratingDocs is set by rclone gendocs to alter the format of the
+// output suitable for the documentation.
+var GeneratingDocs = false
 
 // root help command
 var helpCommand = &cobra.Command{
@@ -100,7 +113,11 @@ var helpFlags = &cobra.Command{
 			}
 			flagsRe = re
 		}
-		Root.SetOutput(os.Stdout)
+		if GeneratingDocs {
+			Root.SetUsageTemplate(docFlagsTemplate)
+		} else {
+			Root.SetOutput(os.Stdout)
+		}
 		_ = command.Usage()
 	},
 }
@@ -222,6 +239,35 @@ Use "rclone help flags" for to see the global flags.
 Use "rclone help backends" for a list of supported services.
 `
 
+var docFlagsTemplate = `---
+title: "Global Flags"
+description: "Rclone Global Flags"
+date: "YYYY-MM-DD"
+---
+
+# Global Flags
+
+This describes the global flags available to every rclone command
+split into two groups, non backend and backend flags.
+
+## Non Backend Flags
+
+These flags are available for every command.
+
+` + "```" + `
+{{(backendFlags . false).FlagUsages | trimTrailingWhitespaces}}
+` + "```" + `
+
+## Backend Flags
+
+These flags are available for every command. They control the backends
+and may be set in the config file.
+
+` + "```" + `
+{{(backendFlags . true).FlagUsages | trimTrailingWhitespaces}}
+` + "```" + `
+`
+
 // show all the backends
 func showBackends() {
 	fmt.Printf("All rclone backends:\n\n")
@@ -262,6 +308,7 @@ func showBackend(name string) {
 	optionsType := "standard"
 	for _, opts := range []fs.Options{standardOptions, advancedOptions} {
 		if len(opts) == 0 {
+			optionsType = "advanced"
 			continue
 		}
 		fmt.Printf("### %s Options\n\n", strings.Title(optionsType))

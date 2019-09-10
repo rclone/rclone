@@ -7,7 +7,7 @@ package log
 import (
 	"os"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs"
 )
 
 // redirectStderr to the file passed in

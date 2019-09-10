@@ -3,6 +3,7 @@ package local
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,20 +17,21 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/lib/file"
-	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/lib/readers"
 )
 
 // Constants
-const devUnset = 0xdeadbeefcafebabe // a device id meaning it is unset
-const linkSuffix = ".rclonelink"    // The suffix added to a translated symbolic link
+const devUnset = 0xdeadbeefcafebabe                                       // a device id meaning it is unset
+const linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
+const useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
 
 // Register with Fs
 func init() {
@@ -84,7 +86,7 @@ are being uploaded and aborts with a message which starts "can't copy
 - source file is being updated" if the file changes during upload.
 
 However on some file systems this modification time check may fail (eg
-[Glusterfs #2206](https://github.com/ncw/rclone/issues/2206)) so this
+[Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
 check can be disabled with this flag.`,
 			Default:  false,
 			Advanced: true,
@@ -94,6 +96,24 @@ check can be disabled with this flag.`,
 			Default:  false,
 			NoPrefix: true,
 			ShortOpt: "x",
+			Advanced: true,
+		}, {
+			Name: "case_sensitive",
+			Help: `Force the filesystem to report itself as case sensitive.
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "case_insensitive",
+			Help: `Force the filesystem to report itself as case insensitive
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.`,
+			Default:  false,
 			Advanced: true,
 		}},
 	}
@@ -109,6 +129,8 @@ type Options struct {
 	NoCheckUpdated    bool `config:"no_check_updated"`
 	NoUNC             bool `config:"nounc"`
 	OneFileSystem     bool `config:"one_file_system"`
+	CaseSensitive     bool `config:"case_sensitive"`
+	CaseInsensitive   bool `config:"case_insensitive"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -172,6 +194,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	f.features = (&fs.Features{
 		CaseInsensitive:         f.caseInsensitive(),
 		CanHaveEmptyDirectories: true,
+		IsLocal:                 true,
 	}).Fill(f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
@@ -227,6 +250,12 @@ func (f *Fs) Features() *fs.Features {
 
 // caseInsensitive returns whether the remote is case insensitive or not
 func (f *Fs) caseInsensitive() bool {
+	if f.opt.CaseSensitive {
+		return false
+	}
+	if f.opt.CaseInsensitive {
+		return true
+	}
 	// FIXME not entirely accurate since you can have case
 	// sensitive Fses on darwin and case insensitive Fses on linux.
 	// Should probably check but that would involve creating a
@@ -302,7 +331,7 @@ func (f *Fs) newObjectWithInfo(remote, dstPath string, info os.FileInfo) (fs.Obj
 
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error ErrorObjectNotFound.
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(remote, "", nil)
 }
 
@@ -315,7 +344,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 
 	dir = f.dirNames.Load(dir)
 	fsDirPath := f.cleanPath(filepath.Join(f.root, dir))
@@ -327,7 +356,14 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 
 	fd, err := os.Open(fsDirPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to open directory %q", dir)
+		isPerm := os.IsPermission(err)
+		err = errors.Wrapf(err, "failed to open directory %q", dir)
+		fs.Errorf(dir, "%v", err)
+		if isPerm {
+			accounting.Stats(ctx).Error(fserrors.NoRetryError(err))
+			err = nil // ignore error but fail sync
+		}
+		return nil, err
 	}
 	defer func() {
 		cerr := fd.Close()
@@ -337,12 +373,38 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}()
 
 	for {
-		fis, err := fd.Readdir(1024)
-		if err == io.EOF && len(fis) == 0 {
-			break
+		var fis []os.FileInfo
+		if useReadDir {
+			// Windows and Plan9 read the directory entries with the stat information in which
+			// shouldn't fail because of unreadable entries.
+			fis, err = fd.Readdir(1024)
+			if err == io.EOF && len(fis) == 0 {
+				break
+			}
+		} else {
+			// For other OSes we read the names only (which shouldn't fail) then stat the
+			// individual ourselves so we can log errors but not fail the directory read.
+			var names []string
+			names, err = fd.Readdirnames(1024)
+			if err == io.EOF && len(names) == 0 {
+				break
+			}
+			if err == nil {
+				for _, name := range names {
+					namepath := filepath.Join(fsDirPath, name)
+					fi, fierr := os.Lstat(namepath)
+					if fierr != nil {
+						err = errors.Wrapf(err, "failed to read directory %q", namepath)
+						fs.Errorf(dir, "%v", fierr)
+						accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
+						continue
+					}
+					fis = append(fis, fi)
+				}
+			}
 		}
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read directory %q", dir)
+			return nil, errors.Wrap(err, "failed to read directory entry")
 		}
 
 		for _, fi := range fis {
@@ -357,7 +419,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 					// Skip bad symlinks
 					err = fserrors.NoRetryError(errors.Wrap(err, "symlink"))
 					fs.Errorf(newRemote, "Listing error: %v", err)
-					accounting.Stats.Error(err)
+					accounting.Stats(ctx).Error(err)
 					continue
 				}
 				if err != nil {
@@ -447,11 +509,11 @@ func (m *mapper) Save(in, out string) string {
 }
 
 // Put the Object to the local filesystem
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	// Temporary Object under construction - info filled in by Update()
 	o := f.newObject(remote, "")
-	err := o.Update(in, src, options...)
+	err := o.Update(ctx, in, src, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -459,12 +521,12 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
 }
 
 // Mkdir creates the directory if it doesn't exist
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
 	root := f.cleanPath(filepath.Join(f.root, dir))
 	err := os.MkdirAll(root, 0777)
@@ -484,7 +546,7 @@ func (f *Fs) Mkdir(dir string) error {
 // Rmdir removes the directory
 //
 // If it isn't empty it will return an error
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	root := f.cleanPath(filepath.Join(f.root, dir))
 	return os.Remove(root)
 }
@@ -540,7 +602,7 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 		}
 
 		// If it matches - have found the precision
-		// fmt.Println("compare", fi.ModTime(), t)
+		// fmt.Println("compare", fi.ModTime(ctx), t)
 		if fi.ModTime().Equal(t) {
 			// fmt.Println("Precision detected as", duration)
 			return duration
@@ -554,7 +616,7 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge() error {
+func (f *Fs) Purge(ctx context.Context) error {
 	fi, err := f.lstat(f.root)
 	if err != nil {
 		return err
@@ -574,7 +636,7 @@ func (f *Fs) Purge() error {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't move - not same remote type")
@@ -633,7 +695,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -698,7 +760,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the requested hash of a file as a lowercase hex string
-func (o *Object) Hash(r hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	// Check that the underlying file hasn't changed
 	oldtime := o.modTime
 	oldsize := o.size
@@ -709,20 +771,25 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 
 	o.fs.objectHashesMu.Lock()
 	hashes := o.hashes
+	hashValue, hashFound := o.hashes[r]
 	o.fs.objectHashesMu.Unlock()
 
-	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil {
+	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil || !hashFound {
 		var in io.ReadCloser
 
 		if !o.translatedLink {
-			in, err = file.Open(o.path)
+			var fd *os.File
+			fd, err = file.Open(o.path)
+			if fd != nil {
+				in = newFadviseReadCloser(o, fd, 0, 0)
+			}
 		} else {
 			in, err = o.openTranslatedLink(0, -1)
 		}
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
-		hashes, err = hash.Stream(in)
+		hashes, err = hash.StreamTypes(in, hash.NewHashSet(r))
 		closeErr := in.Close()
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to read")
@@ -730,11 +797,16 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 		if closeErr != nil {
 			return "", errors.Wrap(closeErr, "hash: failed to close")
 		}
+		hashValue = hashes[r]
 		o.fs.objectHashesMu.Lock()
-		o.hashes = hashes
+		if o.hashes == nil {
+			o.hashes = hashes
+		} else {
+			o.hashes[r] = hashValue
+		}
 		o.fs.objectHashesMu.Unlock()
 	}
-	return hashes[r], nil
+	return hashValue, nil
 }
 
 // Size returns the size of an object in bytes
@@ -743,12 +815,12 @@ func (o *Object) Size() int64 {
 }
 
 // ModTime returns the modification time of the object
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
 // SetModTime sets the modification time of the local fs object
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	var err error
 	if o.translatedLink {
 		err = lChtimes(o.path, modTime, modTime)
@@ -844,9 +916,9 @@ func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err
 }
 
 // Open an object for read
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset, limit int64 = 0, -1
-	hashes := hash.Supported
+	var hasher *hash.MultiHasher
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
@@ -854,7 +926,12 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.size)
 		case *fs.HashesOption:
-			hashes = x.Hashes
+			if x.Hashes.Count() > 0 {
+				hasher, err = hash.NewMultiHasherTypes(x.Hashes)
+				if err != nil {
+					return nil, err
+				}
+			}
 		default:
 			if option.Mandatory() {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
@@ -871,22 +948,22 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if err != nil {
 		return
 	}
-	wrappedFd := readers.NewLimitedReadCloser(fd, limit)
+	wrappedFd := readers.NewLimitedReadCloser(newFadviseReadCloser(o, fd, offset, limit), limit)
 	if offset != 0 {
 		// seek the object
 		_, err = fd.Seek(offset, io.SeekStart)
 		// don't attempt to make checksums
 		return wrappedFd, err
 	}
-	hash, err := hash.NewMultiHasherTypes(hashes)
-	if err != nil {
-		return nil, err
+	if hasher == nil {
+		// no need to wrap since we don't need checksums
+		return wrappedFd, nil
 	}
-	// Update the md5sum as we go along
+	// Update the hashes as we go along
 	in = &localOpenFile{
 		o:    o,
 		in:   wrappedFd,
-		hash: hash,
+		hash: hasher,
 		fd:   fd,
 	}
 	return in, nil
@@ -908,18 +985,23 @@ func (nwc nopWriterCloser) Close() error {
 }
 
 // Update the object from in with modTime and size
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	var out io.WriteCloser
+	var hasher *hash.MultiHasher
 
-	hashes := hash.Supported
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.HashesOption:
-			hashes = x.Hashes
+			if x.Hashes.Count() > 0 {
+				hasher, err = hash.NewMultiHasherTypes(x.Hashes)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
-	err := o.mkdirAll()
+	err = o.mkdirAll()
 	if err != nil {
 		return err
 	}
@@ -944,11 +1026,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	// Calculate the hash of the object we are reading as we go along
-	hash, err := hash.NewMultiHasherTypes(hashes)
-	if err != nil {
-		return err
+	if hasher != nil {
+		in = io.TeeReader(in, hasher)
 	}
-	in = io.TeeReader(in, hash)
 
 	_, err = io.Copy(out, in)
 	closeErr := out.Close()
@@ -984,18 +1064,50 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	// All successful so update the hashes
-	o.fs.objectHashesMu.Lock()
-	o.hashes = hash.Sums()
-	o.fs.objectHashesMu.Unlock()
+	if hasher != nil {
+		o.fs.objectHashesMu.Lock()
+		o.hashes = hasher.Sums()
+		o.fs.objectHashesMu.Unlock()
+	}
 
 	// Set the mtime
-	err = o.SetModTime(src.ModTime())
+	err = o.SetModTime(ctx, src.ModTime(ctx))
 	if err != nil {
 		return err
 	}
 
 	// ReRead info now that we have finished
 	return o.lstat()
+}
+
+// OpenWriterAt opens with a handle for random access writes
+//
+// Pass in the remote desired and the size if known.
+//
+// It truncates any existing object
+func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.WriterAtCloser, error) {
+	// Temporary Object under construction
+	o := f.newObject(remote, "")
+
+	err := o.mkdirAll()
+	if err != nil {
+		return nil, err
+	}
+
+	if o.translatedLink {
+		return nil, errors.New("can't open a symlink for random writing")
+	}
+
+	out, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return nil, err
+	}
+	// Pre-allocate the file for performance reasons
+	err = preAllocate(size, out)
+	if err != nil {
+		fs.Debugf(o, "Failed to pre-allocate: %v", err)
+	}
+	return out, nil
 }
 
 // setMetadata sets the file info from the os.FileInfo passed in
@@ -1023,7 +1135,7 @@ func (o *Object) lstat() error {
 }
 
 // Remove an object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	return remove(o.path)
 }
 
@@ -1139,10 +1251,11 @@ func cleanWindowsName(f *Fs, name string) string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs          = &Fs{}
-	_ fs.Purger      = &Fs{}
-	_ fs.PutStreamer = &Fs{}
-	_ fs.Mover       = &Fs{}
-	_ fs.DirMover    = &Fs{}
-	_ fs.Object      = &Object{}
+	_ fs.Fs             = &Fs{}
+	_ fs.Purger         = &Fs{}
+	_ fs.PutStreamer    = &Fs{}
+	_ fs.Mover          = &Fs{}
+	_ fs.DirMover       = &Fs{}
+	_ fs.OpenWriterAter = &Fs{}
+	_ fs.Object         = &Object{}
 )

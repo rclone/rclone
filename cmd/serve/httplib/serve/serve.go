@@ -8,8 +8,8 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 )
 
 // Object serves an fs.Object via HEAD or GET
@@ -28,7 +28,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	}
 
 	// Set content type
-	mimeType := fs.MimeType(o)
+	mimeType := fs.MimeType(r.Context(), o)
 	if mimeType == "application/octet-stream" && path.Ext(o.Remote()) == "" {
 		// Leave header blank so http server guesses
 	} else {
@@ -69,28 +69,17 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	}
 	w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
 
-	file, err := o.Open(options...)
+	file, err := o.Open(r.Context(), options...)
 	if err != nil {
 		fs.Debugf(o, "Get request open error: %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
-	accounting.Stats.Transferring(o.Remote())
-	in := accounting.NewAccount(file, o) // account the transfer (no buffering)
+	tr := accounting.Stats(r.Context()).NewTransfer(o)
 	defer func() {
-		closeErr := in.Close()
-		if closeErr != nil {
-			fs.Errorf(o, "Get request: close failed: %v", closeErr)
-			if err == nil {
-				err = closeErr
-			}
-		}
-		ok := err == nil
-		accounting.Stats.DoneTransferring(o.Remote(), ok)
-		if !ok {
-			accounting.Stats.Error(err)
-		}
+		tr.Done(err)
 	}()
+	in := tr.Account(file) // account the transfer (no buffering)
 
 	w.WriteHeader(code)
 

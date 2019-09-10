@@ -2,21 +2,28 @@
 package rcserver
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"mime"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/cmd/serve/httplib/serve"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/list"
-	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/cmd/serve/httplib/serve"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fs/rc/jobs"
+	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -24,6 +31,7 @@ import (
 //
 // If the server wasn't configured the *Server returned may be nil
 func Start(opt *rc.Options) (*Server, error) {
+	jobs.SetOpt(opt) // set the defaults for jobs
 	if opt.Enabled {
 		// Serve on the DefaultServeMux so can have global registrations appear
 		s := newServer(opt, http.DefaultServeMux)
@@ -50,10 +58,17 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 	_ = mime.AddExtensionType(".wasm", "application/wasm")
 	_ = mime.AddExtensionType(".js", "application/javascript")
 
+	cachePath := filepath.Join(config.CacheDir, "webgui")
+	extractPath := filepath.Join(cachePath, "current/build")
 	// File handling
 	if opt.Files != "" {
+		if opt.WebUI {
+			fs.Logf(nil, "--rc-files overrides --rc-web-gui command\n")
+		}
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		s.files = http.FileServer(http.Dir(opt.Files))
+	} else if opt.WebUI {
+		s.files = http.FileServer(http.Dir(extractPath))
 	}
 	return s
 }
@@ -75,10 +90,24 @@ func (s *Server) Serve() error {
 		}
 		// Add username, password into the URL if they are set
 		user, pass := s.opt.HTTPOptions.BasicUser, s.opt.HTTPOptions.BasicPass
-		if user != "" || pass != "" {
+		if user != "" && pass != "" {
 			openURL.User = url.UserPassword(user, pass)
+
+			// Base64 encode username and password to be sent through url
+			loginToken := user + ":" + pass
+			parameters := url.Values{}
+			encodedToken := base64.URLEncoding.EncodeToString([]byte(loginToken))
+			fs.Debugf(nil, "login_token %q", encodedToken)
+			parameters.Add("login_token", encodedToken)
+			openURL.RawQuery = parameters.Encode()
+			openURL.RawPath = "/#/login"
 		}
-		_ = open.Start(openURL.String())
+		// Don't open browser if serving in testing environment.
+		if flag.Lookup("test.v") == nil {
+			_ = open.Start(openURL.String())
+		} else {
+			fs.Errorf(nil, "Not opening browser in testing environment")
+		}
 	}
 	return nil
 }
@@ -109,13 +138,26 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 
 // handler reads incoming requests and dispatches them
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimLeft(r.URL.Path, "/")
+	urlPath, ok := s.Path(w, r)
+	if !ok {
+		return
+	}
+	path := strings.TrimLeft(urlPath, "/")
 
-	w.Header().Add("Access-Control-Allow-Origin", "*")
+	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
+	if allowOrigin != "" {
+		if allowOrigin == "*" {
+			fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
+		}
+		w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
+	} else {
+		w.Header().Add("Access-Control-Allow-Origin", s.URL())
+	}
 
 	// echo back access control headers client needs
-	reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
-	w.Header().Add("Access-Control-Allow-Headers", reqAccessHeaders)
+	//reqAccessHeaders := r.Header.Get("Access-Control-Request-Headers")
+	w.Header().Add("Access-Control-Request-Method", "POST, OPTIONS, GET, HEAD")
+	w.Header().Add("Access-Control-Allow-Headers", "authorization, Content-Type")
 
 	switch r.Method {
 	case "POST":
@@ -180,13 +222,16 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		writeError(path, in, w, err, http.StatusBadRequest)
 		return
 	}
+	delete(in, "_async") // remove the async parameter after parsing so vfs operations don't get confused
 
 	fs.Debugf(nil, "rc: %q: with parameters %+v", path, in)
 	var out rc.Params
 	if isAsync {
-		out, err = rc.StartJob(call.Fn, in)
+		out, err = jobs.StartAsyncJob(call.Fn, in)
 	} else {
-		out, err = call.Fn(in)
+		var jobID int64
+		out, jobID, err = jobs.ExecuteJob(r.Context(), call.Fn, in)
+		w.Header().Add("x-rclone-jobid", fmt.Sprintf("%d", jobID))
 	}
 	if err != nil {
 		writeError(path, in, w, err, http.StatusInternalServerError)
@@ -199,7 +244,8 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
 	err = rc.WriteJSON(w, out)
 	if err != nil {
-		// can't return the error at this point
+		// can't return the error at this point - but have a go anyway
+		writeError(path, in, w, err, http.StatusInternalServerError)
 		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
 	}
 }
@@ -222,14 +268,14 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
-	f, err := rc.GetCachedFs(fsName)
+	f, err := cache.Get(fsName)
 	if err != nil {
 		writeError(path, nil, w, errors.Wrap(err, "failed to make Fs"), http.StatusInternalServerError)
 		return
 	}
 	if path == "" || strings.HasSuffix(path, "/") {
 		path = strings.Trim(path, "/")
-		entries, err := list.DirSorted(f, false, path)
+		entries, err := list.DirSorted(r.Context(), f, false, path)
 		if err != nil {
 			writeError(path, nil, w, errors.Wrap(err, "failed to list directory"), http.StatusInternalServerError)
 			return
@@ -242,7 +288,8 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		}
 		directory.Serve(w, r)
 	} else {
-		o, err := f.NewObject(path)
+		path = strings.Trim(path, "/")
+		o, err := f.NewObject(r.Context(), path)
 		if err != nil {
 			writeError(path, nil, w, errors.Wrap(err, "failed to find object"), http.StatusInternalServerError)
 			return
@@ -268,6 +315,7 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		return
 	case s.files != nil:
 		// Serve the files
+		r.URL.Path = "/" + path
 		s.files.ServeHTTP(w, r)
 		return
 	case path == "" && s.opt.Serve:

@@ -15,9 +15,10 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	fscache "github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
 )
 
 // CacheMode controls the functionality of the cache
@@ -100,7 +101,7 @@ func newCache(ctx context.Context, f fs.Fs, opt *Options) (*cache, error) {
 	root := filepath.Join(config.CacheDir, "vfs", f.Name(), fRoot)
 	fs.Debugf(nil, "vfs cache root is %q", root)
 
-	f, err := fs.NewFs(root)
+	f, err := fscache.Get(root)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cache remote")
 	}
@@ -260,6 +261,19 @@ func (c *cache) cacheDir(name string) {
 		}
 		name = findParent(name)
 	}
+}
+
+// exists checks to see if the file exists in the cache or not
+func (c *cache) exists(name string) bool {
+	osPath := c.toOSPath(name)
+	fi, err := os.Stat(osPath)
+	if err != nil {
+		return false
+	}
+	if fi.IsDir() {
+		return false
+	}
+	return true
 }
 
 // _close marks name as closed - must be called with the lock held

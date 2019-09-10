@@ -10,7 +10,7 @@ instead of filing an issue for a quick response.
 
 If you are reporting a bug or asking for a new feature then please use one of the templates here:
 
-    https://github.com/ncw/rclone/issues/new
+    https://github.com/rclone/rclone/issues/new
 
 otherwise fill in the form below.
 

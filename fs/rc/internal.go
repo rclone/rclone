@@ -3,13 +3,14 @@
 package rc
 
 import (
+	"context"
 	"os"
 	"runtime"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/obscure"
-	"github.com/ncw/rclone/fs/version"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/version"
 )
 
 func init() {
@@ -34,8 +35,8 @@ check that parameter passing is working properly.`,
 	})
 }
 
-// Echo the input to the ouput parameters
-func rcNoop(in Params) (out Params, err error) {
+// Echo the input to the output parameters
+func rcNoop(ctx context.Context, in Params) (out Params, err error) {
 	return in, nil
 }
 
@@ -51,7 +52,7 @@ Useful for testing error handling.`,
 }
 
 // Return an error regardless
-func rcError(in Params) (out Params, err error) {
+func rcError(ctx context.Context, in Params) (out Params, err error) {
 	return nil, errors.Errorf("arbitrary error on input %+v", in)
 }
 
@@ -67,7 +68,7 @@ the commands response.`,
 }
 
 // List the registered commands
-func rcList(in Params) (out Params, err error) {
+func rcList(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	out["commands"] = Calls.List()
 	return out, nil
@@ -85,7 +86,7 @@ Useful for stopping rclone process.`,
 }
 
 // Return PID of current process
-func rcPid(in Params) (out Params, err error) {
+func rcPid(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	out["pid"] = os.Getpid()
 	return out, nil
@@ -111,7 +112,7 @@ The most interesting values for most people are:
 }
 
 // Return the memory statistics
-func rcMemStats(in Params) (out Params, err error) {
+func rcMemStats(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
@@ -152,7 +153,7 @@ memory problems.
 }
 
 // Do a garbage collection run
-func rcGc(in Params) (out Params, err error) {
+func rcGc(ctx context.Context, in Params) (out Params, err error) {
 	runtime.GC()
 	return nil, nil
 }
@@ -177,7 +178,7 @@ This shows the current version of go and the go runtime
 }
 
 // Return version info
-func rcVersion(in Params) (out Params, err error) {
+func rcVersion(ctx context.Context, in Params) (out Params, err error) {
 	decomposed, err := version.New(fs.Version)
 	if err != nil {
 		return nil, err
@@ -209,7 +210,7 @@ Returns
 }
 
 // Return obscured string
-func rcObscure(in Params) (out Params, err error) {
+func rcObscure(ctx context.Context, in Params) (out Params, err error) {
 	clear, err := in.GetString("clear")
 	if err != nil {
 		return nil, err

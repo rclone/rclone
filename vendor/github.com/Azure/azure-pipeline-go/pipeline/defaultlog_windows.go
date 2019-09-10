@@ -6,9 +6,9 @@ import (
 	"unsafe"
 )
 
-// ForceLog should rarely be used. It forceable logs an entry to the
+// forceLog should rarely be used. It forceable logs an entry to the
 // Windows Event Log (on Windows) or to the SysLog (on Linux)
-func ForceLog(level LogLevel, msg string) {
+func forceLog(level LogLevel, msg string) {
 	var el eventType
 	switch level {
 	case LogError, LogFatal, LogPanic:
@@ -35,7 +35,7 @@ const (
 )
 
 var reportEvent = func() func(eventType eventType, eventID int32, msg string) {
-	advAPI32 := syscall.MustLoadDLL("AdvAPI32.dll")
+	advAPI32 := syscall.MustLoadDLL("advapi32.dll") // lower case to tie in with Go's sysdll registration
 	registerEventSource := advAPI32.MustFindProc("RegisterEventSourceW")
 
 	sourceName, _ := os.Executable()

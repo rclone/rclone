@@ -9,19 +9,20 @@ import (
 	"log"
 	"path"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // Test describes an integration test to run with `go test`
 type Test struct {
 	Path       string // path to the source directory
-	SubDir     bool   // if it is possible to add -sub-dir to tests
 	FastList   bool   // if it is possible to add -fast-list to tests
+	Short      bool   // if it is possible to run the test with -short
 	AddBackend bool   // set if Path needs the current backend appending
 	NoRetries  bool   // set if no retries should be performed
 	NoBinary   bool   // set to not build a binary in advance
+	LocalOnly  bool   // if set only run with the local backend
 }
 
 // Backend describes a backend test
@@ -30,20 +31,34 @@ type Test struct {
 type Backend struct {
 	Backend  string   // name of the backend directory
 	Remote   string   // name of the test remote
-	SubDir   bool     // set to test with -sub-dir
 	FastList bool     // set to test with -fast-list
+	Short    bool     // set to test with -short
 	OneOnly  bool     // set to run only one backend test at once
 	Ignore   []string // test names to ignore the failure of
+	Tests    []string // paths of tests to run, blank for all
+}
+
+// includeTest returns true if this backend should be included in this
+// test
+func (b *Backend) includeTest(t *Test) bool {
+	if len(b.Tests) == 0 {
+		return true
+	}
+	for _, testPath := range b.Tests {
+		if testPath == t.Path {
+			return true
+		}
+	}
+	return false
 }
 
 // MakeRuns creates Run objects the Backend and Test
 //
-// There can be several created, one for each combination of SubDir
-// and FastList
+// There can be several created, one for each combination of optionl
+// flags (eg FastList)
 func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
-	subdirs := []bool{false}
-	if b.SubDir && t.SubDir {
-		subdirs = append(subdirs, true)
+	if !b.includeTest(t) {
+		return runs
 	}
 	fastlists := []bool{false}
 	if b.FastList && t.FastList {
@@ -53,24 +68,25 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	for _, item := range b.Ignore {
 		ignore[item] = struct{}{}
 	}
-	for _, subdir := range subdirs {
-		for _, fastlist := range fastlists {
-			run := &Run{
-				Remote:    b.Remote,
-				Backend:   b.Backend,
-				Path:      t.Path,
-				SubDir:    subdir,
-				FastList:  fastlist,
-				NoRetries: t.NoRetries,
-				OneOnly:   b.OneOnly,
-				NoBinary:  t.NoBinary,
-				Ignore:    ignore,
-			}
-			if t.AddBackend {
-				run.Path = path.Join(run.Path, b.Backend)
-			}
-			runs = append(runs, run)
+	for _, fastlist := range fastlists {
+		if t.LocalOnly && b.Backend != "local" {
+			continue
 		}
+		run := &Run{
+			Remote:    b.Remote,
+			Backend:   b.Backend,
+			Path:      t.Path,
+			FastList:  fastlist,
+			Short:     (b.Short && t.Short),
+			NoRetries: t.NoRetries,
+			OneOnly:   b.OneOnly,
+			NoBinary:  t.NoBinary,
+			Ignore:    ignore,
+		}
+		if t.AddBackend {
+			run.Path = path.Join(run.Path, b.Backend)
+		}
+		runs = append(runs, run)
 	}
 	return runs
 }

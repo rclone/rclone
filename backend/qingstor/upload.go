@@ -13,9 +13,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
-	qs "github.com/yunify/qingstor-sdk-go/service"
+	"github.com/rclone/rclone/fs"
+	qs "github.com/yunify/qingstor-sdk-go/v3/service"
 )
 
 const (

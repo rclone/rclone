@@ -1,16 +1,24 @@
 package rc
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func clearOptionBlock() {
+func clearOptionBlock() func() {
+	oldOptionBlock := optionBlock
 	optionBlock = map[string]interface{}{}
+	return func() {
+		optionBlock = oldOptionBlock
+	}
 }
 
 var testOptions = struct {
@@ -22,7 +30,7 @@ var testOptions = struct {
 }
 
 func TestAddOption(t *testing.T) {
-	defer clearOptionBlock()
+	defer clearOptionBlock()()
 	assert.Equal(t, len(optionBlock), 0)
 	AddOption("potato", &testOptions)
 	assert.Equal(t, len(optionBlock), 1)
@@ -31,7 +39,7 @@ func TestAddOption(t *testing.T) {
 }
 
 func TestAddOptionReload(t *testing.T) {
-	defer clearOptionBlock()
+	defer clearOptionBlock()()
 	assert.Equal(t, len(optionBlock), 0)
 	reload := func() error { return nil }
 	AddOptionReload("potato", &testOptions, reload)
@@ -42,31 +50,52 @@ func TestAddOptionReload(t *testing.T) {
 }
 
 func TestOptionsBlocks(t *testing.T) {
-	defer clearOptionBlock()
+	defer clearOptionBlock()()
 	AddOption("potato", &testOptions)
 	call := Calls.Get("options/blocks")
 	require.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"options": []string{"potato"}}, out)
 }
 
 func TestOptionsGet(t *testing.T) {
-	defer clearOptionBlock()
+	defer clearOptionBlock()()
 	AddOption("potato", &testOptions)
 	call := Calls.Get("options/get")
 	require.NotNil(t, call)
 	in := Params{}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, Params{"potato": &testOptions}, out)
 }
 
+func TestOptionsGetMarshal(t *testing.T) {
+	defer clearOptionBlock()()
+
+	// Add some real options
+	AddOption("http", &httplib.DefaultOpt)
+	AddOption("main", fs.Config)
+	AddOption("rc", &DefaultOpt)
+
+	// get them
+	call := Calls.Get("options/get")
+	require.NotNil(t, call)
+	in := Params{}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+
+	// Check that they marshal
+	_, err = json.Marshal(out)
+	require.NoError(t, err)
+}
+
 func TestOptionsSet(t *testing.T) {
-	defer clearOptionBlock()
+	defer clearOptionBlock()()
 	var reloaded int
 	AddOptionReload("potato", &testOptions, func() error {
 		if reloaded > 0 {
@@ -83,7 +112,7 @@ func TestOptionsSet(t *testing.T) {
 			"Int": 50,
 		},
 	}
-	out, err := call.Fn(in)
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Nil(t, out)
 	assert.Equal(t, 50, testOptions.Int)
@@ -91,7 +120,7 @@ func TestOptionsSet(t *testing.T) {
 	assert.Equal(t, 1, reloaded)
 
 	// error from reload
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "error while reloading")
 
@@ -101,7 +130,7 @@ func TestOptionsSet(t *testing.T) {
 			"Int": 50,
 		},
 	}
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown option block")
 
@@ -109,7 +138,7 @@ func TestOptionsSet(t *testing.T) {
 	in = Params{
 		"potato": []string{"a", "b"},
 	}
-	_, err = call.Fn(in)
+	_, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to write options")
 

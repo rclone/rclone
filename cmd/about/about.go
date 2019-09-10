@@ -1,13 +1,14 @@
 package about
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -91,9 +92,12 @@ Use the --json flag for a computer readable output, eg
 			if doAbout == nil {
 				return errors.Errorf("%v doesn't support about", f)
 			}
-			u, err := doAbout()
+			u, err := doAbout(context.Background())
 			if err != nil {
 				return errors.Wrap(err, "About call failed")
+			}
+			if u == nil {
+				return errors.New("nil usage returned")
 			}
 			if jsonOutput {
 				out := json.NewEncoder(os.Stdout)

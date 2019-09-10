@@ -5,6 +5,7 @@
 package http
 
 import (
+	"context"
 	"io"
 	"mime"
 	"net/http"
@@ -14,13 +15,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fs/config/configstruct"
-	"github.com/ncw/rclone/fs/fshttp"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/net/html"
 )
 
@@ -46,6 +47,21 @@ func init() {
 				Help:  "Connect to example.com using a username and password",
 			}},
 		}, {
+			Name: "headers",
+			Help: `Set HTTP headers for all transactions
+
+Use this to set additional HTTP headers for all transactions
+
+The input format is comma separated list of key,value pairs.  Standard
+[CSV encoding](https://godoc.org/encoding/csv) may be used.
+
+For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+
+You can set multiple headers, eg '"Cookie","name=value","Authorization","xxx"'.
+`,
+			Default:  fs.CommaSepList{},
+			Advanced: true,
+		}, {
 			Name: "no_slash",
 			Help: `Set this if the site doesn't end directories with /
 
@@ -68,8 +84,9 @@ directories.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Endpoint string `config:"url"`
-	NoSlash  bool   `config:"no_slash"`
+	Endpoint string          `config:"url"`
+	NoSlash  bool            `config:"no_slash"`
+	Headers  fs.CommaSepList `config:"headers"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -107,11 +124,16 @@ func statusError(res *http.Response, err error) error {
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.TODO()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(opt.Headers)%2 != 0 {
+		return nil, errors.New("odd number of headers supplied")
 	}
 
 	if !strings.HasSuffix(opt.Endpoint, "/") {
@@ -139,10 +161,15 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 			return http.ErrUseLastResponse
 		}
 		// check to see if points to a file
-		res, err := noRedir.Head(u.String())
-		err = statusError(res, err)
+		req, err := http.NewRequest("HEAD", u.String(), nil)
 		if err == nil {
-			isFile = true
+			req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
+			addHeaders(req, opt)
+			res, err := noRedir.Do(req)
+			err = statusError(res, err)
+			if err == nil {
+				isFile = true
+			}
 		}
 	}
 
@@ -207,12 +234,12 @@ func (f *Fs) Precision() time.Duration {
 }
 
 // NewObject creates a new remote http file object
-func (f *Fs) NewObject(remote string) (fs.Object, error) {
+func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
 	}
-	err := o.stat()
+	err := o.stat(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -315,8 +342,22 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 	return names, nil
 }
 
+// Adds the configured headers to the request if any
+func addHeaders(req *http.Request, opt *Options) {
+	for i := 0; i < len(opt.Headers); i += 2 {
+		key := opt.Headers[i]
+		value := opt.Headers[i+1]
+		req.Header.Add(key, value)
+	}
+}
+
+// Adds the configured headers to the request if any
+func (f *Fs) addHeaders(req *http.Request) {
+	addHeaders(req, &f.opt)
+}
+
 // Read the directory passed in
-func (f *Fs) readDir(dir string) (names []string, err error) {
+func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error) {
 	URL := f.url(dir)
 	u, err := url.Parse(URL)
 	if err != nil {
@@ -325,7 +366,14 @@ func (f *Fs) readDir(dir string) (names []string, err error) {
 	if !strings.HasSuffix(URL, "/") {
 		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", URL)
 	}
-	res, err := f.httpClient.Get(URL)
+	// Do the request
+	req, err := http.NewRequest("GET", URL, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "readDir failed")
+	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
+	f.addHeaders(req)
+	res, err := f.httpClient.Do(req)
 	if err == nil {
 		defer fs.CheckClose(res.Body, &err)
 		if res.StatusCode == http.StatusNotFound {
@@ -359,11 +407,11 @@ func (f *Fs) readDir(dir string) (names []string, err error) {
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
-func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
+func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	if !strings.HasSuffix(dir, "/") && dir != "" {
 		dir += "/"
 	}
-	names, err := f.readDir(dir)
+	names, err := f.readDir(ctx, dir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error listing %q", dir)
 	}
@@ -379,7 +427,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				fs:     f,
 				remote: remote,
 			}
-			switch err = file.stat(); err {
+			switch err = file.stat(ctx); err {
 			case nil:
 				entries = append(entries, file)
 			case fs.ErrorNotAFile:
@@ -399,12 +447,12 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return nil, errorReadOnly
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
-func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	return nil, errorReadOnly
 }
 
@@ -427,7 +475,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns "" since HTTP (in Go or OpenSSH) doesn't support remote calculation of hashes
-func (o *Object) Hash(r hash.Type) (string, error) {
+func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
 
@@ -437,7 +485,7 @@ func (o *Object) Size() int64 {
 }
 
 // ModTime returns the modification time of the remote http file
-func (o *Object) ModTime() time.Time {
+func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
@@ -447,9 +495,15 @@ func (o *Object) url() string {
 }
 
 // stat updates the info field in the Object
-func (o *Object) stat() error {
+func (o *Object) stat(ctx context.Context) error {
 	url := o.url()
-	res, err := o.fs.httpClient.Head(url)
+	req, err := http.NewRequest("HEAD", url, nil)
+	if err != nil {
+		return errors.Wrap(err, "stat failed")
+	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
+	o.fs.addHeaders(req)
+	res, err := o.fs.httpClient.Do(req)
 	if err == nil && res.StatusCode == http.StatusNotFound {
 		return fs.ErrorObjectNotFound
 	}
@@ -480,7 +534,7 @@ func (o *Object) stat() error {
 // SetModTime sets the modification and access time to the specified time
 //
 // it also updates the info field
-func (o *Object) SetModTime(modTime time.Time) error {
+func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return errorReadOnly
 }
 
@@ -490,17 +544,19 @@ func (o *Object) Storable() bool {
 }
 
 // Open a remote http file object for reading. Seek is supported
-func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	url := o.url()
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 	// Add optional headers
 	for k, v := range fs.OpenOptionHeaders(options) {
 		req.Header.Add(k, v)
 	}
+	o.fs.addHeaders(req)
 
 	// Do the request
 	res, err := o.fs.httpClient.Do(req)
@@ -517,27 +573,27 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // Mkdir makes the root directory of the Fs object
-func (f *Fs) Mkdir(dir string) error {
+func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return errorReadOnly
 }
 
 // Remove a remote http file object
-func (o *Object) Remove() error {
+func (o *Object) Remove(ctx context.Context) error {
 	return errorReadOnly
 }
 
 // Rmdir removes the root directory of the Fs object
-func (f *Fs) Rmdir(dir string) error {
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return errorReadOnly
 }
 
 // Update in to the object with the modTime given of the given size
-func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	return errorReadOnly
 }
 
 // MimeType of an Object if known, "" otherwise
-func (o *Object) MimeType() string {
+func (o *Object) MimeType(ctx context.Context) string {
 	return o.contentType
 }
 

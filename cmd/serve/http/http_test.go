@@ -3,17 +3,16 @@ package http
 import (
 	"flag"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
-	_ "github.com/ncw/rclone/backend/local"
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/filter"
+	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,11 +20,11 @@ import (
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
 	httpServer   *server
+	testURL      string
 )
 
 const (
-	testBindAddress = "localhost:51777"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 )
 
 func startServer(t *testing.T, f fs.Fs) {
@@ -33,13 +32,14 @@ func startServer(t *testing.T, f fs.Fs) {
 	opt.ListenAddr = testBindAddress
 	httpServer = newServer(f, &opt)
 	assert.NoError(t, httpServer.Serve())
+	testURL = httpServer.Server.URL()
 
 	// try to connect to the test server
 	pause := time.Millisecond
 	for i := 0; i < 10; i++ {
-		conn, err := net.Dial("tcp", testBindAddress)
+		resp, err := http.Head(testURL)
 		if err == nil {
-			_ = conn.Close()
+			_ = resp.Body.Close()
 			return
 		}
 		// t.Logf("couldn't connect, sleeping for %v: %v", pause, err)

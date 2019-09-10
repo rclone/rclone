@@ -1,11 +1,12 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"testing"
 
-	"github.com/ncw/rclone/fstest"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,7 @@ import (
 func readHandleCreate(t *testing.T, r *fstest.Run) (*VFS, *ReadFileHandle) {
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("dir/file1", "0123456789abcdef", t1)
+	file1 := r.WriteObject(context.Background(), "dir/file1", "0123456789abcdef", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	h, err := vfs.OpenFile("dir/file1", os.O_RDONLY, 0777)

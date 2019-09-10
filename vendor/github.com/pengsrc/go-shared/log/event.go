@@ -383,14 +383,10 @@ func (e *Event) write(format string, v ...interface{}) {
 	defer buf.Free()
 
 	// Format print message.
-	if format != "" {
-		if len(v) == 0 {
-			fmt.Fprint(buf, format)
-		} else {
-			fmt.Fprintf(buf, format, v...)
-		}
+	if len(v) == 0 {
+		fmt.Fprint(buf, format)
 	} else {
-		fmt.Fprint(buf, v...)
+		fmt.Fprintf(buf, format, v...)
 	}
 
 	// Append filed.

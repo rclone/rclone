@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ncw/rclone/fs/config/configmap"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs/config/configmap"
 )
 
 var matchUpper = regexp.MustCompile("([A-Z]+)")
@@ -43,7 +43,7 @@ func StringToInterface(def interface{}, in string) (newValue interface{}, err er
 	return o.Elem().Interface(), nil
 }
 
-// Item descripts a single entry in the options structure
+// Item describes a single entry in the options structure
 type Item struct {
 	Name  string // snake_case
 	Field string // CamelCase

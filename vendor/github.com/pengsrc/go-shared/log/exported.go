@@ -7,42 +7,42 @@ import (
 // Fatal logs a message with severity FATAL followed by a call to os.Exit(1).
 func Fatal(ctx context.Context, v ...interface{}) {
 	if globalLogger != nil {
-		globalLogger.event(ctx, FatalLevel).write("", v...)
+		globalLogger.event(ctx, FatalLevel).write("%v", v...)
 	}
 }
 
 // Panic logs a message with severity PANIC followed by a call to panic().
 func Panic(ctx context.Context, v ...interface{}) {
 	if globalLogger != nil {
-		globalLogger.event(ctx, PanicLevel).write("", v...)
+		globalLogger.event(ctx, PanicLevel).write("%v", v...)
 	}
 }
 
 // Error logs a message with severity ERROR.
 func Error(ctx context.Context, v ...interface{}) {
 	if globalLogger != nil {
-		globalLogger.event(ctx, ErrorLevel).write("", v...)
+		globalLogger.event(ctx, ErrorLevel).write("%v", v...)
 	}
 }
 
 // Warn logs a message with severity WARN.
 func Warn(ctx context.Context, v ...interface{}) {
 	if globalLogger != nil {
-		globalLogger.event(ctx, WarnLevel).write("", v...)
+		globalLogger.event(ctx, WarnLevel).write("%v", v...)
 	}
 }
 
 // Info logs a message with severity INFO.
 func Info(ctx context.Context, v ...interface{}) {
 	if globalLogger != nil {
-		globalLogger.event(ctx, InfoLevel).write("", v...)
+		globalLogger.event(ctx, InfoLevel).write("%v", v...)
 	}
 }
 
 // Debug logs a message with severity DEBUG.
 func Debug(ctx context.Context, v ...interface{}) {
 	if globalLogger != nil {
-		globalLogger.event(ctx, DebugLevel).write("", v...)
+		globalLogger.event(ctx, DebugLevel).write("%v", v...)
 	}
 }
 

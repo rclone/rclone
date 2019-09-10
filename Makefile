@@ -1,5 +1,5 @@
 SHELL = bash
-BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
+BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(BUILD_SOURCEBRANCHNAME),$(shell git rev-parse --abbrev-ref HEAD))
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 ifeq ($(BRANCH),$(LAST_TAG))
 	BRANCH := master
@@ -17,7 +17,10 @@ ifneq ($(TAG),$(LAST_TAG))
 endif
 GO_VERSION := $(shell go version)
 GO_FILES := $(shell go list ./... | grep -v /vendor/ )
-BETA_PATH := $(BRANCH_PATH)$(TAG)
+ifdef BETA_SUBDIR
+	BETA_SUBDIR := /$(BETA_SUBDIR)
+endif
+BETA_PATH := $(BRANCH_PATH)$(TAG)$(BETA_SUBDIR)
 BETA_URL := https://beta.rclone.org/$(BETA_PATH)/
 BETA_UPLOAD_ROOT := memstore:beta-rclone-org
 BETA_UPLOAD := $(BETA_UPLOAD_ROOT)/$(BETA_PATH)
@@ -27,12 +30,14 @@ BUILDTAGS=-tags "$(GOTAGS)"
 LINTTAGS=--build-tags "$(GOTAGS)"
 endif
 
-.PHONY: rclone vars version
+.PHONY: rclone test_all vars version
 
 rclone:
-	touch fs/version.go
-	go install -v --ldflags "-s -X github.com/ncw/rclone/fs.Version=$(TAG)" $(BUILDTAGS)
+	go install -v --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS)
 	cp -av `go env GOPATH`/bin/rclone .
+
+test_all:
+	go install --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) github.com/rclone/rclone/fstest/test_all
 
 vars:
 	@echo SHELL="'$(SHELL)'"
@@ -47,8 +52,7 @@ version:
 	@echo '$(TAG)'
 
 # Full suite of integration tests
-test:	rclone
-	go install --ldflags "-s -X github.com/ncw/rclone/fs.Version=$(TAG)" $(BUILDTAGS) github.com/ncw/rclone/fstest/test_all
+test:	rclone test_all
 	-test_all 2>&1 | tee test_all.log
 	@echo "Written logs in test_all.log"
 
@@ -61,10 +65,7 @@ racequicktest:
 
 # Do source code quality checks
 check:	rclone
-	@# we still run go vet for -printfuncs which golangci-lint doesn't do yet
-	@# see: https://github.com/golangci/golangci-lint/issues/204
 	@echo "-- START CODE QUALITY REPORT -------------------------------"
-	@go vet $(BUILDTAGS) -printfuncs Debugf,Infof,Logf,Errorf ./...
 	@golangci-lint run $(LINTTAGS) ./...
 	@echo "-- END CODE QUALITY REPORT ---------------------------------"
 
@@ -98,10 +99,10 @@ MANUAL.txt:	MANUAL.md
 	pandoc -s --from markdown --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
-	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/commands/
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/
 
 backenddocs: rclone bin/make_backend_docs.py
-	./bin/make_backend_docs.py
+	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" ./bin/make_backend_docs.py
 
 rcdocs: rclone
 	bin/make_rc_docs.sh
@@ -154,7 +155,7 @@ log_since_last_release:
 	git log $(LAST_TAG)..
 
 compile_all:
-	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go -compile-only $(BUILDTAGS) $(TAG)
 
 appveyor_upload:
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
@@ -170,25 +171,15 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
-BUILD_FLAGS := -exclude "^(windows|darwin)/"
-ifeq ($(TRAVIS_OS_NAME),osx)
-	BUILD_FLAGS := -include "^darwin/" -cgo
-endif
-ifeq ($(TRAVIS_OS_NAME),windows)
-# BUILD_FLAGS := -include "^windows/" -cgo
-# 386 doesn't build yet
-	BUILD_FLAGS := -include "^windows/amd64" -cgo
-endif
-
 travis_beta:
-ifeq ($(TRAVIS_OS_NAME),linux)
+ifeq (linux,$(filter linux,$(subst Linux,linux,$(TRAVIS_OS_NAME) $(AGENT_OS))))
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*\.tar.gz'
 endif
 	git log $(LAST_TAG).. > /tmp/git-log.txt
-	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) -parallel 8 $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifndef BRANCH_PATH
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
+	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
 endif
 	@echo Beta release ready at $(BETA_URL)
 

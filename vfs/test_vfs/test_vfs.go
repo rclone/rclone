@@ -17,7 +17,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ncw/rclone/lib/file"
+	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/lib/random"
 )
 
 var (
@@ -33,24 +34,6 @@ var (
 func init() {
 	rand.Seed(time.Now().UnixNano())
 
-}
-
-// RandomString create a random string for test purposes
-func RandomString(n int) string {
-	const (
-		vowel     = "aeiou"
-		consonant = "bcdfghjklmnpqrstvwxyz"
-		digit     = "0123456789"
-	)
-	pattern := []string{consonant, vowel, consonant, vowel, consonant, vowel, consonant, digit}
-	out := make([]byte, n)
-	p := 0
-	for i := range out {
-		source := pattern[p]
-		p = (p + 1) % len(pattern)
-		out[i] = source[rand.Intn(len(source))]
-	}
-	return string(out)
 }
 
 // Test contains stats about the running test which work for files or
@@ -71,7 +54,7 @@ type Test struct {
 func NewTest(Dir string) *Test {
 	t := &Test{
 		dir:    Dir,
-		name:   RandomString(*nameLength),
+		name:   random.String(*nameLength),
 		isDir:  rand.Intn(2) == 0,
 		number: atomic.AddInt32(&testNumber, 1),
 		timer:  time.NewTimer(*timeout),
@@ -168,7 +151,7 @@ func (t *Test) rename() {
 		return
 	}
 	t.logf("rename")
-	NewName := RandomString(*nameLength)
+	NewName := random.String(*nameLength)
 	newPath := path.Join(t.dir, NewName)
 	err := os.Rename(t.path(), newPath)
 	if err != nil {

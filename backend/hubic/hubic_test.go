@@ -4,8 +4,8 @@ package hubic_test
 import (
 	"testing"
 
-	"github.com/ncw/rclone/backend/hubic"
-	"github.com/ncw/rclone/fstest/fstests"
+	"github.com/rclone/rclone/backend/hubic"
+	"github.com/rclone/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote

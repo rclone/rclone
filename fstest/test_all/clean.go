@@ -5,13 +5,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"regexp"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/list"
-	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 // MatchTestRemote matches the remote names used for testing (copied
@@ -25,7 +26,7 @@ func cleanFs(remote string) error {
 	if err != nil {
 		return err
 	}
-	entries, err := list.DirSorted(f, true, "")
+	entries, err := list.DirSorted(context.Background(), f, true, "")
 	if err != nil {
 		return err
 	}
@@ -46,7 +47,7 @@ func cleanFs(remote string) error {
 				fs.Errorf(fullPath, "%v", err)
 				return nil
 			}
-			err = operations.Purge(dir, "")
+			err = operations.Purge(context.Background(), dir, "")
 			if err != nil {
 				err = errors.Wrap(err, "Purge failed")
 				lastErr = err

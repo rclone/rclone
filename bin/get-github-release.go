@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/net/html"
 	"golang.org/x/sys/unix"
 )

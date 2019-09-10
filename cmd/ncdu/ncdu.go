@@ -5,18 +5,21 @@
 package ncdu
 
 import (
+	"context"
 	"fmt"
 	"path"
+	"reflect"
 	"sort"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	runewidth "github.com/mattn/go-runewidth"
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/cmd/ncdu/scan"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/operations"
 	termbox "github.com/nsf/termbox-go"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/ncdu/scan"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +44,7 @@ structure as it goes along.
 
 Here are the keys - press '?' to toggle the help on and off
 
-    ` + strings.Join(helpText[1:], "\n    ") + `
+    ` + strings.Join(helpText()[1:], "\n    ") + `
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
@@ -59,19 +62,28 @@ UI won't respond in the meantime since the deletion is done synchronously.
 	},
 }
 
-// help text
-var helpText = []string{
-	"rclone ncdu",
-	" ↑,↓ or k,j to Move",
-	" →,l to enter",
-	" ←,h to return",
-	" c toggle counts",
-	" g toggle graph",
-	" n,s,C sort by name,size,count",
-	" d delete file/directory",
-	" ^L refresh screen",
-	" ? to toggle help on and off",
-	" q/ESC/c-C to quit",
+// helpText returns help text for ncdu
+func helpText() (tr []string) {
+	tr = []string{
+		"rclone ncdu",
+		" ↑,↓ or k,j to Move",
+		" →,l to enter",
+		" ←,h to return",
+		" c toggle counts",
+		" g toggle graph",
+		" n,s,C sort by name,size,count",
+		" d delete file/directory",
+	}
+	if !clipboard.Unsupported {
+		tr = append(tr, " y copy current path to clipbard")
+	}
+	tr = append(tr, []string{
+		" Y display current path",
+		" ^L refresh screen",
+		" ? to toggle help on and off",
+		" q/ESC/c-C to quit",
+	}...)
+	return
 }
 
 // UI contains the state of the user interface
@@ -361,7 +373,7 @@ func (u *UI) Draw() error {
 		Linef(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Total usage: %v, Objects: %d%s", fs.SizeSuffix(size), count, message)
 	}
 
-	// Show the box on top if requred
+	// Show the box on top if required
 	if u.showBox {
 		u.Box()
 	}
@@ -423,6 +435,7 @@ func (u *UI) removeEntry(pos int) {
 
 // delete the entry at the current position
 func (u *UI) delete() {
+	ctx := context.Background()
 	dirPos := u.sortPerm[u.dirPosMap[u.path].entry]
 	entry := u.entries[dirPos]
 	u.boxMenu = []string{"cancel", "confirm"}
@@ -431,7 +444,7 @@ func (u *UI) delete() {
 			if o != 1 {
 				return "Aborted!", nil
 			}
-			err := operations.DeleteFile(obj)
+			err := operations.DeleteFile(ctx, obj)
 			if err != nil {
 				return "", err
 			}
@@ -446,7 +459,7 @@ func (u *UI) delete() {
 			if o != 1 {
 				return "Aborted!", nil
 			}
-			err := operations.Purge(f, entry.String())
+			err := operations.Purge(ctx, f, entry.String())
 			if err != nil {
 				return "", err
 			}
@@ -457,6 +470,19 @@ func (u *UI) delete() {
 			"Purge this directory?",
 			"ALL files in it will be deleted",
 			u.fsName + entry.String()})
+	}
+}
+
+func (u *UI) displayPath() {
+	u.togglePopupBox([]string{
+		"Current Path",
+		u.path,
+	})
+}
+
+func (u *UI) copyPath() {
+	if !clipboard.Unsupported {
+		_ = clipboard.WriteAll(u.path)
 	}
 }
 
@@ -589,7 +615,7 @@ func (u *UI) popupBox(text []string) {
 
 // togglePopupBox shows a box with the text in
 func (u *UI) togglePopupBox(text []string) {
-	if u.showBox {
+	if u.showBox && reflect.DeepEqual(u.boxText, text) {
 		u.showBox = false
 	} else {
 		u.popupBox(text)
@@ -636,7 +662,7 @@ func (u *UI) Show() error {
 
 	// scan the disk in the background
 	u.listing = true
-	rootChan, errChan, updated := scan.Scan(u.f)
+	rootChan, errChan, updated := scan.Scan(context.Background(), u.f)
 
 	// Poll the events into a channel
 	events := make(chan termbox.Event)
@@ -716,10 +742,14 @@ outer:
 					u.toggleSort(&u.sortBySize)
 				case 'C':
 					u.toggleSort(&u.sortByCount)
+				case 'y':
+					u.copyPath()
+				case 'Y':
+					u.displayPath()
 				case 'd':
 					u.delete()
 				case '?':
-					u.togglePopupBox(helpText)
+					u.togglePopupBox(helpText())
 
 				// Refresh the screen. Not obvious what key to map
 				// this onto, but ^L is a common choice.

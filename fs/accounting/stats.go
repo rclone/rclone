@@ -3,68 +3,15 @@ package accounting
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/fs/rc"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/rc"
 )
-
-var (
-	// Stats is global statistics counter
-	Stats = NewStats()
-)
-
-func init() {
-	// Set the function pointer up in fs
-	fs.CountError = Stats.Error
-
-	rc.Add(rc.Call{
-		Path:  "core/stats",
-		Fn:    Stats.RemoteStats,
-		Title: "Returns stats about current transfers.",
-		Help: `
-This returns all available stats
-
-	rclone rc core/stats
-
-Returns the following values:
-
-` + "```" + `
-{
-	"speed": average speed in bytes/sec since start of the process,
-	"bytes": total transferred bytes since the start of the process,
-	"errors": number of errors,
-	"fatalError": whether there has been at least one FatalError,
-	"retryError": whether there has been at least one non-NoRetryError,
-	"checks": number of checked files,
-	"transfers": number of transferred files,
-	"deletes" : number of deleted files,
-	"elapsedTime": time in seconds since the start of the process,
-	"lastError": last occurred error,
-	"transferring": an array of currently active file transfers:
-		[
-			{
-				"bytes": total transferred bytes for this file,
-				"eta": estimated time in seconds until file transfer completion
-				"name": name of the file,
-				"percentage": progress of the file transfer in percent,
-				"speed": speed in bytes/sec,
-				"speedAvg": speed in bytes/sec as an exponentially weighted moving average,
-				"size": size of the file in bytes
-			}
-		],
-	"checking": an array of names of currently active file checks
-		[]
-}
-` + "```" + `
-Values for "transferring", "checking" and "lastError" are only assigned if data is available.
-The value for "eta" is null if an eta cannot be determined.
-`,
-	})
-}
 
 // StatsInfo accounts all transfers
 type StatsInfo struct {
@@ -86,25 +33,24 @@ type StatsInfo struct {
 	renameQueue       int
 	renameQueueSize   int64
 	deletes           int64
-	start             time.Time
 	inProgress        *inProgress
+	startedTransfers  []*Transfer
 }
 
-// NewStats cretates an initialised StatsInfo
+// NewStats creates an initialised StatsInfo
 func NewStats() *StatsInfo {
 	return &StatsInfo{
 		checking:     newStringSet(fs.Config.Checkers, "checking"),
 		transferring: newStringSet(fs.Config.Transfers, "transferring"),
-		start:        time.Now(),
 		inProgress:   newInProgress(),
 	}
 }
 
 // RemoteStats returns stats for rc
-func (s *StatsInfo) RemoteStats(in rc.Params) (out rc.Params, err error) {
+func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out = make(rc.Params)
 	s.mu.RLock()
-	dt := time.Now().Sub(s.start)
+	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
@@ -130,22 +76,83 @@ func (s *StatsInfo) RemoteStats(in rc.Params) (out rc.Params, err error) {
 		out["checking"] = c
 	}
 	if !s.transferring.empty() {
-		var t []interface{}
 		s.transferring.mu.RLock()
-		defer s.transferring.mu.RUnlock()
+
+		var t []rc.Params
 		for name := range s.transferring.items {
 			if acc := s.inProgress.get(name); acc != nil {
 				t = append(t, acc.RemoteStats())
 			} else {
-				t = append(t, name)
+				t = append(t, s.transferRemoteStats(name))
 			}
 		}
 		out["transferring"] = t
+		s.transferring.mu.RUnlock()
 	}
 	if s.errors > 0 {
-		out["lastError"] = s.lastError
+		out["lastError"] = s.lastError.Error()
 	}
 	return out, nil
+}
+
+func (s *StatsInfo) transferRemoteStats(name string) rc.Params {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, tr := range s.startedTransfers {
+		if tr.remote == name {
+			return rc.Params{
+				"name": name,
+				"size": tr.size,
+			}
+		}
+	}
+	return rc.Params{"name": name}
+}
+
+type timeRange struct {
+	start time.Time
+	end   time.Time
+}
+
+// Total duration is union of durations of all transfers belonging to this
+// object.
+// Needs to be protected by mutex.
+func (s *StatsInfo) totalDuration() time.Duration {
+	now := time.Now()
+	// Extract time ranges of all transfers.
+	timeRanges := make([]timeRange, len(s.startedTransfers))
+	for i := range s.startedTransfers {
+		start, end := s.startedTransfers[i].TimeRange()
+		if end.IsZero() {
+			end = now
+		}
+		timeRanges[i] = timeRange{start, end}
+	}
+
+	// Sort by the starting time.
+	sort.Slice(timeRanges, func(i, j int) bool {
+		return timeRanges[i].start.Before(timeRanges[j].start)
+	})
+
+	// Merge overlaps and add distinctive ranges together for total.
+	var total time.Duration
+	var i, j = 0, 1
+	for i < len(timeRanges) {
+		if j < len(timeRanges)-1 {
+			if timeRanges[j].start.Before(timeRanges[i].end) {
+				if timeRanges[i].end.Before(timeRanges[j].end) {
+					timeRanges[i].end = timeRanges[j].end
+				}
+				j++
+				continue
+			}
+		}
+		total += timeRanges[i].end.Sub(timeRanges[i].start)
+		i = j
+		j++
+	}
+
+	return total
 }
 
 // eta returns the ETA of the current operation,
@@ -171,7 +178,7 @@ func etaString(done, total int64, rate float64) string {
 	if !ok {
 		return "-"
 	}
-	return d.String()
+	return fs.Duration(d).ReadableString()
 }
 
 // percent returns a/b as a percentage rounded to the nearest integer
@@ -190,11 +197,11 @@ func (s *StatsInfo) String() string {
 	// checking and transferring have their own locking so read
 	// here before lock to prevent deadlock on GetBytes
 	transferring, checking := s.transferring.count(), s.checking.count()
-	transferringBytesDone, transferringBytesTotal := s.transferring.progress()
+	transferringBytesDone, transferringBytesTotal := s.transferring.progress(s)
 
 	s.mu.RLock()
 
-	dt := time.Now().Sub(s.start)
+	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
 	speed := 0.0
 	if dt > 0 {
@@ -216,6 +223,7 @@ func (s *StatsInfo) String() string {
 		currentSize  = s.bytes
 		buf          = &bytes.Buffer{}
 		xfrchkString = ""
+		dateString   = ""
 	)
 
 	if !fs.Config.StatsOneLine {
@@ -231,9 +239,14 @@ func (s *StatsInfo) String() string {
 		if len(xfrchk) > 0 {
 			xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
 		}
+		if fs.Config.StatsOneLineDate {
+			t := time.Now()
+			dateString = t.Format(fs.Config.StatsOneLineDateFormat) // Including the separator so people can customize it
+		}
 	}
 
-	_, _ = fmt.Fprintf(buf, "%10s / %s, %s, %s, ETA %s%s",
+	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s",
+		dateString,
 		fs.SizeSuffix(s.bytes),
 		fs.SizeSuffix(totalSize).Unit("Bytes"),
 		percent(s.bytes, totalSize),
@@ -272,14 +285,28 @@ Elapsed time:  %10v
 	// Add per transfer stats if required
 	if !fs.Config.StatsOneLine {
 		if !s.checking.empty() {
-			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking)
+			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.inProgress))
 		}
 		if !s.transferring.empty() {
-			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring)
+			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.inProgress))
 		}
 	}
 
 	return buf.String()
+}
+
+// Transferred returns list of all completed transfers including checked and
+// failed ones.
+func (s *StatsInfo) Transferred() []TransferSnapshot {
+	ts := make([]TransferSnapshot, 0, len(s.startedTransfers))
+
+	for _, tr := range s.startedTransfers {
+		if tr.IsDone() {
+			ts = append(ts, tr.Snapshot())
+		}
+	}
+
+	return ts
 }
 
 // Log outputs the StatsInfo to the log
@@ -378,6 +405,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
+	s.startedTransfers = nil
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
@@ -429,9 +457,10 @@ func (s *StatsInfo) RetryAfter() time.Time {
 	return s.retryAfter
 }
 
-// Checking adds a check into the stats
-func (s *StatsInfo) Checking(remote string) {
-	s.checking.add(remote)
+// NewCheckingTransfer adds a checking transfer to the stats, from the object.
+func (s *StatsInfo) NewCheckingTransfer(obj fs.Object) *Transfer {
+	s.checking.add(obj.Remote())
+	return newCheckingTransfer(s, obj)
 }
 
 // DoneChecking removes a check from the stats
@@ -449,9 +478,16 @@ func (s *StatsInfo) GetTransfers() int64 {
 	return s.transfers
 }
 
-// Transferring adds a transfer into the stats
-func (s *StatsInfo) Transferring(remote string) {
+// NewTransfer adds a transfer to the stats from the object.
+func (s *StatsInfo) NewTransfer(obj fs.Object) *Transfer {
+	s.transferring.add(obj.Remote())
+	return newTransfer(s, obj)
+}
+
+// NewTransferRemoteSize adds a transfer to the stats based on remote and size.
+func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
 	s.transferring.add(remote)
+	return newTransferRemoteSize(s, remote, size, false)
 }
 
 // DoneTransferring removes a transfer from the stats
@@ -487,5 +523,12 @@ func (s *StatsInfo) SetRenameQueue(n int, size int64) {
 	s.mu.Lock()
 	s.renameQueue = n
 	s.renameQueueSize = size
+	s.mu.Unlock()
+}
+
+// AddTransfer adds reference to the started transfer.
+func (s *StatsInfo) AddTransfer(transfer *Transfer) {
+	s.mu.Lock()
+	s.startedTransfers = append(s.startedTransfers, transfer)
 	s.mu.Unlock()
 }

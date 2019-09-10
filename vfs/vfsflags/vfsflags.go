@@ -2,9 +2,9 @@
 package vfsflags
 
 import (
-	"github.com/ncw/rclone/fs/config/flags"
-	"github.com/ncw/rclone/fs/rc"
-	"github.com/ncw/rclone/vfs"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs"
 	"github.com/spf13/pflag"
 )
 
@@ -32,5 +32,6 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &Opt.ChunkSizeLimit, "vfs-read-chunk-size-limit", "", "If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached. 'off' is unlimited.")
 	flags.FVarP(flagSet, DirPerms, "dir-perms", "", "Directory permissions")
 	flags.FVarP(flagSet, FilePerms, "file-perms", "", "File permissions")
+	flags.BoolVarP(flagSet, &Opt.CaseInsensitive, "vfs-case-insensitive", "", Opt.CaseInsensitive, "If a file name not found, find a case insensitive match.")
 	platformFlags(flagSet)
 }

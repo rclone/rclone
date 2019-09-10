@@ -3,6 +3,7 @@ package filter
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -11,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -21,9 +22,8 @@ var Active = mustNewFilter(nil)
 
 // rule is one filter rule
 type rule struct {
-	Include          bool
-	Regexp           *regexp.Regexp
-	boundedRecursion bool
+	Include bool
+	Regexp  *regexp.Regexp
 }
 
 // Match returns true if rule matches path
@@ -47,14 +47,13 @@ type rules struct {
 }
 
 // add adds a rule if it doesn't exist already
-func (rs *rules) add(Include bool, re *regexp.Regexp, boundedRecursion bool) {
+func (rs *rules) add(Include bool, re *regexp.Regexp) {
 	if rs.existing == nil {
 		rs.existing = make(map[string]struct{})
 	}
 	newRule := rule{
-		Include:          Include,
-		Regexp:           re,
-		boundedRecursion: boundedRecursion,
+		Include: Include,
+		Regexp:  re,
 	}
 	newRuleString := newRule.String()
 	if _, ok := rs.existing[newRuleString]; ok {
@@ -75,27 +74,10 @@ func (rs *rules) len() int {
 	return len(rs.rules)
 }
 
-// boundedRecursion returns true if the set of filters would only
-// need bounded recursion to evaluate
-func (rs *rules) boundedRecursion() bool {
-	var (
-		excludeAll       = false
-		boundedRecursion = true
-	)
-	for _, rule := range rs.rules {
-		if rule.Include {
-			boundedRecursion = boundedRecursion && rule.boundedRecursion
-		} else if rule.Regexp.String() == `^.*$` {
-			excludeAll = true
-		}
-	}
-	return excludeAll && boundedRecursion
-}
-
 // FilesMap describes the map of files to transfer
 type FilesMap map[string]struct{}
 
-// Opt configues the filter
+// Opt configures the filter
 type Opt struct {
 	DeleteExcluded bool
 	FilterRule     []string
@@ -251,8 +233,7 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 		if err != nil {
 			return err
 		}
-		boundedRecursion := globBoundedRecursion(dirGlob)
-		f.dirRules.add(Include, dirRe, boundedRecursion)
+		f.dirRules.add(Include, dirRe)
 	}
 	return nil
 }
@@ -268,9 +249,8 @@ func (f *Filter) Add(Include bool, glob string) error {
 	if err != nil {
 		return err
 	}
-	boundedRecursion := globBoundedRecursion(glob)
 	if isFileRule {
-		f.fileRules.add(Include, re, boundedRecursion)
+		f.fileRules.add(Include, re)
 		// If include rule work out what directories are needed to scan
 		// if exclude rule, we can't rule anything out
 		// Unless it is `*` which matches everything
@@ -283,7 +263,7 @@ func (f *Filter) Add(Include bool, glob string) error {
 		}
 	}
 	if isDirRule {
-		f.dirRules.add(Include, re, boundedRecursion)
+		f.dirRules.add(Include, re)
 	}
 	return nil
 }
@@ -364,12 +344,6 @@ func (f *Filter) InActive() bool {
 		len(f.Opt.ExcludeFile) == 0)
 }
 
-// BoundedRecursion returns true if the filter can be evaluated with
-// bounded recursion only.
-func (f *Filter) BoundedRecursion() bool {
-	return f.fileRules.boundedRecursion()
-}
-
 // includeRemote returns whether this remote passes the filter rules.
 func (f *Filter) includeRemote(remote string) bool {
 	for _, rule := range f.fileRules.rules {
@@ -399,12 +373,12 @@ func (f *Filter) ListContainsExcludeFile(entries fs.DirEntries) bool {
 
 // IncludeDirectory returns a function which checks whether this
 // directory should be included in the sync or not.
-func (f *Filter) IncludeDirectory(fs fs.Fs) func(string) (bool, error) {
+func (f *Filter) IncludeDirectory(ctx context.Context, fs fs.Fs) func(string) (bool, error) {
 	return func(remote string) (bool, error) {
 		remote = strings.Trim(remote, "/")
 		// first check if we need to remove directory based on
 		// the exclude file
-		excl, err := f.DirContainsExcludeFile(fs, remote)
+		excl, err := f.DirContainsExcludeFile(ctx, fs, remote)
 		if err != nil {
 			return false, err
 		}
@@ -431,9 +405,9 @@ func (f *Filter) IncludeDirectory(fs fs.Fs) func(string) (bool, error) {
 // DirContainsExcludeFile checks if exclude file is present in a
 // directroy. If fs is nil, it works properly if ExcludeFile is an
 // empty string (for testing).
-func (f *Filter) DirContainsExcludeFile(fremote fs.Fs, remote string) (bool, error) {
+func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remote string) (bool, error) {
 	if len(f.Opt.ExcludeFile) > 0 {
-		exists, err := fs.FileExists(fremote, path.Join(remote, f.Opt.ExcludeFile))
+		exists, err := fs.FileExists(ctx, fremote, path.Join(remote, f.Opt.ExcludeFile))
 		if err != nil {
 			return false, err
 		}
@@ -470,11 +444,11 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 // IncludeObject returns whether this object should be included into
 // the sync or not. This is a convenience function to avoid calling
 // o.ModTime(), which is an expensive operation.
-func (f *Filter) IncludeObject(o fs.Object) bool {
+func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 	var modTime time.Time
 
 	if !f.ModTimeFrom.IsZero() || !f.ModTimeTo.IsZero() {
-		modTime = o.ModTime()
+		modTime = o.ModTime(ctx)
 	} else {
 		modTime = time.Unix(0, 0)
 	}
@@ -534,8 +508,8 @@ func (f *Filter) HaveFilesFrom() bool {
 var errFilesFromNotSet = errors.New("--files-from not set so can't use Filter.ListR")
 
 // MakeListR makes function to return all the files set using --files-from
-func (f *Filter) MakeListR(NewObject func(remote string) (fs.Object, error)) fs.ListRFn {
-	return func(dir string, callback fs.ListRCallback) error {
+func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Context, remote string) (fs.Object, error)) fs.ListRFn {
+	return func(ctx context.Context, dir string, callback fs.ListRCallback) error {
 		if !f.HaveFilesFrom() {
 			return errFilesFromNotSet
 		}
@@ -547,7 +521,7 @@ func (f *Filter) MakeListR(NewObject func(remote string) (fs.Object, error)) fs.
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {
-					entries[0], err = NewObject(remote)
+					entries[0], err = NewObject(ctx, remote)
 					if err == fs.ErrorObjectNotFound {
 						// Skip files that are not found
 					} else if err != nil {
@@ -568,4 +542,20 @@ func (f *Filter) MakeListR(NewObject func(remote string) (fs.Object, error)) fs.
 		close(remotes)
 		return g.Wait()
 	}
+}
+
+// UsesDirectoryFilters returns true if the filter uses directory
+// filters and false if it doesn't.
+//
+// This is used in deciding whether to walk directories or use ListR
+func (f *Filter) UsesDirectoryFilters() bool {
+	if len(f.dirRules.rules) == 0 {
+		return false
+	}
+	rule := f.dirRules.rules[0]
+	re := rule.Regexp.String()
+	if rule.Include == true && re == "^.*$" {
+		return false
+	}
+	return true
 }

@@ -16,19 +16,41 @@ go get -u github.com/jlaffaye/ftp
 ## Example ##
 
 ```go
-c, err := ftp.DialWithOptions("ftp.example.org", DialWithTimeout(5*time.Second))
+c, err := ftp.Dial("ftp.example.org:21", ftp.DialWithTimeout(5*time.Second))
 if err != nil {
-    t.Fatal(err)
+    log.Fatal(err)
 }
 
 err = c.Login("anonymous", "anonymous")
 if err != nil {
-    t.Fatal(err)
+    log.Fatal(err)
 }
 
 // Do something with the FTP conn
 
-if err := c.Close(); err != nil {
-    t.Fatal(err)
+if err := c.Quit(); err != nil {
+    log.Fatal(err)
 }
+```
+
+## Store a file example ##
+
+```go
+data := bytes.NewBufferString("Hello World")
+err = c.Stor("test-file.txt", data)
+if err != nil {
+	panic(err)
+}
+```
+
+## Read a file example ##
+
+```go
+r, err := c.Retr("test-file.txt")
+if err != nil {
+	panic(err)
+}
+
+buf, err := ioutil.ReadAll(r)
+println(string(buf))
 ```

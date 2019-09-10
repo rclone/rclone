@@ -1,15 +1,16 @@
 package alias
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
 	"sort"
 	"testing"
 
-	_ "github.com/ncw/rclone/backend/local" // pull in test backend
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
+	_ "github.com/rclone/rclone/backend/local" // pull in test backend
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,7 +70,7 @@ func TestNewFS(t *testing.T) {
 		prepare(t, remoteRoot)
 		f, err := fs.NewFs(fmt.Sprintf("%s:%s", remoteName, test.fsRoot))
 		require.NoError(t, err, what)
-		gotEntries, err := f.List(test.fsList)
+		gotEntries, err := f.List(context.Background(), test.fsList)
 		require.NoError(t, err, what)
 
 		sort.Sort(gotEntries)

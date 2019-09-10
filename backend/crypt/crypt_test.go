@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ncw/rclone/backend/crypt"
-	_ "github.com/ncw/rclone/backend/drive" // for integration tests
-	_ "github.com/ncw/rclone/backend/local"
-	_ "github.com/ncw/rclone/backend/swift" // for integration tests
-	"github.com/ncw/rclone/fs/config/obscure"
-	"github.com/ncw/rclone/fstest"
-	"github.com/ncw/rclone/fstest/fstests"
+	"github.com/rclone/rclone/backend/crypt"
+	_ "github.com/rclone/rclone/backend/drive" // for integration tests
+	_ "github.com/rclone/rclone/backend/local"
+	_ "github.com/rclone/rclone/backend/swift" // for integration tests
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote
@@ -23,6 +23,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
 		NilObject:                    (*crypt.Object)(nil),
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
@@ -43,6 +44,7 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
 			{Name: name, Key: "filename_encryption", Value: "standard"},
 		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
@@ -63,6 +65,7 @@ func TestOff(t *testing.T) {
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
 			{Name: name, Key: "filename_encryption", Value: "off"},
 		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
@@ -84,6 +87,7 @@ func TestObfuscate(t *testing.T) {
 			{Name: name, Key: "filename_encryption", Value: "obfuscate"},
 		},
 		SkipBadWindowsCharacters:     true,
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }

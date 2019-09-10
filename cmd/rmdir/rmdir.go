@@ -1,8 +1,10 @@
 package rmdir
 
 import (
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/operations"
+	"context"
+
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +22,7 @@ objects in it, use purge for that.`,
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)
 		cmd.Run(true, false, command, func() error {
-			return operations.Rmdir(fdst, "")
+			return operations.Rmdir(context.Background(), fdst, "")
 		})
 	},
 }

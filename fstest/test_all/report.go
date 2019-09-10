@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -10,10 +11,12 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
+	"runtime"
 	"sort"
 	"time"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -32,6 +35,11 @@ type Report struct {
 	Previous  string        // previous test name if known
 	IndexHTML string        // path to the index.html file
 	URL       string        // online version
+	Branch    string        // rclone branch
+	Commit    string        // rclone commit
+	GOOS      string        // Go OS
+	GOARCH    string        // Go Arch
+	GoVersion string        // Go Version
 }
 
 // ReportRun is used in the templates to report on a test run
@@ -40,11 +48,24 @@ type ReportRun struct {
 	Runs Runs
 }
 
+// Parse version numbers
+// v1.49.0
+// v1.49.0-031-g2298834e-beta
+// v1.49.0-032-g20793a5f-sharefile-beta
+// match 1 is commit number
+// match 2 is branch name
+var parseVersion = regexp.MustCompile(`^v(?:[0-9.]+)-(?:\d+)-g([0-9a-f]+)(?:-(.*))?-beta$`)
+
+// FIXME take -issue or -pr parameter...
+
 // NewReport initialises and returns a Report
 func NewReport() *Report {
 	r := &Report{
 		StartTime: time.Now(),
 		Version:   fs.Version,
+		GOOS:      runtime.GOOS,
+		GOARCH:    runtime.GOARCH,
+		GoVersion: runtime.Version(),
 	}
 	r.DateTime = r.StartTime.Format(timeFormat)
 
@@ -63,6 +84,16 @@ func NewReport() *Report {
 
 	// Online version
 	r.URL = *urlBase + r.DateTime + "/index.html"
+
+	// Get branch/commit out of version
+	parts := parseVersion.FindStringSubmatch(r.Version)
+	if len(parts) >= 3 {
+		r.Commit = parts[1]
+		r.Branch = parts[2]
+	}
+	if r.Branch == "" {
+		r.Branch = "master"
+	}
 
 	return r
 }
@@ -113,6 +144,18 @@ func (r *Report) LogSummary() {
 			log.Printf("  * %s", toShell(t.nextCmdLine()))
 			log.Printf("    * Failed tests: %v", t.failedTests)
 		}
+	}
+}
+
+// LogJSON writes the summary to index.json in LogDir
+func (r *Report) LogJSON() {
+	out, err := json.MarshalIndent(r, "", "\t")
+	if err != nil {
+		log.Fatalf("Failed to marshal data for index.json: %v", err)
+	}
+	err = ioutil.WriteFile(path.Join(r.LogDir, "index.json"), out, 0666)
+	if err != nil {
+		log.Fatalf("Failed to write index.json: %v", err)
 	}
 }
 
@@ -195,6 +238,9 @@ a:focus {
 <table>
 <tr><th>Version</th><td>{{ .Version }}</td></tr>
 <tr><th>Test</th><td><a href="{{ .URL }}">{{ .DateTime}}</a></td></tr>
+<tr><th>Branch</th><td><a href="https://github.com/rclone/rclone/tree/{{ .Branch }}">{{ .Branch }}</a></td></tr>
+{{ if .Commit}}<tr><th>Commit</th><td><a href="https://github.com/rclone/rclone/commit/{{ .Commit }}">{{ .Commit }}</a></td></tr>{{ end }}
+<tr><th>Go</th><td>{{ .GoVersion }} {{ .GOOS }}/{{ .GOARCH }}</td></tr>
 <tr><th>Duration</th><td>{{ .Duration }}</td></tr>
 {{ if .Previous}}<tr><th>Previous</th><td><a href="../{{ .Previous }}/index.html">{{ .Previous }}</a></td></tr>{{ end }}
 <tr><th>Up</th><td><a href="../">Older Tests</a></td></tr>
@@ -208,7 +254,6 @@ a:focus {
 <th>Backend</th>
 <th>Remote</th>
 <th>Test</th>
-<th>SubDir</th>
 <th>FastList</th>
 <th>Failed</th>
 <th>Logs</th>
@@ -220,7 +265,6 @@ a:focus {
 <td>{{ if ne $prevBackend .Backend }}{{ .Backend }}{{ end }}{{ $prevBackend = .Backend }}</td>
 <td>{{ if ne $prevRemote .Remote }}{{ .Remote }}{{ end }}{{ $prevRemote = .Remote }}</td>
 <td>{{ .Path }}</td>
-<td><span class="{{ .SubDir }}">{{ .SubDir }}</span></td>
 <td><span class="{{ .FastList }}">{{ .FastList }}</span></td>
 <td>{{ .FailedTests }}</td>
 <td>{{ range $i, $v := .Logs }}<a href="{{ $v }}">#{{ $i }}</a> {{ end }}</td>

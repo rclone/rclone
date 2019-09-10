@@ -12,12 +12,12 @@ import (
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
-	"github.com/ncw/rclone/cmd/mountlib"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 const fhUnset = ^uint64(0)
@@ -267,8 +267,8 @@ func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	stat.Blocks = fsBlocks  // Total data blocks in file system.
 	stat.Bfree = fsBlocks   // Free blocks in file system.
 	stat.Bavail = fsBlocks  // Free blocks in file system if you're not root.
-	stat.Files = 1E9        // Total files in file system.
-	stat.Ffree = 1E9        // Free files in file system.
+	stat.Files = 1e9        // Total files in file system.
+	stat.Ffree = 1e9        // Free files in file system.
 	stat.Bsize = blockSize  // Block size
 	stat.Namemax = 255      // Maximum file name length?
 	stat.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.

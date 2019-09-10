@@ -5,6 +5,7 @@ package info
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"sort"
@@ -12,12 +13,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/object"
-	"github.com/ncw/rclone/fstest"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
 )
 
@@ -57,17 +58,18 @@ a bit of go code for each one.
 `,
 	Hidden: true,
 	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(1, 1E6, command, args)
+		cmd.CheckArgs(1, 1e6, command, args)
 		for i := range args {
 			f := cmd.NewFsDir(args[i : i+1])
 			cmd.Run(false, false, command, func() error {
-				return readInfo(f)
+				return readInfo(context.Background(), f)
 			})
 		}
 	},
 }
 
 type results struct {
+	ctx                  context.Context
 	f                    fs.Fs
 	mu                   sync.Mutex
 	stringNeedsEscaping  map[string]position
@@ -78,8 +80,9 @@ type results struct {
 	canStream            bool
 }
 
-func newResults(f fs.Fs) *results {
+func newResults(ctx context.Context, f fs.Fs) *results {
 	return &results{
+		ctx:                 ctx,
 		f:                   f,
 		stringNeedsEscaping: make(map[string]position),
 	}
@@ -115,9 +118,9 @@ func (r *results) Print() {
 
 // writeFile writes a file with some random contents
 func (r *results) writeFile(path string) (fs.Object, error) {
-	contents := fstest.RandomString(50)
+	contents := random.String(50)
 	src := object.NewStaticObjectInfo(path, time.Now(), int64(len(contents)), true, nil, r.f)
-	return r.f.Put(bytes.NewBufferString(contents), src)
+	return r.f.Put(r.ctx, bytes.NewBufferString(contents), src)
 }
 
 // check whether normalization is enforced and check whether it is
@@ -131,11 +134,11 @@ func (r *results) checkUTF8Normalization() {
 		return
 	}
 	r.canWriteUnnormalized = true
-	_, err = r.f.NewObject(unnormalized)
+	_, err = r.f.NewObject(r.ctx, unnormalized)
 	if err == nil {
 		r.canReadUnnormalized = true
 	}
-	_, err = r.f.NewObject(normalized)
+	_, err = r.f.NewObject(r.ctx, normalized)
 	if err == nil {
 		r.canReadRenormalized = true
 	}
@@ -163,7 +166,7 @@ func (r *results) checkStringPositions(s string) {
 		} else {
 			fs.Infof(r.f, "Writing %s position file 0x%0X OK", pos.String(), s)
 		}
-		obj, getErr := r.f.NewObject(path)
+		obj, getErr := r.f.NewObject(r.ctx, path)
 		if getErr != nil {
 			fs.Infof(r.f, "Getting %s position file 0x%0X Error: %s", pos.String(), s, getErr)
 		} else {
@@ -262,7 +265,7 @@ func (r *results) checkStreaming() {
 	in := io.TeeReader(buf, hashIn)
 
 	objIn := object.NewStaticObjectInfo("checkStreamingTest", time.Now(), -1, true, nil, r.f)
-	objR, err := putter(in, objIn)
+	objR, err := putter(r.ctx, in, objIn)
 	if err != nil {
 		fs.Infof(r.f, "Streamed file failed to upload (%v)", err)
 		r.canStream = false
@@ -272,7 +275,7 @@ func (r *results) checkStreaming() {
 	hashes := hashIn.Sums()
 	types := objR.Fs().Hashes().Array()
 	for _, Hash := range types {
-		sum, err := objR.Hash(Hash)
+		sum, err := objR.Hash(r.ctx, Hash)
 		if err != nil {
 			fs.Infof(r.f, "Streamed file failed when getting hash %v (%v)", Hash, err)
 			r.canStream = false
@@ -292,12 +295,12 @@ func (r *results) checkStreaming() {
 	r.canStream = true
 }
 
-func readInfo(f fs.Fs) error {
-	err := f.Mkdir("")
+func readInfo(ctx context.Context, f fs.Fs) error {
+	err := f.Mkdir(ctx, "")
 	if err != nil {
 		return errors.Wrap(err, "couldn't mkdir")
 	}
-	r := newResults(f)
+	r := newResults(ctx, f)
 	if checkControl {
 		r.checkControls()
 	}

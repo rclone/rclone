@@ -87,6 +87,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/internal/sdkrand"
 	"github.com/aws/aws-sdk-go/service/sts"
 )
 
@@ -194,6 +195,18 @@ type AssumeRoleProvider struct {
 	//
 	// If ExpiryWindow is 0 or less it will be ignored.
 	ExpiryWindow time.Duration
+
+	// MaxJitterFrac reduces the effective Duration of each credential requested
+	// by a random percentage between 0 and MaxJitterFraction. MaxJitterFrac must
+	// have a value between 0 and 1. Any other value may lead to expected behavior.
+	// With a MaxJitterFrac value of 0, default) will no jitter will be used.
+	//
+	// For example, with a Duration of 30m and a MaxJitterFrac of 0.1, the
+	// AssumeRole call will be made with an arbitrary Duration between 27m and
+	// 30m.
+	//
+	// MaxJitterFrac should not be negative.
+	MaxJitterFrac float64
 }
 
 // NewCredentials returns a pointer to a new Credentials object wrapping the
@@ -245,7 +258,6 @@ func NewCredentialsWithClient(svc AssumeRoler, roleARN string, options ...func(*
 
 // Retrieve generates a new set of temporary credentials using STS.
 func (p *AssumeRoleProvider) Retrieve() (credentials.Value, error) {
-
 	// Apply defaults where parameters are not set.
 	if p.RoleSessionName == "" {
 		// Try to work out a role name that will hopefully end up unique.
@@ -255,8 +267,9 @@ func (p *AssumeRoleProvider) Retrieve() (credentials.Value, error) {
 		// Expire as often as AWS permits.
 		p.Duration = DefaultDuration
 	}
+	jitter := time.Duration(sdkrand.SeededRand.Float64() * p.MaxJitterFrac * float64(p.Duration))
 	input := &sts.AssumeRoleInput{
-		DurationSeconds: aws.Int64(int64(p.Duration / time.Second)),
+		DurationSeconds: aws.Int64(int64((p.Duration - jitter) / time.Second)),
 		RoleArn:         aws.String(p.RoleARN),
 		RoleSessionName: aws.String(p.RoleSessionName),
 		ExternalId:      p.ExternalID,

@@ -1,4 +1,4 @@
-// Package flags contains enahnced versions of spf13/pflag flag
+// Package flags contains enhanced versions of spf13/pflag flag
 // routines which will read from the environment also.
 package flags
 
@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/rclone/rclone/fs"
 	"github.com/spf13/pflag"
 )
 

@@ -1,13 +1,14 @@
 package cat
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/operations"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -74,7 +75,7 @@ Note that if offset is negative it will count from the end, so
 			w = ioutil.Discard
 		}
 		cmd.Run(false, false, command, func() error {
-			return operations.Cat(fsrc, w, offset, count)
+			return operations.Cat(context.Background(), fsrc, w, offset, count)
 		})
 	},
 }

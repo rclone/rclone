@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fstest/mockobject"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +26,6 @@ func TestNewFilterDefault(t *testing.T) {
 	assert.Len(t, f.dirRules.rules, 0)
 	assert.Nil(t, f.files)
 	assert.True(t, f.InActive())
-	assert.False(t, f.BoundedRecursion())
 }
 
 // testFile creates a temp file with the contents
@@ -104,38 +104,6 @@ func TestNewFilterFull(t *testing.T) {
 		}
 	}
 	assert.False(t, f.InActive())
-	assert.False(t, f.BoundedRecursion())
-}
-
-func TestFilterBoundedRecursion(t *testing.T) {
-	for _, test := range []struct {
-		in   string
-		want bool
-	}{
-		{"", false},
-		{"- /**", true},
-		{"+ *.jpg", false},
-		{"+ *.jpg\n- /**", false},
-		{"+ /*.jpg\n- /**", true},
-		{"+ *.png\n+ /*.jpg\n- /**", false},
-		{"+ /*.png\n+ /*.jpg\n- /**", true},
-		{"- *.jpg\n- /**", true},
-		{"+ /*.jpg\n- /**", true},
-		{"+ /*dir/\n- /**", true},
-		{"+ /*dir/\n", false},
-		{"+ /*dir/**\n- /**", false},
-		{"+ **/pics*/*.jpg\n- /**", false},
-	} {
-		f, err := NewFilter(nil)
-		require.NoError(t, err)
-		for _, rule := range strings.Split(test.in, "\n") {
-			if rule != "" {
-				require.NoError(t, f.AddRule(rule))
-			}
-		}
-		got := f.BoundedRecursion()
-		assert.Equal(t, test.want, got, test.in)
-	}
 }
 
 type includeTest struct {
@@ -159,7 +127,7 @@ type includeDirTest struct {
 
 func testDirInclude(t *testing.T, f *Filter, tests []includeDirTest) {
 	for _, test := range tests {
-		got, err := f.IncludeDirectory(nil)(test.in)
+		got, err := f.IncludeDirectory(context.Background(), nil)(test.in)
 		require.NoError(t, err)
 		assert.Equal(t, test.want, got, test.in)
 	}
@@ -184,7 +152,6 @@ func TestNewFilterIncludeFiles(t *testing.T) {
 		{"file3.jpg", 3, 0, false},
 	})
 	assert.False(t, f.InActive())
-	assert.False(t, f.BoundedRecursion())
 }
 
 func TestNewFilterIncludeFilesDirs(t *testing.T) {
@@ -235,8 +202,8 @@ func TestNewFilterMakeListR(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check error if no files
-	listR := f.MakeListR(nil)
-	err = listR("", nil)
+	listR := f.MakeListR(context.Background(), nil)
+	err = listR(context.Background(), "", nil)
 	assert.EqualError(t, err, errFilesFromNotSet.Error())
 
 	// Add some files
@@ -256,7 +223,7 @@ func TestNewFilterMakeListR(t *testing.T) {
 	// NewObject function for MakeListR
 	newObjects := FilesMap{}
 	var newObjectMu sync.Mutex
-	NewObject := func(remote string) (fs.Object, error) {
+	NewObject := func(ctx context.Context, remote string) (fs.Object, error) {
 		newObjectMu.Lock()
 		defer newObjectMu.Unlock()
 		if remote == "notfound" {
@@ -282,8 +249,8 @@ func TestNewFilterMakeListR(t *testing.T) {
 	}
 
 	// Make the listR and call it
-	listR = f.MakeListR(NewObject)
-	err = listR("", listRcallback)
+	listR = f.MakeListR(context.Background(), NewObject)
+	err = listR(context.Background(), "", listRcallback)
 	require.NoError(t, err)
 
 	// Check that the correct objects were created and listed
@@ -298,7 +265,7 @@ func TestNewFilterMakeListR(t *testing.T) {
 
 	// Now check an error is returned from NewObject
 	require.NoError(t, f.AddFile("error"))
-	err = listR("", listRcallback)
+	err = listR(context.Background(), "", listRcallback)
 	require.EqualError(t, err, assert.AnError.Error())
 }
 
@@ -312,7 +279,6 @@ func TestNewFilterMinSize(t *testing.T) {
 		{"potato/file2.jpg", 99, 0, false},
 	})
 	assert.False(t, f.InActive())
-	assert.False(t, f.BoundedRecursion())
 }
 
 func TestNewFilterMaxSize(t *testing.T) {
@@ -586,5 +552,78 @@ func TestFilterMatchesFromDocs(t *testing.T) {
 		if included != test.included {
 			t.Errorf("%q match %q: want %v got %v", test.glob, test.file, test.included, included)
 		}
+	}
+}
+
+func TestNewFilterUsesDirectoryFilters(t *testing.T) {
+	for i, test := range []struct {
+		rules []string
+		want  bool
+	}{
+		{
+			rules: []string{},
+			want:  false,
+		},
+		{
+			rules: []string{
+				"+ *",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"+ *.jpg",
+				"- *",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"- *.jpg",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"- *.jpg",
+				"+ *",
+			},
+			want: false,
+		},
+		{
+			rules: []string{
+				"+ dir/*.jpg",
+				"- *",
+			},
+			want: true,
+		},
+		{
+			rules: []string{
+				"+ dir/**",
+			},
+			want: true,
+		},
+		{
+			rules: []string{
+				"- dir/**",
+			},
+			want: true,
+		},
+		{
+			rules: []string{
+				"- /dir/**",
+			},
+			want: true,
+		},
+	} {
+		what := fmt.Sprintf("#%d", i)
+		f, err := NewFilter(nil)
+		require.NoError(t, err)
+		for _, rule := range test.rules {
+			err := f.AddRule(rule)
+			require.NoError(t, err, what)
+		}
+		got := f.UsesDirectoryFilters()
+		assert.Equal(t, test.want, got, fmt.Sprintf("%s: %s", what, f.DumpFilters()))
 	}
 }

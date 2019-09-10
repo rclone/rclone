@@ -7,11 +7,11 @@ import (
 	"html/template"
 	"io/ioutil"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 )
 
-// GetTemplate eturns the HTML template for serving directories via HTTP
+// GetTemplate returns the HTML template for serving directories via HTTP
 func GetTemplate() (tpl *template.Template, err error) {
 	templateFile, err := Assets.Open("index.html")
 	if err != nil {

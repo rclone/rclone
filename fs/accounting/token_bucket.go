@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/rc"
 	"golang.org/x/time/rate"
 )
 
@@ -132,26 +132,32 @@ func SetBwLimit(bandwidth fs.SizeSuffix) {
 func init() {
 	rc.Add(rc.Call{
 		Path: "core/bwlimit",
-		Fn: func(in rc.Params) (out rc.Params, err error) {
-			ibwlimit, ok := in["rate"]
-			if !ok {
-				return out, errors.Errorf("parameter rate not found")
+		Fn: func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+			if in["rate"] != nil {
+				bwlimit, err := in.GetString("rate")
+				if err != nil {
+					return out, err
+				}
+				var bws fs.BwTimetable
+				err = bws.Set(bwlimit)
+				if err != nil {
+					return out, errors.Wrap(err, "bad bwlimit")
+				}
+				if len(bws) != 1 {
+					return out, errors.New("need exactly 1 bandwidth setting")
+				}
+				bw := bws[0]
+				SetBwLimit(bw.Bandwidth)
 			}
-			bwlimit, ok := ibwlimit.(string)
-			if !ok {
-				return out, errors.Errorf("value must be string rate=%v", ibwlimit)
+			bytesPerSecond := int64(-1)
+			if tokenBucket != nil {
+				bytesPerSecond = int64(tokenBucket.Limit())
 			}
-			var bws fs.BwTimetable
-			err = bws.Set(bwlimit)
-			if err != nil {
-				return out, errors.Wrap(err, "bad bwlimit")
+			out = rc.Params{
+				"rate":           fs.SizeSuffix(bytesPerSecond).String(),
+				"bytesPerSecond": bytesPerSecond,
 			}
-			if len(bws) != 1 {
-				return out, errors.New("need exactly 1 bandwidth setting")
-			}
-			bw := bws[0]
-			SetBwLimit(bw.Bandwidth)
-			return rc.Params{"rate": bw.Bandwidth.String()}, nil
+			return out, nil
 		},
 		Title: "Set the bandwidth limit.",
 		Help: `
@@ -159,11 +165,31 @@ This sets the bandwidth limit to that passed in.
 
 Eg
 
-    rclone rc core/bwlimit rate=1M
     rclone rc core/bwlimit rate=off
+    {
+        "bytesPerSecond": -1,
+        "rate": "off"
+    }
+    rclone rc core/bwlimit rate=1M
+    {
+        "bytesPerSecond": 1048576,
+        "rate": "1M"
+    }
+
+
+If the rate parameter is not suppied then the bandwidth is queried
+
+    rclone rc core/bwlimit
+    {
+        "bytesPerSecond": 1048576,
+        "rate": "1M"
+    }
 
 The format of the parameter is exactly the same as passed to --bwlimit
 except only one bandwidth may be specified.
+
+In either case "rate" is returned as a human readable string, and
+"bytesPerSecond" is returned as a number.
 `,
 	})
 }

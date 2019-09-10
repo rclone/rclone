@@ -16,7 +16,7 @@ source ~/bin/use-go1.11
 go version
 
 # Compile rclone
-cd ~/go/src/github.com/ncw/rclone
+cd ~/go/src/github.com/rclone/rclone
 make
 
 # run the failing test

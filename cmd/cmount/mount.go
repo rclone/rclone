@@ -17,12 +17,12 @@ import (
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
-	"github.com/ncw/rclone/cmd/mountlib"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/okzk/sdnotify"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 func init() {
@@ -127,7 +127,7 @@ func waitFor(fn func() bool) (ok bool) {
 func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error) {
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
-	// Check the mountpoint - in Windows the mountpoint musn't exist before the mount
+	// Check the mountpoint - in Windows the mountpoint mustn't exist before the mount
 	if runtime.GOOS != "windows" {
 		fi, err := os.Stat(mountpoint)
 		if err != nil {

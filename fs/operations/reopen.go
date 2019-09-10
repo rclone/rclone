@@ -1,24 +1,27 @@
 package operations
 
 import (
+	"context"
 	"io"
 	"sync"
 
-	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 )
 
 // reOpen is a wrapper for an object reader which reopens the stream on error
 type reOpen struct {
-	mu         sync.Mutex       // mutex to protect the below
-	src        fs.Object        // object to open
-	hashOption *fs.HashesOption // option to pass to initial open
-	rc         io.ReadCloser    // underlying stream
-	read       int64            // number of bytes read from this stream
-	maxTries   int              // maximum number of retries
-	tries      int              // number of retries we've had so far in this stream
-	err        error            // if this is set then Read/Close calls will return it
-	opened     bool             // if set then rc is valid and needs closing
+	ctx         context.Context
+	mu          sync.Mutex       // mutex to protect the below
+	src         fs.Object        // object to open
+	hashOption  *fs.HashesOption // option to pass to initial open
+	rangeOption *fs.RangeOption  // option to pass to initial open
+	rc          io.ReadCloser    // underlying stream
+	read        int64            // number of bytes read from this stream
+	maxTries    int              // maximum number of retries
+	tries       int              // number of retries we've had so far in this stream
+	err         error            // if this is set then Read/Close calls will return it
+	opened      bool             // if set then rc is valid and needs closing
 }
 
 var (
@@ -27,11 +30,18 @@ var (
 )
 
 // newReOpen makes a handle which will reopen itself and seek to where it was on errors
-func newReOpen(src fs.Object, hashOption *fs.HashesOption, maxTries int) (rc io.ReadCloser, err error) {
+//
+// If hashOption is set this will be applied when reading from the start
+//
+// If rangeOption is set then this will applied when reading from the
+// start, and updated on retries.
+func newReOpen(ctx context.Context, src fs.Object, hashOption *fs.HashesOption, rangeOption *fs.RangeOption, maxTries int) (rc io.ReadCloser, err error) {
 	h := &reOpen{
-		src:        src,
-		hashOption: hashOption,
-		maxTries:   maxTries,
+		ctx:         ctx,
+		src:         src,
+		hashOption:  hashOption,
+		rangeOption: rangeOption,
+		maxTries:    maxTries,
 	}
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -46,21 +56,30 @@ func newReOpen(src fs.Object, hashOption *fs.HashesOption, maxTries int) (rc io.
 //
 // we don't retry here as the Open() call will itself have low level retries
 func (h *reOpen) open() error {
-	var opts = make([]fs.OpenOption, 1)
-	if h.tries > 0 {
-	}
+	var optsArray [2]fs.OpenOption
+	var opts = optsArray[:0]
 	if h.read == 0 {
-		// put hashOption on if reading from the start, ditch otherwise
-		opts[0] = h.hashOption
+		if h.rangeOption != nil {
+			opts = append(opts, h.rangeOption)
+		}
+		if h.hashOption != nil {
+			// put hashOption on if reading from the start, ditch otherwise
+			opts = append(opts, h.hashOption)
+		}
 	} else {
-		// seek to the read point
-		opts[0] = &fs.SeekOption{Offset: h.read}
+		if h.rangeOption != nil {
+			// range to the read point
+			opts = append(opts, &fs.RangeOption{Start: h.rangeOption.Start + h.read, End: h.rangeOption.End})
+		} else {
+			// seek to the read point
+			opts = append(opts, &fs.SeekOption{Offset: h.read})
+		}
 	}
 	h.tries++
 	if h.tries > h.maxTries {
 		h.err = errorTooManyTries
 	} else {
-		h.rc, h.err = h.src.Open(opts...)
+		h.rc, h.err = h.src.Open(h.ctx, opts...)
 	}
 	if h.err != nil {
 		if h.tries > 1 {

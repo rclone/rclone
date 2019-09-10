@@ -11,6 +11,7 @@
 package drive
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,10 +20,10 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/fserrors"
-	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/readers"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
 )
@@ -50,15 +51,13 @@ type resumableUpload struct {
 }
 
 // Upload the io.Reader in of size bytes with contentType and info
-func (f *Fs) Upload(in io.Reader, size int64, contentType, fileID, remote string, info *drive.File) (*drive.File, error) {
+func (f *Fs) Upload(ctx context.Context, in io.Reader, size int64, contentType, fileID, remote string, info *drive.File) (*drive.File, error) {
 	params := url.Values{
 		"alt":        {"json"},
 		"uploadType": {"resumable"},
 		"fields":     {partialFields},
 	}
-	if f.isTeamDrive {
-		params.Set("supportsTeamDrives", "true")
-	}
+	params.Set("supportsAllDrives", "true")
 	if f.opt.KeepRevisionForever {
 		params.Set("keepRevisionForever", "true")
 	}
@@ -83,6 +82,7 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType, fileID, remote string
 		if err != nil {
 			return false, err
 		}
+		req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 		googleapi.Expand(req.URL, map[string]string{
 			"fileId": fileID,
 		})
@@ -108,12 +108,13 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType, fileID, remote string
 		MediaType:     contentType,
 		ContentLength: size,
 	}
-	return rx.Upload()
+	return rx.Upload(ctx)
 }
 
 // Make an http.Request for the range passed in
-func (rx *resumableUpload) makeRequest(start int64, body io.ReadSeeker, reqSize int64) *http.Request {
+func (rx *resumableUpload) makeRequest(ctx context.Context, start int64, body io.ReadSeeker, reqSize int64) *http.Request {
 	req, _ := http.NewRequest("POST", rx.URI, body)
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	req.ContentLength = reqSize
 	if reqSize != 0 {
 		req.Header.Set("Content-Range", fmt.Sprintf("bytes %v-%v/%v", start, start+reqSize-1, rx.ContentLength))
@@ -131,8 +132,8 @@ var rangeRE = regexp.MustCompile(`^0\-(\d+)$`)
 // Query drive for the amount transferred so far
 //
 // If error is nil, then start should be valid
-func (rx *resumableUpload) transferStatus() (start int64, err error) {
-	req := rx.makeRequest(0, nil, 0)
+func (rx *resumableUpload) transferStatus(ctx context.Context) (start int64, err error) {
+	req := rx.makeRequest(ctx, 0, nil, 0)
 	res, err := rx.f.client.Do(req)
 	if err != nil {
 		return 0, err
@@ -159,9 +160,9 @@ func (rx *resumableUpload) transferStatus() (start int64, err error) {
 }
 
 // Transfer a chunk - caller must call googleapi.CloseBody(res) if err == nil || res != nil
-func (rx *resumableUpload) transferChunk(start int64, chunk io.ReadSeeker, chunkSize int64) (int, error) {
+func (rx *resumableUpload) transferChunk(ctx context.Context, start int64, chunk io.ReadSeeker, chunkSize int64) (int, error) {
 	_, _ = chunk.Seek(0, io.SeekStart)
-	req := rx.makeRequest(start, chunk, chunkSize)
+	req := rx.makeRequest(ctx, start, chunk, chunkSize)
 	res, err := rx.f.client.Do(req)
 	if err != nil {
 		return 599, err
@@ -194,7 +195,7 @@ func (rx *resumableUpload) transferChunk(start int64, chunk io.ReadSeeker, chunk
 
 // Upload uploads the chunks from the input
 // It retries each chunk using the pacer and --low-level-retries
-func (rx *resumableUpload) Upload() (*drive.File, error) {
+func (rx *resumableUpload) Upload(ctx context.Context) (*drive.File, error) {
 	start := int64(0)
 	var StatusCode int
 	var err error
@@ -209,7 +210,7 @@ func (rx *resumableUpload) Upload() (*drive.File, error) {
 		// Transfer the chunk
 		err = rx.f.pacer.Call(func() (bool, error) {
 			fs.Debugf(rx.remote, "Sending chunk %d length %d", start, reqSize)
-			StatusCode, err = rx.transferChunk(start, chunk, reqSize)
+			StatusCode, err = rx.transferChunk(ctx, start, chunk, reqSize)
 			again, err := shouldRetry(err)
 			if StatusCode == statusResumeIncomplete || StatusCode == http.StatusCreated || StatusCode == http.StatusOK {
 				again = false

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,14 +10,15 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/configmap"
-	"github.com/ncw/rclone/fstest"
-	"github.com/ncw/rclone/lib/rest"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,6 +27,7 @@ var (
 	remoteName = "TestHTTP"
 	testPath   = "test"
 	filesPath  = filepath.Join(testPath, "files")
+	headers    = []string{"X-Potato", "sausage", "X-Rhubarb", "cucumber"}
 )
 
 // prepareServer the test server and return a function to tidy it up afterwards
@@ -32,8 +35,16 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// file server for test/files
 	fileServer := http.FileServer(http.Dir(filesPath))
 
+	// test the headers are there then pass on to fileServer
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		what := fmt.Sprintf("%s %s: Header ", r.Method, r.URL.Path)
+		assert.Equal(t, headers[1], r.Header.Get(headers[0]), what+headers[0])
+		assert.Equal(t, headers[3], r.Header.Get(headers[2]), what+headers[2])
+		fileServer.ServeHTTP(w, r)
+	})
+
 	// Make the test server
-	ts := httptest.NewServer(fileServer)
+	ts := httptest.NewServer(handler)
 
 	// Configure the remote
 	config.LoadConfig()
@@ -44,8 +55,9 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// config.FileSet(remoteName, "url", ts.URL)
 
 	m := configmap.Simple{
-		"type": "http",
-		"url":  ts.URL,
+		"type":    "http",
+		"url":     ts.URL,
+		"headers": strings.Join(headers, ","),
 	}
 
 	// return a function to tidy up
@@ -64,7 +76,7 @@ func prepare(t *testing.T) (fs.Fs, func()) {
 }
 
 func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
-	entries, err := f.List("")
+	entries, err := f.List(context.Background(), "")
 	require.NoError(t, err)
 
 	sort.Sort(entries)
@@ -120,7 +132,7 @@ func TestListSubDir(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
 
-	entries, err := f.List("three")
+	entries, err := f.List(context.Background(), "three")
 	require.NoError(t, err)
 
 	sort.Sort(entries)
@@ -138,7 +150,7 @@ func TestNewObject(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
 
-	o, err := f.NewObject("four/under four.txt")
+	o, err := f.NewObject(context.Background(), "four/under four.txt")
 	require.NoError(t, err)
 
 	assert.Equal(t, "four/under four.txt", o.Remote())
@@ -148,7 +160,7 @@ func TestNewObject(t *testing.T) {
 
 	// Test the time is correct on the object
 
-	tObj := o.ModTime()
+	tObj := o.ModTime(context.Background())
 
 	fi, err := os.Stat(filepath.Join(filesPath, "four", "under four.txt"))
 	require.NoError(t, err)
@@ -158,7 +170,7 @@ func TestNewObject(t *testing.T) {
 	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", o.Remote(), dt, time.Second, tObj, tFile, time.Second))
 
 	// check object not found
-	o, err = f.NewObject("not found.txt")
+	o, err = f.NewObject(context.Background(), "not found.txt")
 	assert.Nil(t, o)
 	assert.Equal(t, fs.ErrorObjectNotFound, err)
 }
@@ -167,11 +179,11 @@ func TestOpen(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
 
-	o, err := f.NewObject("four/under four.txt")
+	o, err := f.NewObject(context.Background(), "four/under four.txt")
 	require.NoError(t, err)
 
 	// Test normal read
-	fd, err := o.Open()
+	fd, err := o.Open(context.Background())
 	require.NoError(t, err)
 	data, err := ioutil.ReadAll(fd)
 	require.NoError(t, err)
@@ -179,7 +191,7 @@ func TestOpen(t *testing.T) {
 	assert.Equal(t, "beetroot\n", string(data))
 
 	// Test with range request
-	fd, err = o.Open(&fs.RangeOption{Start: 1, End: 5})
+	fd, err = o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 5})
 	require.NoError(t, err)
 	data, err = ioutil.ReadAll(fd)
 	require.NoError(t, err)
@@ -191,12 +203,12 @@ func TestMimeType(t *testing.T) {
 	f, tidy := prepare(t)
 	defer tidy()
 
-	o, err := f.NewObject("four/under four.txt")
+	o, err := f.NewObject(context.Background(), "four/under four.txt")
 	require.NoError(t, err)
 
 	do, ok := o.(fs.MimeTyper)
 	require.True(t, ok)
-	assert.Equal(t, "text/plain; charset=utf-8", do.MimeType())
+	assert.Equal(t, "text/plain; charset=utf-8", do.MimeType(context.Background()))
 }
 
 func TestIsAFileRoot(t *testing.T) {
@@ -216,7 +228,7 @@ func TestIsAFileSubDir(t *testing.T) {
 	f, err := NewFs(remoteName, "three/underthree.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
 
-	entries, err := f.List("")
+	entries, err := f.List(context.Background(), "")
 	require.NoError(t, err)
 
 	sort.Sort(entries)

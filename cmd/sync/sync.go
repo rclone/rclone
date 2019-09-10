@@ -1,8 +1,11 @@
 package sync
 
 import (
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/sync"
+	"context"
+
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -42,9 +45,12 @@ go there.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
-		fsrc, fdst := cmd.NewFsSrcDst(args)
+		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {
-			return sync.Sync(fdst, fsrc, createEmptySrcDirs)
+			if srcFileName == "" {
+				return sync.Sync(context.Background(), fdst, fsrc, createEmptySrcDirs)
+			}
+			return operations.CopyFile(context.Background(), fdst, fsrc, srcFileName, srcFileName)
 		})
 	},
 }

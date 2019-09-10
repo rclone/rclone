@@ -1,6 +1,7 @@
 package dlna
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -8,23 +9,23 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ncw/rclone/vfs"
+	"github.com/rclone/rclone/vfs"
 
-	_ "github.com/ncw/rclone/backend/local"
-	"github.com/ncw/rclone/cmd/serve/dlna/dlnaflags"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
+	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/cmd/serve/dlna/dlnaflags"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
 	dlnaServer *server
+	testURL    string
 )
 
 const (
-	testBindAddress = "localhost:51777"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 )
 
 func startServer(t *testing.T, f fs.Fs) {
@@ -32,13 +33,14 @@ func startServer(t *testing.T, f fs.Fs) {
 	opt.ListenAddr = testBindAddress
 	dlnaServer = newServer(f, &opt)
 	assert.NoError(t, dlnaServer.Serve())
+	testURL = "http://" + dlnaServer.HTTPConn.Addr().String() + "/"
 }
 
 func TestInit(t *testing.T) {
 	config.LoadConfig()
 
 	f, err := fs.NewFs("testdata/files")
-	l, _ := f.List("")
+	l, _ := f.List(context.Background(), "")
 	fmt.Println(l)
 	require.NoError(t, err)
 

@@ -1,10 +1,11 @@
 package md5sum
 
 import (
+	"context"
 	"os"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/operations"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +24,7 @@ is in the same format as the standard md5sum tool produces.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return operations.Md5sum(fsrc, os.Stdout)
+			return operations.Md5sum(context.Background(), fsrc, os.Stdout)
 		})
 	},
 }

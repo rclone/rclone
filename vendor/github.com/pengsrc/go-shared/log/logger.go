@@ -74,32 +74,32 @@ func (l *Logger) Flush() {
 
 // Fatal logs a message with severity FATAL followed by a call to os.Exit(1).
 func (l *Logger) Fatal(ctx context.Context, v ...interface{}) {
-	l.event(ctx, FatalLevel).write("", v...)
+	l.event(ctx, FatalLevel).write("%v", v...)
 }
 
 // Panic logs a message with severity PANIC followed by a call to panic().
 func (l *Logger) Panic(ctx context.Context, v ...interface{}) {
-	l.event(ctx, PanicLevel).write("", v...)
+	l.event(ctx, PanicLevel).write("%v", v...)
 }
 
 // Error logs a message with severity ERROR.
 func (l *Logger) Error(ctx context.Context, v ...interface{}) {
-	l.event(ctx, ErrorLevel).write("", v...)
+	l.event(ctx, ErrorLevel).write("%v", v...)
 }
 
 // Warn logs a message with severity WARN.
 func (l *Logger) Warn(ctx context.Context, v ...interface{}) {
-	l.event(ctx, WarnLevel).write("", v...)
+	l.event(ctx, WarnLevel).write("%v", v...)
 }
 
 // Info logs a message with severity INFO.
 func (l *Logger) Info(ctx context.Context, v ...interface{}) {
-	l.event(ctx, InfoLevel).write("", v...)
+	l.event(ctx, InfoLevel).write("%v", v...)
 }
 
 // Debug logs a message with severity DEBUG.
 func (l *Logger) Debug(ctx context.Context, v ...interface{}) {
-	l.event(ctx, DebugLevel).write("", v...)
+	l.event(ctx, DebugLevel).write("%v", v...)
 }
 
 // Fatalf logs a message with severity FATAL in format followed by a call to

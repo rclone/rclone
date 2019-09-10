@@ -1,20 +1,23 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/operations"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 // WriteFileHandle is an open for write handle on a File
 type WriteFileHandle struct {
 	baseHandle
 	mu          sync.Mutex
-	closed      bool // set if handle has been closed
+	cond        *sync.Cond // cond lock for out of sequence writes
+	closed      bool       // set if handle has been closed
 	remote      string
 	pipeWriter  *io.PipeWriter
 	o           fs.Object
@@ -41,6 +44,7 @@ func newWriteFileHandle(d *Dir, f *File, remote string, flags int) (*WriteFileHa
 		result: make(chan error, 1),
 		file:   f,
 	}
+	fh.cond = sync.NewCond(&fh.mu)
 	fh.file.addWriter(fh)
 	return fh, nil
 }
@@ -65,7 +69,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
 		// NB Rcat deals with Stats.Transferring etc
-		o, err := operations.Rcat(fh.file.d.f, fh.remote, pipeReader, time.Now())
+		o, err := operations.Rcat(context.TODO(), fh.file.d.f, fh.remote, pipeReader, time.Now())
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
@@ -121,10 +125,33 @@ func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
 
 // Implementatino of WriteAt - call with lock held
 func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
-	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(p))
+	// defer log.Trace(fh.remote, "len=%d off=%d", len(p), off)("n=%d, fh.off=%d, err=%v", &n, &fh.offset, &err)
 	if fh.closed {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: error: %v", EBADF)
 		return 0, ECLOSED
+	}
+	if fh.offset != off {
+		// Set a background timer so we don't wait forever
+		timeout := time.NewTimer(10 * time.Second)
+		done := make(chan struct{})
+		abort := int32(0)
+		go func() {
+			select {
+			case <-timeout.C:
+				// set abort flag an give all the waiting goroutines a kick on timeout
+				atomic.StoreInt32(&abort, 1)
+				fh.cond.Broadcast()
+			case <-done:
+			}
+		}()
+		// Wait for an in-sequence write or abort
+		for fh.offset != off && atomic.LoadInt32(&abort) == 0 {
+			// fs.Debugf(fh.remote, "waiting for in-sequence write to %d", off)
+			fh.cond.Wait()
+		}
+		// tidy up end timer
+		close(done)
+		timeout.Stop()
 	}
 	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
@@ -142,6 +169,7 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 		return 0, err
 	}
 	// fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
+	fh.cond.Broadcast() // wake everyone up waiting for an in-sequence read
 	return n, nil
 }
 

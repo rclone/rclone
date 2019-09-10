@@ -1,42 +1,42 @@
 body {
-    margin-top: 75px; /* 100px is double the height of the navbar - I made it a big larger for some more space - keep it at 50px at least if you want to use the fixed top nav */
+	margin-top: 75px; /* 100px is double the height of the navbar - I made it a big larger for some more space - keep it at 50px at least if you want to use the fixed top nav */
 }
 
 footer {
-    margin: 50px 0;
+	margin: 50px 0;
 }
 
 table {
-   background-color:#e0e0ff
+	background-color:#e0e0ff
 }
 
 tbody td, th {
-    border: 1px solid black;
-    padding: 3px 7px 2px 7px;
+	border: 1px solid black;
+	padding: 3px 7px 2px 7px;
 }
 
 thead td, th {
-    border: 1px solid black;
-    padding: 3px 7px 2px 7px;
-    font-weight: bold;
+	border: 1px solid black;
+	padding: 3px 7px 2px 7px;
+	font-weight: bold;
 }
 
 tbody tr:nth-child(odd) {
-   background-color:#d0d0ff
+	background-color:#d0d0ff
 }
 
+/* Preserve whitespace. Wrap text only at line breaks. */
+/* Avoids auto-wrapping the code lines. */
 pre code {
-  /* Preserve whitespace. Wrap text only at line breaks. */
-  /* Avoids auto-wrapping the code lines. */
-  white-space: pre
+	white-space: pre
 }
 
 /* Hover over links on headers */
 .header-link {
-  position: absolute;
-  left: -0.5em;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out 0.1s;
+	position: absolute;
+	left: -0.5em;
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out 0.1s;
 }
 h2:hover .header-link,
 h3:hover .header-link,
@@ -48,6 +48,33 @@ h6:hover .header-link {
 
 /* Fix spacing between menu items */
 .navbar-default .dropdown-menu>li>a {
-  padding-top: 6px;
-  padding-bottom: 6px;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+
+/* custom logo in navbar */
+.rclone-logo {
+	height: 36px;
+}
+
+/* override padding so logo is centered */
+.navbar-brand {
+	padding: 4px 15px;
+}
+
+/* reduce h12345 sizes */
+h1 {
+	font-size: 25px;
+}
+h2 {
+	font-size: 22px;
+}
+h3 {
+	font-size: 20px;
+}
+h4 {
+	font-size: 18px;
+}
+h5 {
+	font-size: 16px;
 }

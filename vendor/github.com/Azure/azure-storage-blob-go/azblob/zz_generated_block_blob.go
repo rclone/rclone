@@ -8,14 +8,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/xml"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // blockBlobClient is the client for the BlockBlob methods of the Azblob service.
@@ -314,16 +313,20 @@ func (client blockBlobClient) stageBlockResponder(resp pipeline.Response) (pipel
 // more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
-// lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
-// limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
+// lease is active and matches this ID. sourceIfModifiedSince is specify this header value to operate only on a blob if
+// it has been modified since the specified date/time. sourceIfUnmodifiedSince is specify this header value to operate
+// only on a blob if it has not been modified since the specified date/time. sourceIfMatch is specify an ETag value to
+// operate only on blobs with a matching value. sourceIfNoneMatch is specify an ETag value to operate only on blobs
+// without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
+// recorded in the analytics logs when storage analytics logging is enabled.
+func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.stageBlockFromURLPreparer(blockID, contentLength, sourceURL, sourceRange, sourceContentMD5, timeout, leaseID, requestID)
+	req, err := client.stageBlockFromURLPreparer(blockID, contentLength, sourceURL, sourceRange, sourceContentMD5, timeout, leaseID, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +338,7 @@ func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID str
 }
 
 // stageBlockFromURLPreparer prepares the StageBlockFromURL request.
-func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -357,6 +360,18 @@ func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentL
 	}
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if sourceIfModifiedSince != nil {
+		req.Header.Set("x-ms-source-if-modified-since", (*sourceIfModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if sourceIfUnmodifiedSince != nil {
+		req.Header.Set("x-ms-source-if-unmodified-since", (*sourceIfUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if sourceIfMatch != nil {
+		req.Header.Set("x-ms-source-if-match", string(*sourceIfMatch))
+	}
+	if sourceIfNoneMatch != nil {
+		req.Header.Set("x-ms-source-if-none-match", string(*sourceIfNoneMatch))
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {

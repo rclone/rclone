@@ -5,6 +5,7 @@ package fstest
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -21,11 +22,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/hash"
-	"github.com/ncw/rclone/fs/walk"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
@@ -34,7 +36,6 @@ import (
 // Globals
 var (
 	RemoteName      = flag.String("remote", "", "Remote to test with, defaults to local filesystem")
-	SubDir          = flag.Bool("subdir", false, "Set to test with a sub directory")
 	Verbose         = flag.Bool("verbose", false, "Set to enable logging")
 	DumpHeaders     = flag.Bool("dump-headers", false, "Set to dump headers (needs -verbose)")
 	DumpBodies      = flag.Bool("dump-bodies", false, "Set to dump bodies (needs -verbose)")
@@ -127,7 +128,7 @@ func (i *Item) CheckHashes(t *testing.T, obj fs.Object) {
 	types := obj.Fs().Hashes().Array()
 	for _, Hash := range types {
 		// Check attributes
-		sum, err := obj.Hash(Hash)
+		sum, err := obj.Hash(context.Background(), Hash)
 		require.NoError(t, err)
 		assert.True(t, hash.Equals(i.Hashes[Hash], sum), fmt.Sprintf("%s/%s: %v hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), Hash, i.Hashes[Hash], sum))
 	}
@@ -137,7 +138,7 @@ func (i *Item) CheckHashes(t *testing.T, obj fs.Object) {
 func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.CheckHashes(t, obj)
 	assert.Equal(t, i.Size, obj.Size(), fmt.Sprintf("%s: size incorrect file=%d vs obj=%d", i.Path, i.Size, obj.Size()))
-	i.CheckModTime(t, obj, obj.ModTime(), precision)
+	i.CheckModTime(t, obj, obj.ModTime(context.Background()), precision)
 }
 
 // WinPath converts a path into a windows safe path
@@ -262,18 +263,21 @@ func filterEmptyDirs(t *testing.T, items []Item, expectedDirs []string) (newExpe
 	return newExpectedDirs
 }
 
-// CheckListingWithPrecision checks the fs to see if it has the
+// CheckListingWithRoot checks the fs to see if it has the
 // expected contents with the given precision.
 //
 // If expectedDirs is non nil then we check those too.  Note that no
 // directories returned is also OK as some remotes don't return
 // directories.
-func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs []string, precision time.Duration) {
+//
+// dir is the directory used for the listing.
+func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expectedDirs []string, precision time.Duration) {
 	if expectedDirs != nil && !f.Features().CanHaveEmptyDirectories {
 		expectedDirs = filterEmptyDirs(t, items, expectedDirs)
 	}
 	is := NewItems(items)
-	oldErrors := accounting.Stats.GetErrors()
+	ctx := context.Background()
+	oldErrors := accounting.Stats(ctx).GetErrors()
 	var objs []fs.Object
 	var dirs []fs.Directory
 	var err error
@@ -283,7 +287,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	gotListing := "<unset>"
 	listingOK := false
 	for i := 1; i <= retries; i++ {
-		objs, dirs, err = walk.GetAll(f, "", true, -1)
+		objs, dirs, err = walk.GetAll(ctx, f, dir, true, -1)
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
@@ -315,8 +319,8 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	}
 	is.Done(t)
 	// Don't notice an error when listing an empty directory
-	if len(items) == 0 && oldErrors == 0 && accounting.Stats.GetErrors() == 1 {
-		accounting.Stats.ResetErrors()
+	if len(items) == 0 && oldErrors == 0 && accounting.Stats(ctx).GetErrors() == 1 {
+		accounting.Stats(ctx).ResetErrors()
 	}
 	// Check the directories
 	if expectedDirs != nil {
@@ -334,6 +338,16 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	}
 }
 
+// CheckListingWithPrecision checks the fs to see if it has the
+// expected contents with the given precision.
+//
+// If expectedDirs is non nil then we check those too.  Note that no
+// directories returned is also OK as some remotes don't return
+// directories.
+func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs []string, precision time.Duration) {
+	CheckListingWithRoot(t, f, "", items, expectedDirs, precision)
+}
+
 // CheckListing checks the fs to see if it has the expected contents
 func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 	precision := f.Precision()
@@ -346,6 +360,49 @@ func CheckItems(t *testing.T, f fs.Fs, items ...Item) {
 	CheckListingWithPrecision(t, f, items, nil, fs.GetModifyWindow(f))
 }
 
+// CompareItems compares a set of DirEntries to a slice of items and a list of dirs
+// The modtimes are compared with the precision supplied
+func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDirs []string, precision time.Duration, what string) {
+	is := NewItems(items)
+	var objs []fs.Object
+	var dirs []fs.Directory
+	wantListing1, wantListing2 := makeListingFromItems(items)
+	for _, entry := range entries {
+		switch x := entry.(type) {
+		case fs.Directory:
+			dirs = append(dirs, x)
+		case fs.Object:
+			objs = append(objs, x)
+			// do nothing
+		default:
+			t.Fatalf("unknown object type %T", entry)
+		}
+	}
+
+	gotListing := makeListingFromObjects(objs)
+	listingOK := wantListing1 == gotListing || wantListing2 == gotListing
+	assert.True(t, listingOK, fmt.Sprintf("%s not equal, want\n  %s or\n  %s got\n  %s", what, wantListing1, wantListing2, gotListing))
+	for _, obj := range objs {
+		require.NotNil(t, obj)
+		is.Find(t, obj, precision)
+	}
+	is.Done(t)
+	// Check the directories
+	if expectedDirs != nil {
+		expectedDirsCopy := make([]string, len(expectedDirs))
+		for i, dir := range expectedDirs {
+			expectedDirsCopy[i] = WinPath(Normalize(dir))
+		}
+		actualDirs := []string{}
+		for _, dir := range dirs {
+			actualDirs = append(actualDirs, WinPath(Normalize(dir.Remote())))
+		}
+		sort.Strings(actualDirs)
+		sort.Strings(expectedDirsCopy)
+		assert.Equal(t, expectedDirsCopy, actualDirs, "directories not equal")
+	}
+}
+
 // Time parses a time string or logs a fatal error
 func Time(timeString string) time.Time {
 	t, err := time.Parse(time.RFC3339Nano, timeString)
@@ -353,24 +410,6 @@ func Time(timeString string) time.Time {
 		log.Fatalf("Failed to parse time %q: %v", timeString, err)
 	}
 	return t
-}
-
-// RandomString create a random string for test purposes
-func RandomString(n int) string {
-	const (
-		vowel     = "aeiou"
-		consonant = "bcdfghjklmnpqrstvwxyz"
-		digit     = "0123456789"
-	)
-	pattern := []string{consonant, vowel, consonant, vowel, consonant, vowel, consonant, digit}
-	out := make([]byte, n)
-	p := 0
-	for i := range out {
-		source := pattern[p]
-		p = (p + 1) % len(pattern)
-		out[i] = source[rand.Intn(len(source))]
-	}
-	return string(out)
 }
 
 // LocalRemote creates a temporary directory name for local remotes
@@ -401,7 +440,7 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 		if !strings.HasSuffix(remoteName, ":") {
 			remoteName += "/"
 		}
-		leafName = "rclone-test-" + RandomString(24)
+		leafName = "rclone-test-" + random.String(24)
 		if !MatchTestRemote.MatchString(leafName) {
 			log.Fatalf("%q didn't match the test remote name regexp", leafName)
 		}
@@ -411,26 +450,20 @@ func RandomRemoteName(remoteName string) (string, string, error) {
 }
 
 // RandomRemote makes a random bucket or subdirectory on the remote
+// from the -remote parameter
 //
 // Call the finalise function returned to Purge the fs at the end (and
 // the parent if necessary)
 //
 // Returns the remote, its url, a finaliser and an error
-func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error) {
+func RandomRemote() (fs.Fs, string, func(), error) {
 	var err error
 	var parentRemote fs.Fs
+	remoteName := *RemoteName
 
 	remoteName, _, err = RandomRemoteName(remoteName)
 	if err != nil {
 		return nil, "", nil, err
-	}
-
-	if subdir {
-		parentRemote, err = fs.NewFs(remoteName)
-		if err != nil {
-			return nil, "", nil, err
-		}
-		remoteName += "/rclone-test-subdir-" + RandomString(8)
 	}
 
 	remote, err := fs.NewFs(remoteName)
@@ -456,23 +489,24 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error)
 //
 // It logs errors rather than returning them
 func Purge(f fs.Fs) {
+	ctx := context.Background()
 	var err error
 	doFallbackPurge := true
 	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
 		fs.Debugf(f, "Purge remote")
-		err = doPurge()
+		err = doPurge(ctx)
 		if err == fs.ErrorCantPurge {
 			doFallbackPurge = true
 		}
 	}
 	if doFallbackPurge {
 		dirs := []string{""}
-		err = walk.ListR(f, "", true, -1, walk.ListAll, func(entries fs.DirEntries) error {
+		err = walk.ListR(ctx, f, "", true, -1, walk.ListAll, func(entries fs.DirEntries) error {
 			var err error
 			entries.ForObject(func(obj fs.Object) {
 				fs.Debugf(f, "Purge object %q", obj.Remote())
-				err = obj.Remove()
+				err = obj.Remove(ctx)
 				if err != nil {
 					log.Printf("purge failed to remove %q: %v", obj.Remote(), err)
 				}
@@ -486,7 +520,7 @@ func Purge(f fs.Fs) {
 		for i := len(dirs) - 1; i >= 0; i-- {
 			dir := dirs[i]
 			fs.Debugf(f, "Purge dir %q", dir)
-			err := f.Rmdir(dir)
+			err := f.Rmdir(ctx, dir)
 			if err != nil {
 				log.Printf("purge failed to rmdir %q: %v", dir, err)
 			}

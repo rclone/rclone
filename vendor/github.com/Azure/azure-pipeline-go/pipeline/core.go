@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"github.com/mattn/go-ieproxy"
 	"net"
 	"net/http"
 	"os"
@@ -204,7 +205,7 @@ func newDefaultHTTPClient() *http.Client {
 	// We want the Transport to have a large connection pool
 	return &http.Client{
 		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
+			Proxy: ieproxy.GetProxyFunc(),
 			// We use Dial instead of DialContext as DialContext has been reported to cause slower performance.
 			Dial /*Context*/ : (&net.Dialer{
 				Timeout:   30 * time.Second,
@@ -253,3 +254,31 @@ type methodFactoryMarker struct {
 func (methodFactoryMarker) New(next Policy, po *PolicyOptions) Policy {
 	panic("methodFactoryMarker policy should have been replaced with a method policy")
 }
+
+// LogSanitizer can be implemented to clean secrets from lines logged by ForceLog
+// By default no implemetation is provided here, because pipeline may be used in many different
+// contexts, so the correct implementation is context-dependent
+type LogSanitizer interface {
+	SanitizeLogMessage(raw string) string
+}
+
+var sanitizer LogSanitizer
+var enableForceLog bool = true
+
+// SetLogSanitizer can be called to supply a custom LogSanitizer.
+// There is no threadsafety or locking on the underlying variable,
+// so call this function just once at startup of your application
+// (Don't later try to change the sanitizer on the fly).
+func SetLogSanitizer(s LogSanitizer)(){
+	sanitizer = s
+}
+
+// SetForceLogEnabled can be used to disable ForceLog
+// There is no threadsafety or locking on the underlying variable,
+// so call this function just once at startup of your application
+// (Don't later try to change the setting on the fly).
+func SetForceLogEnabled(enable bool)() {
+	enableForceLog = enable
+}
+
+

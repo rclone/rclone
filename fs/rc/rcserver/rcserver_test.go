@@ -8,18 +8,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
-	_ "github.com/ncw/rclone/backend/local"
-	"github.com/ncw/rclone/fs/rc"
+	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	testBindAddress = "localhost:51781"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 	testFs          = "testdata/files"
 	remoteURL       = "[" + testFs + "]/" // initial URL path to fetch from that remote
 )
@@ -39,6 +39,7 @@ func TestRcServer(t *testing.T) {
 		rcServer.Close()
 		rcServer.Wait()
 	}()
+	testURL := rcServer.Server.URL()
 
 	// Do the simplest possible test to check the server is alive
 	// Do it a few times to wait for the server to start
@@ -229,7 +230,7 @@ func TestRemoteServing(t *testing.T) {
 			Expected: `{
 	"error": "failed to find object: object not found",
 	"input": null,
-	"path": "/notfound",
+	"path": "notfound",
 	"status": 404
 }
 `,
@@ -263,6 +264,14 @@ func TestRemoteServing(t *testing.T) {
 		}, {
 			Name:     "file",
 			URL:      remoteURL + "file.txt",
+			Status:   http.StatusOK,
+			Expected: "this is file1.txt\n",
+			Headers: map[string]string{
+				"Content-Length": "18",
+			},
+		}, {
+			Name:     "file with no slash after ]",
+			URL:      strings.TrimRight(remoteURL, "/") + "file.txt",
 			Status:   http.StatusOK,
 			Expected: "this is file1.txt\n",
 			Headers: map[string]string{
@@ -449,8 +458,9 @@ func TestMethods(t *testing.T) {
 		Status:   http.StatusOK,
 		Expected: "",
 		Headers: map[string]string{
-			"Access-Control-Allow-Origin":  "*",
-			"Access-Control-Allow-Headers": "",
+			"Access-Control-Allow-Origin":   "http://localhost:5572/",
+			"Access-Control-Request-Method": "POST, OPTIONS, GET, HEAD",
+			"Access-Control-Allow-Headers":  "authorization, Content-Type",
 		},
 	}, {
 		Name:   "bad",
@@ -602,10 +612,7 @@ func TestRCAsync(t *testing.T) {
 		ContentType: "application/json",
 		Body:        `{ "_async":true }`,
 		Status:      http.StatusOK,
-		Expected: `{
-	"jobid": 1
-}
-`,
+		Contains:    regexp.MustCompile(`(?s)\{.*\"jobid\":.*\}`),
 	}, {
 		Name:        "bad",
 		URL:         "rc/noop",

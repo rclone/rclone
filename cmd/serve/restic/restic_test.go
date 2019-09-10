@@ -1,24 +1,22 @@
 // Serve restic tests set up a server and run the integration tests
 // for restic against it.
 
-// +build go1.9
-
 package restic
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"testing"
 
-	_ "github.com/ncw/rclone/backend/all"
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/fstest"
+	_ "github.com/rclone/rclone/backend/all"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	testBindAddress = "localhost:51779"
-	testURL         = "http://" + testBindAddress + "/"
+	testBindAddress = "localhost:0"
 	resticSource    = "../../../../../restic/restic"
 )
 
@@ -35,11 +33,11 @@ func TestRestic(t *testing.T) {
 
 	fstest.Initialise()
 
-	fremote, _, clean, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
+	fremote, _, clean, err := fstest.RandomRemote()
 	assert.NoError(t, err)
 	defer clean()
 
-	err = fremote.Mkdir("")
+	err = fremote.Mkdir(context.Background(), "")
 	assert.NoError(t, err)
 
 	// Start the server
@@ -62,7 +60,7 @@ func TestRestic(t *testing.T) {
 		}
 		cmd := exec.Command("go", args...)
 		cmd.Env = append(os.Environ(),
-			"RESTIC_TEST_REST_REPOSITORY=rest:"+testURL+path,
+			"RESTIC_TEST_REST_REPOSITORY=rest:"+w.Server.URL()+path,
 		)
 		out, err := cmd.CombinedOutput()
 		if len(out) != 0 {

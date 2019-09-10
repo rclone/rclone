@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This is a tool to decrypt file names in rclone logs.
 
@@ -43,13 +43,13 @@ def map_log_file(crypt_map, log_file):
     """
     with open(log_file) as fd:
         for line in fd:
-            for cipher, plain in crypt_map.iteritems():
+            for cipher, plain in crypt_map.items():
                 line = line.replace(cipher, plain)
             sys.stdout.write(line)
 
 def main():
     if len(sys.argv) < 3:
-        print "Syntax: %s <crypt-mapping-file> <log-file>" % sys.argv[0]
+        print("Syntax: %s <crypt-mapping-file> <log-file>" % sys.argv[0])
         raise SystemExit(1)
     mapping_file, log_file = sys.argv[1:]
     crypt_map = read_crypt_map(mapping_file)

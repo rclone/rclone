@@ -3,12 +3,15 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"os"
 	"testing"
 
-	_ "github.com/ncw/rclone/backend/all" // import all the backends
-	"github.com/ncw/rclone/fstest"
+	"github.com/pkg/errors"
+	_ "github.com/rclone/rclone/backend/all" // import all the backends
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -130,8 +133,8 @@ func TestVFSStat(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	node, err := vfs.Stat("file1")
@@ -167,8 +170,8 @@ func TestVFSStatParent(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	node, leaf, err := vfs.StatParent("file1")
@@ -201,8 +204,8 @@ func TestVFSOpenFile(t *testing.T) {
 	defer r.Finalise()
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("file1", "file1 contents", t1)
-	file2 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
+	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	fd, err := vfs.OpenFile("file1", os.O_RDONLY, 0777)
@@ -222,7 +225,10 @@ func TestVFSOpenFile(t *testing.T) {
 	fd, err = vfs.OpenFile("dir/new_file.txt", os.O_WRONLY|os.O_CREATE, 0777)
 	require.NoError(t, err)
 	assert.NotNil(t, fd)
-	require.NoError(t, fd.Close())
+	err = fd.Close()
+	if errors.Cause(err) != fs.ErrorCantUploadEmptyFiles {
+		require.NoError(t, err)
+	}
 
 	fd, err = vfs.OpenFile("not found/new_file.txt", os.O_WRONLY|os.O_CREATE, 0777)
 	assert.Equal(t, os.ErrNotExist, err)
@@ -238,7 +244,7 @@ func TestVFSRename(t *testing.T) {
 	}
 	vfs := New(r.Fremote, nil)
 
-	file1 := r.WriteObject("dir/file2", "file2 contents", t2)
+	file1 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	err := vfs.Rename("dir/file2", "dir/file1")

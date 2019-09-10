@@ -1,14 +1,16 @@
 package vfs
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fstest"
+	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +27,7 @@ func rwHandleCreateReadOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
 	opt.CacheMode = CacheModeFull
 	vfs := New(r.Fremote, &opt)
 
-	file1 := r.WriteObject("dir/file1", "0123456789abcdef", t1)
+	file1 := r.WriteObject(context.Background(), "dir/file1", "0123456789abcdef", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	h, err := vfs.OpenFile("dir/file1", os.O_RDONLY, 0777)
@@ -415,6 +417,10 @@ func TestRWFileHandleWriteNoWrite(t *testing.T) {
 
 	// Close the file without writing to it
 	err := fh.Close()
+	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
+		t.Logf("skipping test: %v", err)
+		return
+	}
 	assert.NoError(t, err)
 
 	// Create a different file (not in the cache)

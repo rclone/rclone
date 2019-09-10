@@ -1,6 +1,7 @@
 package tree
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -10,11 +11,12 @@ import (
 	"time"
 
 	"github.com/a8m/tree"
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/log"
-	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/dirtree"
+	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/spf13/cobra"
 )
 
@@ -117,7 +119,7 @@ short options as they conflict with rclone's short options.
 
 // Tree lists fsrc to outFile using the Options passed in
 func Tree(fsrc fs.Fs, outFile io.Writer, opts *tree.Options) error {
-	dirs, err := walk.NewDirTree(fsrc, "", false, opts.DeepLevel)
+	dirs, err := walk.NewDirTree(context.Background(), fsrc, "", false, opts.DeepLevel)
 	if err != nil {
 		return err
 	}
@@ -165,7 +167,7 @@ func (to *FileInfo) Mode() os.FileMode {
 
 // ModTime is modification time
 func (to *FileInfo) ModTime() time.Time {
-	return to.entry.ModTime()
+	return to.entry.ModTime(context.Background())
 }
 
 // IsDir is abbreviation for Mode().IsDir()
@@ -185,10 +187,10 @@ func (to *FileInfo) String() string {
 }
 
 // Fs maps an fs.Fs into a tree.Fs
-type Fs walk.DirTree
+type Fs dirtree.DirTree
 
 // NewFs creates a new tree
-func NewFs(dirs walk.DirTree) Fs {
+func NewFs(dirs dirtree.DirTree) Fs {
 	return Fs(dirs)
 }
 
@@ -200,7 +202,7 @@ func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 	if filePath == "" {
 		return &FileInfo{fs.NewDir("", time.Now())}, nil
 	}
-	_, entry := walk.DirTree(dirs).Find(filePath)
+	_, entry := dirtree.DirTree(dirs).Find(filePath)
 	if entry == nil {
 		return nil, errors.Errorf("Couldn't find %q in directory cache", filePath)
 	}

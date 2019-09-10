@@ -2,6 +2,8 @@ package termbox
 
 import (
 	"syscall"
+
+	"github.com/mattn/go-runewidth"
 )
 
 // public API
@@ -114,13 +116,23 @@ func Flush() error {
 	update_size_maybe()
 	prepare_diff_messages()
 	for _, diff := range diffbuf {
+		chars := []char_info{}
+		for _, char := range diff.chars {
+			chars = append(chars, char)
+			if runewidth.RuneWidth(rune(char.char)) > 1 {
+				chars = append(chars, char_info{
+					char: ' ',
+					attr: char.attr,
+				})
+			}
+		}
 		r := small_rect{
 			left:   0,
 			top:    diff.pos,
 			right:  term_size.x - 1,
 			bottom: diff.pos + diff.lines - 1,
 		}
-		write_console_output(out, diff.chars, r)
+		write_console_output(out, chars, r)
 	}
 	if !is_cursor_hidden(cursor_x, cursor_y) {
 		move_cursor(cursor_x, cursor_y)

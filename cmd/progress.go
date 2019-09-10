@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/log"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/log"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -82,7 +82,7 @@ var (
 	progressMu sync.Mutex
 )
 
-// printProgress prings the progress with an optional log
+// printProgress prints the progress with an optional log
 func printProgress(logMessage string) {
 	progressMu.Lock()
 	defer progressMu.Unlock()
@@ -93,7 +93,7 @@ func printProgress(logMessage string) {
 		w, h = 80, 25
 	}
 	_ = h
-	stats := strings.TrimSpace(accounting.Stats.String())
+	stats := strings.TrimSpace(accounting.GlobalStats().String())
 	logMessage = strings.TrimSpace(logMessage)
 
 	out := func(s string) {

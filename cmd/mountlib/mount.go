@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
-	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +37,13 @@ var (
 	NoAppleXattr       = false       // do not use noapplexattr by default
 	DaemonTimeout      time.Duration // OSXFUSE only
 )
+
+func init() {
+	// DaemonTimeout defaults to non zero for macOS and freebsd
+	if runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" {
+		DaemonTimeout = 15 * time.Minute
+	}
+}
 
 // Check is folder is empty
 func checkMountEmpty(mountpoint string) error {
@@ -154,10 +161,7 @@ applications won't work with their files on an rclone mount without
 Caching](#file-caching) section for more info.
 
 The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
-Hubic) won't work from the root - you will need to specify a bucket,
-or a path within the bucket.  So ` + "`swift:`" + ` won't work whereas
-` + "`swift:bucket`" + ` will as will ` + "`swift:bucket/path`" + `.
-None of these support the concept of directories, so empty
+Hubic) do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
 
@@ -183,9 +187,9 @@ too many callbacks to rclone from the kernel.
 In theory 0s should be the correct value for filesystems which can
 change outside the control of the kernel. However this causes quite a
 few problems such as
-[rclone using too much memory](https://github.com/ncw/rclone/issues/2157),
+[rclone using too much memory](https://github.com/rclone/rclone/issues/2157),
 [rclone not serving files to samba](https://forum.rclone.org/t/rclone-1-39-vs-1-40-mount-issue/5112)
-and [excessive time listing directories](https://github.com/ncw/rclone/issues/2095#issuecomment-371141147).
+and [excessive time listing directories](https://github.com/rclone/rclone/issues/2095#issuecomment-371141147).
 
 The kernel can cache the info about a file for the time given by
 "--attr-timeout". You may see corruption if the remote file changes

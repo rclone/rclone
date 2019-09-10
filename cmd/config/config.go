@@ -1,11 +1,17 @@
 package config
 
 import (
-	"errors"
+	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"sort"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/rc"
+	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +26,9 @@ func init() {
 	configCommand.AddCommand(configUpdateCommand)
 	configCommand.AddCommand(configDeleteCommand)
 	configCommand.AddCommand(configPasswordCommand)
+	configCommand.AddCommand(configReconnectCommand)
+	configCommand.AddCommand(configDisconnectCommand)
+	configCommand.AddCommand(configUserInfoCommand)
 }
 
 var configCommand = &cobra.Command{
@@ -98,6 +107,9 @@ Note that if the config process would normally ask a question the
 default is taken.  Each time that happens rclone will print a message
 saying how to affect the value taken.
 
+If any of the parameters passed is a password field, then rclone will
+automatically obscure them before putting them in the config file.
+
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
@@ -125,9 +137,13 @@ var configUpdateCommand = &cobra.Command{
 Update an existing remote's options. The options should be passed in
 in pairs of <key> <value>.
 
-For example to update the env_auth field of a remote of name myremote you would do:
+For example to update the env_auth field of a remote of name myremote
+you would do:
 
     rclone config update myremote swift env_auth true
+
+If any of the parameters passed is a password field, then rclone will
+automatically obscure them before putting them in the config file.
 
 If the remote uses oauth the token will be updated, if you don't
 require this add an extra parameter thus:
@@ -168,6 +184,9 @@ should be passed in in pairs of <key> <value>.
 For example to set password of a remote of name myremote you would do:
 
     rclone config password myremote fieldname mypassword
+
+This command is obsolete now that "config update" and "config create"
+both support obscuring passwords directly.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(3, 256, command, args)
@@ -196,4 +215,100 @@ func argsToMap(args []string) (out rc.Params, err error) {
 		out[args[i]] = args[i+1]
 	}
 	return out, nil
+}
+
+var configReconnectCommand = &cobra.Command{
+	Use:   "reconnect remote:",
+	Short: `Re-authenticates user with remote.`,
+	Long: `
+This reconnects remote: passed in to the cloud storage system.
+
+To disconnect the remote use "rclone config disconnect".
+
+This normally means going through the interactive oauth flow again.
+`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(1, 1, command, args)
+		fsInfo, configName, _, config, err := fs.ConfigFs(args[0])
+		if err != nil {
+			return err
+		}
+		if fsInfo.Config == nil {
+			return errors.Errorf("%s: doesn't support Reconnect", configName)
+		}
+		fsInfo.Config(configName, config)
+		return nil
+	},
+}
+
+var configDisconnectCommand = &cobra.Command{
+	Use:   "disconnect remote:",
+	Short: `Disconnects user from remote`,
+	Long: `
+This disconnects the remote: passed in to the cloud storage system.
+
+This normally means revoking the oauth token.
+
+To reconnect use "rclone config reconnect".
+`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(1, 1, command, args)
+		f := cmd.NewFsSrc(args)
+		doDisconnect := f.Features().Disconnect
+		if doDisconnect == nil {
+			return errors.Errorf("%v doesn't support Disconnect", f)
+		}
+		err := doDisconnect(context.Background())
+		if err != nil {
+			return errors.Wrap(err, "Disconnect call failed")
+		}
+		return nil
+	},
+}
+
+var (
+	jsonOutput bool
+)
+
+func init() {
+	configUserInfoCommand.Flags().BoolVar(&jsonOutput, "json", false, "Format output as JSON")
+}
+
+var configUserInfoCommand = &cobra.Command{
+	Use:   "userinfo remote:",
+	Short: `Prints info about logged in user of remote.`,
+	Long: `
+This prints the details of the person logged in to the cloud storage
+system.
+`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(1, 1, command, args)
+		f := cmd.NewFsSrc(args)
+		doUserInfo := f.Features().UserInfo
+		if doUserInfo == nil {
+			return errors.Errorf("%v doesn't support UserInfo", f)
+		}
+		u, err := doUserInfo(context.Background())
+		if err != nil {
+			return errors.Wrap(err, "UserInfo call failed")
+		}
+		if jsonOutput {
+			out := json.NewEncoder(os.Stdout)
+			out.SetIndent("", "\t")
+			return out.Encode(u)
+		}
+		var keys []string
+		var maxKeyLen int
+		for key := range u {
+			keys = append(keys, key)
+			if len(key) > maxKeyLen {
+				maxKeyLen = len(key)
+			}
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			fmt.Printf("%*s: %s\n", maxKeyLen, key, u[key])
+		}
+		return nil
+	},
 }

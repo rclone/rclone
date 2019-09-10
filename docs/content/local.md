@@ -4,7 +4,7 @@ description: "Rclone docs for the local filesystem"
 date: "2014-04-26"
 ---
 
-<i class="fa fa-file"></i> Local Filesystem
+<i class="fas fa-hdd"></i> Local Filesystem
 -------------------------------------------
 
 Local paths are specified as normal filesystem paths, eg `/path/to/wherever`, so
@@ -52,7 +52,7 @@ converted to the UNC path `\\?\c:\files` in the output,
 and `\\server\share` is converted to `\\?\UNC\server\share`.
 
 However, in rare cases this may cause problems with buggy file
-system drivers like [EncFS](https://github.com/ncw/rclone/issues/261).
+system drivers like [EncFS](https://github.com/rclone/rclone/issues/261).
 To disable UNC conversion globally, add this to your `.rclone.conf` file:
 
 ```
@@ -301,7 +301,7 @@ are being uploaded and aborts with a message which starts "can't copy
 - source file is being updated" if the file changes during upload.
 
 However on some file systems this modification time check may fail (eg
-[Glusterfs #2206](https://github.com/ncw/rclone/issues/2206)) so this
+[Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
 check can be disabled with this flag.
 
 - Config:      no_check_updated
@@ -315,6 +315,32 @@ Don't cross filesystem boundaries (unix/macOS only).
 
 - Config:      one_file_system
 - Env Var:     RCLONE_LOCAL_ONE_FILE_SYSTEM
+- Type:        bool
+- Default:     false
+
+#### --local-case-sensitive
+
+Force the filesystem to report itself as case sensitive.
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.
+
+- Config:      case_sensitive
+- Env Var:     RCLONE_LOCAL_CASE_SENSITIVE
+- Type:        bool
+- Default:     false
+
+#### --local-case-insensitive
+
+Force the filesystem to report itself as case insensitive
+
+Normally the local backend declares itself as case insensitive on
+Windows/macOS and case sensitive for everything else.  Use this flag
+to override the default choice.
+
+- Config:      case_insensitive
+- Env Var:     RCLONE_LOCAL_CASE_INSENSITIVE
 - Type:        bool
 - Default:     false
 

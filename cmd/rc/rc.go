@@ -2,6 +2,7 @@ package rc
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,11 +10,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fs/fshttp"
-	"github.com/ncw/rclone/fs/rc"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -24,6 +25,7 @@ var (
 	jsonInput = ""
 	authUser  = ""
 	authPass  = ""
+	loopback  = false
 )
 
 func init() {
@@ -33,6 +35,7 @@ func init() {
 	commandDefintion.Flags().StringVarP(&jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args.")
 	commandDefintion.Flags().StringVarP(&authUser, "user", "", "", "Username to use to rclone remote control.")
 	commandDefintion.Flags().StringVarP(&authPass, "pass", "", "", "Password to use to connect to rclone remote control.")
+	commandDefintion.Flags().BoolVarP(&loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP.")
 }
 
 var commandDefintion = &cobra.Command{
@@ -58,15 +61,22 @@ The --json parameter can be used to pass in a JSON blob as an input
 instead of key=value arguments.  This is the only way of passing in
 more complicated values.
 
+Use --loopback to connect to the rclone instance running "rclone rc".
+This is very useful for testing commands without having to run an
+rclone rc server, eg:
+
+    rclone rc --loopback operations/about fs=/
+
 Use "rclone rc" to see a list of all possible commands.`,
 	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(0, 1E9, command, args)
+		cmd.CheckArgs(0, 1e9, command, args)
 		cmd.Run(false, false, command, func() error {
+			ctx := context.Background()
 			parseFlags()
 			if len(args) == 0 {
-				return list()
+				return list(ctx)
 			}
-			return run(args)
+			return run(ctx, args)
 		})
 	},
 }
@@ -101,7 +111,25 @@ func setAlternateFlag(flagName string, output *string) {
 // do a call from (path, in) to (out, err).
 //
 // if err is set, out may be a valid error return or it may be nil
-func doCall(path string, in rc.Params) (out rc.Params, err error) {
+func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err error) {
+	// If loopback set, short circuit HTTP request
+	if loopback {
+		call := rc.Calls.Get(path)
+		if call == nil {
+			return nil, errors.Errorf("method %q not found", path)
+		}
+		out, err = call.Fn(context.Background(), in)
+		if err != nil {
+			return nil, errors.Wrap(err, "loopback call failed")
+		}
+		// Reshape (serialize then deserialize) the data so it is in the form expected
+		err = rc.Reshape(&out, out)
+		if err != nil {
+			return nil, errors.Wrap(err, "loopback reshape failed")
+		}
+		return out, nil
+	}
+
 	// Do HTTP request
 	client := fshttp.NewClient(fs.Config)
 	url += path
@@ -114,6 +142,7 @@ func doCall(path string, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make request")
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 	req.Header.Set("Content-Type", "application/json")
 	if authUser != "" || authPass != "" {
@@ -155,7 +184,7 @@ func doCall(path string, in rc.Params) (out rc.Params, err error) {
 }
 
 // Run the remote control command passed in
-func run(args []string) (err error) {
+func run(ctx context.Context, args []string) (err error) {
 	path := strings.Trim(args[0], "/")
 
 	// parse input
@@ -181,7 +210,7 @@ func run(args []string) (err error) {
 	}
 
 	// Do the call
-	out, callErr := doCall(path, in)
+	out, callErr := doCall(ctx, path, in)
 
 	// Write the JSON blob to stdout if required
 	if out != nil && !noOutput {
@@ -195,8 +224,8 @@ func run(args []string) (err error) {
 }
 
 // List the available commands to stdout
-func list() error {
-	list, err := doCall("rc/list", nil)
+func list(ctx context.Context) error {
+	list, err := doCall(ctx, "rc/list", nil)
 	if err != nil {
 		return errors.Wrap(err, "failed to list")
 	}
@@ -209,7 +238,7 @@ func list() error {
 		if !ok {
 			return errors.New("bad JSON")
 		}
-		fmt.Printf("### %s: %s\n\n", info["Path"], info["Title"])
+		fmt.Printf("### %s: %s {#%s}\n\n", info["Path"], info["Title"], info["Path"])
 		fmt.Printf("%s\n\n", info["Help"])
 		if authRequired := info["AuthRequired"]; authRequired != nil {
 			if authRequired.(bool) {

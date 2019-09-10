@@ -1,9 +1,9 @@
 package httpflags
 
 import (
-	"github.com/ncw/rclone/cmd/serve/httplib"
-	"github.com/ncw/rclone/fs/config/flags"
-	"github.com/ncw/rclone/fs/rc"
+	"github.com/rclone/rclone/cmd/serve/httplib"
+	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/pflag"
 )
 
@@ -26,6 +26,8 @@ func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *httplib.Options)
 	flags.StringVarP(flagSet, &Opt.Realm, prefix+"realm", "", Opt.Realm, "realm for authentication")
 	flags.StringVarP(flagSet, &Opt.BasicUser, prefix+"user", "", Opt.BasicUser, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.BasicPass, prefix+"pass", "", Opt.BasicPass, "Password for authentication.")
+	flags.StringVarP(flagSet, &Opt.BaseURL, prefix+"baseurl", "", Opt.BaseURL, "Prefix for URLs - leave blank for root.")
+
 }
 
 // AddFlags adds flags for the httplib

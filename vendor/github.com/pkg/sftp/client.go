@@ -884,7 +884,7 @@ func (f *File) Read(b []byte) (int, error) {
 // maximise throughput for transferring the entire file (especially
 // over high latency links).
 func (f *File) WriteTo(w io.Writer) (int64, error) {
-	fi, err := f.Stat()
+	fi, err := f.c.Stat(f.path)
 	if err != nil {
 		return 0, err
 	}

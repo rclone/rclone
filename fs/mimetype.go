@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"context"
 	"mime"
 	"path"
 	"strings"
@@ -17,10 +18,10 @@ func MimeTypeFromName(remote string) (mimeType string) {
 
 // MimeType returns the MimeType from the object, either by calling
 // the MimeTyper interface or using MimeTypeFromName
-func MimeType(o ObjectInfo) (mimeType string) {
+func MimeType(ctx context.Context, o ObjectInfo) (mimeType string) {
 	// Read the MimeType from the optional interface if available
 	if do, ok := o.(MimeTyper); ok {
-		mimeType = do.MimeType()
+		mimeType = do.MimeType(ctx)
 		// Debugf(o, "Read MimeType as %q", mimeType)
 		if mimeType != "" {
 			return mimeType
@@ -33,10 +34,10 @@ func MimeType(o ObjectInfo) (mimeType string) {
 //
 // It returns "inode/directory" for directories, or uses
 // MimeType(Object)
-func MimeTypeDirEntry(item DirEntry) string {
+func MimeTypeDirEntry(ctx context.Context, item DirEntry) string {
 	switch x := item.(type) {
 	case Object:
-		return MimeType(x)
+		return MimeType(ctx, x)
 	case Directory:
 		return "inode/directory"
 	}
