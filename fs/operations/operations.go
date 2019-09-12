@@ -341,6 +341,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						} else {
 							actionTaken = "Copied (Rcat, new)"
 						}
+						// NB Rcat closes in0
 						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx))
 						newDst = dst
 					} else {
