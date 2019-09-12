@@ -217,11 +217,11 @@ var retryErrorCodes = []int{
 // deserve to be retried. It returns the err as a convenience.
 // Retries password authorization (once) in a special case of access denied.
 func shouldRetry(res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, error) {
-	if res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
+	if res != nil && res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
 		reAuthErr := f.reAuthorize(opts, err)
 		return reAuthErr == nil, err // return an original error
 	}
-	if f.quirks.retry400 && res.StatusCode == 400 {
+	if res != nil && res.StatusCode == 400 && f.quirks.retry400 {
 		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(res, retryErrorCodes), err
