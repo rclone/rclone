@@ -118,11 +118,15 @@ func (acc *Account) StopBuffering() {
 // async buffer (if any) and re-adding it
 func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
-	acc.StopBuffering()
+	if acc.withBuf {
+		acc.StopBuffering()
+	}
 	acc.in = in
 	acc.close = in
 	acc.origIn = in
-	acc.WithBuffer()
+	if acc.withBuf {
+		acc.WithBuffer()
+	}
 	acc.mu.Unlock()
 }
 
