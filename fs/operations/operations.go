@@ -312,6 +312,9 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			} else {
 				_ = in.Close()
 			}
+			if err == fs.ErrorCantCopy {
+				tr.Reset() // skip incomplete accounting - will be overwritten by the manual copy below
+			}
 		} else {
 			err = fs.ErrorCantCopy
 		}
