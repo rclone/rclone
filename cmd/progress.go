@@ -23,10 +23,29 @@ const (
 	logTimeFormat = "2006-01-02 15:04:05"
 )
 
+var (
+	initTerminal    func() error
+	writeToTerminal func([]byte)
+)
+
+// Initialise the VT100 terminal
+func initTerminalVT100() error {
+	return nil
+}
+
+// Write to the VT100 terminal
+func writeToTerminalVT100(b []byte) {
+	_, _ = os.Stdout.Write(b)
+}
+
 // startProgress starts the progress bar printing
 //
 // It returns a func which should be called to stop the stats.
 func startProgress() func() {
+	if os.Getenv("TERM") != "" {
+		initTerminal = initTerminalVT100
+		writeToTerminal = writeToTerminalVT100
+	}
 	err := initTerminal()
 	if err != nil {
 		fs.Errorf(nil, "Failed to start progress: %v", err)

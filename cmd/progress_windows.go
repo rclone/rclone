@@ -16,7 +16,13 @@ var (
 	ansiParser *ansiterm.AnsiParser
 )
 
-func initTerminal() error {
+func init() {
+	// Default terminal is Windows console for Windows
+	initTerminal = initTerminalWindows
+	writeToTerminal = writeToTerminalWindows
+}
+
+func initTerminalWindows() error {
 	winEventHandler := winterm.CreateWinEventHandler(os.Stdout.Fd(), os.Stdout)
 	if winEventHandler == nil {
 		err := syscall.GetLastError()
@@ -29,7 +35,7 @@ func initTerminal() error {
 	return nil
 }
 
-func writeToTerminal(b []byte) {
+func writeToTerminalWindows(b []byte) {
 	// Remove all non-ASCII characters until this is fixed
 	// https://github.com/Azure/go-ansiterm/issues/26
 	r := []rune(string(b))

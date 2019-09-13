@@ -2,12 +2,8 @@
 
 package cmd
 
-import "os"
-
-func initTerminal() error {
-	return nil
-}
-
-func writeToTerminal(b []byte) {
-	_, _ = os.Stdout.Write(b)
+func init() {
+	// Default terminal is VT100 for non Windows
+	initTerminal = initTerminalVT100
+	writeToTerminal = writeToTerminalVT100
 }
