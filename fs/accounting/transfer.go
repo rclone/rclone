@@ -115,6 +115,20 @@ func (tr *Transfer) Done(err error) {
 	}
 }
 
+// Reset allows to switch the Account to another transfer method.
+func (tr *Transfer) Reset() {
+	tr.mu.RLock()
+	acc := tr.acc
+	tr.acc = nil
+	tr.mu.RUnlock()
+
+	if acc != nil {
+		if err := acc.Close(); err != nil {
+			fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "can't close account: %+v\n", err)
+		}
+	}
+}
+
 // Account returns reader that knows how to keep track of transfer progress.
 func (tr *Transfer) Account(in io.ReadCloser) *Account {
 	tr.mu.Lock()
