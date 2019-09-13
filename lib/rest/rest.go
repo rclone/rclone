@@ -444,6 +444,9 @@ func (api *Client) callCodec(ctx context.Context, opts *Opts, request interface{
 
 		var overhead int64
 		opts.Body, opts.ContentType, overhead, err = MultipartUpload(opts.Body, params, opts.MultipartContentName, opts.MultipartFileName)
+		if err != nil {
+			return nil, err
+		}
 		if opts.ContentLength != nil {
 			*opts.ContentLength += overhead
 		}
