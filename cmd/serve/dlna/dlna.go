@@ -116,6 +116,9 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 		"ConnectionManager": &connectionManagerService{
 			server: s,
 		},
+		"X_MS_MediaReceiverRegistrar": &mediaReceiverRegistrarService{
+			server: s,
+		},
 	}
 
 	// Setup the various http routes.
@@ -248,7 +251,7 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 // Handle a service control HTTP request.
 func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapActionString := r.Header.Get("SOAPACTION")
-	soapAction, err := upnp.ParseActionHTTPHeader(soapActionString)
+	soapAction, err := parseActionHTTPHeader(soapActionString)
 	if err != nil {
 		serveError(s, w, "Could not parse SOAPACTION header", err)
 		return
