@@ -245,7 +245,15 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 				"UpdateID":       cds.updateIDString(),
 			}, nil
 		case "BrowseMetadata":
-			result, err := xml.Marshal(obj)
+			node, err := cds.vfs.Stat(obj.Path)
+			if err != nil {
+				return nil, err
+			}
+			upnpObject, err := cds.cdsObjectToUpnpavObject(obj, node, host)
+			if err != nil {
+				return nil, err
+			}
+			result, err := xml.Marshal(upnpObject)
 			if err != nil {
 				return nil, err
 			}
