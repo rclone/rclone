@@ -108,6 +108,17 @@ func (os Options) setValues() {
 	}
 }
 
+// Get the Option corresponding to name or return nil if not found
+func (os Options) Get(name string) *Option {
+	for i := range os {
+		opt := &os[i]
+		if opt.Name == name {
+			return opt
+		}
+	}
+	return nil
+}
+
 // OptionVisibility controls whether the options are visible in the
 // configurator or the command line.
 type OptionVisibility byte
@@ -165,6 +176,9 @@ func (o *Option) GetValue() interface{} {
 	val := o.Value
 	if val == nil {
 		val = o.Default
+		if val == nil {
+			val = ""
+		}
 	}
 	return val
 }
@@ -1120,11 +1134,24 @@ func (configName configEnvVars) Get(key string) (value string, ok bool) {
 }
 
 // A configmap.Getter to read from the environment RCLONE_option_name
-type optionEnvVars string
+type optionEnvVars struct {
+	fsInfo *RegInfo
+}
 
 // Get a config item from the option environment variables if possible
-func (prefix optionEnvVars) Get(key string) (value string, ok bool) {
-	return os.LookupEnv(OptionToEnv(string(prefix) + "-" + key))
+func (oev optionEnvVars) Get(key string) (value string, ok bool) {
+	opt := oev.fsInfo.Options.Get(key)
+	if opt == nil {
+		return "", false
+	}
+	// For options with NoPrefix set, check without prefix too
+	if opt.NoPrefix {
+		value, ok = os.LookupEnv(OptionToEnv(key))
+		if ok {
+			return value, ok
+		}
+	}
+	return os.LookupEnv(OptionToEnv(oev.fsInfo.Prefix + "-" + key))
 }
 
 // A configmap.Getter to read either the default value or the set
@@ -1137,14 +1164,9 @@ type regInfoValues struct {
 // override the values in configMap with the either the flag values or
 // the default values
 func (r *regInfoValues) Get(key string) (value string, ok bool) {
-	for i := range r.fsInfo.Options {
-		o := &r.fsInfo.Options[i]
-		if o.Name == key {
-			if r.useDefault || o.Value != nil {
-				return o.String(), true
-			}
-			break
-		}
+	opt := r.fsInfo.Options.Get(key)
+	if opt != nil && (r.useDefault || opt.Value != nil) {
+		return opt.String(), true
 	}
 	return "", false
 }
@@ -1195,7 +1217,7 @@ func ConfigMap(fsInfo *RegInfo, configName string) (config *configmap.Map) {
 
 	// backend specific environment vars
 	if fsInfo != nil {
-		config.AddGetter(optionEnvVars(fsInfo.Prefix))
+		config.AddGetter(optionEnvVars{fsInfo: fsInfo})
 	}
 
 	// config file
