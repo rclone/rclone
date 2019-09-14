@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/vfs"
@@ -90,4 +91,33 @@ func TestServeContent(t *testing.T) {
 	assert.NoError(t, err)
 
 	require.Equal(t, goldenContents, actualContents)
+}
+
+// Check that ContentDirectory#Browse returns appropriate metadata on the root container.
+func TestContentDirectoryBrowseMetadata(t *testing.T) {
+	// Sample from: https://github.com/rclone/rclone/issues/3253#issuecomment-524317469
+	req, err := http.NewRequest("POST", testURL+"ctl", strings.NewReader(`
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"
+            s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+    <s:Body>
+        <u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">
+            <ObjectID>0</ObjectID>
+            <BrowseFlag>BrowseMetadata</BrowseFlag>
+            <Filter>*</Filter>
+            <StartingIndex>0</StartingIndex>
+            <RequestedCount>0</RequestedCount>
+            <SortCriteria></SortCriteria>
+        </u:Browse>
+    </s:Body>
+</s:Envelope>`))
+	require.NoError(t, err)
+	req.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	body, err := ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Contains(t, string(body), "&lt;container ")
+	require.NotContains(t, string(body), "&lt;item ")
 }
