@@ -456,7 +456,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					fs:     f,
 					remote: remote,
 				}
-				switch err = file.stat(ctx); err {
+				switch err := file.stat(ctx); err {
 				case nil:
 					add(file)
 				case fs.ErrorNotAFile:
