@@ -54,6 +54,8 @@ backends:
  - backend:  "s3"
    remote:   "TestS3Minio:"
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "s3"
    remote:   "TestS3Wasabi:"
    fastlist: true
@@ -62,11 +64,13 @@ backends:
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "s3"
    remote:   "TestS3Ceph:"
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "s3"
    remote:   "TestS3Alibaba:"
    fastlist: true
@@ -114,6 +118,7 @@ backends:
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
+     - TestDirRename
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    fastlist: false
