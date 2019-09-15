@@ -1,10 +1,17 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-09-08"
+date: "2019-09-15"
 ---
 
 # Changelog
+
+## v1.49.3 - 2019-09-15
+
+* Bug Fixes
+    * accounting
+        * Fix total duration calculation (Aleksandar Jankovic)
+        * Fix "file already closed" on transfer retries (Nick Craig-Wood)
 
 ## v1.49.2 - 2019-09-08
 

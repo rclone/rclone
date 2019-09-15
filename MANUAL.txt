@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Sep 08, 2019
+Sep 15, 2019
 
 
 
@@ -7856,7 +7856,7 @@ These flags are available for every command.
           --use-json-log                         Use json log format.
           --use-mmap                             Use mmap allocator (see docs).
           --use-server-modtime                   Use server modified time instead of object metadata
-          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.2")
+          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.3")
       -v, --verbose count                        Print lots more stuff (repeat for more)
 
 
@@ -17953,6 +17953,15 @@ override the default choice.
 
 
 CHANGELOG
+
+
+v1.49.3 - 2019-09-15
+
+-   Bug Fixes
+    -   accounting
+        -   Fix total duration calculation (Aleksandar Jankovic)
+        -   Fix “file already closed” on transfer retries (Nick
+            Craig-Wood)
 
 
 v1.49.2 - 2019-09-08
