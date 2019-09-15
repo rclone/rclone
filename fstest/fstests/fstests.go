@@ -579,112 +579,6 @@ func Run(t *testing.T, opt *Opt) {
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
 		})
 
-		t.Run("FsPutChunked", func(t *testing.T) {
-			skipIfNotOk(t)
-			if testing.Short() {
-				t.Skip("not running with -short")
-			}
-
-			setUploadChunkSizer, _ := remote.(SetUploadChunkSizer)
-			if setUploadChunkSizer == nil {
-				t.Skipf("%T does not implement SetUploadChunkSizer", remote)
-			}
-
-			setUploadCutoffer, _ := remote.(SetUploadCutoffer)
-
-			minChunkSize := opt.ChunkedUpload.MinChunkSize
-			if minChunkSize < 100 {
-				minChunkSize = 100
-			}
-			if opt.ChunkedUpload.CeilChunkSize != nil {
-				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
-			}
-
-			maxChunkSize := 2 * fs.MebiByte
-			if maxChunkSize < 2*minChunkSize {
-				maxChunkSize = 2 * minChunkSize
-			}
-			if opt.ChunkedUpload.MaxChunkSize > 0 && maxChunkSize > opt.ChunkedUpload.MaxChunkSize {
-				maxChunkSize = opt.ChunkedUpload.MaxChunkSize
-			}
-			if opt.ChunkedUpload.CeilChunkSize != nil {
-				maxChunkSize = opt.ChunkedUpload.CeilChunkSize(maxChunkSize)
-			}
-
-			next := func(f func(fs.SizeSuffix) fs.SizeSuffix) fs.SizeSuffix {
-				s := f(minChunkSize)
-				if s > maxChunkSize {
-					s = minChunkSize
-				}
-				return s
-			}
-
-			chunkSizes := fs.SizeSuffixList{
-				minChunkSize,
-				minChunkSize + (maxChunkSize-minChunkSize)/3,
-				next(NextPowerOfTwo),
-				next(NextMultipleOf(100000)),
-				next(NextMultipleOf(100001)),
-				maxChunkSize,
-			}
-			chunkSizes.Sort()
-
-			// Set the minimum chunk size, upload cutoff and reset it at the end
-			oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(minChunkSize)
-			require.NoError(t, err)
-			var oldUploadCutoff fs.SizeSuffix
-			if setUploadCutoffer != nil {
-				oldUploadCutoff, err = setUploadCutoffer.SetUploadCutoff(minChunkSize)
-				require.NoError(t, err)
-			}
-			defer func() {
-				_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
-				assert.NoError(t, err)
-				if setUploadCutoffer != nil {
-					_, err := setUploadCutoffer.SetUploadCutoff(oldUploadCutoff)
-					assert.NoError(t, err)
-				}
-			}()
-
-			var lastCs fs.SizeSuffix
-			for _, cs := range chunkSizes {
-				if cs <= lastCs {
-					continue
-				}
-				if opt.ChunkedUpload.CeilChunkSize != nil {
-					cs = opt.ChunkedUpload.CeilChunkSize(cs)
-				}
-				lastCs = cs
-
-				t.Run(cs.String(), func(t *testing.T) {
-					_, err := setUploadChunkSizer.SetUploadChunkSize(cs)
-					require.NoError(t, err)
-					if setUploadCutoffer != nil {
-						_, err = setUploadCutoffer.SetUploadCutoff(cs)
-						require.NoError(t, err)
-					}
-
-					var testChunks []fs.SizeSuffix
-					if opt.ChunkedUpload.NeedMultipleChunks {
-						// If NeedMultipleChunks is set then test with > cs
-						testChunks = []fs.SizeSuffix{cs + 1, 2 * cs, 2*cs + 1}
-					} else {
-						testChunks = []fs.SizeSuffix{cs - 1, cs, 2*cs + 1}
-					}
-
-					for _, fileSize := range testChunks {
-						t.Run(fmt.Sprintf("%d", fileSize), func(t *testing.T) {
-							TestPutLarge(t, remote, &fstest.Item{
-								ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
-								Path:    fmt.Sprintf("chunked-%s-%s.bin", cs.String(), fileSize.String()),
-								Size:    int64(fileSize),
-							})
-						})
-					}
-				})
-			}
-		})
-
 		t.Run("FsPutZeroLength", func(t *testing.T) {
 			skipIfNotOk(t)
 
@@ -1600,7 +1494,26 @@ func Run(t *testing.T, opt *Opt) {
 				fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file2}, nil, fs.ModTimeNotSupported)
 			})
 
-			// TestFsPutStream tests uploading files when size is not known in advance
+			// TestAbout tests the About optional interface
+			t.Run("ObjectAbout", func(t *testing.T) {
+				skipIfNotOk(t)
+
+				// Check have About
+				doAbout := remote.Features().About
+				if doAbout == nil {
+					t.Skip("FS does not support About")
+				}
+
+				// Can't really check the output much!
+				usage, err := doAbout(context.Background())
+				require.NoError(t, err)
+				require.NotNil(t, usage)
+				assert.NotEqual(t, int64(0), usage.Total)
+			})
+
+			// TestFsPutStream tests uploading files when size isn't known in advance.
+			// This may trigger large buffer allocation in some backends, keep it
+			// close to the end of suite. (See fs/operations/xtra_operations_test.go)
 			t.Run("FsPutStream", func(t *testing.T) {
 				skipIfNotOk(t)
 				if remote.Features().PutStream == nil {
@@ -1638,23 +1551,6 @@ func Run(t *testing.T, opt *Opt) {
 				file.Check(t, obj, remote.Precision())
 			})
 
-			// TestAbout tests the About optional interface
-			t.Run("ObjectAbout", func(t *testing.T) {
-				skipIfNotOk(t)
-
-				// Check have About
-				doAbout := remote.Features().About
-				if doAbout == nil {
-					t.Skip("FS does not support About")
-				}
-
-				// Can't really check the output much!
-				usage, err := doAbout(context.Background())
-				require.NoError(t, err)
-				require.NotNil(t, usage)
-				assert.NotEqual(t, int64(0), usage.Total)
-			})
-
 			// TestInternal calls InternalTest() on the Fs
 			t.Run("Internal", func(t *testing.T) {
 				skipIfNotOk(t)
@@ -1667,8 +1563,120 @@ func Run(t *testing.T, opt *Opt) {
 
 		})
 
+		// TestFsPutChunked may trigger large buffer allocation with
+		// some backends (see fs/operations/xtra_operations_test.go),
+		// keep it closer to the end of suite.
+		t.Run("FsPutChunked", func(t *testing.T) {
+			skipIfNotOk(t)
+			if testing.Short() {
+				t.Skip("not running with -short")
+			}
+
+			setUploadChunkSizer, _ := remote.(SetUploadChunkSizer)
+			if setUploadChunkSizer == nil {
+				t.Skipf("%T does not implement SetUploadChunkSizer", remote)
+			}
+
+			setUploadCutoffer, _ := remote.(SetUploadCutoffer)
+
+			minChunkSize := opt.ChunkedUpload.MinChunkSize
+			if minChunkSize < 100 {
+				minChunkSize = 100
+			}
+			if opt.ChunkedUpload.CeilChunkSize != nil {
+				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
+			}
+
+			maxChunkSize := 2 * fs.MebiByte
+			if maxChunkSize < 2*minChunkSize {
+				maxChunkSize = 2 * minChunkSize
+			}
+			if opt.ChunkedUpload.MaxChunkSize > 0 && maxChunkSize > opt.ChunkedUpload.MaxChunkSize {
+				maxChunkSize = opt.ChunkedUpload.MaxChunkSize
+			}
+			if opt.ChunkedUpload.CeilChunkSize != nil {
+				maxChunkSize = opt.ChunkedUpload.CeilChunkSize(maxChunkSize)
+			}
+
+			next := func(f func(fs.SizeSuffix) fs.SizeSuffix) fs.SizeSuffix {
+				s := f(minChunkSize)
+				if s > maxChunkSize {
+					s = minChunkSize
+				}
+				return s
+			}
+
+			chunkSizes := fs.SizeSuffixList{
+				minChunkSize,
+				minChunkSize + (maxChunkSize-minChunkSize)/3,
+				next(NextPowerOfTwo),
+				next(NextMultipleOf(100000)),
+				next(NextMultipleOf(100001)),
+				maxChunkSize,
+			}
+			chunkSizes.Sort()
+
+			// Set the minimum chunk size, upload cutoff and reset it at the end
+			oldChunkSize, err := setUploadChunkSizer.SetUploadChunkSize(minChunkSize)
+			require.NoError(t, err)
+			var oldUploadCutoff fs.SizeSuffix
+			if setUploadCutoffer != nil {
+				oldUploadCutoff, err = setUploadCutoffer.SetUploadCutoff(minChunkSize)
+				require.NoError(t, err)
+			}
+			defer func() {
+				_, err := setUploadChunkSizer.SetUploadChunkSize(oldChunkSize)
+				assert.NoError(t, err)
+				if setUploadCutoffer != nil {
+					_, err := setUploadCutoffer.SetUploadCutoff(oldUploadCutoff)
+					assert.NoError(t, err)
+				}
+			}()
+
+			var lastCs fs.SizeSuffix
+			for _, cs := range chunkSizes {
+				if cs <= lastCs {
+					continue
+				}
+				if opt.ChunkedUpload.CeilChunkSize != nil {
+					cs = opt.ChunkedUpload.CeilChunkSize(cs)
+				}
+				lastCs = cs
+
+				t.Run(cs.String(), func(t *testing.T) {
+					_, err := setUploadChunkSizer.SetUploadChunkSize(cs)
+					require.NoError(t, err)
+					if setUploadCutoffer != nil {
+						_, err = setUploadCutoffer.SetUploadCutoff(cs)
+						require.NoError(t, err)
+					}
+
+					var testChunks []fs.SizeSuffix
+					if opt.ChunkedUpload.NeedMultipleChunks {
+						// If NeedMultipleChunks is set then test with > cs
+						testChunks = []fs.SizeSuffix{cs + 1, 2 * cs, 2*cs + 1}
+					} else {
+						testChunks = []fs.SizeSuffix{cs - 1, cs, 2*cs + 1}
+					}
+
+					for _, fileSize := range testChunks {
+						t.Run(fmt.Sprintf("%d", fileSize), func(t *testing.T) {
+							TestPutLarge(t, remote, &fstest.Item{
+								ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+								Path:    fmt.Sprintf("chunked-%s-%s.bin", cs.String(), fileSize.String()),
+								Size:    int64(fileSize),
+							})
+						})
+					}
+				})
+			}
+		})
+
 		// TestFsUploadUnknownSize ensures Fs.Put() and Object.Update() don't panic when
 		// src.Size() == -1
+		//
+		// This may trigger large buffer allocation in some backends, keep it
+		// closer to the suite end. (See fs/operations/xtra_operations_test.go)
 		t.Run("FsUploadUnknownSize", func(t *testing.T) {
 			skipIfNotOk(t)
 
