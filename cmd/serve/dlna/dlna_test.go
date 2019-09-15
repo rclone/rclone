@@ -3,6 +3,7 @@ package dlna
 import (
 	"context"
 	"fmt"
+	"html"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -118,6 +119,9 @@ func TestContentDirectoryBrowseMetadata(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	body, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
-	require.Contains(t, string(body), "&lt;container ")
-	require.NotContains(t, string(body), "&lt;item ")
+	// expect a <container> element
+	require.Contains(t, string(body), html.EscapeString("<container "))
+	require.NotContains(t, string(body), html.EscapeString("<item "))
+	// with a non-zero childCount
+	require.Contains(t, string(body), html.EscapeString(`childCount="1"`))
 }
