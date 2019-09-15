@@ -77,10 +77,17 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	if fileInfo.IsDir() {
+		children, err := cds.readContainer(cdsObject, host)
+		if err != nil {
+			return nil, err
+		}
+
 		obj.Class = "object.container.storageFolder"
 		obj.Title = fileInfo.Name()
-		ret = upnpav.Container{Object: obj}
-		return
+		return upnpav.Container{
+			Object:     obj,
+			ChildCount: len(children),
+		}, nil
 	}
 
 	if !fileInfo.Mode().IsRegular() {
