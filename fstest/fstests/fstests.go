@@ -557,9 +557,14 @@ func Run(t *testing.T, opt *Opt) {
 		t.Run("FsPutError", func(t *testing.T) {
 			skipIfNotOk(t)
 
-			const N = 5 * 1024
+			var N int64 = 5 * 1024
+			if *fstest.SizeLimit > 0 && N > *fstest.SizeLimit {
+				N = *fstest.SizeLimit
+				t.Logf("Reduce file size due to limit %d", N)
+			}
+
 			// Read N bytes then produce an error
-			contents := random.String(N)
+			contents := random.String(int(N))
 			buf := bytes.NewBufferString(contents)
 			er := &errorReader{errors.New("potato")}
 			in := io.MultiReader(buf, er)
