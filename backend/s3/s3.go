@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -1224,20 +1225,51 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		delimiter = "/"
 	}
 	var marker *string
+	// URL encode the listings so we can use control characters in object names
+	// See: https://github.com/aws/aws-sdk-go/issues/1914
+	//
+	// However this doesn't work perfectly under Ceph (and hence DigitalOcean/Dreamhost) because
+	// it doesn't encode CommonPrefixes.
+	// See: https://tracker.ceph.com/issues/41870
+	//
+	// This does not work under IBM COS also: See https://github.com/rclone/rclone/issues/3345
+	// though maybe it does on some versions.
+	//
+	// This does work with minio but was only added relatively recently
+	// https://github.com/minio/minio/pull/7265
+	//
+	// So we enable only on providers we know supports it properly, all others can retry when a
+	// XML Syntax error is detected.
+	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba")
 	for {
 		// FIXME need to implement ALL loop
 		req := s3.ListObjectsInput{
-			Bucket:       &bucket,
-			Delimiter:    &delimiter,
-			Prefix:       &directory,
-			MaxKeys:      &maxKeys,
-			Marker:       marker,
-			EncodingType: aws.String(s3.EncodingTypeUrl),
+			Bucket:    &bucket,
+			Delimiter: &delimiter,
+			Prefix:    &directory,
+			MaxKeys:   &maxKeys,
+			Marker:    marker,
+		}
+		if urlEncodeListings {
+			req.EncodingType = aws.String(s3.EncodingTypeUrl)
 		}
 		var resp *s3.ListObjectsOutput
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.c.ListObjectsWithContext(ctx, &req)
+			if err != nil && !urlEncodeListings {
+				if awsErr, ok := err.(awserr.RequestFailure); ok {
+					if origErr := awsErr.OrigErr(); origErr != nil {
+						if _, ok := origErr.(*xml.SyntaxError); ok {
+							// Retry the listing with URL encoding as there were characters that XML can't encode
+							urlEncodeListings = true
+							req.EncodingType = aws.String(s3.EncodingTypeUrl)
+							fs.Debugf(f, "Retrying listing because of characters which can't be XML encoded")
+							return true, err
+						}
+					}
+				}
+			}
 			return f.shouldRetry(err)
 		})
 		if err != nil {
@@ -1266,10 +1298,12 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					continue
 				}
 				remote := *commonPrefix.Prefix
-				remote, err = url.QueryUnescape(remote)
-				if err != nil {
-					fs.Logf(f, "failed to URL decode %q in listing common prefix: %v", *commonPrefix.Prefix, err)
-					continue
+				if urlEncodeListings {
+					remote, err = url.QueryUnescape(remote)
+					if err != nil {
+						fs.Logf(f, "failed to URL decode %q in listing common prefix: %v", *commonPrefix.Prefix, err)
+						continue
+					}
 				}
 				remote = enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
@@ -1291,10 +1325,12 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 		for _, object := range resp.Contents {
 			remote := aws.StringValue(object.Key)
-			remote, err = url.QueryUnescape(remote)
-			if err != nil {
-				fs.Logf(f, "failed to URL decode %q in listing: %v", aws.StringValue(object.Key), err)
-				continue
+			if urlEncodeListings {
+				remote, err = url.QueryUnescape(remote)
+				if err != nil {
+					fs.Logf(f, "failed to URL decode %q in listing: %v", aws.StringValue(object.Key), err)
+					continue
+				}
 			}
 			remote = enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
