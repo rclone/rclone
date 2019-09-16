@@ -16,6 +16,7 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -43,6 +44,7 @@ type Run struct {
 	NoRetries bool   // don't retry if set
 	OneOnly   bool   // only run test for this backend at once
 	NoBinary  bool   // set to not build a binary
+	SizeLimit int64  // maximum test file size
 	Ignore    map[string]struct{}
 	// Internals
 	cmdLine     []string
@@ -338,6 +340,9 @@ func (r *Run) Init() {
 	}
 	if r.Short {
 		r.cmdLine = append(r.cmdLine, "-short")
+	}
+	if r.SizeLimit > 0 {
+		r.cmdLine = append(r.cmdLine, "-size-limit", strconv.FormatInt(r.SizeLimit, 10))
 	}
 	r.cmdString = toShell(r.cmdLine)
 }

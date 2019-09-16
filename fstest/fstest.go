@@ -42,6 +42,8 @@ var (
 	Individual      = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
 	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
 	UseListR        = flag.Bool("fast-list", false, "Use recursive list if available. Uses more memory but fewer transactions.")
+	// SizeLimit signals tests to skip maximum test file size and skip inappropriate runs
+	SizeLimit = flag.Int64("size-limit", 0, "Limit maximum test file size")
 	// ListRetries is the number of times to retry a listing to overcome eventual consistency
 	ListRetries = flag.Int("list-retries", 6, "Number or times to retry listing")
 	// MatchTestRemote matches the remote names used for testing
