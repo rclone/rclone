@@ -34,6 +34,7 @@ type Backend struct {
 	FastList bool     // set to test with -fast-list
 	Short    bool     // set to test with -short
 	OneOnly  bool     // set to run only one backend test at once
+	MaxFile  string   // file size limit
 	Ignore   []string // test names to ignore the failure of
 	Tests    []string // paths of tests to run, blank for all
 }
@@ -60,6 +61,12 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	if !b.includeTest(t) {
 		return runs
 	}
+	maxSize := fs.SizeSuffix(0)
+	if b.MaxFile != "" {
+		if err := maxSize.Set(b.MaxFile); err != nil {
+			log.Printf("Invalid maxfile value %q: %v", b.MaxFile, err)
+		}
+	}
 	fastlists := []bool{false}
 	if b.FastList && t.FastList {
 		fastlists = append(fastlists, true)
@@ -81,6 +88,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 			NoRetries: t.NoRetries,
 			OneOnly:   b.OneOnly,
 			NoBinary:  t.NoBinary,
+			SizeLimit: int64(maxSize),
 			Ignore:    ignore,
 		}
 		if t.AddBackend {

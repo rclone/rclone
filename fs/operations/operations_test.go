@@ -445,6 +445,15 @@ func TestRcat(t *testing.T) {
 		r := fstest.NewRun(t)
 		defer r.Finalise()
 
+		if *fstest.SizeLimit > 0 && int64(fs.Config.StreamingUploadCutoff) > *fstest.SizeLimit {
+			savedCutoff := fs.Config.StreamingUploadCutoff
+			defer func() {
+				fs.Config.StreamingUploadCutoff = savedCutoff
+			}()
+			fs.Config.StreamingUploadCutoff = fs.SizeSuffix(*fstest.SizeLimit)
+			t.Logf("Adjust StreamingUploadCutoff to size limit %s (was %s)", fs.Config.StreamingUploadCutoff, savedCutoff)
+		}
+
 		fstest.CheckListing(t, r.Fremote, []fstest.Item{})
 
 		data1 := "this is some really nice test data"
