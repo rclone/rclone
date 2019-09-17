@@ -288,3 +288,4 @@ Contributors
   * Ivan Andreev <ivandeex@gmail.com>
   * David Baumgold <david@davidbaumgold.com>
   * Lars Lehtonen <lars.lehtonen@gmail.com>
+  * Matei David <matei.david@gmail.com>
