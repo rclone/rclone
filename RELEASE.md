@@ -56,8 +56,7 @@ Can be fixed with
 
 ## Making a point release
 
-If rclone needs a point release due to some horrendous bug then a
-point release is necessary.
+If rclone needs a point release due to some horrendous bug:
 
 First make the release branch.  If this is a second point release then
 this will be done already.
@@ -90,8 +89,8 @@ Now
   * NB this overwrites the current beta so we need to do this
   * git co master
   * make LAST_TAG=${NEW_TAG} startdev
-  * # cherry pick the changes to the changelog
-  * git checkout ${BASE_TAG}-fixes docs/content/changelog.md
+  * # cherry pick the changes to the changelog and VERSION
+  * git checkout ${BASE_TAG}-fixes VERSION docs/content/changelog.md
   * git commit --amend
   * git push
   * Announce!
