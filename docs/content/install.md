@@ -105,9 +105,10 @@ rclone v1.49.1
 There are a few command line options to consider when starting an rclone Docker container
 from the rclone image.
 
-- You need to mount the host rclone config dir at `/config` into the Docker container.
-  Due to the way in which rclone updates tokens inside its config file, you need to
-  mount a host config dir, not just a host config file.
+- You need to mount the host rclone config dir at `/config/rclone` into the Docker
+  container. Due to the fact that rclone updates tokens inside its config file, and that
+  the update process involves a file rename, you need to mount the whole host rclone
+  config dir, not just the single host rclone config file.
 
 - You need to mount a host data dir at `/data` into the Docker container.
 
