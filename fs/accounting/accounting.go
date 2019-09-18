@@ -124,6 +124,7 @@ func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.in = in
 	acc.close = in
 	acc.origIn = in
+	acc.closed = false
 	if acc.withBuf {
 		acc.WithBuffer()
 	}
@@ -221,12 +222,18 @@ func (acc *Account) Close() error {
 		return nil
 	}
 	acc.closed = true
-	close(acc.exit)
-	acc.stats.inProgress.clear(acc.name)
 	if acc.close == nil {
 		return nil
 	}
 	return acc.close.Close()
+}
+
+// Done with accounting - must be called to free accounting goroutine
+func (acc *Account) Done() {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	close(acc.exit)
+	acc.stats.inProgress.clear(acc.name)
 }
 
 // progress returns bytes read as well as the size.
