@@ -32,6 +32,8 @@ func TestNewAccountSizeName(t *testing.T) {
 	assert.Equal(t, acc, stats.inProgress.get("test"))
 	err := acc.Close()
 	assert.NoError(t, err)
+	assert.Equal(t, acc, stats.inProgress.get("test"))
+	acc.Done()
 	assert.Nil(t, stats.inProgress.get("test"))
 }
 
@@ -55,18 +57,31 @@ func TestAccountWithBuffer(t *testing.T) {
 }
 
 func TestAccountGetUpdateReader(t *testing.T) {
-	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
-	stats := NewStats()
-	acc := newAccountSizeName(stats, in, 1, "test")
+	test := func(doClose bool) func(t *testing.T) {
+		return func(t *testing.T) {
+			in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+			stats := NewStats()
+			acc := newAccountSizeName(stats, in, 1, "test")
 
-	assert.Equal(t, in, acc.GetReader())
+			assert.Equal(t, in, acc.GetReader())
+			assert.Equal(t, acc, stats.inProgress.get("test"))
 
-	in2 := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
-	acc.UpdateReader(in2)
+			if doClose {
+				// close the account before swapping it out
+				require.NoError(t, acc.Close())
+			}
 
-	assert.Equal(t, in2, acc.GetReader())
+			in2 := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+			acc.UpdateReader(in2)
 
-	assert.NoError(t, acc.Close())
+			assert.Equal(t, in2, acc.GetReader())
+			assert.Equal(t, acc, stats.inProgress.get("test"))
+
+			assert.NoError(t, acc.Close())
+		}
+	}
+	t.Run("NoClose", test(false))
+	t.Run("Close", test(true))
 }
 
 func TestAccountRead(t *testing.T) {
