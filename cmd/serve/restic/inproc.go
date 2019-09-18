@@ -2,7 +2,7 @@ package restic
 
 import (
 	// "fmt"
-	"github.com/ncw/rclone/cmd"
+	"github.com/rclone/rclone/cmd"
 	"net/http"
 	"net/http/httptest"
 )
