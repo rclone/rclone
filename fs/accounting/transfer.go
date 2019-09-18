@@ -96,9 +96,12 @@ func (tr *Transfer) Done(err error) {
 	tr.mu.RUnlock()
 
 	if acc != nil {
+		// Close the file if it is still open
 		if err := acc.Close(); err != nil {
 			fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "can't close account: %+v\n", err)
 		}
+		// Signal done with accounting
+		acc.Done()
 	}
 
 	tr.mu.Lock()
