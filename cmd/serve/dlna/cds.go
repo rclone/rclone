@@ -77,10 +77,17 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	if fileInfo.IsDir() {
+		children, err := cds.readContainer(cdsObject, host)
+		if err != nil {
+			return nil, err
+		}
+
 		obj.Class = "object.container.storageFolder"
 		obj.Title = fileInfo.Name()
-		ret = upnpav.Container{Object: obj}
-		return
+		return upnpav.Container{
+			Object:     obj,
+			ChildCount: len(children),
+		}, nil
 	}
 
 	if !fileInfo.Mode().IsRegular() {
@@ -245,7 +252,15 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 				"UpdateID":       cds.updateIDString(),
 			}, nil
 		case "BrowseMetadata":
-			result, err := xml.Marshal(obj)
+			node, err := cds.vfs.Stat(obj.Path)
+			if err != nil {
+				return nil, err
+			}
+			upnpObject, err := cds.cdsObjectToUpnpavObject(obj, node, host)
+			if err != nil {
+				return nil, err
+			}
+			result, err := xml.Marshal(upnpObject)
 			if err != nil {
 				return nil, err
 			}

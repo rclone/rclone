@@ -2,6 +2,9 @@ package fs
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -10,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/spf13/pflag"
@@ -146,4 +150,195 @@ func TestPacerCallNoRetry(t *testing.T) {
 	err := p.CallNoRetry(dp.fn)
 	require.Equal(t, 1, dp.called)
 	require.Implements(t, (*fserrors.Retrier)(nil), err)
+}
+
+// Test options
+var (
+	nouncOption = Option{
+		Name: "nounc",
+	}
+	copyLinksOption = Option{
+		Name:     "copy_links",
+		Default:  false,
+		NoPrefix: true,
+		ShortOpt: "L",
+		Advanced: true,
+	}
+	caseInsensitiveOption = Option{
+		Name:     "case_insensitive",
+		Default:  false,
+		Value:    true,
+		Advanced: true,
+	}
+	testOptions = Options{nouncOption, copyLinksOption, caseInsensitiveOption}
+)
+
+func TestOptionsSetValues(t *testing.T) {
+	assert.Nil(t, testOptions[0].Default)
+	assert.Equal(t, false, testOptions[1].Default)
+	assert.Equal(t, false, testOptions[2].Default)
+	testOptions.setValues()
+	assert.Equal(t, "", testOptions[0].Default)
+	assert.Equal(t, false, testOptions[1].Default)
+	assert.Equal(t, false, testOptions[2].Default)
+}
+
+func TestOptionsGet(t *testing.T) {
+	opt := testOptions.Get("copy_links")
+	assert.Equal(t, &copyLinksOption, opt)
+	opt = testOptions.Get("not_found")
+	assert.Nil(t, opt)
+}
+
+func TestOptionMarshalJSON(t *testing.T) {
+	out, err := json.MarshalIndent(&caseInsensitiveOption, "", "")
+	assert.NoError(t, err)
+	require.Equal(t, `{
+"Name": "case_insensitive",
+"Help": "",
+"Provider": "",
+"Default": false,
+"Value": true,
+"ShortOpt": "",
+"Hide": 0,
+"Required": false,
+"IsPassword": false,
+"NoPrefix": false,
+"Advanced": true,
+"DefaultStr": "false",
+"ValueStr": "true",
+"Type": "bool"
+}`, string(out))
+}
+
+func TestOptionGetValue(t *testing.T) {
+	assert.Equal(t, "", nouncOption.GetValue())
+	assert.Equal(t, false, copyLinksOption.GetValue())
+	assert.Equal(t, true, caseInsensitiveOption.GetValue())
+}
+
+func TestOptionString(t *testing.T) {
+	assert.Equal(t, "", nouncOption.String())
+	assert.Equal(t, "false", copyLinksOption.String())
+	assert.Equal(t, "true", caseInsensitiveOption.String())
+}
+
+func TestOptionSet(t *testing.T) {
+	o := caseInsensitiveOption
+	assert.Equal(t, true, o.Value)
+	err := o.Set("FALSE")
+	assert.NoError(t, err)
+	assert.Equal(t, false, o.Value)
+
+	o = copyLinksOption
+	assert.Equal(t, nil, o.Value)
+	err = o.Set("True")
+	assert.NoError(t, err)
+	assert.Equal(t, true, o.Value)
+
+	err = o.Set("INVALID")
+	assert.Error(t, err)
+	assert.Equal(t, true, o.Value)
+}
+
+func TestOptionType(t *testing.T) {
+	assert.Equal(t, "string", nouncOption.Type())
+	assert.Equal(t, "bool", copyLinksOption.Type())
+	assert.Equal(t, "bool", caseInsensitiveOption.Type())
+}
+
+func TestOptionFlagName(t *testing.T) {
+	assert.Equal(t, "local-nounc", nouncOption.FlagName("local"))
+	assert.Equal(t, "copy-links", copyLinksOption.FlagName("local"))
+	assert.Equal(t, "local-case-insensitive", caseInsensitiveOption.FlagName("local"))
+}
+
+func TestOptionEnvVarName(t *testing.T) {
+	assert.Equal(t, "RCLONE_LOCAL_NOUNC", nouncOption.EnvVarName("local"))
+	assert.Equal(t, "RCLONE_LOCAL_COPY_LINKS", copyLinksOption.EnvVarName("local"))
+	assert.Equal(t, "RCLONE_LOCAL_CASE_INSENSITIVE", caseInsensitiveOption.EnvVarName("local"))
+}
+
+func TestOptionGetters(t *testing.T) {
+	// Set up env vars
+	envVars := [][2]string{
+		{"RCLONE_CONFIG_LOCAL_POTATO_PIE", "yes"},
+		{"RCLONE_COPY_LINKS", "TRUE"},
+		{"RCLONE_LOCAL_NOUNC", "NOUNC"},
+	}
+	for _, ev := range envVars {
+		assert.NoError(t, os.Setenv(ev[0], ev[1]))
+	}
+	defer func() {
+		for _, ev := range envVars {
+			assert.NoError(t, os.Unsetenv(ev[0]))
+		}
+	}()
+
+	fsInfo := &RegInfo{
+		Name:    "local",
+		Prefix:  "local",
+		Options: testOptions,
+	}
+
+	oldConfigFileGet := ConfigFileGet
+	ConfigFileGet = func(section, key string) (string, bool) {
+		if section == "sausage" && key == "key1" {
+			return "value1", true
+		}
+		return "", false
+	}
+	defer func() {
+		ConfigFileGet = oldConfigFileGet
+	}()
+
+	// set up getters
+
+	// A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
+	configEnvVarsGetter := configEnvVars("local")
+
+	// A configmap.Getter to read from the environment RCLONE_option_name
+	optionEnvVarsGetter := optionEnvVars{fsInfo}
+
+	// A configmap.Getter to read either the default value or the set
+	// value from the RegInfo.Options
+	regInfoValuesGetterFalse := &regInfoValues{
+		fsInfo:     fsInfo,
+		useDefault: false,
+	}
+	regInfoValuesGetterTrue := &regInfoValues{
+		fsInfo:     fsInfo,
+		useDefault: true,
+	}
+
+	// A configmap.Setter to read from the config file
+	configFileGetter := getConfigFile("sausage")
+
+	for i, test := range []struct {
+		get       configmap.Getter
+		key       string
+		wantValue string
+		wantOk    bool
+	}{
+		{configEnvVarsGetter, "not_found", "", false},
+		{configEnvVarsGetter, "potato_pie", "yes", true},
+		{optionEnvVarsGetter, "not_found", "", false},
+		{optionEnvVarsGetter, "copy_links", "TRUE", true},
+		{optionEnvVarsGetter, "nounc", "NOUNC", true},
+		{optionEnvVarsGetter, "case_insensitive", "", false},
+		{regInfoValuesGetterFalse, "not_found", "", false},
+		{regInfoValuesGetterFalse, "case_insensitive", "true", true},
+		{regInfoValuesGetterFalse, "copy_links", "", false},
+		{regInfoValuesGetterTrue, "not_found", "", false},
+		{regInfoValuesGetterTrue, "case_insensitive", "true", true},
+		{regInfoValuesGetterTrue, "copy_links", "false", true},
+		{configFileGetter, "not_found", "", false},
+		{configFileGetter, "key1", "value1", true},
+	} {
+		what := fmt.Sprintf("%d: %+v: %q", i, test.get, test.key)
+		gotValue, gotOk := test.get.Get(test.key)
+		assert.Equal(t, test.wantValue, gotValue, what)
+		assert.Equal(t, test.wantOk, gotOk, what)
+	}
+
 }

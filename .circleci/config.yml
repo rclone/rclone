@@ -14,37 +14,30 @@ jobs:
     - run:
         name: Cross-compile rclone
         command: |
-            docker pull rclone/xgo-cgofuse
+            docker pull billziss/xgo-cgofuse
             go get -v github.com/karalabe/xgo
             xgo \
-                --image=rclone/xgo-cgofuse \
-                --targets=darwin/386,darwin/amd64,linux/386,linux/amd64,windows/386,windows/amd64 \
+                -image=billziss/xgo-cgofuse \
+                -targets=darwin/386,darwin/amd64,linux/386,linux/amd64,windows/386,windows/amd64 \
                 -tags cmount \
+                -dest build \
                 .
             xgo \
-                --targets=android/*,ios/* \
+                -image=billziss/xgo-cgofuse \
+                -targets=android/*,ios/* \
+                -dest build \
                 .
-
-    - run:
-        name: Prepare artifacts
-        command: |
-            mkdir -p /tmp/rclone.dist
-            cp -R rclone-* /tmp/rclone.dist
-            mkdir build
-            cp -R rclone-* build/
 
     - run:
         name: Build rclone
         command: |
-            go version
-            go build
+            docker pull golang
+            docker run --rm -v "$PWD":/usr/src/rclone -w /usr/src/rclone golang go build -mod=vendor -v
 
     - run:
         name: Upload artifacts
         command: |
-          if [[ $CIRCLE_PULL_REQUEST != "" ]]; then
-              make circleci_upload
-          fi
+          make circleci_upload
 
     - store_artifacts:
-        path: /tmp/rclone.dist
+        path: build

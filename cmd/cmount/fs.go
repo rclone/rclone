@@ -299,6 +299,9 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 		return translateError(err), fhUnset
 	}
 
+	// FIXME add support for unknown length files setting direct_io
+	// See: https://github.com/billziss-gh/cgofuse/issues/38
+
 	return 0, fsys.openHandle(handle)
 }
 

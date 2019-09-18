@@ -13,6 +13,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -77,6 +78,26 @@ Note that this may cause rclone to confuse genuine HTML files with
 directories.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name: "no_head",
+			Help: `Don't use HEAD requests to find file sizes in dir listing
+
+If your site is being very slow to load then you can try this option.
+Normally rclone does a HEAD request for each potential file in a
+directory listing to:
+
+- find its size
+- check it really exists
+- check to see if it is a directory
+
+If you set this option, rclone will not do the HEAD request.  This will mean
+
+- directory listings are much quicker
+- rclone won't have the times or sizes of any files
+- some files that don't exist may be in the listing
+`,
+			Default:  false,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -86,6 +107,7 @@ directories.`,
 type Options struct {
 	Endpoint string          `config:"url"`
 	NoSlash  bool            `config:"no_slash"`
+	NoHead   bool            `config:"no_head"`
 	Headers  fs.CommaSepList `config:"headers"`
 }
 
@@ -415,30 +437,49 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, errors.Wrapf(err, "error listing %q", dir)
 	}
+	var (
+		entriesMu sync.Mutex // to protect entries
+		wg        sync.WaitGroup
+		in        = make(chan string, fs.Config.Checkers)
+	)
+	add := func(entry fs.DirEntry) {
+		entriesMu.Lock()
+		entries = append(entries, entry)
+		entriesMu.Unlock()
+	}
+	for i := 0; i < fs.Config.Checkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for remote := range in {
+				file := &Object{
+					fs:     f,
+					remote: remote,
+				}
+				switch err := file.stat(ctx); err {
+				case nil:
+					add(file)
+				case fs.ErrorNotAFile:
+					// ...found a directory not a file
+					add(fs.NewDir(remote, timeUnset))
+				default:
+					fs.Debugf(remote, "skipping because of error: %v", err)
+				}
+			}
+		}()
+	}
 	for _, name := range names {
 		isDir := name[len(name)-1] == '/'
 		name = strings.TrimRight(name, "/")
 		remote := path.Join(dir, name)
 		if isDir {
-			dir := fs.NewDir(remote, timeUnset)
-			entries = append(entries, dir)
+			add(fs.NewDir(remote, timeUnset))
 		} else {
-			file := &Object{
-				fs:     f,
-				remote: remote,
-			}
-			switch err = file.stat(ctx); err {
-			case nil:
-				entries = append(entries, file)
-			case fs.ErrorNotAFile:
-				// ...found a directory not a file
-				dir := fs.NewDir(remote, timeUnset)
-				entries = append(entries, dir)
-			default:
-				fs.Debugf(remote, "skipping because of error: %v", err)
-			}
+			in <- remote
 		}
 	}
+	close(in)
+	wg.Wait()
 	return entries, nil
 }
 
@@ -496,6 +537,12 @@ func (o *Object) url() string {
 
 // stat updates the info field in the Object
 func (o *Object) stat(ctx context.Context) error {
+	if o.fs.opt.NoHead {
+		o.size = -1
+		o.modTime = timeUnset
+		o.contentType = fs.MimeType(ctx, o)
+		return nil
+	}
 	url := o.url()
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {

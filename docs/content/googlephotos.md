@@ -277,13 +277,14 @@ that when syncing to Google Photos, rclone can only do a file
 existence check.
 
 It is possible to read the size of the media, but this needs an extra
-HTTP HEAD request per media item so is very slow and uses up a lot of
+HTTP HEAD request per media item so is **very slow** and uses up a lot of
 transactions.  This can be enabled with the `--gphotos-read-size`
 option or the `read_size = true` config parameter.
 
-If you want to use the backend with `rclone mount` you will need to
-enable this flag otherwise you will not be able to read media off the
-mount.
+If you want to use the backend with `rclone mount` you may need to
+enable this flag (depending on your OS and application using the
+photos) otherwise you may not be able to read media off the mount.
+You'll need to experiment to see if it works for you without the flag.
 
 ### Albums
 

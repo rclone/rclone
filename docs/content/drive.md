@@ -882,9 +882,12 @@ without downloading them.
 Google docs will transfer correctly with `rclone sync`, `rclone copy`
 etc as rclone knows to ignore the size when doing the transfer.
 
-However an unfortunate consequence of this is that you can't download
-Google docs using `rclone mount` - you will get a 0 sized file.  If
-you try again the doc may gain its correct size and be downloadable.
+However an unfortunate consequence of this is that you may not be able
+to download Google docs using `rclone mount`. If it doesn't work you
+will get a 0 sized file.  If you try again the doc may gain its
+correct size and be downloadable. Whther it will work on not depends
+on the application accessing the mount and the OS you are running -
+experiment to find out if it does work for you!
 
 ### Duplicated files ###
 

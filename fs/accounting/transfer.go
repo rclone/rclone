@@ -117,6 +117,8 @@ func (tr *Transfer) Account(in io.ReadCloser) *Account {
 	tr.mu.Lock()
 	if tr.acc == nil {
 		tr.acc = newAccountSizeName(tr.stats, in, tr.size, tr.remote)
+	} else {
+		tr.acc.UpdateReader(in)
 	}
 	tr.mu.Unlock()
 	return tr.acc

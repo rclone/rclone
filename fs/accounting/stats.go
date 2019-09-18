@@ -138,7 +138,7 @@ func (s *StatsInfo) totalDuration() time.Duration {
 	var total time.Duration
 	var i, j = 0, 1
 	for i < len(timeRanges) {
-		if j < len(timeRanges)-1 {
+		if j < len(timeRanges) {
 			if timeRanges[j].start.Before(timeRanges[i].end) {
 				if timeRanges[i].end.Before(timeRanges[j].end) {
 					timeRanges[i].end = timeRanges[j].end

@@ -173,10 +173,6 @@ func SetFlags() {
 		fs.Config.DeleteMode = fs.DeleteModeDefault
 	}
 
-	if fs.Config.IgnoreSize && fs.Config.SizeOnly {
-		log.Fatalf(`Can't use --size-only and --ignore-size together.`)
-	}
-
 	if fs.Config.CompareDest != "" && fs.Config.CopyDest != "" {
 		log.Fatalf(`Can't use --compare-dest with --copy-dest.`)
 	}

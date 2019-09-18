@@ -217,11 +217,11 @@ var retryErrorCodes = []int{
 // deserve to be retried. It returns the err as a convenience.
 // Retries password authorization (once) in a special case of access denied.
 func shouldRetry(res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, error) {
-	if res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
+	if res != nil && res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
 		reAuthErr := f.reAuthorize(opts, err)
 		return reAuthErr == nil, err // return an original error
 	}
-	if f.quirks.retry400 && res.StatusCode == 400 {
+	if res != nil && res.StatusCode == 400 && f.quirks.retry400 {
 		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(res, retryErrorCodes), err
@@ -1581,23 +1581,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var (
-		fileBuf  []byte
-		fileHash []byte
-		newHash  []byte
+		fileBuf    []byte
+		fileHash   []byte
+		newHash    []byte
+		trySpeedup bool
 	)
 
-	// Request hash from source
-	if srcHash, err := src.Hash(ctx, hash.Mailru); err == nil && srcHash != "" {
-		fileHash, _ = mrhash.DecodeString(srcHash)
-	}
-
-	// Try speedup method if it's globally enabled and source hash is available
-	trySpeedup := o.fs.opt.SpeedupEnable
-	if trySpeedup && fileHash != nil {
-		if o.putByHash(ctx, fileHash, src, "source") {
-			return nil
+	// Don't disturb the source if file fits in hash.
+	// Skip an extra speedup request if file fits in hash.
+	if size > mrhash.Size {
+		// Request hash from source.
+		if srcHash, err := src.Hash(ctx, hash.Mailru); err == nil && srcHash != "" {
+			fileHash, _ = mrhash.DecodeString(srcHash)
 		}
-		trySpeedup = false // speedup failed, force upload
+
+		// Try speedup if it's globally enabled and source hash is available.
+		trySpeedup = o.fs.opt.SpeedupEnable
+		if trySpeedup && fileHash != nil {
+			if o.putByHash(ctx, fileHash, src, "source") {
+				return nil
+			}
+			trySpeedup = false // speedup failed, force upload
+		}
 	}
 
 	// Need to calculate hash, check whether file is still eligible for speedup

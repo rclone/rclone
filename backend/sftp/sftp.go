@@ -103,9 +103,14 @@ when the ssh-agent contains many keys.`,
 			Default: false,
 			Help:    "Disable the execution of SSH commands to determine if remote file hashing is available.\nLeave blank or set to false to enable hashing (recommended), set to true to disable hashing.",
 		}, {
-			Name:     "ask_password",
-			Default:  false,
-			Help:     "Allow asking for SFTP password when needed.",
+			Name:    "ask_password",
+			Default: false,
+			Help: `Allow asking for SFTP password when needed.
+
+If this is set and no password is supplied then rclone will:
+- ask for a password
+- not contact the ssh agent
+`,
 			Advanced: true,
 		}, {
 			Name:    "path_override",
@@ -364,7 +369,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	keyFile := env.ShellExpand(opt.KeyFile)
 	// Add ssh agent-auth if no password or file specified
-	if (opt.Pass == "" && keyFile == "") || opt.KeyUseAgent {
+	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword) || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't connect to ssh-agent")

@@ -41,6 +41,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/stretchr/testify/assert"
@@ -252,10 +253,22 @@ func (r *Run) WriteObjectTo(ctx context.Context, f fs.Fs, remote, content string
 		}
 	}
 	r.Mkdir(ctx, f)
+
+	// caclulate all hashes f supports for content
+	hash, err := hash.NewMultiHasherTypes(f.Hashes())
+	if err != nil {
+		r.Fatalf("Failed to make new multi hasher: %v", err)
+	}
+	_, err = hash.Write([]byte(content))
+	if err != nil {
+		r.Fatalf("Failed to make write to hash: %v", err)
+	}
+	hashSums := hash.Sums()
+
 	const maxTries = 10
 	for tries := 1; ; tries++ {
 		in := bytes.NewBufferString(content)
-		objinfo := object.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
+		objinfo := object.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, hashSums, nil)
 		_, err := put(ctx, in, objinfo)
 		if err == nil {
 			break
