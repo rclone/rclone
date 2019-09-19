@@ -115,7 +115,7 @@ func TestCacheExpire(t *testing.T) {
 	entry.lastUsed = time.Now().Add(-c.expireDuration - 60*time.Second)
 	assert.Equal(t, true, c.expireRunning)
 	c.mu.Unlock()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	c.mu.Lock()
 	assert.Equal(t, false, c.expireRunning)
 	assert.Equal(t, 0, len(c.cache))
