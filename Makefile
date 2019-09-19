@@ -1,5 +1,5 @@
 SHELL = bash
-BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(BUILD_SOURCEBRANCHNAME),$(shell git rev-parse --abbrev-ref HEAD))
+BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(BUILD_SOURCEBRANCHNAME),$(lastword $(subst /, ,$(GITHUB_REF))),$(shell git rev-parse --abbrev-ref HEAD))
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 ifeq ($(BRANCH),$(LAST_TAG))
 	BRANCH := master
@@ -33,8 +33,9 @@ endif
 .PHONY: rclone test_all vars version
 
 rclone:
-	go install -v --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS)
-	cp -av `go env GOPATH`/bin/rclone .
+	go build -v --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS)
+	mkdir -p `go env GOPATH`/bin/
+	cp -av rclone`go env GOEXE` `go env GOPATH`/bin/
 
 test_all:
 	go install --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) github.com/rclone/rclone/fstest/test_all
