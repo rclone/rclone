@@ -85,13 +85,16 @@ func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, obj
 
 	// Delete identical duplicates, filling remainingObjs with the ones remaining
 	for md5sum, hashObjs := range byHash {
+		remainingObjs = append(remainingObjs, hashObjs[0])
 		if len(hashObjs) > 1 {
 			fs.Logf(remote, "Deleting %d/%d identical duplicates (%v %q)", len(hashObjs)-1, len(hashObjs), ht, md5sum)
 			for _, o := range hashObjs[1:] {
-				_ = DeleteFile(ctx, o)
+				err := DeleteFile(ctx, o)
+				if err != nil {
+					remainingObjs = append(remainingObjs, o)
+				}
 			}
 		}
-		remainingObjs = append(remainingObjs, hashObjs[0])
 	}
 
 	return remainingObjs
