@@ -68,7 +68,7 @@ func dedupeDeleteAllButOne(ctx context.Context, keep int, remote string, objs []
 		}
 		err := DeleteFile(ctx, o)
 		if err == nil {
-			count ++
+			count++
 		}
 	}
 	if count > 0 {
