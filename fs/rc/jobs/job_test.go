@@ -51,7 +51,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	jobs.mu.Lock()
 	assert.Equal(t, false, jobs.expireRunning)
 	assert.Equal(t, 0, len(jobs.jobs))
