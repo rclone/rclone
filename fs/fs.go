@@ -348,6 +348,13 @@ type ObjectInfo interface {
 	Storable() bool
 }
 
+// HashUnWrapper is an optional interface for ObjectInfo
+type HashUnWrapper interface {
+	// UnWrapHash returns the selected checksum of the source underlying file and its wrapped version
+	// If no checksum is available for a layer it returns "" for this specific layer only
+	UnWrapHash(ctx context.Context, ty hash.Type) (srcHash string, wrappedHash string, err error)
+}
+
 // DirEntry provides read only information about the common subset of
 // a Dir or Object.  These are returned from directory listings - type
 // assert them into the correct type.

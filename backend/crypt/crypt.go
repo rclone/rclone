@@ -81,6 +81,20 @@ names, or for debugging purposes.`,
 			Default:  false,
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
+		}, {
+			Name: "flow_hash",
+			Help: `Determines if the hash of the underlying non crypted source backend is accessible to the target crypted backend.
+			
+This allows you to store the non-crypted hash on the target backend, 
+so you can compare files between the source and remote target using 
+bash (--checksum).
+
+Be aware this option significantly reduce the security of the encryption,
+as the same information is stored twice using 2 different technologies.
+The un-encrypted hash may be used to infer some information of the 
+passwords used to encrypt the file content.`,
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -185,6 +199,7 @@ type Options struct {
 	Password                string `config:"password"`
 	Password2               string `config:"password2"`
 	ShowMapping             bool   `config:"show_mapping"`
+	FlowHash                bool   `config:"flow_hash"`
 }
 
 // Fs represents a wrapped fs.Fs
@@ -328,7 +343,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	// the encrypted data
 	ht := f.Fs.Hashes().GetOne()
 	var hasher *hash.MultiHasher
-	if ht != hash.None {
+	if ht != hash.None && !f.opt.FlowHash {
 		hasher, err = hash.NewMultiHasherTypes(hash.NewHashSet(ht))
 		if err != nil {
 			return nil, err
@@ -349,13 +364,23 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	}
 
 	// Check the hashes of the encrypted data if we were comparing them
-	if ht != hash.None && hasher != nil {
-		srcHash := hasher.Sums()[ht]
+	if ht != hash.None && (hasher != nil || f.opt.FlowHash) {
+		var srcHash string
+		if f.opt.FlowHash {
+			srcHash, err = src.Hash(ctx, ht)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read source hash")
+			}
+		} else {
+			srcHash = hasher.Sums()[ht]
+		}
+
 		var dstHash string
 		dstHash, err = o.Hash(ctx, ht)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read destination hash")
 		}
+
 		if srcHash != "" && dstHash != "" && srcHash != dstHash {
 			// remove object
 			err = o.Remove(ctx)
@@ -385,6 +410,9 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
+	if f.opt.FlowHash {
+		return f.Fs.Hashes()
+	}
 	return hash.Set(hash.None)
 }
 
@@ -558,6 +586,14 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 //
 // Note that we break lots of encapsulation in this function.
 func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
+	// If this remote is configured to flow the hash of the underlying src object
+	// to the encapsulating remote, then it is expected for cyptcheck that the encapsulating
+	// remote object's hash is the flowed hash of the non encrypted data.
+	// So the "computed hash" should also be the hash of the underlying src object.
+	if f.opt.FlowHash {
+		return src.Hash(ctx, hashType)
+	}
+
 	// Read the nonce - opening the file is sufficient to read the nonce in
 	// use a limited read so we only read the header
 	in, err := o.Object.Open(ctx, &fs.RangeOption{Start: 0, End: int64(fileHeaderSize) - 1})
@@ -735,6 +771,9 @@ func (o *Object) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
+	if o.f.opt.FlowHash {
+		return o.Object.Hash(ctx, ht)
+	}
 	return "", hash.ErrUnsupported
 }
 
@@ -857,7 +896,20 @@ func (o *ObjectInfo) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
+	if o.f.opt.FlowHash {
+		return o.ObjectInfo.Hash(ctx, hash)
+	}
 	return "", nil
+}
+
+// UnWrapHash returns the selected checksum of the source underlying file and its wrapped version
+// If no checksum is available for a layer it returns "" for this specific layer only
+func (o *ObjectInfo) UnWrapHash(ctx context.Context, hash hash.Type) (srcHash string, wrappedHash string, err error) {
+	if o.f.opt.FlowHash {
+		srcHash, err := o.ObjectInfo.Hash(ctx, hash)
+		return srcHash, "", err
+	}
+	return "", "", nil
 }
 
 // ID returns the ID of the Object if known, or "" if not

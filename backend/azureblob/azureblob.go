@@ -42,6 +42,7 @@ const (
 	decayConstant         = 1    // bigger for slower decay, exponential
 	maxListChunkSize      = 5000 // number of items to read at once
 	modTimeKey            = "mtime"
+	md5Key                = "md5"
 	timeFormatIn          = time.RFC3339
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
 	maxTotalParts         = 50000 // in multipart upload
@@ -505,6 +506,26 @@ func (o *Object) updateMetadataWithModTime(modTime time.Time) {
 
 	// Set modTimeKey in it
 	o.meta[modTimeKey] = modTime.Format(timeFormatOut)
+}
+
+// updateMetadataWithModTime adds the modTime passed in to o.meta.
+func (o *Object) updateMetadataHash(md5 string) {
+	// We store the MD5 hash as a base64 encoded string so
+	// if the blob content was not ecnrypted, the hash will match the
+	// Content-MD5 computed by azure (only for non-multipart uploaded files)
+	bytes, err := hex.DecodeString(md5)
+	if err != nil {
+		fs.Debugf(o, "Failed to decode %q as MD5: %v", md5, err)
+		return
+	}
+
+	// Make sure o.meta is not nil
+	if o.meta == nil {
+		o.meta = make(map[string]string, 1)
+	}
+
+	// Set md5Key in it
+	o.meta[md5Key] = base64.StdEncoding.EncodeToString(bytes)
 }
 
 // Returns whether file is a directory marker or not
@@ -1005,12 +1026,20 @@ func (o *Object) Size() int64 {
 func (o *Object) setMetadata(metadata azblob.Metadata) {
 	if len(metadata) > 0 {
 		o.meta = metadata
+
 		if modTime, ok := metadata[modTimeKey]; ok {
 			when, err := time.Parse(timeFormatIn, modTime)
 			if err != nil {
 				fs.Debugf(o, "Couldn't parse %v = %q: %v", modTimeKey, modTime, err)
 			}
 			o.modTime = when
+		}
+
+		// Overwrite the MD5 from blob if the metadata was defined.
+		// This allow to have a separate MD5 hash than the actual blob content
+		// (for instance if the content was encrypted using the 'crypt' backend)
+		if md5, ok := metadata[md5Key]; ok {
+			o.md5 = md5
 		}
 	} else {
 		o.meta = nil
@@ -1033,6 +1062,7 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *azblob.BlobGetProper
 	}
 	// NOTE - Client library always returns MD5 as base64 decoded string, Object needs to maintain
 	// this as base64 encoded string.
+	// NOTE - The md5 might be overwitten by the setMetadata
 	o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5())
 	o.mimeType = info.ContentType()
 	o.size = size
@@ -1051,6 +1081,7 @@ func (o *Object) decodeMetaDataFromBlob(info *azblob.BlobItem) (err error) {
 	}
 	// NOTE - Client library always returns MD5 as base64 decoded string, Object needs to maintain
 	// this as base64 encoded string.
+	// NOTE - The md5 might be overwitten by the setMetadata
 	o.md5 = base64.StdEncoding.EncodeToString(info.Properties.ContentMD5)
 	o.mimeType = *info.Properties.ContentType
 	o.size = size
@@ -1388,8 +1419,25 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
 	// Note: If multipart, a MD5 checksum will also be computed for each uploaded block
 	// 		 in order to validate its integrity during transport
-	if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {
-		sourceMD5bytes, err := hex.DecodeString(sourceMD5)
+	// Note: As this remote might be read-only (if access_tier is archive),
+	//		 in case of a crypted source, we won't be able to use the cryptcheck command
+	//		 So if the crypted source was configured with flow_hash, we save the original
+	//		 hash into a specific metadata. We still fill the ContentMD5 header (with the hash
+	//		 of the crypted file) to validate its integrity during transport.
+	hashUnWrapper, ok := src.(fs.HashUnWrapper)
+	var sourceMD5, wrappedMD5 string
+	if ok {
+		sourceMD5, wrappedMD5, err = hashUnWrapper.UnWrapHash(ctx, hash.MD5)
+	} else {
+		sourceMD5, err = src.Hash(ctx, hash.MD5)
+		wrappedMD5 = sourceMD5
+	}
+
+	if err == nil && sourceMD5 != "" {
+		o.updateMetadataHash(sourceMD5)
+	}
+	if err == nil && wrappedMD5 != "" {
+		sourceMD5bytes, err := hex.DecodeString(wrappedMD5)
 		if err == nil {
 			httpHeaders.ContentMD5 = sourceMD5bytes
 		} else {
