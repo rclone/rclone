@@ -39,6 +39,7 @@ const (
 	EncodeSlash         uint = 1 << iota // /
 	EncodeWin                            // :?"*<>|
 	EncodeBackSlash                      // \
+	EncodeCrLf                           // CR(0x0D), LF(0x0A)
 	EncodeHashPercent                    // #%
 	EncodeDel                            // DEL(0x7F)
 	EncodeCtl                            // CTRL(0x01-0x1F)
@@ -86,6 +87,7 @@ func (mask MultiEncoder) Encode(in string) string {
 		encodeWin            = uint(mask)&EncodeWin != 0
 		encodeSlash          = uint(mask)&EncodeSlash != 0
 		encodeBackSlash      = uint(mask)&EncodeBackSlash != 0
+		encodeCrLf           = uint(mask)&EncodeCrLf != 0
 		encodeHashPercent    = uint(mask)&EncodeHashPercent != 0
 		encodeDel            = uint(mask)&EncodeDel != 0
 		encodeCtl            = uint(mask)&EncodeCtl != 0
@@ -202,6 +204,13 @@ func (mask MultiEncoder) Encode(in string) string {
 					return true
 				}
 			}
+			if encodeCrLf { // CR LF
+				switch r {
+				case rune(0x0D), rune(0x0A),
+					'␍', '␊':
+					return true
+				}
+			}
 			if encodeHashPercent { // #%
 				switch r {
 				case '#', '%',
@@ -294,6 +303,17 @@ func (mask MultiEncoder) Encode(in string) string {
 				continue
 			}
 		}
+		if encodeCrLf { // CR LF
+			switch r {
+			case rune(0x0D), rune(0x0A):
+				out.WriteRune(r + symbolOffset)
+				continue
+			case '␍', '␊':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
 		if encodeHashPercent { // #%
 			switch r {
 			case '#', '%':
@@ -338,6 +358,7 @@ func (mask MultiEncoder) Decode(in string) string {
 		encodeWin            = uint(mask)&EncodeWin != 0
 		encodeSlash          = uint(mask)&EncodeSlash != 0
 		encodeBackSlash      = uint(mask)&EncodeBackSlash != 0
+		encodeCrLf           = uint(mask)&EncodeCrLf != 0
 		encodeHashPercent    = uint(mask)&EncodeHashPercent != 0
 		encodeDel            = uint(mask)&EncodeDel != 0
 		encodeCtl            = uint(mask)&EncodeCtl != 0
@@ -432,6 +453,12 @@ func (mask MultiEncoder) Decode(in string) string {
 					return true
 				}
 			}
+			if encodeCrLf { // CR LF
+				switch r {
+				case '␍', '␊':
+					return true
+				}
+			}
 			if encodeHashPercent { // #%
 				switch r {
 				case '＃', '％':
@@ -517,6 +544,17 @@ func (mask MultiEncoder) Decode(in string) string {
 					out.WriteRune(r)
 				} else {
 					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if encodeCrLf { // CR LF
+			switch r {
+			case '␍', '␊':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - symbolOffset)
 				}
 				continue
 			}

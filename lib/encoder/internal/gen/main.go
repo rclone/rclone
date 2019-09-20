@@ -43,6 +43,7 @@ var maskBits = []struct {
 	{encoder.EncodeWin, "EncodeWin"},
 	{encoder.EncodeSlash, "EncodeSlash"},
 	{encoder.EncodeBackSlash, "EncodeBackSlash"},
+	{encoder.EncodeCrLf, "EncodeCrLf"},
 	{encoder.EncodeHashPercent, "EncodeHashPercent"},
 	{encoder.EncodeDel, "EncodeDel"},
 	{encoder.EncodeCtl, "EncodeCtl"},
@@ -98,6 +99,11 @@ var allMappings = []mapping{{
 		'\\',
 	}, []rune{
 		'＼',
+	}}, {
+	encoder.EncodeCrLf, []rune{
+		rune(0x0D), rune(0x0A),
+	}, []rune{
+		'␍', '␊',
 	}}, {
 	encoder.EncodeHashPercent, []rune{
 		'#', '%',
@@ -354,7 +360,7 @@ func fatalW(_ int, err error) func(...interface{}) {
 }
 
 func invalidMask(mask uint) bool {
-	return mask&encoder.EncodeCtl != 0 && mask&(encoder.EncodeLeftCrLfHtVt|encoder.EncodeRightCrLfHtVt) != 0
+	return mask&(encoder.EncodeCtl|encoder.EncodeCrLf) != 0 && mask&(encoder.EncodeLeftCrLfHtVt|encoder.EncodeRightCrLfHtVt) != 0
 }
 
 // construct a slice containing the runes between (l)ow (inclusive) and (h)igh (inclusive)
