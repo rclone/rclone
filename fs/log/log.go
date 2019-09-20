@@ -65,6 +65,18 @@ func Trace(o interface{}, format string, a ...interface{}) func(string, ...inter
 	}
 }
 
+// Stack logs a stack trace of callers with the o and info passed in
+func Stack(o interface{}, info string) {
+	if fs.Config.LogLevel < fs.LogLevelDebug {
+		return
+	}
+	arr := [16 * 1024]byte{}
+	buf := arr[:]
+	n := runtime.Stack(buf, false)
+	buf = buf[:n]
+	fs.LogPrintf(fs.LogLevelDebug, o, "%s\nStack trace:\n%s", info, buf)
+}
+
 // InitLogging start the logging as per the command line flags
 func InitLogging() {
 	flagsStr := "," + *logFormat + ","
