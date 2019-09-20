@@ -172,6 +172,8 @@ github.com/stretchr/testify/require
 github.com/t3rm1n4l/go-mega
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
+# github.com/youmark/pkcs8 v0.0.0-20181201043747-70daafe5d78a
+github.com/youmark/pkcs8
 # github.com/yunify/qingstor-sdk-go/v3 v3.0.2
 github.com/yunify/qingstor-sdk-go/v3/config
 github.com/yunify/qingstor-sdk-go/v3/request/errors
@@ -207,10 +209,10 @@ golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
+golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
-golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
@@ -239,9 +241,9 @@ golang.org/x/net/trace
 golang.org/x/net/internal/timeseries
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
+golang.org/x/oauth2/jws
 golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
-golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
