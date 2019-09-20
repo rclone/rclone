@@ -12,7 +12,8 @@ Paths are specified as `remote:path`
 Paths may be as deep as required, eg `remote:directory/subdirectory`.
 
 The initial setup for Box involves getting a token from Box which you
-need to do in your browser.  `rclone config` walks you through it.
+can do either in your browser, or with a config.json downloaded from Box
+to use JWT authentication.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
@@ -37,7 +38,14 @@ Storage> box
 Box App Client Id - leave blank normally.
 client_id> 
 Box App Client Secret - leave blank normally.
-client_secret> 
+client_secret>
+Box App config.json location
+Leave blank normally.
+Enter a string value. Press Enter for the default ("").
+config_json>
+'enterprise' or 'user' depending on the type of token being requested.
+Enter a string value. Press Enter for the default ("user").
+box_sub_type>
 Remote config
 Use auto config?
  * Say Y if not sure
