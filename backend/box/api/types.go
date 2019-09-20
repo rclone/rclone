@@ -202,3 +202,23 @@ type CommitUpload struct {
 		ContentModifiedAt Time `json:"content_modified_at"`
 	} `json:"attributes"`
 }
+
+// ConfigJSON defines the shape of a box config.json
+type ConfigJSON struct {
+	BoxAppSettings AppSettings `json:"boxAppSettings"`
+	EnterpriseID   string      `json:"enterpriseID"`
+}
+
+// AppSettings defines the shape of the boxAppSettings within box config.json
+type AppSettings struct {
+	ClientID     string  `json:"clientID"`
+	ClientSecret string  `json:"clientSecret"`
+	AppAuth      AppAuth `json:"appAuth"`
+}
+
+// AppAuth defines the shape of the appAuth within boxAppSettings in config.json
+type AppAuth struct {
+	PublicKeyID string `json:"publicKeyID"`
+	PrivateKey  string `json:"privateKey"`
+	Passphrase  string `json:"passphrase"`
+}
