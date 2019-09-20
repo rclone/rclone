@@ -53,6 +53,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20190528125457-55e675378686
 	github.com/xanzy/ssh-agent v0.2.1
+	github.com/youmark/pkcs8 v0.0.0-20181201043747-70daafe5d78a
 	github.com/yunify/qingstor-sdk-go/v3 v3.0.2
 	go.etcd.io/bbolt v1.3.3 // indirect
 	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
