@@ -11,8 +11,12 @@ package box
 
 import (
 	"context"
+	"crypto/rsa"
+	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -20,6 +24,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/rclone/rclone/lib/jwtutil"
+
+	"github.com/youmark/pkcs8"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/box/api"
@@ -29,12 +37,14 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/jws"
 )
 
 const (
@@ -49,6 +59,7 @@ const (
 	listChunks                  = 1000     // chunk size to read directory listings
 	minUploadCutoff             = 50000000 // upload cutoff can be no lower than this
 	defaultUploadCutoff         = 50 * 1024 * 1024
+	tokenURL                    = "https://api.box.com/oauth2/token"
 )
 
 // Globals
@@ -73,9 +84,34 @@ func init() {
 		Description: "Box",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.Config("box", name, m, oauthConfig)
-			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+			jsonFile, ok := m.Get("box_config_file")
+			boxSubType, boxSubTypeOk := m.Get("box_sub_type")
+			var err error
+			if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
+				boxConfig, err := getBoxConfig(jsonFile)
+				if err != nil {
+					log.Fatalf("Failed to configure token: %v", err)
+				}
+				privateKey, err := getDecryptedPrivateKey(boxConfig)
+				if err != nil {
+					log.Fatalf("Failed to configure token: %v", err)
+				}
+				claims, err := getClaims(boxConfig, boxSubType)
+				if err != nil {
+					log.Fatalf("Failed to configure token: %v", err)
+				}
+				signingHeaders := getSigningHeaders(boxConfig)
+				queryParams := getQueryParams(boxConfig)
+				client := fshttp.NewClient(fs.Config)
+				err = jwtutil.Config("box", name, claims, signingHeaders, queryParams, privateKey, m, client)
+				if err != nil {
+					log.Fatalf("Failed to configure token with jwt authentication: %v", err)
+				}
+			} else {
+				err = oauthutil.Config("box", name, m, oauthConfig)
+				if err != nil {
+					log.Fatalf("Failed to configure token with oauth authentication: %v", err)
+				}
 			}
 		},
 		Options: []fs.Option{{
@@ -84,6 +120,19 @@ func init() {
 		}, {
 			Name: config.ConfigClientSecret,
 			Help: "Box App Client Secret\nLeave blank normally.",
+		}, {
+			Name: "box_config_file",
+			Help: "Box App config.json location\nLeave blank normally.",
+		}, {
+			Name:    "box_sub_type",
+			Default: "user",
+			Examples: []fs.OptionExample{{
+				Value: "user",
+				Help:  "Rclone should act on behalf of a user",
+			}, {
+				Value: "enterprise",
+				Help:  "Rclone should act on behalf of a service account",
+			}},
 		}, {
 			Name:     "upload_cutoff",
 			Help:     "Cutoff for switching to multipart upload (>= 50MB).",
@@ -96,6 +145,74 @@ func init() {
 			Advanced: true,
 		}},
 	})
+}
+
+func getBoxConfig(configFile string) (boxConfig *api.ConfigJSON, err error) {
+	file, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "box: failed to read Box config")
+	}
+	err = json.Unmarshal(file, &boxConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "box: failed to parse Box config")
+	}
+	return boxConfig, nil
+}
+
+func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *jws.ClaimSet, err error) {
+	val, err := jwtutil.RandomHex(20)
+	if err != nil {
+		return nil, errors.Wrap(err, "box: failed to generate random string for jti")
+	}
+
+	claims = &jws.ClaimSet{
+		Iss: boxConfig.BoxAppSettings.ClientID,
+		Sub: boxConfig.EnterpriseID,
+		Aud: tokenURL,
+		Iat: time.Now().Unix(),
+		Exp: time.Now().Add(time.Second * 45).Unix(),
+		PrivateClaims: map[string]interface{}{
+			"box_sub_type": boxSubType,
+			"aud":          tokenURL,
+			"jti":          val,
+		},
+	}
+
+	return claims, nil
+}
+
+func getSigningHeaders(boxConfig *api.ConfigJSON) *jws.Header {
+	signingHeaders := &jws.Header{
+		Algorithm: "RS256",
+		Typ:       "JWT",
+		KeyID:     boxConfig.BoxAppSettings.AppAuth.PublicKeyID,
+	}
+
+	return signingHeaders
+}
+
+func getQueryParams(boxConfig *api.ConfigJSON) map[string]string {
+	queryParams := map[string]string{
+		"client_id":     boxConfig.BoxAppSettings.ClientID,
+		"client_secret": boxConfig.BoxAppSettings.ClientSecret,
+	}
+
+	return queryParams
+}
+
+func getDecryptedPrivateKey(boxConfig *api.ConfigJSON) (key *rsa.PrivateKey, err error) {
+
+	block, rest := pem.Decode([]byte(boxConfig.BoxAppSettings.AppAuth.PrivateKey))
+	if len(rest) > 0 {
+		return nil, errors.Wrap(err, "box: extra data included in private key")
+	}
+
+	rsaKey, err := pkcs8.ParsePKCS8PrivateKey(block.Bytes, []byte(boxConfig.BoxAppSettings.AppAuth.Passphrase))
+	if err != nil {
+		return nil, errors.Wrap(err, "box: failed to decrypt private key")
+	}
+
+	return rsaKey.(*rsa.PrivateKey), nil
 }
 
 // Options defines the configuration for this backend
