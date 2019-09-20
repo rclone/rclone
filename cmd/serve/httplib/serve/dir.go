@@ -66,7 +66,7 @@ func (d *Directory) AddEntry(remote string, isDir bool) {
 	})
 }
 
-// Error returns an http.StatusInternalServerError and logs the error
+// Error logs the error and if a ResponseWriter is given it writes a http.StatusInternalServerError
 func Error(what interface{}, w http.ResponseWriter, text string, err error) {
 	fs.CountError(err)
 	fs.Errorf(what, "%s: %v", text, err)
