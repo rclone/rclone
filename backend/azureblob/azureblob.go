@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -59,6 +60,8 @@ const (
 	emulatorAccountKey   = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
 )
+
+const enc = encodings.AzureBlob
 
 // Register with Fs
 func init() {
@@ -208,7 +211,8 @@ func parsePath(path string) (root string) {
 // split returns container and containerPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (containerName, containerPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	containerName, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return enc.FromStandardName(containerName), enc.FromStandardPath(containerPath)
 }
 
 // split returns container and containerPath from the object
@@ -575,18 +579,18 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 		}
 		// Advance marker to next
 		marker = response.NextMarker
-
 		for i := range response.Segment.BlobItems {
 			file := &response.Segment.BlobItems[i]
 			// Finish if file name no longer has prefix
 			// if prefix != "" && !strings.HasPrefix(file.Name, prefix) {
 			// 	return nil
 			// }
-			if !strings.HasPrefix(file.Name, prefix) {
-				fs.Debugf(f, "Odd name received %q", file.Name)
+			remote := enc.ToStandardPath(file.Name)
+			if !strings.HasPrefix(remote, prefix) {
+				fs.Debugf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote := file.Name[len(prefix):]
+			remote = remote[len(prefix):]
 			if isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote) {
 				continue // skip directory marker
 			}
@@ -602,6 +606,7 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 		// Send the subdirectories
 		for _, remote := range response.Segment.BlobPrefixes {
 			remote := strings.TrimRight(remote.Name, "/")
+			remote = enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Debugf(f, "Odd directory name received %q", remote)
 				continue
@@ -665,7 +670,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 		return entries, nil
 	}
 	err = f.listContainersToFn(func(container *azblob.ContainerItem) error {
-		d := fs.NewDir(container.Name, container.Properties.LastModified)
+		d := fs.NewDir(enc.ToStandardName(container.Name), container.Properties.LastModified)
 		f.cache.MarkOK(container.Name)
 		entries = append(entries, d)
 		return nil

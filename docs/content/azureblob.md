@@ -81,6 +81,26 @@ key.  It is stored using RFC3339 Format time with nanosecond
 precision.  The metadata is supplied during directory listings so
 there is no overhead to using it.
 
+### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| /         | 0x2F  | ／           |
+| \         | 0x5C  | ＼           |
+
+File names can also not end with the following characters.
+These only get replaced if they are last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| .         | 0x2E  | ．          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
+
 ### Hashes ###
 
 MD5 hashes are stored with blobs.  However blobs that were uploaded in
