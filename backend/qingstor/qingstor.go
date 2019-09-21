@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
@@ -28,6 +29,8 @@ import (
 	qsErr "github.com/yunify/qingstor-sdk-go/v3/request/errors"
 	qs "github.com/yunify/qingstor-sdk-go/v3/service"
 )
+
+const enc = encodings.QingStor
 
 // Register with Fs
 func init() {
@@ -184,7 +187,8 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return enc.FromStandardName(bucketName), enc.FromStandardPath(bucketPath)
 }
 
 // split returns bucket and bucketPath from the object
@@ -353,7 +357,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = bucketInit.HeadObject(f.rootDirectory, &qs.HeadObjectInput{})
+		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
+		_, err = bucketInit.HeadObject(encodedDirectory, &qs.HeadObjectInput{})
 		if err == nil {
 			newRoot := path.Dir(f.root)
 			if newRoot == "." {
@@ -550,6 +555,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					continue
 				}
 				remote := *commonPrefix
+				remote = enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -569,12 +575,13 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 
 		for _, object := range resp.Keys {
-			key := qs.StringValue(object.Key)
-			if !strings.HasPrefix(key, prefix) {
-				fs.Logf(f, "Odd name received %q", key)
+			remote := qs.StringValue(object.Key)
+			remote = enc.ToStandardPath(remote)
+			if !strings.HasPrefix(remote, prefix) {
+				fs.Logf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote := key[len(prefix):]
+			remote = remote[len(prefix):]
 			if addBucket {
 				remote = path.Join(bucket, remote)
 			}
@@ -646,7 +653,7 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 	}
 
 	for _, bucket := range resp.Buckets {
-		d := fs.NewDir(qs.StringValue(bucket.Name), qs.TimeValue(bucket.Created))
+		d := fs.NewDir(enc.ToStandardName(qs.StringValue(bucket.Name)), qs.TimeValue(bucket.Created))
 		entries = append(entries, d)
 	}
 	return entries, nil
