@@ -1,6 +1,7 @@
 package hubic
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -26,7 +27,7 @@ func newAuth(f *Fs) *auth {
 func (a *auth) Request(*swift.Connection) (r *http.Request, err error) {
 	const retries = 10
 	for try := 1; try <= retries; try++ {
-		err = a.f.getCredentials()
+		err = a.f.getCredentials(context.TODO())
 		if err == nil {
 			break
 		}

@@ -5,6 +5,7 @@ package rest
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"io"
@@ -184,7 +185,7 @@ func ClientWithNoRedirects(c *http.Client) *http.Client {
 // if err != nil then resp.Body will have been closed
 //
 // it will return resp if at all possible, even if err is set
-func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
+func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, err error) {
 	api.mu.RLock()
 	defer api.mu.RUnlock()
 	if opts == nil {
@@ -215,6 +216,7 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	if err != nil {
 		return
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	headers := make(map[string]string)
 	// Set default headers
 	for k, v := range api.headers {
@@ -391,8 +393,8 @@ func MultipartUpload(in io.Reader, params url.Values, contentName, fileName stri
 // parameter name MultipartMetadataName.
 //
 // It will return resp if at all possible, even if err is set
-func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
-	return api.callCodec(opts, request, response, json.Marshal, DecodeJSON, "application/json")
+func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+	return api.callCodec(ctx, opts, request, response, json.Marshal, DecodeJSON, "application/json")
 }
 
 // CallXML runs Call and decodes the body as a XML object into response (if not nil)
@@ -408,14 +410,14 @@ func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{
 // See CallJSON for a description of MultipartParams and related opts
 //
 // It will return resp if at all possible, even if err is set
-func (api *Client) CallXML(opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
-	return api.callCodec(opts, request, response, xml.Marshal, DecodeXML, "application/xml")
+func (api *Client) CallXML(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
+	return api.callCodec(ctx, opts, request, response, xml.Marshal, DecodeXML, "application/xml")
 }
 
 type marshalFn func(v interface{}) ([]byte, error)
 type decodeFn func(resp *http.Response, result interface{}) (err error)
 
-func (api *Client) callCodec(opts *Opts, request interface{}, response interface{}, marshal marshalFn, decode decodeFn, contentType string) (resp *http.Response, err error) {
+func (api *Client) callCodec(ctx context.Context, opts *Opts, request interface{}, response interface{}, marshal marshalFn, decode decodeFn, contentType string) (resp *http.Response, err error) {
 	var requestBody []byte
 	// Marshal the request if given
 	if request != nil {
@@ -446,7 +448,7 @@ func (api *Client) callCodec(opts *Opts, request interface{}, response interface
 			*opts.ContentLength += overhead
 		}
 	}
-	resp, err = api.Call(opts)
+	resp, err = api.Call(ctx, opts)
 	if err != nil {
 		return resp, err
 	}

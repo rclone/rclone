@@ -77,6 +77,7 @@ func init() {
 		Description: "JottaCloud",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			ctx := context.TODO()
 			tokenString, ok := m.Get("token")
 			if ok && tokenString != "" {
 				fmt.Printf("Already have a token - refresh?\n")
@@ -88,7 +89,7 @@ func init() {
 			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 			fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
 			if config.Confirm() {
-				deviceRegistration, err := registerDevice(srv)
+				deviceRegistration, err := registerDevice(ctx, srv)
 				if err != nil {
 					log.Fatalf("Failed to register device: %v", err)
 				}
@@ -113,7 +114,7 @@ func init() {
 			username := config.ReadLine()
 			password := config.GetPassword("Your Jottacloud password is only required during setup and will not be stored.")
 
-			token, err := doAuth(srv, username, password)
+			token, err := doAuth(ctx, srv, username, password)
 			if err != nil {
 				log.Fatalf("Failed to get oauth token: %s", err)
 			}
@@ -132,7 +133,7 @@ func init() {
 				srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
 				apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
-				device, mountpoint, err := setupMountpoint(srv, apiSrv)
+				device, mountpoint, err := setupMountpoint(ctx, srv, apiSrv)
 				if err != nil {
 					log.Fatalf("Failed to setup mountpoint: %s", err)
 				}
@@ -246,7 +247,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 }
 
 // registerDevice register a new device for use with the jottacloud API
-func registerDevice(srv *rest.Client) (reg *api.DeviceRegistrationResponse, err error) {
+func registerDevice(ctx context.Context, srv *rest.Client) (reg *api.DeviceRegistrationResponse, err error) {
 	// random generator to generate random device names
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	randonDeviceNamePartLength := 21
@@ -269,12 +270,12 @@ func registerDevice(srv *rest.Client) (reg *api.DeviceRegistrationResponse, err 
 	}
 
 	var deviceRegistration *api.DeviceRegistrationResponse
-	_, err = srv.CallJSON(&opts, nil, &deviceRegistration)
+	_, err = srv.CallJSON(ctx, &opts, nil, &deviceRegistration)
 	return deviceRegistration, err
 }
 
 // doAuth runs the actual token request
-func doAuth(srv *rest.Client, username, password string) (token oauth2.Token, err error) {
+func doAuth(ctx context.Context, srv *rest.Client, username, password string) (token oauth2.Token, err error) {
 	// prepare out token request with username and password
 	values := url.Values{}
 	values.Set("grant_type", "PASSWORD")
@@ -291,7 +292,7 @@ func doAuth(srv *rest.Client, username, password string) (token oauth2.Token, er
 
 	// do the first request
 	var jsonToken api.TokenJSON
-	resp, err := srv.CallJSON(&opts, nil, &jsonToken)
+	resp, err := srv.CallJSON(ctx, &opts, nil, &jsonToken)
 	if err != nil {
 		// if 2fa is enabled the first request is expected to fail. We will do another request with the 2fa code as an additional http header
 		if resp != nil {
@@ -303,7 +304,7 @@ func doAuth(srv *rest.Client, username, password string) (token oauth2.Token, er
 				authCode = strings.Replace(authCode, "-", "", -1) // remove any "-" contained in the code so we have a 6 digit number
 				opts.ExtraHeaders = make(map[string]string)
 				opts.ExtraHeaders["X-Jottacloud-Otp"] = authCode
-				resp, err = srv.CallJSON(&opts, nil, &jsonToken)
+				resp, err = srv.CallJSON(ctx, &opts, nil, &jsonToken)
 			}
 		}
 	}
@@ -316,13 +317,13 @@ func doAuth(srv *rest.Client, username, password string) (token oauth2.Token, er
 }
 
 // setupMountpoint sets up a custom device and mountpoint if desired by the user
-func setupMountpoint(srv *rest.Client, apiSrv *rest.Client) (device, mountpoint string, err error) {
-	cust, err := getCustomerInfo(apiSrv)
+func setupMountpoint(ctx context.Context, srv *rest.Client, apiSrv *rest.Client) (device, mountpoint string, err error) {
+	cust, err := getCustomerInfo(ctx, apiSrv)
 	if err != nil {
 		return "", "", err
 	}
 
-	acc, err := getDriveInfo(srv, cust.Username)
+	acc, err := getDriveInfo(ctx, srv, cust.Username)
 	if err != nil {
 		return "", "", err
 	}
@@ -333,7 +334,7 @@ func setupMountpoint(srv *rest.Client, apiSrv *rest.Client) (device, mountpoint 
 	fmt.Printf("Please select the device to use. Normally this will be Jotta\n")
 	device = config.Choose("Devices", deviceNames, nil, false)
 
-	dev, err := getDeviceInfo(srv, path.Join(cust.Username, device))
+	dev, err := getDeviceInfo(ctx, srv, path.Join(cust.Username, device))
 	if err != nil {
 		return "", "", err
 	}
@@ -351,13 +352,13 @@ func setupMountpoint(srv *rest.Client, apiSrv *rest.Client) (device, mountpoint 
 }
 
 // getCustomerInfo queries general information about the account
-func getCustomerInfo(srv *rest.Client) (info *api.CustomerInfo, err error) {
+func getCustomerInfo(ctx context.Context, srv *rest.Client) (info *api.CustomerInfo, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "account/v1/customer",
 	}
 
-	_, err = srv.CallJSON(&opts, nil, &info)
+	_, err = srv.CallJSON(ctx, &opts, nil, &info)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't get customer info")
 	}
@@ -366,13 +367,13 @@ func getCustomerInfo(srv *rest.Client) (info *api.CustomerInfo, err error) {
 }
 
 // getDriveInfo queries general information about the account and the available devices and mountpoints.
-func getDriveInfo(srv *rest.Client, username string) (info *api.DriveInfo, err error) {
+func getDriveInfo(ctx context.Context, srv *rest.Client, username string) (info *api.DriveInfo, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   username,
 	}
 
-	_, err = srv.CallXML(&opts, nil, &info)
+	_, err = srv.CallXML(ctx, &opts, nil, &info)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't get drive info")
 	}
@@ -381,13 +382,13 @@ func getDriveInfo(srv *rest.Client, username string) (info *api.DriveInfo, err e
 }
 
 // getDeviceInfo queries Information about a jottacloud device
-func getDeviceInfo(srv *rest.Client, path string) (info *api.JottaDevice, err error) {
+func getDeviceInfo(ctx context.Context, srv *rest.Client, path string) (info *api.JottaDevice, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   urlPathEscape(path),
 	}
 
-	_, err = srv.CallXML(&opts, nil, &info)
+	_, err = srv.CallXML(ctx, &opts, nil, &info)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't get device info")
 	}
@@ -407,7 +408,7 @@ func (f *Fs) setEndpointURL() {
 }
 
 // readMetaDataForPath reads the metadata from the path
-func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
+func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   f.filePath(path),
@@ -415,7 +416,7 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.JottaFile, err error) {
 	var result api.JottaFile
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &result)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
 		return shouldRetry(resp, err)
 	})
 
@@ -492,6 +493,7 @@ func grantTypeFilter(req *http.Request) {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.TODO()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -546,11 +548,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-		_, err := f.readMetaDataForPath("")
+		_, err := f.readMetaDataForPath(ctx, "")
 		return err
 	})
 
-	cust, err := getCustomerInfo(f.apiSrv)
+	cust, err := getCustomerInfo(ctx, f.apiSrv)
 	if err != nil {
 		return nil, err
 	}
@@ -582,7 +584,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *api.JottaFile) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.JottaFile) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -592,7 +594,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.JottaFile) (fs.Object, e
 		// Set info
 		err = o.setMetaData(info)
 	} else {
-		err = o.readMetaData(false) // reads info and meta, returning an error
+		err = o.readMetaData(ctx, false) // reads info and meta, returning an error
 	}
 	if err != nil {
 		return nil, err
@@ -603,11 +605,11 @@ func (f *Fs) newObjectWithInfo(remote string, info *api.JottaFile) (fs.Object, e
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(remote, nil)
+	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
 // CreateDir makes a directory
-func (f *Fs) CreateDir(path string) (jf *api.JottaFolder, err error) {
+func (f *Fs) CreateDir(ctx context.Context, path string) (jf *api.JottaFolder, err error) {
 	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
 	var resp *http.Response
 	opts := rest.Opts{
@@ -619,7 +621,7 @@ func (f *Fs) CreateDir(path string) (jf *api.JottaFolder, err error) {
 	opts.Parameters.Set("mkDir", "true")
 
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &jf)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &jf)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -648,7 +650,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	var resp *http.Response
 	var result api.JottaFolder
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &result)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
 		return shouldRetry(resp, err)
 	})
 
@@ -682,7 +684,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			continue
 		}
 		remote := path.Join(dir, restoreReservedChars(item.Name))
-		o, err := f.newObjectWithInfo(remote, item)
+		o, err := f.newObjectWithInfo(ctx, remote, item)
 		if err != nil {
 			continue
 		}
@@ -696,7 +698,7 @@ type listFileDirFn func(fs.DirEntry) error
 
 // List the objects and directories into entries, from a
 // special kind of JottaFolder representing a FileDirLis
-func (f *Fs) listFileDir(remoteStartPath string, startFolder *api.JottaFolder, fn listFileDirFn) error {
+func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolder *api.JottaFolder, fn listFileDirFn) error {
 	pathPrefix := "/" + f.filePathRaw("") // Non-escaped prefix of API paths to be cut off, to be left with the remote path including the remoteStartPath
 	pathPrefixLength := len(pathPrefix)
 	startPath := path.Join(pathPrefix, remoteStartPath) // Non-escaped API path up to and including remoteStartPath, to decide if it should be created as a new dir object
@@ -725,7 +727,7 @@ func (f *Fs) listFileDir(remoteStartPath string, startFolder *api.JottaFolder, f
 				continue
 			}
 			remoteFile := path.Join(remoteDir, restoreReservedChars(file.Name))
-			o, err := f.newObjectWithInfo(remoteFile, file)
+			o, err := f.newObjectWithInfo(ctx, remoteFile, file)
 			if err != nil {
 				return err
 			}
@@ -754,7 +756,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	var resp *http.Response
 	var result api.JottaFolder // Could be JottaFileDirList, but JottaFolder is close enough
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &result)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -767,7 +769,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return errors.Wrap(err, "couldn't list files")
 	}
 	list := walk.NewListRHelper(callback)
-	err = f.listFileDir(dir, &result, func(entry fs.DirEntry) error {
+	err = f.listFileDir(ctx, dir, &result, func(entry fs.DirEntry) error {
 		return list.Add(entry)
 	})
 	if err != nil {
@@ -821,7 +823,7 @@ func (f *Fs) mkParentDir(ctx context.Context, dirPath string) error {
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	_, err := f.CreateDir(dir)
+	_, err := f.CreateDir(ctx, dir)
 	return err
 }
 
@@ -860,7 +862,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(&opts)
+		resp, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -888,7 +890,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 }
 
 // copyOrMoves copies or moves directories or files depending on the method parameter
-func (f *Fs) copyOrMove(method, src, dest string) (info *api.JottaFile, err error) {
+func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       src,
@@ -899,7 +901,7 @@ func (f *Fs) copyOrMove(method, src, dest string) (info *api.JottaFile, err erro
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &info)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -928,13 +930,13 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	info, err := f.copyOrMove("cp", srcObj.filePath(), remote)
+	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't copy file")
 	}
 
-	return f.newObjectWithInfo(remote, info)
+	return f.newObjectWithInfo(ctx, remote, info)
 	//return f.newObjectWithInfo(remote, &result)
 }
 
@@ -958,13 +960,13 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	info, err := f.copyOrMove("mv", srcObj.filePath(), remote)
+	info, err := f.copyOrMove(ctx, "mv", srcObj.filePath(), remote)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't move file")
 	}
 
-	return f.newObjectWithInfo(remote, info)
+	return f.newObjectWithInfo(ctx, remote, info)
 	//return f.newObjectWithInfo(remote, result)
 }
 
@@ -1002,7 +1004,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	_, err = f.copyOrMove("mvDir", path.Join(f.endpointURL, replaceReservedChars(srcPath))+"/", dstRemote)
+	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, replaceReservedChars(srcPath))+"/", dstRemote)
 
 	if err != nil {
 		return errors.Wrap(err, "couldn't move directory")
@@ -1027,7 +1029,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 	var resp *http.Response
 	var result api.JottaFile
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(&opts, nil, &result)
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
 		return shouldRetry(resp, err)
 	})
 
@@ -1058,7 +1060,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	info, err := getDriveInfo(f.srv, f.user)
+	info, err := getDriveInfo(ctx, f.srv, f.user)
 	if err != nil {
 		return nil, err
 	}
@@ -1113,7 +1115,8 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
-	err := o.readMetaData(false)
+	ctx := context.TODO()
+	err := o.readMetaData(ctx, false)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return 0
@@ -1137,11 +1140,11 @@ func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 }
 
 // readMetaData reads and updates the metadata for an object
-func (o *Object) readMetaData(force bool) (err error) {
+func (o *Object) readMetaData(ctx context.Context, force bool) (err error) {
 	if o.hasMetaData && !force {
 		return nil
 	}
-	info, err := o.fs.readMetaDataForPath(o.remote)
+	info, err := o.fs.readMetaDataForPath(ctx, o.remote)
 	if err != nil {
 		return err
 	}
@@ -1156,7 +1159,7 @@ func (o *Object) readMetaData(force bool) (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	err := o.readMetaData(false)
+	err := o.readMetaData(ctx, false)
 	if err != nil {
 		fs.Logf(o, "Failed to read metadata: %v", err)
 		return time.Now()
@@ -1188,7 +1191,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	opts.Parameters.Set("mode", "bin")
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(&opts)
+		resp, err = o.fs.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1298,7 +1301,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// send it
 	var response api.AllocateFileResponse
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		resp, err = o.fs.apiSrv.CallJSON(&opts, &request, &response)
+		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, &request, &response)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1329,7 +1332,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 
 		// send the remaining bytes
-		resp, err = o.fs.apiSrv.CallJSON(&opts, nil, &result)
+		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, nil, &result)
 		if err != nil {
 			return err
 		}
@@ -1341,7 +1344,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		o.modTime = time.Unix(result.Modified/1000, 0)
 	} else {
 		// If the file state is COMPLETE we don't need to upload it because the file was already found but we still ned to update our metadata
-		return o.readMetaData(true)
+		return o.readMetaData(ctx, true)
 	}
 
 	return nil
@@ -1363,7 +1366,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	}
 
 	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallXML(&opts, nil, nil)
+		resp, err := o.fs.srv.CallXML(ctx, &opts, nil, nil)
 		return shouldRetry(resp, err)
 	})
 }

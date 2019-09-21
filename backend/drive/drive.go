@@ -156,6 +156,7 @@ func init() {
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			ctx := context.TODO()
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
@@ -177,7 +178,7 @@ func init() {
 					log.Fatalf("Failed to configure token: %v", err)
 				}
 			}
-			err = configTeamDrive(opt, m, name)
+			err = configTeamDrive(ctx, opt, m, name)
 			if err != nil {
 				log.Fatalf("Failed to configure team drive: %v", err)
 			}
@@ -663,7 +664,7 @@ OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields(googleapi.Field(fields)).Do()
+			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -778,7 +779,7 @@ func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, er
 }
 
 // Figure out if the user wants to use a team drive
-func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
+func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name string) error {
 	// Stop if we are running non-interactive config
 	if fs.Config.AutoConfirm {
 		return nil
@@ -806,7 +807,7 @@ func configTeamDrive(opt *Options, m configmap.Mapper, name string) error {
 	for {
 		var teamDrives *drive.TeamDriveList
 		err = newPacer(opt).Call(func() (bool, error) {
-			teamDrives, err = listTeamDrives.Do()
+			teamDrives, err = listTeamDrives.Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -1734,7 +1735,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = f.Upload(in, size, srcMimeType, "", remote, createInfo)
+		info, err = f.Upload(ctx, in, size, srcMimeType, "", remote, createInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -1975,7 +1976,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) error {
 	err := f.pacer.Call(func() (bool, error) {
-		err := f.svc.Files.EmptyTrash().Do()
+		err := f.svc.Files.EmptyTrash().Context(ctx).Do()
 		return shouldRetry(err)
 	})
 
@@ -1994,7 +1995,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var about *drive.About
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		about, err = f.svc.About.Get().Fields("storageQuota").Do()
+		about, err = f.svc.About.Get().Fields("storageQuota").Context(ctx).Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -2253,7 +2254,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 					}
 				}
 				fs.Debugf(f, "Checking for changes on remote")
-				startPageToken, err = f.changeNotifyRunner(notifyFunc, startPageToken)
+				startPageToken, err = f.changeNotifyRunner(ctx, notifyFunc, startPageToken)
 				if err != nil {
 					fs.Infof(f, "Change notify listener failure: %s", err)
 				}
@@ -2275,7 +2276,7 @@ func (f *Fs) changeNotifyStartPageToken() (pageToken string, err error) {
 	return startPageToken.StartPageToken, nil
 }
 
-func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPageToken string) (newStartPageToken string, err error) {
+func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), startPageToken string) (newStartPageToken string, err error) {
 	pageToken := startPageToken
 	for {
 		var changeList *drive.ChangeList
@@ -2291,7 +2292,7 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), startPage
 			if f.isTeamDrive {
 				changesCall.TeamDriveId(f.opt.TeamDriveID)
 			}
-			changeList, err = changesCall.Do()
+			changeList, err = changesCall.Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -2499,7 +2500,7 @@ func (o *baseObject) Storable() bool {
 
 // httpResponse gets an http.Response object for the object
 // using the url and method passed in
-func (o *baseObject) httpResponse(url, method string, options []fs.OpenOption) (req *http.Request, res *http.Response, err error) {
+func (o *baseObject) httpResponse(ctx context.Context, url, method string, options []fs.OpenOption) (req *http.Request, res *http.Response, err error) {
 	if url == "" {
 		return nil, nil, errors.New("forbidden to download - check sharing permission")
 	}
@@ -2507,6 +2508,7 @@ func (o *baseObject) httpResponse(url, method string, options []fs.OpenOption) (
 	if err != nil {
 		return req, nil, err
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	if o.bytes == 0 {
 		// Don't supply range requests for 0 length objects as they always fail
@@ -2577,8 +2579,8 @@ func isGoogleError(err error, what string) bool {
 }
 
 // open a url for reading
-func (o *baseObject) open(url string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	_, res, err := o.httpResponse(url, "GET", options)
+func (o *baseObject) open(ctx context.Context, url string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	_, res, err := o.httpResponse(ctx, url, "GET", options)
 	if err != nil {
 		if isGoogleError(err, "cannotDownloadAbusiveFile") {
 			if o.fs.opt.AcknowledgeAbuse {
@@ -2589,7 +2591,7 @@ func (o *baseObject) open(url string, options ...fs.OpenOption) (in io.ReadClose
 					url += "?"
 				}
 				url += "acknowledgeAbuse=true"
-				_, res, err = o.httpResponse(url, "GET", options)
+				_, res, err = o.httpResponse(ctx, url, "GET", options)
 			} else {
 				err = errors.Wrap(err, "Use the --drive-acknowledge-abuse flag to download this file")
 			}
@@ -2618,7 +2620,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			o.v2Download = false
 		}
 	}
-	return o.baseObject.open(o.url, options...)
+	return o.baseObject.open(ctx, o.url, options...)
 }
 func (o *documentObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// Update the size with what we are reading as it can change from
@@ -2643,7 +2645,7 @@ func (o *documentObject) Open(ctx context.Context, options ...fs.OpenOption) (in
 	if offset != 0 {
 		return nil, errors.New("partial downloads are not supported while exporting Google Documents")
 	}
-	in, err = o.baseObject.open(o.url, options...)
+	in, err = o.baseObject.open(ctx, o.url, options...)
 	if in != nil {
 		in = &openDocumentFile{o: o, in: in}
 	}
@@ -2678,7 +2680,7 @@ func (o *linkObject) Open(ctx context.Context, options ...fs.OpenOption) (in io.
 	return ioutil.NopCloser(bytes.NewReader(data)), nil
 }
 
-func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io.Reader,
+func (o *baseObject) update(ctx context.Context, updateInfo *drive.File, uploadMimeType string, in io.Reader,
 	src fs.ObjectInfo) (info *drive.File, err error) {
 	// Make the API request to upload metadata and file data.
 	size := src.Size()
@@ -2696,7 +2698,7 @@ func (o *baseObject) update(updateInfo *drive.File, uploadMimeType string, in io
 		return
 	}
 	// Upload the file in chunks
-	return o.fs.Upload(in, size, uploadMimeType, o.id, o.remote, updateInfo)
+	return o.fs.Upload(ctx, in, size, uploadMimeType, o.id, o.remote, updateInfo)
 }
 
 // Update the already existing object
@@ -2710,7 +2712,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		MimeType:     srcMimeType,
 		ModifiedTime: src.ModTime(ctx).Format(timeFormatOut),
 	}
-	info, err := o.baseObject.update(updateInfo, srcMimeType, in, src)
+	info, err := o.baseObject.update(ctx, updateInfo, srcMimeType, in, src)
 	if err != nil {
 		return err
 	}
@@ -2747,7 +2749,7 @@ func (o *documentObject) Update(ctx context.Context, in io.Reader, src fs.Object
 	}
 	updateInfo.MimeType = importMimeType
 
-	info, err := o.baseObject.update(updateInfo, srcMimeType, in, src)
+	info, err := o.baseObject.update(ctx, updateInfo, srcMimeType, in, src)
 	if err != nil {
 		return err
 	}

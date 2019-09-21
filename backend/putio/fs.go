@@ -289,6 +289,7 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		if err != nil {
 			return false, err
 		}
+		req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 		req.Header.Set("tus-resumable", "1.0.0")
 		req.Header.Set("upload-length", strconv.FormatInt(size, 10))
 		b64name := base64.StdEncoding.EncodeToString([]byte(name))
@@ -354,7 +355,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 func (f *Fs) transferChunk(ctx context.Context, location string, start int64, chunk io.ReadSeeker, chunkSize int64) (fileID int64, err error) {
 	// defer log.Trace(f, "location=%v, start=%v, chunkSize=%v", location, start, chunkSize)("fileID=%v, err=%v", fileID, &err)
 	_, _ = chunk.Seek(0, io.SeekStart)
-	req, err := f.makeUploadPatchRequest(location, chunk, start, chunkSize)
+	req, err := f.makeUploadPatchRequest(ctx, location, chunk, start, chunkSize)
 	if err != nil {
 		return 0, err
 	}
@@ -379,11 +380,12 @@ func (f *Fs) transferChunk(ctx context.Context, location string, start int64, ch
 	return fileID, nil
 }
 
-func (f *Fs) makeUploadPatchRequest(location string, in io.Reader, offset, length int64) (*http.Request, error) {
+func (f *Fs) makeUploadPatchRequest(ctx context.Context, location string, in io.Reader, offset, length int64) (*http.Request, error) {
 	req, err := http.NewRequest("PATCH", location, in)
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	req.Header.Set("tus-resumable", "1.0.0")
 	req.Header.Set("upload-offset", strconv.FormatInt(offset, 10))
 	req.Header.Set("content-length", strconv.FormatInt(length, 10))

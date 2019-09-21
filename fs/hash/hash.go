@@ -13,6 +13,7 @@ import (
 	"github.com/jzelinskie/whirlpool"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/dropbox/dbhash"
+	"github.com/rclone/rclone/backend/mailru/mrhash"
 	"github.com/rclone/rclone/backend/onedrive/quickxorhash"
 )
 
@@ -44,13 +45,16 @@ const (
 	// CRC32 indicates CRC-32 support
 	CRC32
 
+	// Mailru indicates Mailru special hash
+	Mailru
+
 	// None indicates no hashes are supported
 	None Type = 0
 )
 
 // Supported returns a set of all the supported hashes by
 // HashStream and MultiHasher.
-var Supported = NewHashSet(MD5, SHA1, Dropbox, QuickXorHash, Whirlpool, CRC32)
+var Supported = NewHashSet(MD5, SHA1, Dropbox, QuickXorHash, Whirlpool, CRC32, Mailru)
 
 // Width returns the width in characters for any HashType
 var Width = map[Type]int{
@@ -60,6 +64,7 @@ var Width = map[Type]int{
 	QuickXorHash: 40,
 	Whirlpool:    128,
 	CRC32:        8,
+	Mailru:       40,
 }
 
 // Stream will calculate hashes of all supported hash types.
@@ -103,6 +108,8 @@ func (h Type) String() string {
 		return "Whirlpool"
 	case CRC32:
 		return "CRC-32"
+	case Mailru:
+		return "MailruHash"
 	default:
 		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
 		panic(err)
@@ -126,6 +133,8 @@ func (h *Type) Set(s string) error {
 		*h = Whirlpool
 	case "CRC-32":
 		*h = CRC32
+	case "MailruHash":
+		*h = Mailru
 	default:
 		return errors.Errorf("Unknown hash type %q", s)
 	}
@@ -160,6 +169,8 @@ func fromTypes(set Set) (map[Type]hash.Hash, error) {
 			hashers[t] = whirlpool.New()
 		case CRC32:
 			hashers[t] = crc32.NewIEEE()
+		case Mailru:
+			hashers[t] = mrhash.New()
 		default:
 			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
 			panic(err)

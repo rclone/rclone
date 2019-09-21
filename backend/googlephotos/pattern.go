@@ -20,7 +20,7 @@ import (
 // file pattern parsing
 type lister interface {
 	listDir(ctx context.Context, prefix string, filter api.SearchFilter) (entries fs.DirEntries, err error)
-	listAlbums(shared bool) (all *albums, err error)
+	listAlbums(ctx context.Context, shared bool) (all *albums, err error)
 	listUploads(ctx context.Context, dir string) (entries fs.DirEntries, err error)
 	dirTime() time.Time
 }
@@ -296,7 +296,7 @@ func yearMonthDayFilter(ctx context.Context, f lister, match []string) (sf api.S
 // is a prefix of another album, or actual files, or a combination of
 // the two.
 func albumsToEntries(ctx context.Context, f lister, shared bool, prefix string, albumPath string) (entries fs.DirEntries, err error) {
-	albums, err := f.listAlbums(shared)
+	albums, err := f.listAlbums(ctx, shared)
 	if err != nil {
 		return nil, err
 	}

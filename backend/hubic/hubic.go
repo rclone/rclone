@@ -7,6 +7,7 @@ package hubic
 // to be revisted after some actual experience.
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -115,11 +116,12 @@ func (f *Fs) String() string {
 // getCredentials reads the OpenStack Credentials using the Hubic API
 //
 // The credentials are read into the Fs
-func (f *Fs) getCredentials() (err error) {
+func (f *Fs) getCredentials(ctx context.Context) (err error) {
 	req, err := http.NewRequest("GET", "https://api.hubic.com/1.0/account/credentials", nil)
 	if err != nil {
 		return err
 	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	resp, err := f.client.Do(req)
 	if err != nil {
 		return err

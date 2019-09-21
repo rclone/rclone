@@ -32,7 +32,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 
 var isAlphaNumeric = regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString
 
-func (f *Fs) getDownloadToken(url string) (*GetTokenResponse, error) {
+func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenResponse, error) {
 	request := DownloadRequest{
 		URL:    url,
 		Single: 1,
@@ -44,7 +44,7 @@ func (f *Fs) getDownloadToken(url string) (*GetTokenResponse, error) {
 
 	var token GetTokenResponse
 	err := f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, &request, &token)
+		resp, err := f.rest.CallJSON(ctx, &opts, &request, &token)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -72,7 +72,7 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 
 	var sharedFiles SharedFolderResponse
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, nil, &sharedFiles)
+		resp, err := f.rest.CallJSON(ctx, &opts, nil, &sharedFiles)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -88,7 +88,7 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 	return entries, nil
 }
 
-func (f *Fs) listFiles(directoryID int) (filesList *FilesList, err error) {
+func (f *Fs) listFiles(ctx context.Context, directoryID int) (filesList *FilesList, err error) {
 	// fs.Debugf(f, "Requesting files for dir `%s`", directoryID)
 	request := ListFilesRequest{
 		FolderID: directoryID,
@@ -101,7 +101,7 @@ func (f *Fs) listFiles(directoryID int) (filesList *FilesList, err error) {
 
 	filesList = &FilesList{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, &request, filesList)
+		resp, err := f.rest.CallJSON(ctx, &opts, &request, filesList)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -111,7 +111,7 @@ func (f *Fs) listFiles(directoryID int) (filesList *FilesList, err error) {
 	return filesList, nil
 }
 
-func (f *Fs) listFolders(directoryID int) (foldersList *FoldersList, err error) {
+func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *FoldersList, err error) {
 	// fs.Debugf(f, "Requesting folders for id `%s`", directoryID)
 
 	request := ListFolderRequest{
@@ -125,7 +125,7 @@ func (f *Fs) listFolders(directoryID int) (foldersList *FoldersList, err error) 
 
 	foldersList = &FoldersList{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, &request, foldersList)
+		resp, err := f.rest.CallJSON(ctx, &opts, &request, foldersList)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -153,12 +153,12 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 		return nil, err
 	}
 
-	files, err := f.listFiles(folderID)
+	files, err := f.listFiles(ctx, folderID)
 	if err != nil {
 		return nil, err
 	}
 
-	folders, err := f.listFolders(folderID)
+	folders, err := f.listFolders(ctx, folderID)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func getRemote(dir, fileName string) string {
 	return dir + "/" + fileName
 }
 
-func (f *Fs) makeFolder(leaf string, folderID int) (response *MakeFolderResponse, err error) {
+func (f *Fs) makeFolder(ctx context.Context, leaf string, folderID int) (response *MakeFolderResponse, err error) {
 	name := replaceReservedChars(leaf)
 	// fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
 
@@ -221,7 +221,7 @@ func (f *Fs) makeFolder(leaf string, folderID int) (response *MakeFolderResponse
 
 	response = &MakeFolderResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, &request, response)
+		resp, err := f.rest.CallJSON(ctx, &opts, &request, response)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -233,7 +233,7 @@ func (f *Fs) makeFolder(leaf string, folderID int) (response *MakeFolderResponse
 	return response, err
 }
 
-func (f *Fs) removeFolder(name string, folderID int) (response *GenericOKResponse, err error) {
+func (f *Fs) removeFolder(ctx context.Context, name string, folderID int) (response *GenericOKResponse, err error) {
 	// fs.Debugf(f, "Removing folder with id `%s`", directoryID)
 
 	request := &RemoveFolderRequest{
@@ -248,7 +248,7 @@ func (f *Fs) removeFolder(name string, folderID int) (response *GenericOKRespons
 	response = &GenericOKResponse{}
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.rest.CallJSON(&opts, request, response)
+		resp, err = f.rest.CallJSON(ctx, &opts, request, response)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -263,7 +263,7 @@ func (f *Fs) removeFolder(name string, folderID int) (response *GenericOKRespons
 	return response, nil
 }
 
-func (f *Fs) deleteFile(url string) (response *GenericOKResponse, err error) {
+func (f *Fs) deleteFile(ctx context.Context, url string) (response *GenericOKResponse, err error) {
 	request := &RemoveFileRequest{
 		Files: []RmFile{
 			{url},
@@ -277,7 +277,7 @@ func (f *Fs) deleteFile(url string) (response *GenericOKResponse, err error) {
 
 	response = &GenericOKResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, request, response)
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
 		return shouldRetry(resp, err)
 	})
 
@@ -290,7 +290,7 @@ func (f *Fs) deleteFile(url string) (response *GenericOKResponse, err error) {
 	return response, nil
 }
 
-func (f *Fs) getUploadNode() (response *GetUploadNodeResponse, err error) {
+func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse, err error) {
 	// fs.Debugf(f, "Requesting Upload node")
 
 	opts := rest.Opts{
@@ -301,7 +301,7 @@ func (f *Fs) getUploadNode() (response *GetUploadNodeResponse, err error) {
 
 	response = &GetUploadNodeResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, nil, response)
+		resp, err := f.rest.CallJSON(ctx, &opts, nil, response)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -313,7 +313,7 @@ func (f *Fs) getUploadNode() (response *GetUploadNodeResponse, err error) {
 	return response, err
 }
 
-func (f *Fs) uploadFile(in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
+func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
 	// fs.Debugf(f, "Uploading File `%s`", fileName)
 
 	fileName = replaceReservedChars(fileName)
@@ -343,7 +343,7 @@ func (f *Fs) uploadFile(in io.Reader, size int64, fileName, folderID, uploadID, 
 	}
 
 	err = f.pacer.CallNoRetry(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, nil, nil)
+		resp, err := f.rest.CallJSON(ctx, &opts, nil, nil)
 		return shouldRetry(resp, err)
 	})
 
@@ -356,7 +356,7 @@ func (f *Fs) uploadFile(in io.Reader, size int64, fileName, folderID, uploadID, 
 	return response, err
 }
 
-func (f *Fs) endUpload(uploadID string, nodeurl string) (response *EndFileUploadResponse, err error) {
+func (f *Fs) endUpload(ctx context.Context, uploadID string, nodeurl string) (response *EndFileUploadResponse, err error) {
 	// fs.Debugf(f, "Ending File Upload `%s`", uploadID)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
@@ -377,7 +377,7 @@ func (f *Fs) endUpload(uploadID string, nodeurl string) (response *EndFileUpload
 
 	response = &EndFileUploadResponse{}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.rest.CallJSON(&opts, nil, response)
+		resp, err := f.rest.CallJSON(ctx, &opts, nil, response)
 		return shouldRetry(resp, err)
 	})
 

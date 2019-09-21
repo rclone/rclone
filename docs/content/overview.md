@@ -31,6 +31,7 @@ Here is an overview of the major features of each cloud storage system.
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R/W       |
 | Koofr                        | MD5         | No      | Yes              | No              | -         |
+| Mail.ru Cloud                | Mailru ‡‡‡  | Yes     | Yes              | No              | -         |
 | Mega                         | -           | No      | No               | Yes             | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive           | SHA1 ‡‡     | Yes     | Yes              | No              | R         |
@@ -69,6 +70,8 @@ or `sha1sum` as well as `echo` are in the remote's PATH.
 ‡‡ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive
 for business and SharePoint server support Microsoft's own
 [QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash).
+
+‡‡‡ Mail.ru uses its own modified SHA1 hash
 
 ### ModTime ###
 
@@ -148,6 +151,7 @@ operations more efficient.
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | No |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | No      | Yes   | No           | Yes                                                   | Yes | Yes |
+| Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes                                                   | Yes | Yes |
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | Yes |
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No | No | Yes | Yes | Yes |
