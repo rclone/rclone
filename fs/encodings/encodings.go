@@ -262,6 +262,14 @@ const Swift = encoder.MultiEncoder(
 	encoder.EncodeInvalidUtf8 |
 		encoder.EncodeSlash)
 
+// AzureBlob is the encoding used by the azureblob backend
+const AzureBlob = encoder.MultiEncoder(
+	encoder.EncodeInvalidUtf8 |
+		encoder.EncodeSlash |
+		encoder.EncodeCtl |
+		encoder.EncodeDel |
+		encoder.EncodeBackSlash |
+		encoder.EncodeRightPeriod)
 
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
@@ -272,7 +280,8 @@ func ByName(name string) encoder.Encoder {
 		return Display
 	case "amazonclouddrive":
 		return AmazonCloudDrive
-	//case "azureblob":
+	case "azureblob":
+		return AzureBlob
 	case "b2":
 		return B2
 	case "box":
