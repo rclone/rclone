@@ -257,6 +257,12 @@ const S3 = encoder.MultiEncoder(
 		encoder.EncodeSlash |
 		encoder.EncodeDot)
 
+// Swift is the encoding used by the swift backend
+const Swift = encoder.MultiEncoder(
+	encoder.EncodeInvalidUtf8 |
+		encoder.EncodeSlash)
+
+
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
 	switch strings.ToLower(name) {
@@ -302,9 +308,11 @@ func ByName(name string) encoder.Encoder {
 	case "pcloud":
 		return Pcloud
 	//case "qingstor":
-	//case "s3":
+	case "s3":
+		return S3
 	//case "sftp":
-	//case "swift":
+	case "swift":
+		return Swift
 	//case "webdav":
 	//case "yandex":
 	default:

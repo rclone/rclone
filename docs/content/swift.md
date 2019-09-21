@@ -472,6 +472,16 @@ ns.
 This is a defacto standard (used in the official python-swiftclient
 amongst others) for storing the modification time for an object.
 
+### Restricted filename characters
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| /         | 0x2F  | ／          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
+
 ### Limitations ###
 
 The Swift API doesn't return a correct MD5SUM for segmented files
