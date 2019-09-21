@@ -1925,6 +1925,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return errors.Wrap(err, "s3 upload: sign request")
 		}
 
+		if o.fs.opt.V2Auth && headers == nil {
+			headers = putObj.HTTPRequest.Header
+		}
+
 		// Set request to nil if empty so as not to make chunked encoding
 		if size == 0 {
 			in = nil
