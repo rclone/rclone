@@ -271,6 +271,12 @@ const AzureBlob = encoder.MultiEncoder(
 		encoder.EncodeBackSlash |
 		encoder.EncodeRightPeriod)
 
+// QingStor is the encoding used by the qingstor backend
+const QingStor = encoder.MultiEncoder(
+	encoder.EncodeInvalidUtf8 |
+		encoder.EncodeCtl |
+		encoder.EncodeSlash)
+
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
 	switch strings.ToLower(name) {
@@ -316,7 +322,8 @@ func ByName(name string) encoder.Encoder {
 		return OpenDrive
 	case "pcloud":
 		return Pcloud
-	//case "qingstor":
+	case "qingstor":
+		return QingStor
 	case "s3":
 		return S3
 	//case "sftp":
