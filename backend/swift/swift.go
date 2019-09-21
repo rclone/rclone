@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -59,6 +60,8 @@ copy operations.`,
 	Default:  false,
 	Advanced: true,
 }}
+
+const enc = encodings.Swift
 
 // Register with Fs
 func init() {
@@ -320,7 +323,8 @@ func parsePath(path string) (root string) {
 // split returns container and containerPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (container, containerPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	container, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return enc.FromStandardName(container), enc.FromStandardPath(containerPath)
 }
 
 // split returns container and containerPath from the object
@@ -441,9 +445,10 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 		// Check to see if the object exists - ignoring directory markers
 		var info swift.Object
 		var err error
+		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
-			info, rxHeaders, err = f.c.Object(f.rootContainer, f.rootDirectory)
+			info, rxHeaders, err = f.c.Object(f.rootContainer, encodedDirectory)
 			return shouldRetryHeaders(rxHeaders, err)
 		})
 		if err == nil && info.ContentType != directoryMarkerContentType {
@@ -553,17 +558,18 @@ func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer
 				if !recurse {
 					isDirectory = strings.HasSuffix(object.Name, "/")
 				}
-				if !strings.HasPrefix(object.Name, prefix) {
-					fs.Logf(f, "Odd name received %q", object.Name)
+				remote := enc.ToStandardPath(object.Name)
+				if !strings.HasPrefix(remote, prefix) {
+					fs.Logf(f, "Odd name received %q", remote)
 					continue
 				}
-				if object.Name == prefix {
+				if remote == prefix {
 					// If we have zero length directory markers ending in / then swift
 					// will return them in the listing for the directory which causes
 					// duplicate directories.  Ignore them here.
 					continue
 				}
-				remote := object.Name[len(prefix):]
+				remote = remote[len(prefix):]
 				if addContainer {
 					remote = path.Join(container, remote)
 				}
@@ -635,7 +641,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 	}
 	for _, container := range containers {
 		f.cache.MarkOK(container.Name)
-		d := fs.NewDir(container.Name, time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
+		d := fs.NewDir(enc.ToStandardName(container.Name), time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
 		entries = append(entries, d)
 	}
 	return entries, nil
