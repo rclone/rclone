@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -65,11 +66,13 @@ func (d *Directory) AddEntry(remote string, isDir bool) {
 	})
 }
 
-// Error returns an http.StatusInternalServerError and logs the error
+// Error logs the error and if a ResponseWriter is given it writes a http.StatusInternalServerError
 func Error(what interface{}, w http.ResponseWriter, text string, err error) {
 	fs.CountError(err)
 	fs.Errorf(what, "%s: %v", text, err)
-	http.Error(w, text+".", http.StatusInternalServerError)
+	if w != nil {
+		http.Error(w, text+".", http.StatusInternalServerError)
+	}
 }
 
 // Serve serves a directory
@@ -80,9 +83,14 @@ func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
 
-	err := d.HTMLTemplate.Execute(w, d)
+	buf := &bytes.Buffer{}
+	err := d.HTMLTemplate.Execute(buf, d)
 	if err != nil {
 		Error(d.DirRemote, w, "Failed to render template", err)
 		return
+	}
+	_, err = buf.WriteTo(w)
+	if err != nil {
+		Error(d.DirRemote, nil, "Failed to drain template buffer", err)
 	}
 }
