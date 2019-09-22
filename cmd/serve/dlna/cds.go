@@ -46,6 +46,7 @@ func init() {
 		{"video/webm", ".webm"},
 		{"video/x-msvideo", ".avi"},
 		{"video/x-matroska", ".mpv,.mkv"},
+		{"text/srt", ".srt"},
 	} {
 		for _, ext := range strings.Split(t.extensions, ",") {
 			err := mime.AddExtensionType(ext, t.mimeType)
@@ -69,7 +70,7 @@ var mediaMimeTypeRegexp = regexp.MustCompile("^(video|audio|image)/")
 
 // Turns the given entry and DMS host into a UPnP object. A nil object is
 // returned if the entry is not of interest.
-func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fileInfo vfs.Node, host string) (ret interface{}, err error) {
+func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fileInfo vfs.Node, resources vfs.Nodes, host string) (ret interface{}, err error) {
 	obj := upnpav.Object{
 		ID:         cdsObject.ID(),
 		Restricted: 1,
@@ -128,11 +129,24 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 		ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", mimeType, dlna.ContentFeatures{
 			SupportRange: true,
 		}.String()),
-		Bitrate:    0,
-		Duration:   "",
-		Size:       uint64(fileInfo.Size()),
-		Resolution: "",
+		Size: uint64(fileInfo.Size()),
 	})
+
+	basePath, _ := path.Split(cdsObject.Path)
+	for _, resource := range resources {
+		subtitleURL := (&url.URL{
+			Scheme: "http",
+			Host:   host,
+			Path:   resPath,
+			RawQuery: url.Values{
+				"path": {basePath + resource.Path()},
+			}.Encode(),
+		}).String()
+		item.Res = append(item.Res, upnpav.Resource{
+			URL:          subtitleURL,
+			ProtocolInfo: fmt.Sprintf("http-get:*:%s:*", "text/srt"),
+		})
+	}
 
 	ret = item
 	return
@@ -157,13 +171,13 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 		return
 	}
 
-	sort.Sort(dirEntries)
+	dirEntries, extraResources := partitionExtraResources(dirEntries)
 
 	for _, de := range dirEntries {
 		child := object{
 			path.Join(o.Path, de.Name()),
 		}
-		obj, err := cds.cdsObjectToUpnpavObject(child, de, host)
+		obj, err := cds.cdsObjectToUpnpavObject(child, de, extraResources[de], host)
 		if err != nil {
 			fs.Errorf(cds, "error with %s: %s", child.FilePath(), err)
 			continue
@@ -176,6 +190,53 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 	}
 
 	return
+}
+
+// Given a list of nodes, separate them into potential media items and any associated resources (external subtitles,
+// thumbnails, metadata, etc.)
+func partitionExtraResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
+	// First, separate out the subtitles into a separate list from the media
+	media, subtitles := make(vfs.Nodes, 0), make(vfs.Nodes, 0)
+	for _, node := range nodes {
+		name := strings.ToLower(node.Name()) // case insensitive
+		switch path.Ext(name) {
+		case ".srt":
+			subtitles = append(subtitles, node)
+		default:
+			media = append(media, node)
+		}
+	}
+
+	// Find the associated media file for each subtitle
+	extraResources := make(map[vfs.Node]vfs.Nodes)
+	for _, node := range subtitles {
+		subtitleName := strings.ToLower(node.Name())
+
+		// For a media file named "My Video.mp4", we want to associated any subtitles named like
+		// "My Video.srt", "My Video.en.srt", "My Video.es.srt", "My Video.forced.srt"
+		// note: nodes must be sorted!  vfs.dir.ReadDirAll() results are already sorted ..
+		mediaIdx := sort.Search(len(media), func(idx int) bool {
+			mediaName := strings.ToLower(media[idx].Name())
+			basename := strings.SplitN(mediaName, ".", 2)[0]
+			if strings.Compare(subtitleName, basename) <= 0 {
+				return true
+			}
+			if strings.HasPrefix(subtitleName, basename) {
+				return subtitleName[len(basename)] == '.'
+			}
+			return false
+		})
+		if mediaIdx == -1 {
+			fs.Infof(node, "could not find associated media for subtitle: %s", node.Name())
+			continue
+		}
+
+		mediaNode := media[mediaIdx]
+		fs.Debugf(mediaNode, "associating subtitle: %s", node.Name())
+		extraResources[mediaNode] = append(extraResources[mediaNode], node)
+	}
+
+	return media, extraResources
 }
 
 type browse struct {
@@ -256,7 +317,8 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 			if err != nil {
 				return nil, err
 			}
-			upnpObject, err := cds.cdsObjectToUpnpavObject(obj, node, host)
+			// TODO: External subtitles won't appear in the metadata here, but probably should.
+			upnpObject, err := cds.cdsObjectToUpnpavObject(obj, node, vfs.Nodes{}, host)
 			if err != nil {
 				return nil, err
 			}
@@ -279,9 +341,9 @@ func (cds *contentDirectoryService) Handle(action string, argsXML []byte, r *htt
 		return map[string]string{
 			"FeatureList": `<Features xmlns="urn:schemas-upnp-org:av:avs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:schemas-upnp-org:av:avs http://www.upnp.org/schemas/av/avs.xsd">
 	<Feature name="samsung.com_BASICVIEW" version="1">
-		<container id="/" type="object.item.imageItem"/>
-		<container id="/" type="object.item.audioItem"/>
-		<container id="/" type="object.item.videoItem"/>
+		<container id="0" type="object.item.imageItem"/>
+		<container id="0" type="object.item.audioItem"/>
+		<container id="0" type="object.item.videoItem"/>
 	</Feature>
 </Features>`}, nil
 	case "X_SetBookmark":
