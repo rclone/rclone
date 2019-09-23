@@ -25,6 +25,7 @@ import (
 	_ "github.com/rclone/rclone/backend/onedrive"
 	_ "github.com/rclone/rclone/backend/opendrive"
 	_ "github.com/rclone/rclone/backend/pcloud"
+	_ "github.com/rclone/rclone/backend/plugin"
 	_ "github.com/rclone/rclone/backend/premiumizeme"
 	_ "github.com/rclone/rclone/backend/putio"
 	_ "github.com/rclone/rclone/backend/qingstor"
