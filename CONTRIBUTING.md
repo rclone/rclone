@@ -341,6 +341,12 @@ Getting going
   * Add your remote to the imports in `backend/all/all.go`
   * HTTP based remotes are easiest to maintain if they use rclone's rest module, but if there is a really good go SDK then use that instead.
   * Try to implement as many optional methods as possible as it makes the remote more usable.
+  * Use fs/encoder to make sure we can encode any path name and `rclone info` to help determine the encodings needed
+    * `go install -tags noencode`
+    * `rclone purge -v TestRemote:rclone-info`
+    * `rclone info -vv --write-json remote.json TestRemote:rclone-info`
+    * `go run cmd/info/internal/build_csv/main.go -o remote.csv remote.json`
+    * open `remote.csv` in a spreadsheet and examine
 
 Unit tests
 
