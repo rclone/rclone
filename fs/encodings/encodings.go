@@ -229,6 +229,31 @@ const Pcloud = encoder.MultiEncoder(
 		encoder.EncodeBackSlash |
 		encoder.EncodeInvalidUtf8)
 
+// Fichier is the encoding used by the fichier backend
+//
+// Characters that need escaping
+//
+// 		'\\': '＼', // FULLWIDTH REVERSE SOLIDUS
+// 		'<':  '＜', // FULLWIDTH LESS-THAN SIGN
+// 		'>':  '＞', // FULLWIDTH GREATER-THAN SIGN
+// 		'"':  '＂', // FULLWIDTH QUOTATION MARK - not on the list but seems to be reserved
+// 		'\'': '＇', // FULLWIDTH APOSTROPHE
+// 		'$':  '＄', // FULLWIDTH DOLLAR SIGN
+// 		'`':  '｀', // FULLWIDTH GRAVE ACCENT
+//
+// Leading space and trailing space
+const Fichier = encoder.MultiEncoder(
+	uint(Display) |
+		encoder.EncodeBackSlash |
+		encoder.EncodeSingleQuote |
+		encoder.EncodeBackQuote |
+		encoder.EncodeDoubleQuote |
+		encoder.EncodeLtGt |
+		encoder.EncodeDollar |
+		encoder.EncodeLeftSpace |
+		encoder.EncodeRightSpace |
+		encoder.EncodeInvalidUtf8)
+
 // FTP is the encoding used by the ftp backend
 //
 // The FTP protocal can't handle trailing spaces (for instance
@@ -298,6 +323,8 @@ func ByName(name string) encoder.Encoder {
 	case "dropbox":
 		return Dropbox
 	//case "ftp":
+	case "ficher":
+		return Fichier
 	case "googlecloudstorage":
 		return GoogleCloudStorage
 	//case "http":

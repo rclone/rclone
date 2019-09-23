@@ -107,6 +107,10 @@ func (f *Fs) listFiles(ctx context.Context, directoryID int) (filesList *FilesLi
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list files")
 	}
+	for i := range filesList.Items {
+		item := &filesList.Items[i]
+		item.Filename = enc.ToStandardName(item.Filename)
+	}
 
 	return filesList, nil
 }
@@ -130,6 +134,11 @@ func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *Fol
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list folders")
+	}
+	foldersList.Name = enc.ToStandardName(foldersList.Name)
+	for i := range foldersList.SubFolders {
+		folder := &foldersList.SubFolders[i]
+		folder.Name = enc.ToStandardName(folder.Name)
 	}
 
 	// fs.Debugf(f, "Got FoldersList for id `%s`", directoryID)
@@ -166,7 +175,6 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 	entries = make([]fs.DirEntry, len(files.Items)+len(folders.SubFolders))
 
 	for i, item := range files.Items {
-		item.Filename = restoreReservedChars(item.Filename)
 		entries[i] = f.newObjectFromFile(ctx, dir, item)
 	}
 
@@ -176,7 +184,6 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 			return nil, err
 		}
 
-		folder.Name = restoreReservedChars(folder.Name)
 		fullPath := getRemote(dir, folder.Name)
 		folderID := strconv.Itoa(folder.ID)
 
@@ -206,7 +213,7 @@ func getRemote(dir, fileName string) string {
 }
 
 func (f *Fs) makeFolder(ctx context.Context, leaf string, folderID int) (response *MakeFolderResponse, err error) {
-	name := replaceReservedChars(leaf)
+	name := enc.FromStandardName(leaf)
 	// fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
 
 	request := MakeFolderRequest{
@@ -316,7 +323,7 @@ func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse
 func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
 	// fs.Debugf(f, "Uploading File `%s`", fileName)
 
-	fileName = replaceReservedChars(fileName)
+	fileName = enc.FromStandardName(fileName)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
 		return nil, errors.New("Invalid UploadID")

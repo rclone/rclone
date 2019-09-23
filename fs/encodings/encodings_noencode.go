@@ -15,11 +15,13 @@ const (
 	LocalUnix          = Base
 	LocalWindows       = Base
 	AmazonCloudDrive   = Base
+	AzureBlob          = Base
 	B2                 = Base
 	Box                = Base
 	Drive              = Base
 	Dropbox            = Base
 	FTP                = Base
+	Fichier            = Base
 	GoogleCloudStorage = Base
 	JottaCloud         = Base
 	Koofr              = Base
@@ -27,7 +29,9 @@ const (
 	OneDrive           = Base
 	OpenDrive          = Base
 	Pcloud             = Base
+	QingStor           = Base
 	S3                 = Base
+	Swift              = Base
 )
 
 // ByName returns the encoder for a give backend name or nil
