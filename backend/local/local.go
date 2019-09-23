@@ -686,7 +686,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Supported
+	return hash.Supported()
 }
 
 // ------------------------------------------------------------
