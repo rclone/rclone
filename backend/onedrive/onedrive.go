@@ -17,6 +17,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/onedrive/api"
+	"github.com/rclone/rclone/backend/onedrive/quickxorhash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -65,10 +66,14 @@ var (
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
+
+	// QuickXorHashType is the hash.Type for OneDrive
+	QuickXorHashType hash.Type
 )
 
 // Register with Fs
 func init() {
+	QuickXorHashType = hash.RegisterHash("QuickXorHash", 40, quickxorhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "onedrive",
 		Description: "Microsoft OneDrive",
@@ -1194,7 +1199,7 @@ func (f *Fs) Hashes() hash.Set {
 	if f.driveType == driveTypePersonal {
 		return hash.Set(hash.SHA1)
 	}
-	return hash.Set(hash.QuickXorHash)
+	return hash.Set(QuickXorHashType)
 }
 
 // PublicLink returns a link for downloading without accout.
@@ -1270,7 +1275,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 			return o.sha1, nil
 		}
 	} else {
-		if t == hash.QuickXorHash {
+		if t == QuickXorHashType {
 			return o.quickxorhash, nil
 		}
 	}

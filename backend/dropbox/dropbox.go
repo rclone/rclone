@@ -39,6 +39,7 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/dropbox/dbhash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -105,10 +106,14 @@ var (
 	// A regexp matching path names for files Dropbox ignores
 	// See https://www.dropbox.com/en/help/145 - Ignored files
 	ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
+
+	// DbHashType is the hash.Type for Dropbox
+	DbHashType hash.Type
 )
 
 // Register with Fs
 func init() {
+	DbHashType = hash.RegisterHash("Dropbox", 64, dbhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "dropbox",
 		Description: "Dropbox",
@@ -881,7 +886,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.Dropbox)
+	return hash.Set(DbHashType)
 }
 
 // ------------------------------------------------------------
@@ -906,7 +911,7 @@ func (o *Object) Remote() string {
 
 // Hash returns the dropbox special hash
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.Dropbox {
+	if t != DbHashType {
 		return "", hash.ErrUnsupported
 	}
 	err := o.readMetaData()

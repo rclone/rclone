@@ -44,7 +44,7 @@ func TestUpdatingCheck(t *testing.T) {
 	require.NoError(t, err)
 	o := &Object{size: fi.Size(), modTime: fi.ModTime(), fs: &Fs{}}
 	wrappedFd := readers.NewLimitedReadCloser(fd, -1)
-	hash, err := hash.NewMultiHasherTypes(hash.Supported)
+	hash, err := hash.NewMultiHasherTypes(hash.Supported())
 	require.NoError(t, err)
 	in := localOpenFile{
 		o:    o,
