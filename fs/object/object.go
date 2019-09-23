@@ -79,7 +79,7 @@ func (memoryFs) String() string { return "memory" }
 func (memoryFs) Precision() time.Duration { return time.Nanosecond }
 
 // Returns the supported hash types of the filesystem
-func (memoryFs) Hashes() hash.Set { return hash.Supported }
+func (memoryFs) Hashes() hash.Set { return hash.Supported() }
 
 // Features returns the optional features of this Fs
 func (memoryFs) Features() *fs.Features { return &fs.Features{} }

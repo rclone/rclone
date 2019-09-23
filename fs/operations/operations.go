@@ -980,15 +980,6 @@ func Sha1sum(ctx context.Context, f fs.Fs, w io.Writer) error {
 	return HashLister(ctx, hash.SHA1, f, w)
 }
 
-// DropboxHashSum list the Fs to the supplied writer
-//
-// Obeys includes and excludes
-//
-// Lists in parallel which may get them out of order
-func DropboxHashSum(ctx context.Context, f fs.Fs, w io.Writer) error {
-	return HashLister(ctx, hash.Dropbox, f, w)
-}
-
 // hashSum returns the human readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR.
 func hashSum(ctx context.Context, ht hash.Type, o fs.Object) string {
@@ -1011,7 +1002,7 @@ func hashSum(ctx context.Context, ht hash.Type, o fs.Object) string {
 func HashLister(ctx context.Context, ht hash.Type, f fs.Fs, w io.Writer) error {
 	return ListFn(ctx, f, func(o fs.Object) {
 		sum := hashSum(ctx, ht, o)
-		syncFprintf(w, "%*s  %s\n", hash.Width[ht], sum, o.Remote())
+		syncFprintf(w, "%*s  %s\n", hash.Width(ht), sum, o.Remote())
 	})
 }
 

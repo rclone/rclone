@@ -59,6 +59,9 @@ var (
 	ErrorDirAlreadyExists   = errors.New("directory already exists")
 	ErrorDirSourceNotExists = errors.New("directory source does not exist")
 	ErrorInvalidName        = errors.New("invalid characters in object name")
+
+	// MrHashType is the hash.Type for Mailru
+	MrHashType hash.Type
 )
 
 // Description of how to authorize
@@ -74,6 +77,7 @@ var oauthConfig = &oauth2.Config{
 
 // Register with Fs
 func init() {
+	MrHashType = hash.RegisterHash("MailruHash", 40, mrhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "mailru",
 		Description: "Mail.ru Cloud",
@@ -1591,7 +1595,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Skip an extra speedup request if file fits in hash.
 	if size > mrhash.Size {
 		// Request hash from source.
-		if srcHash, err := src.Hash(ctx, hash.Mailru); err == nil && srcHash != "" {
+		if srcHash, err := src.Hash(ctx, MrHashType); err == nil && srcHash != "" {
 			fileHash, _ = mrhash.DecodeString(srcHash)
 		}
 
@@ -1762,7 +1766,7 @@ func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.Obj
 	hashType := hash.SHA1
 
 	// Calculate Mailru and spool verification hashes in transit
-	hashSet := hash.NewHashSet(hash.Mailru, hashType)
+	hashSet := hash.NewHashSet(MrHashType, hashType)
 	hasher, err := hash.NewMultiHasherTypes(hashSet)
 	if err != nil {
 		return nil, nil, err
@@ -1784,7 +1788,7 @@ func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.Obj
 		return nil, nil, mrhash.ErrorInvalidHash
 	}
 
-	mrHash, err = mrhash.DecodeString(sums[hash.Mailru])
+	mrHash, err = mrhash.DecodeString(sums[MrHashType])
 	return
 }
 
@@ -1972,7 +1976,7 @@ func (o *Object) Size() int64 {
 // Hash returns the MD5 or SHA1 sum of an object
 // returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t == hash.Mailru {
+	if t == MrHashType {
 		return hex.EncodeToString(o.mrHash), nil
 	}
 	return "", hash.ErrUnsupported
@@ -2354,7 +2358,7 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash sets
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.Mailru)
+	return hash.Set(MrHashType)
 }
 
 // Features returns the optional features of this Fs

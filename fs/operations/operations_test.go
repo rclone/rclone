@@ -225,23 +225,6 @@ func TestHashSums(t *testing.T) {
 		!strings.Contains(res, "                                          potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
-
-	// Dropbox Hash Sum
-
-	buf.Reset()
-	err = operations.DropboxHashSum(context.Background(), r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "fc62b10ec59efa8041f5a6c924d7c91572c1bbda280d9e01312b660804df1d47  empty space\n") &&
-		!strings.Contains(res, "                                                     UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                                                  empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "a979481df794fed9c3990a6a422e0b1044ac802c15fab13af9c687f8bdbee01a  potato2\n") &&
-		!strings.Contains(res, "                                                     UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                                                  potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
 }
 
 func TestSuffixName(t *testing.T) {
@@ -1260,7 +1243,6 @@ func TestListFormat(t *testing.T) {
 	}{
 		{hash.MD5, "0cc175b9c0f1b6a831c399e269772661"},
 		{hash.SHA1, "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8"},
-		{hash.Dropbox, "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8"},
 	} {
 		list.SetOutput(nil)
 		list.AddHash(test.ht)

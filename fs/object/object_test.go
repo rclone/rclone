@@ -53,7 +53,7 @@ func TestMemoryFs(t *testing.T) {
 	assert.Equal(t, "", f.Root())
 	assert.Equal(t, "memory", f.String())
 	assert.Equal(t, time.Nanosecond, f.Precision())
-	assert.Equal(t, hash.Supported, f.Hashes())
+	assert.Equal(t, hash.Supported(), f.Hashes())
 	assert.Equal(t, &fs.Features{}, f.Features())
 
 	entries, err := f.List(context.Background(), "")
