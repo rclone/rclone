@@ -101,7 +101,7 @@ func main() {
 		k := charsMap[c]
 		row := []string{fmt.Sprintf("%X", c), k}
 		for _, r := range remoteNames {
-			if m, ok := recordsMap[k][r]; ok {
+			if m, ok := recordsMap[c][r]; ok {
 				row = append(row, m...)
 			} else {
 				row = append(row, "", "", "", "", "", "", "", "", "")
