@@ -34,18 +34,11 @@ backends:
    remote:   "TestChunkerNometaLocal:"
    fastlist: true
  - backend:  "chunker"
-   remote:   "TestChunkerCompatLocal:"
-   fastlist: true
- - backend:  "chunker"
    remote:   "TestChunkerChunk3bLocal:"
    fastlist: true
    maxfile:  6k
  - backend:  "chunker"
    remote:   "TestChunkerChunk3bNometaLocal:"
-   fastlist: true
-   maxfile:  6k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk3bCompatLocal:"
    fastlist: true
    maxfile:  6k
  - backend:  "chunker"
@@ -66,30 +59,26 @@ backends:
  - backend:  "chunker"
    remote:   "TestChunkerS3:"
    fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bS3:"
    fastlist: true
    maxfile:  1k
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/SetTier
- #- backend:  "chunker"
- #  remote:   "TestChunkerChunk50bMD5HashS3:"
- #  fastlist: true
- #  maxfile:  1k
- #- backend:  "chunker"
- #  remote:   "TestChunkerChunk50bMD5QuickS3:"
- #  fastlist: true
- #  maxfile:  1k
- #- backend:  "chunker"
- #  remote:   "TestChunkerChunk50bSHA1HashS3:"
- #  fastlist: true
- #  maxfile:  1k
- #- backend:  "chunker"
- #  remote:   "TestChunkerChunk50bSHA1QuickS3:"
- #  fastlist: true
- #  maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bMD5HashS3:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bSHA1HashS3:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bMD5QuickS3:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bSHA1QuickS3:"
+   fastlist: true
+   maxfile:  1k
  ## end chunker
  - backend:  "drive"
    remote:   "TestDrive:"

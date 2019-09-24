@@ -36,13 +36,11 @@ const (
 	// WARNING: this optimization is not transaction safe!
 	optimizeFirstChunk = false
 
-	// Normally metadata is a small (less than 1KB) piece of JSON.
+	// Normally metadata is a small (100-200 bytes) piece of JSON.
 	// Valid metadata size should not exceed this limit.
-	maxMetaDataSize = 1023
+	maxMetaDataSize = 199
 
-	// fastopen strategy opens all chunks immediately, but reads sequentially.
-	// linear strategy opens and reads chunks sequentially, without read-ahead.
-	downloadStrategy = "linear"
+	metaDataVersion = 1
 )
 
 // Formatting of temporary chunk names. Temporary suffix *follows* chunk
@@ -51,6 +49,13 @@ var (
 	tempChunkFormat = `%s..tmp_%010d`
 	tempChunkRegexp = regexp.MustCompile(`^(.+)\.\.tmp_([0-9]{10,19})$`)
 )
+
+// Note: metadata logic is tightly coupled with chunker code in many
+// places of the code, eg. in checks whether a file can have meta object
+// or is eligible for chunking.
+// If more metadata formats (or versions of a format) are added in future,
+// it may be advisable to factor it into a "metadata strategy" interface
+// similar to chunkingReader or linearReader below.
 
 // Register with Fs
 func init() {
@@ -98,16 +103,10 @@ Metadata is a small JSON file named after the composite file.`,
 				Value: "simplejson",
 				Help: `Simple JSON supports hash sums and chunk validation.
 It has the following fields: size, nchunks, md5, sha1.`,
-			}, {
-				Value: "wdmrcompat",
-				Help: `This format brings compatibility with WebDavMailRuCloud.
-It does not support hash sums or validation, most fields are ignored.
-It has the following fields: Name, Size, PublicKey, CreationDate.
-Requires hash type "none".`,
 			}},
 		}, {
 			Name:     "hash_type",
-			Advanced: true,
+			Advanced: false,
 			Default:  "md5",
 			Help:     `Choose how chunker handles hash sums.`,
 			Examples: []fs.OptionExample{{
@@ -122,8 +121,8 @@ for a single-chunk file but returns nothing otherwise.`,
 				Help:  `SHA1 for multi-chunk files. Requires "simplejson".`,
 			}, {
 				Value: "md5quick",
-				Help: `When a file is copied on to chunker, MD5 is taken from its source
-falling back to SHA1 if the source doesn't support it. Requires "simplejson".`,
+				Help: `Copying a file to chunker will request MD5 from the source
+falling back to SHA1 if unsupported. Requires "simplejson".`,
 			}, {
 				Value: "sha1quick",
 				Help:  `Similar to "md5quick" but prefers SHA1 over MD5. Requires "simplejson".`,
@@ -188,7 +187,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	switch opt.MetaFormat {
 	case "none":
 		f.useMeta = false
-	case "simplejson", "wdmrcompat":
+	case "simplejson":
 		f.useMeta = true
 	default:
 		return nil, fmt.Errorf("unsupported meta format '%s'", opt.MetaFormat)
@@ -243,8 +242,6 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		WriteMimeType:           true,
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
-		SetTier:                 true,
-		GetTier:                 true,
 		ServerSideAcrossConfigs: true,
 	}).Fill(f).Mask(baseFs).WrapsFs(f, baseFs)
 
@@ -393,6 +390,19 @@ func (f *Fs) parseChunkName(name string) (mainName string, chunkNo int, tempNo i
 //
 // This should return ErrDirNotFound if the directory isn't
 // found.
+//
+// Commands normally cleanup all temporary chunks in case of a failure.
+// However, if rclone dies unexpectedly, it can leave behind a bunch of
+// hidden temporary chunks. List and its underlying chunkEntries()
+// silently skip all temporary chunks in the directory. It's okay if
+// they belong to an unfinished command running in parallel.
+//
+// However, there is no way to discover dead temporary chunks a.t.m.
+// As a workaround users can use `purge` to forcibly remove the whole
+// directory together with dead chunks.
+// In future a flag named like `--chunker-list-hidden` may be added to
+// rclone that will tell List to reveal hidden chunks.
+//
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	entries, err = f.base.List(ctx, dir)
 	if err != nil {
@@ -428,7 +438,8 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	})
 }
 
-// Add some directory entries.  This alters entries returning it as newEntries.
+// chunkEntries is called by List(R). It merges chunk entries from
+// wrapped remote into composite directory entries.
 func (f *Fs) chunkEntries(ctx context.Context, origEntries fs.DirEntries, hardErrors bool) (chunkedEntries fs.DirEntries, err error) {
 	// sort entries, so that meta objects (if any) appear before their chunks
 	sortedEntries := make(fs.DirEntries, len(origEntries))
@@ -514,6 +525,11 @@ func (f *Fs) chunkEntries(ctx context.Context, origEntries fs.DirEntries, hardEr
 }
 
 // NewObject finds the Object at remote.
+//
+// Please note that every NewObject invocation will scan the whole directory.
+// Using here something like fs.DirCache might improve performance (and make
+// logic more complex though).
+//
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if mainRemote, _, _ := f.parseChunkName(remote); mainRemote != "" {
 		return nil, fmt.Errorf("%q should be meta object, not a chunk", remote)
@@ -622,23 +638,14 @@ func (o *Object) readMetaData(ctx context.Context) error {
 	case "simplejson":
 		metaInfo, err := unmarshalSimpleJSON(ctx, metaObject, metaData)
 		if err != nil {
-			// TODO: maybe it's a small single chunk?
-			return err
+			// TODO: in a rare case we might mistake a small file for metadata
+			return errors.Wrap(err, "invalid metadata")
 		}
 		if o.size != metaInfo.Size() || len(o.chunks) != metaInfo.nChunks {
-			return errors.New("invalid simplejson metadata")
+			return errors.New("metadata doesn't match file size")
 		}
 		o.md5 = metaInfo.md5
 		o.sha1 = metaInfo.sha1
-	case "wdmrcompat":
-		metaInfo, err := unmarshalWDMRCompat(ctx, metaObject, metaData)
-		if err != nil {
-			// TODO: maybe it's a small single chunk?
-			return err
-		}
-		if o.size != metaInfo.Size() {
-			return errors.New("invalid wdmrcompat metadata")
-		}
 	}
 
 	o.isFull = true
@@ -784,9 +791,6 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 	case "simplejson":
 		c.updateHashes()
 		metaData, err = marshalSimpleJSON(ctx, sizeTotal, len(c.chunks), c.md5, c.sha1)
-	case "wdmrcompat":
-		fileInfo := f.wrapInfo(src, baseRemote, sizeTotal)
-		metaData, err = marshalWDMRCompat(ctx, fileInfo)
 	}
 	if err == nil {
 		metaInfo := f.wrapInfo(src, baseRemote, int64(len(metaData)))
@@ -951,6 +955,9 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Update in to the object with the modTime given of the given size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
+	if err := o.readMetaData(ctx); err != nil {
+		return err
+	}
 	basePut := o.f.base.Put
 	if src.Size() < 0 {
 		basePut = o.f.base.Features().PutStream
@@ -989,8 +996,17 @@ func (f *Fs) Precision() time.Duration {
 }
 
 // Hashes returns the supported hash sets.
+// Chunker advertises a hash type if and only if it can be calculated
+// for files of any size, multi-chunked or small.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.None)
+	// composites && all of them && small files supported by wrapped remote
+	if f.useMD5 && !f.quickHash && f.base.Hashes().Contains(hash.MD5) {
+		return hash.NewHashSet(hash.MD5)
+	}
+	if f.useSHA1 && !f.quickHash && f.base.Hashes().Contains(hash.SHA1) {
+		return hash.NewHashSet(hash.SHA1)
+	}
+	return hash.NewHashSet() // can't provide strong guarantees
 }
 
 // Mkdir makes the directory (container, bucket)
@@ -1012,7 +1028,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // Implement this if you have a way of deleting all the files
 // quicker than just running Remove() on the result of List()
 //
-// Return an error if it doesn't exist
+// Return an error if it doesn't exist.
+//
+// This command will chain to `purge` from wrapped remote.
+// As a result it removes not only chunker files with their
+// active chunks but also all hidden chunks in the directory.
+//
 func (f *Fs) Purge(ctx context.Context) error {
 	do := f.base.Features().Purge
 	if do == nil {
@@ -1021,7 +1042,25 @@ func (f *Fs) Purge(ctx context.Context) error {
 	return do(ctx)
 }
 
-// Remove an object
+// Remove an object (chunks and metadata, if any)
+//
+// Remove deletes only active chunks of the object.
+// It does not try to look for temporary chunks because they could belong
+// to another command modifying this composite file in parallel.
+//
+// Commands normally cleanup all temporary chunks in case of a failure.
+// However, if rclone dies unexpectedly, it can leave hidden temporary
+// chunks, which cannot be discovered using the `list` command.
+// Remove does not try to search for such chunks or delete them.
+// Sometimes this can lead to strange results eg. when `list` shows that
+// directory is empty but `rmdir` refuses to remove it because on the
+// level of wrapped remote it's actually *not* empty.
+// As a workaround users can use `purge` to forcibly remove it.
+//
+// In future, a flag `--chunker-delete-hidden` may be added which tells
+// Remove to search directory for hidden chunks and remove them too
+// (at the risk of breaking parallel commands).
+//
 func (o *Object) Remove(ctx context.Context) (err error) {
 	if o.main != nil {
 		err = o.main.Remove(ctx)
@@ -1091,13 +1130,6 @@ func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMo
 	switch f.opt.MetaFormat {
 	case "simplejson":
 		metaData, err = marshalSimpleJSON(ctx, newObj.size, len(newChunks), md5, sha1)
-		if err == nil {
-			metaInfo := f.wrapInfo(metaObject, "", int64(len(metaData)))
-			err = newObj.main.Update(ctx, bytes.NewReader(metaData), metaInfo)
-		}
-	case "wdmrcompat":
-		newInfo := f.wrapInfo(metaObject, "", newObj.size)
-		metaData, err = marshalWDMRCompat(ctx, newInfo)
 		if err == nil {
 			metaInfo := f.wrapInfo(metaObject, "", int64(len(metaData)))
 			err = newObj.main.Update(ctx, bytes.NewReader(metaData), metaInfo)
@@ -1436,7 +1468,22 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 
 // Hash returns the selected checksum of the file.
 // If no checksum is available it returns "".
-// It prefers the wrapped hashsum for a non-chunked file, then tries saved one.
+//
+// Hash prefers wrapped hashsum for a non-chunked file, then tries to
+// read it from metadata. This in theory handles an unusual case when
+// a small file is modified on the lower level by wrapped remote
+// but chunker is not yet aware of changes.
+//
+// Currently metadata (if not configured as 'none') is kept only for
+// multi-chunk files, but for small files chunker obtains hashsums from
+// wrapped remote. If a particular hashsum type is not supported,
+// chunker won't fail with `unsupported` error but return empty hash.
+//
+// In future metadata logic can be extended: if a normal (non-quick)
+// hash type is configured, chunker will check whether wrapped remote
+// supports it (see Fs.Hashes as an example). If not, it will add metadata
+// to small files as well, thus providing hashsums for all files.
+//
 func (o *Object) Hash(ctx context.Context, hashType hash.Type) (string, error) {
 	if !o.isChunked() {
 		// First, chain to the single wrapped chunk, if possible.
@@ -1500,78 +1547,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		limit = o.size - offset
 	}
 
-	switch downloadStrategy {
-	case "linear":
-		return o.newLinearReader(ctx, offset, limit, openOptions)
-	case "fastopen":
-		return o.newFastopenReader(ctx, offset, limit, openOptions)
-	default:
-		return nil, errors.New("invalid download strategy")
-	}
+	return o.newLinearReader(ctx, offset, limit, openOptions)
 }
 
-// fastopenReader opens all chunks immediately, but reads sequentlially
-type fastopenReader struct {
-	readClosers []io.ReadCloser
-	multiReader io.Reader
-}
-
-func (o *Object) newFastopenReader(ctx context.Context, offset, limit int64, options []fs.OpenOption) (io.ReadCloser, error) {
-	var (
-		readers     []io.Reader
-		readClosers []io.ReadCloser
-	)
-	for _, chunk := range o.chunks {
-		if limit <= 0 {
-			break
-		}
-		count := chunk.Size()
-		if offset >= count {
-			offset -= count
-			continue
-		}
-		count -= offset
-		if limit < count {
-			count = limit
-		}
-
-		end := offset + count - 1
-		chunkOptions := append(options, &fs.RangeOption{Start: offset, End: end})
-		rc, err := chunk.Open(ctx, chunkOptions...)
-		if err != nil {
-			r := fastopenReader{readClosers: readClosers}
-			_ = r.Close() // ignore error
-			return nil, err
-		}
-		readClosers = append(readClosers, rc)
-		readers = append(readers, rc)
-
-		offset = 0
-		limit -= count
-	}
-
-	r := &fastopenReader{
-		readClosers: readClosers,
-		multiReader: io.MultiReader(readers...),
-	}
-	return r, nil
-}
-
-func (r *fastopenReader) Read(p []byte) (n int, err error) {
-	return r.multiReader.Read(p)
-}
-
-func (r *fastopenReader) Close() (err error) {
-	for _, rc := range r.readClosers {
-		chunkErr := rc.Close()
-		if err == nil {
-			err = chunkErr
-		}
-	}
-	return
-}
-
-// linearReader opens and reads chunks sequentially, without read-ahead
+// linearReader opens and reads file chunks sequentially, without read-ahead
 type linearReader struct {
 	ctx     context.Context
 	chunks  []fs.Object
@@ -1771,25 +1750,9 @@ func (o *Object) ID() string {
 	return ""
 }
 
-// SetTier performs changing storage tier of the Object if
-// multiple storage classes supported
-func (o *Object) SetTier(tier string) error {
-	if doer, ok := o.mainChunk().(fs.SetTierer); ok {
-		return doer.SetTier(tier)
-	}
-	return errors.New("chunker: wrapped remote does not support SetTier")
-}
-
-// GetTier returns storage tier or class of the Object
-func (o *Object) GetTier() string {
-	if doer, ok := o.mainChunk().(fs.GetTierer); ok {
-		return doer.GetTier()
-	}
-	return ""
-}
-
 // Meta format `simplejson`
 type metaSimpleJSON struct {
+	Version int    `json:"ver"`
 	Size    int64  `json:"size"`
 	NChunks int    `json:"nchunks"`
 	MD5     string `json:"md5"`
@@ -1798,6 +1761,7 @@ type metaSimpleJSON struct {
 
 func marshalSimpleJSON(ctx context.Context, size int64, nChunks int, md5, sha1 string) (data []byte, err error) {
 	metaData := &metaSimpleJSON{
+		Version: metaDataVersion,
 		Size:    size,
 		NChunks: nChunks,
 		MD5:     md5,
@@ -1806,47 +1770,56 @@ func marshalSimpleJSON(ctx context.Context, size int64, nChunks int, md5, sha1 s
 	return json.Marshal(&metaData)
 }
 
+// Note: only metadata format version 1 is supported a.t.m.
+//
+// Current implementation creates metadata only for files larger than
+// configured chunk size. This approach has drawback: availability of
+// configured hashsum type for small files depends on the wrapped remote.
+// Future versions of chunker may change approach as described in comment
+// to the Hash method. They can transparently migrate older metadata.
+// New format will have a higher version number and cannot be correctly
+// hanled by current implementation.
+// The version check below will then explicitly ask user to upgrade rclone.
+//
 func unmarshalSimpleJSON(ctx context.Context, metaObject fs.Object, data []byte) (info *ObjectInfo, err error) {
 	var metaData *metaSimpleJSON
 	err = json.Unmarshal(data, &metaData)
 	if err != nil {
-		return
+		return nil, err
 	}
+
+	// Perform strict checks, avoid corruption of future metadata formats.
+	if metaData.Size < 0 {
+		return nil, errors.New("negative file size")
+	}
+	if metaData.NChunks <= 0 {
+		return nil, errors.New("wrong number of chunks")
+	}
+	if metaData.MD5 != "" {
+		_, err = hex.DecodeString(metaData.MD5)
+		if len(metaData.MD5) != 32 || err != nil {
+			return nil, errors.New("wrong md5 hash")
+		}
+	}
+	if metaData.SHA1 != "" {
+		_, err = hex.DecodeString(metaData.SHA1)
+		if len(metaData.SHA1) != 40 || err != nil {
+			return nil, errors.New("wrong sha1 hash")
+		}
+	}
+	if metaData.Version <= 0 {
+		return nil, errors.New("wrong version number")
+	}
+	if metaData.Version != metaDataVersion {
+		return nil, errors.Errorf("version %d is not supported, please upgrade rclone", metaData.Version)
+	}
+
 	var nilFs *Fs // nil object triggers appropriate type method
 	info = nilFs.wrapInfo(metaObject, "", metaData.Size)
 	info.md5 = metaData.MD5
 	info.sha1 = metaData.SHA1
 	info.nChunks = metaData.NChunks
-	return
-}
-
-// Meta format `wdmrcompat`
-type metaWDMRCompat struct {
-	Name         string      `json:"Name"`
-	Size         int64       `json:"Size"`
-	PublicKey    interface{} `json:"PublicKey"`    // ignored, can be nil
-	CreationDate time.Time   `json:"CreationDate"` // modification time, ignored
-}
-
-func marshalWDMRCompat(ctx context.Context, srcInfo fs.ObjectInfo) (data []byte, err error) {
-	metaData := &metaWDMRCompat{
-		Name:         path.Base(srcInfo.Remote()),
-		Size:         srcInfo.Size(),
-		PublicKey:    nil,
-		CreationDate: srcInfo.ModTime(ctx).UTC(),
-	}
-	return json.Marshal(&metaData)
-}
-
-func unmarshalWDMRCompat(ctx context.Context, metaObject fs.Object, data []byte) (info *ObjectInfo, err error) {
-	var metaData *metaWDMRCompat
-	err = json.Unmarshal(data, &metaData)
-	if err != nil {
-		return
-	}
-	var nilFs *Fs // nil object triggers appropriate type method
-	info = nilFs.wrapInfo(metaObject, "", metaData.Size)
-	return
+	return info, nil
 }
 
 // Check the interfaces are satisfied
@@ -1868,6 +1841,4 @@ var (
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
-	_ fs.SetTierer       = (*Object)(nil)
-	_ fs.GetTierer       = (*Object)(nil)
 )
