@@ -28,10 +28,14 @@ var (
 // dynamic chunker overlay wrapping a local temporary directory.
 func TestIntegration(t *testing.T) {
 	opt := fstests.Opt{
-		RemoteName:                   *fstest.RemoteName,
-		NilObject:                    (*chunker.Object)(nil),
-		SkipBadWindowsCharacters:     !*UseBadChars,
-		UnimplementableObjectMethods: []string{"MimeType"},
+		RemoteName:               *fstest.RemoteName,
+		NilObject:                (*chunker.Object)(nil),
+		SkipBadWindowsCharacters: !*UseBadChars,
+		UnimplementableObjectMethods: []string{
+			"MimeType",
+			"GetTier",
+			"SetTier",
+		},
 		UnimplementableFsMethods: []string{
 			"PublicLink",
 			"OpenWriterAt",
