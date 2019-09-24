@@ -986,7 +986,6 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	fs.Config.TrackRenames = true
 	defer func() {
 		fs.Config.TrackRenames = false
-
 	}()
 
 	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.None
@@ -1010,45 +1009,64 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
-	if canTrackRenames {
-		if r.Fremote.Features().Move == nil || r.Fremote.Name() == "TestUnion" { // union remote can Move but returns CantMove error
-			// If no server side Move, we are falling back to Copy + Delete
-			assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers()) // 1 copy
-			assert.Equal(t, int64(4), accounting.GlobalStats().GetChecks())    // 2 file checks + 1 move + 1 delete
-		} else {
-			assert.Equal(t, int64(0), accounting.GlobalStats().GetTransfers()) // 0 copy
-			assert.Equal(t, int64(3), accounting.GlobalStats().GetChecks())    // 2 file checks + 1 move
-		}
-	} else {
-		if toyFileChecks(r) != -1 {
-			assert.Equal(t, toyFileChecks(r), accounting.GlobalStats().GetChecks())
-		}
-		assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
-	}
-}
-
-func toyFileChecks(r *fstest.Run) int64 {
+	// As currently there is no Fs interface providing number of chunks
+	// in a file, this test depends on the well-known names of test remotes.
 	remote := r.Fremote.Name()
-	// Numbers below are calculated for a 14 byte file.
-	if !strings.HasPrefix(remote, "TestChunker") {
-		return 2
-	}
-	// Chunker makes more internal checks.
+
+	// Union remote can Move but returns CantMove error.
+	moveAsCopyDelete := r.Fremote.Features().Move == nil || remote == "TestUnion"
+
+	chunker := strings.HasPrefix(remote, "TestChunker")
+	wrappedMoveAsCopyDelete := chunker && strings.HasSuffix(remote, "S3")
+
+	chunk3b := chunker && strings.Contains(remote, "Chunk3b")            // chunker with 3 byte chunks
+	chunk50b := chunker && strings.Contains(remote, "Chunk50b")          // chunker with 50 byte chunks
+	chunkDefault := chunker && !strings.Contains(remote, "ChunkerChunk") // default big chunk size
+	chunkBig := chunk50b || chunkDefault                                 // file is smaller than chunk size
+
+	// Verify number of checks for a toy 14 byte file.
+	// The order of cases matters!
 	var checks int
 	switch {
-	case strings.Contains(remote, "Chunk3b"): // chunk 3 bytes
-		checks = 6
-	case strings.Contains(remote, "Chunk50b"): // chunk 50 bytes
-		checks = 3
-	case strings.Contains(remote, "ChunkerChunk"): // unknown chunk size
-		return -1
+	case canTrackRenames && chunk3b:
+		checks = 8 // chunker makes extra checks for each small chunk
+	case canTrackRenames && chunkBig:
+		checks = 4 // chunker makes 1 extra check for a single big chunk
+	case canTrackRenames && moveAsCopyDelete:
+		checks = 4 // 2 file checks + 1 move + 1 delete
+	case canTrackRenames:
+		checks = 3 // 2 file checks + 1 move
+	case !chunker:
+		checks = 2 // 2 file checks on a generic non-chunking remote
+	case chunk3b:
+		checks = 6 // chunker makes extra checks for each small chunk
+	case chunkBig && wrappedMoveAsCopyDelete:
+		checks = 4 // one more extra check because S3 emulates Move as Copy+Delete
+	case chunkBig:
+		checks = 3 // chunker makes 1 extra check for a single big chunk
 	default:
-		checks = 3 // large chunks (eventually no chunking)
+		checks = -1 // skip verification for chunker with unknown chunk size
 	}
-	if strings.HasSuffix(remote, "S3") {
-		checks++ // Extra check because S3 emulates Move as Copy+Delete.
+	if checks != -1 { // "-1" allows remotes to bypass this check
+		assert.Equal(t, int64(checks), accounting.GlobalStats().GetChecks())
 	}
-	return int64(checks)
+
+	// Verify number of copy operations for a toy 14 byte file.
+	// The order of cases matters!
+	var copies int64
+	switch {
+	case canTrackRenames && moveAsCopyDelete:
+		copies = 1 // 1 copy
+	case canTrackRenames:
+		copies = 0 // 0 copy
+	case chunkBig && wrappedMoveAsCopyDelete:
+		copies = 2 // extra Copy because S3 emulates Move as Copy+Delete.
+	default:
+		copies = 1
+	}
+	if copies != -1 { // "-1" allows remotes to bypass this check
+		assert.Equal(t, copies, accounting.GlobalStats().GetTransfers())
+	}
 }
 
 func toyFileTransfers(r *fstest.Run) int64 {
