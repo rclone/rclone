@@ -25,7 +25,7 @@ jobs:
           - job_name: linux
             os: ubuntu-latest
             go: '1.13.x'
-            modules: off
+            modules: 'off'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -35,7 +35,7 @@ jobs:
           - job_name: mac
             os: macOS-latest
             go: '1.13.x'
-            modules: off
+            modules: 'off'
             gotags: ''  # cmount doesn't work on osx travis for some reason
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -45,7 +45,7 @@ jobs:
           - job_name: windows_amd64
             os: windows-latest
             go: '1.13.x'
-            modules: off
+            modules: 'off'
             gotags: cmount
             build_flags: '-include "^windows/amd64" -cgo'
             quicktest: true
@@ -55,7 +55,7 @@ jobs:
           - job_name: windows_386
             os: windows-latest
             go: '1.13.x'
-            modules: off
+            modules: 'off'
             gotags: cmount
             goarch: '386'
             cgo: '1'
@@ -66,7 +66,7 @@ jobs:
           - job_name: other_os
             os: ubuntu-latest
             go: '1.13.x'
-            modules: off
+            modules: 'off'
             build_flags: '-exclude "^(windows/|darwin/amd64|linux/)"'
             compile_all: true
             deploy: true
@@ -74,26 +74,26 @@ jobs:
           - job_name: modules_race
             os: ubuntu-latest
             go: '1.13.x'
-            modules: on
+            modules: 'on'
             quicktest: true
             racequicktest: true
 
           - job_name: go1.10
             os: ubuntu-latest
             go: '1.10.x'
-            modules: off
+            modules: 'off'
             quicktest: true
 
           - job_name: go1.11
             os: ubuntu-latest
             go: '1.11.x'
-            modules: off
+            modules: 'off'
             quicktest: true
 
           - job_name: go1.12
             os: ubuntu-latest
             go: '1.12.x'
-            modules: off
+            modules: 'off'
             quicktest: true
 
     name: ${{ matrix.job_name }}
@@ -201,6 +201,50 @@ jobs:
           make travis_beta
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
-          BETA_SUBDIR: 'github_actions'  # FIXME remove when removing travis/appveyor
         # working-directory: '$(modulePath)'
         if: matrix.deploy && github.head_ref == ''
+
+  xgo:
+    timeout-minutes: 60
+    name: "xgo cross compile"
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@master
+        with:
+          path: ./src/github.com/${{ github.repository }}
+
+      - name: Set environment variables
+        shell: bash
+        run: |
+          echo '::set-env name=GOPATH::${{ runner.workspace }}'
+          echo '::add-path::${{ runner.workspace }}/bin'
+
+      - name: Cross-compile rclone
+        run: |
+          docker pull billziss/xgo-cgofuse
+          go get -v github.com/karalabe/xgo
+          xgo \
+              -image=billziss/xgo-cgofuse \
+              -targets=darwin/386,darwin/amd64,linux/386,linux/amd64,windows/386,windows/amd64 \
+              -tags cmount \
+              -dest build \
+              .
+          xgo \
+              -image=billziss/xgo-cgofuse \
+              -targets=android/*,ios/* \
+              -dest build \
+              .
+
+      - name: Build rclone
+        run: |
+          docker pull golang
+          docker run --rm -v "$PWD":/usr/src/rclone -w /usr/src/rclone golang go build -mod=vendor -v
+
+      - name: Upload artifacts
+        run: |
+          make circleci_upload
+        env:
+          RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
