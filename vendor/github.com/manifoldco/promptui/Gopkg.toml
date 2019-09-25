@@ -1,0 +1,16 @@
+required=[
+  "honnef.co/go/tools/cmd/gosimple",
+  "github.com/alecthomas/gometalinter",
+  "github.com/client9/misspell/cmd/misspell",
+  "github.com/golang/lint/golint",
+  "github.com/gordonklaus/ineffassign",
+  "github.com/tsenart/deadcode",
+]
+
+[[constraint]]
+  name = "github.com/chzyer/readline"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/juju/ansiterm"
+  branch = "master"

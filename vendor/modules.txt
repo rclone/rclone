@@ -17,6 +17,10 @@ github.com/Unknwon/goconfig
 github.com/a8m/tree
 # github.com/abbot/go-http-auth v0.4.0
 github.com/abbot/go-http-auth
+# github.com/alecthomas/gometalinter v2.0.11+incompatible
+github.com/alecthomas/gometalinter
+# github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d
+github.com/alecthomas/units
 # github.com/anacrolix/dms v1.0.0
 github.com/anacrolix/dms/dlna
 github.com/anacrolix/dms/soap
@@ -66,6 +70,11 @@ github.com/aws/aws-sdk-go/private/protocol/query
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 # github.com/billziss-gh/cgofuse v1.1.0
 github.com/billziss-gh/cgofuse/fuse
+# github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
+github.com/chzyer/readline
+# github.com/client9/misspell v0.3.4
+github.com/client9/misspell/cmd/misspell
+github.com/client9/misspell
 # github.com/coreos/bbolt v1.3.3
 github.com/coreos/bbolt
 # github.com/cpuguy83/go-md2man v1.0.10
@@ -90,6 +99,8 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
 # github.com/goftp/server v0.0.0-20190712054601-1149070ae46b
 github.com/goftp/server
+# github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3
+github.com/golang/lint/golint
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
@@ -98,8 +109,12 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
+# github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf
+github.com/google/shlex
 # github.com/googleapis/gax-go/v2 v2.0.5
 github.com/googleapis/gax-go/v2
+# github.com/gordonklaus/ineffassign v0.0.0-20180909121442-1003c8bd00dc
+github.com/gordonklaus/ineffassign
 # github.com/hashicorp/golang-lru v0.5.3
 github.com/hashicorp/golang-lru/simplelru
 # github.com/inconshreveable/mousetrap v1.0.0
@@ -108,6 +123,9 @@ github.com/inconshreveable/mousetrap
 github.com/jlaffaye/ftp
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
+# github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a
+github.com/juju/ansiterm
+github.com/juju/ansiterm/tabwriter
 # github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
 github.com/jzelinskie/whirlpool
 # github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
@@ -120,8 +138,18 @@ github.com/koofr/go-httpclient
 github.com/koofr/go-koofrclient
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
+# github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a
+github.com/lunixbochs/vtclean
+# github.com/manifoldco/promptui v0.3.2
+github.com/manifoldco/promptui
+github.com/manifoldco/promptui/list
+github.com/manifoldco/promptui/screenbuf
+# github.com/mattn/go-colorable v0.0.9
+github.com/mattn/go-colorable
 # github.com/mattn/go-ieproxy v0.0.0-20190805055040-f9202b1cfdeb
 github.com/mattn/go-ieproxy
+# github.com/mattn/go-isatty v0.0.4
+github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.4
 github.com/mattn/go-runewidth
 # github.com/mitchellh/go-homedir v1.1.0
@@ -170,6 +198,8 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/t3rm1n4l/go-mega v0.0.0-20190528125457-55e675378686
 github.com/t3rm1n4l/go-mega
+# github.com/tsenart/deadcode v0.0.0-20160724212837-210d2dc333e9
+github.com/tsenart/deadcode
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
 # github.com/youmark/pkcs8 v0.0.0-20181201043747-70daafe5d78a
@@ -219,6 +249,8 @@ golang.org/x/crypto/ed25519
 golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/ed25519/internal/edwards25519
+# golang.org/x/lint v0.0.0-20190409202823-959b441ac422
+golang.org/x/lint
 # golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 golang.org/x/net/websocket
 golang.org/x/net/html
@@ -259,6 +291,10 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
+# golang.org/x/tools v0.0.0-20190628153133-6cdbf07be9d0
+golang.org/x/tools/go/ast/astutil
+golang.org/x/tools/go/gcexportdata
+golang.org/x/tools/go/internal/gcimporter
 # google.golang.org/api v0.9.0
 google.golang.org/api/drive/v2
 google.golang.org/api/drive/v3
@@ -318,5 +354,7 @@ google.golang.org/grpc/balancer/base
 google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/internal/syscall
+# gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c
+gopkg.in/alecthomas/kingpin.v3-unstable
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2

@@ -1,0 +1,27 @@
+sudo: false
+language: go
+install:
+- go get -t -v . ./regressiontests
+- gometalinter --install
+go:
+- 1.9.x
+- 1.10.x
+- 1.11
+script: go test -v . ./regressiontests
+before_deploy:
+  - curl -sL https://git.io/goreleaser | bash
+deploy:
+  provider: releases
+  api_key:
+    secure: AFHdOq5gTUFodz06wFMwSxM/mjF9BtwiUxHq5eODTymARPp+DBkTLFcZgf77VE8wFEGuM9/5eedsuCna3FmQwY3ClGoINaAa8ouZHyYkqMhEZyhnTu9848zqJQxy46VKpwcXw1se/qyN6tNNIgJizrAbwfSgbdktCFxWZU2xB00
+  file_glob: true
+  file:
+    - dist/gometalinter-*.zip
+    - dist/gometalinter-*.tar.bz2
+    - dist/gometalinter-*.sha256
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: alecthomas/gometalinter
+    condition: $TRAVIS_GO_VERSION =~ ^1\.11(\.[0-9]+)?$
+

@@ -1,0 +1,210 @@
+---
+project_name: gometalinter
+
+release:
+  github:
+    owner: alecthomas
+    name: gometalinter
+
+brew:
+  name: gometalinter
+  github:
+    owner: alecthomas
+    name: homebrew-tap
+
+  commit_author:
+    name: goreleaserbot
+    email: goreleaser@carlosbecker.com
+
+  folder: Formula
+  homepage: "https://github.com/alecthomas/gometalinter"
+  description: "Concurrently run Go lint tools and normalise their output."
+
+builds:
+  - binary: gometalinter
+    goos: &goos
+      - darwin
+      - windows
+      - linux
+    goarch: &goarch
+      - amd64
+      - i386
+    env:
+      - CGO_ENABLED=0
+    main: ./
+    ldflags: -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+  - binary: gocyclo
+    goos: *goos
+    goarch: *goarch
+    env: &env
+      - CGO_ENABLED=0
+      - GOPATH=$PWD/_linters
+    main: ./_linters/src/github.com/alecthomas/gocyclo
+
+  - binary: nakedret
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/alexkohler/nakedret
+
+  - binary: misspell
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/client9/misspell/cmd/misspell
+
+  - binary: gosec
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/securego/gosec/cmd/gosec
+
+  - binary: golint
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/golang/lint/golint
+
+  - binary: ineffassign
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/gordonklaus/ineffassign
+
+  - binary: goconst
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/jgautheron/goconst/cmd/goconst
+
+  - binary: errcheck
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/kisielk/errcheck
+
+  - binary: maligned
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/mdempsky/maligned
+
+  - binary: unconvert
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/mdempsky/unconvert
+
+  - binary: dupl
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/mibk/dupl
+
+  - binary: structcheck
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/opennota/check/cmd/structcheck
+
+  - binary: varcheck
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/opennota/check/cmd/varcheck
+
+  - binary: safesql
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/stripe/safesql
+
+  - binary: deadcode
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/tsenart/deadcode
+
+  - binary: lll
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/github.com/walle/lll/cmd/lll
+
+  - binary: goimports
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/golang.org/x/tools/cmd/goimports
+
+  - binary: gotype
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/golang.org/x/tools/cmd/gotype
+
+  - binary: gosimple
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/honnef.co/go/tools/cmd/gosimple
+
+  - binary: megacheck
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/honnef.co/go/tools/cmd/megacheck
+
+  - binary: staticcheck
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/honnef.co/go/tools/cmd/staticcheck
+
+  - binary: unused
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/honnef.co/go/tools/cmd/unused
+
+  - binary: interfacer
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/mvdan.cc/interfacer
+
+  - binary: unparam
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/mvdan.cc/unparam
+
+  - binary: gochecknoinits
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/4d63.com/gochecknoinits
+
+  - binary: gochecknoglobals
+    goos: *goos
+    goarch: *goarch
+    env: *env
+    main: ./_linters/src/4d63.com/gochecknoglobals
+
+archive:
+  format: tar.gz
+  wrap_in_directory: true
+  format_overrides:
+    - goos: windows
+      format: zip
+  name_template: '{{ .Binary }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  files:
+    - COPYING
+    - README.md
+
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}
+
+checksum:
+  name_template: '{{ .ProjectName }}-{{ .Version }}-checksums.txt'
