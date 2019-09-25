@@ -24,6 +24,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Unknwon/goconfig"
+	"github.com/manifoldco/promptui"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
@@ -611,7 +612,11 @@ func ShowRemotes() {
 func ChooseRemote() string {
 	remotes := getConfigData().GetSectionList()
 	sort.Strings(remotes)
-	return Choose("remote", remotes, nil, false)
+	var help []string
+	for _, remote := range remotes {
+		help = append(help, DumpRemote(remote))
+	}
+	return Choose("remote", remotes, help, false)
 }
 
 // ReadLine reads some input
@@ -631,19 +636,36 @@ func Command(commands []string) byte {
 		fmt.Printf("%c) %s\n", text[0], text[1:])
 		opts = append(opts, text[:1])
 	}
+
 	optString := strings.Join(opts, "")
 	optHelp := strings.Join(opts, "/")
-	for {
-		fmt.Printf("%s> ", optHelp)
-		result := strings.ToLower(ReadLine())
-		if len(result) != 1 {
-			continue
+
+	validate := func(input string) error {
+		if len(input) == 0 {
+			return errors.New("type a letter")
 		}
-		i := strings.Index(optString, string(result[0]))
-		if i >= 0 {
-			return result[0]
+		if len(input) > 1 {
+			return errors.New("only one letter required")
 		}
+		input = strings.ToLower(input)
+		i := strings.Index(optString, string(input[0]))
+		if i < 0 {
+			return errors.New("bad letter")
+		}
+		return nil
 	}
+
+	prompt := promptui.Prompt{
+		Label:    optHelp,
+		Validate: validate,
+	}
+
+	result, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("Prompt failed: %v", err)
+	}
+
+	return strings.ToLower(result)[0]
 }
 
 // Confirm asks the user for Yes or No and returns true or false
@@ -680,8 +702,8 @@ func ConfirmWithConfig(m configmap.Getter, configName string, Default bool) bool
 	return Confirm()
 }
 
-// Choose one of the defaults or type a new string if newOk is set
-func Choose(what string, defaults, help []string, newOk bool) string {
+// ChooseOld one of the defaults or type a new string if newOk is set
+func ChooseOld(what string, defaults, help []string, newOk bool) string {
 	valueDescription := "an existing"
 	if newOk {
 		valueDescription = "your own"
@@ -738,6 +760,67 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 	}
 }
 
+// Choose one of the defaults or type a new string if newOk is set
+func Choose(what string, defaults, help []string, newOk bool) string {
+	const trim = 78
+	// tidy the help trimming all of its lines to trim chars
+	for i := range help {
+		parts := strings.Split(help[i], "\n")
+		for j := range parts {
+			p := []rune(parts[j])
+			if len(p) > trim {
+				p = p[:trim]
+				p[trim-1] = '…'
+				parts[j] = string(p)
+			}
+		}
+		help[i] = strings.Join(parts, "\n")
+	}
+
+	var items []fs.OptionExample
+	for i := range defaults {
+		item := fs.OptionExample{
+			Value: defaults[i],
+		}
+		if i < len(help) {
+			item.Help = help[i]
+		}
+		items = append(items, item)
+	}
+
+	templates := &promptui.SelectTemplates{
+		Label:    "{{ . }}?",
+		Active:   "▸ {{ .Value | underline }}",
+		Inactive: "  {{ .Value | faint }}",
+		Selected: "▸ {{ .Value | underline }}",
+		Details: `
+--------- Help ----------
+{{ .Help }}`,
+	}
+
+	searcher := func(input string, index int) bool {
+		name := items[index].Value + " " + items[index].Help
+		name = strings.Replace(strings.ToLower(name), " ", "", -1)
+		input = strings.Replace(strings.ToLower(input), " ", "", -1)
+
+		return strings.Contains(name, input)
+	}
+
+	prompt := promptui.Select{
+		Label:     what,
+		Items:     items,
+		Size:      8,
+		Searcher:  searcher,
+		Templates: templates,
+	}
+	i, _, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("Prompt failed: %v", err)
+	}
+
+	return defaults[i]
+}
+
 // ChooseNumber asks the user to enter a number between min and max
 // inclusive prompting them with what.
 func ChooseNumber(what string, min, max int) int {
@@ -757,11 +840,16 @@ func ChooseNumber(what string, min, max int) int {
 	}
 }
 
-// ShowRemote shows the contents of the remote
-func ShowRemote(name string) {
-	fmt.Printf("--------------------\n")
-	fmt.Printf("[%s]\n", name)
-	fs := MustFindByName(name)
+// DumpRemote shows the contents of the remote
+func DumpRemote(name string) string {
+	var out []string
+	fs, err := FindByName(name)
+	if err != nil {
+		return fmt.Sprintf("Error looking up %q: %v", name, err)
+	}
+	// fmt.Printf("--------------------\n")
+	// fmt.Printf("[%s]\n", name)
+	// fs := MustFindByName(name)
 	for _, key := range getConfigData().GetKeyList(name) {
 		isPassword := false
 		for _, option := range fs.Options {
@@ -772,11 +860,19 @@ func ShowRemote(name string) {
 		}
 		value := FileGet(name, key)
 		if isPassword && value != "" {
-			fmt.Printf("%s = *** ENCRYPTED ***\n", key)
+			out = append(out, fmt.Sprintf("%s = *** ENCRYPTED ***", key))
 		} else {
-			fmt.Printf("%s = %s\n", key, value)
+			out = append(out, fmt.Sprintf("%s = %s", key, value))
 		}
 	}
+	return strings.Join(out, "\n")
+}
+
+// ShowRemote shows the contents of the remote
+func ShowRemote(name string) {
+	fmt.Printf("--------------------\n")
+	fmt.Printf("[%s]\n", name)
+	fmt.Printf("%s\n", DumpRemote(name))
 	fmt.Printf("--------------------\n")
 }
 
@@ -805,6 +901,16 @@ func MustFindByName(name string) *fs.RegInfo {
 		log.Fatalf("Couldn't find type of fs for %q", name)
 	}
 	return fs.MustFind(fsType)
+}
+
+// FindByName finds the RegInfo for the remote name passed in or
+// returns nil and an error
+func FindByName(name string) (*fs.RegInfo, error) {
+	fsType := FileGet(name, "type")
+	if fsType == "" {
+		return nil, errors.Errorf("Couldn't find type of fs for %q", name)
+	}
+	return fs.Find(fsType)
 }
 
 // RemoteConfig runs the config helper for the remote if needed
