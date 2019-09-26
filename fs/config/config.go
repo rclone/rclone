@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/terminal"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
 )
@@ -697,6 +698,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 		valueDescription = "your own"
 	}
 	fmt.Printf("Choose a number from below, or type in %s value\n", valueDescription)
+	attributes := []string{terminal.HiRedFg, terminal.HiGreenFg}
 	for i, text := range defaults {
 		var lines []string
 		if help != nil {
@@ -705,6 +707,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 		}
 		lines = append(lines, fmt.Sprintf("%q", text))
 		pos := i + 1
+		terminal.WriteString(attributes[i%len(attributes)])
 		if len(lines) == 1 {
 			fmt.Printf("%2d > %s\n", pos, text)
 		} else {
@@ -726,6 +729,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 				fmt.Printf("%s %c %s\n", number, sep, line)
 			}
 		}
+		terminal.WriteString(terminal.Reset)
 	}
 	for {
 		fmt.Printf("%s> ", what)
