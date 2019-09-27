@@ -8,9 +8,6 @@ cloud.google.com/go/compute/metadata
 github.com/Azure/azure-pipeline-go/pipeline
 # github.com/Azure/azure-storage-blob-go v0.8.0
 github.com/Azure/azure-storage-blob-go/azblob
-# github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
-github.com/Azure/go-ansiterm
-github.com/Azure/go-ansiterm/winterm
 # github.com/Unknwon/goconfig v0.0.0-20190425194916-3dba17dd7b9e
 github.com/Unknwon/goconfig
 # github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
