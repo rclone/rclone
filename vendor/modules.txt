@@ -120,8 +120,12 @@ github.com/koofr/go-httpclient
 github.com/koofr/go-koofrclient
 # github.com/kr/fs v0.1.0
 github.com/kr/fs
+# github.com/mattn/go-colorable v0.1.2
+github.com/mattn/go-colorable
 # github.com/mattn/go-ieproxy v0.0.0-20190805055040-f9202b1cfdeb
 github.com/mattn/go-ieproxy
+# github.com/mattn/go-isatty v0.0.8
+github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.4
 github.com/mattn/go-runewidth
 # github.com/mitchellh/go-homedir v1.1.0
@@ -207,8 +211,8 @@ go.opencensus.io
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
-golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/bcrypt
+golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
