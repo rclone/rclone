@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -445,9 +444,13 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 	if useWebServer {
 		server.code = make(chan string, 1)
 		server.err = make(chan error, 1)
-		go server.Start()
+		err := server.Init()
+		if err != nil {
+			return errors.Wrap(err, "failed to start auth webserver")
+		}
+		go server.Serve()
 		defer server.Stop()
-		authURL = "http://" + bindAddress + "/auth"
+		authURL = "http://" + bindAddress + "/auth?state=" + state
 	}
 
 	// Generate a URL for the user to visit for authorization.
@@ -517,8 +520,8 @@ type AuthResponseData struct {
 	AuthError
 }
 
-// startWebServer runs an internal web server to receive config details
-func (s *authServer) Start() {
+// Init gets the internal web server ready to receive config details
+func (s *authServer) Init() error {
 	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
 	mux := http.NewServeMux()
 	s.server = &http.Server{
@@ -531,6 +534,12 @@ func (s *authServer) Start() {
 		return
 	})
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, req *http.Request) {
+		state := req.FormValue("state")
+		if state != s.state {
+			fs.Debugf(nil, "State did not match: want %q got %q", s.state, state)
+			http.Error(w, "State did not match - please try again", 403)
+			return
+		}
 		http.Redirect(w, req, s.authURL, http.StatusTemporaryRedirect)
 		return
 	})
@@ -585,12 +594,18 @@ func (s *authServer) Start() {
 	var err error
 	s.listener, err = net.Listen("tcp", s.bindAddress)
 	if err != nil {
-		log.Fatalf("Failed to start auth webserver: %v", err)
+		return err
 	}
-	err = s.server.Serve(s.listener)
+	return nil
+}
+
+// Serve the auth server, doesn't return
+func (s *authServer) Serve() {
+	err := s.server.Serve(s.listener)
 	fs.Debugf(nil, "Closed auth server with error: %v", err)
 }
 
+// Stop the auth server by closing its socket
 func (s *authServer) Stop() {
 	fs.Debugf(nil, "Closing auth server")
 	if s.code != nil {
