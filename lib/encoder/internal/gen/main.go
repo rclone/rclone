@@ -40,11 +40,20 @@ var maskBits = []struct {
 	name string
 }{
 	{encoder.EncodeZero, "EncodeZero"},
-	{encoder.EncodeWin, "EncodeWin"},
 	{encoder.EncodeSlash, "EncodeSlash"},
+	{encoder.EncodeSingleQuote, "EncodeSingleQuote"},
+	{encoder.EncodeBackQuote, "EncodeBackQuote"},
+	{encoder.EncodeLtGt, "EncodeLtGt"},
+	{encoder.EncodeDollar, "EncodeDollar"},
+	{encoder.EncodeDoubleQuote, "EncodeDoubleQuote"},
+	{encoder.EncodeColon, "EncodeColon"},
+	{encoder.EncodeQuestion, "EncodeQuestion"},
+	{encoder.EncodeAsterisk, "EncodeAsterisk"},
+	{encoder.EncodePipe, "EncodePipe"},
+	{encoder.EncodeHash, "EncodeHash"},
+	{encoder.EncodePercent, "EncodePercent"},
 	{encoder.EncodeBackSlash, "EncodeBackSlash"},
 	{encoder.EncodeCrLf, "EncodeCrLf"},
-	{encoder.EncodeHashPercent, "EncodeHashPercent"},
 	{encoder.EncodeDel, "EncodeDel"},
 	{encoder.EncodeCtl, "EncodeCtl"},
 	{encoder.EncodeLeftSpace, "EncodeLeftSpace"},
@@ -54,6 +63,7 @@ var maskBits = []struct {
 	{encoder.EncodeRightPeriod, "EncodeRightPeriod"},
 	{encoder.EncodeRightCrLfHtVt, "EncodeRightCrLfHtVt"},
 	{encoder.EncodeInvalidUtf8, "EncodeInvalidUtf8"},
+	{encoder.EncodeDot, "EncodeDot"},
 }
 
 type edge struct {
@@ -85,10 +95,65 @@ var allMappings = []mapping{{
 	}, []rune{
 		'␀',
 	}}, {
-	encoder.EncodeWin, []rune{
-		':', '?', '"', '*', '<', '>', '|',
+	encoder.EncodeSlash, []rune{
+		'/',
 	}, []rune{
-		'：', '？', '＂', '＊', '＜', '＞', '｜',
+		'／',
+	}}, {
+	encoder.EncodeLtGt, []rune{
+		'<', '>',
+	}, []rune{
+		'＜', '＞',
+	}}, {
+	encoder.EncodeDoubleQuote, []rune{
+		'"',
+	}, []rune{
+		'＂',
+	}}, {
+	encoder.EncodeSingleQuote, []rune{
+		'\'',
+	}, []rune{
+		'＇',
+	}}, {
+	encoder.EncodeBackQuote, []rune{
+		'`',
+	}, []rune{
+		'｀',
+	}}, {
+	encoder.EncodeDollar, []rune{
+		'$',
+	}, []rune{
+		'＄',
+	}}, {
+	encoder.EncodeColon, []rune{
+		':',
+	}, []rune{
+		'：',
+	}}, {
+	encoder.EncodeQuestion, []rune{
+		'?',
+	}, []rune{
+		'？',
+	}}, {
+	encoder.EncodeAsterisk, []rune{
+		'*',
+	}, []rune{
+		'＊',
+	}}, {
+	encoder.EncodePipe, []rune{
+		'|',
+	}, []rune{
+		'｜',
+	}}, {
+	encoder.EncodeHash, []rune{
+		'#',
+	}, []rune{
+		'＃',
+	}}, {
+	encoder.EncodePercent, []rune{
+		'%',
+	}, []rune{
+		'％',
 	}}, {
 	encoder.EncodeSlash, []rune{
 		'/',
@@ -104,11 +169,6 @@ var allMappings = []mapping{{
 		rune(0x0D), rune(0x0A),
 	}, []rune{
 		'␍', '␊',
-	}}, {
-	encoder.EncodeHashPercent, []rune{
-		'#', '%',
-	}, []rune{
-		'＃', '％',
 	}}, {
 	encoder.EncodeDel, []rune{
 		0x7F,

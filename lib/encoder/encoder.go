@@ -37,10 +37,19 @@ const (
 const (
 	EncodeZero          uint = 0         // NUL(0x00)
 	EncodeSlash         uint = 1 << iota // /
-	EncodeWin                            // :?"*<>|
+	EncodeLtGt                           // <>
+	EncodeDoubleQuote                    // "
+	EncodeSingleQuote                    // '
+	EncodeBackQuote                      // `
+	EncodeDollar                         // $
+	EncodeColon                          // :
+	EncodeQuestion                       // ?
+	EncodeAsterisk                       // *
+	EncodePipe                           // |
+	EncodeHash                           // #
+	EncodePercent                        // %
 	EncodeBackSlash                      // \
 	EncodeCrLf                           // CR(0x0D), LF(0x0A)
-	EncodeHashPercent                    // #%
 	EncodeDel                            // DEL(0x7F)
 	EncodeCtl                            // CTRL(0x01-0x1F)
 	EncodeLeftSpace                      // Leading SPACE
@@ -51,7 +60,16 @@ const (
 	EncodeRightCrLfHtVt                  // Trailing CR LF HT VT
 	EncodeInvalidUtf8                    // Invalid UTF-8 bytes
 	EncodeDot                            // . and .. names
+
+	// Synthetic
+	EncodeWin         = EncodeColon | EncodeQuestion | EncodeDoubleQuote | EncodeAsterisk | EncodeLtGt | EncodePipe // :?"*<>|
+	EncodeHashPercent = EncodeHash | EncodePercent                                                                  // #%
 )
+
+// Has returns true if flag is contained in mask
+func (mask MultiEncoder) Has(flag uint) bool {
+	return uint(mask)&flag != 0
+}
 
 // Encoder can transform names to and from the original and translated version.
 type Encoder interface {
@@ -83,29 +101,11 @@ type MultiEncoder uint
 // Encode takes a raw name and substitutes any reserved characters and
 // patterns in it
 func (mask MultiEncoder) Encode(in string) string {
-	var (
-		encodeWin            = uint(mask)&EncodeWin != 0
-		encodeSlash          = uint(mask)&EncodeSlash != 0
-		encodeBackSlash      = uint(mask)&EncodeBackSlash != 0
-		encodeCrLf           = uint(mask)&EncodeCrLf != 0
-		encodeHashPercent    = uint(mask)&EncodeHashPercent != 0
-		encodeDel            = uint(mask)&EncodeDel != 0
-		encodeCtl            = uint(mask)&EncodeCtl != 0
-		encodeLeftSpace      = uint(mask)&EncodeLeftSpace != 0
-		encodeLeftTilde      = uint(mask)&EncodeLeftTilde != 0
-		encodeLeftCrLfHtVt   = uint(mask)&EncodeLeftCrLfHtVt != 0
-		encodeRightSpace     = uint(mask)&EncodeRightSpace != 0
-		encodeRightPeriod    = uint(mask)&EncodeRightPeriod != 0
-		encodeRightCrLfHtVt  = uint(mask)&EncodeRightCrLfHtVt != 0
-		encodeInvalidUnicode = uint(mask)&EncodeInvalidUtf8 != 0
-		encodeDot            = uint(mask)&EncodeDot != 0
-	)
-
 	if in == "" {
 		return ""
 	}
 
-	if encodeDot {
+	if mask.Has(EncodeDot) {
 		switch in {
 		case ".":
 			return "．"
@@ -120,21 +120,21 @@ func (mask MultiEncoder) Encode(in string) string {
 
 	// handle prefix only replacements
 	prefix := ""
-	if encodeLeftSpace { // Leading SPACE
+	if mask.Has(EncodeLeftSpace) { // Leading SPACE
 		if in[0] == ' ' {
 			prefix, in = "␠", in[1:] // SYMBOL FOR SPACE
 		} else if r, l := utf8.DecodeRuneInString(in); r == '␠' { // SYMBOL FOR SPACE
 			prefix, in = string(QuoteRune)+"␠", in[l:] // SYMBOL FOR SPACE
 		}
 	}
-	if encodeLeftTilde && prefix == "" { // Leading ~
+	if mask.Has(EncodeLeftTilde) && prefix == "" { // Leading ~
 		if in[0] == '~' {
 			prefix, in = string('~'+fullOffset), in[1:] // FULLWIDTH TILDE
 		} else if r, l := utf8.DecodeRuneInString(in); r == '~'+fullOffset {
 			prefix, in = string(QuoteRune)+string('~'+fullOffset), in[l:] // FULLWIDTH TILDE
 		}
 	}
-	if encodeLeftCrLfHtVt && prefix == "" { // Leading CR LF HT VT
+	if mask.Has(EncodeLeftCrLfHtVt) && prefix == "" { // Leading CR LF HT VT
 		switch c := in[0]; c {
 		case '\t', '\n', '\v', '\r':
 			prefix, in = string('␀'+rune(c)), in[1:] // SYMBOL FOR NULL
@@ -148,21 +148,21 @@ func (mask MultiEncoder) Encode(in string) string {
 	// handle suffix only replacements
 	suffix := ""
 	if in != "" {
-		if encodeRightSpace { // Trailing SPACE
+		if mask.Has(EncodeRightSpace) { // Trailing SPACE
 			if in[len(in)-1] == ' ' {
 				suffix, in = "␠", in[:len(in)-1] // SYMBOL FOR SPACE
 			} else if r, l := utf8.DecodeLastRuneInString(in); r == '␠' {
 				suffix, in = string(QuoteRune)+"␠", in[:len(in)-l] // SYMBOL FOR SPACE
 			}
 		}
-		if encodeRightPeriod && suffix == "" { // Trailing .
+		if mask.Has(EncodeRightPeriod) && suffix == "" { // Trailing .
 			if in[len(in)-1] == '.' {
 				suffix, in = "．", in[:len(in)-1] // FULLWIDTH FULL STOP
 			} else if r, l := utf8.DecodeLastRuneInString(in); r == '．' {
 				suffix, in = string(QuoteRune)+"．", in[:len(in)-l] // FULLWIDTH FULL STOP
 			}
 		}
-		if encodeRightCrLfHtVt && suffix == "" { // Trailing .
+		if mask.Has(EncodeRightCrLfHtVt) && suffix == "" { // Trailing .
 			switch c := in[len(in)-1]; c {
 			case '\t', '\n', '\v', '\r':
 				suffix, in = string('␀'+rune(c)), in[:len(in)-1] // FULLWIDTH FULL STOP
@@ -183,48 +183,111 @@ func (mask MultiEncoder) Encode(in string) string {
 			case 0, '␀', QuoteRune, utf8.RuneError:
 				return true
 			}
-			if encodeWin { // :?"*<>|
+			if mask.Has(EncodeAsterisk) { // *
 				switch r {
-				case '*', '<', '>', '?', ':', '|', '"',
-					'＊', '＜', '＞', '？', '：', '｜', '＂':
+				case '*',
+					'＊':
 					return true
 				}
 			}
-			if encodeSlash { // /
+			if mask.Has(EncodeLtGt) { // <>
+				switch r {
+				case '<', '>',
+					'＜', '＞':
+					return true
+				}
+			}
+			if mask.Has(EncodeQuestion) { // ?
+				switch r {
+				case '?',
+					'？':
+					return true
+				}
+			}
+			if mask.Has(EncodeColon) { // :
+				switch r {
+				case ':',
+					'：':
+					return true
+				}
+			}
+			if mask.Has(EncodePipe) { // |
+				switch r {
+				case '|',
+					'｜':
+					return true
+				}
+			}
+			if mask.Has(EncodeDoubleQuote) { // "
+				switch r {
+				case '"',
+					'＂':
+					return true
+				}
+			}
+			if mask.Has(EncodeSingleQuote) { // '
+				switch r {
+				case '\'',
+					'＇':
+					return true
+				}
+			}
+			if mask.Has(EncodeBackQuote) { // `
+				switch r {
+				case '`',
+					'｀':
+					return true
+				}
+			}
+			if mask.Has(EncodeDollar) { // $
+				switch r {
+				case '$',
+					'＄':
+					return true
+				}
+			}
+			if mask.Has(EncodeSlash) { // /
 				switch r {
 				case '/',
 					'／':
 					return true
 				}
 			}
-			if encodeBackSlash { // \
+			if mask.Has(EncodeBackSlash) { // \
 				switch r {
 				case '\\',
 					'＼':
 					return true
 				}
 			}
-			if encodeCrLf { // CR LF
+			if mask.Has(EncodeCrLf) { // CR LF
 				switch r {
 				case rune(0x0D), rune(0x0A),
 					'␍', '␊':
 					return true
 				}
 			}
-			if encodeHashPercent { // #%
+			if mask.Has(EncodeHash) { // #
 				switch r {
-				case '#', '%',
-					'＃', '％':
+				case '#',
+					'＃':
 					return true
 				}
 			}
-			if encodeDel { // DEL(0x7F)
+			if mask.Has(EncodePercent) { // %
+				switch r {
+				case '%',
+					'％':
+					return true
+				}
+			}
+			if mask.Has(EncodeDel) { // DEL(0x7F)
 				switch r {
 				case rune(0x7F), '␡':
 					return true
 				}
 			}
-			if encodeCtl { // CTRL(0x01-0x1F)
+			if mask.Has(EncodeCtl) { // CTRL(0x01-0x1F)
 				if r >= 1 && r <= 0x1F {
 					return true
 				} else if r > symbolOffset && r <= symbolOffset+0x1F {
@@ -256,7 +319,7 @@ func (mask MultiEncoder) Encode(in string) string {
 			out.WriteRune(r)
 			continue
 		case utf8.RuneError:
-			if encodeInvalidUnicode {
+			if mask.Has(EncodeInvalidUtf8) {
 				// only encode invalid sequences and not utf8.RuneError
 				if i+3 > len(in) || in[i:i+3] != string(utf8.RuneError) {
 					_, l := utf8.DecodeRuneInString(in[i:])
@@ -270,18 +333,106 @@ func (mask MultiEncoder) Encode(in string) string {
 				continue
 			}
 		}
-		if encodeWin { // :?"*<>|
+		if mask.Has(EncodeAsterisk) { // *
 			switch r {
-			case '*', '<', '>', '?', ':', '|', '"':
+			case '*':
 				out.WriteRune(r + fullOffset)
 				continue
-			case '＊', '＜', '＞', '？', '：', '｜', '＂':
+			case '＊':
 				out.WriteRune(QuoteRune)
 				out.WriteRune(r)
 				continue
 			}
 		}
-		if encodeSlash { // /
+		if mask.Has(EncodeLtGt) { // <>
+			switch r {
+			case '<', '>':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '＜', '＞':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeQuestion) { // ?
+			switch r {
+			case '?':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '？':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeColon) { // :
+			switch r {
+			case ':':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '：':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodePipe) { // |
+			switch r {
+			case '|':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '｜':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeDoubleQuote) { // "
+			switch r {
+			case '"':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '＂':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeSingleQuote) { // '
+			switch r {
+			case '\'':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '＇':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeBackQuote) { // `
+			switch r {
+			case '`':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '｀':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeDollar) { // $
+			switch r {
+			case '$':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '＄':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeSlash) { // /
 			switch r {
 			case '/':
 				out.WriteRune(r + fullOffset)
@@ -292,7 +443,7 @@ func (mask MultiEncoder) Encode(in string) string {
 				continue
 			}
 		}
-		if encodeBackSlash { // \
+		if mask.Has(EncodeBackSlash) { // \
 			switch r {
 			case '\\':
 				out.WriteRune(r + fullOffset)
@@ -303,7 +454,7 @@ func (mask MultiEncoder) Encode(in string) string {
 				continue
 			}
 		}
-		if encodeCrLf { // CR LF
+		if mask.Has(EncodeCrLf) { // CR LF
 			switch r {
 			case rune(0x0D), rune(0x0A):
 				out.WriteRune(r + symbolOffset)
@@ -314,18 +465,29 @@ func (mask MultiEncoder) Encode(in string) string {
 				continue
 			}
 		}
-		if encodeHashPercent { // #%
+		if mask.Has(EncodeHash) { // #
 			switch r {
-			case '#', '%':
+			case '#':
 				out.WriteRune(r + fullOffset)
 				continue
-			case '＃', '％':
+			case '＃':
 				out.WriteRune(QuoteRune)
 				out.WriteRune(r)
 				continue
 			}
 		}
-		if encodeDel { // DEL(0x7F)
+		if mask.Has(EncodePercent) { // %
+			switch r {
+			case '%':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '％':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeDel) { // DEL(0x7F)
 			switch r {
 			case rune(0x7F):
 				out.WriteRune('␡') // SYMBOL FOR DELETE
@@ -336,7 +498,7 @@ func (mask MultiEncoder) Encode(in string) string {
 				continue
 			}
 		}
-		if encodeCtl { // CTRL(0x01-0x1F)
+		if mask.Has(EncodeCtl) { // CTRL(0x01-0x1F)
 			if r >= 1 && r <= 0x1F {
 				out.WriteRune('␀' + r) // SYMBOL FOR NULL
 				continue
@@ -354,25 +516,7 @@ func (mask MultiEncoder) Encode(in string) string {
 
 // Decode takes a name and undoes any substitutions made by Encode
 func (mask MultiEncoder) Decode(in string) string {
-	var (
-		encodeWin            = uint(mask)&EncodeWin != 0
-		encodeSlash          = uint(mask)&EncodeSlash != 0
-		encodeBackSlash      = uint(mask)&EncodeBackSlash != 0
-		encodeCrLf           = uint(mask)&EncodeCrLf != 0
-		encodeHashPercent    = uint(mask)&EncodeHashPercent != 0
-		encodeDel            = uint(mask)&EncodeDel != 0
-		encodeCtl            = uint(mask)&EncodeCtl != 0
-		encodeLeftSpace      = uint(mask)&EncodeLeftSpace != 0
-		encodeLeftTilde      = uint(mask)&EncodeLeftTilde != 0
-		encodeLeftCrLfHtVt   = uint(mask)&EncodeLeftCrLfHtVt != 0
-		encodeRightSpace     = uint(mask)&EncodeRightSpace != 0
-		encodeRightPeriod    = uint(mask)&EncodeRightPeriod != 0
-		encodeRightCrLfHtVt  = uint(mask)&EncodeRightCrLfHtVt != 0
-		encodeInvalidUnicode = uint(mask)&EncodeInvalidUtf8 != 0
-		encodeDot            = uint(mask)&EncodeDot != 0
-	)
-
-	if encodeDot {
+	if mask.Has(EncodeDot) {
 		switch in {
 		case "．":
 			return "."
@@ -387,39 +531,39 @@ func (mask MultiEncoder) Decode(in string) string {
 
 	// handle prefix only replacements
 	prefix := ""
-	if r, l1 := utf8.DecodeRuneInString(in); encodeLeftSpace && r == '␠' { // SYMBOL FOR SPACE
+	if r, l1 := utf8.DecodeRuneInString(in); mask.Has(EncodeLeftSpace) && r == '␠' { // SYMBOL FOR SPACE
 		prefix, in = " ", in[l1:]
-	} else if encodeLeftTilde && r == '～' { // FULLWIDTH TILDE
+	} else if mask.Has(EncodeLeftTilde) && r == '～' { // FULLWIDTH TILDE
 		prefix, in = "~", in[l1:]
-	} else if encodeLeftCrLfHtVt && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
+	} else if mask.Has(EncodeLeftCrLfHtVt) && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
 		prefix, in = string(r-'␀'), in[l1:]
 	} else if r == QuoteRune {
-		if r, l2 := utf8.DecodeRuneInString(in[l1:]); encodeLeftSpace && r == '␠' { // SYMBOL FOR SPACE
+		if r, l2 := utf8.DecodeRuneInString(in[l1:]); mask.Has(EncodeLeftSpace) && r == '␠' { // SYMBOL FOR SPACE
 			prefix, in = "␠", in[l1+l2:]
-		} else if encodeLeftTilde && r == '～' { // FULLWIDTH TILDE
+		} else if mask.Has(EncodeLeftTilde) && r == '～' { // FULLWIDTH TILDE
 			prefix, in = "～", in[l1+l2:]
-		} else if encodeLeftCrLfHtVt && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
+		} else if mask.Has(EncodeLeftCrLfHtVt) && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
 			prefix, in = string(r), in[l1+l2:]
 		}
 	}
 
 	// handle suffix only replacements
 	suffix := ""
-	if r, l := utf8.DecodeLastRuneInString(in); encodeRightSpace && r == '␠' { // SYMBOL FOR SPACE
+	if r, l := utf8.DecodeLastRuneInString(in); mask.Has(EncodeRightSpace) && r == '␠' { // SYMBOL FOR SPACE
 		in = in[:len(in)-l]
 		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
 			suffix, in = "␠", in[:len(in)-l2]
 		} else {
 			suffix = " "
 		}
-	} else if encodeRightPeriod && r == '．' { // FULLWIDTH FULL STOP
+	} else if mask.Has(EncodeRightPeriod) && r == '．' { // FULLWIDTH FULL STOP
 		in = in[:len(in)-l]
 		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
 			suffix, in = "．", in[:len(in)-l2]
 		} else {
 			suffix = "."
 		}
-	} else if encodeRightCrLfHtVt && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
+	} else if mask.Has(EncodeRightCrLfHtVt) && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
 		in = in[:len(in)-l]
 		if q, l2 := utf8.DecodeLastRuneInString(in); q == QuoteRune {
 			suffix, in = string(r), in[:len(in)-l2]
@@ -435,43 +579,97 @@ func (mask MultiEncoder) Decode(in string) string {
 			case '␀', QuoteRune:
 				return true
 			}
-			if encodeWin { // :?"*<>|
+			if mask.Has(EncodeAsterisk) { // *
 				switch r {
-				case '＊', '＜', '＞', '？', '：', '｜', '＂':
+				case '＊':
 					return true
 				}
 			}
-			if encodeSlash { // /
+			if mask.Has(EncodeLtGt) { // <>
+				switch r {
+				case '＜', '＞':
+					return true
+				}
+			}
+			if mask.Has(EncodeQuestion) { // ?
+				switch r {
+				case '？':
+					return true
+				}
+			}
+			if mask.Has(EncodeColon) { // :
+				switch r {
+				case '：':
+					return true
+				}
+			}
+			if mask.Has(EncodePipe) { // |
+				switch r {
+				case '｜':
+					return true
+				}
+			}
+			if mask.Has(EncodeDoubleQuote) { // "
+				switch r {
+				case '＂':
+					return true
+				}
+			}
+			if mask.Has(EncodeSingleQuote) { // '
+				switch r {
+				case '＇':
+					return true
+				}
+			}
+			if mask.Has(EncodeBackQuote) { // `
+				switch r {
+				case '｀':
+					return true
+				}
+			}
+			if mask.Has(EncodeDollar) { // $
+				switch r {
+				case '＄':
+					return true
+				}
+			}
+			if mask.Has(EncodeSlash) { // /
 				switch r {
 				case '／':
 					return true
 				}
 			}
-			if encodeBackSlash { // \
+			if mask.Has(EncodeBackSlash) { // \
 				switch r {
 				case '＼':
 					return true
 				}
 			}
-			if encodeCrLf { // CR LF
+			if mask.Has(EncodeCrLf) { // CR LF
 				switch r {
 				case '␍', '␊':
 					return true
 				}
 			}
-			if encodeHashPercent { // #%
+			if mask.Has(EncodeHash) { // #
 				switch r {
-				case '＃', '％':
+				case '＃':
 					return true
 				}
 			}
-			if encodeDel { // DEL(0x7F)
+			if mask.Has(EncodePercent) { // %
+				switch r {
+				case '％':
+					return true
+				}
+			}
+			if mask.Has(EncodeDel) { // DEL(0x7F)
 				switch r {
 				case '␡':
 					return true
 				}
 			}
-			if encodeCtl { // CTRL(0x01-0x1F)
+			if mask.Has(EncodeCtl) { // CTRL(0x01-0x1F)
 				if r > symbolOffset && r <= symbolOffset+0x1F {
 					return true
 				}
@@ -515,9 +713,9 @@ func (mask MultiEncoder) Decode(in string) string {
 			}
 			continue
 		}
-		if encodeWin { // :?"*<>|
+		if mask.Has(EncodeAsterisk) { // *
 			switch r {
-			case '＊', '＜', '＞', '？', '：', '｜', '＂':
+			case '＊':
 				if unquote {
 					out.WriteRune(r)
 				} else {
@@ -526,7 +724,95 @@ func (mask MultiEncoder) Decode(in string) string {
 				continue
 			}
 		}
-		if encodeSlash { // /
+		if mask.Has(EncodeLtGt) { // <>
+			switch r {
+			case '＜', '＞':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeQuestion) { // ?
+			switch r {
+			case '？':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeColon) { // :
+			switch r {
+			case '：':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodePipe) { // |
+			switch r {
+			case '｜':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeDoubleQuote) { // "
+			switch r {
+			case '＂':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeSingleQuote) { // '
+			switch r {
+			case '＇':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeBackQuote) { // `
+			switch r {
+			case '｀':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeDollar) { // $
+			switch r {
+			case '＄':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeSlash) { // /
 			switch r {
 			case '／': // FULLWIDTH SOLIDUS
 				if unquote {
@@ -537,7 +823,7 @@ func (mask MultiEncoder) Decode(in string) string {
 				continue
 			}
 		}
-		if encodeBackSlash { // \
+		if mask.Has(EncodeBackSlash) { // \
 			switch r {
 			case '＼': // FULLWIDTH REVERSE SOLIDUS
 				if unquote {
@@ -548,7 +834,7 @@ func (mask MultiEncoder) Decode(in string) string {
 				continue
 			}
 		}
-		if encodeCrLf { // CR LF
+		if mask.Has(EncodeCrLf) { // CR LF
 			switch r {
 			case '␍', '␊':
 				if unquote {
@@ -559,9 +845,9 @@ func (mask MultiEncoder) Decode(in string) string {
 				continue
 			}
 		}
-		if encodeHashPercent { // #%
+		if mask.Has(EncodeHash) { // %
 			switch r {
-			case '＃', '％':
+			case '＃':
 				if unquote {
 					out.WriteRune(r)
 				} else {
@@ -570,7 +856,18 @@ func (mask MultiEncoder) Decode(in string) string {
 				continue
 			}
 		}
-		if encodeDel { // DEL(0x7F)
+		if mask.Has(EncodePercent) { // %
+			switch r {
+			case '％':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeDel) { // DEL(0x7F)
 			switch r {
 			case '␡': // SYMBOL FOR DELETE
 				if unquote {
@@ -581,7 +878,7 @@ func (mask MultiEncoder) Decode(in string) string {
 				continue
 			}
 		}
-		if encodeCtl { // CTRL(0x01-0x1F)
+		if mask.Has(EncodeCtl) { // CTRL(0x01-0x1F)
 			if r > symbolOffset && r <= symbolOffset+0x1F {
 				if unquote {
 					out.WriteRune(r)
@@ -592,7 +889,7 @@ func (mask MultiEncoder) Decode(in string) string {
 			}
 		}
 		if unquote {
-			if encodeInvalidUnicode {
+			if mask.Has(EncodeInvalidUtf8) {
 				skipNext = appendUnquotedByte(&out, in[i:])
 				if skipNext {
 					continue
