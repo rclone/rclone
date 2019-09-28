@@ -376,3 +376,37 @@ Add your fs to the docs - you'll need to pick an icon for it from [fontawesome](
   * `docs/content/about.md` - front page of rclone.org
   * `docs/layouts/chrome/navbar.html` - add it to the website navigation
   * `bin/make_manual.py` - add the page to the `docs` constant
+
+## Writing a plugin ##
+
+New features (backends, commands) can also be added "out-of-tree", through Go plugins.
+Changes will be kept in a dynamically loaded file instead of being compiled into the main binary.
+This is useful if you can't merge your changes upstream or don't want to maintain a fork of rclone.
+
+Usage
+
+ - Naming
+   - Plugins names must have the pattern `librcloneplugin_KIND_NAME.so`.
+   - `KIND` should be one of `backend`, `command` or `bundle`.
+   - Example: A plugin with backend support for PiFS would be called
+     `librcloneplugin_backend_pifs.so`.
+ - Loading
+   - Supported on macOS & Linux as of now. ([Go issue for Windows support](https://github.com/golang/go/issues/19282))
+   - Supported on rclone v1.50 or greater.
+   - All plugins in the folder specified by variable `$RCLONE_PLUGIN_PATH` are loaded.
+   - If this variable doesn't exist, plugin support is disabled.
+   - Plugins must be compiled against the exact version of rclone to work.
+     (The rclone used during building the plugin must be the same as the source of rclone)
+     
+Building
+
+To turn your existing additions into a Go plugin, move them to an external repository
+and change the top-level package name to `main`.
+
+Check `rclone --version` and make sure that the plugin's rclone dependency and host Go version match.
+
+Then, run `go build -buildmode=plugin -o PLUGIN_NAME.so .` to build the plugin.
+
+[Go reference](https://godoc.org/github.com/rclone/rclone/backend/plugin)
+
+[Minimal example](https://gist.github.com/terorie/21b517ee347828e899e1913efc1d684f)
