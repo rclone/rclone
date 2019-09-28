@@ -3,12 +3,14 @@ package rcd
 import (
 	"archive/zip"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/cmd"
@@ -179,6 +181,8 @@ func downloadFile(filepath string, url string) error {
 
 // unzip is a helper function to unzip a file specified in src to path dest
 func unzip(src, dest string) (err error) {
+	dest = filepath.Clean(dest) + string(os.PathSeparator)
+
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -191,13 +195,17 @@ func unzip(src, dest string) (err error) {
 
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
+		path := filepath.Join(dest, f.Name)
+		// Check for Zip Slip: https://github.com/rclone/rclone/issues/3529
+		if !strings.HasPrefix(path, dest) {
+			return fmt.Errorf("%s: illegal file path", path)
+		}
+
 		rc, err := f.Open()
 		if err != nil {
 			return err
 		}
 		defer fs.CheckClose(rc, &err)
-
-		path := filepath.Join(dest, f.Name)
 
 		if f.FileInfo().IsDir() {
 			if err := os.MkdirAll(path, 0755); err != nil {
