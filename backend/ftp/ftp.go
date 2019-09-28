@@ -299,6 +299,14 @@ func translateErrorDir(err error) error {
 func (f *Fs) findItem(remote string) (entry *ftp.Entry, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
 	fullPath := path.Join(f.root, remote)
+	if fullPath == "" || fullPath == "." || fullPath == "/" {
+		// if root, assume exists and synthesize an entry
+		return &ftp.Entry{
+			Name: "",
+			Type: ftp.EntryTypeFolder,
+			Time: time.Now(),
+		}, nil
+	}
 	dir := path.Dir(fullPath)
 	base := path.Base(fullPath)
 
@@ -366,7 +374,7 @@ func (f *Fs) dirExists(remote string) (exists bool, err error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// defer fs.Trace(dir, "curlevel=%d", curlevel)("")
+	// defer log.Trace(dir, "dir=%q", dir)("entries=%v, err=%v", &entries, &err)
 	c, err := f.getFtpConnection()
 	if err != nil {
 		return nil, errors.Wrap(err, "list")
