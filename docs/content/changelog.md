@@ -1,10 +1,21 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-09-15"
+date: "2019-09-29"
 ---
 
 # Changelog
+
+## v1.49.4 - 2019-09-29
+
+* Bug Fixes
+    * cmd/rcd: Address ZipSlip vulnerability (Richard Patel)
+    * accounting: Fix file handle leak on errors (Nick Craig-Wood)
+    * oauthutil: Fix security problem when running with two users on the same machine (Nick Craig-Wood)
+* FTP
+    * Fix listing of an empty root returning: error dir not found (Nick Craig-Wood)
+* S3
+    * Fix SetModTime on GLACIER/ARCHIVE objects and implement set/get tier (Nick Craig-Wood)
 
 ## v1.49.3 - 2019-09-15
 
