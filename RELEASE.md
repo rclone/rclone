@@ -71,7 +71,7 @@ Now
   * git co ${BASE_TAG}-fixes
   * git cherry-pick any fixes
   * Test (see above)
-  * make NEW_TAG=${NEW_TAG} tag
+  * make NEXT_VERSION=${NEW_TAG} tag
   * edit docs/content/changelog.md
   * make TAG=${NEW_TAG} doc
   * git commit -a -v -m "Version ${NEW_TAG}"
