@@ -291,3 +291,4 @@ Contributors
   * Matei David <matei.david@gmail.com>
   * David <david.bramwell@endemolshine.com>
   * Anthony Rusdi <33247310+antrusd@users.noreply.github.com>
+  * Richard Patel <me@terorie.dev>
