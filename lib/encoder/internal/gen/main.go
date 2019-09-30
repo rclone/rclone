@@ -57,6 +57,7 @@ var maskBits = []struct {
 	{encoder.EncodeDel, "EncodeDel"},
 	{encoder.EncodeCtl, "EncodeCtl"},
 	{encoder.EncodeLeftSpace, "EncodeLeftSpace"},
+	{encoder.EncodeLeftPeriod, "EncodeLeftPeriod"},
 	{encoder.EncodeLeftTilde, "EncodeLeftTilde"},
 	{encoder.EncodeLeftCrLfHtVt, "EncodeLeftCrLfHtVt"},
 	{encoder.EncodeRightSpace, "EncodeRightSpace"},
@@ -76,6 +77,7 @@ type edge struct {
 
 var allEdges = []edge{
 	{encoder.EncodeLeftSpace, "EncodeLeftSpace", edgeLeft, []rune{' '}, []rune{'␠'}},
+	{encoder.EncodeLeftPeriod, "EncodeLeftPeriod", edgeLeft, []rune{'.'}, []rune{'．'}},
 	{encoder.EncodeLeftTilde, "EncodeLeftTilde", edgeLeft, []rune{'~'}, []rune{'～'}},
 	{encoder.EncodeLeftCrLfHtVt, "EncodeLeftCrLfHtVt", edgeLeft,
 		[]rune{'\t', '\n', '\v', '\r'},
@@ -312,6 +314,10 @@ var testCasesSingleEdge = []testCase{
 		in:   "  ",
 		out:  "␠ ",
 	}, { // %d
+		mask: EncodeLeftPeriod,
+		in:   "..",
+		out:  "．.",
+	}, { // %d
 		mask: EncodeLeftTilde,
 		in:   "~~",
 		out:  "～~",
@@ -340,6 +346,10 @@ var testCasesSingleEdge = []testCase{
 		in:   "   ",
 		out:  "␠ ␠",
 	}, { // %d
+		mask: EncodeLeftPeriod | EncodeRightPeriod,
+		in:   "...",
+		out:  "．.．",
+	}, { // %d
 		mask: EncodeRightPeriod | EncodeRightSpace,
 		in:   "a. ",
 		out:  "a.␠",
@@ -351,7 +361,7 @@ var testCasesSingleEdge = []testCase{
 }
 
 var testCasesDoubleEdge = []testCase{
-	`, i(), i(), i(), i(), i(), i(), i(), i(), i(), i()))("Error writing test case:")
+	`, i(), i(), i(), i(), i(), i(), i(), i(), i(), i(), i(), i()))("Error writing test case:")
 	_i = 0
 	for _, e1 := range allEdges {
 		for _, e2 := range allEdges {

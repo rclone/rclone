@@ -53,6 +53,7 @@ const (
 	EncodeDel                            // DEL(0x7F)
 	EncodeCtl                            // CTRL(0x01-0x1F)
 	EncodeLeftSpace                      // Leading SPACE
+	EncodeLeftPeriod                     // Leading .
 	EncodeLeftTilde                      // Leading ~
 	EncodeLeftCrLfHtVt                   // Leading CR LF HT VT
 	EncodeRightSpace                     // Trailing SPACE
@@ -125,6 +126,13 @@ func (mask MultiEncoder) Encode(in string) string {
 			prefix, in = "␠", in[1:] // SYMBOL FOR SPACE
 		} else if r, l := utf8.DecodeRuneInString(in); r == '␠' { // SYMBOL FOR SPACE
 			prefix, in = string(QuoteRune)+"␠", in[l:] // SYMBOL FOR SPACE
+		}
+	}
+	if mask.Has(EncodeLeftPeriod) && prefix == "" { // Leading PERIOD
+		if in[0] == '.' {
+			prefix, in = "．", in[1:] // FULLWIDTH FULL STOP
+		} else if r, l := utf8.DecodeRuneInString(in); r == '．' { // FULLWIDTH FULL STOP
+			prefix, in = string(QuoteRune)+"．", in[l:] //  FULLWIDTH FULL STOP
 		}
 	}
 	if mask.Has(EncodeLeftTilde) && prefix == "" { // Leading ~
@@ -533,6 +541,8 @@ func (mask MultiEncoder) Decode(in string) string {
 	prefix := ""
 	if r, l1 := utf8.DecodeRuneInString(in); mask.Has(EncodeLeftSpace) && r == '␠' { // SYMBOL FOR SPACE
 		prefix, in = " ", in[l1:]
+	} else if mask.Has(EncodeLeftPeriod) && r == '．' { // FULLWIDTH FULL STOP
+		prefix, in = ".", in[l1:]
 	} else if mask.Has(EncodeLeftTilde) && r == '～' { // FULLWIDTH TILDE
 		prefix, in = "~", in[l1:]
 	} else if mask.Has(EncodeLeftCrLfHtVt) && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
@@ -540,6 +550,8 @@ func (mask MultiEncoder) Decode(in string) string {
 	} else if r == QuoteRune {
 		if r, l2 := utf8.DecodeRuneInString(in[l1:]); mask.Has(EncodeLeftSpace) && r == '␠' { // SYMBOL FOR SPACE
 			prefix, in = "␠", in[l1+l2:]
+		} else if mask.Has(EncodeLeftPeriod) && r == '．' { // FULLWIDTH FULL STOP
+			prefix, in = "．", in[l1+l2:]
 		} else if mask.Has(EncodeLeftTilde) && r == '～' { // FULLWIDTH TILDE
 			prefix, in = "～", in[l1+l2:]
 		} else if mask.Has(EncodeLeftCrLfHtVt) && (r == '␀'+'\t' || r == '␀'+'\n' || r == '␀'+'\v' || r == '␀'+'\r') {
