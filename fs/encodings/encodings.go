@@ -302,6 +302,18 @@ const QingStor = encoder.MultiEncoder(
 		encoder.EncodeCtl |
 		encoder.EncodeSlash)
 
+// Sharefile is the encoding used by the sharefile backend
+const Sharefile = encoder.MultiEncoder(
+	uint(Base) |
+		encoder.EncodeWin | // :?"*<>|
+		encoder.EncodeBackSlash | // \
+		encoder.EncodeCtl |
+		encoder.EncodeRightSpace |
+		encoder.EncodeRightPeriod |
+		encoder.EncodeLeftSpace |
+		encoder.EncodeLeftPeriod |
+		encoder.EncodeInvalidUtf8)
+
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
 	switch strings.ToLower(name) {
@@ -353,6 +365,8 @@ func ByName(name string) encoder.Encoder {
 		return QingStor
 	case "s3":
 		return S3
+	case "sharefile":
+		return Sharefile
 	//case "sftp":
 	case "swift":
 		return Swift
@@ -392,5 +406,6 @@ func Names() []string {
 		"onedrive",
 		"opendrive",
 		"pcloud",
+		"sharefile",
 	}
 }
