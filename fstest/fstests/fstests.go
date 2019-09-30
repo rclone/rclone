@@ -554,6 +554,7 @@ func Run(t *testing.T, opt *Opt) {
 				{"leading LF", "\nleading LF"},
 				{"leading HT", "\tleading HT"},
 				{"leading VT", "\vleading VT"},
+				{"leading dot", ".leading dot"},
 				{"trailing space", "trailing space "},
 				{"trailing CR", "trailing CR\r"},
 				{"trailing LF", "trailing LF\n"},
