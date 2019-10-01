@@ -33,35 +33,35 @@ func (s *section) GetConfig() map[string]interface{} {
 }
 
 func (s *section) Remove(name string) {
-	s.v.Set(GetConfigKey(s.basePath, name), nil)
+	s.v.Set(getConfigKey(s.basePath, name), nil)
 }
 
 func (s *section) Get(name string) interface{} {
-	return s.v.Get(GetConfigKey(s.basePath, name))
+	return s.v.Get(getConfigKey(s.basePath, name))
 }
 
 func (s *section) GetString(name string) string {
-	return s.v.GetString(GetConfigKey(s.basePath, name))
+	return s.v.GetString(getConfigKey(s.basePath, name))
 }
 
 func (s *section) GetStringDefault(name string, default_ string) string {
-	if s.v.IsSet(GetConfigKey(s.basePath, name)) {
-		return s.v.GetString(GetConfigKey(s.basePath, name))
+	if s.v.IsSet(getConfigKey(s.basePath, name)) {
+		return s.v.GetString(getConfigKey(s.basePath, name))
 	} else {
 		return default_
 	}
 }
 
 func (s *section) GetInt(name string) int {
-	return s.v.GetInt(GetConfigKey(s.basePath, name))
+	return s.v.GetInt(getConfigKey(s.basePath, name))
 }
 
 func (s *section) GetStringSlice(name string) []string {
-	return s.v.GetStringSlice(GetConfigKey(s.basePath, name))
+	return s.v.GetStringSlice(getConfigKey(s.basePath, name))
 }
 
 func (s *section) GetStringMap(name string) map[string]string {
-	return s.v.GetStringMapString(GetConfigKey(s.basePath, name))
+	return s.v.GetStringMapString(getConfigKey(s.basePath, name))
 }
 
 func (s *section) SetString(name string, value string) {
@@ -81,7 +81,7 @@ func (s *section) SetStringMap(name string, value map[string]string) {
 }
 
 func (s *section) Set(name string, value interface{}) {
-	s.v.Set(GetConfigKey(s.basePath, name), value)
+	s.v.Set(getConfigKey(s.basePath, name), value)
 }
 
 func newSection(v *viper.Viper, basePath string) *section {

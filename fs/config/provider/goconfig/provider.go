@@ -9,6 +9,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 )
 
+// Register registers the ConfigProvider
 func Register() {
 	config.RegisterConfigProvider(&config.ProviderDefinition{
 		NewFunc:   NewGoConfigProvider,
@@ -16,6 +17,7 @@ func Register() {
 	})
 }
 
+// NewGoConfigProvider creates an instance of the GoConfig ConfigProvider
 func NewGoConfigProvider() config.Provider {
 	return &goConfig{}
 }

@@ -5,14 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/driveletter"
-	"github.com/rclone/rclone/fs/fspath"
-	"golang.org/x/text/unicode/norm"
 	"io/ioutil"
 	"log"
 	"os"
@@ -22,6 +14,15 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/driveletter"
+	"github.com/rclone/rclone/fs/fspath"
+	"golang.org/x/text/unicode/norm"
 )
 
 // JSONListProviders prints all the providers and options in JSON format
@@ -683,7 +684,6 @@ func matchProvider(providerConfig, provider string) bool {
 	return matched
 }
 
-
 // ChooseOption asks the user to choose an option
 func ChooseOption(o *fs.Option, name string) string {
 	var subProvider string
@@ -780,7 +780,6 @@ func suppressConfirm() func() {
 		fs.Config.AutoConfirm = old
 	}
 }
-
 
 // makeCacheDir returns a directory to use for caching.
 //

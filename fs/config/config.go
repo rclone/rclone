@@ -56,7 +56,7 @@ var (
 	provider Provider
 
 	// ConfigPath points to the config file
-	ConfigPath 	= makeConfigPath(configFileName, configFileFolder, hiddenConfigFileName)
+	ConfigPath = makeConfigPath(configFileName, configFileFolder, hiddenConfigFileName)
 
 	// CacheDir points to the cache directory.  Users of this
 	// should make a subdirectory and use MkdirAll() to create it
@@ -81,6 +81,7 @@ var (
 	Password = random.Password
 
 	errorConfigFileNotFound = errors.New("config file not found")
+	errorNoConfigProviderFound = errors.New("No config provider found")
 
 	configProviders []*ProviderDefinition
 )
@@ -90,7 +91,7 @@ func RegisterConfigProvider(pd *ProviderDefinition) {
 }
 
 type ProviderDefinition struct {
-	NewFunc func()Provider
+	NewFunc   func() Provider
 	FileTypes []string
 }
 
@@ -140,7 +141,7 @@ func GetRemoteConfig() RemoteConfig {
 
 func init() {
 	fs.ConfigFileGet = func(remote, key string) (string, bool) {
-		if GetRemoteConfig().HasRemote(remote) {
+		if provider != nil && GetRemoteConfig().HasRemote(remote) {
 			return GetRemoteConfig().GetRemote(remote).GetString(key), true
 		}
 		return "", false
@@ -170,15 +171,21 @@ func SaveConfig() {
 
 // LoadConfig loads the config file
 func LoadConfig() {
+	ext := path.Ext(ConfigPath)
+	if ext == "" {
+		log.Fatal(errors.New("invalid file extension"))
+	}
+	ext = ext[1:]
+
 	for _, cp := range configProviders {
 		for _, ft := range cp.FileTypes {
-			if ft == path.Ext(ConfigPath)[1:] {
+			if ft == ext {
 				provider = cp.NewFunc()
 				break
 			}
 		}
 	}
-
+	
 	// Load configuration file.
 	var err error
 
@@ -295,7 +302,11 @@ func makeConfigPath(configFileName, configFileFolder, hiddenConfigFileName strin
 
 // findConfigFile will load a config file, and
 // automatically decrypt it.
-func loadConfigFile() (error) {
+func loadConfigFile() error {
+	if provider == nil {
+		return errorNoConfigProviderFound
+	}
+	
 	envpw := os.Getenv("RCLONE_CONFIG_PASS")
 	if len(configKey) == 0 && envpw != "" {
 		err := setConfigPassword(envpw)

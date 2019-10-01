@@ -999,7 +999,7 @@ func (r *run) encryptRemoteIfNeeded(t *testing.T, remote string) string {
 func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool, cfg map[string]string, flags map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
 	remoteExists := false
-	for _, s := range config.FileSections() {
+	for _, s := range config.GetRemoteConfig().GetRemotes() {
 		if s == remote {
 			remoteExists = true
 		}
@@ -1020,7 +1020,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		config.GetRemoteConfig().GetRemote(remote).SetString("type", "cache")
 		config.GetRemoteConfig().GetRemote(remote).SetString("remote", localRemote+":/var/tmp/"+localRemote)
 	} else {
-		remoteType := config.G(remote, "type", "")
+		remoteType := config.GetRemoteConfig().GetRemote(remote).GetString("type")
 		if remoteType == "" {
 			t.Skipf("skipped due to invalid remote type for %v", remote)
 			return nil, nil
@@ -1031,14 +1031,14 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 				config.GetRemoteConfig().GetRemote(remote).SetString("password", cryptPassword1)
 				config.GetRemoteConfig().GetRemote(remote).SetString("password2", cryptPassword2)
 			}
-			remoteRemote := config.G(remote, "remote", "")
+			remoteRemote := config.GetRemoteConfig().GetRemote(remote).GetString("remote")
 			if remoteRemote == "" {
 				t.Skipf("skipped due to invalid remote wrapper for %v", remote)
 				return nil, nil
 			}
 			remoteRemoteParts := strings.Split(remoteRemote, ":")
 			remoteWrapping := remoteRemoteParts[0]
-			remoteType := config.G(remoteWrapping, "type", "")
+			remoteType := config.GetRemoteConfig().GetRemote(remote).GetString("type")
 			if remoteType != "cache" {
 				t.Skipf("skipped due to invalid remote type for %v: '%v'", remoteWrapping, remoteType)
 				return nil, nil

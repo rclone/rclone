@@ -8,6 +8,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/rclone/rclone/fs/config/provider/goconfig"
+	"github.com/rclone/rclone/fs/config/provider/viper"
 	"io"
 	"io/ioutil"
 	"log"
@@ -68,6 +70,8 @@ func Initialise() {
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
 		config.ConfigPath = envConfig
 	}
+	goconfig.Register()
+	viper.Register()
 	config.LoadConfig()
 	if *Verbose {
 		fs.Config.LogLevel = fs.LogLevelDebug
