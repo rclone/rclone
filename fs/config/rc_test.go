@@ -28,8 +28,8 @@ func TestRc(t *testing.T) {
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Nil(t, out)
-	assert.Equal(t, "local", FileGet(testName, "type"))
-	assert.Equal(t, "sausage", FileGet(testName, "test_key"))
+	assert.Equal(t, "local", GetRemoteConfig().GetRemote(testName).GetString("type"))
+	assert.Equal(t, "sausage", GetRemoteConfig().GetRemote(testName).GetString("test_key"))
 
 	// The sub tests rely on the remote created above but they can
 	// all be run independently
@@ -63,7 +63,7 @@ func TestRc(t *testing.T) {
 		assert.Equal(t, "sausage", out["test_key"])
 	})
 
-	t.Run("ListRemotes", func(t *testing.T) {
+	t.Run("GetRemotes", func(t *testing.T) {
 		call := rc.Calls.Get("config/listremotes")
 		assert.NotNil(t, call)
 		in := rc.Params{}
@@ -92,9 +92,9 @@ func TestRc(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
-		assert.Equal(t, "local", FileGet(testName, "type"))
-		assert.Equal(t, "rutabaga", FileGet(testName, "test_key"))
-		assert.Equal(t, "cabbage", FileGet(testName, "test_key2"))
+		assert.Equal(t, "local", GetRemoteConfig().GetRemote(testName).GetString("type"))
+		assert.Equal(t, "rutabaga", GetRemoteConfig().GetRemote(testName).GetString("test_key"))
+		assert.Equal(t, "cabbage", GetRemoteConfig().GetRemote(testName).GetString("test_key2"))
 	})
 
 	t.Run("Password", func(t *testing.T) {
@@ -111,9 +111,9 @@ func TestRc(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
-		assert.Equal(t, "local", FileGet(testName, "type"))
-		assert.Equal(t, "rutabaga", obscure.MustReveal(FileGet(testName, "test_key")))
-		assert.Equal(t, "cabbage", obscure.MustReveal(FileGet(testName, "test_key2")))
+		assert.Equal(t, "local", GetRemoteConfig().GetRemote(testName).GetString("type"))
+		assert.Equal(t, "rutabaga", obscure.MustReveal(GetRemoteConfig().GetRemote(testName).GetString("test_key")))
+		assert.Equal(t, "cabbage", obscure.MustReveal(GetRemoteConfig().GetRemote(testName).GetString("test_key2")))
 	})
 
 	// Delete the test remote
@@ -125,8 +125,8 @@ func TestRc(t *testing.T) {
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Nil(t, out)
-	assert.Equal(t, "", FileGet(testName, "type"))
-	assert.Equal(t, "", FileGet(testName, "test_key"))
+	assert.Equal(t, "", GetRemoteConfig().GetRemote(testName).GetString("type"))
+	assert.Equal(t, "", GetRemoteConfig().GetRemote(testName).GetString("test_key"))
 }
 
 func TestRcProviders(t *testing.T) {

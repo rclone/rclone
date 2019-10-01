@@ -1015,12 +1015,12 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	cacheRemote := remote
 	if !remoteExists {
 		localRemote := remote + "-local"
-		config.FileSet(localRemote, "type", "local")
-		config.FileSet(localRemote, "nounc", "true")
-		config.FileSet(remote, "type", "cache")
-		config.FileSet(remote, "remote", localRemote+":/var/tmp/"+localRemote)
+		config.GetRemoteConfig().GetRemote(localRemote).SetString("type", "local")
+		config.GetRemoteConfig().GetRemote(localRemote).SetString("nounc", "true")
+		config.GetRemoteConfig().GetRemote(remote).SetString("type", "cache")
+		config.GetRemoteConfig().GetRemote(remote).SetString("remote", localRemote+":/var/tmp/"+localRemote)
 	} else {
-		remoteType := config.FileGet(remote, "type", "")
+		remoteType := config.G(remote, "type", "")
 		if remoteType == "" {
 			t.Skipf("skipped due to invalid remote type for %v", remote)
 			return nil, nil
@@ -1028,17 +1028,17 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		if remoteType != "cache" {
 			if remoteType == "crypt" {
 				rootIsCrypt = true
-				config.FileSet(remote, "password", cryptPassword1)
-				config.FileSet(remote, "password2", cryptPassword2)
+				config.GetRemoteConfig().GetRemote(remote).SetString("password", cryptPassword1)
+				config.GetRemoteConfig().GetRemote(remote).SetString("password2", cryptPassword2)
 			}
-			remoteRemote := config.FileGet(remote, "remote", "")
+			remoteRemote := config.G(remote, "remote", "")
 			if remoteRemote == "" {
 				t.Skipf("skipped due to invalid remote wrapper for %v", remote)
 				return nil, nil
 			}
 			remoteRemoteParts := strings.Split(remoteRemote, ":")
 			remoteWrapping := remoteRemoteParts[0]
-			remoteType := config.FileGet(remoteWrapping, "type", "")
+			remoteType := config.G(remoteWrapping, "type", "")
 			if remoteType != "cache" {
 				t.Skipf("skipped due to invalid remote type for %v: '%v'", remoteWrapping, remoteType)
 				return nil, nil

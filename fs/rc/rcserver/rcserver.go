@@ -255,7 +255,7 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request, path stri
 }
 
 func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
-	remotes := config.FileSections()
+	remotes := config.GetRemoteConfig().GetRemotes()
 	sort.Strings(remotes)
 	directory := serve.NewDirectory("", s.HTMLTemplate)
 	directory.Title = "List of all rclone remotes."

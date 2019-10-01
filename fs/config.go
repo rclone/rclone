@@ -1,11 +1,10 @@
 package fs
 
 import (
+	"errors"
 	"net"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Global
@@ -17,13 +16,13 @@ var (
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	ConfigFileGet = func(section, key string) (string, bool) { return "", false }
+	ConfigFileGet = func(remote, key string) (string, bool) { return "", false }
 
 	// Set a value into the config file and persist it
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	ConfigFileSet = func(section, key, value string) (err error) {
+	ConfigFileSet = func(remote, key, value string) (err error) {
 		return errors.New("no config file set handler")
 	}
 

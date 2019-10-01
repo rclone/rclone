@@ -50,6 +50,7 @@ require (
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
+	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.4.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20190528125457-55e675378686
 	github.com/xanzy/ssh-agent v0.2.1

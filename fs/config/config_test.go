@@ -98,9 +98,9 @@ func TestCRUD(t *testing.T) {
 	NewRemote("test")
 
 	assert.Equal(t, []string{"test"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test", "type"))
-	assert.Equal(t, "true", FileGet("test", "bool"))
-	assert.Equal(t, "secret", obscure.MustReveal(FileGet("test", "pass")))
+	assert.Equal(t, "config_test_remote", GetRemoteConfig().GetRemote("test").GetString("type"))
+	assert.Equal(t, "true", GetRemoteConfig().GetRemote("test").GetString("bool"))
+	assert.Equal(t, "secret", obscure.MustReveal(GetRemoteConfig().GetRemote("test").GetString("pass")))
 
 	// normal rename, test → asdf
 	ReadLine = makeReadLine([]string{
@@ -111,17 +111,17 @@ func TestCRUD(t *testing.T) {
 	RenameRemote("test")
 
 	assert.Equal(t, []string{"asdf"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("asdf", "type"))
-	assert.Equal(t, "true", FileGet("asdf", "bool"))
-	assert.Equal(t, "secret", obscure.MustReveal(FileGet("asdf", "pass")))
+	assert.Equal(t, "config_test_remote", GetRemoteConfig().GetRemote("asdf").GetString("type"))
+	assert.Equal(t, "true", GetRemoteConfig().GetRemote("asdf").GetString("bool"))
+	assert.Equal(t, "secret", obscure.MustReveal(GetRemoteConfig().GetRemote("asdf").GetString("pass")))
 
 	// no-op rename, asdf → asdf
 	RenameRemote("asdf")
 
 	assert.Equal(t, []string{"asdf"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("asdf", "type"))
-	assert.Equal(t, "true", FileGet("asdf", "bool"))
-	assert.Equal(t, "secret", obscure.MustReveal(FileGet("asdf", "pass")))
+	assert.Equal(t, "config_test_remote", GetRemoteConfig().GetRemote("asdf").GetString("type"))
+	assert.Equal(t, "true", GetRemoteConfig().GetRemote("asdf").GetString("bool"))
+	assert.Equal(t, "secret", obscure.MustReveal(GetRemoteConfig().GetRemote("asdf").GetString("pass")))
 
 	// delete remote
 	DeleteRemote("asdf")
@@ -172,9 +172,9 @@ func TestCreateUpatePasswordRemote(t *testing.T) {
 	}))
 
 	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "true", FileGet("test2", "bool"))
-	assert.Equal(t, "potato", obscure.MustReveal(FileGet("test2", "pass")))
+	assert.Equal(t, "config_test_remote", GetRemoteConfig().GetRemote("test2").GetString("type"))
+	assert.Equal(t, "true", GetRemoteConfig().GetRemote("test2").GetString("bool"))
+	assert.Equal(t, "potato", obscure.MustReveal(GetRemoteConfig().GetRemote("test2").GetString("pass")))
 
 	require.NoError(t, UpdateRemote("test2", rc.Params{
 		"bool":  false,
@@ -183,18 +183,18 @@ func TestCreateUpatePasswordRemote(t *testing.T) {
 	}))
 
 	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "false", FileGet("test2", "bool"))
-	assert.Equal(t, "potato2", obscure.MustReveal(FileGet("test2", "pass")))
+	assert.Equal(t, "config_test_remote", GetRemoteConfig().GetRemote("test2").GetString("type"))
+	assert.Equal(t, "false", GetRemoteConfig().GetRemote("test2").GetString("bool"))
+	assert.Equal(t, "potato2", obscure.MustReveal(GetRemoteConfig().GetRemote("test2").GetString("pass")))
 
 	require.NoError(t, PasswordRemote("test2", rc.Params{
 		"pass": "potato3",
 	}))
 
 	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "false", FileGet("test2", "bool"))
-	assert.Equal(t, "potato3", obscure.MustReveal(FileGet("test2", "pass")))
+	assert.Equal(t, "config_test_remote", GetRemoteConfig().GetRemote("test2").GetString("type"))
+	assert.Equal(t, "false", GetRemoteConfig().GetRemote("test2").GetString("bool"))
+	assert.Equal(t, "potato3", obscure.MustReveal(GetRemoteConfig().GetRemote("test2").GetString("pass")))
 }
 
 // Test some error cases
@@ -220,7 +220,7 @@ func TestConfigLoad(t *testing.T) {
 		ConfigPath = oldConfigPath
 	}()
 	configKey = nil // reset password
-	c, err := loadConfigFile()
+	c, err := findConfigFile()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +245,7 @@ func TestConfigLoadEncrypted(t *testing.T) {
 	// Set correct password
 	err = setConfigPassword("asdf")
 	require.NoError(t, err)
-	c, err := loadConfigFile()
+	c, err := findConfigFile()
 	require.NoError(t, err)
 	sections := c.GetSectionList()
 	var expect = []string{"nounc", "unc"}
@@ -263,22 +263,22 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 	oldConfigPath := ConfigPath
 	ConfigPath = "./testdata/enc-short.conf"
 	defer func() { ConfigPath = oldConfigPath }()
-	_, err = loadConfigFile()
+	_, err = findConfigFile()
 	require.Error(t, err)
 
 	// This file contains invalid base64 characters.
 	ConfigPath = "./testdata/enc-invalid.conf"
-	_, err = loadConfigFile()
+	_, err = findConfigFile()
 	require.Error(t, err)
 
 	// This file contains invalid base64 characters.
 	ConfigPath = "./testdata/enc-too-new.conf"
-	_, err = loadConfigFile()
+	_, err = findConfigFile()
 	require.Error(t, err)
 
 	// This file does not exist.
 	ConfigPath = "./testdata/filenotfound.conf"
-	c, err := loadConfigFile()
+	c, err := findConfigFile()
 	assert.Equal(t, errorConfigFileNotFound, err)
 	assert.Nil(t, c)
 }

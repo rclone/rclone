@@ -210,7 +210,6 @@ func init() {
 
 			m.Set(configDriveID, finalDriveID)
 			m.Set(configDriveType, rootItem.ParentReference.DriveType)
-			config.SaveConfig()
 		},
 		Options: []fs.Option{{
 			Name: config.ConfigClientID,

@@ -1304,9 +1304,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 				}
 			case <-tickerC:
 				checkpoint = f.changeNotifyRunner(notifyFunc, checkpoint)
-				if err := config.SetValueAndSave(f.name, "checkpoint", checkpoint); err != nil {
-					fs.Debugf(f, "Unable to save checkpoint: %v", err)
-				}
+				config.GetRemoteConfig().GetRemote(f.name).SetString("checkpoint", checkpoint)
 			}
 		}
 	}()

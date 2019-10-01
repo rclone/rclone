@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/rc/rcflags"
@@ -207,6 +208,10 @@ func setupRootCommand(rootCmd *cobra.Command) {
 
 	cobra.OnInitialize(initConfig)
 
+	// Save on exit
+	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		config.SaveConfig()
+	}
 }
 
 var usageTemplate = `Usage:{{if .Runnable}}

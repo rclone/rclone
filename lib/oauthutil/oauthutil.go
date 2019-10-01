@@ -127,14 +127,8 @@ func PutToken(name string, m configmap.Mapper, token *oauth2.Token, newSection b
 	tokenString := string(tokenBytes)
 	old, ok := m.Get(config.ConfigToken)
 	if !ok || tokenString != old {
-		err = config.SetValueAndSave(name, config.ConfigToken, tokenString)
-		if newSection && err != nil {
-			fs.Debugf(name, "Added new token to config, still needs to be saved")
-		} else if err != nil {
-			fs.Errorf(nil, "Failed to save new token in config file: %v", err)
-		} else {
-			fs.Debugf(name, "Saved new token in config file")
-		}
+		config.GetRemoteConfig().GetRemote(name).SetString(config.ConfigToken, tokenString)
+		config.SaveConfig()
 	}
 	return nil
 }
@@ -154,13 +148,13 @@ type TokenSource struct {
 // If token has expired then first try re-reading it from the config
 // file in case a concurrently running rclone has updated it already
 func (ts *TokenSource) reReadToken() bool {
-	tokenString, err := config.FileGetFresh(ts.name, config.ConfigToken)
-	if err != nil {
-		fs.Debugf(ts.name, "Failed to read token out of config file: %v", err)
+	tokenString := config.GetRemoteConfig().GetRemote(ts.name).GetString(config.ConfigToken)
+	if tokenString == "" {
+		fs.Debugf(ts.name, "Failed to read token out of config file")
 		return false
 	}
 	newToken := new(oauth2.Token)
-	err = json.Unmarshal([]byte(tokenString), newToken)
+	err := json.Unmarshal([]byte(tokenString), newToken)
 	if err != nil {
 		fs.Debugf(ts.name, "Failed to parse token out of config file: %v", err)
 		return false

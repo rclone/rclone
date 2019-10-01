@@ -263,10 +263,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if ok && oldToken != "" && oldToken[0] != '{' {
 		fs.Infof(name, "Converting token to new format")
 		newToken := fmt.Sprintf(`{"access_token":"%s","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
-		err := config.SetValueAndSave(name, config.ConfigToken, newToken)
-		if err != nil {
-			return nil, errors.Wrap(err, "NewFS convert token")
-		}
+		config.GetRemoteConfig().GetRemote(name).SetString(config.ConfigToken, newToken)
 	}
 
 	oAuthClient, _, err := oauthutil.NewClient(name, m, dropboxConfig)
