@@ -110,9 +110,20 @@ backends:
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/SetTier
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/leading_VT
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
  - backend:  "s3"
    remote:   "TestS3Wasabi:"
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/leading_CR
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/leading_HT
+     - TestIntegration/FsMkdir/FsEncoding/leading_VT
  - backend:  "s3"
    remote:   "TestS3DigitalOcean:"
    fastlist: true
@@ -144,6 +155,8 @@ backends:
    fastlist: false
  - backend:  "ftp"
    remote:   "TestFTP:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
    fastlist: false
  - backend:  "box"
    remote:   "TestBox:"
