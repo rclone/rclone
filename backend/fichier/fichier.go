@@ -144,8 +144,7 @@ func (f *Fs) Features() *fs.Features {
 //
 // On Windows avoid single character remote names as they can be mixed
 // up with drive letters.
-func NewFs(name string, rootleaf string, config configmap.Mapper) (fs.Fs, error) {
-	root := enc.FromStandardPath(rootleaf)
+func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(config, opt)
 	if err != nil {
