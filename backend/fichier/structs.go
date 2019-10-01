@@ -69,7 +69,7 @@ type SharedFolderResponse []SharedFile
 type SharedFile struct {
 	Filename string `json:"filename"`
 	Link     string `json:"link"`
-	Size     int    `json:"size"`
+	Size     int64  `json:"size"`
 }
 
 // EndFileUploadResponse is the response structure of the corresponding request
@@ -93,7 +93,7 @@ type File struct {
 	Date        string `json:"date"`
 	Filename    string `json:"filename"`
 	Pass        int    `json:"pass"`
-	Size        int    `json:"size"`
+	Size        int64  `json:"size"`
 	URL         string `json:"url"`
 }
 
