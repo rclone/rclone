@@ -197,7 +197,7 @@ jobs:
       - name: Deploy built binaries
         shell: bash
         run: |
-          make release_dep
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then make release_dep ; fi
           make travis_beta
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
