@@ -87,8 +87,8 @@ build_dep:
 
 # Get the release dependencies
 release_dep:
-	go get -u github.com/goreleaser/nfpm/...
-	go get -u github.com/aktau/github-release
+	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*_Linux_x86_64.tar.gz'
+	go run bin/get-github-release.go -extract github-release aktau/github-release 'linux-amd64-github-release.tar.bz2'
 
 # Update dependencies
 update:
