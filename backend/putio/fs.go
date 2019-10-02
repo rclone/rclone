@@ -145,7 +145,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	var entry putio.File
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "creating folder. part: %s, parentID: %d", leaf, parentID)
-		entry, err = f.client.Files.CreateFolder(ctx, leaf, parentID)
+		entry, err = f.client.Files.CreateFolder(ctx, enc.FromStandardName(leaf), parentID)
 		return shouldRetry(err)
 	})
 	return itoa(entry.ID), err
@@ -172,11 +172,11 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return
 	}
 	for _, child := range children {
-		if child.Name == leaf {
+		if enc.ToStandardName(child.Name) == leaf {
 			found = true
 			pathIDOut = itoa(child.ID)
 			if !child.IsDir() {
-				err = fs.ErrorNotAFile
+				err = fs.ErrorIsFile
 			}
 			return
 		}
@@ -214,7 +214,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return
 	}
 	for _, child := range children {
-		remote := path.Join(dir, child.Name)
+		remote := path.Join(dir, enc.ToStandardName(child.Name))
 		// fs.Debugf(f, "child: %s", remote)
 		if child.IsDir() {
 			f.dirCache.Put(remote, itoa(child.ID))
@@ -292,7 +292,7 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 		req.Header.Set("tus-resumable", "1.0.0")
 		req.Header.Set("upload-length", strconv.FormatInt(size, 10))
-		b64name := base64.StdEncoding.EncodeToString([]byte(name))
+		b64name := base64.StdEncoding.EncodeToString([]byte(enc.FromStandardName(name)))
 		b64true := base64.StdEncoding.EncodeToString([]byte("true"))
 		b64parentID := base64.StdEncoding.EncodeToString([]byte(parentID))
 		b64modifiedAt := base64.StdEncoding.EncodeToString([]byte(modTime.Format(time.RFC3339)))
@@ -505,7 +505,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
-		params.Set("name", leaf)
+		params.Set("name", enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/copy", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err
@@ -544,7 +544,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
-		params.Set("name", leaf)
+		params.Set("name", enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/move", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err
@@ -633,7 +633,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		params := url.Values{}
 		params.Set("file_id", srcID)
 		params.Set("parent_id", dstDirectoryID)
-		params.Set("name", leaf)
+		params.Set("name", enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/move", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err

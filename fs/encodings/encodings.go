@@ -238,6 +238,16 @@ const Pcloud = encoder.MultiEncoder(
 		encoder.EncodeBackSlash |
 		encoder.EncodeInvalidUtf8)
 
+// Putio is the encoding used by the putio backend
+//
+// Note that \ is renamed to -
+//
+// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+const Putio = encoder.MultiEncoder(
+	uint(Display) |
+		encoder.EncodeBackSlash |
+		encoder.EncodeInvalidUtf8)
+
 // Fichier is the encoding used by the fichier backend
 //
 // Characters that need escaping
