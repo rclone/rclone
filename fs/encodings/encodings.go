@@ -133,6 +133,15 @@ const Koofr = encoder.MultiEncoder(
 		encoder.EncodeBackSlash |
 		encoder.EncodeInvalidUtf8)
 
+// Mailru is the encoding used by the mailru backend
+//
+// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+const Mailru = encoder.MultiEncoder(
+	uint(Display) |
+		encoder.EncodeWin | // :?"*<>|
+		encoder.EncodeBackSlash |
+		encoder.EncodeInvalidUtf8)
+
 // Mega is the encoding used by the mega backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
@@ -372,6 +381,8 @@ func ByName(name string) encoder.Encoder {
 		return LocalUnix
 	case "local-macos", "macos":
 		return LocalMacOS
+	case "mailru":
+		return Mailru
 	case "mega":
 		return Mega
 	case "onedrive":
