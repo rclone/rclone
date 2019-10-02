@@ -219,6 +219,15 @@ const OpenDrive = encoder.MultiEncoder(
 		encoder.EncodeRightSpace |
 		encoder.EncodeInvalidUtf8)
 
+// PremiumizeMe is the encoding used by the premiumizeme backend
+//
+// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+const PremiumizeMe = encoder.MultiEncoder(
+	uint(Display) |
+		encoder.EncodeBackSlash |
+		encoder.EncodeDoubleQuote |
+		encoder.EncodeInvalidUtf8)
+
 // Pcloud is the encoding used by the pcloud backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
@@ -359,6 +368,8 @@ func ByName(name string) encoder.Encoder {
 		return OneDrive
 	case "opendrive":
 		return OpenDrive
+	case "premiumizeme":
+		return PremiumizeMe
 	case "pcloud":
 		return Pcloud
 	case "qingstor":
@@ -405,6 +416,7 @@ func Names() []string {
 		"mega",
 		"onedrive",
 		"opendrive",
+		"premiumizeme",
 		"pcloud",
 		"sharefile",
 	}
