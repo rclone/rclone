@@ -252,12 +252,11 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 // It also encodes the parts into backend specific encoding
 func splitNodePath(nodePath string) (parts []string) {
 	nodePath = path.Clean(nodePath)
-	nodePath = enc.FromStandardPath(nodePath)
-	parts = strings.Split(nodePath, "/")
-	if len(parts) == 1 && (parts[0] == "." || parts[0] == "/") {
+	if nodePath == "." || nodePath == "/" {
 		return nil
 	}
-	return parts
+	nodePath = enc.FromStandardPath(nodePath)
+	return strings.Split(nodePath, "/")
 }
 
 // findNode looks up the node for the path of the name given from the root given
