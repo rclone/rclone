@@ -2,9 +2,7 @@
 // object storage system.
 package premiumizeme
 
-/* FIXME
-escaping needs fixing
-
+/*
 Run of rclone info
 stringNeedsEscaping = []rune{
 	0x00, 0x0A, 0x0D, 0x22, 0x2F, 0x5C, 0xBF, 0xFE
@@ -36,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -46,6 +45,8 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
+
+const enc = encodings.PremiumizeMe
 
 const (
 	rcloneClientID              = "658922194"
@@ -168,24 +169,6 @@ var retryErrorCodes = []int{
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
-}
-
-// substitute reserved characters
-func replaceReservedChars(x string) string {
-	// Backslash for FULLWIDTH REVERSE SOLIDUS
-	x = strings.Replace(x, "\\", "＼", -1)
-	// Double quote for FULLWIDTH QUOTATION MARK
-	x = strings.Replace(x, `"`, "＂", -1)
-	return x
-}
-
-// restore reserved characters
-func restoreReservedChars(x string) string {
-	// FULLWIDTH QUOTATION MARK for Double quote
-	x = strings.Replace(x, "＂", `"`, -1)
-	// FULLWIDTH REVERSE SOLIDUS for Backslash
-	x = strings.Replace(x, "＼", "\\", -1)
-	return x
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -381,7 +364,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Path:       "/folder/create",
 		Parameters: f.baseParams(),
 		MultipartParams: url.Values{
-			"name":      {replaceReservedChars(leaf)},
+			"name":      {enc.FromStandardName(leaf)},
 			"parent_id": {pathID},
 		},
 	}
@@ -446,7 +429,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 			continue
 		}
-		item.Name = restoreReservedChars(item.Name)
+		item.Name = enc.ToStandardName(item.Name)
 		if fn(item) {
 			found = true
 			break
@@ -654,8 +637,8 @@ func (f *Fs) Purge(ctx context.Context) error {
 // between directories and a separate one to rename them.  We try to
 // call the minimum number of API calls.
 func (f *Fs) move(ctx context.Context, isFile bool, id, oldLeaf, newLeaf, oldDirectoryID, newDirectoryID string) (err error) {
-	newLeaf = replaceReservedChars(newLeaf)
-	oldLeaf = replaceReservedChars(oldLeaf)
+	newLeaf = enc.FromStandardName(newLeaf)
+	oldLeaf = enc.FromStandardName(oldLeaf)
 	doRenameLeaf := oldLeaf != newLeaf
 	doMove := oldDirectoryID != newDirectoryID
 
@@ -686,7 +669,7 @@ func (f *Fs) move(ctx context.Context, isFile bool, id, oldLeaf, newLeaf, oldDir
 		} else {
 			opts.MultipartParams.Set("folders[]", id)
 		}
-		//replacedLeaf := replaceReservedChars(leaf)
+		//replacedLeaf := enc.FromStandardName(leaf)
 		var resp *http.Response
 		var result api.Response
 		err = f.pacer.Call(func() (bool, error) {
@@ -908,7 +891,7 @@ func (o *Object) Remote() string {
 
 // srvPath returns a path for use in server
 func (o *Object) srvPath() string {
-	return replaceReservedChars(o.fs.rootSlash() + o.remote)
+	return enc.FromStandardPath(o.fs.rootSlash() + o.remote)
 }
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
@@ -1023,7 +1006,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	leaf = replaceReservedChars(leaf)
+	leaf = enc.FromStandardName(leaf)
 
 	var resp *http.Response
 	var info api.FolderUploadinfoResponse
