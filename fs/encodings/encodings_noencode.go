@@ -25,6 +25,7 @@ const (
 	GoogleCloudStorage = Base
 	JottaCloud         = Base
 	Koofr              = Base
+	Mailru             = Base
 	Mega               = Base
 	OneDrive           = Base
 	OpenDrive          = Base
