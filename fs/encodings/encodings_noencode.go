@@ -29,8 +29,11 @@ const (
 	OneDrive           = Base
 	OpenDrive          = Base
 	Pcloud             = Base
+	PremiumizeMe       = Base
+	Putio              = Base
 	QingStor           = Base
 	S3                 = Base
+	Sharefile          = Base
 	Swift              = Base
 )
 

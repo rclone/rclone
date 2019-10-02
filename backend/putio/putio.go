@@ -8,10 +8,24 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"golang.org/x/oauth2"
 )
+
+/*
+// TestPutio
+stringNeedsEscaping = []rune{
+	'/', '\x00'
+}
+maxFileLength = 255
+canWriteUnnormalized = true
+canReadUnnormalized   = true
+canReadRenormalized   = true
+canStream = false
+*/
+const enc = encodings.Putio
 
 // Constants
 const (
