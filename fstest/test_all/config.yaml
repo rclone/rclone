@@ -176,6 +176,9 @@ backends:
    fastlist: false
  - backend:  "webdav"
    remote:   "TestWebdav:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
    fastlist: false
  - backend:  "cache"
    remote:   "TestCache:"
