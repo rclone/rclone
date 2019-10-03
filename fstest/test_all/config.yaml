@@ -294,6 +294,9 @@ backends:
  - backend:  "sharefile"
    remote:   "TestSharefile:"
    fastlist: false
+ - backend:  "sia"
+   remote:   "TestSia:"
+   fastlist: false
  - backend:  "mailru"
    remote:   "TestMailru:"
    subdir:   false
