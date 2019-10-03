@@ -248,3 +248,4 @@ jobs:
           make circleci_upload
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
+        if: github.head_ref == ''
