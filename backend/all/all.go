@@ -33,6 +33,7 @@ import (
 	_ "github.com/rclone/rclone/backend/s3"
 	_ "github.com/rclone/rclone/backend/sftp"
 	_ "github.com/rclone/rclone/backend/sharefile"
+	_ "github.com/rclone/rclone/backend/sia"
 	_ "github.com/rclone/rclone/backend/sugarsync"
 	_ "github.com/rclone/rclone/backend/swift"
 	_ "github.com/rclone/rclone/backend/union"
