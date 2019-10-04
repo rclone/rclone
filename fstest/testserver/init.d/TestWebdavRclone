@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+NAME=rclone-serve-webdav
+USER=rclone
+PASS=PagansSwimExpiry9
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           rclone/rclone \
+           serve webdav --user $USER --pass $PASS --addr :80 /data
+    
+    echo type=webdav
+    echo url=http://$(docker_ip)/
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    echo _connect=$(docker_ip):80
+}
+
+. $(dirname "$0")/run.bash

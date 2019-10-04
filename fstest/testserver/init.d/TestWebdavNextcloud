@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+NAME=nextcloud
+USER=rclone
+PASS=ArmorAbleMale6
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           -e "SQLITE_DATABASE=nextcloud.db" \
+           -e "NEXTCLOUD_ADMIN_USER=rclone" \
+           -e "NEXTCLOUD_ADMIN_PASSWORD=$PASS" \
+           -e "NEXTCLOUD_TRUSTED_DOMAINS=*.*.*.*" \
+           nextcloud:latest
+    
+    echo type=webdav
+    echo url=http://$(docker_ip)/remote.php/webdav/
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    # the tests don't pass if we use the nextcloud features
+    # echo vendor=nextcloud
+    echo _connect=$(docker_ip):80
+}
+
+. $(dirname "$0")/run.bash

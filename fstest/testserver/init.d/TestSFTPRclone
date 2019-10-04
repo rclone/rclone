@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+NAME=rclone-serve-sftp
+USER=rclone
+PASS=CranesBallotDorsey5
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           rclone/rclone \
+           serve sftp --user $USER --pass $PASS --addr :22 /data
+    
+    echo type=sftp
+    echo host=$(docker_ip)
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    echo _connect=$(docker_ip):22
+}
+
+. $(dirname "$0")/run.bash

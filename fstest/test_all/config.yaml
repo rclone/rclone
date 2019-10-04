@@ -144,13 +144,19 @@ backends:
    remote:   "TestS3Alibaba:"
    fastlist: true
  - backend:  "sftp"
-   remote:   "TestSftp:"
+   remote:   "TestSFTPOpenssh:"
+   fastlist: false
+ - backend:  "sftp"
+   remote:   "TestSFTPRclone:"
    fastlist: false
  - backend:  "sugarsync"
    remote:   "TestSugarSync:Test"
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
+ - backend:  "swift"
+   remote:   "TestSwiftAIO:"
+   fastlist: true
  - backend:  "swift"
    remote:   "TestSwift:"
    fastlist: true
@@ -163,9 +169,26 @@ backends:
    remote:   "TestYandex:"
    fastlist: false
  - backend:  "ftp"
-   remote:   "TestFTP:"
+   remote:   "TestFTPProftpd:"
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
+   fastlist: false
+ # - backend:  "ftp"
+ #   remote:   "TestFTPVsftpd:"
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsEncoding/punctuation
+ #   fastlist: false
+ - backend:  "ftp"
+   remote:   "TestFTPPureftpd:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+   fastlist: false
+ - backend:  "ftp"
+   remote:   "TestFTPRclone:"
+   ignore:
+     - "TestMultithreadCopy/{size:131071_streams:2}"
+     - "TestMultithreadCopy/{size:131072_streams:2}"
+     - "TestMultithreadCopy/{size:131073_streams:2}"
    fastlist: false
  - backend:  "box"
    remote:   "TestBox:"
@@ -184,10 +207,25 @@ backends:
    remote:   "TestPcloud:"
    fastlist: false
  - backend:  "webdav"
-   remote:   "TestWebdav:"
+   remote:   "TestWebdavNextcloud:"
    ignore:
      - TestIntegration/FsMkdir/FsEncoding/punctuation
      - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+   fastlist: false
+ - backend:  "webdav"
+   remote:   "TestWebdavOwncloud:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+     - TestCopyFileCopyDest
+     - TestServerSideCopy
+     - TestSyncCopyDest
+   fastlist: false
+ - backend:  "webdav"
+   remote:   "TestWebdavRclone:"
+   ignore:
+     - TestFileReadAtZeroLength
    fastlist: false
  - backend:  "cache"
    remote:   "TestCache:"

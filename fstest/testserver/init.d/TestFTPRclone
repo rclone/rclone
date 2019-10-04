@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+NAME=rclone-serve-ftp
+USER=rclone
+PASS=FuddleIdlingJell5
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           rclone/rclone \
+           serve ftp --user $USER --pass $PASS --addr :21 /data
+    
+    echo type=ftp
+    echo host=$(docker_ip)
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    echo _connect=$(docker_ip):21
+}
+
+. $(dirname "$0")/run.bash
