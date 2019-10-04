@@ -15285,7 +15285,7 @@ export NO_PROXY=$no_proxy</code></pre>
 <pre><code>mkdir -p /etc/ssl/certs/
 curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt
 ntpclient -s -h pool.ntp.org</code></pre>
-<p>The two environment variables <code>SSL_CERT_FILE</code> and <code>SSL_CERT_DIR</code>, mentioned in the <a href="https://godoc.org/crypto/x509">x509 pacakge</a>, provide an additional way to provide the SSL root certificates.</p>
+<p>The two environment variables <code>SSL_CERT_FILE</code> and <code>SSL_CERT_DIR</code>, mentioned in the <a href="https://godoc.org/crypto/x509">x509 package</a>, provide an additional way to provide the SSL root certificates.</p>
 <p>Note that you may need to add the <code>--insecure</code> option to the <code>curl</code> command line if it doesn’t work without.</p>
 <pre><code>curl --insecure -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt</code></pre>
 <h3 id="rclone-gives-failed-to-load-config-file-function-not-implemented-error">Rclone gives Failed to load config file: function not implemented error</h3>
