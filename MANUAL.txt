@@ -20570,7 +20570,7 @@ time which is important for SSL to work properly.
     ntpclient -s -h pool.ntp.org
 
 The two environment variables SSL_CERT_FILE and SSL_CERT_DIR, mentioned
-in the x509 pacakge, provide an additional way to provide the SSL root
+in the x509 package, provide an additional way to provide the SSL root
 certificates.
 
 Note that you may need to add the --insecure option to the curl command
