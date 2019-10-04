@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/testserver"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
@@ -306,6 +307,10 @@ func Run(t *testing.T, opt *Opt) {
 		ctx           = context.Background()
 	)
 
+	if strings.HasSuffix(os.Getenv("RCLONE_CONFIG"), "/notfound") && *fstest.RemoteName == "" {
+		t.Skip("quicktest only")
+	}
+
 	// Skip the test if the remote isn't configured
 	skipIfNotOk := func(t *testing.T) {
 		if remote == nil {
@@ -352,7 +357,11 @@ func Run(t *testing.T, opt *Opt) {
 	if *fstest.RemoteName != "" {
 		remoteName = *fstest.RemoteName
 	}
+	oldFstestRemoteName := fstest.RemoteName
 	fstest.RemoteName = &remoteName
+	defer func() {
+		fstest.RemoteName = oldFstestRemoteName
+	}()
 	t.Logf("Using remote %q", remoteName)
 	var err error
 	if remoteName == "" {
@@ -360,6 +369,11 @@ func Run(t *testing.T, opt *Opt) {
 		require.NoError(t, err)
 		isLocalRemote = true
 	}
+
+	// Start any test servers if required
+	finish, err := testserver.Start(remoteName)
+	require.NoError(t, err)
+	defer finish()
 
 	// Make the Fs we are testing with, initialising the local variables
 	// subRemoteName - name of the remote after the TestRemote:

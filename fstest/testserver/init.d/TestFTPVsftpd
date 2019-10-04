@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+NAME=vsftpd
+USER=rclone
+PASS=TiffedRestedSian4
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           -e "FTP_USER=rclone" \
+           -e "FTP_PASS=$PASS" \
+           fauria/vsftpd
+
+    echo type=ftp
+    echo host=$(docker_ip)
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    echo _connect=$(docker_ip):21
+}
+
+. $(dirname "$0")/run.bash
