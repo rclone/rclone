@@ -294,3 +294,4 @@ Contributors
   * Richard Patel <me@terorie.dev>
   * 庄天翼 <zty0826@gmail.com>
   * SwitchJS <dev@switchjs.com>
+  * Raphael <PowershellNinja@users.noreply.github.com>
