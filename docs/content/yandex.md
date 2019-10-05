@@ -9,8 +9,6 @@ date: "2015-12-30"
 
 [Yandex Disk](https://disk.yandex.com) is a cloud storage solution created by [Yandex](https://yandex.com).
 
-Yandex paths may be as deep as required, eg `remote:directory/subdirectory`.
-
 Here is an example of making a yandex configuration.  First run
 
     rclone config
@@ -85,6 +83,8 @@ excess files in the path.
 
     rclone sync /home/local/directory remote:directory
 
+Yandex paths may be as deep as required, eg `remote:directory/subdirectory`.
+
 ### Modified time ###
 
 Modified times are supported and are stored accurate to 1 ns in custom
@@ -104,6 +104,14 @@ does not take any path arguments.
 
 To view your current quota you can use the `rclone about remote:`
 command which will display your usage limit (quota) and the current usage.
+
+#### Restricted filename characters
+
+The [default restricted characters set](/overview/#restricted-characters)
+are replaced.
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
 
 ### Limitations ###
 
