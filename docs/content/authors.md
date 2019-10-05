@@ -293,3 +293,4 @@ Contributors
   * Anthony Rusdi <33247310+antrusd@users.noreply.github.com>
   * Richard Patel <me@terorie.dev>
   * 庄天翼 <zty0826@gmail.com>
+  * SwitchJS <dev@switchjs.com>
