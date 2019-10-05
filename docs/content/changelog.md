@@ -1,10 +1,17 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-09-29"
+date: "2019-10-05"
 ---
 
 # Changelog
+
+## v1.49.5 - 2019-10-05
+
+* Bug Fixes
+    * Revert back to go1.12.x for the v1.49.x builds as go1.13.x was causing issues (Nick Craig-Wood)
+    * Fix rpm packages by using master builds of nfpm (Nick Craig-Wood)
+    * Fix macOS build after brew changes (Nick Craig-Wood)
 
 ## v1.49.4 - 2019-09-29
 
