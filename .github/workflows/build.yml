@@ -135,7 +135,6 @@ jobs:
         shell: bash
         run: |
           brew update
-          brew tap caskroom/cask
           brew cask install osxfuse
         if: matrix.os == 'macOS-latest'
 
