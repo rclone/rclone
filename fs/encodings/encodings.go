@@ -342,6 +342,14 @@ const Sharefile = encoder.MultiEncoder(
 		encoder.EncodeLeftPeriod |
 		encoder.EncodeInvalidUtf8)
 
+// Yandex is the encoding used by the yandex backend
+//
+// Of the control characters \t \n \r are allowed
+// it doesn't seem worth making an exception for this
+const Yandex = encoder.MultiEncoder(
+	uint(Display) |
+		encoder.EncodeInvalidUtf8)
+
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
 	switch strings.ToLower(name) {
@@ -403,7 +411,8 @@ func ByName(name string) encoder.Encoder {
 	case "swift":
 		return Swift
 	//case "webdav":
-	//case "yandex":
+	case "yandex":
+		return Yandex
 	default:
 		return nil
 	}

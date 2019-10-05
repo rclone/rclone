@@ -36,6 +36,7 @@ const (
 	S3                 = Base
 	Sharefile          = Base
 	Swift              = Base
+	Yandex             = Base
 )
 
 // ByName returns the encoder for a give backend name or nil
