@@ -1,10 +1,13 @@
 package mounttest
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/rclone/rclone/vfs"
 )
 
 // TestWriteFileNoWrite tests writing a file with no write()'s to it
@@ -79,6 +82,51 @@ func TestWriteFileFsync(t *testing.T) {
 	require.NoError(t, err)
 	err = fd.Close()
 	require.NoError(t, err)
+	run.waitForWriters()
+	run.rm(t, "to be synced")
+}
+
+// TestWriteFileDup tests behavior of mmap() in Python by using dup() on a file handle
+func TestWriteFileDup(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	if run.vfs.Opt.CacheMode < vfs.CacheModeWrites {
+		t.Skip("not supported on vfs-cache-mode < writes")
+		return
+	}
+
+	filepath := run.path("to be synced")
+	fh, err := osCreate(filepath)
+	require.NoError(t, err)
+
+	testData := []byte("0123456789")
+
+	err = fh.Truncate(int64(len(testData) + 2))
+	require.NoError(t, err)
+
+	err = fh.Sync()
+	require.NoError(t, err)
+
+	var dupFd uintptr
+	dupFd, err = writeTestDup(fh.Fd())
+	require.NoError(t, err)
+
+	dupFile := os.NewFile(dupFd, fh.Name())
+	_, err = dupFile.Write(testData)
+	require.NoError(t, err)
+
+	err = dupFile.Close()
+	require.NoError(t, err)
+
+	_, err = fh.Seek(int64(len(testData)), 0)
+	require.NoError(t, err)
+
+	_, err = fh.Write([]byte("10"))
+	require.NoError(t, err)
+
+	err = fh.Close()
+	require.NoError(t, err)
+
 	run.waitForWriters()
 	run.rm(t, "to be synced")
 }

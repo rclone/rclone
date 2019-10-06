@@ -230,28 +230,14 @@ func (fh *RWFileHandle) modified() bool {
 	return true
 }
 
-// close the file handle returning EBADF if it has been
-// closed already.
+// flushWrites flushes any pending writes to cloud storage
 //
-// Must be called with fh.mu held
-//
-// Note that we leave the file around in the cache on error conditions
-// to give the user a chance to recover it.
-func (fh *RWFileHandle) close() (err error) {
-	defer log.Trace(fh.logPrefix(), "")("err=%v", &err)
-	fh.file.muRW.Lock()
-	defer fh.file.muRW.Unlock()
-
-	if fh.closed {
-		return ECLOSED
+// Must be called with fh.muRW held
+func (fh *RWFileHandle) flushWrites(closeFile bool) error {
+	if fh.closed && !closeFile {
+		return nil
 	}
-	fh.closed = true
-	defer func() {
-		if fh.opened {
-			fh.file.delRWOpen()
-		}
-		fh.d.vfs.cache.close(fh.remote)
-	}()
+
 	rdwrMode := fh.flags & accessModeMask
 	writer := rdwrMode != os.O_RDONLY
 
@@ -284,8 +270,8 @@ func (fh *RWFileHandle) close() (err error) {
 	}
 
 	// Close the underlying file
-	if fh.opened {
-		err = fh.File.Close()
+	if fh.opened && closeFile {
+		err := fh.File.Close()
 		if err != nil {
 			err = errors.Wrap(err, "failed to close cache file")
 			return err
@@ -312,6 +298,32 @@ func (fh *RWFileHandle) close() (err error) {
 	}
 
 	return nil
+}
+
+// close the file handle returning EBADF if it has been
+// closed already.
+//
+// Must be called with fh.mu held
+//
+// Note that we leave the file around in the cache on error conditions
+// to give the user a chance to recover it.
+func (fh *RWFileHandle) close() (err error) {
+	defer log.Trace(fh.logPrefix(), "")("err=%v", &err)
+	fh.file.muRW.Lock()
+	defer fh.file.muRW.Unlock()
+
+	if fh.closed {
+		return ECLOSED
+	}
+	fh.closed = true
+	defer func() {
+		if fh.opened {
+			fh.file.delRWOpen()
+		}
+		fh.d.vfs.cache.close(fh.remote)
+	}()
+
+	return fh.flushWrites(true)
 }
 
 // Close closes the file
@@ -346,7 +358,11 @@ func (fh *RWFileHandle) Flush() error {
 		fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush ignoring flush on unwritten handle")
 		return nil
 	}
-	err := fh.close()
+
+	fh.file.muRW.Lock()
+	defer fh.file.muRW.Unlock()
+	err := fh.flushWrites(false)
+
 	if err != nil {
 		fs.Errorf(fh.logPrefix(), "RWFileHandle.Flush error: %v", err)
 	} else {

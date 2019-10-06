@@ -457,13 +457,18 @@ func TestRWFileHandleFlushWrite(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 5, n)
 
-	// Check Flush closes file if write called
+	// Check Flush does not close file if write called
 	err = fh.Flush()
 	assert.NoError(t, err)
-	assert.True(t, fh.closed)
+	assert.False(t, fh.closed)
 
 	// Check flush does nothing if called again
 	err = fh.Flush()
+	assert.NoError(t, err)
+	assert.False(t, fh.closed)
+
+	// Check that Close closes the file
+	err = fh.Close()
 	assert.NoError(t, err)
 	assert.True(t, fh.closed)
 }
