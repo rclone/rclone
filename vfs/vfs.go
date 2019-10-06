@@ -254,7 +254,7 @@ func (vfs *VFS) Fs() fs.Fs {
 func (vfs *VFS) SetCacheMode(cacheMode CacheMode) {
 	vfs.Shutdown()
 	vfs.cache = nil
-	if vfs.Opt.CacheMode > CacheModeOff {
+	if cacheMode > CacheModeOff {
 		ctx, cancel := context.WithCancel(context.Background())
 		cache, err := newCache(ctx, vfs.f, &vfs.Opt) // FIXME pass on context or get from Opt?
 		if err != nil {
@@ -263,6 +263,7 @@ func (vfs *VFS) SetCacheMode(cacheMode CacheMode) {
 			cancel()
 			return
 		}
+		vfs.Opt.CacheMode = cacheMode
 		vfs.cancel = cancel
 		vfs.cache = cache
 	}
