@@ -12,7 +12,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/anacrolix/dms/dlna"
@@ -121,10 +120,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 		URL: (&url.URL{
 			Scheme: "http",
 			Host:   host,
-			Path:   resPath,
-			RawQuery: url.Values{
-				"path": {cdsObject.Path},
-			}.Encode(),
+			Path:   path.Join(resPath, cdsObject.Path),
 		}).String(),
 		ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", mimeType, dlna.ContentFeatures{
 			SupportRange: true,
@@ -132,15 +128,11 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 		Size: uint64(fileInfo.Size()),
 	})
 
-	basePath, _ := path.Split(cdsObject.Path)
 	for _, resource := range resources {
 		subtitleURL := (&url.URL{
 			Scheme: "http",
 			Host:   host,
-			Path:   resPath,
-			RawQuery: url.Values{
-				"path": {basePath + resource.Path()},
-			}.Encode(),
+			Path:   path.Join(resPath, resource.Path()),
 		}).String()
 		item.Res = append(item.Res, upnpav.Resource{
 			URL:          subtitleURL,
@@ -171,13 +163,12 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 		return
 	}
 
-	dirEntries, extraResources := partitionExtraResources(dirEntries)
-
+	dirEntries, mediaResources := mediaWithResources(dirEntries)
 	for _, de := range dirEntries {
 		child := object{
 			path.Join(o.Path, de.Name()),
 		}
-		obj, err := cds.cdsObjectToUpnpavObject(child, de, extraResources[de], host)
+		obj, err := cds.cdsObjectToUpnpavObject(child, de, mediaResources[de], host)
 		if err != nil {
 			fs.Errorf(cds, "error with %s: %s", child.FilePath(), err)
 			continue
@@ -193,50 +184,47 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 }
 
 // Given a list of nodes, separate them into potential media items and any associated resources (external subtitles,
-// thumbnails, metadata, etc.)
-func partitionExtraResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
-	// First, separate out the subtitles into a separate list from the media
-	media, subtitles := make(vfs.Nodes, 0), make(vfs.Nodes, 0)
+// for example.)
+//
+// The result is a a slice of potential media nodes (in their original order) and a map containing associated
+// resources nodes of each media node, if any.
+func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
+	media, mediaResources := vfs.Nodes{}, make(map[vfs.Node]vfs.Nodes)
+
+	// First, separate out the subtitles and media into maps, keyed by their lowercase base names.
+	mediaByName, subtitlesByName := make(map[string]vfs.Node), make(map[string]vfs.Node)
 	for _, node := range nodes {
-		name := strings.ToLower(node.Name()) // case insensitive
-		switch path.Ext(name) {
+		baseName, ext := splitExt(strings.ToLower(node.Name()))
+		switch ext {
 		case ".srt":
-			subtitles = append(subtitles, node)
+			subtitlesByName[baseName] = node
 		default:
+			mediaByName[baseName] = node
 			media = append(media, node)
 		}
 	}
 
 	// Find the associated media file for each subtitle
-	extraResources := make(map[vfs.Node]vfs.Nodes)
-	for _, node := range subtitles {
-		subtitleName := strings.ToLower(node.Name())
+	for baseName, node := range subtitlesByName {
+		// Find a media file with the same basename (video.mp4 for video.srt)
+		mediaNode, found := mediaByName[baseName]
+		if !found {
+			// Or basename of the basename (video.mp4 for video.en.srt)
+			baseName, _ = splitExt(baseName)
+			mediaNode, found = mediaByName[baseName]
+		}
 
-		// For a media file named "My Video.mp4", we want to associated any subtitles named like
-		// "My Video.srt", "My Video.en.srt", "My Video.es.srt", "My Video.forced.srt"
-		// note: nodes must be sorted!  vfs.dir.ReadDirAll() results are already sorted ..
-		mediaIdx := sort.Search(len(media), func(idx int) bool {
-			mediaName := strings.ToLower(media[idx].Name())
-			basename := strings.SplitN(mediaName, ".", 2)[0]
-			if strings.Compare(subtitleName, basename) <= 0 {
-				return true
-			}
-			if strings.HasPrefix(subtitleName, basename) {
-				return subtitleName[len(basename)] == '.'
-			}
-			return false
-		})
-		if mediaIdx == -1 {
+		// Just advise if no match found
+		if !found {
 			fs.Infof(node, "could not find associated media for subtitle: %s", node.Name())
 			continue
 		}
 
-		mediaNode := media[mediaIdx]
 		fs.Debugf(mediaNode, "associating subtitle: %s", node.Name())
-		extraResources[mediaNode] = append(extraResources[mediaNode], node)
+		mediaResources[mediaNode] = append(mediaResources[mediaNode], node)
 	}
 
-	return media, extraResources
+	return media, mediaResources
 }
 
 type browse struct {
