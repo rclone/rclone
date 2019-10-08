@@ -192,14 +192,14 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	media, mediaResources := vfs.Nodes{}, make(map[vfs.Node]vfs.Nodes)
 
 	// First, separate out the subtitles and media into maps, keyed by their lowercase base names.
-	mediaByName, subtitlesByName := make(map[string]vfs.Node), make(map[string]vfs.Node)
+	mediaByName, subtitlesByName := make(map[string]vfs.Nodes), make(map[string]vfs.Node)
 	for _, node := range nodes {
 		baseName, ext := splitExt(strings.ToLower(node.Name()))
 		switch ext {
 		case ".srt":
 			subtitlesByName[baseName] = node
 		default:
-			mediaByName[baseName] = node
+			mediaByName[baseName] = append(mediaByName[baseName], node)
 			media = append(media, node)
 		}
 	}
@@ -207,11 +207,11 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	// Find the associated media file for each subtitle
 	for baseName, node := range subtitlesByName {
 		// Find a media file with the same basename (video.mp4 for video.srt)
-		mediaNode, found := mediaByName[baseName]
+		mediaNodes, found := mediaByName[baseName]
 		if !found {
 			// Or basename of the basename (video.mp4 for video.en.srt)
 			baseName, _ = splitExt(baseName)
-			mediaNode, found = mediaByName[baseName]
+			mediaNodes, found = mediaByName[baseName]
 		}
 
 		// Just advise if no match found
@@ -220,8 +220,11 @@ func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 			continue
 		}
 
-		fs.Debugf(mediaNode, "associating subtitle: %s", node.Name())
-		mediaResources[mediaNode] = append(mediaResources[mediaNode], node)
+		// Associate with all potential media nodes
+		fs.Debugf(mediaNodes, "associating subtitle: %s", node.Name())
+		for _, mediaNode := range mediaNodes {
+			mediaResources[mediaNode] = append(mediaResources[mediaNode], node)
+		}
 	}
 
 	return media, mediaResources
