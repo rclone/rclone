@@ -61,13 +61,19 @@ outer:
 
 // dedupeDeleteAllButOne deletes all but the one in keep
 func dedupeDeleteAllButOne(ctx context.Context, keep int, remote string, objs []fs.Object) {
+	count := 0
 	for i, o := range objs {
 		if i == keep {
 			continue
 		}
-		_ = DeleteFile(ctx, o)
+		err := DeleteFile(ctx, o)
+		if err == nil {
+			count++
+		}
 	}
-	fs.Logf(remote, "Deleted %d extra copies", len(objs)-1)
+	if count > 0 {
+		fs.Logf(remote, "Deleted %d extra copies", count)
+	}
 }
 
 // dedupeDeleteIdentical deletes all but one of identical (by hash) copies
