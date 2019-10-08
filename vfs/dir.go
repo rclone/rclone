@@ -96,10 +96,27 @@ func (d *Dir) Node() Node {
 	return d
 }
 
+// forgetDirPath clears the cache for itself and all subdirectories if
+// they match the given path. The path is specified relative from the
+// directory it is called from.
+//
+// It does not invalidate or clear the cache of the parent directory.
+func (d *Dir) forgetDirPath(relativePath string) {
+	if dir := d.cachedDir(relativePath); dir != nil {
+		dir.walk(func(dir *Dir) {
+			fs.Debugf(dir.path, "forgetting directory cache")
+			dir.read = time.Time{}
+			dir.items = make(map[string]Node)
+		})
+	}
+}
+
 // ForgetAll ensures the directory and all its children are purged
 // from the cache.
+//
+// It does not invalidate or clear the cache of the parent directory.
 func (d *Dir) ForgetAll() {
-	d.ForgetPath("", fs.EntryDirectory)
+	d.forgetDirPath("")
 }
 
 // ForgetPath clears the cache for itself and all subdirectories if
@@ -126,13 +143,7 @@ func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
 	}
 
 	if entryType == fs.EntryDirectory {
-		if dir := d.cachedDir(relativePath); dir != nil {
-			dir.walk(func(dir *Dir) {
-				fs.Debugf(dir.path, "forgetting directory cache")
-				dir.read = time.Time{}
-				dir.items = make(map[string]Node)
-			})
-		}
+		d.forgetDirPath(relativePath)
 	}
 }
 

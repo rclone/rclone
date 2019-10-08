@@ -96,7 +96,7 @@ func TestDirForgetAll(t *testing.T) {
 	dir.ForgetAll()
 	assert.Equal(t, 1, len(root.items))
 	assert.Equal(t, 0, len(dir.items))
-	assert.True(t, root.read.IsZero())
+	assert.False(t, root.read.IsZero())
 	assert.True(t, dir.read.IsZero())
 
 	root.ForgetAll()
@@ -520,6 +520,22 @@ func TestDirRename(t *testing.T) {
 	// check the underlying r.Fremote
 	file1.Path = "dir2/file3"
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"dir2"}, r.Fremote.Precision())
+
+	// rename an empty directory
+	_, err = root.Mkdir("empty directory")
+	assert.NoError(t, err)
+	checkListing(t, root, []string{
+		"dir2,0,true",
+		"empty directory,0,true",
+	})
+	err = root.Rename("empty directory", "renamed empty directory", root)
+	assert.NoError(t, err)
+	checkListing(t, root, []string{
+		"dir2,0,true",
+		"renamed empty directory,0,true",
+	})
+	// ...we don't check the underlying f.Fremote because on
+	// bucket based remotes the directory won't be there
 
 	// read only check
 	vfs.Opt.ReadOnly = true
