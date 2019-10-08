@@ -1130,8 +1130,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
-		fs.Logf(o, "File name disallowed - not uploading")
-		return nil
+		return fserrors.NoRetryError(errors.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
 	}
 	commitInfo := files.NewCommitInfo(enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
