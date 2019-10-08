@@ -295,3 +295,4 @@ Contributors
   * 庄天翼 <zty0826@gmail.com>
   * SwitchJS <dev@switchjs.com>
   * Raphael <PowershellNinja@users.noreply.github.com>
+  * Sezal Agrawal <sezalagrawal@gmail.com>
