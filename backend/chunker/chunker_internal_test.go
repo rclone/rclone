@@ -418,6 +418,7 @@ func testPreventCorruption(t *testing.T, f *Fs) {
 	var chunkContents []byte
 	assert.NotPanics(t, func() {
 		chunkContents, err = ioutil.ReadAll(r)
+		_ = r.Close()
 	})
 	assert.NoError(t, err)
 	assert.NotEqual(t, contents, string(chunkContents))
@@ -451,6 +452,7 @@ func testPreventCorruption(t *testing.T, f *Fs) {
 	assert.NoError(t, err)
 	assert.NotPanics(t, func() {
 		_, err = ioutil.ReadAll(r)
+		_ = r.Close()
 	})
 	assert.NoError(t, err)
 }
