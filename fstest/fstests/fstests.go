@@ -151,16 +151,19 @@ func retry(t *testing.T, what string, f func() error) {
 	require.NoError(t, err, what)
 }
 
-// testPut puts file to the remote
+// testPut puts file with random contents to the remote
 func testPut(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) (string, fs.Object) {
+	return PutTestContents(ctx, t, f, file, random.String(100), true)
+}
+
+// PutTestContents puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
+func PutTestContents(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, contents string, check bool) (string, fs.Object) {
 	var (
 		err        error
 		obj        fs.Object
 		uploadHash *hash.MultiHasher
-		contents   string
 	)
 	retry(t, "Put", func() error {
-		contents = random.String(100)
 		buf := bytes.NewBufferString(contents)
 		uploadHash = hash.NewMultiHasher()
 		in := io.TeeReader(buf, uploadHash)
@@ -171,10 +174,12 @@ func testPut(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) (str
 		return err
 	})
 	file.Hashes = uploadHash.Sums()
-	file.Check(t, obj, f.Precision())
-	// Re-read the object and check again
-	obj = findObject(ctx, t, f, file.Path)
-	file.Check(t, obj, f.Precision())
+	if check {
+		file.Check(t, obj, f.Precision())
+		// Re-read the object and check again
+		obj = findObject(ctx, t, f, file.Path)
+		file.Check(t, obj, f.Precision())
+	}
 	return contents, obj
 }
 
