@@ -297,3 +297,4 @@ Contributors
   * Raphael <PowershellNinja@users.noreply.github.com>
   * Sezal Agrawal <sezalagrawal@gmail.com>
   * Tyler <TylerNakamura@users.noreply.github.com>
+  * Brett Dutro <brett.dutro@gmail.com>
