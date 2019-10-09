@@ -1,15 +1,23 @@
 package chunker
 
 import (
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"path"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Command line flags
@@ -240,6 +248,307 @@ func testChunkNameFormat(t *testing.T, f *Fs) {
 	assertMakeNamePanics("fish", -2, "bind.", 0)
 }
 
+func testSmallFileInternals(t *testing.T, f *Fs) {
+	const dir = "small"
+	ctx := context.Background()
+	saveOpt := f.opt
+	defer func() {
+		f.opt.FailHard = false
+		_ = operations.Purge(ctx, f.base, dir)
+		f.opt = saveOpt
+	}()
+	f.opt.FailHard = false
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+
+	checkSmallFileInternals := func(obj fs.Object) {
+		assert.NotNil(t, obj)
+		o, ok := obj.(*Object)
+		assert.True(t, ok)
+		assert.NotNil(t, o)
+		if o == nil {
+			return
+		}
+		switch {
+		case !f.useMeta:
+			// If meta format is "none", non-chunked file (even empty)
+			// internally is a single chunk without meta object.
+			assert.Nil(t, o.main)
+			assert.True(t, o.isComposite()) // sorry, sometimes a name is misleading
+			assert.Equal(t, 1, len(o.chunks))
+		default:
+			// normally non-chunked file is kept in the Object's main field
+			assert.NotNil(t, o.main)
+			assert.False(t, o.isComposite())
+			assert.Equal(t, 0, len(o.chunks))
+		}
+	}
+
+	checkContents := func(obj fs.Object, contents string) {
+		assert.NotNil(t, obj)
+		assert.Equal(t, int64(len(contents)), obj.Size())
+
+		r, err := obj.Open(ctx)
+		assert.NoError(t, err)
+		assert.NotNil(t, r)
+		if r == nil {
+			return
+		}
+		data, err := ioutil.ReadAll(r)
+		assert.NoError(t, err)
+		assert.Equal(t, contents, string(data))
+		_ = r.Close()
+	}
+
+	checkSmallFile := func(name, contents string) {
+		filename := path.Join(dir, name)
+		item := fstest.Item{Path: filename, ModTime: modTime}
+		_, put := fstests.PutTestContents(ctx, t, f, &item, contents, false)
+		assert.NotNil(t, put)
+		checkSmallFileInternals(put)
+		checkContents(put, contents)
+
+		// objects returned by Put and NewObject must have similar structure
+		obj, err := f.NewObject(ctx, filename)
+		assert.NoError(t, err)
+		assert.NotNil(t, obj)
+		checkSmallFileInternals(obj)
+		checkContents(obj, contents)
+
+		_ = obj.Remove(ctx)
+		_ = put.Remove(ctx) // for good
+	}
+
+	checkSmallFile("emptyfile", "")
+	checkSmallFile("smallfile", "Ok")
+}
+
+func testPreventCorruption(t *testing.T, f *Fs) {
+	if f.opt.ChunkSize > 50 {
+		t.Skip("this test requires small chunks")
+	}
+	const dir = "corrupted"
+	ctx := context.Background()
+	saveOpt := f.opt
+	defer func() {
+		f.opt.FailHard = false
+		_ = operations.Purge(ctx, f.base, dir)
+		f.opt = saveOpt
+	}()
+	f.opt.FailHard = true
+
+	contents := random.String(250)
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	const overlapMessage = "chunk overlap"
+
+	assertOverlapError := func(err error) {
+		assert.Error(t, err)
+		if err != nil {
+			assert.Contains(t, err.Error(), overlapMessage)
+		}
+	}
+
+	newFile := func(name string) fs.Object {
+		item := fstest.Item{Path: path.Join(dir, name), ModTime: modTime}
+		_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		require.NotNil(t, obj)
+		return obj
+	}
+	billyObj := newFile("billy")
+
+	billyChunkName := func(chunkNo int) string {
+		return f.makeChunkName(billyObj.Remote(), chunkNo, "", -1)
+	}
+
+	err := f.Mkdir(ctx, billyChunkName(1))
+	assertOverlapError(err)
+
+	_, err = f.Move(ctx, newFile("silly1"), billyChunkName(2))
+	assert.Error(t, err)
+	assert.True(t, err == fs.ErrorCantMove || (err != nil && strings.Contains(err.Error(), overlapMessage)))
+
+	_, err = f.Copy(ctx, newFile("silly2"), billyChunkName(3))
+	assert.Error(t, err)
+	assert.True(t, err == fs.ErrorCantCopy || (err != nil && strings.Contains(err.Error(), overlapMessage)))
+
+	// accessing chunks in strict mode is prohibited
+	f.opt.FailHard = true
+	billyChunk4Name := billyChunkName(4)
+	billyChunk4, err := f.NewObject(ctx, billyChunk4Name)
+	assertOverlapError(err)
+
+	f.opt.FailHard = false
+	billyChunk4, err = f.NewObject(ctx, billyChunk4Name)
+	assert.NoError(t, err)
+	require.NotNil(t, billyChunk4)
+
+	f.opt.FailHard = true
+	_, err = f.Put(ctx, bytes.NewBufferString(contents), billyChunk4)
+	assertOverlapError(err)
+
+	// you can freely read chunks (if you have an object)
+	r, err := billyChunk4.Open(ctx)
+	assert.NoError(t, err)
+	var chunkContents []byte
+	assert.NotPanics(t, func() {
+		chunkContents, err = ioutil.ReadAll(r)
+	})
+	assert.NoError(t, err)
+	assert.NotEqual(t, contents, string(chunkContents))
+
+	// but you can't change them
+	err = billyChunk4.Update(ctx, bytes.NewBufferString(contents), newFile("silly3"))
+	assertOverlapError(err)
+
+	// Remove isn't special, you can't corrupt files even if you have an object
+	err = billyChunk4.Remove(ctx)
+	assertOverlapError(err)
+
+	// recreate billy in case it was anyhow corrupted
+	willyObj := newFile("willy")
+	willyChunkName := f.makeChunkName(willyObj.Remote(), 1, "", -1)
+	f.opt.FailHard = false
+	willyChunk, err := f.NewObject(ctx, willyChunkName)
+	f.opt.FailHard = true
+	assert.NoError(t, err)
+	require.NotNil(t, willyChunk)
+
+	_, err = operations.Copy(ctx, f, willyChunk, willyChunkName, newFile("silly4"))
+	assertOverlapError(err)
+
+	// operations.Move will return error when chunker's Move refused
+	// to corrupt target file, but reverts to copy/delete method
+	// still trying to delete target chunk. Chunker must come to rescue.
+	_, err = operations.Move(ctx, f, willyChunk, willyChunkName, newFile("silly5"))
+	assertOverlapError(err)
+	r, err = willyChunk.Open(ctx)
+	assert.NoError(t, err)
+	assert.NotPanics(t, func() {
+		_, err = ioutil.ReadAll(r)
+	})
+	assert.NoError(t, err)
+}
+
+func testChunkNumberOverflow(t *testing.T, f *Fs) {
+	if f.opt.ChunkSize > 50 {
+		t.Skip("this test requires small chunks")
+	}
+	const dir = "wreaked"
+	const wreakNumber = 10200300
+	ctx := context.Background()
+	saveOpt := f.opt
+	defer func() {
+		f.opt.FailHard = false
+		_ = operations.Purge(ctx, f.base, dir)
+		f.opt = saveOpt
+	}()
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	contents := random.String(100)
+
+	newFile := func(f fs.Fs, name string) (fs.Object, string) {
+		filename := path.Join(dir, name)
+		item := fstest.Item{Path: filename, ModTime: modTime}
+		_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		require.NotNil(t, obj)
+		return obj, filename
+	}
+
+	f.opt.FailHard = false
+	file, fileName := newFile(f, "wreaker")
+	wreak, _ := newFile(f.base, f.makeChunkName("wreaker", wreakNumber, "", -1))
+
+	f.opt.FailHard = false
+	fstest.CheckListingWithRoot(t, f, dir, nil, nil, f.Precision())
+	_, err := f.NewObject(ctx, fileName)
+	assert.Error(t, err)
+
+	f.opt.FailHard = true
+	_, err = f.List(ctx, dir)
+	assert.Error(t, err)
+	_, err = f.NewObject(ctx, fileName)
+	assert.Error(t, err)
+
+	f.opt.FailHard = false
+	_ = wreak.Remove(ctx)
+	_ = file.Remove(ctx)
+}
+
+func testMetadataInput(t *testing.T, f *Fs) {
+	const minChunkForTest = 50
+	if f.opt.ChunkSize < minChunkForTest {
+		t.Skip("this test requires chunks that fit metadata")
+	}
+
+	const dir = "usermeta"
+	ctx := context.Background()
+	saveOpt := f.opt
+	defer func() {
+		f.opt.FailHard = false
+		_ = operations.Purge(ctx, f.base, dir)
+		f.opt = saveOpt
+	}()
+	f.opt.FailHard = false
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+
+	putFile := func(f fs.Fs, name, contents, message string, check bool) fs.Object {
+		item := fstest.Item{Path: name, ModTime: modTime}
+		_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, check)
+		assert.NotNil(t, obj, message)
+		return obj
+	}
+
+	runSubtest := func(contents, name string) {
+		description := fmt.Sprintf("file with %s metadata", name)
+		filename := path.Join(dir, name)
+		require.True(t, len(contents) > 2 && len(contents) < minChunkForTest, description+" test data is correct")
+
+		part := putFile(f.base, f.makeChunkName(filename, 0, "", -1), "oops", "", true)
+		_ = putFile(f, filename, contents, "upload "+description, false)
+
+		obj, err := f.NewObject(ctx, filename)
+		assert.NoError(t, err, "access "+description)
+		assert.NotNil(t, obj)
+		assert.Equal(t, int64(len(contents)), obj.Size(), "size "+description)
+
+		o, ok := obj.(*Object)
+		assert.NotNil(t, ok)
+		if o != nil {
+			assert.True(t, o.isComposite() && len(o.chunks) == 1, description+" is forced composite")
+			o = nil
+		}
+
+		defer func() {
+			_ = obj.Remove(ctx)
+			_ = part.Remove(ctx)
+		}()
+
+		r, err := obj.Open(ctx)
+		assert.NoError(t, err, "open "+description)
+		assert.NotNil(t, r, "open stream of "+description)
+		if err == nil && r != nil {
+			data, err := ioutil.ReadAll(r)
+			assert.NoError(t, err, "read all of "+description)
+			assert.Equal(t, contents, string(data), description+" contents is ok")
+			_ = r.Close()
+		}
+	}
+
+	metaData, err := marshalSimpleJSON(ctx, 3, 1, "", "")
+	require.NoError(t, err)
+	todaysMeta := string(metaData)
+	runSubtest(todaysMeta, "today")
+
+	pastMeta := regexp.MustCompile(`"ver":[0-9]+`).ReplaceAllLiteralString(todaysMeta, `"ver":1`)
+	pastMeta = regexp.MustCompile(`"size":[0-9]+`).ReplaceAllLiteralString(pastMeta, `"size":0`)
+	runSubtest(pastMeta, "past")
+
+	futureMeta := regexp.MustCompile(`"ver":[0-9]+`).ReplaceAllLiteralString(todaysMeta, `"ver":999`)
+	futureMeta = regexp.MustCompile(`"nchunks":[0-9]+`).ReplaceAllLiteralString(futureMeta, `"nchunks":0,"x":"y"`)
+	runSubtest(futureMeta, "future")
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("PutLarge", func(t *testing.T) {
@@ -250,6 +559,18 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("ChunkNameFormat", func(t *testing.T) {
 		testChunkNameFormat(t, f)
+	})
+	t.Run("SmallFileInternals", func(t *testing.T) {
+		testSmallFileInternals(t, f)
+	})
+	t.Run("PreventCorruption", func(t *testing.T) {
+		testPreventCorruption(t, f)
+	})
+	t.Run("ChunkNumberOverflow", func(t *testing.T) {
+		testChunkNumberOverflow(t, f)
+	})
+	t.Run("MetadataInput", func(t *testing.T) {
+		testMetadataInput(t, f)
 	})
 }
 
