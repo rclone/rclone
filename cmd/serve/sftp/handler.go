@@ -94,7 +94,7 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 		// link.symlink = r.Filepath
 		// v.files[r.Target] = link
 	}
-	return nil
+	return sftp.ErrSshFxOpUnsupported
 }
 
 type listerat []os.FileInfo
@@ -150,5 +150,5 @@ func (v vfsHandler) Filelist(r *sftp.Request) (l sftp.ListerAt, err error) {
 		// }
 		// return listerat([]os.FileInfo{file}), nil
 	}
-	return nil, nil
+	return nil, sftp.ErrSshFxOpUnsupported
 }
