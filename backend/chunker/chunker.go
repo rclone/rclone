@@ -164,24 +164,28 @@ It has the following fields: ver, size, nchunks, md5, sha1.`,
 			Name:     "hash_type",
 			Advanced: false,
 			Default:  "md5",
-			Help:     `Choose how chunker handles hash sums.`,
+			Help:     `Choose how chunker handles hash sums. All modes but "none" require metadata.`,
 			Examples: []fs.OptionExample{{
 				Value: "none",
-				Help: `Chunker can pass any hash supported by wrapped remote
-for non-chunked files but returns nothing otherwise.`,
+				Help:  `Pass any hash supported by wrapped remote for non-chunked files, return nothing otherwise`,
 			}, {
 				Value: "md5",
-				Help:  `MD5 for composite files. Requires "simplejson".`,
+				Help:  `MD5 for composite files`,
 			}, {
 				Value: "sha1",
-				Help:  `SHA1 for composite files. Requires "simplejson".`,
+				Help:  `SHA1 for composite files`,
+			}, {
+				Value: "md5all",
+				Help:  `MD5 for all files`,
+			}, {
+				Value: "sha1all",
+				Help:  `SHA1 for all files`,
 			}, {
 				Value: "md5quick",
-				Help: `Copying a file to chunker will request MD5 from the source
-falling back to SHA1 if unsupported. Requires "simplejson".`,
+				Help:  `Copying a file to chunker will request MD5 from the source falling back to SHA1 if unsupported`,
 			}, {
 				Value: "sha1quick",
-				Help:  `Similar to "md5quick" but prefers SHA1 over MD5. Requires "simplejson".`,
+				Help:  `Similar to "md5quick" but prefers SHA1 over MD5`,
 			}},
 		}, {
 			Name:     "fail_hard",
@@ -240,38 +244,8 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	f.dirSort = true // processEntries requires that meta Objects prerun data chunks atm.
 
-	switch opt.MetaFormat {
-	case "none":
-		f.useMeta = false
-	case "simplejson":
-		f.useMeta = true
-	default:
-		return nil, fmt.Errorf("unsupported meta format '%s'", opt.MetaFormat)
-	}
-
-	requireMetaHash := true
-	switch opt.HashType {
-	case "none":
-		requireMetaHash = false
-	case "md5":
-		f.useMD5 = true
-	case "sha1":
-		f.useSHA1 = true
-	case "md5quick":
-		f.useMD5 = true
-		f.quickHash = true
-	case "sha1quick":
-		f.useSHA1 = true
-		f.quickHash = true
-	default:
-		return nil, fmt.Errorf("unsupported hash type '%s'", opt.HashType)
-	}
-	if requireMetaHash && opt.MetaFormat != "simplejson" {
-		return nil, fmt.Errorf("hash type '%s' requires meta format 'simplejson'", opt.HashType)
-	}
-
-	if err := f.setChunkNameFormat(opt.NameFormat); err != nil {
-		return nil, errors.Wrapf(err, "invalid name format '%s'", opt.NameFormat)
+	if err := f.configure(opt.NameFormat, opt.MetaFormat, opt.HashType); err != nil {
+		return nil, err
 	}
 
 	// Handle the tricky case detected by FsMkdir/FsPutFiles/FsIsFile
@@ -317,20 +291,87 @@ type Options struct {
 
 // Fs represents a wrapped fs.Fs
 type Fs struct {
-	name        string
-	root        string
-	base        fs.Fs          // remote wrapped by chunker overlay
-	wrapper     fs.Fs          // wrapper is used by SetWrapper
-	useMeta     bool           // false if metadata format is 'none'
-	useMD5      bool           // mutually exclusive with useSHA1
-	useSHA1     bool           // mutually exclusive with useMD5
-	quickHash   bool           // allows fallback from MD5 to SHA1 and vice versa
-	dataNameFmt string         // name format of data chunks
-	ctrlNameFmt string         // name format of control chunks
-	nameRegexp  *regexp.Regexp // regular expression to match chunk names
-	opt         Options        // copy of Options
-	features    *fs.Features   // optional features
-	dirSort     bool           // reserved for future, ignored
+	name         string
+	root         string
+	base         fs.Fs          // remote wrapped by chunker overlay
+	wrapper      fs.Fs          // wrapper is used by SetWrapper
+	useMeta      bool           // false if metadata format is 'none'
+	useMD5       bool           // mutually exclusive with useSHA1
+	useSHA1      bool           // mutually exclusive with useMD5
+	hashFallback bool           // allows fallback from MD5 to SHA1 and vice versa
+	hashAll      bool           // hash all files, mutually exclusive with hashFallback
+	dataNameFmt  string         // name format of data chunks
+	ctrlNameFmt  string         // name format of control chunks
+	nameRegexp   *regexp.Regexp // regular expression to match chunk names
+	opt          Options        // copy of Options
+	features     *fs.Features   // optional features
+	dirSort      bool           // reserved for future, ignored
+}
+
+// configure must be called only from NewFs or by unit tests
+func (f *Fs) configure(nameFormat, metaFormat, hashType string) error {
+	if err := f.setChunkNameFormat(nameFormat); err != nil {
+		return errors.Wrapf(err, "invalid name format '%s'", nameFormat)
+	}
+	if err := f.setMetaFormat(metaFormat); err != nil {
+		return err
+	}
+	if err := f.setHashType(hashType); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *Fs) setMetaFormat(metaFormat string) error {
+	switch metaFormat {
+	case "none":
+		f.useMeta = false
+	case "simplejson":
+		f.useMeta = true
+	default:
+		return fmt.Errorf("unsupported meta format '%s'", metaFormat)
+	}
+	return nil
+}
+
+// setHashType
+// must be called *after* setMetaFormat.
+//
+// In the "All" mode chunker will force metadata on all files
+// if the wrapped remote can't provide given hashsum.
+func (f *Fs) setHashType(hashType string) error {
+	f.useMD5 = false
+	f.useSHA1 = false
+	f.hashFallback = false
+	f.hashAll = false
+	requireMetaHash := true
+
+	switch hashType {
+	case "none":
+		requireMetaHash = false
+	case "md5":
+		f.useMD5 = true
+	case "sha1":
+		f.useSHA1 = true
+	case "md5quick":
+		f.useMD5 = true
+		f.hashFallback = true
+	case "sha1quick":
+		f.useSHA1 = true
+		f.hashFallback = true
+	case "md5all":
+		f.useMD5 = true
+		f.hashAll = !f.base.Hashes().Contains(hash.MD5)
+	case "sha1all":
+		f.useSHA1 = true
+		f.hashAll = !f.base.Hashes().Contains(hash.SHA1)
+	default:
+		return fmt.Errorf("unsupported hash type '%s'", hashType)
+	}
+	if requireMetaHash && !f.useMeta {
+		return fmt.Errorf("hash type '%s' requires compatible meta format", hashType)
+	}
+	return nil
 }
 
 // setChunkNameFormat converts pattern based chunk name format
@@ -877,8 +918,8 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 
 	// Finalize small object as non-chunked.
 	// This can be bypassed, and single chunk with metadata will be
-	// created due to unsafe input.
-	if !needMeta && f.useMeta {
+	// created if forced by consistent hashing or due to unsafe input.
+	if !needMeta && !f.hashAll && f.useMeta {
 		// If previous object was chunked, remove its chunks
 		f.removeOldChunks(ctx, baseRemote)
 
@@ -989,7 +1030,7 @@ func (c *chunkingReader) wrapStream(ctx context.Context, in io.Reader, src fs.Ob
 	switch {
 	case c.fs.useMD5:
 		if c.md5, _ = src.Hash(ctx, hash.MD5); c.md5 == "" {
-			if c.fs.quickHash {
+			if c.fs.hashFallback {
 				c.sha1, _ = src.Hash(ctx, hash.SHA1)
 			} else {
 				c.hasher = md5.New()
@@ -997,7 +1038,7 @@ func (c *chunkingReader) wrapStream(ctx context.Context, in io.Reader, src fs.Ob
 		}
 	case c.fs.useSHA1:
 		if c.sha1, _ = src.Hash(ctx, hash.SHA1); c.sha1 == "" {
-			if c.fs.quickHash {
+			if c.fs.hashFallback {
 				c.md5, _ = src.Hash(ctx, hash.MD5)
 			} else {
 				c.hasher = sha1.New()
@@ -1157,11 +1198,11 @@ func (f *Fs) Precision() time.Duration {
 // Chunker advertises a hash type if and only if it can be calculated
 // for files of any size, non-chunked or composite.
 func (f *Fs) Hashes() hash.Set {
-	// composites && all of them && small files supported by wrapped remote
-	if f.useMD5 && !f.quickHash && f.base.Hashes().Contains(hash.MD5) {
+	// composites AND no fallback AND (chunker OR wrapped Fs will hash all non-chunked's)
+	if f.useMD5 && !f.hashFallback && (f.hashAll || f.base.Hashes().Contains(hash.MD5)) {
 		return hash.NewHashSet(hash.MD5)
 	}
-	if f.useSHA1 && !f.quickHash && f.base.Hashes().Contains(hash.SHA1) {
+	if f.useSHA1 && !f.hashFallback && (f.hashAll || f.base.Hashes().Contains(hash.SHA1)) {
 		return hash.NewHashSet(hash.SHA1)
 	}
 	return hash.NewHashSet() // can't provide strong guarantees
@@ -1383,14 +1424,14 @@ func (f *Fs) okForServerSide(ctx context.Context, src fs.Object, opName string) 
 	case f.useMD5:
 		md5, _ = obj.Hash(ctx, hash.MD5)
 		ok = md5 != ""
-		if !ok && f.quickHash {
+		if !ok && f.hashFallback {
 			sha1, _ = obj.Hash(ctx, hash.SHA1)
 			ok = sha1 != ""
 		}
 	case f.useSHA1:
 		sha1, _ = obj.Hash(ctx, hash.SHA1)
 		ok = sha1 != ""
-		if !ok && f.quickHash {
+		if !ok && f.hashFallback {
 			md5, _ = obj.Hash(ctx, hash.MD5)
 			ok = md5 != ""
 		}
@@ -1678,17 +1719,14 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 
 // Hash returns the selected checksum of the file.
 // If no checksum is available it returns "".
+// If a particular hashsum type is not supported, chunker won't fail
+// with `unsupported` error but return the empty hash string.
 //
 // Currently metadata (if not configured as 'none') is kept only for
 // composite files, but for non-chunked small files chunker obtains
 // hashsums from wrapped remote.
-// If a particular hashsum type is not supported, chunker won't fail
-// with `unsupported` error but return the empty hash string.
-//
-// In future metadata logic can be extended: if a normal (non-quick)
-// hash type is configured, chunker will check whether wrapped remote
-// supports it (see Fs.Hashes as an example). If not, it will add metadata
-// to small files as well, thus providing hashsums for all files.
+// In the "All" mode chunker will force metadata on all files if
+// particular hashsum type is unsupported by wrapped remote.
 //
 func (o *Object) Hash(ctx context.Context, hashType hash.Type) (string, error) {
 	if !o.isComposite() {
@@ -1976,9 +2014,10 @@ type metaSimpleJSON struct {
 
 // marshalSimpleJSON
 //
-// Current implementation creates metadata in two cases:
+// Current implementation creates metadata in three cases:
 // - for files larger than chunk size
 // - if file contents can be mistaken as meta object
+// - if consistent hashing is on but wrapped remote can't provide given hash
 //
 func marshalSimpleJSON(ctx context.Context, size int64, nChunks int, md5, sha1 string) ([]byte, error) {
 	version := metadataVersion
@@ -2000,13 +2039,9 @@ func marshalSimpleJSON(ctx context.Context, size int64, nChunks int, md5, sha1 s
 }
 
 // unmarshalSimpleJSON
-// Note: only metadata format version 1 is supported atm.
 //
-// Current implementation creates metadata only for files larger than
-// configured chunk size. This approach has drawback: availability of
-// configured hashsum type for small files depends on the wrapped remote.
-// Future versions of chunker may change approach as described in comment
-// to the Hash method. They can transparently migrate older metadata.
+// Only metadata format version 1 is supported atm.
+// Future releases will transparently migrate older metadata objects.
 // New format will have a higher version number and cannot be correctly
 // handled by current implementation.
 // The version check below will then explicitly ask user to upgrade rclone.
