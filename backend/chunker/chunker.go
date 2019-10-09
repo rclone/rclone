@@ -106,6 +106,13 @@ var (
 	ErrChunkOverflow = errors.New("chunk number overflow")
 )
 
+// variants of baseMove's parameter delMode
+const (
+	delNever  = 0 // don't delete, just move
+	delAlways = 1 // delete destination before moving
+	delFailed = 2 // move, then delete and try again if failed
+)
+
 // Note: metadata logic is tightly coupled with chunker code in many
 // places, eg. in checks whether a file should have meta object or is
 // eligible for chunking.
@@ -576,12 +583,14 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 // processEntries assembles chunk entries into composite entries
 func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirPath string) (newEntries fs.DirEntries, err error) {
-	// sort entries, so that meta objects (if any) appear before their chunks
-	sortedEntries := origEntries
+	var sortedEntries fs.DirEntries
 	if f.dirSort {
-		sortedEntries := make(fs.DirEntries, len(origEntries))
+		// sort entries so that meta objects go before their chunks
+		sortedEntries = make(fs.DirEntries, len(origEntries))
 		copy(sortedEntries, origEntries)
 		sort.Sort(sortedEntries)
+	} else {
+		sortedEntries = origEntries
 	}
 
 	byRemote := make(map[string]*Object)
@@ -800,10 +809,10 @@ func (o *Object) readMetadata(ctx context.Context) error {
 		return err
 	}
 	metadata, err := ioutil.ReadAll(reader)
+	_ = reader.Close() // ensure file handle is freed on windows
 	if err != nil {
 		return err
 	}
-	_ = reader.Close() // ensure file handle is freed on windows
 
 	switch o.f.opt.MetaFormat {
 	case "simplejson":
@@ -872,9 +881,11 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 		if size > 0 && c.readCount == savedReadCount && c.expectSingle {
 			// basePut returned success but didn't call chunkingReader's Read.
 			// This is possible if wrapped remote has performed the put by hash
-			// (chunker bridges Hash from source for non-chunked files).
-			// Hence, we account here for the actual number of bytes read.
-			c.accountBytes(size)
+			// because chunker bridges Hash from source for non-chunked files.
+			// Hence, force Read here to update accounting and hashsums.
+			if err := c.dummyRead(wrapIn, size); err != nil {
+				return nil, err
+			}
 		}
 		if c.sizeLeft == 0 && !c.done {
 			// The file has been apparently put by hash, force completion.
@@ -884,7 +895,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 		// Expected a single chunk but more to come, so name it as usual.
 		if !c.done && chunkRemote != tempRemote {
 			fs.Infof(chunk, "Expected single chunk, got more")
-			chunkMoved, errMove := f.baseMove(ctx, chunk, tempRemote, false)
+			chunkMoved, errMove := f.baseMove(ctx, chunk, tempRemote, delFailed)
 			if errMove != nil {
 				silentlyRemove(ctx, chunk)
 				return nil, errMove
@@ -926,7 +937,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 		// Rename single data chunk in place
 		chunk := c.chunks[0]
 		if chunk.Remote() != baseRemote {
-			chunkMoved, errMove := f.baseMove(ctx, chunk, baseRemote, true)
+			chunkMoved, errMove := f.baseMove(ctx, chunk, baseRemote, delAlways)
 			if errMove != nil {
 				silentlyRemove(ctx, chunk)
 				return nil, errMove
@@ -952,7 +963,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 	// Rename data chunks from temporary to final names
 	for chunkNo, chunk := range c.chunks {
 		chunkRemote := f.makeChunkName(baseRemote, chunkNo, "", -1)
-		chunkMoved, errMove := f.baseMove(ctx, chunk, chunkRemote, false)
+		chunkMoved, errMove := f.baseMove(ctx, chunk, chunkRemote, delFailed)
 		if errMove != nil {
 			return nil, errMove
 		}
@@ -1103,6 +1114,27 @@ func (c *chunkingReader) accountBytes(bytesRead int64) {
 	if c.sizeLeft != -1 {
 		c.sizeLeft -= bytesRead
 	}
+}
+
+// dummyRead updates accounting, hashsums etc by simulating reads
+func (c *chunkingReader) dummyRead(in io.Reader, size int64) error {
+	if c.hasher == nil && c.readCount+size > maxMetadataSize {
+		c.accountBytes(size)
+		return nil
+	}
+	const bufLen = 1048576 // 1MB
+	buf := make([]byte, bufLen)
+	for size > 0 {
+		n := size
+		if n > bufLen {
+			n = bufLen
+		}
+		if _, err := io.ReadFull(in, buf[0:n]); err != nil {
+			return err
+		}
+		size -= n
+	}
+	return nil
 }
 
 // rollback removes uploaded temporary chunks
@@ -1415,7 +1447,8 @@ func (f *Fs) okForServerSide(ctx context.Context, src fs.Object, opName string) 
 		return
 	}
 
-	if f.opt.MetaFormat != "simplejson" || !obj.isComposite() {
+	requireMetaHash := obj.isComposite() && f.opt.MetaFormat == "simplejson"
+	if !requireMetaHash && !f.hashAll {
 		ok = true // hash is not required for metadata
 		return
 	}
@@ -1476,7 +1509,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	baseMove := func(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-		return f.baseMove(ctx, src, remote, false)
+		return f.baseMove(ctx, src, remote, delNever)
 	}
 	obj, md5, sha1, ok := f.okForServerSide(ctx, src, "move")
 	if !ok {
@@ -1486,14 +1519,25 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // baseMove chains to the wrapped Move or simulates it by Copy+Delete
-func (f *Fs) baseMove(ctx context.Context, src fs.Object, remote string, deleteDest bool) (fs.Object, error) {
-	var dest fs.Object
-	if deleteDest {
-		var err error
+func (f *Fs) baseMove(ctx context.Context, src fs.Object, remote string, delMode int) (fs.Object, error) {
+	var (
+		dest fs.Object
+		err  error
+	)
+	switch delMode {
+	case delAlways:
 		dest, err = f.base.NewObject(ctx, remote)
-		if err != nil {
-			dest = nil
+	case delFailed:
+		dest, err = operations.Move(ctx, f.base, nil, remote, src)
+		if err == nil {
+			return dest, err
 		}
+		dest, err = f.base.NewObject(ctx, remote)
+	case delNever:
+		// fall thru, the default
+	}
+	if err != nil {
+		dest = nil
 	}
 	return operations.Move(ctx, f.base, dest, remote, src)
 }
@@ -1719,18 +1763,25 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 
 // Hash returns the selected checksum of the file.
 // If no checksum is available it returns "".
-// If a particular hashsum type is not supported, chunker won't fail
-// with `unsupported` error but return the empty hash string.
 //
-// Currently metadata (if not configured as 'none') is kept only for
-// composite files, but for non-chunked small files chunker obtains
-// hashsums from wrapped remote.
-// In the "All" mode chunker will force metadata on all files if
-// particular hashsum type is unsupported by wrapped remote.
+// Hash won't fail with `unsupported` error but return empty
+// hash string if a particular hashsum type is not supported
+//
+// Hash takes hashsum from metadata if available or requests it
+// from wrapped remote for non-chunked files.
+// Metadata (if meta format is not 'none') is by default kept
+// only for composite files. In the "All" hashing mode chunker
+// will force metadata on all files if particular hashsum type
+// is not supported by wrapped remote.
+//
+// Note that Hash prefers the wrapped hashsum for non-chunked
+// file, then tries to read it from metadata. This in theory
+// handles the unusual case when a small file has been tampered
+// on the level of wrapped remote but chunker is unaware of that.
 //
 func (o *Object) Hash(ctx context.Context, hashType hash.Type) (string, error) {
 	if !o.isComposite() {
-		// First, chain to the single wrapped chunk, if possible.
+		// First, chain to the wrapped non-chunked file if possible.
 		if value, err := o.mainChunk().Hash(ctx, hashType); err == nil && value != "" {
 			return value, nil
 		}
@@ -1959,14 +2010,9 @@ func (oi *ObjectInfo) ModTime(ctx context.Context) time.Time {
 	return oi.src.ModTime(ctx)
 }
 
-// Hash returns the selected checksum of the file
-// If no checksum is available it returns ""
-//
-// Hash prefers wrapped hashsum for a non-chunked file, then tries to
-// read it from metadata. This in theory handles an unusual case when
-// a small file has been modified on the level of wrapped remote,
-// but chunker isn't aware of that.
-//
+// Hash returns the selected checksum of the wrapped file
+// It returns "" if no checksum is available or if this
+// info doesn't wrap the complete file.
 func (oi *ObjectInfo) Hash(ctx context.Context, hashType hash.Type) (string, error) {
 	var errUnsupported error
 	switch hashType {
