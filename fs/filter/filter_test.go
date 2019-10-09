@@ -42,7 +42,58 @@ func testFile(t *testing.T, contents string) string {
 	return s
 }
 
-func TestNewFilterFull(t *testing.T) {
+func TestNewFilterForbiddenMixOfFilesFromAndFilterRule(t *testing.T) {
+	Opt := DefaultOpt
+
+	// Set up the input
+	Opt.FilterRule = []string{"- filter1", "- filter1b"}
+	Opt.FilesFrom = []string{testFile(t, "#comment\nfiles1\nfiles2\n")}
+
+	rm := func(p string) {
+		err := os.Remove(p)
+		if err != nil {
+			t.Logf("error removing %q: %v", p, err)
+		}
+	}
+	// Reset the input
+	defer func() {
+		rm(Opt.FilesFrom[0])
+	}()
+
+	_, err := NewFilter(&Opt)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "The usage of --files-from overrides all other filters")
+}
+
+func TestNewFilterWithFilesFromAlone(t *testing.T) {
+	Opt := DefaultOpt
+
+	// Set up the input
+	Opt.FilesFrom = []string{testFile(t, "#comment\nfiles1\nfiles2\n")}
+
+	rm := func(p string) {
+		err := os.Remove(p)
+		if err != nil {
+			t.Logf("error removing %q: %v", p, err)
+		}
+	}
+	// Reset the input
+	defer func() {
+		rm(Opt.FilesFrom[0])
+	}()
+
+	f, err := NewFilter(&Opt)
+	require.NoError(t, err)
+	assert.Len(t, f.files, 2)
+	for _, name := range []string{"files1", "files2"} {
+		_, ok := f.files[name]
+		if !ok {
+			t.Errorf("Didn't find file %q in f.files", name)
+		}
+	}
+}
+
+func TestNewFilterFullExceptFilesFromOpt(t *testing.T) {
 	Opt := DefaultOpt
 
 	mins := fs.SizeSuffix(100 * 1024)
@@ -56,7 +107,6 @@ func TestNewFilterFull(t *testing.T) {
 	Opt.ExcludeFrom = []string{testFile(t, "#comment\nexclude2\nexclude3\n")}
 	Opt.IncludeRule = []string{"include1"}
 	Opt.IncludeFrom = []string{testFile(t, "#comment\ninclude2\ninclude3\n")}
-	Opt.FilesFrom = []string{testFile(t, "#comment\nfiles1\nfiles2\n")}
 	Opt.MinSize = mins
 	Opt.MaxSize = maxs
 
@@ -71,7 +121,6 @@ func TestNewFilterFull(t *testing.T) {
 		rm(Opt.FilterFrom[0])
 		rm(Opt.ExcludeFrom[0])
 		rm(Opt.IncludeFrom[0])
-		rm(Opt.FilesFrom[0])
 	}()
 
 	f, err := NewFilter(&Opt)
@@ -96,13 +145,6 @@ func TestNewFilterFull(t *testing.T) {
 + ^.*$
 - ^.*$`
 	assert.Equal(t, want, got)
-	assert.Len(t, f.files, 2)
-	for _, name := range []string{"files1", "files2"} {
-		_, ok := f.files[name]
-		if !ok {
-			t.Errorf("Didn't find file %q in f.files", name)
-		}
-	}
 	assert.False(t, f.InActive())
 }
 
