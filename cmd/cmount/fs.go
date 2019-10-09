@@ -441,6 +441,11 @@ func (fsys *FS) Rename(oldPath string, newPath string) (errc int) {
 	return translateError(fsys.VFS.Rename(oldPath, newPath))
 }
 
+// Windows sometimes seems to send times that are the epoch which is
+// 1601-01-01 +/- timezone so filter out times that are earlier than
+// this.
+var invalidDateCutoff = time.Date(1601, 1, 2, 0, 0, 0, 0, time.UTC)
+
 // Utimens changes the access and modification times of a file.
 func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	defer log.Trace(path, "tmsp=%+v", tmsp)("errc=%d", &errc)
@@ -448,12 +453,16 @@ func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	if errc != 0 {
 		return errc
 	}
-	var t time.Time
 	if tmsp == nil || len(tmsp) < 2 {
-		t = time.Now()
-	} else {
-		t = tmsp[1].Time()
+		fs.Debugf(path, "Utimens: Not setting time as timespec isn't complete: %v", tmsp)
+		return 0
 	}
+	t := tmsp[1].Time()
+	if t.Before(invalidDateCutoff) {
+		fs.Debugf(path, "Utimens: Not setting out of range time: %v", t)
+		return 0
+	}
+	fs.Debugf(path, "Utimens: SetModTime: %v", t)
 	return translateError(node.SetModTime(t))
 }
 
