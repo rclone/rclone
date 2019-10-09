@@ -46,20 +46,22 @@ remote> remote:path
 Files larger than chunk size will be split in chunks.
 Enter a size with suffix k,M,G,T. Press Enter for the default ("2G").
 chunk_size> 100M
-Choose how chunker handles hash sums.
+Choose how chunker handles hash sums. All modes but "none" require metadata.
 Enter a string value. Press Enter for the default ("md5").
 Choose a number from below, or type in your own value
-   / Chunker can pass any hash supported by wrapped remote
- 1 | for non-chunked files but returns nothing otherwise.
+ 1 / Pass any hash supported by wrapped remote for non-chunked files, return nothing otherwise
    \ "none"
- 2 / MD5 for composite files. Requires "simplejson".
+ 2 / MD5 for composite files
    \ "md5"
- 3 / SHA1 for composite files. Requires "simplejson".
+ 3 / SHA1 for composite files
    \ "sha1"
-   / Copying a file to chunker will request MD5 from the source
- 4 | falling back to SHA1 if unsupported. Requires "simplejson".
+ 4 / MD5 for all files
+   \ "md5all"
+ 5 / SHA1 for all files
+   \ "sha1all"
+ 6 / Copying a file to chunker will request MD5 from the source falling back to SHA1 if unsupported
    \ "md5quick"
- 5 / Similar to "md5quick" but prefers SHA1 over MD5. Requires "simplejson".
+ 7 / Similar to "md5quick" but prefers SHA1 over MD5
    \ "sha1quick"
 hash_type> md5
 Edit advanced config? (y/n)
@@ -190,8 +192,8 @@ Chunker supports hashsums only when a compatible metadata is present.
 Hence, if you choose metadata format of `none`, chunker will report hashsum
 as `UNSUPPORTED`.
 
-Please note that metadata is stored only for composite files. If a file
-is small (smaller than configured chunk size), chunker will transparently
+Please note that by default metadata is stored only for composite files.
+If a file is smaller than configured chunk size, chunker will transparently
 redirect hash requests to wrapped remote, so support depends on that.
 You will see the empty string as a hashsum of requested type for small
 files if the wrapped remote doesn't support it.
@@ -203,6 +205,12 @@ Since chunker keeps hashes for composite files and falls back to the
 wrapped remote hash for non-chunked ones, we advise you to choose the same
 hash type as supported by wrapped remote so that your file listings
 look coherent.
+
+If your storage backend does not support MD5 or SHA1 but you need consistent
+file hashing, configure chunker with `md5all` or `sha1all`. These two modes
+guarantee given hash for all files. If wrapped remote doesn't support it,
+chunker will then add metadata to all files, even small. However, this can
+double the amount of small files in storage and incur additional service charges.
 
 Normally, when a file is copied to chunker controlled remote, chunker
 will ask the file source for compatible file hash and revert to on-the-fly
@@ -309,7 +317,7 @@ Files larger than chunk size will be split in chunks.
 
 #### --chunker-hash-type
 
-Choose how chunker handles hash sums.
+Choose how chunker handles hash sums. All modes but "none" require metadata.
 
 - Config:      hash_type
 - Env Var:     RCLONE_CHUNKER_HASH_TYPE
@@ -317,17 +325,19 @@ Choose how chunker handles hash sums.
 - Default:     "md5"
 - Examples:
     - "none"
-        - Chunker can pass any hash supported by wrapped remote
-        - for non-chunked files but returns nothing otherwise.
+        - Pass any hash supported by wrapped remote for non-chunked files, return nothing otherwise
     - "md5"
-        - MD5 for composite files. Requires "simplejson".
+        - MD5 for composite files
     - "sha1"
-        - SHA1 for composite files. Requires "simplejson".
+        - SHA1 for composite files
+    - "md5all"
+        - MD5 for all files
+    - "sha1all"
+        - SHA1 for all files
     - "md5quick"
-        - Copying a file to chunker will request MD5 from the source
-        - falling back to SHA1 if unsupported. Requires "simplejson".
+        - Copying a file to chunker will request MD5 from the source falling back to SHA1 if unsupported
     - "sha1quick"
-        - Similar to "md5quick" but prefers SHA1 over MD5. Requires "simplejson".
+        - Similar to "md5quick" but prefers SHA1 over MD5
 
 ### Advanced Options
 
