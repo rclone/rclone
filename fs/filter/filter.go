@@ -191,7 +191,12 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 			return nil, err
 		}
 	}
+
+	inActive := f.InActive()
 	for _, rule := range f.Opt.FilesFrom {
+		if !inActive {
+			return nil, fmt.Errorf("The usage of --files-from overrides all other filters, it should be used alone")
+		}
 		f.initAddFile() // init to show --files-from set even if no files within
 		err := forEachLine(rule, func(line string) error {
 			return f.AddFile(line)
