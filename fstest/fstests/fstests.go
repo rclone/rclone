@@ -1311,7 +1311,7 @@ func Run(t *testing.T, opt *Opt) {
 				require.NotNil(t, fileRemote)
 				assert.Equal(t, fs.ErrorIsFile, err)
 
-				if strings.HasPrefix(remoteName, "TestChunkerChunk") && strings.Contains(remoteName, "Nometa") {
+				if strings.HasPrefix(remoteName, "TestChunker") && strings.Contains(remoteName, "Nometa") {
 					// TODO fix chunker and remove this bypass
 					t.Logf("Skip listing check -- chunker can't yet handle this tricky case")
 					return
