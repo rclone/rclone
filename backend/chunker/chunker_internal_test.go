@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -276,6 +277,11 @@ func testSmallFileInternals(t *testing.T, f *Fs) {
 			assert.Nil(t, o.main)
 			assert.True(t, o.isComposite()) // sorry, sometimes a name is misleading
 			assert.Equal(t, 1, len(o.chunks))
+		case f.hashAll:
+			// Consistent hashing forces meta object on small files too
+			assert.NotNil(t, o.main)
+			assert.True(t, o.isComposite())
+			assert.Equal(t, 1, len(o.chunks))
 		default:
 			// normally non-chunked file is kept in the Object's main field
 			assert.NotNil(t, o.main)
@@ -300,6 +306,24 @@ func testSmallFileInternals(t *testing.T, f *Fs) {
 		_ = r.Close()
 	}
 
+	checkHashsum := func(obj fs.Object) {
+		var ht hash.Type
+		switch {
+		case !f.hashAll:
+			return
+		case f.useMD5:
+			ht = hash.MD5
+		case f.useSHA1:
+			ht = hash.SHA1
+		default:
+			return
+		}
+		// even empty files must have hashsum in consistent mode
+		sum, err := obj.Hash(ctx, ht)
+		assert.NoError(t, err)
+		assert.NotEqual(t, sum, "")
+	}
+
 	checkSmallFile := func(name, contents string) {
 		filename := path.Join(dir, name)
 		item := fstest.Item{Path: filename, ModTime: modTime}
@@ -307,6 +331,7 @@ func testSmallFileInternals(t *testing.T, f *Fs) {
 		assert.NotNil(t, put)
 		checkSmallFileInternals(put)
 		checkContents(put, contents)
+		checkHashsum(put)
 
 		// objects returned by Put and NewObject must have similar structure
 		obj, err := f.NewObject(ctx, filename)
@@ -314,6 +339,7 @@ func testSmallFileInternals(t *testing.T, f *Fs) {
 		assert.NotNil(t, obj)
 		checkSmallFileInternals(obj)
 		checkContents(obj, contents)
+		checkHashsum(obj)
 
 		_ = obj.Remove(ctx)
 		_ = put.Remove(ctx) // for good
