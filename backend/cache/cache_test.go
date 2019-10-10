@@ -19,5 +19,6 @@ func TestIntegration(t *testing.T) {
 		NilObject:                    (*cache.Object)(nil),
 		UnimplementableFsMethods:     []string{"PublicLink", "MergeDirs", "OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType", "ID", "GetTier", "SetTier"},
+		SkipInvalidUTF8:              true, // invalid UTF-8 confuses the cache
 	})
 }

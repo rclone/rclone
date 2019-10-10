@@ -260,6 +260,7 @@ type Opt struct {
 	UnimplementableObjectMethods []string // List of methods which can't be implemented in this wrapping Fs
 	SkipFsCheckWrap              bool     // if set skip FsCheckWrap
 	SkipObjectCheckWrap          bool     // if set skip ObjectCheckWrap
+	SkipInvalidUTF8              bool     // if set skip invalid UTF-8 checks
 }
 
 // returns true if x is found in ss
@@ -564,6 +565,9 @@ func Run(t *testing.T, opt *Opt) {
 				{"invalid UTF-8", "invalid utf-8\xfe"},
 			} {
 				t.Run(test.name, func(t *testing.T) {
+					if opt.SkipInvalidUTF8 && test.name == "invalid UTF-8" {
+						t.Skip("Skipping " + test.name)
+					}
 					// turn raw strings into Standard encoding
 					fileName := encoder.Standard.Encode(test.path)
 					dirName := fileName
