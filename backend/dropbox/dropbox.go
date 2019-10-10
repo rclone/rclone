@@ -388,8 +388,7 @@ func (f *Fs) getMetadata(objPath string) (entry files.IsMetadata, notFound bool,
 	if err != nil {
 		switch e := err.(type) {
 		case files.GetMetadataAPIError:
-			switch e.EndpointError.Path.Tag {
-			case files.LookupErrorNotFound:
+			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
 				notFound = true
 				err = nil
 			}
@@ -489,8 +488,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if err != nil {
 				switch e := err.(type) {
 				case files.ListFolderAPIError:
-					switch e.EndpointError.Path.Tag {
-					case files.LookupErrorNotFound:
+					if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
 						err = fs.ErrorDirNotFound
 					}
 				}
@@ -1012,7 +1010,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	switch e := err.(type) {
 	case files.DownloadAPIError:
 		// Don't attempt to retry copyright violation errors
-		if e.EndpointError.Path.Tag == files.LookupErrorRestrictedContent {
+		if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorRestrictedContent {
 			return nil, fserrors.NoRetryError(err)
 		}
 	}
