@@ -1489,7 +1489,7 @@ func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, Comp
 // transferred or not.
 func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 	if dst == nil {
-		fs.Debugf(src, "Couldn't find file - need to transfer")
+		fs.Debugf(src, "Need to transfer - File not found at Destination")
 		return true
 	}
 	// If we should ignore existing files, don't transfer
