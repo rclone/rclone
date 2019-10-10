@@ -65,6 +65,11 @@ func init() {
 				Help:     "Do not verify the TLS certificate of the server",
 				Default:  false,
 				Advanced: true,
+			}, {
+				Name:     "disable_epsv",
+				Help:     "Disable using EPSV even if server advertises support",
+				Default:  false,
+				Advanced: true,
 			},
 		},
 	})
@@ -79,6 +84,7 @@ type Options struct {
 	TLS               bool   `config:"tls"`
 	Concurrency       int    `config:"concurrency"`
 	SkipVerifyTLSCert bool   `config:"no_check_certificate"`
+	DisableEPSV       bool   `config:"disable_epsv"`
 }
 
 // Fs represents a remote FTP server
@@ -143,6 +149,9 @@ func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
 		}
 		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
+	}
+	if f.opt.DisableEPSV {
+		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
 	}
 	c, err := ftp.Dial(f.dialAddr, ftpConfig...)
 	if err != nil {
