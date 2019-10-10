@@ -298,3 +298,4 @@ Contributors
   * Sezal Agrawal <sezalagrawal@gmail.com>
   * Tyler <TylerNakamura@users.noreply.github.com>
   * Brett Dutro <brett.dutro@gmail.com>
+  * Vighnesh SK <booterror99@gmail.com>
