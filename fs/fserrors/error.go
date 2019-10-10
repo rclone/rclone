@@ -236,14 +236,14 @@ func IsRetryAfterError(err error) bool {
 func Cause(cause error) (retriable bool, err error) {
 	errors.Walk(cause, func(c error) bool {
 		// Check for net error Timeout()
-		if x, ok := err.(interface {
+		if x, ok := c.(interface {
 			Timeout() bool
 		}); ok && x.Timeout() {
 			retriable = true
 		}
 
 		// Check for net error Temporary()
-		if x, ok := err.(interface {
+		if x, ok := c.(interface {
 			Temporary() bool
 		}); ok && x.Temporary() {
 			retriable = true
