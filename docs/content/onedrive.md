@@ -124,14 +124,11 @@ rclone uses a pair of Client ID and Key shared by all rclone users when performi
 If you are having problems with them (E.g., seeing a lot of throttling), you can get your own
 Client ID and Key by following the steps below:
 
-1. Open https://apps.dev.microsoft.com/#/appList, then click `Add an app` (Choose `Converged applications` if applicable)
-2. Enter a name for your app, and click continue. Copy and keep the `Application Id` under the app name for later use.
-3. Under section `Application Secrets`, click `Generate New Password`. Copy and keep that password for later use.
-4. Under section `Platforms`, click `Add platform`, then `Web`. Enter `http://localhost:53682/` in
-`Redirect URLs`.
-5. Under section `Microsoft Graph Permissions`, `Add` these `delegated permissions`:
-`Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`.
-6. Scroll to the bottom and click `Save`.
+1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade, then click `New registration`.
+2. Enter a name for your app, choose your account type, select `Web` in `Redirect URI` Enter `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
+3. Under `manage` select `Certificates & secrets`, click `New client secret`. Copy and keep that secret for later use.
+4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
+5. Search and select the follwing permssions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`. Once selected click `Add permissions` at the bottom.
 
 Now the application is complete. Run `rclone config` to create or edit a OneDrive remote.
 Supply the app ID and password as Client ID and Secret, respectively. rclone will walk you through the remaining steps.
