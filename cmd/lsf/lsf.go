@@ -28,8 +28,8 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	flags := commandDefintion.Flags()
+	cmd.Root.AddCommand(commandDefinition)
+	flags := commandDefinition.Flags()
 	flags.StringVarP(&format, "format", "F", "p", "Output format - see  help for details")
 	flags.StringVarP(&separator, "separator", "s", ";", "Separator for the items in the format.")
 	flags.BoolVarP(&dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
@@ -38,10 +38,10 @@ func init() {
 	flags.BoolVarP(&dirsOnly, "dirs-only", "", false, "Only list directories.")
 	flags.BoolVarP(&csv, "csv", "", false, "Output in CSV format.")
 	flags.BoolVarP(&absolute, "absolute", "", false, "Put a leading / in front of path names.")
-	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
+	commandDefinition.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "lsf remote:path",
 	Short: `List directories and objects in remote:path formatted for parsing`,
 	Long: `

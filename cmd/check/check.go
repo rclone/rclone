@@ -15,12 +15,12 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&download, "download", "", download, "Check by downloading rather than with hash.")
-	commandDefintion.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on remote")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&download, "download", "", download, "Check by downloading rather than with hash.")
+	commandDefinition.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on remote")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "check source:path dest:path",
 	Short: `Checks the files in the source and destination match.`,
 	Long: `

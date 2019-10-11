@@ -28,8 +28,8 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	flags := commandDefintion.Flags()
+	cmd.Root.AddCommand(commandDefinition)
+	flags := commandDefinition.Flags()
 	// List
 	flags.BoolVarP(&opts.All, "all", "a", false, "All files are listed (list . files too).")
 	flags.BoolVarP(&opts.DirsOnly, "dirs-only", "d", false, "List directories only.")
@@ -64,7 +64,7 @@ func init() {
 	flags.BoolVarP(&opts.Colorize, "color", "C", false, "Turn colorization on always.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "tree remote:path",
 	Short: `List the contents of the remote in a tree like fashion.`,
 	Long: `

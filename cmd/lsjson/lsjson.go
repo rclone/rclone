@@ -18,17 +18,17 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&opt.Recurse, "recursive", "R", false, "Recurse into the listing.")
-	commandDefintion.Flags().BoolVarP(&opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer).")
-	commandDefintion.Flags().BoolVarP(&opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
-	commandDefintion.Flags().BoolVarP(&opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names.")
-	commandDefintion.Flags().BoolVarP(&opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
-	commandDefintion.Flags().BoolVarP(&opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
-	commandDefintion.Flags().BoolVarP(&opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing.")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&opt.Recurse, "recursive", "R", false, "Recurse into the listing.")
+	commandDefinition.Flags().BoolVarP(&opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer).")
+	commandDefinition.Flags().BoolVarP(&opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
+	commandDefinition.Flags().BoolVarP(&opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names.")
+	commandDefinition.Flags().BoolVarP(&opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
+	commandDefinition.Flags().BoolVarP(&opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
+	commandDefinition.Flags().BoolVarP(&opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "lsjson remote:path",
 	Short: `List directories and objects in the path in JSON format.`,
 	Long: `List directories and objects in the path in JSON format.
