@@ -7,6 +7,7 @@ import (
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -19,7 +20,8 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
+	cmdFlag := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlag, &oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
 }
 
 var commandDefinition = &cobra.Command{

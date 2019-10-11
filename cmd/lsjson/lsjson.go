@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -19,13 +20,14 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().BoolVarP(&opt.Recurse, "recursive", "R", false, "Recurse into the listing.")
-	commandDefinition.Flags().BoolVarP(&opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer).")
-	commandDefinition.Flags().BoolVarP(&opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
-	commandDefinition.Flags().BoolVarP(&opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names.")
-	commandDefinition.Flags().BoolVarP(&opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
-	commandDefinition.Flags().BoolVarP(&opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
-	commandDefinition.Flags().BoolVarP(&opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing.")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &opt.Recurse, "recursive", "R", false, "Recurse into the listing.")
+	flags.BoolVarP(cmdFlags, &opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer).")
+	flags.BoolVarP(cmdFlags, &opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
+	flags.BoolVarP(cmdFlags, &opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names.")
+	flags.BoolVarP(cmdFlags, &opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
+	flags.BoolVarP(cmdFlags, &opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
+	flags.BoolVarP(cmdFlags, &opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing.")
 }
 
 var commandDefinition = &cobra.Command{

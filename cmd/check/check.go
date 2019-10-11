@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -16,8 +17,9 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().BoolVarP(&download, "download", "", download, "Check by downloading rather than with hash.")
-	commandDefinition.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on remote")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by downloading rather than with hash.")
+	flags.BoolVarP(cmdFlags, &oneway, "one-way", "", oneway, "Check one way only, source files must exist on remote")
 }
 
 var commandDefinition = &cobra.Command{

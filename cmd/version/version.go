@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/version"
 	"github.com/spf13/cobra"
 )
@@ -20,8 +21,8 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	flags := commandDefinition.Flags()
-	flags.BoolVarP(&check, "check", "", false, "Check for new version.")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &check, "check", "", false, "Check for new version.")
 }
 
 var commandDefinition = &cobra.Command{

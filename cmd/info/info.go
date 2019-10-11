@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/info/internal"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/lib/random"
@@ -42,12 +43,13 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().StringVarP(&writeJSON, "write-json", "", "", "Write results to file.")
-	commandDefinition.Flags().BoolVarP(&checkNormalization, "check-normalization", "", true, "Check UTF-8 Normalization.")
-	commandDefinition.Flags().BoolVarP(&checkControl, "check-control", "", true, "Check control characters.")
-	commandDefinition.Flags().DurationVarP(&uploadWait, "upload-wait", "", 0, "Wait after writing a file.")
-	commandDefinition.Flags().BoolVarP(&checkLength, "check-length", "", true, "Check max filename length.")
-	commandDefinition.Flags().BoolVarP(&checkStreaming, "check-streaming", "", true, "Check uploads with indeterminate file size.")
+	cmdFlags := commandDefinition.Flags()
+	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file.")
+	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", true, "Check UTF-8 Normalization.")
+	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", true, "Check control characters.")
+	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file.")
+	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", true, "Check max filename length.")
+	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", true, "Check uploadxs with indeterminate file size.")
 }
 
 var commandDefinition = &cobra.Command{

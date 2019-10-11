@@ -18,8 +18,8 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	flagSet := commandDefinition.Flags()
-	flags.BoolVarP(flagSet, &Reverse, "reverse", "", Reverse, "Reverse cryptdecode, encrypts filenames")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &Reverse, "reverse", "", Reverse, "Reverse cryptdecode, encrypts filenames")
 }
 
 var commandDefinition = &cobra.Command{

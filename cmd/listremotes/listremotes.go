@@ -6,6 +6,7 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +17,8 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().BoolVarP(&listLong, "long", "", listLong, "Show the type as well as names.")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &listLong, "long", "", listLong, "Show the type as well as names.")
 }
 
 var commandDefinition = &cobra.Command{

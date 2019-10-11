@@ -11,6 +11,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/cobra"
 )
@@ -271,7 +272,7 @@ var (
 )
 
 func init() {
-	configUserInfoCommand.Flags().BoolVar(&jsonOutput, "json", false, "Format output as JSON")
+	flags.BoolVarP(configUserInfoCommand.Flags(), &jsonOutput, "json", "", false, "Format output as JSON")
 }
 
 var configUserInfoCommand = &cobra.Command{
