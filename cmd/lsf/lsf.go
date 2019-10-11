@@ -10,6 +10,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -29,16 +30,16 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	flags := commandDefinition.Flags()
-	flags.StringVarP(&format, "format", "F", "p", "Output format - see  help for details")
-	flags.StringVarP(&separator, "separator", "s", ";", "Separator for the items in the format.")
-	flags.BoolVarP(&dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
-	flags.VarP(&hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
-	flags.BoolVarP(&filesOnly, "files-only", "", false, "Only list files.")
-	flags.BoolVarP(&dirsOnly, "dirs-only", "", false, "Only list directories.")
-	flags.BoolVarP(&csv, "csv", "", false, "Output in CSV format.")
-	flags.BoolVarP(&absolute, "absolute", "", false, "Put a leading / in front of path names.")
-	commandDefinition.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
+	cmdFlags := commandDefinition.Flags()
+	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details")
+	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format.")
+	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
+	flags.FVarP(cmdFlags, &hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
+	flags.BoolVarP(cmdFlags, &filesOnly, "files-only", "", false, "Only list files.")
+	flags.BoolVarP(cmdFlags, &dirsOnly, "dirs-only", "", false, "Only list directories.")
+	flags.BoolVarP(cmdFlags, &csv, "csv", "", false, "Output in CSV format.")
+	flags.BoolVarP(cmdFlags, &absolute, "absolute", "", false, "Put a leading / in front of path names.")
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
 var commandDefinition = &cobra.Command{

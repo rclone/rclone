@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -23,11 +24,12 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().Int64VarP(&head, "head", "", head, "Only print the first N characters.")
-	commandDefinition.Flags().Int64VarP(&tail, "tail", "", tail, "Only print the last N characters.")
-	commandDefinition.Flags().Int64VarP(&offset, "offset", "", offset, "Start printing at offset N (or from end if -ve).")
-	commandDefinition.Flags().Int64VarP(&count, "count", "", count, "Only print N characters.")
-	commandDefinition.Flags().BoolVarP(&discard, "discard", "", discard, "Discard the output instead of printing.")
+	cmdFlags := commandDefinition.Flags()
+	flags.Int64VarP(cmdFlags, &head, "head", "", head, "Only print the first N characters.")
+	flags.Int64VarP(cmdFlags, &tail, "tail", "", tail, "Only print the last N characters.")
+	flags.Int64VarP(cmdFlags, &offset, "offset", "", offset, "Start printing at offset N (or from end if -ve).")
+	flags.Int64VarP(cmdFlags, &count, "count", "", count, "Only print N characters.")
+	flags.BoolVarP(cmdFlags, &discard, "discard", "", discard, "Discard the output instead of printing.")
 }
 
 var commandDefinition = &cobra.Command{

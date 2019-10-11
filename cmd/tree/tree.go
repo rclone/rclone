@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/walk"
@@ -29,39 +30,39 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	flags := commandDefinition.Flags()
+	cmdFlags := commandDefinition.Flags()
 	// List
-	flags.BoolVarP(&opts.All, "all", "a", false, "All files are listed (list . files too).")
-	flags.BoolVarP(&opts.DirsOnly, "dirs-only", "d", false, "List directories only.")
-	flags.BoolVarP(&opts.FullPath, "full-path", "", false, "Print the full path prefix for each file.")
-	//flags.BoolVarP(&opts.IgnoreCase, "ignore-case", "", false, "Ignore case when pattern matching.")
-	flags.BoolVarP(&noReport, "noreport", "", false, "Turn off file/directory count at end of tree listing.")
-	// flags.BoolVarP(&opts.FollowLink, "follow", "l", false, "Follow symbolic links like directories.")
-	flags.IntVarP(&opts.DeepLevel, "level", "", 0, "Descend only level directories deep.")
-	// flags.StringVarP(&opts.Pattern, "pattern", "P", "", "List only those files that match the pattern given.")
-	// flags.StringVarP(&opts.IPattern, "exclude", "", "", "Do not list files that match the given pattern.")
-	flags.StringVarP(&outFileName, "output", "o", "", "Output to file instead of stdout.")
+	flags.BoolVarP(cmdFlags, &opts.All, "all", "a", false, "All files are listed (list . files too).")
+	flags.BoolVarP(cmdFlags, &opts.DirsOnly, "dirs-only", "d", false, "List directories only.")
+	flags.BoolVarP(cmdFlags, &opts.FullPath, "full-path", "", false, "Print the full path prefix for each file.")
+	//flags.BoolVarP(cmdFlags, &opts.IgnoreCase, "ignore-case", "", false, "Ignore case when pattern matching.")
+	flags.BoolVarP(cmdFlags, &noReport, "noreport", "", false, "Turn off file/directory count at end of tree listing.")
+	// flags.BoolVarP(cmdFlags, &opts.FollowLink, "follow", "l", false, "Follow symbolic links like directories.")
+	flags.IntVarP(cmdFlags, &opts.DeepLevel, "level", "", 0, "Descend only level directories deep.")
+	// flags.StringVarP(cmdFlags, &opts.Pattern, "pattern", "P", "", "List only those files that match the pattern given.")
+	// flags.StringVarP(cmdFlags, &opts.IPattern, "exclude", "", "", "Do not list files that match the given pattern.")
+	flags.StringVarP(cmdFlags, &outFileName, "output", "o", "", "Output to file instead of stdout.")
 	// Files
-	flags.BoolVarP(&opts.ByteSize, "size", "s", false, "Print the size in bytes of each file.")
-	flags.BoolVarP(&opts.UnitSize, "human", "", false, "Print the size in a more human readable way.")
-	flags.BoolVarP(&opts.FileMode, "protections", "p", false, "Print the protections for each file.")
-	// flags.BoolVarP(&opts.ShowUid, "uid", "", false, "Displays file owner or UID number.")
-	// flags.BoolVarP(&opts.ShowGid, "gid", "", false, "Displays file group owner or GID number.")
-	flags.BoolVarP(&opts.Quotes, "quote", "Q", false, "Quote filenames with double quotes.")
-	flags.BoolVarP(&opts.LastMod, "modtime", "D", false, "Print the date of last modification.")
-	// flags.BoolVarP(&opts.Inodes, "inodes", "", false, "Print inode number of each file.")
-	// flags.BoolVarP(&opts.Device, "device", "", false, "Print device ID number to which each file belongs.")
+	flags.BoolVarP(cmdFlags, &opts.ByteSize, "size", "s", false, "Print the size in bytes of each file.")
+	flags.BoolVarP(cmdFlags, &opts.UnitSize, "human", "", false, "Print the size in a more human readable way.")
+	flags.BoolVarP(cmdFlags, &opts.FileMode, "protections", "p", false, "Print the protections for each file.")
+	// flags.BoolVarP(cmdFlags, &opts.ShowUid, "uid", "", false, "Displays file owner or UID number.")
+	// flags.BoolVarP(cmdFlags, &opts.ShowGid, "gid", "", false, "Displays file group owner or GID number.")
+	flags.BoolVarP(cmdFlags, &opts.Quotes, "quote", "Q", false, "Quote filenames with double quotes.")
+	flags.BoolVarP(cmdFlags, &opts.LastMod, "modtime", "D", false, "Print the date of last modification.")
+	// flags.BoolVarP(cmdFlags, &opts.Inodes, "inodes", "", false, "Print inode number of each file.")
+	// flags.BoolVarP(cmdFlags, &opts.Device, "device", "", false, "Print device ID number to which each file belongs.")
 	// Sort
-	flags.BoolVarP(&opts.NoSort, "unsorted", "U", false, "Leave files unsorted.")
-	flags.BoolVarP(&opts.VerSort, "version", "", false, "Sort files alphanumerically by version.")
-	flags.BoolVarP(&opts.ModSort, "sort-modtime", "t", false, "Sort files by last modification time.")
-	flags.BoolVarP(&opts.CTimeSort, "sort-ctime", "", false, "Sort files by last status change time.")
-	flags.BoolVarP(&opts.ReverSort, "sort-reverse", "r", false, "Reverse the order of the sort.")
-	flags.BoolVarP(&opts.DirSort, "dirsfirst", "", false, "List directories before files (-U disables).")
-	flags.StringVarP(&sort, "sort", "", "", "Select sort: name,version,size,mtime,ctime.")
+	flags.BoolVarP(cmdFlags, &opts.NoSort, "unsorted", "U", false, "Leave files unsorted.")
+	flags.BoolVarP(cmdFlags, &opts.VerSort, "version", "", false, "Sort files alphanumerically by version.")
+	flags.BoolVarP(cmdFlags, &opts.ModSort, "sort-modtime", "t", false, "Sort files by last modification time.")
+	flags.BoolVarP(cmdFlags, &opts.CTimeSort, "sort-ctime", "", false, "Sort files by last status change time.")
+	flags.BoolVarP(cmdFlags, &opts.ReverSort, "sort-reverse", "r", false, "Reverse the order of the sort.")
+	flags.BoolVarP(cmdFlags, &opts.DirSort, "dirsfirst", "", false, "List directories before files (-U disables).")
+	flags.StringVarP(cmdFlags, &sort, "sort", "", "", "Select sort: name,version,size,mtime,ctime.")
 	// Graphics
-	flags.BoolVarP(&opts.NoIndent, "noindent", "i", false, "Don't print indentation lines.")
-	flags.BoolVarP(&opts.Colorize, "color", "C", false, "Turn colorization on always.")
+	flags.BoolVarP(cmdFlags, &opts.NoIndent, "noindent", "i", false, "Don't print indentation lines.")
+	flags.BoolVarP(cmdFlags, &opts.Colorize, "color", "C", false, "Turn colorization on always.")
 }
 
 var commandDefinition = &cobra.Command{

@@ -82,10 +82,10 @@ func Int64P(name, shorthand string, value int64, usage string) (out *int64) {
 	return out
 }
 
-// IntVar64P defines a flag which can be overridden by an environment variable
+// Int64VarP defines a flag which can be overridden by an environment variable
 //
 // It is a thin wrapper around pflag.Int64VarP
-func IntVar64P(flags *pflag.FlagSet, p *int64, name, shorthand string, value int64, usage string) {
+func Int64VarP(flags *pflag.FlagSet, p *int64, name, shorthand string, value int64, usage string) {
 	flags.Int64VarP(p, name, shorthand, value, usage)
 	setDefaultFromEnv(flags, name)
 }
