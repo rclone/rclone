@@ -299,3 +299,4 @@ Contributors
   * Tyler <TylerNakamura@users.noreply.github.com>
   * Brett Dutro <brett.dutro@gmail.com>
   * Vighnesh SK <booterror99@gmail.com>
+  * Arijit Biswas <dibbyo456@gmail.com>
