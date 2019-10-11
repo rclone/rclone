@@ -29,16 +29,16 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&noOutput, "no-output", "", noOutput, "If set don't output the JSON result.")
-	commandDefintion.Flags().StringVarP(&url, "url", "", url, "URL to connect to rclone remote control.")
-	commandDefintion.Flags().StringVarP(&jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args.")
-	commandDefintion.Flags().StringVarP(&authUser, "user", "", "", "Username to use to rclone remote control.")
-	commandDefintion.Flags().StringVarP(&authPass, "pass", "", "", "Password to use to connect to rclone remote control.")
-	commandDefintion.Flags().BoolVarP(&loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP.")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&noOutput, "no-output", "", noOutput, "If set don't output the JSON result.")
+	commandDefinition.Flags().StringVarP(&url, "url", "", url, "URL to connect to rclone remote control.")
+	commandDefinition.Flags().StringVarP(&jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args.")
+	commandDefinition.Flags().StringVarP(&authUser, "user", "", "", "Username to use to rclone remote control.")
+	commandDefinition.Flags().StringVarP(&authPass, "pass", "", "", "Password to use to connect to rclone remote control.")
+	commandDefinition.Flags().BoolVarP(&loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "rc commands parameter",
 	Short: `Run a command against a running rclone.`,
 	Long: `

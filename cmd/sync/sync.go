@@ -14,11 +14,11 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "sync source:path dest:path",
 	Short: `Make source and dest identical, modifying destination only.`,
 	Long: `

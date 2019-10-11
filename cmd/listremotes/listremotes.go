@@ -15,11 +15,11 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&listLong, "long", "", listLong, "Show the type as well as names.")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&listLong, "long", "", listLong, "Show the type as well as names.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "listremotes",
 	Short: `List all the remotes in the config file.`,
 	Long: `

@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "link remote:path",
 	Short: `Generate public link to file/folder.`,
 	Long: `

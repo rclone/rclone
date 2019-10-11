@@ -16,12 +16,12 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&deleteEmptySrcDirs, "delete-empty-src-dirs", "", deleteEmptySrcDirs, "Delete empty source dirs after move")
-	commandDefintion.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after move")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&deleteEmptySrcDirs, "delete-empty-src-dirs", "", deleteEmptySrcDirs, "Delete empty source dirs after move")
+	commandDefinition.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after move")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "move source:path dest:path",
 	Short: `Move files from source to dest.`,
 	Long: `

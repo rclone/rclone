@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "moveto source:path dest:path",
 	Short: `Move file or directory from source to dest.`,
 	Long: `

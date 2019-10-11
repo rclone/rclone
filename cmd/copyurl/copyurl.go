@@ -14,11 +14,11 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&autoFilename, "auto-filename", "a", autoFilename, "Get the file name from the url and use it for destination file path")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&autoFilename, "auto-filename", "a", autoFilename, "Get the file name from the url and use it for destination file path")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "copyurl https://example.com dest:path",
 	Short: `Copy url content to dest.`,
 	Long: `

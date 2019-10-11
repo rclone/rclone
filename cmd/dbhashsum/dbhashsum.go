@@ -12,10 +12,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "dbhashsum remote:path",
 	Short: `Produces a Dropbox hash file for all the objects in the path.`,
 	Long: `

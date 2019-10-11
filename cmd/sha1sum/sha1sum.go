@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "sha1sum remote:path",
 	Short: `Produces an sha1sum file for all the objects in the path.`,
 	Long: `

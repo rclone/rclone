@@ -22,15 +22,15 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().Int64VarP(&head, "head", "", head, "Only print the first N characters.")
-	commandDefintion.Flags().Int64VarP(&tail, "tail", "", tail, "Only print the last N characters.")
-	commandDefintion.Flags().Int64VarP(&offset, "offset", "", offset, "Start printing at offset N (or from end if -ve).")
-	commandDefintion.Flags().Int64VarP(&count, "count", "", count, "Only print N characters.")
-	commandDefintion.Flags().BoolVarP(&discard, "discard", "", discard, "Discard the output instead of printing.")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().Int64VarP(&head, "head", "", head, "Only print the first N characters.")
+	commandDefinition.Flags().Int64VarP(&tail, "tail", "", tail, "Only print the last N characters.")
+	commandDefinition.Flags().Int64VarP(&offset, "offset", "", offset, "Start printing at offset N (or from end if -ve).")
+	commandDefinition.Flags().Int64VarP(&count, "count", "", count, "Only print N characters.")
+	commandDefinition.Flags().BoolVarP(&discard, "discard", "", discard, "Discard the output instead of printing.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "cat remote:path",
 	Short: `Concatenates any files and sends them to stdout.`,
 	Long: `

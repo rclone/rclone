@@ -24,10 +24,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "ncdu remote:path",
 	Short: `Explore a remote with a text based user interface.`,
 	Long: `

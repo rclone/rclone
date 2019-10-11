@@ -94,7 +94,7 @@ func checkMountpointOverlap(root, mountpoint string) error {
 
 // NewMountCommand makes a mount command with the given name and Mount function
 func NewMountCommand(commandName string, Mount func(f fs.Fs, mountpoint string) error) *cobra.Command {
-	var commandDefintion = &cobra.Command{
+	var commandDefinition = &cobra.Command{
 		Use:   commandName + " remote:path /path/to/mountpoint",
 		Short: `Mount the remote as file system on a mountpoint.`,
 		Long: `
@@ -295,10 +295,10 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 	}
 
 	// Register the command
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 
 	// Add flags
-	flagSet := commandDefintion.Flags()
+	flagSet := commandDefinition.Flags()
 	flags.BoolVarP(flagSet, &DebugFUSE, "debug-fuse", "", DebugFUSE, "Debug the FUSE internals - needs -v.")
 	// mount options
 	flags.BoolVarP(flagSet, &AllowNonEmpty, "allow-non-empty", "", AllowNonEmpty, "Allow mounting over a non-empty directory.")
@@ -322,7 +322,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 	// Add in the generic flags
 	vfsflags.AddFlags(flagSet)
 
-	return commandDefintion
+	return commandDefinition
 }
 
 // ClipBlocks clips the blocks pointed to to the OS max

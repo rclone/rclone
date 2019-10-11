@@ -21,13 +21,13 @@ const defaultLayout string = "060102"
 const layoutDateWithTime = "2006-01-02T15:04:05"
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	flags := commandDefintion.Flags()
+	cmd.Root.AddCommand(commandDefinition)
+	flags := commandDefinition.Flags()
 	flags.BoolVarP(&notCreateNewFile, "no-create", "C", false, "Do not create the file if it does not exist.")
 	flags.StringVarP(&timeAsArgument, "timestamp", "t", "", "Change the modification times to the specified time instead of the current time of day. The argument is of the form 'YYMMDD' (ex. 17.10.30) or 'YYYY-MM-DDTHH:MM:SS' (ex. 2006-01-02T15:04:05)")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "touch remote:path",
 	Short: `Create new file or change file modification time.`,
 	Run: func(command *cobra.Command, args []string) {

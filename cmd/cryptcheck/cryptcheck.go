@@ -18,11 +18,11 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
+	cmd.Root.AddCommand(commandDefinition)
+	commandDefinition.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "cryptcheck remote:path cryptedremote:path",
 	Short: `Cryptcheck checks the integrity of a crypted remote.`,
 	Long: `
