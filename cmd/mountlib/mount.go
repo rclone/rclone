@@ -39,8 +39,8 @@ var (
 )
 
 func init() {
-	// DaemonTimeout defaults to non zero for macOS and freebsd
-	if runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" {
+	// DaemonTimeout defaults to non zero for macOS
+	if runtime.GOOS == "darwin" {
 		DaemonTimeout = 15 * time.Minute
 	}
 }
