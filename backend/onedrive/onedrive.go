@@ -225,9 +225,9 @@ func init() {
 			Help: "Microsoft App Client Secret\nLeave blank normally.",
 		}, {
 			Name: "chunk_size",
-			Help: `Chunk size to upload files with - must be multiple of 320k.
+			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 
-Above this size files will be chunked - must be multiple of 320k. Note
+Above this size files will be chunked - must be multiple of 320k (327,680 bytes). Note
 that the chunks will be buffered into memory.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
