@@ -354,10 +354,10 @@ mainly affect Office files (.docx, .xlsx, etc.). As a workaround, you may use
 the `--backup-dir <BACKUP_DIR>` command line argument so rclone moves the
 files to be replaced/deleted into a given backup directory (instead of directly
 replacing/deleting them). For example, to instruct rclone to move the files into
-the directory `rclone-backup-dir`, you may use:
+the directory `rclone-backup-dir` on backend `mysharepoint`, you may use:
 
 ```
---backup-dir rclone-backup-dir
+--backup-dir mysharepoint:rclone-backup-dir
 ```
 
 #### access\_denied (AADSTS65005) ####
