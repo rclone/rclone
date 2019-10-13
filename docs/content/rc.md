@@ -440,6 +440,7 @@ Returns the following values:
 			...
 		]
 }
+```
 
 ### core/memstats: Returns the memory statistics {#core/memstats}
 
@@ -547,6 +548,7 @@ Returns the following values:
 			}
 		]
 }
+```
 
 ### core/version: Shows the current version of rclone and the go runtime. {#core/version}
 
