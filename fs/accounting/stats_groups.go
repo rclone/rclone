@@ -156,6 +156,7 @@ Returns the following values:
 			}
 		]
 }
+` + "```" + `
 `,
 	})
 
@@ -176,6 +177,7 @@ Returns the following values:
 			...
 		]
 }
+` + "```" + `
 `,
 	})
 
@@ -189,6 +191,7 @@ is provided.
 
 Parameters
 - group - name of the stats group (string)
+` + "```" + `
 `,
 	})
 }
