@@ -10,15 +10,14 @@
 // # details see http://www.openssl.org/~appro/cryptogams/.
 // # ====================================================================
 
-// Original code can be found at the link below:
-// https://github.com/dot-asm/cryptogams/commit/a60f5b50ed908e91e5c39ca79126a4a876d5d8ff
+// Code for the perl script that generates the ppc64 assembler
+// can be found in the cryptogams repository at the link below. It is based on
+// the original from openssl.
 
-// There are some differences between CRYPTOGAMS code and this one. The round
-// loop for "_int" isn't the same as the original. Some adjustments were
-// necessary because there are less vector registers available.  For example, some
-// X variables (r12, r13, r14, and r15) share the same register used by the
-// counter. The original code uses ctr to name the counter. Here we use CNT
-// because golang uses CTR as the counter register name.
+// https://github.com/dot-asm/cryptogams/commit/a60f5b50ed908e91
+
+// The differences in this and the original implementation are
+// due to the calling conventions and initialization of constants.
 
 // +build ppc64le,!gccgo,!appengine
 
@@ -29,8 +28,9 @@
 #define LEN  R5
 #define KEY  R6
 #define CNT  R7
+#define TMP  R15
 
-#define TEMP R8
+#define CONSTBASE  R16
 
 #define X0   R11
 #define X1   R12
@@ -49,620 +49,417 @@
 #define X14  R26
 #define X15  R27
 
-#define CON0 X0
-#define CON1 X1
-#define CON2 X2
-#define CON3 X3
 
-#define KEY0 X4
-#define KEY1 X5
-#define KEY2 X6
-#define KEY3 X7
-#define KEY4 X8
-#define KEY5 X9
-#define KEY6 X10
-#define KEY7 X11
+DATA consts<>+0x00(SB)/8, $0x3320646e61707865
+DATA consts<>+0x08(SB)/8, $0x6b20657479622d32
+DATA consts<>+0x10(SB)/8, $0x0000000000000001
+DATA consts<>+0x18(SB)/8, $0x0000000000000000
+DATA consts<>+0x20(SB)/8, $0x0000000000000004
+DATA consts<>+0x28(SB)/8, $0x0000000000000000
+DATA consts<>+0x30(SB)/8, $0x0a0b08090e0f0c0d
+DATA consts<>+0x38(SB)/8, $0x0203000106070405
+DATA consts<>+0x40(SB)/8, $0x090a0b080d0e0f0c
+DATA consts<>+0x48(SB)/8, $0x0102030005060704
+DATA consts<>+0x50(SB)/8, $0x6170786561707865
+DATA consts<>+0x58(SB)/8, $0x6170786561707865
+DATA consts<>+0x60(SB)/8, $0x3320646e3320646e
+DATA consts<>+0x68(SB)/8, $0x3320646e3320646e
+DATA consts<>+0x70(SB)/8, $0x79622d3279622d32
+DATA consts<>+0x78(SB)/8, $0x79622d3279622d32
+DATA consts<>+0x80(SB)/8, $0x6b2065746b206574
+DATA consts<>+0x88(SB)/8, $0x6b2065746b206574
+DATA consts<>+0x90(SB)/8, $0x0000000100000000
+DATA consts<>+0x98(SB)/8, $0x0000000300000002
+GLOBL consts<>(SB), RODATA, $0xa0
 
-#define CNT0 X12
-#define CNT1 X13
-#define CNT2 X14
-#define CNT3 X15
-
-#define TMP0 R9
-#define TMP1 R10
-#define TMP2 R28
-#define TMP3 R29
-
-#define CONSTS  R8
-
-#define A0      V0
-#define B0      V1
-#define C0      V2
-#define D0      V3
-#define A1      V4
-#define B1      V5
-#define C1      V6
-#define D1      V7
-#define A2      V8
-#define B2      V9
-#define C2      V10
-#define D2      V11
-#define T0      V12
-#define T1      V13
-#define T2      V14
-
-#define K0      V15
-#define K1      V16
-#define K2      V17
-#define K3      V18
-#define K4      V19
-#define K5      V20
-
-#define FOUR    V21
-#define SIXTEEN V22
-#define TWENTY4 V23
-#define TWENTY  V24
-#define TWELVE  V25
-#define TWENTY5 V26
-#define SEVEN   V27
-
-#define INPPERM V28
-#define OUTPERM V29
-#define OUTMASK V30
-
-#define DD0     V31
-#define DD1     SEVEN
-#define DD2     T0
-#define DD3     T1
-#define DD4     T2
-
-DATA  ·consts+0x00(SB)/8, $0x3320646e61707865
-DATA  ·consts+0x08(SB)/8, $0x6b20657479622d32
-DATA  ·consts+0x10(SB)/8, $0x0000000000000001
-DATA  ·consts+0x18(SB)/8, $0x0000000000000000
-DATA  ·consts+0x20(SB)/8, $0x0000000000000004
-DATA  ·consts+0x28(SB)/8, $0x0000000000000000
-DATA  ·consts+0x30(SB)/8, $0x0a0b08090e0f0c0d
-DATA  ·consts+0x38(SB)/8, $0x0203000106070405
-DATA  ·consts+0x40(SB)/8, $0x090a0b080d0e0f0c
-DATA  ·consts+0x48(SB)/8, $0x0102030005060704
-GLOBL ·consts(SB), RODATA, $80
-
-//func chaCha20_ctr32_vmx(out, inp *byte, len int, key *[32]byte, counter *[16]byte)
-TEXT ·chaCha20_ctr32_vmx(SB),NOSPLIT|NOFRAME,$0
-	// Load the arguments inside the registers
+//func chaCha20_ctr32_vsx(out, inp []byte, len int, key *[32]byte, counter *[16]byte)
+TEXT ·chaCha20_ctr32_vsx(SB),NOSPLIT,$64-40
 	MOVD out+0(FP), OUT
 	MOVD inp+8(FP), INP
 	MOVD len+16(FP), LEN
 	MOVD key+24(FP), KEY
-	MOVD counter+32(FP), CNT
+	MOVD cnt+32(FP), CNT
 
-	MOVD $·consts(SB), CONSTS // point to consts addr
+	// Addressing for constants
+	MOVD $consts<>+0x00(SB), CONSTBASE
+	MOVD $16, R8
+	MOVD $32, R9
+	MOVD $48, R10
+	MOVD $64, R11
+	// V16
+	LXVW4X (CONSTBASE)(R0), VS48
+	ADD $80,CONSTBASE
 
-	MOVD $16, X0
-	MOVD $32, X1
-	MOVD $48, X2
-	MOVD $64, X3
-	MOVD $31, X4
-	MOVD $15, X5
+	// Load key into V17,V18
+	LXVW4X (KEY)(R0), VS49
+	LXVW4X (KEY)(R8), VS50
 
-	// Load key
-	LVX  (KEY)(R0), K1
-	LVSR (KEY)(R0), T0
-	LVX  (KEY)(X0), K2
-	LVX  (KEY)(X4), DD0
+	// Load CNT, NONCE into V19
+	LXVW4X (CNT)(R0), VS51
 
-	// Load counter
-	LVX  (CNT)(R0), K3
-	LVSR (CNT)(R0), T1
-	LVX  (CNT)(X5), DD1
+	// Clear V27
+	VXOR V27, V27, V27
 
-	// Load constants
-	LVX (CONSTS)(R0), K0
-	LVX (CONSTS)(X0), K5
-	LVX (CONSTS)(X1), FOUR
-	LVX (CONSTS)(X2), SIXTEEN
-	LVX (CONSTS)(X3), TWENTY4
+	// V28
+	LXVW4X (CONSTBASE)(R11), VS60
 
-	// Align key and counter
-	VPERM K2,  K1, T0, K1
-	VPERM DD0, K2, T0, K2
-	VPERM DD1, K3, T1, K3
+	// splat slot from V19 -> V26
+	VSPLTW $0, V19, V26
 
-	// Load counter to GPR
-	MOVWZ 0(CNT), CNT0
-	MOVWZ 4(CNT), CNT1
-	MOVWZ 8(CNT), CNT2
-	MOVWZ 12(CNT), CNT3
+	VSLDOI $4, V19, V27, V19
+	VSLDOI $12, V27, V19, V19
 
-	// Adjust vectors for the initial state
-	VADDUWM K3, K5, K3
-	VADDUWM K3, K5, K4
-	VADDUWM K4, K5, K5
+	VADDUWM V26, V28, V26
 
-	// Synthesized constants
-	VSPLTISW $-12, TWENTY
-	VSPLTISW $12, TWELVE
-	VSPLTISW $-7, TWENTY5
+	MOVD $10, R14
+	MOVD R14, CTR
 
-	VXOR T0, T0, T0
-	VSPLTISW $-1, OUTMASK
-	LVSR (INP)(R0), INPPERM
-	LVSL (OUT)(R0), OUTPERM
-	VPERM OUTMASK, T0, OUTPERM, OUTMASK
+loop_outer_vsx:
+	// V0, V1, V2, V3
+	LXVW4X (R0)(CONSTBASE), VS32
+	LXVW4X (R8)(CONSTBASE), VS33
+	LXVW4X (R9)(CONSTBASE), VS34
+	LXVW4X (R10)(CONSTBASE), VS35
 
-loop_outer_vmx:
-	// Load constant
-	MOVD $0x61707865, CON0
-	MOVD $0x3320646e, CON1
-	MOVD $0x79622d32, CON2
-	MOVD $0x6b206574, CON3
+	// splat values from V17, V18 into V4-V11
+	VSPLTW $0, V17, V4
+	VSPLTW $1, V17, V5
+	VSPLTW $2, V17, V6
+	VSPLTW $3, V17, V7
+	VSPLTW $0, V18, V8
+	VSPLTW $1, V18, V9
+	VSPLTW $2, V18, V10
+	VSPLTW $3, V18, V11
 
-	VOR K0, K0, A0
-	VOR K0, K0, A1
-	VOR K0, K0, A2
-	VOR K1, K1, B0
+	// VOR
+	VOR V26, V26, V12
 
-	MOVD $10, TEMP
+	// splat values from V19 -> V13, V14, V15
+	VSPLTW $1, V19, V13
+	VSPLTW $2, V19, V14
+	VSPLTW $3, V19, V15
 
-	// Load key to GPR
-	MOVWZ 0(KEY), X4
-	MOVWZ 4(KEY), X5
-	MOVWZ 8(KEY), X6
-	MOVWZ 12(KEY), X7
-	VOR K1, K1, B1
-	VOR K1, K1, B2
-	MOVWZ 16(KEY), X8
-	MOVWZ  0(CNT), X12
-	MOVWZ 20(KEY), X9
-	MOVWZ 4(CNT), X13
-	VOR K2, K2, C0
-	VOR K2, K2, C1
-	MOVWZ 24(KEY), X10
-	MOVWZ 8(CNT), X14
-	VOR K2, K2, C2
-	VOR K3, K3, D0
-	MOVWZ 28(KEY), X11
-	MOVWZ 12(CNT), X15
-	VOR K4, K4, D1
-	VOR K5, K5, D2
+	// splat   const values
+	VSPLTISW $-16, V27
+	VSPLTISW $12, V28
+	VSPLTISW $8, V29
+	VSPLTISW $7, V30
 
-	MOVD X4, TMP0
-	MOVD X5, TMP1
-	MOVD X6, TMP2
-	MOVD X7, TMP3
-	VSPLTISW $7, SEVEN
+loop_vsx:
+	VADDUWM V0, V4, V0
+	VADDUWM V1, V5, V1
+	VADDUWM V2, V6, V2
+	VADDUWM V3, V7, V3
 
-	MOVD TEMP, CTR
+	VXOR V12, V0, V12
+	VXOR V13, V1, V13
+	VXOR V14, V2, V14
+	VXOR V15, V3, V15
 
-loop_vmx:
-	// CRYPTOGAMS uses a macro to create a loop using perl. This isn't possible
-	// using assembly macros.  Therefore, the macro expansion result was used
-	// in order to maintain the algorithm efficiency.
-	// This loop generates three keystream blocks using VMX instructions and,
-	// in parallel, one keystream block using scalar instructions.
-	ADD X4, X0, X0
-	ADD X5, X1, X1
-	VADDUWM A0, B0, A0
-	VADDUWM A1, B1, A1
-	ADD X6, X2, X2
-	ADD X7, X3, X3
-	VADDUWM A2, B2, A2
-	VXOR D0, A0, D0
-	XOR X0, X12, X12
-	XOR X1, X13, X13
-	VXOR D1, A1, D1
-	VXOR D2, A2, D2
-	XOR X2, X14, X14
-	XOR X3, X15, X15
-	VPERM D0, D0, SIXTEEN, D0
-	VPERM D1, D1, SIXTEEN, D1
-	ROTLW $16, X12, X12
-	ROTLW $16, X13, X13
-	VPERM D2, D2, SIXTEEN, D2
-	VADDUWM C0, D0, C0
-	ROTLW $16, X14, X14
-	ROTLW $16, X15, X15
-	VADDUWM C1, D1, C1
-	VADDUWM C2, D2, C2
-	ADD X12, X8, X8
-	ADD X13, X9, X9
-	VXOR B0, C0, T0
-	VXOR B1, C1, T1
-	ADD X14, X10, X10
-	ADD X15, X11, X11
-	VXOR B2, C2, T2
-	VRLW T0, TWELVE, B0
-	XOR X8, X4, X4
-	XOR X9, X5, X5
-	VRLW T1, TWELVE, B1
-	VRLW T2, TWELVE, B2
-	XOR X10, X6, X6
-	XOR X11, X7, X7
-	VADDUWM A0, B0, A0
-	VADDUWM A1, B1, A1
-	ROTLW $12, X4, X4
-	ROTLW $12, X5, X5
-	VADDUWM A2, B2, A2
-	VXOR D0, A0, D0
-	ROTLW $12, X6, X6
-	ROTLW $12, X7, X7
-	VXOR D1, A1, D1
-	VXOR D2, A2, D2
-	ADD X4, X0, X0
-	ADD X5, X1, X1
-	VPERM D0, D0, TWENTY4, D0
-	VPERM D1, D1, TWENTY4, D1
-	ADD X6, X2, X2
-	ADD X7, X3, X3
-	VPERM D2, D2, TWENTY4, D2
-	VADDUWM C0, D0, C0
-	XOR X0, X12, X12
-	XOR X1, X13, X13
-	VADDUWM C1, D1, C1
-	VADDUWM C2, D2, C2
-	XOR X2, X14, X14
-	XOR X3, X15, X15
-	VXOR B0, C0, T0
-	VXOR B1, C1, T1
-	ROTLW $8, X12, X12
-	ROTLW $8, X13, X13
-	VXOR B2, C2, T2
-	VRLW T0, SEVEN, B0
-	ROTLW $8, X14, X14
-	ROTLW $8, X15, X15
-	VRLW T1, SEVEN, B1
-	VRLW T2, SEVEN, B2
-	ADD X12, X8, X8
-	ADD X13, X9, X9
-	VSLDOI $8, C0, C0, C0
-	VSLDOI $8, C1, C1, C1
-	ADD X14, X10, X10
-	ADD X15, X11, X11
-	VSLDOI $8, C2, C2, C2
-	VSLDOI $12, B0, B0, B0
-	XOR X8, X4, X4
-	XOR X9, X5, X5
-	VSLDOI $12, B1, B1, B1
-	VSLDOI $12, B2, B2, B2
-	XOR X10, X6, X6
-	XOR X11, X7, X7
-	VSLDOI $4, D0, D0, D0
-	VSLDOI $4, D1, D1, D1
-	ROTLW $7, X4, X4
-	ROTLW $7, X5, X5
-	VSLDOI $4, D2, D2, D2
-	VADDUWM A0, B0, A0
-	ROTLW $7, X6, X6
-	ROTLW $7, X7, X7
-	VADDUWM A1, B1, A1
-	VADDUWM A2, B2, A2
-	ADD X5, X0, X0
-	ADD X6, X1, X1
-	VXOR D0, A0, D0
-	VXOR D1, A1, D1
-	ADD X7, X2, X2
-	ADD X4, X3, X3
-	VXOR D2, A2, D2
-	VPERM D0, D0, SIXTEEN, D0
-	XOR X0, X15, X15
-	XOR X1, X12, X12
-	VPERM D1, D1, SIXTEEN, D1
-	VPERM D2, D2, SIXTEEN, D2
-	XOR X2, X13, X13
-	XOR X3, X14, X14
-	VADDUWM C0, D0, C0
-	VADDUWM C1, D1, C1
-	ROTLW $16, X15, X15
-	ROTLW $16, X12, X12
-	VADDUWM C2, D2, C2
-	VXOR B0, C0, T0
-	ROTLW $16, X13, X13
-	ROTLW $16, X14, X14
-	VXOR B1, C1, T1
-	VXOR B2, C2, T2
-	ADD X15, X10, X10
-	ADD X12, X11, X11
-	VRLW T0, TWELVE, B0
-	VRLW T1, TWELVE, B1
-	ADD X13, X8, X8
-	ADD X14, X9, X9
-	VRLW T2, TWELVE, B2
-	VADDUWM A0, B0, A0
-	XOR X10, X5, X5
-	XOR X11, X6, X6
-	VADDUWM A1, B1, A1
-	VADDUWM A2, B2, A2
-	XOR X8, X7, X7
-	XOR X9, X4, X4
-	VXOR D0, A0, D0
-	VXOR D1, A1, D1
-	ROTLW $12, X5, X5
-	ROTLW $12, X6, X6
-	VXOR D2, A2, D2
-	VPERM D0, D0, TWENTY4, D0
-	ROTLW $12, X7, X7
-	ROTLW $12, X4, X4
-	VPERM D1, D1, TWENTY4, D1
-	VPERM D2, D2, TWENTY4, D2
-	ADD X5, X0, X0
-	ADD X6, X1, X1
-	VADDUWM C0, D0, C0
-	VADDUWM C1, D1, C1
-	ADD X7, X2, X2
-	ADD X4, X3, X3
-	VADDUWM C2, D2, C2
-	VXOR B0, C0, T0
-	XOR X0, X15, X15
-	XOR X1, X12, X12
-	VXOR B1, C1, T1
-	VXOR B2, C2, T2
-	XOR X2, X13, X13
-	XOR X3, X14, X14
-	VRLW T0, SEVEN, B0
-	VRLW T1, SEVEN, B1
-	ROTLW $8, X15, X15
-	ROTLW $8, X12, X12
-	VRLW T2, SEVEN, B2
-	VSLDOI $8, C0, C0, C0
-	ROTLW $8, X13, X13
-	ROTLW $8, X14, X14
-	VSLDOI $8, C1, C1, C1
-	VSLDOI $8, C2, C2, C2
-	ADD X15, X10, X10
-	ADD X12, X11, X11
-	VSLDOI $4, B0, B0, B0
-	VSLDOI $4, B1, B1, B1
-	ADD X13, X8, X8
-	ADD X14, X9, X9
-	VSLDOI $4, B2, B2, B2
-	VSLDOI $12, D0, D0, D0
-	XOR X10, X5, X5
-	XOR X11, X6, X6
-	VSLDOI $12, D1, D1, D1
-	VSLDOI $12, D2, D2, D2
-	XOR X8, X7, X7
-	XOR X9, X4, X4
-	ROTLW $7, X5, X5
-	ROTLW $7, X6, X6
-	ROTLW $7, X7, X7
-	ROTLW $7, X4, X4
-	BC 0x10, 0, loop_vmx
+	VRLW V12, V27, V12
+	VRLW V13, V27, V13
+	VRLW V14, V27, V14
+	VRLW V15, V27, V15
 
-	SUB $256, LEN, LEN
+	VADDUWM V8, V12, V8
+	VADDUWM V9, V13, V9
+	VADDUWM V10, V14, V10
+	VADDUWM V11, V15, V11
 
-	// Accumulate key block
-	ADD $0x61707865, X0, X0
-	ADD $0x3320646e, X1, X1
-	ADD $0x79622d32, X2, X2
-	ADD $0x6b206574, X3, X3
-	ADD TMP0, X4, X4
-	ADD TMP1, X5, X5
-	ADD TMP2, X6, X6
-	ADD TMP3, X7, X7
-	MOVWZ 16(KEY), TMP0
-	MOVWZ 20(KEY), TMP1
-	MOVWZ 24(KEY), TMP2
-	MOVWZ 28(KEY), TMP3
-	ADD TMP0, X8, X8
-	ADD TMP1, X9, X9
-	ADD TMP2, X10, X10
-	ADD TMP3, X11, X11
+	VXOR V4, V8, V4
+	VXOR V5, V9, V5
+	VXOR V6, V10, V6
+	VXOR V7, V11, V7
 
-	MOVWZ 12(CNT), TMP0
-	MOVWZ 8(CNT), TMP1
-	MOVWZ 4(CNT), TMP2
-	MOVWZ 0(CNT), TEMP
-	ADD TMP0, X15, X15
-	ADD TMP1, X14, X14
-	ADD TMP2, X13, X13
-	ADD TEMP, X12, X12
+	VRLW V4, V28, V4
+	VRLW V5, V28, V5
+	VRLW V6, V28, V6
+	VRLW V7, V28, V7
 
-	// Accumulate key block
-	VADDUWM A0, K0, A0
-	VADDUWM A1, K0, A1
-	VADDUWM A2, K0, A2
-	VADDUWM B0, K1, B0
-	VADDUWM B1, K1, B1
-	VADDUWM B2, K1, B2
-	VADDUWM C0, K2, C0
-	VADDUWM C1, K2, C1
-	VADDUWM C2, K2, C2
-	VADDUWM D0, K3, D0
-	VADDUWM D1, K4, D1
-	VADDUWM D2, K5, D2
+	VADDUWM V0, V4, V0
+	VADDUWM V1, V5, V1
+	VADDUWM V2, V6, V2
+	VADDUWM V3, V7, V3
 
-	// Increment counter
-	ADD $4, TEMP, TEMP
-	MOVW TEMP, 0(CNT)
+	VXOR V12, V0, V12
+	VXOR V13, V1, V13
+	VXOR V14, V2, V14
+	VXOR V15, V3, V15
 
-	VADDUWM K3, FOUR, K3
-	VADDUWM K4, FOUR, K4
-	VADDUWM K5, FOUR, K5
+	VRLW V12, V29, V12
+	VRLW V13, V29, V13
+	VRLW V14, V29, V14
+	VRLW V15, V29, V15
 
-	// XOR the input slice (INP) with the keystream, which is stored in GPRs (X0-X3).
+	VADDUWM V8, V12, V8
+	VADDUWM V9, V13, V9
+	VADDUWM V10, V14, V10
+	VADDUWM V11, V15, V11
 
-	// Load input (aligned or not)
-	MOVWZ 0(INP), TMP0
-	MOVWZ 4(INP), TMP1
-	MOVWZ 8(INP), TMP2
-	MOVWZ 12(INP), TMP3
+	VXOR V4, V8, V4
+	VXOR V5, V9, V5
+	VXOR V6, V10, V6
+	VXOR V7, V11, V7
 
-	// XOR with input
-	XOR TMP0, X0, X0
-	XOR TMP1, X1, X1
-	XOR TMP2, X2, X2
-	XOR TMP3, X3, X3
-	MOVWZ 16(INP), TMP0
-	MOVWZ 20(INP), TMP1
-	MOVWZ 24(INP), TMP2
-	MOVWZ 28(INP), TMP3
-	XOR TMP0, X4, X4
-	XOR TMP1, X5, X5
-	XOR TMP2, X6, X6
-	XOR TMP3, X7, X7
-	MOVWZ 32(INP), TMP0
-	MOVWZ 36(INP), TMP1
-	MOVWZ 40(INP), TMP2
-	MOVWZ 44(INP), TMP3
-	XOR TMP0, X8, X8
-	XOR TMP1, X9, X9
-	XOR TMP2, X10, X10
-	XOR TMP3, X11, X11
-	MOVWZ 48(INP), TMP0
-	MOVWZ 52(INP), TMP1
-	MOVWZ 56(INP), TMP2
-	MOVWZ 60(INP), TMP3
-	XOR TMP0, X12, X12
-	XOR TMP1, X13, X13
-	XOR TMP2, X14, X14
-	XOR TMP3, X15, X15
+	VRLW V4, V30, V4
+	VRLW V5, V30, V5
+	VRLW V6, V30, V6
+	VRLW V7, V30, V7
 
-	// Store output (aligned or not)
-	MOVW X0, 0(OUT)
-	MOVW X1, 4(OUT)
-	MOVW X2, 8(OUT)
-	MOVW X3, 12(OUT)
+	VADDUWM V0, V5, V0
+	VADDUWM V1, V6, V1
+	VADDUWM V2, V7, V2
+	VADDUWM V3, V4, V3
 
-	ADD $64, INP, INP // INP points to the end of the slice for the alignment code below
+	VXOR V15, V0, V15
+	VXOR V12, V1, V12
+	VXOR V13, V2, V13
+	VXOR V14, V3, V14
 
-	MOVW X4, 16(OUT)
-	MOVD $16, TMP0
-	MOVW X5, 20(OUT)
-	MOVD $32, TMP1
-	MOVW X6, 24(OUT)
-	MOVD $48, TMP2
-	MOVW X7, 28(OUT)
-	MOVD $64, TMP3
-	MOVW X8, 32(OUT)
-	MOVW X9, 36(OUT)
-	MOVW X10, 40(OUT)
-	MOVW X11, 44(OUT)
-	MOVW X12, 48(OUT)
-	MOVW X13, 52(OUT)
-	MOVW X14, 56(OUT)
-	MOVW X15, 60(OUT)
-	ADD $64, OUT, OUT
+	VRLW V15, V27, V15
+	VRLW V12, V27, V12
+	VRLW V13, V27, V13
+	VRLW V14, V27, V14
 
-	// Load input
-	LVX (INP)(R0), DD0
-	LVX (INP)(TMP0), DD1
-	LVX (INP)(TMP1), DD2
-	LVX (INP)(TMP2), DD3
-	LVX (INP)(TMP3), DD4
-	ADD $64, INP, INP
+	VADDUWM V10, V15, V10
+	VADDUWM V11, V12, V11
+	VADDUWM V8, V13, V8
+	VADDUWM V9, V14, V9
 
-	VPERM DD1, DD0, INPPERM, DD0 // Align input
-	VPERM DD2, DD1, INPPERM, DD1
-	VPERM DD3, DD2, INPPERM, DD2
-	VPERM DD4, DD3, INPPERM, DD3
-	VXOR A0, DD0, A0 // XOR with input
-	VXOR B0, DD1, B0
-	LVX (INP)(TMP0), DD1 // Keep loading input
-	VXOR C0, DD2, C0
-	LVX (INP)(TMP1), DD2
-	VXOR D0, DD3, D0
-	LVX (INP)(TMP2), DD3
-	LVX (INP)(TMP3), DD0
-	ADD $64, INP, INP
-	MOVD $63, TMP3 // 63 is not a typo
-	VPERM A0, A0, OUTPERM, A0
-	VPERM B0, B0, OUTPERM, B0
-	VPERM C0, C0, OUTPERM, C0
-	VPERM D0, D0, OUTPERM, D0
+	VXOR V5, V10, V5
+	VXOR V6, V11, V6
+	VXOR V7, V8, V7
+	VXOR V4, V9, V4
 
-	VPERM DD1, DD4, INPPERM, DD4 // Align input
-	VPERM DD2, DD1, INPPERM, DD1
-	VPERM DD3, DD2, INPPERM, DD2
-	VPERM DD0, DD3, INPPERM, DD3
-	VXOR A1, DD4, A1
-	VXOR B1, DD1, B1
-	LVX (INP)(TMP0), DD1 // Keep loading
-	VXOR C1, DD2, C1
-	LVX (INP)(TMP1), DD2
-	VXOR D1, DD3, D1
-	LVX (INP)(TMP2), DD3
+	VRLW V5, V28, V5
+	VRLW V6, V28, V6
+	VRLW V7, V28, V7
+	VRLW V4, V28, V4
 
-	// Note that the LVX address is always rounded down to the nearest 16-byte
-	// boundary, and that it always points to at most 15 bytes beyond the end of
-	// the slice, so we cannot cross a page boundary.
-	LVX (INP)(TMP3), DD4 // Redundant in aligned case.
-	ADD $64, INP, INP
-	VPERM A1, A1, OUTPERM, A1 // Pre-misalign output
-	VPERM B1, B1, OUTPERM, B1
-	VPERM C1, C1, OUTPERM, C1
-	VPERM D1, D1, OUTPERM, D1
+	VADDUWM V0, V5, V0
+	VADDUWM V1, V6, V1
+	VADDUWM V2, V7, V2
+	VADDUWM V3, V4, V3
 
-	VPERM DD1, DD0, INPPERM, DD0 // Align Input
-	VPERM DD2, DD1, INPPERM, DD1
-	VPERM DD3, DD2, INPPERM, DD2
-	VPERM DD4, DD3, INPPERM, DD3
-	VXOR A2, DD0, A2
-	VXOR B2, DD1, B2
-	VXOR C2, DD2, C2
-	VXOR D2, DD3, D2
-	VPERM A2, A2, OUTPERM, A2
-	VPERM B2, B2, OUTPERM, B2
-	VPERM C2, C2, OUTPERM, C2
-	VPERM D2, D2, OUTPERM, D2
+	VXOR V15, V0, V15
+	VXOR V12, V1, V12
+	VXOR V13, V2, V13
+	VXOR V14, V3, V14
 
-	ANDCC $15, OUT, X1 // Is out aligned?
-	MOVD OUT, X0
+	VRLW V15, V29, V15
+	VRLW V12, V29, V12
+	VRLW V13, V29, V13
+	VRLW V14, V29, V14
 
-	VSEL A0, B0, OUTMASK, DD0 // Collect pre-misaligned output
-	VSEL B0, C0, OUTMASK, DD1
-	VSEL C0, D0, OUTMASK, DD2
-	VSEL D0, A1, OUTMASK, DD3
-	VSEL A1, B1, OUTMASK, B0
-	VSEL B1, C1, OUTMASK, C0
-	VSEL C1, D1, OUTMASK, D0
-	VSEL D1, A2, OUTMASK, A1
-	VSEL A2, B2, OUTMASK, B1
-	VSEL B2, C2, OUTMASK, C1
-	VSEL C2, D2, OUTMASK, D1
+	VADDUWM V10, V15, V10
+	VADDUWM V11, V12, V11
+	VADDUWM V8, V13, V8
+	VADDUWM V9, V14, V9
 
-	STVX DD0, (OUT+TMP0)
-	STVX DD1, (OUT+TMP1)
-	STVX DD2, (OUT+TMP2)
-	ADD $64, OUT, OUT
-	STVX DD3, (OUT+R0)
-	STVX B0, (OUT+TMP0)
-	STVX C0, (OUT+TMP1)
-	STVX D0, (OUT+TMP2)
-	ADD $64, OUT, OUT
-	STVX A1, (OUT+R0)
-	STVX B1, (OUT+TMP0)
-	STVX C1, (OUT+TMP1)
-	STVX D1, (OUT+TMP2)
-	ADD $64, OUT, OUT
+	VXOR V5, V10, V5
+	VXOR V6, V11, V6
+	VXOR V7, V8, V7
+	VXOR V4, V9, V4
 
-	BEQ aligned_vmx
+	VRLW V5, V30, V5
+	VRLW V6, V30, V6
+	VRLW V7, V30, V7
+	VRLW V4, V30, V4
+	BC   16, LT, loop_vsx
 
-	SUB X1, OUT, X2 // in misaligned case edges
-	MOVD $0, X3 // are written byte-by-byte
+	VADDUWM V12, V26, V12
 
-unaligned_tail_vmx:
-	STVEBX D2, (X2+X3)
-	ADD $1, X3, X3
-	CMPW X3, X1
-	BNE unaligned_tail_vmx
-	SUB X1, X0, X2
+	WORD $0x13600F8C		// VMRGEW V0, V1, V27
+	WORD $0x13821F8C		// VMRGEW V2, V3, V28
 
-unaligned_head_vmx:
-	STVEBX A0, (X2+X1)
-	CMPW X1, $15
-	ADD $1, X1, X1
-	BNE unaligned_head_vmx
+	WORD $0x10000E8C		// VMRGOW V0, V1, V0
+	WORD $0x10421E8C		// VMRGOW V2, V3, V2
 
-	CMPU LEN, $255 // done with 256-byte block yet?
-	BGT loop_outer_vmx
+	WORD $0x13A42F8C		// VMRGEW V4, V5, V29
+	WORD $0x13C63F8C		// VMRGEW V6, V7, V30
 
-	JMP done_vmx
+	XXPERMDI VS32, VS34, $0, VS33
+	XXPERMDI VS32, VS34, $3, VS35
+	XXPERMDI VS59, VS60, $0, VS32
+	XXPERMDI VS59, VS60, $3, VS34
 
-aligned_vmx:
-	STVX A0, (X0+R0)
-	CMPU LEN, $255 // done with 256-byte block yet?
-	BGT loop_outer_vmx
+	WORD $0x10842E8C		// VMRGOW V4, V5, V4
+	WORD $0x10C63E8C		// VMRGOW V6, V7, V6
 
-done_vmx:
+	WORD $0x13684F8C		// VMRGEW V8, V9, V27
+	WORD $0x138A5F8C		// VMRGEW V10, V11, V28
+
+	XXPERMDI VS36, VS38, $0, VS37
+	XXPERMDI VS36, VS38, $3, VS39
+	XXPERMDI VS61, VS62, $0, VS36
+	XXPERMDI VS61, VS62, $3, VS38
+
+	WORD $0x11084E8C		// VMRGOW V8, V9, V8
+	WORD $0x114A5E8C		// VMRGOW V10, V11, V10
+
+	WORD $0x13AC6F8C		// VMRGEW V12, V13, V29
+	WORD $0x13CE7F8C		// VMRGEW V14, V15, V30
+
+	XXPERMDI VS40, VS42, $0, VS41
+	XXPERMDI VS40, VS42, $3, VS43
+	XXPERMDI VS59, VS60, $0, VS40
+	XXPERMDI VS59, VS60, $3, VS42
+
+	WORD $0x118C6E8C		// VMRGOW V12, V13, V12
+	WORD $0x11CE7E8C		// VMRGOW V14, V15, V14
+
+	VSPLTISW $4, V27
+	VADDUWM V26, V27, V26
+
+	XXPERMDI VS44, VS46, $0, VS45
+	XXPERMDI VS44, VS46, $3, VS47
+	XXPERMDI VS61, VS62, $0, VS44
+	XXPERMDI VS61, VS62, $3, VS46
+
+	VADDUWM V0, V16, V0
+	VADDUWM V4, V17, V4
+	VADDUWM V8, V18, V8
+	VADDUWM V12, V19, V12
+
+	CMPU LEN, $64
+	BLT tail_vsx
+
+	// Bottom of loop
+	LXVW4X (INP)(R0), VS59
+	LXVW4X (INP)(R8), VS60
+	LXVW4X (INP)(R9), VS61
+	LXVW4X (INP)(R10), VS62
+
+	VXOR V27, V0, V27
+	VXOR V28, V4, V28
+	VXOR V29, V8, V29
+	VXOR V30, V12, V30
+
+	STXVW4X VS59, (OUT)(R0)
+	STXVW4X VS60, (OUT)(R8)
+	ADD     $64, INP
+	STXVW4X VS61, (OUT)(R9)
+	ADD     $-64, LEN
+	STXVW4X VS62, (OUT)(R10)
+	ADD     $64, OUT
+	BEQ     done_vsx
+
+	VADDUWM V1, V16, V0
+	VADDUWM V5, V17, V4
+	VADDUWM V9, V18, V8
+	VADDUWM V13, V19, V12
+
+	CMPU  LEN, $64
+	BLT   tail_vsx
+
+	LXVW4X (INP)(R0), VS59
+	LXVW4X (INP)(R8), VS60
+	LXVW4X (INP)(R9), VS61
+	LXVW4X (INP)(R10), VS62
+	VXOR   V27, V0, V27
+
+	VXOR V28, V4, V28
+	VXOR V29, V8, V29
+	VXOR V30, V12, V30
+
+	STXVW4X VS59, (OUT)(R0)
+	STXVW4X VS60, (OUT)(R8)
+	ADD     $64, INP
+	STXVW4X VS61, (OUT)(R9)
+	ADD     $-64, LEN
+	STXVW4X VS62, (OUT)(V10)
+	ADD     $64, OUT
+	BEQ     done_vsx
+
+	VADDUWM V2, V16, V0
+	VADDUWM V6, V17, V4
+	VADDUWM V10, V18, V8
+	VADDUWM V14, V19, V12
+
+	CMPU LEN, $64
+	BLT  tail_vsx
+
+	LXVW4X (INP)(R0), VS59
+	LXVW4X (INP)(R8), VS60
+	LXVW4X (INP)(R9), VS61
+	LXVW4X (INP)(R10), VS62
+
+	VXOR V27, V0, V27
+	VXOR V28, V4, V28
+	VXOR V29, V8, V29
+	VXOR V30, V12, V30
+
+	STXVW4X VS59, (OUT)(R0)
+	STXVW4X VS60, (OUT)(R8)
+	ADD     $64, INP
+	STXVW4X VS61, (OUT)(R9)
+	ADD     $-64, LEN
+	STXVW4X VS62, (OUT)(R10)
+	ADD     $64, OUT
+	BEQ     done_vsx
+
+	VADDUWM V3, V16, V0
+	VADDUWM V7, V17, V4
+	VADDUWM V11, V18, V8
+	VADDUWM V15, V19, V12
+
+	CMPU  LEN, $64
+	BLT   tail_vsx
+
+	LXVW4X (INP)(R0), VS59
+	LXVW4X (INP)(R8), VS60
+	LXVW4X (INP)(R9), VS61
+	LXVW4X (INP)(R10), VS62
+
+	VXOR V27, V0, V27
+	VXOR V28, V4, V28
+	VXOR V29, V8, V29
+	VXOR V30, V12, V30
+
+	STXVW4X VS59, (OUT)(R0)
+	STXVW4X VS60, (OUT)(R8)
+	ADD     $64, INP
+	STXVW4X VS61, (OUT)(R9)
+	ADD     $-64, LEN
+	STXVW4X VS62, (OUT)(R10)
+	ADD     $64, OUT
+
+	MOVD $10, R14
+	MOVD R14, CTR
+	BNE  loop_outer_vsx
+
+done_vsx:
+	// Increment counter by 4
+	MOVD (CNT), R14
+	ADD  $4, R14
+	MOVD R14, (CNT)
 	RET
+
+tail_vsx:
+	ADD  $32, R1, R11
+	MOVD LEN, CTR
+
+	// Save values on stack to copy from
+	STXVW4X VS32, (R11)(R0)
+	STXVW4X VS36, (R11)(R8)
+	STXVW4X VS40, (R11)(R9)
+	STXVW4X VS44, (R11)(R10)
+	ADD $-1, R11, R12
+	ADD $-1, INP
+	ADD $-1, OUT
+
+looptail_vsx:
+	// Copying the result to OUT
+	// in bytes.
+	MOVBZU 1(R12), KEY
+	MOVBZU 1(INP), TMP
+	XOR    KEY, TMP, KEY
+	MOVBU  KEY, 1(OUT)
+	BC     16, LT, looptail_vsx
+
+	// Clear the stack values
+	STXVW4X VS48, (R11)(R0)
+	STXVW4X VS48, (R11)(R8)
+	STXVW4X VS48, (R11)(R9)
+	STXVW4X VS48, (R11)(R10)
+	BR      done_vsx
