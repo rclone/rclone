@@ -553,12 +553,15 @@ func walkNDirTree(ctx context.Context, f fs.Fs, path string, includeAll bool, ma
 //
 // NB (f, path) to be replaced by fs.Dir at some point
 func NewDirTree(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int) (dirtree.DirTree, error) {
+	// if --no-traverse and --files-from build DirTree just from files
 	if fs.Config.NoTraverse && filter.Active.HaveFilesFrom() {
 		return walkRDirTree(ctx, f, path, includeAll, maxLevel, filter.Active.MakeListR(ctx, f.NewObject))
 	}
-	if ListR := f.Features().ListR; (maxLevel < 0 || maxLevel > 1) && ListR != nil {
+	// if have ListR; and recursing; and not using --files-from; then build a DirTree with ListR
+	if ListR := f.Features().ListR; (maxLevel < 0 || maxLevel > 1) && ListR != nil && !filter.Active.HaveFilesFrom() {
 		return walkRDirTree(ctx, f, path, includeAll, maxLevel, ListR)
 	}
+	// otherwise just use List
 	return walkNDirTree(ctx, f, path, includeAll, maxLevel, list.DirSorted)
 }
 

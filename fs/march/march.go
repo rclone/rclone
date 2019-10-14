@@ -69,13 +69,18 @@ func (m *March) init() {
 // list a directory into entries, err
 type listDirFn func(dir string) (entries fs.DirEntries, err error)
 
-// makeListDir makes a listing function for the given fs and includeAll flags
+// makeListDir makes constructs a listing function for the given fs
+// and includeAll flags for marching through the file system.
 func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
-	if (!fs.Config.UseListR || f.Features().ListR == nil) && !filter.Active.HaveFilesFrom() {
+	if !(fs.Config.UseListR && f.Features().ListR != nil) && // !--fast-list active and
+		!(fs.Config.NoTraverse && filter.Active.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string) (entries fs.DirEntries, err error) {
 			return list.DirSorted(m.Ctx, f, includeAll, dir)
 		}
 	}
+
+	// This returns a closure for use when --fast-list is active or for when
+	// --files-from and --no-traverse is set
 	var (
 		mu      sync.Mutex
 		started bool
