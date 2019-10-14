@@ -209,5 +209,5 @@ work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
 directory with thousands or millions of files in.  Rclone has to load
-this entirely into memory as rclone objects.  Each Rclone object takes
+this entirely into memory as rclone objects.  Each rclone object takes
 0.5k-1k of memory.
