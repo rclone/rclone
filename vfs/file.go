@@ -31,6 +31,7 @@ type File struct {
 	modified          bool                            // has the cache file be modified by a RWFileHandle?
 	pendingModTime    time.Time                       // will be applied once o becomes available, i.e. after file was written
 	pendingRenameFun  func(ctx context.Context) error // will be run/renamed after all writers close
+	appendMode        bool                            // file was opened with O_APPEND
 
 	muRW sync.Mutex // synchonize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
 }
@@ -65,7 +66,11 @@ func (f *File) IsDir() bool {
 
 // Mode bits of the file or directory - satisfies Node interface
 func (f *File) Mode() (mode os.FileMode) {
-	return f.d.vfs.Opt.FilePerms
+	mode = f.d.vfs.Opt.FilePerms
+	if f.appendMode {
+		mode |= os.ModeAppend
+	}
+	return mode
 }
 
 // Name (base) of the directory - satisfies Node interface
@@ -539,6 +544,7 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	// If append is set then set read to force openRW
 	if flags&os.O_APPEND != 0 {
 		read = true
+		f.appendMode = true
 	}
 
 	// If truncate is set then set write to force openRW

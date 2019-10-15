@@ -78,6 +78,7 @@ func RunTests(t *testing.T, fn MountFn) {
 			t.Run("TestWriteFileDoubleClose", TestWriteFileDoubleClose)
 			t.Run("TestWriteFileFsync", TestWriteFileFsync)
 			t.Run("TestWriteFileDup", TestWriteFileDup)
+			t.Run("TestWriteFileAppend", TestWriteFileAppend)
 		})
 		log.Printf("Finished test run with cache mode %v (ok=%v)", cacheMode, ok)
 		if !ok {
