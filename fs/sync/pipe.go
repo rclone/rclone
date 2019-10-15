@@ -68,7 +68,10 @@ func (p *pipe) Get(ctx context.Context) (pair fs.ObjectPair, ok bool) {
 		}
 	}
 	p.mu.Lock()
-	pair, p.queue = p.queue[0], p.queue[1:]
+	pair = p.queue[0]
+	p.queue[0].Src = nil
+	p.queue[0].Dst = nil
+	p.queue = p.queue[1:]
 	size := pair.Src.Size()
 	if size > 0 {
 		p.totalSize -= size
