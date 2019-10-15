@@ -34,6 +34,11 @@ func osCreate(name string) (*os.File, error) {
 	return os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 }
 
+// os.Create with append
+func osAppend(name string) (*os.File, error) {
+	return os.OpenFile(name, os.O_WRONLY|os.O_APPEND, 0666)
+}
+
 // TestFileModTimeWithOpenWriters tests mod time on open files
 func TestFileModTimeWithOpenWriters(t *testing.T) {
 	run.skipIfNoFUSE(t)

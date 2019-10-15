@@ -2,6 +2,7 @@ package mounttest
 
 import (
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -126,6 +127,51 @@ func TestWriteFileDup(t *testing.T) {
 
 	err = fh.Close()
 	require.NoError(t, err)
+
+	run.waitForWriters()
+	run.rm(t, "to be synced")
+}
+
+// TestWriteFileAppend tests that O_APPEND works on cache backends >= writes
+func TestWriteFileAppend(t *testing.T) {
+	run.skipIfNoFUSE(t)
+
+	if run.vfs.Opt.CacheMode < vfs.CacheModeWrites {
+		t.Skip("not supported on vfs-cache-mode < writes")
+		return
+	}
+
+	// TODO: Windows needs the v1.5 release of WinFsp to handle O_APPEND properly.
+	// Until it gets released, skip this test on Windows.
+	if runtime.GOOS == "windows" {
+		t.Skip("currently unsupported on Windows")
+	}
+
+	filepath := run.path("to be synced")
+	fh, err := osCreate(filepath)
+	require.NoError(t, err)
+
+	testData := []byte("0123456789")
+	appendData := []byte("10")
+
+	_, err = fh.Write(testData)
+	require.NoError(t, err)
+
+	err = fh.Close()
+	require.NoError(t, err)
+
+	fh, err = osAppend(filepath)
+	require.NoError(t, err)
+
+	_, err = fh.Write(appendData)
+	require.NoError(t, err)
+
+	err = fh.Close()
+	require.NoError(t, err)
+
+	info, err := os.Stat(filepath)
+	require.NoError(t, err)
+	require.EqualValues(t, len(testData)+len(appendData), info.Size())
 
 	run.waitForWriters()
 	run.rm(t, "to be synced")
