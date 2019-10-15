@@ -1099,7 +1099,7 @@ This forces rclone to skip any files which exist on the destination
 and have a modified time that is newer than the source file.
 
 This can be useful when transferring to a remote which doesn't support
-mod times directly (or when using `--use-server-mod-time` to avoid extra
+mod times directly (or when using `--use-server-modtime` to avoid extra
 API calls) as it is more accurate than a `--size-only` check and faster
 than using `--checksum`.
 
@@ -1112,7 +1112,7 @@ If an existing destination file is older than the source file then
 it will be updated if the size or checksum differs from the source file.
 
 On remotes which don't support mod time directly (or when using
-`--use-server-mod-time`) the time checked will be the uploaded time.
+`--use-server-modtime`) the time checked will be the uploaded time.
 This means that if uploading to one of these remotes, rclone will skip
 any files which exist on the destination and have an uploaded time that
 is newer than the modification time of the source file.
