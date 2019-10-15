@@ -113,6 +113,7 @@ func (tr *Transfer) Done(err error) {
 	} else {
 		tr.stats.DoneTransferring(tr.remote, err == nil)
 	}
+	tr.stats.RemoveTransfer(tr)
 }
 
 // Reset allows to switch the Account to another transfer method.

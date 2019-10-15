@@ -532,3 +532,16 @@ func (s *StatsInfo) AddTransfer(transfer *Transfer) {
 	s.startedTransfers = append(s.startedTransfers, transfer)
 	s.mu.Unlock()
 }
+
+// RemoveTransfer removes a reference to the started transfer.
+func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
+	s.mu.Lock()
+	for i, tr := range s.startedTransfers {
+		if tr == transfer {
+			// remove the found entry
+			s.startedTransfers = append(s.startedTransfers[:i], s.startedTransfers[i+1:]...)
+			break
+		}
+	}
+	s.mu.Unlock()
+}
