@@ -302,3 +302,4 @@ Contributors
   * Arijit Biswas <dibbyo456@gmail.com>
   * Michele Caci <michele.caci@gmail.com>
   * AlexandrBoltris <ua2fgb@gmail.com>
+  * Bryce Larson <blarson@saltstack.com>
