@@ -5,11 +5,12 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/version"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestInternalNoop(t *testing.T) {
@@ -106,4 +107,15 @@ func TestCoreObscure(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, out)
 	assert.Equal(t, in["clear"], obscure.MustReveal(out["obscured"].(string)))
+}
+
+func TestCoreQuit(t *testing.T) {
+	//The call should return an error if param exitCode is not parsed to int
+	call := Calls.Get("core/quit")
+	assert.NotNil(t, call)
+	in := Params{
+		"exitCode": "potato",
+	}
+	_, err := call.Fn(context.Background(), in)
+	require.Error(t, err)
 }
