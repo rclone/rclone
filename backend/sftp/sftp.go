@@ -86,8 +86,19 @@ requested from the ssh-agent. This allows to avoid ` + "`Too many authentication
 when the ssh-agent contains many keys.`,
 			Default: false,
 		}, {
-			Name:    "use_insecure_cipher",
-			Help:    "Enable the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange. Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.",
+			Name: "use_insecure_cipher",
+			Help: `Enable the use of insecure ciphers and key exchange methods. 
+
+This enables the use of the the following insecure ciphers and key exchange methods:
+
+- aes128-cbc
+- aes192-cbc
+- aes256-cbc
+- 3des-cbc
+- diffie-hellman-group-exchange-sha256
+- diffie-hellman-group-exchange-sha1
+
+Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.`,
 			Default: false,
 			Examples: []fs.OptionExample{
 				{
@@ -363,7 +374,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	if opt.UseInsecureCipher {
 		sshConfig.Config.SetDefaults()
-		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc")
+		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc", "aes192-cbc", "aes256-cbc", "3des-cbc")
 		sshConfig.Config.KeyExchanges = append(sshConfig.Config.KeyExchanges, "diffie-hellman-group-exchange-sha1", "diffie-hellman-group-exchange-sha256")
 	}
 
