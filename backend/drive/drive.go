@@ -10,6 +10,7 @@ package drive
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -405,6 +406,20 @@ different Google drives.  Note that this isn't enabled by default
 because it isn't easy to tell if it will work beween any two
 configurations.`,
 			Advanced: true,
+		}, {
+			Name:    "disable_http2",
+			Default: true,
+			Help: `Disable drive using http2
+
+There is currently an unsolved issue with the google drive backend and
+HTTP/2.  HTTP/2 is therefore disabled by default for the drive backend
+but can be re-enabled here.  When the issue is solved this flag will
+be removed.
+
+See: https://github.com/rclone/rclone/issues/3631
+
+`,
+			Advanced: true,
 		}},
 	})
 
@@ -452,6 +467,7 @@ type Options struct {
 	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
 	PacerBurst                int           `config:"pacer_burst"`
 	ServerSideAcrossConfigs   bool          `config:"server_side_across_configs"`
+	DisableHTTP2              bool          `config:"disable_http2"`
 }
 
 // Fs represents a remote drive server
@@ -840,6 +856,18 @@ func newPacer(opt *Options) *fs.Pacer {
 	return fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst)))
 }
 
+// getClient makes an http client according to the options
+func getClient(opt *Options) *http.Client {
+	t := fshttp.NewTransportCustom(fs.Config, func(t *http.Transport) {
+		if opt.DisableHTTP2 {
+			t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+		}
+	})
+	return &http.Client{
+		Transport: t,
+	}
+}
+
 func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {
 	scopes := driveScopes(opt.Scope)
 	conf, err := google.JWTConfigFromJSON(credentialsData, scopes...)
@@ -849,7 +877,7 @@ func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client
 	if opt.Impersonate != "" {
 		conf.Subject = opt.Impersonate
 	}
-	ctxWithSpecialClient := oauthutil.Context(fshttp.NewClient(fs.Config))
+	ctxWithSpecialClient := oauthutil.Context(getClient(opt))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
@@ -871,7 +899,7 @@ func createOAuthClient(opt *Options, name string, m configmap.Mapper) (*http.Cli
 			return nil, errors.Wrap(err, "failed to create oauth client from service account")
 		}
 	} else {
-		oAuthClient, _, err = oauthutil.NewClient(name, m, driveConfig)
+		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(name, m, driveConfig, getClient(opt))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client")
 		}
