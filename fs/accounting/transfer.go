@@ -102,6 +102,8 @@ func (tr *Transfer) Done(err error) {
 		}
 		// Signal done with accounting
 		acc.Done()
+		// free the account since we may keep the transfer
+		acc = nil
 	}
 
 	tr.mu.Lock()
@@ -113,7 +115,7 @@ func (tr *Transfer) Done(err error) {
 	} else {
 		tr.stats.DoneTransferring(tr.remote, err == nil)
 	}
-	tr.stats.RemoveTransfer(tr)
+	tr.stats.PruneTransfers()
 }
 
 // Reset allows to switch the Account to another transfer method.

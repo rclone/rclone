@@ -13,6 +13,9 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 )
 
+// Maximum number of completed transfers in startedTransfers list
+const maxCompletedTransfers = 100
+
 // StatsInfo accounts all transfers
 type StatsInfo struct {
 	mu                sync.RWMutex
@@ -560,10 +563,11 @@ func (s *StatsInfo) AddTransfer(transfer *Transfer) {
 	s.mu.Unlock()
 }
 
-// RemoveTransfer removes a reference to the started transfer.
-func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
-	s.mu.Lock()
-
+// removeTransfer removes a reference to the started transfer in
+// position i.
+//
+// Must be called with the lock held
+func (s *StatsInfo) removeTransfer(transfer *Transfer, i int) {
 	// add finished transfer onto old time ranges
 	start, end := transfer.TimeRange()
 	if end.IsZero() {
@@ -572,11 +576,32 @@ func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
 	s.oldTimeRanges = append(s.oldTimeRanges, timeRange{start, end})
 	s.oldTimeRanges.merge()
 
+	// remove the found entry
+	s.startedTransfers = append(s.startedTransfers[:i], s.startedTransfers[i+1:]...)
+}
+
+// RemoveTransfer removes a reference to the started transfer.
+func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
+	s.mu.Lock()
 	for i, tr := range s.startedTransfers {
 		if tr == transfer {
-			// remove the found entry
-			s.startedTransfers = append(s.startedTransfers[:i], s.startedTransfers[i+1:]...)
+			s.removeTransfer(tr, i)
 			break
+		}
+	}
+	s.mu.Unlock()
+}
+
+// PruneTransfers makes sure there aren't too many old transfers
+func (s *StatsInfo) PruneTransfers() {
+	s.mu.Lock()
+	// remove a transfer from the start if we are over quota
+	if len(s.startedTransfers) > maxCompletedTransfers+fs.Config.Transfers {
+		for i, tr := range s.startedTransfers {
+			if tr.IsDone() {
+				s.removeTransfer(tr, i)
+				break
+			}
 		}
 	}
 	s.mu.Unlock()

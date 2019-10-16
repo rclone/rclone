@@ -137,6 +137,8 @@ This returns stats about completed transfers:
 If group is not provided then completed transfers for all groups will be
 returned.
 
+Note only the last 100 completed transfers are returned.
+
 Parameters
 - group - name of the stats group (string)
 
