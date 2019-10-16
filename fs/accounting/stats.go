@@ -34,7 +34,8 @@ type StatsInfo struct {
 	renameQueueSize   int64
 	deletes           int64
 	inProgress        *inProgress
-	startedTransfers  []*Transfer
+	startedTransfers  []*Transfer // currently active transfers
+	oldTimeRanges     timeRanges  // a merged list of time ranges for the transfers
 }
 
 // NewStats creates an initialised StatsInfo
@@ -109,50 +110,76 @@ func (s *StatsInfo) transferRemoteStats(name string) rc.Params {
 	return rc.Params{"name": name}
 }
 
+// timeRange is a start and end time of a transfer
 type timeRange struct {
 	start time.Time
 	end   time.Time
+}
+
+// timeRanges is a list of non-overlapping start and end times for
+// transfers
+type timeRanges []timeRange
+
+// merge all the overlapping time ranges
+func (trs *timeRanges) merge() {
+	Trs := *trs
+
+	// Sort by the starting time.
+	sort.Slice(Trs, func(i, j int) bool {
+		return Trs[i].start.Before(Trs[j].start)
+	})
+
+	// Merge overlaps and add distinctive ranges together
+	var (
+		newTrs = Trs[:0]
+		i, j   = 0, 1
+	)
+	for i < len(Trs) {
+		if j < len(Trs) {
+			if !Trs[i].end.Before(Trs[j].start) {
+				if Trs[i].end.Before(Trs[j].end) {
+					Trs[i].end = Trs[j].end
+				}
+				j++
+				continue
+			}
+		}
+		newTrs = append(newTrs, Trs[i])
+		i = j
+		j++
+	}
+
+	*trs = newTrs
+}
+
+// total the time out of the time ranges
+func (trs timeRanges) total() (total time.Duration) {
+	for _, tr := range trs {
+		total += tr.end.Sub(tr.start)
+	}
+	return total
 }
 
 // Total duration is union of durations of all transfers belonging to this
 // object.
 // Needs to be protected by mutex.
 func (s *StatsInfo) totalDuration() time.Duration {
-	now := time.Now()
+	// copy of s.oldTimeRanges with extra room for the current transfers
+	timeRanges := make(timeRanges, len(s.oldTimeRanges), len(s.oldTimeRanges)+len(s.startedTransfers))
+	copy(timeRanges, s.oldTimeRanges)
+
 	// Extract time ranges of all transfers.
-	timeRanges := make([]timeRange, len(s.startedTransfers))
+	now := time.Now()
 	for i := range s.startedTransfers {
 		start, end := s.startedTransfers[i].TimeRange()
 		if end.IsZero() {
 			end = now
 		}
-		timeRanges[i] = timeRange{start, end}
+		timeRanges = append(timeRanges, timeRange{start, end})
 	}
 
-	// Sort by the starting time.
-	sort.Slice(timeRanges, func(i, j int) bool {
-		return timeRanges[i].start.Before(timeRanges[j].start)
-	})
-
-	// Merge overlaps and add distinctive ranges together for total.
-	var total time.Duration
-	var i, j = 0, 1
-	for i < len(timeRanges) {
-		if j < len(timeRanges) {
-			if timeRanges[j].start.Before(timeRanges[i].end) {
-				if timeRanges[i].end.Before(timeRanges[j].end) {
-					timeRanges[i].end = timeRanges[j].end
-				}
-				j++
-				continue
-			}
-		}
-		total += timeRanges[i].end.Sub(timeRanges[i].start)
-		i = j
-		j++
-	}
-
-	return total
+	timeRanges.merge()
+	return timeRanges.total()
 }
 
 // eta returns the ETA of the current operation,
@@ -536,6 +563,15 @@ func (s *StatsInfo) AddTransfer(transfer *Transfer) {
 // RemoveTransfer removes a reference to the started transfer.
 func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
 	s.mu.Lock()
+
+	// add finished transfer onto old time ranges
+	start, end := transfer.TimeRange()
+	if end.IsZero() {
+		end = time.Now()
+	}
+	s.oldTimeRanges = append(s.oldTimeRanges, timeRange{start, end})
+	s.oldTimeRanges.merge()
+
 	for i, tr := range s.startedTransfers {
 		if tr == transfer {
 			// remove the found entry
