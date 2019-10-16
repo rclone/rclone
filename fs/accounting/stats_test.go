@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -305,4 +306,31 @@ func TestTimeRangeDuration(t *testing.T) {
 	assert.Equal(t, 0*time.Second, timeRanges{}.total())
 	assert.Equal(t, 1*time.Second, makeTimeRanges(t, []string{"1-2"}).total())
 	assert.Equal(t, 91*time.Second, makeTimeRanges(t, []string{"1-2", "10-100"}).total())
+}
+
+func TestPruneTransfers(t *testing.T) {
+	max := maxCompletedTransfers + fs.Config.Transfers
+
+	s := NewStats()
+	for i := int64(1); i <= int64(max+100); i++ {
+		s.AddTransfer(&Transfer{
+			startedAt:   time.Unix(i, 0),
+			completedAt: time.Unix(i+1, 0),
+		})
+	}
+
+	s.mu.Lock()
+	assert.Equal(t, time.Duration(max+100)*time.Second, s.totalDuration())
+	assert.Equal(t, max+100, len(s.startedTransfers))
+	s.mu.Unlock()
+
+	for i := 0; i < 200; i++ {
+		s.PruneTransfers()
+	}
+
+	s.mu.Lock()
+	assert.Equal(t, time.Duration(max+100)*time.Second, s.totalDuration())
+	assert.Equal(t, max, len(s.startedTransfers))
+	s.mu.Unlock()
+
 }
