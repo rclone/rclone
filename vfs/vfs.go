@@ -232,7 +232,7 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// Start polling function
 	if do := vfs.f.Features().ChangeNotify; do != nil {
 		vfs.pollChan = make(chan time.Duration)
-		do(context.TODO(), vfs.root.ForgetPath, vfs.pollChan)
+		do(context.TODO(), vfs.root.changeNotify, vfs.pollChan)
 		vfs.pollChan <- vfs.Opt.PollInterval
 	} else {
 		fs.Infof(f, "poll-interval is not supported by this remote")
