@@ -304,3 +304,4 @@ Contributors
   * AlexandrBoltris <ua2fgb@gmail.com>
   * Bryce Larson <blarson@saltstack.com>
   * Carlos Ferreyra <crypticmind@gmail.com>
+  * Saksham Khanna <sakshamkhanna@outlook.com>
