@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 )
@@ -119,6 +120,32 @@ func (d *Dir) ForgetAll() {
 	d.forgetDirPath("")
 }
 
+// invalidateDir invalidates the directory cache for absPath relative to this dir
+func (d *Dir) invalidateDir(absPath string) {
+	node := d.vfs.root.cachedNode(absPath)
+	if dir, ok := node.(*Dir); ok {
+		dir.mu.Lock()
+		if !dir.read.IsZero() {
+			fs.Debugf(dir.path, "invalidating directory cache")
+			dir.read = time.Time{}
+		}
+		dir.mu.Unlock()
+	}
+}
+
+// changeNotify invalidates the directory cache for the relativePath
+// passed in.
+//
+// if entryType is a directory it invalidates the parent of the directory too.
+func (d *Dir) changeNotify(relativePath string, entryType fs.EntryType) {
+	defer log.Trace(d.path, "relativePath=%q, type=%v", relativePath, entryType)("")
+	absPath := path.Join(d.path, relativePath)
+	d.invalidateDir(findParent(absPath))
+	if entryType == fs.EntryDirectory {
+		d.invalidateDir(absPath)
+	}
+}
+
 // ForgetPath clears the cache for itself and all subdirectories if
 // they match the given path. The path is specified relative from the
 // directory it is called from. The cache of the parent directory is
@@ -126,22 +153,10 @@ func (d *Dir) ForgetAll() {
 // It is not possible to traverse the directory tree upwards, i.e.
 // you cannot clear the cache for the Dir's ancestors or siblings.
 func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
+	defer log.Trace(d.path, "relativePath=%q, type=%v", relativePath, entryType)("")
 	if absPath := path.Join(d.path, relativePath); absPath != "" {
-		parent := path.Dir(absPath)
-		if parent == "." || parent == "/" {
-			parent = ""
-		}
-		parentNode := d.vfs.root.cachedNode(parent)
-		if dir, ok := parentNode.(*Dir); ok {
-			dir.mu.Lock()
-			if !dir.read.IsZero() {
-				fs.Debugf(dir.path, "invalidating directory cache")
-				dir.read = time.Time{}
-			}
-			dir.mu.Unlock()
-		}
+		d.invalidateDir(findParent(absPath))
 	}
-
 	if entryType == fs.EntryDirectory {
 		d.forgetDirPath(relativePath)
 	}
