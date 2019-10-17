@@ -770,6 +770,23 @@ in effect (the defaults):
 - 500MB..750MB files will be downloaded with 3 streams
 - 750MB+ files will be downloaded with 4 streams
 
+### --no-check-dest ###
+
+The `--no-check-dest` can be used with `move` or `copy` and it causes
+rclone not to check the destination at all when copying files.
+
+This means that:
+
+- the destination is not listed minimising the API calls
+- files are always transferred
+- this can cause duplicates on remotes which allow it (eg Google Drive)
+- `--retries 1` is recommended otherwise you'll transfer everything again on a retry
+
+This flag is useful to minimise the transactions if you know that none
+of the files are on the destination.
+
+This is a specialized flag which should be ignored by most users!
+
 ### --no-gzip-encoding ###
 
 Don't set `Accept-Encoding: gzip`.  This means that rclone won't ask
