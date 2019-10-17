@@ -31,6 +31,7 @@ type syncCopyMove struct {
 	ctx             context.Context        // internal context for controlling go-routines
 	cancel          func()                 // cancel the context
 	noTraverse      bool                   // if set don't traverse the dst
+	noCheckDest     bool                   // if set transfer all objects regardless without checking dst
 	deletersWg      sync.WaitGroup         // for delete before go routine
 	deleteFilesCh   chan fs.Object         // channel to receive deletes if delete before
 	trackRenames    bool                   // set if we should do server side renames
@@ -82,6 +83,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		dstEmptyDirs:       make(map[string]fs.DirEntry),
 		srcEmptyDirs:       make(map[string]fs.DirEntry),
 		noTraverse:         fs.Config.NoTraverse,
+		noCheckDest:        fs.Config.NoCheckDest,
 		toBeChecked:        newPipe(accounting.Stats(ctx).SetCheckQueue, fs.Config.MaxBacklog),
 		toBeUploaded:       newPipe(accounting.Stats(ctx).SetTransferQueue, fs.Config.MaxBacklog),
 		deleteFilesCh:      make(chan fs.Object, fs.Config.Checkers),
@@ -94,6 +96,17 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
 		fs.Errorf(nil, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
+	}
+	if s.noCheckDest {
+		if s.deleteMode != fs.DeleteModeOff {
+			return nil, errors.New("can't use --no-check-dest with sync: use copy instead")
+		}
+		if fs.Config.Immutable {
+			return nil, errors.New("can't use --no-check-dest with --immutable")
+		}
+		if s.backupDir != nil {
+			return nil, errors.New("can't use --no-check-dest with --backup-dir")
+		}
 	}
 	if s.trackRenames {
 		// Don't track renames for remotes without server-side move support.
@@ -667,6 +680,7 @@ func (s *syncCopyMove) run() error {
 		NoTraverse:    s.noTraverse,
 		Callback:      s,
 		DstIncludeAll: filter.Active.Opt.DeleteExcluded,
+		NoCheckDest:   s.noCheckDest,
 	}
 	s.processError(m.Run())
 
