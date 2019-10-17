@@ -6,11 +6,14 @@ import (
 	"context"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/version"
+	"github.com/rclone/rclone/lib/atexit"
 )
 
 func init() {
@@ -223,4 +226,37 @@ func rcObscure(ctx context.Context, in Params) (out Params, err error) {
 		"obscured": obscured,
 	}
 	return out, nil
+}
+
+func init() {
+	Add(Call{
+		Path:  "core/quit",
+		Fn:    rcQuit,
+		Title: "Terminates the app.",
+		Help: `
+(optional) Pass an exit code to be used for terminating the app:
+- exitCode - int
+`,
+	})
+}
+
+// Terminates app
+func rcQuit(ctx context.Context, in Params) (out Params, err error) {
+	code, err := in.GetInt64("exitCode")
+
+	if IsErrParamInvalid(err) {
+		return nil, err
+	}
+	if IsErrParamNotFound(err) {
+		code = 0
+	}
+	exitCode := int(code)
+
+	go func(exitCode int) {
+		time.Sleep(time.Millisecond * 1500)
+		atexit.Run()
+		os.Exit(exitCode)
+	}(exitCode)
+
+	return nil, nil
 }
