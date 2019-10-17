@@ -254,6 +254,14 @@ func makeTimeRanges(t *testing.T, in []string) timeRanges {
 	return trs
 }
 
+func (trs timeRanges) toStrings() (out []string) {
+	out = []string{}
+	for _, tr := range trs {
+		out = append(out, fmt.Sprintf("%d-%d", tr.start.Unix(), tr.end.Unix()))
+	}
+	return out
+}
+
 func TestTimeRangeMerge(t *testing.T) {
 	for _, test := range []struct {
 		in   []string
@@ -293,12 +301,77 @@ func TestTimeRangeMerge(t *testing.T) {
 		in := makeTimeRanges(t, test.in)
 		in.merge()
 
-		got := []string{}
-		for _, tr := range in {
-			got = append(got, fmt.Sprintf("%d-%d", tr.start.Unix(), tr.end.Unix()))
-		}
-
+		got := in.toStrings()
 		assert.Equal(t, test.want, got)
+	}
+}
+
+func TestTimeRangeCull(t *testing.T) {
+	for _, test := range []struct {
+		in           []string
+		cutoff       int64
+		want         []string
+		wantDuration time.Duration
+	}{{
+		in:           []string{},
+		cutoff:       1,
+		want:         []string{},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"1-2"},
+		cutoff:       1,
+		want:         []string{"1-2"},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       1,
+		want:         []string{"2-5", "7-9"},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       4,
+		want:         []string{"2-5", "7-9"},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       5,
+		want:         []string{"7-9"},
+		wantDuration: 3 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9", "2-5", "2-5"},
+		cutoff:       6,
+		want:         []string{"7-9"},
+		wantDuration: 9 * time.Second,
+	}, {
+		in:           []string{"7-9", "3-3", "2-5"},
+		cutoff:       7,
+		want:         []string{"7-9"},
+		wantDuration: 3 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       8,
+		want:         []string{"7-9"},
+		wantDuration: 3 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       9,
+		want:         []string{},
+		wantDuration: 5 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       10,
+		want:         []string{},
+		wantDuration: 5 * time.Second,
+	}} {
+
+		in := makeTimeRanges(t, test.in)
+		cutoff := time.Unix(test.cutoff, 0)
+		gotDuration := in.cull(cutoff)
+
+		what := fmt.Sprintf("in=%q, cutoff=%d", test.in, test.cutoff)
+		got := in.toStrings()
+		assert.Equal(t, test.want, got, what)
+		assert.Equal(t, test.wantDuration, gotDuration, what)
 	}
 }
 
