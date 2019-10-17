@@ -37,8 +37,9 @@ type StatsInfo struct {
 	renameQueueSize   int64
 	deletes           int64
 	inProgress        *inProgress
-	startedTransfers  []*Transfer // currently active transfers
-	oldTimeRanges     timeRanges  // a merged list of time ranges for the transfers
+	startedTransfers  []*Transfer   // currently active transfers
+	oldTimeRanges     timeRanges    // a merged list of time ranges for the transfers
+	oldDuration       time.Duration // duration of transfers we have culled
 }
 
 // NewStats creates an initialised StatsInfo
@@ -155,6 +156,21 @@ func (trs *timeRanges) merge() {
 	*trs = newTrs
 }
 
+// cull remove any ranges whose start and end are before cutoff
+// returning their duration sum
+func (trs *timeRanges) cull(cutoff time.Time) (d time.Duration) {
+	var newTrs = (*trs)[:0]
+	for _, tr := range *trs {
+		if cutoff.Before(tr.start) || cutoff.Before(tr.end) {
+			newTrs = append(newTrs, tr)
+		} else {
+			d += tr.end.Sub(tr.start)
+		}
+	}
+	*trs = newTrs
+	return d
+}
+
 // total the time out of the time ranges
 func (trs timeRanges) total() (total time.Duration) {
 	for _, tr := range trs {
@@ -182,7 +198,7 @@ func (s *StatsInfo) totalDuration() time.Duration {
 	}
 
 	timeRanges.merge()
-	return timeRanges.total()
+	return s.oldDuration + timeRanges.total()
 }
 
 // eta returns the ETA of the current operation,
@@ -436,6 +452,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.transfers = 0
 	s.deletes = 0
 	s.startedTransfers = nil
+	s.oldDuration = 0
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
@@ -568,16 +585,30 @@ func (s *StatsInfo) AddTransfer(transfer *Transfer) {
 //
 // Must be called with the lock held
 func (s *StatsInfo) removeTransfer(transfer *Transfer, i int) {
+	now := time.Now()
+
 	// add finished transfer onto old time ranges
 	start, end := transfer.TimeRange()
 	if end.IsZero() {
-		end = time.Now()
+		end = now
 	}
 	s.oldTimeRanges = append(s.oldTimeRanges, timeRange{start, end})
 	s.oldTimeRanges.merge()
 
 	// remove the found entry
 	s.startedTransfers = append(s.startedTransfers[:i], s.startedTransfers[i+1:]...)
+
+	// Find youngest active transfer
+	oldestStart := now
+	for i := range s.startedTransfers {
+		start, _ := s.startedTransfers[i].TimeRange()
+		if start.Before(oldestStart) {
+			oldestStart = start
+		}
+	}
+
+	// remove old entries older than that
+	s.oldDuration += s.oldTimeRanges.cull(oldestStart)
 }
 
 // RemoveTransfer removes a reference to the started transfer.
