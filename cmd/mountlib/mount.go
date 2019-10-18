@@ -38,6 +38,11 @@ var (
 	DaemonTimeout      time.Duration // OSXFUSE only
 )
 
+// Global constants
+const (
+	MaxLeafSize = 4095 // don't pass file names longer than this
+)
+
 func init() {
 	// DaemonTimeout defaults to non zero for macOS
 	if runtime.GOOS == "darwin" {

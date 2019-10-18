@@ -11,6 +11,7 @@ import (
 	fusefs "bazil.org/fuse/fs"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/mountlib"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 )
@@ -96,10 +97,15 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 		return nil, translateError(err)
 	}
 	for _, node := range items {
+		name := node.Name()
+		if len(name) >= mountlib.MaxLeafSize {
+			fs.Errorf(d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
+			continue
+		}
 		var dirent = fuse.Dirent{
 			// Inode FIXME ???
 			Type: fuse.DT_File,
-			Name: node.Name(),
+			Name: name,
 		}
 		if node.IsDir() {
 			dirent.Type = fuse.DT_Dir
