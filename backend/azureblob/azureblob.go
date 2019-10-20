@@ -312,6 +312,9 @@ func httpClientFactory(client *http.Client) pipeline.Factory {
 //
 // this code was copied from azblob.NewPipeline
 func (f *Fs) newPipeline(c azblob.Credential, o azblob.PipelineOptions) pipeline.Pipeline {
+	// Don't log stuff to syslog/Windows Event log
+	pipeline.SetForceLogEnabled(false)
+
 	// Closest to API goes first; closest to the wire goes last
 	factories := []pipeline.Factory{
 		azblob.NewTelemetryPolicyFactory(o.Telemetry),
