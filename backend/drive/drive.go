@@ -2314,9 +2314,11 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 func (f *Fs) changeNotifyStartPageToken() (pageToken string, err error) {
 	var startPageToken *drive.StartPageToken
 	err = f.pacer.Call(func() (bool, error) {
-		startPageToken, err = f.svc.Changes.GetStartPageToken().
-			SupportsAllDrives(true).
-			Do()
+		changes := f.svc.Changes.GetStartPageToken().SupportsAllDrives(true)
+		if f.isTeamDrive {
+			changes.DriveId(f.opt.TeamDriveID)
+		}
+		startPageToken, err = changes.Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -2339,7 +2341,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			changesCall.SupportsAllDrives(true)
 			changesCall.IncludeItemsFromAllDrives(true)
 			if f.isTeamDrive {
-				changesCall.TeamDriveId(f.opt.TeamDriveID)
+				changesCall.DriveId(f.opt.TeamDriveID)
 			}
 			changeList, err = changesCall.Context(ctx).Do()
 			return shouldRetry(err)
