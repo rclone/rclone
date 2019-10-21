@@ -411,7 +411,7 @@ older versions that have been set to keep forever.`,
 
 This can be useful if you wish to do a server side copy between two
 different Google drives.  Note that this isn't enabled by default
-because it isn't easy to tell if it will work beween any two
+because it isn't easy to tell if it will work between any two
 configurations.`,
 			Advanced: true,
 		}, {
