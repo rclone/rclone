@@ -590,13 +590,13 @@ type Fs struct {
 }
 
 type baseObject struct {
-	fs           *Fs    // what this object is part of
-	remote       string // The remote path
-	id           string // Drive Id of this object
-	modifiedDate string // RFC3339 time it was last modified
-	mimeType     string // The object MIME type
-	bytes        int64  // size of the object
-	parents      int    // number of parents
+	fs           *Fs      // what this object is part of
+	remote       string   // The remote path
+	id           string   // Drive Id of this object
+	modifiedDate string   // RFC3339 time it was last modified
+	mimeType     string   // The object MIME type
+	bytes        int64    // size of the object
+	parents      []string // IDs of the parent directories
 }
 type documentObject struct {
 	baseObject
@@ -1236,7 +1236,7 @@ func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
 		modifiedDate: modifiedDate,
 		mimeType:     info.MimeType,
 		bytes:        size,
-		parents:      len(info.Parents),
+		parents:      info.Parents,
 	}
 }
 
@@ -2019,6 +2019,9 @@ func (f *Fs) itemToDirEntry(remote string, item *drive.File) (entry fs.DirEntry,
 		f.dirCache.Put(remote, item.Id)
 		when, _ := time.Parse(timeFormatIn, item.ModifiedTime)
 		d := fs.NewDir(remote, when).SetID(item.Id)
+		if len(item.Parents) > 0 {
+			d.SetParentID(item.Parents[0])
+		}
 		return d, nil
 	case f.opt.AuthOwnerOnly && !isAuthOwned(item):
 		// ignore object
@@ -3722,7 +3725,7 @@ func (o *linkObject) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo
 
 // Remove an object
 func (o *baseObject) Remove(ctx context.Context) error {
-	if o.parents > 1 {
+	if len(o.parents) > 1 {
 		return errors.New("can't delete safely - has multiple parents")
 	}
 	return o.fs.delete(ctx, shortcutID(o.id), o.fs.opt.UseTrash)
@@ -3736,6 +3739,14 @@ func (o *baseObject) MimeType(ctx context.Context) string {
 // ID returns the ID of the Object if known, or "" if not
 func (o *baseObject) ID() string {
 	return o.id
+}
+
+// ParentID returns the ID of the Object parent if known, or "" if not
+func (o *baseObject) ParentID() string {
+	if len(o.parents) > 0 {
+		return o.parents[0]
+	}
+	return ""
 }
 
 func (o *documentObject) ext() string {
@@ -3798,10 +3809,13 @@ var (
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
+	_ fs.ParentIDer      = (*Object)(nil)
 	_ fs.Object          = (*documentObject)(nil)
 	_ fs.MimeTyper       = (*documentObject)(nil)
 	_ fs.IDer            = (*documentObject)(nil)
+	_ fs.ParentIDer      = (*documentObject)(nil)
 	_ fs.Object          = (*linkObject)(nil)
 	_ fs.MimeTyper       = (*linkObject)(nil)
 	_ fs.IDer            = (*linkObject)(nil)
+	_ fs.ParentIDer      = (*linkObject)(nil)
 )
