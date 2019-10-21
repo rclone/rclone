@@ -214,7 +214,15 @@ func init() {
 			}},
 		}, {
 			Name: "root_folder_id",
-			Help: "ID of the root folder\nLeave blank normally.\nFill in to access \"Computers\" folders. (see docs).",
+			Help: `ID of the root folder
+Leave blank normally.
+
+Fill in to access "Computers" folders (see docs), or for rclone to use
+a non root folder as its starting point.
+
+Note that if this is blank, the first time rclone runs it will fill it
+in with the ID of the root folder.
+`,
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path \nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
@@ -579,6 +587,23 @@ func containsString(slice []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// getRootID returns the canonical ID for the "root" ID
+func (f *Fs) getRootID() (string, error) {
+	var info *drive.File
+	var err error
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		info, err = f.svc.Files.Get("root").
+			Fields("id").
+			SupportsAllDrives(true).
+			Do()
+		return shouldRetry(err)
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't find root directory ID")
+	}
+	return info.Id, nil
 }
 
 // Lists the directory required calling the user function on each item found
@@ -998,13 +1023,17 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	// set root folder for a team drive or query the user root folder
 	if f.isTeamDrive {
 		f.rootFolderID = f.opt.TeamDriveID
-	} else {
-		f.rootFolderID = "root"
-	}
-
-	// override root folder if set in the config
-	if opt.RootFolderID != "" {
+	} else if opt.RootFolderID != "" {
+		// override root folder if set or cached in the config
 		f.rootFolderID = opt.RootFolderID
+	} else {
+		// Look up the root ID and cache it in the config
+		rootID, err := f.getRootID()
+		if err != nil {
+			return nil, err
+		}
+		f.rootFolderID = rootID
+		m.Set("root_folder_id", rootID)
 	}
 
 	f.dirCache = dircache.New(root, f.rootFolderID, f)
@@ -1553,20 +1582,6 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
-	}
-	if directoryID == "root" {
-		var info *drive.File
-		err = f.pacer.CallNoRetry(func() (bool, error) {
-			info, err = f.svc.Files.Get("root").
-				Fields("id").
-				SupportsAllDrives(true).
-				Do()
-			return shouldRetry(err)
-		})
-		if err != nil {
-			return err
-		}
-		directoryID = info.Id
 	}
 
 	mu := sync.Mutex{} // protects in and overflow
