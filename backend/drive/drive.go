@@ -1515,6 +1515,10 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in <-chan list
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
 		_, err := f.list(ctx, dirs, "", false, false, false, func(item *drive.File) bool {
+			// shared with me items have no parents when at the root
+			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
+				item.Parents = dirs
+			}
 			for _, parent := range item.Parents {
 				// only handle parents that are in the requested dirs list
 				i := sort.SearchStrings(dirs, parent)
