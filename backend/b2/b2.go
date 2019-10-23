@@ -1375,6 +1375,12 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 	if o.sha1 == "" || o.sha1 == "none" {
 		o.sha1 = Info[sha1Key]
 	}
+	// Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
+	// Some tools (eg Cyberduck) use this
+	const unverified = "unverified:"
+	if strings.HasPrefix(o.sha1, unverified) {
+		o.sha1 = o.sha1[len(unverified):]
+	}
 	o.size = Size
 	// Use the UploadTimestamp if can't get file info
 	o.modTime = time.Time(UploadTimestamp)
