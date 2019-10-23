@@ -116,6 +116,47 @@ func TestRc(t *testing.T) {
 		assert.Equal(t, "cabbage", obscure.MustReveal(FileGet(testName, "test_key2")))
 	})
 
+	t.Run("Upload", func(t *testing.T) {
+		// Call upload with implicit nosave == false
+		call := rc.Calls.Get("config/upload")
+		assert.NotNil(t, call)
+		in := rc.Params{
+			"content": "[" + testName + "]\n" +
+				"type = local\n" +
+				"test_key = rutabaga\n" +
+				"test_key2 = cabbage\n",
+		}
+		out, err := call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		assert.Nil(t, out)
+
+		assert.Equal(t, "local", FileGet(testName, "type"))
+		assert.Equal(t, "rutabaga", FileGet(testName, "test_key"))
+		assert.Equal(t, "cabbage", FileGet(testName, "test_key2"))
+
+		// Call upload with nosave
+		in = rc.Params{
+			"content": "[" + testName + "]\n" +
+				"type = local\n" +
+				"test_key = rutabaga\n" +
+				"test_key3 = cabbage\n",
+			"nosave": true,
+		}
+		out, err = call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		assert.Nil(t, out)
+		// Live config must contain new content
+		assert.Equal(t, "local", FileGet(testName, "type"))
+		assert.Equal(t, "", FileGet(testName, "test_key2"))
+		assert.Equal(t, "cabbage", FileGet(testName, "test_key3"))
+		// Config file must contain old content
+		LoadConfig()
+		assert.Equal(t, "local", FileGet(testName, "type"))
+		assert.Equal(t, "rutabaga", FileGet(testName, "test_key"))
+		assert.Equal(t, "cabbage", FileGet(testName, "test_key2"))
+		assert.Equal(t, "", FileGet(testName, "test_key3"))
+	})
+
 	// Delete the test remote
 	call = rc.Calls.Get("config/delete")
 	assert.NotNil(t, call)

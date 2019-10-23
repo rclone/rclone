@@ -2,7 +2,9 @@ package config
 
 import (
 	"context"
+	"strings"
 
+	"github.com/Unknwon/goconfig"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 )
@@ -177,5 +179,41 @@ func rcDelete(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 	DeleteRemote(name)
+	return nil, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "config/upload",
+		Fn:           rcUpload,
+		Title:        "Upload an rclone.conf file.",
+		AuthRequired: true,
+		Help: `
+Parameters:
+
+- content - text content of the config file
+- nosave - if set, don't change the contents of the current file
+
+Replaces the current rclone configuration with the specified config.`,
+	})
+}
+
+// Return the config file upload
+func rcUpload(_ context.Context, in rc.Params) (out rc.Params, err error) {
+	content, err := in.GetString("content")
+	if err != nil {
+		return nil, err
+	}
+	noSave, err := in.GetBool("nosave")
+	if _, ok := err.(rc.ErrParamNotFound); ok {
+		noSave = false
+	}
+	configFile, err = goconfig.LoadFromReader(strings.NewReader(content))
+	if err != nil {
+		return nil, err
+	}
+	if !noSave {
+		SaveConfig()
+	}
 	return nil, nil
 }

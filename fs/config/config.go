@@ -1419,6 +1419,7 @@ func Dump() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to write config dump")
 	}
+	fmt.Println()
 	return nil
 }
 
