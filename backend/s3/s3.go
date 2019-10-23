@@ -1872,6 +1872,9 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	o.etag = aws.StringValue(resp.ETag)
 	o.bytes = size
 	o.meta = resp.Metadata
+	if o.meta == nil {
+		o.meta = map[string]*string{}
+	}
 	o.storageClass = aws.StringValue(resp.StorageClass)
 	if resp.LastModified == nil {
 		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
