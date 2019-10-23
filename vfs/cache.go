@@ -278,53 +278,40 @@ func (c *cache) exists(name string) bool {
 }
 
 // renames the file in cache
-func (c *cache) rename(name string, newName string) bool {
+func (c *cache) rename(name string, newName string) (err error) {
 	osOldPath := c.toOSPath(name)
 	osNewPath := c.toOSPath(newName)
 	sfi, err := os.Stat(osOldPath)
 	if err != nil {
-		return false
+		return errors.Wrapf(err, "Failed to stat source: %s", osOldPath)
 	}
 	if !sfi.Mode().IsRegular() {
 		// cannot copy non-regular files (e.g., directories, symlinks, devices, etc.)
-		fs.Errorf("rename: non-regular source file %s (%q)", sfi.Name(), sfi.Mode().String())
-		return false
+		return errors.Errorf("Non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
 	}
 	dfi, err := os.Stat(osNewPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			fs.Errorf(name, "rename: Failed to stat destination: %v", err)
-			return false
+			return errors.Wrapf(err, "Failed to stat destination: %s", osNewPath)
 		}
 		parent := findParent(osNewPath)
 		err = os.MkdirAll(parent, 0700)
 		if err != nil {
-			return false
+			return errors.Wrapf(err, "Failed to create parent dir: %s", parent)
 		}
 	} else {
 		if !(dfi.Mode().IsRegular()) {
-			fs.Errorf("rename: non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
-			return false
+			return errors.Errorf("Non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
 		if os.SameFile(sfi, dfi) {
-			return true
+			return nil
 		}
-	}
-	if err = os.Link(osOldPath, osNewPath); err == nil {
-		err = os.Remove(osOldPath)
-		if err != nil {
-			fs.Errorf(name, "rename: Failed to remove source in cache: %v", err)
-			return false
-		}
-		fs.Infof(name, "Renamed in cache")
-		return true
 	}
 	if err = os.Rename(osOldPath, osNewPath); err != nil {
-		fs.Errorf(name, "Failed to rename in cache: %v", err)
-		return false
+		return errors.Wrapf(err, "Failed to rename in cache: %s to %s", osOldPath, osNewPath)
 	}
 	fs.Infof(name, "Renamed in cache")
-	return true
+	return nil
 }
 
 // _close marks name as closed - must be called with the lock held
