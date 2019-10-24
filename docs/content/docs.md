@@ -50,6 +50,7 @@ See the following for detailed instructions for
   * [put.io](/putio/)
   * [QingStor](/qingstor/)
   * [SFTP](/sftp/)
+  * [SugarSync](/sugarsync/)
   * [Union](/union/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)

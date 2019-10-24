@@ -354,7 +354,7 @@ Integration tests
   * Add your backend to `fstest/test_all/config.yaml`
       * Once you've done that then you can use the integration test framework from the project root:
       * go install ./...
-      * test_all -backend remote
+      * test_all -backends remote
 
 Or if you want to run the integration tests manually:
 
