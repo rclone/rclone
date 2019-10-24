@@ -2343,6 +2343,10 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if f.isTeamDrive {
 				changesCall.DriveId(f.opt.TeamDriveID)
 			}
+			// If using appDataFolder then need to add Spaces
+			if f.rootFolderID == "appDataFolder" {
+				changesCall.Spaces("appDataFolder")
+			}
 			changeList, err = changesCall.Context(ctx).Do()
 			return shouldRetry(err)
 		})
