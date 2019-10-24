@@ -143,6 +143,11 @@ backends:
  - backend:  "sftp"
    remote:   "TestSftp:"
    fastlist: false
+ - backend:  "sugarsync"
+   remote:   "TestSugarSync:Test"
+   fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  - backend:  "swift"
    remote:   "TestSwift:"
    fastlist: true

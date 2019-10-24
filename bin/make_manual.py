@@ -54,6 +54,7 @@ docs = [
     "premiumizeme.md",
     "putio.md",
     "sftp.md",
+    "sugarsync.md",
     "union.md",
     "webdav.md",
     "yandex.md",
