@@ -62,6 +62,9 @@ const (
 
 	// ConfigAuthorize indicates that we just want "rclone authorize"
 	ConfigAuthorize = "config_authorize"
+
+	// ConfigAuthNoBrowser indicates that we do not want to open browser
+	ConfigAuthNoBrowser = "config_auth_no_browser"
 )
 
 // Global
@@ -1299,7 +1302,7 @@ func SetPassword() {
 //
 //   rclone authorize "fs name"
 //   rclone authorize "fs name" "client id" "client secret"
-func Authorize(args []string) {
+func Authorize(args []string, noAutoBrowser bool) {
 	defer suppressConfirm()()
 	switch len(args) {
 	case 1, 3:
@@ -1319,10 +1322,15 @@ func Authorize(args []string) {
 
 	// Indicate that we are running rclone authorize
 	getConfigData().SetValue(name, ConfigAuthorize, "true")
+	if noAutoBrowser {
+		getConfigData().SetValue(name, ConfigAuthNoBrowser, "true")
+	}
+
 	if len(args) == 3 {
 		getConfigData().SetValue(name, ConfigClientID, args[1])
 		getConfigData().SetValue(name, ConfigClientSecret, args[2])
 	}
+
 	m := fs.ConfigMap(f, name)
 	f.Config(name, m)
 }
