@@ -386,6 +386,8 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 	oauthConfig, changed := overrideCredentials(name, m, oauthConfig)
 	authorizeOnlyValue, ok := m.Get(config.ConfigAuthorize)
 	authorizeOnly := ok && authorizeOnlyValue != "" // set if being run by "rclone authorize"
+	authorizeNoAutoBrowserValue, ok := m.Get(config.ConfigAuthNoBrowser)
+	authorizeNoAutoBrowser := ok && authorizeNoAutoBrowserValue != ""
 
 	// See if already have a token
 	tokenString, ok := m.Get("token")
@@ -470,9 +472,13 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 		authURL = "http://" + bindAddress + "/auth?state=" + state
 	}
 
-	// Open the URL for the user to visit
-	_ = open.Start(authURL)
-	fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n", authURL)
+	if !authorizeNoAutoBrowser && oauthConfig.RedirectURL != TitleBarRedirectURL {
+		// Open the URL for the user to visit
+		_ = open.Start(authURL)
+		fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n", authURL)
+	} else {
+		fmt.Printf("Please go to the following link: %s\n", authURL)
+	}
 	fmt.Printf("Log in and authorize rclone for access\n")
 
 	// Read the code via the webserver or manually

@@ -22,7 +22,8 @@ rclone authorize [flags]
 ### Options
 
 ```
-  -h, --help   help for authorize
+  --auth-no-open-browser   Do not automatically open auth link in default browser
+  -h, --help               help for authorize
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
