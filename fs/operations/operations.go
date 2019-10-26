@@ -4,7 +4,9 @@ package operations
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/csv"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -1042,8 +1044,9 @@ func Sha1sum(ctx context.Context, f fs.Fs, w io.Writer) error {
 }
 
 // hashSum returns the human readable hash for ht passed in.  This may
-// be UNSUPPORTED or ERROR.
-func hashSum(ctx context.Context, ht hash.Type, o fs.Object) string {
+// be UNSUPPORTED or ERROR. If it isn't returning a valid hash it will
+// return an error.
+func hashSum(ctx context.Context, ht hash.Type, o fs.Object) (string, error) {
 	var err error
 	tr := accounting.Stats(ctx).NewCheckingTransfer(o)
 	defer func() {
@@ -1056,14 +1059,27 @@ func hashSum(ctx context.Context, ht hash.Type, o fs.Object) string {
 		fs.Debugf(o, "Failed to read %v: %v", ht, err)
 		sum = "ERROR"
 	}
-	return sum
+	return sum, err
 }
 
 // HashLister does a md5sum equivalent for the hash type passed in
 func HashLister(ctx context.Context, ht hash.Type, f fs.Fs, w io.Writer) error {
 	return ListFn(ctx, f, func(o fs.Object) {
-		sum := hashSum(ctx, ht, o)
+		sum, _ := hashSum(ctx, ht, o)
 		syncFprintf(w, "%*s  %s\n", hash.Width(ht), sum, o.Remote())
+	})
+}
+
+// HashListerBase64 does a md5sum equivalent for the hash type passed in with base64 encoded
+func HashListerBase64(ctx context.Context, ht hash.Type, f fs.Fs, w io.Writer) error {
+	return ListFn(ctx, f, func(o fs.Object) {
+		sum, err := hashSum(ctx, ht, o)
+		if err == nil {
+			hexBytes, _ := hex.DecodeString(sum)
+			sum = base64.URLEncoding.EncodeToString(hexBytes)
+		}
+		width := base64.URLEncoding.EncodedLen(hash.Width(ht) / 2)
+		syncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
 	})
 }
 
