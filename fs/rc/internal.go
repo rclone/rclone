@@ -261,3 +261,77 @@ func rcQuit(ctx context.Context, in Params) (out Params, err error) {
 
 	return nil, nil
 }
+
+func init() {
+	Add(Call{
+		Path:  "debug/set-mutex-profile-fraction",
+		Fn:    rcSetMutexProfileFraction,
+		Title: "Set runtime.SetMutexProfileFraction for mutex profiling.",
+		Help: `
+SetMutexProfileFraction controls the fraction of mutex contention
+events that are reported in the mutex profile. On average 1/rate
+events are reported. The previous rate is returned.
+
+To turn off profiling entirely, pass rate 0. To just read the current
+rate, pass rate < 0. (For n>1 the details of sampling may change.)
+
+Once this is set you can look use this to profile the mutex contention:
+
+    go tool pprof http://localhost:5572/debug/pprof/mutex
+
+Parameters
+
+- rate - int
+
+Results
+
+- previousRate - int
+`,
+	})
+}
+
+// Terminates app
+func rcSetMutexProfileFraction(ctx context.Context, in Params) (out Params, err error) {
+	rate, err := in.GetInt64("rate")
+	if err != nil {
+		return nil, err
+	}
+	previousRate := runtime.SetMutexProfileFraction(int(rate))
+	out = make(Params)
+	out["previousRate"] = previousRate
+	return out, nil
+}
+
+func init() {
+	Add(Call{
+		Path:  "debug/set-block-profile-rate",
+		Fn:    rcSetBlockProfileRate,
+		Title: "Set runtime.SetBlockProfileRate for blocking profiling.",
+		Help: `
+SetBlockProfileRate controls the fraction of goroutine blocking events
+that are reported in the blocking profile. The profiler aims to sample
+an average of one blocking event per rate nanoseconds spent blocked.
+
+To include every blocking event in the profile, pass rate = 1. To turn
+off profiling entirely, pass rate <= 0.
+
+After calling this you can use this to see the blocking profile:
+
+    go tool pprof http://localhost:5572/debug/pprof/block
+
+Parameters
+
+- rate - int
+`,
+	})
+}
+
+// Terminates app
+func rcSetBlockProfileRate(ctx context.Context, in Params) (out Params, err error) {
+	rate, err := in.GetInt64("rate")
+	if err != nil {
+		return nil, err
+	}
+	runtime.SetBlockProfileRate(int(rate))
+	return nil, nil
+}
