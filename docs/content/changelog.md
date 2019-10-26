@@ -1,10 +1,117 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-10-05"
+date: "2019-10-26"
 ---
 
 # Changelog
+
+## v1.50.0 - 2019-10-26
+
+* New backends
+    * [Citrix Sharefile](/sharefile) (Nick Craig-Wood)
+    * [Chunker](/chunker) - an overlay backend to split files into smaller parts (Ivan Andreev)
+    * [Mail.ru Cloud](/mailru) (Ivan Andreev)
+* New Features
+    * encodings (Fabian Möller & Nick Craig-Wood)
+        * All backends now use file name encoding to ensure any file name can be written to any backend.
+        * See the [restricted file name docs](/overview/#restricted-filenames) for more info and the [local backend docs](/local/#filenames).
+        * Some file names may look different in rclone if you are using any control characters in names or [unicode FULLWIDTH symbols](https://en.wikipedia.org/wiki/Halfwidth_and_Fullwidth_Forms_(Unicode_block)).
+    * build
+        * Update to use go1.13 for the build (Nick Craig-Wood)
+        * Drop support for go1.9 (Nick Craig-Wood)
+        * Build rclone with GitHub actions (Nick Craig-Wood)
+        * Convert python scripts to python3 (Nick Craig-Wood)
+        * Swap Azure/go-ansiterm for mattn/go-colorable (Nick Craig-Wood)
+        * Dockerfile fixes (Matei David)
+        * Add [plugin support](https://github.com/rclone/rclone/blob/master/CONTRIBUTING.md#writing-a-plugin) for backends and commands (Richard Patel)
+    * config
+        * Use alternating Red/Green in config to make more obvious (Nick Craig-Wood)
+    * contrib
+        * Add sample DLNA server Docker Compose manifest. (pataquets)
+        * Add sample WebDAV server Docker Compose manifest. (pataquets)
+    * copyurl
+        * Add `--auto-filename` flag for using file name from URL in destination path (Denis)
+    * serve dlna:
+        * Many compatability improvements (Dan Walters)
+        * Support for external srt subtitles (Dan Walters)
+    * rc
+        * Added command core/quit (Saksham Khanna)
+* Bug Fixes
+    * sync
+        * Make `--update`/`-u` not transfer files that haven't changed (Nick Craig-Wood)
+        * Free objects after they come out of the transfer pipe to save memory (Nick Craig-Wood)
+        * Fix `--files-from without --no-traverse` doing a recursive scan (Nick Craig-Wood)
+    * operations
+        * Fix accounting for server side copies (Nick Craig-Wood)
+        * Display 'All duplicates removed' only if dedupe successful (Sezal Agrawal)
+        * Display 'Deleted X extra copies' only if dedupe successful (Sezal Agrawal)
+    * accounting
+        * Only allow up to 100 completed transfers in the accounting list to save memory (Nick Craig-Wood)
+        * Cull the old time ranges when possible to save memory (Nick Craig-Wood)
+        * Fix panic due to server-side copy fallback (Ivan Andreev)
+        * Fix memory leak noticeable for transfers of large numbers of objects (Nick Craig-Wood)
+        * Fix total duration calculation (Nick Craig-Wood)
+    * cmd
+        * Fix environment variables not setting command line flags (Nick Craig-Wood)
+        * Make autocomplete compatible with bash's posix mode for macOS (Danil Semelenov)
+        * Make `--progress` work in git bash on Windows (Nick Craig-Wood)
+        * Fix 'compopt: command not found' on autocomplete on macOS (Danil Semelenov)
+    * config
+        * Fix setting of non top level flags from environment variables (Nick Craig-Wood)
+        * Check config names more carefully and report errors (Nick Craig-Wood)
+        * Remove error: can't use `--size-only` and `--ignore-size` together. (Nick Craig-Wood)
+    * filter: Prevent mixing options when `--files-from` is in use (Michele Caci)
+    * serve sftp: Fix crash on unsupported operations (eg Readlink) (Nick Craig-Wood)
+* Mount
+    * Allow files of unkown size to be read properly (Nick Craig-Wood)
+    * Skip tests on <= 2 CPUs to avoid lockup (Nick Craig-Wood)
+    * Fix panic on File.Open (Nick Craig-Wood)
+    * Fix "mount_fusefs: -o timeout=: option not supported" on FreeBSD (Nick Craig-Wood)
+    * Don't pass huge filenames (>4k) to FUSE as it can't cope (Nick Craig-Wood)
+* VFS
+    * Add flag `--vfs-case-insensitive` for windows/macOS mounts (Ivan Andreev)
+    * Make objects of unknown size readable through the VFS (Nick Craig-Wood)
+    * Move writeback of dirty data out of close() method into its own method (FlushWrites) and remove close() call from Flush() (Brett Dutro)
+    * Stop empty dirs disappearing when renamed on bucket based remotes (Nick Craig-Wood)
+    * Stop change notify polling clearing so much of the directory cache (Nick Craig-Wood)
+* Azure Blob
+    * Disable logging to the Windows event log (Nick Craig-Wood)
+* B2
+    * Remove `unverified:` prefix on sha1 to improve interop (eg with CyberDuck) (Nick Craig-Wood)
+* Box
+    * Add options to get access token via JWT auth (David)
+* Drive
+    * Disable HTTP/2 by default to work around INTERNAL_ERROR problems (Nick Craig-Wood)
+    * Make sure that drive root ID is always canonical (Nick Craig-Wood)
+    * Fix `--drive-shared-with-me` from the root with lsand `--fast-list` (Nick Craig-Wood)
+    * Fix ChangeNotify polling for shared drives (Nick Craig-Wood)
+    * Fix change notify polling when using appDataFolder (Nick Craig-Wood)
+* Dropbox
+    * Make disallowed filenames errors not retry (Nick Craig-Wood)
+    * Fix nil pointer exception on restricted files (Nick Craig-Wood)
+* Fichier
+    * Fix accessing files > 2GB on 32 bit systems (Nick Craig-Wood)
+* FTP
+    * Allow disabling EPSV mode (Jon Fautley)
+* HTTP
+    * HEAD directory entries in parallel to speedup (Nick Craig-Wood)
+    * Add `--http-no-head` to stop rclone doing HEAD in listings (Nick Craig-Wood)
+* Putio
+    * Add ability to resume uploads (Cenk Alti)
+* S3
+    * Fix signature v2_auth headers (Anthony Rusdi)
+    * Fix encoding for control characters (Nick Craig-Wood)
+    * Only ask for URL encoded directory listings if we need them on Ceph (Nick Craig-Wood)
+    * Add option for multipart failiure behaviour (Aleksandar Jankovic)
+    * Support for multipart copy (庄天翼)
+    * Fix nil pointer reference if no metadata returned for object (Nick Craig-Wood)
+* SFTP
+    * Fix `--sftp-ask-password` trying to contact the ssh agent (Nick Craig-Wood)
+    * Fix hashes of files with backslashes (Nick Craig-Wood)
+    * Include more ciphers with `--sftp-use-insecure-cipher` (Carlos Ferreyra)
+* WebDAV
+    * Parse and return Sharepoint error response (Henning Surmeier)
 
 ## v1.49.5 - 2019-10-05
 
@@ -36,16 +143,14 @@ date: "2019-10-05"
 * New Features
     * build: Add Docker workflow support (Alfonso Montero)
 * Bug Fixes
-    * accounting: Fix locking in Transfer to avoid deadlock with --progress (Nick Craig-Wood)
+    * accounting: Fix locking in Transfer to avoid deadlock with `--progress` (Nick Craig-Wood)
     * docs: Fix template argument for mktemp in install.sh (Cnly)
-    * operations: Fix -u/--update with google photos / files of unknown size (Nick Craig-Wood)
+    * operations: Fix `-u`/`--update` with google photos / files of unknown size (Nick Craig-Wood)
     * rc: Fix docs for config/create /update /password (Nick Craig-Wood)
 * Google Cloud Storage
     * Fix need for elevated permissions on SetModTime (Nick Craig-Wood)
 
 ## v1.49.1 - 2019-08-28
-
-Point release to fix config bug and google photos backend.
 
 * Bug Fixes
     * config: Fix generated passwords being stored as empty password (Nick Craig-Wood)

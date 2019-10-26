@@ -1,5 +1,5 @@
 ---
-date: 2019-08-26T15:19:45+01:00
+date: 2019-10-26T11:04:03+01:00
 title: "rclone serve webdav"
 slug: rclone_serve_webdav
 url: /commands/rclone_serve_webdav/
@@ -327,6 +327,7 @@ rclone serve webdav remote:path [flags]
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
       --vfs-cache-poll-interval duration       Interval to poll the cache for stale objects. (default 1m0s)
+      --vfs-case-insensitive                   If a file name not found, find a case insensitive match.
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks. (default 128M)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached. 'off' is unlimited. (default off)
 ```

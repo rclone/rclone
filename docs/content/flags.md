@@ -1,7 +1,7 @@
 ---
 title: "Global Flags"
 description: "Rclone Global Flags"
-date: "2019-08-26T15:19:45+01:00"
+date: "2019-10-26T11:04:03+01:00"
 ---
 
 # Global Flags
@@ -127,7 +127,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.49.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.50.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -164,6 +164,8 @@ and may be set in the config file.
       --b2-test-mode string                          A flag string for X-Bz-Test-Mode header for debugging.
       --b2-upload-cutoff SizeSuffix                  Cutoff for switching to chunked upload. (default 200M)
       --b2-versions                                  Include old versions in directory listings.
+      --box-box-config-file string                   Box App config.json location
+      --box-box-sub-type string                       (default "user")
       --box-client-id string                         Box App Client Id.
       --box-client-secret string                     Box App Client Secret
       --box-commit-retries int                       Max number of times to try committing a multipart file. (default 100)
@@ -188,6 +190,13 @@ and may be set in the config file.
       --cache-tmp-wait-time Duration                 How long should files be stored in local cache before being uploaded (default 15s)
       --cache-workers int                            How many workers should run in parallel to download chunks. (default 4)
       --cache-writes                                 Cache file data on writes through the FS
+      --chunker-chunk-size SizeSuffix                Files larger than chunk size will be split in chunks. (default 2G)
+      --chunker-fail-hard                            Choose how chunker should handle files with missing or invalid chunks.
+      --chunker-hash-type string                     Choose how chunker handles hash sums. All modes but "none" require metadata. (default "md5")
+      --chunker-meta-format string                   Format of the metadata object or "none". By default "simplejson". (default "simplejson")
+      --chunker-name-format string                   String format of chunk file names. (default "*.rclone_chunk.###")
+      --chunker-remote string                        Remote to chunk/unchunk.
+      --chunker-start-from int                       Minimum valid chunk number. Usually 0 or 1. (default 1)
   -L, --copy-links                                   Follow symlinks and copy the pointed to item.
       --crypt-directory-name-encryption              Option to either encrypt directory names or leave them intact. (default true)
       --crypt-filename-encryption string             How to encrypt the filenames. (default "standard")
@@ -202,6 +211,7 @@ and may be set in the config file.
       --drive-chunk-size SizeSuffix                  Upload chunk size. Must a power of 2 >= 256k. (default 8M)
       --drive-client-id string                       Google Application Client Id
       --drive-client-secret string                   Google Application Client Secret
+      --drive-disable-http2                          Disable drive using http2 (default true)
       --drive-export-formats string                  Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
       --drive-formats string                         Deprecated: see export_formats
       --drive-impersonate string                     Impersonate this user when using a service account.
@@ -232,6 +242,7 @@ and may be set in the config file.
       --fichier-api-key string                       Your API Key, get it from https://1fichier.com/console/params.pl
       --fichier-shared-folder string                 If you want to download a shared folder, add this parameter
       --ftp-concurrency int                          Maximum number of FTP simultaneous connections, 0 for unlimited
+      --ftp-disable-epsv                             Disable using EPSV even if server advertises support
       --ftp-host string                              FTP host to connect to
       --ftp-no-check-certificate                     Do not verify the TLS certificate of the server
       --ftp-pass string                              FTP password
@@ -252,6 +263,7 @@ and may be set in the config file.
       --gphotos-read-only                            Set to make the Google Photos backend read only.
       --gphotos-read-size                            Set to read the size of media items.
       --http-headers CommaSepList                    Set HTTP headers for all transactions
+      --http-no-head                                 Don't use HEAD requests to find file sizes in dir listing
       --http-no-slash                                Set this if the site doesn't end directories with /
       --http-url string                              URL of http host to connect to
       --hubic-chunk-size SizeSuffix                  Above this size files will be chunked into a _segments container. (default 5G)
@@ -273,12 +285,19 @@ and may be set in the config file.
       --local-no-check-updated                       Don't check to see if the files change during upload
       --local-no-unicode-normalization               Don't apply unicode normalization to paths and filenames (Deprecated)
       --local-nounc string                           Disable UNC (long path names) conversion on Windows
+      --mailru-check-hash                            What should copy do if file checksum is mismatched or invalid (default true)
+      --mailru-pass string                           Password
+      --mailru-speedup-enable                        Skip full upload if there is another file with same data hash. (default true)
+      --mailru-speedup-file-patterns string          Comma separated list of file name patterns eligible for speedup (put by hash). (default "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf")
+      --mailru-speedup-max-disk SizeSuffix           This option allows you to disable speedup (put by hash) for large files (default 3G)
+      --mailru-speedup-max-memory SizeSuffix         Files larger than the size given below will always be hashed on disk. (default 32M)
+      --mailru-user string                           User name (usually email)
       --mega-debug                                   Output more debug from Mega.
       --mega-hard-delete                             Delete files permanently rather than putting them into the trash.
       --mega-pass string                             Password.
       --mega-user string                             User name
   -x, --one-file-system                              Don't cross filesystem boundaries (unix/macOS only).
-      --onedrive-chunk-size SizeSuffix               Chunk size to upload files with - must be multiple of 320k. (default 10M)
+      --onedrive-chunk-size SizeSuffix               Chunk size to upload files with - must be multiple of 320k (327,680 bytes). (default 10M)
       --onedrive-client-id string                    Microsoft App Client Id
       --onedrive-client-secret string                Microsoft App Client Secret
       --onedrive-drive-id string                     The ID of the drive to use
@@ -305,6 +324,7 @@ and may be set in the config file.
       --s3-endpoint string                           Endpoint for S3 API.
       --s3-env-auth                                  Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).
       --s3-force-path-style                          If true use path style access if false use virtual hosted style. (default true)
+      --s3-leave-parts-on-error                      If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
       --s3-location-constraint string                Location constraint - must be set to match the Region.
       --s3-provider string                           Choose your S3 provider.
       --s3-region string                             Region to connect to.
@@ -329,8 +349,12 @@ and may be set in the config file.
       --sftp-port string                             SSH port, leave blank to use default (22)
       --sftp-set-modtime                             Set the modified time on the remote if set. (default true)
       --sftp-sha1sum-command string                  The command used to read sha1 hashes. Leave blank for autodetect.
-      --sftp-use-insecure-cipher                     Enable the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange. Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
+      --sftp-use-insecure-cipher                     Enable the use of insecure ciphers and key exchange methods.
       --sftp-user string                             SSH username, leave blank for current username, ncw
+      --sharefile-chunk-size SizeSuffix              Upload chunk size. Must a power of 2 >= 256k. (default 64M)
+      --sharefile-endpoint string                    Endpoint for API calls.
+      --sharefile-root-folder-id string              ID of the root folder
+      --sharefile-upload-cutoff SizeSuffix           Cutoff for switching to multipart upload. (default 128M)
       --skip-links                                   Don't warn about skipped symlinks.
       --swift-application-credential-id string       Application Credential ID (OS_APPLICATION_CREDENTIAL_ID)
       --swift-application-credential-name string     Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME)

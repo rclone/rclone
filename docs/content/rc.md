@@ -467,6 +467,11 @@ Returns
 This returns PID of current process.
 Useful for stopping rclone process.
 
+### core/quit: Terminates the app. {#core/quit}
+
+(optional) Pass an exit code to be used for terminating the app:
+- exitCode - int
+
 ### core/stats: Returns stats about current transfers. {#core/stats}
 
 This returns all available stats:
@@ -519,6 +524,7 @@ is provided.
 
 Parameters
 - group - name of the stats group (string)
+```
 
 ### core/transferred: Returns stats about completed transfers. {#core/transferred}
 
@@ -528,6 +534,8 @@ This returns stats about completed transfers:
 
 If group is not provided then completed transfers for all groups will be
 returned.
+
+Note only the last 100 completed transfers are returned.
 
 Parameters
 - group - name of the stats group (string)
@@ -630,7 +638,7 @@ This takes the following parameters
 - fs - a remote name string eg "drive:"
 - remote - a path within that remote eg "dir"
 - url - string, URL to read from
-
+ - autoFilename - boolean, set to true to retrieve destination file name from url
 See the [copyurl command](/commands/rclone_copyurl/) command for more information on the above.
 
 Authentication is required for this call.

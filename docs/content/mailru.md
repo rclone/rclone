@@ -213,20 +213,20 @@ Here are the advanced options specific to mailru (Mail.ru Cloud).
 #### --mailru-speedup-file-patterns
 
 Comma separated list of file name patterns eligible for speedup (put by hash).
-Patterns are case insensitive and can contain `*` or `?` meta characters.
+Patterns are case insensitive and can contain '*' or '?' meta characters.
 
 - Config:      speedup_file_patterns
 - Env Var:     RCLONE_MAILRU_SPEEDUP_FILE_PATTERNS
 - Type:        string
 - Default:     "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf"
 - Examples:
-    - `""`
+    - ""
         - Empty list completely disables speedup (put by hash).
-    - `"*"`
+    - "*"
         - All files will be attempted for speedup.
-    - `"*.mkv,*.avi,*.mp4,*.mp3"`
+    - "*.mkv,*.avi,*.mp4,*.mp3"
         - Only common audio/video files will be tried for put by hash.
-    - `"*.zip,*.gz,*.rar,*.pdf"`
+    - "*.zip,*.gz,*.rar,*.pdf"
         - Only common archives or PDF books will be tried for speedup.
 
 #### --mailru-speedup-max-disk
@@ -288,8 +288,12 @@ Defaults to "rclone/VERSION" or "--user-agent" provided on command line.
 
 #### --mailru-quirks
 
-Comma separated list of internal maintenance flags. This option is intended
-for development purposes. Should not be used by an ordinary user.
+Comma separated list of internal maintenance flags.
+This option must not be used by an ordinary user. It is intended only to
+facilitate remote troubleshooting of backend issues. Strict meaning of
+flags is not documented and not guaranteed to persist between releases.
+Quirks will be removed when the backend grows stable.
+Supported quirks: atomicmkdir binlist gzip insecure retry400
 
 - Config:      quirks
 - Env Var:     RCLONE_MAILRU_QUIRKS

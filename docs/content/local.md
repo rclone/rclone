@@ -319,7 +319,7 @@ Disable UNC (long path names) conversion on Windows
 
 Here are the advanced options specific to local (Local Disk).
 
-#### --copy-links
+#### --copy-links / -L
 
 Follow symlinks and copy the pointed to item.
 
@@ -328,7 +328,7 @@ Follow symlinks and copy the pointed to item.
 - Type:        bool
 - Default:     false
 
-#### --links
+#### --links / -l
 
 Translate symlinks to/from regular files with a '.rclonelink' extension
 
@@ -378,7 +378,7 @@ check can be disabled with this flag.
 - Type:        bool
 - Default:     false
 
-#### --one-file-system
+#### --one-file-system / -x
 
 Don't cross filesystem boundaries (unix/macOS only).
 
