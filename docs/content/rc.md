@@ -573,6 +573,44 @@ This shows the current version of go and the go runtime
 - arch - cpu architecture in use according to Go
 - goVersion - version of Go runtime in use
 
+### debug/set-block-profile-rate: Set runtime.SetBlockProfileRate for blocking profiling. {#debug/set-block-profile-rate}
+
+SetBlockProfileRate controls the fraction of goroutine blocking events
+that are reported in the blocking profile. The profiler aims to sample
+an average of one blocking event per rate nanoseconds spent blocked.
+
+To include every blocking event in the profile, pass rate = 1. To turn
+off profiling entirely, pass rate <= 0.
+
+After calling this you can use this to see the blocking profile:
+
+    go tool pprof http://localhost:5572/debug/pprof/block
+
+Parameters
+
+- rate - int
+
+### debug/set-mutex-profile-fraction: Set runtime.SetMutexProfileFraction for mutex profiling. {#debug/set-mutex-profile-fraction}
+
+SetMutexProfileFraction controls the fraction of mutex contention
+events that are reported in the mutex profile. On average 1/rate
+events are reported. The previous rate is returned.
+
+To turn off profiling entirely, pass rate 0. To just read the current
+rate, pass rate < 0. (For n>1 the details of sampling may change.)
+
+Once this is set you can look use this to profile the mutex contention:
+
+    go tool pprof http://localhost:5572/debug/pprof/mutex
+
+Parameters
+
+- rate - int
+
+Results
+
+- previousRate - int
+
 ### job/list: Lists the IDs of the running jobs {#job/list}
 
 Parameters - None
@@ -1197,13 +1235,20 @@ You can see a summary of profiles available at http://localhost:5572/debug/pprof
 
 Here is how to use some of them:
 
-  * Memory: `go tool pprof http://localhost:5572/debug/pprof/heap`
-  * Go routines: `curl http://localhost:5572/debug/pprof/goroutine?debug=1`
-  * 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
-  * 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
+- Memory: `go tool pprof http://localhost:5572/debug/pprof/heap`
+- Go routines: `curl http://localhost:5572/debug/pprof/goroutine?debug=1`
+- 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
+- 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
+- Goroutine blocking profile
+    - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug/set-block-profile-rate))
+    - `go tool pprof http://localhost:5572/debug/pprof/block`
+- Contended mutexes:
+    - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug/set-mutex-profile-fraction))
+    - `go tool pprof http://localhost:5572/debug/pprof/mutex`
 
 See the [net/http/pprof docs](https://golang.org/pkg/net/http/pprof/)
 for more info on how to use the profiling and for a general overview
 see [the Go team's blog post on profiling go programs](https://blog.golang.org/profiling-go-programs).
 
 The profiling hook is [zero overhead unless it is used](https://stackoverflow.com/q/26545159/164234).
+
