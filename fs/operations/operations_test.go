@@ -225,6 +225,43 @@ func TestHashSums(t *testing.T) {
 		!strings.Contains(res, "                                          potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
+
+	// QuickXorHash Sum
+
+	buf.Reset()
+	var ht hash.Type
+	err = ht.Set("QuickXorHash")
+	require.NoError(t, err)
+	err = operations.HashLister(context.Background(), ht, r.Fremote, &buf)
+	require.NoError(t, err)
+	res = buf.String()
+	if !strings.Contains(res, "2d00000000000000000000000100000000000000  empty space\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                                          empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "4001dad296b6b4a52d6d694b67dad296b6b4a52d  potato2\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                                          potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
+
+	// QuickXorHash Sum with Base64 Encoded
+
+	buf.Reset()
+	err = operations.HashListerBase64(context.Background(), ht, r.Fremote, &buf)
+	require.NoError(t, err)
+	res = buf.String()
+	if !strings.Contains(res, "LQAAAAAAAAAAAAAAAQAAAAAAAAA=  empty space\n") &&
+		!strings.Contains(res, "                 UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                              empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "QAHa0pa2tKUtbWlLZ9rSlra0pS0=  potato2\n") &&
+		!strings.Contains(res, "                 UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                              potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
 }
 
 func TestSuffixName(t *testing.T) {
