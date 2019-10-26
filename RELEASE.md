@@ -15,6 +15,7 @@ This file describes how to make the various kinds of releases
   * make test # see integration test server or run locally
   * make tag
   * edit docs/content/changelog.md
+  * make tidy
   * make doc
   * git status - to check for new man pages - git add them
   * git commit -a -v -m "Version v1.XX.0"

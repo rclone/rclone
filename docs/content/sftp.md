@@ -222,7 +222,18 @@ when the ssh-agent contains many keys.
 
 #### --sftp-use-insecure-cipher
 
-Enable the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange. Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
+Enable the use of insecure ciphers and key exchange methods. 
+
+This enables the use of the the following insecure ciphers and key exchange methods:
+
+- aes128-cbc
+- aes192-cbc
+- aes256-cbc
+- 3des-cbc
+- diffie-hellman-group-exchange-sha256
+- diffie-hellman-group-exchange-sha1
+
+Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
 
 - Config:      use_insecure_cipher
 - Env Var:     RCLONE_SFTP_USE_INSECURE_CIPHER
@@ -251,6 +262,11 @@ Here are the advanced options specific to sftp (SSH/SFTP Connection).
 #### --sftp-ask-password
 
 Allow asking for SFTP password when needed.
+
+If this is set and no password is supplied then rclone will:
+- ask for a password
+- not contact the ssh agent
+
 
 - Config:      ask_password
 - Env Var:     RCLONE_SFTP_ASK_PASSWORD

@@ -1,4 +1,4 @@
 package fs
 
 // Version of rclone
-var Version = "v1.49.5-DEV"
+var Version = "v1.50.0"

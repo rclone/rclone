@@ -96,6 +96,11 @@ update:
 	GO111MODULE=on go mod tidy
 	GO111MODULE=on go mod vendor
 
+# Tidy the module dependencies
+tidy:
+	GO111MODULE=on go mod tidy
+	GO111MODULE=on go mod vendor
+
 doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 
 rclone.1:	MANUAL.md

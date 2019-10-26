@@ -1,5 +1,5 @@
 ---
-date: 2019-08-26T15:19:45+01:00
+date: 2019-10-26T11:04:03+01:00
 title: "rclone genautocomplete zsh"
 slug: rclone_genautocomplete_zsh
 url: /commands/rclone_genautocomplete_zsh/

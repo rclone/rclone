@@ -252,6 +252,30 @@ Leave blank normally.
 - Type:        string
 - Default:     ""
 
+#### --box-box-config-file
+
+Box App config.json location
+Leave blank normally.
+
+- Config:      box_config_file
+- Env Var:     RCLONE_BOX_BOX_CONFIG_FILE
+- Type:        string
+- Default:     ""
+
+#### --box-box-sub-type
+
+
+
+- Config:      box_sub_type
+- Env Var:     RCLONE_BOX_BOX_SUB_TYPE
+- Type:        string
+- Default:     "user"
+- Examples:
+    - "user"
+        - Rclone should act on behalf of a user
+    - "enterprise"
+        - Rclone should act on behalf of a service account
+
 ### Advanced Options
 
 Here are the advanced options specific to box (Box).
