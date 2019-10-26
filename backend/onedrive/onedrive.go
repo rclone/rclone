@@ -351,8 +351,13 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 // instead of simply using `drives/driveID/root:/itemPath` because it works for
 // "shared with me" folders in OneDrive Personal (See #2536, #2778)
 // This path pattern comes from https://github.com/OneDrive/onedrive-api-docs/issues/908#issuecomment-417488480
+//
+// If `relPath` == '', do not append the slash (See #3664)
 func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID string, relPath string) (info *api.Item, resp *http.Response, err error) {
-	opts := newOptsCall(normalizedID, "GET", ":/"+withTrailingColon(rest.URLPathEscape(enc.FromStandardPath(relPath))))
+	if relPath != "" {
+		relPath = "/" + withTrailingColon(rest.URLPathEscape(enc.FromStandardPath(relPath)))
+	}
+	opts := newOptsCall(normalizedID, "GET", ":"+relPath)
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(resp, err)
