@@ -340,6 +340,7 @@ Authentication is required for this call.
 ### config/get: Get a remote in the config file. {#config/get}
 
 Parameters:
+
 - name - name of remote to get
 
 See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
@@ -482,6 +483,7 @@ If group is not provided then summed up stats for all groups will be
 returned.
 
 Parameters
+
 - group - name of the stats group (string)
 
 Returns the following values:
@@ -523,8 +525,8 @@ This clears counters and errors for all stats or specific stats group if group
 is provided.
 
 Parameters
+
 - group - name of the stats group (string)
-```
 
 ### core/transferred: Returns stats about completed transfers. {#core/transferred}
 
@@ -538,6 +540,7 @@ returned.
 Note only the last 100 completed transfers are returned.
 
 Parameters
+
 - group - name of the stats group (string)
 
 Returns the following values:
@@ -561,6 +564,7 @@ Returns the following values:
 ### core/version: Shows the current version of rclone and the go runtime. {#core/version}
 
 This shows the current version of go and the go runtime
+
 - version - rclone version, eg "v1.44"
 - decomposed - version number as [major, minor, patch, subpatch]
     - note patch and subpatch will be 999 for a git compiled version
@@ -574,14 +578,17 @@ This shows the current version of go and the go runtime
 Parameters - None
 
 Results
+
 - jobids - array of integer job ids
 
 ### job/status: Reads the status of the job ID {#job/status}
 
 Parameters
+
 - jobid - id of the job (integer)
 
 Results
+
 - finished - boolean
 - duration - time in seconds that the job ran for
 - endTime - time the job finished (eg "2018-10-26T18:50:20.528746884+01:00")
@@ -596,6 +603,7 @@ Results
 ### job/stop: Stop the running job {#job/stop}
 
 Parameters
+
 - jobid - id of the job (integer)
 
 ### operations/about: Return the space used on the remote {#operations/about}

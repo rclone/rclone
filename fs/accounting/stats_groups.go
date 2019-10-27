@@ -88,6 +88,7 @@ If group is not provided then summed up stats for all groups will be
 returned.
 
 Parameters
+
 - group - name of the stats group (string)
 
 Returns the following values:
@@ -140,6 +141,7 @@ returned.
 Note only the last 100 completed transfers are returned.
 
 Parameters
+
 - group - name of the stats group (string)
 
 Returns the following values:
@@ -192,8 +194,8 @@ This clears counters and errors for all stats or specific stats group if group
 is provided.
 
 Parameters
+
 - group - name of the stats group (string)
-` + "```" + `
 `,
 	})
 }
