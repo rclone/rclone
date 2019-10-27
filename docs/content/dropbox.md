@@ -194,7 +194,7 @@ many files involved in this operation`.  As a work-around do an
 
 ### Get your own Dropbox App ID ###
 
-When you use rclone with Dropbox in its default configuration you are using rclone's App ID. This is shared between all the rclone users. It is strongly recommended to use your own App ID as the default rclone ID is heavily used. If you have multiple services running, it is recommended to use an App ID for each service.
+When you use rclone with Dropbox in its default configuration you are using rclone's App ID. This is shared between all the rclone users.
 
 Here is how to create your own Dropbox App ID for rclone:
 
