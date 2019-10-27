@@ -319,7 +319,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if tpsBucket != nil {
 		tbErr := tpsBucket.Wait(req.Context())
 		if tbErr != nil {
-			fs.Errorf(nil, "HTTP token bucket error: %v", err)
+			fs.Errorf(nil, "HTTP token bucket error: %v", tbErr)
 		}
 	}
 	// Force user agent
