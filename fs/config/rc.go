@@ -37,6 +37,7 @@ func init() {
 		AuthRequired: true,
 		Help: `
 Parameters:
+
 - name - name of remote to get
 
 See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.

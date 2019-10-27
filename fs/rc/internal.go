@@ -168,6 +168,7 @@ func init() {
 		Title: "Shows the current version of rclone and the go runtime.",
 		Help: `
 This shows the current version of go and the go runtime
+
 - version - rclone version, eg "v1.44"
 - decomposed - version number as [major, minor, patch, subpatch]
     - note patch and subpatch will be 999 for a git compiled version
