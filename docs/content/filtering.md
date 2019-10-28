@@ -305,6 +305,10 @@ This reads a list of file names from the file passed in and **only**
 these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
+`--files-from` expects a list of files as it's input. [rclone lsf](/commands/rclone_lsf/)
+has a compatible format that can be used to export file lists from
+remotes.
+
 Rclone will traverse the file system if you use `--files-from`,
 effectively using the files in `--files-from` as a set of filters.
 Rclone will not error if any of the files are missing.
