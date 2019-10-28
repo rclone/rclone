@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -120,7 +119,7 @@ func newCache(ctx context.Context, f fs.Fs, opt *Options) (*cache, error) {
 
 // findParent returns the parent directory of name, or "" for the root
 func findParent(name string) string {
-	parent := path.Dir(name)
+	parent := filepath.Dir(name)
 	if parent == "." || parent == "/" {
 		parent = ""
 	}
@@ -130,7 +129,7 @@ func findParent(name string) string {
 // clean returns the cleaned version of name for use in the index map
 func clean(name string) string {
 	name = strings.Trim(name, "/")
-	name = path.Clean(name)
+	name = filepath.Clean(name)
 	if name == "." || name == "/" {
 		name = ""
 	}
@@ -146,7 +145,7 @@ func (c *cache) toOSPath(name string) string {
 // path for the file
 func (c *cache) mkdir(name string) (string, error) {
 	parent := findParent(name)
-	leaf := path.Base(name)
+	leaf := filepath.Base(name)
 	parentPath := c.toOSPath(parent)
 	err := os.MkdirAll(parentPath, 0700)
 	if err != nil {
