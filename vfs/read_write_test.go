@@ -609,3 +609,30 @@ func TestRWFileModTimeWithOpenWriters(t *testing.T) {
 		assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
 	}
 }
+
+func TestCacheRename(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	opt := DefaultOpt
+	opt.CacheMode = CacheModeFull
+	vfs := New(r.Fremote, &opt)
+
+	h, err := vfs.OpenFile("rename_me", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+	fh, ok := h.(*RWFileHandle)
+	require.True(t, ok)
+
+	err = fh.Sync()
+	require.NoError(t, err)
+	err = fh.Close()
+	require.NoError(t, err)
+
+	assert.True(t, vfs.cache.exists("rename_me"))
+
+	err = vfs.Rename("rename_me", "i_was_renamed")
+	require.NoError(t, err)
+
+	assert.False(t, vfs.cache.exists("rename_me"))
+	assert.True(t, vfs.cache.exists("i_was_renamed"))
+}
