@@ -1,12 +1,11 @@
 # server
 
-[![CircleCI](https://circleci.com/gh/goftp/server.svg?style=shield)](https://circleci.com/gh/goftp/server)
-[![](https://goreportcard.com/badge/github.com/goftp/server)](https://goreportcard.com/report/github.com/goftp/server)
-[![codecov](https://codecov.io/gh/goftp/server/branch/master/graph/badge.svg)](https://codecov.io/gh/goftp/server)
+[![Build Status](https://drone.gitea.com/api/badges/goftp/server/status.svg)](https://drone.gitea.com/goftp/server) [![](http://gocover.io/_badge/gitea.com/goftp/server)](http://gocover.io/gitea.com/goftp/server)
+[![](https://goreportcard.com/badge/gitea.com/goftp/server)](https://goreportcard.com/report/gitea.com/goftp/server)
 
 A FTP server framework forked from [github.com/yob/graval](http://github.com/yob/graval) and changed a lot.
 
-Full documentation for the package is available on [godoc](http://godoc.org/github.com/goftp/server)
+Full documentation for the package is available on [godoc](http://godoc.org/goftp.io/server)
 
 ## Version
 
@@ -14,21 +13,21 @@ Full documentation for the package is available on [godoc](http://godoc.org/gith
 
 ## Installation
 
-    go get github.com/goftp/server
+    go get goftp.io/server
 
 ## Usage
 
 To boot a FTP server you will need to provide a driver that speaks to
 your persistence layer - the required driver contract is in [the
-documentation](http://godoc.org/github.com/goftp/server).
+documentation](http://godoc.org/goftp.io/server).
 
-Look at the [file driver](https://github.com/goftp/file-driver) to see
+Look at the [file driver](https://gitea.com/goftp/file-driver) to see
 an example of how to build a backend.
 
 There is a [sample ftp server](/exampleftpd) as a demo. You can build it with this
 command:
 
-    go install github.com/goftp/server/exampleftpd
+    go install goftp.io/server/exampleftpd
 
 Then run it if you have add $GOPATH to your $PATH:
 
@@ -46,7 +45,7 @@ This uses the file driver mentioned above to serve files.
 
 ## Contributors
 
-see [https://github.com/goftp/server/graphs/contributors](https://github.com/goftp/server/graphs/contributors)
+see [https://gitea.com/goftp/server/graphs/contributors](https://gitea.com/goftp/server/graphs/contributors)
 
 ## Warning
 

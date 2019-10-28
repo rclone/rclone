@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"testing"
 
-	ftp "github.com/goftp/server"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
@@ -19,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ftp "goftp.io/server"
 )
 
 const (

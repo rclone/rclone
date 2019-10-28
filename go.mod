@@ -16,8 +16,6 @@ require (
 	github.com/coreos/bbolt v1.3.3
 	github.com/djherbis/times v1.2.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.4.0+incompatible
-	github.com/goftp/file-driver v0.0.0-20180502053751-5d604a0fc0c9 // indirect
-	github.com/goftp/server v0.0.0-20190712054601-1149070ae46b
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
@@ -56,6 +54,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181201043747-70daafe5d78a
 	github.com/yunify/qingstor-sdk-go/v3 v3.0.2
 	go.etcd.io/bbolt v1.3.3 // indirect
+	goftp.io/server v0.0.0-20190812052725-72a57b186803
 	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
