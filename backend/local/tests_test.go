@@ -54,7 +54,7 @@ var testsWindows = [][2]string{
 	{`\\?\UNC\theserver\dir\file.txt`, `\\?\UNC\theserver\dir\file.txt`},
 	{`//?/UNC/theserver/dir\file.txt`, `\\?\UNC\theserver\dir\file.txt`},
 	{`c:/temp`, `c:\temp`},
-	{`/temp/file.txt`, `\temp\file.txt`},
+	{`C:/temp/file.txt`, `C:\temp\file.txt`},
 	{`c:\!\"#¤%&/()=;:*^?+-`, `c:\!\＂#¤%&\()=;：＊^？+-`},
 	{`c:\<>"|?*:&\<>"|?*:&\<>"|?*:&`, `c:\＜＞＂｜？＊：&\＜＞＂｜？＊：&\＜＞＂｜？＊：&`},
 }
