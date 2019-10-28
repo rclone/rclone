@@ -1084,17 +1084,17 @@ func (o *Object) Remove(ctx context.Context) error {
 
 func cleanRootPath(s string, noUNC bool) string {
 	if runtime.GOOS == "windows" {
-		s = filepath.ToSlash(s)
-		vol := filepath.VolumeName(s)
-		s = vol + enc.FromStandardPath(s[len(vol):])
-		s = filepath.FromSlash(s)
-
 		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
 			s2, err := filepath.Abs(s)
 			if err == nil {
 				s = s2
 			}
 		}
+		s = filepath.ToSlash(s)
+		vol := filepath.VolumeName(s)
+		s = vol + enc.FromStandardPath(s[len(vol):])
+		s = filepath.FromSlash(s)
+
 		if !noUNC {
 			// Convert to UNC
 			s = uncPath(s)
