@@ -191,3 +191,22 @@ If you have more than 10,000 files in a directory then `rclone purge
 dropbox:dir` will return the error `Failed to purge: There are too
 many files involved in this operation`.  As a work-around do an
 `rclone delete dropbox:dir` followed by an `rclone rmdir dropbox:dir`.
+
+### Get your own Dropbox App ID ###
+
+When you use rclone with Dropbox in its default configuration you are using rclone's App ID. This is shared between all the rclone users.
+
+Here is how to create your own Dropbox App ID for rclone:
+
+1. Log into the [Dropbox App console](https://www.dropbox.com/developers/apps/create) with your Dropbox Account (It need not
+to be the same account as the Dropbox you want to access)
+
+2. Choose an API => Usually this should be `Dropbox API`
+
+3. Choose the type of access you want to use => Full Dropbox or App Folder
+
+4. Name your App
+
+5. Click the button `Create App`
+
+6. Find the `App key` and `App secret` Use these values in rclone config to add a new remote or edit an existing remote.
