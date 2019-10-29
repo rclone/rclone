@@ -245,6 +245,7 @@ func GlobalStats() *StatsInfo {
 // NewStatsGroup creates new stats under named group.
 func NewStatsGroup(group string) *StatsInfo {
 	stats := NewStats()
+	stats.group = group
 	groups.set(group, stats)
 	return stats
 }
