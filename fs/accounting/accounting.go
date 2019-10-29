@@ -378,6 +378,7 @@ func (acc *Account) RemoteStats() (out rc.Params) {
 		percentageDone = int(100 * float64(a) / float64(b))
 	}
 	out["percentage"] = percentageDone
+	out["group"] = acc.stats.group
 
 	return out
 }

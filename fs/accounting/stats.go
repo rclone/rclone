@@ -40,6 +40,7 @@ type StatsInfo struct {
 	startedTransfers  []*Transfer   // currently active transfers
 	oldTimeRanges     timeRanges    // a merged list of time ranges for the transfers
 	oldDuration       time.Duration // duration of transfers we have culled
+	group             string
 }
 
 // NewStats creates an initialised StatsInfo
