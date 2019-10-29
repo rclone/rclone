@@ -318,7 +318,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Get transactions per second token first if limiting
 	if tpsBucket != nil {
 		tbErr := tpsBucket.Wait(req.Context())
-		if tbErr != nil {
+		if tbErr != nil && tbErr != context.Canceled {
 			fs.Errorf(nil, "HTTP token bucket error: %v", tbErr)
 		}
 	}
