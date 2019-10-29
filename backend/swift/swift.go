@@ -952,6 +952,18 @@ func (o *Object) isStaticLargeObject() (bool, error) {
 	return o.hasHeader("X-Static-Large-Object")
 }
 
+func (o *Object) isInContainerVersioning() (bool, error) {
+	_, headers, err := o.fs.c.Container(o.fs.root)
+	if err != nil {
+		return false, err
+	}
+	xHistoryLocation := headers["X-History-Location"]
+	if len(xHistoryLocation) > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
 	return o.size
@@ -1306,6 +1318,10 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	isInContainerVersioning, err := o.isInContainerVersioning()
+	if err != nil {
+		return err
+	}
 	// Remove file/manifest first
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectDelete(container, containerPath)
@@ -1315,7 +1331,7 @@ func (o *Object) Remove(ctx context.Context) error {
 		return err
 	}
 	// ...then segments if required
-	if isDynamicLargeObject {
+	if isDynamicLargeObject && !isInContainerVersioning {
 		err = o.removeSegments("")
 		if err != nil {
 			return err
