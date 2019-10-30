@@ -61,7 +61,10 @@ func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name str
 		exit:   make(chan struct{}),
 		avg:    0,
 		lpTime: time.Now(),
-		max:    int64(fs.Config.MaxTransfer),
+		max:    -1,
+	}
+	if fs.Config.MaxTransferMode != fs.MaxTransferModeSoft {
+		acc.max = int64((fs.Config.MaxTransfer))
 	}
 	go acc.averageLoop()
 	stats.inProgress.set(acc.name, acc)

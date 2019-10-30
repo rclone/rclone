@@ -89,6 +89,7 @@ type ConfigInfo struct {
 	AskPassword            bool
 	UseServerModTime       bool
 	MaxTransfer            SizeSuffix
+	MaxTransferMode        MaxTransferMode
 	MaxBacklog             int
 	MaxStatsGroups         int
 	StatsOneLine           bool

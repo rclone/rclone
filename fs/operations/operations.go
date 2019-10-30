@@ -340,6 +340,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		}
 		// If can't server side copy, do it manually
 		if err == fs.ErrorCantCopy {
+			if fs.Config.MaxTransfer >= 0 && (accounting.Stats(ctx).GetBytes() >= int64(fs.Config.MaxTransfer) ||
+				(fs.Config.MaxTransferMode == fs.MaxTransferModeCautious && accounting.Stats(ctx).GetBytesWithPending()+src.Size() >= int64(fs.Config.MaxTransfer))) {
+				return nil, accounting.ErrorMaxTransferLimitReached
+			}
 			if doMultiThreadCopy(f, src) {
 				// Number of streams proportional to size
 				streams := src.Size() / int64(fs.Config.MultiThreadCutoff)
