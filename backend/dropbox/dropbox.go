@@ -113,7 +113,7 @@ var (
 
 // Register with Fs
 func init() {
-	DbHashType = hash.RegisterHash("Dropbox", 64, dbhash.New)
+	DbHashType = hash.RegisterHash("DropboxHash", 64, dbhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "dropbox",
 		Description: "Dropbox",

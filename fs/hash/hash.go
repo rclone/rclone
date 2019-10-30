@@ -66,7 +66,7 @@ func init() {
 	MD5 = RegisterHash("MD5", 32, md5.New)
 	SHA1 = RegisterHash("SHA-1", 40, sha1.New)
 	Whirlpool = RegisterHash("Whirlpool", 128, whirlpool.New)
-	CRC32 = RegisterHash("CRC32", 8, func() hash.Hash { return crc32.NewIEEE() })
+	CRC32 = RegisterHash("CRC-32", 8, func() hash.Hash { return crc32.NewIEEE() })
 }
 
 // Supported returns a set of all the supported hashes by
