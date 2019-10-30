@@ -197,9 +197,12 @@ func TestAccountAccounter(t *testing.T) {
 
 func TestAccountMaxTransfer(t *testing.T) {
 	old := fs.Config.MaxTransfer
+	oldMode := fs.Config.MaxTransferMode
+
 	fs.Config.MaxTransfer = 15
 	defer func() {
 		fs.Config.MaxTransfer = old
+		fs.Config.MaxTransferMode = oldMode
 	}()
 
 	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
@@ -218,6 +221,20 @@ func TestAccountMaxTransfer(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.Equal(t, ErrorMaxTransferLimitReached, err)
 	assert.True(t, fserrors.IsFatalError(err))
+
+	fs.Config.MaxTransferMode = fs.MaxTransferModeSoft
+	stats = NewStats()
+	acc = newAccountSizeName(stats, in, 1, "test")
+
+	n, err = acc.Read(b)
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
+	n, err = acc.Read(b)
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
+	n, err = acc.Read(b)
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
 }
 
 func TestShortenName(t *testing.T) {

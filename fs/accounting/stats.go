@@ -382,6 +382,22 @@ func (s *StatsInfo) GetBytes() int64 {
 	return s.bytes
 }
 
+// GetBytesWithPending returns the number of bytes transferred and remaining transfers
+func (s *StatsInfo) GetBytesWithPending() int64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	pending := int64(0)
+	for _, tr := range s.startedTransfers {
+		if tr.acc != nil {
+			bytes, size := tr.acc.progress()
+			if bytes < size {
+				pending += size - bytes
+			}
+		}
+	}
+	return s.bytes + pending
+}
+
 // Errors updates the stats for errors
 func (s *StatsInfo) Errors(errors int64) {
 	s.mu.Lock()
