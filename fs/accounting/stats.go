@@ -375,7 +375,7 @@ func (s *StatsInfo) GetBytes() int64 {
 	return s.bytes
 }
 
-// GetBytes returns the number of bytes transferred and allocated so far
+// GetBytesWithPending returns the number of bytes transferred and remaining transfers
 func (s *StatsInfo) GetBytesWithPending() int64 {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
