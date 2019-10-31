@@ -75,6 +75,7 @@ func (api *Client) SetRoot(RootURL string) *Client {
 }
 
 // SetHeader sets a header for all requests
+// Start the key with "*" for don't canonicalise
 func (api *Client) SetHeader(key, value string) *Client {
 	api.mu.Lock()
 	defer api.mu.Unlock()
@@ -133,9 +134,9 @@ type Opts struct {
 	ContentType           string
 	ContentLength         *int64
 	ContentRange          string
-	ExtraHeaders          map[string]string
-	UserName              string // username for Basic Auth
-	Password              string // password for Basic Auth
+	ExtraHeaders          map[string]string // extra headers, start them with "*" for don't canonicalise
+	UserName              string            // username for Basic Auth
+	Password              string            // password for Basic Auth
 	Options               []fs.OpenOption
 	IgnoreStatus          bool       // if set then we don't check error status or parse error body
 	MultipartParams       url.Values // if set do multipart form upload with attached file
@@ -247,10 +248,17 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	fs.OpenOptionAddHeaders(opts.Options, headers)
 	// Now set the headers
 	for k, v := range headers {
-		if v != "" {
-			req.Header.Add(k, v)
+		if k != "" && v != "" {
+			if k[0] == '*' {
+				// Add non-canonical version if header starts with *
+				k = k[1:]
+				req.Header[k] = append(req.Header[k], v)
+			} else {
+				req.Header.Add(k, v)
+			}
 		}
 	}
+
 	if opts.UserName != "" || opts.Password != "" {
 		req.SetBasicAuth(opts.UserName, opts.Password)
 	}
