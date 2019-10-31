@@ -961,7 +961,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 			Client: ec2metadata.New(session.New(), &aws.Config{
 				HTTPClient: lowTimeoutClient,
 			}),
-			ExpiryWindow: 3,
+			ExpiryWindow: 3 * time.Minute,
 		},
 	}
 	cred := credentials.NewChainCredentials(providers)
