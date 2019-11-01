@@ -530,10 +530,10 @@ type listFn func(remote string, object *swift.Object, isDirectory bool) error
 //
 // Set recurse to read sub directories
 func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer bool, recurse bool, fn listFn) error {
-	if prefix != "" {
+	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
-	if directory != "" {
+	if directory != "" && !strings.HasSuffix(directory, "/") {
 		directory += "/"
 	}
 	// Options for ObjectsWalk
@@ -1095,9 +1095,8 @@ func min(x, y int64) int64 {
 //
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
-	container, containerPath := o.split()
-	segmentsContainer := container + "_segments"
-	err := o.fs.listContainerRoot(segmentsContainer, containerPath, "", false, true, func(remote string, object *swift.Object, isDirectory bool) error {
+	segmentsContainer, prefix, err := o.getSegmentsDlo()
+	err = o.fs.listContainerRoot(segmentsContainer, prefix, "", false, true, func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
@@ -1124,6 +1123,19 @@ func (o *Object) removeSegments(except string) error {
 		fs.Debugf(o, "Removed empty container %q", segmentsContainer)
 	}
 	return nil
+}
+
+func (o *Object) getSegmentsDlo() (segmentsContainer string, prefix string, err error) {
+	if err = o.readMetaData(); err != nil {
+		return
+	}
+	dirManifest := o.headers["X-Object-Manifest"]
+	if len(dirManifest) == 0 || !strings.Contains(dirManifest, "/") {
+		err = errors.New("Missing or wrong structure of manifest of Dynamic large object")
+		return
+	}
+	delimiter := strings.Index(dirManifest, "/")
+	return dirManifest[:delimiter], dirManifest[delimiter+1:], nil
 }
 
 // urlEncode encodes a string so that it is a valid URL
