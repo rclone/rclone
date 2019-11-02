@@ -1,10 +1,21 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-10-26"
+date: "2019-11-02"
 ---
 
 # Changelog
+
+## v1.50.1 - 2019-11-02
+
+* Bug Fixes
+    * hash: Fix accidentally changed hash names for `DropboxHash` and `CRC-32` (Nick Craig-Wood)
+    * fshttp: Fix error reporting on tpslimit token bucket errors (Nick Craig-Wood)
+    * fshttp: Don't print token bucket errors on context cancelled (Nick Craig-Wood)
+* Local
+    * Fix listings of . on Windows (Nick Craig-Wood)
+* Onedrive
+    * Fix DirMove/Move after Onedrive change (Xiaoxing Ye)
 
 ## v1.50.0 - 2019-10-26
 

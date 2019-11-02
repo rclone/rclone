@@ -89,7 +89,7 @@ Now
   * make TAG=${NEW_TAG} upload_github
   * NB this overwrites the current beta so we need to do this
   * git co master
-  * make LAST_TAG=${NEW_TAG} startdev
+  * make VERSION=${NEW_TAG} startdev
   * # cherry pick the changes to the changelog and VERSION
   * git checkout ${BASE_TAG}-fixes VERSION docs/content/changelog.md
   * git commit --amend
