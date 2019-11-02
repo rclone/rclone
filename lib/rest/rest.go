@@ -269,7 +269,9 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		c = api.c
 	}
 	if api.signer != nil {
+		api.mu.RUnlock()
 		err = api.signer(req)
+		api.mu.RLock()
 		if err != nil {
 			return nil, errors.Wrap(err, "signer failed")
 		}
