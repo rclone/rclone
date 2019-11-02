@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2019-11-02T14:26:08Z
 title: "rclone settier"
 slug: rclone_settier
 url: /commands/rclone_settier/

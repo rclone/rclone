@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2019-11-02T14:26:08Z
 title: "rclone serve ftp"
 slug: rclone_serve_ftp
 url: /commands/rclone_serve_ftp/
