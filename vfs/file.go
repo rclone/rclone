@@ -589,6 +589,10 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 		fs.Errorf(f, "Can't figure out how to open with flags: 0x%X", flags)
 		return nil, EPERM
 	}
+	// if creating a file, add the file to the directory
+	if err == nil && flags&os.O_CREATE != 0 {
+		f.d.addObject(f)
+	}
 	return fd, err
 }
 
