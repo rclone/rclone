@@ -96,6 +96,12 @@ github.com/golang/protobuf/ptypes/timestamp
 github.com/google/go-querystring/query
 # github.com/googleapis/gax-go/v2 v2.0.5
 github.com/googleapis/gax-go/v2
+# github.com/hanwen/go-fuse/v2 v2.0.3-0.20191108143333-152e6ac32d54
+github.com/hanwen/go-fuse/v2/fs
+github.com/hanwen/go-fuse/v2/fuse
+github.com/hanwen/go-fuse/v2/internal
+github.com/hanwen/go-fuse/v2/internal/utimens
+github.com/hanwen/go-fuse/v2/splice
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/jlaffaye/ftp v0.0.0-20191025175106-a59fe673c9b2
