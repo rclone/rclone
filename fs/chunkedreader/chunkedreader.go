@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 )
 
 // io related errors returned by ChunkedReader
@@ -215,12 +216,12 @@ func (cr *ChunkedReader) openRange() error {
 	var err error
 	if length <= 0 {
 		if offset == 0 {
-			rc, err = cr.o.Open(cr.ctx)
+			rc, err = cr.o.Open(cr.ctx, &fs.HashesOption{Hashes: hash.Set(hash.None)})
 		} else {
-			rc, err = cr.o.Open(cr.ctx, &fs.RangeOption{Start: offset, End: -1})
+			rc, err = cr.o.Open(cr.ctx, &fs.HashesOption{Hashes: hash.Set(hash.None)}, &fs.RangeOption{Start: offset, End: -1})
 		}
 	} else {
-		rc, err = cr.o.Open(cr.ctx, &fs.RangeOption{Start: offset, End: offset + length - 1})
+		rc, err = cr.o.Open(cr.ctx, &fs.HashesOption{Hashes: hash.Set(hash.None)}, &fs.RangeOption{Start: offset, End: offset + length - 1})
 	}
 	if err != nil {
 		return err
