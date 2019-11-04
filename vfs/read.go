@@ -45,7 +45,8 @@ func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 	var err error
 	o := f.getObject()
 	if !f.d.vfs.Opt.NoChecksum {
-		mhash, err = hash.NewMultiHasherTypes(o.Fs().Hashes())
+		hashes := hash.NewHashSet(o.Fs().Hashes().GetOne()) // just pick one hash
+		mhash, err = hash.NewMultiHasherTypes(hashes)
 		if err != nil {
 			fs.Errorf(o.Fs(), "newReadFileHandle hash error: %v", err)
 		}
