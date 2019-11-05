@@ -1084,12 +1084,17 @@ func fsOption() *fs.Option {
 	return o
 }
 
-// NewRemoteName asks the user for a name for a remote
+// NewRemoteName asks the user for a name for a new remote
 func NewRemoteName() (name string) {
 	for {
 		fmt.Printf("name> ")
 		name = ReadLine()
-		err := fspath.CheckConfigName(name)
+		_, err := getConfigData().GetSection(name)
+		if err == nil {
+			fmt.Printf("Remote %q already exists.\n", name)
+			continue
+		}
+		err = fspath.CheckConfigName(name)
 		switch {
 		case name == "":
 			fmt.Printf("Can't use empty name.\n")
