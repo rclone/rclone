@@ -830,7 +830,7 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 	} else {
 		fmt.Printf("Change current team drive ID %q?\n", opt.TeamDriveID)
 	}
-	if !config.Confirm() {
+	if !config.Confirm(false) {
 		return nil
 	}
 	client, err := createOAuthClient(opt, name, m)
