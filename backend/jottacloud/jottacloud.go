@@ -84,14 +84,14 @@ func init() {
 			tokenString, ok := m.Get("token")
 			if ok && tokenString != "" {
 				fmt.Printf("Already have a token - refresh?\n")
-				if !config.Confirm() {
+				if !config.Confirm(false) {
 					return
 				}
 			}
 
 			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 			fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
-			if config.Confirm() {
+			if config.Confirm(false) {
 				deviceRegistration, err := registerDevice(ctx, srv)
 				if err != nil {
 					log.Fatalf("Failed to register device: %v", err)
@@ -127,7 +127,7 @@ func init() {
 			}
 
 			fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
-			if config.Confirm() {
+			if config.Confirm(false) {
 				oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
 				if err != nil {
 					log.Fatalf("Failed to load oAuthClient: %s", err)

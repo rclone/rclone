@@ -63,6 +63,7 @@ func init() {
 			Name:       "password",
 			Help:       "Password or pass phrase for encryption.",
 			IsPassword: true,
+			Required:   true,
 		}, {
 			Name:       "password2",
 			Help:       "Password or pass phrase for salt. Optional but recommended.\nShould be different to the previous password.",
