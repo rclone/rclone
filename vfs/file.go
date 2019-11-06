@@ -16,11 +16,11 @@ import (
 
 // File represents a file
 type File struct {
-	inode uint64 // inode number
+	inode uint64 // inode number - read only
 	size  int64  // size of file - read and written with atomic int64 - must be 64 bit aligned
-	d     *Dir   // parent directory - read only
 
-	mu                sync.Mutex                      // protects the following
+	mu                sync.RWMutex                    // protects the following
+	d                 *Dir                            // parent directory
 	o                 fs.Object                       // NB o may be nil if file is being written
 	leaf              string                          // leaf name of the object
 	rwOpenCount       int                             // number of open files on this handle
@@ -66,6 +66,8 @@ func (f *File) IsDir() bool {
 
 // Mode bits of the file or directory - satisfies Node interface
 func (f *File) Mode() (mode os.FileMode) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	mode = f.d.vfs.Opt.FilePerms
 	if f.appendMode {
 		mode |= os.ModeAppend
@@ -75,11 +77,15 @@ func (f *File) Mode() (mode os.FileMode) {
 
 // Name (base) of the directory - satisfies Node interface
 func (f *File) Name() (name string) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return f.leaf
 }
 
 // Path returns the full path of the file
 func (f *File) Path() string {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return path.Join(f.d.path, f.leaf)
 }
 
@@ -101,8 +107,11 @@ func (f *File) Node() Node {
 // applyPendingRename runs a previously set rename operation if there are no
 // more remaining writers. Call without lock held.
 func (f *File) applyPendingRename() {
+	f.mu.RLock()
 	fun := f.pendingRenameFun
-	if fun == nil || f.writingInProgress() {
+	writing := f._writingInProgress()
+	f.mu.RUnlock()
+	if fun == nil || writing {
 		return
 	}
 	fs.Debugf(f.o, "Running delayed rename now")
@@ -115,16 +124,19 @@ func (f *File) applyPendingRename() {
 // Otherwise it will queue the rename operation on the remote until no writers
 // remain.
 func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
-	if features := f.d.f.Features(); features.Move == nil && features.Copy == nil {
-		err := errors.Errorf("Fs %q can't rename files (no server side Move or Copy)", f.d.f)
+	f.mu.RLock()
+	d := f.d
+	f.mu.RUnlock()
+	if features := d.f.Features(); features.Move == nil && features.Copy == nil {
+		err := errors.Errorf("Fs %q can't rename files (no server side Move or Copy)", d.f)
 		fs.Errorf(f.Path(), "Dir.Rename error: %v", err)
 		return err
 	}
 
 	renameCall := func(ctx context.Context) error {
 		newPath := path.Join(destDir.path, newName)
-		dstOverwritten, _ := f.d.f.NewObject(ctx, newPath)
-		newObject, err := operations.Move(ctx, f.d.f, dstOverwritten, newPath, f.o)
+		dstOverwritten, _ := d.f.NewObject(ctx, newPath)
+		newObject, err := operations.Move(ctx, d.f, dstOverwritten, newPath, f.o)
 		if err != nil {
 			fs.Errorf(f.Path(), "File.Rename error: %v", err)
 			return err
@@ -155,7 +167,10 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		return nil
 	}
 
-	if f.writingInProgress() {
+	f.mu.RLock()
+	writing := f._writingInProgress()
+	f.mu.RUnlock()
+	if writing {
 		fs.Debugf(f.o, "File is currently open, delaying rename %p", f)
 		f.mu.Lock()
 		f.d = destDir
@@ -182,6 +197,7 @@ func (f *File) addWriter(h Handle) {
 // delWriter removes a write handle from the file
 func (f *File) delWriter(h Handle, modifiedCacheFile bool) (lastWriterAndModified bool) {
 	f.mu.Lock()
+	defer f.applyPendingRename()
 	defer f.mu.Unlock()
 	var found = -1
 	for i := range f.writers {
@@ -207,7 +223,6 @@ func (f *File) delWriter(h Handle, modifiedCacheFile bool) (lastWriterAndModifie
 	if lastWriterAndModified {
 		f.modified = false
 	}
-	defer f.applyPendingRename()
 	return
 }
 
@@ -231,8 +246,8 @@ func (f *File) delRWOpen() {
 // Note that file handles which are in pending open state aren't
 // counted.
 func (f *File) rwOpens() int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return f.rwOpenCount
 }
 
@@ -256,8 +271,8 @@ func (f *File) activeWriters() int {
 //
 // if NoModTime is set then it returns the mod time of the directory
 func (f *File) ModTime() (modTime time.Time) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 
 	if !f.d.vfs.Opt.NoModTime {
 		// if o is nil it isn't valid yet or there are writers, so return the size so far
@@ -283,11 +298,11 @@ func nonNegative(i int64) int64 {
 
 // Size of the file
 func (f *File) Size() int64 {
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 
 	// if o is nil it isn't valid yet or there are writers, so return the size so far
-	if f.writingInProgress() {
+	if f._writingInProgress() {
 		return atomic.LoadInt64(&f.size)
 	}
 	return nonNegative(f.o.Size())
@@ -304,21 +319,22 @@ func (f *File) SetModTime(modTime time.Time) error {
 	f.pendingModTime = modTime
 
 	// Only update the ModTime when there are no writers, setObject will do it
-	if !f.writingInProgress() {
-		return f.applyPendingModTime()
+	if !f._writingInProgress() {
+		return f._applyPendingModTime()
 	}
 
 	// queue up for later, hoping f.o becomes available
 	return nil
 }
 
-// call with the mutex held
-func (f *File) applyPendingModTime() error {
-	defer func() { f.pendingModTime = time.Time{} }()
-
+// Apply a pending mod time
+// Call with the write mutex held
+func (f *File) _applyPendingModTime() error {
 	if f.pendingModTime.IsZero() {
 		return nil
 	}
+
+	defer func() { f.pendingModTime = time.Time{} }()
 
 	if f.o == nil {
 		return errors.New("Cannot apply ModTime, file object is not available")
@@ -327,19 +343,20 @@ func (f *File) applyPendingModTime() error {
 	err := f.o.SetModTime(context.TODO(), f.pendingModTime)
 	switch err {
 	case nil:
-		fs.Debugf(f.o, "File.applyPendingModTime OK")
+		fs.Debugf(f.o, "File._applyPendingModTime OK")
 	case fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
 		// do nothing, in order to not break "touch somefile" if it exists already
 	default:
-		fs.Errorf(f, "File.applyPendingModTime error: %v", err)
+		fs.Errorf(f, "File._applyPendingModTime error: %v", err)
 		return err
 	}
 
 	return nil
 }
 
-// writingInProgress returns true of there are any open writers
-func (f *File) writingInProgress() bool {
+// _writingInProgress returns true of there are any open writers
+// Call with read lock held
+func (f *File) _writingInProgress() bool {
 	return f.o == nil || len(f.writers) != 0 || f.readWriterClosing
 }
 
@@ -352,7 +369,7 @@ func (f *File) setSize(n int64) {
 func (f *File) setObject(o fs.Object) {
 	f.mu.Lock()
 	f.o = o
-	_ = f.applyPendingModTime()
+	_ = f._applyPendingModTime()
 	f.mu.Unlock()
 
 	f.d.addObject(f)
@@ -362,21 +379,21 @@ func (f *File) setObject(o fs.Object) {
 // the directory cache
 func (f *File) setObjectNoUpdate(o fs.Object) {
 	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.o = o
+	f.mu.Unlock()
 }
 
 // Get the current fs.Object - may be nil
 func (f *File) getObject() fs.Object {
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return f.o
 }
 
 // exists returns whether the file exists already
 func (f *File) exists() bool {
-	f.mu.Lock()
-	defer f.mu.Unlock()
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return f.o != nil
 }
 
@@ -386,11 +403,11 @@ func (f *File) exists() bool {
 // Call without the mutex held
 func (f *File) waitForValidObject() (o fs.Object, err error) {
 	for i := 0; i < 50; i++ {
-		f.mu.Lock()
+		f.mu.RLock()
 		o = f.o
 		nwriters := len(f.writers)
 		wclosing := f.readWriterClosing
-		f.mu.Unlock()
+		f.mu.RUnlock()
 		if o != nil {
 			return o, nil
 		}
@@ -421,12 +438,16 @@ func (f *File) openRead() (fh *ReadFileHandle, err error) {
 
 // openWrite open the file for write
 func (f *File) openWrite(flags int) (fh *WriteFileHandle, err error) {
-	if f.d.vfs.Opt.ReadOnly {
+	f.mu.RLock()
+	d := f.d
+	f.mu.RUnlock()
+
+	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
 	// fs.Debugf(o, "File.openWrite")
 
-	fh, err = newWriteFileHandle(f.d, f, f.Path(), flags)
+	fh, err = newWriteFileHandle(d, f, f.Path(), flags)
 	if err != nil {
 		fs.Errorf(f, "File.openWrite failed: %v", err)
 		return nil, err
@@ -438,13 +459,17 @@ func (f *File) openWrite(flags int) (fh *WriteFileHandle, err error) {
 //
 // It uses the open flags passed in.
 func (f *File) openRW(flags int) (fh *RWFileHandle, err error) {
+	f.mu.RLock()
+	d := f.d
+	f.mu.RUnlock()
+
 	// FIXME chunked
-	if flags&accessModeMask != os.O_RDONLY && f.d.vfs.Opt.ReadOnly {
+	if flags&accessModeMask != os.O_RDONLY && d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
 	// fs.Debugf(o, "File.openRW")
 
-	fh, err = newRWFileHandle(f.d, f, f.Path(), flags)
+	fh, err = newRWFileHandle(d, f, f.Path(), flags)
 	if err != nil {
 		fs.Errorf(f, "File.openRW failed: %v", err)
 		return nil, err
@@ -461,7 +486,11 @@ func (f *File) Sync() error {
 
 // Remove the file
 func (f *File) Remove() error {
-	if f.d.vfs.Opt.ReadOnly {
+	f.mu.RLock()
+	d := f.d
+	f.mu.RUnlock()
+
+	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	f.muRW.Lock() // muRW must be locked before mu to avoid
@@ -479,10 +508,10 @@ func (f *File) Remove() error {
 	f.muRW.Unlock()
 
 	// Remove the item from the directory listing
-	f.d.delObject(f.Name())
+	d.delObject(f.Name())
 	// Remove the object from the cache
-	if f.d.vfs.Opt.CacheMode >= CacheModeMinimal {
-		f.d.vfs.cache.remove(f.Path())
+	if d.vfs.Opt.CacheMode >= CacheModeMinimal {
+		d.vfs.cache.remove(f.Path())
 	}
 	return nil
 }
@@ -494,16 +523,22 @@ func (f *File) RemoveAll() error {
 
 // DirEntry returns the underlying fs.DirEntry - may be nil
 func (f *File) DirEntry() (entry fs.DirEntry) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return f.o
 }
 
 // Dir returns the directory this file is in
 func (f *File) Dir() *Dir {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return f.d
 }
 
 // VFS returns the instance of the VFS
 func (f *File) VFS() *VFS {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
 	return f.d.vfs
 }
 
@@ -552,7 +587,9 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	// If append is set then set read to force openRW
 	if flags&os.O_APPEND != 0 {
 		read = true
+		f.mu.Lock()
 		f.appendMode = true
+		f.mu.Unlock()
 	}
 
 	// If truncate is set then set write to force openRW
@@ -561,8 +598,11 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	}
 
 	// Open the correct sort of handle
-	CacheMode := f.d.vfs.Opt.CacheMode
-	if CacheMode >= CacheModeMinimal && (f.d.vfs.cache.opens(f.Path()) > 0 || f.d.vfs.cache.exists(f.Path())) {
+	f.mu.RLock()
+	d := f.d
+	f.mu.RUnlock()
+	CacheMode := d.vfs.Opt.CacheMode
+	if CacheMode >= CacheModeMinimal && (d.vfs.cache.opens(f.Path()) > 0 || d.vfs.cache.exists(f.Path())) {
 		fd, err = f.openRW(flags)
 	} else if read && write {
 		if CacheMode >= CacheModeMinimal {
@@ -591,7 +631,7 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	}
 	// if creating a file, add the file to the directory
 	if err == nil && flags&os.O_CREATE != 0 {
-		f.d.addObject(f)
+		d.addObject(f)
 	}
 	return fd, err
 }
@@ -603,13 +643,14 @@ func (f *File) Truncate(size int64) (err error) {
 	f.mu.Lock()
 	writers := make([]Handle, len(f.writers))
 	copy(writers, f.writers)
+	o := f.o
 	f.mu.Unlock()
 
 	// FIXME: handle closing writer
 
 	// If have writers then call truncate for each writer
 	if len(writers) != 0 {
-		fs.Debugf(f.o, "Truncating %d file handles", len(writers))
+		fs.Debugf(f, "Truncating %d file handles", len(writers))
 		for _, h := range writers {
 			truncateErr := h.Truncate(size)
 			if truncateErr != nil {
@@ -620,11 +661,11 @@ func (f *File) Truncate(size int64) (err error) {
 	}
 
 	// If no writers, and size is already correct then all done
-	if f.o.Size() == size {
+	if o.Size() == size {
 		return nil
 	}
 
-	fs.Debugf(f.o, "Truncating file")
+	fs.Debugf(f, "Truncating file")
 
 	// Otherwise if no writers then truncate the file by opening
 	// the file and truncating it.
