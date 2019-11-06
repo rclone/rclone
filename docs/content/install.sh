@@ -146,6 +146,10 @@ cd $unzip_dir/*
 
 case $OS in
   'linux')
+    rclonepath="$(command -v rclone)"
+    if [ -x "$rclonepath" ] && ! [ "$rclonepath" = '/usr/local/bin' ]; then
+        echo "WARNING: Existing rclone installation found in PATH: $rclonepath"
+    fi
     #binary
     cp rclone /usr/local/bin/rclone.new
     chmod 755 /usr/local/bin/rclone.new
@@ -161,6 +165,10 @@ case $OS in
     fi
     ;;
   'freebsd'|'openbsd'|'netbsd')
+    rclonepath="$(command -v rclone)"
+    if [ -x "$rclonepath" ] && ! [ "$rclonepath" = '/usr/local/bin' ]; then
+        echo "WARNING: Existing rclone installation found in PATH: $rclonepath"
+    fi
     #bin
     cp rclone /usr/local/bin/rclone.new
     chown root:wheel /usr/local/bin/rclone.new
@@ -171,6 +179,10 @@ case $OS in
     makewhatis
     ;;
   'osx')
+    rclonepath="$(command -v rclone)"
+    if [ -x "$rclonepath" ] && ! [ "$rclonepath" = '/usr/local/bin' ]; then
+        echo "WARNING: Existing rclone installation found in PATH: $rclonepath"
+    fi
     #binary
     mkdir -p /usr/local/bin
     cp rclone /usr/local/bin/rclone.new
