@@ -1130,11 +1130,11 @@ func (o *Object) getSegmentsDlo() (segmentsContainer string, prefix string, err 
 		return
 	}
 	dirManifest := o.headers["X-Object-Manifest"]
-	if len(dirManifest) == 0 || !strings.Contains(dirManifest, "/") {
+	delimiter := strings.Index(dirManifest, "/")
+	if len(dirManifest) == 0 || delimiter < 0 {
 		err = errors.New("Missing or wrong structure of manifest of Dynamic large object")
 		return
 	}
-	delimiter := strings.Index(dirManifest, "/")
 	return dirManifest[:delimiter], dirManifest[delimiter+1:], nil
 }
 
@@ -1324,16 +1324,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove an object
-func (o *Object) Remove(ctx context.Context) error {
+func (o *Object) Remove(ctx context.Context) (err error) {
 	container, containerPath := o.split()
-	isDynamicLargeObject, err := o.isDynamicLargeObject()
-	if err != nil {
-		return err
-	}
-	isInContainerVersioning, err := o.isInContainerVersioning()
-	if err != nil {
-		return err
-	}
+
 	// Remove file/manifest first
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectDelete(container, containerPath)
@@ -1342,11 +1335,21 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	isDynamicLargeObject, err := o.isDynamicLargeObject()
+	if err != nil {
+		return err
+	}
 	// ...then segments if required
-	if isDynamicLargeObject && !isInContainerVersioning {
-		err = o.removeSegments("")
+	if isDynamicLargeObject {
+		isInContainerVersioning, err := o.isInContainerVersioning()
 		if err != nil {
 			return err
+		}
+		if !isInContainerVersioning {
+			err = o.removeSegments("")
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
