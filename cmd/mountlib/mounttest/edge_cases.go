@@ -50,6 +50,8 @@ func TestRenameOpenHandle(t *testing.T) {
 	err = file.Close()
 	require.NoError(t, err)
 
+	run.waitForWriters()
+
 	// verify file was renamed properly
 	run.checkDir(t, "renamebla 9")
 
