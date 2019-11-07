@@ -208,7 +208,10 @@ func (p *Proxy) call(user, pass string, passwordBytes []byte) (value interface{}
 		if err != nil {
 			return nil, false, err
 		}
-		pwHash, err := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.DefaultCost)
+		// The bcrypt cost is a compromise between security and speed. The password is looked up on every
+		// transaction for WebDAV so we store it lightly hashed. An attacker would find it easier to go after
+		// the unencrypted password in memory most likely.
+		pwHash, err := bcrypt.GenerateFromPassword(passwordBytes, bcrypt.MinCost)
 		if err != nil {
 			return nil, false, err
 		}
