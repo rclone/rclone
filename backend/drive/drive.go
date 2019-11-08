@@ -1030,7 +1030,13 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		// Look up the root ID and cache it in the config
 		rootID, err := f.getRootID()
 		if err != nil {
-			return nil, err
+			if gerr, ok := errors.Cause(err).(*googleapi.Error); ok && gerr.Code == 404 {
+				// 404 means that this scope does not have permission to get the
+				// root so just use "root"
+				rootID = "root"
+			} else {
+				return nil, err
+			}
 		}
 		f.rootFolderID = rootID
 		m.Set("root_folder_id", rootID)
