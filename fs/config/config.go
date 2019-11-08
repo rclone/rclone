@@ -575,7 +575,7 @@ func SetValueAndSave(name, key, value string) (err error) {
 	_, err = reloadedConfigFile.GetSection(name)
 	if err != nil {
 		// Section doesn't exist yet so ignore reload
-		return err
+		return nil
 	}
 	// Update the config file with the reloaded version
 	configFile = reloadedConfigFile
