@@ -312,16 +312,11 @@ func (s *StatsInfo) String() string {
 			errorDetails = " (no need to retry)"
 		}
 
-		_, _ = fmt.Fprintf(buf, `
-Errors:        %10d%s
-Checks:        %10d / %d, %s
-Transferred:   %10d / %d, %s
-Elapsed time:  %10v
-`,
-			s.errors, errorDetails,
-			s.checks, totalChecks, percent(s.checks, totalChecks),
-			s.transfers, totalTransfer, percent(s.transfers, totalTransfer),
-			dtRounded)
+		addStatln(buf, "Errors:        %10d%s", s.errors, errorDetails)
+		addStatln(buf, "Checks:        %10d / %d, %s", s.checks, totalChecks, percent(s.checks, totalChecks))
+		addStatln(buf, "Deleted:       %10d", s.deletes)
+		addStatln(buf, "Transferred:   %10d / %d, %s", s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
+		addStatln(buf, "Elapsed time:  %10v", dtRounded)
 	}
 
 	// checking and transferring have their own locking so unlock
@@ -339,6 +334,21 @@ Elapsed time:  %10v
 	}
 
 	return buf.String()
+}
+
+// Add stats line to buf and omit zero stats
+func addStatln(buf *bytes.Buffer, f string, a ...interface{}) error {
+	if i, ok := a[0].(int); ok && i == 0 {
+		return nil
+	}
+
+	f = f + "\n"
+	_, err := fmt.Fprintf(buf, f, a...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Transferred returns list of all completed transfers including checked and
