@@ -2063,3 +2063,208 @@ func SkipDestructive(ctx context.Context, subject interface{}, action string) (s
 	}
 	return skip
 }
+
+// XXX
+// mergeMarch is used to march over two Fses in the same way as
+// sync/copy
+type mergeMarch struct {
+	fdst, fsrc  fs.Fs
+	check       checkFn
+	oneway      bool
+	differences int32
+	noHashes    int32
+	matches     int32
+
+	srcFilesMissing []fs.DirEntry
+	dstFilesMissing []fs.DirEntry
+	filesDifferent  []fs.DirEntry
+
+	mu sync.Mutex
+}
+
+// DstOnly have an object which is in the destination only
+func (c *mergeMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
+	switch dst.(type) {
+	case fs.Object:
+		if c.oneway {
+			return false
+		}
+		err := errors.Errorf("File not in %v", c.fsrc)
+
+		fs.Errorf(dst, "%v", err)
+		fs.CountError(err)
+
+		atomic.AddInt32(&c.differences, 1)
+
+		c.mu.Lock()
+		defer c.mu.Unlock()
+
+		c.srcFilesMissing = append(c.srcFilesMissing, dst)
+		c.filesDifferent = append(c.filesDifferent, dst)
+
+	case fs.Directory:
+		// Do the same thing to the entire contents of the directory
+		return true
+	default:
+		panic("Bad object in DirEntries")
+	}
+	return false
+}
+
+// SrcOnly have an object which is in the source only
+func (c *mergeMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
+	switch src.(type) {
+	case fs.Object:
+		err := errors.Errorf("File not in %v", c.fdst)
+		fs.Errorf(src, "%v", err)
+		fs.CountError(err)
+		atomic.AddInt32(&c.differences, 1)
+
+		c.mu.Lock()
+		defer c.mu.Unlock()
+
+		c.dstFilesMissing = append(c.dstFilesMissing, src)
+		c.filesDifferent = append(c.filesDifferent, src)
+	case fs.Directory:
+		// Do the same thing to the entire contents of the directory
+		return true
+	default:
+		panic("Bad object in DirEntries")
+	}
+	return false
+}
+
+// merge to see if two objects are identical using the merge function
+func (c *mergeMarch) mergeIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
+	var err error
+	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
+	defer func() {
+		tr.Done(err)
+	}()
+
+	if sizeDiffers(src, dst) {
+		err = errors.Errorf("Sizes differ")
+		fs.Errorf(src, "%v", err)
+		fs.CountError(err)
+		return true, false
+	}
+	if fs.Config.SizeOnly {
+		return false, false
+	}
+
+	return c.check(ctx, dst, src)
+}
+
+// Match is called when src and dst are present, so sync src to dst
+func (c *mergeMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse bool) {
+	switch srcX := src.(type) {
+	case fs.Object:
+		dstX, ok := dst.(fs.Object)
+		if ok {
+			differ, noHash := c.mergeIdentical(ctx, dstX, srcX)
+			if differ {
+				atomic.AddInt32(&c.differences, 1)
+				c.mu.Lock()
+				defer c.mu.Unlock()
+				c.filesDifferent = append(c.filesDifferent, dst)
+			} else {
+				atomic.AddInt32(&c.matches, 1)
+				fs.Debugf(dstX, "OK")
+			}
+			if noHash {
+				atomic.AddInt32(&c.noHashes, 1)
+			}
+		} else {
+			err := errors.Errorf("is file on %v but directory on %v", c.fsrc, c.fdst)
+			fs.Errorf(src, "%v", err)
+			fs.CountError(err)
+			atomic.AddInt32(&c.differences, 1)
+
+			c.mu.Lock()
+			defer c.mu.Unlock()
+
+			c.dstFilesMissing = append(c.dstFilesMissing, dst)
+			c.filesDifferent = append(c.filesDifferent, dst)
+		}
+	case fs.Directory:
+		// Do the same thing to the entire contents of the directory
+		_, ok := dst.(fs.Directory)
+		if ok {
+			return true
+		}
+		err := errors.Errorf("is file on %v but directory on %v", c.fdst, c.fsrc)
+		fs.Errorf(dst, "%v", err)
+		fs.CountError(err)
+		atomic.AddInt32(&c.differences, 1)
+
+		c.mu.Lock()
+		defer c.mu.Unlock()
+
+		c.srcFilesMissing = append(c.srcFilesMissing, src)
+		c.filesDifferent = append(c.filesDifferent, src)
+
+	default:
+		panic("Bad object in DirEntries")
+	}
+	return false
+}
+
+// TODO change name
+func syncMissing(ctx context.Context, missing, source fs.Fs, missingFiles []fs.DirEntry) error {
+	for _, f := range missingFiles {
+		fmt.Println(f.String() + " is missing in " + missing.Name())
+		switch i := config.Command([]string{"cCopy to " + missing.Name(), "dDelete from " + source.Name()}); i {
+		case 'c':
+			fmt.Println("copying to " + missing.Name())
+			err := moveOrCopyFile(ctx, missing, source, f.String(), f.String(), true)
+			if err != nil {
+				return err
+			}
+		case 'd':
+			fmt.Println("deleting from " + source.Name())
+			err := DeleteFile(ctx, f.(fs.Object))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func MergeFn(ctx context.Context, fdst, fsrc fs.Fs) error {
+	c := &mergeMarch{
+		fdst:   fdst,
+		fsrc:   fsrc,
+		check:  checkIdentical,
+		oneway: false,
+	}
+
+	m := &march.March{
+		Ctx:      ctx,
+		Fdst:     fdst,
+		Fsrc:     fsrc,
+		Dir:      "",
+		Callback: c,
+	}
+
+	fs.Infof(fdst, "Waiting for checks to finish")
+
+	err := m.Run()
+
+	err = syncMissing(ctx, fdst, fsrc, c.dstFilesMissing)
+	if err != nil {
+		return err
+	}
+
+	err = syncMissing(ctx, fsrc, fdst, c.srcFilesMissing)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(c.srcFilesMissing)
+	fmt.Println(c.dstFilesMissing)
+	fmt.Println(c.filesDifferent)
+
+	return nil
+}

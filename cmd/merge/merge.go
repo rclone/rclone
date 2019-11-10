@@ -1,8 +1,13 @@
 package merge
 
 import (
-"github.com/rclone/rclone/cmd"
-"github.com/spf13/cobra"
+	"context"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 var (
@@ -25,16 +30,11 @@ var commandDefinition = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
-		cmd.Run(true, true, command, func() error {
-			print("MERGE---------")
-			print(fsrc.Name(), fdst.Name())
-			print(srcFileName)
-			//if srcFileName == "" {
-			//return sync.Sync(context.Background(), fdst, fsrc, createEmptySrcDirs)
-			// }
-			//return operations.CopyFile(context.Background(), fdst, fsrc, srcFileName, srcFileName)
-			return nil
+		cmd.Run(false, false, command, func() error {
+			if srcFileName == "" {
+				return operations.MergeFn(context.Background(), fdst, fsrc)
+			}
+			return errors.New("not supporting files")
 		})
-		return
 	},
 }
