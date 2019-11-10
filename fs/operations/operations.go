@@ -2064,6 +2064,11 @@ func SkipDestructive(ctx context.Context, subject interface{}, action string) (s
 	return skip
 }
 
+type mergePair struct {
+	src fs.DirEntry
+	dst fs.DirEntry
+}
+
 // XXX
 // mergeMarch is used to march over two Fses in the same way as
 // sync/copy
@@ -2077,7 +2082,8 @@ type mergeMarch struct {
 
 	srcFilesMissing []fs.DirEntry
 	dstFilesMissing []fs.DirEntry
-	filesDifferent  []fs.DirEntry
+
+	filesDifferent []mergePair
 
 	mu sync.Mutex
 }
@@ -2100,7 +2106,6 @@ func (c *mergeMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 		defer c.mu.Unlock()
 
 		c.srcFilesMissing = append(c.srcFilesMissing, dst)
-		c.filesDifferent = append(c.filesDifferent, dst)
 
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
@@ -2124,7 +2129,6 @@ func (c *mergeMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 		defer c.mu.Unlock()
 
 		c.dstFilesMissing = append(c.dstFilesMissing, src)
-		c.filesDifferent = append(c.filesDifferent, src)
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
 		return true
@@ -2135,7 +2139,7 @@ func (c *mergeMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 }
 
 // merge to see if two objects are identical using the merge function
-func (c *mergeMarch) mergeIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
+func (c *mergeMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
 	var err error
 	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
@@ -2143,9 +2147,6 @@ func (c *mergeMarch) mergeIdentical(ctx context.Context, dst, src fs.Object) (di
 	}()
 
 	if sizeDiffers(src, dst) {
-		err = errors.Errorf("Sizes differ")
-		fs.Errorf(src, "%v", err)
-		fs.CountError(err)
 		return true, false
 	}
 	if fs.Config.SizeOnly {
@@ -2161,12 +2162,13 @@ func (c *mergeMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 	case fs.Object:
 		dstX, ok := dst.(fs.Object)
 		if ok {
-			differ, noHash := c.mergeIdentical(ctx, dstX, srcX)
+			differ, noHash := c.checkIdentical(ctx, dstX, srcX)
 			if differ {
 				atomic.AddInt32(&c.differences, 1)
 				c.mu.Lock()
 				defer c.mu.Unlock()
-				c.filesDifferent = append(c.filesDifferent, dst)
+
+				c.filesDifferent = append(c.filesDifferent, mergePair{src, dst})
 			} else {
 				atomic.AddInt32(&c.matches, 1)
 				fs.Debugf(dstX, "OK")
@@ -2184,7 +2186,6 @@ func (c *mergeMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 			defer c.mu.Unlock()
 
 			c.dstFilesMissing = append(c.dstFilesMissing, dst)
-			c.filesDifferent = append(c.filesDifferent, dst)
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
@@ -2201,7 +2202,6 @@ func (c *mergeMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 		defer c.mu.Unlock()
 
 		c.srcFilesMissing = append(c.srcFilesMissing, src)
-		c.filesDifferent = append(c.filesDifferent, src)
 
 	default:
 		panic("Bad object in DirEntries")
@@ -2262,9 +2262,31 @@ func MergeFn(ctx context.Context, fdst, fsrc fs.Fs) error {
 		return err
 	}
 
-	fmt.Println(c.srcFilesMissing)
-	fmt.Println(c.dstFilesMissing)
-	fmt.Println(c.filesDifferent)
+	for _, p := range c.filesDifferent {
+		f := p.src
+		fmt.Printf(
+			"File \"%s\" with different content exists in both \"%s\" and \"%s\".\n",
+			f.String(), fsrc.Name(), fdst.Name())
+
+		switch i := config.Command([]string{"kKeep " + fsrc.Name(), "tTake from " + fdst.Name()}); i {
+		case 'k':
+			// src -> dst
+			// TODO rename for backup
+			fmt.Println("copying to " + fdst.Name())
+			err := moveOrCopyFile(ctx, fdst, fsrc, f.String(), f.String(), true)
+			if err != nil {
+				return err
+			}
+		case 't':
+			fmt.Println("copying to " + fsrc.Name())
+			err := moveOrCopyFile(ctx, fsrc, fdst, f.String(), f.String(), true)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	fmt.Println("Merge successful")
 
 	return nil
 }
