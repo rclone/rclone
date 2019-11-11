@@ -7,17 +7,18 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 )
 
 var (
-	// createEmptySrcDirs = false
+	takeLatest = false
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	// cmdFlags := commandDefinition.Flags()
-	// flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &takeLatest, "take-latest", "", takeLatest, "TODO doc")
 	return
 }
 
@@ -32,7 +33,7 @@ var commandDefinition = &cobra.Command{
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(false, false, command, func() error {
 			if srcFileName == "" {
-				return operations.MergeFn(context.Background(), fdst, fsrc)
+				return operations.MergeFn(context.Background(), fdst, fsrc, takeLatest)
 			}
 			return errors.New("not supporting files")
 		})

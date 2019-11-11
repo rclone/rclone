@@ -2232,7 +2232,27 @@ func syncMissing(ctx context.Context, missing, source fs.Fs, missingFiles []fs.D
 	return nil
 }
 
-func MergeFn(ctx context.Context, fdst, fsrc fs.Fs) error {
+func copyLatest(ctx context.Context, f fs.DirEntry, srcMod, dstMod time.Time, fsrc, fdst fs.Fs) error {
+	fmt.Println("using the latest copy of " + f.String())
+
+	if srcMod.After(dstMod) {
+		fmt.Println("copying to " + fdst.Name())
+		err := moveOrCopyFile(ctx, fdst, fsrc, f.String(), f.String(), true)
+		if err != nil {
+			return err
+		}
+	} else {
+		fmt.Println("copying to " + fsrc.Name())
+		err := moveOrCopyFile(ctx, fsrc, fdst, f.String(), f.String(), true)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func MergeFn(ctx context.Context, fdst, fsrc fs.Fs, takeLatest bool) error {
 	c := &mergeMarch{
 		fdst:   fdst,
 		fsrc:   fsrc,
@@ -2264,11 +2284,27 @@ func MergeFn(ctx context.Context, fdst, fsrc fs.Fs) error {
 
 	for _, p := range c.filesDifferent {
 		f := p.src
+
+		srcMod := p.src.ModTime(ctx)
+		dstMod := p.dst.ModTime(ctx)
+
 		fmt.Printf(
 			"File \"%s\" with different content exists in both \"%s\" and \"%s\".\n",
 			f.String(), fsrc.Name(), fdst.Name())
 
-		switch i := config.Command([]string{"kKeep " + fsrc.Name(), "tTake from " + fdst.Name()}); i {
+		// TODO(lpan) switch i := config.Command([]string{"kKeep " + fsrc.Name(), "tTake from " + fdst.Name()}); i {
+		fmt.Printf("src mod time: %s\n", srcMod.UTC().String())
+		fmt.Printf("dst mod time: %s\n", dstMod.UTC().String())
+
+		if takeLatest {
+			return copyLatest(ctx, f, srcMod, dstMod, fsrc, fdst)
+		}
+
+		switch i := config.Command([]string{
+			"kKeep " + fsrc.Name(),
+			"tTake from " + fdst.Name(),
+			"lTake latest",
+		}); i {
 		case 'k':
 			// src -> dst
 			// TODO rename for backup
@@ -2283,7 +2319,14 @@ func MergeFn(ctx context.Context, fdst, fsrc fs.Fs) error {
 			if err != nil {
 				return err
 			}
+		case 'l':
+			fmt.Println("copying latest " + fdst.Name())
+			err := copyLatest(ctx, f, srcMod, dstMod, fsrc, fdst)
+			if err != nil {
+				return err
+			}
 		}
+
 	}
 
 	fmt.Println("Merge successful")
