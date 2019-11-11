@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
@@ -207,7 +208,7 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 // If noModTime is set then it
 func Mount(f fs.Fs, mountpoint string) error {
 	// Mount it
-	FS, errChan, _, err := mount(f, mountpoint)
+	FS, errChan, unmount, err := mount(f, mountpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
@@ -216,6 +217,10 @@ func Mount(f fs.Fs, mountpoint string) error {
 
 	sigHup := make(chan os.Signal, 1)
 	signal.Notify(sigHup, syscall.SIGHUP)
+
+	atexit.Register(func() {
+		_ = unmount()
+	})
 
 	if err := sdnotify.Ready(); err != nil && err != sdnotify.ErrSdNotifyNoSocket {
 		return errors.Wrap(err, "failed to notify systemd")
