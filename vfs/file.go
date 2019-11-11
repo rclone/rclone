@@ -274,18 +274,16 @@ func (f *File) ModTime() (modTime time.Time) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
-	if !f.d.vfs.Opt.NoModTime {
-		// if o is nil it isn't valid yet or there are writers, so return the size so far
-		if f.o == nil || len(f.writers) != 0 || f.readWriterClosing {
-			if !f.pendingModTime.IsZero() {
-				return f.pendingModTime
-			}
-		} else {
-			return f.o.ModTime(context.TODO())
-		}
+	if f.d.vfs.Opt.NoModTime {
+		return f.d.modTime
 	}
-
-	return f.d.modTime
+	if !f.pendingModTime.IsZero() {
+		return f.pendingModTime
+	}
+	if f.o == nil {
+		return f.d.modTime
+	}
+	return f.o.ModTime(context.TODO())
 }
 
 // nonNegative returns 0 if i is -ve, i otherwise
