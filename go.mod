@@ -13,9 +13,9 @@ require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/aws/aws-sdk-go v1.23.8
 	github.com/billziss-gh/cgofuse v1.1.0
-	github.com/coreos/bbolt v1.3.3
 	github.com/djherbis/times v1.2.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.4.0+incompatible
+	github.com/etcd-io/bbolt v1.3.3
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
