@@ -252,6 +252,7 @@ func (qss *QingStorSigner) queryToSign(key string) bool {
 		"upload_id":                    true,
 		"uploads":                      true,
 		"image":                        true,
+		"notification":                 true,
 		"lifecycle":                    true,
 		"logging":                      true,
 		"response-expires":             true,

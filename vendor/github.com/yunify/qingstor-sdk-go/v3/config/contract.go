@@ -33,7 +33,6 @@ const DefaultConfigFileContent = `# QingStor services configuration
 host: qingstor.com
 port: 443
 protocol: https
-connection_retries: 3
 
 # Additional User-Agent
 additional_user_agent: ""
