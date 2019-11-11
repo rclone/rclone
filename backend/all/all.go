@@ -23,6 +23,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	_ "github.com/rclone/rclone/backend/mailru"
 	_ "github.com/rclone/rclone/backend/mega"
+	_ "github.com/rclone/rclone/backend/mirror"
 	_ "github.com/rclone/rclone/backend/onedrive"
 	_ "github.com/rclone/rclone/backend/opendrive"
 	_ "github.com/rclone/rclone/backend/pcloud"
