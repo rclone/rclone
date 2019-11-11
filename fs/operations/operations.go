@@ -408,16 +408,15 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		break
 	}
 	if err != nil {
-		fs.CountError(err)
 		fs.Errorf(src, "Failed to copy: %v", err)
+		err = fserrors.FsError(err)
 		return newDst, err
 	}
 
 	// Verify sizes are the same after transfer
 	if sizeDiffers(src, dst) {
-		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
+		err = fserrors.FsError(errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size()))
 		fs.Errorf(dst, "%v", err)
-		fs.CountError(err)
 		removeFailedCopy(ctx, dst)
 		return newDst, err
 	}
@@ -427,9 +426,8 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		// checkHashes has logged and counted errors
 		equal, _, srcSum, dstSum, _ := checkHashes(ctx, src, dst, hashType)
 		if !equal {
-			err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
+			err = fserrors.FsError(errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum))
 			fs.Errorf(dst, "%v", err)
-			fs.CountError(err)
 			removeFailedCopy(ctx, dst)
 			return newDst, err
 		}
@@ -492,7 +490,6 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		case fs.ErrorCantMove:
 			fs.Debugf(src, "Can't move, switching to copy")
 		default:
-			fs.CountError(err)
 			fs.Errorf(src, "Couldn't move: %v", err)
 			return newDst, err
 		}
@@ -558,7 +555,6 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 		err = dst.Remove(ctx)
 	}
 	if err != nil {
-		fs.CountError(err)
 		fs.Errorf(dst, "Couldn't %s: %v", action, err)
 	} else if !fs.Config.DryRun {
 		fs.Infof(dst, actioned)
@@ -756,7 +752,6 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 	if sizeDiffers(src, dst) {
 		err = errors.Errorf("Sizes differ")
 		fs.Errorf(src, "%v", err)
-		fs.CountError(err)
 		return true, false
 	}
 	if fs.Config.SizeOnly {
@@ -1223,7 +1218,6 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		}
 		in, err := o.Open(ctx, options...)
 		if err != nil {
-			fs.CountError(err)
 			fs.Errorf(o, "Failed to open: %v", err)
 			return
 		}
@@ -1236,7 +1230,6 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		defer mu.Unlock()
 		_, err = io.Copy(w, in)
 		if err != nil {
-			fs.CountError(err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
 		}
 	})
@@ -1263,7 +1256,6 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, hash.Sums(), fdst)
 		if !Equal(ctx, src, dst) {
 			err = errors.Errorf("corrupted on transfer")
-			fs.CountError(err)
 			fs.Errorf(dst, "%v", err)
 			return err
 		}

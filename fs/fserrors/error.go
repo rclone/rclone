@@ -230,6 +230,61 @@ func IsRetryAfterError(err error) bool {
 	return !RetryAfterErrorTime(err).IsZero()
 }
 
+// CountableError is an optional interface for error. It stores a boolean
+// which signifies if the error has already been counted or not
+type CountableError interface {
+	error
+	Count()
+	IsCounted() bool
+}
+
+// wrappedFatalError is an error wrapped so it will satisfy the
+// Retrier interface and return true
+type wrappedCountableError struct {
+	error
+	isCounted bool
+}
+
+// CountableError interface
+func (err *wrappedCountableError) Count() {
+	err.isCounted = true
+}
+
+// CountableError interface
+func (err *wrappedCountableError) IsCounted() bool {
+	return err.isCounted
+}
+
+// IsCounted returns true if err conforms to the CountableError interface
+// and has already been counted
+func IsCounted(err error) bool {
+	if r, ok := err.(CountableError); ok {
+		return r.IsCounted()
+	}
+	return false
+}
+
+// Counted sets the isCounted variable on the error if it conforms to the
+// CountableError interface
+func Count(err error) {
+	if r, ok := err.(CountableError); ok {
+		r.Count()
+	}
+}
+
+
+// Check interface
+var _ CountableError = &wrappedCountableError{error: error(nil)}
+
+// FsError makes an error which can keep a record that it is already counted
+// or not
+func FsError(err error) error {
+	if err == nil {
+		err = errors.New("countable error")
+	}
+	return &wrappedCountableError{error: err}
+}
+
 // Cause is a souped up errors.Cause which can unwrap some standard
 // library errors too.  It returns true if any of the intermediate
 // errors had a Timeout() or Temporary() method which returned true.
