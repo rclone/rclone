@@ -2095,10 +2095,6 @@ func (c *mergeMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 		if c.oneway {
 			return false
 		}
-		err := errors.Errorf("File not in %v", c.fsrc)
-
-		fs.Errorf(dst, "%v", err)
-		fs.CountError(err)
 
 		atomic.AddInt32(&c.differences, 1)
 
@@ -2120,9 +2116,6 @@ func (c *mergeMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 func (c *mergeMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 	switch src.(type) {
 	case fs.Object:
-		err := errors.Errorf("File not in %v", c.fdst)
-		fs.Errorf(src, "%v", err)
-		fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
 
 		c.mu.Lock()
@@ -2297,7 +2290,11 @@ func MergeFn(ctx context.Context, fdst, fsrc fs.Fs, takeLatest bool) error {
 		fmt.Printf("dst mod time: %s\n", dstMod.UTC().String())
 
 		if takeLatest {
-			return copyLatest(ctx, f, srcMod, dstMod, fsrc, fdst)
+			err := copyLatest(ctx, f, srcMod, dstMod, fsrc, fdst)
+			if err != nil {
+				return err
+			}
+			continue
 		}
 
 		switch i := config.Command([]string{
