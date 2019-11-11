@@ -27,6 +27,7 @@ import (
 	"github.com/yunify/qingstor-sdk-go/v3/request"
 	"github.com/yunify/qingstor-sdk-go/v3/request/data"
 	"github.com/yunify/qingstor-sdk-go/v3/request/errors"
+	"github.com/yunify/qingstor-sdk-go/v3/utils"
 )
 
 var _ fmt.State
@@ -35,6 +36,7 @@ var _ http.Header
 var _ strings.Reader
 var _ time.Time
 var _ config.Config
+var _ utils.Conn
 
 // AbortMultipartUpload does Abort multipart upload.
 // Documentation URL: https://docs.qingcloud.com/qingstor/api/object/abort_multipart_upload.html
@@ -399,6 +401,8 @@ type GetObjectOutput struct {
 	LastModified *time.Time `json:"Last-Modified,omitempty" name:"Last-Modified" format:"RFC 822" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
+	// User-defined metadata
+	XQSMetaData *map[string]string `json:"X-QS-MetaData,omitempty" name:"X-QS-MetaData" location:"headers"`
 	// Storage class of the object
 	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
 }
@@ -501,6 +505,8 @@ type HeadObjectOutput struct {
 	LastModified *time.Time `json:"Last-Modified,omitempty" name:"Last-Modified" format:"RFC 822" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
+	// User-defined metadata
+	XQSMetaData *map[string]string `json:"X-QS-MetaData,omitempty" name:"X-QS-MetaData" location:"headers"`
 	// Storage class of the object
 	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
 }
@@ -673,6 +679,8 @@ type InitiateMultipartUploadInput struct {
 	XQSEncryptionCustomerKey *string `json:"X-QS-Encryption-Customer-Key,omitempty" name:"X-QS-Encryption-Customer-Key" location:"headers"`
 	// MD5sum of encryption key
 	XQSEncryptionCustomerKeyMD5 *string `json:"X-QS-Encryption-Customer-Key-MD5,omitempty" name:"X-QS-Encryption-Customer-Key-MD5" location:"headers"`
+	// User-defined metadata
+	XQSMetaData *map[string]string `json:"X-QS-MetaData,omitempty" name:"X-QS-MetaData" location:"headers"`
 	// Specify the storage class for object
 	// XQSStorageClass's available values: STANDARD, STANDARD_IA
 	XQSStorageClass *string `json:"X-QS-Storage-Class,omitempty" name:"X-QS-Storage-Class" location:"headers"`
@@ -680,6 +688,13 @@ type InitiateMultipartUploadInput struct {
 
 // Validate validates the input for InitiateMultipartUpload.
 func (v *InitiateMultipartUploadInput) Validate() error {
+
+	if v.XQSMetaData != nil {
+		XQSMetaDataerr := utils.IsMetaDataValid(v.XQSMetaData)
+		if XQSMetaDataerr != nil {
+			return XQSMetaDataerr
+		}
+	}
 
 	if v.XQSStorageClass != nil {
 		xQSStorageClassValidValues := []string{"STANDARD", "STANDARD_IA"}
@@ -1001,6 +1016,8 @@ type PutObjectInput struct {
 	XQSFetchIfUnmodifiedSince *time.Time `json:"X-QS-Fetch-If-Unmodified-Since,omitempty" name:"X-QS-Fetch-If-Unmodified-Since" format:"RFC 822" location:"headers"`
 	// Fetch source, should be a valid url
 	XQSFetchSource *string `json:"X-QS-Fetch-Source,omitempty" name:"X-QS-Fetch-Source" location:"headers"`
+	// User-defined metadata
+	XQSMetaData *map[string]string `json:"X-QS-MetaData,omitempty" name:"X-QS-MetaData" location:"headers"`
 	// Move source, format (/<bucket-name>/<object-key>)
 	XQSMoveSource *string `json:"X-QS-Move-Source,omitempty" name:"X-QS-Move-Source" location:"headers"`
 	// Specify the storage class for object
@@ -1013,6 +1030,13 @@ type PutObjectInput struct {
 
 // Validate validates the input for PutObject.
 func (v *PutObjectInput) Validate() error {
+
+	if v.XQSMetaData != nil {
+		XQSMetaDataerr := utils.IsMetaDataValid(v.XQSMetaData)
+		if XQSMetaDataerr != nil {
+			return XQSMetaDataerr
+		}
+	}
 
 	if v.XQSStorageClass != nil {
 		xQSStorageClassValidValues := []string{"STANDARD", "STANDARD_IA"}

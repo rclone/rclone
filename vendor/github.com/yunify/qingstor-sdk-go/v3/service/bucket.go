@@ -27,6 +27,7 @@ import (
 	"github.com/yunify/qingstor-sdk-go/v3/request"
 	"github.com/yunify/qingstor-sdk-go/v3/request/data"
 	"github.com/yunify/qingstor-sdk-go/v3/request/errors"
+	"github.com/yunify/qingstor-sdk-go/v3/utils"
 )
 
 var _ fmt.State
@@ -35,6 +36,7 @@ var _ http.Header
 var _ strings.Reader
 var _ time.Time
 var _ config.Config
+var _ utils.Conn
 
 // Bucket presents bucket.
 type Bucket struct {
@@ -987,6 +989,8 @@ type ListMultipartUploadsOutput struct {
 	CommonPrefixes []*string `json:"common_prefixes,omitempty" name:"common_prefixes" location:"elements"`
 	// Delimiter that specified in request parameters
 	Delimiter *string `json:"delimiter,omitempty" name:"delimiter" location:"elements"`
+	// Indicate if these are more results in the next page
+	HasMore *bool `json:"has_more,omitempty" name:"has_more" location:"elements"`
 	// Limit that specified in request parameters
 	Limit *int `json:"limit,omitempty" name:"limit" location:"elements"`
 	// Marker that specified in request parameters

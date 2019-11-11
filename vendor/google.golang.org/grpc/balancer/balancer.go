@@ -305,14 +305,23 @@ type ClientConnState struct {
 	BalancerConfig serviceconfig.LoadBalancingConfig
 }
 
+// ErrBadResolverState may be returned by UpdateClientConnState to indicate a
+// problem with the provided name resolver data.
+var ErrBadResolverState = errors.New("bad resolver state")
+
 // V2Balancer is defined for documentation purposes.  If a Balancer also
 // implements V2Balancer, its UpdateClientConnState method will be called
 // instead of HandleResolvedAddrs and its UpdateSubConnState will be called
 // instead of HandleSubConnStateChange.
 type V2Balancer interface {
 	// UpdateClientConnState is called by gRPC when the state of the ClientConn
-	// changes.
-	UpdateClientConnState(ClientConnState)
+	// changes.  If the error returned is ErrBadResolverState, the ClientConn
+	// will begin calling ResolveNow on the active name resolver with
+	// exponential backoff until a subsequent call to UpdateClientConnState
+	// returns a nil error.  Any other errors are currently ignored.
+	UpdateClientConnState(ClientConnState) error
+	// ResolverError is called by gRPC when the name resolver reports an error.
+	ResolverError(error)
 	// UpdateSubConnState is called by gRPC when the state of a SubConn
 	// changes.
 	UpdateSubConnState(SubConn, SubConnState)

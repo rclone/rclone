@@ -130,6 +130,7 @@ type serverOptions struct {
 	readBufferSize        int
 	connectionTimeout     time.Duration
 	maxHeaderListSize     *uint32
+	headerTableSize       *uint32
 }
 
 var defaultServerOptions = serverOptions{
@@ -374,6 +375,16 @@ func ConnectionTimeout(d time.Duration) ServerOption {
 func MaxHeaderListSize(s uint32) ServerOption {
 	return newFuncServerOption(func(o *serverOptions) {
 		o.maxHeaderListSize = &s
+	})
+}
+
+// HeaderTableSize returns a ServerOption that sets the size of dynamic
+// header table for stream.
+//
+// This API is EXPERIMENTAL.
+func HeaderTableSize(s uint32) ServerOption {
+	return newFuncServerOption(func(o *serverOptions) {
+		o.headerTableSize = &s
 	})
 }
 
@@ -686,6 +697,7 @@ func (s *Server) newHTTP2Transport(c net.Conn, authInfo credentials.AuthInfo) tr
 		ReadBufferSize:        s.opts.readBufferSize,
 		ChannelzParentID:      s.channelzID,
 		MaxHeaderListSize:     s.opts.maxHeaderListSize,
+		HeaderTableSize:       s.opts.headerTableSize,
 	}
 	st, err := transport.NewServerTransport("http2", c, config)
 	if err != nil {

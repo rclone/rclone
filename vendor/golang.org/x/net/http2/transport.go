@@ -603,7 +603,7 @@ func (t *Transport) expectContinueTimeout() time.Duration {
 }
 
 func (t *Transport) NewClientConn(c net.Conn) (*ClientConn, error) {
-	return t.newClientConn(c, false)
+	return t.newClientConn(c, t.disableKeepAlives())
 }
 
 func (t *Transport) newClientConn(c net.Conn, singleUse bool) (*ClientConn, error) {
@@ -1216,6 +1216,8 @@ var (
 
 	// abort request body write, but send stream reset of cancel.
 	errStopReqBodyWriteAndCancel = errors.New("http2: canceling request")
+
+	errReqBodyTooLong = errors.New("http2: request body larger than specified content length")
 )
 
 func (cs *clientStream) writeRequestBody(body io.Reader, bodyCloser io.Closer) (err error) {
@@ -1238,10 +1240,32 @@ func (cs *clientStream) writeRequestBody(body io.Reader, bodyCloser io.Closer) (
 
 	req := cs.req
 	hasTrailers := req.Trailer != nil
+	remainLen := actualContentLength(req)
+	hasContentLen := remainLen != -1
 
 	var sawEOF bool
 	for !sawEOF {
-		n, err := body.Read(buf)
+		n, err := body.Read(buf[:len(buf)-1])
+		if hasContentLen {
+			remainLen -= int64(n)
+			if remainLen == 0 && err == nil {
+				// The request body's Content-Length was predeclared and
+				// we just finished reading it all, but the underlying io.Reader
+				// returned the final chunk with a nil error (which is one of
+				// the two valid things a Reader can do at EOF). Because we'd prefer
+				// to send the END_STREAM bit early, double-check that we're actually
+				// at EOF. Subsequent reads should return (0, EOF) at this point.
+				// If either value is different, we return an error in one of two ways below.
+				var n1 int
+				n1, err = body.Read(buf[n:])
+				remainLen -= int64(n1)
+			}
+			if remainLen < 0 {
+				err = errReqBodyTooLong
+				cc.writeStreamReset(cs.ID, ErrCodeCancel, err)
+				return err
+			}
+		}
 		if err == io.EOF {
 			sawEOF = true
 			err = nil
@@ -1454,7 +1478,29 @@ func (cc *ClientConn) encodeHeaders(req *http.Request, addGzipHeader bool, trail
 				if vv[0] == "" {
 					continue
 				}
-
+			} else if strings.EqualFold(k, "cookie") {
+				// Per 8.1.2.5 To allow for better compression efficiency, the
+				// Cookie header field MAY be split into separate header fields,
+				// each with one or more cookie-pairs.
+				for _, v := range vv {
+					for {
+						p := strings.IndexByte(v, ';')
+						if p < 0 {
+							break
+						}
+						f("cookie", v[:p])
+						p++
+						// strip space after semicolon if any.
+						for p+1 <= len(v) && v[p] == ' ' {
+							p++
+						}
+						v = v[p:]
+					}
+					if len(v) > 0 {
+						f("cookie", v)
+					}
+				}
+				continue
 			}
 
 			for _, v := range vv {

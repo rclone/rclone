@@ -1,6 +1,32 @@
 # Change Log
 All notable changes to QingStor SDK for Go will be documented in this file.
 
+## [v3.1.1] - 2019-10-9
+
+### Changed
+
+- interface: Refactor iface, make sure current struct implements them (#89)
+
+## [v3.1.0] - 2019-10-8
+
+### Added
+
+- Add metadata support for PutObject (#70)
+- Add has_more field support in ListMultipartUploads api (#83)
+- Add generated qinsgtor api interface (#87)
+
+### Changed
+
+- template: Update to fit API spec change (#80)
+- request: Remove http retry logic to avoid body length 0 error (#81)
+- client/upload: Switch to normal upload while fileSize small enough (#82)
+- docs: Refactor usages and add zh-CN docs (#86)
+
+### Fixed
+
+- template: Fix sdk major version not bumped (#78)
+- Fix notification subresource not signed (#84)
+
 ## [v3.0.2] - 2019-7-15
 
 ### Fixed
@@ -195,6 +221,8 @@ All notable changes to QingStor SDK for Go will be documented in this file.
 
 - QingStor SDK for the Go programming language.
 
+[v3.1.1]: https://github.com/yunify/qingstor-sdk-go/compare/v3.1.0...v3.1.1
+[v3.1.0]: https://github.com/yunify/qingstor-sdk-go/compare/v3.0.2...v3.1.0
 [v3.0.2]: https://github.com/yunify/qingstor-sdk-go/compare/v3.0.1...v3.0.2
 [v3.0.1]: https://github.com/yunify/qingstor-sdk-go/compare/v3.0.0...v3.0.1
 [v3.0.0]: https://github.com/yunify/qingstor-sdk-go/compare/v2.3.0...v3.0.0

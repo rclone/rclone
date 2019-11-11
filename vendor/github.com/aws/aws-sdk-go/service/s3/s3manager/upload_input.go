@@ -12,7 +12,7 @@ import (
 // package's PutObjectInput with the exception that the Body member is an
 // io.Reader instead of an io.ReadSeeker.
 type UploadInput struct {
-	_ struct{} `type:"structure" payload:"Body"`
+	_ struct{} `locationName:"PutObjectRequest" type:"structure" payload:"Body"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`

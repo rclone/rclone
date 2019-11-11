@@ -38,7 +38,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"9eZ1uxVRThTDhLJCZHhqs3eQWz4/bzjWBZSIb8SwDXXw1rx-RVKTulk\"",
+  "etag": "\"F5McR9eEaw0XRpaO3M9gbIugkbs/oBMvKC4XV0NjxxOx_Y5WENsew0Q\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -3459,7 +3459,7 @@
       }
     }
   },
-  "revision": "20190620",
+  "revision": "20191015",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -3664,7 +3664,7 @@
           "type": "array"
         },
         "quotaBytesTotal": {
-          "description": "The total number of quota bytes.",
+          "description": "The total number of quota bytes. This is only relevant when quotaType is LIMITED.",
           "format": "int64",
           "type": "string"
         },
@@ -4573,11 +4573,15 @@
               "type": "boolean"
             },
             "canEdit": {
-              "description": "Whether the current user can edit this file.",
+              "description": "Whether the current user can edit this file. Other factors may limit the type of changes a user can make to a file. For example, see canChangeCopyRequiresWriterPermission or canModifyContent.",
               "type": "boolean"
             },
             "canListChildren": {
               "description": "Whether the current user can list the children of this folder. This is always false when the item is not a folder.",
+              "type": "boolean"
+            },
+            "canModifyContent": {
+              "description": "Whether the current user can modify the content of this file.",
               "type": "boolean"
             },
             "canMoveChildrenOutOfDrive": {
@@ -4730,7 +4734,7 @@
           "type": "string"
         },
         "hasAugmentedPermissions": {
-          "description": "Whether any users are granted file access directly on this file. This field is only populated for items in shared drives.",
+          "description": "Whether there are permissions directly on this file. This field is only populated for items in shared drives.",
           "type": "boolean"
         },
         "hasThumbnail": {
@@ -5570,7 +5574,7 @@
           "type": "string"
         },
         "pinned": {
-          "description": "Whether this revision is pinned to prevent automatic purging. This will only be populated and can only be modified on files with content stored in Drive which are not Google Docs. Revisions can also be pinned when they are created through the drive.files.insert/update/copy by using the pinned query parameter.",
+          "description": "Whether this revision is pinned to prevent automatic purging. This will only be populated and can only be modified on files with content stored in Drive which are not Google Docs. Revisions can also be pinned when they are created through the drive.files.insert/update/copy by using the pinned query parameter. Pinned revisions are stored indefinitely using additional storage quota, up to a maximum of 200 revisions.",
           "type": "boolean"
         },
         "publishAuto": {

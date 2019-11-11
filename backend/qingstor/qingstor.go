@@ -269,7 +269,7 @@ func qsServiceConnection(opt *Options) (*qs.Service, error) {
 	cf.Protocol = protocol
 	cf.Host = host
 	cf.Port = port
-	cf.ConnectionRetries = opt.ConnectionRetries
+	// unsupported in v3.1: cf.ConnectionRetries = opt.ConnectionRetries
 	cf.Connection = fshttp.NewClient(fs.Config)
 
 	return qs.Init(cf)

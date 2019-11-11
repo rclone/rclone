@@ -7043,7 +7043,7 @@ func (s *AbortIncompleteMultipartUpload) SetDaysAfterInitiation(v int64) *AbortI
 }
 
 type AbortMultipartUploadInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"AbortMultipartUploadRequest" type:"structure"`
 
 	// Name of the bucket to which the multipart upload was initiated.
 	//
@@ -8084,7 +8084,7 @@ func (s *CommonPrefix) SetPrefix(v string) *CommonPrefix {
 }
 
 type CompleteMultipartUploadInput struct {
-	_ struct{} `type:"structure" payload:"MultipartUpload"`
+	_ struct{} `locationName:"CompleteMultipartUploadRequest" type:"structure" payload:"MultipartUpload"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -8404,7 +8404,7 @@ func (s *ContinuationEvent) UnmarshalEvent(
 }
 
 type CopyObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"CopyObjectRequest" type:"structure"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -9025,7 +9025,7 @@ func (s *CreateBucketConfiguration) SetLocationConstraint(v string) *CreateBucke
 }
 
 type CreateBucketInput struct {
-	_ struct{} `type:"structure" payload:"CreateBucketConfiguration"`
+	_ struct{} `locationName:"CreateBucketRequest" type:"structure" payload:"CreateBucketConfiguration"`
 
 	// The canned ACL to apply to the bucket.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"BucketCannedACL"`
@@ -9166,7 +9166,7 @@ func (s *CreateBucketOutput) SetLocation(v string) *CreateBucketOutput {
 }
 
 type CreateMultipartUploadInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"CreateMultipartUploadRequest" type:"structure"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -9708,7 +9708,7 @@ func (s *Delete) SetQuiet(v bool) *Delete {
 }
 
 type DeleteBucketAnalyticsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketAnalyticsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket from which an analytics configuration is deleted.
 	//
@@ -9784,7 +9784,7 @@ func (s DeleteBucketAnalyticsConfigurationOutput) GoString() string {
 }
 
 type DeleteBucketCorsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketCorsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -9844,7 +9844,7 @@ func (s DeleteBucketCorsOutput) GoString() string {
 }
 
 type DeleteBucketEncryptionInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketEncryptionRequest" type:"structure"`
 
 	// The name of the bucket containing the server-side encryption configuration
 	// to delete.
@@ -9907,7 +9907,7 @@ func (s DeleteBucketEncryptionOutput) GoString() string {
 }
 
 type DeleteBucketInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -9953,7 +9953,7 @@ func (s *DeleteBucketInput) getBucket() (v string) {
 }
 
 type DeleteBucketInventoryConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketInventoryConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the inventory configuration to delete.
 	//
@@ -10029,7 +10029,7 @@ func (s DeleteBucketInventoryConfigurationOutput) GoString() string {
 }
 
 type DeleteBucketLifecycleInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketLifecycleRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10089,7 +10089,7 @@ func (s DeleteBucketLifecycleOutput) GoString() string {
 }
 
 type DeleteBucketMetricsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketMetricsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the metrics configuration to delete.
 	//
@@ -10179,7 +10179,7 @@ func (s DeleteBucketOutput) GoString() string {
 }
 
 type DeleteBucketPolicyInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketPolicyRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10239,7 +10239,7 @@ func (s DeleteBucketPolicyOutput) GoString() string {
 }
 
 type DeleteBucketReplicationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketReplicationRequest" type:"structure"`
 
 	// The bucket name.
 	//
@@ -10304,7 +10304,7 @@ func (s DeleteBucketReplicationOutput) GoString() string {
 }
 
 type DeleteBucketTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10364,7 +10364,7 @@ func (s DeleteBucketTaggingOutput) GoString() string {
 }
 
 type DeleteBucketWebsiteInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketWebsiteRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10510,7 +10510,7 @@ func (s *DeleteMarkerReplication) SetStatus(v string) *DeleteMarkerReplication {
 }
 
 type DeleteObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteObjectRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10656,7 +10656,7 @@ func (s *DeleteObjectOutput) SetVersionId(v string) *DeleteObjectOutput {
 }
 
 type DeleteObjectTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteObjectTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10749,7 +10749,7 @@ func (s *DeleteObjectTaggingOutput) SetVersionId(v string) *DeleteObjectTaggingO
 }
 
 type DeleteObjectsInput struct {
-	_ struct{} `type:"structure" payload:"Delete"`
+	_ struct{} `locationName:"DeleteObjectsRequest" type:"structure" payload:"Delete"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10885,7 +10885,7 @@ func (s *DeleteObjectsOutput) SetRequestCharged(v string) *DeleteObjectsOutput {
 }
 
 type DeletePublicAccessBlockInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeletePublicAccessBlockRequest" type:"structure"`
 
 	// The Amazon S3 bucket whose PublicAccessBlock configuration you want to delete.
 	//
@@ -11341,7 +11341,7 @@ func (s *FilterRule) SetValue(v string) *FilterRule {
 }
 
 type GetBucketAccelerateConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketAccelerateConfigurationRequest" type:"structure"`
 
 	// Name of the bucket for which the accelerate configuration is retrieved.
 	//
@@ -11412,7 +11412,7 @@ func (s *GetBucketAccelerateConfigurationOutput) SetStatus(v string) *GetBucketA
 }
 
 type GetBucketAclInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketAclRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11489,7 +11489,7 @@ func (s *GetBucketAclOutput) SetOwner(v *Owner) *GetBucketAclOutput {
 }
 
 type GetBucketAnalyticsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketAnalyticsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket from which an analytics configuration is retrieved.
 	//
@@ -11574,7 +11574,7 @@ func (s *GetBucketAnalyticsConfigurationOutput) SetAnalyticsConfiguration(v *Ana
 }
 
 type GetBucketCorsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketCorsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11642,7 +11642,7 @@ func (s *GetBucketCorsOutput) SetCORSRules(v []*CORSRule) *GetBucketCorsOutput {
 }
 
 type GetBucketEncryptionInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketEncryptionRequest" type:"structure"`
 
 	// The name of the bucket from which the server-side encryption configuration
 	// is retrieved.
@@ -11714,7 +11714,7 @@ func (s *GetBucketEncryptionOutput) SetServerSideEncryptionConfiguration(v *Serv
 }
 
 type GetBucketInventoryConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketInventoryConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the inventory configuration to retrieve.
 	//
@@ -11799,7 +11799,7 @@ func (s *GetBucketInventoryConfigurationOutput) SetInventoryConfiguration(v *Inv
 }
 
 type GetBucketLifecycleConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLifecycleConfigurationRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11867,7 +11867,7 @@ func (s *GetBucketLifecycleConfigurationOutput) SetRules(v []*LifecycleRule) *Ge
 }
 
 type GetBucketLifecycleInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLifecycleRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11935,7 +11935,7 @@ func (s *GetBucketLifecycleOutput) SetRules(v []*Rule) *GetBucketLifecycleOutput
 }
 
 type GetBucketLocationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLocationRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12003,7 +12003,7 @@ func (s *GetBucketLocationOutput) SetLocationConstraint(v string) *GetBucketLoca
 }
 
 type GetBucketLoggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLoggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12075,7 +12075,7 @@ func (s *GetBucketLoggingOutput) SetLoggingEnabled(v *LoggingEnabled) *GetBucket
 }
 
 type GetBucketMetricsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketMetricsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the metrics configuration to retrieve.
 	//
@@ -12160,7 +12160,7 @@ func (s *GetBucketMetricsConfigurationOutput) SetMetricsConfiguration(v *Metrics
 }
 
 type GetBucketNotificationConfigurationRequest struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketNotificationConfigurationRequest" type:"structure"`
 
 	// Name of the bucket to get the notification configuration for.
 	//
@@ -12208,7 +12208,7 @@ func (s *GetBucketNotificationConfigurationRequest) getBucket() (v string) {
 }
 
 type GetBucketPolicyInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketPolicyRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12277,7 +12277,7 @@ func (s *GetBucketPolicyOutput) SetPolicy(v string) *GetBucketPolicyOutput {
 }
 
 type GetBucketPolicyStatusInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketPolicyStatusRequest" type:"structure"`
 
 	// The name of the Amazon S3 bucket whose policy status you want to retrieve.
 	//
@@ -12348,7 +12348,7 @@ func (s *GetBucketPolicyStatusOutput) SetPolicyStatus(v *PolicyStatus) *GetBucke
 }
 
 type GetBucketReplicationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketReplicationRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12418,7 +12418,7 @@ func (s *GetBucketReplicationOutput) SetReplicationConfiguration(v *ReplicationC
 }
 
 type GetBucketRequestPaymentInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketRequestPaymentRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12487,7 +12487,7 @@ func (s *GetBucketRequestPaymentOutput) SetPayer(v string) *GetBucketRequestPaym
 }
 
 type GetBucketTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12556,7 +12556,7 @@ func (s *GetBucketTaggingOutput) SetTagSet(v []*Tag) *GetBucketTaggingOutput {
 }
 
 type GetBucketVersioningInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketVersioningRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12636,7 +12636,7 @@ func (s *GetBucketVersioningOutput) SetStatus(v string) *GetBucketVersioningOutp
 }
 
 type GetBucketWebsiteInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketWebsiteRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12730,7 +12730,7 @@ func (s *GetBucketWebsiteOutput) SetRoutingRules(v []*RoutingRule) *GetBucketWeb
 }
 
 type GetObjectAclInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectAclRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12853,7 +12853,7 @@ func (s *GetObjectAclOutput) SetRequestCharged(v string) *GetObjectAclOutput {
 }
 
 type GetObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -13090,7 +13090,7 @@ func (s *GetObjectInput) SetVersionId(v string) *GetObjectInput {
 }
 
 type GetObjectLegalHoldInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectLegalHoldRequest" type:"structure"`
 
 	// The bucket containing the object whose Legal Hold status you want to retrieve.
 	//
@@ -13199,7 +13199,7 @@ func (s *GetObjectLegalHoldOutput) SetLegalHold(v *ObjectLockLegalHold) *GetObje
 }
 
 type GetObjectLockConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectLockConfigurationRequest" type:"structure"`
 
 	// The bucket whose object lock configuration you want to retrieve.
 	//
@@ -13581,7 +13581,7 @@ func (s *GetObjectOutput) SetWebsiteRedirectLocation(v string) *GetObjectOutput 
 }
 
 type GetObjectRetentionInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectRetentionRequest" type:"structure"`
 
 	// The bucket containing the object whose retention settings you want to retrieve.
 	//
@@ -13690,7 +13690,7 @@ func (s *GetObjectRetentionOutput) SetRetention(v *ObjectLockRetention) *GetObje
 }
 
 type GetObjectTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -13790,7 +13790,7 @@ func (s *GetObjectTaggingOutput) SetVersionId(v string) *GetObjectTaggingOutput 
 }
 
 type GetObjectTorrentInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectTorrentRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -13895,7 +13895,7 @@ func (s *GetObjectTorrentOutput) SetRequestCharged(v string) *GetObjectTorrentOu
 }
 
 type GetPublicAccessBlockInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetPublicAccessBlockRequest" type:"structure"`
 
 	// The name of the Amazon S3 bucket whose PublicAccessBlock configuration you
 	// want to retrieve.
@@ -14126,7 +14126,7 @@ func (s *Grantee) SetURI(v string) *Grantee {
 }
 
 type HeadBucketInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"HeadBucketRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -14186,7 +14186,7 @@ func (s HeadBucketOutput) GoString() string {
 }
 
 type HeadObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"HeadObjectRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -15661,7 +15661,7 @@ func (s *LifecycleRuleFilter) SetTag(v *Tag) *LifecycleRuleFilter {
 }
 
 type ListBucketAnalyticsConfigurationsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListBucketAnalyticsConfigurationsRequest" type:"structure"`
 
 	// The name of the bucket from which analytics configurations are retrieved.
 	//
@@ -15773,7 +15773,7 @@ func (s *ListBucketAnalyticsConfigurationsOutput) SetNextContinuationToken(v str
 }
 
 type ListBucketInventoryConfigurationsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListBucketInventoryConfigurationsRequest" type:"structure"`
 
 	// The name of the bucket containing the inventory configurations to retrieve.
 	//
@@ -15887,7 +15887,7 @@ func (s *ListBucketInventoryConfigurationsOutput) SetNextContinuationToken(v str
 }
 
 type ListBucketMetricsConfigurationsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListBucketMetricsConfigurationsRequest" type:"structure"`
 
 	// The name of the bucket containing the metrics configurations to retrieve.
 	//
@@ -16047,7 +16047,7 @@ func (s *ListBucketsOutput) SetOwner(v *Owner) *ListBucketsOutput {
 }
 
 type ListMultipartUploadsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListMultipartUploadsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -16291,7 +16291,7 @@ func (s *ListMultipartUploadsOutput) SetUploads(v []*MultipartUpload) *ListMulti
 }
 
 type ListObjectVersionsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListObjectVersionsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -16524,7 +16524,7 @@ func (s *ListObjectVersionsOutput) SetVersions(v []*ObjectVersion) *ListObjectVe
 }
 
 type ListObjectsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListObjectsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -16736,7 +16736,7 @@ func (s *ListObjectsOutput) SetPrefix(v string) *ListObjectsOutput {
 }
 
 type ListObjectsV2Input struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListObjectsV2Request" type:"structure"`
 
 	// Name of the bucket to list.
 	//
@@ -16997,7 +16997,7 @@ func (s *ListObjectsV2Output) SetStartAfter(v string) *ListObjectsV2Output {
 }
 
 type ListPartsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListPartsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -18622,7 +18622,7 @@ func (s *PublicAccessBlockConfiguration) SetRestrictPublicBuckets(v bool) *Publi
 }
 
 type PutBucketAccelerateConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"AccelerateConfiguration"`
+	_ struct{} `locationName:"PutBucketAccelerateConfigurationRequest" type:"structure" payload:"AccelerateConfiguration"`
 
 	// Specifies the Accelerate Configuration you want to set for the bucket.
 	//
@@ -18698,7 +18698,7 @@ func (s PutBucketAccelerateConfigurationOutput) GoString() string {
 }
 
 type PutBucketAclInput struct {
-	_ struct{} `type:"structure" payload:"AccessControlPolicy"`
+	_ struct{} `locationName:"PutBucketAclRequest" type:"structure" payload:"AccessControlPolicy"`
 
 	// The canned ACL to apply to the bucket.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"BucketCannedACL"`
@@ -18827,7 +18827,7 @@ func (s PutBucketAclOutput) GoString() string {
 }
 
 type PutBucketAnalyticsConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"AnalyticsConfiguration"`
+	_ struct{} `locationName:"PutBucketAnalyticsConfigurationRequest" type:"structure" payload:"AnalyticsConfiguration"`
 
 	// The configuration and any analyses for the analytics filter.
 	//
@@ -18922,7 +18922,7 @@ func (s PutBucketAnalyticsConfigurationOutput) GoString() string {
 }
 
 type PutBucketCorsInput struct {
-	_ struct{} `type:"structure" payload:"CORSConfiguration"`
+	_ struct{} `locationName:"PutBucketCorsRequest" type:"structure" payload:"CORSConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19004,7 +19004,7 @@ func (s PutBucketCorsOutput) GoString() string {
 }
 
 type PutBucketEncryptionInput struct {
-	_ struct{} `type:"structure" payload:"ServerSideEncryptionConfiguration"`
+	_ struct{} `locationName:"PutBucketEncryptionRequest" type:"structure" payload:"ServerSideEncryptionConfiguration"`
 
 	// Specifies default encryption for a bucket using server-side encryption with
 	// Amazon S3-managed keys (SSE-S3) or AWS KMS-managed keys (SSE-KMS). For information
@@ -19089,7 +19089,7 @@ func (s PutBucketEncryptionOutput) GoString() string {
 }
 
 type PutBucketInventoryConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"InventoryConfiguration"`
+	_ struct{} `locationName:"PutBucketInventoryConfigurationRequest" type:"structure" payload:"InventoryConfiguration"`
 
 	// The name of the bucket where the inventory configuration will be stored.
 	//
@@ -19184,7 +19184,7 @@ func (s PutBucketInventoryConfigurationOutput) GoString() string {
 }
 
 type PutBucketLifecycleConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"LifecycleConfiguration"`
+	_ struct{} `locationName:"PutBucketLifecycleConfigurationRequest" type:"structure" payload:"LifecycleConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19260,7 +19260,7 @@ func (s PutBucketLifecycleConfigurationOutput) GoString() string {
 }
 
 type PutBucketLifecycleInput struct {
-	_ struct{} `type:"structure" payload:"LifecycleConfiguration"`
+	_ struct{} `locationName:"PutBucketLifecycleRequest" type:"structure" payload:"LifecycleConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19333,7 +19333,7 @@ func (s PutBucketLifecycleOutput) GoString() string {
 }
 
 type PutBucketLoggingInput struct {
-	_ struct{} `type:"structure" payload:"BucketLoggingStatus"`
+	_ struct{} `locationName:"PutBucketLoggingRequest" type:"structure" payload:"BucketLoggingStatus"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19410,7 +19410,7 @@ func (s PutBucketLoggingOutput) GoString() string {
 }
 
 type PutBucketMetricsConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"MetricsConfiguration"`
+	_ struct{} `locationName:"PutBucketMetricsConfigurationRequest" type:"structure" payload:"MetricsConfiguration"`
 
 	// The name of the bucket for which the metrics configuration is set.
 	//
@@ -19505,7 +19505,7 @@ func (s PutBucketMetricsConfigurationOutput) GoString() string {
 }
 
 type PutBucketNotificationConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"NotificationConfiguration"`
+	_ struct{} `locationName:"PutBucketNotificationConfigurationRequest" type:"structure" payload:"NotificationConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19585,7 +19585,7 @@ func (s PutBucketNotificationConfigurationOutput) GoString() string {
 }
 
 type PutBucketNotificationInput struct {
-	_ struct{} `type:"structure" payload:"NotificationConfiguration"`
+	_ struct{} `locationName:"PutBucketNotificationRequest" type:"structure" payload:"NotificationConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19657,7 +19657,7 @@ func (s PutBucketNotificationOutput) GoString() string {
 }
 
 type PutBucketPolicyInput struct {
-	_ struct{} `type:"structure" payload:"Policy"`
+	_ struct{} `locationName:"PutBucketPolicyRequest" type:"structure" payload:"Policy"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19741,7 +19741,7 @@ func (s PutBucketPolicyOutput) GoString() string {
 }
 
 type PutBucketReplicationInput struct {
-	_ struct{} `type:"structure" payload:"ReplicationConfiguration"`
+	_ struct{} `locationName:"PutBucketReplicationRequest" type:"structure" payload:"ReplicationConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19830,7 +19830,7 @@ func (s PutBucketReplicationOutput) GoString() string {
 }
 
 type PutBucketRequestPaymentInput struct {
-	_ struct{} `type:"structure" payload:"RequestPaymentConfiguration"`
+	_ struct{} `locationName:"PutBucketRequestPaymentRequest" type:"structure" payload:"RequestPaymentConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19907,7 +19907,7 @@ func (s PutBucketRequestPaymentOutput) GoString() string {
 }
 
 type PutBucketTaggingInput struct {
-	_ struct{} `type:"structure" payload:"Tagging"`
+	_ struct{} `locationName:"PutBucketTaggingRequest" type:"structure" payload:"Tagging"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19984,7 +19984,7 @@ func (s PutBucketTaggingOutput) GoString() string {
 }
 
 type PutBucketVersioningInput struct {
-	_ struct{} `type:"structure" payload:"VersioningConfiguration"`
+	_ struct{} `locationName:"PutBucketVersioningRequest" type:"structure" payload:"VersioningConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -20070,7 +20070,7 @@ func (s PutBucketVersioningOutput) GoString() string {
 }
 
 type PutBucketWebsiteInput struct {
-	_ struct{} `type:"structure" payload:"WebsiteConfiguration"`
+	_ struct{} `locationName:"PutBucketWebsiteRequest" type:"structure" payload:"WebsiteConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -20149,7 +20149,7 @@ func (s PutBucketWebsiteOutput) GoString() string {
 }
 
 type PutObjectAclInput struct {
-	_ struct{} `type:"structure" payload:"AccessControlPolicy"`
+	_ struct{} `locationName:"PutObjectAclRequest" type:"structure" payload:"AccessControlPolicy"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -20324,7 +20324,7 @@ func (s *PutObjectAclOutput) SetRequestCharged(v string) *PutObjectAclOutput {
 }
 
 type PutObjectInput struct {
-	_ struct{} `type:"structure" payload:"Body"`
+	_ struct{} `locationName:"PutObjectRequest" type:"structure" payload:"Body"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -20671,7 +20671,7 @@ func (s *PutObjectInput) SetWebsiteRedirectLocation(v string) *PutObjectInput {
 }
 
 type PutObjectLegalHoldInput struct {
-	_ struct{} `type:"structure" payload:"LegalHold"`
+	_ struct{} `locationName:"PutObjectLegalHoldRequest" type:"structure" payload:"LegalHold"`
 
 	// The bucket containing the object that you want to place a Legal Hold on.
 	//
@@ -20791,7 +20791,7 @@ func (s *PutObjectLegalHoldOutput) SetRequestCharged(v string) *PutObjectLegalHo
 }
 
 type PutObjectLockConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"ObjectLockConfiguration"`
+	_ struct{} `locationName:"PutObjectLockConfigurationRequest" type:"structure" payload:"ObjectLockConfiguration"`
 
 	// The bucket whose object lock configuration you want to create or replace.
 	//
@@ -20998,7 +20998,7 @@ func (s *PutObjectOutput) SetVersionId(v string) *PutObjectOutput {
 }
 
 type PutObjectRetentionInput struct {
-	_ struct{} `type:"structure" payload:"Retention"`
+	_ struct{} `locationName:"PutObjectRetentionRequest" type:"structure" payload:"Retention"`
 
 	// The bucket that contains the object you want to apply this Object Retention
 	// configuration to.
@@ -21129,7 +21129,7 @@ func (s *PutObjectRetentionOutput) SetRequestCharged(v string) *PutObjectRetenti
 }
 
 type PutObjectTaggingInput struct {
-	_ struct{} `type:"structure" payload:"Tagging"`
+	_ struct{} `locationName:"PutObjectTaggingRequest" type:"structure" payload:"Tagging"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -21237,7 +21237,7 @@ func (s *PutObjectTaggingOutput) SetVersionId(v string) *PutObjectTaggingOutput 
 }
 
 type PutPublicAccessBlockInput struct {
-	_ struct{} `type:"structure" payload:"PublicAccessBlockConfiguration"`
+	_ struct{} `locationName:"PutPublicAccessBlockRequest" type:"structure" payload:"PublicAccessBlockConfiguration"`
 
 	// The name of the Amazon S3 bucket whose PublicAccessBlock configuration you
 	// want to set.
@@ -21999,7 +21999,7 @@ func (s *RequestProgress) SetEnabled(v bool) *RequestProgress {
 }
 
 type RestoreObjectInput struct {
-	_ struct{} `type:"structure" payload:"RestoreRequest"`
+	_ struct{} `locationName:"RestoreObjectRequest" type:"structure" payload:"RestoreRequest"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -22464,6 +22464,41 @@ func (s SSES3) GoString() string {
 	return s.String()
 }
 
+type ScanRange struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the end of the byte range. This parameter is optional. Valid values:
+	// non-negative integers. The default value is one less than the size of the
+	// object being queried.
+	End *int64 `type:"long"`
+
+	// Specifies the start of the byte range. This parameter is optional. Valid
+	// values: non-negative integers. The default value is 0.
+	Start *int64 `type:"long"`
+}
+
+// String returns the string representation
+func (s ScanRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ScanRange) GoString() string {
+	return s.String()
+}
+
+// SetEnd sets the End field's value.
+func (s *ScanRange) SetEnd(v int64) *ScanRange {
+	s.End = &v
+	return s
+}
+
+// SetStart sets the Start field's value.
+func (s *ScanRange) SetStart(v int64) *ScanRange {
+	s.Start = &v
+	return s
+}
+
 // SelectObjectContentEventStream provides handling of EventStreams for
 // the SelectObjectContent API.
 //
@@ -22503,6 +22538,8 @@ type SelectObjectContentEventStream struct {
 // may result in resource leaks.
 func (es *SelectObjectContentEventStream) Close() (err error) {
 	es.Reader.Close()
+	es.StreamCloser.Close()
+
 	return es.Err()
 }
 
@@ -22512,8 +22549,6 @@ func (es *SelectObjectContentEventStream) Err() error {
 	if err := es.Reader.Err(); err != nil {
 		return err
 	}
-	es.StreamCloser.Close()
-
 	return nil
 }
 
@@ -22738,6 +22773,12 @@ type SelectObjectContentInput struct {
 	// The SSE Customer Key MD5. For more information, see Server-Side Encryption
 	// (Using Customer-Provided Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html).
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
+
+	// Specifies the byte range of the object to get the records from. A record
+	// is processed when its first byte is contained by the range. This parameter
+	// is optional, but when specified, it must not be empty. See RFC 2616, Section
+	// 14.35.1 about how to specify the start and end of the range.
+	ScanRange *ScanRange `type:"structure"`
 }
 
 // String returns the string representation
@@ -22855,6 +22896,12 @@ func (s *SelectObjectContentInput) getSSECustomerKey() (v string) {
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
 func (s *SelectObjectContentInput) SetSSECustomerKeyMD5(v string) *SelectObjectContentInput {
 	s.SSECustomerKeyMD5 = &v
+	return s
+}
+
+// SetScanRange sets the ScanRange field's value.
+func (s *SelectObjectContentInput) SetScanRange(v *ScanRange) *SelectObjectContentInput {
+	s.ScanRange = v
 	return s
 }
 
@@ -23715,7 +23762,7 @@ func (s *Transition) SetStorageClass(v string) *Transition {
 }
 
 type UploadPartCopyInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"UploadPartCopyRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -24045,7 +24092,7 @@ func (s *UploadPartCopyOutput) SetServerSideEncryption(v string) *UploadPartCopy
 }
 
 type UploadPartInput struct {
-	_ struct{} `type:"structure" payload:"Body"`
+	_ struct{} `locationName:"UploadPartRequest" type:"structure" payload:"Body"`
 
 	// Object data.
 	Body io.ReadSeeker `type:"blob"`
@@ -24657,6 +24704,9 @@ const (
 
 	// InventoryOptionalFieldObjectLockLegalHoldStatus is a InventoryOptionalField enum value
 	InventoryOptionalFieldObjectLockLegalHoldStatus = "ObjectLockLegalHoldStatus"
+
+	// InventoryOptionalFieldIntelligentTieringAccessTier is a InventoryOptionalField enum value
+	InventoryOptionalFieldIntelligentTieringAccessTier = "IntelligentTieringAccessTier"
 )
 
 const (

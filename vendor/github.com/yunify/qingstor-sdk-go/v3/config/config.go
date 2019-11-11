@@ -35,10 +35,9 @@ type Config struct {
 	AccessKeyID     string `yaml:"access_key_id"`
 	SecretAccessKey string `yaml:"secret_access_key"`
 
-	Host              string `yaml:"host"`
-	Port              int    `yaml:"port"`
-	Protocol          string `yaml:"protocol"`
-	ConnectionRetries int    `yaml:"connection_retries"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Protocol string `yaml:"protocol"`
 
 	AdditionalUserAgent string `yaml:"additional_user_agent"`
 

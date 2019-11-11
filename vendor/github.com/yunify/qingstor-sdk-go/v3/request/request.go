@@ -212,27 +212,14 @@ func (r *Request) send() error {
 		r.Operation.Config.InitHTTPClient()
 	}
 
-	retries := r.Operation.Config.ConnectionRetries + 1
-	for {
-		if retries > 0 {
-			logger.Infof(nil, fmt.Sprintf(
-				"Sending request: [%d] %s %s",
-				convert.StringToTimestamp(r.HTTPRequest.Header.Get("Date"), convert.RFC822),
-				r.Operation.RequestMethod,
-				r.HTTPRequest.Host,
-			))
+	logger.Infof(nil, fmt.Sprintf(
+		"Sending request: [%d] %s %s",
+		convert.StringToTimestamp(r.HTTPRequest.Header.Get("Date"), convert.RFC822),
+		r.Operation.RequestMethod,
+		r.HTTPRequest.Host,
+	))
 
-			response, err = r.Operation.Config.Connection.Do(r.HTTPRequest)
-			if err == nil {
-				retries = 0
-			} else {
-				retries--
-				time.Sleep(time.Second)
-			}
-		} else {
-			break
-		}
-	}
+	response, err = r.Operation.Config.Connection.Do(r.HTTPRequest)
 	if err != nil {
 		return err
 	}

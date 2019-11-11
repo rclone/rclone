@@ -53,6 +53,8 @@ func (bb *baseBuilder) Name() string {
 	return bb.name
 }
 
+var _ balancer.V2Balancer = (*baseBalancer)(nil) // Assert that we implement V2Balancer
+
 type baseBalancer struct {
 	cc            balancer.ClientConn
 	pickerBuilder PickerBuilder
@@ -70,7 +72,11 @@ func (b *baseBalancer) HandleResolvedAddrs(addrs []resolver.Address, err error) 
 	panic("not implemented")
 }
 
-func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) {
+func (b *baseBalancer) ResolverError(error) {
+	// Ignore
+}
+
+func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) error {
 	// TODO: handle s.ResolverState.Err (log if not nil) once implemented.
 	// TODO: handle s.ResolverState.ServiceConfig?
 	if grpclog.V(2) {
@@ -101,6 +107,7 @@ func (b *baseBalancer) UpdateClientConnState(s balancer.ClientConnState) {
 			// The entry will be deleted in HandleSubConnStateChange.
 		}
 	}
+	return nil
 }
 
 // regeneratePicker takes a snapshot of the balancer, and generates a picker
