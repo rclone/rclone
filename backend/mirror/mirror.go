@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -63,14 +65,6 @@ type Object struct {
 	fs      *Fs
 	remote  string
 	objects []fs.Object
-}
-
-// Dir is the special Mirrored dir
-type Dir struct {
-	fs     *Fs
-	id     string
-	remote string
-	dirs   []*fs.Dir
 }
 
 // Name of the remote (as passed into NewFs)
@@ -241,13 +235,37 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 // May create the object even if it returns an error - if so
 // will return the object and the error, otherwise will return
 // nil and the error
-/*func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	o, err := f.wr.Features().PutStream(ctx, in, src, options...)
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	pr, pw := io.Pipe()
+	tee := io.TeeReader(in, pw)
+
+	var obj1, obj2 fs.Object
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() (err error) {
+		defer pw.Close()
+
+		obj1, err = f.remotes[0].Features().PutStream(ctx, tee, src, options...)
+
+		return
+	})
+
+	g.Go(func() (err error) {
+		obj2, err = f.remotes[1].Features().PutStream(ctx, pr, src, options...)
+		return
+	})
+
+	err := g.Wait()
 	if err != nil {
 		return nil, err
 	}
-	return f.wrapObject(o), err
-}*/
+
+	out := &Object{
+		remote:  src.Remote(),
+		objects: []fs.Object{obj1, obj2},
+	}
+
+	return out, nil
+}
 
 func min(a, b *int64) *int64 {
 	if a == nil && b != nil {
@@ -359,7 +377,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 			}
 		}
 	}
-
 	return o, nil
 }
 
@@ -519,7 +536,7 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	obj := o.objects[o.fs.readRemote]
 	o.fs.readRemote = (o.fs.readRemote + 1) % len(o.objects)
-	fs.Debugf("Open: using remote %s\n", obj.Fs().Name())
+	fs.Debugf(o.Fs(), "Open: using remote %s", obj.Fs().Name())
 	return obj.Open(ctx, options...)
 }
 
@@ -632,13 +649,16 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	for _, remote := range remotes {
 		features = features.Mask(remote)
 	}
+	if len(remotes) > 2 {
+		features.PutStream = nil
+	}
 
 	f.features = features
 
-	// Get common intersection of hashes
+	// union of hashes
 	hashSet := f.remotes[0].Hashes()
 	for _, remote := range f.remotes[1:] {
-		hashSet = hashSet.Overlap(remote.Hashes())
+		hashSet = hashSet.Add(remote.Hashes().Array()...)
 	}
 	f.hashSet = hashSet
 
