@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -66,7 +67,8 @@ type Fs struct {
 	root       string       // the path we are working on
 	remotes    []fs.Fs      // slice of remotes
 	hashSet    hash.Set     // supported hash types
-	readRemote int
+	lbMutex    sync.Mutex
+	readRemote int // the index of the remote used for read operations
 }
 
 // Object describes a mirror object
@@ -253,7 +255,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	var obj1, obj2 fs.Object
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() (err error) {
-		defer pw.Close()
+		defer fs.CheckClose(pw, &err)
 		obj1, err = f.remotes[0].Features().PutStream(ctx, tee, src, options...)
 		return
 	})
@@ -399,7 +401,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	set2 := make(map[string]fs.DirEntry)
+	set := make(map[string]fs.DirEntry)
 
 	remoteEntries, err := f.remotes[0].List(ctx, dir)
 	if err != nil {
@@ -412,10 +414,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				remote:  remoteEntry.Remote(),
 				objects: []fs.Object{o},
 			}
-			set2[remoteEntry.Remote()] = mirrorObject
+			set[remoteEntry.Remote()] = mirrorObject
 		}
 		if d, ok := remoteEntry.(*fs.Dir); ok {
-			set2[remoteEntry.Remote()] = d
+			set[remoteEntry.Remote()] = d
 		}
 	}
 
@@ -424,11 +426,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if err != nil {
 			return nil, err
 		}
-		if len(remoteEntries) != len(set2) {
+		if len(remoteEntries) != len(set) {
 			return nil, errors.New("remotes out of sync")
 		}
 		for _, remoteEntry := range remoteEntries {
-			if mirrorEntry, ok := set2[remoteEntry.Remote()]; ok {
+			if mirrorEntry, ok := set[remoteEntry.Remote()]; ok {
 				if mirrorObject, ok := mirrorEntry.(*Object); ok {
 					if remoteObject, ok := remoteEntry.(fs.Object); ok {
 						mirrorObject.addRemote(remoteObject)
@@ -447,13 +449,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 	}
 
-	for _, entry := range set2 {
+	for _, entry := range set {
 		entries = append(entries, entry)
 	}
 	return entries, nil
 }
 
-// NewObject creates a new remote union file object based on the first Object it finds (reverse remote order)
+// NewObject creates a new remote mirror file object
 func (f *Fs) NewObject(ctx context.Context, path string) (fs.Object, error) {
 	o := f.createObject(path)
 	for _, remote := range f.remotes {
@@ -543,8 +545,11 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	o.fs.lbMutex.Lock()
 	obj := o.objects[o.fs.readRemote]
 	o.fs.readRemote = (o.fs.readRemote + 1) % len(o.objects)
+	o.fs.lbMutex.Unlock()
+
 	fs.Debugf(o.Fs(), "Open: using remote %s", obj.Fs().Name())
 	return obj.Open(ctx, options...)
 }
@@ -555,7 +560,62 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	return errors.New("unsupported")
+	if src.Size() > int64(o.fs.opt.InMemoryCacheTreshold) {
+		var tempFile *os.File
+
+		// create the cache file
+		tempFile, err := ioutil.TempFile("", cachePrefix)
+		if err != nil {
+			return err
+		}
+
+		_ = os.Remove(tempFile.Name()) // Delete the file - may not work on Windows
+
+		// clean up the file after we are done downloading
+		defer func() {
+			// the file should normally already be close, but just to make sure
+			_ = tempFile.Close()
+			_ = os.Remove(tempFile.Name()) // delete the cache file after we are done - may be deleted already
+		}()
+
+		if _, err = io.Copy(tempFile, in); err != nil {
+			return err
+		}
+		// jump to the start of the local file so we can pass it along
+		if _, err = tempFile.Seek(0, 0); err != nil {
+			return err
+		}
+
+		for _, ro := range o.objects {
+			err := ro.Update(ctx, tempFile, src, options...)
+			if err != nil {
+				return err
+			}
+			if _, err = tempFile.Seek(0, 0); err != nil {
+				return err
+			}
+		}
+	} else {
+		// that's a small file, just read it into memory
+		var inData []byte
+		inData, err := ioutil.ReadAll(in)
+		if err != nil {
+			return err
+		}
+
+		// set the reader to our read memory block
+		out := bytes.NewReader(inData)
+		for _, ro := range o.objects {
+			err := ro.Update(ctx, out, src, options...)
+			if err != nil {
+				return err
+			}
+			if _, err = out.Seek(0, 0); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Remove an object
