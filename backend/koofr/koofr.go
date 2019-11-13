@@ -263,6 +263,7 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	basicAuth := fmt.Sprintf("Basic %s",
 		base64.StdEncoding.EncodeToString([]byte(opt.User+":"+pass)))
 	client.HTTPClient.Headers.Set("Authorization", basicAuth)
+	client.SetUserAgent(fs.Config.UserAgent)
 	mounts, err := client.Mounts()
 	if err != nil {
 		return nil, err
