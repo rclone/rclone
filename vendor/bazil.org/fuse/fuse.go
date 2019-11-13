@@ -1004,7 +1004,7 @@ loop:
 		}
 
 	case opBmap:
-		panic("opBmap")
+		goto unrecognized
 
 	case opDestroy:
 		req = &DestroyRequest{
