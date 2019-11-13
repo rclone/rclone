@@ -47,12 +47,13 @@ type Options struct {
 
 // Fs represents a mirror of remotes
 type Fs struct {
-	name     string       // name of this remote
-	features *fs.Features // optional features
-	opt      Options      // options for this Fs
-	root     string       // the path we are working on
-	remotes  []fs.Fs      // slice of remotes
-	hashSet  hash.Set     // intersection of hash types
+	name       string       // name of this remote
+	features   *fs.Features // optional features
+	opt        Options      // options for this Fs
+	root       string       // the path we are working on
+	remotes    []fs.Fs      // slice of remotes
+	hashSet    hash.Set     // supported hash types
+	readRemote int
 }
 
 // Object describes a mirror object
@@ -157,7 +158,7 @@ func (f *Fs) Purge(ctx context.Context) (err error) {
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Object, err error) {
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(srcObj, "Can't copy - not same remote type")
@@ -166,11 +167,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 
 	obj := f.createObject(remote)
 	for _, roSrc := range srcObj.getRemotes() {
-		roDst, err := roSrc.Fs().Features().Copy(ctx, roSrc, remote)
-		if err != nil {
-			return nil, err
+		for _, r := range f.remotes {
+			if r.Name() == roSrc.Fs().Name() {
+				roDst, err := r.Features().Copy(ctx, roSrc, remote)
+				if err != nil {
+					return nil, err
+				}
+				obj.addRemote(roDst)
+			}
 		}
-		obj.addRemote(roDst)
 	}
 
 	return obj, nil
@@ -194,11 +199,15 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 
 	obj := f.createObject(remote)
 	for _, roSrc := range srcObj.getRemotes() {
-		roDst, err := roSrc.Fs().Features().Move(ctx, roSrc, remote)
-		if err != nil {
-			return nil, err
+		for _, r := range f.remotes {
+			if r.Name() == roSrc.Fs().Name() {
+				roDst, err := r.Features().Move(ctx, roSrc, remote)
+				if err != nil {
+					return nil, err
+				}
+				obj.addRemote(roDst)
+			}
 		}
-		obj.addRemote(roDst)
 	}
 
 	return obj, nil
@@ -508,7 +517,10 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	return o.objects[len(o.objects)-1].Open(ctx, options...)
+	obj := o.objects[o.fs.readRemote]
+	o.fs.readRemote = (o.fs.readRemote + 1) % len(o.objects)
+	fs.Debugf("Open: using remote %s\n", obj.Fs().Name())
+	return obj.Open(ctx, options...)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -638,8 +650,8 @@ var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	//_ fs.PutStreamer     = (*Fs)(nil)
-	_ fs.Copier = (*Fs)(nil)
-	_ fs.Mover  = (*Fs)(nil)
-	//_ fs.DirMover        = (*Fs)(nil)
-	_ fs.Abouter = (*Fs)(nil)
+	_ fs.Copier   = (*Fs)(nil)
+	_ fs.Mover    = (*Fs)(nil)
+	_ fs.DirMover = (*Fs)(nil)
+	_ fs.Abouter  = (*Fs)(nil)
 )
