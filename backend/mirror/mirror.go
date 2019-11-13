@@ -185,22 +185,24 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 // Will only be called if src.Fs().Name() == f.Name()
 //
 // If it isn't possible then return fs.ErrorCantMove
-/*func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Object, err error) {
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Object, err error) {
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(srcObj, "Can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
 
-	for _, wr := range f.remotes {
-		o, err = wr.Features().Move(ctx, src, remote)
+	obj := f.createObject(remote)
+	for _, roSrc := range srcObj.getRemotes() {
+		roDst, err := roSrc.Fs().Features().Move(ctx, roSrc, remote)
 		if err != nil {
 			return nil, err
 		}
+		obj.addRemote(roDst)
 	}
 
-	return f.wrapObject(o), nil
-}*/
+	return obj, nil
+}
 
 // DirMove moves src, srcRemote to this remote at dstRemote
 // using server side move operations.
@@ -210,7 +212,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 // If it isn't possible then return fs.ErrorCantDirMove
 //
 // If destination exists then return fs.ErrorDirExists
-/*func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
 	srcFs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
@@ -223,7 +225,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		}
 	}
 	return nil
-}*/
+}
 
 // PutStream uploads to the remote path with the modTime given of indeterminate size
 //
@@ -710,8 +712,8 @@ var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	//_ fs.PutStreamer     = (*Fs)(nil)
-	//_ fs.Copier          = (*Fs)(nil)
-	//_ fs.Mover           = (*Fs)(nil)
+	_ fs.Copier = (*Fs)(nil)
+	_ fs.Mover  = (*Fs)(nil)
 	//_ fs.DirMover        = (*Fs)(nil)
 	_ fs.Abouter = (*Fs)(nil)
 )
