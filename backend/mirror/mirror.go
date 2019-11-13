@@ -380,12 +380,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			set2[remoteEntry.Remote()] = mirrorObject
 		}
 		if d, ok := remoteEntry.(*fs.Dir); ok {
-			mirrorDir := &Dir{
-				fs:     f,
-				remote: remoteEntry.Remote(),
-				dirs:   []*fs.Dir{d},
-			}
-			set2[remoteEntry.Remote()] = mirrorDir
+			set2[remoteEntry.Remote()] = d
 		}
 	}
 
@@ -406,10 +401,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 						return nil, errors.New("remote mismatch")
 					}
 				}
-				if mirrorDir, ok := mirrorEntry.(*Dir); ok {
-					if remoteDir, ok := remoteEntry.(*fs.Dir); ok {
-						mirrorDir.addRemote(remoteDir)
-					} else {
+				if _, ok := mirrorEntry.(*fs.Dir); ok {
+					if _, ok := remoteEntry.(*fs.Dir); !ok {
 						return nil, errors.New("remote mismatch")
 					}
 				}
@@ -547,73 +540,6 @@ func (o *Object) getRemotes() []fs.Object {
 }
 
 // ---------------------------------------------------
-
-// String returns the name
-func (d *Dir) String() string {
-	return d.remote
-}
-
-// Remote returns the remote path
-func (d *Dir) Remote() string {
-	return d.remote
-}
-
-// SetRemote sets the remote
-func (d *Dir) SetRemote(remote string) *Dir {
-	for _, dir := range d.dirs {
-		dir.SetRemote(remote)
-	}
-	d.remote = remote
-	return d
-}
-
-// ID gets the optional ID
-func (d *Dir) ID() string {
-	return d.id
-}
-
-// SetID sets the optional ID
-func (d *Dir) SetID(id string) *Dir {
-	d.id = id
-	return d
-}
-
-// ModTime returns the modification date of the file
-// It should return a best guess if one isn't available
-func (d *Dir) ModTime(ctx context.Context) time.Time {
-	return d.dirs[len(d.dirs)-1].ModTime(ctx)
-}
-
-// Size returns the size of the file
-func (d *Dir) Size() int64 {
-	return d.dirs[len(d.dirs)-1].Size()
-}
-
-// SetSize sets the size of the directory
-func (d *Dir) SetSize(size int64) *Dir {
-	return d
-}
-
-// Items returns the count of items in this directory or this
-// directory and subdirectories if known, -1 for unknown
-func (d *Dir) Items() int64 {
-	return d.dirs[len(d.dirs)-1].Items()
-}
-
-// SetItems sets the number of items in the directory
-func (d *Dir) SetItems(items int64) *Dir {
-	return d
-}
-
-func (d *Dir) addRemote(dir *fs.Dir) {
-	d.dirs = append(d.dirs, dir)
-}
-
-func (d *Dir) getRemotes() []*fs.Dir {
-	return d.dirs
-}
-
-// -----------------------------------------------------------------------------------
 
 func checkErrors(errors []error, err error) bool {
 	for _, v := range errors {
