@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -37,6 +38,16 @@ func init() {
 			Help:     "List of space separated remotes.\nCan be 'remotea:test/dir remoteb:', '\"remotea:test/space dir\" remoteb:', etc.\nThe last remote is used to write to.",
 			Required: true,
 		}},
+		Config: func(name string, m configmap.Mapper) {
+			fs, err := NewFs(name, "", m)
+			if err != nil {
+				log.Fatalf("Invalid config: %s", err)
+			}
+			_, err = fs.List(context.Background(), "")
+			if err != nil {
+				log.Fatalf("Invalid config: %s", err)
+			}
+		},
 	}
 	fs.Register(fsi)
 }
@@ -243,9 +254,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() (err error) {
 		defer pw.Close()
-
 		obj1, err = f.remotes[0].Features().PutStream(ctx, tee, src, options...)
-
 		return
 	})
 
@@ -652,7 +661,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if len(remotes) > 2 {
 		features.PutStream = nil
 	}
-
 	f.features = features
 
 	// union of hashes
@@ -667,11 +675,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs     = (*Fs)(nil)
-	_ fs.Purger = (*Fs)(nil)
-	//_ fs.PutStreamer     = (*Fs)(nil)
-	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover    = (*Fs)(nil)
-	_ fs.DirMover = (*Fs)(nil)
-	_ fs.Abouter  = (*Fs)(nil)
+	_ fs.Fs          = (*Fs)(nil)
+	_ fs.Purger      = (*Fs)(nil)
+	_ fs.PutStreamer = (*Fs)(nil)
+	_ fs.Copier      = (*Fs)(nil)
+	_ fs.Mover       = (*Fs)(nil)
+	_ fs.DirMover    = (*Fs)(nil)
+	_ fs.Abouter     = (*Fs)(nil)
+	_ fs.Object      = (*Object)(nil)
+	_ fs.MimeTyper   = (*Object)(nil)
 )
