@@ -234,8 +234,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	for _, wr := range f.remotes {
-		err := wr.Features().DirMove(ctx, wr, srcRemote, dstRemote)
+	for i := 0; i < len(f.remotes); i++ {
+		err := f.remotes[i].Features().DirMove(ctx, srcFs.remotes[i], srcRemote, dstRemote)
 		if err != nil {
 			return err
 		}
@@ -249,6 +249,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 // will return the object and the error, otherwise will return
 // nil and the error
 func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	fmt.Printf("PutStream\n")
 	pr, pw := io.Pipe()
 	tee := io.TeeReader(in, pw)
 
@@ -271,9 +272,11 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	}
 
 	out := &Object{
+		fs:      f,
 		remote:  src.Remote(),
 		objects: []fs.Object{obj1, obj2},
 	}
+	fmt.Printf("EndPutStream\n")
 
 	return out, nil
 }
