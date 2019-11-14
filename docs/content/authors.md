@@ -192,7 +192,7 @@ Contributors
   * Sheldon Rupp <me@shel.io>
   * albertony <12441419+albertony@users.noreply.github.com>
   * cron410 <cron410@gmail.com>
-  * Anagh Kumar Baranwal <anaghk.dos@gmail.com>
+  * Anagh Kumar Baranwal <anaghk.dos@gmail.com> <6824881+darthShadow@users.noreply.github.com>
   * Felix Brucker <felix@felixbrucker.com>
   * Santiago Rodríguez <scollazo@users.noreply.github.com>
   * Craig Miskell <craig.miskell@fluxfederation.com>
