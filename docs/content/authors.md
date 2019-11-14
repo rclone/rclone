@@ -309,3 +309,4 @@ Contributors
   * zero-24 <zero-24@users.noreply.github.com>
   * Xiaoxing Ye <ye@xiaoxing.us>
   * Barry Muldrey <barry@muldrey.net>
+  * Sebastian Brandt <sebastian.brandt@friday.de>
