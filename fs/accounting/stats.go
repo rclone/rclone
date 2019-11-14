@@ -627,6 +627,20 @@ func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
 	s.mu.Unlock()
 }
 
+// PruneAllTransfers removes all finished transfers.
+func (s *StatsInfo) PruneAllTransfers() {
+	s.mu.Lock()
+	for i := 0; i < len(s.startedTransfers); i++ {
+		tr := s.startedTransfers[i]
+		if tr.IsDone() {
+			s.removeTransfer(tr, i)
+			// i'th element is removed, recover iterator to not skip next element.
+			i--
+		}
+	}
+	s.mu.Unlock()
+}
+
 // PruneTransfers makes sure there aren't too many old transfers by removing
 // single finished transfer.
 func (s *StatsInfo) PruneTransfers() {

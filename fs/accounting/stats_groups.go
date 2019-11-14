@@ -59,8 +59,10 @@ func resetStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 	}
 
 	if group != "" {
-		groups.get(group).ResetCounters()
-		groups.get(group).ResetErrors()
+		stats := groups.get(group)
+		stats.ResetCounters()
+		stats.ResetErrors()
+		stats.PruneAllTransfers()
 	} else {
 		groups.clear()
 	}
@@ -190,8 +192,8 @@ Returns the following values:
 		Fn:    resetStats,
 		Title: "Reset stats.",
 		Help: `
-This clears counters and errors for all stats or specific stats group if group
-is provided.
+This clears counters, errors and finished transfers for all stats or specific 
+stats group if group is provided.
 
 Parameters
 
@@ -333,6 +335,7 @@ func (sg *statsGroups) clear() {
 	for _, stats := range sg.m {
 		stats.ResetErrors()
 		stats.ResetCounters()
+		stats.PruneAllTransfers()
 	}
 
 	sg.m = make(map[string]*StatsInfo)

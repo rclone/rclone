@@ -431,3 +431,25 @@ func TestPruneTransfers(t *testing.T) {
 		})
 	}
 }
+
+func TestPruneAllTransfers(t *testing.T) {
+	const transfers = 10
+
+	s := NewStats()
+	for i := int64(1); i <= int64(transfers); i++ {
+		s.AddTransfer(&Transfer{
+			startedAt:   time.Unix(i, 0),
+			completedAt: time.Unix(i+1, 0),
+		})
+	}
+
+	s.mu.Lock()
+	assert.Equal(t, transfers, len(s.startedTransfers))
+	s.mu.Unlock()
+
+	s.PruneAllTransfers()
+
+	s.mu.Lock()
+	assert.Empty(t, s.startedTransfers)
+	s.mu.Unlock()
+}

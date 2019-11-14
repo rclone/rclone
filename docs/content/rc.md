@@ -521,8 +521,8 @@ The value for "eta" is null if an eta cannot be determined.
 
 ### core/stats-reset: Reset stats. {#core/stats-reset}
 
-This clears counters and errors for all stats or specific stats group if group
-is provided.
+This clears counters, errors and finished transfers for all stats or specific
+stats group if group is provided.
 
 Parameters
 
