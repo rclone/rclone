@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/encodings"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 
 	httpclient "github.com/koofr/go-httpclient"
@@ -259,7 +260,9 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	if err != nil {
 		return nil, err
 	}
-	client := koofrclient.NewKoofrClient(opt.Endpoint, false)
+	httpClient := httpclient.New()
+	httpClient.Client = fshttp.NewClient(fs.Config)
+	client := koofrclient.NewKoofrClientWithHTTPClient(opt.Endpoint, httpClient)
 	basicAuth := fmt.Sprintf("Basic %s",
 		base64.StdEncoding.EncodeToString([]byte(opt.User+":"+pass)))
 	client.HTTPClient.Headers.Set("Authorization", basicAuth)
