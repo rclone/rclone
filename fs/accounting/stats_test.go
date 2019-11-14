@@ -382,28 +382,52 @@ func TestTimeRangeDuration(t *testing.T) {
 }
 
 func TestPruneTransfers(t *testing.T) {
-	max := maxCompletedTransfers + fs.Config.Transfers
+	for _, test := range []struct {
+		Name                     string
+		Transfers                int
+		Limit                    int
+		ExpectedStartedTransfers int
+	}{
+		{
+			Name:                     "Limited number of StartedTransfers",
+			Limit:                    100,
+			Transfers:                200,
+			ExpectedStartedTransfers: 100 + fs.Config.Transfers,
+		},
+		{
+			Name:                     "Unlimited number of StartedTransfers",
+			Limit:                    -1,
+			Transfers:                200,
+			ExpectedStartedTransfers: 200,
+		},
+	} {
+		t.Run(test.Name, func(t *testing.T) {
+			prevLimit := MaxCompletedTransfers
+			MaxCompletedTransfers = test.Limit
+			defer func() { MaxCompletedTransfers = prevLimit }()
 
-	s := NewStats()
-	for i := int64(1); i <= int64(max+100); i++ {
-		s.AddTransfer(&Transfer{
-			startedAt:   time.Unix(i, 0),
-			completedAt: time.Unix(i+1, 0),
+			s := NewStats()
+			for i := int64(1); i <= int64(test.Transfers); i++ {
+				s.AddTransfer(&Transfer{
+					startedAt:   time.Unix(i, 0),
+					completedAt: time.Unix(i+1, 0),
+				})
+			}
+
+			s.mu.Lock()
+			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s.totalDuration())
+			assert.Equal(t, test.Transfers, len(s.startedTransfers))
+			s.mu.Unlock()
+
+			for i := 0; i < test.Transfers; i++ {
+				s.PruneTransfers()
+			}
+
+			s.mu.Lock()
+			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s.totalDuration())
+			assert.Equal(t, test.ExpectedStartedTransfers, len(s.startedTransfers))
+			s.mu.Unlock()
+
 		})
 	}
-
-	s.mu.Lock()
-	assert.Equal(t, time.Duration(max+100)*time.Second, s.totalDuration())
-	assert.Equal(t, max+100, len(s.startedTransfers))
-	s.mu.Unlock()
-
-	for i := 0; i < 200; i++ {
-		s.PruneTransfers()
-	}
-
-	s.mu.Lock()
-	assert.Equal(t, time.Duration(max+100)*time.Second, s.totalDuration())
-	assert.Equal(t, max, len(s.startedTransfers))
-	s.mu.Unlock()
-
 }
