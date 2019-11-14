@@ -310,3 +310,4 @@ Contributors
   * Xiaoxing Ye <ye@xiaoxing.us>
   * Barry Muldrey <barry@muldrey.net>
   * Sebastian Brandt <sebastian.brandt@friday.de>
+  * Marco Molteni <marco.molteni@mailbox.org>
