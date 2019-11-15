@@ -620,6 +620,8 @@ func TestCacheRename(t *testing.T) {
 
 	h, err := vfs.OpenFile("rename_me", os.O_WRONLY|os.O_CREATE, 0777)
 	require.NoError(t, err)
+	_, err = h.WriteString("hello")
+	require.NoError(t, err)
 	fh, ok := h.(*RWFileHandle)
 	require.True(t, ok)
 
