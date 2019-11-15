@@ -82,15 +82,24 @@ func init() {
 				encoder.EncodeLeftSpace |
 				encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8),
+		}, {
+			Name: "chunk_size",
+			Help: `Files will be uploaded in chunks this size.
+
+Note that these chunks are buffered in memory so increasing them will
+increase memory use.`,
+			Default:  10 * fs.MebiByte,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	UserName string               `config:"username"`
-	Password string               `config:"password"`
-	Enc      encoder.MultiEncoder `config:"encoding"`
+	UserName  string               `config:"username"`
+	Password  string               `config:"password"`
+	Enc       encoder.MultiEncoder `config:"encoding"`
+	ChunkSize fs.SizeSuffix        `config:"chunk_size"`
 }
 
 // Fs represents a remote server
@@ -973,15 +982,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// resp.Body.Close()
 	// fs.Debugf(nil, "PostOpen: %#v", openResponse)
 
-	// 10 MB chunks size
-	chunkSize := int64(1024 * 1024 * 10)
-	buf := make([]byte, int(chunkSize))
+	buf := make([]byte, o.fs.opt.ChunkSize)
 	chunkOffset := int64(0)
 	remainingBytes := size
 	chunkCounter := 0
 
 	for remainingBytes > 0 {
-		currentChunkSize := chunkSize
+		currentChunkSize := int64(o.fs.opt.ChunkSize)
 		if currentChunkSize > remainingBytes {
 			currentChunkSize = remainingBytes
 		}
