@@ -1021,11 +1021,11 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// set root folder for a team drive or query the user root folder
-	if f.isTeamDrive {
-		f.rootFolderID = f.opt.TeamDriveID
-	} else if opt.RootFolderID != "" {
+	if opt.RootFolderID != "" {
 		// override root folder if set or cached in the config
 		f.rootFolderID = opt.RootFolderID
+	} else if f.isTeamDrive {
+		f.rootFolderID = f.opt.TeamDriveID
 	} else {
 		// Look up the root ID and cache it in the config
 		rootID, err := f.getRootID()
