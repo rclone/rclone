@@ -32,7 +32,7 @@ var (
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	CountError = func(err error) {}
+	CountError = func(err error) error { return nil }
 
 	// ConfigProvider is the config key used for provider options
 	ConfigProvider = "provider"

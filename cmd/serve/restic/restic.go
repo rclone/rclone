@@ -271,7 +271,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 
 	_, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now())
 	if err != nil {
-		accounting.Stats(r.Context()).Error(err)
+		err = accounting.Stats(r.Context()).Error(err)
 		fs.Errorf(remote, "Post request rcat error: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
