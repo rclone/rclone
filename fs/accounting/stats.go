@@ -475,14 +475,15 @@ func (s *StatsInfo) Errored() bool {
 }
 
 // Error adds a single error into the stats, assigns lastError and eventually sets fatalError or retryError
-func (s *StatsInfo) Error(err error) {
+func (s *StatsInfo) Error(err error) error {
 	if err == nil || fserrors.IsCounted(err) {
-		return
+		return err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.errors++
 	s.lastError = err
+	err = fserrors.FsError(err)
 	fserrors.Count(err)
 	switch {
 	case fserrors.IsFatalError(err):
@@ -496,6 +497,7 @@ func (s *StatsInfo) Error(err error) {
 	case !fserrors.IsNoRetryError(err):
 		s.retryError = true
 	}
+	return err
 }
 
 // RetryAfter returns the time to retry after if it is set.  It will

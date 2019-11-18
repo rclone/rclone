@@ -255,6 +255,10 @@ func (err *wrappedCountableError) IsCounted() bool {
 	return err.isCounted
 }
 
+func (err *wrappedCountableError) Cause() error {
+	return err.error
+}
+
 // IsCounted returns true if err conforms to the CountableError interface
 // and has already been counted
 func IsCounted(err error) bool {
@@ -264,14 +268,13 @@ func IsCounted(err error) bool {
 	return false
 }
 
-// Counted sets the isCounted variable on the error if it conforms to the
+// Count sets the isCounted variable on the error if it conforms to the
 // CountableError interface
 func Count(err error) {
 	if r, ok := err.(CountableError); ok {
 		r.Count()
 	}
 }
-
 
 // Check interface
 var _ CountableError = &wrappedCountableError{error: error(nil)}

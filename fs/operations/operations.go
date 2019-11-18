@@ -63,7 +63,7 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	g.Go(func() (err error) {
 		srcHash, err = src.Hash(ctx, ht)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(src, "Failed to calculate src hash: %v", err)
 		}
 		return err
@@ -71,7 +71,7 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	g.Go(func() (err error) {
 		dstHash, err = dst.Hash(ctx, ht)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(dst, "Failed to calculate dst hash: %v", err)
 		}
 		return err
@@ -234,7 +234,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 				}
 				return false
 			} else if err != nil {
-				fs.CountError(err)
+				err = fs.CountError(err)
 				fs.Errorf(dst, "Failed to set modification time: %v", err)
 			} else {
 				fs.Infof(src, "Updated modification time in destination")
@@ -408,15 +408,16 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		break
 	}
 	if err != nil {
+		err = fs.CountError(err)
 		fs.Errorf(src, "Failed to copy: %v", err)
-		err = fserrors.FsError(err)
 		return newDst, err
 	}
 
 	// Verify sizes are the same after transfer
 	if sizeDiffers(src, dst) {
-		err = fserrors.FsError(errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size()))
+		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
 		fs.Errorf(dst, "%v", err)
+		err = fs.CountError(err)
 		removeFailedCopy(ctx, dst)
 		return newDst, err
 	}
@@ -426,8 +427,9 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		// checkHashes has logged and counted errors
 		equal, _, srcSum, dstSum, _ := checkHashes(ctx, src, dst, hashType)
 		if !equal {
-			err = fserrors.FsError(errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum))
+			err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
 			fs.Errorf(dst, "%v", err)
+			err = fs.CountError(err)
 			removeFailedCopy(ctx, dst)
 			return newDst, err
 		}
@@ -490,6 +492,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		case fs.ErrorCantMove:
 			fs.Debugf(src, "Can't move, switching to copy")
 		default:
+			err = fs.CountError(err)
 			fs.Errorf(src, "Couldn't move: %v", err)
 			return newDst, err
 		}
@@ -556,6 +559,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	}
 	if err != nil {
 		fs.Errorf(dst, "Couldn't %s: %v", action, err)
+		err = fs.CountError(err)
 	} else if !fs.Config.DryRun {
 		fs.Infof(dst, actioned)
 	}
@@ -681,7 +685,7 @@ func checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHas
 	if !same {
 		err = errors.Errorf("%v differ", ht)
 		fs.Errorf(src, "%v", err)
-		fs.CountError(err)
+		_ = fs.CountError(err)
 		return true, false
 	}
 	return false, false
@@ -712,7 +716,7 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 		}
 		err := errors.Errorf("File not in %v", c.fsrc)
 		fs.Errorf(dst, "%v", err)
-		fs.CountError(err)
+		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.srcFilesMissing, 1)
 	case fs.Directory:
@@ -730,7 +734,7 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 	case fs.Object:
 		err := errors.Errorf("File not in %v", c.fdst)
 		fs.Errorf(src, "%v", err)
-		fs.CountError(err)
+		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.dstFilesMissing, 1)
 	case fs.Directory:
@@ -779,7 +783,7 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 		} else {
 			err := errors.Errorf("is file on %v but directory on %v", c.fsrc, c.fdst)
 			fs.Errorf(src, "%v", err)
-			fs.CountError(err)
+			_ = fs.CountError(err)
 			atomic.AddInt32(&c.differences, 1)
 			atomic.AddInt32(&c.dstFilesMissing, 1)
 		}
@@ -791,7 +795,7 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 		}
 		err := errors.Errorf("is file on %v but directory on %v", c.fdst, c.fsrc)
 		fs.Errorf(dst, "%v", err)
-		fs.CountError(err)
+		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.srcFilesMissing, 1)
 
@@ -918,7 +922,7 @@ func CheckDownload(ctx context.Context, fdst, fsrc fs.Fs, oneway bool) error {
 	check := func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool) {
 		differ, err := CheckIdentical(ctx, a, b)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(a, "Failed to download: %v", err)
 			return true, true
 		}
@@ -1065,7 +1069,7 @@ func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
 	fs.Debugf(fs.LogDirName(f, dir), "Making directory")
 	err := f.Mkdir(ctx, dir)
 	if err != nil {
-		fs.CountError(err)
+		err = fs.CountError(err)
 		return err
 	}
 	return nil
@@ -1086,7 +1090,7 @@ func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
 func Rmdir(ctx context.Context, f fs.Fs, dir string) error {
 	err := TryRmdir(ctx, f, dir)
 	if err != nil {
-		fs.CountError(err)
+		err = fs.CountError(err)
 		return err
 	}
 	return err
@@ -1119,7 +1123,7 @@ func Purge(ctx context.Context, f fs.Fs, dir string) error {
 		err = Rmdirs(ctx, f, dir, false)
 	}
 	if err != nil {
-		fs.CountError(err)
+		err = fs.CountError(err)
 		return err
 	}
 	return nil
@@ -1162,7 +1166,7 @@ func listToChan(ctx context.Context, f fs.Fs, dir string) fs.ObjectsChan {
 		})
 		if err != nil && err != fs.ErrorDirNotFound {
 			err = errors.Wrap(err, "failed to list")
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(nil, "%v", err)
 		}
 	}()
@@ -1218,6 +1222,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		}
 		in, err := o.Open(ctx, options...)
 		if err != nil {
+			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to open: %v", err)
 			return
 		}
@@ -1230,6 +1235,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		defer mu.Unlock()
 		_, err = io.Copy(w, in)
 		if err != nil {
+			err = fs.CountError(err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
 		}
 	})
@@ -1256,6 +1262,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, hash.Sums(), fdst)
 		if !Equal(ctx, src, dst) {
 			err = errors.Errorf("corrupted on transfer")
+			err = fs.CountError(err)
 			fs.Errorf(dst, "%v", err)
 			return err
 		}
@@ -1330,7 +1337,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	dirEmpty[dir] = !leaveRoot
 	err := walk.Walk(ctx, f, dir, true, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(f, "Failed to list %q: %v", dirPath, err)
 			return nil
 		}
@@ -1377,7 +1384,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 		dir := toDelete[i]
 		err := TryRmdir(ctx, f, dir)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(dir, "Failed to rmdir: %v", err)
 			return err
 		}

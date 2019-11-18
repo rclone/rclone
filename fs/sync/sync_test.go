@@ -490,7 +490,7 @@ func TestSyncIgnoreErrors(t *testing.T) {
 	)
 
 	accounting.GlobalStats().ResetCounters()
-	fs.CountError(errors.New("boom"))
+	_ = fs.CountError(errors.New("boom"))
 	assert.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
 
 	fstest.CheckListingWithPrecision(
@@ -800,7 +800,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	)
 
 	accounting.GlobalStats().ResetCounters()
-	fs.CountError(errors.New("boom"))
+	_ = fs.CountError(errors.New("boom"))
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 
@@ -1763,5 +1763,7 @@ func TestAbort(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
-	assert.Equal(t, accounting.ErrorMaxTransferLimitReached, err)
+	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReached)
+	fserrors.Count(expectedErr)
+	assert.Equal(t, expectedErr, err)
 }

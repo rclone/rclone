@@ -86,7 +86,7 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 // Must be called after transfer is finished to run proper cleanups.
 func (tr *Transfer) Done(err error) {
 	if err != nil {
-		tr.stats.Error(err)
+		err = tr.stats.Error(err)
 
 		tr.mu.Lock()
 		tr.err = err
