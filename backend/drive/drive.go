@@ -327,6 +327,17 @@ or move the photos locally and use the date the image was taken
 (created) set as the modification date.`,
 			Advanced: true,
 		}, {
+			Name:    "use_shared_date",
+			Default: false,
+			Help: `Use date file was shared instead of modified date.
+
+Note that, as with "--drive-use-created-date", this flag may have
+unexpected consequences when uploading/downloading files.
+
+If both this flag and "--drive-use-created-date" are set, the created
+date is used.`,
+			Advanced: true,
+		}, {
 			Name:     "list_chunk",
 			Default:  1000,
 			Help:     "Size of listing chunk 100-1000. 0 to disable.",
@@ -463,6 +474,7 @@ type Options struct {
 	ImportExtensions          string        `config:"import_formats"`
 	AllowImportNameChange     bool          `config:"allow_import_name_change"`
 	UseCreatedDate            bool          `config:"use_created_date"`
+	UseSharedDate             bool          `config:"use_shared_date"`
 	ListChunk                 int64         `config:"list_chunk"`
 	Impersonate               string        `config:"impersonate"`
 	AlternateExport           bool          `config:"alternate_export"`
@@ -693,6 +705,9 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 
 	if f.opt.AuthOwnerOnly {
 		fields += ",owners"
+	}
+	if f.opt.UseSharedDate {
+		fields += ",sharedWithMeTime"
 	}
 	if f.opt.SkipChecksumGphotos {
 		fields += ",spaces"
@@ -1095,6 +1110,8 @@ func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
 	modifiedDate := info.ModifiedTime
 	if f.opt.UseCreatedDate {
 		modifiedDate = info.CreatedTime
+	} else if f.opt.UseSharedDate && info.SharedWithMeTime != "" {
+		modifiedDate = info.SharedWithMeTime
 	}
 	size := info.Size
 	if f.opt.SizeAsQuota {
