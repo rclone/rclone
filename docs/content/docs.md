@@ -1285,7 +1285,7 @@ your cloud services. This means that you should keep your
 
 If you are in an environment where that isn't possible, you can
 add a password to your configuration. This means that you will
-have to enter the password every time you start rclone.
+have to supply the password every time you start rclone.
 
 To add a password to your rclone configuration, execute `rclone config`.
 
@@ -1322,9 +1322,9 @@ c/u/q>
 ```
 
 Your configuration is now encrypted, and every time you start rclone
-you will now be asked for the password. In the same menu, you can
-change the password or completely remove encryption from your
-configuration.
+you will have to supply the password. See below for details.
+In the same menu, you can change the password or completely remove
+encryption from your configuration.
 
 There is no way to recover the configuration if you lose your password.
 
@@ -1356,11 +1356,36 @@ Then source the file when you want to use it.  From the shell you
 would do `source set-rclone-password`.  It will then ask you for the
 password and set it in the environment variable.
 
-If you are running rclone inside a script, you might want to disable 
+An alternate means of supplying the password is to provide a script
+which will retrieve the password and print on standard output.  This
+script should have a fully specified path name and not rely on any
+environment variables.  The script is supplied either via
+`--password-command="..."` command line argument or via the
+`RCLONE_CONFIG_PASS_COMMAND` environment variable.
+
+One useful example of this is using the `passwordstore` application
+to retrieve the password:
+
+```
+export RCLONE_CONFIG_PASS_COMMAND="pass rclone/config"
+```
+
+If the `passwordstore` password manager holds the password for the
+rclone configuration, using the script method means the password
+is primarily protected by the `passwordstore` system, and is never
+embedded in the clear in scripts, nor available for examination
+using the standard commands available.  It is quite possible with
+long running rclone sessions for copies of passwords to be innocently
+captured in log files or terminal scroll buffers, etc.  Using the
+script method of supplying the password enhances the security of
+the config password considerably.
+
+If you are running rclone inside a script, unless you are using the
+`RCLONE_CONFIG_PASS_COMMAND` method, you might want to disable 
 password prompts. To do that, pass the parameter 
 `--ask-password=false` to rclone. This will make rclone fail instead
 of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
-a valid password.
+a valid password, and `RCLONE_CONFIG_PASS_COMMAND` has not been supplied.
 
 
 Developer options
