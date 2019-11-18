@@ -270,6 +270,84 @@ func TestConfigLoadEncrypted(t *testing.T) {
 	assert.Equal(t, expect, keys)
 }
 
+func expectConfigValid(t *testing.T) {
+	var err error
+
+	configKey = nil // reset password
+
+	c, err := loadConfigFile()
+	require.NoError(t, err)
+
+	// Not sure why there is no "RCLONE_ENCRYPT_V0" here...
+	sections := c.GetSectionList()
+	var expect = []string{"nounc", "unc"}
+	assert.Equal(t, expect, sections)
+
+	keys := c.GetKeyList("nounc")
+	expect = []string{"type", "nounc"}
+	assert.Equal(t, expect, keys)
+}
+
+func expectConfigInvalid(t *testing.T) {
+	var err error
+
+	configKey = nil // reset password
+
+	_, err = loadConfigFile()
+	require.Error(t, err)
+}
+
+func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
+	oldConfigPath := ConfigPath
+	oldConfig := fs.Config
+	ConfigPath = "./testdata/encrypted.conf"
+	defer func() {
+		ConfigPath = oldConfigPath
+		configKey = nil // reset password
+		fs.Config = oldConfig
+	}()
+
+	// using fs.Config.PasswordCommand, correct password
+	fs.Config.PasswordCommand = "echo asdf"
+	expectConfigValid(t)
+
+	var err error
+
+	// using "RCLONE_CONFIG_PASS_COMMAND"
+
+	err = os.Setenv("RCLONE_CONFIG_PASS_COMMAND", "echo asdf")
+	require.NoError(t, err)
+	expectConfigValid(t)
+
+	err = os.Unsetenv("RCLONE_CONFIG_PASS_COMMAND")
+	require.NoError(t, err)
+}
+
+func TestConfigLoadEncryptedWithInvalidPassCommand(t *testing.T) {
+	oldConfigPath := ConfigPath
+	oldConfig := fs.Config
+	ConfigPath = "./testdata/encrypted.conf"
+	defer func() {
+		ConfigPath = oldConfigPath
+		configKey = nil // reset password
+		fs.Config = oldConfig
+	}()
+
+	// using fs.Config.PasswordCommand, incorrect password
+	fs.Config.PasswordCommand = "echo asdf-blurfl"
+	expectConfigInvalid(t)
+	fs.Config.PasswordCommand = ""
+
+	var err error
+
+	err = os.Setenv("RCLONE_CONFIG_PASS_COMMAND", "echo asdf-blurfl")
+	require.NoError(t, err)
+	expectConfigInvalid(t)
+
+	err = os.Unsetenv("RCLONE_CONFIG_PASS_COMMAND")
+	require.NoError(t, err)
+}
+
 func TestConfigLoadEncryptedFailures(t *testing.T) {
 	var err error
 
