@@ -311,3 +311,4 @@ Contributors
   * Barry Muldrey <barry@muldrey.net>
   * Sebastian Brandt <sebastian.brandt@friday.de>
   * Marco Molteni <marco.molteni@mailbox.org>
+  * Ankur Gupta <ankur0493@gmail.com>
