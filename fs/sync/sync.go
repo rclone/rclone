@@ -926,7 +926,7 @@ func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 			fs.Infof(fdst, "Server side directory move succeeded")
 			return nil
 		default:
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(fdst, "Server side directory move failed: %v", err)
 			return err
 		}

@@ -34,7 +34,7 @@ outer:
 		_, err := f.NewObject(ctx, newName)
 		for ; err != fs.ErrorObjectNotFound; suffix++ {
 			if err != nil {
-				fs.CountError(err)
+				err = fs.CountError(err)
 				fs.Errorf(o, "Failed to check for existing object: %v", err)
 				continue outer
 			}
@@ -48,7 +48,7 @@ outer:
 		if !fs.Config.DryRun {
 			newObj, err := doMove(ctx, o, newName)
 			if err != nil {
-				fs.CountError(err)
+				err = fs.CountError(err)
 				fs.Errorf(o, "Failed to rename: %v", err)
 				continue
 			}

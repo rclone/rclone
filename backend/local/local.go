@@ -350,7 +350,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		err = errors.Wrapf(err, "failed to open directory %q", dir)
 		fs.Errorf(dir, "%v", err)
 		if isPerm {
-			accounting.Stats(ctx).Error(fserrors.NoRetryError(err))
+			_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(err))
 			err = nil // ignore error but fail sync
 		}
 		return nil, err
@@ -386,7 +386,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					if fierr != nil {
 						err = errors.Wrapf(err, "failed to read directory %q", namepath)
 						fs.Errorf(dir, "%v", fierr)
-						accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
+						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
 						continue
 					}
 					fis = append(fis, fi)
@@ -409,7 +409,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					// Skip bad symlinks
 					err = fserrors.NoRetryError(errors.Wrap(err, "symlink"))
 					fs.Errorf(newRemote, "Listing error: %v", err)
-					accounting.Stats(ctx).Error(err)
+					err = accounting.Stats(ctx).Error(err)
 					continue
 				}
 				if err != nil {

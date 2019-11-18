@@ -78,7 +78,7 @@ func TestStatsError(t *testing.T) {
 	t0 := time.Now()
 	t1 := t0.Add(time.Second)
 
-	s.Error(nil)
+	_ = s.Error(nil)
 	assert.Equal(t, int64(0), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.False(t, s.HadRetryError())
@@ -86,7 +86,7 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, nil, s.GetLastError())
 	assert.False(t, s.Errored())
 
-	s.Error(io.EOF)
+	_ = s.Error(io.EOF)
 	assert.Equal(t, int64(1), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
@@ -95,7 +95,7 @@ func TestStatsError(t *testing.T) {
 	assert.True(t, s.Errored())
 
 	e := fserrors.ErrorRetryAfter(t0)
-	s.Error(e)
+	_ = s.Error(e)
 	assert.Equal(t, int64(2), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
@@ -103,14 +103,14 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, e, s.GetLastError())
 
 	err := errors.Wrap(fserrors.ErrorRetryAfter(t1), "potato")
-	s.Error(err)
+	err = s.Error(err)
 	assert.Equal(t, int64(3), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
 	assert.Equal(t, t1, s.RetryAfter())
 	assert.Equal(t, t1, fserrors.RetryAfterErrorTime(err))
 
-	s.Error(fserrors.FatalError(io.EOF))
+	_ = s.Error(fserrors.FatalError(io.EOF))
 	assert.Equal(t, int64(4), s.GetErrors())
 	assert.True(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
@@ -124,7 +124,7 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, nil, s.GetLastError())
 	assert.False(t, s.Errored())
 
-	s.Error(fserrors.NoRetryError(io.EOF))
+	_ = s.Error(fserrors.NoRetryError(io.EOF))
 	assert.Equal(t, int64(1), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.False(t, s.HadRetryError())
