@@ -70,6 +70,10 @@ func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name str
 
 // WithBuffer - If the file is above a certain size it adds an Async reader
 func (acc *Account) WithBuffer() *Account {
+	// if already have a buffer then just return
+	if acc.withBuf {
+		return acc
+	}
 	acc.withBuf = true
 	var buffers int
 	if acc.size >= int64(fs.Config.BufferSize) || acc.size == -1 {
@@ -118,14 +122,16 @@ func (acc *Account) StopBuffering() {
 // async buffer (if any) and re-adding it
 func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
-	if acc.withBuf {
+	withBuf := acc.withBuf
+	if withBuf {
 		acc.StopBuffering()
+		acc.withBuf = false
 	}
 	acc.in = in
 	acc.close = in
 	acc.origIn = in
 	acc.closed = false
-	if acc.withBuf {
+	if withBuf {
 		acc.WithBuffer()
 	}
 	acc.mu.Unlock()
