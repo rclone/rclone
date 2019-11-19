@@ -1,10 +1,18 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2019-11-02"
+date: "2019-11-19"
 ---
 
 # Changelog
+
+## v1.50.2 - 2019-11-19
+
+* Bug Fixes
+    * accounting: Fix memory leak on retries operations (Nick Craig-Wood)
+* Drive
+    * Fix listing of the root directory with drive.files scope (Nick Craig-Wood)
+    * Fix --drive-root-folder-id with team/shared drives (Nick Craig-Wood)
 
 ## v1.50.1 - 2019-11-02
 
