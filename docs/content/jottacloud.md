@@ -11,7 +11,7 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, eg `remote:directory/subdirectory`.
 
-To configure Jottacloud you will need to enter your username and password and select a mountpoint.
+To configure Jottacloud you will need to generate a personal security token in the Jottacloud web inteface. You will the option to do in your [account security settings](https://www.jottacloud.com/web/secure). Note that the web inteface may refer to this token as a JottaCli token.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
@@ -42,16 +42,7 @@ n) No
 y/n> n
 Remote config
 
-Do you want to create a machine specific API key?
-
-Rclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.
-
-y) Yes
-n) No
-y/n> y
-Username> 0xC4KE@gmail.com
-Your Jottacloud password is only required during setup and will not be stored.
-password:
+Login Token> <your token here>
 
 Do you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?
 
@@ -74,11 +65,10 @@ Mountpoints> 1
 [jotta]
 type = jottacloud
 user = 0xC4KE@gmail.com
-client_id = .....
-client_secret = ........
 token = {........}
 device = Jotta
 mountpoint = Archive
+configVersion = 1
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -102,7 +92,7 @@ To copy a local directory to an Jottacloud directory called backup
 ### Devices and Mountpoints ###
 
 The official Jottacloud client registers a device for each computer you install it on and then creates a mountpoint for each folder you select for Backup.
-The web interface uses a special device called Jotta for the Archive, Sync and Shared mountpoints. In most cases you'll want to use the Jotta/Archive device/mounpoint however if you want to access files uploaded by the official rclone provides the option to select other devices and mountpoints during config.
+The web interface uses a special device called Jotta for the Archive, Sync and Shared mountpoints. In most cases you'll want to use the Jotta/Archive device/mounpoint however if you want to access files uploaded by any of the official clients rclone provides the option to select other devices and mountpoints during config.
 
 ### --fast-list ###
 
