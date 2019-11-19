@@ -1,5 +1,5 @@
 ---
-date: 2019-11-02T14:26:08Z
+date: 2019-11-19T16:02:36Z
 title: "rclone genautocomplete bash"
 slug: rclone_genautocomplete_bash
 url: /commands/rclone_genautocomplete_bash/
