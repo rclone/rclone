@@ -46,13 +46,26 @@ func (t Time) String() string { return time.Time(t).Format(timeFormat) }
 // APIString returns Time string in Jottacloud API format
 func (t Time) APIString() string { return time.Time(t).Format(apiTimeFormat) }
 
+// LoginToken is struct representing the login token generated in the WebUI
+type LoginToken struct {
+	Username      string `json:"username"`
+	Realm         string `json:"realm"`
+	WellKnownLink string `json:"well_known_link"`
+	AuthToken     string `json:"auth_token"`
+}
+
 // TokenJSON is the struct representing the HTTP response from OAuth2
 // providers returning a token in JSON form.
 type TokenJSON struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int32  `json:"expires_in"` // at least PayPal returns string, while most return number
+	AccessToken      string `json:"access_token"`
+	ExpiresIn        int32  `json:"expires_in"` // at least PayPal returns string, while most return number
+	RefreshExpiresIn int32  `json:"refresh_expires_in"`
+	RefreshToken     string `json:"refresh_token"`
+	TokenType        string `json:"token_type"`
+	IDToken          string `json:"id_token"`
+	NotBeforePolicy  int32  `json:"not-before-policy"`
+	SessionState     string `json:"session_state"`
+	Scope            string `json:"scope"`
 }
 
 // JSON structures returned by new API
