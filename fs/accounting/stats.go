@@ -313,11 +313,23 @@ func (s *StatsInfo) String() string {
 			errorDetails = " (no need to retry)"
 		}
 
-		addStatln(buf, "Errors:        %10d%s", s.errors, errorDetails)
-		addStatln(buf, "Checks:        %10d / %d, %s", s.checks, totalChecks, percent(s.checks, totalChecks))
-		addStatln(buf, "Deleted:       %10d", s.deletes)
-		addStatln(buf, "Transferred:   %10d / %d, %s", s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
-		addStatln(buf, "Elapsed time:  %10v", dtRounded)
+		// Add only non zero stats
+		if s.errors != 0 {
+			_, _ = fmt.Fprintf(buf, "Errors:        %10d%s\n",
+				s.errors, errorDetails)
+		}
+		if s.checks != 0 || totalChecks != 0 {
+			_, _ = fmt.Fprintf(buf, "Checks:        %10d / %d, %s\n",
+				s.errors, totalChecks, percent(s.checks, totalChecks))
+		}
+		if s.deletes != 0 {
+			_, _ = fmt.Fprintf(buf, "Deleted:       %10d\n", s.deletes)
+		}
+		if s.transfers != 0 || totalTransfer != 0 {
+			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
+				s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
+		}
+		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10v\n", dtRounded)
 	}
 
 	// checking and transferring have their own locking so unlock
@@ -335,19 +347,6 @@ func (s *StatsInfo) String() string {
 	}
 
 	return buf.String()
-}
-
-// Wrapper around Fprintf to filer zero stat lines
-func addStatln(buf *bytes.Buffer, f string, a ...interface{}) {
-	if i, ok := a[0].(int64); ok && i == 0 {
-		return
-	}
-	if i, ok := a[0].(int); ok && i == 0 {
-		return
-	}
-
-	f = f + "\n"
-	_, _ = fmt.Fprintf(buf, f, a...)
 }
 
 // Transferred returns list of all completed transfers including checked and
