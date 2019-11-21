@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -952,8 +953,8 @@ func (o *Object) isStaticLargeObject() (bool, error) {
 	return o.hasHeader("X-Static-Large-Object")
 }
 
-func (o *Object) isInContainerVersioning() (bool, error) {
-	_, headers, err := o.fs.c.Container(o.fs.root)
+func (o *Object) isInContainerVersioning(container string) (bool, error) {
+	_, headers, err := o.fs.c.Container(container)
 	if err != nil {
 		return false, err
 	}
@@ -1130,6 +1131,10 @@ func (o *Object) getSegmentsDlo() (segmentsContainer string, prefix string, err 
 		return
 	}
 	dirManifest := o.headers["X-Object-Manifest"]
+	dirManifest, err = url.PathUnescape(dirManifest)
+	if err != nil {
+		return
+	}
 	delimiter := strings.Index(dirManifest, "/")
 	if len(dirManifest) == 0 || delimiter < 0 {
 		err = errors.New("Missing or wrong structure of manifest of Dynamic large object")
@@ -1341,7 +1346,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	}
 	// ...then segments if required
 	if isDynamicLargeObject {
-		isInContainerVersioning, err := o.isInContainerVersioning()
+		isInContainerVersioning, err := o.isInContainerVersioning(container)
 		if err != nil {
 			return err
 		}
