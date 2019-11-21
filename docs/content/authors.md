@@ -313,3 +313,4 @@ Contributors
   * Marco Molteni <marco.molteni@mailbox.org>
   * Ankur Gupta <ankur0493@gmail.com>
   * Maciej Zimnoch <maciej@scylladb.com>
+  * anuar45 <serdaliyev.anuar@gmail.com>
