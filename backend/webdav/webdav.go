@@ -384,7 +384,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 // sets the BearerToken up
 func (f *Fs) setBearerToken(token string) {
 	f.opt.BearerToken = token
-	f.srv.SetHeader("Authorization", "BEARER "+token)
+	f.srv.SetHeader("Authorization", "Bearer "+token)
 }
 
 // fetch the bearer token using the command
