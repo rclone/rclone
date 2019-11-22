@@ -56,7 +56,14 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
-## macOS installation from precompiled binary ##
+## macOS installation with brew ##
+
+    brew install rclone
+
+## macOS installation from precompiled binary, using curl ##
+
+To avoid problems with macOS gatekeeper enforcing the binary to be signed and
+notarized it is enough to download with `curl`.
 
 Download the latest version of rclone.
 
@@ -80,6 +87,19 @@ Remove the leftover files.
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
+
+## macOS installation from precompiled binary, using a web browser ##
+
+When downloading a binary with a web browser, the browser will set the macOS
+gatekeeper quarantine attribute. Starting from Catalina, when attempting to run
+`rclone`, a pop-up will appear saying:
+
+    “rclone” cannot be opened because the developer cannot be verified.
+    macOS cannot verify that this app is free from malware.
+
+The simplest fix is to run
+
+    xattr -d com.apple.quarantine rclone
 
 ## Install with docker ##
 
