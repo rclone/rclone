@@ -113,7 +113,8 @@ type Fs struct {
 	canStream          bool          // set if can stream
 	useOCMtime         bool          // set if can use X-OC-Mtime
 	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
-	hasChecksums       bool          // set if can use owncloud style checksums
+	hasMD5             bool          // set if can use owncloud style checksums for MD5
+	hasSHA1            bool          // set if can use owncloud style checksums for SHA1
 }
 
 // Object describes a webdav object
@@ -215,7 +216,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		},
 		NoRedirect: true,
 	}
-	if f.hasChecksums {
+	if f.hasMD5 || f.hasSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	}
 	var result api.Multistatus
@@ -430,11 +431,12 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.canStream = true
 		f.precision = time.Second
 		f.useOCMtime = true
-		f.hasChecksums = true
+		f.hasMD5 = true
+		f.hasSHA1 = true
 	case "nextcloud":
 		f.precision = time.Second
 		f.useOCMtime = true
-		f.hasChecksums = true
+		f.hasSHA1 = true
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
@@ -536,7 +538,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			"Depth": depth,
 		},
 	}
-	if f.hasChecksums {
+	if f.hasMD5 || f.hasSHA1 {
 		opts.Body = bytes.NewBuffer(owncloudProps)
 	}
 	var result api.Multistatus
@@ -945,10 +947,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	if f.hasChecksums {
-		return hash.NewHashSet(hash.MD5, hash.SHA1)
+	hashes := hash.Set(hash.None)
+	if f.hasMD5 {
+		hashes.Add(hash.MD5)
 	}
-	return hash.Set(hash.None)
+	if f.hasSHA1 {
+		hashes.Add(hash.SHA1)
+	}
+	return hashes
 }
 
 // About gets quota information
@@ -1015,13 +1021,11 @@ func (o *Object) Remote() string {
 
 // Hash returns the SHA1 or MD5 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if o.fs.hasChecksums {
-		switch t {
-		case hash.SHA1:
-			return o.sha1, nil
-		case hash.MD5:
-			return o.md5, nil
-		}
+	if t == hash.MD5 && o.fs.hasMD5 {
+		return o.md5, nil
+	}
+	if t == hash.SHA1 && o.fs.hasSHA1 {
+		return o.sha1, nil
 	}
 	return "", hash.ErrUnsupported
 }
@@ -1042,10 +1046,14 @@ func (o *Object) setMetaData(info *api.Prop) (err error) {
 	o.hasMetaData = true
 	o.size = info.Size
 	o.modTime = time.Time(info.Modified)
-	if o.fs.hasChecksums {
+	if o.fs.hasMD5 || o.fs.hasSHA1 {
 		hashes := info.Hashes()
-		o.sha1 = hashes[hash.SHA1]
-		o.md5 = hashes[hash.MD5]
+		if o.fs.hasSHA1 {
+			o.sha1 = hashes[hash.SHA1]
+		}
+		if o.fs.hasMD5 {
+			o.md5 = hashes[hash.MD5]
+		}
 	}
 	return nil
 }
@@ -1126,19 +1134,21 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
 		ContentType:   fs.MimeType(ctx, src),
 	}
-	if o.fs.useOCMtime || o.fs.hasChecksums {
+	if o.fs.useOCMtime || o.fs.hasMD5 || o.fs.hasSHA1 {
 		opts.ExtraHeaders = map[string]string{}
 		if o.fs.useOCMtime {
 			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1e9)
 		}
-		if o.fs.hasChecksums {
-			// Set an upload checksum - prefer SHA1
-			//
-			// This is used as an upload integrity test. If we set
-			// only SHA1 here, owncloud will calculate the MD5 too.
+		// Set one upload checksum
+		// Owncloud uses one checksum only to check the upload and stores its own SHA1 and MD5
+		// Nextcloud stores the checksum you supply (SHA1 or MD5) but only stores one
+		if o.fs.hasSHA1 {
 			if sha1, _ := src.Hash(ctx, hash.SHA1); sha1 != "" {
 				opts.ExtraHeaders["OC-Checksum"] = "SHA1:" + sha1
-			} else if md5, _ := src.Hash(ctx, hash.MD5); md5 != "" {
+			}
+		}
+		if o.fs.hasMD5 && opts.ExtraHeaders["OC-Checksum"] == "" {
+			if md5, _ := src.Hash(ctx, hash.MD5); md5 != "" {
 				opts.ExtraHeaders["OC-Checksum"] = "MD5:" + md5
 			}
 		}
