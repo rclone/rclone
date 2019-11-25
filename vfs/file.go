@@ -37,13 +37,19 @@ type File struct {
 }
 
 // newFile creates a new File
+//
+// o may be nil
 func newFile(d *Dir, o fs.Object, leaf string) *File {
-	return &File{
+	f := &File{
 		d:     d,
 		o:     o,
 		leaf:  leaf,
 		inode: newInode(),
 	}
+	if o != nil {
+		f.size = o.Size()
+	}
+	return f
 }
 
 // String converts it to printable

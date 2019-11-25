@@ -21,16 +21,18 @@ func cleanup(t *testing.T, r *fstest.Run, vfs *VFS) {
 	r.Finalise()
 }
 
-// Open a file for write
-func rwHandleCreateReadOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
+// Create a file and open it with the flags passed in
+func rwHandleCreateFlags(t *testing.T, r *fstest.Run, create bool, filename string, flags int) (*VFS, *RWFileHandle) {
 	opt := DefaultOpt
 	opt.CacheMode = CacheModeFull
 	vfs := New(r.Fremote, &opt)
 
-	file1 := r.WriteObject(context.Background(), "dir/file1", "0123456789abcdef", t1)
-	fstest.CheckItems(t, r.Fremote, file1)
+	if create {
+		file1 := r.WriteObject(context.Background(), filename, "0123456789abcdef", t1)
+		fstest.CheckItems(t, r.Fremote, file1)
+	}
 
-	h, err := vfs.OpenFile("dir/file1", os.O_RDONLY, 0777)
+	h, err := vfs.OpenFile(filename, flags, 0777)
 	require.NoError(t, err)
 	fh, ok := h.(*RWFileHandle)
 	require.True(t, ok)
@@ -38,18 +40,14 @@ func rwHandleCreateReadOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
 	return vfs, fh
 }
 
+// Open a file for read
+func rwHandleCreateReadOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
+	return rwHandleCreateFlags(t, r, true, "dir/file1", os.O_RDONLY)
+}
+
 // Open a file for write
 func rwHandleCreateWriteOnly(t *testing.T, r *fstest.Run) (*VFS, *RWFileHandle) {
-	opt := DefaultOpt
-	opt.CacheMode = CacheModeFull
-	vfs := New(r.Fremote, &opt)
-
-	h, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
-	require.NoError(t, err)
-	fh, ok := h.(*RWFileHandle)
-	require.True(t, ok)
-
-	return vfs, fh
+	return rwHandleCreateFlags(t, r, false, "file1", os.O_WRONLY|os.O_CREATE)
 }
 
 // read data from the string
@@ -492,6 +490,96 @@ func TestRWFileHandleReleaseWrite(t *testing.T) {
 	err = fh.Release()
 	assert.NoError(t, err)
 	assert.True(t, fh.closed)
+}
+
+// check the size of the file through the open file (if not nil) and via stat
+func assertSize(t *testing.T, vfs *VFS, fh *RWFileHandle, filepath string, size int64) {
+	if fh != nil {
+		assert.Equal(t, size, fh.Size())
+	}
+	fi, err := vfs.Stat(filepath)
+	require.NoError(t, err)
+	assert.Equal(t, size, fi.Size())
+}
+
+func TestRWFileHandleSizeTruncateExisting(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs, fh := rwHandleCreateFlags(t, r, true, "dir/file1", os.O_WRONLY|os.O_TRUNC)
+	defer cleanup(t, r, vfs)
+
+	// check initial size after opening
+	assertSize(t, vfs, fh, "dir/file1", 0)
+
+	// write some bytes
+	n, err := fh.Write([]byte("hello"))
+	assert.NoError(t, err)
+	assert.Equal(t, 5, n)
+
+	// check size after writing
+	assertSize(t, vfs, fh, "dir/file1", 5)
+
+	// close
+	assert.NoError(t, fh.Close())
+
+	// check size after close
+	assertSize(t, vfs, nil, "dir/file1", 5)
+}
+
+func TestRWFileHandleSizeCreateExisting(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs, fh := rwHandleCreateFlags(t, r, true, "dir/file1", os.O_WRONLY|os.O_CREATE)
+	defer cleanup(t, r, vfs)
+
+	// check initial size after opening
+	assertSize(t, vfs, fh, "dir/file1", 16)
+
+	// write some bytes
+	n, err := fh.Write([]byte("hello"))
+	assert.NoError(t, err)
+	assert.Equal(t, 5, n)
+
+	// check size after writing
+	assertSize(t, vfs, fh, "dir/file1", 16)
+
+	// write some more bytes
+	n, err = fh.Write([]byte("helloHELLOhello"))
+	assert.NoError(t, err)
+	assert.Equal(t, 15, n)
+
+	// check size after writing
+	assertSize(t, vfs, fh, "dir/file1", 20)
+
+	// close
+	assert.NoError(t, fh.Close())
+
+	// check size after close
+	assertSize(t, vfs, nil, "dir/file1", 20)
+}
+
+func TestRWFileHandleSizeCreateNew(t *testing.T) {
+	r := fstest.NewRun(t)
+	vfs, fh := rwHandleCreateFlags(t, r, false, "file1", os.O_WRONLY|os.O_CREATE)
+	defer cleanup(t, r, vfs)
+
+	// check initial size after opening
+	assertSize(t, vfs, fh, "file1", 0)
+
+	// write some bytes
+	n, err := fh.Write([]byte("hello"))
+	assert.NoError(t, err)
+	assert.Equal(t, 5, n)
+
+	// check size after writing
+	assertSize(t, vfs, fh, "file1", 5)
+
+	// check size after writing
+	assertSize(t, vfs, fh, "file1", 5)
+
+	// close
+	assert.NoError(t, fh.Close())
+
+	// check size after close
+	assertSize(t, vfs, nil, "file1", 5)
 }
 
 func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
