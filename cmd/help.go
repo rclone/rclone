@@ -316,7 +316,11 @@ func showBackend(name string) {
 		optionsType = "advanced"
 		for _, opt := range opts {
 			done[opt.Name] = struct{}{}
-			fmt.Printf("#### --%s\n\n", opt.FlagName(backend.Prefix))
+			shortOpt := ""
+			if opt.ShortOpt != "" {
+				shortOpt = fmt.Sprintf(" / -%s", opt.ShortOpt)
+			}
+			fmt.Printf("#### --%s%s\n\n", opt.FlagName(backend.Prefix), shortOpt)
 			fmt.Printf("%s\n\n", opt.Help)
 			fmt.Printf("- Config:      %s\n", opt.Name)
 			fmt.Printf("- Env Var:     %s\n", opt.EnvVarName(backend.Prefix))

@@ -63,12 +63,21 @@ func (ss *stringSet) count() int {
 	return len(ss.items)
 }
 
-// String returns string representation of set items.
-func (ss *stringSet) String(progress *inProgress) string {
+// String returns string representation of set items excluding any in
+// exclude (if set).
+func (ss *stringSet) String(progress *inProgress, exclude *stringSet) string {
 	ss.mu.RLock()
 	defer ss.mu.RUnlock()
 	strngs := make([]string, 0, len(ss.items))
 	for name := range ss.items {
+		if exclude != nil {
+			exclude.mu.RLock()
+			_, found := exclude.items[name]
+			exclude.mu.RUnlock()
+			if found {
+				continue
+			}
+		}
 		var out string
 		if acc := progress.get(name); acc != nil {
 			out = acc.String()

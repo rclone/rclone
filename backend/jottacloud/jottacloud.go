@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -35,6 +36,8 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
+
+const enc = encodings.JottaCloud
 
 // Globals
 const (
@@ -81,14 +84,14 @@ func init() {
 			tokenString, ok := m.Get("token")
 			if ok && tokenString != "" {
 				fmt.Printf("Already have a token - refresh?\n")
-				if !config.Confirm() {
+				if !config.Confirm(false) {
 					return
 				}
 			}
 
 			srv := rest.NewClient(fshttp.NewClient(fs.Config))
 			fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
-			if config.Confirm() {
+			if config.Confirm(false) {
 				deviceRegistration, err := registerDevice(ctx, srv)
 				if err != nil {
 					log.Fatalf("Failed to register device: %v", err)
@@ -124,7 +127,7 @@ func init() {
 			}
 
 			fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
-			if config.Confirm() {
+			if config.Confirm(false) {
 				oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
 				if err != nil {
 					log.Fatalf("Failed to load oAuthClient: %s", err)
@@ -460,7 +463,7 @@ func urlPathEscape(in string) string {
 
 // filePathRaw returns an unescaped file path (f.root, file)
 func (f *Fs) filePathRaw(file string) string {
-	return path.Join(f.endpointURL, replaceReservedChars(path.Join(f.root, file)))
+	return path.Join(f.endpointURL, enc.FromStandardPath(path.Join(f.root, file)))
 }
 
 // filePath returns a escaped file path (f.root, file)
@@ -673,7 +676,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if item.Deleted {
 			continue
 		}
-		remote := path.Join(dir, restoreReservedChars(item.Name))
+		remote := path.Join(dir, enc.ToStandardName(item.Name))
 		d := fs.NewDir(remote, time.Time(item.ModifiedAt))
 		entries = append(entries, d)
 	}
@@ -683,7 +686,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if item.Deleted || item.State != "COMPLETED" {
 			continue
 		}
-		remote := path.Join(dir, restoreReservedChars(item.Name))
+		remote := path.Join(dir, enc.ToStandardName(item.Name))
 		o, err := f.newObjectWithInfo(ctx, remote, item)
 		if err != nil {
 			continue
@@ -708,7 +711,7 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 		if folder.Deleted {
 			return nil
 		}
-		folderPath := restoreReservedChars(path.Join(folder.Path, folder.Name))
+		folderPath := enc.ToStandardPath(path.Join(folder.Path, folder.Name))
 		folderPathLength := len(folderPath)
 		var remoteDir string
 		if folderPathLength > pathPrefixLength {
@@ -726,7 +729,7 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 			if file.Deleted || file.State != "COMPLETED" {
 				continue
 			}
-			remoteFile := path.Join(remoteDir, restoreReservedChars(file.Name))
+			remoteFile := path.Join(remoteDir, enc.ToStandardName(file.Name))
 			o, err := f.newObjectWithInfo(ctx, remoteFile, file)
 			if err != nil {
 				return err
@@ -897,7 +900,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *ap
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set(method, "/"+path.Join(f.endpointURL, replaceReservedChars(path.Join(f.root, dest))))
+	opts.Parameters.Set(method, "/"+path.Join(f.endpointURL, enc.FromStandardPath(path.Join(f.root, dest))))
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -1004,7 +1007,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, replaceReservedChars(srcPath))+"/", dstRemote)
+	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, enc.FromStandardPath(srcPath))+"/", dstRemote)
 
 	if err != nil {
 		return errors.Wrap(err, "couldn't move directory")
@@ -1295,7 +1298,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Created:  fileDate,
 		Modified: fileDate,
 		Md5:      md5String,
-		Path:     path.Join(o.fs.opt.Mountpoint, replaceReservedChars(path.Join(o.fs.root, o.remote))),
+		Path:     path.Join(o.fs.opt.Mountpoint, enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
 	}
 
 	// send it

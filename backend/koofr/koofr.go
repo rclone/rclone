@@ -15,11 +15,15 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 
 	httpclient "github.com/koofr/go-httpclient"
 	koofrclient "github.com/koofr/go-koofrclient"
 )
+
+const enc = encodings.Koofr
 
 // Register Fs with rclone
 func init() {
@@ -242,7 +246,7 @@ func (f *Fs) Hashes() hash.Set {
 
 // fullPath constructs a full, absolute path from a Fs root relative path,
 func (f *Fs) fullPath(part string) string {
-	return path.Join("/", f.root, part)
+	return enc.FromStandardPath(path.Join("/", f.root, part))
 }
 
 // NewFs constructs a new filesystem given a root path and configuration options
@@ -256,7 +260,9 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	if err != nil {
 		return nil, err
 	}
-	client := koofrclient.NewKoofrClient(opt.Endpoint, false)
+	httpClient := httpclient.New()
+	httpClient.Client = fshttp.NewClient(fs.Config)
+	client := koofrclient.NewKoofrClientWithHTTPClient(opt.Endpoint, httpClient)
 	basicAuth := fmt.Sprintf("Basic %s",
 		base64.StdEncoding.EncodeToString([]byte(opt.User+":"+pass)))
 	client.HTTPClient.Headers.Set("Authorization", basicAuth)
@@ -293,7 +299,7 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 		}
 		return nil, errors.New("Failed to find mount " + opt.MountID)
 	}
-	rootFile, err := f.client.FilesInfo(f.mountID, "/"+f.root)
+	rootFile, err := f.client.FilesInfo(f.mountID, enc.FromStandardPath("/"+f.root))
 	if err == nil && rootFile.Type != "dir" {
 		f.root = dir(f.root)
 		err = fs.ErrorIsFile
@@ -311,13 +317,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	entries = make([]fs.DirEntry, len(files))
 	for i, file := range files {
+		remote := path.Join(dir, enc.ToStandardName(file.Name))
 		if file.Type == "dir" {
-			entries[i] = fs.NewDir(path.Join(dir, file.Name), time.Unix(0, 0))
+			entries[i] = fs.NewDir(remote, time.Unix(0, 0))
 		} else {
 			entries[i] = &Object{
 				fs:     f,
 				info:   file,
-				remote: path.Join(dir, file.Name),
+				remote: remote,
 			}
 		}
 	}

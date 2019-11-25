@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/mockfs"
+	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +21,7 @@ func fileCreate(t *testing.T, r *fstest.Run) (*VFS, *File, fstest.Item) {
 
 	node, err := vfs.Stat("dir/file1")
 	require.NoError(t, err)
-	require.True(t, node.IsFile())
+	require.True(t, node.Mode().IsRegular())
 
 	return vfs, node.(*File), file1
 }
@@ -106,6 +108,51 @@ func TestFileOpenRead(t *testing.T) {
 	contents, err := ioutil.ReadAll(fd)
 	require.NoError(t, err)
 	assert.Equal(t, "file1 contents", string(contents))
+
+	require.NoError(t, fd.Close())
+}
+
+func TestFileOpenReadUnknownSize(t *testing.T) {
+	var (
+		contents = []byte("file contents")
+		remote   = "file.txt"
+		ctx      = context.Background()
+	)
+
+	// create a mock object which returns size -1
+	o := mockobject.New(remote).WithContent(contents, mockobject.SeekModeNone)
+	o.SetUnknownSize(true)
+	assert.Equal(t, int64(-1), o.Size())
+
+	// add it to a mock fs
+	f := mockfs.NewFs("test", "root")
+	f.AddObject(o)
+	testObj, err := f.NewObject(ctx, remote)
+	require.NoError(t, err)
+	assert.Equal(t, int64(-1), testObj.Size())
+
+	// create a VFS from that mockfs
+	vfs := New(f, nil)
+
+	// find the file
+	node, err := vfs.Stat(remote)
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	file := node.(*File)
+
+	// open it
+	fd, err := file.openRead()
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), fd.Size())
+
+	// check the contents are not empty even though size is empty
+	gotContents, err := ioutil.ReadAll(fd)
+	require.NoError(t, err)
+	assert.Equal(t, contents, gotContents)
+	t.Logf("gotContents = %q", gotContents)
+
+	// check that file size has been updated
+	assert.Equal(t, int64(len(contents)), fd.Size())
 
 	require.NoError(t, fd.Close())
 }

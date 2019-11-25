@@ -243,6 +243,15 @@ user = YourEmailAddress
 pass = encryptedpassword
 ```
 
+#### Required Flags for SharePoint ####
+As SharePoint does some special things with uploaded documents, you won't be able to use the documents size or the documents hash to compare if a file has been changed since the upload / which file is newer.
+
+For Rclone calls copying files (especially Office files such as .docx, .xlsx, etc.) from/to SharePoint (like copy, sync, etc.), you should append these flags to ensure Rclone uses the "Last Modified" datetime property to compare your documents:
+
+```
+--ignore-size --ignore-checksum --update
+```
+
 ### dCache ###
 
 dCache is a storage system that supports many protocols and

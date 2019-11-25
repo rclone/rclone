@@ -5,6 +5,7 @@ package sync
 import (
 	"context"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -311,7 +312,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Change last modified date only
@@ -345,7 +346,7 @@ func TestSyncSizeOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Update mtime, md5sum but not length of file
@@ -379,7 +380,7 @@ func TestSyncIgnoreSize(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Update size but not date of file
@@ -419,7 +420,7 @@ func TestSyncIgnoreTimes(t *testing.T) {
 
 	// We should have transferred exactly one file even though the
 	// files were identical.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -489,7 +490,7 @@ func TestSyncIgnoreErrors(t *testing.T) {
 	)
 
 	accounting.GlobalStats().ResetCounters()
-	fs.CountError(errors.New("boom"))
+	_ = fs.CountError(errors.New("boom"))
 	assert.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
 
 	fstest.CheckListingWithPrecision(
@@ -598,7 +599,7 @@ func TestSyncDoesntUpdateModtime(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// We should have transferred exactly one file, not set the mod time
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 }
 
 func TestSyncAfterAddingAFile(t *testing.T) {
@@ -799,7 +800,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	)
 
 	accounting.GlobalStats().ResetCounters()
-	fs.CountError(errors.New("boom"))
+	_ = fs.CountError(errors.New("boom"))
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 
@@ -971,10 +972,22 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 		fs.Config.ModifyWindow = oldModifyWindow
 	}()
 
-	accounting.GlobalStats().ResetCounters()
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeO, fourF, fiveF)
+
+	if r.Fremote.Hashes().Count() == 0 {
+		t.Logf("Skip test with --checksum as no hashes supported")
+		return
+	}
+
+	// now enable checksum
+	fs.Config.CheckSum = true
+	defer func() { fs.Config.CheckSum = false }()
+
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeF, fourF, fiveF)
 }
 
 // Test with TrackRenames set
@@ -985,7 +998,6 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	fs.Config.TrackRenames = true
 	defer func() {
 		fs.Config.TrackRenames = false
-
 	}()
 
 	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.None
@@ -1009,19 +1021,73 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
-	if canTrackRenames {
-		if r.Fremote.Features().Move == nil || r.Fremote.Name() == "TestUnion" { // union remote can Move but returns CantMove error
-			// If no server side Move, we are falling back to Copy + Delete
-			assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers()) // 1 copy
-			assert.Equal(t, int64(4), accounting.GlobalStats().GetChecks())    // 2 file checks + 1 move + 1 delete
-		} else {
-			assert.Equal(t, int64(0), accounting.GlobalStats().GetTransfers()) // 0 copy
-			assert.Equal(t, int64(3), accounting.GlobalStats().GetChecks())    // 2 file checks + 1 move
-		}
-	} else {
-		assert.Equal(t, int64(2), accounting.GlobalStats().GetChecks())    // 2 file checks
-		assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers()) // 0 copy
+	// As currently there is no Fs interface providing number of chunks
+	// in a file, this test depends on the well-known names of test remotes.
+	remote := r.Fremote.Name()
+
+	// Union remote can Move but returns CantMove error.
+	moveAsCopyDelete := r.Fremote.Features().Move == nil || remote == "TestUnion"
+
+	chunker := strings.HasPrefix(remote, "TestChunker")
+	wrappedMoveAsCopyDelete := chunker && strings.HasSuffix(remote, "S3")
+
+	chunk3b := chunker && strings.Contains(remote, "Chunk3b")            // chunker with 3 byte chunks
+	chunk50b := chunker && strings.Contains(remote, "Chunk50b")          // chunker with 50 byte chunks
+	chunkDefault := chunker && !strings.Contains(remote, "ChunkerChunk") // default big chunk size
+	chunkBig := chunk50b || chunkDefault                                 // file is smaller than chunk size
+
+	// Verify number of checks for a toy 14 byte file.
+	// The order of cases matters!
+	var checks int
+	switch {
+	case canTrackRenames && chunk3b:
+		checks = 8 // chunker makes extra checks for each small chunk
+	case canTrackRenames && chunkBig:
+		checks = 4 // chunker makes 1 extra check for a single big chunk
+	case canTrackRenames && moveAsCopyDelete:
+		checks = 4 // 2 file checks + 1 move + 1 delete
+	case canTrackRenames:
+		checks = 3 // 2 file checks + 1 move
+	case !chunker:
+		checks = 2 // 2 file checks on a generic non-chunking remote
+	case chunk3b:
+		checks = 6 // chunker makes extra checks for each small chunk
+	case chunkBig && wrappedMoveAsCopyDelete:
+		checks = 4 // one more extra check because S3 emulates Move as Copy+Delete
+	case chunkBig:
+		checks = 3 // chunker makes 1 extra check for a single big chunk
+	default:
+		checks = -1 // skip verification for chunker with unknown chunk size
 	}
+	if checks != -1 { // "-1" allows remotes to bypass this check
+		assert.Equal(t, int64(checks), accounting.GlobalStats().GetChecks())
+	}
+
+	// Verify number of copy operations for a toy 14 byte file.
+	// The order of cases matters!
+	var copies int64
+	switch {
+	case canTrackRenames && moveAsCopyDelete:
+		copies = 1 // 1 copy
+	case canTrackRenames:
+		copies = 0 // 0 copy
+	case chunkBig && wrappedMoveAsCopyDelete:
+		copies = 2 // extra Copy because S3 emulates Move as Copy+Delete.
+	default:
+		copies = 1
+	}
+	if copies != -1 { // "-1" allows remotes to bypass this check
+		assert.Equal(t, copies, accounting.GlobalStats().GetTransfers())
+	}
+}
+
+func toyFileTransfers(r *fstest.Run) int64 {
+	remote := r.Fremote.Name()
+	transfers := 1
+	if strings.HasPrefix(remote, "TestChunker") && strings.HasSuffix(remote, "S3") {
+		transfers++ // Extra Copy because S3 emulates Move as Copy+Delete.
+	}
+	return int64(transfers)
 }
 
 // Test a server side move if possible, or the backup path if not
@@ -1600,7 +1666,7 @@ func TestSyncUTFNorm(t *testing.T) {
 
 	// We should have transferred exactly one file, but kept the
 	// normalized state of the file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Flocal, file1)
 	file1.Path = file2.Path
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -1697,5 +1763,7 @@ func TestAbort(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
-	assert.Equal(t, accounting.ErrorMaxTransferLimitReached, err)
+	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReached)
+	fserrors.Count(expectedErr)
+	assert.Equal(t, expectedErr, err)
 }

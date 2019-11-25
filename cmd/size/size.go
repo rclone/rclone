@@ -8,6 +8,7 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -16,7 +17,8 @@ var jsonOutput bool
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().BoolVar(&jsonOutput, "json", false, "format output as JSON")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "format output as JSON")
 }
 
 var commandDefinition = &cobra.Command{

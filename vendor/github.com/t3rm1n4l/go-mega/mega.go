@@ -105,7 +105,7 @@ type Mega struct {
 	// Server state sn
 	ssn string
 	// Session ID
-	sid []byte
+	sid string
 	// Master key
 	k []byte
 	// User handle
@@ -407,8 +407,8 @@ func (m *Mega) api_request(r []byte) (buf []byte, err error) {
 
 	url := fmt.Sprintf("%s/cs?id=%d", m.baseurl, m.sn)
 
-	if m.sid != nil {
-		url = fmt.Sprintf("%s&sid=%s", url, string(m.sid))
+	if m.sid != "" {
+		url = fmt.Sprintf("%s&sid=%s", url, m.sid)
 	}
 
 	sleepTime := minSleepTime // inital backoff time
@@ -499,7 +499,7 @@ func (m *Mega) prelogin(email string) error {
 		if len(res[0].Salt) == 0 {
 			return errors.New("prelogin: no salt returned")
 		}
-		m.accountSalt, err = base64urldecode([]byte(res[0].Salt))
+		m.accountSalt, err = base64urldecode(res[0].Salt)
 		if err != nil {
 			return err
 		}
@@ -532,7 +532,7 @@ func (m *Mega) login(email string, passwd string) error {
 	msg[0].Cmd = "us"
 	msg[0].User = email
 	if m.accountVersion == 1 {
-		msg[0].Handle = string(uhandle)
+		msg[0].Handle = uhandle
 	} else {
 		const derivedKeyLength = 2 * aes.BlockSize
 		derivedKey := pbkdf2.Key([]byte(passwd), m.accountSalt, 100000, derivedKeyLength, sha512.New)
@@ -544,8 +544,8 @@ func (m *Mega) login(email string, passwd string) error {
 		if err != nil {
 			return err
 		}
-		msg[0].Handle = string(base64urlencode(authKey))
-		msg[0].SessionKey = string(base64urlencode(sessionKey))
+		msg[0].Handle = base64urlencode(authKey)
+		msg[0].SessionKey = base64urlencode(sessionKey)
 	}
 
 	req, err := json.Marshal(msg)
@@ -562,7 +562,7 @@ func (m *Mega) login(email string, passwd string) error {
 		return err
 	}
 
-	m.k, err = base64urldecode([]byte(res[0].Key))
+	m.k, err = base64urldecode(res[0].Key)
 	if err != nil {
 		return err
 	}
@@ -571,7 +571,7 @@ func (m *Mega) login(email string, passwd string) error {
 		return err
 	}
 	cipher.Decrypt(m.k, m.k)
-	m.sid, err = decryptSessionId([]byte(res[0].Privk), []byte(res[0].Csid), m.k)
+	m.sid, err = decryptSessionId(res[0].Privk, res[0].Csid, m.k)
 	if err != nil {
 		return err
 	}
@@ -708,7 +708,7 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 		switch {
 		// File or folder owned by current user
 		case args[0] == itm.User:
-			buf, err := base64urldecode([]byte(args[1]))
+			buf, err := base64urldecode(args[1])
 			if err != nil {
 				return nil, err
 			}
@@ -722,7 +722,7 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 			}
 			// Shared folder
 		case itm.SUser != "" && itm.SKey != "":
-			sk, err := base64urldecode([]byte(itm.SKey))
+			sk, err := base64urldecode(itm.SKey)
 			if err != nil {
 				return nil, err
 			}
@@ -736,7 +736,7 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 			}
 
 			m.FS.skmap[itm.Hash] = itm.SKey
-			buf, err := base64urldecode([]byte(args[1]))
+			buf, err := base64urldecode(args[1])
 			if err != nil {
 				return nil, err
 			}
@@ -751,7 +751,7 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 			// Shared file
 		default:
 			k := m.FS.skmap[args[0]]
-			b, err := base64urldecode([]byte(k))
+			b, err := base64urldecode(k)
 			if err != nil {
 				return nil, err
 			}
@@ -763,7 +763,7 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 			if err != nil {
 				return nil, err
 			}
-			buf, err := base64urldecode([]byte(args[1]))
+			buf, err := base64urldecode(args[1])
 			if err != nil {
 				return nil, err
 			}
@@ -779,6 +779,10 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 
 		switch {
 		case itm.T == FILE:
+			if len(compkey) < 8 {
+				m.logf("ignoring item: compkey too short (%d): %#v", len(compkey), itm)
+				return nil, nil
+			}
 			key = []uint32{compkey[0] ^ compkey[4], compkey[1] ^ compkey[5], compkey[2] ^ compkey[6], compkey[3] ^ compkey[7]}
 		default:
 			key = compkey
@@ -789,7 +793,7 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 			// FIXME:
 			attr.Name = "BAD ATTRIBUTE"
 		} else {
-			attr, err = decryptAttr(bkey, []byte(itm.Attr))
+			attr, err = decryptAttr(bkey, itm.Attr)
 			// FIXME:
 			if err != nil {
 				attr.Name = "BAD ATTRIBUTE"
@@ -978,7 +982,12 @@ func (m *Mega) NewDownload(src *Node) (*Download, error) {
 		return nil, err
 	}
 
-	_, err = decryptAttr(key, []byte(res[0].Attr))
+	// DownloadResp has an embedded error in it for some reason
+	if res[0].Err != 0 {
+		return nil, parseError(res[0].Err)
+	}
+
+	_, err = decryptAttr(key, res[0].Attr)
 	if err != nil {
 		return nil, err
 	}
@@ -1484,8 +1493,8 @@ func (u *Upload) Finish() (node *Node, err error) {
 	cmsg[0].T = u.parenthash
 	cmsg[0].N[0].H = string(u.completion_handle)
 	cmsg[0].N[0].T = FILE
-	cmsg[0].N[0].A = string(attr_data)
-	cmsg[0].N[0].K = string(base64urlencode(buf))
+	cmsg[0].N[0].A = attr_data
+	cmsg[0].N[0].K = base64urlencode(buf)
 
 	request, err := json.Marshal(cmsg)
 	if err != nil {
@@ -1662,8 +1671,8 @@ func (m *Mega) Rename(src *Node, name string) error {
 	}
 
 	msg[0].Cmd = "a"
-	msg[0].Attr = string(attr_data)
-	msg[0].Key = string(base64urlencode(key))
+	msg[0].Attr = attr_data
+	msg[0].Key = base64urlencode(key)
 	msg[0].N = src.hash
 	msg[0].I, err = randString(10)
 	if err != nil {
@@ -1723,8 +1732,8 @@ func (m *Mega) CreateDir(name string, parent *Node) (*Node, error) {
 	msg[0].T = parent.hash
 	msg[0].N[0].H = "xxxxxxxx"
 	msg[0].N[0].T = FOLDER
-	msg[0].N[0].A = string(attr_data)
-	msg[0].N[0].K = string(base64urlencode(key))
+	msg[0].N[0].A = attr_data
+	msg[0].N[0].K = base64urlencode(key)
 	msg[0].I, err = randString(10)
 	if err != nil {
 		return nil, err
@@ -1817,7 +1826,7 @@ func (m *Mega) processUpdateNode(evRaw []byte) error {
 	}
 
 	node := m.FS.hashLookup(ev.N)
-	attr, err := decryptAttr(node.meta.key, []byte(ev.Attr))
+	attr, err := decryptAttr(node.meta.key, ev.Attr)
 	if err == nil {
 		node.name = attr.Name
 	} else {
@@ -1861,7 +1870,7 @@ func (m *Mega) pollEvents() {
 			sleepTime = minSleepTime
 		}
 
-		url := fmt.Sprintf("%s/sc?sn=%s&sid=%s", m.baseurl, m.ssn, string(m.sid))
+		url := fmt.Sprintf("%s/sc?sn=%s&sid=%s", m.baseurl, m.ssn, m.sid)
 		resp, err = m.client.Post(url, "application/xml", nil)
 		if err != nil {
 			m.logf("pollEvents: Error fetching status: %s", err)
@@ -2014,7 +2023,7 @@ func (m *Mega) Link(n *Node, includeKey bool) (string, error) {
 	}
 	if includeKey {
 		m.FS.mutex.Lock()
-		key := string(base64urlencode(n.meta.compkey))
+		key := base64urlencode(n.meta.compkey)
 		m.FS.mutex.Unlock()
 		return fmt.Sprintf("%v/#!%v!%v", BASE_DOWNLOAD_URL, id, key), nil
 	} else {

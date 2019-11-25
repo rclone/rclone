@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/terminal"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/text/unicode/norm"
 )
@@ -61,6 +62,9 @@ const (
 
 	// ConfigAuthorize indicates that we just want "rclone authorize"
 	ConfigAuthorize = "config_authorize"
+
+	// ConfigAuthNoBrowser indicates that we do not want to open browser
+	ConfigAuthNoBrowser = "config_auth_no_browser"
 )
 
 // Global
@@ -571,7 +575,7 @@ func SetValueAndSave(name, key, value string) (err error) {
 	_, err = reloadedConfigFile.GetSection(name)
 	if err != nil {
 		// Section doesn't exist yet so ignore reload
-		return err
+		return nil
 	}
 	// Update the config file with the reloaded version
 	configFile = reloadedConfigFile
@@ -624,11 +628,26 @@ var ReadLine = func() string {
 	return strings.TrimSpace(line)
 }
 
-// Command - choose one
-func Command(commands []string) byte {
+// ReadNonEmptyLine prints prompt and calls Readline until non empty
+func ReadNonEmptyLine(prompt string) string {
+	result := ""
+	for result == "" {
+		fmt.Print(prompt)
+		result = strings.TrimSpace(ReadLine())
+	}
+	return result
+}
+
+// CommandDefault - choose one.  If return is pressed then it will
+// chose the defaultIndex if it is >= 0
+func CommandDefault(commands []string, defaultIndex int) byte {
 	opts := []string{}
-	for _, text := range commands {
-		fmt.Printf("%c) %s\n", text[0], text[1:])
+	for i, text := range commands {
+		def := ""
+		if i == defaultIndex {
+			def = " (default)"
+		}
+		fmt.Printf("%c) %s%s\n", text[0], text[1:], def)
 		opts = append(opts, text[:1])
 	}
 	optString := strings.Join(opts, "")
@@ -636,6 +655,9 @@ func Command(commands []string) byte {
 	for {
 		fmt.Printf("%s> ", optHelp)
 		result := strings.ToLower(ReadLine())
+		if len(result) == 0 && defaultIndex >= 0 {
+			return optString[defaultIndex]
+		}
 		if len(result) != 1 {
 			continue
 		}
@@ -646,11 +668,20 @@ func Command(commands []string) byte {
 	}
 }
 
+// Command - choose one
+func Command(commands []string) byte {
+	return CommandDefault(commands, -1)
+}
+
 // Confirm asks the user for Yes or No and returns true or false
 //
-// If AutoConfirm is set, it will return true
-func Confirm() bool {
-	return Command([]string{"yYes", "nNo"}) == 'y'
+// If the user presses enter then the Default will be used
+func Confirm(Default bool) bool {
+	defaultIndex := 0
+	if !Default {
+		defaultIndex = 1
+	}
+	return CommandDefault([]string{"yYes", "nNo"}, defaultIndex) == 'y'
 }
 
 // ConfirmWithConfig asks the user for Yes or No and returns true or
@@ -677,7 +708,7 @@ func ConfirmWithConfig(m configmap.Getter, configName string, Default bool) bool
 		fmt.Printf("Auto confirm is set: answering %s, override by setting config parameter %s=%v\n", answer, configName, !Default)
 		return Default
 	}
-	return Confirm()
+	return Confirm(Default)
 }
 
 // Choose one of the defaults or type a new string if newOk is set
@@ -687,6 +718,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 		valueDescription = "your own"
 	}
 	fmt.Printf("Choose a number from below, or type in %s value\n", valueDescription)
+	attributes := []string{terminal.HiRedFg, terminal.HiGreenFg}
 	for i, text := range defaults {
 		var lines []string
 		if help != nil {
@@ -695,6 +727,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 		}
 		lines = append(lines, fmt.Sprintf("%q", text))
 		pos := i + 1
+		terminal.WriteString(attributes[i%len(attributes)])
 		if len(lines) == 1 {
 			fmt.Printf("%2d > %s\n", pos, text)
 		} else {
@@ -716,6 +749,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 				fmt.Printf("%s %c %s\n", number, sep, line)
 			}
 		}
+		terminal.WriteString(terminal.Reset)
 	}
 	for {
 		fmt.Printf("%s> ", what)
@@ -783,7 +817,7 @@ func ShowRemote(name string) {
 // OkRemote prints the contents of the remote and ask if it is OK
 func OkRemote(name string) bool {
 	ShowRemote(name)
-	switch i := Command([]string{"yYes this is OK", "eEdit this remote", "dDelete this remote"}); i {
+	switch i := CommandDefault([]string{"yYes this is OK", "eEdit this remote", "dDelete this remote"}, 0); i {
 	case 'y':
 		return true
 	case 'e':
@@ -853,12 +887,14 @@ func ChooseOption(o *fs.Option, name string) string {
 	fmt.Println(o.Help)
 	if o.IsPassword {
 		actions := []string{"yYes type in my own password", "gGenerate random password"}
+		defaultAction := -1
 		if !o.Required {
+			defaultAction = len(actions)
 			actions = append(actions, "nNo leave this optional password blank")
 		}
 		var password string
 		var err error
-		switch i := Command(actions); i {
+		switch i := CommandDefault(actions, defaultAction); i {
 		case 'y':
 			password = ChangePassword("the")
 		case 'g':
@@ -873,7 +909,7 @@ func ChooseOption(o *fs.Option, name string) string {
 				fmt.Printf("Use this password? Please note that an obscured version of this \npassword (and not the " +
 					"password itself) will be stored under your \nconfiguration file, so keep this generated password " +
 					"in a safe place.\n")
-				if Confirm() {
+				if Confirm(true) {
 					break
 				}
 			}
@@ -1048,12 +1084,17 @@ func fsOption() *fs.Option {
 	return o
 }
 
-// NewRemoteName asks the user for a name for a remote
+// NewRemoteName asks the user for a name for a new remote
 func NewRemoteName() (name string) {
 	for {
 		fmt.Printf("name> ")
 		name = ReadLine()
-		err := fspath.CheckConfigName(name)
+		_, err := getConfigData().GetSection(name)
+		if err == nil {
+			fmt.Printf("Remote %q already exists.\n", name)
+			continue
+		}
+		err = fspath.CheckConfigName(name)
 		switch {
 		case name == "":
 			fmt.Printf("Can't use empty name.\n")
@@ -1078,7 +1119,7 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 				break
 			}
 			fmt.Printf("Edit advanced config? (y/n)\n")
-			if !Confirm() {
+			if !Confirm(false) {
 				break
 			}
 		}
@@ -1093,7 +1134,7 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 				if !isNew {
 					fmt.Printf("Value %q = %q\n", option.Name, FileGet(name, option.Name))
 					fmt.Printf("Edit? (y/n)>\n")
-					if !Confirm() {
+					if !Confirm(false) {
 						continue
 					}
 				}
@@ -1285,7 +1326,7 @@ func SetPassword() {
 //
 //   rclone authorize "fs name"
 //   rclone authorize "fs name" "client id" "client secret"
-func Authorize(args []string) {
+func Authorize(args []string, noAutoBrowser bool) {
 	defer suppressConfirm()()
 	switch len(args) {
 	case 1, 3:
@@ -1305,10 +1346,15 @@ func Authorize(args []string) {
 
 	// Indicate that we are running rclone authorize
 	getConfigData().SetValue(name, ConfigAuthorize, "true")
+	if noAutoBrowser {
+		getConfigData().SetValue(name, ConfigAuthNoBrowser, "true")
+	}
+
 	if len(args) == 3 {
 		getConfigData().SetValue(name, ConfigClientID, args[1])
 		getConfigData().SetValue(name, ConfigClientSecret, args[2])
 	}
+
 	m := fs.ConfigMap(f, name)
 	f.Config(name, m)
 }

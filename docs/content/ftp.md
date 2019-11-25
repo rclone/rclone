@@ -103,6 +103,25 @@ will be time of upload.
 
 FTP does not support any checksums.
 
+#### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+File names can also not end with the following characters.
+These only get replaced if they are last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+
+Note that not all FTP servers can have all characters in file names, for example:
+
+| FTP Server| Forbidden characters |
+| --------- |:--------------------:|
+| proftpd   | `*`                  |
+| pureftpd  | `\ [ ]`              |
+
 ### Implicit TLS ###
 
 FTP supports implicit FTP over TLS servers (FTPS). This has to be enabled
@@ -181,6 +200,15 @@ Do not verify the TLS certificate of the server
 
 - Config:      no_check_certificate
 - Env Var:     RCLONE_FTP_NO_CHECK_CERTIFICATE
+- Type:        bool
+- Default:     false
+
+#### --ftp-disable-epsv
+
+Disable using EPSV even if server advertises support
+
+- Config:      disable_epsv
+- Env Var:     RCLONE_FTP_DISABLE_EPSV
 - Type:        bool
 - Default:     false
 

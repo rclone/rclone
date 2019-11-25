@@ -41,7 +41,7 @@ Then
 		cmd.CheckArgs(0, 2, command, args)
 		if len(args) == 0 {
 			fmt.Printf("Supported hashes are:\n")
-			for _, ht := range hash.Supported.Array() {
+			for _, ht := range hash.Supported().Array() {
 				fmt.Printf("  * %v\n", ht)
 			}
 			return nil

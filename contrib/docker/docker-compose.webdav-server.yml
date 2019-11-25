@@ -1,0 +1,35 @@
+rclone-webdav-server:
+  container_name: rclone-webdav-server
+
+  image: rclone/rclone
+  command:
+# Tweak here rclone's command line switches:
+#    - "--config"
+#    - "/path/to/mounted/rclone.conf"
+    - "--verbose"
+    - "serve"
+    - "webdav"
+    - "remote:/"
+#    - "--addr"
+#    - "0.0.0.0:8080"
+    - "--read-only"
+#    - "--no-modtime"
+#    - "--no-checksum"
+
+  restart: unless-stopped
+
+  # Use host networking for simplicity.
+  # It also enables server's default listen on 127.0.0.1 to work safely.
+  net: host
+
+  # If you want to use port mapping instead of host networking,
+  # make sure to make rclone listen on 0.0.0.0.
+  #ports:
+  #  - "127.0.0.1:8080:8080"
+
+  # Here you have to map your host's rclone.conf directory to
+  # container's /root/.config/rclone/ dir (R/O).
+  # If you have any remote referencing local files, you have to
+  # map them here, too.
+  volumes:
+    - ~/.config/rclone/:/root/.config/rclone/:ro

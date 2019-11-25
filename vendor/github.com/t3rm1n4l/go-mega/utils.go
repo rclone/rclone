@@ -66,48 +66,27 @@ func a32_to_bytes(a []uint32) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// base64urlencode encodes byte slice b using base64 url encoding.
-// It removes `=` padding when necessary
-func base64urlencode(b []byte) []byte {
-	enc := base64.URLEncoding
-	encSize := enc.EncodedLen(len(b))
-	buf := make([]byte, encSize)
-	enc.Encode(buf, b)
-
-	paddSize := 3 - len(b)%3
-	if paddSize < 3 {
-		encSize -= paddSize
-		buf = buf[:encSize]
-	}
-
-	return buf
+// base64urlencode encodes byte slice b using base64 url encoding
+// without `=` padding.
+func base64urlencode(b []byte) string {
+	return base64.RawURLEncoding.EncodeToString(b)
 }
 
-// base64urldecode decodes the byte slice b using base64 url decoding.
-// It adds required '=' padding before decoding.
-func base64urldecode(b []byte) ([]byte, error) {
-	enc := base64.URLEncoding
-	padSize := 4 - len(b)%4
-
-	switch padSize {
-	case 1:
-		b = append(b, '=')
-	case 2:
-		b = append(b, '=', '=')
-	}
-
-	decSize := enc.DecodedLen(len(b))
-	buf := make([]byte, decSize)
-	n, err := enc.Decode(buf, b)
-	if err != nil {
-		return nil, err
-	}
-	return buf[:n], err
+// base64urldecode decodes the byte slice b using unpadded base64 url
+// decoding. It also allows the characters from standard base64 to be
+// compatible with the mega decoder.
+func base64urldecode(s string) ([]byte, error) {
+	enc := base64.RawURLEncoding
+	// mega base64 decoder accepts the characters from both URLEncoding and StdEncoding
+	// though nearly all strings are URL encoded
+	s = strings.Replace(s, "+", "-", -1)
+	s = strings.Replace(s, "/", "_", -1)
+	return enc.DecodeString(s)
 }
 
 // base64_to_a32 converts base64 encoded byte slice b to uint32 slice.
-func base64_to_a32(b []byte) ([]uint32, error) {
-	d, err := base64urldecode(b)
+func base64_to_a32(s string) ([]uint32, error) {
+	d, err := base64urldecode(s)
 	if err != nil {
 		return nil, err
 	}
@@ -115,10 +94,10 @@ func base64_to_a32(b []byte) ([]uint32, error) {
 }
 
 // a32_to_base64 converts uint32 slice to base64 encoded byte slice.
-func a32_to_base64(a []uint32) ([]byte, error) {
+func a32_to_base64(a []uint32) (string, error) {
 	d, err := a32_to_bytes(a)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	return base64urlencode(d), nil
 }
@@ -181,10 +160,10 @@ func password_key(p string) ([]byte, error) {
 
 // stringhash computes generic string hash. Uses k as the key for AES
 // cipher.
-func stringhash(s string, k []byte) ([]byte, error) {
+func stringhash(s string, k []byte) (string, error) {
 	a, err := bytes_to_a32(paddnull([]byte(s), 4))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	h := []uint32{0, 0, 0, 0}
 	for i, v := range a {
@@ -193,18 +172,18 @@ func stringhash(s string, k []byte) ([]byte, error) {
 
 	hb, err := a32_to_bytes(h)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	cipher, err := aes.NewCipher(k)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	for i := 16384; i > 0; i-- {
 		cipher.Encrypt(hb, hb)
 	}
 	ha, err := bytes_to_a32(paddnull(hb, 4))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return a32_to_base64([]uint32{ha[0], ha[2]})
@@ -272,24 +251,24 @@ func blockEncrypt(blk cipher.Block, dst, src []byte) error {
 
 // decryptSeessionId decrypts the session id using the given private
 // key.
-func decryptSessionId(privk []byte, csid []byte, mk []byte) ([]byte, error) {
+func decryptSessionId(privk string, csid string, mk []byte) (string, error) {
 
 	block, err := aes.NewCipher(mk)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	pk, err := base64urldecode(privk)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	err = blockDecrypt(block, pk, pk)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	c, err := base64urldecode(csid)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	m, _ := getMPI(c)
@@ -328,7 +307,7 @@ func getChunkSizes(size int64) (chunks []chunkSize) {
 
 var attrMatch = regexp.MustCompile(`{".*"}`)
 
-func decryptAttr(key []byte, data []byte) (attr FileAttr, err error) {
+func decryptAttr(key []byte, data string) (attr FileAttr, err error) {
 	err = EBADATTR
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -340,7 +319,7 @@ func decryptAttr(key []byte, data []byte) (attr FileAttr, err error) {
 	}
 	mode := cipher.NewCBCDecrypter(block, iv)
 	buf := make([]byte, len(data))
-	ddata, err := base64urldecode([]byte(data))
+	ddata, err := base64urldecode(data)
 	if err != nil {
 		return attr, err
 	}
@@ -357,15 +336,15 @@ func decryptAttr(key []byte, data []byte) (attr FileAttr, err error) {
 	return attr, err
 }
 
-func encryptAttr(key []byte, attr FileAttr) (b []byte, err error) {
+func encryptAttr(key []byte, attr FileAttr) (b string, err error) {
 	err = EBADATTR
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	data, err := json.Marshal(attr)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	attrib := []byte("MEGA")
 	attrib = append(attrib, data...)
@@ -373,7 +352,7 @@ func encryptAttr(key []byte, attr FileAttr) (b []byte, err error) {
 
 	iv, err := a32_to_bytes([]uint32{0, 0, 0, 0})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(attrib, attrib)

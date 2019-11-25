@@ -35,7 +35,7 @@ costs more.  It may do in future (probably with a flag).
 
 ## Bugs
 
-Bugs are stored in rclone's Github project:
+Bugs are stored in rclone's GitHub project:
 
 * [Reported bugs](https://github.com/rclone/rclone/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 * [Known issues](https://github.com/rclone/rclone/issues?q=is%3Aopen+is%3Aissue+milestone%3A%22Known+Problem%22)

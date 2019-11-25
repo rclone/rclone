@@ -134,6 +134,25 @@ This command does not take any path arguments.
 To view your current quota you can use the `rclone about remote:`
 command which will display your usage limit (quota) and the current usage.
 
+#### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| "         | 0x22  | ＂          |
+| *         | 0x2A  | ＊          |
+| :         | 0x3A  | ：          |
+| <         | 0x3C  | ＜          |
+| >         | 0x3E  | ＞          |
+| ?         | 0x3F  | ？          |
+| \         | 0x5C  | ＼          |
+| \|        | 0x7C  | ｜          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
+
 ### Limitations ###
 
 File size limits depend on your account. A single file size is limited by 2G
@@ -194,20 +213,20 @@ Here are the advanced options specific to mailru (Mail.ru Cloud).
 #### --mailru-speedup-file-patterns
 
 Comma separated list of file name patterns eligible for speedup (put by hash).
-Patterns are case insensitive and can contain `*` or `?` meta characters.
+Patterns are case insensitive and can contain '*' or '?' meta characters.
 
 - Config:      speedup_file_patterns
 - Env Var:     RCLONE_MAILRU_SPEEDUP_FILE_PATTERNS
 - Type:        string
 - Default:     "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf"
 - Examples:
-    - `""`
+    - ""
         - Empty list completely disables speedup (put by hash).
-    - `"*"`
+    - "*"
         - All files will be attempted for speedup.
-    - `"*.mkv,*.avi,*.mp4,*.mp3"`
+    - "*.mkv,*.avi,*.mp4,*.mp3"
         - Only common audio/video files will be tried for put by hash.
-    - `"*.zip,*.gz,*.rar,*.pdf"`
+    - "*.zip,*.gz,*.rar,*.pdf"
         - Only common archives or PDF books will be tried for speedup.
 
 #### --mailru-speedup-max-disk
@@ -269,8 +288,12 @@ Defaults to "rclone/VERSION" or "--user-agent" provided on command line.
 
 #### --mailru-quirks
 
-Comma separated list of internal maintenance flags. This option is intended
-for development purposes. Should not be used by an ordinary user.
+Comma separated list of internal maintenance flags.
+This option must not be used by an ordinary user. It is intended only to
+facilitate remote troubleshooting of backend issues. Strict meaning of
+flags is not documented and not guaranteed to persist between releases.
+Quirks will be removed when the backend grows stable.
+Supported quirks: atomicmkdir binlist gzip insecure retry400
 
 - Config:      quirks
 - Env Var:     RCLONE_MAILRU_QUIRKS

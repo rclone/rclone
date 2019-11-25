@@ -25,7 +25,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -226,23 +225,6 @@ func TestHashSums(t *testing.T) {
 		!strings.Contains(res, "                                          potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
-
-	// Dropbox Hash Sum
-
-	buf.Reset()
-	err = operations.DropboxHashSum(context.Background(), r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "fc62b10ec59efa8041f5a6c924d7c91572c1bbda280d9e01312b660804df1d47  empty space\n") &&
-		!strings.Contains(res, "                                                     UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                                                  empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "a979481df794fed9c3990a6a422e0b1044ac802c15fab13af9c687f8bdbee01a  potato2\n") &&
-		!strings.Contains(res, "                                                     UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                                                  potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
 }
 
 func TestSuffixName(t *testing.T) {
@@ -431,45 +413,6 @@ func TestCat(t *testing.T) {
 	}
 }
 
-func TestRcat(t *testing.T) {
-	checkSumBefore := fs.Config.CheckSum
-	defer func() { fs.Config.CheckSum = checkSumBefore }()
-
-	check := func(withChecksum bool) {
-		fs.Config.CheckSum = withChecksum
-		prefix := "no_checksum_"
-		if withChecksum {
-			prefix = "with_checksum_"
-		}
-
-		r := fstest.NewRun(t)
-		defer r.Finalise()
-
-		fstest.CheckListing(t, r.Fremote, []fstest.Item{})
-
-		data1 := "this is some really nice test data"
-		path1 := prefix + "small_file_from_pipe"
-
-		data2 := string(make([]byte, fs.Config.StreamingUploadCutoff+1))
-		path2 := prefix + "big_file_from_pipe"
-
-		in := ioutil.NopCloser(strings.NewReader(data1))
-		_, err := operations.Rcat(context.Background(), r.Fremote, path1, in, t1)
-		require.NoError(t, err)
-
-		in = ioutil.NopCloser(strings.NewReader(data2))
-		_, err = operations.Rcat(context.Background(), r.Fremote, path2, in, t2)
-		require.NoError(t, err)
-
-		file1 := fstest.NewItem(path1, data1, t1)
-		file2 := fstest.NewItem(path2, data2, t2)
-		fstest.CheckItems(t, r.Fremote, file1, file2)
-	}
-
-	check(true)
-	check(false)
-}
-
 func TestPurge(t *testing.T) {
 	r := fstest.NewRunIndividual(t) // make new container (azureblob has delayed mkdir after rmdir)
 	defer r.Finalise()
@@ -656,32 +599,6 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 		},
 		fs.GetModifyWindow(r.Fremote),
 	)
-}
-
-func TestRcatSize(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-
-	const body = "------------------------------------------------------------"
-	file1 := r.WriteFile("potato1", body, t1)
-	file2 := r.WriteFile("potato2", body, t2)
-	// Test with known length
-	bodyReader := ioutil.NopCloser(strings.NewReader(body))
-	obj, err := operations.RcatSize(context.Background(), r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime)
-	require.NoError(t, err)
-	assert.Equal(t, int64(len(body)), obj.Size())
-	assert.Equal(t, file1.Path, obj.Remote())
-
-	// Test with unknown length
-	bodyReader = ioutil.NopCloser(strings.NewReader(body)) // reset Reader
-	ioutil.NopCloser(strings.NewReader(body))
-	obj, err = operations.RcatSize(context.Background(), r.Fremote, file2.Path, bodyReader, -1, file2.ModTime)
-	require.NoError(t, err)
-	assert.Equal(t, int64(len(body)), obj.Size())
-	assert.Equal(t, file2.Path, obj.Remote())
-
-	// Check files exist
-	fstest.CheckItems(t, r.Fremote, file1, file2)
 }
 
 func TestCopyURL(t *testing.T) {
@@ -1326,7 +1243,6 @@ func TestListFormat(t *testing.T) {
 	}{
 		{hash.MD5, "0cc175b9c0f1b6a831c399e269772661"},
 		{hash.SHA1, "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8"},
-		{hash.Dropbox, "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8"},
 	} {
 		list.SetOutput(nil)
 		list.AddHash(test.ht)
@@ -1389,7 +1305,6 @@ func TestDirMove(t *testing.T) {
 
 	for i := range files {
 		files[i].Path = strings.Replace(files[i].Path, "A1/", "A2/", -1)
-		files[i].WinPath = ""
 	}
 
 	fstest.CheckListingWithPrecision(
@@ -1419,7 +1334,6 @@ func TestDirMove(t *testing.T) {
 
 	for i := range files {
 		files[i].Path = strings.Replace(files[i].Path, "A2/", "A3/", -1)
-		files[i].WinPath = ""
 	}
 
 	fstest.CheckListingWithPrecision(

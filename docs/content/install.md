@@ -102,13 +102,55 @@ rclone v1.49.1
 - go version: go1.12.9
 ```
 
-You will probably want to mount rclone's config file directory or file
-from the host, or configure rclone with environment variables.
+There are a few command line options to consider when starting an rclone Docker container
+from the rclone image.
 
-Eg to share your local config with the container
+- You need to mount the host rclone config dir at `/config/rclone` into the Docker
+  container. Due to the fact that rclone updates tokens inside its config file, and that
+  the update process involves a file rename, you need to mount the whole host rclone
+  config dir, not just the single host rclone config file.
+
+- You need to mount a host data dir at `/data` into the Docker container.
+
+- By default, the rclone binary inside a Docker container runs with UID=0 (root).
+  As a result, all files created in a run will have UID=0. If your config and data files
+  reside on the host with a non-root UID:GID, you need to pass these on the container
+  start command line.
+
+- It is possible to use `rclone mount` inside a userspace Docker container, and expose
+  the resulting fuse mount to the host. The exact `docker run` options to do that might
+  vary slightly between hosts. See, e.g. the discussion in this
+  [thread](https://github.com/moby/moby/issues/9448).
+
+  You also need to mount the host `/etc/passwd` and `/etc/group` for fuse to work inside
+  the container.
+
+Here are some commands tested on an Ubuntu 18.04.3 host:
 
 ```
-docker run  -v ~/.config/rclone:/root/.config/rclone rclone/rclone:latest listremotes
+# config on host at ~/.config/rclone/rclone.conf
+# data on host at ~/data
+
+# make sure the config is ok by listing the remotes
+docker run --rm \
+    --volume ~/.config/rclone:/config/rclone \
+    --volume ~/data:/data:shared \
+    --user $(id -u):$(id -g) \
+    rclone/rclone \
+    listremotes
+
+# perform mount inside Docker container, expose result to host
+mkdir -p ~/data/mount
+docker run --rm \
+    --volume ~/.config/rclone:/config/rclone \
+    --volume ~/data:/data:shared \
+    --user $(id -u):$(id -g) \
+    --volume /etc/passwd:/etc/passwd:ro --volume /etc/group:/etc/group:ro \
+    --device /dev/fuse --cap-add SYS_ADMIN --security-opt apparmor:unconfined \
+    rclone/rclone \
+    mount dropbox:Photos /data/mount &
+ls ~/data/mount
+kill %1
 ```
 
 ## Install from source ##

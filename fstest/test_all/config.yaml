@@ -26,6 +26,60 @@ backends:
  - backend:  "crypt"
    remote:   "TestCryptSwift:"
    fastlist: false
+ ## chunker
+ - backend:  "chunker"
+   remote:   "TestChunkerLocal:"
+   fastlist: true
+ - backend:  "chunker"
+   remote:   "TestChunkerNometaLocal:"
+   fastlist: true
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk3bLocal:"
+   fastlist: true
+   maxfile:  6k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk3bNometaLocal:"
+   fastlist: true
+   maxfile:  6k
+ - backend:  "chunker"
+   remote:   "TestChunkerMailru:"
+   fastlist: true
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bMailru:"
+   fastlist: true
+   maxfile:  10k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bYandex:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bBox:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerS3:"
+   fastlist: true
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bS3:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bMD5HashS3:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bSHA1HashS3:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bMD5QuickS3:"
+   fastlist: true
+   maxfile:  1k
+ - backend:  "chunker"
+   remote:   "TestChunkerChunk50bSHA1QuickS3:"
+   fastlist: true
+   maxfile:  1k
+ ## end chunker
  - backend:  "drive"
    remote:   "TestDrive:"
    fastlist: true
@@ -54,19 +108,34 @@ backends:
  - backend:  "s3"
    remote:   "TestS3Minio:"
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/leading_VT
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
  - backend:  "s3"
    remote:   "TestS3Wasabi:"
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/leading_CR
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/leading_HT
+     - TestIntegration/FsMkdir/FsEncoding/leading_VT
  - backend:  "s3"
    remote:   "TestS3DigitalOcean:"
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "s3"
    remote:   "TestS3Ceph:"
    fastlist: true
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "s3"
    remote:   "TestS3Alibaba:"
    fastlist: true
@@ -86,6 +155,8 @@ backends:
    fastlist: false
  - backend:  "ftp"
    remote:   "TestFTP:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
    fastlist: false
  - backend:  "box"
    remote:   "TestBox:"
@@ -105,6 +176,9 @@ backends:
    fastlist: false
  - backend:  "webdav"
    remote:   "TestWebdav:"
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
    fastlist: false
  - backend:  "cache"
    remote:   "TestCache:"
@@ -114,6 +188,7 @@ backends:
    fastlist: false
    ignore:
      - TestIntegration/FsMkdir/FsPutFiles/PublicLink
+     - TestDirRename
  - backend:  "opendrive"
    remote:   "TestOpenDrive:"
    fastlist: false
@@ -128,7 +203,9 @@ backends:
    fastlist: false
  - backend:  "putio"
    remote:   "TestPutio:"
-   subdir:   false
+   fastlist: false
+ - backend:  "sharefile"
+   remote:   "TestSharefile:"
    fastlist: false
  - backend:  "mailru"
    remote:   "TestMailru:"

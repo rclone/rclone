@@ -69,13 +69,18 @@ func (m *March) init() {
 // list a directory into entries, err
 type listDirFn func(dir string) (entries fs.DirEntries, err error)
 
-// makeListDir makes a listing function for the given fs and includeAll flags
+// makeListDir makes constructs a listing function for the given fs
+// and includeAll flags for marching through the file system.
 func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
-	if (!fs.Config.UseListR || f.Features().ListR == nil) && !filter.Active.HaveFilesFrom() {
+	if !(fs.Config.UseListR && f.Features().ListR != nil) && // !--fast-list active and
+		!(fs.Config.NoTraverse && filter.Active.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string) (entries fs.DirEntries, err error) {
 			return list.DirSorted(m.Ctx, f, includeAll, dir)
 		}
 	}
+
+	// This returns a closure for use when --fast-list is active or for when
+	// --files-from and --no-traverse is set
 	var (
 		mu      sync.Mutex
 		started bool
@@ -388,14 +393,14 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	wg.Wait()
 	if srcListErr != nil {
 		fs.Errorf(job.srcRemote, "error reading source directory: %v", srcListErr)
-		fs.CountError(srcListErr)
+		srcListErr = fs.CountError(srcListErr)
 		return nil, srcListErr
 	}
 	if dstListErr == fs.ErrorDirNotFound {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
 		fs.Errorf(job.dstRemote, "error reading destination directory: %v", dstListErr)
-		fs.CountError(dstListErr)
+		dstListErr = fs.CountError(dstListErr)
 		return nil, dstListErr
 	}
 

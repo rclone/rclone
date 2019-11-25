@@ -7,6 +7,7 @@ import (
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -18,11 +19,12 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
+	cmd.Root.AddCommand(commandDefinition)
+	cmdFlag := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlag, &oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "cryptcheck remote:path cryptedremote:path",
 	Short: `Cryptcheck checks the integrity of a crypted remote.`,
 	Long: `
@@ -86,7 +88,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 		underlyingDst := cryptDst.UnWrap()
 		underlyingHash, err := underlyingDst.Hash(ctx, hashType)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(dst, "Error reading hash from underlying %v: %v", underlyingDst, err)
 			return true, false
 		}
@@ -95,7 +97,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 		}
 		cryptHash, err := fcrypt.ComputeHash(ctx, cryptDst, src, hashType)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(dst, "Error computing hash: %v", err)
 			return true, false
 		}
@@ -104,7 +106,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 		}
 		if cryptHash != underlyingHash {
 			err = errors.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
-			fs.CountError(err)
+			err = fs.CountError(err)
 			fs.Errorf(src, err.Error())
 			return true, false
 		}

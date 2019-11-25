@@ -192,7 +192,7 @@ Contributors
   * Sheldon Rupp <me@shel.io>
   * albertony <12441419+albertony@users.noreply.github.com>
   * cron410 <cron410@gmail.com>
-  * Anagh Kumar Baranwal <anaghk.dos@gmail.com>
+  * Anagh Kumar Baranwal <anaghk.dos@gmail.com> <6824881+darthShadow@users.noreply.github.com>
   * Felix Brucker <felix@felixbrucker.com>
   * Santiago Rodríguez <scollazo@users.noreply.github.com>
   * Craig Miskell <craig.miskell@fluxfederation.com>
@@ -286,3 +286,31 @@ Contributors
   * Andreas Chlupka <andy@chlupka.com>
   * Alfonso Montero <amontero@tinet.org>
   * Ivan Andreev <ivandeex@gmail.com>
+  * David Baumgold <david@davidbaumgold.com>
+  * Lars Lehtonen <lars.lehtonen@gmail.com>
+  * Matei David <matei.david@gmail.com>
+  * David <david.bramwell@endemolshine.com>
+  * Anthony Rusdi <33247310+antrusd@users.noreply.github.com>
+  * Richard Patel <me@terorie.dev>
+  * 庄天翼 <zty0826@gmail.com>
+  * SwitchJS <dev@switchjs.com>
+  * Raphael <PowershellNinja@users.noreply.github.com>
+  * Sezal Agrawal <sezalagrawal@gmail.com>
+  * Tyler <TylerNakamura@users.noreply.github.com>
+  * Brett Dutro <brett.dutro@gmail.com>
+  * Vighnesh SK <booterror99@gmail.com>
+  * Arijit Biswas <dibbyo456@gmail.com>
+  * Michele Caci <michele.caci@gmail.com>
+  * AlexandrBoltris <ua2fgb@gmail.com>
+  * Bryce Larson <blarson@saltstack.com>
+  * Carlos Ferreyra <crypticmind@gmail.com>
+  * Saksham Khanna <sakshamkhanna@outlook.com>
+  * dausruddin <5763466+dausruddin@users.noreply.github.com>
+  * zero-24 <zero-24@users.noreply.github.com>
+  * Xiaoxing Ye <ye@xiaoxing.us>
+  * Barry Muldrey <barry@muldrey.net>
+  * Sebastian Brandt <sebastian.brandt@friday.de>
+  * Marco Molteni <marco.molteni@mailbox.org>
+  * Ankur Gupta <ankur0493@gmail.com>
+  * Maciej Zimnoch <maciej@scylladb.com>
+  * anuar45 <serdaliyev.anuar@gmail.com>

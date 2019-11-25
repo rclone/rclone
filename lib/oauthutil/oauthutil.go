@@ -2,14 +2,12 @@ package oauthutil
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"net"
 	"net/http"
-	"strings"
+	"net/url"
 	"sync"
 	"time"
 
@@ -18,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
 )
@@ -43,8 +42,12 @@ const (
 	// RedirectLocalhostURL is redirect to local webserver when active with localhost
 	RedirectLocalhostURL = "http://localhost:" + bindPort + "/"
 
-	// AuthResponse is a template to handle the redirect URL for oauth requests
-	AuthResponse = `<!DOCTYPE html>
+	// RedirectPublicSecureURL is a public https URL which
+	// redirects to the local webserver
+	RedirectPublicSecureURL = "https://oauth.rclone.org/"
+
+	// AuthResponseTemplate is a template to handle the redirect URL for oauth requests
+	AuthResponseTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -55,17 +58,12 @@ const (
 <hr>
 <pre style="width: 750px; white-space: pre-wrap;">
 {{ if eq .OK false }}
-Error: {{ .AuthError.Name }}<br>
-{{ if .AuthError.Description }}Description: {{ .AuthError.Description }}<br>{{ end }}
-{{ if .AuthError.Code }}Code: {{ .AuthError.Code }}<br>{{ end }}
-{{ if .AuthError.HelpURL }}Look here for help: <a href="{{ .AuthError.HelpURL }}">{{ .AuthError.HelpURL }}</a><br>{{ end }}
+Error: {{ .Name }}<br>
+{{ if .Description }}Description: {{ .Description }}<br>{{ end }}
+{{ if .Code }}Code: {{ .Code }}<br>{{ end }}
+{{ if .HelpURL }}Look here for help: <a href="{{ .HelpURL }}">{{ .HelpURL }}</a><br>{{ end }}
 {{ else }}
-	{{ if .Code }}
-Please copy this code into rclone:
-{{ .Code }}
-	{{ else }}
 All done. Please go back to rclone.
-	{{ end }}
 {{ end }}
 </pre>
 </body>
@@ -337,29 +335,59 @@ func NewClient(name string, m configmap.Mapper, oauthConfig *oauth2.Config) (*ht
 	return NewClientWithBaseClient(name, m, oauthConfig, fshttp.NewClient(fs.Config))
 }
 
+// AuthResult is returned from the web server after authorization
+// success or failure
+type AuthResult struct {
+	OK          bool // Failure or Success?
+	Name        string
+	Description string
+	Code        string
+	HelpURL     string
+	Form        url.Values // the complete contents of the form
+	Err         error      // any underlying error to report
+}
+
+// Error satisfies the error interface so AuthResult can be used as an error
+func (ar *AuthResult) Error() string {
+	status := "Error"
+	if ar.OK {
+		status = "OK"
+	}
+	return fmt.Sprintf("%s: %s\nCode: %q\nDescription: %s\nHelp: %s",
+		status, ar.Name, ar.Code, ar.Description, ar.HelpURL)
+}
+
 // Config does the initial creation of the token
 //
 // It may run an internal webserver to receive the results
 func Config(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, nil, config, true, opts)
+	return doConfig(id, name, m, config, true, nil, opts)
+}
+
+// CheckAuthFn is called when a good Auth has been received
+type CheckAuthFn func(*oauth2.Config, *AuthResult) error
+
+// ConfigWithCallback does the initial creation of the token
+//
+// It may run an internal webserver to receive the results
+//
+// When the AuthResult is known the checkAuth function is called if set
+func ConfigWithCallback(id, name string, m configmap.Mapper, config *oauth2.Config, checkAuth CheckAuthFn, opts ...oauth2.AuthCodeOption) error {
+	return doConfig(id, name, m, config, true, checkAuth, opts)
 }
 
 // ConfigNoOffline does the same as Config but does not pass the
 // "access_type=offline" parameter.
 func ConfigNoOffline(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, nil, config, false, opts)
+	return doConfig(id, name, m, config, false, nil, opts)
 }
 
-// ConfigErrorCheck does the same as Config, but allows the backend to pass a error handling function
-// This function gets called with the request made to rclone as a parameter if no code was found
-func ConfigErrorCheck(id, name string, m configmap.Mapper, errorHandler func(*http.Request) AuthError, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, errorHandler, config, true, opts)
-}
-
-func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Request) AuthError, oauthConfig *oauth2.Config, offline bool, opts []oauth2.AuthCodeOption) error {
+func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, offline bool, checkAuth CheckAuthFn, opts []oauth2.AuthCodeOption) error {
 	oauthConfig, changed := overrideCredentials(name, m, oauthConfig)
 	authorizeOnlyValue, ok := m.Get(config.ConfigAuthorize)
 	authorizeOnly := ok && authorizeOnlyValue != "" // set if being run by "rclone authorize"
+	authorizeNoAutoBrowserValue, ok := m.Get(config.ConfigAuthNoBrowser)
+	authorizeNoAutoBrowser := ok && authorizeNoAutoBrowserValue != ""
 
 	// See if already have a token
 	tokenString, ok := m.Get("token")
@@ -381,7 +409,18 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 	// Detect whether we should use internal web server
 	useWebServer := false
 	switch oauthConfig.RedirectURL {
-	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
+	case TitleBarRedirectURL:
+		useWebServer = authorizeOnly
+		if !authorizeOnly {
+			useWebServer = isLocal()
+		}
+		if useWebServer {
+			// copy the config and set to use the internal webserver
+			configCopy := *oauthConfig
+			oauthConfig = &configCopy
+			oauthConfig.RedirectURL = RedirectURL
+		}
+	default:
 		if changed {
 			fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", oauthConfig.RedirectURL)
 		}
@@ -398,11 +437,7 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 				fmt.Printf("\trclone authorize %q\n", id)
 			}
 			fmt.Println("Then paste the result below:")
-			code := ""
-			for code == "" {
-				fmt.Printf("result> ")
-				code = strings.TrimSpace(config.ReadLine())
-			}
+			code := config.ReadNonEmptyLine("result> ")
 			token := &oauth2.Token{}
 			err := json.Unmarshal([]byte(code), token)
 			if err != nil {
@@ -410,76 +445,70 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 			}
 			return PutToken(name, m, token, true)
 		}
-	case TitleBarRedirectURL:
-		useWebServer = authorizeOnly
-		if !authorizeOnly {
-			useWebServer = isLocal()
-		}
-		if useWebServer {
-			// copy the config and set to use the internal webserver
-			configCopy := *oauthConfig
-			oauthConfig = &configCopy
-			oauthConfig.RedirectURL = RedirectURL
-		}
 	}
 
 	// Make random state
-	stateBytes := make([]byte, 16)
-	_, err := rand.Read(stateBytes)
+	state, err := random.Password(128)
 	if err != nil {
 		return err
 	}
-	state := fmt.Sprintf("%x", stateBytes)
+
+	// Generate oauth URL
 	if offline {
 		opts = append(opts, oauth2.AccessTypeOffline)
 	}
 	authURL := oauthConfig.AuthCodeURL(state, opts...)
 
-	// Prepare webserver
-	server := authServer{
-		state:        state,
-		bindAddress:  bindAddress,
-		authURL:      authURL,
-		errorHandler: errorHandler,
-	}
+	// Prepare webserver if needed
+	var server *authServer
 	if useWebServer {
-		server.code = make(chan string, 1)
-		server.err = make(chan error, 1)
-		go server.Start()
+		server = newAuthServer(bindAddress, state, authURL)
+		err := server.Init()
+		if err != nil {
+			return errors.Wrap(err, "failed to start auth webserver")
+		}
+		go server.Serve()
 		defer server.Stop()
-		authURL = "http://" + bindAddress + "/auth"
+		authURL = "http://" + bindAddress + "/auth?state=" + state
 	}
 
-	// Generate a URL for the user to visit for authorization.
-	_ = open.Start(authURL)
-	fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n", authURL)
+	if !authorizeNoAutoBrowser && oauthConfig.RedirectURL != TitleBarRedirectURL {
+		// Open the URL for the user to visit
+		_ = open.Start(authURL)
+		fmt.Printf("If your browser doesn't open automatically go to the following link: %s\n", authURL)
+	} else {
+		fmt.Printf("Please go to the following link: %s\n", authURL)
+	}
 	fmt.Printf("Log in and authorize rclone for access\n")
 
-	var authCode string
+	// Read the code via the webserver or manually
+	var auth *AuthResult
 	if useWebServer {
-		// Read the code, and exchange it for a token.
 		fmt.Printf("Waiting for code...\n")
-		authCode = <-server.code
-		authError := <-server.err
-		if authCode != "" {
-			fmt.Printf("Got code\n")
-		} else {
-			if authError != nil {
-				return authError
+		auth = <-server.result
+		if !auth.OK || auth.Code == "" {
+			return auth
+		}
+		fmt.Printf("Got code\n")
+		if checkAuth != nil {
+			err = checkAuth(oauthConfig, auth)
+			if err != nil {
+				return err
 			}
-			return errors.New("failed to get code")
 		}
 	} else {
-		// Read the code, and exchange it for a token.
-		fmt.Printf("Enter verification code> ")
-		authCode = config.ReadLine()
+		auth = &AuthResult{
+			Code: config.ReadNonEmptyLine("Enter verification code> "),
+		}
 	}
-	token, err := oauthConfig.Exchange(oauth2.NoContext, authCode)
+
+	// Exchange the code for a token
+	token, err := oauthConfig.Exchange(oauth2.NoContext, auth.Code)
 	if err != nil {
 		return errors.Wrap(err, "failed to get token")
 	}
 
-	// Print code if we do automatic retrieval
+	// Print code if we are doing a manual auth
 	if authorizeOnly {
 		result, err := json.Marshal(token)
 		if err != nil {
@@ -492,33 +521,79 @@ func doConfig(id, name string, m configmap.Mapper, errorHandler func(*http.Reque
 
 // Local web server for collecting auth
 type authServer struct {
-	state        string
-	listener     net.Listener
-	bindAddress  string
-	code         chan string
-	err          chan error
-	authURL      string
-	server       *http.Server
-	errorHandler func(*http.Request) AuthError
+	state       string
+	listener    net.Listener
+	bindAddress string
+	authURL     string
+	server      *http.Server
+	result      chan *AuthResult
 }
 
-// AuthError gets returned by the backend's errorHandler function
-type AuthError struct {
-	Name        string
-	Description string
-	Code        string
-	HelpURL     string
+// newAuthServer makes the webserver for collecting auth
+func newAuthServer(bindAddress, state, authURL string) *authServer {
+	return &authServer{
+		state:       state,
+		bindAddress: bindAddress,
+		authURL:     authURL, // http://host/auth redirects to here
+		result:      make(chan *AuthResult, 1),
+	}
 }
 
-// AuthResponseData can fill the AuthResponse template
-type AuthResponseData struct {
-	OK   bool   // Failure or Success?
-	Code string // code to paste into rclone config
-	AuthError
+// Receive the auth request
+func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
+	fs.Debugf(nil, "Received %s request on auth server to %q", req.Method, req.URL.Path)
+
+	// Reply with the response to the user and to the channel
+	reply := func(status int, res *AuthResult) {
+		w.WriteHeader(status)
+		w.Header().Set("Content-Type", "text/html")
+		var t = template.Must(template.New("authResponse").Parse(AuthResponseTemplate))
+		if err := t.Execute(w, res); err != nil {
+			fs.Debugf(nil, "Could not execute template for web response.")
+		}
+		s.result <- res
+	}
+
+	// Parse the form parameters and save them
+	err := req.ParseForm()
+	if err != nil {
+		reply(http.StatusBadRequest, &AuthResult{
+			Name:        "Parse form error",
+			Description: err.Error(),
+		})
+		return
+	}
+
+	// get code, error if empty
+	code := req.Form.Get("code")
+	if code == "" {
+		reply(http.StatusBadRequest, &AuthResult{
+			Name:        "Auth Error",
+			Description: "No code returned by remote server",
+		})
+		return
+	}
+
+	// check state
+	state := req.Form.Get("state")
+	if state != s.state {
+		reply(http.StatusBadRequest, &AuthResult{
+			Name:        "Auth state doesn't match",
+			Description: fmt.Sprintf("Expecting %q got %q", s.state, state),
+		})
+		return
+	}
+
+	// code OK
+	reply(http.StatusOK, &AuthResult{
+		OK:   true,
+		Code: code,
+		Form: req.Form,
+	})
 }
 
-// startWebServer runs an internal web server to receive config details
-func (s *authServer) Start() {
+// Init gets the internal web server ready to receive config details
+func (s *authServer) Init() error {
 	fs.Debugf(nil, "Starting auth server on %s", s.bindAddress)
 	mux := http.NewServeMux()
 	s.server = &http.Server{
@@ -526,77 +601,41 @@ func (s *authServer) Start() {
 		Handler: mux,
 	}
 	s.server.SetKeepAlivesEnabled(false)
+
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
-		http.Error(w, "", 404)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	})
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, req *http.Request) {
+		state := req.FormValue("state")
+		if state != s.state {
+			fs.Debugf(nil, "State did not match: want %q got %q", s.state, state)
+			http.Error(w, "State did not match - please try again", http.StatusForbidden)
+			return
+		}
 		http.Redirect(w, req, s.authURL, http.StatusTemporaryRedirect)
 		return
 	})
-	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		fs.Debugf(nil, "Received request on auth server")
-		code := req.FormValue("code")
-		var err error
-		var t = template.Must(template.New("authResponse").Parse(AuthResponse))
-		resp := AuthResponseData{AuthError: AuthError{}}
-		if code != "" {
-			state := req.FormValue("state")
-			if state != s.state {
-				fs.Debugf(nil, "State did not match: want %q got %q", s.state, state)
-				resp.OK = false
-				resp.AuthError = AuthError{
-					Name: "Auth State doesn't match",
-				}
-			} else {
-				fs.Debugf(nil, "Successfully got code")
-				resp.OK = true
-				if s.code == nil {
-					resp.Code = code
-				}
-			}
-		} else {
-			fs.Debugf(nil, "No code found on request")
-			var authError AuthError
-			if s.errorHandler == nil {
-				authError = AuthError{
-					Name:        "Auth Error",
-					Description: "No code found returned by remote server.",
-				}
-			} else {
-				authError = s.errorHandler(req)
-			}
-			err = fmt.Errorf("Error: %s\nCode: %s\nDescription: %s\nHelp: %s",
-				authError.Name, authError.Code, authError.Description, authError.HelpURL)
-			resp.OK = false
-			resp.AuthError = authError
-			w.WriteHeader(500)
-		}
-		if err := t.Execute(w, resp); err != nil {
-			fs.Debugf(nil, "Could not execute template for web response.")
-		}
-		if s.code != nil {
-			s.code <- code
-			s.err <- err
-		}
-	})
+	mux.HandleFunc("/", s.handleAuth)
 
 	var err error
 	s.listener, err = net.Listen("tcp", s.bindAddress)
 	if err != nil {
-		log.Fatalf("Failed to start auth webserver: %v", err)
+		return err
 	}
-	err = s.server.Serve(s.listener)
+	return nil
+}
+
+// Serve the auth server, doesn't return
+func (s *authServer) Serve() {
+	err := s.server.Serve(s.listener)
 	fs.Debugf(nil, "Closed auth server with error: %v", err)
 }
 
+// Stop the auth server by closing its socket
 func (s *authServer) Stop() {
 	fs.Debugf(nil, "Closing auth server")
-	if s.code != nil {
-		close(s.code)
-		s.code = nil
-	}
+	close(s.result)
 	_ = s.listener.Close()
 
 	// close the server

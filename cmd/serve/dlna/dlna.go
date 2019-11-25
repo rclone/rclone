@@ -10,7 +10,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	dms_dlna "github.com/anacrolix/dms/dlna"
@@ -63,7 +62,7 @@ players might show files that they are not able to play back correctly.
 const (
 	serverField       = "Linux/3.4 DLNADOC/1.50 UPnP/1.0 DMS/1.0"
 	rootDescPath      = "/rootDesc.xml"
-	resPath           = "/res"
+	resPath           = "/r/"
 	serviceControlURL = "/ctl"
 )
 
@@ -116,11 +115,15 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 		"ConnectionManager": &connectionManagerService{
 			server: s,
 		},
+		"X_MS_MediaReceiverRegistrar": &mediaReceiverRegistrarService{
+			server: s,
+		},
 	}
 
 	// Setup the various http routes.
 	r := http.NewServeMux()
-	r.HandleFunc(resPath, s.resourceHandler)
+	r.Handle(resPath, http.StripPrefix(resPath,
+		http.HandlerFunc(s.resourceHandler)))
 	if opt.LogTrace {
 		r.Handle(rootDescPath, traceLogging(http.HandlerFunc(s.rootDescHandler)))
 		r.Handle(serviceControlURL, traceLogging(http.HandlerFunc(s.serviceControlHandler)))
@@ -153,85 +156,18 @@ func (s *server) ModelNumber() string {
 	return fs.Version
 }
 
-// Template used to generate the root device XML descriptor.
-//
-// Due to the use of namespaces and various subtleties with device compatibility,
-// it turns out to be easier to use a template than to marshal XML.
-//
-// For rendering, it is passed the server object for context.
-var rootDescTmpl = template.Must(template.New("rootDesc").Parse(`<?xml version="1.0"?>
-<root xmlns="urn:schemas-upnp-org:device-1-0"
-      xmlns:dlna="urn:schemas-dlna-org:device-1-0"
-      xmlns:sec="http://www.sec.co.kr/dlna">
-  <specVersion>
-    <major>1</major>
-    <minor>0</minor>
-  </specVersion>
-  <device>
-    <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
-    <friendlyName>{{.FriendlyName}}</friendlyName>
-    <manufacturer>rclone (rclone.org)</manufacturer>
-    <manufacturerURL>https://rclone.org/</manufacturerURL>
-    <modelDescription>rclone</modelDescription>
-    <modelName>rclone</modelName>
-    <modelNumber>{{.ModelNumber}}</modelNumber>
-    <modelURL>https://rclone.org/</modelURL>
-    <serialNumber>00000000</serialNumber>
-    <UDN>{{.RootDeviceUUID}}</UDN>
-    <dlna:X_DLNACAP/>
-    <dlna:X_DLNADOC>DMS-1.50</dlna:X_DLNADOC>
-    <dlna:X_DLNADOC>M-DMS-1.50</dlna:X_DLNADOC>
-    <sec:ProductCap>smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec</sec:ProductCap>
-    <sec:X_ProductCap>smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec</sec:X_ProductCap>
-    <iconList>
-      <icon>
-        <mimetype>image/png</mimetype>
-        <width>48</width>
-        <height>48</height>
-        <depth>8</depth>
-        <url>/static/rclone-48x48.png</url>
-      </icon>
-      <icon>
-        <mimetype>image/png</mimetype>
-        <width>120</width>
-        <height>120</height>
-        <depth>8</depth>
-        <url>/static/rclone-120x120.png</url>
-      </icon>
-    </iconList>
-    <serviceList>
-      <service>
-        <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
-        <serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
-        <SCPDURL>/static/ContentDirectory.xml</SCPDURL>
-        <controlURL>/ctl</controlURL>
-        <eventSubURL></eventSubURL>
-      </service>
-      <service>
-        <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
-        <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
-        <SCPDURL>/static/ConnectionManager.xml</SCPDURL>
-        <controlURL>/ctl</controlURL>
-        <eventSubURL></eventSubURL>
-      </service>
-      <service>
-        <serviceType>urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1</serviceType>
-        <serviceId>urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar</serviceId>
-        <SCPDURL>/static/X_MS_MediaReceiverRegistrar.xml</SCPDURL>
-        <controlURL>/ctl</controlURL>
-        <eventSubURL></eventSubURL>
-      </service>
-    </serviceList>
-    <presentationURL>/</presentationURL>
-  </device>
-</root>`))
-
 // Renders the root device descriptor.
 func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
-	buffer := new(bytes.Buffer)
-	err := rootDescTmpl.Execute(buffer, s)
+	tmpl, err := data.GetTemplate()
 	if err != nil {
-		serveError(s, w, "Failed to create root descriptor XML", err)
+		serveError(s, w, "Failed to load root descriptor template", err)
+		return
+	}
+
+	buffer := new(bytes.Buffer)
+	err = tmpl.Execute(buffer, s)
+	if err != nil {
+		serveError(s, w, "Failed to render root descriptor XML", err)
 		return
 	}
 
@@ -248,7 +184,7 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 // Handle a service control HTTP request.
 func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapActionString := r.Header.Get("SOAPACTION")
-	soapAction, err := upnp.ParseActionHTTPHeader(soapActionString)
+	soapAction, err := parseActionHTTPHeader(soapActionString)
 	if err != nil {
 		serveError(s, w, "Could not parse SOAPACTION header", err)
 		return
@@ -289,8 +225,8 @@ func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte,
 
 // Serves actual resources (media files).
 func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
-	remotePath := r.URL.Query().Get("path")
-	node, err := s.vfs.Stat(remotePath)
+	remotePath := r.URL.Path
+	node, err := s.vfs.Stat(r.URL.Path)
 	if err != nil {
 		http.NotFound(w, r)
 		return

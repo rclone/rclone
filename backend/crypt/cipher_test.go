@@ -44,69 +44,6 @@ func TestNewNameEncryptionModeString(t *testing.T) {
 	assert.Equal(t, NameEncryptionMode(3).String(), "Unknown mode #3")
 }
 
-func TestValidString(t *testing.T) {
-	for _, test := range []struct {
-		in       string
-		expected error
-	}{
-		{"", nil},
-		{"\x01", ErrorBadDecryptControlChar},
-		{"a\x02", ErrorBadDecryptControlChar},
-		{"abc\x03", ErrorBadDecryptControlChar},
-		{"abc\x04def", ErrorBadDecryptControlChar},
-		{"\x05d", ErrorBadDecryptControlChar},
-		{"\x06def", ErrorBadDecryptControlChar},
-		{"\x07", ErrorBadDecryptControlChar},
-		{"\x08", ErrorBadDecryptControlChar},
-		{"\x09", ErrorBadDecryptControlChar},
-		{"\x0A", ErrorBadDecryptControlChar},
-		{"\x0B", ErrorBadDecryptControlChar},
-		{"\x0C", ErrorBadDecryptControlChar},
-		{"\x0D", ErrorBadDecryptControlChar},
-		{"\x0E", ErrorBadDecryptControlChar},
-		{"\x0F", ErrorBadDecryptControlChar},
-		{"\x10", ErrorBadDecryptControlChar},
-		{"\x11", ErrorBadDecryptControlChar},
-		{"\x12", ErrorBadDecryptControlChar},
-		{"\x13", ErrorBadDecryptControlChar},
-		{"\x14", ErrorBadDecryptControlChar},
-		{"\x15", ErrorBadDecryptControlChar},
-		{"\x16", ErrorBadDecryptControlChar},
-		{"\x17", ErrorBadDecryptControlChar},
-		{"\x18", ErrorBadDecryptControlChar},
-		{"\x19", ErrorBadDecryptControlChar},
-		{"\x1A", ErrorBadDecryptControlChar},
-		{"\x1B", ErrorBadDecryptControlChar},
-		{"\x1C", ErrorBadDecryptControlChar},
-		{"\x1D", ErrorBadDecryptControlChar},
-		{"\x1E", ErrorBadDecryptControlChar},
-		{"\x1F", ErrorBadDecryptControlChar},
-		{"\x20", nil},
-		{"\x7E", nil},
-		{"\x7F", ErrorBadDecryptControlChar},
-		{"£100", nil},
-		{`hello? sausage/êé/Hello, 世界/ " ' @ < > & ?/z.txt`, nil},
-		{"£100", nil},
-		// Following tests from https://secure.php.net/manual/en/reference.pcre.pattern.modifiers.php#54805
-		{"a", nil},                                        // Valid ASCII
-		{"\xc3\xb1", nil},                                 // Valid 2 Octet Sequence
-		{"\xc3\x28", ErrorBadDecryptUTF8},                 // Invalid 2 Octet Sequence
-		{"\xa0\xa1", ErrorBadDecryptUTF8},                 // Invalid Sequence Identifier
-		{"\xe2\x82\xa1", nil},                             // Valid 3 Octet Sequence
-		{"\xe2\x28\xa1", ErrorBadDecryptUTF8},             // Invalid 3 Octet Sequence (in 2nd Octet)
-		{"\xe2\x82\x28", ErrorBadDecryptUTF8},             // Invalid 3 Octet Sequence (in 3rd Octet)
-		{"\xf0\x90\x8c\xbc", nil},                         // Valid 4 Octet Sequence
-		{"\xf0\x28\x8c\xbc", ErrorBadDecryptUTF8},         // Invalid 4 Octet Sequence (in 2nd Octet)
-		{"\xf0\x90\x28\xbc", ErrorBadDecryptUTF8},         // Invalid 4 Octet Sequence (in 3rd Octet)
-		{"\xf0\x28\x8c\x28", ErrorBadDecryptUTF8},         // Invalid 4 Octet Sequence (in 4th Octet)
-		{"\xf8\xa1\xa1\xa1\xa1", ErrorBadDecryptUTF8},     // Valid 5 Octet Sequence (but not Unicode!)
-		{"\xfc\xa1\xa1\xa1\xa1\xa1", ErrorBadDecryptUTF8}, // Valid 6 Octet Sequence (but not Unicode!)
-	} {
-		actual := checkValidString([]byte(test.in))
-		assert.Equal(t, actual, test.expected, fmt.Sprintf("in=%q", test.in))
-	}
-}
-
 func TestEncodeFileName(t *testing.T) {
 	for _, test := range []struct {
 		in       string
@@ -210,8 +147,6 @@ func TestDecryptSegment(t *testing.T) {
 		{encodeFileName([]byte("a")), ErrorNotAMultipleOfBlocksize},
 		{encodeFileName([]byte("123456789abcdef")), ErrorNotAMultipleOfBlocksize},
 		{encodeFileName([]byte("123456789abcdef0")), pkcs7.ErrorPaddingTooLong},
-		{c.encryptSegment("\x01"), ErrorBadDecryptControlChar},
-		{c.encryptSegment("\xc3\x28"), ErrorBadDecryptUTF8},
 	} {
 		actual, actualErr := c.decryptSegment(test.in)
 		assert.Equal(t, test.expectedErr, actualErr, fmt.Sprintf("in=%q got actual=%q, err = %v %T", test.in, actual, actualErr, actualErr))

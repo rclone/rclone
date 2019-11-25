@@ -5,7 +5,6 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -13,7 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/log"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/rclone/rclone/lib/terminal"
 )
 
 const (
@@ -27,11 +26,6 @@ const (
 //
 // It returns a func which should be called to stop the stats.
 func startProgress() func() {
-	err := initTerminal()
-	if err != nil {
-		fs.Errorf(nil, "Failed to start progress: %v", err)
-		return func() {}
-	}
 	stopStats := make(chan struct{})
 	oldLogPrint := fs.LogPrint
 	if !log.Redirected() {
@@ -69,13 +63,6 @@ func startProgress() func() {
 	}
 }
 
-// VT100 codes
-const (
-	eraseLine         = "\x1b[2K"
-	moveToStartOfLine = "\x1b[0G"
-	moveUp            = "\x1b[A"
-)
-
 // state for the progress printing
 var (
 	nlines     = 0 // number of lines in the previous stats block
@@ -88,11 +75,7 @@ func printProgress(logMessage string) {
 	defer progressMu.Unlock()
 
 	var buf bytes.Buffer
-	w, h, err := terminal.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		w, h = 80, 25
-	}
-	_ = h
+	w, _ := terminal.GetSize()
 	stats := strings.TrimSpace(accounting.GlobalStats().String())
 	logMessage = strings.TrimSpace(logMessage)
 
@@ -102,17 +85,17 @@ func printProgress(logMessage string) {
 
 	if logMessage != "" {
 		out("\n")
-		out(moveUp)
+		out(terminal.MoveUp)
 	}
 	// Move to the start of the block we wrote erasing all the previous lines
 	for i := 0; i < nlines-1; i++ {
-		out(eraseLine)
-		out(moveUp)
+		out(terminal.EraseLine)
+		out(terminal.MoveUp)
 	}
-	out(eraseLine)
-	out(moveToStartOfLine)
+	out(terminal.EraseLine)
+	out(terminal.MoveToStartOfLine)
 	if logMessage != "" {
-		out(eraseLine)
+		out(terminal.EraseLine)
 		out(logMessage + "\n")
 	}
 	fixedLines := strings.Split(stats, "\n")
@@ -126,5 +109,5 @@ func printProgress(logMessage string) {
 			out("\n")
 		}
 	}
-	writeToTerminal(buf.Bytes())
+	terminal.Write(buf.Bytes())
 }

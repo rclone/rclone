@@ -93,6 +93,7 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 		// link := newMemFile(r.Target, false)
 		// link.symlink = r.Filepath
 		// v.files[r.Target] = link
+		return sftp.ErrSshFxOpUnsupported
 	}
 	return nil
 }
@@ -150,5 +151,5 @@ func (v vfsHandler) Filelist(r *sftp.Request) (l sftp.ListerAt, err error) {
 		// }
 		// return listerat([]os.FileInfo{file}), nil
 	}
-	return nil, nil
+	return nil, sftp.ErrSshFxOpUnsupported
 }

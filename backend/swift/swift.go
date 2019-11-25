@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -59,6 +61,8 @@ copy operations.`,
 	Default:  false,
 	Advanced: true,
 }}
+
+const enc = encodings.Swift
 
 // Register with Fs
 func init() {
@@ -320,7 +324,8 @@ func parsePath(path string) (root string) {
 // split returns container and containerPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (container, containerPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	container, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return enc.FromStandardName(container), enc.FromStandardPath(containerPath)
 }
 
 // split returns container and containerPath from the object
@@ -441,9 +446,10 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 		// Check to see if the object exists - ignoring directory markers
 		var info swift.Object
 		var err error
+		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
-			info, rxHeaders, err = f.c.Object(f.rootContainer, f.rootDirectory)
+			info, rxHeaders, err = f.c.Object(f.rootContainer, encodedDirectory)
 			return shouldRetryHeaders(rxHeaders, err)
 		})
 		if err == nil && info.ContentType != directoryMarkerContentType {
@@ -525,10 +531,10 @@ type listFn func(remote string, object *swift.Object, isDirectory bool) error
 //
 // Set recurse to read sub directories
 func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer bool, recurse bool, fn listFn) error {
-	if prefix != "" {
+	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
-	if directory != "" {
+	if directory != "" && !strings.HasSuffix(directory, "/") {
 		directory += "/"
 	}
 	// Options for ObjectsWalk
@@ -553,17 +559,18 @@ func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer
 				if !recurse {
 					isDirectory = strings.HasSuffix(object.Name, "/")
 				}
-				if !strings.HasPrefix(object.Name, prefix) {
-					fs.Logf(f, "Odd name received %q", object.Name)
+				remote := enc.ToStandardPath(object.Name)
+				if !strings.HasPrefix(remote, prefix) {
+					fs.Logf(f, "Odd name received %q", remote)
 					continue
 				}
-				if object.Name == prefix {
+				if remote == prefix {
 					// If we have zero length directory markers ending in / then swift
 					// will return them in the listing for the directory which causes
 					// duplicate directories.  Ignore them here.
 					continue
 				}
-				remote := object.Name[len(prefix):]
+				remote = remote[len(prefix):]
 				if addContainer {
 					remote = path.Join(container, remote)
 				}
@@ -635,7 +642,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 	}
 	for _, container := range containers {
 		f.cache.MarkOK(container.Name)
-		d := fs.NewDir(container.Name, time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
+		d := fs.NewDir(enc.ToStandardName(container.Name), time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
 		entries = append(entries, d)
 	}
 	return entries, nil
@@ -946,6 +953,18 @@ func (o *Object) isStaticLargeObject() (bool, error) {
 	return o.hasHeader("X-Static-Large-Object")
 }
 
+func (o *Object) isInContainerVersioning(container string) (bool, error) {
+	_, headers, err := o.fs.c.Container(container)
+	if err != nil {
+		return false, err
+	}
+	xHistoryLocation := headers["X-History-Location"]
+	if len(xHistoryLocation) > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
 	return o.size
@@ -1077,9 +1096,8 @@ func min(x, y int64) int64 {
 //
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
-	container, containerPath := o.split()
-	segmentsContainer := container + "_segments"
-	err := o.fs.listContainerRoot(segmentsContainer, containerPath, "", false, true, func(remote string, object *swift.Object, isDirectory bool) error {
+	segmentsContainer, prefix, err := o.getSegmentsDlo()
+	err = o.fs.listContainerRoot(segmentsContainer, prefix, "", false, true, func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
@@ -1106,6 +1124,23 @@ func (o *Object) removeSegments(except string) error {
 		fs.Debugf(o, "Removed empty container %q", segmentsContainer)
 	}
 	return nil
+}
+
+func (o *Object) getSegmentsDlo() (segmentsContainer string, prefix string, err error) {
+	if err = o.readMetaData(); err != nil {
+		return
+	}
+	dirManifest := o.headers["X-Object-Manifest"]
+	dirManifest, err = url.PathUnescape(dirManifest)
+	if err != nil {
+		return
+	}
+	delimiter := strings.Index(dirManifest, "/")
+	if len(dirManifest) == 0 || delimiter < 0 {
+		err = errors.New("Missing or wrong structure of manifest of Dynamic large object")
+		return
+	}
+	return dirManifest[:delimiter], dirManifest[delimiter+1:], nil
 }
 
 // urlEncode encodes a string so that it is a valid URL
@@ -1294,12 +1329,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove an object
-func (o *Object) Remove(ctx context.Context) error {
+func (o *Object) Remove(ctx context.Context) (err error) {
 	container, containerPath := o.split()
-	isDynamicLargeObject, err := o.isDynamicLargeObject()
-	if err != nil {
-		return err
-	}
+
 	// Remove file/manifest first
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectDelete(container, containerPath)
@@ -1308,11 +1340,21 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	isDynamicLargeObject, err := o.isDynamicLargeObject()
+	if err != nil {
+		return err
+	}
 	// ...then segments if required
 	if isDynamicLargeObject {
-		err = o.removeSegments("")
+		isInContainerVersioning, err := o.isInContainerVersioning(container)
 		if err != nil {
 			return err
+		}
+		if !isInContainerVersioning {
+			err = o.removeSegments("")
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

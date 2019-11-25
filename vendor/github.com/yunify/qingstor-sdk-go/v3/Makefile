@@ -57,6 +57,7 @@ generate:
 		echo "ERROR: Command \"snips\" not found."; \
 	fi
 	snips -f="./specs/qingstor/2016-01-06/swagger/api_v2.0.json" -t="./template" -o="./service"
+	snips -f="./specs/qingstor/2016-01-06/swagger/api_v2.0.json" -t="./interface" -o="./interface"
 	gofmt -w .
 	@echo "Done"
 

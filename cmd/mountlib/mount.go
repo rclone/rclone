@@ -38,9 +38,14 @@ var (
 	DaemonTimeout      time.Duration // OSXFUSE only
 )
 
+// Global constants
+const (
+	MaxLeafSize = 4095 // don't pass file names longer than this
+)
+
 func init() {
-	// DaemonTimeout defaults to non zero for macOS and freebsd
-	if runtime.GOOS == "darwin" || runtime.GOOS == "freebsd" {
+	// DaemonTimeout defaults to non zero for macOS
+	if runtime.GOOS == "darwin" {
 		DaemonTimeout = 15 * time.Minute
 	}
 }
@@ -94,7 +99,7 @@ func checkMountpointOverlap(root, mountpoint string) error {
 
 // NewMountCommand makes a mount command with the given name and Mount function
 func NewMountCommand(commandName string, Mount func(f fs.Fs, mountpoint string) error) *cobra.Command {
-	var commandDefintion = &cobra.Command{
+	var commandDefinition = &cobra.Command{
 		Use:   commandName + " remote:path /path/to/mountpoint",
 		Short: `Mount the remote as file system on a mountpoint.`,
 		Long: `
@@ -295,34 +300,34 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 	}
 
 	// Register the command
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 
 	// Add flags
-	flagSet := commandDefintion.Flags()
-	flags.BoolVarP(flagSet, &DebugFUSE, "debug-fuse", "", DebugFUSE, "Debug the FUSE internals - needs -v.")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &DebugFUSE, "debug-fuse", "", DebugFUSE, "Debug the FUSE internals - needs -v.")
 	// mount options
-	flags.BoolVarP(flagSet, &AllowNonEmpty, "allow-non-empty", "", AllowNonEmpty, "Allow mounting over a non-empty directory.")
-	flags.BoolVarP(flagSet, &AllowRoot, "allow-root", "", AllowRoot, "Allow access to root user.")
-	flags.BoolVarP(flagSet, &AllowOther, "allow-other", "", AllowOther, "Allow access to other users.")
-	flags.BoolVarP(flagSet, &DefaultPermissions, "default-permissions", "", DefaultPermissions, "Makes kernel enforce access control based on the file mode.")
-	flags.BoolVarP(flagSet, &WritebackCache, "write-back-cache", "", WritebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
-	flags.FVarP(flagSet, &MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
-	flags.DurationVarP(flagSet, &AttrTimeout, "attr-timeout", "", AttrTimeout, "Time for which file/directory attributes are cached.")
-	flags.StringArrayVarP(flagSet, &ExtraOptions, "option", "o", []string{}, "Option for libfuse/WinFsp. Repeat if required.")
-	flags.StringArrayVarP(flagSet, &ExtraFlags, "fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
-	flags.BoolVarP(flagSet, &Daemon, "daemon", "", Daemon, "Run mount as a daemon (background mode).")
-	flags.StringVarP(flagSet, &VolumeName, "volname", "", VolumeName, "Set the volume name (not supported by all OSes).")
-	flags.DurationVarP(flagSet, &DaemonTimeout, "daemon-timeout", "", DaemonTimeout, "Time limit for rclone to respond to kernel (not supported by all OSes).")
+	flags.BoolVarP(cmdFlags, &AllowNonEmpty, "allow-non-empty", "", AllowNonEmpty, "Allow mounting over a non-empty directory.")
+	flags.BoolVarP(cmdFlags, &AllowRoot, "allow-root", "", AllowRoot, "Allow access to root user.")
+	flags.BoolVarP(cmdFlags, &AllowOther, "allow-other", "", AllowOther, "Allow access to other users.")
+	flags.BoolVarP(cmdFlags, &DefaultPermissions, "default-permissions", "", DefaultPermissions, "Makes kernel enforce access control based on the file mode.")
+	flags.BoolVarP(cmdFlags, &WritebackCache, "write-back-cache", "", WritebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
+	flags.FVarP(cmdFlags, &MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
+	flags.DurationVarP(cmdFlags, &AttrTimeout, "attr-timeout", "", AttrTimeout, "Time for which file/directory attributes are cached.")
+	flags.StringArrayVarP(cmdFlags, &ExtraOptions, "option", "o", []string{}, "Option for libfuse/WinFsp. Repeat if required.")
+	flags.StringArrayVarP(cmdFlags, &ExtraFlags, "fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
+	flags.BoolVarP(cmdFlags, &Daemon, "daemon", "", Daemon, "Run mount as a daemon (background mode).")
+	flags.StringVarP(cmdFlags, &VolumeName, "volname", "", VolumeName, "Set the volume name (not supported by all OSes).")
+	flags.DurationVarP(cmdFlags, &DaemonTimeout, "daemon-timeout", "", DaemonTimeout, "Time limit for rclone to respond to kernel (not supported by all OSes).")
 
 	if runtime.GOOS == "darwin" {
-		flags.BoolVarP(flagSet, &NoAppleDouble, "noappledouble", "", NoAppleDouble, "Sets the OSXFUSE option noappledouble.")
-		flags.BoolVarP(flagSet, &NoAppleXattr, "noapplexattr", "", NoAppleXattr, "Sets the OSXFUSE option noapplexattr.")
+		flags.BoolVarP(cmdFlags, &NoAppleDouble, "noappledouble", "", NoAppleDouble, "Sets the OSXFUSE option noappledouble.")
+		flags.BoolVarP(cmdFlags, &NoAppleXattr, "noapplexattr", "", NoAppleXattr, "Sets the OSXFUSE option noapplexattr.")
 	}
 
 	// Add in the generic flags
-	vfsflags.AddFlags(flagSet)
+	vfsflags.AddFlags(cmdFlags)
 
-	return commandDefintion
+	return commandDefinition
 }
 
 // ClipBlocks clips the blocks pointed to to the OS max

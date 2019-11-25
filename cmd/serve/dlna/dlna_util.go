@@ -3,6 +3,7 @@ package dlna
 import (
 	"crypto/md5"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,9 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/upnp"
@@ -85,6 +89,36 @@ func marshalSOAPResponse(sa upnp.SoapAction, args map[string]string) []byte {
 		sa.Action, sa.ServiceURN.String(), mustMarshalXML(soapArgs)))
 }
 
+var serviceURNRegexp = regexp.MustCompile(`:service:(\w+):(\d+)$`)
+
+func parseServiceType(s string) (ret upnp.ServiceURN, err error) {
+	matches := serviceURNRegexp.FindStringSubmatch(s)
+	if matches == nil {
+		err = errors.New(s)
+		return
+	}
+	if len(matches) != 3 {
+		log.Panicf("Invalid serviceURNRegexp ?")
+	}
+	ret.Type = matches[1]
+	ret.Version, err = strconv.ParseUint(matches[2], 0, 0)
+	return
+}
+
+func parseActionHTTPHeader(s string) (ret upnp.SoapAction, err error) {
+	if s[0] != '"' || s[len(s)-1] != '"' {
+		return
+	}
+	s = s[1 : len(s)-1]
+	hashIndex := strings.LastIndex(s, "#")
+	if hashIndex == -1 {
+		return
+	}
+	ret.Action = s[hashIndex+1:]
+	ret.ServiceURN, err = parseServiceType(s[:hashIndex])
+	return
+}
+
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	request   *http.Request
@@ -100,7 +134,11 @@ func (lrw *loggingResponseWriter) logRequest(code int, err interface{}) {
 		level = fs.LogLevelError
 	}
 
-	fs.LogPrintf(level, lrw.request.URL.Path, "%s %s %d %s %s",
+	if err == nil {
+		err = ""
+	}
+
+	fs.LogPrintf(level, lrw.request.URL, "%s %s %d %s %s",
 		lrw.request.RemoteAddr, lrw.request.Method, code,
 		lrw.request.Header.Get("SOAPACTION"), err)
 }
@@ -176,7 +214,18 @@ func withHeader(name string, value string, next http.Handler) http.Handler {
 
 // serveError returns an http.StatusInternalServerError and logs the error
 func serveError(what interface{}, w http.ResponseWriter, text string, err error) {
-	fs.CountError(err)
+	err = fs.CountError(err)
 	fs.Errorf(what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
+}
+
+// Splits a path into (root, ext) such that root + ext == path, and ext is empty
+// or begins with a period.  Extended version of path.Ext().
+func splitExt(path string) (string, string) {
+	for i := len(path) - 1; i >= 0 && path[i] != '/'; i-- {
+		if path[i] == '.' {
+			return path[:i], path[i:]
+		}
+	}
+	return path, ""
 }

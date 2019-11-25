@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	bolt "github.com/coreos/bbolt"
+	bolt "github.com/etcd-io/bbolt"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"

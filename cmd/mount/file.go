@@ -73,6 +73,11 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 		return nil, translateError(err)
 	}
 
+	// If size unknown then use direct io to read
+	if entry := handle.Node().DirEntry(); entry != nil && entry.Size() < 0 {
+		resp.Flags |= fuse.OpenDirectIO
+	}
+
 	return &FileHandle{handle}, nil
 }
 

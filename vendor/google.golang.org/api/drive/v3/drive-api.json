@@ -35,7 +35,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"9eZ1uxVRThTDhLJCZHhqs3eQWz4/0iA8vxcUiheoF8DYYwsH9o3K3hg\"",
+  "etag": "\"LYADMvHWYH2ul9D6m9UT9gT77YM/ixkLftF7SIEiqkkwNYopCpZnQlw\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -784,7 +784,7 @@
             },
             "keepRevisionForever": {
               "default": "false",
-              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive.",
+              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive. Only 200 revisions for the file can be kept forever. If the limit is reached, try deleting pinned revisions.",
               "location": "query",
               "type": "boolean"
             },
@@ -849,7 +849,7 @@
             },
             "keepRevisionForever": {
               "default": "false",
-              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive.",
+              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive. Only 200 revisions for the file can be kept forever. If the limit is reached, try deleting pinned revisions.",
               "location": "query",
               "type": "boolean"
             },
@@ -1185,7 +1185,7 @@
             },
             "keepRevisionForever": {
               "default": "false",
-              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive.",
+              "description": "Whether to set the 'keepForever' field in the new head revision. This is only applicable to files with binary content in Google Drive. Only 200 revisions for the file can be kept forever. If the limit is reached, try deleting pinned revisions.",
               "location": "query",
               "type": "boolean"
             },
@@ -2096,7 +2096,7 @@
       }
     }
   },
-  "revision": "20190620",
+  "revision": "20190926",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -2704,11 +2704,15 @@
               "type": "boolean"
             },
             "canEdit": {
-              "description": "Whether the current user can edit this file.",
+              "description": "Whether the current user can edit this file. Other factors may limit the type of changes a user can make to a file. For example, see canChangeCopyRequiresWriterPermission or canModifyContent.",
               "type": "boolean"
             },
             "canListChildren": {
               "description": "Whether the current user can list the children of this folder. This is always false when the item is not a folder.",
+              "type": "boolean"
+            },
+            "canModifyContent": {
+              "description": "Whether the current user can modify the content of this file.",
               "type": "boolean"
             },
             "canMoveChildrenOutOfDrive": {
@@ -2857,7 +2861,7 @@
           "type": "string"
         },
         "hasAugmentedPermissions": {
-          "description": "Whether any users are granted file access directly on this file. This field is only populated for shared drive files.",
+          "description": "Whether there are permissions directly on this file. This field is only populated for items in shared drives.",
           "type": "boolean"
         },
         "hasThumbnail": {

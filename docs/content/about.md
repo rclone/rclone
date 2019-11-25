@@ -17,6 +17,7 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="Backblaze B2" home="https://www.backblaze.com/b2/cloud-storage.html" config="/b2/" >}}
 * {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
 * {{< provider name="Ceph" home="http://ceph.com/" config="/s3/#ceph" >}}
+* {{< provider name="Citrix ShareFile" home="http://sharefile.com/" config="/sharefile/" >}}
 * {{< provider name="C14" home="https://www.online.net/en/storage/c14-cold-storage" config="/sftp/#c14" >}}
 * {{< provider name="DigitalOcean Spaces" home="https://www.digitalocean.com/products/object-storage/" config="/s3/#digitalocean-spaces" >}}
 * {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/#dreamhost" >}}
@@ -66,6 +67,7 @@ Features
   * Can sync to and from network, eg two different cloud accounts
   * [Encryption](/crypt/) backend
   * [Cache](/cache/) backend
+  * [Chunking](/chunker/) backend
   * [Union](/union/) backend
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
   * Multi-threaded downloads to local disk

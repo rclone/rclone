@@ -227,6 +227,9 @@ func InternalIP() (string, error) { return defaultClient.InternalIP() }
 // ExternalIP returns the instance's primary external (public) IP address.
 func ExternalIP() (string, error) { return defaultClient.ExternalIP() }
 
+// Email calls Client.Email on the default client.
+func Email(serviceAccount string) (string, error) { return defaultClient.Email(serviceAccount) }
+
 // Hostname returns the instance's hostname. This will be of the form
 // "<instanceID>.c.<projID>.internal".
 func Hostname() (string, error) { return defaultClient.Hostname() }
@@ -365,6 +368,16 @@ func (c *Client) InstanceID() (string, error) { return instID.get(c) }
 // InternalIP returns the instance's primary internal IP address.
 func (c *Client) InternalIP() (string, error) {
 	return c.getTrimmed("instance/network-interfaces/0/ip")
+}
+
+// Email returns the email address associated with the service account.
+// The account may be empty or the string "default" to use the instance's
+// main account.
+func (c *Client) Email(serviceAccount string) (string, error) {
+	if serviceAccount == "" {
+		serviceAccount = "default"
+	}
+	return c.getTrimmed("instance/service-accounts/" + serviceAccount + "/email")
 }
 
 // ExternalIP returns the instance's primary external (public) IP address.

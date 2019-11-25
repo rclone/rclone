@@ -11,8 +11,9 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: "TestS3:",
-		NilObject:  (*Object)(nil),
+		RemoteName:  "TestS3:",
+		NilObject:   (*Object)(nil),
+		TiersToTest: []string{"STANDARD", "STANDARD_IA"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{
 			MinChunkSize: minChunkSize,
 		},

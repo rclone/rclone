@@ -45,6 +45,22 @@ func TestEncodeSingleMaskEdge(t *testing.T) {
 	}
 }
 
+func TestEncodeDoubleMaskEdge(t *testing.T) {
+	for i, tc := range testCasesDoubleEdge {
+		e := MultiEncoder(tc.mask)
+		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
+			got := e.Encode(tc.in)
+			if got != tc.out {
+				t.Errorf("Encode(%q) want %q got %q", tc.in, tc.out, got)
+			}
+			got2 := e.Decode(got)
+			if got2 != tc.in {
+				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
+			}
+		})
+	}
+}
+
 func TestEncodeInvalidUnicode(t *testing.T) {
 	for i, tc := range []testCase{
 		{
@@ -102,6 +118,49 @@ func TestEncodeInvalidUnicode(t *testing.T) {
 		})
 	}
 }
+
+func TestEncodeDot(t *testing.T) {
+	for i, tc := range []testCase{
+		{
+			mask: 0,
+			in:   ".",
+			out:  ".",
+		}, {
+			mask: EncodeDot,
+			in:   ".",
+			out:  "．",
+		}, {
+			mask: 0,
+			in:   "..",
+			out:  "..",
+		}, {
+			mask: EncodeDot,
+			in:   "..",
+			out:  "．．",
+		}, {
+			mask: EncodeDot,
+			in:   "...",
+			out:  "...",
+		}, {
+			mask: EncodeDot,
+			in:   ". .",
+			out:  ". .",
+		},
+	} {
+		e := MultiEncoder(tc.mask)
+		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
+			got := e.Encode(tc.in)
+			if got != tc.out {
+				t.Errorf("Encode(%q) want %q got %q", tc.in, tc.out, got)
+			}
+			got2 := e.Decode(got)
+			if got2 != tc.in {
+				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
+			}
+		})
+	}
+}
+
 func TestDecodeHalf(t *testing.T) {
 	for i, tc := range []testCase{
 		{
@@ -141,7 +200,7 @@ func TestDecodeHalf(t *testing.T) {
 }
 
 const oneDrive = MultiEncoder(
-	EncodeStandard |
+	uint(Standard) |
 		EncodeWin |
 		EncodeBackSlash |
 		EncodeHashPercent |

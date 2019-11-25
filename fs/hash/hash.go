@@ -12,64 +12,88 @@ import (
 
 	"github.com/jzelinskie/whirlpool"
 	"github.com/pkg/errors"
-	"github.com/rclone/rclone/backend/dropbox/dbhash"
-	"github.com/rclone/rclone/backend/mailru/mrhash"
-	"github.com/rclone/rclone/backend/onedrive/quickxorhash"
 )
 
 // Type indicates a standard hashing algorithm
 type Type int
 
+type hashDefinition struct {
+	width    int
+	name     string
+	newFunc  func() hash.Hash
+	hashType Type
+}
+
+var hashes []*hashDefinition
+var highestType Type = 1
+
+// RegisterHash adds a new Hash to the list and returns it Type
+func RegisterHash(name string, width int, newFunc func() hash.Hash) Type {
+	definition := &hashDefinition{
+		name:     name,
+		width:    width,
+		newFunc:  newFunc,
+		hashType: highestType,
+	}
+	hashes = append(hashes, definition)
+	highestType = highestType << 1
+
+	return definition.hashType
+}
+
 // ErrUnsupported should be returned by filesystem,
 // if it is requested to deliver an unsupported hash type.
 var ErrUnsupported = errors.New("hash type not supported")
 
-const (
+var (
+	// None indicates no hashes are supported
+	None Type
+
 	// MD5 indicates MD5 support
-	MD5 Type = 1 << iota
+	MD5 Type
 
 	// SHA1 indicates SHA-1 support
-	SHA1
-
-	// Dropbox indicates Dropbox special hash
-	// https://www.dropbox.com/developers/reference/content-hash
-	Dropbox
-
-	// QuickXorHash indicates Microsoft onedrive hash
-	// https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash
-	QuickXorHash
+	SHA1 Type
 
 	// Whirlpool indicates Whirlpool support
-	Whirlpool
+	Whirlpool Type
 
 	// CRC32 indicates CRC-32 support
-	CRC32
-
-	// Mailru indicates Mailru special hash
-	Mailru
-
-	// None indicates no hashes are supported
-	None Type = 0
+	CRC32 Type
 )
+
+func init() {
+	MD5 = RegisterHash("MD5", 32, md5.New)
+	SHA1 = RegisterHash("SHA-1", 40, sha1.New)
+	Whirlpool = RegisterHash("Whirlpool", 128, whirlpool.New)
+	CRC32 = RegisterHash("CRC-32", 8, func() hash.Hash { return crc32.NewIEEE() })
+}
 
 // Supported returns a set of all the supported hashes by
 // HashStream and MultiHasher.
-var Supported = NewHashSet(MD5, SHA1, Dropbox, QuickXorHash, Whirlpool, CRC32, Mailru)
+func Supported() Set {
+	var types []Type
+	for _, v := range hashes {
+		types = append(types, v.hashType)
+	}
+
+	return NewHashSet(types...)
+}
 
 // Width returns the width in characters for any HashType
-var Width = map[Type]int{
-	MD5:          32,
-	SHA1:         40,
-	Dropbox:      64,
-	QuickXorHash: 40,
-	Whirlpool:    128,
-	CRC32:        8,
-	Mailru:       40,
+func Width(hashType Type) int {
+	for _, v := range hashes {
+		if v.hashType == hashType {
+			return v.width
+		}
+	}
+
+	return 0
 }
 
 // Stream will calculate hashes of all supported hash types.
 func Stream(r io.Reader) (map[Type]string, error) {
-	return StreamTypes(r, Supported)
+	return StreamTypes(r, Supported())
 }
 
 // StreamTypes will calculate hashes of the requested hash types.
@@ -93,52 +117,34 @@ func StreamTypes(r io.Reader, set Set) (map[Type]string, error) {
 // String returns a string representation of the hash type.
 // The function will panic if the hash type is unknown.
 func (h Type) String() string {
-	switch h {
-	case None:
+	if h == None {
 		return "None"
-	case MD5:
-		return "MD5"
-	case SHA1:
-		return "SHA-1"
-	case Dropbox:
-		return "DropboxHash"
-	case QuickXorHash:
-		return "QuickXorHash"
-	case Whirlpool:
-		return "Whirlpool"
-	case CRC32:
-		return "CRC-32"
-	case Mailru:
-		return "MailruHash"
-	default:
-		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
-		panic(err)
 	}
+
+	for _, v := range hashes {
+		if v.hashType == h {
+			return v.name
+		}
+	}
+
+	err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
+	panic(err)
 }
 
 // Set a Type from a flag
 func (h *Type) Set(s string) error {
-	switch s {
-	case "None":
+	if s == "None" {
 		*h = None
-	case "MD5":
-		*h = MD5
-	case "SHA-1":
-		*h = SHA1
-	case "DropboxHash":
-		*h = Dropbox
-	case "QuickXorHash":
-		*h = QuickXorHash
-	case "Whirlpool":
-		*h = Whirlpool
-	case "CRC-32":
-		*h = CRC32
-	case "MailruHash":
-		*h = Mailru
-	default:
-		return errors.Errorf("Unknown hash type %q", s)
 	}
-	return nil
+
+	for _, v := range hashes {
+		if v.name == s {
+			*h = v.hashType
+			return nil
+		}
+	}
+
+	return errors.Errorf("Unknown hash type %q", s)
 }
 
 // Type of the value
@@ -150,32 +156,28 @@ func (h Type) Type() string {
 // The types must be a subset of SupportedHashes,
 // and this function must support all types.
 func fromTypes(set Set) (map[Type]hash.Hash, error) {
-	if !set.SubsetOf(Supported) {
+	if !set.SubsetOf(Supported()) {
 		return nil, errors.Errorf("requested set %08x contains unknown hash types", int(set))
 	}
 	var hashers = make(map[Type]hash.Hash)
+
 	types := set.Array()
 	for _, t := range types {
-		switch t {
-		case MD5:
-			hashers[t] = md5.New()
-		case SHA1:
-			hashers[t] = sha1.New()
-		case Dropbox:
-			hashers[t] = dbhash.New()
-		case QuickXorHash:
-			hashers[t] = quickxorhash.New()
-		case Whirlpool:
-			hashers[t] = whirlpool.New()
-		case CRC32:
-			hashers[t] = crc32.NewIEEE()
-		case Mailru:
-			hashers[t] = mrhash.New()
-		default:
+		for _, v := range hashes {
+			if t != v.hashType {
+				continue
+			}
+
+			hashers[t] = v.newFunc()
+			break
+		}
+
+		if hashers[t] == nil {
 			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
 			panic(err)
 		}
 	}
+
 	return hashers, nil
 }
 
@@ -202,7 +204,7 @@ type MultiHasher struct {
 // NewMultiHasher will return a hash writer that will write all
 // supported hash types.
 func NewMultiHasher() *MultiHasher {
-	h, err := NewMultiHasherTypes(Supported)
+	h, err := NewMultiHasherTypes(Supported())
 	if err != nil {
 		panic("internal error: could not create multihasher")
 	}

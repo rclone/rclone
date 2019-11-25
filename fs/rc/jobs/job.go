@@ -237,9 +237,11 @@ func init() {
 		Fn:    rcJobStatus,
 		Title: "Reads the status of the job ID",
 		Help: `Parameters
+
 - jobid - id of the job (integer)
 
 Results
+
 - finished - boolean
 - duration - time in seconds that the job ran for
 - endTime - time the job finished (eg "2018-10-26T18:50:20.528746884+01:00")
@@ -282,6 +284,7 @@ func init() {
 		Help: `Parameters - None
 
 Results
+
 - jobids - array of integer job ids
 `,
 	})
@@ -300,6 +303,7 @@ func init() {
 		Fn:    rcJobStop,
 		Title: "Stop the running job",
 		Help: `Parameters
+
 - jobid - id of the job (integer)
 `,
 	})

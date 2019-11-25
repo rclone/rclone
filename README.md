@@ -22,13 +22,14 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
 
 ## Storage providers
 
-  * 1Fichier [:page_facing_up:](https://rclone.org/ficher/)
+  * 1Fichier [:page_facing_up:](https://rclone.org/fichier/)
   * Alibaba Cloud (Aliyun) Object Storage System (OSS) [:page_facing_up:](https://rclone.org/s3/#alibaba-oss)
   * Amazon Drive [:page_facing_up:](https://rclone.org/amazonclouddrive/) ([See note](https://rclone.org/amazonclouddrive/#status))
   * Amazon S3 [:page_facing_up:](https://rclone.org/s3/)
   * Backblaze B2 [:page_facing_up:](https://rclone.org/b2/)
   * Box [:page_facing_up:](https://rclone.org/box/)
   * Ceph [:page_facing_up:](https://rclone.org/s3/#ceph)
+  * Citrix ShareFile [:page_facing_up:](https://rclone.org/sharefile/)
   * DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
   * Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
@@ -76,6 +77,7 @@ Please see [the full list of all storage providers and their features](https://r
   * [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
   * [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, e.g. two different cloud accounts
+  * Optional large file chunking ([Chunker](https://rclone.org/chunker/))
   * Optional encryption ([Crypt](https://rclone.org/crypt/))
   * Optional cache ([Cache](https://rclone.org/cache/))
   * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))

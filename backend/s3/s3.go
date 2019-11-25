@@ -17,12 +17,16 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -41,6 +45,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -49,6 +54,8 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
+
+const enc = encodings.S3
 
 // Register with Fs
 func init() {
@@ -687,14 +694,25 @@ The minimum is 0 and the maximum is 5GB.`,
 			Name: "chunk_size",
 			Help: `Chunk size to use for uploading.
 
-When uploading files larger than upload_cutoff they will be uploaded
-as multipart uploads using this chunk size.
+When uploading files larger than upload_cutoff or files with unknown
+size (eg from "rclone rcat" or uploaded with "rclone mount" or google
+photos or google docs) they will be uploaded as multipart uploads
+using this chunk size.
 
 Note that "--s3-upload-concurrency" chunks of this size are buffered
 in memory per transfer.
 
 If you are transferring large files over high speed links and you have
-enough memory, then increasing this will speed up the transfers.`,
+enough memory, then increasing this will speed up the transfers.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of known size to stay below the 10,000 chunks limit.
+
+Files of unknown size are uploaded with the configured
+chunk_size. Since the default chunk size is 5MB and there can be at
+most 10,000 chunks, this means that by default the maximum size of
+file you can stream upload is 48GB.  If you wish to stream upload
+larger files then you will need to increase chunk_size.`,
 			Default:  minChunkSize,
 			Advanced: true,
 		}, {
@@ -748,18 +766,28 @@ Use this only if v4 signatures don't work, eg pre Jewel/v10 CEPH.`,
 See: [AWS S3 Transfer acceleration](https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration-examples.html)`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     "leave_parts_on_error",
+			Provider: "AWS",
+			Help: `If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
+
+It should be set to true for resuming uploads across different sessions.
+
+WARNING: Storing parts of an incomplete multipart upload counts towards space usage on S3 and will add additional costs if not cleaned up.
+`,
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
 
 // Constants
 const (
-	metaMtime           = "Mtime"                       // the meta key to store mtime in - eg X-Amz-Meta-Mtime
-	metaMD5Hash         = "Md5chksum"                   // the meta key to store md5hash in
-	listChunkSize       = 1000                          // number of items to read at once
-	maxRetries          = 10                            // number of retries to make of operations
-	maxSizeForCopy      = 5 * 1024 * 1024 * 1024        // The maximum size of object we can COPY
-	maxFileSize         = 5 * 1024 * 1024 * 1024 * 1024 // largest possible upload file size
+	metaMtime           = "Mtime"                // the meta key to store mtime in - eg X-Amz-Meta-Mtime
+	metaMD5Hash         = "Md5chksum"            // the meta key to store md5hash in
+	listChunkSize       = 1000                   // number of items to read at once
+	maxRetries          = 10                     // number of retries to make of operations
+	maxSizeForCopy      = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
 	minChunkSize        = fs.SizeSuffix(s3manager.MinUploadPartSize)
 	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
 	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
@@ -788,6 +816,7 @@ type Options struct {
 	ForcePathStyle        bool          `config:"force_path_style"`
 	V2Auth                bool          `config:"v2_auth"`
 	UseAccelerateEndpoint bool          `config:"use_accelerate_endpoint"`
+	LeavePartsOnError     bool          `config:"leave_parts_on_error"`
 }
 
 // Fs represents a remote s3 server
@@ -818,6 +847,7 @@ type Object struct {
 	lastModified time.Time          // Last modified
 	meta         map[string]*string // The object metadata if known - may be nil
 	mimeType     string             // MimeType of object - may be ""
+	storageClass string             // eg GLACIER
 }
 
 // ------------------------------------------------------------
@@ -898,7 +928,8 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return enc.FromStandardName(bucketName), enc.FromStandardPath(bucketPath)
 }
 
 // split returns bucket and bucketPath from the object
@@ -941,7 +972,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 			Client: ec2metadata.New(session.New(), &aws.Config{
 				HTTPClient: lowTimeoutClient,
 			}),
-			ExpiryWindow: 3,
+			ExpiryWindow: 3 * time.Minute,
 		},
 	}
 	cred := credentials.NewChainCredentials(providers)
@@ -1089,12 +1120,15 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
+		SetTier:           true,
+		GetTier:           true,
 	}).Fill(f)
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the object exists
+		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
 		req := s3.HeadObjectInput{
 			Bucket: &f.rootBucket,
-			Key:    &f.rootDirectory,
+			Key:    &encodedDirectory,
 		}
 		err = f.pacer.Call(func() (bool, error) {
 			_, err = f.c.HeadObject(&req)
@@ -1132,6 +1166,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		}
 		o.etag = aws.StringValue(info.ETag)
 		o.bytes = aws.Int64Value(info.Size)
+		o.storageClass = aws.StringValue(info.StorageClass)
 	} else {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
 		if err != nil {
@@ -1214,6 +1249,22 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		delimiter = "/"
 	}
 	var marker *string
+	// URL encode the listings so we can use control characters in object names
+	// See: https://github.com/aws/aws-sdk-go/issues/1914
+	//
+	// However this doesn't work perfectly under Ceph (and hence DigitalOcean/Dreamhost) because
+	// it doesn't encode CommonPrefixes.
+	// See: https://tracker.ceph.com/issues/41870
+	//
+	// This does not work under IBM COS also: See https://github.com/rclone/rclone/issues/3345
+	// though maybe it does on some versions.
+	//
+	// This does work with minio but was only added relatively recently
+	// https://github.com/minio/minio/pull/7265
+	//
+	// So we enable only on providers we know supports it properly, all others can retry when a
+	// XML Syntax error is detected.
+	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba")
 	for {
 		// FIXME need to implement ALL loop
 		req := s3.ListObjectsInput{
@@ -1223,10 +1274,26 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			MaxKeys:   &maxKeys,
 			Marker:    marker,
 		}
+		if urlEncodeListings {
+			req.EncodingType = aws.String(s3.EncodingTypeUrl)
+		}
 		var resp *s3.ListObjectsOutput
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.c.ListObjectsWithContext(ctx, &req)
+			if err != nil && !urlEncodeListings {
+				if awsErr, ok := err.(awserr.RequestFailure); ok {
+					if origErr := awsErr.OrigErr(); origErr != nil {
+						if _, ok := origErr.(*xml.SyntaxError); ok {
+							// Retry the listing with URL encoding as there were characters that XML can't encode
+							urlEncodeListings = true
+							req.EncodingType = aws.String(s3.EncodingTypeUrl)
+							fs.Debugf(f, "Retrying listing because of characters which can't be XML encoded")
+							return true, err
+						}
+					}
+				}
+			}
 			return f.shouldRetry(err)
 		})
 		if err != nil {
@@ -1255,6 +1322,14 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					continue
 				}
 				remote := *commonPrefix.Prefix
+				if urlEncodeListings {
+					remote, err = url.QueryUnescape(remote)
+					if err != nil {
+						fs.Logf(f, "failed to URL decode %q in listing common prefix: %v", *commonPrefix.Prefix, err)
+						continue
+					}
+				}
+				remote = enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -1274,6 +1349,14 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 		for _, object := range resp.Contents {
 			remote := aws.StringValue(object.Key)
+			if urlEncodeListings {
+				remote, err = url.QueryUnescape(remote)
+				if err != nil {
+					fs.Logf(f, "failed to URL decode %q in listing: %v", aws.StringValue(object.Key), err)
+					continue
+				}
+			}
+			remote = enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Logf(f, "Odd name received %q", remote)
 				continue
@@ -1358,7 +1441,7 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 		return nil, err
 	}
 	for _, bucket := range resp.Buckets {
-		bucketName := aws.StringValue(bucket.Name)
+		bucketName := enc.ToStandardName(aws.StringValue(bucket.Name))
 		f.cache.MarkOK(bucketName)
 		d := fs.NewDir(bucketName, aws.TimeValue(bucket.CreationDate))
 		entries = append(entries, d)
@@ -1550,6 +1633,132 @@ func pathEscape(s string) string {
 	return strings.Replace(rest.URLPathEscape(s), "+", "%2B", -1)
 }
 
+// copy does a server side copy
+//
+// It adds the boiler plate to the req passed in and calls the s3
+// method
+func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPath, srcBucket, srcPath string, srcSize int64) error {
+	req.Bucket = &dstBucket
+	req.ACL = &f.opt.ACL
+	req.Key = &dstPath
+	source := pathEscape(path.Join(srcBucket, srcPath))
+	req.CopySource = &source
+	if f.opt.ServerSideEncryption != "" {
+		req.ServerSideEncryption = &f.opt.ServerSideEncryption
+	}
+	if f.opt.SSEKMSKeyID != "" {
+		req.SSEKMSKeyId = &f.opt.SSEKMSKeyID
+	}
+	if req.StorageClass == nil && f.opt.StorageClass != "" {
+		req.StorageClass = &f.opt.StorageClass
+	}
+
+	if srcSize >= int64(f.opt.UploadCutoff) {
+		return f.copyMultipart(ctx, req, dstBucket, dstPath, srcBucket, srcPath, srcSize)
+	}
+	return f.pacer.Call(func() (bool, error) {
+		_, err := f.c.CopyObjectWithContext(ctx, req)
+		return f.shouldRetry(err)
+	})
+}
+
+func calculateRange(partSize, partIndex, numParts, totalSize int64) string {
+	start := partIndex * partSize
+	var ends string
+	if partIndex == numParts-1 {
+		if totalSize >= 0 {
+			ends = strconv.FormatInt(totalSize, 10)
+		}
+	} else {
+		ends = strconv.FormatInt(start+partSize-1, 10)
+	}
+	return fmt.Sprintf("bytes=%v-%v", start, ends)
+}
+
+func (f *Fs) copyMultipart(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPath, srcBucket, srcPath string, srcSize int64) (err error) {
+	var cout *s3.CreateMultipartUploadOutput
+	if err := f.pacer.Call(func() (bool, error) {
+		var err error
+		cout, err = f.c.CreateMultipartUploadWithContext(ctx, &s3.CreateMultipartUploadInput{
+			Bucket: &dstBucket,
+			Key:    &dstPath,
+		})
+		return f.shouldRetry(err)
+	}); err != nil {
+		return err
+	}
+	uid := cout.UploadId
+
+	defer func() {
+		if err != nil {
+			// We can try to abort the upload, but ignore the error.
+			_ = f.pacer.Call(func() (bool, error) {
+				_, err := f.c.AbortMultipartUploadWithContext(ctx, &s3.AbortMultipartUploadInput{
+					Bucket:       &dstBucket,
+					Key:          &dstPath,
+					UploadId:     uid,
+					RequestPayer: req.RequestPayer,
+				})
+				return f.shouldRetry(err)
+			})
+		}
+	}()
+
+	partSize := int64(f.opt.ChunkSize)
+	numParts := (srcSize-1)/partSize + 1
+
+	var parts []*s3.CompletedPart
+	for partNum := int64(1); partNum <= numParts; partNum++ {
+		if err := f.pacer.Call(func() (bool, error) {
+			partNum := partNum
+			uploadPartReq := &s3.UploadPartCopyInput{
+				Bucket:          &dstBucket,
+				Key:             &dstPath,
+				PartNumber:      &partNum,
+				UploadId:        uid,
+				CopySourceRange: aws.String(calculateRange(partSize, partNum-1, numParts, srcSize)),
+				// Args copy from req
+				CopySource:                     req.CopySource,
+				CopySourceIfMatch:              req.CopySourceIfMatch,
+				CopySourceIfModifiedSince:      req.CopySourceIfModifiedSince,
+				CopySourceIfNoneMatch:          req.CopySourceIfNoneMatch,
+				CopySourceIfUnmodifiedSince:    req.CopySourceIfUnmodifiedSince,
+				CopySourceSSECustomerAlgorithm: req.CopySourceSSECustomerAlgorithm,
+				CopySourceSSECustomerKey:       req.CopySourceSSECustomerKey,
+				CopySourceSSECustomerKeyMD5:    req.CopySourceSSECustomerKeyMD5,
+				RequestPayer:                   req.RequestPayer,
+				SSECustomerAlgorithm:           req.SSECustomerAlgorithm,
+				SSECustomerKey:                 req.SSECustomerKey,
+				SSECustomerKeyMD5:              req.SSECustomerKeyMD5,
+			}
+			uout, err := f.c.UploadPartCopyWithContext(ctx, uploadPartReq)
+			if err != nil {
+				return f.shouldRetry(err)
+			}
+			parts = append(parts, &s3.CompletedPart{
+				PartNumber: &partNum,
+				ETag:       uout.CopyPartResult.ETag,
+			})
+			return false, nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	return f.pacer.Call(func() (bool, error) {
+		_, err := f.c.CompleteMultipartUploadWithContext(ctx, &s3.CompleteMultipartUploadInput{
+			Bucket: &dstBucket,
+			Key:    &dstPath,
+			MultipartUpload: &s3.CompletedMultipartUpload{
+				Parts: parts,
+			},
+			RequestPayer: req.RequestPayer,
+			UploadId:     uid,
+		})
+		return f.shouldRetry(err)
+	})
+}
+
 // Copy src to this remote using server side copy operations.
 //
 // This is stored with the remote path given
@@ -1571,27 +1780,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 	srcBucket, srcPath := srcObj.split()
-	source := pathEscape(path.Join(srcBucket, srcPath))
 	req := s3.CopyObjectInput{
-		Bucket:            &dstBucket,
-		ACL:               &f.opt.ACL,
-		Key:               &dstPath,
-		CopySource:        &source,
 		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
 	}
-	if f.opt.ServerSideEncryption != "" {
-		req.ServerSideEncryption = &f.opt.ServerSideEncryption
-	}
-	if f.opt.SSEKMSKeyID != "" {
-		req.SSEKMSKeyId = &f.opt.SSEKMSKeyID
-	}
-	if f.opt.StorageClass != "" {
-		req.StorageClass = &f.opt.StorageClass
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.c.CopyObjectWithContext(ctx, &req)
-		return f.shouldRetry(err)
-	})
+	err = f.copy(ctx, &req, dstBucket, dstPath, srcBucket, srcPath, srcObj.Size())
 	if err != nil {
 		return nil, err
 	}
@@ -1691,6 +1883,10 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	o.etag = aws.StringValue(resp.ETag)
 	o.bytes = size
 	o.meta = resp.Metadata
+	if o.meta == nil {
+		o.meta = map[string]*string{}
+	}
+	o.storageClass = aws.StringValue(resp.StorageClass)
 	if resp.LastModified == nil {
 		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
 		o.lastModified = time.Now()
@@ -1741,39 +1937,19 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return nil
 	}
 
-	// Guess the content type
-	mimeType := fs.MimeType(ctx, o)
+	// Can't update metadata here, so return this error to force a recopy
+	if o.storageClass == "GLACIER" || o.storageClass == "DEEP_ARCHIVE" {
+		return fs.ErrorCantSetModTime
+	}
 
 	// Copy the object to itself to update the metadata
 	bucket, bucketPath := o.split()
-	sourceKey := path.Join(bucket, bucketPath)
-	directive := s3.MetadataDirectiveReplace // replace metadata with that passed in
 	req := s3.CopyObjectInput{
-		Bucket:            &bucket,
-		ACL:               &o.fs.opt.ACL,
-		Key:               &bucketPath,
-		ContentType:       &mimeType,
-		CopySource:        aws.String(pathEscape(sourceKey)),
+		ContentType:       aws.String(fs.MimeType(ctx, o)), // Guess the content type
 		Metadata:          o.meta,
-		MetadataDirective: &directive,
+		MetadataDirective: aws.String(s3.MetadataDirectiveReplace), // replace metadata with that passed in
 	}
-	if o.fs.opt.ServerSideEncryption != "" {
-		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
-	}
-	if o.fs.opt.SSEKMSKeyID != "" {
-		req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyID
-	}
-	if o.fs.opt.StorageClass == "GLACIER" || o.fs.opt.StorageClass == "DEEP_ARCHIVE" {
-		return fs.ErrorCantSetModTime
-	}
-	if o.fs.opt.StorageClass != "" {
-		req.StorageClass = &o.fs.opt.StorageClass
-	}
-	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err := o.fs.c.CopyObjectWithContext(ctx, &req)
-		return o.fs.shouldRetry(err)
-	})
-	return err
+	return o.fs.copy(ctx, &req, bucket, bucketPath, bucket, bucketPath, o.bytes)
 }
 
 // Storable raturns a boolean indicating if this object is storable
@@ -1817,6 +1993,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return resp.Body, nil
 }
 
+var warnStreamUpload sync.Once
+
 // Update the Object from in with modTime and size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	bucket, bucketPath := o.split()
@@ -1832,14 +2010,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if multipart {
 		uploader = s3manager.NewUploader(o.fs.ses, func(u *s3manager.Uploader) {
 			u.Concurrency = o.fs.opt.UploadConcurrency
-			u.LeavePartsOnError = false
+			u.LeavePartsOnError = o.fs.opt.LeavePartsOnError
 			u.S3 = o.fs.c
 			u.PartSize = int64(o.fs.opt.ChunkSize)
 
+			// size can be -1 here meaning we don't know the size of the incoming file.  We use ChunkSize
+			// buffers here (default 5MB). With a maximum number of parts (10,000) this will be a file of
+			// 48GB which seems like a not too unreasonable limit.
 			if size == -1 {
-				// Make parts as small as possible while still being able to upload to the
-				// S3 file size limit. Rounded up to nearest MB.
-				u.PartSize = (((maxFileSize / s3manager.MaxUploadParts) >> 20) + 1) << 20
+				warnStreamUpload.Do(func() {
+					fs.Logf(o.fs, "Streaming uploads using chunk size %v will have maximum file size of %v",
+						o.fs.opt.ChunkSize, fs.SizeSuffix(u.PartSize*s3manager.MaxUploadParts))
+				})
 				return
 			}
 			// Adjust PartSize until the number of parts is small enough.
@@ -1932,6 +2114,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return errors.Wrap(err, "s3 upload: sign request")
 		}
 
+		if o.fs.opt.V2Auth && headers == nil {
+			headers = putObj.HTTPRequest.Header
+		}
+
 		// Set request to nil if empty so as not to make chunked encoding
 		if size == 0 {
 			in = nil
@@ -1998,6 +2184,31 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 
+// SetTier performs changing storage class
+func (o *Object) SetTier(tier string) (err error) {
+	ctx := context.TODO()
+	tier = strings.ToUpper(tier)
+	bucket, bucketPath := o.split()
+	req := s3.CopyObjectInput{
+		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
+		StorageClass:      aws.String(tier),
+	}
+	err = o.fs.copy(ctx, &req, bucket, bucketPath, bucket, bucketPath, o.bytes)
+	if err != nil {
+		return err
+	}
+	o.storageClass = tier
+	return err
+}
+
+// GetTier returns storage class as string
+func (o *Object) GetTier() string {
+	if o.storageClass == "" {
+		return "STANDARD"
+	}
+	return o.storageClass
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs          = &Fs{}
@@ -2006,4 +2217,6 @@ var (
 	_ fs.ListRer     = &Fs{}
 	_ fs.Object      = &Object{}
 	_ fs.MimeTyper   = &Object{}
+	_ fs.GetTierer   = &Object{}
+	_ fs.SetTierer   = &Object{}
 )

@@ -343,7 +343,7 @@ func TestCallParallel(t *testing.T) {
 			assert.Equal(t, errFoo, p.CallNoRetry(dp.fn))
 		}()
 	}
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	called := 0
 	wait.L.Lock()
 	for _, dp := range funcs {
@@ -353,7 +353,7 @@ func TestCallParallel(t *testing.T) {
 
 	assert.Equal(t, 3, called)
 	wait.Broadcast()
-	time.Sleep(20 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 
 	called = 0
 	wait.L.Lock()

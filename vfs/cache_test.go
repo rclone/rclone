@@ -51,7 +51,7 @@ func itemAsString(c *cache) []string {
 	defer c.itemMu.Unlock()
 	var out []string
 	for name, item := range c.item {
-		out = append(out, fmt.Sprintf("name=%q isFile=%v opens=%d size=%d", name, item.isFile, item.opens, item.size))
+		out = append(out, fmt.Sprintf("name=%q isFile=%v opens=%d size=%d", filepath.ToSlash(name), item.isFile, item.opens, item.size))
 	}
 	sort.Strings(out)
 	return out
@@ -386,11 +386,11 @@ func TestCachePurgeOld(t *testing.T) {
 	var removed []string
 	removedDir := true
 	removeFile := func(name string) {
-		removed = append(removed, name)
+		removed = append(removed, filepath.ToSlash(name))
 	}
 	removeDir := func(name string) bool {
 		if removedDir {
-			removed = append(removed, name+"/")
+			removed = append(removed, filepath.ToSlash(name)+"/")
 		}
 		return removedDir
 	}
@@ -483,7 +483,7 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	// Test funcs
 	var removed []string
 	remove := func(name string) {
-		removed = append(removed, name)
+		removed = append(removed, filepath.ToSlash(name))
 		c.remove(name)
 	}
 

@@ -32,12 +32,10 @@ func mountOptions(device string) (options []fuse.MountOption) {
 		fuse.Subtype("rclone"),
 		fuse.FSName(device),
 		fuse.VolumeName(mountlib.VolumeName),
+		fuse.AsyncRead(),
 
 		// Options from benchmarking in the fuse module
 		//fuse.MaxReadahead(64 * 1024 * 1024),
-		//fuse.AsyncRead(), - FIXME this causes
-		// ReadFileHandle.Read error: read /home/files/ISOs/xubuntu-15.10-desktop-amd64.iso: bad file descriptor
-		// which is probably related to errors people are having
 		//fuse.WritebackCache(),
 	}
 	if mountlib.NoAppleDouble {
@@ -139,6 +137,9 @@ func Mount(f fs.Fs, mountpoint string) error {
 	sigHup := make(chan os.Signal, 1)
 	signal.Notify(sigHup, syscall.SIGHUP)
 	atexit.IgnoreSignals()
+	atexit.Register(func() {
+		_ = unmount()
+	})
 
 	if err := sdnotify.Ready(); err != nil && err != sdnotify.ErrSdNotifyNoSocket {
 		return errors.Wrap(err, "failed to notify systemd")

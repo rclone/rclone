@@ -145,7 +145,7 @@ curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bag
 ntpclient -s -h pool.ntp.org
 ```
 
-The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in the [x509 pacakge](https://godoc.org/crypto/x509),
+The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in the [x509 package](https://godoc.org/crypto/x509),
 provide an additional way to provide the SSL root certificates.
 
 Note that you may need to add the `--insecure` option to the `curl` command line if it doesn't work without.
@@ -209,5 +209,5 @@ work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
 directory with thousands or millions of files in.  Rclone has to load
-this entirely into memory as rclone objects.  Each Rclone object takes
+this entirely into memory as rclone objects.  Each rclone object takes
 0.5k-1k of memory.

@@ -10,6 +10,7 @@ package drive
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -32,6 +33,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -46,6 +48,8 @@ import (
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
 )
+
+const enc = encodings.Drive
 
 // Constants
 const (
@@ -210,7 +214,15 @@ func init() {
 			}},
 		}, {
 			Name: "root_folder_id",
-			Help: "ID of the root folder\nLeave blank normally.\nFill in to access \"Computers\" folders. (see docs).",
+			Help: `ID of the root folder
+Leave blank normally.
+
+Fill in to access "Computers" folders (see docs), or for rclone to use
+a non root folder as its starting point.
+
+Note that if this is blank, the first time rclone runs it will fill it
+in with the ID of the root folder.
+`,
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path \nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
@@ -399,8 +411,22 @@ older versions that have been set to keep forever.`,
 
 This can be useful if you wish to do a server side copy between two
 different Google drives.  Note that this isn't enabled by default
-because it isn't easy to tell if it will work beween any two
+because it isn't easy to tell if it will work between any two
 configurations.`,
+			Advanced: true,
+		}, {
+			Name:    "disable_http2",
+			Default: true,
+			Help: `Disable drive using http2
+
+There is currently an unsolved issue with the google drive backend and
+HTTP/2.  HTTP/2 is therefore disabled by default for the drive backend
+but can be re-enabled here.  When the issue is solved this flag will
+be removed.
+
+See: https://github.com/rclone/rclone/issues/3631
+
+`,
 			Advanced: true,
 		}},
 	})
@@ -449,6 +475,7 @@ type Options struct {
 	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
 	PacerBurst                int           `config:"pacer_burst"`
 	ServerSideAcrossConfigs   bool          `config:"server_side_across_configs"`
+	DisableHTTP2              bool          `config:"disable_http2"`
 }
 
 // Fs represents a remote drive server
@@ -562,6 +589,23 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
+// getRootID returns the canonical ID for the "root" ID
+func (f *Fs) getRootID() (string, error) {
+	var info *drive.File
+	var err error
+	err = f.pacer.CallNoRetry(func() (bool, error) {
+		info, err = f.svc.Files.Get("root").
+			Fields("id").
+			SupportsAllDrives(true).
+			Do()
+		return shouldRetry(err)
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't find root directory ID")
+	}
+	return info.Id, nil
+}
+
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
@@ -599,11 +643,10 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	}
 	var stems []string
 	if title != "" {
+		searchTitle := enc.FromStandardName(title)
 		// Escaping the backslash isn't documented but seems to work
-		searchTitle := strings.Replace(title, `\`, `\\`, -1)
+		searchTitle = strings.Replace(searchTitle, `\`, `\\`, -1)
 		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
-		// Convert ／ to / for search
-		searchTitle = strings.Replace(searchTitle, "／", "/", -1)
 
 		var titleQuery bytes.Buffer
 		_, _ = fmt.Fprintf(&titleQuery, "(name='%s'", searchTitle)
@@ -671,11 +714,9 @@ OUTER:
 			return false, errors.Wrap(err, "couldn't list directory")
 		}
 		for _, item := range files.Files {
-			// Convert / to ／ for listing purposes
-			item.Name = strings.Replace(item.Name, "/", "／", -1)
+			item.Name = enc.ToStandardName(item.Name)
 			// Check the case of items is correct since
 			// the `=` operator is case insensitive.
-
 			if title != "" && title != item.Name {
 				found := false
 				for _, stem := range stems {
@@ -789,7 +830,7 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 	} else {
 		fmt.Printf("Change current team drive ID %q?\n", opt.TeamDriveID)
 	}
-	if !config.Confirm() {
+	if !config.Confirm(false) {
 		return nil
 	}
 	client, err := createOAuthClient(opt, name, m)
@@ -840,6 +881,18 @@ func newPacer(opt *Options) *fs.Pacer {
 	return fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst)))
 }
 
+// getClient makes an http client according to the options
+func getClient(opt *Options) *http.Client {
+	t := fshttp.NewTransportCustom(fs.Config, func(t *http.Transport) {
+		if opt.DisableHTTP2 {
+			t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+		}
+	})
+	return &http.Client{
+		Transport: t,
+	}
+}
+
 func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {
 	scopes := driveScopes(opt.Scope)
 	conf, err := google.JWTConfigFromJSON(credentialsData, scopes...)
@@ -849,7 +902,7 @@ func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client
 	if opt.Impersonate != "" {
 		conf.Subject = opt.Impersonate
 	}
-	ctxWithSpecialClient := oauthutil.Context(fshttp.NewClient(fs.Config))
+	ctxWithSpecialClient := oauthutil.Context(getClient(opt))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
@@ -871,7 +924,7 @@ func createOAuthClient(opt *Options, name string, m configmap.Mapper) (*http.Cli
 			return nil, errors.Wrap(err, "failed to create oauth client from service account")
 		}
 	} else {
-		oAuthClient, _, err = oauthutil.NewClient(name, m, driveConfig)
+		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(name, m, driveConfig, getClient(opt))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client")
 		}
@@ -968,15 +1021,25 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// set root folder for a team drive or query the user root folder
-	if f.isTeamDrive {
+	if opt.RootFolderID != "" {
+		// override root folder if set or cached in the config
+		f.rootFolderID = opt.RootFolderID
+	} else if f.isTeamDrive {
 		f.rootFolderID = f.opt.TeamDriveID
 	} else {
-		f.rootFolderID = "root"
-	}
-
-	// override root folder if set in the config
-	if opt.RootFolderID != "" {
-		f.rootFolderID = opt.RootFolderID
+		// Look up the root ID and cache it in the config
+		rootID, err := f.getRootID()
+		if err != nil {
+			if gerr, ok := errors.Cause(err).(*googleapi.Error); ok && gerr.Code == 404 {
+				// 404 means that this scope does not have permission to get the
+				// root so just use "root"
+				rootID = "root"
+			} else {
+				return nil, err
+			}
+		}
+		f.rootFolderID = rootID
+		m.Set("root_folder_id", rootID)
 	}
 
 	f.dirCache = dircache.New(root, f.rootFolderID, f)
@@ -1210,6 +1273,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	leaf = enc.FromStandardName(leaf)
 	// fmt.Println("Making", path)
 	// Define the metadata for the directory we are going to create.
 	createInfo := &drive.File{
@@ -1457,6 +1521,10 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in <-chan list
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
 		_, err := f.list(ctx, dirs, "", false, false, false, func(item *drive.File) bool {
+			// shared with me items have no parents when at the root
+			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
+				item.Parents = dirs
+			}
 			for _, parent := range item.Parents {
 				// only handle parents that are in the requested dirs list
 				i := sort.SearchStrings(dirs, parent)
@@ -1524,20 +1592,6 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
-	}
-	if directoryID == "root" {
-		var info *drive.File
-		err = f.pacer.CallNoRetry(func() (bool, error) {
-			info, err = f.svc.Files.Get("root").
-				Fields("id").
-				SupportsAllDrives(true).
-				Do()
-			return shouldRetry(err)
-		})
-		if err != nil {
-			return err
-		}
-		directoryID = info.Id
 	}
 
 	mu := sync.Mutex{} // protects in and overflow
@@ -1645,6 +1699,7 @@ func (f *Fs) createFileInfo(ctx context.Context, remote string, modTime time.Tim
 		return nil, err
 	}
 
+	leaf = enc.FromStandardName(leaf)
 	// Define the metadata for the file we are going to create.
 	createInfo := &drive.File{
 		Name:         leaf,
@@ -2265,9 +2320,11 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 func (f *Fs) changeNotifyStartPageToken() (pageToken string, err error) {
 	var startPageToken *drive.StartPageToken
 	err = f.pacer.Call(func() (bool, error) {
-		startPageToken, err = f.svc.Changes.GetStartPageToken().
-			SupportsAllDrives(true).
-			Do()
+		changes := f.svc.Changes.GetStartPageToken().SupportsAllDrives(true)
+		if f.isTeamDrive {
+			changes.DriveId(f.opt.TeamDriveID)
+		}
+		startPageToken, err = changes.Do()
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -2290,7 +2347,11 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			changesCall.SupportsAllDrives(true)
 			changesCall.IncludeItemsFromAllDrives(true)
 			if f.isTeamDrive {
-				changesCall.TeamDriveId(f.opt.TeamDriveID)
+				changesCall.DriveId(f.opt.TeamDriveID)
+			}
+			// If using appDataFolder then need to add Spaces
+			if f.rootFolderID == "appDataFolder" {
+				changesCall.Spaces("appDataFolder")
 			}
 			changeList, err = changesCall.Context(ctx).Do()
 			return shouldRetry(err)
@@ -2316,6 +2377,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 			// find the new path
 			if change.File != nil {
+				change.File.Name = enc.ToStandardName(change.File.Name)
 				changeType := fs.EntryDirectory
 				if change.File.MimeType != driveFolderType {
 					changeType = fs.EntryObject

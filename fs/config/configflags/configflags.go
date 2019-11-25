@@ -57,7 +57,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &deleteBefore, "delete-before", "", false, "When synchronizing, delete files on destination before transferring")
 	flags.BoolVarP(flagSet, &deleteDuring, "delete-during", "", false, "When synchronizing, delete files during transfer")
 	flags.BoolVarP(flagSet, &deleteAfter, "delete-after", "", false, "When synchronizing, delete files on destination after transferring (default)")
-	flags.IntVar64P(flagSet, &fs.Config.MaxDelete, "max-delete", "", -1, "When synchronizing, limit the number of deletes")
+	flags.Int64VarP(flagSet, &fs.Config.MaxDelete, "max-delete", "", -1, "When synchronizing, limit the number of deletes")
 	flags.BoolVarP(flagSet, &fs.Config.TrackRenames, "track-renames", "", fs.Config.TrackRenames, "When synchronizing, track file renames and do a server side move if possible")
 	flags.IntVarP(flagSet, &fs.Config.LowLevelRetries, "low-level-retries", "", fs.Config.LowLevelRetries, "Number of low level retries to do.")
 	flags.BoolVarP(flagSet, &fs.Config.UpdateOlder, "update", "u", fs.Config.UpdateOlder, "Skip files that are newer on the destination.")
@@ -69,8 +69,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &fs.Config.IgnoreCaseSync, "ignore-case-sync", "", fs.Config.IgnoreCaseSync, "Ignore case when synchronizing")
 	flags.BoolVarP(flagSet, &fs.Config.NoTraverse, "no-traverse", "", fs.Config.NoTraverse, "Don't traverse destination file system on copy.")
 	flags.BoolVarP(flagSet, &fs.Config.NoUpdateModTime, "no-update-modtime", "", fs.Config.NoUpdateModTime, "Don't update destination mod-time if files identical.")
-	flags.StringVarP(flagSet, &fs.Config.CompareDest, "compare-dest", "", fs.Config.CompareDest, "use DIR to server side copy flies from.")
-	flags.StringVarP(flagSet, &fs.Config.CopyDest, "copy-dest", "", fs.Config.CopyDest, "Compare dest to DIR also.")
+	flags.StringVarP(flagSet, &fs.Config.CompareDest, "compare-dest", "", fs.Config.CompareDest, "Include additional server-side path during comparison.")
+	flags.StringVarP(flagSet, &fs.Config.CopyDest, "copy-dest", "", fs.Config.CopyDest, "Implies --compare-dest but also copies files from path into destination.")
 	flags.StringVarP(flagSet, &fs.Config.BackupDir, "backup-dir", "", fs.Config.BackupDir, "Make backups into hierarchy based in DIR.")
 	flags.StringVarP(flagSet, &fs.Config.Suffix, "suffix", "", fs.Config.Suffix, "Suffix to add to changed files.")
 	flags.BoolVarP(flagSet, &fs.Config.SuffixKeepExtension, "suffix-keep-extension", "", fs.Config.SuffixKeepExtension, "Preserve the extension when using --suffix.")
@@ -171,10 +171,6 @@ func SetFlags() {
 		fs.Config.DeleteMode = fs.DeleteModeAfter
 	default:
 		fs.Config.DeleteMode = fs.DeleteModeDefault
-	}
-
-	if fs.Config.IgnoreSize && fs.Config.SizeOnly {
-		log.Fatalf(`Can't use --size-only and --ignore-size together.`)
 	}
 
 	if fs.Config.CompareDest != "" && fs.Config.CopyDest != "" {

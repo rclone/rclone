@@ -15,6 +15,7 @@ This file describes how to make the various kinds of releases
   * make test # see integration test server or run locally
   * make tag
   * edit docs/content/changelog.md
+  * make tidy
   * make doc
   * git status - to check for new man pages - git add them
   * git commit -a -v -m "Version v1.XX.0"
@@ -56,8 +57,7 @@ Can be fixed with
 
 ## Making a point release
 
-If rclone needs a point release due to some horrendous bug then a
-point release is necessary.
+If rclone needs a point release due to some horrendous bug:
 
 First make the release branch.  If this is a second point release then
 this will be done already.
@@ -72,7 +72,7 @@ Now
   * git co ${BASE_TAG}-fixes
   * git cherry-pick any fixes
   * Test (see above)
-  * make NEW_TAG=${NEW_TAG} tag
+  * make NEXT_VERSION=${NEW_TAG} tag
   * edit docs/content/changelog.md
   * make TAG=${NEW_TAG} doc
   * git commit -a -v -m "Version ${NEW_TAG}"
@@ -89,9 +89,9 @@ Now
   * make TAG=${NEW_TAG} upload_github
   * NB this overwrites the current beta so we need to do this
   * git co master
-  * make LAST_TAG=${NEW_TAG} startdev
-  * # cherry pick the changes to the changelog
-  * git checkout ${BASE_TAG}-fixes docs/content/changelog.md
+  * make VERSION=${NEW_TAG} startdev
+  * # cherry pick the changes to the changelog and VERSION
+  * git checkout ${BASE_TAG}-fixes VERSION docs/content/changelog.md
   * git commit --amend
   * git push
   * Announce!

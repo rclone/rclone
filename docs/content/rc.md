@@ -340,6 +340,7 @@ Authentication is required for this call.
 ### config/get: Get a remote in the config file. {#config/get}
 
 Parameters:
+
 - name - name of remote to get
 
 See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
@@ -440,6 +441,7 @@ Returns the following values:
 			...
 		]
 }
+```
 
 ### core/memstats: Returns the memory statistics {#core/memstats}
 
@@ -466,6 +468,11 @@ Returns
 This returns PID of current process.
 Useful for stopping rclone process.
 
+### core/quit: Terminates the app. {#core/quit}
+
+(optional) Pass an exit code to be used for terminating the app:
+- exitCode - int
+
 ### core/stats: Returns stats about current transfers. {#core/stats}
 
 This returns all available stats:
@@ -476,6 +483,7 @@ If group is not provided then summed up stats for all groups will be
 returned.
 
 Parameters
+
 - group - name of the stats group (string)
 
 Returns the following values:
@@ -513,10 +521,11 @@ The value for "eta" is null if an eta cannot be determined.
 
 ### core/stats-reset: Reset stats. {#core/stats-reset}
 
-This clears counters and errors for all stats or specific stats group if group
-is provided.
+This clears counters, errors and finished transfers for all stats or specific
+stats group if group is provided.
 
 Parameters
+
 - group - name of the stats group (string)
 
 ### core/transferred: Returns stats about completed transfers. {#core/transferred}
@@ -528,7 +537,10 @@ This returns stats about completed transfers:
 If group is not provided then completed transfers for all groups will be
 returned.
 
+Note only the last 100 completed transfers are returned.
+
 Parameters
+
 - group - name of the stats group (string)
 
 Returns the following values:
@@ -547,10 +559,12 @@ Returns the following values:
 			}
 		]
 }
+```
 
 ### core/version: Shows the current version of rclone and the go runtime. {#core/version}
 
 This shows the current version of go and the go runtime
+
 - version - rclone version, eg "v1.44"
 - decomposed - version number as [major, minor, patch, subpatch]
     - note patch and subpatch will be 999 for a git compiled version
@@ -559,19 +573,60 @@ This shows the current version of go and the go runtime
 - arch - cpu architecture in use according to Go
 - goVersion - version of Go runtime in use
 
+### debug/set-block-profile-rate: Set runtime.SetBlockProfileRate for blocking profiling. {#debug/set-block-profile-rate}
+
+SetBlockProfileRate controls the fraction of goroutine blocking events
+that are reported in the blocking profile. The profiler aims to sample
+an average of one blocking event per rate nanoseconds spent blocked.
+
+To include every blocking event in the profile, pass rate = 1. To turn
+off profiling entirely, pass rate <= 0.
+
+After calling this you can use this to see the blocking profile:
+
+    go tool pprof http://localhost:5572/debug/pprof/block
+
+Parameters
+
+- rate - int
+
+### debug/set-mutex-profile-fraction: Set runtime.SetMutexProfileFraction for mutex profiling. {#debug/set-mutex-profile-fraction}
+
+SetMutexProfileFraction controls the fraction of mutex contention
+events that are reported in the mutex profile. On average 1/rate
+events are reported. The previous rate is returned.
+
+To turn off profiling entirely, pass rate 0. To just read the current
+rate, pass rate < 0. (For n>1 the details of sampling may change.)
+
+Once this is set you can look use this to profile the mutex contention:
+
+    go tool pprof http://localhost:5572/debug/pprof/mutex
+
+Parameters
+
+- rate - int
+
+Results
+
+- previousRate - int
+
 ### job/list: Lists the IDs of the running jobs {#job/list}
 
 Parameters - None
 
 Results
+
 - jobids - array of integer job ids
 
 ### job/status: Reads the status of the job ID {#job/status}
 
 Parameters
+
 - jobid - id of the job (integer)
 
 Results
+
 - finished - boolean
 - duration - time in seconds that the job ran for
 - endTime - time the job finished (eg "2018-10-26T18:50:20.528746884+01:00")
@@ -586,6 +641,7 @@ Results
 ### job/stop: Stop the running job {#job/stop}
 
 Parameters
+
 - jobid - id of the job (integer)
 
 ### operations/about: Return the space used on the remote {#operations/about}
@@ -628,7 +684,7 @@ This takes the following parameters
 - fs - a remote name string eg "drive:"
 - remote - a path within that remote eg "dir"
 - url - string, URL to read from
-
+ - autoFilename - boolean, set to true to retrieve destination file name from url
 See the [copyurl command](/commands/rclone_copyurl/) command for more information on the above.
 
 Authentication is required for this call.
@@ -1179,13 +1235,20 @@ You can see a summary of profiles available at http://localhost:5572/debug/pprof
 
 Here is how to use some of them:
 
-  * Memory: `go tool pprof http://localhost:5572/debug/pprof/heap`
-  * Go routines: `curl http://localhost:5572/debug/pprof/goroutine?debug=1`
-  * 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
-  * 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
+- Memory: `go tool pprof http://localhost:5572/debug/pprof/heap`
+- Go routines: `curl http://localhost:5572/debug/pprof/goroutine?debug=1`
+- 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
+- 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
+- Goroutine blocking profile
+    - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug/set-block-profile-rate))
+    - `go tool pprof http://localhost:5572/debug/pprof/block`
+- Contended mutexes:
+    - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug/set-mutex-profile-fraction))
+    - `go tool pprof http://localhost:5572/debug/pprof/mutex`
 
 See the [net/http/pprof docs](https://golang.org/pkg/net/http/pprof/)
 for more info on how to use the profiling and for a general overview
 see [the Go team's blog post on profiling go programs](https://blog.golang.org/profiling-go-programs).
 
 The profiling hook is [zero overhead unless it is used](https://stackoverflow.com/q/26545159/164234).
+

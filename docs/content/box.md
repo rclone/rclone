@@ -12,7 +12,8 @@ Paths are specified as `remote:path`
 Paths may be as deep as required, eg `remote:directory/subdirectory`.
 
 The initial setup for Box involves getting a token from Box which you
-need to do in your browser.  `rclone config` walks you through it.
+can do either in your browser, or with a config.json downloaded from Box
+to use JWT authentication.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:
 
@@ -37,7 +38,14 @@ Storage> box
 Box App Client Id - leave blank normally.
 client_id> 
 Box App Client Secret - leave blank normally.
-client_secret> 
+client_secret>
+Box App config.json location
+Leave blank normally.
+Enter a string value. Press Enter for the default ("").
+config_json>
+'enterprise' or 'user' depending on the type of token being requested.
+Enter a string value. Press Enter for the default ("user").
+box_sub_type>
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -188,6 +196,25 @@ not.
 Box supports SHA1 type hashes, so you can use the `--checksum`
 flag.
 
+#### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| \         | 0x5C  | ＼           |
+
+File names can also not end with the following characters.
+These only get replaced if they are last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
+
 ### Transfers ###
 
 For files above 50MB rclone will use a chunked transfer.  Rclone will
@@ -224,6 +251,30 @@ Leave blank normally.
 - Env Var:     RCLONE_BOX_CLIENT_SECRET
 - Type:        string
 - Default:     ""
+
+#### --box-box-config-file
+
+Box App config.json location
+Leave blank normally.
+
+- Config:      box_config_file
+- Env Var:     RCLONE_BOX_BOX_CONFIG_FILE
+- Type:        string
+- Default:     ""
+
+#### --box-box-sub-type
+
+
+
+- Config:      box_sub_type
+- Env Var:     RCLONE_BOX_BOX_SUB_TYPE
+- Type:        string
+- Default:     "user"
+- Examples:
+    - "user"
+        - Rclone should act on behalf of a user
+    - "enterprise"
+        - Rclone should act on behalf of a service account
 
 ### Advanced Options
 

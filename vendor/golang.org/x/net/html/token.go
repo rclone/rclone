@@ -347,6 +347,7 @@ loop:
 			break loop
 		}
 		if c != '/' {
+			z.raw.end--
 			continue loop
 		}
 		if z.readRawEndTag() || z.err != nil {
@@ -1067,6 +1068,11 @@ loop:
 
 // Raw returns the unmodified text of the current token. Calling Next, Token,
 // Text, TagName or TagAttr may change the contents of the returned slice.
+//
+// The token stream's raw bytes partition the byte stream (up until an
+// ErrorToken). There are no overlaps or gaps between two consecutive token's
+// raw bytes. One implication is that the byte offset of the current token is
+// the sum of the lengths of all previous tokens' raw bytes.
 func (z *Tokenizer) Raw() []byte {
 	return z.buf[z.raw.start:z.raw.end]
 }

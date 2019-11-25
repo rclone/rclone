@@ -111,7 +111,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 	}
 	var request = api.StartLargeFileRequest{
 		BucketID:    bucketID,
-		Name:        bucketPath,
+		Name:        enc.FromStandardPath(bucketPath),
 		ContentType: fs.MimeType(ctx, src),
 		Info: map[string]string{
 			timeKey: timeString(modTime),

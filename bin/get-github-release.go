@@ -9,6 +9,7 @@ package main
 
 import (
 	"archive/tar"
+	"compress/bzip2"
 	"compress/gzip"
 	"encoding/json"
 	"flag"
@@ -349,6 +350,8 @@ func untar(srcFile, fileName, extractDir string) {
 			log.Fatalf("Couldn't open gzip: %v", err)
 		}
 		in = gzf
+	} else if srcExt == ".bz2" {
+		in = bzip2.NewReader(f)
 	}
 
 	tarReader := tar.NewReader(in)

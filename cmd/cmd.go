@@ -82,7 +82,7 @@ func ShowVersion() {
 func NewFsFile(remote string) (fs.Fs, string) {
 	_, _, fsPath, err := fs.ParseRemote(remote)
 	if err != nil {
-		fs.CountError(err)
+		err = fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
 	f, err := cache.Get(remote)
@@ -92,7 +92,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 	case nil:
 		return f, ""
 	default:
-		fs.CountError(err)
+		err = fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
 	return nil, ""
@@ -107,13 +107,13 @@ func newFsFileAddFilter(remote string) (fs.Fs, string) {
 	if fileName != "" {
 		if !filter.Active.InActive() {
 			err := errors.Errorf("Can't limit to single files when using filters: %v", remote)
-			fs.CountError(err)
+			err = fs.CountError(err)
 			log.Fatalf(err.Error())
 		}
 		// Limit transfers to this file
 		err := filter.Active.AddFile(fileName)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			log.Fatalf("Failed to limit to single file %q: %v", remote, err)
 		}
 	}
@@ -135,7 +135,7 @@ func NewFsSrc(args []string) fs.Fs {
 func newFsDir(remote string) fs.Fs {
 	f, err := cache.Get(remote)
 	if err != nil {
-		fs.CountError(err)
+		err = fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
 	return f
@@ -189,11 +189,11 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 	fdst, err := cache.Get(dstRemote)
 	switch err {
 	case fs.ErrorIsFile:
-		fs.CountError(err)
+		_ = fs.CountError(err)
 		log.Fatalf("Source doesn't exist or is a directory and destination is a file")
 	case nil:
 	default:
-		fs.CountError(err)
+		_ = fs.CountError(err)
 		log.Fatalf("Failed to create file system for destination %q: %v", dstRemote, err)
 	}
 	return
@@ -239,7 +239,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	SigInfoHandler()
 	for try := 1; try <= *retries; try++ {
 		err = f()
-		fs.CountError(err)
+		err = fs.CountError(err)
 		lastErr := accounting.GlobalStats().GetLastError()
 		if err == nil {
 			err = lastErr
@@ -386,12 +386,12 @@ func initConfig() {
 		fs.Infof(nil, "Creating CPU profile %q\n", *cpuProfile)
 		f, err := os.Create(*cpuProfile)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			log.Fatal(err)
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			fs.CountError(err)
+			err = fs.CountError(err)
 			log.Fatal(err)
 		}
 		atexit.Register(func() {
@@ -405,17 +405,17 @@ func initConfig() {
 			fs.Infof(nil, "Saving Memory profile %q\n", *memProfile)
 			f, err := os.Create(*memProfile)
 			if err != nil {
-				fs.CountError(err)
+				err = fs.CountError(err)
 				log.Fatal(err)
 			}
 			err = pprof.WriteHeapProfile(f)
 			if err != nil {
-				fs.CountError(err)
+				err = fs.CountError(err)
 				log.Fatal(err)
 			}
 			err = f.Close()
 			if err != nil {
-				fs.CountError(err)
+				err = fs.CountError(err)
 				log.Fatal(err)
 			}
 		})

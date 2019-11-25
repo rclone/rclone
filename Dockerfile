@@ -12,10 +12,11 @@ RUN ./rclone version
 # Begin final image
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates fuse
 
-WORKDIR /root/
+COPY --from=builder /go/src/github.com/rclone/rclone/rclone /usr/local/bin/
 
-COPY --from=builder /go/src/github.com/rclone/rclone/rclone .
+ENTRYPOINT [ "rclone" ]
 
-ENTRYPOINT [ "./rclone" ]
+WORKDIR /data
+ENV XDG_CONFIG_HOME=/config

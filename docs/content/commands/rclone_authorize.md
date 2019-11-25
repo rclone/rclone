@@ -1,5 +1,5 @@
 ---
-date: 2019-08-26T15:19:45+01:00
+date: 2019-10-26T11:04:03+01:00
 title: "rclone authorize"
 slug: rclone_authorize
 url: /commands/rclone_authorize/
@@ -22,7 +22,8 @@ rclone authorize [flags]
 ### Options
 
 ```
-  -h, --help   help for authorize
+  --auth-no-open-browser   Do not automatically open auth link in default browser
+  -h, --help               help for authorize
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

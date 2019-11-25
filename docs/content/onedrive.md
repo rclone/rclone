@@ -124,19 +124,16 @@ rclone uses a pair of Client ID and Key shared by all rclone users when performi
 If you are having problems with them (E.g., seeing a lot of throttling), you can get your own
 Client ID and Key by following the steps below:
 
-1. Open https://apps.dev.microsoft.com/#/appList, then click `Add an app` (Choose `Converged applications` if applicable)
-2. Enter a name for your app, and click continue. Copy and keep the `Application Id` under the app name for later use.
-3. Under section `Application Secrets`, click `Generate New Password`. Copy and keep that password for later use.
-4. Under section `Platforms`, click `Add platform`, then `Web`. Enter `http://localhost:53682/` in
-`Redirect URLs`.
-5. Under section `Microsoft Graph Permissions`, `Add` these `delegated permissions`:
-`Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`.
-6. Scroll to the bottom and click `Save`.
+1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade, then click `New registration`.
+2. Enter a name for your app, choose your account type, select `Web` in `Redirect URI` Enter `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
+3. Under `manage` select `Certificates & secrets`, click `New client secret`. Copy and keep that secret for later use.
+4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
+5. Search and select the follwing permssions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`. Once selected click `Add permissions` at the bottom.
 
 Now the application is complete. Run `rclone config` to create or edit a OneDrive remote.
 Supply the app ID and password as Client ID and Secret, respectively. rclone will walk you through the remaining steps.
 
-### Modified time and hashes ###
+### Modification time and hashes ###
 
 OneDrive allows modification times to be set on objects accurate to 1
 second.  These will be used to detect whether objects need syncing or
@@ -147,6 +144,43 @@ Sharepoint Server support
 [QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash).
 
 For all types of OneDrive you can use the `--checksum` flag.
+
+### Restricted filename characters ###
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| "         | 0x22  | ＂          |
+| *         | 0x2A  | ＊          |
+| :         | 0x3A  | ：          |
+| <         | 0x3C  | ＜          |
+| >         | 0x3E  | ＞          |
+| ?         | 0x3F  | ？          |
+| \         | 0x5C  | ＼          |
+| \|        | 0x7C  | ｜          |
+| #         | 0x23  | ＃          |
+| %         | 0x25  | ％          |
+
+File names can also not end with the following characters.
+These only get replaced if they are last character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+| .         | 0x2E  | ．          |
+
+File names can also not begin with the following characters.
+These only get replaced if they are first character in the name:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| SP        | 0x20  | ␠           |
+| ~         | 0x7E  | ～          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
 
 ### Deleting files ###
 
@@ -186,9 +220,9 @@ Here are the advanced options specific to onedrive (Microsoft OneDrive).
 
 #### --onedrive-chunk-size
 
-Chunk size to upload files with - must be multiple of 320k.
+Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 
-Above this size files will be chunked - must be multiple of 320k. Note
+Above this size files will be chunked - must be multiple of 320k (327,680 bytes). Note
 that the chunks will be buffered into memory.
 
 - Config:      chunk_size
@@ -233,6 +267,8 @@ listing, set this option.
 
 ### Limitations ###
 
+#### Naming ####
+
 Note that OneDrive is case insensitive so you can't have a
 file called "Hello.doc" and one called "hello.doc".
 
@@ -242,16 +278,22 @@ platforms they are common.  Rclone will map these names to and from an
 identical looking unicode equivalent.  For example if a file has a `?`
 in it will be mapped to `？` instead.
 
+#### File sizes ####
+
 The largest allowed file sizes are 15GB for OneDrive for Business and 35GB for OneDrive Personal (Updated 4 Jan 2019).
 
+#### Path length ####
+
 The entire path, including the file name, must contain fewer than 400 characters for OneDrive, OneDrive for Business and SharePoint Online. If you are encrypting file and folder names with rclone, you may want to pay attention to this limitation because the encrypted names are typically longer than the original ones.
+
+#### Number of files ####
 
 OneDrive seems to be OK with at least 50,000 files in a folder, but at
 100,000 rclone will get errors listing the directory like `couldn’t
 list files: UnknownError:`.  See
 [#2707](https://github.com/rclone/rclone/issues/2707) for more info.
 
-An official document about the limitations for different types of OneDrive can be found [here](https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa). 
+An official document about the limitations for different types of OneDrive can be found [here](https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa).
 
 ### Versioning issue ###
 
@@ -290,6 +332,36 @@ Note: This will disable the creation of new file versions, but will not remove a
 
 ### Troubleshooting ###
 
+#### Unexpected file size/hash differences on Sharepoint ####
+
+It is a
+[known](https://github.com/OneDrive/onedrive-api-docs/issues/935#issuecomment-441741631)
+issue that Sharepoint (not OneDrive or OneDrive for Business) silently modifies
+uploaded files, mainly Office files (.docx, .xlsx, etc.), causing file size and
+hash checks to fail. To use rclone with such affected files on Sharepoint, you
+may disable these checks with the following command line arguments:
+
+```
+--ignore-checksum --ignore-size
+```
+
+#### Replacing/deleting existing files on Sharepoint gets "item not found" ####
+
+It is a [known](https://github.com/OneDrive/onedrive-api-docs/issues/1068) issue
+that Sharepoint (not OneDrive or OneDrive for Business) may return "item not
+found" errors when users try to replace or delete uploaded files; this seems to
+mainly affect Office files (.docx, .xlsx, etc.). As a workaround, you may use
+the `--backup-dir <BACKUP_DIR>` command line argument so rclone moves the
+files to be replaced/deleted into a given backup directory (instead of directly
+replacing/deleting them). For example, to instruct rclone to move the files into
+the directory `rclone-backup-dir` on backend `mysharepoint`, you may use:
+
+```
+--backup-dir mysharepoint:rclone-backup-dir
+```
+
+#### access\_denied (AADSTS65005) ####
+
 ```
 Error: access_denied
 Code: AADSTS65005
@@ -300,6 +372,7 @@ This means that rclone can't use the OneDrive for Business API with your account
 
 However, there are other ways to interact with your OneDrive account. Have a look at the webdav backend: https://rclone.org/webdav/#sharepoint
 
+#### invalid\_grant (AADSTS50076) ####
 
 ```
 Error: invalid_grant

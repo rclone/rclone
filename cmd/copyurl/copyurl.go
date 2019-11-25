@@ -5,6 +5,7 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -14,11 +15,12 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&autoFilename, "auto-filename", "a", autoFilename, "Get the file name from the url and use it for destination file path")
+	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &autoFilename, "auto-filename", "a", autoFilename, "Get the file name from the url and use it for destination file path")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "copyurl https://example.com dest:path",
 	Short: `Copy url content to dest.`,
 	Long: `

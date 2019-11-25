@@ -129,6 +129,24 @@ temporarily on disk (wherever the `TMPDIR` environment variable points
 to) before it is uploaded.  Small files will be cached in memory - see
 the `--jottacloud-md5-memory-limit` flag.
 
+#### Restricted filename characters
+
+In addition to the [default restricted characters set](/overview/#restricted-characters)
+the following characters are also replaced:
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| "         | 0x22  | ＂          |
+| *         | 0x2A  | ＊          |
+| :         | 0x3A  | ：          |
+| <         | 0x3C  | ＜          |
+| >         | 0x3E  | ＞          |
+| ?         | 0x3F  | ？          |
+| \|        | 0x7C  | ｜          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in XML strings.
+
 ### Deleting files ###
 
 By default rclone will send all files to the trash when deleting files.

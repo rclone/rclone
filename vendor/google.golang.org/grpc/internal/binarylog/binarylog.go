@@ -34,7 +34,7 @@ type Logger interface {
 }
 
 // binLogger is the global binary logger for the binary. One of this should be
-// built at init time from the configuration (environment varialbe or flags).
+// built at init time from the configuration (environment variable or flags).
 //
 // It is used to get a methodLogger for each individual method.
 var binLogger Logger

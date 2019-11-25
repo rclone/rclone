@@ -85,6 +85,16 @@ To copy a local directory to an Mega directory called backup
 
 Mega does not support modification times or hashes yet.
 
+#### Restricted filename characters
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| /         | 0x2F  | ／          |
+
+Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
+as they can't be used in JSON strings.
+
 ### Duplicated files ###
 
 Mega can have two files with exactly the same name and path (unlike a

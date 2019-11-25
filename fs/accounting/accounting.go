@@ -70,6 +70,10 @@ func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name str
 
 // WithBuffer - If the file is above a certain size it adds an Async reader
 func (acc *Account) WithBuffer() *Account {
+	// if already have a buffer then just return
+	if acc.withBuf {
+		return acc
+	}
 	acc.withBuf = true
 	var buffers int
 	if acc.size >= int64(fs.Config.BufferSize) || acc.size == -1 {
@@ -118,11 +122,18 @@ func (acc *Account) StopBuffering() {
 // async buffer (if any) and re-adding it
 func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
-	acc.StopBuffering()
+	withBuf := acc.withBuf
+	if withBuf {
+		acc.StopBuffering()
+		acc.withBuf = false
+	}
 	acc.in = in
 	acc.close = in
 	acc.origIn = in
-	acc.WithBuffer()
+	acc.closed = false
+	if withBuf {
+		acc.WithBuffer()
+	}
 	acc.mu.Unlock()
 }
 
@@ -239,12 +250,18 @@ func (acc *Account) Close() error {
 		return nil
 	}
 	acc.closed = true
-	close(acc.exit)
-	acc.stats.inProgress.clear(acc.name)
 	if acc.close == nil {
 		return nil
 	}
 	return acc.close.Close()
+}
+
+// Done with accounting - must be called to free accounting goroutine
+func (acc *Account) Done() {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	close(acc.exit)
+	acc.stats.inProgress.clear(acc.name)
 }
 
 // progress returns bytes read as well as the size.
@@ -367,6 +384,7 @@ func (acc *Account) RemoteStats() (out rc.Params) {
 		percentageDone = int(100 * float64(a) / float64(b))
 	}
 	out["percentage"] = percentageDone
+	out["group"] = acc.stats.group
 
 	return out
 }

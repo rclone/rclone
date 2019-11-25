@@ -27,6 +27,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -40,6 +41,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
+
+const enc = encodings.Mailru
 
 // Global constants
 const (
@@ -59,6 +62,9 @@ var (
 	ErrorDirAlreadyExists   = errors.New("directory already exists")
 	ErrorDirSourceNotExists = errors.New("directory source does not exist")
 	ErrorInvalidName        = errors.New("invalid characters in object name")
+
+	// MrHashType is the hash.Type for Mailru
+	MrHashType hash.Type
 )
 
 // Description of how to authorize
@@ -74,6 +80,7 @@ var oauthConfig = &oauth2.Config{
 
 // Register with Fs
 func init() {
+	MrHashType = hash.RegisterHash("MailruHash", 40, mrhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "mailru",
 		Description: "Mail.ru Cloud",
@@ -217,11 +224,11 @@ var retryErrorCodes = []int{
 // deserve to be retried. It returns the err as a convenience.
 // Retries password authorization (once) in a special case of access denied.
 func shouldRetry(res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, error) {
-	if res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
+	if res != nil && res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
 		reAuthErr := f.reAuthorize(opts, err)
 		return reAuthErr == nil, err // return an original error
 	}
-	if f.quirks.retry400 && res.StatusCode == 400 {
+	if res != nil && res.StatusCode == 400 && f.quirks.retry400 {
 		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(res, retryErrorCodes), err
@@ -280,7 +287,7 @@ type Fs struct {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
-	fs.Debugf(nil, ">>> NewFs %q %q", name, root)
+	// fs.Debugf(nil, ">>> NewFs %q %q", name, root)
 	ctx := context.Background() // Note: NewFs does not pass context!
 
 	// Parse config into Options struct
@@ -515,7 +522,7 @@ func (f *Fs) accessToken() (string, error) {
 
 // absPath converts root-relative remote to absolute home path
 func (f *Fs) absPath(remote string) string {
-	return "/" + path.Join(f.root, strings.Trim(remote, "/"))
+	return path.Join("/", f.root, remote)
 }
 
 // relPath converts absolute home path to root-relative remote
@@ -600,7 +607,7 @@ func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEnt
 		Path:   "/api/m1/file",
 		Parameters: url.Values{
 			"access_token": {token},
-			"home":         {path},
+			"home":         {enc.FromStandardPath(path)},
 			"offset":       {"0"},
 			"limit":        {strconv.Itoa(maxInt32)},
 		},
@@ -635,7 +642,7 @@ func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEnt
 //   =0 - for an empty directory
 //   >0 - for a non-empty directory
 func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.DirEntry, dirSize int, err error) {
-	remote, err := f.relPath(item.Home)
+	remote, err := f.relPath(enc.ToStandardPath(item.Home))
 	if err != nil {
 		return nil, -1, err
 	}
@@ -668,7 +675,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.D
 // dir should be "" to list the root, and should not have trailing slashes.
 // This should return ErrDirNotFound if the directory isn't found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	fs.Debugf(f, ">>> List: %q", dir)
+	// fs.Debugf(f, ">>> List: %q", dir)
 
 	if f.quirks.binlist {
 		entries, err = f.listBin(ctx, f.absPath(dir), 1)
@@ -682,7 +689,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			names = append(names, entry.Remote())
 		}
 		sort.Strings(names)
-		fs.Debugf(f, "List(%q): %v", dir, names)
+		// fs.Debugf(f, "List(%q): %v", dir, names)
 	}
 
 	return
@@ -701,7 +708,7 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 	params.Set("limit", strconv.Itoa(limit))
 
 	data := url.Values{}
-	data.Set("home", dirPath)
+	data.Set("home", enc.FromStandardPath(dirPath))
 
 	opts := rest.Opts{
 		Method:      "POST",
@@ -749,7 +756,7 @@ func (f *Fs) listBin(ctx context.Context, dirPath string, depth int) (entries fs
 
 	req := api.NewBinWriter()
 	req.WritePu16(api.OperationFolderList)
-	req.WriteString(dirPath)
+	req.WriteString(enc.FromStandardPath(dirPath))
 	req.WritePu32(int64(depth))
 	req.WritePu32(int64(options))
 	req.WritePu32(0)
@@ -885,7 +892,7 @@ func (t *treeState) NextRecord() (fs.DirEntry, error) {
 	if (head & 4096) != 0 {
 		t.dunnoNodeID = r.ReadNBytes(api.DunnoNodeIDLength)
 	}
-	name := string(r.ReadBytesByLength())
+	name := enc.FromStandardPath(string(r.ReadBytesByLength()))
 	t.dunno1 = int(r.ReadULong())
 	t.dunno2 = 0
 	t.dunno3 = 0
@@ -1019,12 +1026,12 @@ func (rev *treeRevision) Read(data *api.BinReader) error {
 
 // CreateDir makes a directory (parent must exist)
 func (f *Fs) CreateDir(ctx context.Context, path string) error {
-	fs.Debugf(f, ">>> CreateDir %q", path)
+	// fs.Debugf(f, ">>> CreateDir %q", path)
 
 	req := api.NewBinWriter()
 	req.WritePu16(api.OperationCreateFolder)
 	req.WritePu16(0) // revision
-	req.WriteString(path)
+	req.WriteString(enc.FromStandardPath(path))
 	req.WritePu32(0)
 
 	token, err := f.accessToken()
@@ -1081,7 +1088,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) error {
 // already exists. As a workaround, users can add string "atomicmkdir" in the
 // hidden `quirks` parameter or in the `--mailru-quirks` command-line option.
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, ">>> Mkdir %q", dir)
+	// fs.Debugf(f, ">>> Mkdir %q", dir)
 	err := f.mkDirs(ctx, f.absPath(dir))
 	if err == ErrorDirAlreadyExists && !f.quirks.atomicmkdir {
 		return nil
@@ -1142,7 +1149,7 @@ func (f *Fs) mkParentDirs(ctx context.Context, path string) error {
 // Rmdir deletes a directory.
 // Returns an error if it isn't empty.
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	fs.Debugf(f, ">>> Rmdir %q", dir)
+	// fs.Debugf(f, ">>> Rmdir %q", dir)
 	return f.purgeWithCheck(ctx, dir, true, "rmdir")
 }
 
@@ -1150,7 +1157,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // Optional interface: Only implement this if you have a way of deleting
 // all the files quicker than just running Remove() on the result of List()
 func (f *Fs) Purge(ctx context.Context) error {
-	fs.Debugf(f, ">>> Purge")
+	// fs.Debugf(f, ">>> Purge")
 	return f.purgeWithCheck(ctx, "", false, "purge")
 }
 
@@ -1179,7 +1186,7 @@ func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) error {
 		return err
 	}
 
-	data := url.Values{"home": {path}}
+	data := url.Values{"home": {enc.FromStandardPath(path)}}
 	opts := rest.Opts{
 		Method: "POST",
 		Path:   "/api/m1/file/remove",
@@ -1212,7 +1219,7 @@ func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) error {
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	fs.Debugf(f, ">>> Copy %q %q", src.Remote(), remote)
+	// fs.Debugf(f, ">>> Copy %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1228,7 +1235,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcPath := srcObj.absPath()
 	dstPath := f.absPath(remote)
 	overwrite := false
-	fs.Debugf(f, "copy %q -> %q\n", srcPath, dstPath)
+	// fs.Debugf(f, "copy %q -> %q\n", srcPath, dstPath)
 
 	err := f.mkParentDirs(ctx, dstPath)
 	if err != nil {
@@ -1236,8 +1243,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	data := url.Values{}
-	data.Set("home", srcPath)
-	data.Set("folder", parentDir(dstPath))
+	data.Set("home", enc.FromStandardPath(srcPath))
+	data.Set("folder", enc.FromStandardPath(parentDir(dstPath)))
 	data.Set("email", f.opt.Username)
 	data.Set("x-email", f.opt.Username)
 
@@ -1275,9 +1282,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fmt.Errorf("copy failed with code %d", response.Status)
 	}
 
-	tmpPath := response.Body
+	tmpPath := enc.ToStandardPath(response.Body)
 	if tmpPath != dstPath {
-		fs.Debugf(f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
+		// fs.Debugf(f, "rename temporary file %q -> %q\n", tmpPath, dstPath)
 		err = f.moveItemBin(ctx, tmpPath, dstPath, "rename temporary file")
 		if err != nil {
 			_ = f.delete(ctx, tmpPath, false) // ignore error
@@ -1307,7 +1314,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantMove
 func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	fs.Debugf(f, ">>> Move %q %q", src.Remote(), remote)
+	// fs.Debugf(f, ">>> Move %q %q", src.Remote(), remote)
 
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1350,9 +1357,9 @@ func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) e
 	req := api.NewBinWriter()
 	req.WritePu16(api.OperationRename)
 	req.WritePu32(0) // old revision
-	req.WriteString(srcPath)
+	req.WriteString(enc.FromStandardPath(srcPath))
 	req.WritePu32(0) // new revision
-	req.WriteString(dstPath)
+	req.WriteString(enc.FromStandardPath(dstPath))
 	req.WritePu32(0) // dunno
 
 	opts := rest.Opts{
@@ -1393,7 +1400,7 @@ func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) e
 // If it isn't possible then return fs.ErrorCantDirMove
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
-	fs.Debugf(f, ">>> DirMove %q %q", srcRemote, dstRemote)
+	// fs.Debugf(f, ">>> DirMove %q %q", srcRemote, dstRemote)
 
 	srcFs, ok := src.(*Fs)
 	if !ok {
@@ -1407,7 +1414,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	srcPath := srcFs.absPath(srcRemote)
 	dstPath := f.absPath(dstRemote)
-	fs.Debugf(srcFs, "DirMove [%s]%q --> [%s]%q\n", srcRemote, srcPath, dstRemote, dstPath)
+	// fs.Debugf(srcFs, "DirMove [%s]%q --> [%s]%q\n", srcRemote, srcPath, dstRemote, dstPath)
 
 	// Refuse to move to or from the root
 	if len(srcPath) <= len(srcFs.root) || len(dstPath) <= len(f.root) {
@@ -1435,7 +1442,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
-	fs.Debugf(f, ">>> PublicLink %q", remote)
+	// fs.Debugf(f, ">>> PublicLink %q", remote)
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1443,7 +1450,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 	}
 
 	data := url.Values{}
-	data.Set("home", f.absPath(remote))
+	data.Set("home", enc.FromStandardPath(f.absPath(remote)))
 	data.Set("email", f.opt.Username)
 	data.Set("x-email", f.opt.Username)
 
@@ -1477,7 +1484,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 
 // CleanUp permanently deletes all trashed files/folders
 func (f *Fs) CleanUp(ctx context.Context) error {
-	fs.Debugf(f, ">>> CleanUp")
+	// fs.Debugf(f, ">>> CleanUp")
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1517,7 +1524,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	fs.Debugf(f, ">>> About")
+	// fs.Debugf(f, ">>> About")
 
 	token, err := f.accessToken()
 	if err != nil {
@@ -1561,7 +1568,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		size:    src.Size(),
 		modTime: src.ModTime(ctx),
 	}
-	fs.Debugf(f, ">>> Put: %q %d '%v'", o.remote, o.size, o.modTime)
+	// fs.Debugf(f, ">>> Put: %q %d '%v'", o.remote, o.size, o.modTime)
 	return o, o.Update(ctx, in, src, options...)
 }
 
@@ -1581,23 +1588,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var (
-		fileBuf  []byte
-		fileHash []byte
-		newHash  []byte
+		fileBuf    []byte
+		fileHash   []byte
+		newHash    []byte
+		trySpeedup bool
 	)
 
-	// Request hash from source
-	if srcHash, err := src.Hash(ctx, hash.Mailru); err == nil && srcHash != "" {
-		fileHash, _ = mrhash.DecodeString(srcHash)
-	}
-
-	// Try speedup method if it's globally enabled and source hash is available
-	trySpeedup := o.fs.opt.SpeedupEnable
-	if trySpeedup && fileHash != nil {
-		if o.putByHash(ctx, fileHash, src, "source") {
-			return nil
+	// Don't disturb the source if file fits in hash.
+	// Skip an extra speedup request if file fits in hash.
+	if size > mrhash.Size {
+		// Request hash from source.
+		if srcHash, err := src.Hash(ctx, MrHashType); err == nil && srcHash != "" {
+			fileHash, _ = mrhash.DecodeString(srcHash)
 		}
-		trySpeedup = false // speedup failed, force upload
+
+		// Try speedup if it's globally enabled and source hash is available.
+		trySpeedup = o.fs.opt.SpeedupEnable
+		if trySpeedup && fileHash != nil {
+			if o.putByHash(ctx, fileHash, src, "source") {
+				return nil
+			}
+			trySpeedup = false // speedup failed, force upload
+		}
 	}
 
 	// Need to calculate hash, check whether file is still eligible for speedup
@@ -1757,7 +1769,7 @@ func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.Obj
 	hashType := hash.SHA1
 
 	// Calculate Mailru and spool verification hashes in transit
-	hashSet := hash.NewHashSet(hash.Mailru, hashType)
+	hashSet := hash.NewHashSet(MrHashType, hashType)
 	hasher, err := hash.NewMultiHasherTypes(hashSet)
 	if err != nil {
 		return nil, nil, err
@@ -1779,7 +1791,7 @@ func makeTempFile(ctx context.Context, tmpFs fs.Fs, wrapIn io.Reader, src fs.Obj
 		return nil, nil, mrhash.ErrorInvalidHash
 	}
 
-	mrHash, err = mrhash.DecodeString(sums[hash.Mailru])
+	mrHash, err = mrhash.DecodeString(sums[MrHashType])
 	return
 }
 
@@ -1883,7 +1895,7 @@ type Object struct {
 // NewObject finds an Object at the remote.
 // If object can't be found it fails with fs.ErrorObjectNotFound
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	fs.Debugf(f, ">>> NewObject %q", remote)
+	// fs.Debugf(f, ">>> NewObject %q", remote)
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -1967,7 +1979,7 @@ func (o *Object) Size() int64 {
 // Hash returns the MD5 or SHA1 sum of an object
 // returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t == hash.Mailru {
+	if t == MrHashType {
 		return hex.EncodeToString(o.mrHash), nil
 	}
 	return "", hash.ErrUnsupported
@@ -1982,7 +1994,7 @@ func (o *Object) Storable() bool {
 //
 // Commits the datastore
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	fs.Debugf(o, ">>> SetModTime [%v]", modTime)
+	// fs.Debugf(o, ">>> SetModTime [%v]", modTime)
 	o.modTime = modTime
 	return o.addFileMetaData(ctx, true)
 }
@@ -2003,7 +2015,7 @@ func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 	req := api.NewBinWriter()
 	req.WritePu16(api.OperationAddFile)
 	req.WritePu16(0) // revision
-	req.WriteString(o.absPath())
+	req.WriteString(enc.FromStandardPath(o.absPath()))
 	req.WritePu64(o.size)
 	req.WritePu64(o.modTime.Unix())
 	req.WritePu32(0)
@@ -2055,7 +2067,7 @@ func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	fs.Debugf(o, ">>> Remove")
+	// fs.Debugf(o, ">>> Remove")
 	return o.fs.delete(ctx, o.absPath(), false)
 }
 
@@ -2088,7 +2100,7 @@ func getTransferRange(size int64, options ...fs.OpenOption) (start int64, end in
 
 // Open an object for read and download its content
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	fs.Debugf(o, ">>> Open")
+	// fs.Debugf(o, ">>> Open")
 
 	token, err := o.fs.accessToken()
 	if err != nil {
@@ -2101,7 +2113,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	opts := rest.Opts{
 		Method:  "GET",
 		Options: options,
-		Path:    url.PathEscape(strings.TrimLeft(o.absPath(), "/")),
+		Path:    url.PathEscape(strings.TrimLeft(enc.FromStandardPath(o.absPath()), "/")),
 		Parameters: url.Values{
 			"client_id": {api.OAuthClientID},
 			"token":     {token},
@@ -2349,7 +2361,7 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash sets
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.Mailru)
+	return hash.Set(MrHashType)
 }
 
 // Features returns the optional features of this Fs

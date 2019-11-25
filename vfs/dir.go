@@ -13,20 +13,22 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/list"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 )
 
 // Dir represents a directory entry
 type Dir struct {
-	vfs     *VFS
-	inode   uint64 // inode number
-	f       fs.Fs
-	parent  *Dir // parent, nil for root
+	vfs   *VFS   // read only
+	inode uint64 // read only: inode number
+	f     fs.Fs  // read only
+
+	mu      sync.RWMutex // protects the following
+	parent  *Dir         // parent, nil for root
 	path    string
 	modTime time.Time
 	entry   fs.Directory
-	mu      sync.Mutex      // protects the following
 	read    time.Time       // time directory entry last read
 	items   map[string]Node // directory entries - can be empty but not nil
 }
@@ -49,6 +51,8 @@ func (d *Dir) String() string {
 	if d == nil {
 		return "<nil *Dir>"
 	}
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	return d.path + "/"
 }
 
@@ -69,7 +73,9 @@ func (d *Dir) Mode() (mode os.FileMode) {
 
 // Name (base) of the directory - satisfies Node interface
 func (d *Dir) Name() (name string) {
+	d.mu.RLock()
 	name = path.Base(d.path)
+	d.mu.RUnlock()
 	if name == "." {
 		name = "/"
 	}
@@ -78,6 +84,8 @@ func (d *Dir) Name() (name string) {
 
 // Path of the directory - satisfies Node interface
 func (d *Dir) Path() (name string) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	return d.path
 }
 
@@ -96,10 +104,56 @@ func (d *Dir) Node() Node {
 	return d
 }
 
+// forgetDirPath clears the cache for itself and all subdirectories if
+// they match the given path. The path is specified relative from the
+// directory it is called from.
+//
+// It does not invalidate or clear the cache of the parent directory.
+func (d *Dir) forgetDirPath(relativePath string) {
+	if dir := d.cachedDir(relativePath); dir != nil {
+		dir.walk(func(dir *Dir) {
+			// this is called with the mutex held
+			fs.Debugf(dir.path, "forgetting directory cache")
+			dir.read = time.Time{}
+			dir.items = make(map[string]Node)
+		})
+	}
+}
+
 // ForgetAll ensures the directory and all its children are purged
 // from the cache.
+//
+// It does not invalidate or clear the cache of the parent directory.
 func (d *Dir) ForgetAll() {
-	d.ForgetPath("", fs.EntryDirectory)
+	d.forgetDirPath("")
+}
+
+// invalidateDir invalidates the directory cache for absPath relative to this dir
+func (d *Dir) invalidateDir(absPath string) {
+	node := d.vfs.root.cachedNode(absPath)
+	if dir, ok := node.(*Dir); ok {
+		dir.mu.Lock()
+		if !dir.read.IsZero() {
+			fs.Debugf(dir.path, "invalidating directory cache")
+			dir.read = time.Time{}
+		}
+		dir.mu.Unlock()
+	}
+}
+
+// changeNotify invalidates the directory cache for the relativePath
+// passed in.
+//
+// if entryType is a directory it invalidates the parent of the directory too.
+func (d *Dir) changeNotify(relativePath string, entryType fs.EntryType) {
+	defer log.Trace(d.path, "relativePath=%q, type=%v", relativePath, entryType)("")
+	d.mu.RLock()
+	absPath := path.Join(d.path, relativePath)
+	d.mu.RUnlock()
+	d.invalidateDir(findParent(absPath))
+	if entryType == fs.EntryDirectory {
+		d.invalidateDir(absPath)
+	}
 }
 
 // ForgetPath clears the cache for itself and all subdirectories if
@@ -109,35 +163,22 @@ func (d *Dir) ForgetAll() {
 // It is not possible to traverse the directory tree upwards, i.e.
 // you cannot clear the cache for the Dir's ancestors or siblings.
 func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
-	if absPath := path.Join(d.path, relativePath); absPath != "" {
-		parent := path.Dir(absPath)
-		if parent == "." || parent == "/" {
-			parent = ""
-		}
-		parentNode := d.vfs.root.cachedNode(parent)
-		if dir, ok := parentNode.(*Dir); ok {
-			dir.mu.Lock()
-			if !dir.read.IsZero() {
-				fs.Debugf(dir.path, "invalidating directory cache")
-				dir.read = time.Time{}
-			}
-			dir.mu.Unlock()
-		}
+	defer log.Trace(d.path, "relativePath=%q, type=%v", relativePath, entryType)("")
+	d.mu.RLock()
+	absPath := path.Join(d.path, relativePath)
+	d.mu.RUnlock()
+	if absPath != "" {
+		d.invalidateDir(findParent(absPath))
 	}
-
 	if entryType == fs.EntryDirectory {
-		if dir := d.cachedDir(relativePath); dir != nil {
-			dir.walk(func(dir *Dir) {
-				fs.Debugf(dir.path, "forgetting directory cache")
-				dir.read = time.Time{}
-				dir.items = make(map[string]Node)
-			})
-		}
+		d.forgetDirPath(relativePath)
 	}
 }
 
 // walk runs a function on all cached directories. It will be called
 // on a directory's children first.
+//
+// The mutex will be held for the directory when fun is called
 func (d *Dir) walk(fun func(*Dir)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -150,18 +191,11 @@ func (d *Dir) walk(fun func(*Dir)) {
 	fun(d)
 }
 
-// stale returns true if the directory contents will be read the next
-// time it is accessed. stale must be called with d.mu held.
-func (d *Dir) stale(when time.Time) bool {
-	_, stale := d.age(when)
-	return stale
-}
-
 // age returns the duration since the last time the directory contents
 // was read and the content is cosidered stale. age will be 0 and
 // stale true if the last read time is empty.
 // age must be called with d.mu held.
-func (d *Dir) age(when time.Time) (age time.Duration, stale bool) {
+func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
 	if d.read.IsZero() {
 		return age, true
 	}
@@ -176,11 +210,13 @@ func (d *Dir) age(when time.Time) (age time.Duration, stale bool) {
 // reading everything again
 func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
+	d.mu.Lock()
 	d.parent = newParent
 	d.entry = fsDir
 	d.path = fsDir.Remote()
 	d.modTime = fsDir.ModTime(context.TODO())
 	d.read = time.Time{}
+	d.mu.Unlock()
 }
 
 // addObject adds a new object or directory to the directory
@@ -202,7 +238,7 @@ func (d *Dir) delObject(leaf string) {
 // read the directory and sets d.items - must be called with the lock held
 func (d *Dir) _readDir() error {
 	when := time.Now()
-	if age, stale := d.age(when); stale {
+	if age, stale := d._age(when); stale {
 		if age != 0 {
 			fs.Debugf(d.path, "Re-reading directory (%v old)", age)
 		}
@@ -291,9 +327,9 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 
 // readDirTree forces a refresh of the complete directory tree
 func (d *Dir) readDirTree() error {
-	d.mu.Lock()
+	d.mu.RLock()
 	f, path := d.f, d.path
-	d.mu.Unlock()
+	d.mu.RUnlock()
 	when := time.Now()
 	fs.Debugf(path, "Reading directory tree")
 	dt, err := walk.NewDirTree(context.TODO(), f, path, false, -1)
@@ -368,6 +404,8 @@ func (d *Dir) isEmpty() (bool, error) {
 
 // ModTime returns the modification time of the directory
 func (d *Dir) ModTime() time.Time {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
 	// fs.Debugf(d.path, "Dir.ModTime %v", d.modTime)
 	return d.modTime
 }
@@ -383,8 +421,8 @@ func (d *Dir) SetModTime(modTime time.Time) error {
 		return EROFS
 	}
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	d.modTime = modTime
+	d.mu.Unlock()
 	return nil
 }
 

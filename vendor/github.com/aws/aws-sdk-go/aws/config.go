@@ -246,6 +246,9 @@ type Config struct {
 	// Disabling this feature is useful when you want to use local endpoints
 	// for testing that do not support the modeled host prefix pattern.
 	DisableEndpointHostPrefix *bool
+
+	// STSRegionalEndpoint will enable regional or legacy endpoint resolving
+	STSRegionalEndpoint endpoints.STSRegionalEndpoint
 }
 
 // NewConfig returns a new Config pointer that can be chained with builder
@@ -420,6 +423,13 @@ func (c *Config) MergeIn(cfgs ...*Config) {
 	}
 }
 
+// WithSTSRegionalEndpoint will set whether or not to use regional endpoint flag
+// when resolving the endpoint for a service
+func (c *Config) WithSTSRegionalEndpoint(sre endpoints.STSRegionalEndpoint) *Config {
+	c.STSRegionalEndpoint = sre
+	return c
+}
+
 func mergeInConfig(dst *Config, other *Config) {
 	if other == nil {
 		return
@@ -519,6 +529,10 @@ func mergeInConfig(dst *Config, other *Config) {
 
 	if other.DisableEndpointHostPrefix != nil {
 		dst.DisableEndpointHostPrefix = other.DisableEndpointHostPrefix
+	}
+
+	if other.STSRegionalEndpoint != endpoints.UnsetSTSEndpoint {
+		dst.STSRegionalEndpoint = other.STSRegionalEndpoint
 	}
 }
 
