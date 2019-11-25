@@ -211,11 +211,17 @@ func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) ([][]fs.Directory, er
 	if err != nil {
 		return nil, errors.Wrap(err, "find duplicate dirs")
 	}
-	duplicateDirs := [][]fs.Directory{}
-	for _, ds := range dirs {
+	// make sure parents are before children
+	duplicateNames := []string{}
+	for name, ds := range dirs {
 		if len(ds) > 1 {
-			duplicateDirs = append(duplicateDirs, ds)
+			duplicateNames = append(duplicateNames, name)
 		}
+	}
+	sort.Strings(duplicateNames)
+	duplicateDirs := [][]fs.Directory{}
+	for _, name := range duplicateNames {
+		duplicateDirs = append(duplicateDirs, dirs[name])
 	}
 	return duplicateDirs, nil
 }
@@ -235,8 +241,8 @@ func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]fs
 			fs.Infof(dirs[0], "Merging contents of duplicate directories")
 			err := mergeDirs(ctx, dirs)
 			if err != nil {
-				fs.CountError(err)
-				fs.Errorf(nil, "merge duplicate dirs: %s", err)
+				err = fs.CountError(err)
+				fs.Errorf(nil, "merge duplicate dirs: %v", err)
 			}
 		} else {
 			fs.Infof(dirs[0], "NOT Merging contents of duplicate directories as --dry-run")
