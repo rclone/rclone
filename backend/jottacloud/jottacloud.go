@@ -105,6 +105,7 @@ func init() {
 			clientConfig.UserAgent = "JottaCli 0.6.18626 windows-amd64"
 			srv := rest.NewClient(fshttp.NewClient(&clientConfig))
 
+			fmt.Printf("Generate a personal login token here: https://www.jottacloud.com/web/secure\n")
 			fmt.Printf("Login Token> ")
 			loginToken := config.ReadLine()
 
