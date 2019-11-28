@@ -9,6 +9,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPipe(t *testing.T) {
@@ -19,7 +20,8 @@ func TestPipe(t *testing.T) {
 	}
 
 	// Make a new pipe
-	p := newPipe(stats, 10)
+	p, err := newPipe("", stats, 10)
+	require.NoError(t, err)
 
 	checkStats := func(expectedN int, expectedSize int64) {
 		n, size := p.Stats()
@@ -60,7 +62,8 @@ func TestPipe(t *testing.T) {
 	assert.Panics(t, func() { p.Put(ctx, pair1) })
 
 	// Make a new pipe
-	p = newPipe(stats, 10)
+	p, err = newPipe("", stats, 10)
+	require.NoError(t, err)
 	ctx2, cancel := context.WithCancel(ctx)
 
 	// cancel it in the background - check read ceases
@@ -86,7 +89,8 @@ func TestPipeConcurrent(t *testing.T) {
 	stats := func(n int, size int64) {}
 
 	// Make a new pipe
-	p := newPipe(stats, 10)
+	p, err := newPipe("", stats, 10)
+	require.NoError(t, err)
 
 	var wg sync.WaitGroup
 	obj1 := mockobject.New("potato").WithContent([]byte("hello"), mockobject.SeekModeNone)
@@ -119,4 +123,126 @@ func TestPipeConcurrent(t *testing.T) {
 	wg.Wait()
 
 	assert.Equal(t, int64(0), count)
+}
+
+func TestPipeOrderBy(t *testing.T) {
+	var (
+		stats = func(n int, size int64) {}
+		ctx   = context.Background()
+		obj1  = mockobject.New("b").WithContent([]byte("1"), mockobject.SeekModeNone)
+		obj2  = mockobject.New("a").WithContent([]byte("22"), mockobject.SeekModeNone)
+		pair1 = fs.ObjectPair{Src: obj1}
+		pair2 = fs.ObjectPair{Src: obj2}
+	)
+
+	for _, test := range []struct {
+		orderBy  string
+		swapped1 bool
+		swapped2 bool
+	}{
+		{"", false, true},
+		{"size", false, false},
+		{"name", true, true},
+		{"modtime", false, true},
+		{"size,ascending", false, false},
+		{"name,asc", true, true},
+		{"modtime,ascending", false, true},
+		{"size,descending", true, true},
+		{"name,desc", false, false},
+		{"modtime,descending", true, false},
+	} {
+		t.Run(test.orderBy, func(t *testing.T) {
+			p, err := newPipe(test.orderBy, stats, 10)
+			require.NoError(t, err)
+
+			ok := p.Put(ctx, pair1)
+			assert.True(t, ok)
+			ok = p.Put(ctx, pair2)
+			assert.True(t, ok)
+
+			readAndCheck := func(swapped bool) {
+				readFirst, ok := p.Get(ctx)
+				assert.True(t, ok)
+				readSecond, ok := p.Get(ctx)
+				assert.True(t, ok)
+
+				if swapped {
+					assert.True(t, readFirst == pair2 && readSecond == pair1)
+				} else {
+					assert.True(t, readFirst == pair1 && readSecond == pair2)
+				}
+			}
+
+			readAndCheck(test.swapped1)
+
+			// insert other way round
+
+			ok = p.Put(ctx, pair2)
+			assert.True(t, ok)
+			ok = p.Put(ctx, pair1)
+			assert.True(t, ok)
+
+			readAndCheck(test.swapped2)
+		})
+	}
+}
+
+func TestNewLess(t *testing.T) {
+	t.Run("blankOK", func(t *testing.T) {
+		less, err := newLess("")
+		require.NoError(t, err)
+		assert.Nil(t, less)
+	})
+
+	t.Run("tooManyParts", func(t *testing.T) {
+		_, err := newLess("too,many,parts")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "bad --order-by string")
+	})
+
+	t.Run("unknownComparison", func(t *testing.T) {
+		_, err := newLess("potato")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown --order-by comparison")
+	})
+
+	t.Run("unknownSortDirection", func(t *testing.T) {
+		_, err := newLess("name,sideways")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown --order-by sort direction")
+	})
+
+	var (
+		obj1  = mockobject.New("b").WithContent([]byte("1"), mockobject.SeekModeNone)
+		obj2  = mockobject.New("a").WithContent([]byte("22"), mockobject.SeekModeNone)
+		pair1 = fs.ObjectPair{Src: obj1}
+		pair2 = fs.ObjectPair{Src: obj2}
+	)
+
+	for _, test := range []struct {
+		orderBy        string
+		pair1LessPair2 bool
+		pair2LessPair1 bool
+	}{
+		{"size", true, false},
+		{"name", false, true},
+		{"modtime", false, false},
+		{"size,ascending", true, false},
+		{"name,asc", false, true},
+		{"modtime,ascending", false, false},
+		{"size,descending", false, true},
+		{"name,desc", true, false},
+		{"modtime,descending", true, true},
+	} {
+		t.Run(test.orderBy, func(t *testing.T) {
+			less, err := newLess(test.orderBy)
+			require.NoError(t, err)
+			require.NotNil(t, less)
+			pair1LessPair2 := less(pair1, pair2)
+			assert.Equal(t, test.pair1LessPair2, pair1LessPair2)
+			pair2LessPair1 := less(pair2, pair1)
+			assert.Equal(t, test.pair2LessPair1, pair2LessPair1)
+		})
+	}
+
 }
