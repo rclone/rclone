@@ -102,7 +102,8 @@ type ConfigInfo struct {
 	ClientKey              string // Client Side Key
 	MultiThreadCutoff      SizeSuffix
 	MultiThreadStreams     int
-	MultiThreadSet         bool // whether MultiThreadStreams was set (set in fs/config/configflags)
+	MultiThreadSet         bool   // whether MultiThreadStreams was set (set in fs/config/configflags)
+	OrderBy                string // instructions on how to order the transfer
 }
 
 // NewConfig creates a new config with everything set to the default

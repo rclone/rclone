@@ -82,13 +82,23 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		dstEmptyDirs:       make(map[string]fs.DirEntry),
 		srcEmptyDirs:       make(map[string]fs.DirEntry),
 		noTraverse:         fs.Config.NoTraverse,
-		toBeChecked:        newPipe(accounting.Stats(ctx).SetCheckQueue, fs.Config.MaxBacklog),
-		toBeUploaded:       newPipe(accounting.Stats(ctx).SetTransferQueue, fs.Config.MaxBacklog),
 		deleteFilesCh:      make(chan fs.Object, fs.Config.Checkers),
 		trackRenames:       fs.Config.TrackRenames,
 		commonHash:         fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
-		toBeRenamed:        newPipe(accounting.Stats(ctx).SetRenameQueue, fs.Config.MaxBacklog),
 		trackRenamesCh:     make(chan fs.Object, fs.Config.Checkers),
+	}
+	var err error
+	s.toBeChecked, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetCheckQueue, fs.Config.MaxBacklog)
+	if err != nil {
+		return nil, err
+	}
+	s.toBeUploaded, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetTransferQueue, fs.Config.MaxBacklog)
+	if err != nil {
+		return nil, err
+	}
+	s.toBeRenamed, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetRenameQueue, fs.Config.MaxBacklog)
+	if err != nil {
+		return nil, err
 	}
 	s.ctx, s.cancel = context.WithCancel(ctx)
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
