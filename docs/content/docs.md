@@ -671,8 +671,8 @@ queue is in use.  Note that it will use in the order of N kB of memory
 when the backlog is in use.
 
 Setting this large allows rclone to calculate how many files are
-pending more accurately and give a more accurate estimated finish
-time.
+pending more accurately, give a more accurate estimated finish
+time and make `--order-by` work more accurately.
 
 Setting this small will make rclone more synchronous to the listings
 of the remote which may be desirable.
@@ -822,6 +822,48 @@ files if they are incorrect as it would normally.
 
 This can be used if the remote is being synced with another tool also
 (eg the Google Drive client).
+
+### --order-by string ###
+
+The `--order-by` flag controls the order in which files in the backlog
+are processed in `rclone sync`, `rclone copy` and `rclone move`.
+
+The order by string is constructed like this.  The first part
+describes what aspect is being measured:
+
+- `size` - order by the size of the files
+- `name` - order by the full path of the files
+- `modtime` - order by the modification date of the files
+
+This can have a modifier appended with a comma:
+
+- `ascending` or `asc` - order so that the smallest (or oldest) is processed first
+- `descending` or `desc` - order so that the largest (or newest) is processed first
+
+If no modifier is supplied then the order is `ascending`.
+
+For example
+
+- `--order-by size,desc` - send the largest files first
+- `--order-by modtime,ascending` - send the oldest files first
+- `--order-by name` - send the files with alphabetically by path first
+
+If the `--order-by` flag is not supplied or it is supplied with an
+empty string then the default ordering will be used which is as
+scanned.  With `--checkers 1` this is mostly alphabetical, however
+with the default `--checkers 8` it is somewhat random.
+
+#### Limitations
+
+The `--order-by` flag does not do a separate pass over the data.  This
+means that is may transfer some files out of the order specified if
+
+- there are no files in the backlog or the source has not been fully scanned yet
+- there are more than [--max-backlog](#max-backlog-n) files in the backlog
+
+Rclone will do its best to transfer the best file it has so in
+practice this should not cause a problem.  Think of `--order-by` as
+being more of a best efforts flag rather than a perfect ordering.
 
 ### -P, --progress ###
 
