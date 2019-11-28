@@ -42,6 +42,7 @@ n) No
 y/n> n
 Remote config
 
+Generate a personal login token here: https://www.jottacloud.com/web/secure
 Login Token> <your token here>
 
 Do you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?
