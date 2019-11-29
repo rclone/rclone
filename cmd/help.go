@@ -46,10 +46,11 @@ __rclone_custom_func() {
         else
             __rclone_init_completion -n : || return
         fi
+	local rclone=(command rclone --ask-password=false)
         if [[ $cur != *:* ]]; then
             local ifs=$IFS
             IFS=$'\n'
-            local remotes=($(command rclone listremotes))
+            local remotes=($("${rclone[@]}" listremotes 2> /dev/null))
             IFS=$ifs
             local remote
             for remote in "${remotes[@]}"; do
@@ -68,7 +69,7 @@ __rclone_custom_func() {
             fi
             local ifs=$IFS
             IFS=$'\n'
-            local lines=($(rclone lsf "${cur%%:*}:$prefix" 2>/dev/null))
+            local lines=($("${rclone[@]}" lsf "${cur%%:*}:$prefix" 2> /dev/null))
             IFS=$ifs
             local line
             for line in "${lines[@]}"; do
