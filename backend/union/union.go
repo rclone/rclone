@@ -556,7 +556,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 	}()
 	// Multi-threading
 	var wg sync.WaitGroup
-	objs := make([]upstream.Entry, len(upstreams))
+	objs := make([]*upstream.Object, len(upstreams))
 	for i, u := range upstreams {
 		wg.Add(1)
 		i, u := i, u // Closure
@@ -580,15 +580,20 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 	for _, w := range writers {
 		w.Close()
 	}
-	
-	// Get an object for future operation
-	e, _ := f.wrapEntries(objs...)
-	for _, err := range errs {
-		if err != nil {
-			return e.(*Object), err
+	var entries []upstream.Entry
+	for i, o := range objs {
+		if errs[i] != nil {
+			err = errs[i]
+			continue
 		}
+		entries = append(entries, o)
 	}
-	return e.(*Object), nil
+	if len(entries) == 0 {
+		return nil, err
+	}
+	// Get an object for future operation
+	e, err := f.wrapEntries(entries...)
+	return e.(*Object), err
 }
 
 // Put in to the remote path with the modTime given of the given size
