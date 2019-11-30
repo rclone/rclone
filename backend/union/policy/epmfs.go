@@ -12,7 +12,7 @@ func init(){
 }
 
 // EpMfs stands for existing path, most free space
-// Of all the branches on which the path exists choose the drive with the most free space.
+// Of all the candidates on which the path exists choose the one with the most free space.
 type EpMfs struct {
 	EpAll
 }
@@ -20,15 +20,18 @@ type EpMfs struct {
 func (p *EpMfs) mfs(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 	var maxFreeSpace int64
 	var mfsupstream *upstream.Fs
-	for _, r := range upstreams {
-		space, err := r.GetFreeSpace()
+	for _, u := range upstreams {
+		space, err := u.GetFreeSpace()
 		if err != nil {
 			return nil, err
 		}
 		if maxFreeSpace < space {
 			maxFreeSpace = space
-			mfsupstream = r
+			mfsupstream = u
 		}
+	}
+	if mfsupstream == nil {
+		return nil, fs.ErrorObjectNotFound
 	}
 	return mfsupstream, nil
 }
@@ -55,8 +58,8 @@ func (p *EpMfs) Action(ctx context.Context, upstreams []*upstream.Fs, path strin
 	if err != nil {
 		return nil, err
 	}
-	r, err := p.mfs(upstreams)
-	return []*upstream.Fs{r}, err
+	u, err := p.mfs(upstreams)
+	return []*upstream.Fs{u}, err
 }
 
 // ActionEntries is ACTION category policy but receving a set of candidate entries
@@ -75,8 +78,8 @@ func (p *EpMfs) Create(ctx context.Context, upstreams []*upstream.Fs, path strin
 	if err != nil {
 		return nil, err
 	}
-	r, err := p.mfs(upstreams)
-	return []*upstream.Fs{r}, err
+	u, err := p.mfs(upstreams)
+	return []*upstream.Fs{u}, err
 }
 
 // CreateEntries is CREATE category policy but receving a set of candidate entries

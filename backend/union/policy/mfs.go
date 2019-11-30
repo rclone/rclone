@@ -12,7 +12,9 @@ func init(){
 }
 
 // Mfs stands for most free space
-// Of all the candidates on which the path exists choose the one with the most free space.
+// Search category: same as epmfs.
+// Action category: same as epmfs.
+// Create category: Pick the drive with the most free space.
 type Mfs struct {
 	EpMfs
 }
@@ -26,6 +28,6 @@ func (p *Mfs) Create(ctx context.Context, upstreams []*upstream.Fs, path string)
 	if len(upstreams) == 0 {
 		return nil, fs.ErrorPermissionDenied
 	}
-	r, err := p.mfs(upstreams)
-	return []*upstream.Fs{r}, err
+	u, err := p.mfs(upstreams)
+	return []*upstream.Fs{u}, err
 }

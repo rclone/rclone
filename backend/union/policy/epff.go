@@ -17,19 +17,19 @@ type EpFF struct {}
 
 func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error) {
 	ch := make(chan *upstream.Fs)
-	for _, r := range upstreams {
-		r := r // Closure
+	for _, u := range upstreams {
+		u := u // Closure
 		go func() {
-			if !exists(ctx, r, path) {
-				r = nil
+			if !exists(ctx, u, path) {
+				u = nil
 			}
-			ch <- r
+			ch <- u
 		}()
 	}
-	var r *upstream.Fs
+	var u *upstream.Fs
 	for i := 0; i < len(upstreams); i++ {
-		r = <- ch
-		if r != nil {
+		u = <- ch
+		if u != nil {
 			// close remaining goroutines
 			go func(num int) {
 				defer close(ch)
@@ -39,10 +39,10 @@ func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) 
 			}(len(upstreams) - 1 - i)
 		}
 	}
-	if r == nil {
+	if u == nil {
 		return nil, fs.ErrorObjectNotFound
 	}
-	return r, nil
+	return u, nil
 }
 
 // Action category policy, governing the modification of files and directories
@@ -54,8 +54,8 @@ func (p *EpFF) Action(ctx context.Context, upstreams []*upstream.Fs, path string
 	if len(upstreams) == 0 {
 		return nil, fs.ErrorPermissionDenied
 	}
-	r, err := p.epff(ctx, upstreams, path)
-	return []*upstream.Fs{r}, err
+	u, err := p.epff(ctx, upstreams, path)
+	return []*upstream.Fs{u}, err
 }
 
 // ActionEntries is ACTION category policy but receving a set of candidate entries
@@ -79,8 +79,8 @@ func (p *EpFF) Create(ctx context.Context, upstreams []*upstream.Fs, path string
 	if len(upstreams) == 0 {
 		return nil, fs.ErrorPermissionDenied
 	}
-	r, err := p.epff(ctx, upstreams, path)
-	return []*upstream.Fs{r}, err
+	u, err := p.epff(ctx, upstreams, path)
+	return []*upstream.Fs{u}, err
 }
 
 // CreateEntries is CREATE category policy but receving a set of candidate entries
