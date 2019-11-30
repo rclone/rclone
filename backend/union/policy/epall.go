@@ -58,6 +58,18 @@ func (p *EpAll) Action(ctx context.Context, upstreams []*upstream.Fs, path strin
 	return p.epall(ctx, upstreams, path)
 }
 
+// ActionEntries is ACTION category policy but receving a set of candidate entries
+func (p *EpAll) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
+	if len(entries) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	entries = filterROEntries(entries)
+	if len(entries) == 0 {
+		return nil, fs.ErrorPermissionDenied
+	}
+	return entries, nil
+}
+
 // Create category policy, governing the creation of files and directories
 func (p *EpAll) Create(ctx context.Context, upstreams []*upstream.Fs, path string) ([]*upstream.Fs, error) {
 	if len(upstreams) == 0 {
@@ -69,4 +81,16 @@ func (p *EpAll) Create(ctx context.Context, upstreams []*upstream.Fs, path strin
 	}
 	upstreams, err := p.epall(ctx, upstreams, path)
 	return upstreams, err
+}
+
+// CreateEntries is CREATE category policy but receving a set of candidate entries
+func (p *EpAll) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
+	if len(entries) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	entries = filterNCEntries(entries)
+	if len(entries) == 0 {
+		return nil, fs.ErrorPermissionDenied
+	}
+	return entries, nil
 }
