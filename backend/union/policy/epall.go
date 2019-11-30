@@ -27,7 +27,7 @@ func (p *EpAll) epall(ctx context.Context, upstreams []*upstream.Fs, path string
 		wg.Add(1)
 		i, u := i, u // Closure
 		go func() {
-			if exists(ctx, u, path) {
+			if findEntry(ctx, u, path) != nil {
 				ufs[i] = u
 			}
 			wg.Done()

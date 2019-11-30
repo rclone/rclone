@@ -20,7 +20,7 @@ func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) 
 	for _, u := range upstreams {
 		u := u // Closure
 		go func() {
-			if !exists(ctx, u, path) {
+			if findEntry(ctx, u, path) == nil {
 				u = nil
 			}
 			ch <- u

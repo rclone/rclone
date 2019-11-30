@@ -3,8 +3,10 @@ package policy
 import (
 	"context"
 	"strings"
+	"math/rand"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
@@ -100,11 +102,13 @@ func clean(absPath string) string {
 	return cleanPath
 }
 
-func exists(ctx context.Context, f fs.Fs, remote string) bool {
+func findEntry(ctx context.Context, f fs.Fs, remote string) fs.DirEntry {
 	remote = clean(remote)
 	dir := parentDir(remote)
 	if remote == dir {
-		return true
+		// random modtime for root
+    	randomNow := time.Unix(time.Now().Unix() - rand.Int63n(10000), 0)
+		return fs.NewDir("", randomNow)
 	}
 	found := false
 	entries, _ := f.List(ctx, dir);
@@ -116,8 +120,8 @@ func exists(ctx context.Context, f fs.Fs, remote string) bool {
 			found = (remote == eRemote)
 		}
 		if found {
-			break
+			return e
 		}
 	}
-	return found
+	return nil
 }
