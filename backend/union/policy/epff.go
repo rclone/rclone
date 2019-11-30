@@ -1,0 +1,112 @@
+package policy
+
+import (
+	"context"
+	
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/backend/union/upstream"
+)
+
+func init(){
+	registerPolicy("epff", &EpFF{})
+}
+
+// EpFF stands for existing path, first found
+// Given the order of the candidates, act on the first one found where the relative path exists.
+type EpFF struct {}
+
+func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error) {
+	ch := make(chan *upstream.Fs)
+	for _, r := range upstreams {
+		r := r // Closure
+		go func() {
+			if !exists(ctx, r, path) {
+				r = nil
+			}
+			ch <- r
+		}()
+	}
+	var r *upstream.Fs
+	for i := 0; i < len(upstreams); i++ {
+		r = <- ch
+		if r != nil {
+			// close remaining goroutines
+			go func(num int) {
+				defer close(ch)
+				for i := 0; i < num; i++ {
+					<- ch
+				}
+			}(len(upstreams) - 1 - i)
+		}
+	}
+	if r == nil {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return r, nil
+}
+
+// Action category policy, governing the modification of files and directories
+func (p *EpFF) Action(ctx context.Context, upstreams []*upstream.Fs, path string) ([]*upstream.Fs, error) {
+	if len(upstreams) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	upstreams = filterRO(upstreams)
+	if len(upstreams) == 0 {
+		return nil, fs.ErrorPermissionDenied
+	}
+	r, err := p.epff(ctx, upstreams, path)
+	return []*upstream.Fs{r}, err
+}
+
+// ActionEntries is ACTION category policy but receving a set of candidate entries
+func (p *EpFF) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
+	if len(entries) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	entries = filterROEntries(entries)
+	if len(entries) == 0 {
+		return nil, fs.ErrorPermissionDenied
+	}
+	return entries[:1], nil
+}
+
+// Create category policy, governing the creation of files and directories
+func (p *EpFF) Create(ctx context.Context, upstreams []*upstream.Fs, path string) ([]*upstream.Fs, error) {
+	if len(upstreams) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	upstreams = filterNC(upstreams)
+	if len(upstreams) == 0 {
+		return nil, fs.ErrorPermissionDenied
+	}
+	r, err := p.epff(ctx, upstreams, path)
+	return []*upstream.Fs{r}, err
+}
+
+// CreateEntries is CREATE category policy but receving a set of candidate entries
+func (p *EpFF) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
+	if len(entries) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	entries = filterNCEntries(entries)
+	if len(entries) == 0 {
+		return nil, fs.ErrorPermissionDenied
+	}
+	return entries[:1], nil
+}
+
+// Search category policy, governing the access to files and directories
+func (p *EpFF) Search(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error) {
+	if len(upstreams) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return p.epff(ctx, upstreams, path)
+}
+
+// SearchEntries is SEARCH category policy but receving a set of candidate entries
+func (p *EpFF) SearchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
+	if len(entries) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return entries[0], nil
+}

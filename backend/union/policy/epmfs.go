@@ -1,0 +1,110 @@
+package policy
+
+import (
+	"context"
+	
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/backend/union/upstream"
+)
+
+func init(){
+	registerPolicy("epmfs", &EpMfs{})
+}
+
+// EpMfs stands for existing path, most free space
+// Of all the branches on which the path exists choose the drive with the most free space.
+type EpMfs struct {
+	EpAll
+}
+
+func (p *EpMfs) mfs(upstreams []*upstream.Fs) (*upstream.Fs, error) {
+	var maxFreeSpace int64
+	var mfsupstream *upstream.Fs
+	for _, r := range upstreams {
+		space, err := r.GetFreeSpace()
+		if err != nil {
+			return nil, err
+		}
+		if maxFreeSpace < space {
+			maxFreeSpace = space
+			mfsupstream = r
+		}
+	}
+	return mfsupstream, nil
+}
+
+func (p *EpMfs) mfsEntries(entries []upstream.Entry) (upstream.Entry, error) {
+	var maxFreeSpace int64
+	var mfsEntry upstream.Entry
+	for _, e := range entries {
+		space, err := e.UpstreamFs().GetFreeSpace()
+		if err != nil {
+			return nil, err
+		}
+		if maxFreeSpace < space {
+			maxFreeSpace = space
+			mfsEntry = e
+		}
+	}
+	return mfsEntry, nil
+}
+
+// Action category policy, governing the modification of files and directories
+func (p *EpMfs) Action(ctx context.Context, upstreams []*upstream.Fs, path string) ([]*upstream.Fs, error) {
+	upstreams, err := p.EpAll.Action(ctx, upstreams, path)
+	if err != nil {
+		return nil, err
+	}
+	r, err := p.mfs(upstreams)
+	return []*upstream.Fs{r}, err
+}
+
+// ActionEntries is ACTION category policy but receving a set of candidate entries
+func (p *EpMfs) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
+	entries, err := p.EpAll.ActionEntries(entries...)
+	if err != nil {
+		return nil, err
+	}
+	e, err := p.mfsEntries(entries)
+	return []upstream.Entry{e}, err
+}
+
+// Create category policy, governing the creation of files and directories
+func (p *EpMfs) Create(ctx context.Context, upstreams []*upstream.Fs, path string) ([]*upstream.Fs, error) {
+	upstreams, err := p.EpAll.Create(ctx, upstreams, path)
+	if err != nil {
+		return nil, err
+	}
+	r, err := p.mfs(upstreams)
+	return []*upstream.Fs{r}, err
+}
+
+// CreateEntries is CREATE category policy but receving a set of candidate entries
+func (p *EpMfs) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
+	entries, err := p.EpAll.CreateEntries(entries...)
+	if err != nil {
+		return nil, err
+	}
+	e, err := p.mfsEntries(entries)
+	return []upstream.Entry{e}, err
+}
+
+// Search category policy, governing the access to files and directories
+func (p *EpMfs) Search(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error) {
+	if len(upstreams) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	upstreams, err := p.epall(ctx, upstreams, path)
+	if err != nil {
+		return nil, err
+	}
+	return p.mfs(upstreams)
+}
+
+// SearchEntries is SEARCH category policy but receving a set of candidate entries
+func (p *EpMfs) SearchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
+	if len(entries) == 0 {
+		return nil, fs.ErrorObjectNotFound
+	}
+	return p.mfsEntries(entries)
+}
