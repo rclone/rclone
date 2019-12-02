@@ -1666,8 +1666,8 @@ func calculateRange(partSize, partIndex, numParts, totalSize int64) string {
 	start := partIndex * partSize
 	var ends string
 	if partIndex == numParts-1 {
-		if totalSize >= 0 {
-			ends = strconv.FormatInt(totalSize, 10)
+		if totalSize >= 1 {
+			ends = strconv.FormatInt(totalSize-1, 10)
 		}
 	} else {
 		ends = strconv.FormatInt(start+partSize-1, 10)
