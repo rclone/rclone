@@ -2040,7 +2040,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// read the md5sum if available for non multpart and if
 	// disable checksum isn't present.
 	var md5sum string
-	if !multipart || !o.fs.opt.DisableChecksum {
+	if !multipart && !o.fs.opt.DisableChecksum {
 		hash, err := src.Hash(ctx, hash.MD5)
 		if err == nil && matchMd5.MatchString(hash) {
 			hashBytes, err := hex.DecodeString(hash)
