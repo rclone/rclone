@@ -716,6 +716,16 @@ larger files then you will need to increase chunk_size.`,
 			Default:  minChunkSize,
 			Advanced: true,
 		}, {
+			Name: "copy_cutoff",
+			Help: `Cutoff for switching to multipart copy
+
+Any files larger than this that need to be server side copied will be
+copied in chunks of this size.
+
+The minimum is 0 and the maximum is 5GB.`,
+			Default:  fs.SizeSuffix(maxSizeForCopy),
+			Advanced: true,
+		}, {
 			Name:     "disable_checksum",
 			Help:     "Don't store MD5 checksum with object metadata",
 			Default:  false,
@@ -809,6 +819,7 @@ type Options struct {
 	SSEKMSKeyID           string        `config:"sse_kms_key_id"`
 	StorageClass          string        `config:"storage_class"`
 	UploadCutoff          fs.SizeSuffix `config:"upload_cutoff"`
+	CopyCutoff            fs.SizeSuffix `config:"copy_cutoff"`
 	ChunkSize             fs.SizeSuffix `config:"chunk_size"`
 	DisableChecksum       bool          `config:"disable_checksum"`
 	SessionToken          string        `config:"session_token"`
@@ -1653,7 +1664,7 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 		req.StorageClass = &f.opt.StorageClass
 	}
 
-	if srcSize >= int64(f.opt.UploadCutoff) {
+	if srcSize >= int64(f.opt.CopyCutoff) {
 		return f.copyMultipart(ctx, req, dstBucket, dstPath, srcBucket, srcPath, srcSize)
 	}
 	return f.pacer.Call(func() (bool, error) {
@@ -1704,7 +1715,7 @@ func (f *Fs) copyMultipart(ctx context.Context, req *s3.CopyObjectInput, dstBuck
 		}
 	}()
 
-	partSize := int64(f.opt.ChunkSize)
+	partSize := int64(f.opt.CopyCutoff)
 	numParts := (srcSize-1)/partSize + 1
 
 	var parts []*s3.CompletedPart
@@ -1931,11 +1942,6 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return err
 	}
 	o.meta[metaMtime] = aws.String(swift.TimeToFloatString(modTime))
-
-	if o.bytes >= maxSizeForCopy {
-		fs.Debugf(o, "SetModTime is unsupported for objects bigger than %v bytes", fs.SizeSuffix(maxSizeForCopy))
-		return nil
-	}
 
 	// Can't update metadata here, so return this error to force a recopy
 	if o.storageClass == "GLACIER" || o.storageClass == "DEEP_ARCHIVE" {
