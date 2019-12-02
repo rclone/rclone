@@ -820,10 +820,10 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 			return 0, errors.Wrap(err, "can't read status of source file while transferring")
 		}
 		if file.o.size != fi.Size() {
-			return 0, errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", file.o.size, fi.Size())
+			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", file.o.size, fi.Size()))
 		}
 		if !file.o.modTime.Equal(fi.ModTime()) {
-			return 0, errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", file.o.modTime, fi.ModTime())
+			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", file.o.modTime, fi.ModTime()))
 		}
 	}
 
