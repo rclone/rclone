@@ -111,7 +111,7 @@ func findEntry(ctx context.Context, f fs.Fs, remote string) fs.DirEntry {
 			return nil
 		}
 		// random modtime for root
-    	randomNow := time.Unix(time.Now().Unix() - rand.Int63n(10000), 0)
+		randomNow := time.Unix(time.Now().Unix() - rand.Int63n(10000), 0)
 		return fs.NewDir("", randomNow)
 	}
 	found := false

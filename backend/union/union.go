@@ -250,7 +250,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	errs := make([]error, len(entries))
 	multithread(len(entries), func(i int){
 		u := entries[i].UpstreamFs()
-        o, ok := entries[i].(*upstream.Object);
+		o, ok := entries[i].(*upstream.Object);
 		if !ok {
 			errs[i] = fs.ErrorNotAFile
 			return
@@ -390,7 +390,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 	}
 	go func() {
 		mw := io.MultiWriter(writers...)
-        io.Copy(mw, in)
+		io.Copy(mw, in)
 		for _, bw := range writers {
 			bw.(*bufio.Writer).Flush()
 		}

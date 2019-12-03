@@ -21,10 +21,10 @@ var (
 )
 
 const (
-    unInitilized uint32 = iota
-    initilizing
-    normal
-    updating
+	unInitilized uint32 = iota
+	initilizing
+	normal
+	updating
 )
 
 // Fs is a wrap of any fs and its configs
