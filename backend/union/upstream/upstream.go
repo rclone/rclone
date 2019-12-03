@@ -307,7 +307,8 @@ func (f *Fs) updateUsageCore(lock bool) error {
 		defer f.cacheMutex.Unlock()
 	}
 	// Run in background, should not be cancelled by user
-	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 	usage, err := f.Features().About(ctx)
 	if err != nil {
 		return err
