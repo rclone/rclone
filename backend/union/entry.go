@@ -1,14 +1,14 @@
 package union
 
 import (
-	"context"
 	"bufio"
+	"context"
 	"io"
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/backend/union/upstream"
+	"github.com/rclone/rclone/fs"
 )
 
 // Object describes a union Object
@@ -70,7 +70,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Get multiple reader
 	readers := make([]io.Reader, len(entries))
 	writers := make([]io.Writer, len(entries))
-	errs := make([]error, len(entries) + 1)
+	errs := make([]error, len(entries)+1)
 	for i := range entries {
 		r, w := io.Pipe()
 		bw := bufio.NewWriter(w)
@@ -79,13 +79,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	go func() {
 		mw := io.MultiWriter(writers...)
-        _, errs[len(entries)] = io.Copy(mw, in)
+		_, errs[len(entries)] = io.Copy(mw, in)
 		for _, bw := range writers {
 			bw.(*bufio.Writer).Flush()
 		}
 	}()
 	// Multi-threading
-	multithread(len(entries), func(i int){
+	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			errs[i] = o.Update(ctx, readers[i], src, options...)
 		} else {
@@ -109,7 +109,7 @@ func (o *Object) Remove(ctx context.Context) error {
 		return err
 	}
 	errs := make([]error, len(entries))
-	multithread(len(entries), func(i int){
+	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			errs[i] = o.Remove(ctx)
 		} else {
@@ -123,6 +123,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	}
 	return nil
 }
+
 // SetModTime sets the metadata on the object to set the modification date
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	f := o.Fs().(*Fs)
@@ -132,7 +133,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	}
 	var wg sync.WaitGroup
 	errs := make([]error, len(entries))
-	multithread(len(entries), func(i int){
+	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			errs[i] = o.SetModTime(ctx, t)
 		} else {
@@ -153,7 +154,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 func (d *Directory) ModTime(ctx context.Context) (t time.Time) {
 	entries := d.candidates()
 	times := make([]time.Time, len(entries))
-	multithread(len(entries), func(i int){
+	multithread(len(entries), func(i int) {
 		times[i] = entries[i].ModTime(ctx)
 	})
 	for _, ti := range times {
