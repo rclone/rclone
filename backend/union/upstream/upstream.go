@@ -90,11 +90,11 @@ func New(remote, root string, cacheTime time.Duration) (*Fs, error) {
 		rootString = configName + ":" + rootString
 	}
 	myFs, err := cache.Get(rootString)
-	if err != nil {
+	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}
 	rFs.Fs = myFs
-	return rFs, nil
+	return rFs, err
 }
 
 // WrapDirectory wraps a fs.Directory to include the info
@@ -142,6 +142,12 @@ func (e *Directory) UpstreamFs() *Fs {
 // UpstreamFs get the upstream Fs the entry is stored in
 func (o *Object) UpstreamFs() *Fs {
 	return o.f
+}
+
+// UnWrap returns the Object that this Object is wrapping or
+// nil if it isn't wrapping anything
+func (o *Object) UnWrap() fs.Object {
+	return o.Object
 }
 
 // IsCreatable return if the fs is allowed to create new objects

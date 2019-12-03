@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -337,15 +336,13 @@ func (f *Fs) Purge(ctx context.Context) error {
 			return fs.ErrorCantPurge
 		}
 	}
-	for _, r := range f.upstreams {
-		// Can't Purge if any read-only upstreams
-		if !r.IsWritable() {
-			return fs.ErrorPermissionDenied
-		}
+	upstreams, err := f.action(ctx, "")
+	if err != nil {
+		return err
 	}
-	errs := make([]error, len(f.upstreams))
-	multithread(len(f.upstreams), func(i int){
-		errs[i] = f.upstreams[i].Features().Purge(ctx)
+	errs := make([]error, len(upstreams))
+	multithread(len(upstreams), func(i int){
+		errs[i] = upstreams[i].Features().Purge(ctx)
 	})
 	for _, err := range errs {
 		if err != nil {
@@ -678,36 +675,35 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	var found int32
 	entriess := make([][]upstream.Entry, len(f.upstreams))
 	errs := make([]error, len(f.upstreams))
 	multithread(len(f.upstreams), func(i int){
 		u := f.upstreams[i]
 		entries, err := u.List(ctx, dir)
-		if err != nil && err != fs.ErrorDirNotFound {
+		if err != nil {
 			errs[i] = err
 			return
 		}
-		atomic.StoreInt32(&found, 1)
 		uEntries := make([]upstream.Entry, len(entries))
 		for j, e := range entries {
 			uEntries[j], _ = u.WrapEntry(e)
 		}
 		entriess[i] = uEntries
 	})
-	if found == 0 {
+	found := false
+	for _, err := range errs {
+		if err == fs.ErrorDirNotFound {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		found = true
+	}
+	if !found {
 		return nil, fs.ErrorDirNotFound
 	}
-	entries, err = f.mergeDirEntries(entriess)
-	if err != nil {
-		return entries, err
-	}
-	for _, err := range errs {
-		if err != nil {
-			return entries, err
-		}
-	}
-	return entries, nil
+	return f.mergeDirEntries(entriess)
 }
 
 // NewObject creates a new remote union file object
@@ -826,22 +822,33 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		}
 	}
 
-	var upstreams []*upstream.Fs
-	for i := range opt.Upstreams {
-		// Last remote first so we return the correct (last) matching fs in case of fs.ErrorIsFile
-		var u = opt.Upstreams[len(opt.Upstreams)-i-1]
-		uFs, err := upstream.New(u, root, time.Duration(opt.CacheTime) * time.Second)
-		if err != nil {
+	upstreams := make([]*upstream.Fs, len(opt.Upstreams))
+	errs := make([]error, len(opt.Upstreams))
+	multithread(len(opt.Upstreams), func(i int) {
+		u := opt.Upstreams[i]
+		upstreams[i], errs[i] = upstream.New(u, root, time.Duration(opt.CacheTime) * time.Second)
+	})
+	var usedUpstreams []*upstream.Fs
+	var fserr error
+	for i, err := range errs {
+		if err != nil && err != fs.ErrorIsFile {
 			return nil, err
 		}
-		upstreams = append(upstreams, uFs)
+		// Only the upstreams returns ErrorIsFile would be used if any
+		if err == fs.ErrorIsFile {
+			usedUpstreams = append(usedUpstreams, upstreams[i])
+			fserr = fs.ErrorIsFile
+		}
+	}
+	if fserr == nil {
+		usedUpstreams = upstreams
 	}
 
 	f := &Fs{
 		name:         name,
 		root:         root,
 		opt:          *opt,
-		upstreams:    upstreams,
+		upstreams:    usedUpstreams,
 	}
 	f.actionPolicy, err = policy.Get(opt.ActionPolicy)
 	if err != nil {
@@ -907,7 +914,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	f.hashSet = hashSet
 
-	return f, nil
+	return f, fserr
 }
 
 func parentDir(absPath string) string {

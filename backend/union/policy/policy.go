@@ -105,13 +105,16 @@ func clean(absPath string) string {
 func findEntry(ctx context.Context, f fs.Fs, remote string) fs.DirEntry {
 	remote = clean(remote)
 	dir := parentDir(remote)
+	entries, err := f.List(ctx, dir);
 	if remote == dir {
+		if err != nil {
+			return nil
+		}
 		// random modtime for root
     	randomNow := time.Unix(time.Now().Unix() - rand.Int63n(10000), 0)
 		return fs.NewDir("", randomNow)
 	}
 	found := false
-	entries, _ := f.List(ctx, dir);
 	for _, e := range entries {
 		eRemote := e.Remote()
 		if f.Features().CaseInsensitive {
