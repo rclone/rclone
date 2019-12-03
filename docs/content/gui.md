@@ -99,7 +99,7 @@ Or instead of htpassword if you just want a single user and password:
 
 The GUI is being developed in the: [rclone/rclone-webui-react respository](https://github.com/rclone/rclone-webui-react).
 
-Bug reports and contributions very welcome welcome :-)
+Bug reports and contributions are very welcome :-)
 
 If you have questions then please ask them on the [rclone forum](https://forum.rclone.org/).
 
