@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/backend/union/upstream"
+	"github.com/rclone/rclone/fs"
 )
 
-func init(){
+func init() {
 	registerPolicy("newest", &Newest{})
 }
 
@@ -52,7 +52,7 @@ func (p *Newest) newest(ctx context.Context, upstreams []*upstream.Fs, path stri
 func (p *Newest) newestEntries(entries []upstream.Entry) (upstream.Entry, error) {
 	var wg sync.WaitGroup
 	mtimes := make([]time.Time, len(entries))
-	ctx, _ := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	for i, e := range entries {
 		wg.Add(1)
 		i, e := i, e // Closure

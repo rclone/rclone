@@ -1,8 +1,8 @@
 package union
 
 import (
-	"context"
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"path"
@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/backend/union/policy"
+	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -66,15 +66,15 @@ type Options struct {
 
 // Fs represents a union of upstreams
 type Fs struct {
-	name         string            // name of this remote
-	features     *fs.Features      // optional features
-	opt          Options           // options for this Fs
-	root         string            // the path we are working on
-	upstreams    []*upstream.Fs    // slice of upstreams
-	hashSet      hash.Set          // intersection of hash types
-	actionPolicy policy.Policy     // policy for ACTION
-	createPolicy policy.Policy     // policy for CREATE
-	searchPolicy policy.Policy     // policy for SEARCH
+	name         string         // name of this remote
+	features     *fs.Features   // optional features
+	opt          Options        // options for this Fs
+	root         string         // the path we are working on
+	upstreams    []*upstream.Fs // slice of upstreams
+	hashSet      hash.Set       // intersection of hash types
+	actionPolicy policy.Policy  // policy for ACTION
+	createPolicy policy.Policy  // policy for CREATE
+	searchPolicy policy.Policy  // policy for SEARCH
 }
 
 // Wrap candidate objects in to an union Object
@@ -85,15 +85,15 @@ func (f *Fs) wrapEntries(entries ...upstream.Entry) (entry, error) {
 	}
 	switch e.(type) {
 	case *upstream.Object:
-		return &Object {
-			Object:     e.(*upstream.Object),
-			fs:         f,
-			co: entries,
+		return &Object{
+			Object: e.(*upstream.Object),
+			fs:     f,
+			co:     entries,
 		}, nil
 	case *upstream.Directory:
-		return &Directory {
-			Directory:     e.(*upstream.Directory),
-			cd: entries,
+		return &Directory{
+			Directory: e.(*upstream.Directory),
+			cd:        entries,
 		}, nil
 	default:
 		return nil, errors.Errorf("unknown object type %T", e)
@@ -127,7 +127,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return err
 	}
 	errs := make([]error, len(upstreams))
-	multithread(len(upstreams), func(i int){
+	multithread(len(upstreams), func(i int) {
 		errs[i] = upstreams[i].Rmdir(ctx, dir)
 	})
 	for _, err := range errs {
@@ -151,7 +151,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return err
 	}
 	errs := make([]error, len(upstreams))
-	multithread(len(upstreams), func(i int){
+	multithread(len(upstreams), func(i int) {
 		errs[i] = upstreams[i].Mkdir(ctx, dir)
 	})
 	for _, err := range errs {
@@ -179,7 +179,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 		return err
 	}
 	errs := make([]error, len(upstreams))
-	multithread(len(upstreams), func(i int){
+	multithread(len(upstreams), func(i int) {
 		errs[i] = upstreams[i].Features().Purge(ctx)
 	})
 	for _, err := range errs {
@@ -248,9 +248,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	objs := make([]*upstream.Object, len(entries))
 	errs := make([]error, len(entries))
-	multithread(len(entries), func(i int){
+	multithread(len(entries), func(i int) {
 		u := entries[i].UpstreamFs()
-		o, ok := entries[i].(*upstream.Object);
+		o, ok := entries[i].(*upstream.Object)
 		if !ok {
 			errs[i] = fs.ErrorNotAFile
 			return
@@ -304,7 +304,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		}
 	}
 	errs := make([]error, len(upstreams))
-	multithread(len(upstreams), func(i int){
+	multithread(len(upstreams), func(i int) {
 		u := upstreams[i]
 		errs[i] = u.Features().DirMove(ctx, u, srcRemote, dstRemote)
 	})
@@ -351,7 +351,7 @@ func (f *Fs) ChangeNotify(ctx context.Context, fn func(string, fs.EntryType), ch
 // DirCacheFlush resets the directory cache - used in testing
 // as an optional interface
 func (f *Fs) DirCacheFlush() {
-	multithread(len(f.upstreams), func(i int){
+	multithread(len(f.upstreams), func(i int) {
 		if do := f.upstreams[i].Features().DirCacheFlush; do != nil {
 			do()
 		}
@@ -515,7 +515,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	entriess := make([][]upstream.Entry, len(f.upstreams))
 	errs := make([]error, len(f.upstreams))
-	multithread(len(f.upstreams), func(i int){
+	multithread(len(f.upstreams), func(i int) {
 		u := f.upstreams[i]
 		entries, err := u.List(ctx, dir)
 		if err != nil {
@@ -548,7 +548,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	objs := make([]*upstream.Object, len(f.upstreams))
 	errs := make([]error, len(f.upstreams))
-	multithread(len(f.upstreams), func(i int){
+	multithread(len(f.upstreams), func(i int) {
 		u := f.upstreams[i]
 		o, err := u.NewObject(ctx, remote)
 		if err != nil && err != fs.ErrorObjectNotFound {
@@ -664,7 +664,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	errs := make([]error, len(opt.Upstreams))
 	multithread(len(opt.Upstreams), func(i int) {
 		u := opt.Upstreams[i]
-		upstreams[i], errs[i] = upstream.New(u, root, time.Duration(opt.CacheTime) * time.Second)
+		upstreams[i], errs[i] = upstream.New(u, root, time.Duration(opt.CacheTime)*time.Second)
 	})
 	var usedUpstreams []*upstream.Fs
 	var fserr error
@@ -683,10 +683,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:         name,
-		root:         root,
-		opt:          *opt,
-		upstreams:    usedUpstreams,
+		name:      name,
+		root:      root,
+		opt:       *opt,
+		upstreams: usedUpstreams,
 	}
 	f.actionPolicy, err = policy.Get(opt.ActionPolicy)
 	if err != nil {

@@ -2,18 +2,18 @@ package policy
 
 import (
 	"context"
-	
-	"github.com/rclone/rclone/fs"
+
 	"github.com/rclone/rclone/backend/union/upstream"
+	"github.com/rclone/rclone/fs"
 )
 
-func init(){
+func init() {
 	registerPolicy("epff", &EpFF{})
 }
 
 // EpFF stands for existing path, first found
 // Given the order of the candidates, act on the first one found where the relative path exists.
-type EpFF struct {}
+type EpFF struct{}
 
 func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error) {
 	ch := make(chan *upstream.Fs)
@@ -28,13 +28,13 @@ func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) 
 	}
 	var u *upstream.Fs
 	for i := 0; i < len(upstreams); i++ {
-		u = <- ch
+		u = <-ch
 		if u != nil {
 			// close remaining goroutines
 			go func(num int) {
 				defer close(ch)
 				for i := 0; i < num; i++ {
-					<- ch
+					<-ch
 				}
 			}(len(upstreams) - 1 - i)
 		}

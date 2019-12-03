@@ -2,12 +2,12 @@ package policy
 
 import (
 	"context"
-	
-	"github.com/rclone/rclone/fs"
+
 	"github.com/rclone/rclone/backend/union/upstream"
+	"github.com/rclone/rclone/fs"
 )
 
-func init(){
+func init() {
 	registerPolicy("epmfs", &EpMfs{})
 }
 

@@ -32,9 +32,9 @@ type Fs struct {
 	fs.Fs
 	writable    bool
 	creatable   bool
-	usage       *fs.Usage     // Cache the usage
+	usage       *fs.Usage // Cache the usage
 	cacheMutex  sync.RWMutex
-	cacheExpiry int64     // usage cache expiry time
+	cacheExpiry int64         // usage cache expiry time
 	cacheTime   time.Duration // cache duration
 	cacheState  uint32        // if the cache is updating
 }
@@ -302,7 +302,7 @@ func (f *Fs) updateUsageCore(lock bool) error {
 		atomic.StoreInt64(&f.cacheExpiry, time.Now().Add(f.cacheTime).Unix())
 		atomic.StoreUint32(&f.cacheState, normal)
 	}()
-	if (lock) {
+	if lock {
 		f.cacheMutex.Lock()
 		defer f.cacheMutex.Unlock()
 	}

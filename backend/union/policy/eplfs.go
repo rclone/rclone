@@ -3,12 +3,12 @@ package policy
 import (
 	"context"
 	"math"
-	
-	"github.com/rclone/rclone/fs"
+
 	"github.com/rclone/rclone/backend/union/upstream"
+	"github.com/rclone/rclone/fs"
 )
 
-func init(){
+func init() {
 	registerPolicy("eplfs", &EpLfs{})
 }
 
