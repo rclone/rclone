@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
 )
@@ -70,7 +71,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Get multiple reader
 	readers := make([]io.Reader, len(entries))
 	writers := make([]io.Writer, len(entries))
-	errs := make([]error, len(entries)+1)
+	errs := Errors(make([]error, len(entries)+1))
 	for i := range entries {
 		r, w := io.Pipe()
 		bw := bufio.NewWriter(w)
@@ -79,26 +80,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	go func() {
 		mw := io.MultiWriter(writers...)
-		_, errs[len(entries)] = io.Copy(mw, in)
-		for _, bw := range writers {
-			bw.(*bufio.Writer).Flush()
+		es := make([]error, len(writers)+1)
+		_, es[len(es)-1] = io.Copy(mw, in)
+		for i, bw := range writers {
+			es[i] = bw.(*bufio.Writer).Flush()
 		}
+		errs[len(entries)] = Errors(es).Err()
 	}()
 	// Multi-threading
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
-			errs[i] = o.Update(ctx, readers[i], src, options...)
+			err := o.Update(ctx, readers[i], src, options...)
+			errs[i] = errors.Wrap(err, o.UpstreamFs().Name())
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}
 	})
-	// Get an object for future operation
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errs.Err()
 }
 
 // Remove candidate objects selected by ACTION policy
@@ -108,20 +106,16 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	errs := make([]error, len(entries))
+	errs := Errors(make([]error, len(entries)))
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
-			errs[i] = o.Remove(ctx)
+			err := o.Remove(ctx)
+			errs[i] = errors.Wrap(err, o.UpstreamFs().Name())
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}
 	})
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errs.Err()
 }
 
 // SetModTime sets the metadata on the object to set the modification date
@@ -132,21 +126,17 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 		return err
 	}
 	var wg sync.WaitGroup
-	errs := make([]error, len(entries))
+	errs := Errors(make([]error, len(entries)))
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
-			errs[i] = o.SetModTime(ctx, t)
+			err := o.SetModTime(ctx, t)
+			errs[i] = errors.Wrap(err, o.UpstreamFs().Name())
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}
 	})
 	wg.Wait()
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errs.Err()
 }
 
 // ModTime returns the modification date of the directory

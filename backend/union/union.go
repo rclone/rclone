@@ -126,16 +126,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	errs := make([]error, len(upstreams))
+	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
-		errs[i] = upstreams[i].Rmdir(ctx, dir)
+		err := upstreams[i].Rmdir(ctx, dir)
+		errs[i] = errors.Wrap(err, upstreams[i].Name())
 	})
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errs.Err()
 }
 
 // Hashes returns hash.HashNone to indicate remote hashing is unavailable
@@ -150,16 +146,12 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	errs := make([]error, len(upstreams))
+	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
-		errs[i] = upstreams[i].Mkdir(ctx, dir)
+		err := upstreams[i].Mkdir(ctx, dir)
+		errs[i] = errors.Wrap(err, upstreams[i].Name())
 	})
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errs.Err()
 }
 
 // Purge all files in the root and the root directory
@@ -178,16 +170,12 @@ func (f *Fs) Purge(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	errs := make([]error, len(upstreams))
+	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
-		errs[i] = upstreams[i].Features().Purge(ctx)
+		err := upstreams[i].Features().Purge(ctx)
+		errs[i] = errors.Wrap(err, upstreams[i].Name())
 	})
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errs.Err()
 }
 
 // Copy src to this remote using server side copy operations.
@@ -247,17 +235,17 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 	}
 	objs := make([]*upstream.Object, len(entries))
-	errs := make([]error, len(entries))
+	errs := Errors(make([]error, len(entries)))
 	multithread(len(entries), func(i int) {
 		u := entries[i].UpstreamFs()
 		o, ok := entries[i].(*upstream.Object)
 		if !ok {
-			errs[i] = fs.ErrorNotAFile
+			errs[i] = errors.Wrap(fs.ErrorNotAFile, u.Name())
 			return
 		}
 		mo, err := u.Features().Move(ctx, o, remote)
 		if err != nil || mo == nil {
-			errs[i] = err
+			errs[i] = errors.Wrap(err, u.Name())
 			return
 		}
 		objs[i] = u.WrapObject(mo)
@@ -272,12 +260,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	for _, err := range errs {
-		if err != nil {
-			return e.(*Object), err
-		}
-	}
-	return e.(*Object), nil
+	return e.(*Object), errs.Err()
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
@@ -303,17 +286,13 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			return fs.ErrorCantDirMove
 		}
 	}
-	errs := make([]error, len(upstreams))
+	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		u := upstreams[i]
-		errs[i] = u.Features().DirMove(ctx, u, srcRemote, dstRemote)
+		err := u.Features().DirMove(ctx, u, srcRemote, dstRemote)
+		errs[i] = errors.Wrap(err, u.Name())
 	})
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return errs.Err()
 }
 
 // ChangeNotify calls the passed function with a path
@@ -379,6 +358,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		e, err := f.wrapEntries(u.WrapObject(o))
 		return e.(*Object), err
 	}
+	errs := Errors(make([]error, len(upstreams)+1))
 	// Get multiple reader
 	readers := make([]io.Reader, len(upstreams))
 	writers := make([]io.Writer, len(upstreams))
@@ -386,35 +366,42 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		r, w := io.Pipe()
 		bw := bufio.NewWriter(w)
 		readers[i], writers[i] = r, bw
-		defer w.Close()
+		defer func() {
+			err := w.Close()
+			if err != nil {
+				panic(err)
+			}
+		}()
 	}
 	go func() {
 		mw := io.MultiWriter(writers...)
-		io.Copy(mw, in)
-		for _, bw := range writers {
-			bw.(*bufio.Writer).Flush()
+		es := make([]error, len(writers)+1)
+		_, es[len(es)-1] = io.Copy(mw, in)
+		for i, bw := range writers {
+			es[i] = bw.(*bufio.Writer).Flush()
 		}
+		errs[len(upstreams)] = Errors(es).Err()
 	}()
 	// Multi-threading
 	objs := make([]upstream.Entry, len(upstreams))
-	errs := make([]error, len(upstreams))
 	multithread(len(upstreams), func(i int) {
 		u := upstreams[i]
 		var o fs.Object
+		var err error
 		if stream {
-			o, errs[i] = u.Features().PutStream(ctx, readers[i], src, options...)
+			o, err = u.Features().PutStream(ctx, readers[i], src, options...)
 		} else {
-			o, errs[i] = u.Put(ctx, readers[i], src, options...)
+			o, err = u.Put(ctx, readers[i], src, options...)
 		}
-		if errs[i] != nil {
+		if err != nil {
+			errs[i] = errors.Wrap(err, u.Name())
 			return
 		}
 		objs[i] = u.WrapObject(o)
 	})
-	for _, err := range errs {
-		if err != nil {
-			return nil, err
-		}
+	err = errs.Err()
+	if err != nil {
+		return nil, err
 	}
 	e, err := f.wrapEntries(objs...)
 	return e.(*Object), err
@@ -514,12 +501,12 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	entriess := make([][]upstream.Entry, len(f.upstreams))
-	errs := make([]error, len(f.upstreams))
+	errs := Errors(make([]error, len(f.upstreams)))
 	multithread(len(f.upstreams), func(i int) {
 		u := f.upstreams[i]
 		entries, err := u.List(ctx, dir)
 		if err != nil {
-			errs[i] = err
+			errs[i] = errors.Wrap(err, u.Name())
 			return
 		}
 		uEntries := make([]upstream.Entry, len(entries))
@@ -528,18 +515,17 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 		entriess[i] = uEntries
 	})
-	found := false
-	for _, err := range errs {
-		if err == fs.ErrorDirNotFound {
-			continue
+	if len(errs) == len(errs.Map(FilterNil)) {
+		errs = errs.Map(func(e error) error {
+			if errors.Cause(e) == fs.ErrorDirNotFound {
+				return nil
+			}
+			return e
+		})
+		if len(errs) == 0 {
+			return nil, fs.ErrorDirNotFound
 		}
-		if err != nil {
-			return nil, err
-		}
-		found = true
-	}
-	if !found {
-		return nil, fs.ErrorDirNotFound
+		return nil, errs.Err()
 	}
 	return f.mergeDirEntries(entriess)
 }
@@ -547,12 +533,12 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // NewObject creates a new remote union file object
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	objs := make([]*upstream.Object, len(f.upstreams))
-	errs := make([]error, len(f.upstreams))
+	errs := Errors(make([]error, len(f.upstreams)))
 	multithread(len(f.upstreams), func(i int) {
 		u := f.upstreams[i]
 		o, err := u.NewObject(ctx, remote)
 		if err != nil && err != fs.ErrorObjectNotFound {
-			errs[i] = err
+			errs[i] = errors.Wrap(err, u.Name())
 			return
 		}
 		objs[i] = u.WrapObject(o)
@@ -570,12 +556,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, err := range errs {
-		if err != nil {
-			return e.(*Object), err
-		}
-	}
-	return e.(*Object), nil
+	return e.(*Object), errs.Err()
 }
 
 // Precision is the greatest Precision of all upstreams
@@ -661,7 +642,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	upstreams := make([]*upstream.Fs, len(opt.Upstreams))
-	errs := make([]error, len(opt.Upstreams))
+	errs := Errors(make([]error, len(opt.Upstreams)))
 	multithread(len(opt.Upstreams), func(i int) {
 		u := opt.Upstreams[i]
 		upstreams[i], errs[i] = upstream.New(u, root, time.Duration(opt.CacheTime)*time.Second)
