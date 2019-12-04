@@ -263,7 +263,7 @@ Contributors
   * garry415 <garry.415@gmail.com>
   * forgems <forgems@gmail.com>
   * Florian Apolloner <florian@apolloner.eu>
-  * Aleksandar Jankovic <office@ajankovic.com>
+  * Aleksandar Janković <office@ajankovic.com> <ajankovic@users.noreply.github.com>
   * Maran <maran@protonmail.com>
   * nguyenhuuluan434 <nguyenhuuluan434@gmail.com>
   * Laura Hausmann <zotan@zotan.pw> <laura@hausmann.dev>
