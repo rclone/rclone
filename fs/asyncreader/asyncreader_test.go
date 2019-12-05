@@ -60,12 +60,12 @@ func TestAsyncWriteTo(t *testing.T) {
 
 	var dst = &bytes.Buffer{}
 	n, err := io.Copy(dst, ar)
-	assert.Equal(t, io.EOF, err)
+	require.NoError(t, err)
 	assert.Equal(t, int64(10), n)
 
-	// Should still return EOF
+	// Should still not return any errors
 	n, err = io.Copy(dst, ar)
-	assert.Equal(t, io.EOF, err)
+	require.NoError(t, err)
 	assert.Equal(t, int64(0), n)
 
 	err = ar.Close()
