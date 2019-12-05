@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockfs"
 	"github.com/rclone/rclone/fstest/mockobject"
@@ -13,8 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func fileCreate(t *testing.T, r *fstest.Run) (*VFS, *File, fstest.Item) {
-	vfs := New(r.Fremote, nil)
+func fileCreate(t *testing.T, r *fstest.Run, mode CacheMode) (*VFS, *File, fstest.Item) {
+	opt := DefaultOpt
+	opt.CacheMode = mode
+	vfs := New(r.Fremote, &opt)
 
 	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -29,7 +32,7 @@ func fileCreate(t *testing.T, r *fstest.Run) (*VFS, *File, fstest.Item) {
 func TestFileMethods(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r)
+	vfs, file, _ := fileCreate(t, r, CacheModeOff)
 
 	// String
 	assert.Equal(t, "dir/file1", file.String())
@@ -84,7 +87,7 @@ func TestFileSetModTime(t *testing.T) {
 		return
 	}
 	defer r.Finalise()
-	vfs, file, file1 := fileCreate(t, r)
+	vfs, file, file1 := fileCreate(t, r, CacheModeOff)
 
 	err := file.SetModTime(t2)
 	require.NoError(t, err)
@@ -97,12 +100,8 @@ func TestFileSetModTime(t *testing.T) {
 	assert.Equal(t, EROFS, err)
 }
 
-func TestFileOpenRead(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	_, file, _ := fileCreate(t, r)
-
-	fd, err := file.openRead()
+func fileCheckContents(t *testing.T, file *File) {
+	fd, err := file.Open(os.O_RDONLY)
 	require.NoError(t, err)
 
 	contents, err := ioutil.ReadAll(fd)
@@ -110,6 +109,14 @@ func TestFileOpenRead(t *testing.T) {
 	assert.Equal(t, "file1 contents", string(contents))
 
 	require.NoError(t, fd.Close())
+}
+
+func TestFileOpenRead(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	_, file, _ := fileCreate(t, r, CacheModeOff)
+
+	fileCheckContents(t, file)
 }
 
 func TestFileOpenReadUnknownSize(t *testing.T) {
@@ -160,7 +167,7 @@ func TestFileOpenReadUnknownSize(t *testing.T) {
 func TestFileOpenWrite(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r)
+	vfs, file, _ := fileCreate(t, r, CacheModeOff)
 
 	fd, err := file.openWrite(os.O_WRONLY | os.O_TRUNC)
 	require.NoError(t, err)
@@ -181,7 +188,7 @@ func TestFileOpenWrite(t *testing.T) {
 func TestFileRemove(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r)
+	vfs, file, _ := fileCreate(t, r, CacheModeOff)
 
 	err := file.Remove()
 	require.NoError(t, err)
@@ -196,7 +203,7 @@ func TestFileRemove(t *testing.T) {
 func TestFileRemoveAll(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r)
+	vfs, file, _ := fileCreate(t, r, CacheModeOff)
 
 	err := file.RemoveAll()
 	require.NoError(t, err)
@@ -211,7 +218,7 @@ func TestFileRemoveAll(t *testing.T) {
 func TestFileOpen(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	_, file, _ := fileCreate(t, r)
+	_, file, _ := fileCreate(t, r, CacheModeOff)
 
 	fd, err := file.Open(os.O_RDONLY)
 	require.NoError(t, err)
@@ -232,4 +239,91 @@ func TestFileOpen(t *testing.T) {
 
 	fd, err = file.Open(3)
 	assert.Equal(t, EPERM, err)
+}
+
+func testFileRename(t *testing.T, mode CacheMode) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	vfs, file, item := fileCreate(t, r, mode)
+
+	rootDir, err := vfs.Root()
+	require.NoError(t, err)
+
+	// check file in cache
+	if mode != CacheModeOff {
+		// read contents to get file in cache
+		fileCheckContents(t, file)
+		assert.True(t, vfs.cache.exists(item.Path))
+	}
+
+	dir := file.Dir()
+
+	// start with "dir/file1"
+	fstest.CheckItems(t, r.Fremote, item)
+
+	// rename file to "newLeaf"
+	err = dir.Rename("file1", "newLeaf", rootDir)
+	require.NoError(t, err)
+
+	item.Path = "newLeaf"
+	fstest.CheckItems(t, r.Fremote, item)
+
+	// check file in cache
+	if mode != CacheModeOff {
+		assert.True(t, vfs.cache.exists(item.Path))
+	}
+
+	// check file exists in the vfs layer at its new name
+	_, err = vfs.Stat("newLeaf")
+	require.NoError(t, err)
+
+	// rename it back to "dir/file1"
+	err = rootDir.Rename("newLeaf", "file1", dir)
+	require.NoError(t, err)
+
+	item.Path = "dir/file1"
+	fstest.CheckItems(t, r.Fremote, item)
+
+	// check file in cache
+	if mode != CacheModeOff {
+		assert.True(t, vfs.cache.exists(item.Path))
+	}
+
+	// now try renaming it with the file open
+	// first open it and write to it but dont close it
+	fd, err := file.Open(os.O_WRONLY | os.O_TRUNC)
+	require.NoError(t, err)
+	newContents := []byte("this is some new contents")
+	_, err = fd.Write(newContents)
+	require.NoError(t, err)
+
+	// rename file to "newLeaf"
+	err = dir.Rename("file1", "newLeaf", rootDir)
+	require.NoError(t, err)
+	newItem := fstest.NewItem("newLeaf", string(newContents), item.ModTime)
+
+	// check file has been renamed immediately in the cache
+	if mode != CacheModeOff {
+		assert.True(t, vfs.cache.exists("newLeaf"))
+	}
+
+	// check file exists in the vfs layer at its new name
+	_, err = vfs.Stat("newLeaf")
+	require.NoError(t, err)
+
+	// Close the file
+	require.NoError(t, fd.Close())
+
+	// Check file has now been renamed on the remote
+	item.Path = "newLeaf"
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{newItem}, nil, fs.ModTimeNotSupported)
+}
+
+func TestFileRename(t *testing.T) {
+	t.Run("CacheModeOff", func(t *testing.T) {
+		testFileRename(t, CacheModeOff)
+	})
+	t.Run("CacheModeFull", func(t *testing.T) {
+		testFileRename(t, CacheModeFull)
+	})
 }

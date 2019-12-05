@@ -698,7 +698,7 @@ func TestRWFileModTimeWithOpenWriters(t *testing.T) {
 	}
 }
 
-func TestCacheRename(t *testing.T) {
+func TestRWCacheRename(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
