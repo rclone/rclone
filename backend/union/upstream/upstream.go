@@ -292,7 +292,9 @@ func (f *Fs) updateUsage() error {
 		return f.updateUsageCore(false)
 	}
 	if atomic.CompareAndSwapUint32(&f.cacheState, normal, updating) {
-		go f.updateUsageCore(true)
+		go func() {
+			_ = f.updateUsageCore(true)
+		}()
 	}
 	return nil
 }

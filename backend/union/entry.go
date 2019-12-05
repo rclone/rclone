@@ -76,7 +76,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		r, w := io.Pipe()
 		bw := bufio.NewWriter(w)
 		readers[i], writers[i] = r, bw
-		defer w.Close()
+		defer func() {
+			err := w.Close()
+			if err != nil {
+				panic(err)
+			}
+		}()
 	}
 	go func() {
 		mw := io.MultiWriter(writers...)
