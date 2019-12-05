@@ -174,6 +174,9 @@ func (a *AsyncReader) WriteTo(w io.Writer) (n int64, err error) {
 	n = 0
 	for {
 		err = a.fill()
+		if err == io.EOF {
+			return n, nil
+		}
 		if err != nil {
 			return n, err
 		}
@@ -181,6 +184,10 @@ func (a *AsyncReader) WriteTo(w io.Writer) (n int64, err error) {
 		a.cur.increment(n2)
 		n += int64(n2)
 		if err != nil {
+			return n, err
+		}
+		if a.cur.err == io.EOF {
+			a.err = a.cur.err
 			return n, err
 		}
 		if a.cur.err != nil {
