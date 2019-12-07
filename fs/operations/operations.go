@@ -721,6 +721,9 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 		atomic.AddInt32(&c.srcFilesMissing, 1)
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
+		if c.oneway {
+			return false
+		}
 		return true
 	default:
 		panic("Bad object in DirEntries")
