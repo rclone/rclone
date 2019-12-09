@@ -24,14 +24,12 @@ type RWFileHandle struct {
 	*os.File
 	mu          sync.Mutex
 	closed      bool // set if handle has been closed
-	remote      string
 	file        *File
 	d           *Dir
 	opened      bool
-	flags       int    // open flags
-	osPath      string // path to the file in the cache
-	writeCalled bool   // if any Write() methods have been called
-	changed     bool   // file contents was changed in any other way
+	flags       int  // open flags
+	writeCalled bool // if any Write() methods have been called
+	changed     bool // file contents was changed in any other way
 }
 
 // Check interfaces
@@ -44,26 +42,25 @@ var (
 	_ io.Closer   = (*RWFileHandle)(nil)
 )
 
-func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandle, err error) {
+func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 	// if O_CREATE and O_EXCL are set and if path already exists, then return EEXIST
 	if flags&(os.O_CREATE|os.O_EXCL) == os.O_CREATE|os.O_EXCL && f.exists() {
 		return nil, EEXIST
 	}
 
 	fh = &RWFileHandle{
-		file:   f,
-		d:      d,
-		remote: remote,
-		flags:  flags,
+		file:  f,
+		d:     d,
+		flags: flags,
 	}
 
 	// mark the file as open in the cache - must be done before the mkdir
-	fh.d.vfs.cache.open(fh.remote)
+	fh.d.vfs.cache.open(fh.file.Path())
 
 	// Make a place for the file
-	fh.osPath, err = d.vfs.cache.mkdir(remote)
+	_, err = d.vfs.cache.mkdir(fh.file.Path())
 	if err != nil {
-		fh.d.vfs.cache.close(fh.remote)
+		fh.d.vfs.cache.close(fh.file.Path())
 		return nil, errors.Wrap(err, "open RW handle failed to make cache directory")
 	}
 
@@ -113,9 +110,9 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		// If the remote object exists AND its cached file exists locally AND there are no
 		// other RW handles with it open, then attempt to update it.
 		if o != nil && fh.file.rwOpens() == 0 {
-			cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.remote)
+			cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.file.Path())
 			if err == nil && cacheObj != nil {
-				_, err = copyObj(fh.d.vfs.cache.f, cacheObj, fh.remote, o)
+				_, err = copyObj(fh.d.vfs.cache.f, cacheObj, fh.file.Path(), o)
 				if err != nil {
 					return errors.Wrap(err, "open RW handle failed to update cached file")
 				}
@@ -123,12 +120,12 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		}
 
 		// try to open a exising cache file
-		fd, err = file.OpenFile(fh.osPath, cacheFileOpenFlags&^os.O_CREATE, 0600)
+		fd, err = file.OpenFile(fh.file.osPath(), cacheFileOpenFlags&^os.O_CREATE, 0600)
 		if os.IsNotExist(err) {
 			// cache file does not exist, so need to fetch it if we have an object to fetch
 			// it from
 			if o != nil {
-				_, err = copyObj(fh.d.vfs.cache.f, nil, fh.remote, o)
+				_, err = copyObj(fh.d.vfs.cache.f, nil, fh.file.Path(), o)
 				if err != nil {
 					cause := errors.Cause(err)
 					if cause != fs.ErrorObjectNotFound && cause != fs.ErrorDirNotFound {
@@ -162,7 +159,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		fh.changed = true
 		if fh.flags&os.O_CREATE == 0 && fh.file.exists() {
 			// create an empty file if it exists on the source
-			err = ioutil.WriteFile(fh.osPath, []byte{}, 0600)
+			err = ioutil.WriteFile(fh.file.osPath(), []byte{}, 0600)
 			if err != nil {
 				return errors.Wrap(err, "cache open failed to create zero length file")
 			}
@@ -172,9 +169,9 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		// exists in these cases.
 		if runtime.GOOS == "windows" && fh.flags&os.O_APPEND != 0 {
 			cacheFileOpenFlags &^= os.O_TRUNC
-			_, err = os.Stat(fh.osPath)
+			_, err = os.Stat(fh.file.osPath())
 			if err == nil {
-				err = os.Truncate(fh.osPath, 0)
+				err = os.Truncate(fh.file.osPath(), 0)
 				if err != nil {
 					return errors.Wrap(err, "cache open failed to truncate")
 				}
@@ -184,7 +181,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 
 	if fd == nil {
 		fs.Debugf(fh.logPrefix(), "Opening cached copy with flags=%s", decodeOpenFlags(fh.flags))
-		fd, err = file.OpenFile(fh.osPath, cacheFileOpenFlags, 0600)
+		fd, err = file.OpenFile(fh.file.osPath(), cacheFileOpenFlags, 0600)
 		if err != nil {
 			return errors.Wrap(err, "cache open file failed")
 		}
@@ -280,14 +277,14 @@ func (fh *RWFileHandle) flushWrites(closeFile bool) error {
 
 	if isCopied {
 		// Transfer the temp file to the remote
-		cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.remote)
+		cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.file.Path())
 		if err != nil {
 			err = errors.Wrap(err, "failed to find cache file")
 			fs.Errorf(fh.logPrefix(), "%v", err)
 			return err
 		}
 
-		o, err := copyObj(fh.d.vfs.f, fh.file.getObject(), fh.remote, cacheObj)
+		o, err := copyObj(fh.d.vfs.f, fh.file.getObject(), fh.file.Path(), cacheObj)
 		if err != nil {
 			err = errors.Wrap(err, "failed to transfer file from cache to remote")
 			fs.Errorf(fh.logPrefix(), "%v", err)
@@ -320,7 +317,7 @@ func (fh *RWFileHandle) close() (err error) {
 		if fh.opened {
 			fh.file.delRWOpen()
 		}
-		fh.d.vfs.cache.close(fh.remote)
+		fh.d.vfs.cache.close(fh.file.Path())
 	}()
 
 	return fh.flushWrites(true)
@@ -549,5 +546,5 @@ func (fh *RWFileHandle) Sync() error {
 }
 
 func (fh *RWFileHandle) logPrefix() string {
-	return fmt.Sprintf("%s(%p)", fh.remote, fh)
+	return fmt.Sprintf("%s(%p)", fh.file.Path(), fh)
 }

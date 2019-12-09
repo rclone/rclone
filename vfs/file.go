@@ -95,6 +95,11 @@ func (f *File) Path() string {
 	return path.Join(f.d.path, f.leaf)
 }
 
+// osPath returns the full path of the file in the cache in OS format
+func (f *File) osPath() string {
+	return f.d.vfs.cache.toOSPath(f.Path())
+}
+
 // Sys returns underlying data source (can be nil) - satisfies Node interface
 func (f *File) Sys() interface{} {
 	return nil
@@ -473,7 +478,7 @@ func (f *File) openRW(flags int) (fh *RWFileHandle, err error) {
 	}
 	// fs.Debugf(o, "File.openRW")
 
-	fh, err = newRWFileHandle(d, f, f.Path(), flags)
+	fh, err = newRWFileHandle(d, f, flags)
 	if err != nil {
 		fs.Errorf(f, "File.openRW failed: %v", err)
 		return nil, err
