@@ -309,6 +309,13 @@ func (c *cache) rename(name string, newName string) (err error) {
 	if err = os.Rename(osOldPath, osNewPath); err != nil {
 		return errors.Wrapf(err, "Failed to rename in cache: %s to %s", osOldPath, osNewPath)
 	}
+	// Rename the cache item
+	c.itemMu.Lock()
+	if oldItem, ok := c.item[name]; ok {
+		c.item[newName] = oldItem
+		delete(c.item, name)
+	}
+	c.itemMu.Unlock()
 	fs.Infof(name, "Renamed in cache")
 	return nil
 }
