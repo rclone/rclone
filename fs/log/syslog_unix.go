@@ -32,9 +32,9 @@ var (
 
 // Starts syslog
 func startSysLog() bool {
-	facility, ok := syslogFacilityMap[*syslogFacility]
+	facility, ok := syslogFacilityMap[Opt.SyslogFacility]
 	if !ok {
-		log.Fatalf("Unknown syslog facility %q - man syslog for list", *syslogFacility)
+		log.Fatalf("Unknown syslog facility %q - man syslog for list", Opt.SyslogFacility)
 	}
 	Me := path.Base(os.Args[0])
 	w, err := syslog.New(syslog.LOG_NOTICE|facility, Me)
