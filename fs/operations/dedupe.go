@@ -15,7 +15,6 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
-	"github.com/spf13/pflag"
 )
 
 // dedupeRename renames the objs slice to different names
@@ -195,9 +194,6 @@ func (x *DeduplicateMode) Set(s string) error {
 func (x *DeduplicateMode) Type() string {
 	return "string"
 }
-
-// Check it satisfies the interface
-var _ pflag.Value = (*DeduplicateMode)(nil)
 
 // dedupeFindDuplicateDirs scans f for duplicate directories
 func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) ([][]fs.Directory, error) {
