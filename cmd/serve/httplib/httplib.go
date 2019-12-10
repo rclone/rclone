@@ -101,6 +101,7 @@ type Options struct {
 	BasicUser          string        // single username for basic auth if not using Htpasswd
 	BasicPass          string        // password for BasicUser
 	Auth               AuthFn        `json:"-"` // custom Auth (not set by command line flags)
+	WebUI              bool          // True if serving webGUI
 }
 
 // AuthFn if used will be used to authenticate user, pass. If an error
@@ -116,6 +117,7 @@ var DefaultOpt = Options{
 	ServerReadTimeout:  1 * time.Hour,
 	ServerWriteTimeout: 1 * time.Hour,
 	MaxHeaderBytes:     4096,
+	WebUI:              false,
 }
 
 // Server contains info about the running http server
@@ -201,6 +203,19 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		}
 		oldHandler := handler
 		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// No auth if the request is for the web-gui
+			requestURI := strings.Split(r.RequestURI, "/")
+			fs.Debugf(nil, "RequestURI: %s, %d", r.RequestURI, len(requestURI))
+			// No auth for serving web UI files
+			if s.Opt.WebUI && r.Method == "GET" && (len(requestURI) == 2 || (len(requestURI) > 1 && requestURI[1] == "static")) {
+				if len(requestURI) == 1 {
+					fs.Debugf(nil, "Allowed root url")
+				} else {
+					fs.Debugf(nil, "Allowed: "+requestURI[1])
+				}
+				oldHandler.ServeHTTP(w, r)
+				return
+			}
 			// No auth wanted for OPTIONS method
 			if r.Method == "OPTIONS" {
 				oldHandler.ServeHTTP(w, r)

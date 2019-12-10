@@ -48,6 +48,7 @@ type Server struct {
 }
 
 func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
+	opt.HTTPOptions.WebUI = opt.WebUI
 	s := &Server{
 		Server: httplib.NewServer(mux, &opt.HTTPOptions),
 		opt:    opt,
@@ -91,7 +92,7 @@ func (s *Server) Serve() error {
 		// Add username, password into the URL if they are set
 		user, pass := s.opt.HTTPOptions.BasicUser, s.opt.HTTPOptions.BasicPass
 		if user != "" && pass != "" {
-			openURL.User = url.UserPassword(user, pass)
+			//openURL.User = url.UserPassword(user, pass)
 
 			// Base64 encode username and password to be sent through url
 			loginToken := user + ":" + pass
