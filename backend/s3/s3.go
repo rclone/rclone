@@ -1398,6 +1398,12 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		} else {
 			marker = resp.NextMarker
 		}
+		if urlEncodeListings {
+			*marker, err = url.QueryUnescape(*marker)
+			if err != nil {
+				return errors.Wrapf(err, "failed to URL decode NextMarker %q", *marker)
+			}
+		}
 	}
 	return nil
 }
