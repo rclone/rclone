@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -204,14 +205,13 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		oldHandler := handler
 		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// No auth if the request is for the web-gui
-			requestURI := strings.Split(r.RequestURI, "/")
-			fs.Debugf(nil, "RequestURI: %s, %d", r.RequestURI, len(requestURI))
-			// No auth for serving web UI files
-			if s.Opt.WebUI && r.Method == "GET" && (len(requestURI) == 2 || (len(requestURI) > 1 && requestURI[1] == "static")) {
-				if len(requestURI) == 1 {
+			fs.Debugf(nil, "URL:"+r.RequestURI)
+			match, err := regexp.MatchString(`(?m)^(/[^/]*)$`, r.RequestURI)
+			if s.Opt.WebUI && r.Method == "GET" && (err == nil && match || strings.HasPrefix(r.RequestURI, "/static/")) {
+				if r.RequestURI == "/" {
 					fs.Debugf(nil, "Allowed root url")
 				} else {
-					fs.Debugf(nil, "Allowed: "+requestURI[1])
+					fs.Debugf(nil, "Allowed: "+r.RequestURI)
 				}
 				oldHandler.ServeHTTP(w, r)
 				return
