@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockfs"
 	"github.com/rclone/rclone/fstest/mockobject"
@@ -245,6 +246,10 @@ func testFileRename(t *testing.T, mode CacheMode) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	vfs, file, item := fileCreate(t, r, mode)
+
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("skip as can't rename files")
+	}
 
 	rootDir, err := vfs.Root()
 	require.NoError(t, err)
