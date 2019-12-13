@@ -34,9 +34,11 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/encodings"
+	"github.com/rclone/rclone/fs/filter/filterflags"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	fsSyncCtxKeys "github.com/rclone/rclone/fs/sync/contextkeys"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -683,6 +685,29 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		query = append(query, fmt.Sprintf("mimeType!='%s'", driveFolderType))
 	}
 	list := f.svc.Files.List()
+
+	isSyncCopyMoveSrc := false
+	{
+		fsrcName := ctx.Value(fsSyncCtxKeys.SyncCopyMoveSrcNameKey)
+		if fsrcName != nil {
+			fs.Debugf(f, "syncCopyMove_fsrc_name = %s", fsrcName)
+			if fsrcName.(string) == f.Name() {
+				isSyncCopyMoveSrc = true
+			}
+		}
+	}
+	if isSyncCopyMoveSrc {
+		// Google Drive API allows us to place a constraint on last modified time in the query.
+		if filterflags.Opt.MaxAge != fs.DurationOff {
+			ModTimeFrom := time.Now().Add(-time.Duration(filterflags.Opt.MaxAge))
+			query = append(query, fmt.Sprintf("(modifiedTime >= '%s' or mimeType = '%s')", ModTimeFrom.Format("2006-01-02T15:04:05"), driveFolderType))
+		}
+		if filterflags.Opt.MinAge != fs.DurationOff {
+			ModTimeTo := time.Now().Add(-time.Duration(filterflags.Opt.MaxAge))
+			query = append(query, fmt.Sprintf("(modifiedTime <= '%s' or mimeType = '%s')", ModTimeTo.Format("2006-01-02T15:04:05"), driveFolderType))
+		}
+	}
+
 	if len(query) > 0 {
 		list.Q(strings.Join(query, " and "))
 		// fmt.Printf("list Query = %q\n", query)

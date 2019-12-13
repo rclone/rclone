@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/sync/contextkeys"
 )
 
 type syncCopyMove struct {
@@ -90,6 +91,9 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		toBeRenamed:        newPipe(accounting.Stats(ctx).SetRenameQueue, fs.Config.MaxBacklog),
 		trackRenamesCh:     make(chan fs.Object, fs.Config.Checkers),
 	}
+	// Record names of src/dst so that the backend may know it is called during a syncCopyMove.
+	ctx = context.WithValue(ctx, contextkeys.SyncCopyMoveSrcNameKey, fsrc.Name())
+	ctx = context.WithValue(ctx, contextkeys.SyncCopyMoveDstNameKey, fdst.Name())
 	s.ctx, s.cancel = context.WithCancel(ctx)
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
 		fs.Errorf(nil, "Ignoring --no-traverse with sync")
