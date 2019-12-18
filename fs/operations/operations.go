@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"path"
 	"path/filepath"
 	"sort"
@@ -1616,26 +1617,48 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 	return obj, nil
 }
 
-// CopyURL copies the data from the url to (fdst, dstFileName)
-func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, dstFileNameFromURL bool) (dst fs.Object, err error) {
+// copyURLFunc is called from CopyURLFn
+type copyURLFunc func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error)
+
+// copyURLFn copies the data from the url to the function supplied
+func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameFromURL bool, fn copyURLFunc) (err error) {
 	client := fshttp.NewClient(fs.Config)
 	resp, err := client.Get(url)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, errors.Errorf("CopyURL failed: %s", resp.Status)
+		return errors.Errorf("CopyURL failed: %s", resp.Status)
 	}
-
+	modTime, err := http.ParseTime(resp.Header.Get("Last-Modified"))
+	if err != nil {
+		modTime = time.Now()
+	}
 	if dstFileNameFromURL {
 		dstFileName = path.Base(resp.Request.URL.Path)
 		if dstFileName == "." || dstFileName == "/" {
-			return nil, errors.Errorf("CopyURL failed: file name wasn't found in url")
+			return errors.Errorf("CopyURL failed: file name wasn't found in url")
 		}
 	}
+	return fn(ctx, dstFileName, resp.Body, resp.ContentLength, modTime)
+}
 
-	return RcatSize(ctx, fdst, dstFileName, resp.Body, resp.ContentLength, time.Now())
+// CopyURL copies the data from the url to (fdst, dstFileName)
+func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, dstFileNameFromURL bool) (dst fs.Object, err error) {
+	err = copyURLFn(ctx, dstFileName, url, dstFileNameFromURL, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
+		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime)
+		return err
+	})
+	return dst, err
+}
+
+// CopyURLToWriter copies the data from the url to the io.Writer supplied
+func CopyURLToWriter(ctx context.Context, url string, out io.Writer) (err error) {
+	return copyURLFn(ctx, "", url, false, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
+		_, err = io.Copy(out, in)
+		return err
+	})
 }
 
 // BackupDir returns the correctly configured --backup-dir
