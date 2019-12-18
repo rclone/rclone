@@ -100,6 +100,7 @@ type ConfigInfo struct {
 	StatsOneLine           bool
 	StatsOneLineDate       bool   // If we want a date prefix at all
 	StatsOneLineDateFormat string // If we want to customize the prefix
+	ErrorOnNoTransfer      bool   // Set appropriate exit code if no files transferred
 	Progress               bool
 	Cookie                 bool
 	UseMmap                bool
