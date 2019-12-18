@@ -665,6 +665,37 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
+func TestCopyURLToWriter(t *testing.T) {
+	contents := "file contents\n"
+
+	// check when reading from regular HTTP server
+	status := 0
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if status != 0 {
+			http.Error(w, "an error ocurred", status)
+			return
+		}
+		_, err := w.Write([]byte(contents))
+		assert.NoError(t, err)
+	})
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	// test normal fetch
+	var buf bytes.Buffer
+	err := operations.CopyURLToWriter(context.Background(), ts.URL, &buf)
+	require.NoError(t, err)
+	assert.Equal(t, contents, buf.String())
+
+	// test fetch with error
+	status = http.StatusNotFound
+	buf.Reset()
+	err = operations.CopyURLToWriter(context.Background(), ts.URL, &buf)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Not Found")
+	assert.Equal(t, 0, len(buf.String()))
+}
+
 func TestMoveFile(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
