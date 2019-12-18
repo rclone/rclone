@@ -553,6 +553,18 @@ the time to send the request header.
 
 The default is `1s`.  Set to 0 to disable.
 
+### --error-on-no-transfer ###
+
+By default, rclone will exit with return code 0 if there were no errors.
+
+This option allows rclone to return exit code 9 if no files were transferred
+between the source and destination. This allows using rclone in scripts, and
+triggering follow-on actions if data was copied, or skipping if not.
+
+NB: Enabling this option turns a usually non-fatal error into a potentially
+fatal one - please check and adjust your scripts accordingly!
+
+
 ### --ignore-case-sync ###
 
 Using this option will cause rclone to ignore the case of the files 
@@ -1622,6 +1634,7 @@ it will log a high priority message if the retry was successful.
   * `6` - Less serious errors (like 461 errors from dropbox) (NoRetry errors)
   * `7` - Fatal error (one that more retries won't fix, like account suspended) (Fatal errors)
   * `8` - Transfer exceeded - limit set by --max-transfer reached
+  * `9` - Operation successful, but no files transferred
 
 Environment Variables
 ---------------------
