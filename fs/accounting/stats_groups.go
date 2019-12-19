@@ -184,9 +184,8 @@ func rcResetStats(ctx context.Context, in rc.Params) (rc.Params, error) {
 
 	if group != "" {
 		stats := groups.get(group)
-		stats.ResetCounters()
 		stats.ResetErrors()
-		stats.PruneAllTransfers()
+		stats.ResetCounters()
 	} else {
 		groups.reset()
 	}
@@ -202,6 +201,35 @@ func init() {
 		Help: `
 This clears counters, errors and finished transfers for all stats or specific 
 stats group if group is provided.
+
+Parameters
+
+- group - name of the stats group (string)
+`,
+	})
+}
+
+func rcDeleteStats(ctx context.Context, in rc.Params) (rc.Params, error) {
+	// Group name required because we only do single group.
+	group, err := in.GetString("group")
+	if rc.NotErrParamNotFound(err) {
+		return rc.Params{}, err
+	}
+
+	if group != "" {
+		groups.delete(group)
+	}
+
+	return rc.Params{}, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "core/stats-delete",
+		Fn:    rcDeleteStats,
+		Title: "Delete stats group.",
+		Help: `
+This deletes entire stats group
 
 Parameters
 
@@ -282,13 +310,13 @@ func (sg *statsGroups) set(group string, stats *StatsInfo) {
 	// Limit number of groups kept in memory.
 	if len(sg.order) >= fs.Config.MaxStatsGroups {
 		group := sg.order[0]
-		fs.LogPrintf(fs.LogLevelInfo, nil, "Max number of stats groups reached removing %s", group)
+		//fs.LogPrintf(fs.LogLevelInfo, nil, "Max number of stats groups reached removing %s", group)
 		delete(sg.m, group)
 		r := (len(sg.order) - fs.Config.MaxStatsGroups) + 1
 		sg.order = sg.order[r:]
 	}
 
-	// Exclude global stats from
+	// Exclude global stats from listing
 	if group != globalStats {
 		sg.order = append(sg.order, group)
 	}
@@ -343,9 +371,30 @@ func (sg *statsGroups) reset() {
 	for _, stats := range sg.m {
 		stats.ResetErrors()
 		stats.ResetCounters()
-		stats.PruneAllTransfers()
 	}
 
 	sg.m = make(map[string]*StatsInfo)
 	sg.order = nil
+}
+
+// delete removes all references to the group.
+func (sg *statsGroups) delete(group string) {
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+	stats := sg.m[group]
+	if stats == nil {
+		return
+	}
+	stats.ResetErrors()
+	stats.ResetCounters()
+	delete(sg.m, group)
+
+	// Remove group reference from the ordering slice.
+	tmp := sg.order[:0]
+	for _, g := range sg.order {
+		if g != group {
+			tmp = append(tmp, g)
+		}
+	}
+	sg.order = tmp
 }
