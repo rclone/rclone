@@ -320,7 +320,7 @@ func (s *StatsInfo) String() string {
 		}
 		if s.checks != 0 || totalChecks != 0 {
 			_, _ = fmt.Fprintf(buf, "Checks:        %10d / %d, %s\n",
-				s.errors, totalChecks, percent(s.checks, totalChecks))
+				s.checks, totalChecks, percent(s.checks, totalChecks))
 		}
 		if s.deletes != 0 {
 			_, _ = fmt.Fprintf(buf, "Deleted:       %10d\n", s.deletes)
