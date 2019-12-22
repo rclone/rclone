@@ -43,7 +43,11 @@ h3:hover .header-link,
 h4:hover .header-link,
 h5:hover .header-link,
 h6:hover .header-link {
-  opacity: 1;
+  	opacity: 1;
+}
+h2, h3, h4, h5, h6 {
+	padding-top: 55px;
+	margin-top: -44px;
 }
 
 /* Fix spacing between menu items */
