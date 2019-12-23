@@ -38,6 +38,7 @@ rclone check source:path dest:path [flags]
       --download   Check by downloading rather than with hash.
   -h, --help       help for check
       --one-way    Check one way only, source files must exist on remote
+      --size-only  Only compare sizes not hashes
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
