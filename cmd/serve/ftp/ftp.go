@@ -246,7 +246,7 @@ var connServeFunction = []byte("(*Conn).Serve(")
 func (s *server) CheckPasswd(user, pass string) (ok bool, err error) {
 	var VFS *vfs.VFS
 	if s.proxy != nil {
-		VFS, _, err = s.proxy.Call(user, pass)
+		VFS, _, err = s.proxy.Call(user, pass, false)
 		if err != nil {
 			fs.Infof(nil, "proxy login failed: %v", err)
 			return false, nil
