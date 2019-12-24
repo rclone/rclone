@@ -8,10 +8,10 @@ import (
 	"crypto/rsa"
 	"crypto/subtle"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -119,8 +119,13 @@ func (s *server) acceptConnections() {
 func (s *server) serve() (err error) {
 	var authorizedKeysMap map[string]struct{}
 
+	// ensure the user isn't trying to use conflicting flags
+	if proxyflags.Opt.AuthProxy != "" && s.opt.AuthorizedKeys != "" && s.opt.AuthorizedKeys != DefaultOpt.AuthorizedKeys {
+		return errors.New("--auth-proxy and --authorized-keys cannot be used at the same time")
+	}
+
 	// Load the authorized keys
-	if s.opt.AuthorizedKeys != "" {
+	if s.opt.AuthorizedKeys != "" && proxyflags.Opt.AuthProxy == "" {
 		authKeysFile := env.ShellExpand(s.opt.AuthorizedKeys)
 		authorizedKeysMap, err = loadAuthorizedKeys(authKeysFile)
 		// If user set the flag away from the default then report an error
@@ -142,7 +147,7 @@ func (s *server) serve() (err error) {
 			fs.Debugf(describeConn(c), "Password login attempt for %s", c.User())
 			if s.proxy != nil {
 				// query the proxy for the config
-				_, vfsKey, err := s.proxy.Call(c.User(), string(pass))
+				_, vfsKey, err := s.proxy.Call(c.User(), string(pass), false)
 				if err != nil {
 					return nil, err
 				}
@@ -164,7 +169,21 @@ func (s *server) serve() (err error) {
 		PublicKeyCallback: func(c ssh.ConnMetadata, pubKey ssh.PublicKey) (*ssh.Permissions, error) {
 			fs.Debugf(describeConn(c), "Public key login attempt for %s", c.User())
 			if s.proxy != nil {
-				return nil, errors.New("public key login not allowed when using auth proxy")
+				//query the proxy for the config
+				_, vfsKey, err := s.proxy.Call(
+					c.User(),
+					base64.StdEncoding.EncodeToString(pubKey.Marshal()),
+					true,
+				)
+				if err != nil {
+					return nil, err
+				}
+				// just return the Key so we can get it back from the cache
+				return &ssh.Permissions{
+					Extensions: map[string]string{
+						"_vfsKey": vfsKey,
+					},
+				}, nil
 			}
 			if _, ok := authorizedKeysMap[string(pubKey.Marshal())]; ok {
 				return &ssh.Permissions{
@@ -220,7 +239,7 @@ func (s *server) serve() (err error) {
 	// accepted.
 	s.listener, err = net.Listen("tcp", s.opt.ListenAddr)
 	if err != nil {
-		log.Fatal("failed to listen for connection", err)
+		return errors.Wrap(err, "failed to listen for connection")
 	}
 	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
 
