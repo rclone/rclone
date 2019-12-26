@@ -35,6 +35,7 @@ type StatsInfo struct {
 	transferQueueSize int64
 	renameQueue       int
 	renameQueueSize   int64
+	listedFiles       map[string]int64
 	deletes           int64
 	inProgress        *inProgress
 	startedTransfers  []*Transfer   // currently active transfers
@@ -48,6 +49,7 @@ func NewStats() *StatsInfo {
 	return &StatsInfo{
 		checking:     newStringSet(fs.Config.Checkers, "checking"),
 		transferring: newStringSet(fs.Config.Transfers, "transferring"),
+		listedFiles:  make(map[string]int64, 0),
 		inProgress:   newInProgress(),
 	}
 }
@@ -69,6 +71,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["retryError"] = s.retryError
 	out["checks"] = s.checks
 	out["transfers"] = s.transfers
+	out["listedFiles"] = s.listedFiles
 	out["deletes"] = s.deletes
 	out["elapsedTime"] = dtSeconds
 	s.mu.RUnlock()
@@ -322,6 +325,18 @@ func (s *StatsInfo) String() string {
 			_, _ = fmt.Fprintf(buf, "Checks:        %10d / %d, %s\n",
 				s.checks, totalChecks, percent(s.checks, totalChecks))
 		}
+		if len(s.listedFiles) != 0 {
+			var fsNames []string
+			for k := range s.listedFiles {
+				fsNames = append(fsNames, k)
+			}
+			sort.Strings(fsNames)
+			var lsString []string
+			for _, fsName := range fsNames {
+				lsString = append(lsString, fmt.Sprintf("%s: %d", fsName, s.listedFiles[fsName]))
+			}
+			_, _ = fmt.Fprintf(buf, "Listed Files: %s\n", strings.Join(lsString, ", "))
+		}
 		if s.deletes != 0 {
 			_, _ = fmt.Fprintf(buf, "Deleted:       %10d\n", s.deletes)
 		}
@@ -436,6 +451,14 @@ func (s *StatsInfo) HadRetryError() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.retryError
+}
+
+// ListedFiles updates the stats for listedFiles
+func (s *StatsInfo) ListedFiles(fsName string, listedFiles int64) map[string]int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.listedFiles[fsName] += listedFiles
+	return s.listedFiles
 }
 
 // Deletes updates the stats for deletes

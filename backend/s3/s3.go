@@ -43,6 +43,7 @@ import (
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/encodings"
@@ -1248,6 +1249,8 @@ type listFn func(remote string, object *s3.Object, isDirectory bool) error
 //
 // Set recurse to read sub directories
 func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, fn listFn) error {
+	accounting.Stats(ctx).ListedFiles(f.Name(), 0)
+
 	if prefix != "" {
 		prefix += "/"
 	}
@@ -1357,6 +1360,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					return err
 				}
 			}
+			accounting.Stats(ctx).ListedFiles(f.Name(), int64(len(resp.CommonPrefixes)))
 		}
 		for _, object := range resp.Contents {
 			remote := aws.StringValue(object.Key)
@@ -1404,7 +1408,9 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				return errors.Wrapf(err, "failed to URL decode NextMarker %q", *marker)
 			}
 		}
+		accounting.Stats(ctx).ListedFiles(f.Name(), int64(len(resp.Contents)))
 	}
+	fs.Logf(f, "Listing of bucket %s completed", bucket)
 	return nil
 }
 
