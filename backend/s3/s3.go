@@ -793,6 +793,17 @@ WARNING: Storing parts of an incomplete multipart upload counts towards space us
 `,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name: "list_chunk",
+			Help: `Size of listing chunk (response list for each ListObject S3 request).
+
+This option is also known as "MaxKeys", "max-items", or "page-size" from the AWS S3 specification.
+Most services truncate the response list to 1000 objects even if requested more than that.
+In AWS S3 this is a global maximum and cannot be changed, see [AWS S3](https://docs.aws.amazon.com/cli/latest/reference/s3/ls.html).
+In Ceph, this can be increased with the "rgw list buckets max chunk" option.
+`,
+			Default:  1000,
+			Advanced: true,
 		}},
 	})
 }
@@ -801,7 +812,6 @@ WARNING: Storing parts of an incomplete multipart upload counts towards space us
 const (
 	metaMtime           = "Mtime"                // the meta key to store mtime in - eg X-Amz-Meta-Mtime
 	metaMD5Hash         = "Md5chksum"            // the meta key to store md5hash in
-	listChunkSize       = 1000                   // number of items to read at once
 	maxRetries          = 10                     // number of retries to make of operations
 	maxSizeForCopy      = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
 	minChunkSize        = fs.SizeSuffix(s3manager.MinUploadPartSize)
@@ -834,6 +844,7 @@ type Options struct {
 	V2Auth                bool          `config:"v2_auth"`
 	UseAccelerateEndpoint bool          `config:"use_accelerate_endpoint"`
 	LeavePartsOnError     bool          `config:"leave_parts_on_error"`
+	ListChunk             int64         `config:"list_chunk"`
 }
 
 // Fs represents a remote s3 server
@@ -1260,7 +1271,6 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	if directory != "" {
 		directory += "/"
 	}
-	maxKeys := int64(listChunkSize)
 	delimiter := ""
 	if !recurse {
 		delimiter = "/"
@@ -1288,7 +1298,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			Bucket:    &bucket,
 			Delimiter: &delimiter,
 			Prefix:    &directory,
-			MaxKeys:   &maxKeys,
+			MaxKeys:   &f.opt.ListChunk,
 			Marker:    marker,
 		}
 		if urlEncodeListings {
