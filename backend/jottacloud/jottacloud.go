@@ -49,10 +49,11 @@ const (
 	rootURL           = "https://www.jottacloud.com/jfs/"
 	apiURL            = "https://api.jottacloud.com/"
 	baseURL           = "https://www.jottacloud.com/"
-	tokenURL          = "https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token"
+	defaultTokenURL   = "https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token"
 	cachePrefix       = "rclone-jcmd5-"
 	configDevice      = "device"
 	configMountpoint  = "mountpoint"
+	configTokenURL    = "tokenURL"
 	configVersion     = 1
 )
 
@@ -61,8 +62,8 @@ var (
 	oauthConfig = &oauth2.Config{
 		ClientID: "jottacli",
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  tokenURL,
-			TokenURL: tokenURL,
+			AuthURL:  defaultTokenURL,
+			TokenURL: defaultTokenURL,
 		},
 		RedirectURL: oauthutil.RedirectLocalhostURL,
 	}
@@ -85,8 +86,6 @@ func init() {
 					log.Fatalf("Failed to parse config version - corrupted config")
 				}
 				refresh = ver != configVersion
-			} else {
-				refresh = true
 			}
 
 			if refresh {
@@ -109,7 +108,7 @@ func init() {
 			fmt.Printf("Login Token> ")
 			loginToken := config.ReadLine()
 
-			token, err := doAuth(ctx, srv, loginToken)
+			token, err := doAuth(ctx, srv, loginToken, m)
 			if err != nil {
 				log.Fatalf("Failed to get oauth token: %s", err)
 			}
@@ -244,12 +243,13 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 }
 
 // doAuth runs the actual token request
-func doAuth(ctx context.Context, srv *rest.Client, loginTokenBase64 string) (token oauth2.Token, err error) {
+func doAuth(ctx context.Context, srv *rest.Client, loginTokenBase64 string, m configmap.Mapper) (token oauth2.Token, err error) {
 	loginTokenBytes, err := base64.StdEncoding.DecodeString(loginTokenBase64)
 	if err != nil {
 		return token, err
 	}
 
+	// decode login token
 	var loginToken api.LoginToken
 	decoder := json.NewDecoder(bytes.NewReader(loginTokenBytes))
 	err = decoder.Decode(&loginToken)
@@ -257,16 +257,21 @@ func doAuth(ctx context.Context, srv *rest.Client, loginTokenBase64 string) (tok
 		return token, err
 	}
 
-	// we don't seem to need any data from this link but the API is not happy if skip it
+	// retrieve endpoint urls
 	opts := rest.Opts{
-		Method:     "GET",
-		RootURL:    loginToken.WellKnownLink,
-		NoResponse: true,
+		Method:  "GET",
+		RootURL: loginToken.WellKnownLink,
 	}
-	_, err = srv.Call(ctx, &opts)
+	var wellKnown api.WellKnown
+	_, err = srv.CallJSON(ctx, &opts, nil, &wellKnown)
 	if err != nil {
 		return token, err
 	}
+
+	// save the tokenurl
+	oauthConfig.Endpoint.AuthURL = wellKnown.TokenEndpoint
+	oauthConfig.Endpoint.TokenURL = wellKnown.TokenEndpoint
+	m.Set(configTokenURL, wellKnown.TokenEndpoint)
 
 	// prepare out token request with username and password
 	values := url.Values{}
@@ -459,6 +464,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, err
 	}
 
+	// Check config version
 	var ok bool
 	var version string
 	if version, ok = m.Get("configVersion"); ok {
@@ -472,14 +478,22 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.New("Outdated config - please reconfigure this backend")
 	}
 
-	rootIsDir := strings.HasSuffix(root, "/")
-	root = parsePath(root)
+	// if custome endpoints are set use them else stick with defaults
+	if tokenURL, ok := m.Get(configTokenURL); ok {
+		oauthConfig.Endpoint.TokenURL = tokenURL
+		// jottacloud is weird. we need to use the tokenURL as authURL
+		oauthConfig.Endpoint.AuthURL = tokenURL
+	}
 
+	// Create OAuth Client
 	baseClient := fshttp.NewClient(fs.Config)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, m, oauthConfig, baseClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to configure Jottacloud oauth client")
 	}
+
+	rootIsDir := strings.HasSuffix(root, "/")
+	root = parsePath(root)
 
 	f := &Fs{
 		name:   name,
