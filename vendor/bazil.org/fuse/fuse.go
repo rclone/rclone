@@ -495,9 +495,15 @@ func fileMode(unixMode uint32) os.FileMode {
 		mode |= os.ModeSymlink
 	case syscall.S_IFSOCK:
 		mode |= os.ModeSocket
+	case 0:
+		// apparently there's plenty of times when the FUSE request
+		// does not contain the file type
+		mode |= os.ModeIrregular
 	default:
-		// no idea
-		mode |= os.ModeDevice
+		// not just unavailable in the kernel codepath; known to
+		// kernel but unrecognized by us
+		Debug(fmt.Sprintf("unrecognized file mode type: %04o", unixMode))
+		mode |= os.ModeIrregular
 	}
 	if unixMode&syscall.S_ISUID != 0 {
 		mode |= os.ModeSetuid
@@ -1004,7 +1010,12 @@ loop:
 		}
 
 	case opBmap:
-		panic("opBmap")
+		// bmap asks to map a byte offset within a file to a single
+		// uint64. On Linux, it triggers only with blkdev fuse mounts,
+		// that claim to be backed by an actual block device. FreeBSD
+		// seems to send it for just any fuse mount, whether there's a
+		// block device involved or not.
+		goto unrecognized
 
 	case opDestroy:
 		req = &DestroyRequest{
@@ -1384,8 +1395,6 @@ func (a *Attr) attr(out *attr, proto Protocol) {
 	if proto.GE(Protocol{7, 9}) {
 		out.Blksize = a.BlockSize
 	}
-
-	return
 }
 
 // A GetattrRequest asks for the metadata for the file denoted by r.Node.
@@ -1464,7 +1473,7 @@ type GetxattrResponse struct {
 }
 
 func (r *GetxattrResponse) String() string {
-	return fmt.Sprintf("Getxattr %x", r.Xattr)
+	return fmt.Sprintf("Getxattr %q", r.Xattr)
 }
 
 // A ListxattrRequest asks to list the extended attributes associated with r.Node.
@@ -1500,7 +1509,7 @@ type ListxattrResponse struct {
 }
 
 func (r *ListxattrResponse) String() string {
-	return fmt.Sprintf("Listxattr %x", r.Xattr)
+	return fmt.Sprintf("Listxattr %q", r.Xattr)
 }
 
 // Append adds an extended attribute name to the response.
@@ -1565,7 +1574,7 @@ func trunc(b []byte, max int) ([]byte, string) {
 
 func (r *SetxattrRequest) String() string {
 	xattr, tail := trunc(r.Xattr, 16)
-	return fmt.Sprintf("Setxattr [%s] %q %x%s fl=%v @%#x", &r.Header, r.Name, xattr, tail, r.Flags, r.Position)
+	return fmt.Sprintf("Setxattr [%s] %q %q%s fl=%v @%#x", &r.Header, r.Name, xattr, tail, r.Flags, r.Position)
 }
 
 // Respond replies to the request, indicating that the extended attribute was set.
@@ -1986,9 +1995,14 @@ type SetattrRequest struct {
 	Size   uint64
 	Atime  time.Time
 	Mtime  time.Time
-	Mode   os.FileMode
-	Uid    uint32
-	Gid    uint32
+	// Mode is the file mode to set (when valid).
+	//
+	// The type of the node (as in os.ModeType, os.ModeDir etc) is not
+	// guaranteed to be sent by the kernel, in which case
+	// os.ModeIrregular will be set.
+	Mode os.FileMode
+	Uid  uint32
+	Gid  uint32
 
 	// OS X only
 	Bkuptime time.Time

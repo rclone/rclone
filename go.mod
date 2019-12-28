@@ -1,7 +1,7 @@
 module github.com/rclone/rclone
 
 require (
-	bazil.org/fuse v0.0.0-20180421153158-65cc252bf669
+	bazil.org/fuse v0.0.0-20191225233854-3a99aca11732
 	cloud.google.com/go v0.47.0 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.2
 	github.com/Azure/azure-storage-blob-go v0.8.0
@@ -61,7 +61,7 @@ require (
 	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20191113165036-4c7a9d0fe056
+	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/api v0.13.0
