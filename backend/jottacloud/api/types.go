@@ -54,6 +54,37 @@ type LoginToken struct {
 	AuthToken     string `json:"auth_token"`
 }
 
+// WellKnown contains some configuration parameters for setting up endpoints
+type WellKnown struct {
+	Issuer                                     string   `json:"issuer"`
+	AuthorizationEndpoint                      string   `json:"authorization_endpoint"`
+	TokenEndpoint                              string   `json:"token_endpoint"`
+	TokenIntrospectionEndpoint                 string   `json:"token_introspection_endpoint"`
+	UserinfoEndpoint                           string   `json:"userinfo_endpoint"`
+	EndSessionEndpoint                         string   `json:"end_session_endpoint"`
+	JwksURI                                    string   `json:"jwks_uri"`
+	CheckSessionIframe                         string   `json:"check_session_iframe"`
+	GrantTypesSupported                        []string `json:"grant_types_supported"`
+	ResponseTypesSupported                     []string `json:"response_types_supported"`
+	SubjectTypesSupported                      []string `json:"subject_types_supported"`
+	IDTokenSigningAlgValuesSupported           []string `json:"id_token_signing_alg_values_supported"`
+	UserinfoSigningAlgValuesSupported          []string `json:"userinfo_signing_alg_values_supported"`
+	RequestObjectSigningAlgValuesSupported     []string `json:"request_object_signing_alg_values_supported"`
+	ResponseNodesSupported                     []string `json:"response_modes_supported"`
+	RegistrationEndpoint                       string   `json:"registration_endpoint"`
+	TokenEndpointAuthMethodsSupported          []string `json:"token_endpoint_auth_methods_supported"`
+	TokenEndpointAuthSigningAlgValuesSupported []string `json:"token_endpoint_auth_signing_alg_values_supported"`
+	ClaimsSupported                            []string `json:"claims_supported"`
+	ClaimTypesSupported                        []string `json:"claim_types_supported"`
+	ClaimsParameterSupported                   bool     `json:"claims_parameter_supported"`
+	ScopesSupported                            []string `json:"scopes_supported"`
+	RequestParameterSupported                  bool     `json:"request_parameter_supported"`
+	RequestURIParameterSupported               bool     `json:"request_uri_parameter_supported"`
+	CodeChallengeMethodsSupported              []string `json:"code_challenge_methods_supported"`
+	TLSClientCertificateBoundAccessTokens      bool     `json:"tls_client_certificate_bound_access_tokens"`
+	IntrospectionEndpoint                      string   `json:"introspection_endpoint"`
+}
+
 // TokenJSON is the struct representing the HTTP response from OAuth2
 // providers returning a token in JSON form.
 type TokenJSON struct {
