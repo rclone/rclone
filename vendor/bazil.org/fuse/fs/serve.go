@@ -3,6 +3,8 @@
 package fs // import "bazil.org/fuse/fs"
 
 import (
+	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"hash/fnv"
@@ -13,12 +15,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/net/context"
-)
-
-import (
-	"bytes"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fuseutil"
@@ -71,6 +67,9 @@ type FSInodeGenerator interface {
 	//
 	// Implementing this is useful to e.g. constrain the range of
 	// inode values used for dynamic inodes.
+	//
+	// Non-zero return values should be greater than 1, as that is
+	// always used for the root inode.
 	GenerateInode(parentInode uint64, name string) uint64
 }
 
@@ -434,8 +433,6 @@ func Serve(c *fuse.Conn, fs FS) error {
 	server := New(c, nil)
 	return server.Serve(fs)
 }
-
-type nothing struct{}
 
 type serveRequest struct {
 	Request fuse.Request
@@ -1557,11 +1554,12 @@ func GenerateDynamicInode(parent uint64, name string) uint64 {
 	var inode uint64
 	for {
 		inode = h.Sum64()
-		if inode != 0 {
+		if inode > 1 {
 			break
 		}
-		// there's a tiny probability that result is zero; change the
-		// input a little and try again
+		// there's a tiny probability that result is zero or the
+		// hardcoded root inode 1; change the input a little and try
+		// again
 		_, _ = h.Write([]byte{'x'})
 	}
 	return inode

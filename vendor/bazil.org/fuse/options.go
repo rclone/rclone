@@ -106,6 +106,14 @@ func NoAppleXattr() MountOption {
 	return noAppleXattr
 }
 
+// NoBrowse makes OSXFUSE mark the volume as non-browsable, so that
+// Finder won't automatically browse it.
+//
+// OS X only.  Others ignore this option.
+func NoBrowse() MountOption {
+	return noBrowse
+}
+
 // ExclCreate causes O_EXCL flag to be set for only "truly" exclusive creates,
 // i.e. create calls for which the initiator explicitly set the O_EXCL flag.
 //
@@ -155,7 +163,8 @@ func AllowOther() MountOption {
 	}
 }
 
-// AllowRoot allows other users to access the file system.
+// AllowRoot allows root (but not just everyone) to access the file
+// system.
 //
 // Only one of AllowOther or AllowRoot can be used.
 //

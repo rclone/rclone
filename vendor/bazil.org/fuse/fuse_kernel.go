@@ -232,7 +232,7 @@ type OpenResponseFlags uint32
 const (
 	OpenDirectIO    OpenResponseFlags = 1 << 0 // bypass page cache for this open file
 	OpenKeepCache   OpenResponseFlags = 1 << 1 // don't invalidate the data cache on open
-	OpenNonSeekable OpenResponseFlags = 1 << 2 // mark the file as non-seekable (not supported on OS X)
+	OpenNonSeekable OpenResponseFlags = 1 << 2 // mark the file as non-seekable (not supported on OS X or FreeBSD)
 
 	OpenPurgeAttr OpenResponseFlags = 1 << 30 // OS X
 	OpenPurgeUBC  OpenResponseFlags = 1 << 31 // OS X
