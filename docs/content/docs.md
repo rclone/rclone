@@ -37,7 +37,7 @@ See the following for detailed instructions for
   * [Google Photos](/googlephotos/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
-  * [Jottacloud](/jottacloud/)
+  * [Jottacloud / GetSky.no](/jottacloud/)
   * [Koofr](/koofr/)
   * [Mail.ru Cloud](/mailru/)
   * [Mega](/mega/)
