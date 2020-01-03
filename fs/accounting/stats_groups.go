@@ -310,7 +310,7 @@ func (sg *statsGroups) set(group string, stats *StatsInfo) {
 	// Limit number of groups kept in memory.
 	if len(sg.order) >= fs.Config.MaxStatsGroups {
 		group := sg.order[0]
-		//fs.LogPrintf(fs.LogLevelInfo, nil, "Max number of stats groups reached removing %s", group)
+		fs.LogPrintf(fs.LogLevelDebug, nil, "Max number of stats groups reached removing %s", group)
 		delete(sg.m, group)
 		r := (len(sg.order) - fs.Config.MaxStatsGroups) + 1
 		sg.order = sg.order[r:]
