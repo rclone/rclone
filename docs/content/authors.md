@@ -318,3 +318,4 @@ Contributors
   * David Cole <david.cole@sohonet.com>
   * Wei He <git@weispot.com>
   * Outvi V <19144373+outloudvi@users.noreply.github.com>
+  * Thomas Kriechbaumer <thomas@kriechbaumer.name>
