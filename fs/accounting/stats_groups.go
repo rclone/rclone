@@ -308,22 +308,27 @@ func (sg *statsGroups) names() []string {
 func (sg *statsGroups) sum() *StatsInfo {
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
+
 	sum := NewStats()
 	for _, stats := range sg.m {
-		sum.bytes += stats.bytes
-		sum.errors += stats.errors
-		sum.fatalError = sum.fatalError || stats.fatalError
-		sum.retryError = sum.retryError || stats.retryError
-		sum.checks += stats.checks
-		sum.transfers += stats.transfers
-		sum.deletes += stats.deletes
-		sum.checking.merge(stats.checking)
-		sum.transferring.merge(stats.transferring)
-		sum.inProgress.merge(stats.inProgress)
-		if sum.lastError == nil && stats.lastError != nil {
-			sum.lastError = stats.lastError
+		stats.mu.RLock()
+		{
+			sum.bytes += stats.bytes
+			sum.errors += stats.errors
+			sum.fatalError = sum.fatalError || stats.fatalError
+			sum.retryError = sum.retryError || stats.retryError
+			sum.checks += stats.checks
+			sum.transfers += stats.transfers
+			sum.deletes += stats.deletes
+			sum.checking.merge(stats.checking)
+			sum.transferring.merge(stats.transferring)
+			sum.inProgress.merge(stats.inProgress)
+			if sum.lastError == nil && stats.lastError != nil {
+				sum.lastError = stats.lastError
+			}
+			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
 		}
-		sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
+		stats.mu.RUnlock()
 	}
 	return sum
 }
