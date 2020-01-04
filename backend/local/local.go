@@ -956,7 +956,17 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if !o.translatedLink {
 		f, err := file.OpenFile(o.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
-			return err
+			if runtime.GOOS == "windows" && os.IsPermission(err) {
+				// If permission denied on Windows might be trying to update a
+				// hidden file, in which case try opening without CREATE
+				// See: https://stackoverflow.com/questions/13215716/ioerror-errno-13-permission-denied-when-trying-to-open-hidden-file-in-w-mod
+				f, err = file.OpenFile(o.path, os.O_WRONLY|os.O_TRUNC, 0666)
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
 		}
 		// Pre-allocate the file for performance reasons
 		err = preAllocate(src.Size(), f)
