@@ -1546,15 +1546,23 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in <-chan list
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
 		_, err := f.list(ctx, dirs, "", false, false, false, func(item *drive.File) bool {
-			// shared with me items have no parents when at the root
-			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
-				item.Parents = dirs
-			}
 			for _, parent := range item.Parents {
-				// only handle parents that are in the requested dirs list
-				i := sort.SearchStrings(dirs, parent)
-				if i == len(dirs) || dirs[i] != parent {
-					continue
+				var i int
+				// If only one item in paths then no need to search for the ID
+				// assuming google drive is doing its job properly.
+				//
+				// Note that we at the root when len(paths) == 1 && paths[0] == ""
+				if len(paths) == 1 {
+					// don't check parents at root because
+					// - shared with me items have no parents at the root
+					// - if using a root alias, eg "root" or "appDataFolder" the ID won't match
+					i = 0
+				} else {
+					// only handle parents that are in the requested dirs list if not at root
+					i = sort.SearchStrings(dirs, parent)
+					if i == len(dirs) || dirs[i] != parent {
+						continue
+					}
 				}
 				remote := path.Join(paths[i], item.Name)
 				entry, err := f.itemToDirEntry(remote, item)
