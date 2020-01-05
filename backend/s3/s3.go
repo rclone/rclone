@@ -987,7 +987,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 			ExpiryWindow: 3 * time.Minute,
 		},
 
-		// Pick up IAM role if we are in eks
+		// Pick up IAM role if we are in EKS
 		&stscreds.WebIdentityRoleProvider{
 			ExpiryWindow: 3 * time.Minute,
 		},
