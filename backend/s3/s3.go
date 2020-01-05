@@ -2127,7 +2127,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 		var n int
 		n, err = readers.ReadFill(in, buf) // this can never return 0, nil
 		if err == io.EOF {
-			if n == 0 {
+			if n == 0 && partNum != 1 { // end if no data and if not first chunk
 				break
 			}
 			finished = true
