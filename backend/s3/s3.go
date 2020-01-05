@@ -765,7 +765,9 @@ if false then rclone will use virtual path style. See [the AWS S3
 docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
 for more info.
 
-Some providers (eg Aliyun OSS or Netease COS) require this set to false.`,
+Some providers (eg AWS, Aliyun OSS or Netease COS) require this set to
+false - rclone will do this automatically based on the provider
+setting.`,
 			Default:  true,
 			Advanced: true,
 		}, {
@@ -1028,7 +1030,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
 	}
-	if opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.UseAccelerateEndpoint {
+	if opt.Provider == "AWS" || opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.UseAccelerateEndpoint {
 		opt.ForcePathStyle = false
 	}
 	awsConfig := aws.NewConfig().
