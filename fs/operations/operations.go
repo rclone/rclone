@@ -779,10 +779,12 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 				atomic.AddInt32(&c.differences, 1)
 			} else {
 				atomic.AddInt32(&c.matches, 1)
-				fs.Debugf(dstX, "OK")
-			}
-			if noHash {
-				atomic.AddInt32(&c.noHashes, 1)
+				if noHash {
+					atomic.AddInt32(&c.noHashes, 1)
+					fs.Debugf(dstX, "OK - could not check hash")
+				} else {
+					fs.Debugf(dstX, "OK")
+				}
 			}
 		} else {
 			err := errors.Errorf("is file on %v but directory on %v", c.fsrc, c.fdst)
