@@ -2240,10 +2240,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		metaMtime: aws.String(swift.TimeToFloatString(modTime)),
 	}
 
-	// read the md5sum if available for non multpart and if
-	// disable checksum isn't present.
+	// read the md5sum if available
+	// - for non multpart
+	//    - so we can add a ContentMD5
+	// - for multipart provided checksums aren't disabled
+	//    - so we can add the md5sum in the metadata as metaMD5Hash
 	var md5sum string
-	if !multipart && !o.fs.opt.DisableChecksum {
+	if !multipart || !o.fs.opt.DisableChecksum {
 		hash, err := src.Hash(ctx, hash.MD5)
 		if err == nil && matchMd5.MatchString(hash) {
 			hashBytes, err := hex.DecodeString(hash)
