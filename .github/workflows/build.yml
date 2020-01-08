@@ -104,7 +104,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
         with:
-          path: ./src/github.com/${{ github.repository }}
+          # Checkout into a fixed path to avoid import path problems on go < 1.11
+          path: ./src/github.com/rclone/rclone
 
       - name: Install Go
         uses: actions/setup-go@v1
@@ -201,7 +202,8 @@ jobs:
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
         # working-directory: '$(modulePath)'
-        if: matrix.deploy && github.head_ref == ''
+        # Deploy binaries if enabled in config && not a PR && not a fork
+        if: matrix.deploy && github.head_ref == '' && github.repository == 'rclone/rclone'
 
   xgo:
     timeout-minutes: 60
@@ -213,7 +215,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
         with:
-          path: ./src/github.com/${{ github.repository }}
+          # Checkout into a fixed path to avoid import path problems on go < 1.11
+          path: ./src/github.com/rclone/rclone
 
       - name: Set environment variables
         shell: bash
@@ -247,4 +250,5 @@ jobs:
           make circleci_upload
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
-        if: github.head_ref == ''
+        # Upload artifacts if not a PR && not a fork
+        if: github.head_ref == '' && github.repository == 'rclone/rclone'
