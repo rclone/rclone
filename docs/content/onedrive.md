@@ -120,12 +120,16 @@ To copy a local directory to an OneDrive directory called backup
 
 ### Getting your own Client ID and Key ###
 
-rclone uses a pair of Client ID and Key shared by all rclone users when performing requests by default.
+You can use your own Client ID if the default (`client_id` left blank)
+one doesn't work for you or you see lots of throttling. The default
+Client ID and Key is shared by all rclone users when performing
+requests.
+
 If you are having problems with them (E.g., seeing a lot of throttling), you can get your own
 Client ID and Key by following the steps below:
 
 1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade, then click `New registration`.
-2. Enter a name for your app, choose your account type, select `Web` in `Redirect URI` Enter `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
+2. Enter a name for your app, choose account type `Any Azure AD directory - Multitenant`, select `Web` in `Redirect URI` Enter `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
 3. Under `manage` select `Certificates & secrets`, click `New client secret`. Copy and keep that secret for later use.
 4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
 5. Search and select the follwing permssions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`. Once selected click `Add permissions` at the bottom.
