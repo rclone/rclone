@@ -1,6 +1,6 @@
 // Package mount implents a FUSE mounting system for rclone remotes.
 
-// +build linux darwin freebsd
+// +build linux,go1.11 darwin,go1.11 freebsd,go1.11
 
 package mount
 

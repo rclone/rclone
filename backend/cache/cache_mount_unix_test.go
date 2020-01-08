@@ -1,4 +1,4 @@
-// +build !plan9,!windows
+// +build linux,go1.11 darwin,go1.11 freebsd,go1.11
 
 package cache_test
 
