@@ -402,6 +402,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		// Retry if err returned a retry error
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
 			fs.Debugf(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
+			tr.Reset() // skip incomplete accounting - will be overwritten by retry
 			continue
 		}
 		// otherwise finish
