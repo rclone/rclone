@@ -6,6 +6,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -22,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -345,9 +347,36 @@ func (r *Run) waitForWriters() {
 	run.vfs.WaitForWriters(10 * time.Second)
 }
 
+// writeFile writes data to a file named by filename.
+// If the file does not exist, WriteFile creates it with permissions perm;
+// otherwise writeFile truncates it before writing.
+// If there is an error writing then writeFile
+// deletes it an existing file and tries again.
+func writeFile(filename string, data []byte, perm os.FileMode) error {
+	f, err := file.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
+		err = os.Remove(filename)
+		if err != nil {
+			return err
+		}
+		f, err = file.OpenFile(filename, os.O_WRONLY|os.O_CREATE, perm)
+		if err != nil {
+			return err
+		}
+	}
+	n, err := f.Write(data)
+	if err == nil && n < len(data) {
+		err = io.ErrShortWrite
+	}
+	if err1 := f.Close(); err == nil {
+		err = err1
+	}
+	return err
+}
+
 func (r *Run) createFile(t *testing.T, filepath string, contents string) {
 	filepath = r.path(filepath)
-	err := ioutil.WriteFile(filepath, []byte(contents), 0600)
+	err := writeFile(filepath, []byte(contents), 0600)
 	require.NoError(t, err)
 	r.waitForWriters()
 }
