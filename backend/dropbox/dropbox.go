@@ -1123,6 +1123,13 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 			return false, nil
 		}
 		entry, err = o.fs.srv.UploadSessionFinish(args, chunk)
+		// If error is insufficient space then don't retry
+		if e, ok := err.(files.UploadSessionFinishAPIError); ok {
+			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.WriteErrorInsufficientSpace {
+				err = fserrors.NoRetryError(err)
+				return false, err
+			}
+		}
 		// after the first chunk is uploaded, we retry everything
 		return err != nil, err
 	})
