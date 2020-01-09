@@ -320,3 +320,4 @@ Contributors
   * Outvi V <19144373+outloudvi@users.noreply.github.com>
   * Thomas Kriechbaumer <thomas@kriechbaumer.name>
   * Tennix <tennix@users.noreply.github.com>
+  * Ole Schütt <ole@schuett.name>
