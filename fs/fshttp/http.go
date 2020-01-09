@@ -178,7 +178,7 @@ func NewTransportCustom(ci *fs.ConfigInfo, customize func(*http.Transport)) http
 		return dialContextTimeout(ctx, network, addr, ci)
 	}
 	t.IdleConnTimeout = 60 * time.Second
-	t.ExpectContinueTimeout = ci.ConnectTimeout
+	t.ExpectContinueTimeout = ci.ExpectContinueTimeout
 
 	// customize the transport if required
 	if customize != nil {
