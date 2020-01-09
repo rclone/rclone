@@ -539,6 +539,19 @@ Do a trial run with no permanent changes.  Use this to see what rclone
 would do without actually doing it.  Useful when setting up the `sync`
 command which deletes files in the destination.
 
+### --expect-continue-timeout=TIME ###
+
+This specifies the amount of time to wait for a server's first
+response headers after fully writing the request headers if the
+request has an "Expect: 100-continue" header. Not all backends support
+using this.
+
+Zero means no timeout and causes the body to be sent immediately,
+without waiting for the server to approve.  This time does not include
+the time to send the request header.
+
+The default is `1s`.  Set to 0 to disable.
+
 ### --ignore-case-sync ###
 
 Using this option will cause rclone to ignore the case of the files 

@@ -54,6 +54,7 @@ type ConfigInfo struct {
 	Transfers              int
 	ConnectTimeout         time.Duration // Connect timeout
 	Timeout                time.Duration // Data channel timeout
+	ExpectContinueTimeout  time.Duration
 	Dump                   DumpFlags
 	InsecureSkipVerify     bool // Skip server certificate verification
 	DeleteMode             DeleteMode
@@ -121,6 +122,7 @@ func NewConfig() *ConfigInfo {
 	c.Transfers = 4
 	c.ConnectTimeout = 60 * time.Second
 	c.Timeout = 5 * 60 * time.Second
+	c.ExpectContinueTimeout = 1 * time.Second
 	c.DeleteMode = DeleteModeDefault
 	c.MaxDelete = -1
 	c.LowLevelRetries = 10
