@@ -358,6 +358,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
+	f.srv.SetHeader("Referer", u.String())
 
 	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file
