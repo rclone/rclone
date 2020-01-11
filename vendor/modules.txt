@@ -58,8 +58,6 @@ github.com/aws/aws-sdk-go/private/protocol/rest
 github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/s3
-github.com/aws/aws-sdk-go/service/s3/s3iface
-github.com/aws/aws-sdk-go/service/s3/s3manager
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/billziss-gh/cgofuse v1.2.0
@@ -168,7 +166,7 @@ github.com/spf13/pflag
 # github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
-# github.com/t3rm1n4l/go-mega v0.0.0-20191014094753-e8695d78299a
+# github.com/t3rm1n4l/go-mega v0.0.0-20200111163430-ad0abe77ec81
 github.com/t3rm1n4l/go-mega
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
@@ -205,13 +203,13 @@ go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
 # goftp.io/server v0.0.0-20190812052725-72a57b186803
 goftp.io/server
-# golang.org/x/crypto v0.0.0-20191108234033-bd318be0434a
+# golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
-golang.org/x/crypto/internal/chacha20
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/pbkdf2
