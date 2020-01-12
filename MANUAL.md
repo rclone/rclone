@@ -6723,8 +6723,10 @@ This will produce logs like this and rclone needs to continue to run to serve th
 This assumes you are running rclone locally on your machine.  It is
 possible to separate the rclone and the GUI - see below for details.
 
-If you wish to update to the latest API version then you can add
-`--rc-web-gui-update` to the command line.
+By default, rclone will NOT check for GUI update each time it operates. You may alter this
+behaviour by using `--rc-web-gui-update` to check and update.
+
+Also, rclone will open the default browser automatically. You may disable it by using `--rc-web-gui-no-open-browser`.
 
 ## Using the GUI
 
@@ -6900,7 +6902,7 @@ Default https://api.github.com/repos/rclone/rclone-webui-react/releases/latest.
 
 ### --rc-web-gui-update
 
-Set this flag to Download / Force update rclone-webui-react from the rc-web-fetch-url.
+Set this flag to check and update rclone-webui-react from the rc-web-fetch-url.
 
 Default Off.
 
@@ -8426,7 +8428,7 @@ These flags are available for every command.
       --rc-user string                       User name for authentication.
       --rc-web-fetch-url string              URL to fetch the releases for webgui. (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
       --rc-web-gui                           Launch WebGUI on localhost
-      --rc-web-gui-update                    Update / Force update to latest version of web gui
+      --rc-web-gui-update                    Check and update to latest version of web gui
       --retries int                          Retry operations this many times if they fail (default 3)
       --retries-sleep duration               Interval between retrying operations if they fail, e.g 500ms, 60s, 5m. (0 to disable)
       --size-only                            Skip based on size only, not mod-time or checksum
