@@ -24,7 +24,9 @@ type Options struct {
 	Files                    string // set to enable serving files locally
 	NoAuth                   bool   // set to disable auth checks on AuthRequired methods
 	WebUI                    bool   // set to launch the web ui
-	WebGUIUpdate             bool   // set to download new update
+	WebGUIUpdate             bool   // set to check new update
+	WebGUIForceUpdate        bool   // set to force download new update
+	WebGUINoOpenBrowser      bool   // set to disable auto opening browser
 	WebGUIFetchURL           string // set the default url for fetching webgui
 	AccessControlAllowOrigin string // set the access control for CORS configuration
 	JobExpireDuration        time.Duration

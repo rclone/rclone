@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"mime"
 	"net/http"
 	"net/url"
@@ -24,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -68,6 +70,28 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		s.files = http.FileServer(http.Dir(opt.Files))
 	} else if opt.WebUI {
+		if err := rc.CheckAndDownloadWebGUIRelease(opt.WebGUIUpdate, opt.WebGUIForceUpdate, opt.WebGUIFetchURL, config.CacheDir); err != nil {
+			log.Fatalf("Error while fetching the latest release of Web GUI: %v", err)
+		}
+		if opt.NoAuth {
+			opt.NoAuth = false
+			fs.Infof(nil, "Cannot run Web GUI without authentication, using default auth")
+		}
+		if opt.HTTPOptions.BasicUser == "" {
+			opt.HTTPOptions.BasicUser = "gui"
+			fs.Infof(nil, "No username specified. Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
+		}
+		if opt.HTTPOptions.BasicPass == "" {
+			randomPass, err := random.Password(128)
+			if err != nil {
+				log.Fatalf("Failed to make password: %v", err)
+			}
+			opt.HTTPOptions.BasicPass = randomPass
+			fs.Infof(nil, "No password specified. Using random password: %s \n", randomPass)
+		}
+		opt.Serve = true
+
+		fs.Logf(nil, "Serving Web GUI")
 		s.files = http.FileServer(http.Dir(extractPath))
 	}
 	return s
@@ -102,11 +126,13 @@ func (s *Server) Serve() error {
 			openURL.RawQuery = parameters.Encode()
 			openURL.RawPath = "/#/login"
 		}
-		// Don't open browser if serving in testing environment.
-		if flag.Lookup("test.v") == nil {
-			_ = open.Start(openURL.String())
+		// Don't open browser if serving in testing environment or required not to do so.
+		if flag.Lookup("test.v") == nil && !s.opt.WebGUINoOpenBrowser {
+			if err := open.Start(openURL.String()); err != nil {
+				fs.Errorf(nil, "Failed to open Web GUI in browser: %v. Manually access it at: %s", err, openURL.String())
+			}
 		} else {
-			fs.Errorf(nil, "Not opening browser in testing environment")
+			fs.Logf(nil, "Web GUI is not automatically opening browser. Navigate to %s to use.", openURL.String())
 		}
 	}
 	return nil

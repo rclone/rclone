@@ -107,7 +107,19 @@ Default https://api.github.com/repos/rclone/rclone-webui-react/releases/latest.
 
 ### --rc-web-gui-update
 
-Set this flag to Download / Force update rclone-webui-react from the rc-web-fetch-url.
+Set this flag to check and update rclone-webui-react from the rc-web-fetch-url.
+
+Default Off.
+
+### --rc-web-gui-force-update
+
+Set this flag to force update rclone-webui-react from the rc-web-fetch-url.
+
+Default Off.
+
+### --rc-web-gui-no-open-browser
+
+Set this flag to disable opening browser automatically when using web-gui.
 
 Default Off.
 
