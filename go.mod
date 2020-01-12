@@ -29,11 +29,11 @@ require (
 	github.com/mattn/go-colorable v0.1.4
 	github.com/mattn/go-ieproxy v0.0.0-20190805055040-f9202b1cfdeb // indirect
 	github.com/mattn/go-isatty v0.0.11-0.20191112051248-2a2f0ea997f9 // indirect
-	github.com/mattn/go-runewidth v0.0.6
+	github.com/mattn/go-runewidth v0.0.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 	github.com/ncw/swift v1.0.49
-	github.com/nsf/termbox-go v0.0.0-20190817171036-93860e161317
+	github.com/nsf/termbox-go v0.0.0-20191229070316-58d4fcbce2a7
 	github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd
 	github.com/onsi/ginkgo v1.9.0 // indirect
 	github.com/onsi/gomega v1.6.0 // indirect
