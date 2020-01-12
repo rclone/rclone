@@ -3,6 +3,7 @@ package proxy
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/base64"
 	"log"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -85,8 +85,7 @@ func TestRun(t *testing.T) {
 		require.True(t, ok)
 
 		// check hash is correct in entry
-		err = bcrypt.CompareHashAndPassword(entry.pwHash, passwordBytes)
-		require.NoError(t, err)
+		assert.Equal(t, entry.pwHash, sha256.Sum256(passwordBytes))
 		require.NotNil(t, entry.vfs)
 		f := entry.vfs.Fs()
 		require.NotNil(t, f)
