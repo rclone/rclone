@@ -29,8 +29,13 @@ This will produce logs like this and rclone needs to continue to run to serve th
 This assumes you are running rclone locally on your machine.  It is
 possible to separate the rclone and the GUI - see below for details.
 
-If you wish to update to the latest API version then you can add
-`--rc-web-gui-update` to the command line.
+If you wish to check for updates then you can add `--rc-web-gui-update` 
+to the command line.
+
+If you find your GUI broken, you may force it to update by add `--rc-web-gui-force-update`.
+
+By default, rclone will open your browser. Add `--rc-web-gui-no-open-browser` 
+to disable this feature.
 
 ## Using the GUI
 

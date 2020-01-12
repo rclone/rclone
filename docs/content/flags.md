@@ -101,7 +101,9 @@ These flags are available for every command.
       --rc-user string                       User name for authentication.
       --rc-web-fetch-url string              URL to fetch the releases for webgui. (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
       --rc-web-gui                           Launch WebGUI on localhost
-      --rc-web-gui-update                    Update / Force update to latest version of web gui
+      --rc-web-gui-update                    Check and update to latest version of web gui
+      --rc-web-gui-force-update              Force update to latest version of web gui
+      --rc-web-gui-no-open-browser           Don't open browser automatically
       --retries int                          Retry operations this many times if they fail (default 3)
       --retries-sleep duration               Interval between retrying operations if they fail, e.g 500ms, 60s, 5m. (0 to disable)
       --size-only                            Skip based on size only, not mod-time or checksum
