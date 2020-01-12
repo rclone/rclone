@@ -321,3 +321,4 @@ Contributors
   * Thomas Kriechbaumer <thomas@kriechbaumer.name>
   * Tennix <tennix@users.noreply.github.com>
   * Ole Schütt <ole@schuett.name>
+  * Kuang-che Wu <kcwu@csie.org>
