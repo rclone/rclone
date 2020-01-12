@@ -35,14 +35,14 @@ func init() {
 			Default: "standard",
 			Examples: []fs.OptionExample{
 				{
-					Value: "off",
-					Help:  "Don't encrypt the file names.  Adds a \".bin\" extension only.",
-				}, {
 					Value: "standard",
 					Help:  "Encrypt the filenames see the docs for the details.",
 				}, {
 					Value: "obfuscate",
 					Help:  "Very simple filename obfuscation.",
+				}, {
+					Value: "off",
+					Help:  "Don't encrypt the file names.  Adds a \".bin\" extension only.",
 				},
 			},
 		}, {
