@@ -124,6 +124,7 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/leading_LF
      - TestIntegration/FsMkdir/FsEncoding/leading_HT
      - TestIntegration/FsMkdir/FsEncoding/leading_VT
+     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
  - backend:  "s3"
    remote:   "TestS3DigitalOcean:"
    fastlist: true
