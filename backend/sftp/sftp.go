@@ -439,7 +439,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 				return nil, err
 			}
 		}
-		signer, err := ssh.ParsePrivateKeyWithPassphrase(key, []byte(clearpass))
+		var signer ssh.Signer
+		if clearpass == "" {
+			signer, err = ssh.ParsePrivateKey(key)
+		} else {
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(clearpass))
+		}
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse private key file")
 		}
