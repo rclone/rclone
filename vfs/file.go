@@ -150,19 +150,22 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	newPath := path.Join(destDir.path, newName)
 
 	renameCall := func(ctx context.Context) error {
-		f.mu.RLock()
-		o := f.o
-		f.mu.RUnlock()
-		if o == nil {
-			return errors.New("Cannot rename: file object is not available")
-		}
-
 		// chain rename calls if any
 		if oldPendingRenameFun != nil {
 			err := oldPendingRenameFun(ctx)
 			if err != nil {
 				return err
 			}
+		}
+
+		f.mu.RLock()
+		o := f.o
+		f.mu.RUnlock()
+		if o == nil {
+			return errors.New("Cannot rename: file object is not available")
+		}
+		if o.Remote() == newPath {
+			return nil // no need to rename
 		}
 
 		// do the move of the remote object
