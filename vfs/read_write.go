@@ -284,7 +284,12 @@ func (fh *RWFileHandle) flushWrites(closeFile bool) error {
 			return err
 		}
 
-		o, err := copyObj(fh.d.vfs.f, fh.file.getObject(), fh.file.Path(), cacheObj)
+		objPath := fh.file.Path()
+		objOld := fh.file.getObject()
+		if objOld != nil {
+			objPath = objOld.Remote() // use the path of the actual object if available
+		}
+		o, err := copyObj(fh.d.vfs.f, objOld, objPath, cacheObj)
 		if err != nil {
 			err = errors.Wrap(err, "failed to transfer file from cache to remote")
 			fs.Errorf(fh.logPrefix(), "%v", err)
