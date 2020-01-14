@@ -39,6 +39,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -48,8 +49,6 @@ import (
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
 )
-
-const enc = encodings.Drive
 
 // Constants
 const (
@@ -456,6 +455,11 @@ Google don't document so it may break in the future.
 See: https://github.com/rclone/rclone/issues/3857
 `,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Drive,
 		}},
 	})
 
@@ -475,37 +479,38 @@ See: https://github.com/rclone/rclone/issues/3857
 
 // Options defines the configuration for this backend
 type Options struct {
-	Scope                     string        `config:"scope"`
-	RootFolderID              string        `config:"root_folder_id"`
-	ServiceAccountFile        string        `config:"service_account_file"`
-	ServiceAccountCredentials string        `config:"service_account_credentials"`
-	TeamDriveID               string        `config:"team_drive"`
-	AuthOwnerOnly             bool          `config:"auth_owner_only"`
-	UseTrash                  bool          `config:"use_trash"`
-	SkipGdocs                 bool          `config:"skip_gdocs"`
-	SkipChecksumGphotos       bool          `config:"skip_checksum_gphotos"`
-	SharedWithMe              bool          `config:"shared_with_me"`
-	TrashedOnly               bool          `config:"trashed_only"`
-	Extensions                string        `config:"formats"`
-	ExportExtensions          string        `config:"export_formats"`
-	ImportExtensions          string        `config:"import_formats"`
-	AllowImportNameChange     bool          `config:"allow_import_name_change"`
-	UseCreatedDate            bool          `config:"use_created_date"`
-	UseSharedDate             bool          `config:"use_shared_date"`
-	ListChunk                 int64         `config:"list_chunk"`
-	Impersonate               string        `config:"impersonate"`
-	AlternateExport           bool          `config:"alternate_export"`
-	UploadCutoff              fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize                 fs.SizeSuffix `config:"chunk_size"`
-	AcknowledgeAbuse          bool          `config:"acknowledge_abuse"`
-	KeepRevisionForever       bool          `config:"keep_revision_forever"`
-	SizeAsQuota               bool          `config:"size_as_quota"`
-	V2DownloadMinSize         fs.SizeSuffix `config:"v2_download_min_size"`
-	PacerMinSleep             fs.Duration   `config:"pacer_min_sleep"`
-	PacerBurst                int           `config:"pacer_burst"`
-	ServerSideAcrossConfigs   bool          `config:"server_side_across_configs"`
-	DisableHTTP2              bool          `config:"disable_http2"`
-	StopOnUploadLimit         bool          `config:"stop_on_upload_limit"`
+	Scope                     string               `config:"scope"`
+	RootFolderID              string               `config:"root_folder_id"`
+	ServiceAccountFile        string               `config:"service_account_file"`
+	ServiceAccountCredentials string               `config:"service_account_credentials"`
+	TeamDriveID               string               `config:"team_drive"`
+	AuthOwnerOnly             bool                 `config:"auth_owner_only"`
+	UseTrash                  bool                 `config:"use_trash"`
+	SkipGdocs                 bool                 `config:"skip_gdocs"`
+	SkipChecksumGphotos       bool                 `config:"skip_checksum_gphotos"`
+	SharedWithMe              bool                 `config:"shared_with_me"`
+	TrashedOnly               bool                 `config:"trashed_only"`
+	Extensions                string               `config:"formats"`
+	ExportExtensions          string               `config:"export_formats"`
+	ImportExtensions          string               `config:"import_formats"`
+	AllowImportNameChange     bool                 `config:"allow_import_name_change"`
+	UseCreatedDate            bool                 `config:"use_created_date"`
+	UseSharedDate             bool                 `config:"use_shared_date"`
+	ListChunk                 int64                `config:"list_chunk"`
+	Impersonate               string               `config:"impersonate"`
+	AlternateExport           bool                 `config:"alternate_export"`
+	UploadCutoff              fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize                 fs.SizeSuffix        `config:"chunk_size"`
+	AcknowledgeAbuse          bool                 `config:"acknowledge_abuse"`
+	KeepRevisionForever       bool                 `config:"keep_revision_forever"`
+	SizeAsQuota               bool                 `config:"size_as_quota"`
+	V2DownloadMinSize         fs.SizeSuffix        `config:"v2_download_min_size"`
+	PacerMinSleep             fs.Duration          `config:"pacer_min_sleep"`
+	PacerBurst                int                  `config:"pacer_burst"`
+	ServerSideAcrossConfigs   bool                 `config:"server_side_across_configs"`
+	DisableHTTP2              bool                 `config:"disable_http2"`
+	StopOnUploadLimit         bool                 `config:"stop_on_upload_limit"`
+	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote drive server
@@ -677,7 +682,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	}
 	var stems []string
 	if title != "" {
-		searchTitle := enc.FromStandardName(title)
+		searchTitle := f.opt.Enc.FromStandardName(title)
 		// Escaping the backslash isn't documented but seems to work
 		searchTitle = strings.Replace(searchTitle, `\`, `\\`, -1)
 		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
@@ -751,7 +756,7 @@ OUTER:
 			return false, errors.Wrap(err, "couldn't list directory")
 		}
 		for _, item := range files.Files {
-			item.Name = enc.ToStandardName(item.Name)
+			item.Name = f.opt.Enc.ToStandardName(item.Name)
 			// Check the case of items is correct since
 			// the `=` operator is case insensitive.
 			if title != "" && title != item.Name {
@@ -1313,7 +1318,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	leaf = enc.FromStandardName(leaf)
+	leaf = f.opt.Enc.FromStandardName(leaf)
 	// fmt.Println("Making", path)
 	// Define the metadata for the directory we are going to create.
 	createInfo := &drive.File{
@@ -1771,7 +1776,7 @@ func (f *Fs) createFileInfo(ctx context.Context, remote string, modTime time.Tim
 		return nil, err
 	}
 
-	leaf = enc.FromStandardName(leaf)
+	leaf = f.opt.Enc.FromStandardName(leaf)
 	// Define the metadata for the file we are going to create.
 	createInfo := &drive.File{
 		Name:         leaf,
@@ -2470,7 +2475,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 			// find the new path
 			if change.File != nil {
-				change.File.Name = enc.ToStandardName(change.File.Name)
+				change.File.Name = f.opt.Enc.ToStandardName(change.File.Name)
 				changeType := fs.EntryDirectory
 				if change.File.MimeType != driveFolderType {
 					changeType = fs.EntryObject

@@ -6,4 +6,4 @@ import (
 	"github.com/rclone/rclone/fs/encodings"
 )
 
-const enc = encodings.LocalUnix
+const defaultEnc = encodings.LocalUnix

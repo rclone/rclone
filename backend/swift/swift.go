@@ -16,6 +16,7 @@ import (
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/encodings"
@@ -25,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 )
@@ -60,9 +62,12 @@ Rclone will still chunk files bigger than chunk_size when doing normal
 copy operations.`,
 	Default:  false,
 	Advanced: true,
+}, {
+	Name:     config.ConfigEncoding,
+	Help:     config.ConfigEncodingHelp,
+	Advanced: true,
+	Default:  encodings.Swift,
 }}
-
-const enc = encodings.Swift
 
 // Register with Fs
 func init() {
@@ -187,26 +192,27 @@ provider.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	EnvAuth                     bool          `config:"env_auth"`
-	User                        string        `config:"user"`
-	Key                         string        `config:"key"`
-	Auth                        string        `config:"auth"`
-	UserID                      string        `config:"user_id"`
-	Domain                      string        `config:"domain"`
-	Tenant                      string        `config:"tenant"`
-	TenantID                    string        `config:"tenant_id"`
-	TenantDomain                string        `config:"tenant_domain"`
-	Region                      string        `config:"region"`
-	StorageURL                  string        `config:"storage_url"`
-	AuthToken                   string        `config:"auth_token"`
-	AuthVersion                 int           `config:"auth_version"`
-	ApplicationCredentialID     string        `config:"application_credential_id"`
-	ApplicationCredentialName   string        `config:"application_credential_name"`
-	ApplicationCredentialSecret string        `config:"application_credential_secret"`
-	StoragePolicy               string        `config:"storage_policy"`
-	EndpointType                string        `config:"endpoint_type"`
-	ChunkSize                   fs.SizeSuffix `config:"chunk_size"`
-	NoChunk                     bool          `config:"no_chunk"`
+	EnvAuth                     bool                 `config:"env_auth"`
+	User                        string               `config:"user"`
+	Key                         string               `config:"key"`
+	Auth                        string               `config:"auth"`
+	UserID                      string               `config:"user_id"`
+	Domain                      string               `config:"domain"`
+	Tenant                      string               `config:"tenant"`
+	TenantID                    string               `config:"tenant_id"`
+	TenantDomain                string               `config:"tenant_domain"`
+	Region                      string               `config:"region"`
+	StorageURL                  string               `config:"storage_url"`
+	AuthToken                   string               `config:"auth_token"`
+	AuthVersion                 int                  `config:"auth_version"`
+	ApplicationCredentialID     string               `config:"application_credential_id"`
+	ApplicationCredentialName   string               `config:"application_credential_name"`
+	ApplicationCredentialSecret string               `config:"application_credential_secret"`
+	StoragePolicy               string               `config:"storage_policy"`
+	EndpointType                string               `config:"endpoint_type"`
+	ChunkSize                   fs.SizeSuffix        `config:"chunk_size"`
+	NoChunk                     bool                 `config:"no_chunk"`
+	Enc                         encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote swift server
@@ -325,7 +331,7 @@ func parsePath(path string) (root string) {
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (container, containerPath string) {
 	container, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
-	return enc.FromStandardName(container), enc.FromStandardPath(containerPath)
+	return f.opt.Enc.FromStandardName(container), f.opt.Enc.FromStandardPath(containerPath)
 }
 
 // split returns container and containerPath from the object
@@ -446,7 +452,7 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 		// Check to see if the object exists - ignoring directory markers
 		var info swift.Object
 		var err error
-		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
+		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
 			info, rxHeaders, err = f.c.Object(f.rootContainer, encodedDirectory)
@@ -559,7 +565,7 @@ func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer
 				if !recurse {
 					isDirectory = strings.HasSuffix(object.Name, "/")
 				}
-				remote := enc.ToStandardPath(object.Name)
+				remote := f.opt.Enc.ToStandardPath(object.Name)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -642,7 +648,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 	}
 	for _, container := range containers {
 		f.cache.MarkOK(container.Name)
-		d := fs.NewDir(enc.ToStandardName(container.Name), time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
+		d := fs.NewDir(f.opt.Enc.ToStandardName(container.Name), time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
 		entries = append(entries, d)
 	}
 	return entries, nil

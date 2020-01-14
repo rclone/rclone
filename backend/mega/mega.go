@@ -26,18 +26,18 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	mega "github.com/t3rm1n4l/go-mega"
 )
-
-const enc = encodings.Mega
 
 const (
 	minSleep      = 10 * time.Millisecond
@@ -83,16 +83,22 @@ than permanently deleting them.  If you specify this then rclone will
 permanently delete objects instead.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Mega,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	User       string `config:"user"`
-	Pass       string `config:"pass"`
-	Debug      bool   `config:"debug"`
-	HardDelete bool   `config:"hard_delete"`
+	User       string               `config:"user"`
+	Pass       string               `config:"pass"`
+	Debug      bool                 `config:"debug"`
+	HardDelete bool                 `config:"hard_delete"`
+	Enc        encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote mega
@@ -250,12 +256,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 // splitNodePath splits nodePath into / separated parts, returning nil if it
 // should refer to the root.
 // It also encodes the parts into backend specific encoding
-func splitNodePath(nodePath string) (parts []string) {
+func (f *Fs) splitNodePath(nodePath string) (parts []string) {
 	nodePath = path.Clean(nodePath)
 	if nodePath == "." || nodePath == "/" {
 		return nil
 	}
-	nodePath = enc.FromStandardPath(nodePath)
+	nodePath = f.opt.Enc.FromStandardPath(nodePath)
 	return strings.Split(nodePath, "/")
 }
 
@@ -263,7 +269,7 @@ func splitNodePath(nodePath string) (parts []string) {
 //
 // It returns mega.ENOENT if it wasn't found
 func (f *Fs) findNode(rootNode *mega.Node, nodePath string) (*mega.Node, error) {
-	parts := splitNodePath(nodePath)
+	parts := f.splitNodePath(nodePath)
 	if parts == nil {
 		return rootNode, nil
 	}
@@ -320,7 +326,7 @@ func (f *Fs) mkdir(rootNode *mega.Node, dir string) (node *mega.Node, err error)
 	f.mkdirMu.Lock()
 	defer f.mkdirMu.Unlock()
 
-	parts := splitNodePath(dir)
+	parts := f.splitNodePath(dir)
 	if parts == nil {
 		return rootNode, nil
 	}
@@ -422,7 +428,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	errors := 0
 	// similar to f.deleteNode(trash) but with HardDelete as true
 	for _, item := range items {
-		fs.Debugf(f, "Deleting trash %q", enc.ToStandardName(item.GetName()))
+		fs.Debugf(f, "Deleting trash %q", f.opt.Enc.ToStandardName(item.GetName()))
 		deleteErr := f.pacer.Call(func() (bool, error) {
 			err := f.srv.Delete(item, true)
 			return shouldRetry(err)
@@ -504,7 +510,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	var iErr error
 	_, err = f.list(ctx, dirNode, func(info *mega.Node) bool {
-		remote := path.Join(dir, enc.ToStandardName(info.GetName()))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(info.GetName()))
 		switch info.GetType() {
 		case mega.FOLDER, mega.ROOT, mega.INBOX, mega.TRASH:
 			d := fs.NewDir(remote, info.GetTimeStamp()).SetID(info.GetHash())
@@ -726,7 +732,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 	if srcLeaf != dstLeaf {
 		//log.Printf("rename %q to %q", srcLeaf, dstLeaf)
 		err = f.pacer.Call(func() (bool, error) {
-			err = f.srv.Rename(info, enc.FromStandardName(dstLeaf))
+			err = f.srv.Rename(info, f.opt.Enc.FromStandardName(dstLeaf))
 			return shouldRetry(err)
 		})
 		if err != nil {
@@ -875,13 +881,13 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 		}
 		// move them into place
 		for _, info := range infos {
-			fs.Infof(srcDir, "merging %q", enc.ToStandardName(info.GetName()))
+			fs.Infof(srcDir, "merging %q", f.opt.Enc.ToStandardName(info.GetName()))
 			err = f.pacer.Call(func() (bool, error) {
 				err = f.srv.Move(info, dstDirNode)
 				return shouldRetry(err)
 			})
 			if err != nil {
-				return errors.Wrapf(err, "MergeDirs move failed on %q in %v", enc.ToStandardName(info.GetName()), srcDir)
+				return errors.Wrapf(err, "MergeDirs move failed on %q in %v", f.opt.Enc.ToStandardName(info.GetName()), srcDir)
 			}
 		}
 		// rmdir (into trash) the now empty source directory
@@ -1124,7 +1130,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	var u *mega.Upload
 	err = o.fs.pacer.Call(func() (bool, error) {
-		u, err = o.fs.srv.NewUpload(dirNode, enc.FromStandardName(leaf), size)
+		u, err = o.fs.srv.NewUpload(dirNode, o.fs.opt.Enc.FromStandardName(leaf), size)
 		return shouldRetry(err)
 	})
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -21,12 +22,11 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 )
-
-const enc = encodings.OpenDrive
 
 const (
 	defaultEndpoint = "https://dev.opendrive.com/api/v1"
@@ -50,14 +50,20 @@ func init() {
 			Help:       "Password.",
 			IsPassword: true,
 			Required:   true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.OpenDrive,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	UserName string `config:"username"`
-	Password string `config:"password"`
+	UserName string               `config:"username"`
+	Password string               `config:"password"`
+	Enc      encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote server
@@ -588,7 +594,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 		fs:     f,
 		remote: remote,
 	}
-	return o, enc.FromStandardName(leaf), directoryID, nil
+	return o, f.opt.Enc.FromStandardName(leaf), directoryID, nil
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -690,7 +696,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	err = f.pacer.Call(func() (bool, error) {
 		createDirData := createFolder{
 			SessionID:           f.session.SessionID,
-			FolderName:          enc.FromStandardName(leaf),
+			FolderName:          f.opt.Enc.FromStandardName(leaf),
 			FolderSubParent:     pathID,
 			FolderIsPublic:      0,
 			FolderPublicUpl:     0,
@@ -736,7 +742,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return "", false, errors.Wrap(err, "failed to get folder list")
 	}
 
-	leaf = enc.FromStandardName(leaf)
+	leaf = f.opt.Enc.FromStandardName(leaf)
 	for _, folder := range folderList.Folders {
 		// fs.Debugf(nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
 
@@ -784,7 +790,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, folder := range folderList.Folders {
-		folder.Name = enc.ToStandardName(folder.Name)
+		folder.Name = f.opt.Enc.ToStandardName(folder.Name)
 		// fs.Debugf(nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
 		remote := path.Join(dir, folder.Name)
 		// cache the directory ID for later lookups
@@ -795,7 +801,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, file := range folderList.Files {
-		file.Name = enc.ToStandardName(file.Name)
+		file.Name = f.opt.Enc.ToStandardName(file.Name)
 		// fs.Debugf(nil, "File: %s (%s)", file.Name, file.FileID)
 		remote := path.Join(dir, file.Name)
 		o, err := f.newObjectWithInfo(ctx, remote, &file)
@@ -1050,7 +1056,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		opts := rest.Opts{
 			Method: "GET",
 			Path: fmt.Sprintf("/folder/itembyname.json/%s/%s?name=%s",
-				o.fs.session.SessionID, directoryID, url.QueryEscape(enc.FromStandardName(leaf))),
+				o.fs.session.SessionID, directoryID, url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf))),
 		}
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &folderList)
 		return o.fs.shouldRetry(resp, err)

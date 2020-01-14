@@ -48,13 +48,12 @@ import (
 	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/oauth2"
 )
-
-const enc = encodings.Dropbox
 
 // Constants
 const (
@@ -147,14 +146,20 @@ memory.  It can be set smaller if you are tight on memory.`, maxChunkSize),
 			Help:     "Impersonate this user when using a business account.",
 			Default:  "",
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Dropbox,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize   fs.SizeSuffix `config:"chunk_size"`
-	Impersonate string        `config:"impersonate"`
+	ChunkSize   fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate string               `config:"impersonate"`
+	Enc         encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote dropbox server
@@ -381,7 +386,7 @@ func (f *Fs) setRoot(root string) {
 func (f *Fs) getMetadata(objPath string) (entry files.IsMetadata, notFound bool, err error) {
 	err = f.pacer.Call(func() (bool, error) {
 		entry, err = f.srv.GetMetadata(&files.GetMetadataArg{
-			Path: enc.FromStandardPath(objPath),
+			Path: f.opt.Enc.FromStandardPath(objPath),
 		})
 		return shouldRetry(err)
 	})
@@ -475,7 +480,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for {
 		if !started {
 			arg := files.ListFolderArg{
-				Path:      enc.FromStandardPath(root),
+				Path:      f.opt.Enc.FromStandardPath(root),
 				Recursive: false,
 			}
 			if root == "/" {
@@ -525,7 +530,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 			// Only the last element is reliably cased in PathDisplay
 			entryPath := metadata.PathDisplay
-			leaf := enc.ToStandardName(path.Base(entryPath))
+			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
 			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
 				d := fs.NewDir(remote, time.Now())
@@ -583,7 +588,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 	// create it
 	arg2 := files.CreateFolderArg{
-		Path: enc.FromStandardPath(root),
+		Path: f.opt.Enc.FromStandardPath(root),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.CreateFolderV2(&arg2)
@@ -609,7 +614,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return errors.Wrap(err, "Rmdir")
 	}
 
-	root = enc.FromStandardPath(root)
+	root = f.opt.Enc.FromStandardPath(root)
 	// check directory empty
 	arg := files.ListFolderArg{
 		Path:      root,
@@ -668,8 +673,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Copy
 	arg := files.RelocationArg{
 		RelocationPath: files.RelocationPath{
-			FromPath: enc.FromStandardPath(srcObj.remotePath()),
-			ToPath:   enc.FromStandardPath(dstObj.remotePath()),
+			FromPath: f.opt.Enc.FromStandardPath(srcObj.remotePath()),
+			ToPath:   f.opt.Enc.FromStandardPath(dstObj.remotePath()),
 		},
 	}
 	var err error
@@ -704,7 +709,7 @@ func (f *Fs) Purge(ctx context.Context) (err error) {
 	// Let dropbox delete the filesystem tree
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.DeleteV2(&files.DeleteArg{
-			Path: enc.FromStandardPath(f.slashRoot),
+			Path: f.opt.Enc.FromStandardPath(f.slashRoot),
 		})
 		return shouldRetry(err)
 	})
@@ -736,8 +741,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Do the move
 	arg := files.RelocationArg{
 		RelocationPath: files.RelocationPath{
-			FromPath: enc.FromStandardPath(srcObj.remotePath()),
-			ToPath:   enc.FromStandardPath(dstObj.remotePath()),
+			FromPath: f.opt.Enc.FromStandardPath(srcObj.remotePath()),
+			ToPath:   f.opt.Enc.FromStandardPath(dstObj.remotePath()),
 		},
 	}
 	var err error
@@ -764,7 +769,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
-	absPath := enc.FromStandardPath(path.Join(f.slashRoot, remote))
+	absPath := f.opt.Enc.FromStandardPath(path.Join(f.slashRoot, remote))
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
@@ -840,8 +845,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Do the move
 	arg := files.RelocationArg{
 		RelocationPath: files.RelocationPath{
-			FromPath: enc.FromStandardPath(srcPath),
-			ToPath:   enc.FromStandardPath(dstPath),
+			FromPath: f.opt.Enc.FromStandardPath(srcPath),
+			ToPath:   f.opt.Enc.FromStandardPath(dstPath),
 		},
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -999,7 +1004,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	fs.FixRangeOption(options, o.bytes)
 	headers := fs.OpenOptionHeaders(options)
 	arg := files.DownloadArg{
-		Path:         enc.FromStandardPath(o.remotePath()),
+		Path:         o.fs.opt.Enc.FromStandardPath(o.remotePath()),
 		ExtraHeaders: headers,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1130,7 +1135,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if ignoredFiles.MatchString(remote) {
 		return fserrors.NoRetryError(errors.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
 	}
-	commitInfo := files.NewCommitInfo(enc.FromStandardPath(o.remotePath()))
+	commitInfo := files.NewCommitInfo(o.fs.opt.Enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
 	commitInfo.ClientModified = src.ModTime(ctx).UTC().Round(time.Second)
@@ -1156,7 +1161,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 func (o *Object) Remove(ctx context.Context) (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{
-			Path: enc.FromStandardPath(o.remotePath()),
+			Path: o.fs.opt.Enc.FromStandardPath(o.remotePath()),
 		})
 		return shouldRetry(err)
 	})

@@ -18,6 +18,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/encodings"
@@ -25,12 +26,11 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	qsConfig "github.com/yunify/qingstor-sdk-go/v3/config"
 	qsErr "github.com/yunify/qingstor-sdk-go/v3/request/errors"
 	qs "github.com/yunify/qingstor-sdk-go/v3/service"
 )
-
-const enc = encodings.QingStor
 
 // Register with Fs
 func init() {
@@ -113,6 +113,11 @@ and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
 			Default:  1,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.QingStor,
 		}},
 	})
 }
@@ -136,15 +141,16 @@ func timestampToTime(tp int64) time.Time {
 
 // Options defines the configuration for this backend
 type Options struct {
-	EnvAuth           bool          `config:"env_auth"`
-	AccessKeyID       string        `config:"access_key_id"`
-	SecretAccessKey   string        `config:"secret_access_key"`
-	Endpoint          string        `config:"endpoint"`
-	Zone              string        `config:"zone"`
-	ConnectionRetries int           `config:"connection_retries"`
-	UploadCutoff      fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize         fs.SizeSuffix `config:"chunk_size"`
-	UploadConcurrency int           `config:"upload_concurrency"`
+	EnvAuth           bool                 `config:"env_auth"`
+	AccessKeyID       string               `config:"access_key_id"`
+	SecretAccessKey   string               `config:"secret_access_key"`
+	Endpoint          string               `config:"endpoint"`
+	Zone              string               `config:"zone"`
+	ConnectionRetries int                  `config:"connection_retries"`
+	UploadCutoff      fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency int                  `config:"upload_concurrency"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote qingstor server
@@ -188,7 +194,7 @@ func parsePath(path string) (root string) {
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
-	return enc.FromStandardName(bucketName), enc.FromStandardPath(bucketPath)
+	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
 // split returns bucket and bucketPath from the object
@@ -357,7 +363,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, err
 		}
-		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
+		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)
 		_, err = bucketInit.HeadObject(encodedDirectory, &qs.HeadObjectInput{})
 		if err == nil {
 			newRoot := path.Dir(f.root)
@@ -555,7 +561,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					continue
 				}
 				remote := *commonPrefix
-				remote = enc.ToStandardPath(remote)
+				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -576,7 +582,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 
 		for _, object := range resp.Keys {
 			remote := qs.StringValue(object.Key)
-			remote = enc.ToStandardPath(remote)
+			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Logf(f, "Odd name received %q", remote)
 				continue
@@ -653,7 +659,7 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 	}
 
 	for _, bucket := range resp.Buckets {
-		d := fs.NewDir(enc.ToStandardName(qs.StringValue(bucket.Name)), qs.TimeValue(bucket.Created))
+		d := fs.NewDir(f.opt.Enc.ToStandardName(qs.StringValue(bucket.Name)), qs.TimeValue(bucket.Created))
 		entries = append(entries, d)
 	}
 	return entries, nil

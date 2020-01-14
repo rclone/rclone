@@ -60,6 +60,12 @@ const (
 	// ConfigTokenURL is the config key used to store the token server endpoint
 	ConfigTokenURL = "token_url"
 
+	// ConfigEncoding is the config key to change the encoding for a backend
+	ConfigEncoding = "encoding"
+
+	// ConfigEncodingHelp is the help for ConfigEncoding
+	ConfigEncodingHelp = "This sets the encoding for the backend.\n\nSee: the [encoding section in the overview](/overview/#encoding) for more info."
+
 	// ConfigAuthorize indicates that we just want "rclone authorize"
 	ConfigAuthorize = "config_authorize"
 

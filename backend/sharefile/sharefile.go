@@ -87,6 +87,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/sharefile/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -94,14 +95,13 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
-
-const enc = encodings.Sharefile
 
 const (
 	rcloneClientID              = "djQUPlHTUM9EvayYBWuKC5IrVIoQde46"
@@ -204,16 +204,22 @@ be set manually to something like: https://XXX.sharefile.com
 `,
 			Advanced: true,
 			Default:  "",
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Sharefile,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	RootFolderID string        `config:"root_folder_id"`
-	UploadCutoff fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize    fs.SizeSuffix `config:"chunk_size"`
-	Endpoint     string        `config:"endpoint"`
+	RootFolderID string               `config:"root_folder_id"`
+	UploadCutoff fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize    fs.SizeSuffix        `config:"chunk_size"`
+	Endpoint     string               `config:"endpoint"`
+	Enc          encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote cloud storage system
@@ -301,7 +307,7 @@ func (f *Fs) readMetaDataForIDPath(ctx context.Context, id, path string, directo
 	}
 	if path != "" {
 		opts.Path += "/ByPath"
-		opts.Parameters.Set("path", "/"+enc.FromStandardPath(path))
+		opts.Parameters.Set("path", "/"+f.opt.Enc.FromStandardPath(path))
 	}
 	var item api.Item
 	var resp *http.Response
@@ -595,7 +601,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
 	var resp *http.Response
-	leaf = enc.FromStandardName(leaf)
+	leaf = f.opt.Enc.FromStandardName(leaf)
 	var req = api.Item{
 		Name:      leaf,
 		FileName:  leaf,
@@ -664,7 +670,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 			continue
 		}
-		item.Name = enc.ToStandardName(item.Name)
+		item.Name = f.opt.Enc.ToStandardName(item.Name)
 		if fn(item) {
 			found = true
 			break
@@ -873,7 +879,7 @@ func (f *Fs) updateItem(ctx context.Context, id, leaf, directoryID string, modTi
 			"overwrite": {"false"},
 		},
 	}
-	leaf = enc.FromStandardName(leaf)
+	leaf = f.opt.Enc.FromStandardName(leaf)
 	// FIXME this appears to be a bug in the API
 	//
 	// If you set the modified time via PATCH then the server
@@ -1119,7 +1125,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	if err != nil {
 		return nil, err
 	}
-	srcLeaf = enc.FromStandardName(srcLeaf)
+	srcLeaf = f.opt.Enc.FromStandardName(srcLeaf)
 	_ = srcParentID
 
 	// Create temporary object
@@ -1127,7 +1133,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	if err != nil {
 		return nil, err
 	}
-	dstLeaf = enc.FromStandardName(dstLeaf)
+	dstLeaf = f.opt.Enc.FromStandardName(dstLeaf)
 
 	sameName := strings.ToLower(srcLeaf) == strings.ToLower(dstLeaf)
 	if sameName && srcParentID == dstParentID {
@@ -1390,7 +1396,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	leaf = enc.FromStandardName(leaf)
+	leaf = o.fs.opt.Enc.FromStandardName(leaf)
 	var req = api.UploadRequest{
 		Method:       "standard",
 		Raw:          true,

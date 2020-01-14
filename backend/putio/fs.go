@@ -17,6 +17,7 @@ import (
 	"github.com/putdotio/go-putio/putio"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -29,6 +30,7 @@ type Fs struct {
 	name        string             // name of this remote
 	root        string             // the path we are working on
 	features    *fs.Features       // optional features
+	opt         Options            // options for this Fs
 	client      *putio.Client      // client for making API calls to Put.io
 	pacer       *fs.Pacer          // To pace the API calls
 	dirCache    *dircache.DirCache // Map of directory path to directory id
@@ -60,6 +62,12 @@ func (f *Fs) Features() *fs.Features {
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	// defer log.Trace(name, "root=%v", root)("f=%+v, err=%v", &f, &err)
+	// Parse config into Options struct
+	opt := new(Options)
+	err = configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
 	oAuthClient, _, err := oauthutil.NewClient(name, m, putioConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure putio")
@@ -67,6 +75,7 @@ func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	p := &Fs{
 		name:        name,
 		root:        root,
+		opt:         *opt,
 		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		client:      putio.NewClient(oAuthClient),
 		oAuthClient: oAuthClient,
@@ -127,7 +136,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	var entry putio.File
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "creating folder. part: %s, parentID: %d", leaf, parentID)
-		entry, err = f.client.Files.CreateFolder(ctx, enc.FromStandardName(leaf), parentID)
+		entry, err = f.client.Files.CreateFolder(ctx, f.opt.Enc.FromStandardName(leaf), parentID)
 		return shouldRetry(err)
 	})
 	return itoa(entry.ID), err
@@ -154,7 +163,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return
 	}
 	for _, child := range children {
-		if enc.ToStandardName(child.Name) == leaf {
+		if f.opt.Enc.ToStandardName(child.Name) == leaf {
 			found = true
 			pathIDOut = itoa(child.ID)
 			if !child.IsDir() {
@@ -196,7 +205,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return
 	}
 	for _, child := range children {
-		remote := path.Join(dir, enc.ToStandardName(child.Name))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(child.Name))
 		// fs.Debugf(f, "child: %s", remote)
 		if child.IsDir() {
 			f.dirCache.Put(remote, itoa(child.ID))
@@ -274,7 +283,7 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 		req.Header.Set("tus-resumable", "1.0.0")
 		req.Header.Set("upload-length", strconv.FormatInt(size, 10))
-		b64name := base64.StdEncoding.EncodeToString([]byte(enc.FromStandardName(name)))
+		b64name := base64.StdEncoding.EncodeToString([]byte(f.opt.Enc.FromStandardName(name)))
 		b64true := base64.StdEncoding.EncodeToString([]byte("true"))
 		b64parentID := base64.StdEncoding.EncodeToString([]byte(parentID))
 		b64modifiedAt := base64.StdEncoding.EncodeToString([]byte(modTime.Format(time.RFC3339)))
@@ -546,7 +555,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
-		params.Set("name", enc.FromStandardName(leaf))
+		params.Set("name", f.opt.Enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/copy", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err
@@ -585,7 +594,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
-		params.Set("name", enc.FromStandardName(leaf))
+		params.Set("name", f.opt.Enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/move", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err
@@ -674,7 +683,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		params := url.Values{}
 		params.Set("file_id", srcID)
 		params.Set("parent_id", dstDirectoryID)
-		params.Set("name", enc.FromStandardName(leaf))
+		params.Set("name", f.opt.Enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/move", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err

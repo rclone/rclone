@@ -20,10 +20,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/readers"
 )
@@ -115,6 +117,11 @@ Windows/macOS and case sensitive for everything else.  Use this flag
 to override the default choice.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  defaultEnc,
 		}},
 	}
 	fs.Register(fsi)
@@ -122,15 +129,16 @@ to override the default choice.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	FollowSymlinks    bool `config:"copy_links"`
-	TranslateSymlinks bool `config:"links"`
-	SkipSymlinks      bool `config:"skip_links"`
-	NoUTFNorm         bool `config:"no_unicode_normalization"`
-	NoCheckUpdated    bool `config:"no_check_updated"`
-	NoUNC             bool `config:"nounc"`
-	OneFileSystem     bool `config:"one_file_system"`
-	CaseSensitive     bool `config:"case_sensitive"`
-	CaseInsensitive   bool `config:"case_insensitive"`
+	FollowSymlinks    bool                 `config:"copy_links"`
+	TranslateSymlinks bool                 `config:"links"`
+	SkipSymlinks      bool                 `config:"skip_links"`
+	NoUTFNorm         bool                 `config:"no_unicode_normalization"`
+	NoCheckUpdated    bool                 `config:"no_check_updated"`
+	NoUNC             bool                 `config:"nounc"`
+	OneFileSystem     bool                 `config:"one_file_system"`
+	CaseSensitive     bool                 `config:"case_sensitive"`
+	CaseInsensitive   bool                 `config:"case_insensitive"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a local filesystem rooted at root
@@ -189,7 +197,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		dev:    devUnset,
 		lstat:  os.Lstat,
 	}
-	f.root = cleanRootPath(root, f.opt.NoUNC)
+	f.root = cleanRootPath(root, f.opt.NoUNC, f.opt.Enc)
 	f.features = (&fs.Features{
 		CaseInsensitive:         f.caseInsensitive(),
 		CanHaveEmptyDirectories: true,
@@ -234,7 +242,7 @@ func (f *Fs) Name() string {
 
 // Root of the remote (as passed into NewFs)
 func (f *Fs) Root() string {
-	return enc.ToStandardPath(filepath.ToSlash(f.root))
+	return f.opt.Enc.ToStandardPath(filepath.ToSlash(f.root))
 }
 
 // String converts this Fs to a string
@@ -443,7 +451,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 func (f *Fs) cleanRemote(dir, filename string) (remote string) {
-	remote = path.Join(dir, enc.ToStandardName(filename))
+	remote = path.Join(dir, f.opt.Enc.ToStandardName(filename))
 
 	if !utf8.ValidString(filename) {
 		f.warnedMu.Lock()
@@ -457,7 +465,7 @@ func (f *Fs) cleanRemote(dir, filename string) (remote string) {
 }
 
 func (f *Fs) localPath(name string) string {
-	return filepath.Join(f.root, filepath.FromSlash(enc.FromStandardPath(name)))
+	return filepath.Join(f.root, filepath.FromSlash(f.opt.Enc.FromStandardPath(name)))
 }
 
 // Put the Object to the local filesystem
@@ -1092,7 +1100,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	return remove(o.path)
 }
 
-func cleanRootPath(s string, noUNC bool) string {
+func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	if runtime.GOOS == "windows" {
 		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
 			s2, err := filepath.Abs(s)

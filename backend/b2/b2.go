@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/encodings"
@@ -31,11 +32,10 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
-
-const enc = encodings.B2
 
 const (
 	defaultEndpoint     = "https://api.backblazeb2.com"
@@ -146,23 +146,29 @@ The duration before the download authorization token will expire.
 The minimum value is 1 second. The maximum value is one week.`,
 			Default:  fs.Duration(7 * 24 * time.Hour),
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.B2,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account                       string        `config:"account"`
-	Key                           string        `config:"key"`
-	Endpoint                      string        `config:"endpoint"`
-	TestMode                      string        `config:"test_mode"`
-	Versions                      bool          `config:"versions"`
-	HardDelete                    bool          `config:"hard_delete"`
-	UploadCutoff                  fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize                     fs.SizeSuffix `config:"chunk_size"`
-	DisableCheckSum               bool          `config:"disable_checksum"`
-	DownloadURL                   string        `config:"download_url"`
-	DownloadAuthorizationDuration fs.Duration   `config:"download_auth_duration"`
+	Account                       string               `config:"account"`
+	Key                           string               `config:"key"`
+	Endpoint                      string               `config:"endpoint"`
+	TestMode                      string               `config:"test_mode"`
+	Versions                      bool                 `config:"versions"`
+	HardDelete                    bool                 `config:"hard_delete"`
+	UploadCutoff                  fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize                     fs.SizeSuffix        `config:"chunk_size"`
+	DisableCheckSum               bool                 `config:"disable_checksum"`
+	DownloadURL                   string               `config:"download_url"`
+	DownloadAuthorizationDuration fs.Duration          `config:"download_auth_duration"`
+	Enc                           encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote b2 server
@@ -402,7 +408,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	// If this is a key limited to a single bucket, it must exist already
 	if f.rootBucket != "" && f.info.Allowed.BucketID != "" {
-		allowedBucket := enc.ToStandardName(f.info.Allowed.BucketName)
+		allowedBucket := f.opt.Enc.ToStandardName(f.info.Allowed.BucketName)
 		if allowedBucket == "" {
 			return nil, errors.New("bucket that application key is restricted to no longer exists")
 		}
@@ -623,11 +629,11 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	var request = api.ListFileNamesRequest{
 		BucketID:     bucketID,
 		MaxFileCount: chunkSize,
-		Prefix:       enc.FromStandardPath(directory),
+		Prefix:       f.opt.Enc.FromStandardPath(directory),
 		Delimiter:    delimiter,
 	}
 	if directory != "" {
-		request.StartFileName = enc.FromStandardPath(directory)
+		request.StartFileName = f.opt.Enc.FromStandardPath(directory)
 	}
 	opts := rest.Opts{
 		Method: "POST",
@@ -647,7 +653,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 		for i := range response.Files {
 			file := &response.Files[i]
-			file.Name = enc.ToStandardPath(file.Name)
+			file.Name = f.opt.Enc.ToStandardPath(file.Name)
 			// Finish if file name no longer has prefix
 			if prefix != "" && !strings.HasPrefix(file.Name, prefix) {
 				return nil
@@ -848,7 +854,7 @@ func (f *Fs) listBucketsToFn(ctx context.Context, fn listBucketFn) error {
 	f._bucketType = make(map[string]string, 1)
 	for i := range response.Buckets {
 		bucket := &response.Buckets[i]
-		bucket.Name = enc.ToStandardName(bucket.Name)
+		bucket.Name = f.opt.Enc.ToStandardName(bucket.Name)
 		f.cache.MarkOK(bucket.Name)
 		f._bucketID[bucket.Name] = bucket.ID
 		f._bucketType[bucket.Name] = bucket.Type
@@ -970,7 +976,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		}
 		var request = api.CreateBucketRequest{
 			AccountID: f.info.AccountID,
-			Name:      enc.FromStandardName(bucket),
+			Name:      f.opt.Enc.FromStandardName(bucket),
 			Type:      "allPrivate",
 		}
 		var response api.Bucket
@@ -1054,7 +1060,7 @@ func (f *Fs) hide(ctx context.Context, bucket, bucketPath string) error {
 	}
 	var request = api.HideFileRequest{
 		BucketID: bucketID,
-		Name:     enc.FromStandardPath(bucketPath),
+		Name:     f.opt.Enc.FromStandardPath(bucketPath),
 	}
 	var response api.File
 	err = f.pacer.Call(func() (bool, error) {
@@ -1082,7 +1088,7 @@ func (f *Fs) deleteByID(ctx context.Context, ID, Name string) error {
 	}
 	var request = api.DeleteFileRequest{
 		ID:   ID,
-		Name: enc.FromStandardPath(Name),
+		Name: f.opt.Enc.FromStandardPath(Name),
 	}
 	var response api.File
 	err := f.pacer.Call(func() (bool, error) {
@@ -1220,7 +1226,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	var request = api.CopyFileRequest{
 		SourceID:          srcObj.id,
-		Name:              enc.FromStandardPath(dstPath),
+		Name:              f.opt.Enc.FromStandardPath(dstPath),
 		MetadataDirective: "COPY",
 		DestBucketID:      destBucketID,
 	}
@@ -1268,7 +1274,7 @@ func (f *Fs) getDownloadAuthorization(ctx context.Context, bucket, remote string
 	}
 	var request = api.GetDownloadAuthorizationRequest{
 		BucketID:               bucketID,
-		FileNamePrefix:         enc.FromStandardPath(path.Join(f.root, remote)),
+		FileNamePrefix:         f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
 		ValidDurationInSeconds: validDurationInSeconds,
 	}
 	var response api.GetDownloadAuthorizationResponse
@@ -1509,7 +1515,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	}
 	var request = api.CopyFileRequest{
 		SourceID:          o.id,
-		Name:              enc.FromStandardPath(bucketPath), // copy to same name
+		Name:              o.fs.opt.Enc.FromStandardPath(bucketPath), // copy to same name
 		MetadataDirective: "REPLACE",
 		ContentType:       info.ContentType,
 		Info:              info.Info,
@@ -1611,7 +1617,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		opts.Path += "/b2api/v1/b2_download_file_by_id?fileId=" + urlEncode(o.id)
 	} else {
 		bucket, bucketPath := o.split()
-		opts.Path += "/file/" + urlEncode(enc.FromStandardName(bucket)) + "/" + urlEncode(enc.FromStandardPath(bucketPath))
+		opts.Path += "/file/" + urlEncode(o.fs.opt.Enc.FromStandardName(bucket)) + "/" + urlEncode(o.fs.opt.Enc.FromStandardPath(bucketPath))
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1808,7 +1814,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Body:    in,
 		ExtraHeaders: map[string]string{
 			"Authorization":  upload.AuthorizationToken,
-			"X-Bz-File-Name": urlEncode(enc.FromStandardPath(bucketPath)),
+			"X-Bz-File-Name": urlEncode(o.fs.opt.Enc.FromStandardPath(bucketPath)),
 			"Content-Type":   fs.MimeType(ctx, src),
 			sha1Header:       calculatedSha1,
 			timeHeader:       timeString(modTime),

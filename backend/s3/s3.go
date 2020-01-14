@@ -46,6 +46,7 @@ import (
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/encodings"
@@ -54,13 +55,12 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/sync/errgroup"
 )
-
-const enc = encodings.S3
 
 // Register with Fs
 func init() {
@@ -811,6 +811,11 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 `,
 			Default:  1000,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.S3,
 		}},
 	})
 }
@@ -830,29 +835,30 @@ const (
 
 // Options defines the configuration for this backend
 type Options struct {
-	Provider              string        `config:"provider"`
-	EnvAuth               bool          `config:"env_auth"`
-	AccessKeyID           string        `config:"access_key_id"`
-	SecretAccessKey       string        `config:"secret_access_key"`
-	Region                string        `config:"region"`
-	Endpoint              string        `config:"endpoint"`
-	LocationConstraint    string        `config:"location_constraint"`
-	ACL                   string        `config:"acl"`
-	BucketACL             string        `config:"bucket_acl"`
-	ServerSideEncryption  string        `config:"server_side_encryption"`
-	SSEKMSKeyID           string        `config:"sse_kms_key_id"`
-	StorageClass          string        `config:"storage_class"`
-	UploadCutoff          fs.SizeSuffix `config:"upload_cutoff"`
-	CopyCutoff            fs.SizeSuffix `config:"copy_cutoff"`
-	ChunkSize             fs.SizeSuffix `config:"chunk_size"`
-	DisableChecksum       bool          `config:"disable_checksum"`
-	SessionToken          string        `config:"session_token"`
-	UploadConcurrency     int           `config:"upload_concurrency"`
-	ForcePathStyle        bool          `config:"force_path_style"`
-	V2Auth                bool          `config:"v2_auth"`
-	UseAccelerateEndpoint bool          `config:"use_accelerate_endpoint"`
-	LeavePartsOnError     bool          `config:"leave_parts_on_error"`
-	ListChunk             int64         `config:"list_chunk"`
+	Provider              string               `config:"provider"`
+	EnvAuth               bool                 `config:"env_auth"`
+	AccessKeyID           string               `config:"access_key_id"`
+	SecretAccessKey       string               `config:"secret_access_key"`
+	Region                string               `config:"region"`
+	Endpoint              string               `config:"endpoint"`
+	LocationConstraint    string               `config:"location_constraint"`
+	ACL                   string               `config:"acl"`
+	BucketACL             string               `config:"bucket_acl"`
+	ServerSideEncryption  string               `config:"server_side_encryption"`
+	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
+	StorageClass          string               `config:"storage_class"`
+	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
+	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
+	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
+	DisableChecksum       bool                 `config:"disable_checksum"`
+	SessionToken          string               `config:"session_token"`
+	UploadConcurrency     int                  `config:"upload_concurrency"`
+	ForcePathStyle        bool                 `config:"force_path_style"`
+	V2Auth                bool                 `config:"v2_auth"`
+	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
+	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
+	ListChunk             int64                `config:"list_chunk"`
+	Enc                   encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote s3 server
@@ -965,7 +971,7 @@ func parsePath(path string) (root string) {
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
-	return enc.FromStandardName(bucketName), enc.FromStandardPath(bucketPath)
+	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
 // split returns bucket and bucketPath from the object
@@ -1166,7 +1172,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}).Fill(f)
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the object exists
-		encodedDirectory := enc.FromStandardPath(f.rootDirectory)
+		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)
 		req := s3.HeadObjectInput{
 			Bucket: &f.rootBucket,
 			Key:    &encodedDirectory,
@@ -1369,7 +1375,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 						continue
 					}
 				}
-				remote = enc.ToStandardPath(remote)
+				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -1396,7 +1402,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					continue
 				}
 			}
-			remote = enc.ToStandardPath(remote)
+			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Logf(f, "Odd name received %q", remote)
 				continue
@@ -1487,7 +1493,7 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 		return nil, err
 	}
 	for _, bucket := range resp.Buckets {
-		bucketName := enc.ToStandardName(aws.StringValue(bucket.Name))
+		bucketName := f.opt.Enc.ToStandardName(aws.StringValue(bucket.Name))
 		f.cache.MarkOK(bucketName)
 		d := fs.NewDir(bucketName, aws.TimeValue(bucket.CreationDate))
 		entries = append(entries, d)

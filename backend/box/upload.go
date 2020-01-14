@@ -38,7 +38,7 @@ func (o *Object) createUploadSession(ctx context.Context, leaf, directoryID stri
 	} else {
 		opts.Path = "/files/upload_sessions"
 		request.FolderID = directoryID
-		request.FileName = enc.FromStandardName(leaf)
+		request.FileName = o.fs.opt.Enc.FromStandardName(leaf)
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {

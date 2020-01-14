@@ -28,14 +28,13 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
-
-const enc = encodings.OneDrive
 
 const (
 	rcloneClientID              = "b15665d9-eda6-4092-8539-0eec376afd59"
@@ -252,16 +251,22 @@ delete OneNote files or otherwise want them to show up in directory
 listing, set this option.`,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.OneDrive,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize          fs.SizeSuffix `config:"chunk_size"`
-	DriveID            string        `config:"drive_id"`
-	DriveType          string        `config:"drive_type"`
-	ExposeOneNoteFiles bool          `config:"expose_onenote_files"`
+	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
+	DriveID            string               `config:"drive_id"`
+	DriveType          string               `config:"drive_type"`
+	ExposeOneNoteFiles bool                 `config:"expose_onenote_files"`
+	Enc                encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote one drive
@@ -355,7 +360,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 // If `relPath` == '', do not append the slash (See #3664)
 func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID string, relPath string) (info *api.Item, resp *http.Response, err error) {
 	if relPath != "" {
-		relPath = "/" + withTrailingColon(rest.URLPathEscape(enc.FromStandardPath(relPath)))
+		relPath = "/" + withTrailingColon(rest.URLPathEscape(f.opt.Enc.FromStandardPath(relPath)))
 	}
 	opts := newOptsCall(normalizedID, "GET", ":"+relPath)
 	err = f.pacer.Call(func() (bool, error) {
@@ -380,7 +385,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		} else {
 			opts = rest.Opts{
 				Method: "GET",
-				Path:   "/root:/" + rest.URLPathEscape(enc.FromStandardPath(path)),
+				Path:   "/root:/" + rest.URLPathEscape(f.opt.Enc.FromStandardPath(path)),
 			}
 		}
 		err = f.pacer.Call(func() (bool, error) {
@@ -628,7 +633,7 @@ func (f *Fs) CreateDir(ctx context.Context, dirID, leaf string) (newID string, e
 	var info *api.Item
 	opts := newOptsCall(dirID, "POST", "/children")
 	mkdir := api.CreateItemRequest{
-		Name:             enc.FromStandardName(leaf),
+		Name:             f.opt.Enc.FromStandardName(leaf),
 		ConflictBehavior: "fail",
 	}
 	err = f.pacer.Call(func() (bool, error) {
@@ -688,7 +693,7 @@ OUTER:
 			if item.Deleted != nil {
 				continue
 			}
-			item.Name = enc.ToStandardName(item.GetName())
+			item.Name = f.opt.Enc.ToStandardName(item.GetName())
 			if fn(item) {
 				found = true
 				break OUTER
@@ -944,7 +949,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	id, dstDriveID, _ := parseNormalizedID(directoryID)
 
-	replacedLeaf := enc.FromStandardName(leaf)
+	replacedLeaf := f.opt.Enc.FromStandardName(leaf)
 	copyReq := api.CopyItemRequest{
 		Name: &replacedLeaf,
 		ParentReference: api.ItemReference{
@@ -1028,7 +1033,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	opts := newOptsCall(srcObj.id, "PATCH", "")
 
 	move := api.MoveItemRequest{
-		Name: enc.FromStandardName(leaf),
+		Name: f.opt.Enc.FromStandardName(leaf),
 		ParentReference: &api.ItemReference{
 			DriveID: dstDriveID,
 			ID:      id,
@@ -1143,7 +1148,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Do the move
 	opts := newOptsCall(srcID, "PATCH", "")
 	move := api.MoveItemRequest{
-		Name: enc.FromStandardName(leaf),
+		Name: f.opt.Enc.FromStandardName(leaf),
 		ParentReference: &api.ItemReference{
 			DriveID: dstDriveID,
 			ID:      parsedDstDirID,
@@ -1265,7 +1270,7 @@ func (o *Object) rootPath() string {
 
 // srvPath returns a path for use in server given a remote
 func (f *Fs) srvPath(remote string) string {
-	return enc.FromStandardPath(f.rootSlash() + remote)
+	return f.opt.Enc.FromStandardPath(f.rootSlash() + remote)
 }
 
 // srvPath returns a path for use in server
@@ -1377,7 +1382,7 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.Item, 
 		opts = rest.Opts{
 			Method:  "PATCH",
 			RootURL: rootURL,
-			Path:    "/" + drive + "/items/" + trueDirID + ":/" + withTrailingColon(rest.URLPathEscape(enc.FromStandardName(leaf))),
+			Path:    "/" + drive + "/items/" + trueDirID + ":/" + withTrailingColon(rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf))),
 		}
 	} else {
 		opts = rest.Opts{
@@ -1452,7 +1457,7 @@ func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (re
 			Method:  "POST",
 			RootURL: rootURL,
 			Path: fmt.Sprintf("/%s/items/%s:/%s:/createUploadSession",
-				drive, id, rest.URLPathEscape(enc.FromStandardName(leaf))),
+				drive, id, rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf))),
 		}
 	} else {
 		opts = rest.Opts{
@@ -1604,7 +1609,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 		opts = rest.Opts{
 			Method:        "PUT",
 			RootURL:       rootURL,
-			Path:          "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(enc.FromStandardName(leaf)) + ":/content",
+			Path:          "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)) + ":/content",
 			ContentLength: &size,
 			Body:          in,
 		}
