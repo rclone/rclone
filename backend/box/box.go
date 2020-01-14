@@ -37,7 +37,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -149,7 +148,17 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.Box,
+			// From https://developer.box.com/docs/error-codes#section-400-bad-request :
+			// > Box only supports file or folder names that are 255 characters or less.
+			// > File names containing non-printable ascii, "/" or "\", names with leading
+			// > or trailing spaces, and the special names “.” and “..” are also unsupported.
+			//
+			// Testing revealed names with leading spaces work fine.
+			// Also encode invalid UTF-8 bytes as json doesn't handle them properly.
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeRightSpace |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

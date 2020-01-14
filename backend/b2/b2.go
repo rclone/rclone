@@ -26,7 +26,6 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -150,7 +149,12 @@ The minimum value is 1 second. The maximum value is one week.`,
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.B2,
+			// See: https://www.backblaze.com/b2/docs/files.html
+			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+			// FIXME: allow /, but not leading, trailing or double
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

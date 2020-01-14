@@ -23,7 +23,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/atexit"
@@ -255,7 +254,48 @@ listing, set this option.`,
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.OneDrive,
+			// List of replaced characters:
+			//   < (less than)     -> '＜' // FULLWIDTH LESS-THAN SIGN
+			//   > (greater than)  -> '＞' // FULLWIDTH GREATER-THAN SIGN
+			//   : (colon)         -> '：' // FULLWIDTH COLON
+			//   " (double quote)  -> '＂' // FULLWIDTH QUOTATION MARK
+			//   \ (backslash)     -> '＼' // FULLWIDTH REVERSE SOLIDUS
+			//   | (vertical line) -> '｜' // FULLWIDTH VERTICAL LINE
+			//   ? (question mark) -> '？' // FULLWIDTH QUESTION MARK
+			//   * (asterisk)      -> '＊' // FULLWIDTH ASTERISK
+			//   # (number sign)  -> '＃'  // FULLWIDTH NUMBER SIGN
+			//   % (percent sign) -> '％'  // FULLWIDTH PERCENT SIGN
+			//
+			// Folder names cannot begin with a tilde ('~')
+			// List of replaced characters:
+			//   ~ (tilde)        -> '～'  // FULLWIDTH TILDE
+			//
+			// Additionally names can't begin with a space ( ) or end with a period (.) or space ( ).
+			// List of replaced characters:
+			//   . (period)        -> '．' // FULLWIDTH FULL STOP
+			//     (space)         -> '␠'  // SYMBOL FOR SPACE
+			//
+			// Also encode invalid UTF-8 bytes as json doesn't handle them.
+			//
+			// The OneDrive API documentation lists the set of reserved characters, but
+			// testing showed this list is incomplete. This are the differences:
+			//  - " (double quote) is rejected, but missing in the documentation
+			//  - space at the end of file and folder names is rejected, but missing in the documentation
+			//  - period at the end of file names is rejected, but missing in the documentation
+			//
+			// Adding these restrictions to the OneDrive API documentation yields exactly
+			// the same rules as the Windows naming conventions.
+			//
+			// https://docs.microsoft.com/en-us/onedrive/developer/rest-api/concepts/addressing-driveitems?view=odsp-graph-online#path-encoding
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeHashPercent |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeLeftTilde |
+				encoder.EncodeRightPeriod |
+				encoder.EncodeRightSpace |
+				encoder.EncodeWin |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

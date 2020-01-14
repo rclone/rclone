@@ -49,7 +49,6 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -815,7 +814,19 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.S3,
+			// Any UTF-8 character is valid in a key, however it can't handle
+			// invalid UTF-8 and / have a special meaning.
+			//
+			// The SDK can't seem to handle uploading files called '.'
+			//
+			// FIXME would be nice to add
+			// - initial / encoding
+			// - doubled / encoding
+			// - trailing / encoding
+			// so that AWS keys are always valid file names
+			Default: (encoder.EncodeInvalidUtf8 |
+				encoder.EncodeSlash |
+				encoder.EncodeDot),
 		}},
 	})
 }
