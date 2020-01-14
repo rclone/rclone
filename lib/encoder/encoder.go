@@ -37,32 +37,32 @@ const (
 
 // Possible flags for the MultiEncoder
 const (
-	EncodeZero          uint = 0         // NUL(0x00)
-	EncodeSlash         uint = 1 << iota // /
-	EncodeLtGt                           // <>
-	EncodeDoubleQuote                    // "
-	EncodeSingleQuote                    // '
-	EncodeBackQuote                      // `
-	EncodeDollar                         // $
-	EncodeColon                          // :
-	EncodeQuestion                       // ?
-	EncodeAsterisk                       // *
-	EncodePipe                           // |
-	EncodeHash                           // #
-	EncodePercent                        // %
-	EncodeBackSlash                      // \
-	EncodeCrLf                           // CR(0x0D), LF(0x0A)
-	EncodeDel                            // DEL(0x7F)
-	EncodeCtl                            // CTRL(0x01-0x1F)
-	EncodeLeftSpace                      // Leading SPACE
-	EncodeLeftPeriod                     // Leading .
-	EncodeLeftTilde                      // Leading ~
-	EncodeLeftCrLfHtVt                   // Leading CR LF HT VT
-	EncodeRightSpace                     // Trailing SPACE
-	EncodeRightPeriod                    // Trailing .
-	EncodeRightCrLfHtVt                  // Trailing CR LF HT VT
-	EncodeInvalidUtf8                    // Invalid UTF-8 bytes
-	EncodeDot                            // . and .. names
+	EncodeZero          MultiEncoder = 0         // NUL(0x00)
+	EncodeSlash         MultiEncoder = 1 << iota // /
+	EncodeLtGt                                   // <>
+	EncodeDoubleQuote                            // "
+	EncodeSingleQuote                            // '
+	EncodeBackQuote                              // `
+	EncodeDollar                                 // $
+	EncodeColon                                  // :
+	EncodeQuestion                               // ?
+	EncodeAsterisk                               // *
+	EncodePipe                                   // |
+	EncodeHash                                   // #
+	EncodePercent                                // %
+	EncodeBackSlash                              // \
+	EncodeCrLf                                   // CR(0x0D), LF(0x0A)
+	EncodeDel                                    // DEL(0x7F)
+	EncodeCtl                                    // CTRL(0x01-0x1F)
+	EncodeLeftSpace                              // Leading SPACE
+	EncodeLeftPeriod                             // Leading .
+	EncodeLeftTilde                              // Leading ~
+	EncodeLeftCrLfHtVt                           // Leading CR LF HT VT
+	EncodeRightSpace                             // Trailing SPACE
+	EncodeRightPeriod                            // Trailing .
+	EncodeRightCrLfHtVt                          // Trailing CR LF HT VT
+	EncodeInvalidUtf8                            // Invalid UTF-8 bytes
+	EncodeDot                                    // . and .. names
 
 	// Synthetic
 	EncodeWin         = EncodeColon | EncodeQuestion | EncodeDoubleQuote | EncodeAsterisk | EncodeLtGt | EncodePipe // :?"*<>|
@@ -70,8 +70,8 @@ const (
 )
 
 // Has returns true if flag is contained in mask
-func (mask MultiEncoder) Has(flag uint) bool {
-	return uint(mask)&flag != 0
+func (mask MultiEncoder) Has(flag MultiEncoder) bool {
+	return mask&flag != 0
 }
 
 // Encoder can transform names to and from the original and translated version.

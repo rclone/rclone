@@ -9,24 +9,14 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 )
 
-// Base only encodes the zero byte and slash
-const Base = encoder.MultiEncoder(
-	encoder.EncodeZero |
-		encoder.EncodeSlash |
-		encoder.EncodeDot)
-
-// Display is the internal encoding for logging and output
-const Display = encoder.Standard
-
 // LocalUnix is the encoding used by the local backend for non windows platforms
-const LocalUnix = Base
+const LocalUnix = encoder.Base
 
 // LocalMacOS is the encoding used by the local backend for macOS
 //
 // macOS can't store invalid UTF-8, it converts them into %XX encoding
-const LocalMacOS = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeInvalidUtf8)
+const LocalMacOS = (encoder.Base |
+	encoder.EncodeInvalidUtf8)
 
 // LocalWindows is the encoding used by the local backend for windows platforms
 //
@@ -48,31 +38,28 @@ const LocalMacOS = encoder.MultiEncoder(
 // Also encode invalid UTF-8 bytes as Go can't convert them to UTF-16.
 //
 // https://docs.microsoft.com/de-de/windows/desktop/FileIO/naming-a-file#naming-conventions
-const LocalWindows = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeWin |
-		encoder.EncodeBackSlash |
-		encoder.EncodeCtl |
-		encoder.EncodeRightSpace |
-		encoder.EncodeRightPeriod |
-		encoder.EncodeInvalidUtf8)
+const LocalWindows = (encoder.Base |
+	encoder.EncodeWin |
+	encoder.EncodeBackSlash |
+	encoder.EncodeCtl |
+	encoder.EncodeRightSpace |
+	encoder.EncodeRightPeriod |
+	encoder.EncodeInvalidUtf8)
 
 // AmazonCloudDrive is the encoding used by the amazonclouddrive backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
-const AmazonCloudDrive = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeInvalidUtf8)
+const AmazonCloudDrive = (encoder.Base |
+	encoder.EncodeInvalidUtf8)
 
 // B2 is the encoding used by the b2 backend
 //
 // See: https://www.backblaze.com/b2/docs/files.html
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
 // FIXME: allow /, but not leading, trailing or double
-const B2 = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeInvalidUtf8)
+const B2 = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeInvalidUtf8)
 
 // Box is the encoding used by the box backend
 //
@@ -83,18 +70,16 @@ const B2 = encoder.MultiEncoder(
 //
 // Testing revealed names with leading spaces work fine.
 // Also encode invalid UTF-8 bytes as json doesn't handle them properly.
-const Box = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeRightSpace |
-		encoder.EncodeInvalidUtf8)
+const Box = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeRightSpace |
+	encoder.EncodeInvalidUtf8)
 
 // Drive is the encoding used by the drive backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
 // Don't encode / as it's a valid name character in drive.
-const Drive = encoder.MultiEncoder(
-	encoder.EncodeInvalidUtf8)
+const Drive = (encoder.EncodeInvalidUtf8)
 
 // Dropbox is the encoding used by the dropbox backend
 //
@@ -102,52 +87,46 @@ const Drive = encoder.MultiEncoder(
 // as invalid characters.
 // Testing revealed names with trailing spaces and the DEL character don't work.
 // Also encode invalid UTF-8 bytes as json doesn't handle them properly.
-const Dropbox = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeDel |
-		encoder.EncodeRightSpace |
-		encoder.EncodeInvalidUtf8)
+const Dropbox = (encoder.Base |
+	encoder.EncodeBackSlash |
+	encoder.EncodeDel |
+	encoder.EncodeRightSpace |
+	encoder.EncodeInvalidUtf8)
 
 // GoogleCloudStorage is the encoding used by the googlecloudstorage backend
-const GoogleCloudStorage = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeCrLf |
-		encoder.EncodeInvalidUtf8)
+const GoogleCloudStorage = (encoder.Base |
+	encoder.EncodeCrLf |
+	encoder.EncodeInvalidUtf8)
 
 // JottaCloud is the encoding used by the jottacloud backend
 //
 // Encode invalid UTF-8 bytes as xml doesn't handle them properly.
 //
 // Also: '*', '/', ':', '<', '>', '?', '\"', '\x00', '|'
-const JottaCloud = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeWin | // :?"*<>|
-		encoder.EncodeInvalidUtf8)
+const JottaCloud = (encoder.Display |
+	encoder.EncodeWin | // :?"*<>|
+	encoder.EncodeInvalidUtf8)
 
 // Koofr is the encoding used by the koofr backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
-const Koofr = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeInvalidUtf8)
+const Koofr = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeInvalidUtf8)
 
 // Mailru is the encoding used by the mailru backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
-const Mailru = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeWin | // :?"*<>|
-		encoder.EncodeBackSlash |
-		encoder.EncodeInvalidUtf8)
+const Mailru = (encoder.Display |
+	encoder.EncodeWin | // :?"*<>|
+	encoder.EncodeBackSlash |
+	encoder.EncodeInvalidUtf8)
 
 // Mega is the encoding used by the mega backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
-const Mega = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeInvalidUtf8)
+const Mega = (encoder.Base |
+	encoder.EncodeInvalidUtf8)
 
 // OneDrive is the encoding used by the onedrive backend
 //
@@ -184,16 +163,15 @@ const Mega = encoder.MultiEncoder(
 // the same rules as the Windows naming conventions.
 //
 // https://docs.microsoft.com/en-us/onedrive/developer/rest-api/concepts/addressing-driveitems?view=odsp-graph-online#path-encoding
-const OneDrive = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeHashPercent |
-		encoder.EncodeLeftSpace |
-		encoder.EncodeLeftTilde |
-		encoder.EncodeRightPeriod |
-		encoder.EncodeRightSpace |
-		encoder.EncodeWin |
-		encoder.EncodeInvalidUtf8)
+const OneDrive = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeHashPercent |
+	encoder.EncodeLeftSpace |
+	encoder.EncodeLeftTilde |
+	encoder.EncodeRightPeriod |
+	encoder.EncodeRightSpace |
+	encoder.EncodeWin |
+	encoder.EncodeInvalidUtf8)
 
 // OpenDrive is the encoding used by the opendrive backend
 //
@@ -218,44 +196,40 @@ const OneDrive = encoder.MultiEncoder(
 // Also encode invalid UTF-8 bytes as json doesn't handle them properly.
 //
 // https://www.opendrive.com/wp-content/uploads/guides/OpenDrive_API_guide.pdf
-const OpenDrive = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeWin |
-		encoder.EncodeLeftCrLfHtVt |
-		encoder.EncodeRightCrLfHtVt |
-		encoder.EncodeBackSlash |
-		encoder.EncodeLeftSpace |
-		encoder.EncodeRightSpace |
-		encoder.EncodeInvalidUtf8)
+const OpenDrive = (encoder.Base |
+	encoder.EncodeWin |
+	encoder.EncodeLeftCrLfHtVt |
+	encoder.EncodeRightCrLfHtVt |
+	encoder.EncodeBackSlash |
+	encoder.EncodeLeftSpace |
+	encoder.EncodeRightSpace |
+	encoder.EncodeInvalidUtf8)
 
 // PremiumizeMe is the encoding used by the premiumizeme backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
-const PremiumizeMe = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeDoubleQuote |
-		encoder.EncodeInvalidUtf8)
+const PremiumizeMe = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeDoubleQuote |
+	encoder.EncodeInvalidUtf8)
 
 // Pcloud is the encoding used by the pcloud backend
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
 //
 // TODO: Investigate Unicode simplification (＼ gets converted to \ server-side)
-const Pcloud = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeInvalidUtf8)
+const Pcloud = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeInvalidUtf8)
 
 // Putio is the encoding used by the putio backend
 //
 // Note that \ is renamed to -
 //
 // Encode invalid UTF-8 bytes as json doesn't handle them properly.
-const Putio = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeInvalidUtf8)
+const Putio = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeInvalidUtf8)
 
 // Fichier is the encoding used by the fichier backend
 //
@@ -270,17 +244,16 @@ const Putio = encoder.MultiEncoder(
 // 		'`':  '｀', // FULLWIDTH GRAVE ACCENT
 //
 // Leading space and trailing space
-const Fichier = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeBackSlash |
-		encoder.EncodeSingleQuote |
-		encoder.EncodeBackQuote |
-		encoder.EncodeDoubleQuote |
-		encoder.EncodeLtGt |
-		encoder.EncodeDollar |
-		encoder.EncodeLeftSpace |
-		encoder.EncodeRightSpace |
-		encoder.EncodeInvalidUtf8)
+const Fichier = (encoder.Display |
+	encoder.EncodeBackSlash |
+	encoder.EncodeSingleQuote |
+	encoder.EncodeBackQuote |
+	encoder.EncodeDoubleQuote |
+	encoder.EncodeLtGt |
+	encoder.EncodeDollar |
+	encoder.EncodeLeftSpace |
+	encoder.EncodeRightSpace |
+	encoder.EncodeInvalidUtf8)
 
 // FTP is the encoding used by the ftp backend
 //
@@ -289,9 +262,8 @@ const Fichier = encoder.MultiEncoder(
 //
 // proftpd can't handle '*' in file names
 // pureftpd can't handle '[', ']' or '*'
-const FTP = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeRightSpace)
+const FTP = (encoder.Display |
+	encoder.EncodeRightSpace)
 
 // S3 is the encoding used by the s3 backend
 //
@@ -305,58 +277,52 @@ const FTP = encoder.MultiEncoder(
 // - doubled / encoding
 // - trailing / encoding
 // so that AWS keys are always valid file names
-const S3 = encoder.MultiEncoder(
-	encoder.EncodeInvalidUtf8 |
-		encoder.EncodeSlash |
-		encoder.EncodeDot)
+const S3 = (encoder.EncodeInvalidUtf8 |
+	encoder.EncodeSlash |
+	encoder.EncodeDot)
 
 // Swift is the encoding used by the swift backend
-const Swift = encoder.MultiEncoder(
-	encoder.EncodeInvalidUtf8 |
-		encoder.EncodeSlash)
+const Swift = (encoder.EncodeInvalidUtf8 |
+	encoder.EncodeSlash)
 
 // AzureBlob is the encoding used by the azureblob backend
-const AzureBlob = encoder.MultiEncoder(
-	encoder.EncodeInvalidUtf8 |
-		encoder.EncodeSlash |
-		encoder.EncodeCtl |
-		encoder.EncodeDel |
-		encoder.EncodeBackSlash |
-		encoder.EncodeRightPeriod)
+const AzureBlob = (encoder.EncodeInvalidUtf8 |
+	encoder.EncodeSlash |
+	encoder.EncodeCtl |
+	encoder.EncodeDel |
+	encoder.EncodeBackSlash |
+	encoder.EncodeRightPeriod)
 
 // QingStor is the encoding used by the qingstor backend
-const QingStor = encoder.MultiEncoder(
-	encoder.EncodeInvalidUtf8 |
-		encoder.EncodeCtl |
-		encoder.EncodeSlash)
+const QingStor = (encoder.EncodeInvalidUtf8 |
+	encoder.EncodeCtl |
+	encoder.EncodeSlash)
 
 // Sharefile is the encoding used by the sharefile backend
-const Sharefile = encoder.MultiEncoder(
-	uint(Base) |
-		encoder.EncodeWin | // :?"*<>|
-		encoder.EncodeBackSlash | // \
-		encoder.EncodeCtl |
-		encoder.EncodeRightSpace |
-		encoder.EncodeRightPeriod |
-		encoder.EncodeLeftSpace |
-		encoder.EncodeLeftPeriod |
-		encoder.EncodeInvalidUtf8)
+const Sharefile = (encoder.Base |
+	encoder.EncodeWin | // :?"*<>|
+	encoder.EncodeBackSlash | // \
+	encoder.EncodeCtl |
+	encoder.EncodeRightSpace |
+	encoder.EncodeRightPeriod |
+	encoder.EncodeLeftSpace |
+	encoder.EncodeLeftPeriod |
+	encoder.EncodeInvalidUtf8)
 
 // Yandex is the encoding used by the yandex backend
 //
 // Of the control characters \t \n \r are allowed
 // it doesn't seem worth making an exception for this
-const Yandex = encoder.MultiEncoder(
-	uint(Display) |
-		encoder.EncodeInvalidUtf8)
+const Yandex = (encoder.Display |
+	encoder.EncodeInvalidUtf8)
 
 // ByName returns the encoder for a give backend name or nil
 func ByName(name string) encoder.Encoder {
 	switch strings.ToLower(name) {
 	case "base":
-		return Base
+		return encoder.Base
 	case "display":
-		return Display
+		return encoder.Display
 	case "amazonclouddrive":
 		return AmazonCloudDrive
 	case "azureblob":
