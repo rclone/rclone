@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -701,6 +702,10 @@ func TestRWFileModTimeWithOpenWriters(t *testing.T) {
 func TestRWCacheRename(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
+
+	if !operations.CanServerSideMove(r.Fremote) {
+		t.Skip("skip as can't rename files")
+	}
 
 	opt := DefaultOpt
 	opt.CacheMode = CacheModeFull
