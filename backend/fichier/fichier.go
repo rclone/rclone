@@ -14,7 +14,6 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
@@ -50,7 +49,27 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.Fichier,
+			// Characters that need escaping
+			//
+			// 		'\\': '＼', // FULLWIDTH REVERSE SOLIDUS
+			// 		'<':  '＜', // FULLWIDTH LESS-THAN SIGN
+			// 		'>':  '＞', // FULLWIDTH GREATER-THAN SIGN
+			// 		'"':  '＂', // FULLWIDTH QUOTATION MARK - not on the list but seems to be reserved
+			// 		'\'': '＇', // FULLWIDTH APOSTROPHE
+			// 		'$':  '＄', // FULLWIDTH DOLLAR SIGN
+			// 		'`':  '｀', // FULLWIDTH GRAVE ACCENT
+			//
+			// Leading space and trailing space
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeSingleQuote |
+				encoder.EncodeBackQuote |
+				encoder.EncodeDoubleQuote |
+				encoder.EncodeLtGt |
+				encoder.EncodeDollar |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeRightSpace |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

@@ -91,7 +91,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
@@ -208,7 +207,15 @@ be set manually to something like: https://XXX.sharefile.com
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.Sharefile,
+			Default: (encoder.Base |
+				encoder.EncodeWin | // :?"*<>|
+				encoder.EncodeBackSlash | // \
+				encoder.EncodeCtl |
+				encoder.EncodeRightSpace |
+				encoder.EncodeRightPeriod |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeLeftPeriod |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

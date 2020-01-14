@@ -20,7 +20,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
@@ -83,7 +82,10 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.Yandex,
+			// Of the control characters \t \n \r are allowed
+			// it doesn't seem worth making an exception for this
+			Default: (encoder.Display |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

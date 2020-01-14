@@ -26,7 +26,6 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -160,7 +159,12 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.JottaCloud,
+			// Encode invalid UTF-8 bytes as xml doesn't handle them properly.
+			//
+			// Also: '*', '/', ':', '<', '>', '?', '\"', '\x00', '|'
+			Default: (encoder.Display |
+				encoder.EncodeWin | // :?"*<>|
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

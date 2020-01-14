@@ -17,7 +17,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -54,7 +53,35 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.OpenDrive,
+			// List of replaced characters:
+			//   < (less than)     -> '＜' // FULLWIDTH LESS-THAN SIGN
+			//   > (greater than)  -> '＞' // FULLWIDTH GREATER-THAN SIGN
+			//   : (colon)         -> '：' // FULLWIDTH COLON
+			//   " (double quote)  -> '＂' // FULLWIDTH QUOTATION MARK
+			//   \ (backslash)     -> '＼' // FULLWIDTH REVERSE SOLIDUS
+			//   | (vertical line) -> '｜' // FULLWIDTH VERTICAL LINE
+			//   ? (question mark) -> '？' // FULLWIDTH QUESTION MARK
+			//   * (asterisk)      -> '＊' // FULLWIDTH ASTERISK
+			//
+			// Additionally names can't begin or end with a ASCII whitespace.
+			// List of replaced characters:
+			//     (space)           -> '␠'  // SYMBOL FOR SPACE
+			//     (horizontal tab)  -> '␉'  // SYMBOL FOR HORIZONTAL TABULATION
+			//     (line feed)       -> '␊'  // SYMBOL FOR LINE FEED
+			//     (vertical tab)    -> '␋'  // SYMBOL FOR VERTICAL TABULATION
+			//     (carriage return) -> '␍'  // SYMBOL FOR CARRIAGE RETURN
+			//
+			// Also encode invalid UTF-8 bytes as json doesn't handle them properly.
+			//
+			// https://www.opendrive.com/wp-content/uploads/guides/OpenDrive_API_guide.pdf
+			Default: (encoder.Base |
+				encoder.EncodeWin |
+				encoder.EncodeLeftCrLfHtVt |
+				encoder.EncodeRightCrLfHtVt |
+				encoder.EncodeBackSlash |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeRightSpace |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }

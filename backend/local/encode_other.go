@@ -2,8 +2,7 @@
 
 package local
 
-import (
-	"github.com/rclone/rclone/fs/encodings"
-)
+import "github.com/rclone/rclone/lib/encoder"
 
-const defaultEnc = encodings.LocalUnix
+// This is the encoding used by the local backend for non windows platforms
+const defaultEnc = encoder.Base

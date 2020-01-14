@@ -33,7 +33,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -459,7 +458,9 @@ See: https://github.com/rclone/rclone/issues/3857
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			Default:  encodings.Drive,
+			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+			// Don't encode / as it's a valid name character in drive.
+			Default: encoder.EncodeInvalidUtf8,
 		}},
 	})
 
