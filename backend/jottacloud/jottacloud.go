@@ -31,13 +31,12 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 	"golang.org/x/oauth2"
 )
-
-const enc = encodings.JottaCloud
 
 // Globals
 const (
@@ -157,18 +156,24 @@ func init() {
 			Help:     "Files bigger than this can be resumed if the upload fail's.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.JottaCloud,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Device             string        `config:"device"`
-	Mountpoint         string        `config:"mountpoint"`
-	MD5MemoryThreshold fs.SizeSuffix `config:"md5_memory_limit"`
-	HardDelete         bool          `config:"hard_delete"`
-	Unlink             bool          `config:"unlink"`
-	UploadThreshold    fs.SizeSuffix `config:"upload_resume_limit"`
+	Device             string               `config:"device"`
+	Mountpoint         string               `config:"mountpoint"`
+	MD5MemoryThreshold fs.SizeSuffix        `config:"md5_memory_limit"`
+	HardDelete         bool                 `config:"hard_delete"`
+	Unlink             bool                 `config:"unlink"`
+	UploadThreshold    fs.SizeSuffix        `config:"upload_resume_limit"`
+	Enc                encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote jottacloud
@@ -446,7 +451,7 @@ func urlPathEscape(in string) string {
 
 // filePathRaw returns an unescaped file path (f.root, file)
 func (f *Fs) filePathRaw(file string) string {
-	return path.Join(f.endpointURL, enc.FromStandardPath(path.Join(f.root, file)))
+	return path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(path.Join(f.root, file)))
 }
 
 // filePath returns a escaped file path (f.root, file)
@@ -638,7 +643,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if item.Deleted {
 			continue
 		}
-		remote := path.Join(dir, enc.ToStandardName(item.Name))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
 		d := fs.NewDir(remote, time.Time(item.ModifiedAt))
 		entries = append(entries, d)
 	}
@@ -648,7 +653,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if item.Deleted || item.State != "COMPLETED" {
 			continue
 		}
-		remote := path.Join(dir, enc.ToStandardName(item.Name))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
 		o, err := f.newObjectWithInfo(ctx, remote, item)
 		if err != nil {
 			continue
@@ -673,7 +678,7 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 		if folder.Deleted {
 			return nil
 		}
-		folderPath := enc.ToStandardPath(path.Join(folder.Path, folder.Name))
+		folderPath := f.opt.Enc.ToStandardPath(path.Join(folder.Path, folder.Name))
 		folderPathLength := len(folderPath)
 		var remoteDir string
 		if folderPathLength > pathPrefixLength {
@@ -691,7 +696,7 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 			if file.Deleted || file.State != "COMPLETED" {
 				continue
 			}
-			remoteFile := path.Join(remoteDir, enc.ToStandardName(file.Name))
+			remoteFile := path.Join(remoteDir, f.opt.Enc.ToStandardName(file.Name))
 			o, err := f.newObjectWithInfo(ctx, remoteFile, file)
 			if err != nil {
 				return err
@@ -862,7 +867,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *ap
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set(method, "/"+path.Join(f.endpointURL, enc.FromStandardPath(path.Join(f.root, dest))))
+	opts.Parameters.Set(method, "/"+path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(path.Join(f.root, dest))))
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -969,7 +974,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, enc.FromStandardPath(srcPath))+"/", dstRemote)
+	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(srcPath))+"/", dstRemote)
 
 	if err != nil {
 		return errors.Wrap(err, "couldn't move directory")
@@ -1260,7 +1265,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Created:  fileDate,
 		Modified: fileDate,
 		Md5:      md5String,
-		Path:     path.Join(o.fs.opt.Mountpoint, enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+		Path:     path.Join(o.fs.opt.Mountpoint, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
 	}
 
 	// send it

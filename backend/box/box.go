@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/jwtutil"
 
 	"github.com/youmark/pkcs8"
@@ -47,8 +48,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jws"
 )
-
-const enc = encodings.Box
 
 const (
 	rcloneClientID              = "d0374ba6pgmaguie02ge15sv1mllndho"
@@ -146,6 +145,11 @@ func init() {
 			Help:     "Max number of times to try committing a multipart file.",
 			Default:  100,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Box,
 		}},
 	})
 }
@@ -220,8 +224,9 @@ func getDecryptedPrivateKey(boxConfig *api.ConfigJSON) (key *rsa.PrivateKey, err
 
 // Options defines the configuration for this backend
 type Options struct {
-	UploadCutoff  fs.SizeSuffix `config:"upload_cutoff"`
-	CommitRetries int           `config:"commit_retries"`
+	UploadCutoff  fs.SizeSuffix        `config:"upload_cutoff"`
+	CommitRetries int                  `config:"commit_retries"`
+	Enc           encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote box
@@ -488,7 +493,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		Parameters: fieldsValue(),
 	}
 	mkdir := api.CreateFolder{
-		Name: enc.FromStandardName(leaf),
+		Name: f.opt.Enc.FromStandardName(leaf),
 		Parent: api.Parent{
 			ID: pathID,
 		},
@@ -554,7 +559,7 @@ OUTER:
 			if item.ItemStatus != api.ItemStatusActive {
 				continue
 			}
-			item.Name = enc.ToStandardName(item.Name)
+			item.Name = f.opt.Enc.ToStandardName(item.Name)
 			if fn(item) {
 				found = true
 				break OUTER
@@ -791,7 +796,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		Parameters: fieldsValue(),
 	}
 	copyFile := api.CopyFile{
-		Name: enc.FromStandardName(leaf),
+		Name: f.opt.Enc.FromStandardName(leaf),
 		Parent: api.Parent{
 			ID: directoryID,
 		},
@@ -830,7 +835,7 @@ func (f *Fs) move(ctx context.Context, endpoint, id, leaf, directoryID string) (
 		Parameters: fieldsValue(),
 	}
 	move := api.UpdateFileMove{
-		Name: enc.FromStandardName(leaf),
+		Name: f.opt.Enc.FromStandardName(leaf),
 		Parent: api.Parent{
 			ID: directoryID,
 		},
@@ -1155,7 +1160,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // This is recommended for less than 50 MB of content
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time) (err error) {
 	upload := api.UploadFile{
-		Name:              enc.FromStandardName(leaf),
+		Name:              o.fs.opt.Enc.FromStandardName(leaf),
 		ContentModifiedAt: api.Time(modTime),
 		ContentCreatedAt:  api.Time(modTime),
 		Parent: api.Parent{

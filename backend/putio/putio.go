@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"golang.org/x/oauth2"
 )
@@ -25,7 +27,6 @@ canReadUnnormalized   = true
 canReadRenormalized   = true
 canStream = false
 */
-const enc = encodings.Putio
 
 // Constants
 const (
@@ -65,7 +66,18 @@ func init() {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
+		Options: []fs.Option{{
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Putio,
+		}},
 	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Enc encoder.MultiEncoder `config:"encoding"`
 }
 
 // Check the interfaces are satisfied

@@ -1,4 +1,4 @@
-package config
+package config_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +29,8 @@ func TestRc(t *testing.T) {
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	require.Nil(t, out)
-	assert.Equal(t, "local", FileGet(testName, "type"))
-	assert.Equal(t, "sausage", FileGet(testName, "test_key"))
+	assert.Equal(t, "local", config.FileGet(testName, "type"))
+	assert.Equal(t, "sausage", config.FileGet(testName, "test_key"))
 
 	// The sub tests rely on the remote created above but they can
 	// all be run independently
@@ -92,9 +93,9 @@ func TestRc(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
-		assert.Equal(t, "local", FileGet(testName, "type"))
-		assert.Equal(t, "rutabaga", FileGet(testName, "test_key"))
-		assert.Equal(t, "cabbage", FileGet(testName, "test_key2"))
+		assert.Equal(t, "local", config.FileGet(testName, "type"))
+		assert.Equal(t, "rutabaga", config.FileGet(testName, "test_key"))
+		assert.Equal(t, "cabbage", config.FileGet(testName, "test_key2"))
 	})
 
 	t.Run("Password", func(t *testing.T) {
@@ -111,9 +112,9 @@ func TestRc(t *testing.T) {
 		require.NoError(t, err)
 		assert.Nil(t, out)
 
-		assert.Equal(t, "local", FileGet(testName, "type"))
-		assert.Equal(t, "rutabaga", obscure.MustReveal(FileGet(testName, "test_key")))
-		assert.Equal(t, "cabbage", obscure.MustReveal(FileGet(testName, "test_key2")))
+		assert.Equal(t, "local", config.FileGet(testName, "type"))
+		assert.Equal(t, "rutabaga", obscure.MustReveal(config.FileGet(testName, "test_key")))
+		assert.Equal(t, "cabbage", obscure.MustReveal(config.FileGet(testName, "test_key2")))
 	})
 
 	// Delete the test remote
@@ -125,8 +126,8 @@ func TestRc(t *testing.T) {
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Nil(t, out)
-	assert.Equal(t, "", FileGet(testName, "type"))
-	assert.Equal(t, "", FileGet(testName, "test_key"))
+	assert.Equal(t, "", config.FileGet(testName, "type"))
+	assert.Equal(t, "", config.FileGet(testName, "test_key"))
 }
 
 func TestRcProviders(t *testing.T) {

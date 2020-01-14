@@ -109,7 +109,7 @@ func (f *Fs) listFiles(ctx context.Context, directoryID int) (filesList *FilesLi
 	}
 	for i := range filesList.Items {
 		item := &filesList.Items[i]
-		item.Filename = enc.ToStandardName(item.Filename)
+		item.Filename = f.opt.Enc.ToStandardName(item.Filename)
 	}
 
 	return filesList, nil
@@ -135,10 +135,10 @@ func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *Fol
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list folders")
 	}
-	foldersList.Name = enc.ToStandardName(foldersList.Name)
+	foldersList.Name = f.opt.Enc.ToStandardName(foldersList.Name)
 	for i := range foldersList.SubFolders {
 		folder := &foldersList.SubFolders[i]
-		folder.Name = enc.ToStandardName(folder.Name)
+		folder.Name = f.opt.Enc.ToStandardName(folder.Name)
 	}
 
 	// fs.Debugf(f, "Got FoldersList for id `%s`", directoryID)
@@ -213,7 +213,7 @@ func getRemote(dir, fileName string) string {
 }
 
 func (f *Fs) makeFolder(ctx context.Context, leaf string, folderID int) (response *MakeFolderResponse, err error) {
-	name := enc.FromStandardName(leaf)
+	name := f.opt.Enc.FromStandardName(leaf)
 	// fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
 
 	request := MakeFolderRequest{
@@ -323,7 +323,7 @@ func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse
 func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
 	// fs.Debugf(f, "Uploading File `%s`", fileName)
 
-	fileName = enc.FromStandardName(fileName)
+	fileName = f.opt.Enc.FromStandardName(fileName)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
 		return nil, errors.New("Invalid UploadID")

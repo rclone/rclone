@@ -12,18 +12,18 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 
 	httpclient "github.com/koofr/go-httpclient"
 	koofrclient "github.com/koofr/go-koofrclient"
 )
-
-const enc = encodings.Koofr
 
 // Register Fs with rclone
 func init() {
@@ -31,46 +31,50 @@ func init() {
 		Name:        "koofr",
 		Description: "Koofr",
 		NewFs:       NewFs,
-		Options: []fs.Option{
-			{
-				Name:     "endpoint",
-				Help:     "The Koofr API endpoint to use",
-				Default:  "https://app.koofr.net",
-				Required: true,
-				Advanced: true,
-			}, {
-				Name:     "mountid",
-				Help:     "Mount ID of the mount to use. If omitted, the primary mount is used.",
-				Required: false,
-				Default:  "",
-				Advanced: true,
-			}, {
-				Name:     "setmtime",
-				Help:     "Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
-				Default:  true,
-				Required: true,
-				Advanced: true,
-			}, {
-				Name:     "user",
-				Help:     "Your Koofr user name",
-				Required: true,
-			}, {
-				Name:       "password",
-				Help:       "Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)",
-				IsPassword: true,
-				Required:   true,
-			},
-		},
+		Options: []fs.Option{{
+			Name:     "endpoint",
+			Help:     "The Koofr API endpoint to use",
+			Default:  "https://app.koofr.net",
+			Required: true,
+			Advanced: true,
+		}, {
+			Name:     "mountid",
+			Help:     "Mount ID of the mount to use. If omitted, the primary mount is used.",
+			Required: false,
+			Default:  "",
+			Advanced: true,
+		}, {
+			Name:     "setmtime",
+			Help:     "Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
+			Default:  true,
+			Required: true,
+			Advanced: true,
+		}, {
+			Name:     "user",
+			Help:     "Your Koofr user name",
+			Required: true,
+		}, {
+			Name:       "password",
+			Help:       "Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)",
+			IsPassword: true,
+			Required:   true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Koofr,
+		}},
 	})
 }
 
 // Options represent the configuration of the Koofr backend
 type Options struct {
-	Endpoint string `config:"endpoint"`
-	MountID  string `config:"mountid"`
-	User     string `config:"user"`
-	Password string `config:"password"`
-	SetMTime bool   `config:"setmtime"`
+	Endpoint string               `config:"endpoint"`
+	MountID  string               `config:"mountid"`
+	User     string               `config:"user"`
+	Password string               `config:"password"`
+	SetMTime bool                 `config:"setmtime"`
+	Enc      encoder.MultiEncoder `config:"encoding"`
 }
 
 // A Fs is a representation of a remote Koofr Fs
@@ -246,7 +250,7 @@ func (f *Fs) Hashes() hash.Set {
 
 // fullPath constructs a full, absolute path from a Fs root relative path,
 func (f *Fs) fullPath(part string) string {
-	return enc.FromStandardPath(path.Join("/", f.root, part))
+	return f.opt.Enc.FromStandardPath(path.Join("/", f.root, part))
 }
 
 // NewFs constructs a new filesystem given a root path and configuration options
@@ -299,7 +303,7 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 		}
 		return nil, errors.New("Failed to find mount " + opt.MountID)
 	}
-	rootFile, err := f.client.FilesInfo(f.mountID, enc.FromStandardPath("/"+f.root))
+	rootFile, err := f.client.FilesInfo(f.mountID, f.opt.Enc.FromStandardPath("/"+f.root))
 	if err == nil && rootFile.Type != "dir" {
 		f.root = dir(f.root)
 		err = fs.ErrorIsFile
@@ -317,7 +321,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	entries = make([]fs.DirEntry, len(files))
 	for i, file := range files {
-		remote := path.Join(dir, enc.ToStandardName(file.Name))
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(file.Name))
 		if file.Type == "dir" {
 			entries[i] = fs.NewDir(remote, time.Unix(0, 0))
 		} else {

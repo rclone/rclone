@@ -11,12 +11,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/encodings"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -29,8 +31,6 @@ const (
 	decayConstant = 2 // bigger for slower decay, exponential
 )
 
-const enc = encodings.Fichier
-
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "fichier",
@@ -38,25 +38,28 @@ func init() {
 		Config: func(name string, config configmap.Mapper) {
 		},
 		NewFs: NewFs,
-		Options: []fs.Option{
-			{
-				Help: "Your API Key, get it from https://1fichier.com/console/params.pl",
-				Name: "api_key",
-			},
-			{
-				Help:     "If you want to download a shared folder, add this parameter",
-				Name:     "shared_folder",
-				Required: false,
-				Advanced: true,
-			},
-		},
+		Options: []fs.Option{{
+			Help: "Your API Key, get it from https://1fichier.com/console/params.pl",
+			Name: "api_key",
+		}, {
+			Help:     "If you want to download a shared folder, add this parameter",
+			Name:     "shared_folder",
+			Required: false,
+			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default:  encodings.Fichier,
+		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey       string `config:"api_key"`
-	SharedFolder string `config:"shared_folder"`
+	APIKey       string               `config:"api_key"`
+	SharedFolder string               `config:"shared_folder"`
+	Enc          encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs is the interface a cloud storage system must provide
@@ -64,9 +67,9 @@ type Fs struct {
 	root       string
 	name       string
 	features   *fs.Features
+	opt        Options
 	dirCache   *dircache.DirCache
 	baseClient *http.Client
-	options    *Options
 	pacer      *fs.Pacer
 	rest       *rest.Client
 }
@@ -162,7 +165,7 @@ func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
 	f := &Fs{
 		name:       name,
 		root:       root,
-		options:    opt,
+		opt:        *opt,
 		pacer:      fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		baseClient: &http.Client{},
 	}
@@ -176,7 +179,7 @@ func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
 
 	f.rest = rest.NewClient(client).SetRoot(apiBaseURL)
 
-	f.rest.SetHeader("Authorization", "Bearer "+f.options.APIKey)
+	f.rest.SetHeader("Authorization", "Bearer "+f.opt.APIKey)
 
 	f.dirCache = dircache.New(root, rootID, f)
 
@@ -226,8 +229,8 @@ func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	if f.options.SharedFolder != "" {
-		return f.listSharedFiles(ctx, f.options.SharedFolder)
+	if f.opt.SharedFolder != "" {
+		return f.listSharedFiles(ctx, f.opt.SharedFolder)
 	}
 
 	dirContent, err := f.listDir(ctx, dir)

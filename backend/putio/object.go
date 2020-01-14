@@ -137,7 +137,7 @@ func (o *Object) readEntry(ctx context.Context) (f *putio.File, err error) {
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		// fs.Debugf(o, "requesting child. directoryID: %s, name: %s", directoryID, leaf)
-		req, err := o.fs.client.NewRequest(ctx, "GET", "/v2/files/"+directoryID+"/child?name="+url.QueryEscape(enc.FromStandardName(leaf)), nil)
+		req, err := o.fs.client.NewRequest(ctx, "GET", "/v2/files/"+directoryID+"/child?name="+url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf)), nil)
 		if err != nil {
 			return false, err
 		}
