@@ -210,6 +210,86 @@ A common source of invalid UTF-8 bytes are local filesystems, that store
 names in a different encoding than UTF-8 or UTF-16, like latin1. See the
 [local filenames](/local/#filenames) section for details.
 
+#### Encoding option {#encoding}
+
+Most backends have an encoding options, specified as a flag
+`--backend-encoding` where `backend` is the name of the backend, or as
+a config parameter `encoding` (you'll need to select the Advanced
+config in `rclone config` to see it).
+
+This will have default value which encodes and decodes characters in
+such a way as to preserve the maximum number of characters (see
+above).
+
+However this can be incorrect in some scenarios, for example if you
+have a Windows file system with characters such as `＊` and `？` that
+you want to remain as those characters on the remote rather than being
+translated to `*` and `?`.
+
+The `--backend-encoding` flags allow you to change that. You can
+disable the encoding completely with `--backend-encoding None` or set
+`encoding = None` in the config file.
+
+Encoding takes a comma separated list of encodings. You can see the
+list of all available characters by passing an invalid value to this
+flag, eg `--local-encoding "help"` and `rclone help flags encoding`
+will show you the defaults for the backends.
+
+| Encoding  | Characters |
+| --------- | ---------- |
+| Asterisk | `*` |
+| BackQuote | `` ` `` |
+| BackSlash | `\` |
+| Colon | `:` |
+| CrLf | CR 0x0D, LF 0x0A |
+| Ctl | All control characters 0x00-0x1F |
+| Del | DEL 0x7F |
+| Dollar | `$` |
+| Dot | `.` |
+| DoubleQuote | `"` |
+| Hash | `#` |
+| InvalidUtf8 | An invalid UTF-8 character (eg latin1) |
+| LeftCrLfHtVt | CR 0x0D, LF 0x0A,HT 0x09, VT 0x0B on the left of a string |
+| LeftPeriod | `.` on the left of a string |
+| LeftSpace | SPACE on the left of a string |
+| LeftTilde | `~` on the left of a string |
+| LtGt | `<`, `>` |
+| None | No characters are encoded |
+| Percent | `%` |
+| Pipe | <code>\|</code> |
+| Question | `?` |
+| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string |
+| RightPeriod | `.` on the right of a string |
+| RightSpace | SPACE on the right of a string |
+| SingleQuote | `'` |
+| Slash | `/` |
+
+To take a specific example, the FTP backend's default encoding is
+
+    --ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
+
+However, let's say the FTP server is running on Windows and can't have
+any of the invalid Windows characters in file names. You are backing
+up Linux servers to this FTP server which do have those characters in
+file names. So you would add the Windows set which are
+
+    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+
+to the existing ones, giving:
+
+    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
+
+This can be specified using the `--ftp-encoding` flag or using an `encoding` parameter in the config file.
+
+Or let's say you have a Windows server but you want to preserve `＊`
+and `？`, you would then have this as the encoding (the Windows
+encoding minus `Asterisk` and `Question`).
+
+    Slash,LtGt,DoubleQuote,Colon,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+
+This can be specified using the `--local-encoding` flag or using an
+`encoding` parameter in the config file.
+
 ### MIME Type ###
 
 MIME types (also known as media types) classify types of documents
