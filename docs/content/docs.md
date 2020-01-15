@@ -839,7 +839,7 @@ with the default `--checkers 8` it is somewhat random.
 #### Limitations
 
 The `--order-by` flag does not do a separate pass over the data.  This
-means that is may transfer some files out of the order specified if
+means that it may transfer some files out of the order specified if
 
 - there are no files in the backlog or the source has not been fully scanned yet
 - there are more than [--max-backlog](#max-backlog-n) files in the backlog
