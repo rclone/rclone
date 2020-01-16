@@ -125,14 +125,6 @@ func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string
 	}
 }
 
-type objectsSortedByModTime []fs.Object
-
-func (objs objectsSortedByModTime) Len() int      { return len(objs) }
-func (objs objectsSortedByModTime) Swap(i, j int) { objs[i], objs[j] = objs[j], objs[i] }
-func (objs objectsSortedByModTime) Less(i, j int) bool {
-	return objs[i].ModTime(context.TODO()).Before(objs[j].ModTime(context.TODO()))
-}
-
 // DeduplicateMode is how the dedupe command chooses what to do
 type DeduplicateMode int
 
@@ -145,6 +137,7 @@ const (
 	DeduplicateOldest                             // choose the oldest object
 	DeduplicateRename                             // rename the objects
 	DeduplicateLargest                            // choose the largest object
+	DeduplicateSmallest                           // choose the smallest object
 )
 
 func (x DeduplicateMode) String() string {
@@ -163,6 +156,8 @@ func (x DeduplicateMode) String() string {
 		return "rename"
 	case DeduplicateLargest:
 		return "largest"
+	case DeduplicateSmallest:
+		return "smallest"
 	}
 	return "unknown"
 }
@@ -184,6 +179,8 @@ func (x *DeduplicateMode) Set(s string) error {
 		*x = DeduplicateRename
 	case "largest":
 		*x = DeduplicateLargest
+	case "smallest":
+		*x = DeduplicateSmallest
 	default:
 		return errors.Errorf("Unknown mode for dedupe %q.", s)
 	}
@@ -248,6 +245,20 @@ func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]fs
 	return nil
 }
 
+// sort oldest first
+func sortOldestFirst(objs []fs.Object) {
+	sort.Slice(objs, func(i, j int) bool {
+		return objs[i].ModTime(context.TODO()).Before(objs[j].ModTime(context.TODO()))
+	})
+}
+
+// sort smallest first
+func sortSmallestFirst(objs []fs.Object) {
+	sort.Slice(objs, func(i, j int) bool {
+		return objs[i].Size() < objs[j].Size()
+	})
+}
+
 // Deduplicate interactively finds duplicate files and offers to
 // delete all but one or rename them to be different. Only useful with
 // Google Drive which can have duplicate file names.
@@ -296,24 +307,19 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode) error {
 			case DeduplicateFirst:
 				dedupeDeleteAllButOne(ctx, 0, remote, objs)
 			case DeduplicateNewest:
-				sort.Sort(objectsSortedByModTime(objs)) // sort oldest first
+				sortOldestFirst(objs)
 				dedupeDeleteAllButOne(ctx, len(objs)-1, remote, objs)
 			case DeduplicateOldest:
-				sort.Sort(objectsSortedByModTime(objs)) // sort oldest first
+				sortOldestFirst(objs)
 				dedupeDeleteAllButOne(ctx, 0, remote, objs)
 			case DeduplicateRename:
 				dedupeRename(ctx, f, remote, objs)
 			case DeduplicateLargest:
-				largest, largestIndex := int64(-1), -1
-				for i, obj := range objs {
-					size := obj.Size()
-					if size > largest {
-						largest, largestIndex = size, i
-					}
-				}
-				if largestIndex > -1 {
-					dedupeDeleteAllButOne(ctx, largestIndex, remote, objs)
-				}
+				sortSmallestFirst(objs)
+				dedupeDeleteAllButOne(ctx, len(objs)-1, remote, objs)
+			case DeduplicateSmallest:
+				sortSmallestFirst(objs)
+				dedupeDeleteAllButOne(ctx, 0, remote, objs)
 			case DeduplicateSkip:
 				// skip
 			default:
