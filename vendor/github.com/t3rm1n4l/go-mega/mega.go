@@ -759,7 +759,10 @@ func (m *Mega) addFSNode(itm FSNode) (*Node, error) {
 			}
 			// Shared file
 		default:
-			k := m.FS.skmap[itemUser]
+			k, ok := m.FS.skmap[itemUser]
+			if !ok {
+				return nil, errors.New("couldn't find decryption key for shared file")
+			}
 			b, err := base64urldecode(k)
 			if err != nil {
 				return nil, err
@@ -930,7 +933,8 @@ func (m *Mega) getFileSystem() error {
 	for _, itm := range res[0].F {
 		_, err = m.addFSNode(itm)
 		if err != nil {
-			return err
+			m.debugf("couldn't decode FSNode %#v: %v ", itm, err)
+			continue
 		}
 	}
 
