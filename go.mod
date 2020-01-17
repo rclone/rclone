@@ -50,7 +50,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/t3rm1n4l/go-mega v0.0.0-20200111163430-ad0abe77ec81
+	github.com/t3rm1n4l/go-mega v0.0.0-20200117211730-79a813bb328d
 	github.com/xanzy/ssh-agent v0.2.1
 	github.com/youmark/pkcs8 v0.0.0-20191102193632-94c173a94d60
 	github.com/yunify/qingstor-sdk-go/v3 v3.1.1
