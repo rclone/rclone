@@ -183,6 +183,9 @@ endif
 	@echo Beta release ready at $(BETA_URL)
 
 circleci_upload:
+	sudo chown -R $$USER build
+	find build -type l -delete
+	gzip -r9v build
 	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
 ifndef BRANCH_PATH
 	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
