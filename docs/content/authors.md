@@ -324,3 +324,4 @@ Contributors
   * Kuang-che Wu <kcwu@csie.org>
   * Thomas Eales <wingsuit@users.noreply.github.com>
   * Paul Tinsley <paul.tinsley@vitalsource.com>
+  * Felix Hungenberg <git@shiftgeist.com>
