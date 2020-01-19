@@ -61,7 +61,7 @@ var (
 			AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
 			TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
 		},
-		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"},
+		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
