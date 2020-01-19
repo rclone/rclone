@@ -17,7 +17,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlag := commandDefinition.Flags()
-	flags.FVarP(cmdFlag, &dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
+	flags.FVarP(cmdFlag, &dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename.")
 }
 
 var commandDefinition = &cobra.Command{
