@@ -88,11 +88,17 @@ func (f *File) Name() (name string) {
 	return f.leaf
 }
 
+// _path returns the full path of the file
+// use when lock is held
+func (f *File) _path() string {
+	return path.Join(f.d.path, f.leaf)
+}
+
 // Path returns the full path of the file
 func (f *File) Path() string {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	return path.Join(f.d.path, f.leaf)
+	return f._path()
 }
 
 // osPath returns the full path of the file in the cache in OS format
@@ -372,6 +378,12 @@ func (f *File) _applyPendingModTime() error {
 		return errors.New("Cannot apply ModTime, file object is not available")
 	}
 
+	// set the time of the file in the cache
+	if f.d.vfs.Opt.CacheMode != CacheModeOff {
+		f.d.vfs.cache.setModTime(f._path(), f.pendingModTime)
+	}
+
+	// set the time of the object
 	err := f.o.SetModTime(context.TODO(), f.pendingModTime)
 	switch err {
 	case nil:

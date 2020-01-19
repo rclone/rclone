@@ -381,6 +381,15 @@ func (c *cache) removeDir(dir string) bool {
 	return false
 }
 
+// setModTime should be called to set the modification time of the cache file
+func (c *cache) setModTime(name string, modTime time.Time) {
+	osPath := c.toOSPath(name)
+	err := os.Chtimes(osPath, modTime, modTime)
+	if err != nil {
+		fs.Errorf(name, "Failed to set modification time of cached file: %v", err)
+	}
+}
+
 // cleanUp empties the cache of everything
 func (c *cache) cleanUp() error {
 	return os.RemoveAll(c.root)
