@@ -108,7 +108,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	}
 	for _, node := range items {
 		name := node.Name()
-		if len(name) >= mountlib.MaxLeafSize {
+		if len(name) > mountlib.MaxLeafSize {
 			fs.Errorf(d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 			continue
 		}
