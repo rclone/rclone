@@ -326,3 +326,4 @@ Contributors
   * Paul Tinsley <paul.tinsley@vitalsource.com>
   * Felix Hungenberg <git@shiftgeist.com>
   * Benjamin Richter <github@dev.telepath.de>
+  * landall <cst_zf@qq.com>
