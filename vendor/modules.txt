@@ -203,7 +203,7 @@ go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
 # goftp.io/server v0.0.0-20190812052725-72a57b186803
 goftp.io/server
-# golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
+# golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20

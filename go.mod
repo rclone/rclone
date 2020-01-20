@@ -57,7 +57,7 @@ require (
 	go.etcd.io/bbolt v1.3.3 // indirect
 	go.opencensus.io v0.22.2 // indirect
 	goftp.io/server v0.0.0-20190812052725-72a57b186803
-	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
+	golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
 	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
