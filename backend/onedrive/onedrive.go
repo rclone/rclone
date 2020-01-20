@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -380,13 +381,30 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
-	authRetry := false
-
-	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
-		authRetry = true
-		fs.Debugf(nil, "Should retry: %v", err)
+	retry := false
+	if resp != nil {
+		switch resp.StatusCode {
+		case 401:
+			if len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
+				retry = true
+				fs.Debugf(nil, "Should retry: %v", err)
+			}
+		case 429: // Too Many Requests.
+			// see https://docs.microsoft.com/en-us/sharepoint/dev/general-development/how-to-avoid-getting-throttled-or-blocked-in-sharepoint-online
+			if values := resp.Header["Retry-After"]; len(values) == 1 && values[0] != "" {
+				retryAfter, parseErr := strconv.Atoi(values[0])
+				if parseErr != nil {
+					fs.Debugf(nil, "Failed to parse Retry-After: %q: %v", values[0], parseErr)
+				} else {
+					duration := time.Second * time.Duration(retryAfter)
+					retry = true
+					err = pacer.RetryAfterError(err, duration)
+					fs.Debugf(nil, "Too many requests. Trying again in %d seconds.", retryAfter)
+				}
+			}
+		}
 	}
-	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return retry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // readMetaDataForPathRelativeToID reads the metadata for a path relative to an item that is addressed by its normalized ID.
