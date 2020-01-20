@@ -325,3 +325,4 @@ Contributors
   * Thomas Eales <wingsuit@users.noreply.github.com>
   * Paul Tinsley <paul.tinsley@vitalsource.com>
   * Felix Hungenberg <git@shiftgeist.com>
+  * Benjamin Richter <github@dev.telepath.de>
