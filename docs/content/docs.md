@@ -1378,7 +1378,14 @@ Write CPU profile to file.  This can be analysed with `go tool pprof`.
 #### --dump flag,flag,flag ####
 
 The `--dump` flag takes a comma separated list of flags to dump info
-about.  These are:
+about.
+
+Note that some headers including `Accept-Encoding` as shown may not 
+be correct in the request and the response may not show `Content-Encoding`
+if the go standard libraries auto gzip encoding was in effect. In this case 
+the body of the request will be gunzipped before showing it.
+
+The available flags are:
 
 #### --dump headers ####
 
