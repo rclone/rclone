@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path"
 	"strings"
 	"time"
 
@@ -143,6 +144,10 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	wInfo, wName, wPath, wConfig, err := fs.ConfigFs(remote)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
+	}
+	// Make sure to remove trailing . reffering to the current dir
+	if path.Base(rpath) == "." {
+		rpath = strings.TrimSuffix(rpath, ".")
 	}
 	// Look for a file first
 	remotePath := fspath.JoinRootPath(wPath, cipher.EncryptFileName(rpath))
