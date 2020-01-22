@@ -99,6 +99,18 @@ var ctxFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 	}
 }
 
+var ctxParmFn = func(paramCtx context.Context, returnError bool) func(ctx context.Context, in rc.Params) (rc.Params, error) {
+	return func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		select {
+		case <-paramCtx.Done():
+			if returnError {
+				return nil, ctx.Err()
+			}
+			return rc.Params{}, nil
+		}
+	}
+}
+
 const (
 	sleepTime      = 100 * time.Millisecond
 	floatSleepTime = float64(sleepTime) / 1e9 / 2
@@ -341,5 +353,44 @@ func TestRcSyncJobStop(t *testing.T) {
 	assert.Equal(t, float64(1), out["id"])
 	assert.Equal(t, "context canceled", out["error"])
 	assert.Equal(t, true, out["finished"])
+	assert.Equal(t, false, out["success"])
+}
+
+func TestRcStatusLongPolling(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	jobID = 0
+	_, err := StartAsyncJob(ctxParmFn(ctx, false), rc.Params{})
+	assert.NoError(t, err)
+
+	time.AfterFunc(50*time.Millisecond, func() {
+		cancel()
+	})
+
+	call := rc.Calls.Get("job/status")
+	assert.NotNil(t, call)
+	in := rc.Params{"jobid": 1, "long_poll": 100}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, float64(1), out["id"])
+	assert.Equal(t, true, out["finished"])
+	assert.Equal(t, true, out["success"])
+}
+
+func TestRcStatusLongPollingExpire(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	jobID = 0
+	_, err := StartAsyncJob(ctxParmFn(ctx, true), rc.Params{})
+	assert.NoError(t, err)
+
+	call := rc.Calls.Get("job/status")
+	assert.NotNil(t, call)
+	in := rc.Params{"jobid": 1, "long_poll": 20}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.NotNil(t, out)
+	assert.Equal(t, float64(1), out["id"])
+	assert.Equal(t, false, out["finished"])
 	assert.Equal(t, false, out["success"])
 }

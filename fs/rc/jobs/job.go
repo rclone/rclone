@@ -18,6 +18,8 @@ import (
 
 // Job describes a asynchronous task started via the rc package
 type Job struct {
+	observers sync.Map
+
 	mu        sync.Mutex
 	ID        int64     `json:"id"`
 	Group     string    `json:"group"`
@@ -34,6 +36,81 @@ type Job struct {
 	// the real error to the upper application layers while still printing the
 	// string error message.
 	realErr error
+}
+
+// WaitForFinish will block until provided context is canceled or job is
+// finished.
+func (j *Job) WaitForFinish(ctx context.Context) {
+	j.mu.Lock()
+	if j.Finished {
+		return
+	}
+	j.mu.Unlock()
+
+	waitChan := make(chan struct{})
+	j.observers.Store(waitChan, struct{}{})
+
+	select {
+	case <-ctx.Done():
+		return
+	case <-waitChan:
+		return
+	}
+}
+
+func (j *Job) notifyFinished() {
+	j.observers.Range(func(key, value interface{}) bool {
+		if key == nil {
+			return false
+		}
+
+		close(key.(chan struct{}))
+		return true
+	})
+}
+
+// RcParams marshals job stats into rc.Params.
+func (j *Job) RcParams() (rc.Params, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
+	out := make(rc.Params)
+	err := rc.Reshape(&out, j)
+	return out, err
+}
+
+// mark the job as finished
+func (j *Job) finish(out rc.Params, err error) {
+	j.mu.Lock()
+	j.EndTime = time.Now()
+	if out == nil {
+		out = make(rc.Params)
+	}
+	j.Output = out
+	j.Duration = j.EndTime.Sub(j.StartTime).Seconds()
+	if err != nil {
+		j.realErr = err
+		j.Error = err.Error()
+		j.Success = false
+	} else {
+		j.realErr = nil
+		j.Error = ""
+		j.Success = true
+	}
+	j.Finished = true
+	j.mu.Unlock()
+	j.notifyFinished()
+	running.kickExpire() // make sure this job gets expired
+}
+
+// run the job until completion writing the return status
+func (j *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
+	defer func() {
+		if r := recover(); r != nil {
+			j.finish(nil, errors.Errorf("panic received: %v \n%s", r, string(debug.Stack())))
+		}
+	}()
+	j.finish(fn(ctx, in))
 }
 
 // Jobs describes a collection of running tasks
@@ -115,39 +192,6 @@ func (jobs *Jobs) Get(ID int64) *Job {
 	jobs.mu.RLock()
 	defer jobs.mu.RUnlock()
 	return jobs.jobs[ID]
-}
-
-// mark the job as finished
-func (job *Job) finish(out rc.Params, err error) {
-	job.mu.Lock()
-	job.EndTime = time.Now()
-	if out == nil {
-		out = make(rc.Params)
-	}
-	job.Output = out
-	job.Duration = job.EndTime.Sub(job.StartTime).Seconds()
-	if err != nil {
-		job.realErr = err
-		job.Error = err.Error()
-		job.Success = false
-	} else {
-		job.realErr = nil
-		job.Error = ""
-		job.Success = true
-	}
-	job.Finished = true
-	job.mu.Unlock()
-	running.kickExpire() // make sure this job gets expired
-}
-
-// run the job until completion writing the return status
-func (job *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
-	defer func() {
-		if r := recover(); r != nil {
-			job.finish(nil, errors.Errorf("panic received: %v \n%s", r, string(debug.Stack())))
-		}
-	}()
-	job.finish(fn(ctx, in))
 }
 
 func getGroup(in rc.Params) string {
@@ -239,6 +283,7 @@ func init() {
 		Help: `Parameters
 
 - jobid - id of the job (integer)
+- long_poll - optional millisecond duration to wait for job to complete before returning 
 
 Results
 
@@ -266,10 +311,17 @@ func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if job == nil {
 		return nil, errors.New("job not found")
 	}
-	job.mu.Lock()
-	defer job.mu.Unlock()
-	out = make(rc.Params)
-	err = rc.Reshape(&out, job)
+	longPoll, err := in.GetInt64("long_poll")
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+
+	if longPoll > 0 {
+		ctxWait, cancel := context.WithTimeout(ctx, time.Duration(longPoll)*time.Millisecond)
+		job.WaitForFinish(ctxWait)
+		cancel()
+	}
+	out, err = job.RcParams()
 	if err != nil {
 		return nil, errors.Wrap(err, "reshape failed in job status")
 	}
