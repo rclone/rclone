@@ -880,6 +880,14 @@ Rclone will do its best to transfer the best file it has so in
 practice this should not cause a problem.  Think of `--order-by` as
 being more of a best efforts flag rather than a perfect ordering.
 
+### --password-command=STRING ###
+
+This flag supplies a program which should supply the config password
+when run. This is an alternative to rclone prompting for the password
+or setting the `RCLONE_CONFIG_PASS` variable.
+
+See the [Configuration Encryption](#configuration-encryption) for more info.
+
 ### -P, --progress ###
 
 This flag makes rclone update the stats in a static block in the
@@ -1361,13 +1369,13 @@ which will retrieve the password and print on standard output.  This
 script should have a fully specified path name and not rely on any
 environment variables.  The script is supplied either via
 `--password-command="..."` command line argument or via the
-`RCLONE_CONFIG_PASS_COMMAND` environment variable.
+`RCLONE_PASSWORD_COMMAND` environment variable.
 
 One useful example of this is using the `passwordstore` application
 to retrieve the password:
 
 ```
-export RCLONE_CONFIG_PASS_COMMAND="pass rclone/config"
+export RCLONE_PASSWORD_COMMAND="pass rclone/config"
 ```
 
 If the `passwordstore` password manager holds the password for the
@@ -1381,11 +1389,11 @@ script method of supplying the password enhances the security of
 the config password considerably.
 
 If you are running rclone inside a script, unless you are using the
-`RCLONE_CONFIG_PASS_COMMAND` method, you might want to disable 
+`--password-command` method, you might want to disable 
 password prompts. To do that, pass the parameter 
 `--ask-password=false` to rclone. This will make rclone fail instead
 of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
-a valid password, and `RCLONE_CONFIG_PASS_COMMAND` has not been supplied.
+a valid password, and `--password-command` has not been supplied.
 
 
 Developer options
