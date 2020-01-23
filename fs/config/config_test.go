@@ -275,12 +275,12 @@ func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
 	oldConfig := fs.Config
 	ConfigPath = "./testdata/encrypted.conf"
 	// using fs.Config.PasswordCommand, correct password
-	fs.Config.PasswordCommand = "echo asdf"
+	fs.Config.PasswordCommand = fs.SpaceSepList{"echo", "asdf"}
 	defer func() {
 		ConfigPath = oldConfigPath
 		configKey = nil // reset password
 		fs.Config = oldConfig
-		fs.Config.PasswordCommand = ""
+		fs.Config.PasswordCommand = nil
 	}()
 
 	configKey = nil // reset password
@@ -302,12 +302,12 @@ func TestConfigLoadEncryptedWithInvalidPassCommand(t *testing.T) {
 	oldConfig := fs.Config
 	ConfigPath = "./testdata/encrypted.conf"
 	// using fs.Config.PasswordCommand, incorrect password
-	fs.Config.PasswordCommand = "echo asdf-blurfl"
+	fs.Config.PasswordCommand = fs.SpaceSepList{"echo", "asdf-blurfl"}
 	defer func() {
 		ConfigPath = oldConfigPath
 		configKey = nil // reset password
 		fs.Config = oldConfig
-		fs.Config.PasswordCommand = ""
+		fs.Config.PasswordCommand = nil
 	}()
 
 	configKey = nil // reset password
