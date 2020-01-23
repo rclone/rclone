@@ -113,7 +113,7 @@ func (d *Dir) forgetDirPath(relativePath string) {
 	if dir := d.cachedDir(relativePath); dir != nil {
 		dir.walk(func(dir *Dir) {
 			// this is called with the mutex held
-			fs.Debugf(dir.path, "forgetting directory cache")
+			fs.Infof(dir.path, "forgetting directory cache")
 			dir.read = time.Time{}
 			dir.items = make(map[string]Node)
 		})
@@ -134,7 +134,7 @@ func (d *Dir) invalidateDir(absPath string) {
 	if dir, ok := node.(*Dir); ok {
 		dir.mu.Lock()
 		if !dir.read.IsZero() {
-			fs.Debugf(dir.path, "invalidating directory cache")
+			fs.Infof(dir.path, "invalidating directory cache")
 			dir.read = time.Time{}
 		}
 		dir.mu.Unlock()
