@@ -274,13 +274,11 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	}
 
 	if len(configKey) == 0 {
-		pwc := fs.Config.PasswordCommand
-		if pwc != "" {
+		if len(fs.Config.PasswordCommand) != 0 {
 			var stdout bytes.Buffer
 			var stderr bytes.Buffer
 
-			args := strings.Fields(pwc)
-			cmd := exec.Command(args[0], args[1:]...)
+			cmd := exec.Command(fs.Config.PasswordCommand[0], fs.Config.PasswordCommand[1:]...)
 
 			cmd.Stdout = &stdout
 			cmd.Stderr = &stderr

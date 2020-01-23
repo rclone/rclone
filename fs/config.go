@@ -89,7 +89,7 @@ type ConfigInfo struct {
 	StreamingUploadCutoff  SizeSuffix
 	StatsFileNameLength    int
 	AskPassword            bool
-	PasswordCommand        string
+	PasswordCommand        SpaceSepList
 	UseServerModTime       bool
 	MaxTransfer            SizeSuffix
 	MaxBacklog             int
