@@ -102,6 +102,18 @@ var ctxFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 	}
 }
 
+var ctxParmFn = func(paramCtx context.Context, returnError bool) func(ctx context.Context, in rc.Params) (rc.Params, error) {
+	return func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		select {
+		case <-paramCtx.Done():
+			if returnError {
+				return nil, ctx.Err()
+			}
+			return rc.Params{}, nil
+		}
+	}
+}
+
 const (
 	sleepTime      = 100 * time.Millisecond
 	floatSleepTime = float64(sleepTime) / 1e9 / 2
@@ -345,4 +357,43 @@ func TestRcSyncJobStop(t *testing.T) {
 	assert.Equal(t, "context canceled", out["error"])
 	assert.Equal(t, true, out["finished"])
 	assert.Equal(t, false, out["success"])
+}
+
+func TestOnFinish(t *testing.T) {
+	jobID = 0
+	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	_, err := StartAsyncJob(ctxParmFn(ctx, false), rc.Params{})
+	assert.NoError(t, err)
+
+	stop, err := OnFinish(jobID, func() { close(done) })
+	defer stop()
+	assert.NoError(t, err)
+
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("Timeout waiting for OnFinish to fire")
+	}
+}
+
+func TestOnFinishAlreadyFinished(t *testing.T) {
+	jobID = 0
+	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	_, id, err := ExecuteJob(ctx, shortFn, rc.Params{})
+	assert.NoError(t, err)
+
+	stop, err := OnFinish(id, func() { close(done) })
+	defer stop()
+	assert.NoError(t, err)
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("Timeout waiting for OnFinish to fire")
+	}
 }
