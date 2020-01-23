@@ -327,3 +327,4 @@ Contributors
   * Felix Hungenberg <git@shiftgeist.com>
   * Benjamin Richter <github@dev.telepath.de>
   * landall <cst_zf@qq.com>
+  * thestigma <thestigma@gmail.com>
