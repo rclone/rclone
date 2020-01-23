@@ -275,10 +275,6 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 
 	if len(configKey) == 0 {
 		pwc := fs.Config.PasswordCommand
-
-		if pwc == "" {
-			pwc = os.Getenv("RCLONE_CONFIG_PASS_COMMAND")
-		}
 		if pwc != "" {
 			var stdout bytes.Buffer
 			var stderr bytes.Buffer
@@ -291,7 +287,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 
 			if err := cmd.Run(); err != nil {
 				// One does not always get the stderr returned in the wrapped error.
-				fs.Errorf(nil, "Using RCLONE_CONFIG_PASS_COMMAND returned: %v", err)
+				fs.Errorf(nil, "Using --password-command returned: %v", err)
 				if ers := strings.TrimSpace(stderr.String()); ers != "" {
 					fs.Errorf(nil, "--password-command stderr: %s", ers)
 				}
@@ -357,7 +353,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		} else {
 			if len(configKey) == 0 {
 				if usingPasswordCommand {
-					return nil, errors.New("using password command derived password, unable to decrypt configuration")
+					return nil, errors.New("using --password-command derived password, unable to decrypt configuration")
 				}
 				if !fs.Config.AskPassword {
 					return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
