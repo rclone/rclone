@@ -880,11 +880,23 @@ Rclone will do its best to transfer the best file it has so in
 practice this should not cause a problem.  Think of `--order-by` as
 being more of a best efforts flag rather than a perfect ordering.
 
-### --password-command=STRING ###
+### --password-command SpaceSepList ###
 
 This flag supplies a program which should supply the config password
 when run. This is an alternative to rclone prompting for the password
 or setting the `RCLONE_CONFIG_PASS` variable.
+
+The argument to this should be a command with a space separated list
+of arguments. If one of the arguments has a space in then enclose it
+in `"`, if you want a literal `"` in an argument then enclose the
+argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
+for more info.
+
+Eg
+
+    --password-command echo hello
+    --password-command echo "hello with space"
+    --password-command echo "hello with ""quotes"" and space"
 
 See the [Configuration Encryption](#configuration-encryption) for more info.
 
