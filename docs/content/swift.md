@@ -63,7 +63,7 @@ Choose a number from below, or type in your own value
  5 / Memset Memstore UK v2
    \ "https://auth.storage.memset.com/v2.0"
  6 / OVH
-   \ "https://auth.cloud.ovh.net/v2.0"
+   \ "https://auth.cloud.ovh.net/v3"
 auth> 
 User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
 user_id> 
@@ -279,7 +279,7 @@ Authentication URL for server (OS_AUTH_URL).
         - Memset Memstore UK
     - "https://auth.storage.memset.com/v2.0"
         - Memset Memstore UK v2
-    - "https://auth.cloud.ovh.net/v2.0"
+    - "https://auth.cloud.ovh.net/v3"
         - OVH
 
 #### --swift-user-id

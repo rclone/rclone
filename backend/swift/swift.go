@@ -114,7 +114,7 @@ func init() {
 				Value: "https://auth.storage.memset.com/v2.0",
 			}, {
 				Help:  "OVH",
-				Value: "https://auth.cloud.ovh.net/v2.0",
+				Value: "https://auth.cloud.ovh.net/v3",
 			}},
 		}, {
 			Name: "user_id",
