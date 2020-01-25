@@ -1540,21 +1540,74 @@ func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (re
 	return response, err
 }
 
+// getPosition gets the current position in a multipart upload
+func (o *Object) getPosition(ctx context.Context, url string) (pos int64, err error) {
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: url,
+	}
+	var info api.UploadFragmentResponse
+	var resp *http.Response
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &info)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return 0, err
+	}
+	if len(info.NextExpectedRanges) != 1 {
+		return 0, errors.Errorf("bad number of ranges in upload position: %v", info.NextExpectedRanges)
+	}
+	position := info.NextExpectedRanges[0]
+	i := strings.IndexByte(position, '-')
+	if i < 0 {
+		return 0, errors.Errorf("no '-' in next expected range: %q", position)
+	}
+	position = position[:i]
+	pos, err = strconv.ParseInt(position, 10, 64)
+	if err != nil {
+		return 0, errors.Wrapf(err, "bad expected range: %q", position)
+	}
+	return pos, nil
+}
+
 // uploadFragment uploads a part
 func (o *Object) uploadFragment(ctx context.Context, url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64) (info *api.Item, err error) {
-	opts := rest.Opts{
-		Method:        "PUT",
-		RootURL:       url,
-		ContentLength: &chunkSize,
-		ContentRange:  fmt.Sprintf("bytes %d-%d/%d", start, start+chunkSize-1, totalSize),
-		Body:          chunk,
-	}
 	//	var response api.UploadFragmentResponse
 	var resp *http.Response
 	var body []byte
+	var skip = int64(0)
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, _ = chunk.Seek(0, io.SeekStart)
+		toSend := chunkSize - skip
+		opts := rest.Opts{
+			Method:        "PUT",
+			RootURL:       url,
+			ContentLength: &toSend,
+			ContentRange:  fmt.Sprintf("bytes %d-%d/%d", start+skip, start+chunkSize-1, totalSize),
+			Body:          chunk,
+		}
+		_, _ = chunk.Seek(skip, io.SeekStart)
 		resp, err = o.fs.srv.Call(ctx, &opts)
+		if err != nil && resp != nil && resp.StatusCode == http.StatusRequestedRangeNotSatisfiable {
+			fs.Debugf(o, "Received 416 error - reading current position from server: %v", err)
+			pos, posErr := o.getPosition(ctx, url)
+			if posErr != nil {
+				fs.Debugf(o, "Failed to read position: %v", posErr)
+				return false, posErr
+			}
+			skip = pos - start
+			fs.Debugf(o, "Read position %d, chunk is %d..%d, bytes to skip = %d", pos, start, start+chunkSize, skip)
+			switch {
+			case skip < 0:
+				return false, errors.Wrapf(err, "sent block already (skip %d < 0), can't rewind", skip)
+			case skip > chunkSize:
+				return false, errors.Wrapf(err, "position is in the future (skip %d > chunkSize %d), can't skip forward", skip, chunkSize)
+			case skip == chunkSize:
+				fs.Debugf(o, "Skipping chunk as already sent (skip %d == chunkSize %d)", skip, chunkSize)
+				return false, nil
+			}
+			return true, errors.Wrapf(err, "retry this chunk skipping %d bytes", skip)
+		}
 		if err != nil {
 			return shouldRetry(resp, err)
 		}
