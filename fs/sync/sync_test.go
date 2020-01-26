@@ -993,6 +993,9 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 
 // Test with a max transfer duration
 func TestSyncWithMaxDuration(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
