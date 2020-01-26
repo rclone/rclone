@@ -71,6 +71,7 @@ func formatForPrecision(precision time.Duration) string {
 type ListJSONOpt struct {
 	Recurse       bool `json:"recurse"`
 	NoModTime     bool `json:"noModTime"`
+	NoMimeType    bool `json:"noMimeType"`
 	ShowEncrypted bool `json:"showEncrypted"`
 	ShowOrigIDs   bool `json:"showOrigIDs"`
 	ShowHash      bool `json:"showHash"`
@@ -114,13 +115,15 @@ func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, 
 			}
 
 			item := ListJSONItem{
-				Path:     entry.Remote(),
-				Name:     path.Base(entry.Remote()),
-				Size:     entry.Size(),
-				MimeType: fs.MimeTypeDirEntry(ctx, entry),
+				Path: entry.Remote(),
+				Name: path.Base(entry.Remote()),
+				Size: entry.Size(),
 			}
 			if !opt.NoModTime {
 				item.ModTime = Timestamp{When: entry.ModTime(ctx), Format: format}
+			}
+			if !opt.NoMimeType {
+				item.MimeType = fs.MimeTypeDirEntry(ctx, entry)
 			}
 			if cipher != nil {
 				switch entry.(type) {
