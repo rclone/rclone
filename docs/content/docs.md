@@ -378,7 +378,7 @@ An example of timetable with WEEKDAY could be:
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
 
 It mean that, the transfer bandwidth will be set to 512kBytes/sec on Monday.
-It will raise to 10Mbytes/s before the end of Friday. 
+It will raise to 10Mbytes/s before the end of Friday.
 At 10:00 on Sunday it will be set to 1Mbyte/s.
 From 20:00 at Sunday will be unlimited.
 
@@ -458,12 +458,12 @@ they are incorrect as it would normally.
 
 ### --compare-dest=DIR ###
 
-When using `sync`, `copy` or `move` DIR is checked in addition to the 
-destination for files. If a file identical to the source is found that 
-file is NOT copied from source. This is useful to copy just files that 
+When using `sync`, `copy` or `move` DIR is checked in addition to the
+destination for files. If a file identical to the source is found that
+file is NOT copied from source. This is useful to copy just files that
 have changed since the last backup.
 
-You must use the same remote as the destination of the sync.  The 
+You must use the same remote as the destination of the sync.  The
 compare directory must not overlap the destination directory.
 
 See `--copy-dest` and `--backup-dir`.
@@ -498,9 +498,9 @@ connection to go through to a remote object storage system.  It is
 
 ### --copy-dest=DIR ###
 
-When using `sync`, `copy` or `move` DIR is checked in addition to the 
-destination for files. If a file identical to the source is found that 
-file is server side copied from DIR to the destination. This is useful 
+When using `sync`, `copy` or `move` DIR is checked in addition to the
+destination for files. If a file identical to the source is found that
+file is server side copied from DIR to the destination. This is useful
 for incremental backup.
 
 The remote in use must support server side copy and you must
@@ -555,7 +555,7 @@ The default is `1s`.  Set to 0 to disable.
 
 ### --ignore-case-sync ###
 
-Using this option will cause rclone to ignore the case of the files 
+Using this option will cause rclone to ignore the case of the files
 when synchronizing so files will not be copied/synced when the
 existing filenames are the same, even if the casing is different.
 
@@ -637,7 +637,7 @@ have a signal to rotate logs.
 
 ### --log-format LIST ###
 
-Comma separated list of log format options. `date`, `time`, `microseconds`, `longfile`, `shortfile`, `UTC`.  The default is "`date`,`time`". 
+Comma separated list of log format options. `date`, `time`, `microseconds`, `longfile`, `shortfile`, `UTC`.  The default is "`date`,`time`".
 
 ### --log-level LEVEL ###
 
@@ -657,7 +657,7 @@ warnings and significant events.
 
 ### --use-json-log ###
 
-This switches the log format to JSON for rclone. The fields of json log 
+This switches the log format to JSON for rclone. The fields of json log
 are level, msg, source, time.
 
 ### --low-level-retries NUMBER ###
@@ -946,7 +946,7 @@ Disable retries with `--retries 1`.
 
 ### --retries-sleep=TIME ###
 
-This sets the interval between each retry specified by `--retries` 
+This sets the interval between each retry specified by `--retries`
 
 The default is 0. Use 0 to disable.
 
@@ -983,9 +983,9 @@ Note that on macOS you can send a SIGINFO (which is normally ctrl-T in
 the terminal) to make the stats print immediately.
 
 ### --stats-file-name-length integer ###
-By default, the `--stats` output will truncate file names and paths longer 
-than 40 characters.  This is equivalent to providing 
-`--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable 
+By default, the `--stats` output will truncate file names and paths longer
+than 40 characters.  This is equivalent to providing
+`--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable
 any truncation of file names printed by stats.
 
 ### --stats-log-level string ###
@@ -1013,6 +1013,17 @@ the display with a user-supplied date string. The date string MUST be
 enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
 date formatting syntax.
 
+### --stats-unscaled ###
+
+By default, rclone prints stats in a human friendly manner, by scaling them to
+the most convenient unit (`k|M|G|P|T`).
+
+This flag disables this behaviour, printing `bits`|`bytes` regardless of the
+magnitude's order.
+
+A possible use case for this flag is having some system reading rclone's log
+and then generating metrics from its output.
+
 ### --stats-unit=bits|bytes ###
 
 By default, data transfer rates will be printed in bytes/second.
@@ -1029,14 +1040,14 @@ The default is `bytes`.
 ### --suffix=SUFFIX ###
 
 When using `sync`, `copy` or `move` any files which would have been
-overwritten or deleted will have the suffix added to them.  If there 
-is a file with the same path (after the suffix has been added), then 
+overwritten or deleted will have the suffix added to them.  If there
+is a file with the same path (after the suffix has been added), then
 it will be overwritten.
 
 The remote in use must support server side move or copy and you must
 use the same remote as the destination of the sync.
 
-This is for use with files to add the suffix in the current directory 
+This is for use with files to add the suffix in the current directory
 or with `--backup-dir`. See `--backup-dir` for more info.
 
 For example
@@ -1310,8 +1321,8 @@ This option defaults to `false`.
 
 Configuration Encryption
 ------------------------
-Your configuration file contains information for logging in to 
-your cloud services. This means that you should keep your 
+Your configuration file contains information for logging in to
+your cloud services. This means that you should keep your
 `.rclone.conf` file in a secure location.
 
 If you are in an environment where that isn't possible, you can
@@ -1359,8 +1370,8 @@ encryption from your configuration.
 
 There is no way to recover the configuration if you lose your password.
 
-rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox) 
-which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate 
+rclone uses [nacl secretbox](https://godoc.org/golang.org/x/crypto/nacl/secretbox)
+which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate
 your configuration with secret-key cryptography.
 The password is SHA-256 hashed, which produces the key for secretbox.
 The hashed password is not stored.
@@ -1412,8 +1423,8 @@ script method of supplying the password enhances the security of
 the config password considerably.
 
 If you are running rclone inside a script, unless you are using the
-`--password-command` method, you might want to disable 
-password prompts. To do that, pass the parameter 
+`--password-command` method, you might want to disable
+password prompts. To do that, pass the parameter
 `--ask-password=false` to rclone. This will make rclone fail instead
 of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
 a valid password, and `--password-command` has not been supplied.
@@ -1436,9 +1447,9 @@ Write CPU profile to file.  This can be analysed with `go tool pprof`.
 The `--dump` flag takes a comma separated list of flags to dump info
 about.
 
-Note that some headers including `Accept-Encoding` as shown may not 
+Note that some headers including `Accept-Encoding` as shown may not
 be correct in the request and the response may not show `Content-Encoding`
-if the go standard libraries auto gzip encoding was in effect. In this case 
+if the go standard libraries auto gzip encoding was in effect. In this case
 the body of the request will be gunzipped before showing it.
 
 The available flags are:

@@ -95,6 +95,7 @@ type ConfigInfo struct {
 	MaxDuration            time.Duration
 	MaxBacklog             int
 	MaxStatsGroups         int
+	StatsUnscaled          bool
 	StatsOneLine           bool
 	StatsOneLineDate       bool   // If we want a date prefix at all
 	StatsOneLineDateFormat string // If we want to customize the prefix

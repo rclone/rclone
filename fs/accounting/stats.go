@@ -272,7 +272,6 @@ func (s *StatsInfo) String() string {
 		xfrchkString = ""
 		dateString   = ""
 	)
-
 	if !fs.Config.StatsOneLine {
 		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
 	} else {
@@ -292,15 +291,27 @@ func (s *StatsInfo) String() string {
 		}
 	}
 
-	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s\n",
-		dateString,
-		fs.SizeSuffix(s.bytes),
-		fs.SizeSuffix(totalSize).Unit("Bytes"),
-		percent(s.bytes, totalSize),
-		fs.SizeSuffix(displaySpeed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
-		etaString(currentSize, totalSize, speed),
-		xfrchkString,
-	)
+	if fs.Config.StatsUnscaled {
+		_, _ = fmt.Fprintf(buf, "%s%10d / %d Bytes, %s, %s, ETA %s%s\n",
+			dateString,
+			s.bytes,
+			totalSize,
+			percent(s.bytes, totalSize),
+			fmt.Sprintf("%0.f %s/s", displaySpeed, fs.Config.DataRateUnit),
+			etaString(currentSize, totalSize, speed),
+			xfrchkString,
+		)
+	} else {
+		_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s\n",
+			dateString,
+			fs.SizeSuffix(s.bytes),
+			fs.SizeSuffix(totalSize).Unit("Bytes"),
+			percent(s.bytes, totalSize),
+			fs.SizeSuffix(displaySpeed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
+			etaString(currentSize, totalSize, speed),
+			xfrchkString,
+		)
+	}
 
 	if !fs.Config.StatsOneLine {
 		errorDetails := ""
