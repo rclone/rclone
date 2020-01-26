@@ -24,6 +24,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &opt.Recurse, "recursive", "R", false, "Recurse into the listing.")
 	flags.BoolVarP(cmdFlags, &opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer).")
 	flags.BoolVarP(cmdFlags, &opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
+	flags.BoolVarP(cmdFlags, &opt.NoMimeType, "no-mimetype", "", false, "Don't read the mime type (can speed things up).")
 	flags.BoolVarP(cmdFlags, &opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names.")
 	flags.BoolVarP(cmdFlags, &opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
 	flags.BoolVarP(cmdFlags, &opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
@@ -59,7 +60,9 @@ The output is an array of Items, where each Item looks like this
 
 If --hash is not specified the Hashes property won't be emitted.
 
-If --no-modtime is specified then ModTime will be blank.
+If --no-modtime is specified then ModTime will be blank. This can speed things up on remotes where reading the ModTime takes an extra request (eg s3, swift).
+
+If --no-mimetype is specified then MimeType will be blank. This can speed things up on remotes where reading the MimeType takes an extra request (eg s3, swift).
 
 If --encrypted is not specified the Encrypted won't be emitted.
 

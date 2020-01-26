@@ -166,10 +166,11 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 	list.SetDirSlash(dirSlash)
 	list.SetAbsolute(absolute)
 	var opt = operations.ListJSONOpt{
-		NoModTime: true,
-		DirsOnly:  dirsOnly,
-		FilesOnly: filesOnly,
-		Recurse:   recurse,
+		NoModTime:  true,
+		NoMimeType: true,
+		DirsOnly:   dirsOnly,
+		FilesOnly:  filesOnly,
+		Recurse:    recurse,
 	}
 
 	for _, char := range format {
@@ -188,6 +189,7 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 			list.AddID()
 		case 'm':
 			list.AddMimeType()
+			opt.NoMimeType = false
 		case 'e':
 			list.AddEncrypted()
 			opt.ShowEncrypted = true
