@@ -8,13 +8,6 @@ import (
 // The Errors type wraps a slice of errors
 type Errors []error
 
-var (
-	// FilterNil returns the error directly
-	FilterNil = func(err error) error {
-		return err
-	}
-)
-
 // Map returns a copy of the error slice with all its errors modified
 // according to the mapping function. If mapping returns nil,
 // the error is dropped from the error slice with no replacement.
@@ -32,34 +25,38 @@ func (e Errors) Map(mapping func(error) error) Errors {
 	return Errors(s[:i])
 }
 
-// Err returns a MultiError struct containing this Errors instance, or nil
-// if there are zero errors contained.
-func (e Errors) Err() error {
-	e = e.Map(FilterNil)
-	if len(e) == 0 {
-		return nil
-	}
-
-	return &MultiError{Errors: e}
+// FilterNil returns the Errors without nil
+func (e Errors) FilterNil() Errors {
+	ne := e.Map(func(err error) error {
+		return err
+	})
+	return ne
 }
 
-// MultiError type implements the error interface, and contains the
-// Errors used to construct it.
-type MultiError struct {
-	Errors Errors
+// Err returns a error interface that filtered nil,
+// or nil if no non-nil Error is presented.
+func (e Errors) Err() error {
+	ne := e.FilterNil()
+	if len(ne) == 0 {
+		return nil
+	}
+	return ne
 }
 
 // Error returns a concatenated string of the contained errors
-func (m *MultiError) Error() string {
+func (e Errors) Error() string {
 	var buf bytes.Buffer
 
-	if len(m.Errors) == 1 {
+	if len(e) == 0 {
+		buf.WriteString("no error")
+	}
+	if len(e) == 1 {
 		buf.WriteString("1 error: ")
 	} else {
-		fmt.Fprintf(&buf, "%d errors: ", len(m.Errors))
+		fmt.Fprintf(&buf, "%d errors: ", len(e))
 	}
 
-	for i, err := range m.Errors {
+	for i, err := range e {
 		if i != 0 {
 			buf.WriteString("; ")
 		}

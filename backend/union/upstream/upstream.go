@@ -20,23 +20,17 @@ var (
 	ErrUsageFieldNotSupported = errors.New("this usage field is not supported")
 )
 
-const (
-	unInitilized uint32 = iota
-	initilizing
-	normal
-	updating
-)
-
 // Fs is a wrap of any fs and its configs
 type Fs struct {
 	fs.Fs
 	writable    bool
 	creatable   bool
-	usage       *fs.Usage // Cache the usage
-	cacheMutex  sync.RWMutex
-	cacheExpiry int64         // usage cache expiry time
+	usage       *fs.Usage     // Cache the usage
 	cacheTime   time.Duration // cache duration
-	cacheState  uint32        // if the cache is updating
+	cacheExpiry int64         // usage cache expiry time
+	cacheMutex  sync.RWMutex
+	cacheOnce   sync.Once
+	cacheUpdate bool // if the cache is updating
 }
 
 // Directory describes a wrapped Directory
@@ -279,42 +273,45 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 	return *f.usage.Used, nil
 }
 
-func (f *Fs) updateUsage() error {
+func (f *Fs) updateUsage() (err error) {
 	if do := f.Fs.Features().About; do == nil {
 		return ErrUsageFieldNotSupported
 	}
-	if atomic.LoadUint32(&f.cacheState) == unInitilized {
+	done := false
+	f.cacheOnce.Do(func() {
 		f.cacheMutex.Lock()
-		defer f.cacheMutex.Unlock()
-		if !atomic.CompareAndSwapUint32(&f.cacheState, unInitilized, initilizing) {
-			return f.updateUsage()
-		}
-		return f.updateUsageCore(false)
+		err = f.updateUsageCore(false)
+		f.cacheMutex.Unlock()
+		done = true
+	})
+	if done {
+		return err
 	}
-	if atomic.CompareAndSwapUint32(&f.cacheState, normal, updating) {
+	if !f.cacheUpdate {
+		f.cacheUpdate = true
 		go func() {
 			_ = f.updateUsageCore(true)
+			f.cacheUpdate = false
 		}()
 	}
 	return nil
 }
 
 func (f *Fs) updateUsageCore(lock bool) error {
-	defer func() {
-		atomic.StoreInt64(&f.cacheExpiry, time.Now().Add(f.cacheTime).Unix())
-		atomic.StoreUint32(&f.cacheState, normal)
-	}()
-	if lock {
-		f.cacheMutex.Lock()
-		defer f.cacheMutex.Unlock()
-	}
 	// Run in background, should not be cancelled by user
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	usage, err := f.Features().About(ctx)
 	if err != nil {
+		f.cacheUpdate = false
 		return err
 	}
+	if lock {
+		f.cacheMutex.Lock()
+		defer f.cacheMutex.Unlock()
+	}
+	// Store usage
+	atomic.StoreInt64(&f.cacheExpiry, time.Now().Add(f.cacheTime).Unix())
 	f.usage = usage
 	return nil
 }

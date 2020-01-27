@@ -59,8 +59,7 @@ func (d *Directory) candidates() []upstream.Entry {
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	f := o.Fs().(*Fs)
-	entries, err := f.actionEntries(o.candidates()...)
+	entries, err := o.fs.actionEntries(o.candidates()...)
 	if err != nil {
 		return err
 	}
@@ -106,8 +105,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove candidate objects selected by ACTION policy
 func (o *Object) Remove(ctx context.Context) error {
-	f := o.Fs().(*Fs)
-	entries, err := f.actionEntries(o.candidates()...)
+	entries, err := o.fs.actionEntries(o.candidates()...)
 	if err != nil {
 		return err
 	}
@@ -125,8 +123,7 @@ func (o *Object) Remove(ctx context.Context) error {
 
 // SetModTime sets the metadata on the object to set the modification date
 func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
-	f := o.Fs().(*Fs)
-	entries, err := f.actionEntries(o.candidates()...)
+	entries, err := o.fs.actionEntries(o.candidates()...)
 	if err != nil {
 		return err
 	}

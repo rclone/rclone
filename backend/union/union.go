@@ -530,7 +530,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 		entriess[i] = uEntries
 	})
-	if len(errs) == len(errs.Map(FilterNil)) {
+	if len(errs) == len(errs.FilterNil()) {
 		errs = errs.Map(func(e error) error {
 			if errors.Cause(e) == fs.ErrorDirNotFound {
 				return nil
