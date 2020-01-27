@@ -1,7 +1,7 @@
 ---
 title: "Union"
 description: "Remote Unification"
-date: "2018-08-29"
+date: "2020-01-25"
 ---
 
 <i class="fa fa-link"></i> Union
@@ -12,21 +12,74 @@ The `union` remote provides a unification similar to UnionFS using other remotes
 Paths may be as deep as required or a local path, 
 eg `remote:directory/subdirectory` or `/directory/subdirectory`.
 
-During the initial setup with `rclone config` you will specify the target
-remotes as a space separated list. The target remotes can either be a local paths or other remotes.
+During the initial setup with `rclone config` you will specify the upstream
+remotes as a space separated list. The upstream remotes can either be a local paths or other remotes.
 
-The order of the remotes is important as it defines which remotes take precedence over others if there are files with the same name in the same logical path.
-The last remote is the topmost remote and replaces files with the same name from previous remotes.
+Attribute `:ro` and `:nc` can be attach to the end of path to tag the remote as **read only** or **no create**,
+eg `remote:directory/subdirectory:ro` or `remote:directory/subdirectory:nc`.
 
-Only the last remote is used to write to and delete from, all other remotes are read-only.
-
-Subfolders can be used in target remote. Assume a union remote named `backup`
-with the remotes `mydrive:private/backup mydrive2:/backup`. Invoking `rclone mkdir backup:desktop`
+Subfolders can be used in upstream remotes. Assume a union remote named `backup`
+with the remotes `mydrive:private/backup`. Invoking `rclone mkdir backup:desktop`
 is exactly the same as invoking `rclone mkdir mydrive2:/backup/desktop`.
 
 There will be no special handling of paths containing `..` segments.
 Invoking `rclone mkdir backup:../desktop` is exactly the same as invoking
 `rclone mkdir mydrive2:/backup/../desktop`.
+
+### Behavior / Policies
+
+The behavior of union backend is inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs). All functions are grouped into 3 categories: **action**, **create** and **search**. These functions and categories can be assigned a policy which dictates what file or directory is chosen when performing that behavior. Any policy can be assigned to a function or category though some may not be very useful in practice. For instance: **rand** (random) may be useful for file creation (create) but could lead to very odd behavior if used for `delete` if there were more than one copy of the file.
+
+#### Function / Category classifications
+
+| Category | Description              | Functions                                                                           |
+|----------|--------------------------|-------------------------------------------------------------------------------------|
+| action   | Writing Existing file    | move, rmdir, rmdirs, delete, purge and copy, sync (as destination when file exist)  |
+| create   | Create non-existing file | copy, sync (as destination when file not exist)                                     |
+| search   | Reading and listing file | ls, lsd, lsl, cat, md5sum, sha1sum and copy, sync (as source)                       |
+| N/A      |                          | size, about                                                                         |
+
+#### Path Preservation
+
+Policies, as described below, are of two basic types. `path preserving` and `non-path preserving`.
+
+All policies which start with `ep` (**epff**, **eplfs**, **eplus**, **epmfs**, **eprand**) are `path preserving`. `ep` stands for `existing path`.
+
+A path preserving policy will only consider upstreams where the relative path being accessed already exists.
+
+When using non-path preserving policies paths will be created in target upstreams as necessary.
+
+#### Filters
+
+Policies basically search upstream remotes and create a list of files / paths for functions to work on. The policy is responsible for filtering and sorting. The policy type defines the sorting but filtering is mostly uniform as described below.
+
+* No **search** policies filter.
+* All **action** policies will filter out remotes which are tagged as **read-only**.
+* All **create** policies will filter out remotes which are tagged **read-only** or **no-create**.
+
+If all remotes are filtered an error will be returned.
+
+#### Policy descriptions
+
+THe policies definition are inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs) but not exactly the same. Some policy definition could be different due to the much larger latency of remote file systems.
+
+| Policy           | Description                                                |
+|------------------|------------------------------------------------------------|
+| all | Search category: same as **epall**. Action category: same as **epall**. Create category: act on all remotes. |
+| epall (existing path, all) | Search category: Given this order configured, act on the first one found where the relative path exists. Action category: apply to all found. Create category: act on all remotes where the relative path exists. |
+| epff (existing path, first found) | Act on the first one found, by the time upstreams reply, where the relative path exists. |
+| eplfs (existing path, least free space) | Of all the remotes on which the relative path exists choose the one with the least free space. |
+| eplus (existing path, least used space) | Of all the remotes on which the relative path exists choose the one with the least used space. |
+| epmfs (existing path, most free space) | Of all the remotes on which the relative path exists choose the one with the most free space. |
+| eprand (existing path, random) | Calls **epall** and then randomizes. Returns only one remote. |
+| ff (first found) | Search category: same as **epff**. Action category: same as **epff**. Create category: Act on the first one found by the time upstreams reply. |
+| lfs (least free space) | Search category: same as **eplfs**. Action category: same as **eplfs**. Create category: Pick the remote with the least available free space. |
+| lus (least used space) | Search category: same as **eplus**. Action category: same as **eplus**. Create category: Pick the remote with the least used space. |
+| mfs (most free space) | Search category: same as **epmfs**. Action category: same as **epmfs**. Create category: Pick the remote with the most available free space. |
+| newest | Pick the file / directory with the largest mtime. |
+| rand (random) | Calls **all** and then randomizes. Returns only one remote. |
+
+### Setup
 
 Here is an example of how to make a union called `remote` for local folders.
 First run:
@@ -49,16 +102,27 @@ XX / Union merges the contents of several remotes
    \ "union"
 [snip]
 Storage> union
-List of space separated remotes.
-Can be 'remotea:test/dir remoteb:', '"remotea:test/space dir" remoteb:', etc.
-The last remote is used to write to.
+List of space separated upstreams.
+Can be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.
 Enter a string value. Press Enter for the default ("").
-remotes>
+upstreams>
+Policy to choose upstream on ACTION class.
+Enter a string value. Press Enter for the default ("epall").
+action_policy>
+Policy to choose upstream on CREATE class.
+Enter a string value. Press Enter for the default ("epmfs").
+create_policy>
+Policy to choose upstream on SEARCH class.
+Enter a string value. Press Enter for the default ("ff").
+search_policy>
+Cache time of usage and free space (in seconds)
+Enter a signed integer. Press Enter for the default ("120").
+cache_time>
 Remote config
 --------------------
 [remote]
 type = union
-remotes = C:\dir1 C:\dir2 C:\dir3
+upstreams = C:\dir1 C:\dir2 C:\dir3
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -97,17 +161,53 @@ Copy another local directory to the union directory called source, which will be
 <!--- autogenerated options start - DO NOT EDIT, instead edit fs.RegInfo in backend/union/union.go then run make backenddocs -->
 ### Standard Options
 
-Here are the standard options specific to union (Union merges the contents of several remotes).
+Here are the standard options specific to union (Union merges the contents of several upstream fs).
 
-#### --union-remotes
+#### --union-upstreams
 
-List of space separated remotes.
-Can be 'remotea:test/dir remoteb:', '"remotea:test/space dir" remoteb:', etc.
-The last remote is used to write to.
+List of space separated upstreams.
+Can be 'upstreama:test/dir upstreamb:', '"upstreama:test/space:ro dir" upstreamb:', etc.
 
-- Config:      remotes
-- Env Var:     RCLONE_UNION_REMOTES
+
+- Config:      upstreams
+- Env Var:     RCLONE_UNION_UPSTREAMS
 - Type:        string
 - Default:     ""
+
+#### --union-action-policy
+
+Policy to choose upstream on ACTION class.
+
+- Config:      action_policy
+- Env Var:     RCLONE_UNION_ACTION_POLICY
+- Type:        string
+- Default:     "epall"
+
+#### --union-create-policy
+
+Policy to choose upstream on CREATE class.
+
+- Config:      create_policy
+- Env Var:     RCLONE_UNION_CREATE_POLICY
+- Type:        string
+- Default:     "epmfs"
+
+#### --union-search-policy
+
+Policy to choose upstream on SEARCH class.
+
+- Config:      search_policy
+- Env Var:     RCLONE_UNION_SEARCH_POLICY
+- Type:        string
+- Default:     "ff"
+
+#### --union-cache-time
+
+Cache time of usage and free space (in seconds)
+
+- Config:      cache_time
+- Env Var:     RCLONE_UNION_CACHE_TIME
+- Type:        int
+- Default:     120
 
 <!--- autogenerated options stop -->
