@@ -241,6 +241,66 @@ func TestStatsTotalDuration(t *testing.T) {
 	})
 }
 
+func TestStatsInfo_String(t *testing.T) {
+	startTime := time.Now()
+	time1 := startTime.Add(-40 * time.Second)
+	time2 := time1.Add(10 * time.Second)
+	s := NewStats()
+	bytes := int64(15000000)
+	s.bytes = bytes
+	s.transferQueue = 2
+	s.transferQueueSize = 6
+	s.transfers = 4
+	s.checkQueue = 3
+	s.checks = 2
+	s.errors = 1
+	s.deletes = 2
+	s.AddTransfer(&Transfer{
+		size:        bytes,
+		startedAt:   time1,
+		completedAt: time2,
+	})
+
+	t.Run("Default stats", func(t *testing.T) {
+		want := "\nTransferred:   \t   14.305M / 14.305 MBytes, 100%, 1.431 MBytes/s, " +
+			"ETA 0s\nErrors:                 1 (no need to retry)\nChecks:              " +
+			"   2 / 5, 40%\nDeleted:                2\nTransferred:            4 / 6, " +
+			"67%\nElapsed time:         10s\n"
+		got := s.String()
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("One line stats", func(t *testing.T) {
+		fs.Config.StatsOneLine = true
+		want := "   14.305M / 14.305 MBytes, 100%, 1.431 MBytes/s, ETA 0s (xfr#4/6, chk#2/5)\n"
+		got := s.String()
+		assert.Equal(t, want, got)
+		fs.Config.StatsOneLine = false
+	})
+
+	t.Run("Stats in bits", func(t *testing.T) {
+		fs.Config.DataRateUnit = "bits"
+		want := "\nTransferred:   \t   14.305M / 14.305 MBytes, 100%, 11.444 MBits/s, " +
+			"ETA 0s\nErrors:                 1 (no need to retry)\nChecks:               " +
+			"  2 / 5, 40%\nDeleted:                2\nTransferred:            4 / 6, " +
+			"67%\nElapsed time:         10s\n"
+		got := s.String()
+		assert.Equal(t, want, got)
+		fs.Config.DataRateUnit = "bytes"
+	})
+
+	t.Run("Unscaled stats", func(t *testing.T) {
+		fs.Config.StatsUnscaled = true
+		want := "\nTransferred:   \t  15000000 / 15000006 Bytes, 100%, 1500000 bytes/s, " +
+			"ETA 0s\nErrors:                 1 (no need to retry)\nChecks:               " +
+			"  2 / 5, 40%\nDeleted:                2\nTransferred:            4 / 6, " +
+			"67%\nElapsed time:         10s\n"
+		got := s.String()
+		assert.Equal(t, want, got)
+		fs.Config.StatsUnscaled = false
+	})
+}
+
 // make time ranges from string description for testing
 func makeTimeRanges(t *testing.T, in []string) timeRanges {
 	trs := make(timeRanges, len(in))
