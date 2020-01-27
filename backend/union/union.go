@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/backend/union/policy"
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
@@ -141,8 +142,22 @@ func (f *Fs) Hashes() hash.Set {
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	parent := parentDir(dir)
-	upstreams, err := f.create(ctx, parent)
+	var upstreams []*upstream.Fs
+	var err error
+	if dir == "" {
+		pf, e := cache.Get(f.name + ":")
+		if e != nil {
+			return e
+		}
+		pfs, ok := pf.(*Fs)
+		if !ok {
+			return errors.New("failed to get parent Fs")
+		}
+		upstreams, err = pfs.create(ctx, "")
+		dir = f.root
+	} else {
+		upstreams, err = f.create(ctx, parentDir(dir))
+	}
 	if err != nil {
 		return err
 	}
