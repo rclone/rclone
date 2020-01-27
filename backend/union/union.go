@@ -29,21 +29,21 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "upstreams",
-			Help:     "List of space separated upstreams.\nCan be 'upstreama:test/dir upstreamb:', '\"remotea:test/space:ro dir\" remoteb:', etc.\n",
+			Help:     "List of space separated upstreams.\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.\n",
 			Required: true,
 		}, {
 			Name:     "action_policy",
-			Help:     "Policy to choose upstream on ACTION class.",
+			Help:     "Policy to choose upstream on ACTION category.",
 			Required: true,
 			Default:  "epall",
 		}, {
 			Name:     "create_policy",
-			Help:     "Policy to choose upstream on CREATE class.",
+			Help:     "Policy to choose upstream on CREATE category.",
 			Required: true,
 			Default:  "epmfs",
 		}, {
 			Name:     "search_policy",
-			Help:     "Policy to choose upstream on SEARCH class.",
+			Help:     "Policy to choose upstream on SEARCH category.",
 			Required: true,
 			Default:  "ff",
 		}, {
@@ -59,6 +59,7 @@ func init() {
 // Options defines the configuration for this backend
 type Options struct {
 	Upstreams    fs.SpaceSepList `config:"upstreams"`
+	Remotes      fs.SpaceSepList `config:"remotes"` // Depreated
 	ActionPolicy string          `config:"action_policy"`
 	CreatePolicy string          `config:"create_policy"`
 	SearchPolicy string          `config:"search_policy"`
@@ -643,6 +644,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
+	}
+	// Backward compatible to old config
+	if len(opt.Upstreams) == 0 && len(opt.Remotes) > 0 {
+		for i := 0; i < len(opt.Remotes)-1; i++ {
+			opt.Remotes[i] = opt.Remotes[i] + ":ro"
+		}
+		opt.Upstreams = opt.Remotes
 	}
 	if len(opt.Upstreams) == 0 {
 		return nil, errors.New("union can't point to an empty upstream - check the value of the upstreams setting")
