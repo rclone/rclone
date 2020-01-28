@@ -250,11 +250,11 @@ func (s *StatsInfo) String() string {
 
 	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
+	dtSecondsOnly := dt.Truncate(time.Second/10) % time.Minute
 	speed := 0.0
 	if dt > 0 {
 		speed = float64(s.bytes) / dtSeconds
 	}
-	dtRounded := dt - (dt % (time.Second / 10))
 
 	displaySpeed := speed
 	if fs.Config.DataRateUnit == "bits" {
@@ -329,7 +329,7 @@ func (s *StatsInfo) String() string {
 			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
 				s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
 		}
-		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10v\n", dtRounded)
+		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(dt.Truncate(time.Minute).String(), "0s")+fmt.Sprintf("%.1f", dtSecondsOnly.Seconds()))
 	}
 
 	// checking and transferring have their own locking so unlock
