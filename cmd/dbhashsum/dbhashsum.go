@@ -4,9 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/rclone/rclone/backend/dropbox/dbhash"
+	"github.com/rclone/rclone/backend/dropbox"
 	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -28,8 +27,7 @@ The output is in the same format as md5sum and sha1sum.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			dbHashType := hash.RegisterHash("Dropbox", 64, dbhash.New)
-			return operations.HashLister(context.Background(), dbHashType, fsrc, os.Stdout)
+			return operations.HashLister(context.Background(), dropbox.DbHashType, fsrc, os.Stdout)
 		})
 	},
 }
