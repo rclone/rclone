@@ -332,3 +332,4 @@ Contributors
   * Damon Permezel <permezel@me.com>
   * boosh <boosh@users.noreply.github.com>
   * unbelauscht <58393353+unbelauscht@users.noreply.github.com>
+  * Motonori IWAMURO <vmi@nifty.com>
