@@ -95,6 +95,9 @@ func init() {
 				Value: "Netease",
 				Help:  "Netease Object Storage (NOS)",
 			}, {
+				Value: "StackPath",
+				Help:  "StackPath Object Storage",
+			}, {
 				Value: "Wasabi",
 				Help:  "Wasabi Object Storage",
 			}, {
@@ -358,8 +361,22 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for StackPath Object Storage.",
+			Provider: "StackPath",
+			Examples: []fs.OptionExample{{
+				Value: "s3.us-east-2.stackpathstorage.com",
+				Help:  "US East Endpoint",
+			}, {
+				Value: "s3.us-west-1.stackpathstorage.com",
+				Help:  "US West Endpoint",
+			}, {
+				Value: "s3.eu-central-1.stackpathstorage.com",
+				Help:  "EU Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,Alibaba",
+			Provider: "!AWS,IBMCOS,Alibaba,StackPath",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -546,7 +563,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba",
+			Provider: "!AWS,IBMCOS,Alibaba,StackPath",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
