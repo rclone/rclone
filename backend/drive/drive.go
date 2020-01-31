@@ -324,6 +324,7 @@ Photos folder" option in your google drive settings. You can then copy
 or move the photos locally and use the date the image was taken
 (created) set as the modification date.`,
 			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
 		}, {
 			Name:    "use_shared_date",
 			Default: false,
@@ -335,6 +336,7 @@ unexpected consequences when uploading/downloading files.
 If both this flag and "--drive-use-created-date" are set, the created
 date is used.`,
 			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
 		}, {
 			Name:     "list_chunk",
 			Default:  1000,
@@ -393,11 +395,22 @@ will download it anyway.`,
 		}, {
 			Name:    "size_as_quota",
 			Default: false,
-			Help: `Show storage quota usage for file size.
+			Help: `Show sizes as storage quota usage, not actual size.
 
-The storage used by a file is the size of the current version plus any
-older versions that have been set to keep forever.`,
+Show the size of a file as the the storage quota used. This is the
+current version plus any older versions that have been set to keep
+forever.
+
+**WARNING**: This flag may have some unexpected consequences.
+
+It is not recommended to set this flag in your config - the
+recommended usage is using the flag form --drive-size-as-quota when
+doing rclone ls/lsl/lsf/lsjson/etc only.
+
+If you do use this flag for syncing (not recommended) then you will
+need to use --ignore size also.`,
 			Advanced: true,
+			Hide:     fs.OptionHideConfigurator,
 		}, {
 			Name:     "v2_download_min_size",
 			Default:  fs.SizeSuffix(-1),
