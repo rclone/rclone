@@ -123,11 +123,6 @@ func getCompressibleString(size int) string {
 
 func TestCompression(t *testing.T) {
 	testCases := []string{"lz4", "snappy", "gzip-min"}
-	if checkXZ() {
-		testCases = append(testCases, "xz-min")
-	} else {
-		t.Log("XZ binary not found on current system. Not testing xz.")
-	}
 	for _, tc := range testCases {
 		t.Run(tc, func(t *testing.T) {
 			testSmallLarge(t, tc)

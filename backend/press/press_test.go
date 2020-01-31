@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "github.com/ncw/rclone/backend/local"
-	"github.com/ncw/rclone/fstest"
-	"github.com/ncw/rclone/fstest/fstests"
+	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/fstests"
 )
 
 // TestIntegration runs integration tests against the remote
@@ -17,10 +17,21 @@ func TestIntegration(t *testing.T) {
 		t.Skip("Skipping as -remote not set")
 	}
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:                   *fstest.RemoteName,
-		NilObject:                    (*Object)(nil),
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
-		UnimplementableObjectMethods: []string{},
+		RemoteName: *fstest.RemoteName,
+		NilObject:  (*Object)(nil),
+		UnimplementableFsMethods: []string{
+			"OpenWriterAt",
+			"MergeDirs",
+			"DirCacheFlush",
+			"PutUnchecked",
+			"PutStream",
+			"UserInfo",
+			"Disconnect",
+		},
+		UnimplementableObjectMethods: []string{
+			"GetTier",
+			"SetTier",
+		},
 	})
 }
 
@@ -32,10 +43,21 @@ func TestRemoteLz4(t *testing.T) {
 	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-lz4")
 	name := "TestPressLz4"
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:                   name + ":",
-		NilObject:                    (*Object)(nil),
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
-		UnimplementableObjectMethods: []string{},
+		RemoteName: name + ":",
+		NilObject:  (*Object)(nil),
+		UnimplementableFsMethods: []string{
+			"OpenWriterAt",
+			"MergeDirs",
+			"DirCacheFlush",
+			"PutUnchecked",
+			"PutStream",
+			"UserInfo",
+			"Disconnect",
+		},
+		UnimplementableObjectMethods: []string{
+			"GetTier",
+			"SetTier",
+		},
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
@@ -52,10 +74,21 @@ func TestRemoteGzip(t *testing.T) {
 	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-gzip")
 	name := "TestPressGzip"
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:                   name + ":",
-		NilObject:                    (*Object)(nil),
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
-		UnimplementableObjectMethods: []string{},
+		RemoteName: name + ":",
+		NilObject:  (*Object)(nil),
+		UnimplementableFsMethods: []string{
+			"OpenWriterAt",
+			"MergeDirs",
+			"DirCacheFlush",
+			"PutUnchecked",
+			"PutStream",
+			"UserInfo",
+			"Disconnect",
+		},
+		UnimplementableObjectMethods: []string{
+			"GetTier",
+			"SetTier",
+		},
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
@@ -64,25 +97,4 @@ func TestRemoteGzip(t *testing.T) {
 	})
 }
 
-// TestRemoteXZ tests XZ compression
-func TestRemoteXZ(t *testing.T) {
-	if !checkXZ() {
-		t.Skip("XZ binary not found on current system")
-	}
-	if *fstest.RemoteName != "" {
-		t.Skip("Skipping as -remote set")
-	}
-	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-xz")
-	name := "TestPressXZ"
-	fstests.Run(t, &fstests.Opt{
-		RemoteName:                   name + ":",
-		NilObject:                    (*Object)(nil),
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
-		UnimplementableObjectMethods: []string{},
-		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "press"},
-			{Name: name, Key: "remote", Value: tempdir},
-			{Name: name, Key: "compression_mode", Value: "xz-min"},
-		},
-	})
-}
+// TODO: Snappy needs testing

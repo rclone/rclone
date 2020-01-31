@@ -36,8 +36,6 @@ const (
 	GzipMax      = 3
 	LZ4          = 4
 	Snappy       = 5
-	XZMin        = 6
-	XZDefault    = 7
 )
 
 // Errors
@@ -72,10 +70,6 @@ func NewCompressionPreset(preset string) (*Compression, error) {
 		return NewCompression(GzipMin, 131070) // GZIP-min compression (fast)
 	case "gzip-default":
 		return NewCompression(GzipDefault, 131070) // GZIP-default compression (medium)
-	case "xz-min":
-		return NewCompression(XZMin, 524288) // XZ-min compression (slow)
-	case "xz-default":
-		return NewCompression(XZDefault, 1048576) // XZ-default compression (very slow)
 	}
 	return nil, errors.New("Compression mode doesn't exist")
 }
@@ -93,10 +87,6 @@ func NewCompressionPresetNumber(preset int) (*Compression, error) {
 		return NewCompression(GzipMin, 131070) // GZIP-min compression (fast)
 	case GzipDefault:
 		return NewCompression(GzipDefault, 131070) // GZIP-default compression (medium)
-	case XZMin:
-		return NewCompression(XZMin, 524288) // XZ-min compression (slow)
-	case XZDefault:
-		return NewCompression(XZDefault, 1048576) // XZ-default compression (very slow)
 	}
 	return nil, errors.New("Compression mode doesn't exist")
 }
@@ -115,8 +105,6 @@ func NewCompressionAdvanced(mode int, bs uint32, hb int64, threads int, mcr floa
 	c.HeuristicBytes = hb
 	c.NumThreads = threads
 	c.MaxCompressionRatio = mcr
-	// Get binary path if needed
-	err = getBinPaths(c, mode)
 	return c, err
 }
 
@@ -131,8 +119,6 @@ func (c *Compression) GetFileExtension() string {
 	switch c.CompressionMode {
 	case GzipStore, GzipMin, GzipDefault, GzipMax:
 		return ".gz"
-	case XZMin, XZDefault:
-		return ".xzgz"
 	case LZ4:
 		return ".lz4"
 	case Snappy:
@@ -142,7 +128,6 @@ func (c *Compression) GetFileExtension() string {
 }
 
 // GetFileCompressionInfo gets a file extension along with compressibility of file
-// It is currently not being used but may be usable in the future.
 func (c *Compression) GetFileCompressionInfo(reader io.Reader) (compressable bool, extension string, err error) {
 	// Use our compression algorithm to do a heuristic on the first few bytes
 	var emulatedBlock, emulatedBlockCompressed bytes.Buffer
@@ -170,8 +155,6 @@ func (c *Compression) getHeader() []byte {
 	switch c.CompressionMode {
 	case GzipStore, GzipMin, GzipDefault, GzipMax:
 		return GzipHeader
-	case XZMin, XZDefault:
-		return ExecHeader
 	case LZ4:
 		return LZ4Header
 	case Snappy:
@@ -184,8 +167,6 @@ func (c *Compression) getHeader() []byte {
 func (c *Compression) getFooter() []byte {
 	switch c.CompressionMode {
 	case GzipStore, GzipMin, GzipDefault, GzipMax:
-		return []byte{}
-	case XZMin, XZDefault:
 		return []byte{}
 	case LZ4:
 		return LZ4Footer
@@ -207,10 +188,6 @@ func (c *Compression) compressBlock(in []byte, out io.Writer) (compressedSize ui
 		return c.compressBlockGz(in, out, 6)
 	case GzipMax:
 		return c.compressBlockGz(in, out, 9)
-	case XZDefault:
-		return c.compressBlockExec(in, out, c.BinPath, []string{"-c"})
-	case XZMin:
-		return c.compressBlockExec(in, out, c.BinPath, []string{"-c1"})
 	case LZ4:
 		return c.compressBlockLz4(in, out)
 	case Snappy:
@@ -349,10 +326,6 @@ func (d *Decompressor) decompressBlock(in io.Reader, out io.Writer) (n int, err 
 	switch d.c.CompressionMode { // Select decompression function based off compression mode
 	case GzipStore, GzipMin, GzipDefault, GzipMax:
 		return decompressBlockRangeGz(in, out)
-	case XZMin:
-		return decompressBlockRangeExec(in, out, d.c.BinPath, []string{"-dc1"})
-	case XZDefault:
-		return decompressBlockRangeExec(in, out, d.c.BinPath, []string{"-dc"})
 	case LZ4:
 		return decompressBlockLz4(in, out, int64(d.c.BlockSize))
 	case Snappy:
