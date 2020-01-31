@@ -15,7 +15,6 @@ import (
 	"github.com/rclone/rclone/backend/union/policy"
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
@@ -143,21 +142,12 @@ func (f *Fs) Hashes() hash.Set {
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	var upstreams []*upstream.Fs
-	var err error
-	if dir == "" {
-		pf, e := cache.Get(f.name + ":")
-		if e != nil {
-			return e
+	upstreams, err := f.create(ctx, dir)
+	if err == fs.ErrorObjectNotFound && dir != parentDir(dir) {
+		if err := f.Mkdir(ctx, parentDir(dir)); err != nil {
+			return err
 		}
-		pfs, ok := pf.(*Fs)
-		if !ok {
-			return errors.New("failed to get parent Fs")
-		}
-		upstreams, err = pfs.create(ctx, "")
-		dir = f.root
-	} else {
-		upstreams, err = f.create(ctx, parentDir(dir))
+		upstreams, err = f.create(ctx, dir)
 	}
 	if err != nil {
 		return err
@@ -259,7 +249,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			errs[i] = errors.Wrap(fs.ErrorNotAFile, u.Name())
 			return
 		}
-		mo, err := u.Features().Move(ctx, o, remote)
+		mo, err := u.Features().Move(ctx, o.UnWrap(), remote)
 		if err != nil || mo == nil {
 			errs[i] = errors.Wrap(err, u.Name())
 			return
@@ -288,12 +278,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 //
 // If destination exists then return fs.ErrorDirExists
 func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) error {
-	_, ok := src.(*Fs)
+	sfs, ok := src.(*Fs)
 	if !ok {
 		fs.Debugf(src, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	upstreams, err := f.action(ctx, srcRemote)
+	upstreams, err := sfs.action(ctx, srcRemote)
 	if err != nil {
 		return err
 	}
@@ -304,11 +294,30 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
-		u := upstreams[i]
-		err := u.Features().DirMove(ctx, u, srcRemote, dstRemote)
-		errs[i] = errors.Wrap(err, u.Name())
+		su := upstreams[i]
+		var du *upstream.Fs
+		for _, u := range f.upstreams {
+			if u.RootFs.Root() == su.RootFs.Root() {
+				du = u
+			}
+		}
+		if du == nil {
+			errs[i] = errors.Wrap(fs.ErrorCantDirMove, su.Name()+":"+su.Root())
+			return
+		}
+		err := du.Features().DirMove(ctx, su.Fs, srcRemote, dstRemote)
+		errs[i] = errors.Wrap(err, du.Name()+":"+du.Root())
 	})
-	return errs.Err()
+	errs = errs.FilterNil()
+	if len(errs) == 0 {
+		return nil
+	}
+	for _, e := range errs {
+		if errors.Cause(e) != fs.ErrorDirExists {
+			return errs
+		}
+	}
+	return fs.ErrorDirExists
 }
 
 // ChangeNotify calls the passed function with a path
@@ -355,7 +364,13 @@ func (f *Fs) DirCacheFlush() {
 
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bool, options ...fs.OpenOption) (fs.Object, error) {
 	srcPath := src.Remote()
-	upstreams, err := f.create(ctx, parentDir(srcPath))
+	upstreams, err := f.create(ctx, srcPath)
+	if err == fs.ErrorObjectNotFound {
+		if err := f.Mkdir(ctx, parentDir(srcPath)); err != nil {
+			return nil, err
+		}
+		upstreams, err = f.create(ctx, srcPath)
+	}
 	if err != nil {
 		return nil, err
 	}

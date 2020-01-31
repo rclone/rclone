@@ -23,6 +23,8 @@ var (
 // Fs is a wrap of any fs and its configs
 type Fs struct {
 	fs.Fs
+	RootFs      fs.Fs
+	RootPath    string
 	writable    bool
 	creatable   bool
 	usage       *fs.Usage     // Cache the usage
@@ -63,7 +65,8 @@ func New(remote, root string, cacheTime time.Duration) (*Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	rFs := &Fs{
+	f := &Fs{
+		RootPath:    root,
 		writable:    true,
 		creatable:   true,
 		cacheExpiry: time.Now().Unix(),
@@ -71,24 +74,29 @@ func New(remote, root string, cacheTime time.Duration) (*Fs, error) {
 		usage:       &fs.Usage{},
 	}
 	if strings.HasSuffix(fsPath, ":ro") {
-		rFs.writable = false
-		rFs.creatable = false
+		f.writable = false
+		f.creatable = false
 		fsPath = fsPath[0 : len(fsPath)-3]
 	} else if strings.HasSuffix(fsPath, ":nc") {
-		rFs.writable = true
-		rFs.creatable = false
+		f.writable = true
+		f.creatable = false
 		fsPath = fsPath[0 : len(fsPath)-3]
 	}
-	var rootString = path.Join(fsPath, filepath.ToSlash(root))
 	if configName != "local" {
-		rootString = configName + ":" + rootString
+		fsPath = configName + ":" + fsPath
 	}
+	rFs, err := cache.Get(fsPath)
+	if err != nil && err != fs.ErrorIsFile {
+		return nil, err
+	}
+	f.RootFs = rFs
+	rootString := path.Join(fsPath, filepath.ToSlash(root))
 	myFs, err := cache.Get(rootString)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}
-	rFs.Fs = myFs
-	return rFs, err
+	f.Fs = myFs
+	return f, err
 }
 
 // WrapDirectory wraps a fs.Directory to include the info
@@ -274,7 +282,7 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 }
 
 func (f *Fs) updateUsage() (err error) {
-	if do := f.Fs.Features().About; do == nil {
+	if do := f.RootFs.Features().About; do == nil {
 		return ErrUsageFieldNotSupported
 	}
 	done := false
@@ -301,7 +309,7 @@ func (f *Fs) updateUsageCore(lock bool) error {
 	// Run in background, should not be cancelled by user
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	usage, err := f.Features().About(ctx)
+	usage, err := f.RootFs.Features().About(ctx)
 	if err != nil {
 		f.cacheUpdate = false
 		return err

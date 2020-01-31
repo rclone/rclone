@@ -2,6 +2,7 @@ package policy
 
 import (
 	"context"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -28,7 +29,9 @@ func (p *Newest) newest(ctx context.Context, upstreams []*upstream.Fs, path stri
 		i, u := i, u // Closure
 		go func() {
 			defer wg.Done()
-			if e := findEntry(ctx, u, path); e != nil {
+			rfs := u.RootFs
+			remote := filepath.Join(u.RootPath, path)
+			if e := findEntry(ctx, rfs, remote); e != nil {
 				ufs[i] = u
 				mtimes[i] = e.ModTime(ctx)
 			}
@@ -112,7 +115,7 @@ func (p *Newest) Create(ctx context.Context, upstreams []*upstream.Fs, path stri
 	if len(upstreams) == 0 {
 		return nil, fs.ErrorPermissionDenied
 	}
-	u, err := p.newest(ctx, upstreams, path)
+	u, err := p.newest(ctx, upstreams, path+"/..")
 	return []*upstream.Fs{u}, err
 }
 

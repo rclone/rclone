@@ -2,6 +2,7 @@ package policy
 
 import (
 	"context"
+	"path/filepath"
 	"sync"
 
 	"github.com/rclone/rclone/backend/union/upstream"
@@ -27,7 +28,9 @@ func (p *EpAll) epall(ctx context.Context, upstreams []*upstream.Fs, path string
 		wg.Add(1)
 		i, u := i, u // Closure
 		go func() {
-			if findEntry(ctx, u, path) != nil {
+			rfs := u.RootFs
+			remote := filepath.Join(u.RootPath, path)
+			if findEntry(ctx, rfs, remote) != nil {
 				ufs[i] = u
 			}
 			wg.Done()
@@ -79,7 +82,7 @@ func (p *EpAll) Create(ctx context.Context, upstreams []*upstream.Fs, path strin
 	if len(upstreams) == 0 {
 		return nil, fs.ErrorPermissionDenied
 	}
-	upstreams, err := p.epall(ctx, upstreams, path)
+	upstreams, err := p.epall(ctx, upstreams, path+"/..")
 	return upstreams, err
 }
 

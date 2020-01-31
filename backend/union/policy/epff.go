@@ -2,6 +2,7 @@ package policy
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
@@ -20,7 +21,9 @@ func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) 
 	for _, u := range upstreams {
 		u := u // Closure
 		go func() {
-			if findEntry(ctx, u, path) == nil {
+			rfs := u.RootFs
+			remote := filepath.Join(u.RootPath, path)
+			if findEntry(ctx, rfs, remote) == nil {
 				u = nil
 			}
 			ch <- u
@@ -79,7 +82,7 @@ func (p *EpFF) Create(ctx context.Context, upstreams []*upstream.Fs, path string
 	if len(upstreams) == 0 {
 		return nil, fs.ErrorPermissionDenied
 	}
-	u, err := p.epff(ctx, upstreams, path)
+	u, err := p.epff(ctx, upstreams, path+"/..")
 	return []*upstream.Fs{u}, err
 }
 
