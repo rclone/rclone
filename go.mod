@@ -8,7 +8,6 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.2
 	github.com/Azure/azure-storage-blob-go v0.10.0
 	github.com/Unknwon/goconfig v0.0.0-20191126170842-860a72fb44fd
-	github.com/OneOfOne/xxhash v1.2.7
 	github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 	github.com/aalpar/deheap v0.0.0-20200318053559-9a0c2883bd56
 	github.com/abbot/go-http-auth v0.4.0
@@ -17,9 +16,11 @@ require (
 	github.com/aws/aws-sdk-go v1.32.11
 	github.com/billziss-gh/cgofuse v1.4.0
 	github.com/btcsuite/btcutil v1.0.2 // indirect
+	github.com/buengese/xxh32 v1.0.1
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/coreos/go-semver v0.3.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
+	github.com/gabriel-vasile/mimetype v1.1.1
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3
@@ -38,6 +39,7 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1
 	github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/pierrec/lz4 v2.4.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.11.0
 	github.com/prometheus/client_golang v1.7.1
@@ -50,6 +52,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
+	github.com/ulikunitz/xz v0.5.8
 	github.com/xanzy/ssh-agent v0.2.1
 	github.com/youmark/pkcs8 v0.0.0-20200520070018-fad002e585ce
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0

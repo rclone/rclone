@@ -4,45 +4,45 @@ import (
 	"bufio"
 	"io"
 
-	"github.com/klauspost/compress/gzip"
+	"github.com/ulikunitz/xz"
 )
 
-// AlgGzip represents gzip compression algorithm
-type AlgGzip struct {
-	level     int
+// AlgXZ represents the XZ compression algorithm
+type AlgXZ struct {
 	blockSize uint32
+	config    xz.WriterConfig
 }
 
-// InitializeGzip initializes the gzip compression Algorithm
-func InitializeGzip(bs uint32, level int) Algorithm {
-	a := new(AlgGzip)
+// InitializeXZ creates an Lz4 compression algorithm
+func InitializeXZ(bs uint32) Algorithm {
+	a := new(AlgXZ)
 	a.blockSize = bs
-	a.level = level
+	a.config = xz.WriterConfig{}
 	return a
 }
 
 // GetFileExtension returns file extension
-func (a *AlgGzip) GetFileExtension() string {
-	return ".gz"
+func (a *AlgXZ) GetFileExtension() string {
+	return ".xz"
 }
 
 // GetHeader returns the Lz4 compression header
-func (a *AlgGzip) GetHeader() []byte {
+func (a *AlgXZ) GetHeader() []byte {
 	return []byte{}
 }
 
 // GetFooter returns
-func (a *AlgGzip) GetFooter() []byte {
+func (a *AlgXZ) GetFooter() []byte {
 	return []byte{}
 }
 
-// CompressBlock that compresses a block using gzip
-func (a *AlgGzip) CompressBlock(in []byte, out io.Writer) (compressedSize uint32, uncompressedSize uint64, err error) {
+// CompressBlock that compresses a block using lz4
+func (a *AlgXZ) CompressBlock(in []byte, out io.Writer) (compressedSize uint32, uncompressedSize uint64, err error) {
 	// Initialize buffer
 	bufw := bufio.NewWriterSize(out, int(a.blockSize+(a.blockSize)>>4))
 
 	// Initialize block writer
-	outw, err := gzip.NewWriterLevel(bufw, a.level)
+	outw, err := a.config.NewWriter(bufw)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -65,11 +65,11 @@ func (a *AlgGzip) CompressBlock(in []byte, out io.Writer) (compressedSize uint32
 }
 
 // DecompressBlock decompresses Lz4 compressed block
-func (a *AlgGzip) DecompressBlock(in io.Reader, out io.Writer, BlockSize uint32) (n int, err error) {
-	gzipReader, err := gzip.NewReader(in)
+func (a *AlgXZ) DecompressBlock(in io.Reader, out io.Writer, BlockSize uint32) (n int, err error) {
+	xzReader, err := xz.NewReader(in)
 	if err != nil {
 		return 0, err
 	}
-	written, err := io.Copy(out, gzipReader)
+	written, err := io.Copy(out, xzReader)
 	return int(written), err
 }
