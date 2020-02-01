@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2020-02-01T10:26:53Z
 title: "rclone lsjson"
 slug: rclone_lsjson
 url: /commands/rclone_lsjson/
@@ -36,7 +36,9 @@ The output is an array of Items, where each Item looks like this
 
 If --hash is not specified the Hashes property won't be emitted.
 
-If --no-modtime is specified then ModTime will be blank.
+If --no-modtime is specified then ModTime will be blank. This can speed things up on remotes where reading the ModTime takes an extra request (eg s3, swift).
+
+If --no-mimetype is specified then MimeType will be blank. This can speed things up on remotes where reading the MimeType takes an extra request (eg s3, swift).
 
 If --encrypted is not specified the Encrypted won't be emitted.
 
@@ -94,14 +96,15 @@ rclone lsjson remote:path [flags]
 ### Options
 
 ```
-      --dirs-only    Show only directories in the listing.
-  -M, --encrypted    Show the encrypted names.
-      --files-only   Show only files in the listing.
-      --hash         Include hashes in the output (may take longer).
-  -h, --help         help for lsjson
-      --no-modtime   Don't read the modification time (can speed things up).
-      --original     Show the ID of the underlying Object.
-  -R, --recursive    Recurse into the listing.
+      --dirs-only     Show only directories in the listing.
+  -M, --encrypted     Show the encrypted names.
+      --files-only    Show only files in the listing.
+      --hash          Include hashes in the output (may take longer).
+  -h, --help          help for lsjson
+      --no-mimetype   Don't read the mime type (can speed things up).
+      --no-modtime    Don't read the modification time (can speed things up).
+      --original      Show the ID of the underlying Object.
+  -R, --recursive     Recurse into the listing.
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

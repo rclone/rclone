@@ -297,12 +297,12 @@ How to encrypt the filenames.
 - Type:        string
 - Default:     "standard"
 - Examples:
-    - "off"
-        - Don't encrypt the file names.  Adds a ".bin" extension only.
     - "standard"
         - Encrypt the filenames see the docs for the details.
     - "obfuscate"
         - Very simple filename obfuscation.
+    - "off"
+        - Don't encrypt the file names.  Adds a ".bin" extension only.
 
 #### --crypt-directory-name-encryption
 

@@ -531,9 +531,17 @@ Returns the following values:
 Values for "transferring", "checking" and "lastError" are only assigned if data is available.
 The value for "eta" is null if an eta cannot be determined.
 
+### core/stats-delete: Delete stats group. {#core/stats-delete}
+
+This deletes entire stats group
+
+Parameters
+
+- group - name of the stats group (string)
+
 ### core/stats-reset: Reset stats. {#core/stats-reset}
 
-This clears counters, errors and finished transfers for all stats or specific
+This clears counters, errors and finished transfers for all stats or specific 
 stats group if group is provided.
 
 Parameters

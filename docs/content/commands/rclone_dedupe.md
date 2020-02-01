@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2020-02-01T10:26:53Z
 title: "rclone dedupe"
 slug: rclone_dedupe
 url: /commands/rclone_dedupe/
@@ -81,6 +81,7 @@ Dedupe can be run non interactively using the `--dedupe-mode` flag or by using a
   * `--dedupe-mode newest` - removes identical files then keeps the newest one.
   * `--dedupe-mode oldest` - removes identical files then keeps the oldest one.
   * `--dedupe-mode largest` - removes identical files then keeps the largest one.
+  * `--dedupe-mode smallest` - removes identical files then keeps the smallest one.
   * `--dedupe-mode rename` - removes identical files then renames the rest to be different.
 
 For example to rename all the identically named photos in your Google Photos directory, do
@@ -99,7 +100,7 @@ rclone dedupe [mode] remote:path [flags]
 ### Options
 
 ```
-      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|rename. (default "interactive")
+      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename. (default "interactive")
   -h, --help                 help for dedupe
 ```
 

@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2020-02-01T10:26:53Z
 title: "rclone check"
 slug: rclone_check
 url: /commands/rclone_check/

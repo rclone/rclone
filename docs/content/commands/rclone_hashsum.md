@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2020-02-01T10:26:53Z
 title: "rclone hashsum"
 slug: rclone_hashsum
 url: /commands/rclone_hashsum/
@@ -36,7 +36,8 @@ rclone hashsum <hash> remote:path [flags]
 ### Options
 
 ```
-  -h, --help   help for hashsum
+      --base64   Output base64 encoded hashsum
+  -h, --help     help for hashsum
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

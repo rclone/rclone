@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2020-02-01T10:26:53Z
 title: "rclone copyurl"
 slug: rclone_copyurl
 url: /commands/rclone_copyurl/
@@ -11,10 +11,15 @@ Copy url content to dest.
 ### Synopsis
 
 
-Download urls content and copy it to destination 
-without saving it in tmp storage.
+Download a URL's content and copy it to the destination without saving
+it in temporary storage.
 
-Setting --auto-filename flag will cause retrieving file name from url and using it in destination path. 
+Setting --auto-filename will cause the file name to be retreived from
+the from URL (after any redirections) and used in the destination
+path.
+
+Setting --stdout or making the output file name "-" will cause the
+output to be written to standard output.
 
 
 ```
@@ -24,8 +29,9 @@ rclone copyurl https://example.com dest:path [flags]
 ### Options
 
 ```
-  -a, --auto-filename   Get the file name from the url and use it for destination file path
+  -a, --auto-filename   Get the file name from the URL and use it for destination file path
   -h, --help            help for copyurl
+      --stdout          Write the output to stdout rather than a file
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
