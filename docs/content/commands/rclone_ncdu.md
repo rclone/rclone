@@ -1,5 +1,5 @@
 ---
-date: 2019-10-26T11:04:03+01:00
+date: 2020-02-01T10:26:53Z
 title: "rclone ncdu"
 slug: rclone_ncdu
 url: /commands/rclone_ncdu/
@@ -31,6 +31,7 @@ Here are the keys - press '?' to toggle the help on and off
      g toggle graph
      n,s,C sort by name,size,count
      d delete file/directory
+     y copy current path to clipbard
      Y display current path
      ^L refresh screen
      ? to toggle help on and off

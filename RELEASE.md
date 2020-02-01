@@ -9,12 +9,13 @@ This file describes how to make the various kinds of releases
 
 ## Making a release
 
+  * git checkout master
+  * git pull
   * git status - make sure everything is checked in
-  * Check travis & appveyor builds are green
-  * make check
+  * Check GitHub actions build for master is Green
   * make test # see integration test server or run locally
   * make tag
-  * edit docs/content/changelog.md
+  * edit docs/content/changelog.md # make sure to remove duplicate logs from point releases
   * make tidy
   * make doc
   * git status - to check for new man pages - git add them
