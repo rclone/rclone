@@ -203,6 +203,9 @@ don't need to run these when adding a feature.
 Documentation for rclone sub commands is with their code, eg
 `cmd/ls/ls.go`.
 
+Note that you can use [GitHub's online editor](https://help.github.com/en/github/managing-files-in-a-repository/editing-files-in-another-users-repository)
+for small changes in the docs which makes it very easy.
+
 ## Making a release ##
 
 There are separate instructions for making a release in the RELEASE.md
