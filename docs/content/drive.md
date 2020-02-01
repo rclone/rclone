@@ -1031,14 +1031,34 @@ be the same account as the Google Drive you want to access)
 "Google Drive API".
 
 4. Click "Credentials" in the left-side panel (not "Create
-credentials", which opens the wizard), then "Create credentials", then
-"OAuth client ID".  It will prompt you to set the OAuth consent screen
-product name, if you haven't set one already.
+credentials", which opens the wizard), then "Create credentials"
 
-5. Choose an application type of "other", and click "Create". (the
+5. If you already configured an "Oauth Consent Screen", then skip
+to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
+(near the top right corner of the right panel), then select "External"
+and click on "CREATE"; on the next screen, enter an "Application name"
+("rclone" is OK) then click on "Save" (all other data is optional). 
+Click again on "Credentials" on the left panel to go back to the 
+"Credentials" screen.
+
+(PS: if you are a GSuite user, you could also select "Internal" instead
+of "External" above, but this has not been tested/documented so far). 
+
+6.  Click on the "+ CREATE CREDENTIALS" button at the top of the screen,
+then select "OAuth client ID".
+
+7. Choose an application type of "other", and click "Create". (the
 default name is fine)
 
-6. It will show you a client ID and client secret.  Use these values
+8. It will show you a client ID and client secret.  Use these values
 in rclone config to add a new remote or edit an existing remote.
+
+Be aware that, due to the "enhanced security" recently introduced by
+Google, you are theoretically expected to "submit your app for verification"
+and then wait a few weeks(!) for their response; in practice, you can go right
+ahead and use the client ID and client secret with rclone, the only issue will
+be a very scary confirmation screen shown when you connect via your browser 
+for rclone to be able to get its token-id (but as this only happens during 
+the remote configuration, it's not such a big deal). 
 
 (Thanks to @balazer on github for these instructions.)
