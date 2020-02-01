@@ -22,7 +22,7 @@ This file describes how to make the various kinds of releases
   * git commit -a -v -m "Version v1.XX.0"
   * make retag
   * git push --tags origin master
-  * # Wait for the appveyor and travis builds to complete then...
+  * # Wait for the GitHub builds to complete then...
   * make fetch_binaries
   * make tarball
   * make sign_upload
