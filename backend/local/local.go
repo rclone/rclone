@@ -31,9 +31,9 @@ import (
 )
 
 // Constants
-const devUnset = 0xdeadbeefcafebabe                                       // a device id meaning it is unset
-const linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
-const useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
+const devUnset = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
+const linkSuffix = ".rclonelink"                                        // The suffix added to a translated symbolic link
+const useReadDir = runtime.GOOS == "windows" || runtime.GOOS == "plan9" // these OSes read FileInfos directly
 
 // Register with Fs
 func init() {
@@ -118,6 +118,16 @@ to override the default choice.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "readahead_amount",
+			Help:     `Amount of bytes to readahead`,
+			Default:  0,
+			Advanced: true,
+		}, {
+			Name:     "readahead_min_buffer",
+			Help:     `How low to let readahead buffer reach before rereading`,
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -138,6 +148,8 @@ type Options struct {
 	OneFileSystem     bool                 `config:"one_file_system"`
 	CaseSensitive     bool                 `config:"case_sensitive"`
 	CaseInsensitive   bool                 `config:"case_insensitive"`
+	ReadaheadAmount   uintptr              `config:"readahead_amount"`
+	ReadaheadMinBuf   uintptr              `config:"readahead_min_buffer"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -188,6 +200,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	if opt.NoUTFNorm {
 		fs.Errorf(nil, "The --local-no-unicode-normalization flag is deprecated and will be removed")
+	}
+
+	if opt.ReadaheadAmount != 0 && (opt.ReadaheadMinBuf == 0 || opt.ReadaheadMinBuf > opt.ReadaheadAmount) {
+		opt.ReadaheadMinBuf = opt.ReadaheadAmount / 2
 	}
 
 	f := &Fs{
@@ -813,14 +829,18 @@ func (o *Object) Storable() bool {
 // localOpenFile wraps an io.ReadCloser and updates the md5sum of the
 // object that is read
 type localOpenFile struct {
-	o    *Object           // object that is open
-	in   io.ReadCloser     // handle we are wrapping
-	hash *hash.MultiHasher // currently accumulating hashes
-	fd   *os.File          // file object reference
+	o             *Object           // object that is open
+	in            io.ReadCloser     // handle we are wrapping
+	hash          *hash.MultiHasher // currently accumulating hashes
+	fd            *os.File          // file object reference
+	readTill      uintptr           // running count of bytes read
+	readAheadTill uintptr           // until where we have readahead this file
 }
 
 // Read bytes from the object - see io.Reader
 func (file *localOpenFile) Read(p []byte) (n int, err error) {
+	readahead(file)
+
 	if !file.o.fs.opt.NoCheckUpdated {
 		// Check if file has the same size and modTime
 		fi, err := file.fd.Stat()
@@ -839,6 +859,8 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 	if n > 0 {
 		// Hash routines never return an error
 		_, _ = file.hash.Write(p[:n])
+
+		file.readTill += uintptr(n)
 	}
 	return
 }
