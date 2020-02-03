@@ -239,6 +239,20 @@ func percent(a int64, b int64) string {
 	return fmt.Sprintf("%d%%", int(float64(a)*100/float64(b)+0.5))
 }
 
+// runningAvgSpeed retuns the total running average speed of all in progress transfers
+func runningAvgSpeed(ip *inProgress) float64 {
+	ip.mu.Lock()
+	defer ip.mu.Unlock()
+
+	var total float64
+
+	for _, a := range ip.m {
+		total += a.avg
+	}
+
+	return total
+}
+
 // String convert the StatsInfo to a string for printing
 func (s *StatsInfo) String() string {
 	// checking and transferring have their own locking so read
@@ -251,8 +265,10 @@ func (s *StatsInfo) String() string {
 	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
 	speed := 0.0
+	curSpeed := 0.0
 	if dt > 0 {
 		speed = float64(s.bytes) / dtSeconds
+		curSpeed = runningAvgSpeed(s.inProgress)
 	}
 	dtRounded := dt - (dt % (time.Second / 10))
 
@@ -292,13 +308,14 @@ func (s *StatsInfo) String() string {
 		}
 	}
 
-	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s\n",
+	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, (%s,%s), ETA %s%s\n",
 		dateString,
 		fs.SizeSuffix(s.bytes),
 		fs.SizeSuffix(totalSize).Unit("Bytes"),
 		percent(s.bytes, totalSize),
+		fs.SizeSuffix(curSpeed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
 		fs.SizeSuffix(displaySpeed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
-		etaString(currentSize, totalSize, speed),
+		etaString(currentSize, totalSize, curSpeed),
 		xfrchkString,
 	)
 
