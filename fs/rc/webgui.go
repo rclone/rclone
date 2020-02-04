@@ -44,6 +44,9 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	extractPath := filepath.Join(cachePath, "current")
 
 	extractPathExist, extractPathStat, err := exists(extractPath)
+	if err != nil {
+		return err
+	}
 
 	if extractPathExist && !extractPathStat.IsDir() {
 		return errors.New("Web GUI path exists, but is a file instead of folder. Please check the path " + extractPath)
