@@ -679,13 +679,8 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 			q = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, q)
 		}
 		query = append(query, q)
-
-		s := "starred=" + strconv.FormatBool(f.opt.StarredOnly)
-		if f.opt.StarredOnly {
-			s = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, s)
-		}
-		query = append(query, s)
 	}
+
 	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
 	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
 	// If we need to list file inside those shared folders, we must search it without sharedWithMe
@@ -697,8 +692,13 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		if parentsQuery.Len() > 1 {
 			_, _ = parentsQuery.WriteString(" or ")
 		}
-		if f.opt.SharedWithMe && dirID == f.rootFolderID {
-			_, _ = parentsQuery.WriteString("sharedWithMe=true")
+		if dirID == f.rootFolderID {
+			if f.opt.SharedWithMe {
+				_, _ = parentsQuery.WriteString("sharedWithMe=true")
+			}
+			if f.opt.StarredOnly {
+				_, _ = parentsQuery.WriteString("starred=true")
+			}
 		} else {
 			_, _ = fmt.Fprintf(parentsQuery, "'%s' in parents", dirID)
 		}
