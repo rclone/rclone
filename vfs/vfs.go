@@ -53,6 +53,8 @@ var DefaultOpt = Options{
 	ChunkSizeLimit:    -1,
 	CacheMaxSize:      -1,
 	CaseInsensitive:   runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise
+	WriteWait:         1000 * time.Millisecond,
+	ReadWait:          5 * time.Millisecond,
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
@@ -202,6 +204,8 @@ type Options struct {
 	CacheMaxSize      fs.SizeSuffix
 	CachePollInterval time.Duration
 	CaseInsensitive   bool
+	WriteWait         time.Duration // time to wait for in-sequence write
+	ReadWait          time.Duration // time to wait for in-sequence read
 }
 
 // New creates a new VFS and root directory.  If opt is nil, then
