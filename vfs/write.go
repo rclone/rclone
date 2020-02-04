@@ -132,7 +132,8 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 	}
 	if fh.offset != off {
 		// Set a background timer so we don't wait forever
-		timeout := time.NewTimer(10 * time.Second)
+		maxWait := fh.file.d.vfs.Opt.WriteWait
+		timeout := time.NewTimer(maxWait)
 		done := make(chan struct{})
 		abort := int32(0)
 		go func() {
