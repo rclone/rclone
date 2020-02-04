@@ -232,9 +232,10 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 	if gap := off - fh.offset; gap > 0 && gap < int64(8*maxBuf) {
 		// Set a background timer so we don't wait for long
 		// Waits here potentially affect all seeks so need to keep them short
-		// This time here was made by finding the smallest when mounting a local backend
-		// that didn't cause seeks.
-		const maxWait = 5 * time.Millisecond
+		// The default time here was made by finding the
+		// smallest when mounting a local backend that didn't
+		// cause seeks.
+		maxWait := fh.file.d.vfs.Opt.ReadWait
 		timeout := time.NewTimer(maxWait)
 		done := make(chan struct{})
 		abort := int32(0)
