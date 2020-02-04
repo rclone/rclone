@@ -283,6 +283,12 @@ commands (copy, sync, etc), and with all other commands too.`,
 			Help:     "Only show files that are in the trash.\nThis will show trashed files in their original directory structure.",
 			Advanced: true,
 		}, {
+		}, {
+			Name:     "starred_only",
+			Default:  false,
+			Help:     "Only show files that are starred.",
+			Advanced: true,
+		}, {
 			Name:     "formats",
 			Default:  "",
 			Help:     "Deprecated: see export_formats",
@@ -504,6 +510,7 @@ type Options struct {
 	SkipChecksumGphotos       bool                 `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool                 `config:"shared_with_me"`
 	TrashedOnly               bool                 `config:"trashed_only"`
+	StarredOnly               bool                 `config:"starred_only"`
 	Extensions                string               `config:"formats"`
 	ExportExtensions          string               `config:"export_formats"`
 	ImportExtensions          string               `config:"import_formats"`
@@ -672,6 +679,12 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 			q = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, q)
 		}
 		query = append(query, q)
+
+		s := "starred=" + strconv.FormatBool(f.opt.StarredOnly)
+		if f.opt.StarredOnly {
+			s = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, s)
+		}
+		query = append(query, s)
 	}
 	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
 	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
