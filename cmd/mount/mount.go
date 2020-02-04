@@ -32,11 +32,13 @@ func mountOptions(device string) (options []fuse.MountOption) {
 		fuse.Subtype("rclone"),
 		fuse.FSName(device),
 		fuse.VolumeName(mountlib.VolumeName),
-		fuse.AsyncRead(),
 
 		// Options from benchmarking in the fuse module
 		//fuse.MaxReadahead(64 * 1024 * 1024),
 		//fuse.WritebackCache(),
+	}
+	if mountlib.AsyncRead {
+		options = append(options, fuse.AsyncRead())
 	}
 	if mountlib.NoAppleDouble {
 		options = append(options, fuse.NoAppleDouble())
