@@ -283,7 +283,6 @@ commands (copy, sync, etc), and with all other commands too.`,
 			Help:     "Only show files that are in the trash.\nThis will show trashed files in their original directory structure.",
 			Advanced: true,
 		}, {
-		}, {
 			Name:     "starred_only",
 			Default:  false,
 			Help:     "Only show files that are starred.",
