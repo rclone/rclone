@@ -442,7 +442,7 @@ func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadClose
 	if err != nil {
 		return 0, nil, err
 	}
-	_, err = handle.Seek(offset, os.SEEK_SET)
+	_, err = handle.Seek(offset, io.SeekStart)
 	if err != nil {
 		return 0, nil, err
 	}
