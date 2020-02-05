@@ -697,6 +697,9 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 				_, _ = parentsQuery.WriteString("sharedWithMe=true")
 			}
 			if f.opt.StarredOnly {
+				if f.opt.SharedWithMe {
+					_, _ = parentsQuery.WriteString(" and ")
+				}
 				_, _ = parentsQuery.WriteString("starred=true")
 			}
 		} else {
