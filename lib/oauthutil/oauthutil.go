@@ -503,7 +503,7 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 	}
 
 	// Exchange the code for a token
-	token, err := oauthConfig.Exchange(oauth2.NoContext, auth.Code)
+	token, err := oauthConfig.Exchange(context.Background(), auth.Code)
 	if err != nil {
 		return errors.Wrap(err, "failed to get token")
 	}
