@@ -838,7 +838,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		},
 	}
 	if f.useOCMtime {
-		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1e9)
+		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
@@ -1138,7 +1138,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if o.fs.useOCMtime || o.fs.hasMD5 || o.fs.hasSHA1 {
 		opts.ExtraHeaders = map[string]string{}
 		if o.fs.useOCMtime {
-			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%f", float64(src.ModTime(ctx).UnixNano())/1e9)
+			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
 		}
 		// Set one upload checksum
 		// Owncloud uses one checksum only to check the upload and stores its own SHA1 and MD5
