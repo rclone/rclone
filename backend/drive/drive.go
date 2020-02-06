@@ -691,7 +691,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		if parentsQuery.Len() > 1 {
 			_, _ = parentsQuery.WriteString(" or ")
 		}
-		if dirID == f.rootFolderID {
+		if (f.opt.SharedWithMe || f.opt.StarredOnly) && dirID == f.rootFolderID {
 			if f.opt.SharedWithMe {
 				_, _ = parentsQuery.WriteString("sharedWithMe=true")
 			}
