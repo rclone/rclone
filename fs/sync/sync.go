@@ -345,7 +345,7 @@ func (s *syncCopyMove) startCheckers() {
 // This stops the background checkers
 func (s *syncCopyMove) stopCheckers() {
 	s.toBeChecked.Close()
-	fs.Infof(s.fdst, "Waiting for checks to finish")
+	fs.Debugf(s.fdst, "Waiting for checks to finish")
 	s.checkerWg.Wait()
 }
 
@@ -360,7 +360,7 @@ func (s *syncCopyMove) startTransfers() {
 // This stops the background transfers
 func (s *syncCopyMove) stopTransfers() {
 	s.toBeUploaded.Close()
-	fs.Infof(s.fdst, "Waiting for transfers to finish")
+	fs.Debugf(s.fdst, "Waiting for transfers to finish")
 	s.transfersWg.Wait()
 }
 
@@ -381,7 +381,7 @@ func (s *syncCopyMove) stopRenamers() {
 		return
 	}
 	s.toBeRenamed.Close()
-	fs.Infof(s.fdst, "Waiting for renames to finish")
+	fs.Debugf(s.fdst, "Waiting for renames to finish")
 	s.renamerWg.Wait()
 }
 
@@ -755,6 +755,10 @@ func (s *syncCopyMove) run() error {
 
 	// Read the error out of the context if there is one
 	s.processError(s.ctx.Err())
+
+	if accounting.Stats(s.ctx).GetTransfers() == 0 {
+		fs.Infof(nil, "There was nothing to transfer")
+	}
 
 	// cancel the context to free resources
 	s.cancel()
