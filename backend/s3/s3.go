@@ -1338,7 +1338,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	//
 	// So we enable only on providers we know supports it properly, all others can retry when a
 	// XML Syntax error is detected.
-	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba")
+	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba" || f.opt.Provider == "Minio")
 	for {
 		// FIXME need to implement ALL loop
 		req := s3.ListObjectsInput{
