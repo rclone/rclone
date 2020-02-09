@@ -640,7 +640,7 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 			}
 		}()
 	}
-	fs.Infof(nil, "Waiting for deletions to finish")
+	fs.Debugf(nil, "Waiting for deletions to finish")
 	wg.Wait()
 	if errorCount > 0 {
 		err := errors.Errorf("failed to delete %d files", errorCount)
@@ -872,7 +872,7 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 		Dir:      "",
 		Callback: c,
 	}
-	fs.Infof(fdst, "Waiting for checks to finish")
+	fs.Debugf(fdst, "Waiting for checks to finish")
 	err := m.Run()
 
 	if c.dstFilesMissing > 0 {
