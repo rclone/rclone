@@ -1,5 +1,5 @@
 ---
-date: 2020-02-10T14:40:51Z
+date: 2020-02-10T14:50:44Z
 title: "rclone mount"
 slug: rclone_mount
 url: /commands/rclone_mount/
@@ -315,6 +315,42 @@ This mode should support all normal file system operations.
 
 If an upload or download fails it will be retried up to
 --low-level-retries times.
+
+### Case Sensitivity
+
+Linux file systems are case-sensitive: two files can differ only
+by case, and the exact case must be used when opening a file.
+
+Windows is not like most other operating systems supported by rclone.
+File systems in modern Windows are case-insensitive but case-preserving:
+although existing files can be opened using any case, the exact case used
+to create the file is preserved and available for programs to query.
+It is not allowed for two files in the same directory to differ only by case.
+
+Usually file systems on MacOS are case-insensitive. It is possible to make MacOS
+file systems case-sensitive but that is not the default
+
+The "--vfs-case-insensitive" mount flag controls how rclone handles these
+two cases. If its value is "false", rclone passes file names to the mounted
+file system as is. If the flag is "true" (or appears without a value on
+command line), rclone may perform a "fixup" as explained below.
+
+The user may specify a file name to open/delete/rename/etc with a case
+different than what is stored on mounted file system. If an argument refers
+to an existing file with exactly the same name, then the case of the existing
+file on the disk will be used. However, if a file name with exactly the same
+name is not found but a name differing only by case exists, rclone will
+transparently fixup the name. This fixup happens only when an existing file
+is requested. Case sensitivity of file names created anew by rclone is
+controlled by an underlying mounted file system.
+
+Note that case sensitivity of the operating system running rclone (the target)
+may differ from case sensitivity of a file system mounted by rclone (the source).
+The flag controls whether "fixup" is performed to satisfy the target.
+
+If the flag is not provided on command line, then its default value depends
+on the operating system where rclone runs: "true" on Windows and MacOS, "false"
+otherwise. If the flag is provided without a value, then it is "true".
 
 
 ```
