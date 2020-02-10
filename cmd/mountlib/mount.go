@@ -157,6 +157,34 @@ infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Archit
 which creates drives accessible for everyone on the system or
 alternatively using [the nssm service manager](https://nssm.cc/usage).
 
+#### Mount as a network drive
+
+By default, rclone will mount the remote as a normal drive. However,
+you can also mount it as a **Network Drive** (or **Network Share**, as
+mentioned in some places)
+
+Unlike other systems, Windows provides a different filesystem type for
+network drives.  Windows and other programs treat the network drives
+and fixed/removable drives differently: In network drives, many I/O
+operations are optimized, as the high latency and low reliability
+(compared to a normal drive) of a network is expected.
+
+Although many people prefer network shares to be mounted as normal
+system drives, this might cause some issues, such as programs not
+working as expected or freezes and errors while operating with the
+mounted remote in Windows Explorer. If you experience any of those,
+consider mounting rclone remotes as network shares, as Windows expects
+normal drives to be fast and reliable, while cloud storage is far from
+that.  See also [Limitations](#limitations) section below for more
+info
+
+Add "--fuse-flag --VolumePrefix=\server\share" to your "mount"
+command, **replacing "share" with any other name of your choice if you
+are mounting more than one remote**. Otherwise, the mountpoints will
+conflict and your mounted filesystems will overlap.
+
+[Read more about drive mapping](https://en.wikipedia.org/wiki/Drive_mapping)
+
 ### Limitations
 
 Without the use of "--vfs-cache-mode" this can only write files
