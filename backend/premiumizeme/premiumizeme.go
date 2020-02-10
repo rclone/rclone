@@ -315,14 +315,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	return f, nil
 }
 
-// rootSlash returns root with a slash on if it is empty, otherwise empty string
-func (f *Fs) rootSlash() string {
-	if f.root == "" {
-		return f.root
-	}
-	return f.root + "/"
-}
-
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
@@ -898,11 +890,6 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// srvPath returns a path for use in server
-func (o *Object) srvPath() string {
-	return o.fs.opt.Enc.FromStandardPath(o.fs.rootSlash() + o.remote)
-}
-
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
@@ -991,14 +978,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, err
 	}
 	return resp.Body, err
-}
-
-// metaHash returns a rough hash of metadata to detect if object has been updated
-func (o *Object) metaHash() string {
-	if !o.hasMetaData {
-		return ""
-	}
-	return fmt.Sprintf("remote=%q, size=%d, modTime=%v, id=%q, mimeType=%q", o.remote, o.size, o.modTime, o.id, o.mimeType)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
