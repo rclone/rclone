@@ -2127,22 +2127,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if o.fs.opt.SSECustomerKeyMD5 != "" {
 		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
 	}
+	httpReq, resp := o.fs.c.GetObjectRequest(&req)
 	fs.FixRangeOption(options, o.bytes)
 	for _, option := range options {
 		switch option.(type) {
 		case *fs.RangeOption, *fs.SeekOption:
 			_, value := option.Header()
 			req.Range = &value
+		case *fs.HTTPOption:
+			key, value := option.Header()
+			httpReq.HTTPRequest.Header.Add(key, value)
 		default:
 			if option.Mandatory() {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
 	}
-	var resp *s3.GetObjectOutput
 	err = o.fs.pacer.Call(func() (bool, error) {
 		var err error
-		resp, err = o.fs.c.GetObjectWithContext(ctx, &req)
+		httpReq.HTTPRequest = httpReq.HTTPRequest.WithContext(ctx)
+		err = httpReq.Send()
 		return o.fs.shouldRetry(err)
 	})
 	if err, ok := err.(awserr.RequestFailure); ok {
@@ -2448,6 +2452,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// set the headers we signed and the length
 		httpReq.Header = headers
 		httpReq.ContentLength = size
+
+		for _, option := range options {
+			switch option.(type) {
+			case *fs.HTTPOption:
+				key, value := option.Header()
+				httpReq.Header.Add(key, value)
+			default:
+				if option.Mandatory() {
+					fs.Logf(o, "Unsupported mandatory option: %v", option)
+				}
+			}
+		}
 
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			resp, err := o.fs.srv.Do(httpReq)
