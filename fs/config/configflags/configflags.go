@@ -29,6 +29,8 @@ var (
 	deleteAfter     bool
 	bindAddr        string
 	disableFeatures string
+	uploadHeaders   []string
+	downloadHeaders []string
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -112,6 +114,25 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &fs.Config.MultiThreadStreams, "multi-thread-streams", "", fs.Config.MultiThreadStreams, "Max number of streams to use for multi-thread downloads.")
 	flags.BoolVarP(flagSet, &fs.Config.UseJSONLog, "use-json-log", "", fs.Config.UseJSONLog, "Use json log format.")
 	flags.StringVarP(flagSet, &fs.Config.OrderBy, "order-by", "", fs.Config.OrderBy, "Instructions on how to order the transfers, eg 'size,descending'")
+	flags.StringArrayVarP(flagSet, &uploadHeaders, "header-upload", "", nil, "Set HTTP header for upload transactions")
+	flags.StringArrayVarP(flagSet, &downloadHeaders, "header-download", "", nil, "Set HTTP header for download transactions")
+}
+
+// ParseHeaders converts the strings passed in via the header flags into HTTPOptions
+func ParseHeaders(headers []string) []*fs.HTTPOption {
+	opts := []*fs.HTTPOption{}
+	for _, header := range headers {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 1 {
+			log.Fatalf("Failed to parse '%s' as an HTTP header. Expecting a string like: 'Content-Encoding: gzip'", header)
+		}
+		option := &fs.HTTPOption{
+			Key:   strings.TrimSpace(parts[0]),
+			Value: strings.TrimSpace(parts[1]),
+		}
+		opts = append(opts, option)
+	}
+	return opts
 }
 
 // SetFlags converts any flags into config which weren't straight forward
@@ -210,6 +231,14 @@ func SetFlags() {
 			log.Fatalf("Possible backend features are: %s\n", strings.Join(new(fs.Features).List(), ", "))
 		}
 		fs.Config.DisableFeatures = strings.Split(disableFeatures, ",")
+	}
+
+	if len(uploadHeaders) != 0 {
+		fs.Config.UploadHeaders = ParseHeaders(uploadHeaders)
+	}
+
+	if len(downloadHeaders) != 0 {
+		fs.Config.DownloadHeaders = ParseHeaders(downloadHeaders)
 	}
 
 	// Make the config file absolute
