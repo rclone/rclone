@@ -55,7 +55,7 @@ Choose a number from below, or type in your own value
  2 | Needs location constraint sh1a.
    \ "sh1a"
 zone> 1
-Number of connnection retry.
+Number of connection retry.
 Leave blank will use the default value "3".
 connection_retries>
 Remote config
