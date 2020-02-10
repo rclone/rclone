@@ -1,5 +1,5 @@
 ---
-date: 2020-02-10T14:50:44Z
+date: 2020-02-10T14:59:49Z
 title: "rclone serve ftp"
 slug: rclone_serve_ftp
 url: /commands/rclone_serve_ftp/
@@ -38,7 +38,9 @@ Using the `--dir-cache-time` flag, you can set how long a
 directory should be considered up to date and not refreshed from the
 backend. Changes made locally in the mount may appear immediately or
 invalidate the cache. However, changes done on the remote will only
-be picked up once the cache expires.
+be picked up once the cache expires if the backend configured does not
+support polling for changes. If the backend supports polling, changes
+will be picked up on within the polling interval.
 
 Alternatively, you can send a `SIGHUP` signal to rclone for
 it to flush all directory caches, regardless of how old they are.
