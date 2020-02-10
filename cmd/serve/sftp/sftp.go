@@ -71,7 +71,7 @@ control the stats printing.
 
 You must provide some means of authentication, either with --user/--pass,
 an authorized keys file (specify location with --authorized-keys - the
-default is the same as ssh) or set the --no-auth flag for no
+default is the same as ssh), an --auth-proxy, or set the --no-auth flag for no
 authentication when logging in.
 
 Note that this also implements a small number of shell commands so

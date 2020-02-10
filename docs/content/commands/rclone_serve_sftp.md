@@ -1,5 +1,5 @@
 ---
-date: 2020-02-10T12:28:36Z
+date: 2020-02-10T14:24:31Z
 title: "rclone serve sftp"
 slug: rclone_serve_sftp
 url: /commands/rclone_serve_sftp/
@@ -25,7 +25,7 @@ control the stats printing.
 
 You must provide some means of authentication, either with --user/--pass,
 an authorized keys file (specify location with --authorized-keys - the
-default is the same as ssh) or set the --no-auth flag for no
+default is the same as ssh), an --auth-proxy, or set the --no-auth flag for no
 authentication when logging in.
 
 Note that this also implements a small number of shell commands so
@@ -184,6 +184,10 @@ rclone will use that program to generate backends on the fly which
 then are used to authenticate incoming requests.  This uses a simple
 JSON based protocl with input on STDIN and output on STDOUT.
 
+**PLEASE NOTE:** `--auth-proxy` and `--authorized-keys` cannot be used
+together, if `--auth-proxy` is set the authorized keys option will be
+ignored.
+
 There is an example program
 [bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/test_proxy.py)
 in the rclone source code.
@@ -201,7 +205,8 @@ This config generated must have this extra parameter
 And it may have this parameter
 - `_obscure` - comma separated strings for parameters to obscure
 
-For example the program might take this on STDIN
+If password authentication was used by the client, input to the proxy
+process (on STDIN) would look similar to this:
 
 ```
 {
@@ -210,7 +215,17 @@ For example the program might take this on STDIN
 }
 ```
 
-And return this on STDOUT
+If public-key authentication was used by the client, input to the
+proxy process (on STDIN) would look similar to this:
+
+```
+{
+	"user": "me",
+	"public_key": "AAAAB3NzaC1yc2EAAAADAQABAAABAQDuwESFdAe14hVS6omeyX7edc...JQdf"
+}
+```
+
+And as an example return this on STDOUT
 
 ```
 {
@@ -224,7 +239,7 @@ And return this on STDOUT
 ```
 
 This would mean that an SFTP backend would be created on the fly for
-the `user` and `pass` returned in the output to the host given.  Note
+the `user` and `pass`/`public_key` returned in the output to the host given.  Note
 that since `_obscure` is set to `pass`, rclone will obscure the `pass`
 parameter before creating the backend (which is required for sftp
 backends).
@@ -236,8 +251,8 @@ in the output and the user to `user`. For security you'd probably want
 to restrict the `host` to a limited list.
 
 Note that an internal cache is keyed on `user` so only use that for
-configuration, don't use `pass`.  This also means that if a user's
-password is changed the cache will need to expire (which takes 5 mins)
+configuration, don't use `pass` or `public_key`.  This also means that if a user's
+password or public-key is changed the cache will need to expire (which takes 5 mins)
 before it takes effect.
 
 This can be used to build general purpose proxies to any kind of
