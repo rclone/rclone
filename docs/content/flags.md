@@ -48,6 +48,8 @@ These flags are available for every command.
       --files-from stringArray               Read list of source-file names from file (use - to read from stdin).
   -f, --filter stringArray                   Add a file-filtering rule
       --filter-from stringArray              Read filtering patterns from a file (use - to read from stdin).
+      --header-download stringArray          Add HTTP header for download transactions
+      --header-upload stringArray            Add HTTP header for upload transactions
       --ignore-case                          Ignore case in filters (case insensitive)
       --ignore-case-sync                     Ignore case when synchronizing
       --ignore-checksum                      Skip post copy check of checksums.
