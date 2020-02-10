@@ -1,5 +1,5 @@
 ---
-date: 2020-02-10T12:28:36Z
+date: 2020-02-10T15:06:43Z
 title: "rclone config update"
 slug: rclone_config_update
 url: /commands/rclone_config_update/
@@ -23,7 +23,7 @@ you would do:
 If any of the parameters passed is a password field, then rclone will
 automatically obscure them before putting them in the config file.
 
-If the remote uses oauth the token will be updated, if you don't
+If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
     rclone config update myremote swift env_auth true config_refresh_token false
