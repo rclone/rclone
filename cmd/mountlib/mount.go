@@ -109,6 +109,11 @@ FUSE.
 
 First set up your remote using ` + "`rclone config`" + `.  Check it works with ` + "`rclone ls`" + ` etc.
 
+You can either run mount in foreground mode or background(daemon) mode. Mount runs in
+foreground mode by default, use the --daemon flag to specify background mode mode.
+Background mode is only supported on Linux and OSX, you can only run mount in
+foreground mode on Windows.
+
 Start the mount like this
 
     rclone ` + commandName + ` remote:path/to/files /path/to/local/mount
@@ -117,11 +122,15 @@ Or on Windows like this where X: is an unused drive letter
 
     rclone ` + commandName + ` remote:path/to/files X:
 
-When the program ends, either via Ctrl+C or receiving a SIGINT or SIGTERM signal,
-the mount is automatically stopped.
+When running in background mode the user will have to stop the mount manually (specified below).
+
+When the program ends while in foreground mode, either via Ctrl+C or receiving
+a SIGINT or SIGTERM signal, the mount is automatically stopped.
 
 The umount operation can fail, for example when the mountpoint is busy.
-When that happens, it is the user's responsibility to stop the mount manually with
+When that happens, it is the user's responsibility to stop the mount manually.
+
+Stopping the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
