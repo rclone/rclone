@@ -74,7 +74,7 @@ func TestReOpen(t *testing.T) {
 					breaks: breaks,
 				}
 				hashOption := &fs.HashesOption{Hashes: hash.NewHashSet(hash.MD5)}
-				return NewReOpen(context.Background(), src, hashOption, rangeOption, maxRetries)
+				return NewReOpen(context.Background(), src, maxRetries, hashOption, rangeOption)
 			}
 
 			t.Run("Basics", func(t *testing.T) {

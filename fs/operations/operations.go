@@ -403,7 +403,11 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				}
 			} else {
 				var in0 io.ReadCloser
-				in0, err = NewReOpen(ctx, src, hashOption, nil, fs.Config.LowLevelRetries)
+				options := []fs.OpenOption{hashOption}
+				for _, option := range fs.Config.DownloadHeaders {
+					options = append(options, option)
+				}
+				in0, err = NewReOpen(ctx, src, fs.Config.LowLevelRetries, options...)
 				if err != nil {
 					err = errors.Wrap(err, "failed to open source object")
 				} else {
@@ -424,12 +428,16 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						if src.Remote() != remote {
 							wrappedSrc = NewOverrideRemote(src, remote)
 						}
+						options := []fs.OpenOption{hashOption}
+						for _, option := range fs.Config.UploadHeaders {
+							options = append(options, option)
+						}
 						if doUpdate {
 							actionTaken = "Copied (replaced existing)"
-							err = dst.Update(ctx, in, wrappedSrc, hashOption)
+							err = dst.Update(ctx, in, wrappedSrc, options...)
 						} else {
 							actionTaken = "Copied (new)"
-							dst, err = f.Put(ctx, in, wrappedSrc, hashOption)
+							dst, err = f.Put(ctx, in, wrappedSrc, options...)
 						}
 						closeErr := in.Close()
 						if err == nil {
