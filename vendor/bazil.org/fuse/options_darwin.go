@@ -38,3 +38,7 @@ func noBrowse(conf *mountConfig) error {
 	conf.options["nobrowse"] = ""
 	return nil
 }
+
+func maxPages(count uint16) MountOption {
+	return dummyOption
+}
