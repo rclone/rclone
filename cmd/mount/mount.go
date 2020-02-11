@@ -22,7 +22,7 @@ import (
 )
 
 func init() {
-	mountlib.NewMountCommand("mount", Mount)
+	mountlib.NewMountCommand("mount", false, Mount)
 }
 
 // mountOptions configures the options from the command line flags

@@ -98,10 +98,11 @@ func checkMountpointOverlap(root, mountpoint string) error {
 }
 
 // NewMountCommand makes a mount command with the given name and Mount function
-func NewMountCommand(commandName string, Mount func(f fs.Fs, mountpoint string) error) *cobra.Command {
+func NewMountCommand(commandName string, hidden bool, Mount func(f fs.Fs, mountpoint string) error) *cobra.Command {
 	var commandDefinition = &cobra.Command{
-		Use:   commandName + " remote:path /path/to/mountpoint",
-		Short: `Mount the remote as file system on a mountpoint.`,
+		Use:    commandName + " remote:path /path/to/mountpoint",
+		Hidden: hidden,
+		Short:  `Mount the remote as file system on a mountpoint.`,
 		Long: `
 rclone ` + commandName + ` allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
