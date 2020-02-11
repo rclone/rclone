@@ -1344,26 +1344,6 @@ func (r *run) list(t *testing.T, f fs.Fs, remote string) ([]interface{}, error) 
 	return l, err
 }
 
-func (r *run) listPath(t *testing.T, f fs.Fs, remote string) []string {
-	var err error
-	var l []string
-	if r.useMount {
-		var list []os.FileInfo
-		list, err = ioutil.ReadDir(path.Join(r.mntDir, remote))
-		for _, ll := range list {
-			l = append(l, ll.Name())
-		}
-	} else {
-		var list fs.DirEntries
-		list, err = f.List(context.Background(), remote)
-		for _, ll := range list {
-			l = append(l, ll.Remote())
-		}
-	}
-	require.NoError(t, err)
-	return l
-}
-
 func (r *run) copyFile(t *testing.T, f fs.Fs, src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
