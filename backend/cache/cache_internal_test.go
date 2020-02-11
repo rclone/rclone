@@ -17,7 +17,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1137,15 +1136,6 @@ func (r *run) randomReader(t *testing.T, size int64) io.ReadCloser {
 	r.tempFiles = append(r.tempFiles, f)
 
 	return f
-}
-
-func (r *run) writeRemoteRandomBytes(t *testing.T, f fs.Fs, p string, size int64) string {
-	remote := path.Join(p, strconv.Itoa(rand.Int())+".bin")
-	// create some rand test data
-	testData := randStringBytes(int(size))
-
-	r.writeRemoteBytes(t, f, remote, testData)
-	return remote
 }
 
 func (r *run) writeRemoteString(t *testing.T, f fs.Fs, remote, content string) {
