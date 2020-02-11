@@ -405,7 +405,7 @@ func TestDirRemove(t *testing.T) {
 	require.NoError(t, err)
 
 	// check directory is not there
-	node, err = vfs.Stat("dir")
+	_, err = vfs.Stat("dir")
 	assert.Equal(t, ENOENT, err)
 
 	// check the vfs
