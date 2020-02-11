@@ -1148,14 +1148,6 @@ func (r *run) writeRemoteRandomBytes(t *testing.T, f fs.Fs, p string, size int64
 	return remote
 }
 
-func (r *run) writeObjectRandomBytes(t *testing.T, f fs.Fs, p string, size int64) fs.Object {
-	remote := path.Join(p, strconv.Itoa(rand.Int())+".bin")
-	// create some rand test data
-	testData := randStringBytes(int(size))
-
-	return r.writeObjectBytes(t, f, remote, testData)
-}
-
 func (r *run) writeRemoteString(t *testing.T, f fs.Fs, remote, content string) {
 	r.writeRemoteBytes(t, f, remote, []byte(content))
 }
