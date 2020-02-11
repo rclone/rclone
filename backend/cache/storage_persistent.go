@@ -767,31 +767,6 @@ func (b *Persistent) iterateBuckets(buk *bolt.Bucket, bucketFn func(name string)
 	return err
 }
 
-func (b *Persistent) dumpRoot() string {
-	var itBuckets func(buk *bolt.Bucket) map[string]interface{}
-
-	itBuckets = func(buk *bolt.Bucket) map[string]interface{} {
-		m := make(map[string]interface{})
-		c := buk.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if v == nil {
-				buk2 := buk.Bucket(k)
-				m[string(k)] = itBuckets(buk2)
-			} else {
-				m[string(k)] = "-"
-			}
-		}
-		return m
-	}
-	var mm map[string]interface{}
-	_ = b.db.View(func(tx *bolt.Tx) error {
-		mm = itBuckets(tx.Bucket([]byte(RootBucket)))
-		return nil
-	})
-	raw, _ := json.MarshalIndent(mm, "", "  ")
-	return string(raw)
-}
-
 // addPendingUpload adds a new file to the pending queue of uploads
 func (b *Persistent) addPendingUpload(destPath string, started bool) error {
 	return b.db.Update(func(tx *bolt.Tx) error {
