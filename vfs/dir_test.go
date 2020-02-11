@@ -238,7 +238,7 @@ func TestDirStat(t *testing.T) {
 	assert.Equal(t, int64(14), node.Size())
 	assert.Equal(t, "file1", node.Name())
 
-	node, err = dir.Stat("not found")
+	_, err = dir.Stat("not found")
 	assert.Equal(t, ENOENT, err)
 }
 
