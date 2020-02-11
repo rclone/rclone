@@ -12,11 +12,12 @@ var (
 	}
 	threeGPSigs = []sig{
 		ftypSig("3gp1"), ftypSig("3gp2"), ftypSig("3gp3"), ftypSig("3gp4"),
-		ftypSig("3gp5"), ftypSig("3gp6"), ftypSig("3gs7"), ftypSig("3ge6"),
-		ftypSig("3ge7"), ftypSig("3gg6"),
+		ftypSig("3gp5"), ftypSig("3gp6"), ftypSig("3gp7"), ftypSig("3gs7"),
+		ftypSig("3ge6"), ftypSig("3ge7"), ftypSig("3gg6"),
 	}
 	threeG2Sigs = []sig{
-		ftypSig("3g2a"), ftypSig("3g2b"), ftypSig("3g2c"), ftypSig("KDDI"),
+		ftypSig("3g24"), ftypSig("3g25"), ftypSig("3g26"), ftypSig("3g2a"),
+		ftypSig("3g2b"), ftypSig("3g2c"), ftypSig("KDDI"),
 	}
 	amp4Sigs = []sig{
 		// audio for Adobe Flash Player 9+

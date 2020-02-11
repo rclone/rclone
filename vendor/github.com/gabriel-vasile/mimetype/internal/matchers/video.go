@@ -31,13 +31,12 @@ func isMatroskaFileTypeMatched(in []byte, flType string) bool {
 // The logic of search is: find first instance of \x42\x82 and then
 // search for given string after one byte of above instance.
 func isFileTypeNamePresent(in []byte, flType string) bool {
-	var ind int
-	if len(in) >= 4096 { // restricting length to 4096
-		ind = bytes.Index(in[0:4096], []byte("\x42\x82"))
-	} else {
-		ind = bytes.Index(in, []byte("\x42\x82"))
+	ind, maxInd, lenIn := 0, 4096, len(in)
+	if lenIn < maxInd { // restricting length to 4096
+		maxInd = lenIn
 	}
-	if ind > 0 {
+	ind = bytes.Index(in[:maxInd], []byte("\x42\x82"))
+	if ind > 0 && lenIn > ind+3 {
 		// filetype name will be present exactly
 		// one byte after the match of the two bytes "\x42\x82"
 		return bytes.HasPrefix(in[ind+3:], []byte(flType))
@@ -52,7 +51,7 @@ func Flv(in []byte) bool {
 
 // Mpeg matches a Moving Picture Experts Group file.
 func Mpeg(in []byte) bool {
-	return len(in) > 3 && bytes.Equal(in[:3], []byte("\x00\x00\x01")) &&
+	return len(in) > 3 && bytes.HasPrefix(in, []byte{0x00, 0x00, 0x01}) &&
 		in[3] >= 0xB0 && in[3] <= 0xBF
 }
 
@@ -65,6 +64,8 @@ func Avi(in []byte) bool {
 
 // Asf matches an Advanced Systems Format file.
 func Asf(in []byte) bool {
-	return len(in) > 16 && bytes.Equal(in[:16], []byte{0x30, 0x26, 0xB2, 0x75,
-		0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C})
+	return bytes.HasPrefix(in, []byte{
+		0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11,
+		0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C,
+	})
 }

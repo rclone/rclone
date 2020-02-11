@@ -49,9 +49,10 @@ func (xx *XXHash64) WriteString(s string) (int, error) {
 		return 0, nil
 	}
 	ss := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	return xx.Write((*[maxInt32]byte)(unsafe.Pointer(ss.Data))[:len(s)])
+	return xx.Write((*[maxInt32]byte)(unsafe.Pointer(ss.Data))[:len(s):len(s)])
 }
 
+//go:nocheckptr
 func checksum64(in []byte, seed uint64) uint64 {
 	var (
 		wordsLen = len(in) >> 3
@@ -103,6 +104,7 @@ func checksum64(in []byte, seed uint64) uint64 {
 	return mix64(h)
 }
 
+//go:nocheckptr
 func checksum64Short(in []byte, seed uint64) uint64 {
 	var (
 		h = seed + prime64x5 + uint64(len(in))

@@ -12,8 +12,7 @@ func Zip(in []byte) bool {
 
 // SevenZ matches a 7z archive.
 func SevenZ(in []byte) bool {
-	return len(in) > 6 &&
-		bytes.Equal(in[:6], []byte{0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C})
+	return bytes.HasPrefix(in, []byte{0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C})
 }
 
 // Epub matches an EPUB file.
@@ -28,12 +27,12 @@ func Jar(in []byte) bool {
 
 // Gzip matched gzip files based on http://www.zlib.org/rfc-gzip.html#header-trailer.
 func Gzip(in []byte) bool {
-	return len(in) > 2 && bytes.Equal(in[:2], []byte{0x1f, 0x8b})
+	return bytes.HasPrefix(in, []byte{0x1f, 0x8b})
 }
 
 // Crx matches a Chrome extension file: a zip archive prepended by "Cr24".
 func Crx(in []byte) bool {
-	return len(in) > 4 && bytes.Equal(in[:4], []byte("Cr24"))
+	return bytes.HasPrefix(in, []byte("Cr24"))
 }
 
 // Tar matches a (t)ape (ar)chive file.
@@ -43,9 +42,11 @@ func Tar(in []byte) bool {
 
 // Fits matches an Flexible Image Transport System file.
 func Fits(in []byte) bool {
-	return bytes.HasPrefix(in, []byte{0x53, 0x49, 0x4D, 0x50, 0x4C, 0x45, 0x20,
-		0x20, 0x3D, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-		0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x54})
+	return bytes.HasPrefix(in, []byte{
+		0x53, 0x49, 0x4D, 0x50, 0x4C, 0x45, 0x20, 0x20, 0x3D, 0x20,
+		0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+		0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x54,
+	})
 }
 
 // Xar matches an eXtensible ARchive format file.
@@ -63,8 +64,35 @@ func Ar(in []byte) bool {
 	return bytes.HasPrefix(in, []byte{0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E})
 }
 
-// Deb matches a Debian package file
+// Deb matches a Debian package file.
 func Deb(in []byte) bool {
-	return len(in) > 8 && bytes.HasPrefix(in[8:], []byte{0x64, 0x65, 0x62, 0x69,
-		0x61, 0x6E, 0x2D, 0x62, 0x69, 0x6E, 0x61, 0x72, 0x79})
+	return len(in) > 8 && bytes.HasPrefix(in[8:], []byte{
+		0x64, 0x65, 0x62, 0x69, 0x61, 0x6E, 0x2D,
+		0x62, 0x69, 0x6E, 0x61, 0x72, 0x79,
+	})
+}
+
+// Rar matches a RAR archive file.
+func Rar(in []byte) bool {
+	if !bytes.HasPrefix(in, []byte{0x52, 0x61, 0x72, 0x21, 0x1A, 0x07}) {
+		return false
+	}
+	return len(in) > 8 && (bytes.Equal(in[6:8], []byte{0x01, 0x00}) || in[6] == 0x00)
+}
+
+// Warc matches a Web ARChive file.
+func Warc(in []byte) bool {
+	return bytes.HasPrefix(in, []byte("WARC/"))
+}
+
+// Zstd matches a Zstandard archive file.
+func Zstd(in []byte) bool {
+	return len(in) >= 4 &&
+		(0x22 <= in[0] && in[0] <= 0x28 || in[0] == 0x1E) && // Different Zstandard versions.
+		bytes.HasPrefix(in[1:], []byte{0xB5, 0x2F, 0xFD})
+}
+
+// Cab matches a Cabinet archive file.
+func Cab(in []byte) bool {
+	return bytes.HasPrefix(in, []byte("MSCF"))
 }

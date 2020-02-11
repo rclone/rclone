@@ -1,5 +1,7 @@
 package xxhash
 
+import "hash"
+
 const (
 	prime32x1 uint32 = 2654435761
 	prime32x2 uint32 = 2246822519
@@ -21,6 +23,9 @@ const (
 	zero64x3 = 0x0
 	zero64x4 = 0x61c8864e7a143579
 )
+
+func NewHash32() hash.Hash { return New32() }
+func NewHash64() hash.Hash { return New64() }
 
 // Checksum32 returns the checksum of the input data with the seed set to 0.
 func Checksum32(in []byte) uint32 {

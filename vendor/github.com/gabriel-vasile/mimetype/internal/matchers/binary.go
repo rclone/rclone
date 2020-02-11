@@ -2,29 +2,62 @@ package matchers
 
 import (
 	"bytes"
+	"debug/macho"
+	"encoding/binary"
 )
 
-// Class matches an java class file.
+// Java bytecode and Mach-O binaries share the same magic number.
+// More info here https://github.com/threatstack/libmagic/blob/master/magic/Magdir/cafebabe
+func classOrMachOFat(in []byte) bool {
+	// There should be at least 8 bytes for both of them because the only way to
+	// quickly distinguish them is by comparing byte at position 7
+	if len(in) < 8 {
+		return false
+	}
+
+	return bytes.HasPrefix(in, []byte{0xCA, 0xFE, 0xBA, 0xBE})
+}
+
+// Class matches a java class file.
 func Class(in []byte) bool {
-	return len(in) > 4 && bytes.Equal(in[:4], []byte{0xCA, 0xFE, 0xBA, 0xBE})
+	return classOrMachOFat(in) && in[7] > 30
+}
+
+// MachO matches Mach-O binaries format.
+func MachO(in []byte) bool {
+	if classOrMachOFat(in) && in[7] < 20 {
+		return true
+	}
+
+	if len(in) < 4 {
+		return false
+	}
+
+	be := binary.BigEndian.Uint32(in)
+	le := binary.LittleEndian.Uint32(in)
+
+	return be == macho.Magic32 || le == macho.Magic32 || be == macho.Magic64 || le == macho.Magic64
 }
 
 // Swf matches an Adobe Flash swf file.
 func Swf(in []byte) bool {
-	return len(in) > 3 &&
-		bytes.Equal(in[:3], []byte("CWS")) ||
-		bytes.Equal(in[:3], []byte("FWS")) ||
-		bytes.Equal(in[:3], []byte("ZWS"))
+	return bytes.HasPrefix(in, []byte("CWS")) ||
+		bytes.HasPrefix(in, []byte("FWS")) ||
+		bytes.HasPrefix(in, []byte("ZWS"))
 }
 
 // Wasm matches a web assembly File Format file.
 func Wasm(in []byte) bool {
-	return len(in) > 4 && bytes.Equal(in[:4], []byte{0x00, 0x61, 0x73, 0x6D})
+	return bytes.HasPrefix(in, []byte{0x00, 0x61, 0x73, 0x6D})
 }
 
 // Dbf matches a dBase file.
 // https://www.dbase.com/Knowledgebase/INT/db7_file_fmt.htm
 func Dbf(in []byte) bool {
+	if len(in) < 4 {
+		return false
+	}
+
 	// 3rd and 4th bytes contain the last update month and day of month
 	if !(0 < in[2] && in[2] < 13 && 0 < in[3] && in[3] < 32) {
 		return false
@@ -82,4 +115,32 @@ func ElfDump(in []byte) bool {
 func Dcm(in []byte) bool {
 	return len(in) > 131 &&
 		bytes.Equal(in[128:132], []byte{0x44, 0x49, 0x43, 0x4D})
+}
+
+// Nes matches a Nintendo Entertainment system ROM file.
+func Nes(in []byte) bool {
+	return bytes.HasPrefix(in, []byte{0x4E, 0x45, 0x53, 0x1A})
+}
+
+// Marc matches a MARC21 (MAchine-Readable Cataloging) file.
+func Marc(in []byte) bool {
+	// File is at least 24 bytes ("leader" field size)
+	if len(in) < 24 {
+		return false
+	}
+
+	// Fixed bytes at offset 20
+	if !bytes.Equal(in[20:24], []byte("4500")) {
+		return false
+	}
+
+	// First 5 bytes are ASCII digits
+	for i := 0; i < 5; i++ {
+		if in[i] < '0' || in[i] > '9' {
+			return false
+		}
+	}
+
+	// Field terminator is present
+	return bytes.Contains(in, []byte{0x1E})
 }

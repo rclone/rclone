@@ -7,6 +7,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.8.0
 	github.com/Azure/go-autorest/autorest/adal v0.6.0 // indirect
 	github.com/Unknwon/goconfig v0.0.0-20191126170842-860a72fb44fd
+	github.com/OneOfOne/xxhash v1.2.7
 	github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 	github.com/aalpar/deheap v0.0.0-20191229192855-f837f7a9ba26
 	github.com/abbot/go-http-auth v0.4.0
@@ -17,10 +18,16 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/djherbis/times v1.2.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
+	github.com/etcd-io/bbolt v1.3.3
+	github.com/gabriel-vasile/mimetype v1.0.2
+	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
+	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3-0.20191108143333-152e6ac32d54
 	github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122
+	github.com/id01/go-lz4 v1.0.3
 	github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
