@@ -31,7 +31,7 @@ func init() {
 	if runtime.GOOS == "windows" {
 		name = "mount"
 	}
-	mountlib.NewMountCommand(name, Mount)
+	mountlib.NewMountCommand(name, false, Mount)
 }
 
 // mountOptions configures the options from the command line flags
