@@ -293,7 +293,7 @@ func TestDirOpen(t *testing.T) {
 	assert.True(t, ok)
 	require.NoError(t, fd.Close())
 
-	fd, err = dir.Open(os.O_WRONLY)
+	_, err = dir.Open(os.O_WRONLY)
 	assert.Equal(t, EPERM, err)
 }
 
