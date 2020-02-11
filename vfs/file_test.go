@@ -238,7 +238,7 @@ func TestFileOpen(t *testing.T) {
 	_, ok = fd.(*WriteFileHandle)
 	assert.True(t, ok)
 
-	fd, err = file.Open(3)
+	_, err = file.Open(3)
 	assert.Equal(t, EPERM, err)
 }
 
