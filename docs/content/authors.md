@@ -336,3 +336,4 @@ Contributors
   * Benjapol Worakan <benwrk@live.com>
   * Dave Koston <dave.koston@stackpath.com>
   * Durval Menezes <DurvalMenezes@users.noreply.github.com>
+  * Tim Gallant <me@timgallant.us>
