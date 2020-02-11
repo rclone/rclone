@@ -2165,6 +2165,12 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			buf = make([]byte, partSize)
 		}
 
+		// Fail fast, in case an errgroup managed function returns an error
+		// gCtx is cancelled. There is no point in uploading all the other parts.
+		if gCtx.Err() != nil {
+			break
+		}
+
 		// Read the chunk
 		var n int
 		n, err = readers.ReadFill(in, buf) // this can never return 0, nil
