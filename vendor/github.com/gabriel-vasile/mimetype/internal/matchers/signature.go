@@ -99,6 +99,7 @@ func (fSig ftypSig) detect(in []byte) bool {
 		bytes.Equal(in[8:12], fSig)
 }
 
+// Implement sig interface.
 func (xSig xmlSig) detect(in []byte) bool {
 	l := 512
 	if len(in) < l {
@@ -109,11 +110,15 @@ func (xSig xmlSig) detect(in []byte) bool {
 	if len(xSig.localName) == 0 {
 		return bytes.Index(in, xSig.xmlns) > 0
 	}
+	if len(xSig.xmlns) == 0 {
+		return bytes.Index(in, xSig.localName) > 0
+	}
 
 	localNameIndex := bytes.Index(in, xSig.localName)
 	return localNameIndex != -1 && localNameIndex < bytes.Index(in, xSig.xmlns)
 }
 
+// detect returns true if any of the provided signatures pass for in input.
 func detect(in []byte, sigs []sig) bool {
 	for _, sig := range sigs {
 		if sig.detect(in) {

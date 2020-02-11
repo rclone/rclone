@@ -9,6 +9,8 @@ github.com/Azure/azure-pipeline-go/pipeline
 # github.com/Azure/azure-storage-blob-go v0.8.0
 github.com/Azure/azure-storage-blob-go/azblob
 # github.com/Unknwon/goconfig v0.0.0-20191126170842-860a72fb44fd
+# github.com/OneOfOne/xxhash v1.2.7
+github.com/OneOfOne/xxhash
 github.com/Unknwon/goconfig
 # github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 github.com/a8m/tree
@@ -91,6 +93,12 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
+# github.com/etcd-io/bbolt v1.3.3
+github.com/etcd-io/bbolt
+# github.com/gabriel-vasile/mimetype v1.0.2
+github.com/gabriel-vasile/mimetype
+github.com/gabriel-vasile/mimetype/internal/json
+github.com/gabriel-vasile/mimetype/internal/matchers
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.3
 github.com/golang/protobuf/proto
@@ -110,6 +118,8 @@ github.com/hanwen/go-fuse/v2/fuse
 github.com/hanwen/go-fuse/v2/internal
 github.com/hanwen/go-fuse/v2/internal/utimens
 github.com/hanwen/go-fuse/v2/splice
+# github.com/id01/go-lz4 v1.0.3
+github.com/id01/go-lz4
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3

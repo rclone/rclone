@@ -40,5 +40,5 @@ func Shp(in []byte) bool {
 // Shx matches a shape index format file.
 // https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf
 func Shx(in []byte) bool {
-	return len(in) > 4 && bytes.Equal(in[:4], []byte{0x00, 0x00, 0x27, 0x0A})
+	return bytes.HasPrefix(in, []byte{0x00, 0x00, 0x27, 0x0A})
 }

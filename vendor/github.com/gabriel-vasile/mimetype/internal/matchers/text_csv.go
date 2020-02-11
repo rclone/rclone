@@ -21,6 +21,7 @@ func sv(in []byte, comma rune) bool {
 	r.Comma = comma
 	r.TrimLeadingSpace = true
 	r.LazyQuotes = true
+	r.Comment = '#'
 
 	lines, err := r.ReadAll()
 	return err == nil && r.FieldsPerRecord > 1 && len(lines) > 1
