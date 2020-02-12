@@ -17,7 +17,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1139,23 +1138,6 @@ func (r *run) randomReader(t *testing.T, size int64) io.ReadCloser {
 	return f
 }
 
-func (r *run) writeRemoteRandomBytes(t *testing.T, f fs.Fs, p string, size int64) string {
-	remote := path.Join(p, strconv.Itoa(rand.Int())+".bin")
-	// create some rand test data
-	testData := randStringBytes(int(size))
-
-	r.writeRemoteBytes(t, f, remote, testData)
-	return remote
-}
-
-func (r *run) writeObjectRandomBytes(t *testing.T, f fs.Fs, p string, size int64) fs.Object {
-	remote := path.Join(p, strconv.Itoa(rand.Int())+".bin")
-	// create some rand test data
-	testData := randStringBytes(int(size))
-
-	return r.writeObjectBytes(t, f, remote, testData)
-}
-
 func (r *run) writeRemoteString(t *testing.T, f fs.Fs, remote, content string) {
 	r.writeRemoteBytes(t, f, remote, []byte(content))
 }
@@ -1342,26 +1324,6 @@ func (r *run) list(t *testing.T, f fs.Fs, remote string) ([]interface{}, error) 
 		}
 	}
 	return l, err
-}
-
-func (r *run) listPath(t *testing.T, f fs.Fs, remote string) []string {
-	var err error
-	var l []string
-	if r.useMount {
-		var list []os.FileInfo
-		list, err = ioutil.ReadDir(path.Join(r.mntDir, remote))
-		for _, ll := range list {
-			l = append(l, ll.Name())
-		}
-	} else {
-		var list fs.DirEntries
-		list, err = f.List(context.Background(), remote)
-		for _, ll := range list {
-			l = append(l, ll.Remote())
-		}
-	}
-	require.NoError(t, err)
-	return l
 }
 
 func (r *run) copyFile(t *testing.T, f fs.Fs, src, dst string) error {
