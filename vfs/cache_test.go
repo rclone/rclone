@@ -333,7 +333,7 @@ func TestCacheOpenMkdir(t *testing.T) {
 	assert.Equal(t, []string(nil), itemAsString(c))
 
 	// test directory does not exist
-	fi, err = os.Stat(filepath.Dir(p))
+	_, err = os.Stat(filepath.Dir(p))
 	require.True(t, os.IsNotExist(err))
 }
 
