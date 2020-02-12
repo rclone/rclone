@@ -152,16 +152,16 @@ func TestVFSStat(t *testing.T) {
 	assert.True(t, node.IsFile())
 	assert.Equal(t, "file2", node.Name())
 
-	node, err = vfs.Stat("not found")
+	_, err = vfs.Stat("not found")
 	assert.Equal(t, os.ErrNotExist, err)
 
-	node, err = vfs.Stat("dir/not found")
+	_, err = vfs.Stat("dir/not found")
 	assert.Equal(t, os.ErrNotExist, err)
 
-	node, err = vfs.Stat("not found/not found")
+	_, err = vfs.Stat("not found/not found")
 	assert.Equal(t, os.ErrNotExist, err)
 
-	node, err = vfs.Stat("file1/under a file")
+	_, err = vfs.Stat("file1/under a file")
 	assert.Equal(t, os.ErrNotExist, err)
 }
 

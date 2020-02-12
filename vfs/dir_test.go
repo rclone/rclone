@@ -238,7 +238,7 @@ func TestDirStat(t *testing.T) {
 	assert.Equal(t, int64(14), node.Size())
 	assert.Equal(t, "file1", node.Name())
 
-	node, err = dir.Stat("not found")
+	_, err = dir.Stat("not found")
 	assert.Equal(t, ENOENT, err)
 }
 
@@ -293,7 +293,7 @@ func TestDirOpen(t *testing.T) {
 	assert.True(t, ok)
 	require.NoError(t, fd.Close())
 
-	fd, err = dir.Open(os.O_WRONLY)
+	_, err = dir.Open(os.O_WRONLY)
 	assert.Equal(t, EPERM, err)
 }
 
@@ -405,7 +405,7 @@ func TestDirRemove(t *testing.T) {
 	require.NoError(t, err)
 
 	// check directory is not there
-	node, err = vfs.Stat("dir")
+	_, err = vfs.Stat("dir")
 	assert.Equal(t, ENOENT, err)
 
 	// check the vfs
