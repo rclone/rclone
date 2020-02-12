@@ -850,7 +850,6 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 			Default:  memoryPoolFlushTime,
 			Advanced: true,
 			Help: `How often internal memory buffer pools will be flushed.
-
 Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
 This option controls how often unused buffers will be removed from the pool.`,
 		}, {
@@ -866,7 +865,6 @@ This option controls how often unused buffers will be removed from the pool.`,
 const (
 	metaMtime           = "Mtime"                // the meta key to store mtime in - eg X-Amz-Meta-Mtime
 	metaMD5Hash         = "Md5chksum"            // the meta key to store md5hash in
-	maxRetries          = 10                     // number of retries to make of operations
 	maxSizeForCopy      = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
 	maxUploadParts      = 10000                  // maximum allowed number of parts in a multi-part upload
 	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
@@ -1095,7 +1093,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		opt.ForcePathStyle = false
 	}
 	awsConfig := aws.NewConfig().
-		WithMaxRetries(maxRetries).
+		WithMaxRetries(fs.Config.LowLevelRetries).
 		WithCredentials(cred).
 		WithHTTPClient(fshttp.NewClient(fs.Config)).
 		WithS3ForcePathStyle(opt.ForcePathStyle).
