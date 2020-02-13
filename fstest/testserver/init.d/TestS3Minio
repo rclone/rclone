@@ -15,6 +15,7 @@ start() {
            minio/minio server /data
     
     echo type=s3
+    echo provider=Minio
     echo access_key_id=$USER
     echo secret_access_key=$PASS
     echo endpoint=http://$(docker_ip):9000/
