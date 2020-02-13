@@ -432,7 +432,7 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 			fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
 			fmt.Printf("Execute the following on your machine (same rclone version recommended) :\n")
 			if changed {
-				fmt.Printf("\trclone authorize %q %q %q\n", id, oauthConfig.ClientID, oauthConfig.ClientSecret)
+				fmt.Printf("\trclone authorize %q -- %q %q\n", id, oauthConfig.ClientID, oauthConfig.ClientSecret)
 			} else {
 				fmt.Printf("\trclone authorize %q\n", id)
 			}
