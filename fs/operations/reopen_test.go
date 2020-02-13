@@ -15,7 +15,7 @@ import (
 )
 
 // check interface
-var _ io.ReadCloser = (*reOpen)(nil)
+var _ io.ReadCloser = (*ReOpen)(nil)
 
 var errorTestError = errors.New("test error")
 
@@ -74,7 +74,7 @@ func TestReOpen(t *testing.T) {
 					breaks: breaks,
 				}
 				hashOption := &fs.HashesOption{Hashes: hash.NewHashSet(hash.MD5)}
-				return newReOpen(context.Background(), src, hashOption, rangeOption, maxRetries)
+				return NewReOpen(context.Background(), src, hashOption, rangeOption, maxRetries)
 			}
 
 			t.Run("Basics", func(t *testing.T) {
