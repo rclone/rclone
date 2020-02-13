@@ -19,6 +19,7 @@ import (
 // Check it satisfies the interfaces
 var (
 	_ io.ReadCloser = &Account{}
+	_ io.WriterTo   = &Account{}
 	_ io.Reader     = &accountStream{}
 	_ Accounter     = &Account{}
 	_ Accounter     = &accountStream{}
@@ -115,6 +116,46 @@ func TestAccountRead(t *testing.T) {
 	assert.Equal(t, 0, n)
 
 	assert.NoError(t, acc.Close())
+}
+
+func testAccountWriteTo(t *testing.T, withBuffer bool) {
+	buf := make([]byte, 2*asyncreader.BufferSize+1)
+	for i := range buf {
+		buf[i] = byte(i % 251)
+	}
+	in := ioutil.NopCloser(bytes.NewBuffer(buf))
+	stats := NewStats()
+	acc := newAccountSizeName(stats, in, int64(len(buf)), "test")
+	if withBuffer {
+		acc = acc.WithBuffer()
+	}
+
+	assert.True(t, acc.start.IsZero())
+	assert.Equal(t, 0, acc.lpBytes)
+	assert.Equal(t, int64(0), acc.bytes)
+	assert.Equal(t, int64(0), stats.bytes)
+
+	var out bytes.Buffer
+
+	n, err := acc.WriteTo(&out)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(len(buf)), n)
+	assert.Equal(t, buf, out.Bytes())
+
+	assert.False(t, acc.start.IsZero())
+	assert.Equal(t, len(buf), acc.lpBytes)
+	assert.Equal(t, int64(len(buf)), acc.bytes)
+	assert.Equal(t, int64(len(buf)), stats.bytes)
+
+	assert.NoError(t, acc.Close())
+}
+
+func TestAccountWriteTo(t *testing.T) {
+	testAccountWriteTo(t, false)
+}
+
+func TestAccountWriteToWithBuffer(t *testing.T) {
+	testAccountWriteTo(t, true)
 }
 
 func TestAccountString(t *testing.T) {
