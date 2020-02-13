@@ -321,6 +321,22 @@ func (o *OverrideRemote) GetTier() string {
 // Check all optional interfaces satisfied
 var _ fs.FullObjectInfo = (*OverrideRemote)(nil)
 
+// CommonHash returns a single hash.Type and a HashOption with that
+// type which is in common between the two fs.Fs.
+func CommonHash(fa, fb fs.Info) (hash.Type, *fs.HashesOption) {
+	// work out which hash to use - limit to 1 hash in common
+	var common hash.Set
+	hashType := hash.None
+	if !fs.Config.IgnoreChecksum {
+		common = fb.Hashes().Overlap(fa.Hashes())
+		if common.Count() > 0 {
+			hashType = common.GetOne()
+			common = hash.Set(hashType)
+		}
+	}
+	return hashType, &fs.HashesOption{Hashes: common}
+}
+
 // Copy src object to dst or f if nil.  If dst is nil then it uses
 // remote as the name of the new object.
 //
@@ -339,17 +355,8 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	maxTries := fs.Config.LowLevelRetries
 	tries := 0
 	doUpdate := dst != nil
-	// work out which hash to use - limit to 1 hash in common
-	var common hash.Set
-	hashType := hash.None
-	if !fs.Config.IgnoreChecksum {
-		common = src.Fs().Hashes().Overlap(f.Hashes())
-		if common.Count() > 0 {
-			hashType = common.GetOne()
-			common = hash.Set(hashType)
-		}
-	}
-	hashOption := &fs.HashesOption{Hashes: common}
+	hashType, hashOption := CommonHash(f, src.Fs())
+
 	var actionTaken string
 	for {
 		// Try server side copy first - if has optional interface and
