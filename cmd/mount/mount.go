@@ -73,6 +73,9 @@ func mountOptions(device string) (options []fuse.MountOption) {
 	if len(mountlib.ExtraFlags) > 0 {
 		fs.Errorf(nil, "--fuse-flag not supported with this FUSE backend")
 	}
+	if vfsflags.Opt.MaxPages != 0 {
+		options = append(options, fuse.MaxPages(vfsflags.Opt.MaxPages))
+	}
 	return options
 }
 

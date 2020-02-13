@@ -99,6 +99,10 @@ func mountOptions(fsys *FS, f fs.Fs) (mountOpts *fuse.MountOptions) {
 		*/
 
 	}
+	if fsys.VFS.Opt.MaxPages != 0 {
+		mountOpts.MaxPages = fsys.VFS.Opt.MaxPages
+		mountOpts.MaxWrite = int(fsys.VFS.Opt.MaxPages) * 4096
+	}
 	var opts []string
 	// FIXME doesn't work opts = append(opts, fmt.Sprintf("max_readahead=%d", maxReadAhead))
 	if mountlib.AllowNonEmpty {

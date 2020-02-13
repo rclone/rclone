@@ -1,4 +1,4 @@
-// +build darwin freebsd
+// +build linux
 
 package vfsflags
 
@@ -17,4 +17,6 @@ func platformFlags(flagSet *pflag.FlagSet) {
 	Opt.GID = uint32(unix.Getegid())
 	flags.Uint32VarP(flagSet, &Opt.UID, "uid", "", Opt.UID, "Override the uid field set by the filesystem.")
 	flags.Uint32VarP(flagSet, &Opt.GID, "gid", "", Opt.GID, "Override the gid field set by the filesystem.")
+
+	flags.Uint16VarP(flagSet, &Opt.MaxPages, "max-pages", "", Opt.MaxPages, "Set the Max Pages to be passed onto the FUSE library")
 }

@@ -98,6 +98,14 @@ func IntVarP(flags *pflag.FlagSet, p *int, name, shorthand string, value int, us
 	setDefaultFromEnv(flags, name)
 }
 
+// Uint16VarP defines a flag which can be overridden by an environment variable
+//
+// It is a thin wrapper around pflag.Uint16VarP
+func Uint16VarP(flags *pflag.FlagSet, p *uint16, name, shorthand string, value uint16, usage string) {
+	flags.Uint16VarP(p, name, shorthand, value, usage)
+	setDefaultFromEnv(flags, name)
+}
+
 // Uint32VarP defines a flag which can be overridden by an environment variable
 //
 // It is a thin wrapper around pflag.Uint32VarP
