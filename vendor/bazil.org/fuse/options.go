@@ -16,6 +16,7 @@ type mountConfig struct {
 	maxReadahead     uint32
 	initFlags        InitFlags
 	osxfuseLocations []OSXFUSEPaths
+	maxPages         uint16
 }
 
 func escapeComma(s string) string {
@@ -316,4 +317,12 @@ func AllowNonEmptyMount() MountOption {
 		conf.options["nonempty"] = ""
 		return nil
 	}
+}
+
+// MaxPages enables the configuration of the maximum number of pages
+// in the request & response from the kernel.
+//
+// Linux only. Others ignore this option.
+func MaxPages(count uint16) MountOption {
+	return maxPages(count)
 }

@@ -30,3 +30,7 @@ func exclCreate(conf *mountConfig) error {
 func noBrowse(conf *mountConfig) error {
 	return nil
 }
+
+func maxPages(count uint16) MountOption {
+	return dummyOption
+}

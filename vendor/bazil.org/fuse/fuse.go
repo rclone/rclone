@@ -156,7 +156,8 @@ func (e *MountpointDoesNotExistError) Error() string {
 // progress.
 func Mount(dir string, options ...MountOption) (*Conn, error) {
 	conf := mountConfig{
-		options: make(map[string]string),
+		options:  make(map[string]string),
+		maxPages: 32,
 	}
 	for _, option := range options {
 		if err := option(&conf); err != nil {
@@ -238,8 +239,18 @@ func initMount(c *Conn, conf *mountConfig) error {
 		MaxWrite:     maxWrite,
 		Flags:        InitBigWrites | conf.initFlags,
 	}
+
+	setMaxPages(r, s, conf)
+
 	r.Respond(s)
 	return nil
+}
+
+func setMaxPages(request *InitRequest, response *InitResponse, conf *mountConfig) {
+	if (request.Flags & InitMaxPages) == InitMaxPages {
+		response.Flags |= InitMaxPages
+		response.MaxPages = conf.maxPages
+	}
 }
 
 // A Request represents a single FUSE request received from the kernel.
@@ -1229,6 +1240,9 @@ type InitResponse struct {
 	// Maximum size of a single write operation.
 	// Linux enforces a minimum of 4 KiB.
 	MaxWrite uint32
+	// Maximum number of pages in a single write operation.
+	// Linux enforces a minimum of 32.
+	MaxPages uint16
 }
 
 func (r *InitResponse) String() string {
@@ -1244,12 +1258,14 @@ func (r *InitRequest) Respond(resp *InitResponse) {
 	out.MaxReadahead = resp.MaxReadahead
 	out.Flags = uint32(resp.Flags)
 	out.MaxWrite = resp.MaxWrite
+	out.MaxPages = resp.MaxPages
 
 	// MaxWrite larger than our receive buffer would just lead to
 	// errors on large writes.
 	if out.MaxWrite > maxWrite {
 		out.MaxWrite = maxWrite
 	}
+
 	r.respond(buf)
 }
 

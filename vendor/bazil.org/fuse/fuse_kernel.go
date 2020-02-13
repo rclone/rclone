@@ -274,6 +274,8 @@ const (
 	InitWritebackCache  InitFlags = 1 << 16
 	InitNoOpenSupport   InitFlags = 1 << 17
 
+	InitMaxPages InitFlags = 1 << 22 // Linux only
+
 	InitCaseSensitive InitFlags = 1 << 29 // OS X only
 	InitVolRename     InitFlags = 1 << 30 // OS X only
 	InitXtimes        InitFlags = 1 << 31 // OS X only
@@ -710,6 +712,8 @@ type initOut struct {
 	Flags        uint32
 	Unused       uint32
 	MaxWrite     uint32
+	_            uint32 // Unused, refers to TimeGran
+	MaxPages     uint16
 }
 
 type interruptIn struct {
