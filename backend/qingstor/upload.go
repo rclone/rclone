@@ -297,21 +297,6 @@ func (mu *multiUploader) send(c chunk) error {
 	return err
 }
 
-// list list the ObjectParts of an multipart upload
-func (mu *multiUploader) list() error {
-	bucketInit, _ := mu.bucketInit()
-
-	req := qs.ListMultipartInput{
-		UploadID: mu.uploadID,
-	}
-	fs.Debugf(mu, "Reading multi-part details")
-	rsp, err := bucketInit.ListMultipart(mu.cfg.key, &req)
-	if err == nil {
-		mu.objectParts = rsp.ObjectParts
-	}
-	return err
-}
-
 // complete complete an multipart upload
 func (mu *multiUploader) complete() error {
 	var err error
