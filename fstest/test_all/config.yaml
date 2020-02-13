@@ -120,6 +120,11 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/trailing_VT
  - backend:  "s3"
+   remote:   "TestS3MinioEdge:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
+ - backend:  "s3"
    remote:   "TestS3Wasabi:"
    fastlist: true
    ignore:
