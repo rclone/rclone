@@ -158,6 +158,10 @@ type MountOptions struct {
 	// If set, ask kernel not to do automatic data cache invalidation.
 	// The filesystem is fully responsible for invalidating data cache.
 	ExplicitDataCacheControl bool
+
+	// Number of pages to request.  If less than 32, use default (i.e. 32). This number is
+	// capped at the kernel maximum i.e. 256.
+	MaxPages uint16
 }
 
 // RawFileSystem is an interface close to the FUSE wire protocol.

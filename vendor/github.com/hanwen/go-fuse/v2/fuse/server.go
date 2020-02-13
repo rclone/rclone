@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	// The kernel caps writes at 128k.
-	MAX_KERNEL_WRITE = 128 * 1024
+	// The kernel caps writes at 1 MiB (from 4.20+).
+	MAX_KERNEL_WRITE = 1 * 1024 * 1024
 )
 
 // Server contains the logic for reading from the FUSE device and

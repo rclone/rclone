@@ -130,6 +130,17 @@ func doInit(server *Server, req *request) {
 		out.Minor = input.Minor
 	}
 
+	if (input.Flags & CAP_MAX_PAGES) == CAP_MAX_PAGES {
+		out.Flags |= CAP_MAX_PAGES
+		if server.opts.MaxPages < 32 {
+			out.MaxPages = 32 // The minimum allowed by the kernel
+		} else if server.opts.MaxPages > 256 {
+			out.MaxPages = 256 // The maximum allowed by the kernel
+		} else {
+			out.MaxPages = server.opts.MaxPages
+		}
+	}
+
 	if out.Minor <= 22 {
 		tweaked := *req.handler
 
