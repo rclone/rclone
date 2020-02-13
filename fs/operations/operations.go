@@ -403,7 +403,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				}
 			} else {
 				var in0 io.ReadCloser
-				in0, err = newReOpen(ctx, src, hashOption, nil, fs.Config.LowLevelRetries)
+				in0, err = NewReOpen(ctx, src, hashOption, nil, fs.Config.LowLevelRetries)
 				if err != nil {
 					err = errors.Wrap(err, "failed to open source object")
 				} else {

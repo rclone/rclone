@@ -71,7 +71,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v starting", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
 
-	rc, err := newReOpen(ctx, mc.src, nil, &fs.RangeOption{Start: start, End: end - 1}, fs.Config.LowLevelRetries)
+	rc, err := NewReOpen(ctx, mc.src, nil, &fs.RangeOption{Start: start, End: end - 1}, fs.Config.LowLevelRetries)
 	if err != nil {
 		return errors.Wrap(err, "multpart copy: failed to open source")
 	}

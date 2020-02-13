@@ -10,8 +10,8 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 )
 
-// reOpen is a wrapper for an object reader which reopens the stream on error
-type reOpen struct {
+// ReOpen is a wrapper for an object reader which reopens the stream on error
+type ReOpen struct {
 	ctx         context.Context
 	mu          sync.Mutex       // mutex to protect the below
 	src         fs.Object        // object to open
@@ -30,14 +30,14 @@ var (
 	errorTooManyTries = errors.New("failed to reopen: too many retries")
 )
 
-// newReOpen makes a handle which will reopen itself and seek to where it was on errors
+// NewReOpen makes a handle which will reopen itself and seek to where it was on errors
 //
 // If hashOption is set this will be applied when reading from the start
 //
 // If rangeOption is set then this will applied when reading from the
 // start, and updated on retries.
-func newReOpen(ctx context.Context, src fs.Object, hashOption *fs.HashesOption, rangeOption *fs.RangeOption, maxTries int) (rc io.ReadCloser, err error) {
-	h := &reOpen{
+func NewReOpen(ctx context.Context, src fs.Object, hashOption *fs.HashesOption, rangeOption *fs.RangeOption, maxTries int) (rc io.ReadCloser, err error) {
+	h := &ReOpen{
 		ctx:         ctx,
 		src:         src,
 		hashOption:  hashOption,
@@ -56,7 +56,7 @@ func newReOpen(ctx context.Context, src fs.Object, hashOption *fs.HashesOption, 
 // open the underlying handle - call with lock held
 //
 // we don't retry here as the Open() call will itself have low level retries
-func (h *reOpen) open() error {
+func (h *ReOpen) open() error {
 	var optsArray [2]fs.OpenOption
 	var opts = optsArray[:0]
 	if h.read == 0 {
@@ -93,7 +93,7 @@ func (h *reOpen) open() error {
 }
 
 // Read bytes retrying as necessary
-func (h *reOpen) Read(p []byte) (n int, err error) {
+func (h *ReOpen) Read(p []byte) (n int, err error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if h.err != nil {
@@ -119,7 +119,7 @@ func (h *reOpen) Read(p []byte) (n int, err error) {
 }
 
 // Close the stream
-func (h *reOpen) Close() error {
+func (h *ReOpen) Close() error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if !h.opened {
