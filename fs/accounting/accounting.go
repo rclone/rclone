@@ -249,6 +249,44 @@ func (acc *Account) Read(p []byte) (n int, err error) {
 	return acc.read(acc.in, p)
 }
 
+// Thin wrapper for w
+type accountWriteTo struct {
+	w   io.Writer
+	acc *Account
+}
+
+// Write writes len(p) bytes from p to the underlying data stream. It
+// returns the number of bytes written from p (0 <= n <= len(p)) and
+// any error encountered that caused the write to stop early. Write
+// must return a non-nil error if it returns n < len(p). Write must
+// not modify the slice data, even temporarily.
+//
+// Implementations must not retain p.
+func (awt *accountWriteTo) Write(p []byte) (n int, err error) {
+	_, err = awt.acc.checkRead()
+	if err == nil {
+		n, err = awt.w.Write(p)
+		awt.acc.accountRead(n)
+	}
+	return n, err
+}
+
+// WriteTo writes data to w until there's no more data to write or
+// when an error occurs. The return value n is the number of bytes
+// written. Any error encountered during the write is also returned.
+func (acc *Account) WriteTo(w io.Writer) (n int64, err error) {
+	acc.mu.Lock()
+	in := acc.in
+	acc.mu.Unlock()
+	wrappedWriter := accountWriteTo{w: w, acc: acc}
+	if do, ok := in.(io.WriterTo); ok {
+		n, err = do.WriteTo(&wrappedWriter)
+	} else {
+		n, err = io.Copy(&wrappedWriter, in)
+	}
+	return
+}
+
 // AccountRead account having read n bytes
 func (acc *Account) AccountRead(n int) (err error) {
 	acc.mu.Lock()
