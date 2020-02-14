@@ -1314,17 +1314,29 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	}()
 	in = tr.Account(in).WithBuffer()
 
-	hashes := hash.NewHashSet(fdst.Hashes().GetOne()) // just pick one hash
-	hashOption := &fs.HashesOption{Hashes: hashes}
-	hash, err := hash.NewMultiHasherTypes(hashes)
-	if err != nil {
-		return nil, err
-	}
 	readCounter := readers.NewCountingReader(in)
-	trackingIn := io.TeeReader(readCounter, hash)
+	var trackingIn io.Reader
+	var hasher *hash.MultiHasher
+	var options []fs.OpenOption
+	if !fs.Config.IgnoreChecksum {
+		hashes := hash.NewHashSet(fdst.Hashes().GetOne()) // just pick one hash
+		hashOption := &fs.HashesOption{Hashes: hashes}
+		options = append(options, hashOption)
+		hasher, err = hash.NewMultiHasherTypes(hashes)
+		if err != nil {
+			return nil, err
+		}
+		trackingIn = io.TeeReader(readCounter, hasher)
+	} else {
+		trackingIn = readCounter
+	}
 
 	compare := func(dst fs.Object) error {
-		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, hash.Sums(), fdst)
+		var sums map[hash.Type]string
+		if hasher != nil {
+			sums = hasher.Sums()
+		}
+		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst)
 		if !Equal(ctx, src, dst) {
 			err = errors.Errorf("corrupted on transfer")
 			err = fs.CountError(err)
@@ -1373,7 +1385,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	}
 
 	objInfo := object.NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
-	if dst, err = fStreamTo.Features().PutStream(ctx, in, objInfo, hashOption); err != nil {
+	if dst, err = fStreamTo.Features().PutStream(ctx, in, objInfo, options...); err != nil {
 		return dst, err
 	}
 	if err = compare(dst); err != nil {
