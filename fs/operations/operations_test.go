@@ -1443,14 +1443,21 @@ func TestGetFsInfo(t *testing.T) {
 }
 
 func TestRcat(t *testing.T) {
-	checkSumBefore := fs.Config.CheckSum
-	defer func() { fs.Config.CheckSum = checkSumBefore }()
+	check := func(withChecksum, ignoreChecksum bool) {
+		checksumBefore, ignoreChecksumBefore := fs.Config.CheckSum, fs.Config.IgnoreChecksum
+		fs.Config.CheckSum, fs.Config.IgnoreChecksum = withChecksum, ignoreChecksum
+		defer func() {
+			fs.Config.CheckSum, fs.Config.IgnoreChecksum = checksumBefore, ignoreChecksumBefore
+		}()
 
-	check := func(withChecksum bool) {
-		fs.Config.CheckSum = withChecksum
-		prefix := "no_checksum_"
+		var prefix string
 		if withChecksum {
 			prefix = "with_checksum_"
+		} else {
+			prefix = "no_checksum_"
+		}
+		if ignoreChecksum {
+			prefix = "ignore_checksum_"
 		}
 
 		r := fstest.NewRun(t)
@@ -1486,8 +1493,13 @@ func TestRcat(t *testing.T) {
 		fstest.CheckItems(t, r.Fremote, file1, file2)
 	}
 
-	check(true)
-	check(false)
+	for i := 0; i < 4; i++ {
+		withChecksum := (i & 1) != 0
+		ignoreChecksum := (i & 2) != 0
+		t.Run(fmt.Sprintf("withChecksum=%v,ignoreChecksum=%v", withChecksum, ignoreChecksum), func(t *testing.T) {
+			check(withChecksum, ignoreChecksum)
+		})
+	}
 }
 
 func TestRcatSize(t *testing.T) {
