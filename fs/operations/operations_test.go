@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -1439,4 +1440,78 @@ func TestGetFsInfo(t *testing.T) {
 	}
 	assert.Equal(t, f.Hashes(), hashSet)
 	assert.Equal(t, f.Features().Enabled(), info.Features)
+}
+
+func TestRcat(t *testing.T) {
+	checkSumBefore := fs.Config.CheckSum
+	defer func() { fs.Config.CheckSum = checkSumBefore }()
+
+	check := func(withChecksum bool) {
+		fs.Config.CheckSum = withChecksum
+		prefix := "no_checksum_"
+		if withChecksum {
+			prefix = "with_checksum_"
+		}
+
+		r := fstest.NewRun(t)
+		defer r.Finalise()
+
+		if *fstest.SizeLimit > 0 && int64(fs.Config.StreamingUploadCutoff) > *fstest.SizeLimit {
+			savedCutoff := fs.Config.StreamingUploadCutoff
+			defer func() {
+				fs.Config.StreamingUploadCutoff = savedCutoff
+			}()
+			fs.Config.StreamingUploadCutoff = fs.SizeSuffix(*fstest.SizeLimit)
+			t.Logf("Adjust StreamingUploadCutoff to size limit %s (was %s)", fs.Config.StreamingUploadCutoff, savedCutoff)
+		}
+
+		fstest.CheckListing(t, r.Fremote, []fstest.Item{})
+
+		data1 := "this is some really nice test data"
+		path1 := prefix + "small_file_from_pipe"
+
+		data2 := string(make([]byte, fs.Config.StreamingUploadCutoff+1))
+		path2 := prefix + "big_file_from_pipe"
+
+		in := ioutil.NopCloser(strings.NewReader(data1))
+		_, err := operations.Rcat(context.Background(), r.Fremote, path1, in, t1)
+		require.NoError(t, err)
+
+		in = ioutil.NopCloser(strings.NewReader(data2))
+		_, err = operations.Rcat(context.Background(), r.Fremote, path2, in, t2)
+		require.NoError(t, err)
+
+		file1 := fstest.NewItem(path1, data1, t1)
+		file2 := fstest.NewItem(path2, data2, t2)
+		fstest.CheckItems(t, r.Fremote, file1, file2)
+	}
+
+	check(true)
+	check(false)
+}
+
+func TestRcatSize(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	const body = "------------------------------------------------------------"
+	file1 := r.WriteFile("potato1", body, t1)
+	file2 := r.WriteFile("potato2", body, t2)
+	// Test with known length
+	bodyReader := ioutil.NopCloser(strings.NewReader(body))
+	obj, err := operations.RcatSize(context.Background(), r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+	assert.Equal(t, file1.Path, obj.Remote())
+
+	// Test with unknown length
+	bodyReader = ioutil.NopCloser(strings.NewReader(body)) // reset Reader
+	ioutil.NopCloser(strings.NewReader(body))
+	obj, err = operations.RcatSize(context.Background(), r.Fremote, file2.Path, bodyReader, -1, file2.ModTime)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+	assert.Equal(t, file2.Path, obj.Remote())
+
+	// Check files exist
+	fstest.CheckItems(t, r.Fremote, file1, file2)
 }
