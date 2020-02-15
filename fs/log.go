@@ -3,6 +3,7 @@ package fs
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -85,6 +86,10 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 				"object":     fmt.Sprintf("%+v", o),
 				"objectType": fmt.Sprintf("%T", o),
 			}
+		}
+		if strings.HasPrefix(out, "map[") {
+			fields["json"] = args[0]
+			out = ""
 		}
 		switch level {
 		case LogLevelDebug:
