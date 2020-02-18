@@ -456,12 +456,19 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 // "shared with me" folders in OneDrive Personal (See #2536, #2778)
 // This path pattern comes from https://github.com/OneDrive/onedrive-api-docs/issues/908#issuecomment-417488480
 //
+// And we try to address items using `drives/driveID/items/itemID/children/relativePath`
+// when we're using 'OneDrive China Operated by 21Vianet'
+//
 // If `relPath` == '', do not append the slash (See #3664)
 func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID string, relPath string) (info *api.Item, resp *http.Response, err error) {
 	if relPath != "" {
 		relPath = "/" + withTrailingColon(rest.URLPathEscape(f.opt.Enc.FromStandardPath(relPath)))
 	}
-	opts := newOptsCall(normalizedID, "GET", ":"+relPath, f.opt.Region)
+	path := ":" + relPath
+	if f.opt.Region == "cn" {
+		path = "/children" + relPath
+	}
+	opts := newOptsCall(normalizedID, "GET", path, f.opt.Region)
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
 		return shouldRetry(resp, err)
@@ -473,13 +480,17 @@ func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID s
 // readMetaDataForPath reads the metadata from the path (relative to the absolute root)
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, resp *http.Response, err error) {
 	firstSlashIndex := strings.IndexRune(path, '/')
-
-	if f.driveType != driveTypePersonal || firstSlashIndex == -1 {
+	if (f.driveType != driveTypePersonal && f.opt.Region != "cn") || firstSlashIndex == -1 {
 		var opts rest.Opts
 		if len(path) == 0 {
 			opts = rest.Opts{
 				Method: "GET",
 				Path:   "/root",
+			}
+		} else if f.opt.Region == "cn" {
+			opts = rest.Opts{
+				Method: "GET",
+				Path:   "/root/children/" + rest.URLPathEscape(f.opt.Enc.FromStandardPath(path)),
 			}
 		} else {
 			opts = rest.Opts{
@@ -500,6 +511,9 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 	// by its path relative to the folder's ID relative to the sharer's driveID.
 	// Note: A "shared with me" folder can only be placed in the sharee's absolute root.
 	// So we read metadata relative to a suitable folder's normalized ID.
+
+	// We should also handle the case that we're using OneDrive China National
+	// where `drives/driveID/root:/itemPath` is unavailable
 	var dirCacheFoundRoot bool
 	var rootNormalizedID string
 	if f.dirCache != nil {
@@ -1484,10 +1498,14 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.Item, 
 	leaf, directoryID, _ := o.fs.dirCache.FindPath(ctx, o.remote, false)
 	trueDirID, drive, rootURL := parseNormalizedID(directoryID, o.fs.opt.Region)
 	if drive != "" {
+		path := "/" + drive + "/items/" + trueDirID + ":/" + withTrailingColon(rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)))
+		if o.fs.opt.Region == "cn" {
+			path = "/" + drive + "/items/" + trueDirID + "/children/" + withTrailingColon(rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)))
+		}
 		opts = rest.Opts{
 			Method:  "PATCH",
 			RootURL: rootURL,
-			Path:    "/" + drive + "/items/" + trueDirID + ":/" + withTrailingColon(rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf))),
+			Path:    path,
 		}
 	} else {
 		opts = rest.Opts{
@@ -1558,10 +1576,14 @@ func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (re
 	id, drive, rootURL := parseNormalizedID(directoryID, o.fs.opt.Region)
 	var opts rest.Opts
 	if drive != "" {
+		path := "/%s/items/%s:/%s:/createUploadSession"
+		if o.fs.opt.Region == "cn" {
+			path = "/%s/items/%s/children/%s/createUploadSession"
+		}
 		opts = rest.Opts{
 			Method:  "POST",
 			RootURL: rootURL,
-			Path: fmt.Sprintf("/%s/items/%s:/%s:/createUploadSession",
+			Path: fmt.Sprintf(path,
 				drive, id, rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf))),
 		}
 	} else {
@@ -1764,10 +1786,14 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 	leaf, directoryID, _ := o.fs.dirCache.FindPath(ctx, o.remote, false)
 	trueDirID, drive, rootURL := parseNormalizedID(directoryID, o.fs.opt.Region)
 	if drive != "" {
+		path := "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)) + ":/content"
+		if o.fs.opt.Region == "cn" {
+			path = "/" + drive + "/items/" + trueDirID + "/children/" + rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)) + "/content"
+		}
 		opts = rest.Opts{
 			Method:        "PUT",
 			RootURL:       rootURL,
-			Path:          "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)) + ":/content",
+			Path:          path,
 			ContentLength: &size,
 			Body:          in,
 		}
