@@ -122,8 +122,8 @@ func TestContentDirectoryBrowseMetadata(t *testing.T) {
 	// expect a <container> element
 	require.Contains(t, string(body), html.EscapeString("<container "))
 	require.NotContains(t, string(body), html.EscapeString("<item "))
-	// with a non-zero childCount
-	require.Regexp(t, " childCount=&#34;[1-9]", string(body))
+	// if there is a childCount, it better not be zero
+	require.NotContains(t, string(body), html.EscapeString(" childCount=\"0\""))
 }
 
 // Check that the X_MS_MediaReceiverRegistrar is faked out properly.
