@@ -1799,8 +1799,9 @@ func (f *Fs) copyMultipart(ctx context.Context, req *s3.CopyObjectInput, dstBuck
 	defer func() {
 		if err != nil {
 			// We can try to abort the upload, but ignore the error.
+			fs.Debugf(nil, "Cancelling multipart copy")
 			_ = f.pacer.Call(func() (bool, error) {
-				_, err := f.c.AbortMultipartUploadWithContext(ctx, &s3.AbortMultipartUploadInput{
+				_, err := f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
 					Bucket:       &dstBucket,
 					Key:          &dstPath,
 					UploadId:     uid,
@@ -2172,7 +2173,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			// We can try to abort the upload, but ignore the error.
 			fs.Debugf(o, "Cancelling multipart upload")
 			errCancel := f.pacer.Call(func() (bool, error) {
-				_, err := f.c.AbortMultipartUploadWithContext(ctx, &s3.AbortMultipartUploadInput{
+				_, err := f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
 					Bucket:       req.Bucket,
 					Key:          req.Key,
 					UploadId:     uid,
