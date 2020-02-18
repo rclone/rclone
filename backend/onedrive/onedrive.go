@@ -43,17 +43,8 @@ const (
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
 
-	graphAPIEndpoint = "https://graph.microsoft.com"
-	authEndpoint     = "https://login.microsoftonline.com"
-
-	graphAPIEndpointUS = "https://graph.microsoft.us"
-	authEndpointUS     = "https://login.microsoftonline.us"
-
-	graphAPIEndpointDE = "https://graph.microsoft.de"
-	authEndpointDE     = "https://login.microsoftonline.de"
-
-	graphAPIEndpointCN = "https://microsoftgraph.chinacloudapi.cn"
-	authEndpointCN     = "https://login.chinacloudapi.cn"
+	authPath  = "/common/oauth2/v2.0/authorize"
+	tokenPath = "/common/oauth2/v2.0/token"
 
 	configDriveID       = "drive_id"
 	configDriveType     = "drive_type"
@@ -67,33 +58,25 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app for a business account
-	oauthEndpoint = &oauth2.Endpoint{
-		AuthURL:  authEndpoint + "/common/oauth2/v2.0/authorize",
-		TokenURL: authEndpoint + "/common/oauth2/v2.0/token",
-	}
-	oauthEndpointCN = &oauth2.Endpoint{
-		AuthURL:  authEndpointCN + "/common/oauth2/v2.0/authorize",
-		TokenURL: authEndpointCN + "/common/oauth2/v2.0/token",
-	}
-	oauthEndpointUS = &oauth2.Endpoint{
-		AuthURL:  authEndpointUS + "/common/oauth2/v2.0/authorize",
-		TokenURL: authEndpointUS + "/common/oauth2/v2.0/token",
-	}
-	oauthEndpointDE = &oauth2.Endpoint{
-		AuthURL:  authEndpointDE + "/common/oauth2/v2.0/authorize",
-		TokenURL: authEndpointDE + "/common/oauth2/v2.0/token",
-	}
 	oauthConfig = &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-			TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-		},
 		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
+	graphAPIEndpoint = map[string]string{
+		"global": "https://graph.microsoft.com",
+		"us":     "https://graph.microsoft.us",
+		"de":     "https://graph.microsoft.de",
+		"cn":     "https://microsoftgraph.chinacloudapi.cn",
+	}
 
+	authEndpoint = map[string]string{
+		"global": "https://login.microsoftonline.com",
+		"us":     "https://login.microsoftonline.us",
+		"de":     "https://login.microsoftonline.de",
+		"cn":     "https://login.chinacloudapi.cn",
+	}
 	// QuickXorHashType is the hash.Type for OneDrive
 	QuickXorHashType hash.Type
 )
@@ -113,23 +96,11 @@ func init() {
 				return
 			}
 
-			graphURL := graphAPIEndpoint + "/v1.0"
-			oauthConfig.Endpoint = *oauthEndpoint
-			switch opt.Region {
-			case "cn":
-				graphURL = graphAPIEndpointCN + "/v1.0"
-				oauthConfig.Endpoint = *oauthEndpointCN
-				break
-			case "us":
-				graphURL = graphAPIEndpointUS + "/v1.0"
-				oauthConfig.Endpoint = *oauthEndpointUS
-				break
-			case "de":
-				graphURL = graphAPIEndpointDE + "/v1.0"
-				oauthConfig.Endpoint = *oauthEndpointDE
-				break
+			graphURL := graphAPIEndpoint[opt.Region] + "/v1.0"
+			oauthConfig.Endpoint = oauth2.Endpoint{
+				AuthURL:  authEndpoint[opt.Region] + authPath,
+				TokenURL: authEndpoint[opt.Region] + tokenPath,
 			}
-
 			ctx := context.TODO()
 			err = oauthutil.Config("onedrive", name, m, oauthConfig)
 			if err != nil {
@@ -627,21 +598,10 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.New("unable to get drive_id and drive_type - if you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend")
 	}
 
-	rootURL := graphAPIEndpoint + "/v1.0" + "/drives/" + opt.DriveID
-	oauthConfig.Endpoint = *oauthEndpoint
-	switch opt.Region {
-	case "us":
-		rootURL = graphAPIEndpointUS + "/v1.0" + "/drives/" + opt.DriveID
-		oauthConfig.Endpoint = *oauthEndpointUS
-		break
-	case "de":
-		rootURL = graphAPIEndpointDE + "/v1.0" + "/drives/" + opt.DriveID
-		oauthConfig.Endpoint = *oauthEndpointDE
-		break
-	case "cn":
-		rootURL = graphAPIEndpointCN + "/v1.0" + "/me/drive"
-		oauthConfig.Endpoint = *oauthEndpointCN
-		break
+	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
+	oauthConfig.Endpoint = oauth2.Endpoint{
+		AuthURL:  authEndpoint[opt.Region] + authPath,
+		TokenURL: authEndpoint[opt.Region] + tokenPath,
 	}
 
 	root = parsePath(root)
@@ -1886,8 +1846,8 @@ func (o *Object) ID() string {
 	return o.id
 }
 
-func newOptsCall(normalizedID string, method string, route string, Region string) (opts rest.Opts) {
-	id, drive, rootURL := parseNormalizedID(normalizedID, Region)
+func newOptsCall(normalizedID string, method string, route string, region string) (opts rest.Opts) {
+	id, drive, rootURL := parseNormalizedID(normalizedID, region)
 
 	if drive != "" {
 		return rest.Opts{
@@ -1905,25 +1865,11 @@ func newOptsCall(normalizedID string, method string, route string, Region string
 // parseNormalizedID parses a normalized ID (may be in the form `driveID#itemID` or just `itemID`)
 // and returns itemID, driveID, rootURL.
 // Such a normalized ID can come from (*Item).GetID()
-func parseNormalizedID(ID string, Region string) (string, string, string) {
-	graphURL := graphAPIEndpoint + "/v1.0"
-	switch Region {
-	case "us":
-		graphURL = graphAPIEndpointUS + "/v1.0"
-		break
-	case "de":
-		graphURL = graphAPIEndpointUS + "/v1.0"
-		break
-	case "cn":
-		if strings.Index(ID, "#") >= 0 {
-			s := strings.Split(ID, "#")
-			return s[1], "", ""
-		}
-		break
-	}
+func parseNormalizedID(ID string, region string) (string, string, string) {
+	rootURL := graphAPIEndpoint[region] + "/v1.0/drives"
 	if strings.Index(ID, "#") >= 0 {
 		s := strings.Split(ID, "#")
-		return s[1], s[0], graphURL + "/drives"
+		return s[1], s[0], rootURL
 	}
 	return ID, "", ""
 }
