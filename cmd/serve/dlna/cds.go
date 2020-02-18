@@ -104,6 +104,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 
 	obj.Class = "object.item." + mediaType[1] + "Item"
 	obj.Title = fileInfo.Name()
+	obj.Date = upnpav.Timestamp{Time: fileInfo.ModTime()}
 
 	item := upnpav.Item{
 		Object: obj,
