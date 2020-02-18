@@ -124,6 +124,8 @@ func TestContentDirectoryBrowseMetadata(t *testing.T) {
 	require.NotContains(t, string(body), html.EscapeString("<item "))
 	// if there is a childCount, it better not be zero
 	require.NotContains(t, string(body), html.EscapeString(" childCount=\"0\""))
+	// should have a dc:date element
+	require.Contains(t, string(body), html.EscapeString("<dc:date>"))
 }
 
 // Check that the X_MS_MediaReceiverRegistrar is faked out properly.
