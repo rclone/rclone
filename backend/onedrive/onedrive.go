@@ -51,6 +51,10 @@ const (
 	driveTypePersonal   = "personal"
 	driveTypeBusiness   = "business"
 	driveTypeSharepoint = "documentLibrary"
+	regionGlobal        = "global"
+	regionUS            = "us"
+	regionDE            = "de"
+	regionCN            = "cn"
 	defaultChunkSize    = 10 * fs.MebiByte
 	chunkSizeMultiple   = 320 * fs.KibiByte
 )
@@ -89,20 +93,14 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			opt := new(Options)
-			err := configstruct.Set(m, opt)
-			if err != nil {
-				fs.Errorf(nil, "Couldn't parse config into struct: %v", err)
-				return
-			}
-
-			graphURL := graphAPIEndpoint[opt.Region] + "/v1.0"
+			region, _ := m.Get("region")
+			graphURL := graphAPIEndpoint[region] + "/v1.0"
 			oauthConfig.Endpoint = oauth2.Endpoint{
-				AuthURL:  authEndpoint[opt.Region] + authPath,
-				TokenURL: authEndpoint[opt.Region] + tokenPath,
+				AuthURL:  authEndpoint[region] + authPath,
+				TokenURL: authEndpoint[region] + tokenPath,
 			}
 			ctx := context.TODO()
-			err = oauthutil.Config("onedrive", name, m, oauthConfig)
+			err := oauthutil.Config("onedrive", name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 				return
@@ -250,16 +248,16 @@ func init() {
 			Help:    "Choose national cloud region for OneDrive.",
 			Default: "global",
 			Examples: []fs.OptionExample{{
-				Value: "global",
+				Value: regionGlobal,
 				Help:  "Microsoft Cloud Global",
 			}, {
-				Value: "us",
+				Value: regionUS,
 				Help:  "Microsoft Cloud for US Government",
 			}, {
-				Value: "de",
+				Value: regionDE,
 				Help:  "Microsoft Cloud Germany",
 			}, {
-				Value: "cn",
+				Value: regionCN,
 				Help:  "Azure and Office 365 operated by 21Vianet in China",
 			}},
 		}, {
@@ -465,7 +463,7 @@ func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID s
 		relPath = "/" + withTrailingColon(rest.URLPathEscape(f.opt.Enc.FromStandardPath(relPath)))
 	}
 	path := ":" + relPath
-	if f.opt.Region == "cn" {
+	if f.opt.Region == regionCN {
 		path = "/children" + relPath
 	}
 	opts := newOptsCall(normalizedID, "GET", path, f.opt.Region)
@@ -480,14 +478,14 @@ func (f *Fs) readMetaDataForPathRelativeToID(ctx context.Context, normalizedID s
 // readMetaDataForPath reads the metadata from the path (relative to the absolute root)
 func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Item, resp *http.Response, err error) {
 	firstSlashIndex := strings.IndexRune(path, '/')
-	if (f.driveType != driveTypePersonal && f.opt.Region != "cn") || firstSlashIndex == -1 {
+	if (f.driveType != driveTypePersonal && f.opt.Region != regionCN) || firstSlashIndex == -1 {
 		var opts rest.Opts
 		if len(path) == 0 {
 			opts = rest.Opts{
 				Method: "GET",
 				Path:   "/root",
 			}
-		} else if f.opt.Region == "cn" {
+		} else if f.opt.Region == regionCN {
 			opts = rest.Opts{
 				Method: "GET",
 				Path:   "/root/children/" + rest.URLPathEscape(f.opt.Enc.FromStandardPath(path)),
@@ -1499,7 +1497,7 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.Item, 
 	trueDirID, drive, rootURL := parseNormalizedID(directoryID, o.fs.opt.Region)
 	if drive != "" {
 		path := "/" + drive + "/items/" + trueDirID + ":/" + withTrailingColon(rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)))
-		if o.fs.opt.Region == "cn" {
+		if o.fs.opt.Region == regionCN {
 			path = "/" + drive + "/items/" + trueDirID + "/children/" + withTrailingColon(rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)))
 		}
 		opts = rest.Opts{
@@ -1577,7 +1575,7 @@ func (o *Object) createUploadSession(ctx context.Context, modTime time.Time) (re
 	var opts rest.Opts
 	if drive != "" {
 		path := "/%s/items/%s:/%s:/createUploadSession"
-		if o.fs.opt.Region == "cn" {
+		if o.fs.opt.Region == regionCN {
 			path = "/%s/items/%s/children/%s/createUploadSession"
 		}
 		opts = rest.Opts{
@@ -1787,7 +1785,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 	trueDirID, drive, rootURL := parseNormalizedID(directoryID, o.fs.opt.Region)
 	if drive != "" {
 		path := "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)) + ":/content"
-		if o.fs.opt.Region == "cn" {
+		if o.fs.opt.Region == regionCN {
 			path = "/" + drive + "/items/" + trueDirID + "/children/" + rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)) + "/content"
 		}
 		opts = rest.Opts{
