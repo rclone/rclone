@@ -198,7 +198,7 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.rootContainer == "" {
-		return fmt.Sprintf("Azure root")
+		return "Azure root"
 	}
 	if f.rootDirectory == "" {
 		return fmt.Sprintf("Azure container %s", f.rootContainer)
