@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1119,22 +1118,6 @@ func (o *Object) readMetaData() (err error) {
 	}
 
 	return o.decodeMetaDataFromPropertiesResponse(blobProperties)
-}
-
-// parseTimeString converts a decimal string number of milliseconds
-// elapsed since January 1, 1970 UTC into a time.Time and stores it in
-// the modTime variable.
-func (o *Object) parseTimeString(timeString string) (err error) {
-	if timeString == "" {
-		return nil
-	}
-	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
-	if err != nil {
-		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
-		return err
-	}
-	o.modTime = time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
-	return nil
 }
 
 // ModTime returns the modification time of the object
