@@ -190,7 +190,11 @@ func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
 	if c != nil {
 		return c, nil
 	}
-	return f.ftpConnection()
+	c, err = f.ftpConnection()
+	if err != nil && f.opt.Concurrency > 0 {
+		f.tokens.Put()
+	}
+	return c, err
 }
 
 // Return an FTP connection to the pool
