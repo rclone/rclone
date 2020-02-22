@@ -253,7 +253,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 
 // doAuth runs the actual token request
 func doAuth(ctx context.Context, srv *rest.Client, loginTokenBase64 string, m configmap.Mapper) (token oauth2.Token, err error) {
-	loginTokenBytes, err := base64.StdEncoding.DecodeString(loginTokenBase64)
+	loginTokenBytes, err := base64.RawURLEncoding.DecodeString(loginTokenBase64)
 	if err != nil {
 		return token, err
 	}
