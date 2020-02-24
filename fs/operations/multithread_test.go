@@ -138,7 +138,7 @@ func TestMultithreadCopy(t *testing.T) {
 			assert.Equal(t, src.Size(), dst.Size())
 			assert.Equal(t, "file1", dst.Remote())
 
-			fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
+			fstest.CheckItems(t, r.Flocal, file1)
 			require.NoError(t, dst.Remove(context.Background()))
 		})
 	}
