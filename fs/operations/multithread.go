@@ -165,7 +165,6 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	if err != nil {
 		return nil, errors.Wrap(err, "multpart copy: failed to open destination")
 	}
-	defer fs.CheckClose(mc.wc, &err)
 
 	fs.Debugf(src, "Starting multi-thread copy with %d parts of size %v", mc.streams, fs.SizeSuffix(mc.partSize))
 	for stream := 0; stream < mc.streams; stream++ {
@@ -175,8 +174,12 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		})
 	}
 	err = g.Wait()
+	closeErr := mc.wc.Close()
 	if err != nil {
 		return nil, err
+	}
+	if closeErr != nil {
+		return nil, errors.Wrap(closeErr, "multi-thread copy: failed to close object after copy")
 	}
 
 	obj, err := f.NewObject(ctx, remote)
