@@ -20,18 +20,15 @@ import (
 
 var (
 	// these will get interpreted into fs.Config via SetFlags() below
-	verbose             int
-	quiet               bool
-	dumpHeaders         bool
-	dumpBodies          bool
-	deleteBefore        bool
-	deleteDuring        bool
-	deleteAfter         bool
-	bindAddr            string
-	disableFeatures     string
-	maxTransferHard     bool
-	maxTransferSoft     bool
-	maxTransferCautious bool
+	verbose         int
+	quiet           bool
+	dumpHeaders     bool
+	dumpBodies      bool
+	deleteBefore    bool
+	deleteDuring    bool
+	deleteAfter     bool
+	bindAddr        string
+	disableFeatures string
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -97,9 +94,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, &fs.Config.Dump, "dump", "", "List of items to dump from: "+fs.DumpFlagsList)
 	flags.FVarP(flagSet, &fs.Config.MaxTransfer, "max-transfer", "", "Maximum size of data to transfer.")
 	flags.DurationVarP(flagSet, &fs.Config.MaxDuration, "max-duration", "", 0, "Maximum duration rclone will transfer data for.")
-	flags.BoolVarP(flagSet, &maxTransferHard, "max-transfer-hard", "", false, "When transferring, stop immediately when --max-transfer is reached")
-	flags.BoolVarP(flagSet, &maxTransferSoft, "max-transfer-soft", "", false, "When transferring, stop starting new transfers when --max-transfer is reached")
-	flags.BoolVarP(flagSet, &maxTransferCautious, "max-transfer-cautious", "", false, "When transferring, try to avoid reaching --max-transfer")
+	flags.FVarP(flagSet, &fs.Config.CutoffMode, "cutoff-mode", "", "Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS")
 	flags.IntVarP(flagSet, &fs.Config.MaxBacklog, "max-backlog", "", fs.Config.MaxBacklog, "Maximum number of objects in sync or check backlog.")
 	flags.IntVarP(flagSet, &fs.Config.MaxStatsGroups, "max-stats-groups", "", fs.Config.MaxStatsGroups, "Maximum number of stats groups to keep in memory. On max oldest is discarded.")
 	flags.BoolVarP(flagSet, &fs.Config.StatsOneLine, "stats-one-line", "", fs.Config.StatsOneLine, "Make the stats fit on one line.")
@@ -182,20 +177,6 @@ func SetFlags() {
 		fs.Config.DeleteMode = fs.DeleteModeAfter
 	default:
 		fs.Config.DeleteMode = fs.DeleteModeDefault
-	}
-
-	switch {
-	case maxTransferHard && (maxTransferSoft || maxTransferCautious),
-		maxTransferSoft && maxTransferCautious:
-		log.Fatalf(`Only one of --max-trans fer-hard, --max-transfer-soft or --max-transfer-cautious can be used.`)
-	case maxTransferHard:
-		fs.Config.MaxTransferMode = fs.MaxTransferModeHard
-	case maxTransferSoft:
-		fs.Config.MaxTransferMode = fs.MaxTransferModeSoft
-	case maxTransferCautious:
-		fs.Config.MaxTransferMode = fs.MaxTransferModeCautious
-	default:
-		fs.Config.MaxTransferMode = fs.MaxTransferModeDefault
 	}
 
 	if fs.Config.CompareDest != "" && fs.Config.CopyDest != "" {
