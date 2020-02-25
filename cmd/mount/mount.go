@@ -51,7 +51,8 @@ func mountOptions(device string) (options []fuse.MountOption) {
 		options = append(options, fuse.AllowOther())
 	}
 	if mountlib.AllowRoot {
-		options = append(options, fuse.AllowRoot())
+		// options = append(options, fuse.AllowRoot())
+		fs.Errorf(nil, "Ignoring --allow-root. Support has been removed upstream - see https://github.com/bazil/fuse/issues/144 for more info")
 	}
 	if mountlib.DefaultPermissions {
 		options = append(options, fuse.DefaultPermissions())
