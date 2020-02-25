@@ -58,6 +58,7 @@ Some policies rely on quota information. These policies should be used only if y
 | lfs, eplfs | Free           |
 | mfs, epmfs | Free           |
 | lus, eplus | Used           |
+| lno, eplno | Objects        |
 
 To check if your upstream support the field, run `rclone about remote: [flags]` and see if the reuqired field exists.
 
@@ -82,11 +83,13 @@ THe policies definition are inspired by [trapexit/mergerfs](https://github.com/t
 | epff (existing path, first found) | Act on the first one found, by the time upstreams reply, where the relative path exists. |
 | eplfs (existing path, least free space) | Of all the remotes on which the relative path exists choose the one with the least free space. |
 | eplus (existing path, least used space) | Of all the remotes on which the relative path exists choose the one with the least used space. |
+| eplno (existing path, least number of objects) | Of all the remotes on which the relative path exists choose the one with the least number of objects. |
 | epmfs (existing path, most free space) | Of all the remotes on which the relative path exists choose the one with the most free space. |
 | eprand (existing path, random) | Calls **epall** and then randomizes. Returns only one remote. |
 | ff (first found) | Search category: same as **epff**. Action category: same as **epff**. Create category: Act on the first one found by the time upstreams reply. |
 | lfs (least free space) | Search category: same as **eplfs**. Action category: same as **eplfs**. Create category: Pick the remote with the least available free space. |
 | lus (least used space) | Search category: same as **eplus**. Action category: same as **eplus**. Create category: Pick the remote with the least used space. |
+| lno (least number of objects) | Search category: same as **eplno**. Action category: same as **eplno**. Create category: Pick the remote with the least number of objects. |
 | mfs (most free space) | Search category: same as **epmfs**. Action category: same as **epmfs**. Create category: Pick the remote with the most available free space. |
 | newest | Pick the file / directory with the largest mtime. |
 | rand (random) | Calls **all** and then randomizes. Returns only one remote. |

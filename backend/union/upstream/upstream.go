@@ -182,6 +182,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	if f.usage.Free != nil {
 		*f.usage.Free -= size
 	}
+	if f.usage.Objects != nil {
+		*f.usage.Objects++
+	}
 	return o, nil
 }
 
@@ -207,6 +210,9 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	}
 	if f.usage.Free != nil {
 		*f.usage.Free -= size
+	}
+	if f.usage.Objects != nil {
+		*f.usage.Objects++
 	}
 	return o, nil
 }
@@ -280,6 +286,22 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 		return 0, ErrUsageFieldNotSupported
 	}
 	return *f.usage.Used, nil
+}
+
+// GetNumObjects get the number of objects of the fs
+func (f *Fs) GetNumObjects() (int64, error) {
+	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
+		err := f.updateUsage()
+		if err != nil {
+			return 0, ErrUsageFieldNotSupported
+		}
+	}
+	f.cacheMutex.RLock()
+	defer f.cacheMutex.RUnlock()
+	if f.usage.Objects == nil {
+		return 0, ErrUsageFieldNotSupported
+	}
+	return *f.usage.Objects, nil
 }
 
 func (f *Fs) updateUsage() (err error) {
