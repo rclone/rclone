@@ -93,7 +93,7 @@ type Transport struct {
 	// send in the initial settings frame. It is how many bytes
 	// of response headers are allowed. Unlike the http2 spec, zero here
 	// means to use a default limit (currently 10MB). If you actually
-	// want to advertise an ulimited value to the peer, Transport
+	// want to advertise an unlimited value to the peer, Transport
 	// interprets the highest possible value here (0xffffffff or 1<<32-1)
 	// to mean no limit.
 	MaxHeaderListSize uint32
@@ -227,6 +227,7 @@ type ClientConn struct {
 	br              *bufio.Reader
 	fr              *Framer
 	lastActive      time.Time
+	lastIdle        time.Time // time last idle
 	// Settings from peer: (also guarded by mu)
 	maxFrameSize          uint32
 	maxConcurrentStreams  uint32
@@ -736,7 +737,8 @@ func (cc *ClientConn) idleStateLocked() (st clientConnIdleState) {
 	}
 
 	st.canTakeNewRequest = cc.goAway == nil && !cc.closed && !cc.closing && maxConcurrentOkay &&
-		int64(cc.nextStreamID)+2*int64(cc.pendingRequests) < math.MaxInt32
+		int64(cc.nextStreamID)+2*int64(cc.pendingRequests) < math.MaxInt32 &&
+		!cc.tooIdleLocked()
 	st.freshConn = cc.nextStreamID == 1 && st.canTakeNewRequest
 	return
 }
@@ -744,6 +746,16 @@ func (cc *ClientConn) idleStateLocked() (st clientConnIdleState) {
 func (cc *ClientConn) canTakeNewRequestLocked() bool {
 	st := cc.idleStateLocked()
 	return st.canTakeNewRequest
+}
+
+// tooIdleLocked reports whether this connection has been been sitting idle
+// for too much wall time.
+func (cc *ClientConn) tooIdleLocked() bool {
+	// The Round(0) strips the monontonic clock reading so the
+	// times are compared based on their wall time. We don't want
+	// to reuse a connection that's been sitting idle during
+	// VM/laptop suspend if monotonic time was also frozen.
+	return cc.idleTimeout != 0 && !cc.lastIdle.IsZero() && time.Since(cc.lastIdle.Round(0)) > cc.idleTimeout
 }
 
 // onIdleTimeout is called from a time.AfterFunc goroutine. It will
@@ -1150,6 +1162,7 @@ func (cc *ClientConn) awaitOpenSlotForRequest(req *http.Request) error {
 			}
 			return errClientConnUnusable
 		}
+		cc.lastIdle = time.Time{}
 		if int64(len(cc.streams))+1 <= int64(cc.maxConcurrentStreams) {
 			if waitingForConn != nil {
 				close(waitingForConn)
@@ -1638,6 +1651,7 @@ func (cc *ClientConn) streamByID(id uint32, andRemove bool) *clientStream {
 		delete(cc.streams, id)
 		if len(cc.streams) == 0 && cc.idleTimer != nil {
 			cc.idleTimer.Reset(cc.idleTimeout)
+			cc.lastIdle = time.Now()
 		}
 		close(cs.done)
 		// Wake up checkResetOrDone via clientStream.awaitFlowControl and
@@ -2184,8 +2198,6 @@ func (rl *clientConnReadLoop) processData(f *DataFrame) error {
 	return nil
 }
 
-var errInvalidTrailers = errors.New("http2: invalid trailers")
-
 func (rl *clientConnReadLoop) endStream(cs *clientStream) {
 	// TODO: check that any declared content-length matches, like
 	// server.go's (*stream).endStream method.
@@ -2416,7 +2428,6 @@ func (cc *ClientConn) writeStreamReset(streamID uint32, code ErrCode, err error)
 var (
 	errResponseHeaderListSize = errors.New("http2: response header list larger than advertised limit")
 	errRequestHeaderListSize  = errors.New("http2: request header list larger than peer's advertised limit")
-	errPseudoTrailers         = errors.New("http2: invalid pseudo header in trailers")
 )
 
 func (cc *ClientConn) logf(format string, args ...interface{}) {

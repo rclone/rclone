@@ -81,7 +81,7 @@ fi
 
 # - Do not import math/rand for real library code.  Use internal/grpcrand for
 #   thread safety.
-git grep -l '"math/rand"' -- "*.go" 2>&1 | (! grep -v '^examples\|^stress\|grpcrand\|wrr_test')
+git grep -l '"math/rand"' -- "*.go" 2>&1 | (! grep -v '^examples\|^stress\|grpcrand\|^benchmark\|wrr_test')
 
 # - Ensure all ptypes proto packages are renamed when importing.
 (! git grep "\(import \|^\s*\)\"github.com/golang/protobuf/ptypes/" -- "*.go")
@@ -92,9 +92,11 @@ go list -f {{.Dir}} ./... | xargs go run test/go_vet/vet.go
 
 # - gofmt, goimports, golint (with exceptions for generated code), go vet.
 gofmt -s -d -l . 2>&1 | fail_on_output
-goimports -l . 2>&1 | (! grep -vE "(_mock|\.pb)\.go") | fail_on_output
+goimports -l . 2>&1 | (! grep -vE "(_mock|\.pb)\.go")
 golint ./... 2>&1 | (! grep -vE "(_mock|\.pb)\.go:")
 go vet -all .
+
+misspell -error .
 
 # - Check that generated proto files are up to date.
 if [[ -z "${VET_SKIP_PROTO}" ]]; then
@@ -111,32 +113,47 @@ if go help mod >& /dev/null; then
 fi
 
 # - Collection of static analysis checks
-# TODO(dfawley): don't use deprecated functions in examples.
-staticcheck -go 1.9 -checks 'inherit,-ST1015' -ignore '
-google.golang.org/grpc/balancer.go:SA1019
-google.golang.org/grpc/balancer/grpclb/grpclb_remote_balancer.go:SA1019
-google.golang.org/grpc/balancer/grpclb/grpclb_test.go:SA1019
-google.golang.org/grpc/balancer/roundrobin/roundrobin_test.go:SA1019
-google.golang.org/grpc/xds/internal/balancer/edsbalancer/balancergroup.go:SA1019
-google.golang.org/grpc/xds/internal/resolver/xds_resolver.go:SA1019
-google.golang.org/grpc/xds/internal/balancer/xds.go:SA1019
-google.golang.org/grpc/xds/internal/balancer/xds_client.go:SA1019
-google.golang.org/grpc/balancer_conn_wrappers.go:SA1019
-google.golang.org/grpc/balancer_test.go:SA1019
-google.golang.org/grpc/benchmark/benchmain/main.go:SA1019
-google.golang.org/grpc/benchmark/worker/benchmark_client.go:SA1019
-google.golang.org/grpc/clientconn.go:S1024
-google.golang.org/grpc/clientconn_state_transition_test.go:SA1019
-google.golang.org/grpc/clientconn_test.go:SA1019
-google.golang.org/grpc/examples/features/debugging/client/main.go:SA1019
-google.golang.org/grpc/examples/features/load_balancing/client/main.go:SA1019
-google.golang.org/grpc/internal/transport/handler_server.go:SA1019
-google.golang.org/grpc/internal/transport/handler_server_test.go:SA1019
-google.golang.org/grpc/internal/resolver/dns/dns_resolver.go:SA1019
-google.golang.org/grpc/stats/stats_test.go:SA1019
-google.golang.org/grpc/test/balancer_test.go:SA1019
-google.golang.org/grpc/test/channelz_test.go:SA1019
-google.golang.org/grpc/test/end2end_test.go:SA1019
-google.golang.org/grpc/test/healthcheck_test.go:SA1019
-' ./...
-misspell -error .
+#
+# TODO(dfawley): don't use deprecated functions in examples or first-party
+# plugins.
+SC_OUT="$(mktemp)"
+staticcheck -go 1.9 -checks 'inherit,-ST1015' ./... > "${SC_OUT}" || true
+# Error if anything other than deprecation warnings are printed.
+(! grep -v "is deprecated:.*SA1019" "${SC_OUT}")
+# Only ignore the following deprecated types/fields/functions.
+(! grep -Fv '.HandleResolvedAddrs
+.HandleSubConnStateChange
+.HeaderMap
+.NewAddress
+.NewServiceConfig
+.Metadata is deprecated: use Attributes
+.Type is deprecated: use Attributes
+.UpdateBalancerState
+balancer.Picker
+grpc.CallCustomCodec
+grpc.Code
+grpc.Compressor
+grpc.Decompressor
+grpc.MaxMsgSize
+grpc.MethodConfig
+grpc.NewGZIPCompressor
+grpc.NewGZIPDecompressor
+grpc.RPCCompressor
+grpc.RPCDecompressor
+grpc.RoundRobin
+grpc.ServiceConfig
+grpc.WithBalancer
+grpc.WithBalancerName
+grpc.WithCompressor
+grpc.WithDecompressor
+grpc.WithDialer
+grpc.WithMaxMsgSize
+grpc.WithServiceConfig
+grpc.WithTimeout
+http.CloseNotifier
+naming.Resolver
+naming.Update
+naming.Watcher
+resolver.Backend
+resolver.GRPCLB' "${SC_OUT}"
+)

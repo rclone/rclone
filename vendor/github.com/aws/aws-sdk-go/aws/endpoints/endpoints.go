@@ -50,11 +50,27 @@ type Options struct {
 
 	// STS Regional Endpoint flag helps with resolving the STS endpoint
 	STSRegionalEndpoint STSRegionalEndpoint
+
+	// S3 Regional Endpoint flag helps with resolving the S3 endpoint
+	S3UsEast1RegionalEndpoint S3UsEast1RegionalEndpoint
 }
 
-// STSRegionalEndpoint is an enum type alias for int
-// It is used internally by the core sdk as STS Regional Endpoint flag value
+// STSRegionalEndpoint is an enum for the states of the STS Regional Endpoint
+// options.
 type STSRegionalEndpoint int
+
+func (e STSRegionalEndpoint) String() string {
+	switch e {
+	case LegacySTSEndpoint:
+		return "legacy"
+	case RegionalSTSEndpoint:
+		return "regional"
+	case UnsetSTSEndpoint:
+		return ""
+	default:
+		return "unknown"
+	}
+}
 
 const (
 
@@ -83,6 +99,55 @@ func GetSTSRegionalEndpoint(s string) (STSRegionalEndpoint, error) {
 		return RegionalSTSEndpoint, nil
 	default:
 		return UnsetSTSEndpoint, fmt.Errorf("unable to resolve the value of STSRegionalEndpoint for %v", s)
+	}
+}
+
+// S3UsEast1RegionalEndpoint is an enum for the states of the S3 us-east-1
+// Regional Endpoint options.
+type S3UsEast1RegionalEndpoint int
+
+func (e S3UsEast1RegionalEndpoint) String() string {
+	switch e {
+	case LegacyS3UsEast1Endpoint:
+		return "legacy"
+	case RegionalS3UsEast1Endpoint:
+		return "regional"
+	case UnsetS3UsEast1Endpoint:
+		return ""
+	default:
+		return "unknown"
+	}
+}
+
+const (
+
+	// UnsetS3UsEast1Endpoint represents that S3 Regional Endpoint flag is not
+	// specified.
+	UnsetS3UsEast1Endpoint S3UsEast1RegionalEndpoint = iota
+
+	// LegacyS3UsEast1Endpoint represents when S3 Regional Endpoint flag is
+	// specified to use legacy endpoints.
+	LegacyS3UsEast1Endpoint
+
+	// RegionalS3UsEast1Endpoint represents when S3 Regional Endpoint flag is
+	// specified to use regional endpoints.
+	RegionalS3UsEast1Endpoint
+)
+
+// GetS3UsEast1RegionalEndpoint function returns the S3UsEast1RegionalEndpointFlag based
+// on the input string provided in env config or shared config by the user.
+//
+// `legacy`, `regional` are the only case-insensitive valid strings for
+// resolving the S3 regional Endpoint flag.
+func GetS3UsEast1RegionalEndpoint(s string) (S3UsEast1RegionalEndpoint, error) {
+	switch {
+	case strings.EqualFold(s, "legacy"):
+		return LegacyS3UsEast1Endpoint, nil
+	case strings.EqualFold(s, "regional"):
+		return RegionalS3UsEast1Endpoint, nil
+	default:
+		return UnsetS3UsEast1Endpoint,
+			fmt.Errorf("unable to resolve the value of S3UsEast1RegionalEndpoint for %v", s)
 	}
 }
 
@@ -252,7 +317,7 @@ func (p Partition) EndpointFor(service, region string, opts ...func(*Options)) (
 // Regions returns a map of Regions indexed by their ID. This is useful for
 // enumerating over the regions in a partition.
 func (p Partition) Regions() map[string]Region {
-	rs := map[string]Region{}
+	rs := make(map[string]Region, len(p.p.Regions))
 	for id, r := range p.p.Regions {
 		rs[id] = Region{
 			id:   id,
@@ -267,7 +332,7 @@ func (p Partition) Regions() map[string]Region {
 // Services returns a map of Service indexed by their ID. This is useful for
 // enumerating over the services in a partition.
 func (p Partition) Services() map[string]Service {
-	ss := map[string]Service{}
+	ss := make(map[string]Service, len(p.p.Services))
 	for id := range p.p.Services {
 		ss[id] = Service{
 			id: id,
@@ -354,7 +419,7 @@ func (s Service) Regions() map[string]Region {
 // A region is the AWS region the service exists in. Whereas a Endpoint is
 // an URL that can be resolved to a instance of a service.
 func (s Service) Endpoints() map[string]Endpoint {
-	es := map[string]Endpoint{}
+	es := make(map[string]Endpoint, len(s.p.Services[s.id].Endpoints))
 	for id := range s.p.Services[s.id].Endpoints {
 		es[id] = Endpoint{
 			id:        id,

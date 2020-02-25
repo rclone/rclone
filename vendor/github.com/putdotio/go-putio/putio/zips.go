@@ -26,7 +26,6 @@ func (z *ZipsService) Get(ctx context.Context, id int64) (Zip, error) {
 	}
 
 	return r, nil
-
 }
 
 // List lists active zip files.

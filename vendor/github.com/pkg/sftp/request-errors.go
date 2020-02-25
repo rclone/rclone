@@ -1,40 +1,52 @@
 package sftp
 
+type fxerr uint32
+
 // Error types that match the SFTP's SSH_FXP_STATUS codes. Gives you more
 // direct control of the errors being sent vs. letting the library work them
 // out from the standard os/io errors.
-
-type fxerr uint32
-
 const (
-	ErrSshFxOk               = fxerr(ssh_FX_OK)
-	ErrSshFxEof              = fxerr(ssh_FX_EOF)
-	ErrSshFxNoSuchFile       = fxerr(ssh_FX_NO_SUCH_FILE)
-	ErrSshFxPermissionDenied = fxerr(ssh_FX_PERMISSION_DENIED)
-	ErrSshFxFailure          = fxerr(ssh_FX_FAILURE)
-	ErrSshFxBadMessage       = fxerr(ssh_FX_BAD_MESSAGE)
-	ErrSshFxNoConnection     = fxerr(ssh_FX_NO_CONNECTION)
-	ErrSshFxConnectionLost   = fxerr(ssh_FX_CONNECTION_LOST)
-	ErrSshFxOpUnsupported    = fxerr(ssh_FX_OP_UNSUPPORTED)
+	ErrSSHFxOk               = fxerr(sshFxOk)
+	ErrSSHFxEOF              = fxerr(sshFxEOF)
+	ErrSSHFxNoSuchFile       = fxerr(sshFxNoSuchFile)
+	ErrSSHFxPermissionDenied = fxerr(sshFxPermissionDenied)
+	ErrSSHFxFailure          = fxerr(sshFxFailure)
+	ErrSSHFxBadMessage       = fxerr(sshFxBadMessage)
+	ErrSSHFxNoConnection     = fxerr(sshFxNoConnection)
+	ErrSSHFxConnectionLost   = fxerr(sshFxConnectionLost)
+	ErrSSHFxOpUnsupported    = fxerr(sshFxOPUnsupported)
+)
+
+// Deprecated error types, these are aliases for the new ones, please use the new ones directly
+const (
+	ErrSshFxOk               = ErrSSHFxOk
+	ErrSshFxEof              = ErrSSHFxEOF
+	ErrSshFxNoSuchFile       = ErrSSHFxNoSuchFile
+	ErrSshFxPermissionDenied = ErrSSHFxPermissionDenied
+	ErrSshFxFailure          = ErrSSHFxFailure
+	ErrSshFxBadMessage       = ErrSSHFxBadMessage
+	ErrSshFxNoConnection     = ErrSSHFxNoConnection
+	ErrSshFxConnectionLost   = ErrSSHFxConnectionLost
+	ErrSshFxOpUnsupported    = ErrSSHFxOpUnsupported
 )
 
 func (e fxerr) Error() string {
 	switch e {
-	case ErrSshFxOk:
+	case ErrSSHFxOk:
 		return "OK"
-	case ErrSshFxEof:
+	case ErrSSHFxEOF:
 		return "EOF"
-	case ErrSshFxNoSuchFile:
+	case ErrSSHFxNoSuchFile:
 		return "No Such File"
-	case ErrSshFxPermissionDenied:
+	case ErrSSHFxPermissionDenied:
 		return "Permission Denied"
-	case ErrSshFxBadMessage:
+	case ErrSSHFxBadMessage:
 		return "Bad Message"
-	case ErrSshFxNoConnection:
+	case ErrSSHFxNoConnection:
 		return "No Connection"
-	case ErrSshFxConnectionLost:
+	case ErrSSHFxConnectionLost:
 		return "Connection Lost"
-	case ErrSshFxOpUnsupported:
+	case ErrSSHFxOpUnsupported:
 		return "Operation Unsupported"
 	default:
 		return "Failure"

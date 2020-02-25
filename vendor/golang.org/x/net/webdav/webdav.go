@@ -323,7 +323,7 @@ func (h *Handler) handleCopyMove(w http.ResponseWriter, r *http.Request) (status
 	if err != nil {
 		return http.StatusBadRequest, errInvalidDestination
 	}
-	if u.Host != r.Host {
+	if u.Host != "" && u.Host != r.Host {
 		return http.StatusBadGateway, errInvalidDestination
 	}
 

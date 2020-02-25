@@ -1,6 +1,18 @@
 # Change Log
 All notable changes to QingStor SDK for Go will be documented in this file.
 
+## [v3.2.0] - 2020-2-13
+
+### Added
+
+- Add int64 type converter (#92)
+- config: Implement DisableURICleaning config (#95)
+
+### Fixed
+
+- Compatible for content type containing application/json (#91)
+- Fix signed url invalid when non-ascii used (#85)
+
 ## [v3.1.1] - 2019-10-9
 
 ### Changed
@@ -221,6 +233,7 @@ All notable changes to QingStor SDK for Go will be documented in this file.
 
 - QingStor SDK for the Go programming language.
 
+[v3.2.0]: https://github.com/yunify/qingstor-sdk-go/compare/v3.1.1...v3.2.0
 [v3.1.1]: https://github.com/yunify/qingstor-sdk-go/compare/v3.1.0...v3.1.1
 [v3.1.0]: https://github.com/yunify/qingstor-sdk-go/compare/v3.0.2...v3.1.0
 [v3.0.2]: https://github.com/yunify/qingstor-sdk-go/compare/v3.0.1...v3.0.2

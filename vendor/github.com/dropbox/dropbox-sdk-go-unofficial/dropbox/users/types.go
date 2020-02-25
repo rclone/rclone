@@ -278,6 +278,9 @@ const (
 func (u *GetAccountBatchError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// NoAccount : The value is an account ID specified in
+		// `GetAccountBatchArg.account_ids` that does not exist.
+		NoAccount string `json:"no_account,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -287,7 +290,7 @@ func (u *GetAccountBatchError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "no_account":
-		err = json.Unmarshal(body, &u.NoAccount)
+		u.NoAccount = w.NoAccount
 
 		if err != nil {
 			return err
@@ -372,11 +375,6 @@ const (
 func (u *SpaceAllocation) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Individual : The user's space allocation applies only to their
-		// individual account.
-		Individual json.RawMessage `json:"individual,omitempty"`
-		// Team : The user shares space with other members of their team.
-		Team json.RawMessage `json:"team,omitempty"`
 	}
 	var w wrap
 	var err error

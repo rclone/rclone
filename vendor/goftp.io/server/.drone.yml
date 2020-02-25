@@ -1,10 +1,29 @@
+---
 kind: pipeline
-name: default
+name: testing
 
 steps:
-- name: test
-  image: golang:1.12
+- name: fetch-tags
+  pull: default
+  image: docker:git
   commands:
-  - go get -t -d -v ./...
-  - go build -v
-  - go test -v -race -coverprofile=coverage.txt -covermode=atomic
+    - git fetch --tags --force
+  when:
+    event:
+      exclude:
+        - pull_request
+
+- name: test
+  pull: always
+  image: golang:1.13
+  commands:
+  - export PATH=$PATH:/go:/srv/app/bin
+  - go vet ./...
+  - go test -race ./...
+  environment:
+    GOPATH: /srv/app
+  when:
+    event:
+    - push
+    - tag
+    - pull_request

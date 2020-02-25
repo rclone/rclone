@@ -110,8 +110,9 @@ func (p partition) EndpointFor(service, region string, opts ...func(*Options)) (
 		region = s.PartitionEndpoint
 	}
 
-	if service == "sts" && opt.STSRegionalEndpoint != RegionalSTSEndpoint {
-		if _, ok := stsLegacyGlobalRegions[region]; ok {
+	if (service == "sts" && opt.STSRegionalEndpoint != RegionalSTSEndpoint) ||
+		(service == "s3" && opt.S3UsEast1RegionalEndpoint != RegionalS3UsEast1Endpoint) {
+		if _, ok := legacyGlobalRegions[service][region]; ok {
 			region = "aws-global"
 		}
 	}
@@ -240,20 +241,6 @@ func (e endpoint) resolve(service, partitionID, region, dnsSuffix string, defs [
 	merged.mergeIn(e)
 	e = merged
 
-	hostname := e.Hostname
-
-	// Offset the hostname for dualstack if enabled
-	if opts.UseDualStack && e.HasDualStack == boxedTrue {
-		hostname = e.DualStackHostname
-	}
-
-	u := strings.Replace(hostname, "{service}", service, 1)
-	u = strings.Replace(u, "{region}", region, 1)
-	u = strings.Replace(u, "{dnsSuffix}", dnsSuffix, 1)
-
-	scheme := getEndpointScheme(e.Protocols, opts.DisableSSL)
-	u = fmt.Sprintf("%s://%s", scheme, u)
-
 	signingRegion := e.CredentialScope.Region
 	if len(signingRegion) == 0 {
 		signingRegion = region
@@ -265,6 +252,20 @@ func (e endpoint) resolve(service, partitionID, region, dnsSuffix string, defs [
 		signingName = service
 		signingNameDerived = true
 	}
+
+	hostname := e.Hostname
+	// Offset the hostname for dualstack if enabled
+	if opts.UseDualStack && e.HasDualStack == boxedTrue {
+		hostname = e.DualStackHostname
+		region = signingRegion
+	}
+
+	u := strings.Replace(hostname, "{service}", service, 1)
+	u = strings.Replace(u, "{region}", region, 1)
+	u = strings.Replace(u, "{dnsSuffix}", dnsSuffix, 1)
+
+	scheme := getEndpointScheme(e.Protocols, opts.DisableSSL)
+	u = fmt.Sprintf("%s://%s", scheme, u)
 
 	return ResolvedEndpoint{
 		URL:                u,

@@ -7,6 +7,7 @@ var winHttpGetProxyForURL = winHttp.NewProc("WinHttpGetProxyForUrl")
 var winHttpOpen = winHttp.NewProc("WinHttpOpen")
 var winHttpCloseHandle = winHttp.NewProc("WinHttpCloseHandle")
 var winHttpGetIEProxyConfigForCurrentUser = winHttp.NewProc("WinHttpGetIEProxyConfigForCurrentUser")
+var winHttpGetDefaultProxyConfiguration = winHttp.NewProc("WinHttpGetDefaultProxyConfiguration")
 
 type tWINHTTP_AUTOPROXY_OPTIONS struct {
 	dwFlags                autoProxyFlag

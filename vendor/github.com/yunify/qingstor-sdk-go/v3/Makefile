@@ -2,9 +2,6 @@ SHELL := /bin/bash
 
 PREFIX=qingstor-sdk-go
 VERSION=$(shell cat version.go | grep "Version\ =" | sed -e s/^.*\ //g | sed -e s/\"//g)
-PKGS_TO_CHECK=$(shell go list ./... | grep -v "/vendor/")
-PKGS_TO_RELEASE=$(shell go list ./... | grep -vE "/vendor/|/test")
-FILES_TO_RELEASE=$(shell find . -name "*.go" | grep -vE "/vendor/|/test|.*_test.go")
 
 .PHONY: help
 help:
@@ -21,7 +18,7 @@ help:
 	@echo "  clean             to clean the coverage files"
 
 .PHONY: all
-all: check build unit release
+all: check build test release
 
 .PHONY: check
 check: vet lint format
@@ -29,21 +26,19 @@ check: vet lint format
 .PHONY: format
 format:
 	@echo "go fmt, skipping vendor packages"
-	@for pkg in ${PKGS_TO_CHECK}; do go fmt $${pkg}; done;
+	@go fmt ./...
 	@echo "ok"
 
 .PHONY: vet
 vet:
 	@echo "Go tool vet, skipping vendor packages"
-	@for pkg in ${PKGS_TO_RELEASE}; do go vet -all $${pkg}; done;
+	@go vet ./...
 	@echo "Done"
 
 .PHONY: lint
 lint:
 	@echo "Golint, skipping vendor packages"
-	@lint=$$(for pkg in ${PKGS_TO_CHECK}; do golint $${pkg}; done); \
-	 lint=$$(echo "$${lint}"); \
-	 if [[ -n $${lint} ]]; then echo "$${lint}"; exit 1; fi
+	@golint ./...
 	@echo "Done"
 
 .PHONY: update
@@ -64,32 +59,26 @@ generate:
 .PHONY: build
 build: format
 	@echo "Build the SDK"
-	go build ${PKGS_TO_RELEASE}
+	go build ./...
 	@echo "Done"
 
 .PHONY: test
 test:
 	@echo "Run test"
-	go test -v ${PKGS_TO_RELEASE}
+	go test -v ./...
 	@echo "Done"
 
 .PHONY: test-coverage
 test-coverage:
 	@echo "Run test with coverage"
-	for pkg in ${PKGS_TO_RELEASE}; do \
-		output="coverage$${pkg#github.com/yunify/qingstor-sdk-go}"; \
-		mkdir -p $${output}; \
-		go test -v -cover -coverprofile="$${output}/profile.out" $${pkg}; \
-		if [[ -e "$${output}/profile.out" ]]; then \
-			go tool cover -html="$${output}/profile.out" -o "$${output}/profile.html"; \
-		fi; \
-	done
+	@go test -race -coverprofile=coverage.txt -covermode=atomic -v ./...
+	@go tool cover -html="coverage.txt" -o "coverage.html"
 	@echo "Done"
 
 .PHONY: test-race
 test-race:
 	@echo "Run test with race"
-	go test -v -race -cpu=1,2,4 ${PKGS_TO_RELEASE}
+	go test -v -race -cpu=1,2,4 ./...
 	@echo "Done"
 
 .PHONY: integration-test

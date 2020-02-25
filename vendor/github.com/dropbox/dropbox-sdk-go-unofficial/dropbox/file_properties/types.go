@@ -86,6 +86,8 @@ const (
 func (u *TemplateError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// TemplateNotFound : Template does not exist for the given identifier.
+		TemplateNotFound string `json:"template_not_found,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -95,7 +97,7 @@ func (u *TemplateError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "template_not_found":
-		err = json.Unmarshal(body, &u.TemplateNotFound)
+		u.TemplateNotFound = w.TemplateNotFound
 
 		if err != nil {
 			return err
@@ -126,8 +128,10 @@ const (
 func (u *PropertiesError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// TemplateNotFound : Template does not exist for the given identifier.
+		TemplateNotFound string `json:"template_not_found,omitempty"`
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *LookupError `json:"path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -137,13 +141,13 @@ func (u *PropertiesError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "template_not_found":
-		err = json.Unmarshal(body, &u.TemplateNotFound)
+		u.TemplateNotFound = w.TemplateNotFound
 
 		if err != nil {
 			return err
 		}
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
@@ -176,8 +180,10 @@ const (
 func (u *InvalidPropertyGroupError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// TemplateNotFound : Template does not exist for the given identifier.
+		TemplateNotFound string `json:"template_not_found,omitempty"`
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *LookupError `json:"path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -187,13 +193,13 @@ func (u *InvalidPropertyGroupError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "template_not_found":
-		err = json.Unmarshal(body, &u.TemplateNotFound)
+		u.TemplateNotFound = w.TemplateNotFound
 
 		if err != nil {
 			return err
 		}
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
@@ -227,8 +233,10 @@ const (
 func (u *AddPropertiesError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// TemplateNotFound : Template does not exist for the given identifier.
+		TemplateNotFound string `json:"template_not_found,omitempty"`
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *LookupError `json:"path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -238,13 +246,13 @@ func (u *AddPropertiesError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "template_not_found":
-		err = json.Unmarshal(body, &u.TemplateNotFound)
+		u.TemplateNotFound = w.TemplateNotFound
 
 		if err != nil {
 			return err
 		}
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
@@ -388,6 +396,8 @@ const (
 func (u *LookupError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// MalformedPath : has no documentation (yet)
+		MalformedPath string `json:"malformed_path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -397,7 +407,7 @@ func (u *LookupError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "malformed_path":
-		err = json.Unmarshal(body, &u.MalformedPath)
+		u.MalformedPath = w.MalformedPath
 
 		if err != nil {
 			return err
@@ -428,6 +438,8 @@ const (
 func (u *ModifyTemplateError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// TemplateNotFound : Template does not exist for the given identifier.
+		TemplateNotFound string `json:"template_not_found,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -437,7 +449,7 @@ func (u *ModifyTemplateError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "template_not_found":
-		err = json.Unmarshal(body, &u.TemplateNotFound)
+		u.TemplateNotFound = w.TemplateNotFound
 
 		if err != nil {
 			return err
@@ -522,7 +534,7 @@ func (u *PropertiesSearchError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// PropertyGroupLookup : has no documentation (yet)
-		PropertyGroupLookup json.RawMessage `json:"property_group_lookup,omitempty"`
+		PropertyGroupLookup *LookUpPropertiesError `json:"property_group_lookup,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -532,7 +544,7 @@ func (u *PropertiesSearchError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "property_group_lookup":
-		err = json.Unmarshal(w.PropertyGroupLookup, &u.PropertyGroupLookup)
+		u.PropertyGroupLookup = w.PropertyGroupLookup
 
 		if err != nil {
 			return err
@@ -580,6 +592,8 @@ const (
 func (u *PropertiesSearchMode) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// FieldName : Search for a value associated with this field name.
+		FieldName string `json:"field_name,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -589,7 +603,7 @@ func (u *PropertiesSearchMode) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "field_name":
-		err = json.Unmarshal(body, &u.FieldName)
+		u.FieldName = w.FieldName
 
 		if err != nil {
 			return err
@@ -768,10 +782,12 @@ const (
 func (u *RemovePropertiesError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// TemplateNotFound : Template does not exist for the given identifier.
+		TemplateNotFound string `json:"template_not_found,omitempty"`
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *LookupError `json:"path,omitempty"`
 		// PropertyGroupLookup : has no documentation (yet)
-		PropertyGroupLookup json.RawMessage `json:"property_group_lookup,omitempty"`
+		PropertyGroupLookup *LookUpPropertiesError `json:"property_group_lookup,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -781,19 +797,19 @@ func (u *RemovePropertiesError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "template_not_found":
-		err = json.Unmarshal(body, &u.TemplateNotFound)
+		u.TemplateNotFound = w.TemplateNotFound
 
 		if err != nil {
 			return err
 		}
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
 		}
 	case "property_group_lookup":
-		err = json.Unmarshal(w.PropertyGroupLookup, &u.PropertyGroupLookup)
+		u.PropertyGroupLookup = w.PropertyGroupLookup
 
 		if err != nil {
 			return err
@@ -836,7 +852,7 @@ func (u *TemplateFilterBase) UnmarshalJSON(body []byte) error {
 		dropbox.Tagged
 		// FilterSome : Only templates with an ID in the supplied list will be
 		// returned (a subset of templates will be returned).
-		FilterSome json.RawMessage `json:"filter_some,omitempty"`
+		FilterSome []string `json:"filter_some,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -846,7 +862,7 @@ func (u *TemplateFilterBase) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "filter_some":
-		err = json.Unmarshal(body, &u.FilterSome)
+		u.FilterSome = w.FilterSome
 
 		if err != nil {
 			return err
@@ -876,7 +892,7 @@ func (u *TemplateFilter) UnmarshalJSON(body []byte) error {
 		dropbox.Tagged
 		// FilterSome : Only templates with an ID in the supplied list will be
 		// returned (a subset of templates will be returned).
-		FilterSome json.RawMessage `json:"filter_some,omitempty"`
+		FilterSome []string `json:"filter_some,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -886,7 +902,7 @@ func (u *TemplateFilter) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "filter_some":
-		err = json.Unmarshal(body, &u.FilterSome)
+		u.FilterSome = w.FilterSome
 
 		if err != nil {
 			return err
@@ -950,10 +966,12 @@ const (
 func (u *UpdatePropertiesError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// TemplateNotFound : Template does not exist for the given identifier.
+		TemplateNotFound string `json:"template_not_found,omitempty"`
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *LookupError `json:"path,omitempty"`
 		// PropertyGroupLookup : has no documentation (yet)
-		PropertyGroupLookup json.RawMessage `json:"property_group_lookup,omitempty"`
+		PropertyGroupLookup *LookUpPropertiesError `json:"property_group_lookup,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -963,19 +981,19 @@ func (u *UpdatePropertiesError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "template_not_found":
-		err = json.Unmarshal(body, &u.TemplateNotFound)
+		u.TemplateNotFound = w.TemplateNotFound
 
 		if err != nil {
 			return err
 		}
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
 		}
 	case "property_group_lookup":
-		err = json.Unmarshal(w.PropertyGroupLookup, &u.PropertyGroupLookup)
+		u.PropertyGroupLookup = w.PropertyGroupLookup
 
 		if err != nil {
 			return err

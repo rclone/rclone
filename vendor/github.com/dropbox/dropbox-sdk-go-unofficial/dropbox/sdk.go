@@ -21,6 +21,7 @@
 package dropbox
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,8 +38,8 @@ const (
 	hostAPI       = "api"
 	hostContent   = "content"
 	hostNotify    = "notify"
-	sdkVersion    = "5.4.0"
-	specVersion   = "097e9ba"
+	sdkVersion    = "5.6.0"
+	specVersion   = "0e697d7"
 )
 
 // Version returns the current SDK version and API Spec version
@@ -220,4 +221,21 @@ func HandleCommonAPIErrors(c Config, resp *http.Response, body []byte) error {
 		return e
 	}
 	return apiError
+}
+
+// HTTPHeaderSafeJSON encode the JSON passed in b []byte passed in in
+// a way that is suitable for HTTP headers.
+//
+// See: https://www.dropbox.com/developers/reference/json-encoding
+func HTTPHeaderSafeJSON(b []byte) string {
+	var s bytes.Buffer
+	s.Grow(len(b))
+	for _, r := range string(b) {
+		if r >= 0x007f {
+			fmt.Fprintf(&s, "\\u%04x", r)
+		} else {
+			s.WriteRune(r)
+		}
+	}
+	return s.String()
 }

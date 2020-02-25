@@ -49,8 +49,9 @@ func (p sshFxpOpendirPacket) getPath() string  { return p.Path }
 func (p sshFxpOpenPacket) getPath() string     { return p.Path }
 
 func (p sshFxpExtendedPacketPosixRename) getPath() string { return p.Oldpath }
+func (p sshFxpExtendedPacketHardlink) getPath() string    { return p.Oldpath }
 
-// hasHandle
+// getHandle
 func (p sshFxpFstatPacket) getHandle() string    { return p.Handle }
 func (p sshFxpFsetstatPacket) getHandle() string { return p.Handle }
 func (p sshFxpReadPacket) getHandle() string     { return p.Handle }
@@ -68,6 +69,7 @@ func (p sshFxpRmdirPacket) notReadOnly()               {}
 func (p sshFxpRenamePacket) notReadOnly()              {}
 func (p sshFxpSymlinkPacket) notReadOnly()             {}
 func (p sshFxpExtendedPacketPosixRename) notReadOnly() {}
+func (p sshFxpExtendedPacketHardlink) notReadOnly()    {}
 
 // some packets with ID are missing id()
 func (p sshFxpDataPacket) id() uint32   { return p.ID }
@@ -82,45 +84,45 @@ func (p sshFxVersionPacket) id() uint32 { return 0 }
 func makePacket(p rxPacket) (requestPacket, error) {
 	var pkt requestPacket
 	switch p.pktType {
-	case ssh_FXP_INIT:
+	case sshFxpInit:
 		pkt = &sshFxInitPacket{}
-	case ssh_FXP_LSTAT:
+	case sshFxpLstat:
 		pkt = &sshFxpLstatPacket{}
-	case ssh_FXP_OPEN:
+	case sshFxpOpen:
 		pkt = &sshFxpOpenPacket{}
-	case ssh_FXP_CLOSE:
+	case sshFxpClose:
 		pkt = &sshFxpClosePacket{}
-	case ssh_FXP_READ:
+	case sshFxpRead:
 		pkt = &sshFxpReadPacket{}
-	case ssh_FXP_WRITE:
+	case sshFxpWrite:
 		pkt = &sshFxpWritePacket{}
-	case ssh_FXP_FSTAT:
+	case sshFxpFstat:
 		pkt = &sshFxpFstatPacket{}
-	case ssh_FXP_SETSTAT:
+	case sshFxpSetstat:
 		pkt = &sshFxpSetstatPacket{}
-	case ssh_FXP_FSETSTAT:
+	case sshFxpFsetstat:
 		pkt = &sshFxpFsetstatPacket{}
-	case ssh_FXP_OPENDIR:
+	case sshFxpOpendir:
 		pkt = &sshFxpOpendirPacket{}
-	case ssh_FXP_READDIR:
+	case sshFxpReaddir:
 		pkt = &sshFxpReaddirPacket{}
-	case ssh_FXP_REMOVE:
+	case sshFxpRemove:
 		pkt = &sshFxpRemovePacket{}
-	case ssh_FXP_MKDIR:
+	case sshFxpMkdir:
 		pkt = &sshFxpMkdirPacket{}
-	case ssh_FXP_RMDIR:
+	case sshFxpRmdir:
 		pkt = &sshFxpRmdirPacket{}
-	case ssh_FXP_REALPATH:
+	case sshFxpRealpath:
 		pkt = &sshFxpRealpathPacket{}
-	case ssh_FXP_STAT:
+	case sshFxpStat:
 		pkt = &sshFxpStatPacket{}
-	case ssh_FXP_RENAME:
+	case sshFxpRename:
 		pkt = &sshFxpRenamePacket{}
-	case ssh_FXP_READLINK:
+	case sshFxpReadlink:
 		pkt = &sshFxpReadlinkPacket{}
-	case ssh_FXP_SYMLINK:
+	case sshFxpSymlink:
 		pkt = &sshFxpSymlinkPacket{}
-	case ssh_FXP_EXTENDED:
+	case sshFxpExtended:
 		pkt = &sshFxpExtendedPacket{}
 	default:
 		return nil, errors.Errorf("unhandled packet type: %s", p.pktType)

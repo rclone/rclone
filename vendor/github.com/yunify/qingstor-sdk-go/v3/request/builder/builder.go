@@ -280,7 +280,9 @@ func (qb *Builder) parseRequestURL() error {
 		endpoint = strings.Replace(endpoint, "<"+key+">", utils.URLQueryEscape(value), -1)
 		requestURI = strings.Replace(requestURI, "<"+key+">", utils.URLQueryEscape(value), -1)
 	}
-	requestURI = regexp.MustCompile(`/+`).ReplaceAllString(requestURI, "/")
+	if !config.DisableURICleaning {
+		requestURI = regexp.MustCompile(`/+`).ReplaceAllString(requestURI, "/")
+	}
 
 	requestURL, err := url.Parse(endpoint + requestURI)
 	if err != nil {
@@ -320,17 +322,17 @@ func (qb *Builder) setupHeaders(httpRequest *http.Request) error {
 		case nil:
 			length = 0
 		case io.Seeker:
-			//start, err := body.Seek(0, io.SeekStart)
+			// start, err := body.Seek(0, io.SeekStart)
 			start, err := body.Seek(0, 0)
 			if err != nil {
 				return err
 			}
-			//end, err := body.Seek(0, io.SeekEnd)
+			// end, err := body.Seek(0, io.SeekEnd)
 			end, err := body.Seek(0, 2)
 			if err != nil {
 				return err
 			}
-			//body.Seek(0, io.SeekStart)
+			// body.Seek(0, io.SeekStart)
 			body.Seek(0, 0)
 			length = end - start
 		default:

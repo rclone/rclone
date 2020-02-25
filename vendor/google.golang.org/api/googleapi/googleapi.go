@@ -16,7 +16,7 @@ import (
 	"net/url"
 	"strings"
 
-	"google.golang.org/api/googleapi/internal/uritemplates"
+	"google.golang.org/api/internal/third_party/uritemplates"
 )
 
 // ContentTyper is an interface for Readers which know (or would like
@@ -54,7 +54,7 @@ const (
 
 	// DefaultUploadChunkSize is the default chunk size to use for resumable
 	// uploads if not specified by the user.
-	DefaultUploadChunkSize = 8 * 1024 * 1024
+	DefaultUploadChunkSize = 16 * 1024 * 1024
 
 	// MinUploadChunkSize is the minimum chunk size that can be used for
 	// resumable uploads.  All user-specified chunk sizes must be multiple of
@@ -339,7 +339,7 @@ func ConvertVariant(v map[string]interface{}, dst interface{}) bool {
 }
 
 // A Field names a field to be retrieved with a partial response.
-// See https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// https://cloud.google.com/storage/docs/json_api/v1/how-tos/performance
 //
 // Partial responses can dramatically reduce the amount of data that must be sent to your application.
 // In order to request partial responses, you can specify the full list of fields
@@ -355,9 +355,6 @@ func ConvertVariant(v map[string]interface{}, dst interface{}) bool {
 // or if you were also interested in each Item's "Updated" field, you can combine them like this:
 //
 //     svc.Events.List().Fields("nextPageToken", "items(id,updated)").Do()
-//
-// More information about field formatting can be found here:
-// https://developers.google.com/+/api/#fields-syntax
 //
 // Another way to find field names is through the Google API explorer:
 // https://developers.google.com/apis-explorer/#p/

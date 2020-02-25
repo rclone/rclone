@@ -771,7 +771,11 @@ func key_event_record_to_event(r *key_event_record) (Event, bool) {
 		case vk_tab:
 			e.Key = KeyTab
 		case vk_enter:
-			e.Key = KeyEnter
+			if ctrlpressed {
+				e.Key = KeyCtrlJ
+			} else {
+				e.Key = KeyEnter
+			}
 		case vk_esc:
 			switch {
 			case input_mode&InputEsc != 0:

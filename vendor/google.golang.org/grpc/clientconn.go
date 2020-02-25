@@ -239,25 +239,26 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	if cc.dopts.bs == nil {
 		cc.dopts.bs = backoff.DefaultExponential
 	}
-	if cc.dopts.resolverBuilder == nil {
-		// Only try to parse target when resolver builder is not already set.
-		cc.parsedTarget = parseTarget(cc.target)
-		grpclog.Infof("parsed scheme: %q", cc.parsedTarget.Scheme)
-		cc.dopts.resolverBuilder = resolver.Get(cc.parsedTarget.Scheme)
-		if cc.dopts.resolverBuilder == nil {
-			// If resolver builder is still nil, the parsed target's scheme is
-			// not registered. Fallback to default resolver and set Endpoint to
-			// the original target.
-			grpclog.Infof("scheme %q not registered, fallback to default scheme", cc.parsedTarget.Scheme)
-			cc.parsedTarget = resolver.Target{
-				Scheme:   resolver.GetDefaultScheme(),
-				Endpoint: target,
-			}
-			cc.dopts.resolverBuilder = resolver.Get(cc.parsedTarget.Scheme)
+
+	// Determine the resolver to use.
+	cc.parsedTarget = parseTarget(cc.target)
+	grpclog.Infof("parsed scheme: %q", cc.parsedTarget.Scheme)
+	resolverBuilder := cc.getResolver(cc.parsedTarget.Scheme)
+	if resolverBuilder == nil {
+		// If resolver builder is still nil, the parsed target's scheme is
+		// not registered. Fallback to default resolver and set Endpoint to
+		// the original target.
+		grpclog.Infof("scheme %q not registered, fallback to default scheme", cc.parsedTarget.Scheme)
+		cc.parsedTarget = resolver.Target{
+			Scheme:   resolver.GetDefaultScheme(),
+			Endpoint: target,
 		}
-	} else {
-		cc.parsedTarget = resolver.Target{Endpoint: target}
+		resolverBuilder = cc.getResolver(cc.parsedTarget.Scheme)
+		if resolverBuilder == nil {
+			return nil, fmt.Errorf("could not get resolver for default scheme: %q", cc.parsedTarget.Scheme)
+		}
 	}
+
 	creds := cc.dopts.copts.TransportCredentials
 	if creds != nil && creds.Info().ServerName != "" {
 		cc.authority = creds.Info().ServerName
@@ -297,14 +298,14 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	}
 
 	// Build the resolver.
-	rWrapper, err := newCCResolverWrapper(cc)
+	rWrapper, err := newCCResolverWrapper(cc, resolverBuilder)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build resolver: %v", err)
 	}
-
 	cc.mu.Lock()
 	cc.resolverWrapper = rWrapper
 	cc.mu.Unlock()
+
 	// A blocking dial blocks until the clientConn is ready.
 	if cc.dopts.block {
 		for {
@@ -442,6 +443,20 @@ func (csm *connectivityStateManager) getNotifyChan() <-chan struct{} {
 	}
 	return csm.notifyChan
 }
+
+// ClientConnInterface defines the functions clients need to perform unary and
+// streaming RPCs.  It is implemented by *ClientConn, and is only intended to
+// be referenced by generated code.
+type ClientConnInterface interface {
+	// Invoke performs a unary RPC and returns after the response is received
+	// into reply.
+	Invoke(ctx context.Context, method string, args interface{}, reply interface{}, opts ...CallOption) error
+	// NewStream begins a streaming RPC.
+	NewStream(ctx context.Context, desc *StreamDesc, method string, opts ...CallOption) (ClientStream, error)
+}
+
+// Assert *ClientConn implements ClientConnInterface.
+var _ ClientConnInterface = (*ClientConn)(nil)
 
 // ClientConn represents a virtual connection to a conceptual endpoint, to
 // perform RPCs.
@@ -688,7 +703,7 @@ func (cc *ClientConn) switchBalancer(name string) {
 	cc.balancerWrapper = newCCBalancerWrapper(cc, builder, cc.balancerBuildOpts)
 }
 
-func (cc *ClientConn) handleSubConnStateChange(sc balancer.SubConn, s connectivity.State) {
+func (cc *ClientConn) handleSubConnStateChange(sc balancer.SubConn, s connectivity.State, err error) {
 	cc.mu.Lock()
 	if cc.conns == nil {
 		cc.mu.Unlock()
@@ -696,7 +711,7 @@ func (cc *ClientConn) handleSubConnStateChange(sc balancer.SubConn, s connectivi
 	}
 	// TODO(bar switching) send updates to all balancer wrappers when balancer
 	// gracefully switching is supported.
-	cc.balancerWrapper.handleSubConnStateChange(sc, s)
+	cc.balancerWrapper.handleSubConnStateChange(sc, s, err)
 	cc.mu.Unlock()
 }
 
@@ -793,7 +808,7 @@ func (ac *addrConn) connect() error {
 	}
 	// Update connectivity state within the lock to prevent subsequent or
 	// concurrent calls from resetting the transport more than once.
-	ac.updateConnectivityState(connectivity.Connecting)
+	ac.updateConnectivityState(connectivity.Connecting, nil)
 	ac.mu.Unlock()
 
 	// Start a goroutine connecting to the server asynchronously.
@@ -879,7 +894,8 @@ func (cc *ClientConn) healthCheckConfig() *healthCheckConfig {
 }
 
 func (cc *ClientConn) getTransport(ctx context.Context, failfast bool, method string) (transport.ClientTransport, func(balancer.DoneInfo), error) {
-	t, done, err := cc.blockingpicker.pick(ctx, failfast, balancer.PickOptions{
+	t, done, err := cc.blockingpicker.pick(ctx, failfast, balancer.PickInfo{
+		Ctx:            ctx,
 		FullMethodName: method,
 	})
 	if err != nil {
@@ -938,7 +954,7 @@ func (cc *ClientConn) applyServiceConfigAndBalancer(sc *ServiceConfig, addrs []r
 	}
 }
 
-func (cc *ClientConn) resolveNow(o resolver.ResolveNowOption) {
+func (cc *ClientConn) resolveNow(o resolver.ResolveNowOptions) {
 	cc.mu.RLock()
 	r := cc.resolverWrapper
 	cc.mu.RUnlock()
@@ -1048,7 +1064,7 @@ type addrConn struct {
 }
 
 // Note: this requires a lock on ac.mu.
-func (ac *addrConn) updateConnectivityState(s connectivity.State) {
+func (ac *addrConn) updateConnectivityState(s connectivity.State, lastErr error) {
 	if ac.state == s {
 		return
 	}
@@ -1061,7 +1077,7 @@ func (ac *addrConn) updateConnectivityState(s connectivity.State) {
 			Severity: channelz.CtINFO,
 		})
 	}
-	ac.cc.handleSubConnStateChange(ac.acbw, s)
+	ac.cc.handleSubConnStateChange(ac.acbw, s, lastErr)
 }
 
 // adjustParams updates parameters used to create transports upon
@@ -1081,7 +1097,7 @@ func (ac *addrConn) adjustParams(r transport.GoAwayReason) {
 func (ac *addrConn) resetTransport() {
 	for i := 0; ; i++ {
 		if i > 0 {
-			ac.cc.resolveNow(resolver.ResolveNowOption{})
+			ac.cc.resolveNow(resolver.ResolveNowOptions{})
 		}
 
 		ac.mu.Lock()
@@ -1110,7 +1126,7 @@ func (ac *addrConn) resetTransport() {
 		// https://github.com/grpc/grpc/blob/master/doc/connection-backoff.md#proposed-backoff-algorithm
 		connectDeadline := time.Now().Add(dialDuration)
 
-		ac.updateConnectivityState(connectivity.Connecting)
+		ac.updateConnectivityState(connectivity.Connecting, nil)
 		ac.transport = nil
 		ac.mu.Unlock()
 
@@ -1123,7 +1139,7 @@ func (ac *addrConn) resetTransport() {
 				ac.mu.Unlock()
 				return
 			}
-			ac.updateConnectivityState(connectivity.TransientFailure)
+			ac.updateConnectivityState(connectivity.TransientFailure, err)
 
 			// Backoff.
 			b := ac.resetBackoff
@@ -1179,6 +1195,7 @@ func (ac *addrConn) resetTransport() {
 // first successful one. It returns the transport, the address and a Event in
 // the successful case. The Event fires when the returned transport disconnects.
 func (ac *addrConn) tryAllAddrs(addrs []resolver.Address, connectDeadline time.Time) (transport.ClientTransport, resolver.Address, *grpcsync.Event, error) {
+	var firstConnErr error
 	for _, addr := range addrs {
 		ac.mu.Lock()
 		if ac.state == connectivity.Shutdown {
@@ -1207,11 +1224,14 @@ func (ac *addrConn) tryAllAddrs(addrs []resolver.Address, connectDeadline time.T
 		if err == nil {
 			return newTr, addr, reconnect, nil
 		}
+		if firstConnErr == nil {
+			firstConnErr = err
+		}
 		ac.cc.blockingpicker.updateConnectionError(err)
 	}
 
 	// Couldn't connect to any address.
-	return nil, resolver.Address{}, nil, fmt.Errorf("couldn't connect to any address")
+	return nil, resolver.Address{}, nil, firstConnErr
 }
 
 // createTransport creates a connection to addr. It returns the transport and a
@@ -1244,7 +1264,7 @@ func (ac *addrConn) createTransport(addr resolver.Address, copts transport.Conne
 				// state to Connecting.
 				//
 				// TODO: this should be Idle when grpc-go properly supports it.
-				ac.updateConnectivityState(connectivity.Connecting)
+				ac.updateConnectivityState(connectivity.Connecting, nil)
 			}
 		})
 		ac.mu.Unlock()
@@ -1259,7 +1279,7 @@ func (ac *addrConn) createTransport(addr resolver.Address, copts transport.Conne
 				// state to Connecting.
 				//
 				// TODO: this should be Idle when grpc-go properly supports it.
-				ac.updateConnectivityState(connectivity.Connecting)
+				ac.updateConnectivityState(connectivity.Connecting, nil)
 			}
 		})
 		ac.mu.Unlock()
@@ -1285,7 +1305,7 @@ func (ac *addrConn) createTransport(addr resolver.Address, copts transport.Conne
 	}
 
 	select {
-	case <-time.After(connectDeadline.Sub(time.Now())):
+	case <-time.After(time.Until(connectDeadline)):
 		// We didn't get the preface in time.
 		newTr.Close()
 		grpclog.Warningf("grpc: addrConn.createTransport failed to connect to %v: didn't receive server preface in time. Reconnecting...", addr)
@@ -1316,7 +1336,7 @@ func (ac *addrConn) startHealthCheck(ctx context.Context) {
 	var healthcheckManagingState bool
 	defer func() {
 		if !healthcheckManagingState {
-			ac.updateConnectivityState(connectivity.Ready)
+			ac.updateConnectivityState(connectivity.Ready, nil)
 		}
 	}()
 
@@ -1352,13 +1372,13 @@ func (ac *addrConn) startHealthCheck(ctx context.Context) {
 		ac.mu.Unlock()
 		return newNonRetryClientStream(ctx, &StreamDesc{ServerStreams: true}, method, currentTr, ac)
 	}
-	setConnectivityState := func(s connectivity.State) {
+	setConnectivityState := func(s connectivity.State, lastErr error) {
 		ac.mu.Lock()
 		defer ac.mu.Unlock()
 		if ac.transport != currentTr {
 			return
 		}
-		ac.updateConnectivityState(s)
+		ac.updateConnectivityState(s, lastErr)
 	}
 	// Start the health checking stream.
 	go func() {
@@ -1424,7 +1444,7 @@ func (ac *addrConn) tearDown(err error) {
 	ac.transport = nil
 	// We have to set the state to Shutdown before anything else to prevent races
 	// between setting the state and logic that waits on context cancellation / etc.
-	ac.updateConnectivityState(connectivity.Shutdown)
+	ac.updateConnectivityState(connectivity.Shutdown, nil)
 	ac.cancel()
 	ac.curAddr = resolver.Address{}
 	if err == errConnDrain && curTr != nil {
@@ -1537,3 +1557,12 @@ func (c *channelzChannel) ChannelzMetric() *channelz.ChannelInternalMetric {
 // Deprecated: This error is never returned by grpc and should not be
 // referenced by users.
 var ErrClientConnTimeout = errors.New("grpc: timed out when dialing")
+
+func (cc *ClientConn) getResolver(scheme string) resolver.Builder {
+	for _, rb := range cc.dopts.resolvers {
+		if cc.parsedTarget.Scheme == rb.Scheme() {
+			return rb
+		}
+	}
+	return resolver.Get(cc.parsedTarget.Scheme)
+}

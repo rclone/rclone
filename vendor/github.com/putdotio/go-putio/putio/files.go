@@ -202,7 +202,7 @@ func (f *FilesService) Move(ctx context.Context, parent int64, files ...int64) e
 
 // Upload reads from given io.Reader and uploads the file contents to Put.io
 // servers under directory given by parent. If parent is negative, user's
-// prefered folder is used.
+// preferred folder is used.
 //
 // If the uploaded file is a torrent file, Put.io will interpret it as a
 // transfer and Transfer field will be present to represent the status of the
@@ -219,7 +219,7 @@ func (f *FilesService) Upload(ctx context.Context, r io.Reader, filename string,
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
 
-	// negative parent means use user's prefered download folder.
+	// negative parent means use user's preferred download folder.
 	if parent >= 0 {
 		err := mw.WriteField("parent_id", itoa(parent))
 		if err != nil {
@@ -322,7 +322,7 @@ func (f *FilesService) sharedWith(ctx context.Context, id int64) ([]share, error
 	return r.Shared, nil
 }
 
-// Subtitles lists available subtitles for the given file for user's prefered
+// Subtitles lists available subtitles for the given file for user's preferred
 // subtitle language.
 func (f *FilesService) Subtitles(ctx context.Context, id int64) ([]Subtitle, error) {
 	req, err := f.client.NewRequest(ctx, "GET", "/v2/files/"+itoa(id)+"/subtitles", nil)

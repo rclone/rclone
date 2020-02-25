@@ -3,7 +3,6 @@ package putio
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -30,6 +29,9 @@ type Client struct {
 
 	// User agent for client
 	UserAgent string
+
+	// Override host header for API requests
+	Host string
 
 	// ExtraHeaders are passed to the API server on every request.
 	ExtraHeaders http.Header
@@ -79,7 +81,8 @@ func (c *Client) ValidateToken(ctx context.Context) (userID *int64, err error) {
 	var r struct {
 		UserID *int64 `json:"user_id"`
 	}
-	_, err = c.Do(req, &r)
+	resp, err := c.Do(req, &r)
+	defer resp.Body.Close()
 	return r.UserID, err
 }
 
@@ -108,6 +111,10 @@ func (c *Client) NewRequest(ctx context.Context, method, relURL string, body io.
 	req = req.WithContext(ctx)
 	req.Header.Set("Accept", defaultMediaType)
 	req.Header.Set("User-Agent", c.UserAgent)
+
+	if c.Host != "" {
+		req.Host = c.Host
+	}
 
 	// merge headers with extra headers
 	for header, values := range c.ExtraHeaders {
@@ -156,25 +163,22 @@ func (c *Client) Do(r *http.Request, v interface{}) (*http.Response, error) {
 // status code is not in success range, it will try to return a structured
 // error.
 func checkResponse(r *http.Response) error {
-	status := r.StatusCode
-	switch {
-	case status >= 200 && status <= 399:
+	if r.StatusCode >= 200 && r.StatusCode <= 399 {
 		return nil
-	case status >= 400 && status <= 599:
-		// server returns json
-	default:
-		return fmt.Errorf("unexpected status code: %d", status)
 	}
-	errorResponse := &ErrorResponse{Response: r}
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return fmt.Errorf("body read error: %s. status: %v. Details: %v:", err, status, string(data[:250]))
+
+	// server possibly returns json and more details
+	er := &ErrorResponse{Response: r}
+
+	er.Body, er.ParseError = ioutil.ReadAll(r.Body)
+	if er.ParseError != nil {
+		return er
 	}
-	if len(data) > 0 {
-		err = json.Unmarshal(data, errorResponse)
-		if err != nil {
-			return fmt.Errorf("json decode error: %s. status: %v. Details: %v:", err, status, string(data[:250]))
+	if r.Header.Get("content-type") == "application/json" {
+		er.ParseError = json.Unmarshal(er.Body, er)
+		if er.ParseError != nil {
+			return er
 		}
 	}
-	return errorResponse
+	return er
 }

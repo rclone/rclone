@@ -52,6 +52,14 @@ const (
 func (u *PathRoot) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// Root : Paths are relative to the authenticating user's root namespace
+		// (This results in `PathRootError.invalid_root` if the user's root
+		// namespace has changed.).
+		Root string `json:"root,omitempty"`
+		// NamespaceId : Paths are relative to given namespace id (This results
+		// in `PathRootError.no_permission` if you don't have access to this
+		// namespace.).
+		NamespaceId string `json:"namespace_id,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -61,13 +69,13 @@ func (u *PathRoot) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "root":
-		err = json.Unmarshal(body, &u.Root)
+		u.Root = w.Root
 
 		if err != nil {
 			return err
 		}
 	case "namespace_id":
-		err = json.Unmarshal(body, &u.NamespaceId)
+		u.NamespaceId = w.NamespaceId
 
 		if err != nil {
 			return err
@@ -107,7 +115,7 @@ func (u *PathRootError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "invalid_root":
-		u.InvalidRoot, err = IsRootInfoFromJSON(body)
+		u.InvalidRoot, err = IsRootInfoFromJSON(w.InvalidRoot)
 
 		if err != nil {
 			return err
@@ -161,10 +169,6 @@ const (
 func (u *rootInfoUnion) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Team : has no documentation (yet)
-		Team json.RawMessage `json:"team,omitempty"`
-		// User : has no documentation (yet)
-		User json.RawMessage `json:"user,omitempty"`
 	}
 	var w wrap
 	var err error
