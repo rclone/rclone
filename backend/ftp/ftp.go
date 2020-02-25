@@ -207,7 +207,13 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	if f.opt.Concurrency > 0 {
 		defer f.tokens.Put()
 	}
+	if pc == nil {
+		return
+	}
 	c := *pc
+	if c == nil {
+		return
+	}
 	*pc = nil
 	if err != nil {
 		// If not a regular FTP error code then check the connection
@@ -861,6 +867,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		_ = c.Quit() // toss this connection to avoid sync errors
 		remove()
+		o.fs.putFtpConnection(nil, err)
 		return errors.Wrap(err, "update stor")
 	}
 	o.fs.putFtpConnection(&c, nil)
