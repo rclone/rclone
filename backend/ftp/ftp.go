@@ -788,11 +788,13 @@ func (f *ftpReadCloser) Close() error {
 	case <-timer.C:
 		// if timer fired assume no error but connection dead
 		fs.Errorf(f.f, "Timeout when waiting for connection Close")
+		f.f.putFtpConnection(nil, nil)
 		return nil
 	}
 	// if errors while reading or closing, dump the connection
 	if err != nil || f.err != nil {
 		_ = f.c.Quit()
+		f.f.putFtpConnection(nil, nil)
 	} else {
 		f.f.putFtpConnection(&f.c, nil)
 	}
