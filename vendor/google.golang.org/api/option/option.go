@@ -6,6 +6,7 @@
 package option
 
 import (
+	"crypto/tls"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -114,7 +115,7 @@ func (w withHTTPClient) Apply(o *internal.DialSettings) {
 }
 
 // WithGRPCConn returns a ClientOption that specifies the gRPC client
-// connection to use as the basis of communications. This option many only be
+// connection to use as the basis of communications. This option may only be
 // used with services that support gRPC as their communication transport. When
 // used, the WithGRPCConn option takes precedent over all other supplied
 // options.
@@ -150,8 +151,7 @@ func WithGRPCConnectionPool(size int) ClientOption {
 type withGRPCConnectionPool int
 
 func (w withGRPCConnectionPool) Apply(o *internal.DialSettings) {
-	balancer := grpc.RoundRobin(internal.NewPoolResolver(int(w), o))
-	o.GRPCDialOpts = append(o.GRPCDialOpts, grpc.WithBalancer(balancer))
+	o.GRPCConnPoolSize = int(w)
 }
 
 // WithAPIKey returns a ClientOption that specifies an API key to be used
@@ -222,4 +222,49 @@ type withRequestReason string
 
 func (w withRequestReason) Apply(o *internal.DialSettings) {
 	o.RequestReason = string(w)
+}
+
+// WithTelemetryDisabled returns a ClientOption that disables default telemetry (OpenCensus)
+// settings on gRPC and HTTP clients.
+// An example reason would be to bind custom telemetry that overrides the defaults.
+func WithTelemetryDisabled() ClientOption {
+	return withTelemetryDisabled{}
+}
+
+type withTelemetryDisabled struct{}
+
+func (w withTelemetryDisabled) Apply(o *internal.DialSettings) {
+	o.TelemetryDisabled = true
+}
+
+// ClientCertSource is a function that returns a TLS client certificate to be used
+// when opening TLS connections.
+//
+// It follows the same semantics as crypto/tls.Config.GetClientCertificate.
+//
+// This is an EXPERIMENTAL API and may be changed or removed in the future.
+type ClientCertSource = func(*tls.CertificateRequestInfo) (*tls.Certificate, error)
+
+// WithClientCertSource returns a ClientOption that specifies a
+// callback function for obtaining a TLS client certificate.
+//
+// This option is used for supporting mTLS authentication, where the
+// server validates the client certifcate when establishing a connection.
+//
+// The callback function will be invoked whenever the server requests a
+// certificate from the client. Implementations of the callback function
+// should try to ensure that a valid certificate can be repeatedly returned
+// on demand for the entire life cycle of the transport client. If a nil
+// Certificate is returned (i.e. no Certificate can be obtained), an error
+// should be returned.
+//
+// This is an EXPERIMENTAL API and may be changed or removed in the future.
+func WithClientCertSource(s ClientCertSource) ClientOption {
+	return withClientCertSource{s}
+}
+
+type withClientCertSource struct{ s ClientCertSource }
+
+func (w withClientCertSource) Apply(o *internal.DialSettings) {
+	o.ClientCertSource = w.s
 }

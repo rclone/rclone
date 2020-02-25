@@ -212,10 +212,6 @@ func (qss *QingStorSigner) buildCanonicalizedResource(request *http.Request) (st
 			if len(values) > 0 {
 				if values[0] != "" {
 					value := strings.TrimSpace(strings.Join(values, ""))
-					value, err := utils.URLQueryUnescape(value)
-					if err != nil {
-						return "", err
-					}
 					parts = append(parts, key+"="+value)
 				} else {
 					parts = append(parts, key)

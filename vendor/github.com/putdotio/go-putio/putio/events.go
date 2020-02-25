@@ -24,7 +24,6 @@ func (e *EventsService) List(ctx context.Context) ([]Event, error) {
 		return nil, err
 	}
 	return r.Events, nil
-
 }
 
 // Delete Clears all all dashboard events.

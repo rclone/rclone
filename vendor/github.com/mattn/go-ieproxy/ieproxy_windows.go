@@ -25,33 +25,62 @@ func getConf() ProxyConf {
 }
 
 func writeConf() {
-	var (
-		cfg *tWINHTTP_CURRENT_USER_IE_PROXY_CONFIG
-		err error
-	)
+	proxy := ""
+	proxyByPass := ""
+	autoConfigUrl := ""
+	autoDetect := false
 
-	if cfg, err = getUserConfigFromWindowsSyscall(); err != nil {
+	// Try from IE first.
+	if ieCfg, err := getUserConfigFromWindowsSyscall(); err == nil {
+		defer globalFreeWrapper(ieCfg.lpszProxy)
+		defer globalFreeWrapper(ieCfg.lpszProxyBypass)
+		defer globalFreeWrapper(ieCfg.lpszAutoConfigUrl)
+
+		proxy = StringFromUTF16Ptr(ieCfg.lpszProxy)
+		proxyByPass = StringFromUTF16Ptr(ieCfg.lpszProxyBypass)
+		autoConfigUrl = StringFromUTF16Ptr(ieCfg.lpszAutoConfigUrl)
+		autoDetect = ieCfg.fAutoDetect
+	}
+
+	if proxy == "" { // <- new. Only fallback if we got NO proxy
+		// Try WinHTTP default proxy.
+		if defaultCfg, err := getDefaultProxyConfiguration(); err == nil {
+			defer globalFreeWrapper(defaultCfg.lpszProxy)
+			defer globalFreeWrapper(defaultCfg.lpszProxyBypass)
+
+			// Changed, next 2 lines, so if that if we always set both of these (they are a pair, it doesn't make sense to set one here and keep the value of the other from above)
+			newProxy := StringFromUTF16Ptr(defaultCfg.lpszProxy)
+			if proxy == "" {
+				proxy = newProxy
+			}
+
+			newProxyByPass := StringFromUTF16Ptr(defaultCfg.lpszProxyBypass)
+			if proxyByPass == "" {
+				proxyByPass = newProxyByPass
+			}
+		}
+	}
+
+	if proxy == "" && !autoDetect {
+		// Fall back to IE registry or manual detection if nothing is found there..
 		regedit, _ := readRegedit() // If the syscall fails, backup to manual detection.
 		windowsProxyConf = parseRegedit(regedit)
 		return
 	}
 
-	defer globalFreeWrapper(cfg.lpszProxy)
-	defer globalFreeWrapper(cfg.lpszProxyBypass)
-	defer globalFreeWrapper(cfg.lpszAutoConfigUrl)
-
+	// Setting the proxy settings.
 	windowsProxyConf = ProxyConf{
 		Static: StaticProxyConf{
-			Active: cfg.lpszProxy != nil,
+			Active: len(proxy) > 0,
 		},
 		Automatic: ProxyScriptConf{
-			Active: cfg.lpszAutoConfigUrl != nil || cfg.fAutoDetect,
+			Active: len(autoConfigUrl) > 0 || autoDetect,
 		},
 	}
 
 	if windowsProxyConf.Static.Active {
 		protocol := make(map[string]string)
-		for _, s := range strings.Split(StringFromUTF16Ptr(cfg.lpszProxy), ";") {
+		for _, s := range strings.Split(proxy, ";") {
 			s = strings.TrimSpace(s)
 			if s == "" {
 				continue
@@ -65,31 +94,38 @@ func writeConf() {
 		}
 
 		windowsProxyConf.Static.Protocols = protocol
-		if cfg.lpszProxyBypass != nil {
-			windowsProxyConf.Static.NoProxy = strings.Replace(StringFromUTF16Ptr(cfg.lpszProxyBypass), ";", ",", -1)
+		if len(proxyByPass) > 0 {
+			windowsProxyConf.Static.NoProxy = strings.Replace(proxyByPass, ";", ",", -1)
 		}
 	}
 
 	if windowsProxyConf.Automatic.Active {
-		windowsProxyConf.Automatic.PreConfiguredURL = StringFromUTF16Ptr(cfg.lpszAutoConfigUrl)
+		windowsProxyConf.Automatic.PreConfiguredURL = autoConfigUrl
 	}
 }
 
 func getUserConfigFromWindowsSyscall() (*tWINHTTP_CURRENT_USER_IE_PROXY_CONFIG, error) {
-	handle, _, err := winHttpOpen.Call(0, 0, 0, 0, 0)
-	if handle == 0 {
-		return &tWINHTTP_CURRENT_USER_IE_PROXY_CONFIG{}, err
+	if err := winHttpGetIEProxyConfigForCurrentUser.Find(); err != nil {
+		return nil, err
 	}
-	defer winHttpCloseHandle.Call(handle)
-
-	config := new(tWINHTTP_CURRENT_USER_IE_PROXY_CONFIG)
-
-	ret, _, err := winHttpGetIEProxyConfigForCurrentUser.Call(uintptr(unsafe.Pointer(config)))
-	if ret > 0 {
-		err = nil
+	p := new(tWINHTTP_CURRENT_USER_IE_PROXY_CONFIG)
+	r, _, err := winHttpGetIEProxyConfigForCurrentUser.Call(uintptr(unsafe.Pointer(p)))
+	if rTrue(r) {
+		return p, nil
 	}
+	return nil, err
+}
 
-	return config, err
+func getDefaultProxyConfiguration() (*tWINHTTP_PROXY_INFO, error) {
+	pInfo := new(tWINHTTP_PROXY_INFO)
+	if err := winHttpGetDefaultProxyConfiguration.Find(); err != nil {
+		return nil, err
+	}
+	r, _, err := winHttpGetDefaultProxyConfiguration.Call(uintptr(unsafe.Pointer(pInfo)))
+	if rTrue(r) {
+		return pInfo, nil
+	}
+	return nil, err
 }
 
 // OverrideEnvWithStaticProxy writes new values to the
@@ -135,7 +171,27 @@ func parseRegedit(regedit regeditValues) ProxyConf {
 }
 
 func readRegedit() (values regeditValues, err error) {
-	k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
+	var proxySettingsPerUser uint64 = 1 // 1 is the default value to consider current user
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `Software\Policies\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
+	if err == nil {
+		//We had used the below variable tempPrxUsrSettings, because the Golang method GetIntegerValue
+		//sets the value to zero even it fails.
+		tempPrxUsrSettings, _, err := k.GetIntegerValue("ProxySettingsPerUser")
+		if err == nil {
+			//consider the value of tempPrxUsrSettings if it is a success
+			proxySettingsPerUser = tempPrxUsrSettings
+		}
+		k.Close()
+	}
+
+	var hkey registry.Key
+	if proxySettingsPerUser == 0 {
+		hkey = registry.LOCAL_MACHINE
+	} else {
+		hkey = registry.CURRENT_USER
+	}
+
+	k, err = registry.OpenKey(hkey, `Software\Microsoft\Windows\CurrentVersion\Internet Settings`, registry.QUERY_VALUE)
 	if err != nil {
 		return
 	}

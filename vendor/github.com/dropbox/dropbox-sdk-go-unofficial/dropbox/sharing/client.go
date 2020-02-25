@@ -966,7 +966,7 @@ func (dbx *apiImpl) GetSharedLinkFile(arg *GetSharedLinkMetadataArg) (res IsShar
 	}
 
 	headers := map[string]string{
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID

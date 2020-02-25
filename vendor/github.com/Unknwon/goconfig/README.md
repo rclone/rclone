@@ -1,4 +1,4 @@
-goconfig [![Build Status](https://drone.io/github.com/Unknwon/goconfig/status.png)](https://drone.io/github.com/Unknwon/goconfig/latest) [![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/Unknwon/goconfig)
+goconfig [![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/Unknwon/goconfig)
 ========
 
 [中文文档](README_ZH.md)
@@ -26,15 +26,11 @@ The configuration file consists of sections, led by a `[section]` header and fol
 
 ## Installation
 	
-	go get github.com/Unknwon/goconfig
-
-Or
-	
-	gopm get github.com/Unknwon/goconfig
+	go get github.com/unknwon/goconfig
 
 ## API Documentation
 
-[Go Walker](http://gowalker.org/github.com/Unknwon/goconfig).
+[Go Walker](http://gowalker.org/github.com/unknwon/goconfig).
 
 ## Example
 

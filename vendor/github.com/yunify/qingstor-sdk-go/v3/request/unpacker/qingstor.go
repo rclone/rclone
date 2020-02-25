@@ -22,6 +22,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/yunify/qingstor-sdk-go/v3/logger"
 	"github.com/yunify/qingstor-sdk-go/v3/request/data"
@@ -66,7 +67,7 @@ func (qu *QingStorUnpacker) parseError() error {
 
 	// QingStor nginx could refuse user's request directly and only return status code.
 	// We should handle this and build a qingstor error with message.
-	if qu.baseUnpacker.httpResponse.Header.Get("Content-Type") != "application/json" {
+	if !strings.Contains(qu.baseUnpacker.httpResponse.Header.Get("Content-Type"), "application/json") {
 		qsError := &errors.QingStorError{
 			StatusCode: qu.baseUnpacker.httpResponse.StatusCode,
 			Message:    http.StatusText(qu.baseUnpacker.httpResponse.StatusCode),

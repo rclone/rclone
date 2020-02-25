@@ -57,7 +57,7 @@ type Client interface {
 	Copy(arg *RelocationArg) (res IsMetadata, err error)
 	// CopyBatch : Copy multiple files or folders to different locations at once
 	// in the user's Dropbox. This route will replace `copyBatch`. The main
-	// difference is this route will return stutus for each entry, while
+	// difference is this route will return status for each entry, while
 	// `copyBatch` raises failure if any entry fails. This route will either
 	// finish synchronously, or return a job ID and do the async copy job in
 	// background. Please use `copyBatchCheck` to check the job status.
@@ -130,19 +130,23 @@ type Client interface {
 	// total files. The input cannot be a single file. Any single file must be
 	// less than 4GB in size.
 	DownloadZip(arg *DownloadZipArg) (res *DownloadZipResult, content io.ReadCloser, err error)
+	// Export : Export a file from a user's Dropbox. This route only supports
+	// exporting files that cannot be downloaded directly  and whose
+	// `ExportResult.file_metadata` has `ExportInfo.export_as` populated.
+	Export(arg *ExportArg) (res *ExportResult, content io.ReadCloser, err error)
 	// GetMetadata : Returns the metadata for a file or folder. Note: Metadata
 	// for the root folder is unsupported.
 	GetMetadata(arg *GetMetadataArg) (res IsMetadata, err error)
 	// GetPreview : Get a preview for a file. Currently, PDF previews are
 	// generated for files with the following extensions: .ai, .doc, .docm,
-	// .docx, .eps, .odp, .odt, .pps, .ppsm, .ppsx, .ppt, .pptm, .pptx, .rtf.
-	// HTML previews are generated for files with the following extensions:
-	// .csv, .ods, .xls, .xlsm, .xlsx. Other formats will return an unsupported
-	// extension error.
+	// .docx, .eps, .gdoc, .gslides, .odp, .odt, .pps, .ppsm, .ppsx, .ppt,
+	// .pptm, .pptx, .rtf. HTML previews are generated for files with the
+	// following extensions: .csv, .ods, .xls, .xlsm, .gsheet, .xlsx. Other
+	// formats will return an unsupported extension error.
 	GetPreview(arg *PreviewArg) (res *FileMetadata, content io.ReadCloser, err error)
 	// GetTemporaryLink : Get a temporary link to stream content of a file. This
-	// link will expire in four hours and afterwards you will get 410 Gone. So
-	// this URL should not be used to display content directly in the browser.
+	// link will expire in four hours and afterwards you will get 410 Gone. This
+	// URL should not be used to display content directly in the browser. The
 	// Content-Type of the link is determined automatically by the file's mime
 	// type.
 	GetTemporaryLink(arg *GetTemporaryLinkArg) (res *GetTemporaryLinkResult, err error)
@@ -246,7 +250,7 @@ type Client interface {
 	Move(arg *RelocationArg) (res IsMetadata, err error)
 	// MoveBatch : Move multiple files or folders to different locations at once
 	// in the user's Dropbox. This route will replace `moveBatch`. The main
-	// difference is this route will return stutus for each entry, while
+	// difference is this route will return status for each entry, while
 	// `moveBatch` raises failure if any entry fails. This route will either
 	// finish synchronously, or return a job ID and do the async move job in
 	// background. Please use `moveBatchCheck` to check the job status.
@@ -477,7 +481,7 @@ func (dbx *apiImpl) AlphaUpload(arg *CommitInfoWithProperties, content io.Reader
 
 	headers := map[string]string{
 		"Content-Type":    "application/octet-stream",
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -1636,7 +1640,7 @@ func (dbx *apiImpl) Download(arg *DownloadArg) (res *FileMetadata, content io.Re
 	}
 
 	headers := map[string]string{
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	for k, v := range arg.ExtraHeaders {
 		headers[k] = v
@@ -1706,7 +1710,7 @@ func (dbx *apiImpl) DownloadZip(arg *DownloadZipArg) (res *DownloadZipResult, co
 	}
 
 	headers := map[string]string{
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -1742,6 +1746,73 @@ func (dbx *apiImpl) DownloadZip(arg *DownloadZipArg) (res *DownloadZipResult, co
 			return
 		}
 		var apiError DownloadZipAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	err = auth.HandleCommonAuthErrors(dbx.Config, resp, body)
+	if err != nil {
+		return
+	}
+	err = dropbox.HandleCommonAPIErrors(dbx.Config, resp, body)
+	return
+}
+
+//ExportAPIError is an error-wrapper for the export route
+type ExportAPIError struct {
+	dropbox.APIError
+	EndpointError *ExportError `json:"error"`
+}
+
+func (dbx *apiImpl) Export(arg *ExportArg) (res *ExportResult, content io.ReadCloser, err error) {
+	cli := dbx.Client
+
+	dbx.Config.LogDebug("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("content", "download", true, "files", "export", headers, nil)
+	if err != nil {
+		return
+	}
+	dbx.Config.LogInfo("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogInfo("resp: %v", resp)
+	body := []byte(resp.Header.Get("Dropbox-API-Result"))
+	content = resp.Body
+	dbx.Config.LogDebug("body: %s", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		var apiError ExportAPIError
 		err = json.Unmarshal(body, &apiError)
 		if err != nil {
 			return
@@ -1850,7 +1921,7 @@ func (dbx *apiImpl) GetPreview(arg *PreviewArg) (res *FileMetadata, content io.R
 	}
 
 	headers := map[string]string{
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -2049,7 +2120,7 @@ func (dbx *apiImpl) GetThumbnail(arg *ThumbnailArg) (res *FileMetadata, content 
 	}
 
 	headers := map[string]string{
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -2116,7 +2187,7 @@ func (dbx *apiImpl) GetThumbnailBatch(arg *GetThumbnailBatchArg) (res *GetThumbn
 	}
 
 	headers := map[string]string{
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -3625,7 +3696,7 @@ func (dbx *apiImpl) Upload(arg *CommitInfo, content io.Reader) (res *FileMetadat
 
 	headers := map[string]string{
 		"Content-Type":    "application/octet-stream",
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -3692,7 +3763,7 @@ func (dbx *apiImpl) UploadSessionAppendV2(arg *UploadSessionAppendArg, content i
 
 	headers := map[string]string{
 		"Content-Type":    "application/octet-stream",
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -3757,7 +3828,7 @@ func (dbx *apiImpl) UploadSessionAppend(arg *UploadSessionCursor, content io.Rea
 
 	headers := map[string]string{
 		"Content-Type":    "application/octet-stream",
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -3819,7 +3890,7 @@ func (dbx *apiImpl) UploadSessionFinish(arg *UploadSessionFinishArg, content io.
 
 	headers := map[string]string{
 		"Content-Type":    "application/octet-stream",
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -4018,7 +4089,7 @@ func (dbx *apiImpl) UploadSessionStart(arg *UploadSessionStartArg, content io.Re
 
 	headers := map[string]string{
 		"Content-Type":    "application/octet-stream",
-		"Dropbox-API-Arg": string(b),
+		"Dropbox-API-Arg": dropbox.HTTPHeaderSafeJSON(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID

@@ -128,9 +128,9 @@ func (u *AddFileMemberError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// UserError : has no documentation (yet)
-		UserError json.RawMessage `json:"user_error,omitempty"`
+		UserError *SharingUserError `json:"user_error,omitempty"`
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -140,13 +140,13 @@ func (u *AddFileMemberError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "user_error":
-		err = json.Unmarshal(w.UserError, &u.UserError)
+		u.UserError = w.UserError
 
 		if err != nil {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -198,6 +198,7 @@ type AddFolderMemberError struct {
 const (
 	AddFolderMemberErrorAccessError           = "access_error"
 	AddFolderMemberErrorEmailUnverified       = "email_unverified"
+	AddFolderMemberErrorBannedMember          = "banned_member"
 	AddFolderMemberErrorBadMember             = "bad_member"
 	AddFolderMemberErrorCantShareOutsideTeam  = "cant_share_outside_team"
 	AddFolderMemberErrorTooManyMembers        = "too_many_members"
@@ -215,10 +216,15 @@ func (u *AddFolderMemberError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : Unable to access shared folder.
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 		// BadMember : `AddFolderMemberArg.members` contains a bad invitation
 		// recipient.
-		BadMember json.RawMessage `json:"bad_member,omitempty"`
+		BadMember *AddMemberSelectorError `json:"bad_member,omitempty"`
+		// TooManyMembers : The value is the member limit that was reached.
+		TooManyMembers uint64 `json:"too_many_members,omitempty"`
+		// TooManyPendingInvites : The value is the pending invite limit that
+		// was reached.
+		TooManyPendingInvites uint64 `json:"too_many_pending_invites,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -228,25 +234,25 @@ func (u *AddFolderMemberError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
 		}
 	case "bad_member":
-		err = json.Unmarshal(w.BadMember, &u.BadMember)
+		u.BadMember = w.BadMember
 
 		if err != nil {
 			return err
 		}
 	case "too_many_members":
-		err = json.Unmarshal(body, &u.TooManyMembers)
+		u.TooManyMembers = w.TooManyMembers
 
 		if err != nil {
 			return err
 		}
 	case "too_many_pending_invites":
-		err = json.Unmarshal(body, &u.TooManyPendingInvites)
+		u.TooManyPendingInvites = w.TooManyPendingInvites
 
 		if err != nil {
 			return err
@@ -301,6 +307,14 @@ const (
 func (u *AddMemberSelectorError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// InvalidDropboxId : The value is the ID that could not be identified.
+		InvalidDropboxId string `json:"invalid_dropbox_id,omitempty"`
+		// InvalidEmail : The value is the e-email address that is malformed.
+		InvalidEmail string `json:"invalid_email,omitempty"`
+		// UnverifiedDropboxId : The value is the ID of the Dropbox user with an
+		// unverified e-mail address.  Invite unverified users by e-mail address
+		// instead of by their Dropbox ID.
+		UnverifiedDropboxId string `json:"unverified_dropbox_id,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -310,19 +324,19 @@ func (u *AddMemberSelectorError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "invalid_dropbox_id":
-		err = json.Unmarshal(body, &u.InvalidDropboxId)
+		u.InvalidDropboxId = w.InvalidDropboxId
 
 		if err != nil {
 			return err
 		}
 	case "invalid_email":
-		err = json.Unmarshal(body, &u.InvalidEmail)
+		u.InvalidEmail = w.InvalidEmail
 
 		if err != nil {
 			return err
 		}
 	case "unverified_dropbox_id":
-		err = json.Unmarshal(body, &u.UnverifiedDropboxId)
+		u.UnverifiedDropboxId = w.UnverifiedDropboxId
 
 		if err != nil {
 			return err
@@ -449,10 +463,6 @@ const (
 func (u *linkMetadataUnion) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
-		// Collection : has no documentation (yet)
-		Collection json.RawMessage `json:"collection,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -545,7 +555,7 @@ func (u *CreateSharedLinkError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *files.LookupError `json:"path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -555,7 +565,7 @@ func (u *CreateSharedLinkError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
@@ -584,6 +594,10 @@ type CreateSharedLinkWithSettingsError struct {
 	dropbox.Tagged
 	// Path : has no documentation (yet)
 	Path *files.LookupError `json:"path,omitempty"`
+	// SharedLinkAlreadyExists : The shared link already exists. You can call
+	// `listSharedLinks` to get the  existing link, or use the provided metadata
+	// if it is returned.
+	SharedLinkAlreadyExists *SharedLinkAlreadyExistsMetadata `json:"shared_link_already_exists,omitempty"`
 	// SettingsError : There is an error with the given settings.
 	SettingsError *SharedLinkSettingsError `json:"settings_error,omitempty"`
 }
@@ -602,9 +616,13 @@ func (u *CreateSharedLinkWithSettingsError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *files.LookupError `json:"path,omitempty"`
+		// SharedLinkAlreadyExists : The shared link already exists. You can
+		// call `listSharedLinks` to get the  existing link, or use the provided
+		// metadata if it is returned.
+		SharedLinkAlreadyExists *SharedLinkAlreadyExistsMetadata `json:"shared_link_already_exists,omitempty"`
 		// SettingsError : There is an error with the given settings.
-		SettingsError json.RawMessage `json:"settings_error,omitempty"`
+		SettingsError *SharedLinkSettingsError `json:"settings_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -614,13 +632,19 @@ func (u *CreateSharedLinkWithSettingsError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
+
+		if err != nil {
+			return err
+		}
+	case "shared_link_already_exists":
+		u.SharedLinkAlreadyExists = w.SharedLinkAlreadyExists
 
 		if err != nil {
 			return err
 		}
 	case "settings_error":
-		err = json.Unmarshal(w.SettingsError, &u.SettingsError)
+		u.SettingsError = w.SettingsError
 
 		if err != nil {
 			return err
@@ -698,6 +722,8 @@ const (
 	FileActionRelinquishMembership  = "relinquish_membership"
 	FileActionShareLink             = "share_link"
 	FileActionCreateLink            = "create_link"
+	FileActionCreateViewLink        = "create_view_link"
+	FileActionCreateEditLink        = "create_edit_link"
 	FileActionOther                 = "other"
 )
 
@@ -726,6 +752,14 @@ const (
 func (u *FileErrorResult) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// FileNotFoundError : File specified by id was not found.
+		FileNotFoundError string `json:"file_not_found_error,omitempty"`
+		// InvalidFileActionError : User does not have permission to take the
+		// specified action on the file.
+		InvalidFileActionError string `json:"invalid_file_action_error,omitempty"`
+		// PermissionDeniedError : User does not have permission to access file
+		// specified by file.Id.
+		PermissionDeniedError string `json:"permission_denied_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -735,19 +769,19 @@ func (u *FileErrorResult) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "file_not_found_error":
-		err = json.Unmarshal(body, &u.FileNotFoundError)
+		u.FileNotFoundError = w.FileNotFoundError
 
 		if err != nil {
 			return err
 		}
 	case "invalid_file_action_error":
-		err = json.Unmarshal(body, &u.InvalidFileActionError)
+		u.InvalidFileActionError = w.InvalidFileActionError
 
 		if err != nil {
 			return err
 		}
 	case "permission_denied_error":
-		err = json.Unmarshal(body, &u.PermissionDeniedError)
+		u.PermissionDeniedError = w.PermissionDeniedError
 
 		if err != nil {
 			return err
@@ -817,10 +851,6 @@ const (
 func (u *sharedLinkMetadataUnion) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// File : has no documentation (yet)
-		File json.RawMessage `json:"file,omitempty"`
-		// Folder : has no documentation (yet)
-		Folder json.RawMessage `json:"folder,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -920,11 +950,7 @@ func (u *FileMemberActionError) UnmarshalJSON(body []byte) error {
 		dropbox.Tagged
 		// AccessError : Specified file was invalid or user does not have
 		// access.
-		AccessError json.RawMessage `json:"access_error,omitempty"`
-		// NoExplicitAccess : The action cannot be completed because the target
-		// member does not have explicit access to the file. The return value is
-		// the access that the member has to the file from a parent folder.
-		NoExplicitAccess json.RawMessage `json:"no_explicit_access,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -934,7 +960,7 @@ func (u *FileMemberActionError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -972,9 +998,9 @@ func (u *FileMemberActionIndividualResult) UnmarshalJSON(body []byte) error {
 		// Success : Member was successfully removed from this file. If
 		// AccessLevel is given, the member still has access via a parent shared
 		// folder.
-		Success json.RawMessage `json:"success,omitempty"`
+		Success *AccessLevel `json:"success,omitempty"`
 		// MemberError : User was not able to perform this action.
-		MemberError json.RawMessage `json:"member_error,omitempty"`
+		MemberError *FileMemberActionError `json:"member_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -984,13 +1010,13 @@ func (u *FileMemberActionIndividualResult) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "success":
-		err = json.Unmarshal(body, &u.Success)
+		u.Success = w.Success
 
 		if err != nil {
 			return err
 		}
 	case "member_error":
-		err = json.Unmarshal(w.MemberError, &u.MemberError)
+		u.MemberError = w.MemberError
 
 		if err != nil {
 			return err
@@ -1036,10 +1062,8 @@ const (
 func (u *FileMemberRemoveActionResult) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Success : Member was successfully removed from this file.
-		Success json.RawMessage `json:"success,omitempty"`
 		// MemberError : User was not able to remove this member.
-		MemberError json.RawMessage `json:"member_error,omitempty"`
+		MemberError *FileMemberActionError `json:"member_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1055,7 +1079,7 @@ func (u *FileMemberRemoveActionResult) UnmarshalJSON(body []byte) error {
 			return err
 		}
 	case "member_error":
-		err = json.Unmarshal(w.MemberError, &u.MemberError)
+		u.MemberError = w.MemberError
 
 		if err != nil {
 			return err
@@ -1245,9 +1269,9 @@ func (u *GetFileMetadataError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// UserError : has no documentation (yet)
-		UserError json.RawMessage `json:"user_error,omitempty"`
+		UserError *SharingUserError `json:"user_error,omitempty"`
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1257,13 +1281,13 @@ func (u *GetFileMetadataError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "user_error":
-		err = json.Unmarshal(w.UserError, &u.UserError)
+		u.UserError = w.UserError
 
 		if err != nil {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -1292,10 +1316,8 @@ const (
 func (u *GetFileMetadataIndividualResult) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Metadata : The result for this file if it was successful.
-		Metadata json.RawMessage `json:"metadata,omitempty"`
 		// AccessError : The result for this file if it was an error.
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1311,7 +1333,7 @@ func (u *GetFileMetadataIndividualResult) UnmarshalJSON(body []byte) error {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -1415,7 +1437,7 @@ func (u *GetSharedLinksError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path string `json:"path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1425,7 +1447,7 @@ func (u *GetSharedLinksError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "path":
-		err = json.Unmarshal(body, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
@@ -1591,6 +1613,8 @@ const (
 func (u *InviteeInfo) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// Email : E-mail address of invited user.
+		Email string `json:"email,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1600,7 +1624,7 @@ func (u *InviteeInfo) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "email":
-		err = json.Unmarshal(body, &u.Email)
+		u.Email = w.Email
 
 		if err != nil {
 			return err
@@ -1657,13 +1681,13 @@ func (u *JobError) UnmarshalJSON(body []byte) error {
 		dropbox.Tagged
 		// UnshareFolderError : Error occurred while performing `unshareFolder`
 		// action.
-		UnshareFolderError json.RawMessage `json:"unshare_folder_error,omitempty"`
+		UnshareFolderError *UnshareFolderError `json:"unshare_folder_error,omitempty"`
 		// RemoveFolderMemberError : Error occurred while performing
 		// `removeFolderMember` action.
-		RemoveFolderMemberError json.RawMessage `json:"remove_folder_member_error,omitempty"`
+		RemoveFolderMemberError *RemoveFolderMemberError `json:"remove_folder_member_error,omitempty"`
 		// RelinquishFolderMembershipError : Error occurred while performing
 		// `relinquishFolderMembership` action.
-		RelinquishFolderMembershipError json.RawMessage `json:"relinquish_folder_membership_error,omitempty"`
+		RelinquishFolderMembershipError *RelinquishFolderMembershipError `json:"relinquish_folder_membership_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1673,19 +1697,19 @@ func (u *JobError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "unshare_folder_error":
-		err = json.Unmarshal(w.UnshareFolderError, &u.UnshareFolderError)
+		u.UnshareFolderError = w.UnshareFolderError
 
 		if err != nil {
 			return err
 		}
 	case "remove_folder_member_error":
-		err = json.Unmarshal(w.RemoveFolderMemberError, &u.RemoveFolderMemberError)
+		u.RemoveFolderMemberError = w.RemoveFolderMemberError
 
 		if err != nil {
 			return err
 		}
 	case "relinquish_folder_membership_error":
-		err = json.Unmarshal(w.RelinquishFolderMembershipError, &u.RelinquishFolderMembershipError)
+		u.RelinquishFolderMembershipError = w.RelinquishFolderMembershipError
 
 		if err != nil {
 			return err
@@ -1713,7 +1737,7 @@ func (u *JobStatus) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// Failed : The asynchronous job returned an error.
-		Failed json.RawMessage `json:"failed,omitempty"`
+		Failed *JobError `json:"failed,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1723,7 +1747,7 @@ func (u *JobStatus) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "failed":
-		err = json.Unmarshal(w.Failed, &u.Failed)
+		u.Failed = w.Failed
 
 		if err != nil {
 			return err
@@ -1731,6 +1755,18 @@ func (u *JobStatus) UnmarshalJSON(body []byte) error {
 	}
 	return nil
 }
+
+// LinkAccessLevel : has no documentation (yet)
+type LinkAccessLevel struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for LinkAccessLevel
+const (
+	LinkAccessLevelViewer = "viewer"
+	LinkAccessLevelEditor = "editor"
+	LinkAccessLevelOther  = "other"
+)
 
 // LinkAction : Actions that can be performed on a link.
 type LinkAction struct {
@@ -1755,11 +1791,12 @@ type LinkAudience struct {
 
 // Valid tag values for LinkAudience
 const (
-	LinkAudiencePublic  = "public"
-	LinkAudienceTeam    = "team"
-	LinkAudienceNoOne   = "no_one"
-	LinkAudienceMembers = "members"
-	LinkAudienceOther   = "other"
+	LinkAudiencePublic   = "public"
+	LinkAudienceTeam     = "team"
+	LinkAudienceNoOne    = "no_one"
+	LinkAudiencePassword = "password"
+	LinkAudienceMembers  = "members"
+	LinkAudienceOther    = "other"
 )
 
 // LinkExpiry : has no documentation (yet)
@@ -1780,6 +1817,8 @@ const (
 func (u *LinkExpiry) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// SetExpiry : Set a new expiry or change an existing expiry.
+		SetExpiry time.Time `json:"set_expiry,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1789,7 +1828,7 @@ func (u *LinkExpiry) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "set_expiry":
-		err = json.Unmarshal(body, &u.SetExpiry)
+		u.SetExpiry = w.SetExpiry
 
 		if err != nil {
 			return err
@@ -1816,6 +1855,8 @@ const (
 func (u *LinkPassword) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// SetPassword : Set a new password or change an existing password.
+		SetPassword string `json:"set_password,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -1825,7 +1866,7 @@ func (u *LinkPassword) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "set_password":
-		err = json.Unmarshal(body, &u.SetPassword)
+		u.SetPassword = w.SetPassword
 
 		if err != nil {
 			return err
@@ -1858,18 +1899,32 @@ type LinkPermissions struct {
 	// the shared links policies of the the team (in case the link's owner is
 	// part of a team) and the shared folder (in case the linked file is part of
 	// a shared folder). This field is shown only if the caller has access to
-	// this info (the link's owner always has access to this data).
+	// this info (the link's owner always has access to this data). For some
+	// links, an effective_audience value is returned instead.
 	ResolvedVisibility *ResolvedVisibility `json:"resolved_visibility,omitempty"`
 	// RequestedVisibility : The shared link's requested visibility. This can be
 	// overridden by the team and shared folder policies. The final visibility,
 	// after considering these policies, can be found in `resolved_visibility`.
-	// This is shown only if the caller is the link's owner.
+	// This is shown only if the caller is the link's owner and
+	// resolved_visibility is returned instead of effective_audience.
 	RequestedVisibility *RequestedVisibility `json:"requested_visibility,omitempty"`
 	// CanRevoke : Whether the caller can revoke the shared link.
 	CanRevoke bool `json:"can_revoke"`
 	// RevokeFailureReason : The failure reason for revoking the link. This
 	// field will only be present if the `can_revoke` is false.
 	RevokeFailureReason *SharedLinkAccessFailureReason `json:"revoke_failure_reason,omitempty"`
+	// EffectiveAudience : The type of audience who can benefit from the access
+	// level specified by the `link_access_level` field.
+	EffectiveAudience *LinkAudience `json:"effective_audience,omitempty"`
+	// LinkAccessLevel : The access level that the link will grant to its users.
+	// A link can grant additional rights to a user beyond their current access
+	// level. For example, if a user was invited as a viewer to a file, and then
+	// opens a link with `link_access_level` set to `editor`, then they will
+	// gain editor privileges. The `link_access_level` is a property of the
+	// link, and does not depend on who is calling this API. In particular,
+	// `link_access_level` does not take into account the API caller's current
+	// permissions to the content.
+	LinkAccessLevel *LinkAccessLevel `json:"link_access_level,omitempty"`
 }
 
 // NewLinkPermissions returns a new LinkPermissions instance
@@ -1990,9 +2045,9 @@ func (u *ListFileMembersContinueError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// UserError : has no documentation (yet)
-		UserError json.RawMessage `json:"user_error,omitempty"`
+		UserError *SharingUserError `json:"user_error,omitempty"`
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2002,13 +2057,13 @@ func (u *ListFileMembersContinueError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "user_error":
-		err = json.Unmarshal(w.UserError, &u.UserError)
+		u.UserError = w.UserError
 
 		if err != nil {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -2055,9 +2110,9 @@ func (u *ListFileMembersError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// UserError : has no documentation (yet)
-		UserError json.RawMessage `json:"user_error,omitempty"`
+		UserError *SharingUserError `json:"user_error,omitempty"`
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2067,13 +2122,13 @@ func (u *ListFileMembersError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "user_error":
-		err = json.Unmarshal(w.UserError, &u.UserError)
+		u.UserError = w.UserError
 
 		if err != nil {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -2102,11 +2157,9 @@ const (
 func (u *ListFileMembersIndividualResult) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Result : The results of the query for this file if it was successful.
-		Result json.RawMessage `json:"result,omitempty"`
 		// AccessError : The result of the query for this file if it was an
 		// error.
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2122,7 +2175,7 @@ func (u *ListFileMembersIndividualResult) UnmarshalJSON(body []byte) error {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -2181,7 +2234,7 @@ func (u *ListFilesContinueError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// UserError : User account had a problem.
-		UserError json.RawMessage `json:"user_error,omitempty"`
+		UserError *SharingUserError `json:"user_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2191,7 +2244,7 @@ func (u *ListFilesContinueError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "user_error":
-		err = json.Unmarshal(w.UserError, &u.UserError)
+		u.UserError = w.UserError
 
 		if err != nil {
 			return err
@@ -2281,7 +2334,7 @@ func (u *ListFolderMembersContinueError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2291,7 +2344,7 @@ func (u *ListFolderMembersContinueError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -2399,7 +2452,7 @@ func (u *ListSharedLinksError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
+		Path *files.LookupError `json:"path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2409,7 +2462,7 @@ func (u *ListSharedLinksError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
+		u.Path = w.Path
 
 		if err != nil {
 			return err
@@ -2559,6 +2612,10 @@ const (
 func (u *MemberSelector) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// DropboxId : Dropbox account, team member, or group ID of member.
+		DropboxId string `json:"dropbox_id,omitempty"`
+		// Email : E-mail address of member.
+		Email string `json:"email,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2568,13 +2625,13 @@ func (u *MemberSelector) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "dropbox_id":
-		err = json.Unmarshal(body, &u.DropboxId)
+		u.DropboxId = w.DropboxId
 
 		if err != nil {
 			return err
 		}
 	case "email":
-		err = json.Unmarshal(body, &u.Email)
+		u.Email = w.Email
 
 		if err != nil {
 			return err
@@ -2625,7 +2682,7 @@ func (u *ModifySharedLinkSettingsError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// SettingsError : There is an error with the given settings.
-		SettingsError json.RawMessage `json:"settings_error,omitempty"`
+		SettingsError *SharedLinkSettingsError `json:"settings_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2635,7 +2692,7 @@ func (u *ModifySharedLinkSettingsError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "settings_error":
-		err = json.Unmarshal(w.SettingsError, &u.SettingsError)
+		u.SettingsError = w.SettingsError
 
 		if err != nil {
 			return err
@@ -2683,10 +2740,7 @@ func (u *MountFolderError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
-		// InsufficientQuota : The current user does not have enough space to
-		// mount the shared folder.
-		InsufficientQuota json.RawMessage `json:"insufficient_quota,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2696,7 +2750,7 @@ func (u *MountFolderError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -2794,8 +2848,6 @@ const (
 func (u *PermissionDeniedReason) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// InsufficientPlan : has no documentation (yet)
-		InsufficientPlan json.RawMessage `json:"insufficient_plan,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2847,7 +2899,7 @@ func (u *RelinquishFileMembershipError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2857,7 +2909,7 @@ func (u *RelinquishFileMembershipError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -2907,7 +2959,7 @@ func (u *RelinquishFolderMembershipError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2917,7 +2969,7 @@ func (u *RelinquishFolderMembershipError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -2970,13 +3022,9 @@ func (u *RemoveFileMemberError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// UserError : has no documentation (yet)
-		UserError json.RawMessage `json:"user_error,omitempty"`
+		UserError *SharingUserError `json:"user_error,omitempty"`
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
-		// NoExplicitAccess : This member does not have explicit access to the
-		// file and therefore cannot be removed. The return value is the access
-		// that a user might have to the file from a parent folder.
-		NoExplicitAccess json.RawMessage `json:"no_explicit_access,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2986,13 +3034,13 @@ func (u *RemoveFileMemberError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "user_error":
-		err = json.Unmarshal(w.UserError, &u.UserError)
+		u.UserError = w.UserError
 
 		if err != nil {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -3055,9 +3103,9 @@ func (u *RemoveFolderMemberError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 		// MemberError : has no documentation (yet)
-		MemberError json.RawMessage `json:"member_error,omitempty"`
+		MemberError *SharedFolderMemberError `json:"member_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3067,13 +3115,13 @@ func (u *RemoveFolderMemberError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
 		}
 	case "member_error":
-		err = json.Unmarshal(w.MemberError, &u.MemberError)
+		u.MemberError = w.MemberError
 
 		if err != nil {
 			return err
@@ -3103,11 +3151,8 @@ const (
 func (u *RemoveMemberJobStatus) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Complete : Removing the folder member has finished. The value is
-		// information about whether the member has another form of access.
-		Complete json.RawMessage `json:"complete,omitempty"`
 		// Failed : has no documentation (yet)
-		Failed json.RawMessage `json:"failed,omitempty"`
+		Failed *RemoveFolderMemberError `json:"failed,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3123,7 +3168,7 @@ func (u *RemoveMemberJobStatus) UnmarshalJSON(body []byte) error {
 			return err
 		}
 	case "failed":
-		err = json.Unmarshal(w.Failed, &u.Failed)
+		u.Failed = w.Failed
 
 		if err != nil {
 			return err
@@ -3131,6 +3176,19 @@ func (u *RemoveMemberJobStatus) UnmarshalJSON(body []byte) error {
 	}
 	return nil
 }
+
+// RequestedLinkAccessLevel : has no documentation (yet)
+type RequestedLinkAccessLevel struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for RequestedLinkAccessLevel
+const (
+	RequestedLinkAccessLevelViewer = "viewer"
+	RequestedLinkAccessLevelEditor = "editor"
+	RequestedLinkAccessLevelMax    = "max"
+	RequestedLinkAccessLevelOther  = "other"
+)
 
 // RequestedVisibility : The access permission that can be requested by the
 // caller for the shared link. Note that the final resolved visibility of the
@@ -3228,7 +3286,7 @@ func (u *SetAccessInheritanceError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : Unable to access shared folder.
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3238,7 +3296,7 @@ func (u *SetAccessInheritanceError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -3321,7 +3379,7 @@ func (u *ShareFolderErrorBase) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// BadPath : `ShareFolderArg.path` is invalid.
-		BadPath json.RawMessage `json:"bad_path,omitempty"`
+		BadPath *SharePathError `json:"bad_path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3331,7 +3389,7 @@ func (u *ShareFolderErrorBase) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "bad_path":
-		err = json.Unmarshal(w.BadPath, &u.BadPath)
+		u.BadPath = w.BadPath
 
 		if err != nil {
 			return err
@@ -3362,7 +3420,7 @@ func (u *ShareFolderError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// BadPath : `ShareFolderArg.path` is invalid.
-		BadPath json.RawMessage `json:"bad_path,omitempty"`
+		BadPath *SharePathError `json:"bad_path,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3372,7 +3430,7 @@ func (u *ShareFolderError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "bad_path":
-		err = json.Unmarshal(w.BadPath, &u.BadPath)
+		u.BadPath = w.BadPath
 
 		if err != nil {
 			return err
@@ -3402,11 +3460,8 @@ const (
 func (u *ShareFolderJobStatus) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Complete : The share job has finished. The value is the metadata for
-		// the folder.
-		Complete json.RawMessage `json:"complete,omitempty"`
 		// Failed : has no documentation (yet)
-		Failed json.RawMessage `json:"failed,omitempty"`
+		Failed *ShareFolderError `json:"failed,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3422,7 +3477,7 @@ func (u *ShareFolderJobStatus) UnmarshalJSON(body []byte) error {
 			return err
 		}
 	case "failed":
-		err = json.Unmarshal(w.Failed, &u.Failed)
+		u.Failed = w.Failed
 
 		if err != nil {
 			return err
@@ -3452,8 +3507,10 @@ const (
 func (u *ShareFolderLaunch) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// Complete : has no documentation (yet)
-		Complete json.RawMessage `json:"complete,omitempty"`
+		// AsyncJobId : This response indicates that the processing is
+		// asynchronous. The string is an id that can be used to obtain the
+		// status of the asynchronous job.
+		AsyncJobId string `json:"async_job_id,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3463,7 +3520,7 @@ func (u *ShareFolderLaunch) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "async_job_id":
-		err = json.Unmarshal(body, &u.AsyncJobId)
+		u.AsyncJobId = w.AsyncJobId
 
 		if err != nil {
 			return err
@@ -3508,9 +3565,6 @@ const (
 func (u *SharePathError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// AlreadyShared : Folder is already shared. Contains metadata about the
-		// existing shared folder.
-		AlreadyShared json.RawMessage `json:"already_shared,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3670,9 +3724,6 @@ const (
 func (u *SharedFolderMemberError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// NoExplicitAccess : The target member only has inherited access to the
-		// shared folder.
-		NoExplicitAccess json.RawMessage `json:"no_explicit_access,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3806,6 +3857,43 @@ const (
 	SharedLinkAccessFailureReasonOther               = "other"
 )
 
+// SharedLinkAlreadyExistsMetadata : has no documentation (yet)
+type SharedLinkAlreadyExistsMetadata struct {
+	dropbox.Tagged
+	// Metadata : Metadata of the shared link that already exists.
+	Metadata IsSharedLinkMetadata `json:"metadata,omitempty"`
+}
+
+// Valid tag values for SharedLinkAlreadyExistsMetadata
+const (
+	SharedLinkAlreadyExistsMetadataMetadata = "metadata"
+	SharedLinkAlreadyExistsMetadataOther    = "other"
+)
+
+// UnmarshalJSON deserializes into a SharedLinkAlreadyExistsMetadata instance
+func (u *SharedLinkAlreadyExistsMetadata) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// Metadata : Metadata of the shared link that already exists.
+		Metadata json.RawMessage `json:"metadata,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "metadata":
+		u.Metadata, err = IsSharedLinkMetadataFromJSON(w.Metadata)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // SharedLinkPolicy : Who can view shared links in this folder.
 type SharedLinkPolicy struct {
 	dropbox.Tagged
@@ -3830,6 +3918,15 @@ type SharedLinkSettings struct {
 	// Expires : Expiration time of the shared link. By default the link won't
 	// expire.
 	Expires time.Time `json:"expires,omitempty"`
+	// Audience : The new audience who can benefit from the access level
+	// specified by the link's access level specified in the `link_access_level`
+	// field of `LinkPermissions`. This is used in conjunction with team
+	// policies and shared folder policies to determine the final effective
+	// audience type in the `effective_audience` field of `LinkPermissions.
+	Audience *LinkAudience `json:"audience,omitempty"`
+	// Access : Requested access level you want the audience to gain from this
+	// link.
+	Access *RequestedLinkAccessLevel `json:"access,omitempty"`
 }
 
 // NewSharedLinkSettings returns a new SharedLinkSettings instance
@@ -3934,7 +4031,7 @@ func (u *TransferFolderError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3944,7 +4041,7 @@ func (u *TransferFolderError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -3986,7 +4083,7 @@ func (u *UnmountFolderError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -3996,7 +4093,7 @@ func (u *UnmountFolderError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -4039,9 +4136,9 @@ func (u *UnshareFileError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// UserError : has no documentation (yet)
-		UserError json.RawMessage `json:"user_error,omitempty"`
+		UserError *SharingUserError `json:"user_error,omitempty"`
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharingFileAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -4051,13 +4148,13 @@ func (u *UnshareFileError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "user_error":
-		err = json.Unmarshal(w.UserError, &u.UserError)
+		u.UserError = w.UserError
 
 		if err != nil {
 			return err
 		}
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -4106,7 +4203,7 @@ func (u *UnshareFolderError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -4116,7 +4213,7 @@ func (u *UnshareFolderError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
@@ -4187,13 +4284,13 @@ func (u *UpdateFolderMemberError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 		// MemberError : has no documentation (yet)
-		MemberError json.RawMessage `json:"member_error,omitempty"`
+		MemberError *SharedFolderMemberError `json:"member_error,omitempty"`
 		// NoExplicitAccess : If updating the access type required the member to
 		// be added to the shared folder and there was an error when adding the
 		// member.
-		NoExplicitAccess json.RawMessage `json:"no_explicit_access,omitempty"`
+		NoExplicitAccess *AddFolderMemberError `json:"no_explicit_access,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -4203,19 +4300,19 @@ func (u *UpdateFolderMemberError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err
 		}
 	case "member_error":
-		err = json.Unmarshal(w.MemberError, &u.MemberError)
+		u.MemberError = w.MemberError
 
 		if err != nil {
 			return err
 		}
 	case "no_explicit_access":
-		err = json.Unmarshal(w.NoExplicitAccess, &u.NoExplicitAccess)
+		u.NoExplicitAccess = w.NoExplicitAccess
 
 		if err != nil {
 			return err
@@ -4280,7 +4377,7 @@ func (u *UpdateFolderPolicyError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// AccessError : has no documentation (yet)
-		AccessError json.RawMessage `json:"access_error,omitempty"`
+		AccessError *SharedFolderAccessError `json:"access_error,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -4290,7 +4387,7 @@ func (u *UpdateFolderPolicyError) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "access_error":
-		err = json.Unmarshal(w.AccessError, &u.AccessError)
+		u.AccessError = w.AccessError
 
 		if err != nil {
 			return err

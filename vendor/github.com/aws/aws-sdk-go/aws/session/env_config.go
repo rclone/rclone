@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -128,11 +129,25 @@ type envConfig struct {
 	//  AWS_ROLE_SESSION_NAME=session_name
 	RoleSessionName string
 
-	// Specifies the Regional Endpoint flag for the sdk to resolve the endpoint for a service
+	// Specifies the STS Regional Endpoint flag for the SDK to resolve the endpoint
+	// for a service.
 	//
-	// AWS_STS_REGIONAL_ENDPOINTS =sts_regional_endpoint
+	// AWS_STS_REGIONAL_ENDPOINTS=regional
 	// This can take value as `regional` or `legacy`
 	STSRegionalEndpoint endpoints.STSRegionalEndpoint
+
+	// Specifies the S3 Regional Endpoint flag for the SDK to resolve the
+	// endpoint for a service.
+	//
+	// AWS_S3_US_EAST_1_REGIONAL_ENDPOINT=regional
+	// This can take value as `regional` or `legacy`
+	S3UsEast1RegionalEndpoint endpoints.S3UsEast1RegionalEndpoint
+
+	// Specifies if the S3 service should allow ARNs to direct the region
+	// the client's requests are sent to.
+	//
+	// AWS_S3_USE_ARN_REGION=true
+	S3UseARNRegion bool
 }
 
 var (
@@ -189,6 +204,12 @@ var (
 	}
 	stsRegionalEndpointKey = []string{
 		"AWS_STS_REGIONAL_ENDPOINTS",
+	}
+	s3UsEast1RegionalEndpoint = []string{
+		"AWS_S3_US_EAST_1_REGIONAL_ENDPOINT",
+	}
+	s3UseARNRegionEnvKey = []string{
+		"AWS_S3_USE_ARN_REGION",
 	}
 )
 
@@ -275,14 +296,39 @@ func envConfigLoad(enableSharedConfig bool) (envConfig, error) {
 
 	cfg.CustomCABundle = os.Getenv("AWS_CA_BUNDLE")
 
+	var err error
 	// STS Regional Endpoint variable
 	for _, k := range stsRegionalEndpointKey {
 		if v := os.Getenv(k); len(v) != 0 {
-			STSRegionalEndpoint, err := endpoints.GetSTSRegionalEndpoint(v)
+			cfg.STSRegionalEndpoint, err = endpoints.GetSTSRegionalEndpoint(v)
 			if err != nil {
 				return cfg, fmt.Errorf("failed to load, %v from env config, %v", k, err)
 			}
-			cfg.STSRegionalEndpoint = STSRegionalEndpoint
+		}
+	}
+
+	// S3 Regional Endpoint variable
+	for _, k := range s3UsEast1RegionalEndpoint {
+		if v := os.Getenv(k); len(v) != 0 {
+			cfg.S3UsEast1RegionalEndpoint, err = endpoints.GetS3UsEast1RegionalEndpoint(v)
+			if err != nil {
+				return cfg, fmt.Errorf("failed to load, %v from env config, %v", k, err)
+			}
+		}
+	}
+
+	var s3UseARNRegion string
+	setFromEnvVal(&s3UseARNRegion, s3UseARNRegionEnvKey)
+	if len(s3UseARNRegion) != 0 {
+		switch {
+		case strings.EqualFold(s3UseARNRegion, "false"):
+			cfg.S3UseARNRegion = false
+		case strings.EqualFold(s3UseARNRegion, "true"):
+			cfg.S3UseARNRegion = true
+		default:
+			return envConfig{}, fmt.Errorf(
+				"invalid value for environment variable, %s=%s, need true or false",
+				s3UseARNRegionEnvKey[0], s3UseARNRegion)
 		}
 	}
 

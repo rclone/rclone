@@ -38,7 +38,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"F5McR9eEaw0XRpaO3M9gbIugkbs/oBMvKC4XV0NjxxOx_Y5WENsew0Q\"",
+  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/CN38amP-kM1VVBkrUzbZOKj8dm4\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -831,7 +831,7 @@
           ]
         },
         "patch": {
-          "description": "Updates an existing comment. This method supports patch semantics.",
+          "description": "Updates an existing comment.",
           "httpMethod": "PATCH",
           "id": "drive.comments.patch",
           "parameterOrder": [
@@ -2795,83 +2795,6 @@
         }
       }
     },
-    "realtime": {
-      "methods": {
-        "get": {
-          "description": "Exports the contents of the Realtime API data model associated with this file as JSON.",
-          "httpMethod": "GET",
-          "id": "drive.realtime.get",
-          "parameterOrder": [
-            "fileId"
-          ],
-          "parameters": {
-            "fileId": {
-              "description": "The ID of the file that the Realtime API data model is associated with.",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            },
-            "revision": {
-              "description": "The revision of the Realtime API data model to export. Revisions start at 1 (the initial empty data model) and are incremented with each change. If this parameter is excluded, the most recent data model will be returned.",
-              "format": "int32",
-              "location": "query",
-              "minimum": "1",
-              "type": "integer"
-            }
-          },
-          "path": "files/{fileId}/realtime",
-          "scopes": [
-            "https://www.googleapis.com/auth/drive",
-            "https://www.googleapis.com/auth/drive.file",
-            "https://www.googleapis.com/auth/drive.readonly"
-          ],
-          "supportsMediaDownload": true
-        },
-        "update": {
-          "description": "Overwrites the Realtime API data model associated with this file with the provided JSON data model.",
-          "httpMethod": "PUT",
-          "id": "drive.realtime.update",
-          "mediaUpload": {
-            "accept": [
-              "*/*"
-            ],
-            "maxSize": "10MB",
-            "protocols": {
-              "resumable": {
-                "multipart": true,
-                "path": "/resumable/upload/drive/v2/files/{fileId}/realtime"
-              },
-              "simple": {
-                "multipart": true,
-                "path": "/upload/drive/v2/files/{fileId}/realtime"
-              }
-            }
-          },
-          "parameterOrder": [
-            "fileId"
-          ],
-          "parameters": {
-            "baseRevision": {
-              "description": "The revision of the model to diff the uploaded model against. If set, the uploaded model is diffed against the provided revision and those differences are merged with any changes made to the model after the provided revision. If not set, the uploaded model replaces the current model on the server.",
-              "location": "query",
-              "type": "string"
-            },
-            "fileId": {
-              "description": "The ID of the file that the Realtime API data model is associated with.",
-              "location": "path",
-              "required": true,
-              "type": "string"
-            }
-          },
-          "path": "files/{fileId}/realtime",
-          "scopes": [
-            "https://www.googleapis.com/auth/drive",
-            "https://www.googleapis.com/auth/drive.file"
-          ],
-          "supportsMediaUpload": true
-        }
-      }
-    },
     "replies": {
       "methods": {
         "delete": {
@@ -3041,7 +2964,7 @@
           ]
         },
         "patch": {
-          "description": "Updates an existing reply. This method supports patch semantics.",
+          "description": "Updates an existing reply.",
           "httpMethod": "PATCH",
           "id": "drive.replies.patch",
           "parameterOrder": [
@@ -3235,7 +3158,7 @@
           ]
         },
         "patch": {
-          "description": "Updates a revision. This method supports patch semantics.",
+          "description": "Updates a revision.",
           "httpMethod": "PATCH",
           "id": "drive.revisions.patch",
           "parameterOrder": [
@@ -3459,7 +3382,7 @@
       }
     }
   },
-  "revision": "20191015",
+  "revision": "20200110",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -4129,7 +4052,7 @@
         },
         "author": {
           "$ref": "User",
-          "description": "The user who wrote this comment."
+          "description": "The author of the comment. The author's email address and permission ID will not be populated."
         },
         "commentId": {
           "description": "The ID of the comment.",
@@ -4246,7 +4169,7 @@
       "properties": {
         "author": {
           "$ref": "User",
-          "description": "The user who wrote this reply."
+          "description": "The author of the reply. The author's email address and permission ID will not be populated."
         },
         "content": {
           "annotations": {
@@ -5519,7 +5442,6 @@
       "id": "Revision",
       "properties": {
         "downloadUrl": {
-          "description": "Short term download URL for the file. This will only be populated on files with content stored in Drive.",
           "type": "string"
         },
         "etag": {

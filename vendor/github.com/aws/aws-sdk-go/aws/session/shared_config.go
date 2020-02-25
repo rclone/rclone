@@ -44,10 +44,16 @@ const (
 	// Additional config fields for regional or legacy endpoints
 	stsRegionalEndpointSharedKey = `sts_regional_endpoints`
 
+	// Additional config fields for regional or legacy endpoints
+	s3UsEast1RegionalSharedKey = `s3_us_east_1_regional_endpoint`
+
 	// DefaultSharedConfigProfile is the default profile to be used when
 	// loading configuration from the config files if another profile name
 	// is not provided.
 	DefaultSharedConfigProfile = `default`
+
+	// S3 ARN Region Usage
+	s3UseARNRegionKey = "s3_use_arn_region"
 )
 
 // sharedConfig represents the configuration fields of the SDK config files.
@@ -86,17 +92,30 @@ type sharedConfig struct {
 	//
 	//	endpoint_discovery_enabled = true
 	EnableEndpointDiscovery *bool
+
 	// CSM Options
 	CSMEnabled  *bool
 	CSMHost     string
 	CSMPort     string
 	CSMClientID string
 
-	// Specifies the Regional Endpoint flag for the sdk to resolve the endpoint for a service
+	// Specifies the Regional Endpoint flag for the SDK to resolve the endpoint for a service
 	//
-	// sts_regional_endpoints = sts_regional_endpoint
+	// sts_regional_endpoints = regional
 	// This can take value as `LegacySTSEndpoint` or `RegionalSTSEndpoint`
 	STSRegionalEndpoint endpoints.STSRegionalEndpoint
+
+	// Specifies the Regional Endpoint flag for the SDK to resolve the endpoint for a service
+	//
+	// s3_us_east_1_regional_endpoint = regional
+	// This can take value as `LegacyS3UsEast1Endpoint` or `RegionalS3UsEast1Endpoint`
+	S3UsEast1RegionalEndpoint endpoints.S3UsEast1RegionalEndpoint
+
+	// Specifies if the S3 service should allow ARNs to direct the region
+	// the client's requests are sent to.
+	//
+	// s3_use_arn_region=true
+	S3UseARNRegion bool
 }
 
 type sharedConfigFile struct {
@@ -259,9 +278,18 @@ func (cfg *sharedConfig) setFromIniFile(profile string, file sharedConfigFile, e
 			sre, err := endpoints.GetSTSRegionalEndpoint(v)
 			if err != nil {
 				return fmt.Errorf("failed to load %s from shared config, %s, %v",
-					stsRegionalEndpointKey, file.Filename, err)
+					stsRegionalEndpointSharedKey, file.Filename, err)
 			}
 			cfg.STSRegionalEndpoint = sre
+		}
+
+		if v := section.String(s3UsEast1RegionalSharedKey); len(v) != 0 {
+			sre, err := endpoints.GetS3UsEast1RegionalEndpoint(v)
+			if err != nil {
+				return fmt.Errorf("failed to load %s from shared config, %s, %v",
+					s3UsEast1RegionalSharedKey, file.Filename, err)
+			}
+			cfg.S3UsEast1RegionalEndpoint = sre
 		}
 	}
 
@@ -287,6 +315,8 @@ func (cfg *sharedConfig) setFromIniFile(profile string, file sharedConfigFile, e
 	updateString(&cfg.CSMHost, section, csmHostKey)
 	updateString(&cfg.CSMPort, section, csmPortKey)
 	updateString(&cfg.CSMClientID, section, csmClientIDKey)
+
+	updateBool(&cfg.S3UseARNRegion, section, s3UseARNRegionKey)
 
 	return nil
 }
@@ -378,6 +408,15 @@ func updateString(dst *string, section ini.Section, key string) {
 		return
 	}
 	*dst = section.String(key)
+}
+
+// updateBool will only update the dst with the value in the section key, key
+// is present in the section.
+func updateBool(dst *bool, section ini.Section, key string) {
+	if !section.Has(key) {
+		return
+	}
+	*dst = section.Bool(key)
 }
 
 // updateBoolPtr will only update the dst with the value in the section key,

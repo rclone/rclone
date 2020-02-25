@@ -7,6 +7,7 @@ import (
 	"os"
 	pathpkg "path"
 	"strings"
+	"syscall"
 
 	"bazil.org/fuse"
 )
@@ -84,7 +85,7 @@ func (t *tree) Lookup(ctx context.Context, name string) (Node, error) {
 	if n != nil {
 		return n, nil
 	}
-	return nil, fuse.ENOENT
+	return nil, syscall.ENOENT
 }
 
 func (t *tree) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {

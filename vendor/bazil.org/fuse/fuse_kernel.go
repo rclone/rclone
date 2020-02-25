@@ -633,8 +633,6 @@ func (fl WriteFlags) String() string {
 	return flagString(uint32(fl), writeFlagNames)
 }
 
-const compatStatfsSize = 48
-
 type statfsOut struct {
 	St kstatfs
 }

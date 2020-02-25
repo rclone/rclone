@@ -49,6 +49,10 @@ const (
 func (u *LaunchResultBase) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// AsyncJobId : This response indicates that the processing is
+		// asynchronous. The string is an id that can be used to obtain the
+		// status of the asynchronous job.
+		AsyncJobId string `json:"async_job_id,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -58,7 +62,7 @@ func (u *LaunchResultBase) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "async_job_id":
-		err = json.Unmarshal(body, &u.AsyncJobId)
+		u.AsyncJobId = w.AsyncJobId
 
 		if err != nil {
 			return err
@@ -88,6 +92,10 @@ const (
 func (u *LaunchEmptyResult) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// AsyncJobId : This response indicates that the processing is
+		// asynchronous. The string is an id that can be used to obtain the
+		// status of the asynchronous job.
+		AsyncJobId string `json:"async_job_id,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -97,7 +105,7 @@ func (u *LaunchEmptyResult) UnmarshalJSON(body []byte) error {
 	u.Tag = w.Tag
 	switch u.Tag {
 	case "async_job_id":
-		err = json.Unmarshal(body, &u.AsyncJobId)
+		u.AsyncJobId = w.AsyncJobId
 
 		if err != nil {
 			return err

@@ -26,6 +26,13 @@ import "sync"
 //
 // All methods on this type are thread-safe and don't block on anything except
 // the underlying mutex used for synchronization.
+//
+// Unbounded supports values of any type to be stored in it by using a channel
+// of `interface{}`. This means that a call to Put() incurs an extra memory
+// allocation, and also that users need a type assertion while reading. For
+// performance critical code paths, using Unbounded is strongly discouraged and
+// defining a new type specific implementation of this buffer is preferred. See
+// internal/transport/transport.go for an example of this.
 type Unbounded struct {
 	c       chan interface{}
 	mu      sync.Mutex

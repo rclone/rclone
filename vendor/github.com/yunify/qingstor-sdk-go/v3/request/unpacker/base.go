@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pengsrc/go-shared/convert"
@@ -177,7 +178,7 @@ func (b *BaseUnpacker) parseResponseElements() error {
 		return nil
 	}
 
-	if b.httpResponse.Header.Get("Content-Type") != "application/json" {
+	if !strings.Contains(b.httpResponse.Header.Get("Content-Type"), "application/json") {
 		return nil
 	}
 

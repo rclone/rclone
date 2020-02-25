@@ -17,6 +17,8 @@ package cobra
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -26,6 +28,8 @@ import (
 
 	flag "github.com/spf13/pflag"
 )
+
+var ErrSubCommandRequired = errors.New("subcommand is required")
 
 // FParseErrWhitelist configures Flag parse errors to be ignored
 type FParseErrWhitelist flag.ParseErrorsWhitelist
@@ -140,8 +144,10 @@ type Command struct {
 	// TraverseChildren parses flags on all parents before executing child command.
 	TraverseChildren bool
 
-	//FParseErrWhitelist flag parse errors to be ignored
+	// FParseErrWhitelist flag parse errors to be ignored
 	FParseErrWhitelist FParseErrWhitelist
+
+	ctx context.Context
 
 	// commands is the list of commands supported by this program.
 	commands []*Command
@@ -202,6 +208,12 @@ type Command struct {
 	errWriter io.Writer
 }
 
+// Context returns underlying command context. If command wasn't
+// executed with ExecuteContext Context returns Background context.
+func (c *Command) Context() context.Context {
+	return c.ctx
+}
+
 // SetArgs sets arguments for the command. It is set to os.Args[1:] by default, if desired, can be overridden
 // particularly useful when testing.
 func (c *Command) SetArgs(a []string) {
@@ -228,7 +240,7 @@ func (c *Command) SetErr(newErr io.Writer) {
 	c.errWriter = newErr
 }
 
-// SetOut sets the source for input data
+// SetIn sets the source for input data
 // If newIn is nil, os.Stdin is used.
 func (c *Command) SetIn(newIn io.Reader) {
 	c.inReader = newIn
@@ -297,7 +309,7 @@ func (c *Command) ErrOrStderr() io.Writer {
 	return c.getErr(os.Stderr)
 }
 
-// ErrOrStderr returns output to stderr
+// InOrStdin returns output to stderr
 func (c *Command) InOrStdin() io.Reader {
 	return c.getIn(os.Stdin)
 }
@@ -369,6 +381,8 @@ func (c *Command) HelpFunc() func(*Command, []string) {
 	}
 	return func(c *Command, a []string) {
 		c.mergePersistentFlags()
+		// The help should be sent to stdout
+		// See https://github.com/spf13/cobra/issues/1002
 		err := tmpl(c.OutOrStdout(), c.HelpTemplate(), c)
 		if err != nil {
 			c.Println(err)
@@ -786,7 +800,7 @@ func (c *Command) execute(a []string) (err error) {
 	}
 
 	if !c.Runnable() {
-		return flag.ErrHelp
+		return ErrSubCommandRequired
 	}
 
 	c.preRun()
@@ -857,6 +871,13 @@ func (c *Command) preRun() {
 	}
 }
 
+// ExecuteContext is the same as Execute(), but sets the ctx on the command.
+// Retrieve ctx by calling cmd.Context() inside your *Run lifecycle functions.
+func (c *Command) ExecuteContext(ctx context.Context) error {
+	c.ctx = ctx
+	return c.Execute()
+}
+
 // Execute uses the args (os.Args[1:] by default)
 // and run through the command tree finding appropriate matches
 // for commands and then corresponding flags.
@@ -867,6 +888,10 @@ func (c *Command) Execute() error {
 
 // ExecuteC executes the command.
 func (c *Command) ExecuteC() (cmd *Command, err error) {
+	if c.ctx == nil {
+		c.ctx = context.Background()
+	}
+
 	// Regardless of what command execute is called on, run on Root only
 	if c.HasParent() {
 		return c.Root().ExecuteC()
@@ -911,6 +936,12 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 		cmd.commandCalledAs.name = cmd.Name()
 	}
 
+	// We have to pass global context to children command
+	// if context is present on the parent command.
+	if cmd.ctx == nil {
+		cmd.ctx = c.ctx
+	}
+
 	err = cmd.execute(flags)
 	if err != nil {
 		// Always show help if requested, even if SilenceErrors is in
@@ -918,6 +949,14 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 		if err == flag.ErrHelp {
 			cmd.HelpFunc()(cmd, args)
 			return cmd, nil
+		}
+
+		// If command wasn't runnable, show full help, but do return the error.
+		// This will result in apps by default returning a non-success exit code, but also gives them the option to
+		// handle specially.
+		if err == ErrSubCommandRequired {
+			cmd.HelpFunc()(cmd, args)
+			return cmd, err
 		}
 
 		// If root command has SilentErrors flagged,
@@ -1547,7 +1586,7 @@ func (c *Command) ParseFlags(args []string) error {
 	beforeErrorBufLen := c.flagErrorBuf.Len()
 	c.mergePersistentFlags()
 
-	//do it here after merging all flags and just before parse
+	// do it here after merging all flags and just before parse
 	c.Flags().ParseErrorsWhitelist = flag.ParseErrorsWhitelist(c.FParseErrWhitelist)
 
 	err := c.Flags().Parse(args)

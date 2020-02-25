@@ -13,3 +13,7 @@ func globalFreeWrapper(ptr *uint16) {
 		_, _, _ = globalFree.Call(uintptr(unsafe.Pointer(ptr)))
 	}
 }
+
+func rTrue(r uintptr) bool {
+	return r == 1
+}

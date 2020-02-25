@@ -125,7 +125,7 @@ type Connection struct {
 	Expires    time.Time // time the token expires, may be Zero if unknown
 	client     *http.Client
 	Auth       Authenticator `json:"-" xml:"-"` // the current authenticator
-	authLock   sync.Mutex    // lock when R/W StorageUrl, AuthToken, Auth
+	authLock   *sync.Mutex   // lock when R/W StorageUrl, AuthToken, Auth
 	// swiftInfo is filled after QueryInfo is called
 	swiftInfo SwiftInfo
 }
@@ -458,6 +458,9 @@ func (c *Connection) setDefaults() {
 // If you don't call it before calling one of the connection methods
 // then it will be called for you on the first access.
 func (c *Connection) Authenticate() (err error) {
+	if c.authLock == nil {
+		c.authLock = &sync.Mutex{}
+	}
 	c.authLock.Lock()
 	defer c.authLock.Unlock()
 	return c.authenticate()
@@ -580,6 +583,9 @@ func (c *Connection) UnAuthenticate() {
 //
 // Doesn't actually check the credentials against the server.
 func (c *Connection) Authenticated() bool {
+	if c.authLock == nil {
+		c.authLock = &sync.Mutex{}
+	}
 	c.authLock.Lock()
 	defer c.authLock.Unlock()
 	return c.authenticated()
@@ -1482,6 +1488,22 @@ func (c *Connection) ObjectCreate(container string, objectName string, checkHash
 		pipeReader.Close()
 		close(file.done)
 	}()
+	return
+}
+
+func (c *Connection) ObjectSymlinkCreate(container string, symlink string, targetAccount string, targetContainer string, targetObject string, targetEtag string) (headers Headers, err error) {
+
+	EMPTY_MD5 := "d41d8cd98f00b204e9800998ecf8427e"
+	symHeaders := Headers{}
+	contents := bytes.NewBufferString("")
+	if targetAccount != "" {
+		symHeaders["X-Symlink-Target-Account"] = targetAccount
+	}
+	if targetEtag != "" {
+		symHeaders["X-Symlink-Target-Etag"] = targetEtag
+	}
+	symHeaders["X-Symlink-Target"] = fmt.Sprintf("%s/%s", targetContainer, targetObject)
+	_, err = c.ObjectPut(container, symlink, contents, true, EMPTY_MD5, "application/symlink", symHeaders)
 	return
 }
 

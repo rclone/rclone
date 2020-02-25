@@ -35,7 +35,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"LYADMvHWYH2ul9D6m9UT9gT77YM/ixkLftF7SIEiqkkwNYopCpZnQlw\"",
+  "etag": "\"F5McR9eEaw0XRpaO3M9gbIugkbs/PorHXWkzCl6hdMxMR0HVf8TWRb0\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -2096,7 +2096,7 @@
       }
     }
   },
-  "revision": "20190926",
+  "revision": "20191108",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -2378,7 +2378,7 @@
         },
         "author": {
           "$ref": "User",
-          "description": "The user who created the comment."
+          "description": "The author of the comment. The author's email address and permission ID will not be populated."
         },
         "content": {
           "annotations": {
@@ -3256,7 +3256,7 @@
           "type": "boolean"
         },
         "displayName": {
-          "description": "A displayable name for users, groups or domains.",
+          "description": "The \"pretty\" name of the value of the permission. The following is a list of examples for each type of permission:  \n- user - User's full name, as defined for their Google account, such as \"Joe Smith.\" \n- group - Name of the Google Group, such as \"The Company Administrators.\" \n- domain - String domain name, such as \"thecompany.com.\" \n- anyone - No displayName is present.",
           "type": "string"
         },
         "domain": {
@@ -3273,7 +3273,7 @@
           "type": "string"
         },
         "id": {
-          "description": "The ID of this permission. This is a unique identifier for the grantee, and is published in User resources as permissionId.",
+          "description": "The ID of this permission. This is a unique identifier for the grantee, and is published in User resources as permissionId. IDs should be treated as opaque values.",
           "type": "string"
         },
         "kind": {
@@ -3350,7 +3350,7 @@
               "drive.permissions.create"
             ]
           },
-          "description": "The type of the grantee. Valid values are:  \n- user \n- group \n- domain \n- anyone",
+          "description": "The type of the grantee. Valid values are:  \n- user \n- group \n- domain \n- anyone  When creating a permission, if type is user or group, you must provide an emailAddress for the user or group. When type is domain, you must provide a domain. There isn't extra information required for a anyone type.",
           "type": "string"
         }
       },
@@ -3389,7 +3389,7 @@
         },
         "author": {
           "$ref": "User",
-          "description": "The user who created the reply."
+          "description": "The author of the reply. The author's email address and permission ID will not be populated."
         },
         "content": {
           "annotations": {

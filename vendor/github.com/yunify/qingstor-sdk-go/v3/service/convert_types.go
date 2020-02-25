@@ -152,6 +152,20 @@ func IntValue(v *int) int {
 	return 0
 }
 
+// Int64 returns a pointer to the given int64 value.
+func Int64(v int64) *int64 {
+	return &v
+}
+
+// Int64Value returns the value of the given int64 pointer or
+// 0 if the pointer is nil.
+func Int64Value(v *int64) int64 {
+	if v != nil {
+		return *v
+	}
+	return 0
+}
+
 // IntSlice converts a slice of int values into a slice of
 // int pointers
 func IntSlice(src []int) []*int {

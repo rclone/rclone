@@ -16,7 +16,7 @@ import (
 
 // Version returns the library version
 func Version() string {
-	return "0.3.0"
+	return "0.3.1"
 }
 
 // ServerOpts contains parameters for server.NewServer()

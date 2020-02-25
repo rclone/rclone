@@ -40,6 +40,7 @@ type Config struct {
 	Protocol string `yaml:"protocol"`
 
 	AdditionalUserAgent string `yaml:"additional_user_agent"`
+	DisableURICleaning  bool   `yaml:"disable_uri_cleaning"`
 
 	LogLevel string `yaml:"log_level"`
 

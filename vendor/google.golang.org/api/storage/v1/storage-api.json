@@ -21,12 +21,12 @@
     }
   },
   "basePath": "/storage/v1/",
-  "baseUrl": "https://www.googleapis.com/storage/v1/",
+  "baseUrl": "https://storage.googleapis.com/storage/v1/",
   "batchPath": "batch/storage/v1",
   "description": "Stores and retrieves potentially large, immutable data objects.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/storage/docs/json_api/",
-  "etag": "\"F5McR9eEaw0XRpaO3M9gbIugkbs/bQWWH-5yykbmINHZHPMOypW2I3M\"",
+  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/1nXB4dbk0lw3Xe_A6xBKVeN3Y7U\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/cloud_storage-16.png",
     "x32": "https://www.google.com/images/icons/product/cloud_storage-32.png"
@@ -3204,8 +3204,8 @@
       }
     }
   },
-  "revision": "20191011",
-  "rootUrl": "https://www.googleapis.com/",
+  "revision": "20191127",
+  "rootUrl": "https://storage.googleapis.com/",
   "schemas": {
     "Bucket": {
       "description": "A bucket.",
@@ -3297,7 +3297,7 @@
           "description": "The bucket's IAM configuration.",
           "properties": {
             "bucketPolicyOnly": {
-              "description": "The bucket's Bucket Policy Only configuration.",
+              "description": "The bucket's uniform bucket-level access configuration. The feature was formerly known as Bucket Policy Only. For backward compatibility, this field will be populated with identical information as the uniformBucketLevelAccess field. We recommend using the uniformBucketLevelAccess field to enable and disable the feature.",
               "properties": {
                 "enabled": {
                   "description": "If set, access is controlled only by bucket-level or above IAM policies.",
@@ -3389,7 +3389,7 @@
                         "type": "string"
                       },
                       "matchesStorageClass": {
-                        "description": "Objects having any of the storage classes specified by this condition will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.",
+                        "description": "Objects having any of the storage classes specified by this condition will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, ARCHIVE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.",
                         "items": {
                           "type": "string"
                         },
@@ -3491,7 +3491,7 @@
           "type": "string"
         },
         "storageClass": {
-          "description": "The bucket's default storage class, used whenever no storageClass is specified for a newly-created object. This defines how objects in the bucket are stored and determines the SLA and the cost of storage. Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY. If this value is not specified when the bucket is created, it will default to STANDARD. For more information, see storage classes.",
+          "description": "The bucket's default storage class, used whenever no storageClass is specified for a newly-created object. This defines how objects in the bucket are stored and determines the SLA and the cost of storage. Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, ARCHIVE, and DURABLE_REDUCED_AVAILABILITY. If this value is not specified when the bucket is created, it will default to STANDARD. For more information, see storage classes.",
           "type": "string"
         },
         "timeCreated": {

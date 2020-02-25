@@ -30,9 +30,12 @@ type PlatformType struct {
 
 // Valid tag values for PlatformType
 const (
-	PlatformTypeWeb     = "web"
-	PlatformTypeMobile  = "mobile"
-	PlatformTypeDesktop = "desktop"
-	PlatformTypeUnknown = "unknown"
-	PlatformTypeOther   = "other"
+	PlatformTypeWeb           = "web"
+	PlatformTypeDesktop       = "desktop"
+	PlatformTypeMobileIos     = "mobile_ios"
+	PlatformTypeMobileAndroid = "mobile_android"
+	PlatformTypeApi           = "api"
+	PlatformTypeUnknown       = "unknown"
+	PlatformTypeMobile        = "mobile"
+	PlatformTypeOther         = "other"
 )

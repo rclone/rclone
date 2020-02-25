@@ -79,7 +79,7 @@
 // is cancelled and no longer needed, the context will be cancelled.
 // Blocking operations should select on a receive from ctx.Done() and attempt to
 // abort the operation early if the receive succeeds (meaning the channel is closed).
-// To indicate that the operation failed because it was aborted, return fuse.EINTR.
+// To indicate that the operation failed because it was aborted, return syscall.EINTR.
 //
 // If an operation does not block for an indefinite amount of time, supporting
 // cancellation is not necessary.
@@ -90,8 +90,8 @@
 // inspect req.Pid, req.Uid, and req.Gid as necessary to implement
 // permission checking. The kernel FUSE layer normally prevents other
 // users from accessing the FUSE file system (to change this, see
-// AllowOther, AllowRoot), but does not enforce access modes (to
-// change this, see DefaultPermissions).
+// AllowOther), but does not enforce access modes (to change this, see
+// DefaultPermissions).
 //
 // Mount Options
 //
@@ -323,6 +323,8 @@ type ErrorNumber interface {
 	Errno() Errno
 }
 
+// Deprecated: Return a syscall.Errno directly. See ToErrno for exact
+// rules.
 const (
 	// ENOSYS indicates that the call is not supported.
 	ENOSYS = Errno(syscall.ENOSYS)
@@ -348,13 +350,14 @@ const (
 const DefaultErrno = EIO
 
 var errnoNames = map[Errno]string{
-	ENOSYS: "ENOSYS",
-	ESTALE: "ESTALE",
-	ENOENT: "ENOENT",
-	EIO:    "EIO",
-	EPERM:  "EPERM",
-	EINTR:  "EINTR",
-	EEXIST: "EEXIST",
+	ENOSYS:                      "ENOSYS",
+	ESTALE:                      "ESTALE",
+	ENOENT:                      "ENOENT",
+	EIO:                         "EIO",
+	EPERM:                       "EPERM",
+	EINTR:                       "EINTR",
+	EEXIST:                      "EEXIST",
+	Errno(syscall.ENAMETOOLONG): "ENAMETOOLONG",
 }
 
 // Errno implements Error and ErrorNumber using a syscall.Errno.
@@ -390,11 +393,28 @@ func (e Errno) MarshalText() ([]byte, error) {
 	return []byte(s), nil
 }
 
-func (h *Header) RespondError(err error) {
-	errno := DefaultErrno
-	if ferr, ok := err.(ErrorNumber); ok {
-		errno = ferr.Errno()
+// ToErrno converts arbitrary errors to Errno.
+//
+// If the underlying type of err is syscall.Errno, it is used
+// directly. No unwrapping is done, to prevent wrong errors from
+// leaking via e.g. *os.PathError.
+//
+// If err unwraps to implement ErrorNumber, that is used.
+//
+// Finally, returns DefaultErrno.
+func ToErrno(err error) Errno {
+	if err, ok := err.(syscall.Errno); ok {
+		return Errno(err)
 	}
+	var errnum ErrorNumber
+	if errors.As(err, &errnum) {
+		return Errno(errnum.Errno())
+	}
+	return DefaultErrno
+}
+
+func (h *Header) RespondError(err error) {
+	errno := ToErrno(err)
 	// FUSE uses negative errors!
 	// TODO: File bug report against OSXFUSE: positive error causes kernel panic.
 	buf := newBuffer(0)

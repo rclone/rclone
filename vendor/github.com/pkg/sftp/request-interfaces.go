@@ -25,6 +25,8 @@ type FileReader interface {
 // The request server code will call Close() on the returned io.WriterAt
 // ojbect if an io.Closer type assertion succeeds.
 // Note in cases of an error, the error text will be sent to the client.
+// Note when receiving an Append flag it is important to not open files using
+// O_APPEND if you plan to use WriteAt, as they conflict.
 // Called for Methods: Put, Open
 type FileWriter interface {
 	Filewrite(*Request) (io.WriterAt, error)
@@ -32,7 +34,7 @@ type FileWriter interface {
 
 // FileCmder should return an error
 // Note in cases of an error, the error text will be sent to the client.
-// Called for Methods: Setstat, Rename, Rmdir, Mkdir, Symlink, Remove
+// Called for Methods: Setstat, Rename, Rmdir, Mkdir, Link, Symlink, Remove
 type FileCmder interface {
 	Filecmd(*Request) error
 }
@@ -52,4 +54,11 @@ type FileLister interface {
 // Note in cases of an error, the error text will be sent to the client.
 type ListerAt interface {
 	ListAt([]os.FileInfo, int64) (int, error)
+}
+
+// TransferError is an optional interface that readerAt and writerAt
+// can implement to be notified about the error causing Serve() to exit
+// with the request still open
+type TransferError interface {
+	TransferError(err error)
 }

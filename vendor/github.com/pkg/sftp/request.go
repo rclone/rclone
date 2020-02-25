@@ -18,7 +18,7 @@ var MaxFilelist int64 = 100
 // Request contains the data and state for the incoming service request.
 type Request struct {
 	// Get, Put, Setstat, Stat, Rename, Remove
-	// Rmdir, Mkdir, List, Readlink, Symlink
+	// Rmdir, Mkdir, List, Readlink, Link, Symlink
 	Method   string
 	Filepath string
 	Flags    uint32
@@ -56,6 +56,8 @@ func requestFromPacket(ctx context.Context, pkt hasPath) *Request {
 		request.Target = cleanPath(p.Newpath)
 	case *sshFxpSymlinkPacket:
 		request.Target = cleanPath(p.Linkpath)
+	case *sshFxpExtendedPacketHardlink:
+		request.Target = cleanPath(p.Newpath)
 	}
 	return request
 }
@@ -158,7 +160,7 @@ func (r *Request) call(handlers Handlers, pkt requestPacket) responsePacket {
 		return fileget(handlers.FileGet, r, pkt)
 	case "Put":
 		return fileput(handlers.FilePut, r, pkt)
-	case "Setstat", "Rename", "Rmdir", "Mkdir", "Symlink", "Remove":
+	case "Setstat", "Rename", "Rmdir", "Mkdir", "Link", "Symlink", "Remove":
 		return filecmd(handlers.FileCmd, r, pkt)
 	case "List":
 		return filelist(handlers.FileList, r, pkt)
@@ -378,6 +380,8 @@ func requestMethod(p requestPacket) (method string) {
 		method = "Readlink"
 	case *sshFxpMkdirPacket:
 		method = "Mkdir"
+	case *sshFxpExtendedPacketHardlink:
+		method = "Link"
 	}
 	return method
 }

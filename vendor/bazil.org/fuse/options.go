@@ -148,33 +148,10 @@ func DaemonTimeout(name string) MountOption {
 	return daemonTimeout(name)
 }
 
-var ErrCannotCombineAllowOtherAndAllowRoot = errors.New("cannot combine AllowOther and AllowRoot")
-
 // AllowOther allows other users to access the file system.
-//
-// Only one of AllowOther or AllowRoot can be used.
 func AllowOther() MountOption {
 	return func(conf *mountConfig) error {
-		if _, ok := conf.options["allow_root"]; ok {
-			return ErrCannotCombineAllowOtherAndAllowRoot
-		}
 		conf.options["allow_other"] = ""
-		return nil
-	}
-}
-
-// AllowRoot allows root (but not just everyone) to access the file
-// system.
-//
-// Only one of AllowOther or AllowRoot can be used.
-//
-// FreeBSD ignores this option.
-func AllowRoot() MountOption {
-	return func(conf *mountConfig) error {
-		if _, ok := conf.options["allow_other"]; ok {
-			return ErrCannotCombineAllowOtherAndAllowRoot
-		}
-		conf.options["allow_root"] = ""
 		return nil
 	}
 }
@@ -202,7 +179,7 @@ func AllowSUID() MountOption {
 //
 // Without this option, the Node itself decides what is and is not
 // allowed. This is normally ok because FUSE file systems cannot be
-// accessed by other users without AllowOther/AllowRoot.
+// accessed by other users without AllowOther.
 //
 // FreeBSD ignores this option.
 func DefaultPermissions() MountOption {
