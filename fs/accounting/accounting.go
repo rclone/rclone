@@ -63,7 +63,7 @@ func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name str
 		lpTime: time.Now(),
 		max:    -1,
 	}
-	if fs.Config.MaxTransferMode != fs.MaxTransferModeSoft {
+	if fs.Config.CutoffMode == fs.CutoffModeHard {
 		acc.max = int64((fs.Config.MaxTransfer))
 	}
 	go acc.averageLoop()

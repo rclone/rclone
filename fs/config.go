@@ -93,7 +93,7 @@ type ConfigInfo struct {
 	UseServerModTime       bool
 	MaxTransfer            SizeSuffix
 	MaxDuration            time.Duration
-	MaxTransferMode        MaxTransferMode
+	CutoffMode             CutoffMode
 	MaxBacklog             int
 	MaxStatsGroups         int
 	StatsOneLine           bool

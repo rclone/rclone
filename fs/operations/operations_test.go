@@ -1533,11 +1533,11 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	old := fs.Config.MaxTransfer
-	oldMode := fs.Config.MaxTransferMode
+	oldMode := fs.Config.CutoffMode
 
 	defer func() {
 		fs.Config.MaxTransfer = old
-		fs.Config.MaxTransferMode = oldMode
+		fs.Config.CutoffMode = oldMode
 		accounting.Stats(context.Background()).ResetCounters()
 	}()
 
@@ -1550,7 +1550,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	rfile2.Path = "sub/file2"
 
 	fs.Config.MaxTransfer = 15
-	fs.Config.MaxTransferMode = fs.MaxTransferModeHard
+	fs.Config.CutoffMode = fs.CutoffModeHard
 	accounting.Stats(context.Background()).ResetCounters()
 
 	err := operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile1.Path, file1.Path)
@@ -1563,19 +1563,19 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	err = operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile2.Path, file2.Path)
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, rfile1)
-	assert.Equal(t, accounting.ErrorMaxTransferLimitReached, err)
+	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err))
 
-	fs.Config.MaxTransferMode = fs.MaxTransferModeCautious
+	fs.Config.CutoffMode = fs.CutoffModeCautious
 	accounting.Stats(context.Background()).ResetCounters()
 
 	err = operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile2.Path, file2.Path)
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, rfile1)
-	assert.Equal(t, accounting.ErrorMaxTransferLimitReached, err)
+	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err))
 
-	fs.Config.MaxTransferMode = fs.MaxTransferModeSoft
+	fs.Config.CutoffMode = fs.CutoffModeSoft
 	accounting.Stats(context.Background()).ResetCounters()
 
 	err = operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile2.Path, file2.Path)
