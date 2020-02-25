@@ -49,6 +49,18 @@ A path preserving policy will only consider upstreams where the relative path be
 
 When using non-path preserving policies paths will be created in target upstreams as necessary.
 
+#### Quota Relevant Policies
+
+Some policies rely on quota information. These policies should be used only if your upstreams support the respective quota fields.
+
+| Policy     | Required Field |
+|------------|----------------|
+| lfs, eplfs | Free           |
+| mfs, epmfs | Free           |
+| lus, eplus | Used           |
+
+To check if your upstream support the field, run `rclone about remote: [flags]` and see if the reuqired field exists.
+
 #### Filters
 
 Policies basically search upstream remotes and create a list of files / paths for functions to work on. The policy is responsible for filtering and sorting. The policy type defines the sorting but filtering is mostly uniform as described below.

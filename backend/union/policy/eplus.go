@@ -24,7 +24,8 @@ func (p *EpLus) lus(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 	for _, u := range upstreams {
 		space, err := u.GetUsedSpace()
 		if err != nil {
-			return nil, err
+			fs.LogPrintf(fs.LogLevelNotice, nil,
+				"Used Space is not supported for upstream %s, treating as 0", u.Name())
 		}
 		if space < minUsedSpace {
 			minUsedSpace = space
@@ -43,7 +44,8 @@ func (p *EpLus) lusEntries(entries []upstream.Entry) (upstream.Entry, error) {
 	for _, e := range entries {
 		space, err := e.UpstreamFs().GetFreeSpace()
 		if err != nil {
-			return nil, err
+			fs.LogPrintf(fs.LogLevelNotice, nil,
+				"Used Space is not supported for upstream %s, treating as 0", e.UpstreamFs().Name())
 		}
 		if space < minUsedSpace {
 			minUsedSpace = space

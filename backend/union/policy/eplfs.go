@@ -24,7 +24,8 @@ func (p *EpLfs) lfs(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 	for _, u := range upstreams {
 		space, err := u.GetFreeSpace()
 		if err != nil {
-			return nil, err
+			fs.LogPrintf(fs.LogLevelNotice, nil,
+				"Free Space is not supported for upstream %s, treating as infinite", u.Name())
 		}
 		if space < minFreeSpace {
 			minFreeSpace = space
@@ -43,7 +44,8 @@ func (p *EpLfs) lfsEntries(entries []upstream.Entry) (upstream.Entry, error) {
 	for _, e := range entries {
 		space, err := e.UpstreamFs().GetFreeSpace()
 		if err != nil {
-			return nil, err
+			fs.LogPrintf(fs.LogLevelNotice, nil,
+				"Free Space is not supported for upstream %s, treating as infinite", e.UpstreamFs().Name())
 		}
 		if space < minFreeSpace {
 			minFreeSpace = space

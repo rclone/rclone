@@ -3,6 +3,7 @@ package upstream
 import (
 	"context"
 	"io"
+	"math"
 	"path"
 	"path/filepath"
 	"strings"
@@ -254,13 +255,13 @@ func (f *Fs) GetFreeSpace() (int64, error) {
 	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
-			return 0, ErrUsageFieldNotSupported
+			return math.MaxInt64, ErrUsageFieldNotSupported
 		}
 	}
 	f.cacheMutex.RLock()
 	defer f.cacheMutex.RUnlock()
 	if f.usage.Free == nil {
-		return 0, ErrUsageFieldNotSupported
+		return math.MaxInt64, ErrUsageFieldNotSupported
 	}
 	return *f.usage.Free, nil
 }
