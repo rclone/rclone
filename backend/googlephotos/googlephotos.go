@@ -1003,7 +1003,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Add upload to internal storage
 	if pattern.isUpload {
+		o.fs.uploadedMu.Lock()
 		o.fs.uploaded.AddEntry(o)
+		o.fs.uploadedMu.Unlock()
 	}
 	return nil
 }
