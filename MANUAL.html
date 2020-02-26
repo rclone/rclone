@@ -12431,7 +12431,7 @@ y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
-<p>Because the memory backend isn’t persistent it is most useful for testing or with an rclone server or rclone mount, eg</p>
+<p>Because the memory backend isn’t persistent it is better to test it with either rclone server or rclone mount, eg</p>
 <pre><code>rclone mount :memory: /mnt/tmp
 rclone serve webdav :memory:
 rclone serve sftp :memory:</code></pre>
