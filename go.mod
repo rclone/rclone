@@ -15,7 +15,6 @@ require (
 	github.com/billziss-gh/cgofuse v1.2.0
 	github.com/djherbis/times v1.2.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
-	github.com/etcd-io/bbolt v1.3.3
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3-0.20191108143333-152e6ac32d54
@@ -54,7 +53,7 @@ require (
 	github.com/xanzy/ssh-agent v0.2.1
 	github.com/youmark/pkcs8 v0.0.0-20191102193632-94c173a94d60
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
-	go.etcd.io/bbolt v1.3.3 // indirect
+	go.etcd.io/bbolt v1.3.3
 	goftp.io/server v0.3.2
 	golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
 	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
