@@ -1,7 +1,5 @@
 // Config handling
 
-// +build go1.11
-
 package main
 
 import (
