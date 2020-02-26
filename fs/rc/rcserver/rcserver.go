@@ -16,9 +16,14 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/skratchdot/open-golang/open"
+
 	"github.com/rclone/rclone/cmd/serve/httplib"
 	"github.com/rclone/rclone/cmd/serve/httplib/serve"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/list"
@@ -26,8 +31,15 @@ import (
 	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/lib/random"
-	"github.com/skratchdot/open-golang/open"
 )
+
+var promHandler http.Handler
+
+func init() {
+	rcloneCollector := accounting.NewRcloneCollector()
+	prometheus.MustRegister(rcloneCollector)
+	promHandler = promhttp.Handler()
+}
 
 // Start the remote control server if configured
 //
@@ -334,6 +346,9 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 	case match != nil && s.opt.Serve:
 		// Serve /[fs]/remote files
 		s.serveRemote(w, r, match[2], match[1])
+		return
+	case path == "metrics" && s.opt.EnableMetrics:
+		promHandler.ServeHTTP(w, r)
 		return
 	case path == "*" && s.opt.Serve:
 		// Serve /* as the remote listing

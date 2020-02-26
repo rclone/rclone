@@ -12,10 +12,12 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	_ "github.com/rclone/rclone/backend/local"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 const (
@@ -479,6 +481,59 @@ func TestMethods(t *testing.T) {
 	opt.Serve = true
 	opt.Files = testFs
 	testServer(t, tests, &opt)
+}
+
+func TestMetrics(t *testing.T) {
+	stats := accounting.GlobalStats()
+	tests := makeMetricsTestCases(stats)
+	opt := newTestOpt()
+	opt.EnableMetrics = true
+	testServer(t, tests, &opt)
+
+	// Test changing a couple options
+	stats.Bytes(500)
+	stats.Deletes(30)
+	stats.Errors(2)
+	stats.Bytes(324)
+
+	tests = makeMetricsTestCases(stats)
+	testServer(t, tests, &opt)
+}
+
+func makeMetricsTestCases(stats *accounting.StatsInfo) (tests []testRun) {
+	tests = []testRun{{
+		Name:     "Bytes Transferred Metric",
+		URL:      "/metrics",
+		Method:   "GET",
+		Status:   http.StatusOK,
+		Contains: regexp.MustCompile(fmt.Sprintf("rclone_bytes_transferred_total %d", stats.GetBytes())),
+	}, {
+		Name:     "Checked Files Metric",
+		URL:      "/metrics",
+		Method:   "GET",
+		Status:   http.StatusOK,
+		Contains: regexp.MustCompile(fmt.Sprintf("rclone_checked_files_total %d", stats.GetChecks())),
+	}, {
+		Name:     "Errors Metric",
+		URL:      "/metrics",
+		Method:   "GET",
+		Status:   http.StatusOK,
+		Contains: regexp.MustCompile(fmt.Sprintf("rclone_errors_total %d", stats.GetErrors())),
+	}, {
+		Name:     "Deleted Files Metric",
+		URL:      "/metrics",
+		Method:   "GET",
+		Status:   http.StatusOK,
+		Contains: regexp.MustCompile(fmt.Sprintf("rclone_files_deleted_total %d", stats.Deletes(0))),
+	}, {
+		Name:     "Files Transferred Metric",
+		URL:      "/metrics",
+		Method:   "GET",
+		Status:   http.StatusOK,
+		Contains: regexp.MustCompile(fmt.Sprintf("rclone_files_transferred_total %d", stats.GetTransfers())),
+	},
+	}
+	return
 }
 
 var matchRemoteDirListing = regexp.MustCompile(`<title>List of all rclone remotes.</title>`)

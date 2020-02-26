@@ -9,6 +9,7 @@ date: "2018-03-05"
 If rclone is run with the `--rc` flag then it starts an http server
 which can be used to remote control rclone.
 
+
 If you just want to run a remote control then see the [rcd command](/commands/rclone_rcd/).
 
 **NB** this is experimental and everything here is subject to change!
@@ -82,6 +83,12 @@ implementing browser based GUIs for rclone functions.
 If `--rc-user` or `--rc-pass` is set then the URL that is opened will
 have the authorization in the URL in the `http://user:pass@localhost/`
 style.
+
+Default Off.
+
+### --rc-enable-metrics
+
+Enable OpenMetrics/Prometheus compatible endpoint at `/metrics`.
 
 Default Off.
 

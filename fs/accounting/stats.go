@@ -56,13 +56,7 @@ func NewStats() *StatsInfo {
 func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out = make(rc.Params)
 	s.mu.RLock()
-	dt := s.totalDuration()
-	dtSeconds := dt.Seconds()
-	speed := 0.0
-	if dt > 0 {
-		speed = float64(s.bytes) / dtSeconds
-	}
-	out["speed"] = speed
+	out["speed"] = s.Speed()
 	out["bytes"] = s.bytes
 	out["errors"] = s.errors
 	out["fatalError"] = s.fatalError
@@ -70,7 +64,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["checks"] = s.checks
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
-	out["elapsedTime"] = dtSeconds
+	out["elapsedTime"] = s.totalDuration().Seconds()
 	s.mu.RUnlock()
 	if !s.checking.empty() {
 		var c []string
@@ -99,6 +93,17 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 		out["lastError"] = s.lastError.Error()
 	}
 	return out, nil
+}
+
+// Speed returns the average speed of the transfer in bytes/second
+func (s *StatsInfo) Speed() float64 {
+	dt := s.totalDuration()
+	dtSeconds := dt.Seconds()
+	speed := 0.0
+	if dt > 0 {
+		speed = float64(s.bytes) / dtSeconds
+	}
+	return speed
 }
 
 func (s *StatsInfo) transferRemoteStats(name string) rc.Params {
