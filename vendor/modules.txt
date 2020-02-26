@@ -90,8 +90,6 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
-# github.com/etcd-io/bbolt v1.3.3
-github.com/etcd-io/bbolt
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.3
@@ -216,6 +214,8 @@ github.com/yunify/qingstor-sdk-go/v3/request/signer
 github.com/yunify/qingstor-sdk-go/v3/request/unpacker
 github.com/yunify/qingstor-sdk-go/v3/service
 github.com/yunify/qingstor-sdk-go/v3/utils
+# go.etcd.io/bbolt v1.3.3
+go.etcd.io/bbolt
 # go.opencensus.io v0.22.3
 go.opencensus.io
 go.opencensus.io/internal
