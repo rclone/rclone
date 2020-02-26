@@ -1,6 +1,6 @@
-// +build !linux !go1.11
-// +build !darwin !go1.11
-// +build !freebsd !go1.11
+// +build !linux !go1.13
+// +build !darwin !go1.13
+// +build !freebsd !go1.13
 // +build !windows
 
 package cache_test
