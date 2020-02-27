@@ -1,4 +1,5 @@
 // +build windows
+// +build !race
 
 package cache_test
 
