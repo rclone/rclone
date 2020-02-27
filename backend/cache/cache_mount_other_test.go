@@ -2,6 +2,7 @@
 // +build !darwin !go1.13
 // +build !freebsd !go1.13
 // +build !windows
+// +build !race
 
 package cache_test
 

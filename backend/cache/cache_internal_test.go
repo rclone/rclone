@@ -1,4 +1,5 @@
 // +build !plan9
+// +build !race
 
 package cache_test
 

@@ -1,4 +1,5 @@
 // +build linux,go1.13 darwin,go1.13 freebsd,go1.13
+// +build !race
 
 package cache_test
 
