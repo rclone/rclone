@@ -476,15 +476,16 @@ func (d *Dir) Stat(name string) (node Node, err error) {
 func (d *Dir) ReadDirAll() (items Nodes, err error) {
 	// fs.Debugf(d.path, "Dir.ReadDirAll")
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	err = d._readDir()
 	if err != nil {
 		fs.Debugf(d.path, "Dir.ReadDirAll error: %v", err)
+		d.mu.Unlock()
 		return nil, err
 	}
 	for _, item := range d.items {
 		items = append(items, item)
 	}
+	d.mu.Unlock()
 	sort.Sort(items)
 	// fs.Debugf(d.path, "Dir.ReadDirAll OK with %d entries", len(items))
 	return items, nil

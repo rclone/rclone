@@ -91,7 +91,7 @@ func (f *File) Name() (name string) {
 // _path returns the full path of the file
 // use when lock is held
 func (f *File) _path() string {
-	return path.Join(f.d.path, f.leaf)
+	return path.Join(f.d.Path(), f.leaf)
 }
 
 // Path returns the full path of the file
