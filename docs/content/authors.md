@@ -338,3 +338,4 @@ Contributors
   * Durval Menezes <DurvalMenezes@users.noreply.github.com>
   * Tim Gallant <me@timgallant.us>
   * Frederick Zhang <frederick888@tsundere.moe>
+  * valery1707 <valery1707@gmail.com>
