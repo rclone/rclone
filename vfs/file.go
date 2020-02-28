@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // File represents a file
@@ -103,7 +104,7 @@ func (f *File) Path() string {
 
 // osPath returns the full path of the file in the cache in OS format
 func (f *File) osPath() string {
-	return f.d.vfs.cache.toOSPath(f.Path())
+	return f.d.vfs.cache.ToOSPath(f.Path())
 }
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
@@ -199,8 +200,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	}
 
 	// Rename in the cache if it exists
-	if f.d.vfs.Opt.CacheMode != CacheModeOff && f.d.vfs.cache.exists(f.Path()) {
-		if err := f.d.vfs.cache.rename(f.Path(), newPath); err != nil {
+	if f.d.vfs.Opt.CacheMode != vfscommon.CacheModeOff && f.d.vfs.cache.Exists(f.Path()) {
+		if err := f.d.vfs.cache.Rename(f.Path(), newPath); err != nil {
 			fs.Infof(f.Path(), "File.Rename failed in Cache: %v", err)
 		}
 	}
@@ -379,8 +380,8 @@ func (f *File) _applyPendingModTime() error {
 	}
 
 	// set the time of the file in the cache
-	if f.d.vfs.Opt.CacheMode != CacheModeOff {
-		f.d.vfs.cache.setModTime(f._path(), f.pendingModTime)
+	if f.d.vfs.Opt.CacheMode != vfscommon.CacheModeOff {
+		f.d.vfs.cache.SetModTime(f._path(), f.pendingModTime)
 	}
 
 	// set the time of the object
@@ -554,8 +555,8 @@ func (f *File) Remove() error {
 	// Remove the item from the directory listing
 	d.delObject(f.Name())
 	// Remove the object from the cache
-	if d.vfs.Opt.CacheMode >= CacheModeMinimal {
-		d.vfs.cache.remove(f.Path())
+	if d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal {
+		d.vfs.cache.Remove(f.Path())
 	}
 	return nil
 }
@@ -646,10 +647,10 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	d := f.d
 	f.mu.RUnlock()
 	CacheMode := d.vfs.Opt.CacheMode
-	if CacheMode >= CacheModeMinimal && (d.vfs.cache.opens(f.Path()) > 0 || d.vfs.cache.exists(f.Path())) {
+	if CacheMode >= vfscommon.CacheModeMinimal && (d.vfs.cache.Opens(f.Path()) > 0 || d.vfs.cache.Exists(f.Path())) {
 		fd, err = f.openRW(flags)
 	} else if read && write {
-		if CacheMode >= CacheModeMinimal {
+		if CacheMode >= vfscommon.CacheModeMinimal {
 			fd, err = f.openRW(flags)
 		} else {
 			// Open write only and hope the user doesn't
@@ -658,13 +659,13 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 			fd, err = f.openWrite(flags)
 		}
 	} else if write {
-		if CacheMode >= CacheModeWrites {
+		if CacheMode >= vfscommon.CacheModeWrites {
 			fd, err = f.openRW(flags)
 		} else {
 			fd, err = f.openWrite(flags)
 		}
 	} else if read {
-		if CacheMode >= CacheModeFull {
+		if CacheMode >= vfscommon.CacheModeFull {
 			fd, err = f.openRW(flags)
 		} else {
 			fd, err = f.openRead()

@@ -5,10 +5,9 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/rclone/rclone/vfs"
 )
 
 // TestWriteFileNoWrite tests writing a file with no write()'s to it
@@ -91,7 +90,7 @@ func TestWriteFileFsync(t *testing.T) {
 func TestWriteFileDup(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
-	if run.vfs.Opt.CacheMode < vfs.CacheModeWrites {
+	if run.vfs.Opt.CacheMode < vfscommon.CacheModeWrites {
 		t.Skip("not supported on vfs-cache-mode < writes")
 		return
 	}
@@ -136,7 +135,7 @@ func TestWriteFileDup(t *testing.T) {
 func TestWriteFileAppend(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
-	if run.vfs.Opt.CacheMode < vfs.CacheModeWrites {
+	if run.vfs.Opt.CacheMode < vfscommon.CacheModeWrites {
 		t.Skip("not supported on vfs-cache-mode < writes")
 		return
 	}
