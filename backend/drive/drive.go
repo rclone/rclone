@@ -642,17 +642,21 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
-// getRootID returns the canonical ID for the "root" ID
-func (f *Fs) getRootID() (string, error) {
-	var info *drive.File
-	var err error
+// getFile returns drive.File for the ID passed and fields passed in
+func (f *Fs) getFile(ID string, fields googleapi.Field) (info *drive.File, err error) {
 	err = f.pacer.CallNoRetry(func() (bool, error) {
-		info, err = f.svc.Files.Get("root").
-			Fields("id").
+		info, err = f.svc.Files.Get(ID).
+			Fields(fields).
 			SupportsAllDrives(true).
 			Do()
 		return f.shouldRetry(err)
 	})
+	return info, err
+}
+
+// getRootID returns the canonical ID for the "root" ID
+func (f *Fs) getRootID() (string, error) {
+	info, err := f.getFile("root", "id")
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't find root directory ID")
 	}
@@ -2042,11 +2046,13 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	var srcObj *baseObject
 	ext := ""
+	readDescription := false
 	switch src := src.(type) {
 	case *Object:
 		srcObj = &src.baseObject
 	case *documentObject:
 		srcObj, ext = &src.baseObject, src.ext()
+		readDescription = true
 	case *linkObject:
 		srcObj, ext = &src.baseObject, src.ext()
 	default:
@@ -2068,6 +2074,19 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	createInfo, err := f.createFileInfo(ctx, remote, src.ModTime(ctx))
 	if err != nil {
 		return nil, err
+	}
+
+	if readDescription {
+		// preserve the description on copy for docs
+		info, err := f.getFile(srcObj.id, "description")
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read description for Google Doc")
+		}
+		createInfo.Description = info.Description
+	} else {
+		// don't overwrite the description on copy for files
+		// this should work for docs but it doesn't - it is probably a bug in Google Drive
+		createInfo.Description = ""
 	}
 
 	var info *drive.File
