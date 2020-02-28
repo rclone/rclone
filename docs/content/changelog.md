@@ -9,8 +9,8 @@ date: "2020-02-01"
 ## v1.51.0 - 2020-02-01
 
 * New backends
-    * [Memory](/memory) (Nick Craig-Wood)
-    * [Sugarsync](/sugarsync) (Nick Craig-Wood)
+    * [Memory](/memory/) (Nick Craig-Wood)
+    * [Sugarsync](/sugarsync/) (Nick Craig-Wood)
 * New Features
     * Adjust all backends to have `--backend-encoding` parameter (Nick Craig-Wood)
         * this enables the encoding for special characters to be adjusted or disabled
@@ -165,9 +165,9 @@ date: "2020-02-01"
 ## v1.50.0 - 2019-10-26
 
 * New backends
-    * [Citrix Sharefile](/sharefile) (Nick Craig-Wood)
-    * [Chunker](/chunker) - an overlay backend to split files into smaller parts (Ivan Andreev)
-    * [Mail.ru Cloud](/mailru) (Ivan Andreev)
+    * [Citrix Sharefile](/sharefile/) (Nick Craig-Wood)
+    * [Chunker](/chunker/) - an overlay backend to split files into smaller parts (Ivan Andreev)
+    * [Mail.ru Cloud](/mailru/) (Ivan Andreev)
 * New Features
     * encodings (Fabian Möller & Nick Craig-Wood)
         * All backends now use file name encoding to ensure any file name can be written to any backend.
@@ -320,7 +320,7 @@ date: "2020-02-01"
 
 * New backends
     * [1fichier](/fichier/) (Laura Hausmann)
-    * [Google Photos](/googlephotos) (Nick Craig-Wood)
+    * [Google Photos](/googlephotos/) (Nick Craig-Wood)
     * [Putio](/putio/) (Cenk Alti)
     * [premiumize.me](/premiumizeme/) (Nick Craig-Wood)
 * New Features
