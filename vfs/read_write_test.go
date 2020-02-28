@@ -13,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,8 +26,8 @@ func cleanup(t *testing.T, r *fstest.Run, vfs *VFS) {
 
 // Create a file and open it with the flags passed in
 func rwHandleCreateFlags(t *testing.T, r *fstest.Run, create bool, filename string, flags int) (*VFS, *RWFileHandle) {
-	opt := DefaultOpt
-	opt.CacheMode = CacheModeFull
+	opt := vfscommon.DefaultOpt
+	opt.CacheMode = vfscommon.CacheModeFull
 	vfs := New(r.Fremote, &opt)
 
 	if create {
@@ -661,8 +662,8 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 
 func TestRWFileHandleOpenTests(t *testing.T) {
 	r := fstest.NewRun(t)
-	opt := DefaultOpt
-	opt.CacheMode = CacheModeFull
+	opt := vfscommon.DefaultOpt
+	opt.CacheMode = vfscommon.CacheModeFull
 	vfs := New(r.Fremote, &opt)
 	defer cleanup(t, r, vfs)
 
@@ -716,8 +717,8 @@ func TestRWCacheRename(t *testing.T) {
 		t.Skip("skip as can't rename files")
 	}
 
-	opt := DefaultOpt
-	opt.CacheMode = CacheModeFull
+	opt := vfscommon.DefaultOpt
+	opt.CacheMode = vfscommon.CacheModeFull
 	vfs := New(r.Fremote, &opt)
 
 	h, err := vfs.OpenFile("rename_me", os.O_WRONLY|os.O_CREATE, 0777)
@@ -732,11 +733,11 @@ func TestRWCacheRename(t *testing.T) {
 	err = fh.Close()
 	require.NoError(t, err)
 
-	assert.True(t, vfs.cache.exists("rename_me"))
+	assert.True(t, vfs.cache.Exists("rename_me"))
 
 	err = vfs.Rename("rename_me", "i_was_renamed")
 	require.NoError(t, err)
 
-	assert.False(t, vfs.cache.exists("rename_me"))
-	assert.True(t, vfs.cache.exists("i_was_renamed"))
+	assert.False(t, vfs.cache.Exists("rename_me"))
+	assert.True(t, vfs.cache.Exists("i_was_renamed"))
 }

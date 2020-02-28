@@ -6,10 +6,9 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
-
-	"github.com/rclone/rclone/vfs"
 )
 
 // TestWriteFileDoubleClose tests double close on write
@@ -46,7 +45,7 @@ func TestWriteFileDoubleClose(t *testing.T) {
 
 	// write to the other dup
 	_, err = unix.Write(fd2, buf)
-	if run.vfs.Opt.CacheMode < vfs.CacheModeWrites {
+	if run.vfs.Opt.CacheMode < vfscommon.CacheModeWrites {
 		// produces an error if cache mode < writes
 		assert.Error(t, err, "input/output error")
 	} else {
