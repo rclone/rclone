@@ -799,10 +799,12 @@ func (f *ftpReadCloser) Close() error {
 		f.f.putFtpConnection(&f.c, nil)
 	}
 	// mask the error if it was caused by a premature close
+	// NB StatusAboutToSend is to work around a bug in pureftpd
+	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
 	switch errX := err.(type) {
 	case *textproto.Error:
 		switch errX.Code {
-		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable:
+		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
 			err = nil
 		}
 	}
