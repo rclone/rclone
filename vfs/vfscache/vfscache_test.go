@@ -1,4 +1,4 @@
-package vfs
+package vfscache
 
 import (
 	"context"
@@ -11,42 +11,20 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
+	_ "github.com/rclone/rclone/backend/local" // import the local backend
 	"github.com/rclone/rclone/fstest"
-	"github.com/spf13/pflag"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// Check CacheMode it satisfies the pflag interface
-var _ pflag.Value = (*CacheMode)(nil)
-
-func TestCacheModeString(t *testing.T) {
-	assert.Equal(t, "off", CacheModeOff.String())
-	assert.Equal(t, "full", CacheModeFull.String())
-	assert.Equal(t, "CacheMode(17)", CacheMode(17).String())
-}
-
-func TestCacheModeSet(t *testing.T) {
-	var m CacheMode
-
-	err := m.Set("full")
-	assert.NoError(t, err)
-	assert.Equal(t, CacheModeFull, m)
-
-	err = m.Set("potato")
-	assert.Error(t, err, "Unknown cache mode level")
-
-	err = m.Set("")
-	assert.Error(t, err, "Unknown cache mode level")
-}
-
-func TestCacheModeType(t *testing.T) {
-	var m CacheMode
-	assert.Equal(t, "CacheMode", m.Type())
+// TestMain drives the tests
+func TestMain(m *testing.M) {
+	fstest.TestMain(m)
 }
 
 // convert c.item to a string
-func itemAsString(c *cache) []string {
+func itemAsString(c *Cache) []string {
 	c.itemMu.Lock()
 	defer c.itemMu.Unlock()
 	var out []string
@@ -65,17 +43,17 @@ func TestCacheNew(t *testing.T) {
 	defer cancel()
 
 	// Disable the cache cleaner as it interferes with these tests
-	opt := DefaultOpt
+	opt := vfscommon.DefaultOpt
 	opt.CachePollInterval = 0
-	c, err := newCache(ctx, r.Fremote, &opt)
+	c, err := New(ctx, r.Fremote, &opt)
 	require.NoError(t, err)
 
 	assert.Contains(t, c.root, "vfs")
-	assert.Contains(t, c.f.Root(), filepath.Base(r.Fremote.Root()))
+	assert.Contains(t, c.fcache.Root(), filepath.Base(r.Fremote.Root()))
 	assert.Equal(t, []string(nil), itemAsString(c))
 
 	// mkdir
-	p, err := c.mkdir("potato")
+	p, err := c.Mkdir("potato")
 	require.NoError(t, err)
 	assert.Equal(t, "potato", filepath.Base(p))
 	assert.Equal(t, []string{
@@ -111,7 +89,7 @@ func TestCacheNew(t *testing.T) {
 		`name="" isFile=false opens=0 size=0`,
 		`name="potato" isFile=true opens=0 size=0`,
 	}, itemAsString(c))
-	c.open("/potato")
+	c.Open("/potato")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=1 size=0`,
 		`name="potato" isFile=true opens=1 size=0`,
@@ -173,7 +151,7 @@ func TestCacheNew(t *testing.T) {
 		`name="" isFile=false opens=1 size=0`,
 		`name="potato" isFile=true opens=1 size=6`,
 	}, itemAsString(c))
-	c.close("potato/")
+	c.Close("potato/")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=0 size=0`,
 		`name="potato" isFile=true opens=0 size=5`,
@@ -197,7 +175,7 @@ func TestCacheNew(t *testing.T) {
 	c.clean()
 
 	// cleanup
-	err = c.cleanUp()
+	err = c.CleanUp()
 	require.NoError(t, err)
 	_, err = os.Stat(c.root)
 	assert.True(t, os.IsNotExist(err))
@@ -210,35 +188,35 @@ func TestCacheOpens(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	c, err := newCache(ctx, r.Fremote, &DefaultOpt)
+	c, err := New(ctx, r.Fremote, &vfscommon.DefaultOpt)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string(nil), itemAsString(c))
-	c.open("potato")
+	c.Open("potato")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=1 size=0`,
 		`name="potato" isFile=true opens=1 size=0`,
 	}, itemAsString(c))
-	c.open("potato")
+	c.Open("potato")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=2 size=0`,
 		`name="potato" isFile=true opens=2 size=0`,
 	}, itemAsString(c))
-	c.close("potato")
+	c.Close("potato")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=1 size=0`,
 		`name="potato" isFile=true opens=1 size=0`,
 	}, itemAsString(c))
-	c.close("potato")
+	c.Close("potato")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=0 size=0`,
 		`name="potato" isFile=true opens=0 size=0`,
 	}, itemAsString(c))
 
-	c.open("potato")
-	c.open("a//b/c/d/one")
-	c.open("a/b/c/d/e/two")
-	c.open("a/b/c/d/e/f/three")
+	c.Open("potato")
+	c.Open("a//b/c/d/one")
+	c.Open("a/b/c/d/e/two")
+	c.Open("a/b/c/d/e/f/three")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=4 size=0`,
 		`name="a" isFile=false opens=3 size=0`,
@@ -252,10 +230,10 @@ func TestCacheOpens(t *testing.T) {
 		`name="a/b/c/d/one" isFile=true opens=1 size=0`,
 		`name="potato" isFile=true opens=1 size=0`,
 	}, itemAsString(c))
-	c.close("potato")
-	c.close("a/b/c/d/one")
-	c.close("a/b/c/d/e/two")
-	c.close("a/b/c//d/e/f/three")
+	c.Close("potato")
+	c.Close("a/b/c/d/one")
+	c.Close("a/b/c/d/e/two")
+	c.Close("a/b/c//d/e/f/three")
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=0 size=0`,
 		`name="a" isFile=false opens=0 size=0`,
@@ -280,13 +258,13 @@ func TestCacheOpenMkdir(t *testing.T) {
 	defer cancel()
 
 	// Disable the cache cleaner as it interferes with these tests
-	opt := DefaultOpt
+	opt := vfscommon.DefaultOpt
 	opt.CachePollInterval = 0
-	c, err := newCache(ctx, r.Fremote, &opt)
+	c, err := New(ctx, r.Fremote, &opt)
 	require.NoError(t, err)
 
 	// open
-	c.open("sub/potato")
+	c.Open("sub/potato")
 
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=1 size=0`,
@@ -295,7 +273,7 @@ func TestCacheOpenMkdir(t *testing.T) {
 	}, itemAsString(c))
 
 	// mkdir
-	p, err := c.mkdir("sub/potato")
+	p, err := c.Mkdir("sub/potato")
 	require.NoError(t, err)
 	assert.Equal(t, "potato", filepath.Base(p))
 	assert.Equal(t, []string{
@@ -318,7 +296,7 @@ func TestCacheOpenMkdir(t *testing.T) {
 	assert.True(t, fi.IsDir())
 
 	// close
-	c.close("sub/potato")
+	c.Close("sub/potato")
 
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=0 size=0`,
@@ -344,7 +322,7 @@ func TestCacheCacheDir(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	c, err := newCache(ctx, r.Fremote, &DefaultOpt)
+	c, err := New(ctx, r.Fremote, &vfscommon.DefaultOpt)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string(nil), itemAsString(c))
@@ -379,7 +357,7 @@ func TestCachePurgeOld(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	c, err := newCache(ctx, r.Fremote, &DefaultOpt)
+	c, err := New(ctx, r.Fremote, &vfscommon.DefaultOpt)
 	require.NoError(t, err)
 
 	// Test funcs
@@ -400,10 +378,10 @@ func TestCachePurgeOld(t *testing.T) {
 	c._purgeEmptyDirs(removeDir)
 	assert.Equal(t, []string(nil), removed)
 
-	c.open("sub/dir2/potato2")
-	c.open("sub/dir/potato")
-	c.close("sub/dir2/potato2")
-	c.open("sub/dir/potato")
+	c.Open("sub/dir2/potato2")
+	c.Open("sub/dir/potato")
+	c.Close("sub/dir2/potato2")
+	c.Open("sub/dir/potato")
 
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=2 size=0`,
@@ -423,7 +401,7 @@ func TestCachePurgeOld(t *testing.T) {
 		"sub/dir2/",
 	}, removed)
 
-	c.close("sub/dir/potato")
+	c.Close("sub/dir/potato")
 
 	removed = nil
 	removedDir = true
@@ -431,7 +409,7 @@ func TestCachePurgeOld(t *testing.T) {
 	c._purgeEmptyDirs(removeDir)
 	assert.Equal(t, []string(nil), removed)
 
-	c.close("sub/dir/potato")
+	c.Close("sub/dir/potato")
 
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=0 size=0`,
@@ -475,16 +453,16 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	defer cancel()
 
 	// Disable the cache cleaner as it interferes with these tests
-	opt := DefaultOpt
+	opt := vfscommon.DefaultOpt
 	opt.CachePollInterval = 0
-	c, err := newCache(ctx, r.Fremote, &opt)
+	c, err := New(ctx, r.Fremote, &opt)
 	require.NoError(t, err)
 
 	// Test funcs
 	var removed []string
 	remove := func(name string) {
 		removed = append(removed, filepath.ToSlash(name))
-		c.remove(name)
+		c.Remove(name)
 	}
 
 	removed = nil
@@ -500,14 +478,14 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	assert.Equal(t, []string(nil), removed)
 
 	// Make some test files
-	c.open("sub/dir/potato")
-	p, err := c.mkdir("sub/dir/potato")
+	c.Open("sub/dir/potato")
+	p, err := c.Mkdir("sub/dir/potato")
 	require.NoError(t, err)
 	err = ioutil.WriteFile(p, []byte("hello"), 0600)
 	require.NoError(t, err)
 
-	p, err = c.mkdir("sub/dir2/potato2")
-	c.open("sub/dir2/potato2")
+	p, err = c.Mkdir("sub/dir2/potato2")
+	c.Open("sub/dir2/potato2")
 	require.NoError(t, err)
 	err = ioutil.WriteFile(p, []byte("hello2"), 0600)
 	require.NoError(t, err)
@@ -527,8 +505,8 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	assert.Equal(t, []string(nil), removed)
 
 	// Close the files
-	c.close("sub/dir/potato")
-	c.close("sub/dir2/potato2")
+	c.Close("sub/dir/potato")
+	c.Close("sub/dir2/potato2")
 
 	assert.Equal(t, []string{
 		`name="" isFile=false opens=0 size=0`,
@@ -565,12 +543,12 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	}, itemAsString(c))
 
 	// Put potato back
-	c.open("sub/dir/potato")
-	p, err = c.mkdir("sub/dir/potato")
+	c.Open("sub/dir/potato")
+	p, err = c.Mkdir("sub/dir/potato")
 	require.NoError(t, err)
 	err = ioutil.WriteFile(p, []byte("hello"), 0600)
 	require.NoError(t, err)
-	c.close("sub/dir/potato")
+	c.Close("sub/dir/potato")
 
 	// Update the stats to read the total size
 	err = c.updateStats()

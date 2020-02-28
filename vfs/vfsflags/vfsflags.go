@@ -4,13 +4,13 @@ package vfsflags
 import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/spf13/pflag"
 )
 
 // Options set by command line flags
 var (
-	Opt       = vfs.DefaultOpt
+	Opt       = vfscommon.DefaultOpt
 	DirPerms  = &FileMode{Mode: &Opt.DirPerms}
 	FilePerms = &FileMode{Mode: &Opt.FilePerms}
 )

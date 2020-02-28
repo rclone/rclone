@@ -13,6 +13,7 @@ import (
 	_ "github.com/rclone/rclone/backend/all" // import all the backends
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -101,13 +102,13 @@ func TestVFSNew(t *testing.T) {
 
 	// Check making a VFS with nil options
 	vfs := New(r.Fremote, nil)
-	var defaultOpt = DefaultOpt
+	var defaultOpt = vfscommon.DefaultOpt
 	defaultOpt.DirPerms |= os.ModeDir
 	assert.Equal(t, vfs.Opt, defaultOpt)
 	assert.Equal(t, vfs.f, r.Fremote)
 
 	// Check the initialisation
-	var opt = DefaultOpt
+	var opt = vfscommon.DefaultOpt
 	opt.DirPerms = 0777
 	opt.FilePerms = 0666
 	opt.Umask = 0002

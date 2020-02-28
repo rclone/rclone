@@ -361,12 +361,7 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	if errc != 0 {
 		return errc
 	}
-	var err error
-	if fsys.VFS.Opt.CacheMode < vfs.CacheModeWrites || handle.Node().Mode()&os.ModeAppend == 0 {
-		n, err = handle.WriteAt(buff, ofst)
-	} else {
-		n, err = handle.Write(buff)
-	}
+	n, err := handle.WriteAt(buff, ofst)
 	if err != nil {
 		return translateError(err)
 	}

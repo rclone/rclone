@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"syscall"
 
 	fusefs "github.com/hanwen/go-fuse/v2/fs"
@@ -74,11 +73,7 @@ func (f *FileHandle) Write(ctx context.Context, data []byte, off int64) (written
 	var n int
 	var err error
 	defer log.Trace(f, "off=%d", off)("n=%d, off=%d, errno=%v", &n, &off, &errno)
-	if f.h.Node().VFS().Opt.CacheMode < vfs.CacheModeWrites || f.h.Node().Mode()&os.ModeAppend == 0 {
-		n, err = f.h.WriteAt(data, off)
-	} else {
-		n, err = f.h.Write(data)
-	}
+	n, err = f.h.WriteAt(data, off)
 	return uint32(n), translateError(err)
 }
 

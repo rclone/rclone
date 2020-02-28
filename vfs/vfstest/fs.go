@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,11 +46,11 @@ var (
 func RunTests(t *testing.T, useVFS bool, fn MountFn) {
 	mountFn = fn
 	flag.Parse()
-	cacheModes := []vfs.CacheMode{
-		vfs.CacheModeOff,
-		vfs.CacheModeMinimal,
-		vfs.CacheModeWrites,
-		vfs.CacheModeFull,
+	cacheModes := []vfscommon.CacheMode{
+		vfscommon.CacheModeOff,
+		vfscommon.CacheModeMinimal,
+		vfscommon.CacheModeWrites,
+		vfscommon.CacheModeFull,
 	}
 	run = newRun(useVFS)
 	for _, cacheMode := range cacheModes {
@@ -218,7 +219,7 @@ func (r *Run) umount() {
 }
 
 // cacheMode flushes the VFS and changes the CacheMode
-func (r *Run) cacheMode(cacheMode vfs.CacheMode) {
+func (r *Run) cacheMode(cacheMode vfscommon.CacheMode) {
 	if r.skip {
 		log.Printf("FUSE not found so skipping cacheMode")
 		return

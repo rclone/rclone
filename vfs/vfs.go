@@ -27,7 +27,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -36,31 +35,9 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/vfs/vfscache"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
-
-// DefaultOpt is the default values uses for Opt
-var DefaultOpt = Options{
-	NoModTime:         false,
-	NoChecksum:        false,
-	NoSeek:            false,
-	DirCacheTime:      5 * 60 * time.Second,
-	PollInterval:      time.Minute,
-	ReadOnly:          false,
-	Umask:             0,
-	UID:               ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
-	GID:               ^uint32(0), // overriden for non windows in mount_unix.go
-	DirPerms:          os.FileMode(0777),
-	FilePerms:         os.FileMode(0666),
-	CacheMode:         CacheModeOff,
-	CacheMaxAge:       3600 * time.Second,
-	CachePollInterval: 60 * time.Second,
-	ChunkSize:         128 * fs.MebiByte,
-	ChunkSizeLimit:    -1,
-	CacheMaxSize:      -1,
-	CaseInsensitive:   runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise
-	WriteWait:         1000 * time.Millisecond,
-	ReadWait:          5 * time.Millisecond,
-}
 
 // Node represents either a directory (*Dir) or a file (*File)
 type Node interface {
@@ -180,8 +157,8 @@ var (
 type VFS struct {
 	f         fs.Fs
 	root      *Dir
-	Opt       Options
-	cache     *cache
+	Opt       vfscommon.Options
+	cache     *vfscache.Cache
 	cancel    context.CancelFunc
 	usageMu   sync.Mutex
 	usageTime time.Time
@@ -189,33 +166,9 @@ type VFS struct {
 	pollChan  chan time.Duration
 }
 
-// Options is options for creating the vfs
-type Options struct {
-	NoSeek            bool          // don't allow seeking if set
-	NoChecksum        bool          // don't check checksums if set
-	ReadOnly          bool          // if set VFS is read only
-	NoModTime         bool          // don't read mod times for files
-	DirCacheTime      time.Duration // how long to consider directory listing cache valid
-	PollInterval      time.Duration
-	Umask             int
-	UID               uint32
-	GID               uint32
-	DirPerms          os.FileMode
-	FilePerms         os.FileMode
-	ChunkSize         fs.SizeSuffix // if > 0 read files in chunks
-	ChunkSizeLimit    fs.SizeSuffix // if > ChunkSize double the chunk size after each chunk until reached
-	CacheMode         CacheMode
-	CacheMaxAge       time.Duration
-	CacheMaxSize      fs.SizeSuffix
-	CachePollInterval time.Duration
-	CaseInsensitive   bool
-	WriteWait         time.Duration // time to wait for in-sequence write
-	ReadWait          time.Duration // time to wait for in-sequence read
-}
-
 // New creates a new VFS and root directory.  If opt is nil, then
 // DefaultOpt will be used
-func New(f fs.Fs, opt *Options) *VFS {
+func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
 	vfs := &VFS{
 		f: f,
@@ -225,7 +178,7 @@ func New(f fs.Fs, opt *Options) *VFS {
 	if opt != nil {
 		vfs.Opt = *opt
 	} else {
-		vfs.Opt = DefaultOpt
+		vfs.Opt = vfscommon.DefaultOpt
 	}
 
 	// Mask the permissions with the umask
@@ -260,15 +213,15 @@ func (vfs *VFS) Fs() fs.Fs {
 }
 
 // SetCacheMode change the cache mode
-func (vfs *VFS) SetCacheMode(cacheMode CacheMode) {
+func (vfs *VFS) SetCacheMode(cacheMode vfscommon.CacheMode) {
 	vfs.Shutdown()
 	vfs.cache = nil
-	if cacheMode > CacheModeOff {
+	if cacheMode > vfscommon.CacheModeOff {
 		ctx, cancel := context.WithCancel(context.Background())
-		cache, err := newCache(ctx, vfs.f, &vfs.Opt) // FIXME pass on context or get from Opt?
+		cache, err := vfscache.New(ctx, vfs.f, &vfs.Opt) // FIXME pass on context or get from Opt?
 		if err != nil {
 			fs.Errorf(nil, "Failed to create vfs cache - disabling: %v", err)
-			vfs.Opt.CacheMode = CacheModeOff
+			vfs.Opt.CacheMode = vfscommon.CacheModeOff
 			cancel()
 			return
 		}
@@ -288,10 +241,10 @@ func (vfs *VFS) Shutdown() {
 
 // CleanUp deletes the contents of the on disk cache
 func (vfs *VFS) CleanUp() error {
-	if vfs.Opt.CacheMode == CacheModeOff {
+	if vfs.Opt.CacheMode == vfscommon.CacheModeOff {
 		return nil
 	}
-	return vfs.cache.cleanUp()
+	return vfs.cache.CleanUp()
 }
 
 // FlushDirCache empties the directory cache

@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // Dir represents a directory entry
@@ -150,7 +151,7 @@ func (d *Dir) changeNotify(relativePath string, entryType fs.EntryType) {
 	d.mu.RLock()
 	absPath := path.Join(d.path, relativePath)
 	d.mu.RUnlock()
-	d.invalidateDir(findParent(absPath))
+	d.invalidateDir(vfscommon.FindParent(absPath))
 	if entryType == fs.EntryDirectory {
 		d.invalidateDir(absPath)
 	}
@@ -168,7 +169,7 @@ func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
 	absPath := path.Join(d.path, relativePath)
 	d.mu.RUnlock()
 	if absPath != "" {
-		d.invalidateDir(findParent(absPath))
+		d.invalidateDir(vfscommon.FindParent(absPath))
 	}
 	if entryType == fs.EntryDirectory {
 		d.forgetDirPath(relativePath)
