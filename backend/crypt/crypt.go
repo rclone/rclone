@@ -47,8 +47,10 @@ func init() {
 				},
 			},
 		}, {
-			Name:    "directory_name_encryption",
-			Help:    "Option to either encrypt directory names or leave them intact.",
+			Name: "directory_name_encryption",
+			Help: `Option to either encrypt directory names or leave them intact.
+
+NB If filename_encryption is "off" then this option will do nothing.`,
 			Default: true,
 			Examples: []fs.OptionExample{
 				{
