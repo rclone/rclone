@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -64,6 +65,16 @@ func (t *Timestamp) UnmarshalJSON(data []byte) error {
 }
 
 const versionFormat = "-v2006-01-02-150405.000"
+
+var /* const */ versionRegexp = regexp.MustCompile("-v\\d{4}-\\d{2}-\\d{2}-\\d{6}-\\d{3}")
+
+// HasVersion returns true if it looks like the passed filename has a timestamp on it.
+//
+// Note that the passed filename's timestamp may still be invalid even if this
+// function returns true.
+func HasVersion(remote string) bool {
+	return versionRegexp.MatchString(remote)
+}
 
 // AddVersion adds the timestamp as a version string into the filename passed in.
 func (t Timestamp) AddVersion(remote string) string {

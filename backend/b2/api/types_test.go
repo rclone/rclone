@@ -36,6 +36,24 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 	assert.Equal(t, (time.Time)(t1), (time.Time)(tActual))
 }
 
+func TestTimestampHasVersion(t *testing.T) {
+	for _, test := range []struct {
+		in       string
+		expected bool
+	}{
+		{"potato.txt", false},
+		{"potato", false},
+		{"", false},
+		{"potato-v1970-01-01-010101-123.txt", true},
+		{"potato-v2001-02-03-040506-123", true},
+		{"-v2001-02-03-040506-123", true},
+		{"-v9999-99-99-999999-999", true},
+	} {
+		actual := api.HasVersion(test.in)
+		assert.Equal(t, test.expected, actual, test.in)
+	}
+}
+
 func TestTimestampAddVersion(t *testing.T) {
 	for _, test := range []struct {
 		t        api.Timestamp

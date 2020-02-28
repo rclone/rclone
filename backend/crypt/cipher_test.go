@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -180,7 +181,8 @@ func TestEncryptFileName(t *testing.T) {
 }
 
 func TestDecryptFileName(t *testing.T) {
-	for _, test := range []struct {
+	var timestamp api.Timestamp
+	for _, testSpec := range []struct {
 		mode           NameEncryptionMode
 		dirNameEncrypt bool
 		in             string
@@ -193,20 +195,37 @@ func TestDecryptFileName(t *testing.T) {
 		{NameEncryptionStandard, true, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng/qgm4avr35m5loi1th53ato71v0", "1/12/123", nil},
 		{NameEncryptionStandard, true, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1/qgm4avr35m5loi1th53ato71v0", "", ErrorNotAMultipleOfBlocksize},
 		{NameEncryptionStandard, false, "1/12/qgm4avr35m5loi1th53ato71v0", "1/12/123", nil},
+		{NameEncryptionStandard, true, "p0e52nreeaj0a5ea7s64m4j72s-v9999-99-99-000000-000", "", base32.CorruptInputError(26)},
 		{NameEncryptionOff, true, "1/12/123.bin", "1/12/123", nil},
 		{NameEncryptionOff, true, "1/12/123.bix", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionOff, true, ".bin", "", ErrorNotAnEncryptedFile},
+		{NameEncryptionOff, true, "1/12/123-v9999-99-99-000000-000.bin", "1/12/123-v9999-99-99-000000-000", nil},
 		{NameEncryptionObfuscated, true, "!.hello", "hello", nil},
 		{NameEncryptionObfuscated, true, "hello", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionObfuscated, true, "161.\u00e4", "\u00a1", nil},
 		{NameEncryptionObfuscated, true, "160.\u03c2", "\u03a0", nil},
 		{NameEncryptionObfuscated, false, "1/12/123/53.!!lipps", "1/12/123/!hello", nil},
+		{NameEncryptionObfuscated, false, "1/12/123/53.!!lipps-v9999-99-99-000000-000", "1/12/123/!hello-r0000-00-00-111111-111", nil},
 	} {
-		c, _ := newCipher(test.mode, "", "", test.dirNameEncrypt)
-		actual, actualErr := c.DecryptFileName(test.in)
-		what := fmt.Sprintf("Testing %q (mode=%v)", test.in, test.mode)
-		assert.Equal(t, test.expected, actual, what)
-		assert.Equal(t, test.expectedErr, actualErr, what)
+		timestampedIn := timestamp.AddVersion(testSpec.in)
+		timestampedExpected := timestamp.AddVersion(testSpec.expected)
+		if testSpec.expectedErr != nil {
+			timestampedExpected = ""
+		}
+		for _, test := range []struct {
+			in          string
+			expected    string
+			expectedErr error
+		}{
+			{testSpec.in, testSpec.expected, testSpec.expectedErr},
+			{timestampedIn, timestampedExpected, testSpec.expectedErr},
+		} {
+			c, _ := newCipher(testSpec.mode, "", "", testSpec.dirNameEncrypt)
+			actual, actualErr := c.DecryptFileName(test.in)
+			what := fmt.Sprintf("Testing %q (mode=%v)", test.in, testSpec.mode)
+			assert.Equal(t, test.expected, actual, what)
+			assert.Equal(t, test.expectedErr, actualErr, what)
+		}
 	}
 }
 

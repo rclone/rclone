@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -500,6 +501,19 @@ func (c *cipher) decryptFileName(in string) (string, error) {
 		if !c.dirNameEncrypt && i != (len(segments)-1) {
 			continue
 		}
+
+		hasVersion := false
+		var t api.Timestamp
+		if i == (len(segments)-1) && api.HasVersion(segments[i]) {
+			var s string
+			t, s = api.RemoveVersion(segments[i])
+			// RemoveVersion can fail, in which case it returns segments[i]
+			if s != segments[i] {
+				segments[i] = s
+				hasVersion = true
+			}
+		}
+
 		if c.mode == NameEncryptionStandard {
 			segments[i], err = c.decryptSegment(segments[i])
 		} else {
@@ -509,6 +523,10 @@ func (c *cipher) decryptFileName(in string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
+		if hasVersion {
+			segments[i] = t.AddVersion(segments[i])
+		}
 	}
 	return strings.Join(segments, "/"), nil
 }
@@ -517,10 +535,18 @@ func (c *cipher) decryptFileName(in string) (string, error) {
 func (c *cipher) DecryptFileName(in string) (string, error) {
 	if c.mode == NameEncryptionOff {
 		remainingLength := len(in) - len(encryptedSuffix)
-		if remainingLength > 0 && strings.HasSuffix(in, encryptedSuffix) {
-			return in[:remainingLength], nil
+		if remainingLength == 0 || !strings.HasSuffix(in, encryptedSuffix) {
+			return "", ErrorNotAnEncryptedFile
 		}
-		return "", ErrorNotAnEncryptedFile
+		decrypted := in[:remainingLength]
+		if api.HasVersion(decrypted) {
+			_, unversioned := api.RemoveVersion(decrypted)
+			if unversioned == "" {
+				return "", ErrorNotAnEncryptedFile
+			}
+		}
+		// Leave the version string on, if it was there
+		return decrypted, nil
 	}
 	return c.decryptFileName(in)
 }
