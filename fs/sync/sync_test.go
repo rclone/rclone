@@ -1593,9 +1593,11 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 
 	fstest.CheckItems(t, r.Fremote, file1b, file2, file3a, file1a)
 }
-func TestSyncBackupDir(t *testing.T)                        { testSyncBackupDir(t, "", false) }
-func TestSyncBackupDirWithSuffix(t *testing.T)              { testSyncBackupDir(t, ".bak", false) }
-func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) { testSyncBackupDir(t, "-2019-01-01", true) }
+func TestSyncBackupDir(t *testing.T)           { testSyncBackupDir(t, "", false) }
+func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak", false) }
+func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) {
+	testSyncBackupDir(t, "-2019-01-01", true)
+}
 
 // Test with Suffix set
 func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {

@@ -81,8 +81,8 @@ func (n *Node) Statfs(ctx context.Context, out *fuse.StatfsOut) syscall.Errno {
 	out.Blocks = fsBlocks  // Total data blocks in file system.
 	out.Bfree = fsBlocks   // Free blocks in file system.
 	out.Bavail = fsBlocks  // Free blocks in file system if you're not root.
-	out.Files = 1E9        // Total files in file system.
-	out.Ffree = 1E9        // Free files in file system.
+	out.Files = 1e9        // Total files in file system.
+	out.Ffree = 1e9        // Free files in file system.
 	out.Bsize = blockSize  // Block size
 	out.NameLen = 255      // Maximum file name length?
 	out.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
