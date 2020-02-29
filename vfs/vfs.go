@@ -506,6 +506,15 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 		if u.Used != nil {
 			used = *u.Used
 		}
+		if total < 0 && free >= 0 && used >= 0 {
+			total = free + used
+		}
+		if free < 0 && total >= 0 && used >= 0 {
+			free = total - used
+		}
+		if used < 0 && total >= 0 && free >= 0 {
+			used = total - free
+		}
 	}
 	return
 }
