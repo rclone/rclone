@@ -1329,19 +1329,8 @@ func (f *Fs) updateRegionForBucket(bucket string) error {
 	return nil
 }
 
-// listFn is called from list to handle an object.
-type listFn func(remote string, object *s3.Object, isDirectory bool) error
-
-// list lists the objects into the function supplied from
-// the bucket and directory supplied.  The remote has prefix
-// removed from it and if addBucket is set then it adds the
-// bucket to the start.
-//
-// Set recurse to read sub directories
-func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, fn listFn) error {
-	if prefix != "" {
-		prefix += "/"
-	}
+// Return a ListObjectsInput structure, and a boolean indicating whether listings are URL-encoded.
+func (f *Fs) createListObjectsInput(bucket *string, directory string, recurse bool) (s3.ListObjectsInput, bool) {
 	if directory != "" {
 		directory += "/"
 	}
@@ -1349,7 +1338,6 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	if !recurse {
 		delimiter = "/"
 	}
-	var marker *string
 	// URL encode the listings so we can use control characters in object names
 	// See: https://github.com/aws/aws-sdk-go/issues/1914
 	//
@@ -1366,18 +1354,37 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	// So we enable only on providers we know supports it properly, all others can retry when a
 	// XML Syntax error is detected.
 	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba" || f.opt.Provider == "Minio")
+
+	req := s3.ListObjectsInput{
+		Bucket:    bucket,
+		Delimiter: &delimiter,
+		Prefix:    &directory,
+		MaxKeys:   &f.opt.ListChunk,
+	}
+	if urlEncodeListings {
+		req.EncodingType = aws.String(s3.EncodingTypeUrl)
+	}
+	return req, urlEncodeListings
+}
+
+// listFn is called from list to handle an object.
+type listFn func(remote string, object *s3.Object, isDirectory bool) error
+
+// list lists the objects into the function supplied from
+// the bucket and directory supplied.  The remote has prefix
+// removed from it and if addBucket is set then it adds the
+// bucket to the start.
+//
+// Set recurse to read sub directories
+func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, fn listFn) error {
+	if prefix != "" {
+		prefix += "/"
+	}
+	var marker *string
 	for {
 		// FIXME need to implement ALL loop
-		req := s3.ListObjectsInput{
-			Bucket:    &bucket,
-			Delimiter: &delimiter,
-			Prefix:    &directory,
-			MaxKeys:   &f.opt.ListChunk,
-			Marker:    marker,
-		}
-		if urlEncodeListings {
-			req.EncodingType = aws.String(s3.EncodingTypeUrl)
-		}
+		req, urlEncodeListings := f.createListObjectsInput(&bucket, directory, recurse)
+		req.Marker = marker
 		var resp *s3.ListObjectsOutput
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
@@ -1536,8 +1543,9 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 	return entries, nil
 }
 
-// listBuckets lists the buckets to out
-func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
+type bucketHandler func(bucket *s3.Bucket) error
+
+func (f *Fs) listBucketsAndDo(ctx context.Context, handler bucketHandler) (err error) {
 	req := s3.ListBucketsInput{}
 	var resp *s3.ListBucketsOutput
 	err = f.pacer.Call(func() (bool, error) {
@@ -1545,13 +1553,27 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 		return f.shouldRetry(err)
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, bucket := range resp.Buckets {
+		if err = handler(bucket); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// listBuckets lists the buckets to out
+func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
+	err = f.listBucketsAndDo(ctx, func(bucket *s3.Bucket) error {
 		bucketName := f.opt.Enc.ToStandardName(aws.StringValue(bucket.Name))
 		f.cache.MarkOK(bucketName)
 		d := fs.NewDir(bucketName, aws.TimeValue(bucket.CreationDate))
 		entries = append(entries, d)
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	return entries, nil
 }
@@ -1865,6 +1887,32 @@ func (f *Fs) copyMultipart(ctx context.Context, req *s3.CopyObjectInput, dstBuck
 		})
 		return f.shouldRetry(err)
 	})
+}
+
+// About gets quota information from the Fs.
+// This implementation lists all objects of all buckets, and sums their sizes.
+// No information is provided regarding Free or Total space.
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	req, _ := f.createListObjectsInput(nil, "", true)
+	used := int64(0)
+	err := f.listBucketsAndDo(ctx, func(bucket *s3.Bucket) error {
+		req.Bucket = bucket.Name
+		return f.pacer.Call(func() (bool, error) {
+			return f.shouldRetry(
+				f.c.ListObjectsPagesWithContext(ctx, &req, func(page *s3.ListObjectsOutput, last bool) bool {
+					for _, s3Object := range page.Contents {
+						used += *s3Object.Size
+					}
+					return true
+				}))
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &fs.Usage{
+		Used: fs.NewUsageValue(used),
+	}, nil
 }
 
 // Copy src to this remote using server side copy operations.
@@ -2474,6 +2522,7 @@ func (o *Object) GetTier() string {
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs          = &Fs{}
+	_ fs.Abouter     = &Fs{}
 	_ fs.Copier      = &Fs{}
 	_ fs.PutStreamer = &Fs{}
 	_ fs.ListRer     = &Fs{}
