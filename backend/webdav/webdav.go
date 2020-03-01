@@ -989,13 +989,14 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, errors.Wrap(err, "about call failed")
 	}
 	usage := &fs.Usage{}
-	if q.Available != 0 || q.Used != 0 {
-		if q.Available >= 0 && q.Used >= 0 {
-			usage.Total = fs.NewUsageValue(q.Available + q.Used)
-		}
-		if q.Used >= 0 {
-			usage.Used = fs.NewUsageValue(q.Used)
-		}
+	if q.Used >= 0 {
+		usage.Used = fs.NewUsageValue(q.Used)
+	}
+	if q.Available >= 0 {
+		usage.Free = fs.NewUsageValue(q.Available)
+	}
+	if q.Available >= 0 && q.Used >= 0 {
+		usage.Total = fs.NewUsageValue(q.Available + q.Used)
 	}
 	return usage, nil
 }
