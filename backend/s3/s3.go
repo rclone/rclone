@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"regexp"
 	"sort"
@@ -43,8 +44,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -59,7 +63,6 @@ import (
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/sync/errgroup"
 )
 
 // Register with Fs
@@ -1063,12 +1066,19 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 			}),
 			ExpiryWindow: 3 * time.Minute,
 		},
-
-		// Pick up IAM role if we are in EKS
-		&stscreds.WebIdentityRoleProvider{
-			ExpiryWindow: 3 * time.Minute,
-		},
 	}
+
+	// Pick up IAM role if we are in EKS
+	roleARN := os.Getenv("AWS_ROLE_ARN")
+	if len(roleARN) > 0 {
+		roleSessionName := os.Getenv("AWS_ROLE_SESSION_NAME")
+		tokenPath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
+
+		providers = append(providers, stscreds.NewWebIdentityRoleProvider(sts.New(session.New(), &aws.Config{
+			HTTPClient: lowTimeoutClient,
+		}), roleARN, roleSessionName, tokenPath))
+	}
+
 	cred := credentials.NewChainCredentials(providers)
 
 	switch {
