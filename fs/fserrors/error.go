@@ -116,6 +116,10 @@ func (err wrappedFatalError) Cause() error {
 	return err.error
 }
 
+func (err wrappedFatalError) Unwrap() error {
+	return err.error
+}
+
 // IsFatalError returns true if err conforms to the Fatal interface
 // and calling the Fatal method returns true.
 func IsFatalError(err error) (isFatal bool) {
@@ -303,6 +307,10 @@ func (err *wrappedCountableError) IsCounted() bool {
 }
 
 func (err *wrappedCountableError) Cause() error {
+	return err.error
+}
+
+func (err *wrappedCountableError) Unwrap() error {
 	return err.error
 }
 
