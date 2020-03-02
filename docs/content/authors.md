@@ -341,3 +341,4 @@ Contributors
   * valery1707 <valery1707@gmail.com>
   * Yves G <theYinYeti@yalis.fr>
   * Shing Kit Chan <chanshingkit@gmail.com>
+  * Franklyn Tackitt <franklyn@tackitt.net>
