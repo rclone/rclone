@@ -322,6 +322,9 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 			VolumeName = strings.Replace(VolumeName, ":", " ", -1)
 			VolumeName = strings.Replace(VolumeName, "/", " ", -1)
 			VolumeName = strings.TrimSpace(VolumeName)
+			if runtime.GOOS == "windows" && len(VolumeName) > 32 {
+				VolumeName = VolumeName[:32]
+			}
 
 			// Start background task if --background is specified
 			if Daemon {
