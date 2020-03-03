@@ -342,3 +342,4 @@ Contributors
   * Yves G <theYinYeti@yalis.fr>
   * Shing Kit Chan <chanshingkit@gmail.com>
   * Franklyn Tackitt <franklyn@tackitt.net>
+  * Robert-André Mauchin <zebob.m@gmail.com>
