@@ -879,11 +879,15 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		// Do the same thing to the entire contents of the directory
 		_, ok := dst.(fs.Directory)
 		if ok {
-			// Record the src directory for deletion
-			s.srcEmptyDirsMu.Lock()
-			s.srcParentDirCheck(src)
-			s.srcEmptyDirs[src.Remote()] = src
-			s.srcEmptyDirsMu.Unlock()
+			// Only record matched (src & dst) empty dirs when performing move
+			if s.DoMove {
+				// Record the src directory for deletion
+				s.srcEmptyDirsMu.Lock()
+				s.srcParentDirCheck(src)
+				s.srcEmptyDirs[src.Remote()] = src
+				s.srcEmptyDirsMu.Unlock()
+			}
+
 			return true
 		}
 		// FIXME src is dir, dst is file
