@@ -1,22 +1,48 @@
 package press
 
-// This file implements the gzip algorithm.
 import (
 	"bufio"
-	"compress/gzip"
 	"io"
+
+	"github.com/klauspost/compress/gzip"
 )
 
-// GzipHeader - Header we add to a gzip file. We're contatenating GZIP files here, so we don't need this.
-var GzipHeader = []byte{}
+// AlgGzip represents gzip compression algorithm
+type AlgGzip struct {
+	level     int
+	blockSize uint32
+}
 
-// Function that compresses a block using gzip
-func (c *Compression) compressBlockGz(in []byte, out io.Writer, compressionLevel int) (compressedSize uint32, uncompressedSize int64, err error) {
+// InitializeGzip initializes the gzip compression Algorithm
+func InitializeGzip(bs uint32, level int) Algorithm {
+	a := new(AlgGzip)
+	a.blockSize = bs
+	a.level = level
+	return a
+}
+
+// GetFileExtension returns file extension
+func (a *AlgGzip) GetFileExtension() string {
+	return ".gz"
+}
+
+// GetHeader returns the Lz4 compression header
+func (a *AlgGzip) GetHeader() []byte {
+	return []byte{}
+}
+
+// GetFooter returns
+func (a *AlgGzip) GetFooter() []byte {
+	return []byte{}
+}
+
+// CompressBlock that compresses a block using gzip
+func (a *AlgGzip) CompressBlock(in []byte, out io.Writer) (compressedSize uint32, uncompressedSize uint64, err error) {
 	// Initialize buffer
-	bufw := bufio.NewWriterSize(out, int(c.maxCompressedBlockSize()))
+	bufw := bufio.NewWriterSize(out, int(a.blockSize+(a.blockSize)>>4))
 
 	// Initialize block writer
-	outw, err := gzip.NewWriterLevel(bufw, compressionLevel)
+	outw, err := gzip.NewWriterLevel(bufw, a.level)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -35,11 +61,11 @@ func (c *Compression) compressBlockGz(in []byte, out io.Writer, compressionLevel
 	blockSize := uint32(bufw.Buffered())
 	err = bufw.Flush()
 
-	return blockSize, int64(len(in)), err
+	return blockSize, uint64(len(in)), err
 }
 
-// Utility function to decompress a block range using gzip
-func decompressBlockRangeGz(in io.Reader, out io.Writer) (n int, err error) {
+// DecompressBlock decompresses Lz4 compressed block
+func (a *AlgGzip) DecompressBlock(in io.Reader, out io.Writer, BlockSize uint32) (n int, err error) {
 	gzipReader, err := gzip.NewReader(in)
 	if err != nil {
 		return 0, err

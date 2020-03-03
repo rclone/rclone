@@ -38,14 +38,8 @@ func init() {
 		Value: "lz4",
 		Help:  "Fast, real-time compression with reasonable compression ratios.",
 	}, {
-		Value: "snappy",
-		Help:  "Google's compression algorithm. Slightly faster and larger than LZ4.",
-	}, {
-		Value: "gzip-min",
+		Value: "gzip",
 		Help:  "Standard gzip compression with fastest parameters.",
-	}, {
-		Value: "gzip-default",
-		Help:  "Standard gzip compression with default parameters.",
 	},
 	}
 
@@ -60,8 +54,8 @@ func init() {
 			Required: true,
 		}, {
 			Name:     "compression_mode",
-			Help:     "Compression mode. Installing XZ will unlock XZ modes.",
-			Default:  "gzip-min",
+			Help:     "Compression mode.",
+			Default:  "gzip",
 			Examples: compressionModeOptions,
 		}},
 	})
@@ -538,8 +532,7 @@ func (f *Fs) putMetadata(ctx context.Context, meta *ObjectMetadata, src fs.Objec
 	if err != nil {
 		return nil, err
 	}
-	var metaReader io.Reader
-	metaReader = bytes.NewReader(b.Bytes())
+	metaReader := bytes.NewReader(b.Bytes())
 
 	// Put the data
 	mo, err = put(ctx, metaReader, f.wrapInfo(src, generateMetadataName(src.Remote()), int64(b.Len())), options...)

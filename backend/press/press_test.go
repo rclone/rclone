@@ -92,9 +92,7 @@ func TestRemoteGzip(t *testing.T) {
 		ExtraConfig: []fstests.ExtraConfigItem{
 			{Name: name, Key: "type", Value: "press"},
 			{Name: name, Key: "remote", Value: tempdir},
-			{Name: name, Key: "compression_mode", Value: "gzip-min"},
+			{Name: name, Key: "compression_mode", Value: "gzip"},
 		},
 	})
 }
-
-// TODO: Snappy needs testing
