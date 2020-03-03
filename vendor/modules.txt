@@ -16,8 +16,6 @@ github.com/Azure/azure-storage-blob-go/azblob
 ## explicit
 # github.com/Unknwon/goconfig v0.0.0-20191126170842-860a72fb44fd
 ## explicit
-# github.com/OneOfOne/xxhash v1.2.7
-github.com/OneOfOne/xxhash
 github.com/Unknwon/goconfig
 # github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 ## explicit
@@ -88,6 +86,9 @@ github.com/beorn7/perks/quantile
 github.com/billziss-gh/cgofuse/fuse
 # github.com/btcsuite/btcutil v1.0.1
 github.com/btcsuite/btcutil/base58
+# github.com/buengese/xxh32 v1.0.1
+## explicit
+github.com/buengese/xxh32
 # github.com/calebcase/tmpfile v1.0.1
 github.com/calebcase/tmpfile
 # github.com/cespare/xxhash/v2 v2.1.1
@@ -117,15 +118,14 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
-# github.com/gogo/protobuf v1.2.1
-github.com/gogo/protobuf/proto
-# github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
-# github.com/etcd-io/bbolt v1.3.3
-github.com/etcd-io/bbolt
 # github.com/gabriel-vasile/mimetype v1.0.2
+## explicit
 github.com/gabriel-vasile/mimetype
 github.com/gabriel-vasile/mimetype/internal/json
 github.com/gabriel-vasile/mimetype/internal/matchers
+# github.com/gogo/protobuf v1.2.1
+github.com/gogo/protobuf/proto
+# github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.3
 github.com/golang/protobuf/proto
@@ -133,8 +133,6 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
-github.com/golang/snappy
 # github.com/google/go-querystring v1.0.0
 ## explicit
 github.com/google/go-querystring/query
@@ -149,8 +147,7 @@ github.com/hanwen/go-fuse/v2/fuse
 github.com/hanwen/go-fuse/v2/internal
 github.com/hanwen/go-fuse/v2/internal/utimens
 github.com/hanwen/go-fuse/v2/splice
-# github.com/id01/go-lz4 v1.0.3
-github.com/id01/go-lz4
+## explicit
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122
@@ -164,6 +161,10 @@ github.com/jzelinskie/whirlpool
 # github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 ## explicit
 github.com/kardianos/osext
+# github.com/klauspost/compress v1.10.1
+## explicit
+github.com/klauspost/compress/flate
+github.com/klauspost/compress/gzip
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 ## explicit
 github.com/konsorten/go-windows-terminal-sequences
@@ -206,9 +207,9 @@ github.com/nsf/termbox-go
 # github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd
 ## explicit
 github.com/okzk/sdnotify
-# github.com/onsi/ginkgo v1.9.0
+# github.com/onsi/ginkgo v1.12.0
 ## explicit
-# github.com/onsi/gomega v1.6.0
+# github.com/onsi/gomega v1.9.0
 ## explicit
 # github.com/patrickmn/go-cache v2.1.0+incompatible
 ## explicit
@@ -219,6 +220,10 @@ github.com/pengsrc/go-shared/check
 github.com/pengsrc/go-shared/convert
 github.com/pengsrc/go-shared/log
 github.com/pengsrc/go-shared/reopen
+# github.com/pierrec/lz4 v2.4.1+incompatible
+## explicit
+github.com/pierrec/lz4
+github.com/pierrec/lz4/internal/xxh32
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -282,6 +287,12 @@ github.com/stretchr/testify/require
 # github.com/t3rm1n4l/go-mega v0.0.0-20200117211730-79a813bb328d
 ## explicit
 github.com/t3rm1n4l/go-mega
+# github.com/ulikunitz/xz v0.5.7
+## explicit
+github.com/ulikunitz/xz
+github.com/ulikunitz/xz/internal/hash
+github.com/ulikunitz/xz/internal/xlog
+github.com/ulikunitz/xz/lzma
 # github.com/vivint/infectious v0.0.0-20200605153912-25a574ae18a3
 github.com/vivint/infectious
 # github.com/xanzy/ssh-agent v0.2.1
