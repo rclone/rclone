@@ -96,3 +96,34 @@ func TestRemoteGzip(t *testing.T) {
 		},
 	})
 }
+
+// TestRemoteXz tests XZ compression
+func TestRemoteXz(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-xz")
+	name := "TestPressXz"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*Object)(nil),
+		UnimplementableFsMethods: []string{
+			"OpenWriterAt",
+			"MergeDirs",
+			"DirCacheFlush",
+			"PutUnchecked",
+			"PutStream",
+			"UserInfo",
+			"Disconnect",
+		},
+		UnimplementableObjectMethods: []string{
+			"GetTier",
+			"SetTier",
+		},
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "press"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "compression_mode", Value: "xz"},
+		},
+	})
+}

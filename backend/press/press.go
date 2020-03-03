@@ -40,6 +40,9 @@ func init() {
 	}, {
 		Value: "gzip",
 		Help:  "Standard gzip compression with fastest parameters.",
+	}, {
+		Value: "xz",
+		Help:  "Standard xz compression with fastest parameters.",
 	},
 	}
 

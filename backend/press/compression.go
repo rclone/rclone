@@ -62,6 +62,9 @@ func NewCompressionPreset(preset string) (*Compression, error) {
 	case "gzip":
 		alg := InitializeGzip(131072, 6)
 		return NewCompression(Gzip, alg, 131070) // GZIP-default compression (medium)*/
+	case "xz":
+		alg := InitializeXZ(1048576)
+		return NewCompression(XZ, alg, 1048576) // XZ compression (strong compression)*/
 	}
 	return nil, errors.New("Compression mode doesn't exist")
 }
@@ -75,6 +78,9 @@ func NewCompressionPresetNumber(preset int) (*Compression, error) {
 	case Gzip:
 		alg := InitializeGzip(131072, 6)
 		return NewCompression(Gzip, alg, 131070) // GZIP-default compression (medium)*/
+	case XZ:
+		alg := InitializeXZ(1048576)
+		return NewCompression(XZ, alg, 1048576) // XZ compression (strong compression)*/
 	}
 	return nil, errors.New("Compression mode doesn't exist")
 }

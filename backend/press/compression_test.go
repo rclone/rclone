@@ -122,7 +122,7 @@ func getCompressibleString(size int) string {
 }
 
 func TestCompression(t *testing.T) {
-	testCases := []string{"lz4", "gzip"}
+	testCases := []string{"lz4", "gzip", "xz"}
 	for _, tc := range testCases {
 		t.Run(tc, func(t *testing.T) {
 			testSmallLarge(t, tc)
