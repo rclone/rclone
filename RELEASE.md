@@ -33,7 +33,7 @@ This file describes how to make the various kinds of releases
   * make startdev
   * # announce with forum post, twitter post, patreon post
 
-Early in the next release cycle update the vendored dependencies
+Early in the next release cycle update the dependencies
 
   * Review any pinned packages in go.mod and remove if possible
   * make update
@@ -53,7 +53,6 @@ Can be fixed with
 
     * GO111MODULE=on go get -u github.com/russross/blackfriday@v1.5.2
     * GO111MODULE=on go mod tidy
-    * GO111MODULE=on go mod vendor
  
 
 ## Making a point release
