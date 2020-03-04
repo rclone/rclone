@@ -1039,6 +1039,12 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	def := defaults.Get()
 	def.Config.HTTPClient = lowTimeoutClient
 
+	// start a new AWS session
+	awsSession, err := session.NewSession()
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "NewSession")
+	}
+
 	// first provider to supply a credential set "wins"
 	providers := []credentials.Provider{
 		// use static credentials if they're present (checked by provider)
@@ -1058,7 +1064,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 
 		// Pick up IAM role in case we're on EC2
 		&ec2rolecreds.EC2RoleProvider{
-			Client: ec2metadata.New(session.New(), &aws.Config{
+			Client: ec2metadata.New(awsSession, &aws.Config{
 				HTTPClient: lowTimeoutClient,
 			}),
 			ExpiryWindow: 3 * time.Minute,
