@@ -113,29 +113,39 @@ Rclone has 3 ways of authenticating with Azure Blob Storage:
 
 #### Account and Key
 
-This is the most straight forward and least flexible way.  Just fill in the `account` and `key` lines and leave the rest blank.
+This is the most straight forward and least flexible way.  Just fill
+in the `account` and `key` lines and leave the rest blank.
 
 #### SAS URL
 
-This can be an account level SAS URL or container level SAS URL
+This can be an account level SAS URL or container level SAS URL.
 
-To use it leave `account`, `key`  blank and fill in `sas_url`.
+To use it leave `account`, `key` blank and fill in `sas_url`.
 
-Account level SAS URL or container level SAS URL can be obtained from Azure portal or Azure Storage Explorer.
-To get a container level SAS URL right click on a container in the Azure Blob explorer in the Azure portal.
+An account level SAS URL or container level SAS URL can be obtained
+from the Azure portal or the Azure Storage Explorer.  To get a
+container level SAS URL right click on a container in the Azure Blob
+explorer in the Azure portal.
 
-If You use container level SAS URL, rclone operations are permitted only on particular container, eg
+If you use a container level SAS URL, rclone operations are permitted
+only on a particular container, eg
 
-    rclone ls azureblob:container or rclone ls azureblob:
+    rclone ls azureblob:container
 
-Since container name already exists in SAS URL, you can leave it empty as well.
+You can also list the single container from the root. This will only
+show the container specified by the SAS URL.
 
-However these will not work
+    $ rclone lsd azureblob:
+    container/
 
-    rclone lsd azureblob:
+Note that you can't see or access any other containers - this will
+fail
+
     rclone ls azureblob:othercontainer
 
-This would be useful for temporarily allowing third parties access to a single container or putting credentials into an untrusted environment.
+Container level SAS URLs are useful for temporarily allowing third
+parties access to a single container or putting credentials into an
+untrusted environment such as a CI build server.
 
 ### Multipart uploads ###
 
