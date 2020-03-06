@@ -44,3 +44,8 @@ again:
 	// }
 	return err
 }
+
+// setSparse makes the file be a sparse file
+func setSparse(out *os.File) error {
+	return nil
+}

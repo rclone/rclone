@@ -8,3 +8,8 @@ import "os"
 func preAllocate(size int64, out *os.File) error {
 	return nil
 }
+
+// setSparse makes the file be a sparse file
+func setSparse(out *os.File) error {
+	return nil
+}

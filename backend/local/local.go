@@ -1068,6 +1068,12 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	if err != nil {
 		fs.Debugf(o, "Failed to pre-allocate: %v", err)
 	}
+	// Set the file to be a sparse file (important on Windows)
+	err = setSparse(out)
+	if err != nil {
+		fs.Debugf(o, "Failed to set sparse: %v", err)
+	}
+
 	return out, nil
 }
 
