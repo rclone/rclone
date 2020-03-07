@@ -1591,8 +1591,13 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in <-chan list
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
 		_, err := f.list(ctx, dirs, "", false, false, false, func(item *drive.File) bool {
+			// shared with me items have no parents when at the root
+			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
+				item.Parents = dirs
+			}
 			for _, parent := range item.Parents {
 				var i int
+				earlyExit := false
 				// If only one item in paths then no need to search for the ID
 				// assuming google drive is doing its job properly.
 				//
@@ -1602,6 +1607,9 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in <-chan list
 					// - shared with me items have no parents at the root
 					// - if using a root alias, eg "root" or "appDataFolder" the ID won't match
 					i = 0
+					// items at root can have more than one parent so we need to put
+					// the item in just once.
+					earlyExit = true
 				} else {
 					// only handle parents that are in the requested dirs list if not at root
 					i = sort.SearchStrings(dirs, parent)
@@ -1620,6 +1628,11 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in <-chan list
 				if err != nil {
 					iErr = err
 					return true
+				}
+
+				// If didn't check parents then insert only once
+				if earlyExit {
+					break
 				}
 			}
 			return false
