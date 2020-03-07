@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -556,9 +557,25 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 	defer vfs.usageMu.Unlock()
 	total, used, free = -1, -1, -1
 	doAbout := vfs.f.Features().About
-	if doAbout != nil && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime) {
+	if (doAbout != nil || vfs.Opt.UsedIsSize) && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime) {
 		var err error
-		vfs.usage, err = doAbout(context.TODO())
+		ctx := context.TODO()
+		if doAbout == nil {
+			vfs.usage = &fs.Usage{}
+		} else {
+			vfs.usage, err = doAbout(ctx)
+		}
+		if vfs.Opt.UsedIsSize {
+			var usedBySizeAlgorithm int64 = 0
+			// Algorithm from `rclone size`
+			err = walk.ListR(ctx, vfs.f, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+				entries.ForObject(func(o fs.Object) {
+					usedBySizeAlgorithm += o.Size()
+				})
+				return nil
+			})
+			vfs.usage.Used = &usedBySizeAlgorithm
+		}
 		vfs.usageTime = time.Now()
 		if err != nil {
 			fs.Errorf(vfs.f, "Statfs failed: %v", err)
