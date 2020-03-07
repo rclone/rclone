@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
@@ -58,11 +59,26 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 		}
 	}
 
+	// determine if ExtraOptions already has an opt in
+	hasOption := func(optionName string) bool {
+		optionName += "="
+		for _, option := range opt.ExtraOptions {
+			if strings.HasPrefix(option, optionName) {
+				return true
+			}
+		}
+		return false
+	}
+
 	// Windows options
 	if runtime.GOOS == "windows" {
 		// These cause WinFsp to mean the current user
-		options = append(options, "-o", "uid=-1")
-		options = append(options, "-o", "gid=-1")
+		if !hasOption("uid") {
+			options = append(options, "-o", "uid=-1")
+		}
+		if !hasOption("gid") {
+			options = append(options, "-o", "gid=-1")
+		}
 		options = append(options, "--FileSystemName=rclone")
 	}
 
