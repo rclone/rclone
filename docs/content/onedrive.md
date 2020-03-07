@@ -1,7 +1,7 @@
 ---
 title: "Microsoft OneDrive"
 description: "Rclone docs for Microsoft OneDrive"
-date: "2015-10-14"
+date: "2020-03-07"
 ---
 
 <i class="fab fa-windows"></i> Microsoft OneDrive
@@ -226,8 +226,9 @@ Here are the advanced options specific to onedrive (Microsoft OneDrive).
 
 Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 
-Above this size files will be chunked - must be multiple of 320k (327,680 bytes). Note
-that the chunks will be buffered into memory.
+Above this size files will be chunked - must be multiple of 320k (327,680 bytes) and should not exceed 250M (262,144,000 bytes) else you may encounter `Microsoft.SharePoint.Client.InvalidClientQueryException: The request message is too big. The server does not allow messages larger than 262144000 bytes.`
+
+Note that the chunks will be buffered into memory.
 
 - Config:      chunk_size
 - Env Var:     RCLONE_ONEDRIVE_CHUNK_SIZE
