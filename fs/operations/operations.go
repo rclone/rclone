@@ -730,57 +730,86 @@ func SameDir(fdst, fsrc fs.Info) bool {
 //
 // it returns true if differences were found
 // it also returns whether it couldn't be hashed
-func checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
+func checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 	same, ht, err := CheckHashes(ctx, src, dst)
 	if err != nil {
-		// CheckHashes will log and count errors
-		return true, false
+		return true, false, err
 	}
 	if ht == hash.None {
-		return false, true
+		return false, true, nil
 	}
 	if !same {
 		err = errors.Errorf("%v differ", ht)
 		fs.Errorf(src, "%v", err)
 		_ = fs.CountError(err)
-		return true, false
+		return true, false, nil
 	}
-	return false, false
+	return false, false, nil
 }
 
 // checkFn is the type of the checking function used in CheckFn()
-type checkFn func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool)
+//
+// It should check the two objects (a, b) and return if they differ
+// and whether the hash was used.
+type checkFn func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool, err error)
 
 // checkMarch is used to march over two Fses in the same way as
 // sync/copy
 type checkMarch struct {
-	fdst, fsrc      fs.Fs
-	check           checkFn
+	ioMu            sync.Mutex
 	wg              sync.WaitGroup
 	tokens          chan struct{}
-	oneway          bool
 	differences     int32
 	noHashes        int32
 	srcFilesMissing int32
 	dstFilesMissing int32
 	matches         int32
+	opt             CheckOpt
+}
+
+// CheckOpt contains options for the Check functions
+type CheckOpt struct {
+	Fdst, Fsrc   fs.Fs     // fses to check
+	Check        checkFn   // function to use for checking
+	OneWay       bool      // one way only?
+	Combined     io.Writer // a file with file names with leading sigils
+	MissingOnSrc io.Writer // files only in the destination
+	MissingOnDst io.Writer // files only in the source
+	Match        io.Writer // matching files
+	Differ       io.Writer // differing files
+	Error        io.Writer // files with errors of some kind
+}
+
+// report outputs the fileName to out if required and to the combined log
+func (c *checkMarch) report(o fs.DirEntry, out io.Writer, sigil rune) {
+	if out != nil {
+		c.ioMu.Lock()
+		_, _ = fmt.Fprintf(out, "%v\n", o)
+		c.ioMu.Unlock()
+	}
+	if c.opt.Combined != nil {
+		c.ioMu.Lock()
+		_, _ = fmt.Fprintf(c.opt.Combined, "%c %v\n", sigil, o)
+		c.ioMu.Unlock()
+	}
 }
 
 // DstOnly have an object which is in the destination only
 func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 	switch dst.(type) {
 	case fs.Object:
-		if c.oneway {
+		if c.opt.OneWay {
 			return false
 		}
-		err := errors.Errorf("File not in %v", c.fsrc)
+		err := errors.Errorf("File not in %v", c.opt.Fsrc)
 		fs.Errorf(dst, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.srcFilesMissing, 1)
+		c.report(dst, c.opt.MissingOnSrc, '-')
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
-		if c.oneway {
+		if c.opt.OneWay {
 			return false
 		}
 		return true
@@ -794,11 +823,12 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 	switch src.(type) {
 	case fs.Object:
-		err := errors.Errorf("File not in %v", c.fdst)
+		err := errors.Errorf("File not in %v", c.opt.Fdst)
 		fs.Errorf(src, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.dstFilesMissing, 1)
+		c.report(src, c.opt.MissingOnDst, '+')
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
 		return true
@@ -809,8 +839,7 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 }
 
 // check to see if two objects are identical using the check function
-func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
-	var err error
+func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
 		tr.Done(err)
@@ -818,12 +847,12 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 	if sizeDiffers(src, dst) {
 		err = errors.Errorf("Sizes differ")
 		fs.Errorf(src, "%v", err)
-		return true, false
+		return true, false, nil
 	}
 	if fs.Config.SizeOnly {
-		return false, false
+		return false, false, nil
 	}
-	return c.check(ctx, dst, src)
+	return c.opt.Check(ctx, dst, src)
 }
 
 // Match is called when src and dst are present, so sync src to dst
@@ -842,11 +871,20 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 					<-c.tokens // get the token back to free up a slot
 					c.wg.Done()
 				}()
-				differ, noHash := c.checkIdentical(ctx, dstX, srcX)
-				if differ {
+				differ, noHash, err := c.checkIdentical(ctx, dstX, srcX)
+				if err != nil {
+					fs.Errorf(src, "%v", err)
+					_ = fs.CountError(err)
+					c.report(src, c.opt.Error, '!')
+				} else if differ {
 					atomic.AddInt32(&c.differences, 1)
+					err := errors.New("files differ")
+					fs.Errorf(src, "%v", err)
+					_ = fs.CountError(err)
+					c.report(src, c.opt.Differ, '*')
 				} else {
 					atomic.AddInt32(&c.matches, 1)
+					c.report(src, c.opt.Match, '=')
 					if noHash {
 						atomic.AddInt32(&c.noHashes, 1)
 						fs.Debugf(dstX, "OK - could not check hash")
@@ -856,11 +894,12 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 				}
 			}()
 		} else {
-			err := errors.Errorf("is file on %v but directory on %v", c.fsrc, c.fdst)
+			err := errors.Errorf("is file on %v but directory on %v", c.opt.Fsrc, c.opt.Fdst)
 			fs.Errorf(src, "%v", err)
 			_ = fs.CountError(err)
 			atomic.AddInt32(&c.differences, 1)
 			atomic.AddInt32(&c.dstFilesMissing, 1)
+			c.report(src, c.opt.MissingOnDst, '+')
 		}
 	case fs.Directory:
 		// Do the same thing to the entire contents of the directory
@@ -868,11 +907,12 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 		if ok {
 			return true
 		}
-		err := errors.Errorf("is file on %v but directory on %v", c.fdst, c.fsrc)
+		err := errors.Errorf("is file on %v but directory on %v", c.opt.Fdst, c.opt.Fsrc)
 		fs.Errorf(dst, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.srcFilesMissing, 1)
+		c.report(dst, c.opt.MissingOnSrc, '-')
 
 	default:
 		panic("Bad object in DirEntries")
@@ -887,43 +927,43 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 //
 // it returns true if differences were found
 // it also returns whether it couldn't be hashed
-func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) error {
+func CheckFn(ctx context.Context, opt *CheckOpt) error {
+	if opt.Check == nil {
+		return errors.New("internal error: nil check function")
+	}
 	c := &checkMarch{
-		fdst:   fdst,
-		fsrc:   fsrc,
-		check:  check,
-		oneway: oneway,
 		tokens: make(chan struct{}, fs.Config.Checkers),
+		opt:    *opt,
 	}
 
 	// set up a march over fdst and fsrc
 	m := &march.March{
 		Ctx:      ctx,
-		Fdst:     fdst,
-		Fsrc:     fsrc,
+		Fdst:     c.opt.Fdst,
+		Fsrc:     c.opt.Fsrc,
 		Dir:      "",
 		Callback: c,
 	}
-	fs.Debugf(fdst, "Waiting for checks to finish")
+	fs.Debugf(c.opt.Fdst, "Waiting for checks to finish")
 	err := m.Run()
 	c.wg.Wait() // wait for background go-routines
 
 	if c.dstFilesMissing > 0 {
-		fs.Logf(fdst, "%d files missing", c.dstFilesMissing)
+		fs.Logf(c.opt.Fdst, "%d files missing", c.dstFilesMissing)
 	}
 	if c.srcFilesMissing > 0 {
-		fs.Logf(fsrc, "%d files missing", c.srcFilesMissing)
+		fs.Logf(c.opt.Fsrc, "%d files missing", c.srcFilesMissing)
 	}
 
-	fs.Logf(fdst, "%d differences found", c.differences)
+	fs.Logf(c.opt.Fdst, "%d differences found", accounting.Stats(ctx).GetErrors())
 	if errs := accounting.Stats(ctx).GetErrors(); errs > 0 {
-		fs.Logf(fdst, "%d errors while checking", errs)
+		fs.Logf(c.opt.Fdst, "%d errors while checking", errs)
 	}
 	if c.noHashes > 0 {
-		fs.Logf(fdst, "%d hashes could not be checked", c.noHashes)
+		fs.Logf(c.opt.Fdst, "%d hashes could not be checked", c.noHashes)
 	}
 	if c.matches > 0 {
-		fs.Logf(fdst, "%d matching files", c.matches)
+		fs.Logf(c.opt.Fdst, "%d matching files", c.matches)
 	}
 	if c.differences > 0 {
 		return errors.Errorf("%d differences found", c.differences)
@@ -932,8 +972,10 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 }
 
 // Check the files in fsrc and fdst according to Size and hash
-func Check(ctx context.Context, fdst, fsrc fs.Fs, oneway bool) error {
-	return CheckFn(ctx, fdst, fsrc, checkIdentical, oneway)
+func Check(ctx context.Context, opt *CheckOpt) error {
+	optCopy := *opt
+	optCopy.Check = checkIdentical
+	return CheckFn(ctx, &optCopy)
 }
 
 // CheckEqualReaders checks to see if in1 and in2 have the same
@@ -1025,17 +1067,16 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 
 // CheckDownload checks the files in fsrc and fdst according to Size
 // and the actual contents of the files.
-func CheckDownload(ctx context.Context, fdst, fsrc fs.Fs, oneway bool) error {
-	check := func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool) {
-		differ, err := CheckIdenticalDownload(ctx, a, b)
+func CheckDownload(ctx context.Context, opt *CheckOpt) error {
+	optCopy := *opt
+	optCopy.Check = func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool, err error) {
+		differ, err = CheckIdenticalDownload(ctx, a, b)
 		if err != nil {
-			err = fs.CountError(err)
-			fs.Errorf(a, "Failed to download: %v", err)
-			return true, true
+			return true, true, errors.Wrap(err, "failed to download")
 		}
-		return differ, false
+		return differ, false, nil
 	}
-	return CheckFn(ctx, fdst, fsrc, check, oneway)
+	return CheckFn(ctx, &optCopy)
 }
 
 // ListFn lists the Fs to the supplied function
