@@ -7,7 +7,6 @@ package cmd
 // would probably mean bringing all the flags in to here? Or define some flagsets in fs...
 
 import (
-	stderrors "errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -443,7 +442,7 @@ func resolveExitCode(err error) {
 		os.Exit(exitCodeFileNotFound)
 	case unwrapped == errorUncategorized:
 		os.Exit(exitCodeUncategorizedError)
-	case stderrors.Is(err, accounting.ErrorMaxTransferLimitReached):
+	case unwrapped == accounting.ErrorMaxTransferLimitReached:
 		os.Exit(exitCodeTransferExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitCodeRetryError)
