@@ -6,22 +6,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/check"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
-// Globals
-var (
-	oneway = false
-)
-
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlag := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlag, &oneway, "one-way", "", oneway, "Check one way only, source files must exist on destination")
+	check.AddFlags(cmdFlag)
 }
 
 var commandDefinition = &cobra.Command{
@@ -50,11 +45,7 @@ the files in remote:path.
     rclone cryptcheck remote:path encryptedremote:path
 
 After it has run it will log the status of the encryptedremote:.
-
-If you supply the --one-way flag, it will only check that files in source
-match the files in destination, not the other way around. Meaning extra files in
-destination that are not in the source will not trigger an error.
-`,
+` + check.FlagsHelp,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
@@ -79,39 +70,40 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 	}
 	fs.Infof(nil, "Using %v for hash comparisons", hashType)
 
+	opt, close, err := check.GetCheckOpt(fsrc, fcrypt)
+	if err != nil {
+		return err
+	}
+	defer close()
+
 	// checkIdentical checks to see if dst and src are identical
 	//
 	// it returns true if differences were found
 	// it also returns whether it couldn't be hashed
-	checkIdentical := func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool) {
+	opt.Check = func(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 		cryptDst := dst.(*crypt.Object)
 		underlyingDst := cryptDst.UnWrap()
 		underlyingHash, err := underlyingDst.Hash(ctx, hashType)
 		if err != nil {
-			err = fs.CountError(err)
-			fs.Errorf(dst, "Error reading hash from underlying %v: %v", underlyingDst, err)
-			return true, false
+			return true, false, errors.Wrapf(err, "error reading hash from underlying %v", underlyingDst)
 		}
 		if underlyingHash == "" {
-			return false, true
+			return false, true, nil
 		}
 		cryptHash, err := fcrypt.ComputeHash(ctx, cryptDst, src, hashType)
 		if err != nil {
-			err = fs.CountError(err)
-			fs.Errorf(dst, "Error computing hash: %v", err)
-			return true, false
+			return true, false, errors.Wrap(err, "error computing hash")
 		}
 		if cryptHash == "" {
-			return false, true
+			return false, true, nil
 		}
 		if cryptHash != underlyingHash {
 			err = errors.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
-			err = fs.CountError(err)
 			fs.Errorf(src, err.Error())
-			return true, false
+			return true, false, nil
 		}
-		return false, false
+		return false, false, nil
 	}
 
-	return operations.CheckFn(ctx, fcrypt, fsrc, checkIdentical, oneway)
+	return operations.CheckFn(ctx, opt)
 }
