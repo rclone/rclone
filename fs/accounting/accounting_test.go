@@ -219,7 +219,7 @@ func TestAccountMaxTransfer(t *testing.T) {
 	assert.NoError(t, err)
 	n, err = acc.Read(b)
 	assert.Equal(t, 0, n)
-	assert.Equal(t, ErrorMaxTransferLimitReached, err)
+	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
 	assert.True(t, fserrors.IsFatalError(err))
 
 	fs.Config.CutoffMode = fs.CutoffModeSoft
