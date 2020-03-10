@@ -2,7 +2,7 @@ package policy
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 	"sync"
 
 	"github.com/rclone/rclone/backend/union/upstream"
@@ -21,7 +21,7 @@ type EpAll struct {
 	EpFF
 }
 
-func (p *EpAll) epall(ctx context.Context, upstreams []*upstream.Fs, path string) ([]*upstream.Fs, error) {
+func (p *EpAll) epall(ctx context.Context, upstreams []*upstream.Fs, filePath string) ([]*upstream.Fs, error) {
 	var wg sync.WaitGroup
 	ufs := make([]*upstream.Fs, len(upstreams))
 	for i, u := range upstreams {
@@ -29,7 +29,7 @@ func (p *EpAll) epall(ctx context.Context, upstreams []*upstream.Fs, path string
 		i, u := i, u // Closure
 		go func() {
 			rfs := u.RootFs
-			remote := filepath.Join(u.RootPath, path)
+			remote := path.Join(u.RootPath, filePath)
 			if findEntry(ctx, rfs, remote) != nil {
 				ufs[i] = u
 			}

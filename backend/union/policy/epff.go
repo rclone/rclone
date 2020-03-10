@@ -2,7 +2,7 @@ package policy
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
@@ -16,13 +16,13 @@ func init() {
 // Given the order of the candidates, act on the first one found where the relative path exists.
 type EpFF struct{}
 
-func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error) {
+func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, filePath string) (*upstream.Fs, error) {
 	ch := make(chan *upstream.Fs)
 	for _, u := range upstreams {
 		u := u // Closure
 		go func() {
 			rfs := u.RootFs
-			remote := filepath.Join(u.RootPath, path)
+			remote := path.Join(u.RootPath, filePath)
 			if findEntry(ctx, rfs, remote) == nil {
 				u = nil
 			}

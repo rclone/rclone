@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/rand"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -95,7 +94,7 @@ func parentDir(absPath string) string {
 }
 
 func clean(absPath string) string {
-	cleanPath := path.Clean(filepath.ToSlash(absPath))
+	cleanPath := path.Clean(absPath)
 	if cleanPath == "." {
 		cleanPath = ""
 	}

@@ -2,7 +2,7 @@ package policy
 
 import (
 	"context"
-	"path/filepath"
+	"path"
 	"sync"
 	"time"
 
@@ -20,7 +20,7 @@ type Newest struct {
 	EpAll
 }
 
-func (p *Newest) newest(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error) {
+func (p *Newest) newest(ctx context.Context, upstreams []*upstream.Fs, filePath string) (*upstream.Fs, error) {
 	var wg sync.WaitGroup
 	ufs := make([]*upstream.Fs, len(upstreams))
 	mtimes := make([]time.Time, len(upstreams))
@@ -30,7 +30,7 @@ func (p *Newest) newest(ctx context.Context, upstreams []*upstream.Fs, path stri
 		go func() {
 			defer wg.Done()
 			rfs := u.RootFs
-			remote := filepath.Join(u.RootPath, path)
+			remote := path.Join(u.RootPath, filePath)
 			if e := findEntry(ctx, rfs, remote); e != nil {
 				ufs[i] = u
 				mtimes[i] = e.ModTime(ctx)
