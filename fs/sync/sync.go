@@ -676,7 +676,7 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	}
 
 	//Verify that modtime is within 1ms margin
-	if s.trackUsingModTime && dst.ModTime(s.ctx).Sub(dst.ModTime(s.ctx)).Milliseconds() > 1 {
+	if s.trackUsingModTime && dst.ModTime(s.ctx).Sub(dst.ModTime(s.ctx)).Nanoseconds() > 1000000 {
 		return false
 	}
 
