@@ -16,9 +16,13 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 )
 
-// ErrorMaxTransferLimitReached is returned from Read when the max
+// ErrorMaxTransferLimitReached defines error when transfer limit is reached.
+// Used for checking on exit and matching to correct exit code.
+var ErrorMaxTransferLimitReached = errors.New("Max transfer limit reached as set by --max-transfer")
+
+// ErrorMaxTransferLimitReachedFatal is returned from Read when the max
 // transfer limit is reached.
-var ErrorMaxTransferLimitReached = fserrors.FatalError(errors.New("Max transfer limit reached as set by --max-transfer"))
+var ErrorMaxTransferLimitReachedFatal = fserrors.FatalError(ErrorMaxTransferLimitReached)
 
 // Account limits and accounts for one transfer
 type Account struct {
@@ -172,7 +176,7 @@ func (acc *Account) checkRead() (err error) {
 	acc.statmu.Lock()
 	if acc.max >= 0 && acc.stats.GetBytes() >= acc.max {
 		acc.statmu.Unlock()
-		return ErrorMaxTransferLimitReached
+		return ErrorMaxTransferLimitReachedFatal
 	}
 	// Set start time.
 	if acc.start.IsZero() {

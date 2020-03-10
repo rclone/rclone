@@ -1811,7 +1811,7 @@ func TestAbort(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
-	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReached)
+	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReachedFatal)
 	fserrors.Count(expectedErr)
 	assert.Equal(t, expectedErr, err)
 }
