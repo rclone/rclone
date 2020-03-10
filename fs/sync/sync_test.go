@@ -1127,6 +1127,98 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	}
 }
 
+func TestSyncWithTrackRenamesUsingModtime(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.TrackRenames = true
+	fs.Config.TrackUsingModTime = true
+	defer func() {
+		fs.Config.TrackRenames = false
+		fs.Config.TrackUsingModTime = false
+	}()
+
+	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.None
+	canTrackRenames := haveHash && operations.CanServerSideMove(r.Fremote)
+	t.Logf("Can track renames: %v", canTrackRenames)
+
+	f1 := r.WriteFile("potato", "Potato Content", t1)
+	f2 := r.WriteFile("yam", "Yam Content", t2)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+	fstest.CheckItems(t, r.Flocal, f1, f2)
+
+	// Now rename locally.
+	f2 = r.RenameFile(f2, "yaml")
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+
+	// As currently there is no Fs interface providing number of chunks
+	// in a file, this test depends on the well-known names of test remotes.
+	remote := r.Fremote.Name()
+
+	// Union remote can Move but returns CantMove error.
+	moveAsCopyDelete := r.Fremote.Features().Move == nil || remote == "TestUnion"
+
+	chunker := strings.HasPrefix(remote, "TestChunker")
+	wrappedMoveAsCopyDelete := chunker && strings.HasSuffix(remote, "S3")
+
+	chunk3b := chunker && strings.Contains(remote, "Chunk3b")            // chunker with 3 byte chunks
+	chunk50b := chunker && strings.Contains(remote, "Chunk50b")          // chunker with 50 byte chunks
+	chunkDefault := chunker && !strings.Contains(remote, "ChunkerChunk") // default big chunk size
+	chunkBig := chunk50b || chunkDefault                                 // file is smaller than chunk size
+
+	// Verify number of checks for a toy 14 byte file.
+	// The order of cases matters!
+	var checks int
+	switch {
+	case canTrackRenames && chunk3b:
+		checks = 8 // chunker makes extra checks for each small chunk
+	case canTrackRenames && chunkBig:
+		checks = 4 // chunker makes 1 extra check for a single big chunk
+	case canTrackRenames && moveAsCopyDelete:
+		checks = 4 // 2 file checks + 1 move + 1 delete
+	case canTrackRenames:
+		checks = 3 // 2 file checks + 1 move
+	case !chunker:
+		checks = 2 // 2 file checks on a generic non-chunking remote
+	case chunk3b:
+		checks = 6 // chunker makes extra checks for each small chunk
+	case chunkBig && wrappedMoveAsCopyDelete:
+		checks = 4 // one more extra check because S3 emulates Move as Copy+Delete
+	case chunkBig:
+		checks = 3 // chunker makes 1 extra check for a single big chunk
+	default:
+		checks = -1 // skip verification for chunker with unknown chunk size
+	}
+	if checks != -1 { // "-1" allows remotes to bypass this check
+		assert.Equal(t, int64(checks), accounting.GlobalStats().GetChecks())
+	}
+
+	// Verify number of copy operations for a toy 14 byte file.
+	// The order of cases matters!
+	var copies int64
+	switch {
+	case canTrackRenames && moveAsCopyDelete:
+		copies = 1 // 1 copy
+	case canTrackRenames:
+		copies = 0 // 0 copy
+	case chunkBig && wrappedMoveAsCopyDelete:
+		copies = 2 // extra Copy because S3 emulates Move as Copy+Delete.
+	default:
+		copies = 1
+	}
+	if copies != -1 { // "-1" allows remotes to bypass this check
+		assert.Equal(t, copies, accounting.GlobalStats().GetTransfers())
+	}
+}
+
 func toyFileTransfers(r *fstest.Run) int64 {
 	remote := r.Fremote.Name()
 	transfers := 1

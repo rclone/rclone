@@ -60,6 +60,7 @@ type ConfigInfo struct {
 	DeleteMode             DeleteMode
 	MaxDelete              int64
 	TrackRenames           bool // Track file renames.
+	TrackUsingModTime      bool // Use mod time for renames instead of hashes
 	LowLevelRetries        int
 	UpdateOlder            bool // Skip files that are newer on the destination
 	NoGzip                 bool // Disable compression
