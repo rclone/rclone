@@ -176,7 +176,7 @@ func (acc *Account) checkRead() (err error) {
 	acc.statmu.Lock()
 	if acc.max >= 0 && acc.stats.GetBytes() >= acc.max {
 		acc.statmu.Unlock()
-		return ErrorMaxTransferLimitReached
+		return ErrorMaxTransferLimitReachedFatal
 	}
 	// Set start time.
 	if acc.start.IsZero() {
