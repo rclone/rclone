@@ -77,6 +77,31 @@ func dedupeDeleteAllButOne(ctx context.Context, keep int, remote string, objs []
 
 // dedupeDeleteIdentical deletes all but one of identical (by hash) copies
 func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, objs []fs.Object) (remainingObjs []fs.Object) {
+	// Make map of IDs
+	IDs := make(map[string]int, len(objs))
+	for _, o := range objs {
+		if do, ok := o.(fs.IDer); ok {
+			if ID := do.ID(); ID != "" {
+				IDs[ID]++
+			}
+		}
+	}
+
+	// Remove duplicate IDs
+	newObjs := objs[:0]
+	for _, o := range objs {
+		if do, ok := o.(fs.IDer); ok {
+			if ID := do.ID(); ID != "" {
+				if IDs[ID] <= 1 {
+					newObjs = append(newObjs, o)
+				} else {
+					fs.Logf(o, "Ignoring as it appears %d times in the listing and deleting would lead to data loss", IDs[ID])
+				}
+			}
+		}
+	}
+	objs = newObjs
+
 	// See how many of these duplicates are identical
 	byHash := make(map[string][]fs.Object, len(objs))
 	for _, o := range objs {
