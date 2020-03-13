@@ -879,6 +879,17 @@ This can have a modifier appended with a comma:
 
 - `ascending` or `asc` - order so that the smallest (or oldest) is processed first
 - `descending` or `desc` - order so that the largest (or newest) is processed first
+- `mixed` - order so that the smallest is processed first for some threads and the largest for others
+
+If the modifier is `mixed` then it can have an optional percentage
+(which defaults to `50`), eg `size,mixed,25` which means that 25% of
+the threads should be taking the smallest items and 75% the
+largest. The threads which take the smallest first will always take
+the smallest first and likewise the largest first threads. The `mixed`
+mode can be useful to minimise the transfer time when you are
+transferring a mixture of large and small files - the large files are
+guaranteed upload threads and bandwidth and the small files will be
+processed continuously.
 
 If no modifier is supplied then the order is `ascending`.
 
