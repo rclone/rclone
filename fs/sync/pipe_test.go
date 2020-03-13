@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"container/heap"
 	"context"
 	"sync"
 	"sync/atomic"
@@ -11,6 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Check interface satisfied
+var _ heap.Interface = (*pipe)(nil)
 
 func TestPipe(t *testing.T) {
 	var queueLength int
