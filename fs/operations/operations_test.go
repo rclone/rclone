@@ -1541,45 +1541,53 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 		accounting.Stats(context.Background()).ResetCounters()
 	}()
 
+	ctx := context.Background()
+
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	file2 := r.WriteFile("file2", "file2 contents...........", t2)
 
 	rfile1 := file1
 	rfile1.Path = "sub/file1"
-	rfile2 := file2
-	rfile2.Path = "sub/file2"
+	rfile2a := file2
+	rfile2a.Path = "sub/file2a"
+	rfile2b := file2
+	rfile2b.Path = "sub/file2b"
+	rfile2c := file2
+	rfile2c.Path = "sub/file2c"
 
 	fs.Config.MaxTransfer = 15
 	fs.Config.CutoffMode = fs.CutoffModeHard
-	accounting.Stats(context.Background()).ResetCounters()
+	accounting.Stats(ctx).ResetCounters()
 
-	err := operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile1.Path, file1.Path)
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile1.Path, file1.Path)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, rfile1)
 
-	accounting.Stats(context.Background()).ResetCounters()
+	accounting.Stats(ctx).ResetCounters()
 
-	err = operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile2.Path, file2.Path)
-	fstest.CheckItems(t, r.Flocal, file1, file2)
-	fstest.CheckItems(t, r.Fremote, rfile1)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile2a.Path, file2.Path)
+	require.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err))
+	fstest.CheckItems(t, r.Flocal, file1, file2)
+	fstest.CheckItems(t, r.Fremote, rfile1)
 
 	fs.Config.CutoffMode = fs.CutoffModeCautious
-	accounting.Stats(context.Background()).ResetCounters()
+	accounting.Stats(ctx).ResetCounters()
 
-	err = operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile2.Path, file2.Path)
-	fstest.CheckItems(t, r.Flocal, file1, file2)
-	fstest.CheckItems(t, r.Fremote, rfile1)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile2b.Path, file2.Path)
+	require.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err))
+	fstest.CheckItems(t, r.Flocal, file1, file2)
+	fstest.CheckItems(t, r.Fremote, rfile1)
 
 	fs.Config.CutoffMode = fs.CutoffModeSoft
-	accounting.Stats(context.Background()).ResetCounters()
+	accounting.Stats(ctx).ResetCounters()
 
-	err = operations.CopyFile(context.Background(), r.Fremote, r.Flocal, rfile2.Path, file2.Path)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile2c.Path, file2.Path)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1, file2)
-	fstest.CheckItems(t, r.Fremote, rfile1, rfile2)
+	fstest.CheckItems(t, r.Fremote, rfile1, rfile2c)
 }
