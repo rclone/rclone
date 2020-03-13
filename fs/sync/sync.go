@@ -241,10 +241,10 @@ func (s *syncCopyMove) currentError() error {
 // pairChecker reads Objects~s on in send to out if they need transferring.
 //
 // FIXME potentially doing lots of hashes at once
-func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
+func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		pair, ok := in.Get(s.ctx)
+		pair, ok := in.GetMax(s.ctx, fraction)
 		if !ok {
 			return
 		}
@@ -297,10 +297,10 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 
 // pairRenamer reads Objects~s on in and attempts to rename them,
 // otherwise it sends them out if they need transferring.
-func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, wg *sync.WaitGroup) {
+func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		pair, ok := in.Get(s.ctx)
+		pair, ok := in.GetMax(s.ctx, fraction)
 		if !ok {
 			return
 		}
@@ -316,11 +316,11 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, wg *sync.WaitGroup) {
 }
 
 // pairCopyOrMove reads Objects on in and moves or copies them.
-func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs, wg *sync.WaitGroup) {
+func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var err error
 	for {
-		pair, ok := in.Get(s.ctx)
+		pair, ok := in.GetMax(s.ctx, fraction)
 		if !ok {
 			return
 		}
@@ -338,7 +338,8 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 func (s *syncCopyMove) startCheckers() {
 	s.checkerWg.Add(fs.Config.Checkers)
 	for i := 0; i < fs.Config.Checkers; i++ {
-		go s.pairChecker(s.toBeChecked, s.toBeUploaded, &s.checkerWg)
+		fraction := (100 * i) / fs.Config.Checkers
+		go s.pairChecker(s.toBeChecked, s.toBeUploaded, fraction, &s.checkerWg)
 	}
 }
 
@@ -353,7 +354,8 @@ func (s *syncCopyMove) stopCheckers() {
 func (s *syncCopyMove) startTransfers() {
 	s.transfersWg.Add(fs.Config.Transfers)
 	for i := 0; i < fs.Config.Transfers; i++ {
-		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, &s.transfersWg)
+		fraction := (100 * i) / fs.Config.Transfers
+		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, fraction, &s.transfersWg)
 	}
 }
 
@@ -371,7 +373,8 @@ func (s *syncCopyMove) startRenamers() {
 	}
 	s.renamerWg.Add(fs.Config.Checkers)
 	for i := 0; i < fs.Config.Checkers; i++ {
-		go s.pairRenamer(s.toBeRenamed, s.toBeUploaded, &s.renamerWg)
+		fraction := (100 * i) / fs.Config.Checkers
+		go s.pairRenamer(s.toBeRenamed, s.toBeUploaded, fraction, &s.renamerWg)
 	}
 }
 
