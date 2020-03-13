@@ -171,19 +171,22 @@ func (acc *Account) averageLoop() {
 	}
 }
 
-// Check the read is valid
-func (acc *Account) checkRead() (err error) {
+// Check the read is valid returning the number of bytes it is over
+func (acc *Account) checkRead() (over int64, err error) {
 	acc.statmu.Lock()
-	if acc.max >= 0 && acc.stats.GetBytes() >= acc.max {
-		acc.statmu.Unlock()
-		return ErrorMaxTransferLimitReachedFatal
+	if acc.max >= 0 {
+		over = acc.stats.GetBytes() - acc.max
+		if over >= 0 {
+			acc.statmu.Unlock()
+			return over, ErrorMaxTransferLimitReachedFatal
+		}
 	}
 	// Set start time.
 	if acc.start.IsZero() {
 		acc.start = time.Now()
 	}
 	acc.statmu.Unlock()
-	return nil
+	return over, nil
 }
 
 // ServerSideCopyStart should be called at the start of a server side copy
@@ -223,10 +226,18 @@ func (acc *Account) accountRead(n int) {
 
 // read bytes from the io.Reader passed in and account them
 func (acc *Account) read(in io.Reader, p []byte) (n int, err error) {
-	err = acc.checkRead()
+	_, err = acc.checkRead()
 	if err == nil {
 		n, err = in.Read(p)
 		acc.accountRead(n)
+		if over, checkErr := acc.checkRead(); checkErr == ErrorMaxTransferLimitReachedFatal {
+			// chop the overage off
+			n -= int(over)
+			if n < 0 {
+				n = 0
+			}
+			err = checkErr
+		}
 	}
 	return n, err
 }
@@ -242,7 +253,7 @@ func (acc *Account) Read(p []byte) (n int, err error) {
 func (acc *Account) AccountRead(n int) (err error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
-	err = acc.checkRead()
+	_, err = acc.checkRead()
 	if err == nil {
 		acc.accountRead(n)
 	}
