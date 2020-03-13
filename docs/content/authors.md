@@ -345,3 +345,4 @@ Contributors
   * Robert-André Mauchin <zebob.m@gmail.com>
   * evileye <48332831+ibiruai@users.noreply.github.com>
   * Joachim Brandon LeBlanc <brandon@leblanc.codes>
+  * Patryk Jakuszew <patryk.jakuszew@gmail.com>
