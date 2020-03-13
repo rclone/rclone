@@ -8,6 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.6.0 // indirect
 	github.com/Unknwon/goconfig v0.0.0-20191126170842-860a72fb44fd
 	github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
+	github.com/aalpar/deheap v0.0.0-20191229192855-f837f7a9ba26
 	github.com/abbot/go-http-auth v0.4.0
 	github.com/anacrolix/dms v1.1.0
 	github.com/atotto/clipboard v0.1.2

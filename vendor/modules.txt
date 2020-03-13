@@ -12,6 +12,8 @@ github.com/Azure/azure-storage-blob-go/azblob
 github.com/Unknwon/goconfig
 # github.com/a8m/tree v0.0.0-20181222104329-6a0b80129de4
 github.com/a8m/tree
+# github.com/aalpar/deheap v0.0.0-20191229192855-f837f7a9ba26
+github.com/aalpar/deheap
 # github.com/abbot/go-http-auth v0.4.0
 github.com/abbot/go-http-auth
 # github.com/anacrolix/dms v1.1.0
