@@ -465,12 +465,17 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 //
 // It ignores empty lines and lines starting with '#' or ';'
 func forEachLine(path string, fn func(string) error) (err error) {
-	in, err := os.Open(path)
-	if err != nil {
-		return err
+	var scanner *bufio.Scanner
+	if path == "-" {
+		scanner = bufio.NewScanner(os.Stdin)
+	} else {
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		scanner = bufio.NewScanner(in)
+		defer fs.CheckClose(in, &err)
 	}
-	defer fs.CheckClose(in, &err)
-	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		line := scanner.Text()
 		line = strings.TrimSpace(line)
