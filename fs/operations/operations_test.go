@@ -1543,8 +1543,9 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 
 	ctx := context.Background()
 
+	const sizeCutoff = 2048
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	file2 := r.WriteFile("file2", "file2 contents...........", t2)
+	file2 := r.WriteFile("file2", "file2 contents"+string(make([]byte, sizeCutoff)), t2)
 
 	rfile1 := file1
 	rfile1.Path = "sub/file1"
@@ -1555,7 +1556,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	rfile2c := file2
 	rfile2c.Path = "sub/file2c"
 
-	fs.Config.MaxTransfer = 15
+	fs.Config.MaxTransfer = sizeCutoff
 	fs.Config.CutoffMode = fs.CutoffModeHard
 	accounting.Stats(ctx).ResetCounters()
 
