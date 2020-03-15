@@ -253,6 +253,16 @@ listing, set this option.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:    "server_side_across_configs",
+			Default: false,
+			Help: `Allow server side operations (eg copy) to work across different onedrive configs.
+
+This can be useful if you wish to do a server side copy between two
+different Onedrives.  Note that this isn't enabled by default
+because it isn't easy to tell if it will work between any two
+configurations.`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -304,11 +314,12 @@ listing, set this option.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
-	DriveID            string               `config:"drive_id"`
-	DriveType          string               `config:"drive_type"`
-	ExposeOneNoteFiles bool                 `config:"expose_onenote_files"`
-	Enc                encoder.MultiEncoder `config:"encoding"`
+	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
+	DriveID                 string               `config:"drive_id"`
+	DriveType               string               `config:"drive_type"`
+	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
+	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
+	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote one drive
@@ -577,6 +588,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		CaseInsensitive:         true,
 		ReadMimeType:            true,
 		CanHaveEmptyDirectories: true,
+		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
 	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
@@ -989,10 +1001,13 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	srcPath := srcObj.rootPath()
-	dstPath := f.rootPath(remote)
-	if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
-		return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
+	// Check we aren't overwriting a file on the same remote
+	if srcObj.fs == f {
+		srcPath := srcObj.rootPath()
+		dstPath := f.rootPath(remote)
+		if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
+			return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
+		}
 	}
 
 	// Create temporary object
