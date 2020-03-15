@@ -188,7 +188,9 @@ esac
 #update version variable post install
 version=`rclone --version 2>>errors | head -n 1`
 #create the directory for the default configuration folder
-mkdir $HOME/.config/rclone -p
+# Make sure we don't create a root owned .config/rclone directory #2127
+mkdir -p $HOME/.config/rclone
+chown -R $USER:$USER $HOME/.config/rclone
 
 printf "\n${version} has successfully installed."
 printf '\nNow run "rclone config" for setup. Check https://rclone.org/docs/ for more details.\n\n'
