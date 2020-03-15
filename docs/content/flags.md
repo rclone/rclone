@@ -41,13 +41,13 @@ These flags are available for every command.
       --dump-bodies                          Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                         Dump HTTP headers - may contain sensitive info
       --exclude stringArray                  Exclude files matching pattern
-      --exclude-from stringArray             Read exclude patterns from file
+      --exclude-from stringArray             Read exclude patterns from file (use - to read from stdin).
       --exclude-if-present string            Exclude directories if filename is present
       --expect-continue-timeout duration     Timeout when using expect / 100-continue in HTTP (default 1s)
       --fast-list                            Use recursive list if available. Uses more memory but fewer transactions.
-      --files-from stringArray               Read list of source-file names from file
+      --files-from stringArray               Read list of source-file names from file (use - to read from stdin).
   -f, --filter stringArray                   Add a file-filtering rule
-      --filter-from stringArray              Read filtering patterns from a file
+      --filter-from stringArray              Read filtering patterns from a file (use - to read from stdin).
       --ignore-case                          Ignore case in filters (case insensitive)
       --ignore-case-sync                     Ignore case when synchronizing
       --ignore-checksum                      Skip post copy check of checksums.
@@ -57,7 +57,7 @@ These flags are available for every command.
   -I, --ignore-times                         Don't skip files that match size and time - transfer all files
       --immutable                            Do not modify files. Fail if existing files have been modified.
       --include stringArray                  Include files matching pattern
-      --include-from stringArray             Read include patterns from file
+      --include-from stringArray             Read include patterns from file (use - to read from stdin).
       --log-file string                      Log everything to this file
       --log-format string                    Comma separated list of log format options (default "date,time")
       --log-level string                     Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
