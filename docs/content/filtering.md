@@ -17,7 +17,8 @@ Each path as it passes through rclone is matched against the include
 and exclude rules like `--include`, `--exclude`, `--include-from`,
 `--exclude-from`, `--filter`, or `--filter-from`. The simplest way to
 try them out is using the `ls` command, or `--dry-run` together with
-`-v`.
+`-v`. `--filter-from`, `--exclude-from`, `--include-from`, `--files-from`
+understand `-` as a file name to mean read from standard input.
 
 ## Patterns ##
 

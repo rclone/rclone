@@ -517,7 +517,7 @@ func TestFilterAddDirRuleOrFileRule(t *testing.T) {
 	}
 }
 
-func TestFilterForEachLine(t *testing.T) {
+func testFilterForEachLine(t *testing.T, useStdin bool) {
 	file := testFile(t, `; comment
 one
 # another comment
@@ -534,12 +534,32 @@ five
 		require.NoError(t, err)
 	}()
 	lines := []string{}
-	err := forEachLine(file, func(s string) error {
+	fileName := file
+	if useStdin {
+		in, err := os.Open(file)
+		require.NoError(t, err)
+		oldStdin := os.Stdin
+		os.Stdin = in
+		defer func() {
+			os.Stdin = oldStdin
+			_ = in.Close()
+		}()
+		fileName = "-"
+	}
+	err := forEachLine(fileName, func(s string) error {
 		lines = append(lines, s)
 		return nil
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "one,two,three,four,five,six", strings.Join(lines, ","))
+}
+
+func TestFilterForEachLine(t *testing.T) {
+	testFilterForEachLine(t, false)
+}
+
+func TestFilterForEachLineStdin(t *testing.T) {
+	testFilterForEachLine(t, true)
 }
 
 func TestFilterMatchesFromDocs(t *testing.T) {
