@@ -346,3 +346,4 @@ Contributors
   * evileye <48332831+ibiruai@users.noreply.github.com>
   * Joachim Brandon LeBlanc <brandon@leblanc.codes>
   * Patryk Jakuszew <patryk.jakuszew@gmail.com>
+  * fishbullet <shindu666@gmail.com>
