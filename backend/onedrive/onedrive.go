@@ -329,7 +329,7 @@ listing, set this option.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Is21Vianet         bool          `config:"is_21vianet_version"`
+	Is21Vianet         bool                 `config:"is_21vianet_version"`
 	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
 	DriveID            string               `config:"drive_id"`
 	DriveType          string               `config:"drive_type"`
