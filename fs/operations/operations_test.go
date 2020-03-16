@@ -1584,6 +1584,11 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file1, file2)
 	fstest.CheckItems(t, r.Fremote, rfile1)
 
+	if strings.HasPrefix(r.Fremote.Name(), "TestChunker") {
+		t.Log("skipping remainder of test for chunker as it involves multiple transfers")
+		return
+	}
+
 	fs.Config.CutoffMode = fs.CutoffModeSoft
 	accounting.Stats(ctx).ResetCounters()
 
