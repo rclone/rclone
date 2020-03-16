@@ -558,6 +558,7 @@ func saveConfig() error {
 		_ = enc.Close()
 	}
 
+	_ = f.Sync()
 	err = f.Close()
 	if err != nil {
 		return errors.Errorf("Failed to close config file: %v", err)
