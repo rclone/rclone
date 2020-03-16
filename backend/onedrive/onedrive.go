@@ -244,7 +244,7 @@ func init() {
 			Name: config.ConfigClientSecret,
 			Help: "Microsoft App Client Secret\nLeave blank normally.",
 		}, {
-			Name: "is_21vianet_version",
+			Name:    "is_21vianet_version",
 			Default: false,
 			Help:    "OneDrive operated by 21Vianet (世纪互联).",
 		}, {
