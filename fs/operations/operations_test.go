@@ -44,6 +44,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1545,7 +1546,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 
 	const sizeCutoff = 2048
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	file2 := r.WriteFile("file2", "file2 contents"+string(make([]byte, sizeCutoff)), t2)
+	file2 := r.WriteFile("file2", "file2 contents"+random.String(sizeCutoff), t2)
 
 	rfile1 := file1
 	rfile1.Path = "sub/file1"
