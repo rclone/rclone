@@ -589,7 +589,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		rootURL = graphAPIEndpoint21V + "/v1.0" + "/me/drive"
 		oauthConfig.Endpoint = *oauthEndpointV21
 	}
-	
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
