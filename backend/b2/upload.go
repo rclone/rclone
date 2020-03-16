@@ -184,13 +184,6 @@ func (up *largeUpload) returnUploadURL(upload *api.GetUploadPartURLResponse) {
 	up.uploadMu.Unlock()
 }
 
-// clearUploadURL clears the current UploadURL and the AuthorizationToken
-func (up *largeUpload) clearUploadURL() {
-	up.uploadMu.Lock()
-	up.uploads = nil
-	up.uploadMu.Unlock()
-}
-
 // Transfer a chunk
 func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byte) error {
 	err := up.f.pacer.Call(func() (bool, error) {
