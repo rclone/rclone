@@ -42,7 +42,10 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
-	graphURL                    = "https://graph.microsoft.com/v1.0"
+	graphAPIEndpoint            = "https://graph.microsoft.com"
+	authEndpoint                = "https://login.microsoftonline.com"
+	graphAPIEndpoint21V         = "https://microsoftgraph.chinacloudapi.cn"
+	authEndpoint21V             = "https://login.chinacloudapi.cn"
 	configDriveID               = "drive_id"
 	configDriveType             = "drive_type"
 	driveTypePersonal           = "personal"
@@ -54,12 +57,16 @@ const (
 
 // Globals
 var (
+	oauthEndpoint = &oauth2.Endpoint{
+		AuthURL:  authEndpoint + "/common/oauth2/v2.0/authorize",
+		TokenURL: authEndpoint + "/common/oauth2/v2.0/token",
+	}
+	oauthEndpointV21 = &oauth2.Endpoint{
+		AuthURL:  authEndpoint21V + "/common/oauth2/v2.0/authorize",
+		TokenURL: authEndpoint21V + "/common/oauth2/v2.0/token",
+	}
 	// Description of how to auth for this app for a business account
 	oauthConfig = &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-			TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-		},
 		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -78,8 +85,22 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			opt := new(Options)
+			err := configstruct.Set(m, opt)
+			if err != nil {
+				fs.Errorf(nil, "Couldn't parse config into struct: %v", err)
+				return
+			}
+
+			graphURL := graphAPIEndpoint + "/v1.0"
+			oauthConfig.Endpoint = *oauthEndpoint
+			if opt.Is21Vianet {
+				graphURL = graphAPIEndpoint21V + "/v1.0"
+				oauthConfig.Endpoint = *oauthEndpointV21
+			}
+
 			ctx := context.TODO()
-			err := oauthutil.Config("onedrive", name, m, oauthConfig)
+			err = oauthutil.Config("onedrive", name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 				return
@@ -217,6 +238,10 @@ func init() {
 			config.SaveConfig()
 		},
 		Options: []fs.Option{{
+			Name:    "is_21vianet_version",
+			Default: false,
+			Help:    "OneDrive operated by 21Vianet (世纪互联).必须输入ClientID&ClientSecret",
+ 		}, {
 			Name: config.ConfigClientID,
 			Help: "Microsoft App Client Id\nLeave blank normally.",
 		}, {
@@ -251,16 +276,6 @@ behaviour may also prevent you from deleting them.  If you want to
 delete OneNote files or otherwise want them to show up in directory
 listing, set this option.`,
 			Default:  false,
-			Advanced: true,
-		}, {
-			Name:    "server_side_across_configs",
-			Default: false,
-			Help: `Allow server side operations (eg copy) to work across different onedrive configs.
-
-This can be useful if you wish to do a server side copy between two
-different Onedrives.  Note that this isn't enabled by default
-because it isn't easy to tell if it will work between any two
-configurations.`,
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -314,12 +329,12 @@ configurations.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
-	DriveID                 string               `config:"drive_id"`
-	DriveType               string               `config:"drive_type"`
-	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
-	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
-	Enc                     encoder.MultiEncoder `config:"encoding"`
+	Is21Vianet         bool          `config:"is_21vianet_version"`
+	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
+	DriveID            string               `config:"drive_id"`
+	DriveType          string               `config:"drive_type"`
+	ExposeOneNoteFiles bool                 `config:"expose_onenote_files"`
+	Enc                encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote one drive
@@ -568,7 +583,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.DriveID == "" || opt.DriveType == "" {
 		return nil, errors.New("unable to get drive_id and drive_type - if you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend")
 	}
-
+	rootURL := graphAPIEndpoint + "/v1.0" + "/drives/" + opt.DriveID
+	oauthConfig.Endpoint = *oauthEndpoint
+	if opt.Is21Vianet {
+		rootURL = graphAPIEndpoint21V + "/v1.0" + "/me/drive"
+		oauthConfig.Endpoint = *oauthEndpointV21
+	}
+	
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
@@ -581,14 +602,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:       *opt,
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
-		srv:       rest.NewClient(oAuthClient).SetRoot(graphURL + "/drives/" + opt.DriveID),
+		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
 		pacer:     fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		ReadMimeType:            true,
 		CanHaveEmptyDirectories: true,
-		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
 	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
@@ -1001,13 +1021,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	// Check we aren't overwriting a file on the same remote
-	if srcObj.fs == f {
-		srcPath := srcObj.rootPath()
-		dstPath := f.rootPath(remote)
-		if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
-			return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
-		}
+	srcPath := srcObj.rootPath()
+	dstPath := f.rootPath(remote)
+	if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
+		return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 
 	// Create temporary object
@@ -1837,7 +1854,7 @@ func newOptsCall(normalizedID string, method string, route string) (opts rest.Op
 func parseNormalizedID(ID string) (string, string, string) {
 	if strings.Index(ID, "#") >= 0 {
 		s := strings.Split(ID, "#")
-		return s[1], s[0], graphURL + "/drives"
+		return s[1], "", ""
 	}
 	return ID, "", ""
 }
