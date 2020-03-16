@@ -238,15 +238,15 @@ func init() {
 			config.SaveConfig()
 		},
 		Options: []fs.Option{{
-			Name:    "is_21vianet_version",
-			Default: false,
-			Help:    "OneDrive operated by 21Vianet (世纪互联).必须输入ClientID&ClientSecret",
- 		}, {
 			Name: config.ConfigClientID,
 			Help: "Microsoft App Client Id\nLeave blank normally.",
 		}, {
 			Name: config.ConfigClientSecret,
 			Help: "Microsoft App Client Secret\nLeave blank normally.",
+		}, {
+			Name:    "is_21vianet_version",
+			Default: false,
+			Help:    "OneDrive operated by 21Vianet (世纪互联).",
 		}, {
 			Name: "chunk_size",
 			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
