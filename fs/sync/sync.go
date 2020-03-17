@@ -682,11 +682,6 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 		return false
 	}
 
-	//Verify that modtime is within 1ms margin
-	if isUsingRenameStrategy("modtime", s.trackRenamesStrategy) && src.ModTime(s.ctx).Sub(dst.ModTime(s.ctx)) > fs.GetModifyWindow(src.Fs(), dst.Fs()) {
-		return false
-	}
-
 	// Find dst object we are about to overwrite if it exists
 	dstOverwritten, _ := s.fdst.NewObject(s.ctx, src.Remote())
 
