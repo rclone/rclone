@@ -1132,10 +1132,10 @@ func TestSyncWithTrackRenamesUsingModtime(t *testing.T) {
 	defer r.Finalise()
 
 	fs.Config.TrackRenames = true
-	fs.Config.TrackUsingModTime = true
+	fs.Config.TrackRenamesStrategy = "hash,modtime"
 	defer func() {
 		fs.Config.TrackRenames = false
-		fs.Config.TrackUsingModTime = false
+		fs.Config.TrackRenamesStrategy = "hash"
 	}()
 
 	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.None

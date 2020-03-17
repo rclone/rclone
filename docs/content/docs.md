@@ -1142,14 +1142,13 @@ Note also that `--track-renames` is incompatible with
 `--delete-before` and will select `--delete-after` instead of
 `--delete-during`.
 
-### --track-using-modtime
+### --track-renames-strategy (hash,modtime) ###
 
 This option changes the matching criteria for `--track-renames` to match
-by modification time instead of matching by file hash. This also means
+by any combination of modtime, hash, size. Matchig by size is always enabled
+no matter what option is selected here. This also means
 that it enables `--track-renames` support for encrypted destinations.
-The source and destination file modification time must be within one
-millisecond to match.
-
+If nothing is specified, the default option is matching by hashes.
 
 ### --delete-(before,during,after) ###
 
