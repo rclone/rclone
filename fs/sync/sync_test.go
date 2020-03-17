@@ -1127,7 +1127,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	}
 }
 
-func TestSyncWithTrackRenamesUsingModtime(t *testing.T) {
+func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 

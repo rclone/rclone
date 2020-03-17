@@ -594,7 +594,7 @@ func (s *syncCopyMove) renameID(obj fs.Object, renameStrategy []string, precisio
 
 	if isUsingRenameStrategy("modtime", renameStrategy) {
 		modTime := obj.ModTime(s.ctx).Unix() / precision.Nanoseconds() / 2
-		renameID += fmt.Sprintf(",%s", modTime)
+		renameID += fmt.Sprintf(",%d", modTime)
 	}
 
 	return renameID
