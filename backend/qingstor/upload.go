@@ -341,12 +341,17 @@ func (mu *multiUploader) abort() error {
 }
 
 // multiPartUpload upload a multiple object into QingStor
-func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) error {
-	var err error
-	//Initiate an multi-part upload
+func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) (err error) {
+	// Initiate an multi-part upload
 	if err = mu.initiate(); err != nil {
 		return err
 	}
+	defer func() {
+		// Abort the transfer if returning an error
+		if err != nil {
+			_ = mu.abort()
+		}
+	}()
 
 	ch := make(chan chunk, mu.cfg.concurrency)
 	for i := 0; i < mu.cfg.concurrency; i++ {
@@ -400,9 +405,5 @@ func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) error {
 	close(ch)
 	mu.wg.Wait()
 	// Complete Multipart Upload
-	err = mu.complete()
-	if mu.getErr() != nil || err != nil {
-		_ = mu.abort()
-	}
-	return err
+	return mu.complete()
 }
