@@ -61,6 +61,7 @@ func TestRestic(t *testing.T) {
 		cmd := exec.Command("go", args...)
 		cmd.Env = append(os.Environ(),
 			"RESTIC_TEST_REST_REPOSITORY=rest:"+w.Server.URL()+path,
+			"GO111MODULE=on",
 		)
 		out, err := cmd.CombinedOutput()
 		if len(out) != 0 {
