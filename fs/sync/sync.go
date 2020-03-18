@@ -139,6 +139,12 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 			fs.Errorf(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
 			s.trackRenames = false
 		}
+
+		if fs.GetModifyWindow(fsrc, fdst) == fs.ModTimeNotSupported && isUsingRenameStrategy("modtime", s.trackRenamesStrategy) {
+			fs.Errorf(fdst, "Ignoring --track-renames as either the source or destination do not support modtime")
+			s.trackRenames = false
+		}
+
 		if s.deleteMode == fs.DeleteModeOff {
 			fs.Errorf(fdst, "Ignoring --track-renames as it doesn't work with copy or move, only sync")
 			s.trackRenames = false
@@ -573,9 +579,10 @@ func isUsingRenameStrategy(strategy string, strategies []string) bool {
 // renameID makes a string with the size and the other identifiers of the requested rename strategies
 //
 // it may return an empty string in which case no hash could be made
-func (s *syncCopyMove) renameID(obj fs.Object, renameStrategy []string, precision time.Duration) (renameID string) {
-	renameID = ""
-	renameID += fmt.Sprintf("%d", obj.Size())
+func (s *syncCopyMove) renameID(obj fs.Object, renameStrategy []string, precision time.Duration) string {
+	var builder strings.Builder
+
+	fmt.Fprintf(&builder, "%d", obj.Size())
 
 	if isUsingRenameStrategy("hash", renameStrategy) {
 		var err error
@@ -589,15 +596,23 @@ func (s *syncCopyMove) renameID(obj fs.Object, renameStrategy []string, precisio
 			return ""
 		}
 
-		renameID += fmt.Sprintf(",%s", hash)
+		fmt.Fprintf(&builder, ",%s", hash)
 	}
 
 	if isUsingRenameStrategy("modtime", renameStrategy) {
-		modTime := obj.ModTime(s.ctx).Unix() / precision.Nanoseconds() / 2
-		renameID += fmt.Sprintf(",%d", modTime)
+		modTime := obj.ModTime(s.ctx)
+		divisor := precision.Nanoseconds() / 2
+		rounding := divisor / 2
+
+		if rounding > 0 {
+			rounding--
+		}
+
+		timeHash := (modTime.Unix()*time.Nanosecond.Nanoseconds() + int64(modTime.Nanosecond()) + rounding)
+		fmt.Fprintf(&builder, ",%d", timeHash)
 	}
 
-	return renameID
+	return builder.String()
 }
 
 // pushRenameMap adds the object with hash to the rename map
@@ -669,8 +684,7 @@ func (s *syncCopyMove) makeRenameMap() {
 // possible, it returns true if the object was renamed.
 func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	// Calculate the hash of the src object
-	hash := ""
-	hash = s.renameID(src, s.trackRenamesStrategy, fs.GetModifyWindow(s.fsrc, s.fdst))
+	hash := s.renameID(src, s.trackRenamesStrategy, fs.GetModifyWindow(s.fsrc, s.fdst))
 
 	if hash == "" {
 		return false
