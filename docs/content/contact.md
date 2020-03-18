@@ -12,7 +12,7 @@ Forum for questions and general discussion:
 
   * https://forum.rclone.org
 
-## Gitub project ##
+## GitHub project ##
 
 The project website is at:
 
