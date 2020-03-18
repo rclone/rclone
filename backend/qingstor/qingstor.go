@@ -864,6 +864,76 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	})
 }
 
+// cleanUpBucket removes all pending multipart uploads for a given bucket
+func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
+	fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than 24 hours", bucket)
+	bucketInit, err := f.svc.Bucket(bucket, f.zone)
+	if err != nil {
+		return err
+	}
+	maxLimit := int(listLimitSize)
+	var marker *string
+	for {
+		req := qs.ListMultipartUploadsInput{
+			Limit:     &maxLimit,
+			KeyMarker: marker,
+		}
+		var resp *qs.ListMultipartUploadsOutput
+		resp, err = bucketInit.ListMultipartUploads(&req)
+		if err != nil {
+			return errors.Wrap(err, "clean up bucket list multipart uploads")
+		}
+		for _, upload := range resp.Uploads {
+			if upload.Created != nil && upload.Key != nil && upload.UploadID != nil {
+				age := time.Since(*upload.Created)
+				if age > 24*time.Hour {
+					fs.Infof(f, "removing pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
+					req := qs.AbortMultipartUploadInput{
+						UploadID: upload.UploadID,
+					}
+					_, abortErr := bucketInit.AbortMultipartUpload(*upload.Key, &req)
+					if abortErr != nil {
+						err = errors.Wrapf(abortErr, "failed to remove multipart upload for %q", *upload.Key)
+						fs.Errorf(f, "%v", err)
+					}
+				} else {
+					fs.Debugf(f, "ignoring pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
+				}
+			}
+		}
+		if resp.HasMore != nil && !*resp.HasMore {
+			break
+		}
+		// Use NextMarker if set, otherwise use last Key
+		if resp.NextKeyMarker == nil || *resp.NextKeyMarker == "" {
+			fs.Errorf(f, "Expecting NextKeyMarker but didn't find one")
+			break
+		} else {
+			marker = resp.NextKeyMarker
+		}
+	}
+	return err
+}
+
+// CleanUp removes all pending multipart uploads
+func (f *Fs) CleanUp(ctx context.Context) (err error) {
+	if f.rootBucket != "" {
+		return f.cleanUpBucket(ctx, f.rootBucket)
+	}
+	entries, err := f.listBuckets(ctx)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		cleanErr := f.cleanUpBucket(ctx, f.opt.Enc.FromStandardName(entry.Remote()))
+		if err != nil {
+			fs.Errorf(f, "Failed to cleanup bucket: %q", cleanErr)
+			err = cleanErr
+		}
+	}
+	return err
+}
+
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // it also sets the info
@@ -1090,9 +1160,10 @@ func (o *Object) MimeType(ctx context.Context) string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = &Fs{}
-	_ fs.Copier    = &Fs{}
-	_ fs.Object    = &Object{}
-	_ fs.ListRer   = &Fs{}
-	_ fs.MimeTyper = &Object{}
+	_ fs.Fs         = &Fs{}
+	_ fs.CleanUpper = &Fs{}
+	_ fs.Copier     = &Fs{}
+	_ fs.Object     = &Object{}
+	_ fs.ListRer    = &Fs{}
+	_ fs.MimeTyper  = &Object{}
 )

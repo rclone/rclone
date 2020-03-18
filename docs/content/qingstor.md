@@ -105,6 +105,12 @@ rclone supports multipart uploads with QingStor which means that it can
 upload files bigger than 5GB. Note that files uploaded with multipart
 upload don't have an MD5SUM.
 
+Note that incomplete multipart uploads older than 24 hours can be
+removed with `rclone cleanup remote:bucket` just for one bucket
+`rclone cleanup remote:` for all buckets. QingStor does not ever
+remove incomplete multipart uploads so it may be necessary to run this
+from time to time.
+
 ### Buckets and Zone ###
 
 With QingStor you can list buckets (`rclone lsd`) using any zone,
