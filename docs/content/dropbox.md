@@ -1,7 +1,7 @@
 ---
 title: "Dropbox"
 description: "Rclone docs for Dropbox"
-date: "2016-02-21"
+date: "2020-03-18"
 ---
 
 <i class="fab fa-dropbox"></i> Dropbox
@@ -214,10 +214,12 @@ to be the same account as the Dropbox you want to access)
 
 2. Choose an API => Usually this should be `Dropbox API`
 
-3. Choose the type of access you want to use => Full Dropbox or App Folder
+3. Choose the type of access you want to use => `Full Dropbox` or `App Folder`
 
-4. Name your App
+4. Name your App. The app name is global, so you can't use `rclone` for example
 
 5. Click the button `Create App`
+
+5. Fill `Redirect URIs` as `http://localhost:53682/`
 
 6. Find the `App key` and `App secret` Use these values in rclone config to add a new remote or edit an existing remote.
