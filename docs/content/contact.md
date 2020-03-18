@@ -12,13 +12,13 @@ Forum for questions and general discussion:
 
   * https://forum.rclone.org
 
-## Gitub project ##
+## GitHub's repository ##
 
-The project website is at:
+The project's repository is located at:
 
   * https://github.com/rclone/rclone
 
-There you can file bug reports or contribute pull requests.
+There you can file bug reports or contribute with pull requests.
 
 ## Twitter ##
 
