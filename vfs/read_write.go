@@ -3,7 +3,6 @@ package vfs
 import (
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -20,7 +19,7 @@ import (
 // It will be open to a temporary file which, when closed, will be
 // transferred to the remote.
 type RWFileHandle struct {
-	*os.File
+	fd          *os.File
 	mu          sync.Mutex
 	closed      bool // set if handle has been closed
 	file        *File
@@ -30,16 +29,6 @@ type RWFileHandle struct {
 	writeCalled bool // if any Write() methods have been called
 	changed     bool // file contents was changed in any other way
 }
-
-// Check interfaces
-var (
-	_ io.Reader   = (*RWFileHandle)(nil)
-	_ io.ReaderAt = (*RWFileHandle)(nil)
-	_ io.Writer   = (*RWFileHandle)(nil)
-	_ io.WriterAt = (*RWFileHandle)(nil)
-	_ io.Seeker   = (*RWFileHandle)(nil)
-	_ io.Closer   = (*RWFileHandle)(nil)
-)
 
 func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 	// if O_CREATE and O_EXCL are set and if path already exists, then return EEXIST
@@ -172,7 +161,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 			return errors.Wrap(err, "cache open file failed")
 		}
 	}
-	fh.File = fd
+	fh.fd = fd
 	fh.opened = true
 	fh.file.addRWOpen()
 	fh.d.addObject(fh.file) // make sure the directory has this object in it now
@@ -242,7 +231,7 @@ func (fh *RWFileHandle) flushWrites(closeFile bool) error {
 	}
 
 	if writer && fh.opened {
-		fi, err := fh.File.Stat()
+		fi, err := fh.fd.Stat()
 		if err != nil {
 			fs.Errorf(fh.logPrefix(), "Failed to stat cache file: %v", err)
 		} else {
@@ -252,7 +241,7 @@ func (fh *RWFileHandle) flushWrites(closeFile bool) error {
 
 	// Close the underlying file
 	if fh.opened && closeFile {
-		err := fh.File.Close()
+		err := fh.fd.Close()
 		if err != nil {
 			err = errors.Wrap(err, "failed to close cache file")
 			return err
@@ -371,7 +360,7 @@ func (fh *RWFileHandle) Size() int64 {
 	if !fh.opened {
 		return fh.file.Size()
 	}
-	fi, err := fh.File.Stat()
+	fi, err := fh.fd.Stat()
 	if err != nil {
 		return 0
 	}
@@ -405,14 +394,14 @@ func (fh *RWFileHandle) readFn(read func() (int, error)) (n int, err error) {
 // Read bytes from the file
 func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
 	return fh.readFn(func() (int, error) {
-		return fh.File.Read(b)
+		return fh.fd.Read(b)
 	})
 }
 
 // ReadAt bytes from the file at off
 func (fh *RWFileHandle) ReadAt(b []byte, off int64) (n int, err error) {
 	return fh.readFn(func() (int, error) {
-		return fh.File.ReadAt(b, off)
+		return fh.fd.ReadAt(b, off)
 	})
 }
 
@@ -429,7 +418,7 @@ func (fh *RWFileHandle) Seek(offset int64, whence int) (ret int64, err error) {
 	if err = fh.openPending(false); err != nil {
 		return ret, err
 	}
-	return fh.File.Seek(offset, whence)
+	return fh.fd.Seek(offset, whence)
 }
 
 // writeFn general purpose write call
@@ -452,7 +441,7 @@ func (fh *RWFileHandle) writeFn(write func() error) (err error) {
 	if err != nil {
 		return err
 	}
-	fi, err := fh.File.Stat()
+	fi, err := fh.fd.Stat()
 	if err != nil {
 		return errors.Wrap(err, "failed to stat cache file")
 	}
@@ -463,7 +452,7 @@ func (fh *RWFileHandle) writeFn(write func() error) (err error) {
 // Write bytes to the file
 func (fh *RWFileHandle) Write(b []byte) (n int, err error) {
 	err = fh.writeFn(func() error {
-		n, err = fh.File.Write(b)
+		n, err = fh.fd.Write(b)
 		return err
 	})
 	return n, err
@@ -476,7 +465,7 @@ func (fh *RWFileHandle) WriteAt(b []byte, off int64) (n int, err error) {
 		return fh.Write(b)
 	}
 	err = fh.writeFn(func() error {
-		n, err = fh.File.WriteAt(b, off)
+		n, err = fh.fd.WriteAt(b, off)
 		return err
 	})
 	return n, err
@@ -485,7 +474,7 @@ func (fh *RWFileHandle) WriteAt(b []byte, off int64) (n int, err error) {
 // WriteString a string to the file
 func (fh *RWFileHandle) WriteString(s string) (n int, err error) {
 	err = fh.writeFn(func() error {
-		n, err = fh.File.WriteString(s)
+		n, err = fh.fd.WriteString(s)
 		return err
 	})
 	return n, err
@@ -503,7 +492,7 @@ func (fh *RWFileHandle) Truncate(size int64) (err error) {
 	}
 	fh.changed = true
 	fh.file.setSize(size)
-	return fh.File.Truncate(size)
+	return fh.fd.Truncate(size)
 }
 
 // Sync commits the current contents of the file to stable storage. Typically,
@@ -521,9 +510,45 @@ func (fh *RWFileHandle) Sync() error {
 	if fh.flags&accessModeMask == os.O_RDONLY {
 		return nil
 	}
-	return fh.File.Sync()
+	return fh.fd.Sync()
 }
 
 func (fh *RWFileHandle) logPrefix() string {
 	return fmt.Sprintf("%s(%p)", fh.file.Path(), fh)
+}
+
+// Chdir changes the current working directory to the file, which must
+// be a directory.
+func (fh *RWFileHandle) Chdir() error {
+	return ENOSYS
+}
+
+// Chmod changes the mode of the file to mode.
+func (fh *RWFileHandle) Chmod(mode os.FileMode) error {
+	return ENOSYS
+}
+
+// Chown changes the numeric uid and gid of the named file.
+func (fh *RWFileHandle) Chown(uid, gid int) error {
+	return ENOSYS
+}
+
+// Fd returns the integer Unix file descriptor referencing the open file.
+func (fh *RWFileHandle) Fd() uintptr {
+	return fh.fd.Fd()
+}
+
+// Name returns the name of the file from the underlying Object.
+func (fh *RWFileHandle) Name() string {
+	return fh.file.String()
+}
+
+// Readdir reads the contents of the directory associated with file.
+func (fh *RWFileHandle) Readdir(n int) ([]os.FileInfo, error) {
+	return nil, ENOSYS
+}
+
+// Readdirnames reads the contents of the directory associated with file.
+func (fh *RWFileHandle) Readdirnames(n int) (names []string, err error) {
+	return nil, ENOSYS
 }

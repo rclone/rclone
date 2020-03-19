@@ -18,6 +18,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Check interfaces
+var (
+	_ io.Reader   = (*RWFileHandle)(nil)
+	_ io.ReaderAt = (*RWFileHandle)(nil)
+	_ io.Writer   = (*RWFileHandle)(nil)
+	_ io.WriterAt = (*RWFileHandle)(nil)
+	_ io.Seeker   = (*RWFileHandle)(nil)
+	_ io.Closer   = (*RWFileHandle)(nil)
+	_ Handle      = (*RWFileHandle)(nil)
+)
+
 func cleanup(t *testing.T, r *fstest.Run, vfs *VFS) {
 	assert.NoError(t, vfs.CleanUp())
 	vfs.Shutdown()
