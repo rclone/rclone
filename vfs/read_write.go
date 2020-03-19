@@ -3,6 +3,7 @@ package vfs
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"runtime"
@@ -19,13 +20,14 @@ import (
 // It will be open to a temporary file which, when closed, will be
 // transferred to the remote.
 type RWFileHandle struct {
-	fd          *os.File
 	mu          sync.Mutex
-	closed      bool // set if handle has been closed
+	fd          *os.File
+	offset      int64 // file pointer offset
 	file        *File
 	d           *Dir
-	opened      bool
 	flags       int  // open flags
+	closed      bool // set if handle has been closed
+	opened      bool
 	writeCalled bool // if any Write() methods have been called
 	changed     bool // file contents was changed in any other way
 }
@@ -353,10 +355,13 @@ func (fh *RWFileHandle) Release() error {
 	return err
 }
 
-// Size returns the size of the underlying file
-func (fh *RWFileHandle) Size() int64 {
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
+// _size returns the size of the underlying file
+//
+// call with the lock held
+//
+// FIXME what if a file was partially read in - this may return the wrong thing?
+// FIXME need to make sure we extend the file to the maximum when creating it
+func (fh *RWFileHandle) _size() int64 {
 	if !fh.opened {
 		return fh.file.Size()
 	}
@@ -367,6 +372,13 @@ func (fh *RWFileHandle) Size() int64 {
 	return fi.Size()
 }
 
+// Size returns the size of the underlying file
+func (fh *RWFileHandle) Size() int64 {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	return fh._size()
+}
+
 // Stat returns info about the file
 func (fh *RWFileHandle) Stat() (os.FileInfo, error) {
 	fh.mu.Lock()
@@ -374,35 +386,36 @@ func (fh *RWFileHandle) Stat() (os.FileInfo, error) {
 	return fh.file, nil
 }
 
-// readFn is a general purpose read function - pass in a closure to do
-// the actual read
-func (fh *RWFileHandle) readFn(read func() (int, error)) (n int, err error) {
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
+// _readAt bytes from the file at off
+//
+// call with lock held
+func (fh *RWFileHandle) _readAt(b []byte, off int64) (n int, err error) {
 	if fh.closed {
-		return 0, ECLOSED
+		return n, ECLOSED
 	}
 	if fh.flags&accessModeMask == os.O_WRONLY {
-		return 0, EBADF
+		return n, EBADF
 	}
 	if err = fh.openPending(false); err != nil {
 		return n, err
 	}
-	return read()
-}
-
-// Read bytes from the file
-func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
-	return fh.readFn(func() (int, error) {
-		return fh.fd.Read(b)
-	})
+	return fh.fd.ReadAt(b, off)
 }
 
 // ReadAt bytes from the file at off
 func (fh *RWFileHandle) ReadAt(b []byte, off int64) (n int, err error) {
-	return fh.readFn(func() (int, error) {
-		return fh.fd.ReadAt(b, off)
-	})
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	return fh._readAt(b, off)
+}
+
+// Read bytes from the file
+func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	n, err = fh._readAt(b, fh.offset)
+	fh.offset += int64(n)
+	return n, err
 }
 
 // Seek to new file position
@@ -418,66 +431,67 @@ func (fh *RWFileHandle) Seek(offset int64, whence int) (ret int64, err error) {
 	if err = fh.openPending(false); err != nil {
 		return ret, err
 	}
-	return fh.fd.Seek(offset, whence)
+	switch whence {
+	case io.SeekStart:
+		fh.offset = 0
+	case io.SeekEnd:
+		fh.offset = fh._size()
+	}
+	fh.offset += offset
+	// we don't check the offset - the next Read will
+	return fh.offset, nil
 }
 
-// writeFn general purpose write call
-//
-// Pass a closure to do the actual write
-func (fh *RWFileHandle) writeFn(write func() error) (err error) {
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
+// WriteAt bytes to the file at off
+func (fh *RWFileHandle) _writeAt(b []byte, off int64) (n int, err error) {
 	if fh.closed {
-		return ECLOSED
+		return n, ECLOSED
 	}
 	if fh.flags&accessModeMask == os.O_RDONLY {
-		return EBADF
+		return n, EBADF
 	}
 	if err = fh.openPending(false); err != nil {
-		return err
+		return n, err
 	}
 	fh.writeCalled = true
-	err = write()
-	if err != nil {
-		return err
+
+	if fh.flags&os.O_APPEND != 0 {
+		// if append is set, call Write as WriteAt returns an error if append is set
+		n, err = fh.fd.Write(b)
+	} else {
+		n, err = fh.fd.WriteAt(b, off)
 	}
+	if err != nil {
+		return n, err
+	}
+
 	fi, err := fh.fd.Stat()
 	if err != nil {
-		return errors.Wrap(err, "failed to stat cache file")
+		return n, errors.Wrap(err, "failed to stat cache file")
 	}
 	fh.file.setSize(fi.Size())
-	return nil
-}
-
-// Write bytes to the file
-func (fh *RWFileHandle) Write(b []byte) (n int, err error) {
-	err = fh.writeFn(func() error {
-		n, err = fh.fd.Write(b)
-		return err
-	})
 	return n, err
 }
 
 // WriteAt bytes to the file at off
 func (fh *RWFileHandle) WriteAt(b []byte, off int64) (n int, err error) {
-	if fh.flags&os.O_APPEND != 0 {
-		// if append is set, call Write as WriteAt returns an error if append is set
-		return fh.Write(b)
-	}
-	err = fh.writeFn(func() error {
-		n, err = fh.fd.WriteAt(b, off)
-		return err
-	})
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	return fh._writeAt(b, off)
+}
+
+// Write bytes to the file
+func (fh *RWFileHandle) Write(b []byte) (n int, err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	n, err = fh._writeAt(b, fh.offset)
+	fh.offset += int64(n)
 	return n, err
 }
 
 // WriteString a string to the file
 func (fh *RWFileHandle) WriteString(s string) (n int, err error) {
-	err = fh.writeFn(func() error {
-		n, err = fh.fd.WriteString(s)
-		return err
-	})
-	return n, err
+	return fh.Write([]byte(s))
 }
 
 // Truncate file to given size
