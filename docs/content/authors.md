@@ -348,3 +348,4 @@ Contributors
   * Patryk Jakuszew <patryk.jakuszew@gmail.com>
   * fishbullet <shindu666@gmail.com>
   * greatroar <@>
+  * Bernd Schoolmann <mail@quexten.com>
