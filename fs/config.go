@@ -59,7 +59,8 @@ type ConfigInfo struct {
 	InsecureSkipVerify     bool // Skip server certificate verification
 	DeleteMode             DeleteMode
 	MaxDelete              int64
-	TrackRenames           bool // Track file renames.
+	TrackRenames           bool   // Track file renames.
+	TrackRenamesStrategy   string // Comma separated list of stratgies used to track renames
 	LowLevelRetries        int
 	UpdateOlder            bool // Skip files that are newer on the destination
 	NoGzip                 bool // Disable compression
@@ -144,6 +145,8 @@ func NewConfig() *ConfigInfo {
 	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
 	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
 	c.MultiThreadStreams = 4
+
+	c.TrackRenamesStrategy = "hash"
 
 	return c
 }

@@ -128,6 +128,7 @@ These flags are available for every command.
       --tpslimit float                       Limit HTTP transactions per second to this.
       --tpslimit-burst int                   Max burst of transactions for --tpslimit. (default 1)
       --track-renames                        When synchronizing, track file renames and do a server side move if possible
+      --track-renames-strategy                  When tracking renames, use multiple strategies of hash, modtime
       --transfers int                        Number of file transfers to run in parallel. (default 4)
   -u, --update                               Skip files that are newer on the destination.
       --use-cookies                          Enable session cookiejar.
