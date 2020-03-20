@@ -44,6 +44,7 @@ type ConfigInfo struct {
 	StatsLogLevel          LogLevel
 	UseJSONLog             bool
 	DryRun                 bool
+	Interactive            bool
 	CheckSum               bool
 	SizeOnly               bool
 	IgnoreTimes            bool

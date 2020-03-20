@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -211,9 +212,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 
 	// mod time differs but hash is the same to reset mod time if required
 	if opt.updateModTime {
-		if fs.Config.DryRun {
-			fs.Logf(src, "Not updating modification time as --dry-run")
-		} else {
+		if !skipDestructive(ctx, src, "update modification time") {
 			// Size and hash the same but mtime different
 			// Error if objects are treated as immutable
 			if fs.Config.Immutable {
@@ -348,8 +347,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		tr.Done(err)
 	}()
 	newDst = dst
-	if fs.Config.DryRun {
-		fs.Logf(src, "Not copying as --dry-run")
+	if skipDestructive(ctx, src, "copy") {
 		return newDst, nil
 	}
 	maxTries := fs.Config.LowLevelRetries
@@ -527,8 +525,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		tr.Done(err)
 	}()
 	newDst = dst
-	if fs.Config.DryRun {
-		fs.Logf(src, "Not moving as --dry-run")
+	if skipDestructive(ctx, src, "move") {
 		return newDst, nil
 	}
 	// See if we have Move available
@@ -603,12 +600,12 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	if fs.Config.MaxDelete != -1 && numDeletes > fs.Config.MaxDelete {
 		return fserrors.FatalError(errors.New("--max-delete threshold reached"))
 	}
-	action, actioned, actioning := "delete", "Deleted", "deleting"
+	action, actioned := "delete", "Deleted"
 	if backupDir != nil {
-		action, actioned, actioning = "move into backup dir", "Moved into backup dir", "moving into backup dir"
+		action, actioned = "move into backup dir", "Moved into backup dir"
 	}
-	if fs.Config.DryRun {
-		fs.Logf(dst, "Not %s as --dry-run", actioning)
+	if skipDestructive(ctx, dst, action) {
+		// do nothing
 	} else if backupDir != nil {
 		err = MoveBackupDir(ctx, backupDir, dst)
 	} else {
@@ -1154,8 +1151,7 @@ func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
 // TryRmdir removes a container but not if not empty.  It doesn't
 // count errors but may return one.
 func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
-	if fs.Config.DryRun {
-		fs.Logf(fs.LogDirName(f, dir), "Not deleting as dry run is set")
+	if skipDestructive(ctx, fs.LogDirName(f, dir), "remove directory") {
 		return nil
 	}
 	fs.Debugf(fs.LogDirName(f, dir), "Removing directory")
@@ -1180,8 +1176,8 @@ func Purge(ctx context.Context, f fs.Fs, dir string) error {
 		// FIXME change the Purge interface so it takes a dir - see #1891
 		if doPurge := f.Features().Purge; doPurge != nil {
 			doFallbackPurge = false
-			if fs.Config.DryRun {
-				fs.Logf(f, "Not purging as --dry-run set")
+			if skipDestructive(ctx, fs.LogDirName(f, dir), "purge directory") {
+				return nil
 			} else {
 				err = doPurge(ctx)
 				if err == fs.ErrorCantPurge {
@@ -1255,8 +1251,7 @@ func CleanUp(ctx context.Context, f fs.Fs) error {
 	if doCleanUp == nil {
 		return errors.Errorf("%v doesn't support cleanup", f)
 	}
-	if fs.Config.DryRun {
-		fs.Logf(f, "Not running cleanup as --dry-run set")
+	if skipDestructive(ctx, f, "clean up old files") {
 		return nil
 	}
 	return doCleanUp(ctx)
@@ -1394,8 +1389,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 		fStreamTo = tmpLocalFs
 	}
 
-	if fs.Config.DryRun {
-		fs.Logf("stdin", "Not uploading as --dry-run")
+	if skipDestructive(ctx, dstFileName, "upload from pipe") {
 		// prevents "broken pipe" errors
 		_, err = io.Copy(ioutil.Discard, in)
 		return nil, err
@@ -1677,8 +1671,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		body := ioutil.NopCloser(in) // we let the server close the body
 		in := tr.Account(body)       // account the transfer (no buffering)
 
-		if fs.Config.DryRun {
-			fs.Logf("stdin", "Not uploading as --dry-run")
+		if skipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
 			_, err = io.Copy(ioutil.Discard, in)
 			return nil, err
@@ -2192,4 +2185,30 @@ func GetFsInfo(f fs.Fs) *FsInfo {
 		info.Hashes = append(info.Hashes, hashType.String())
 	}
 	return info
+}
+
+var interactiveMutex sync.Mutex
+
+func skipDestructive(ctx context.Context, subject interface{}, action string) bool {
+	var (
+		flag string
+		skip bool
+	)
+	switch {
+	case fs.Config.DryRun:
+		flag = "--dry-run"
+		skip = true
+	case fs.Config.Interactive:
+		flag = "--interactive"
+		interactiveMutex.Lock()
+		defer interactiveMutex.Unlock()
+		fmt.Printf("rclone: %s \"%v\"?\n", action, subject)
+		skip = !config.Confirm(true)
+	default:
+		skip = false
+	}
+	if skip {
+		fs.Logf(subject, "Skipped %s as %s is set", action, flag)
+	}
+	return skip
 }
