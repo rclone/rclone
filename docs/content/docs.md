@@ -1153,6 +1153,14 @@ Note also that `--track-renames` is incompatible with
 `--delete-before` and will select `--delete-after` instead of
 `--delete-during`.
 
+### --track-renames-strategy (hash,modtime) ###
+
+This option changes the matching criteria for `--track-renames` to match
+by any combination of modtime, hash, size. Matchig by size is always enabled
+no matter what option is selected here. This also means
+that it enables `--track-renames` support for encrypted destinations.
+If nothing is specified, the default option is matching by hashes.
+
 ### --delete-(before,during,after) ###
 
 This option allows you to specify when files on your destination are
