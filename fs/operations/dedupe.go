@@ -44,7 +44,7 @@ outer:
 			newName = fmt.Sprintf("%s-%d%s", base, i+suffix, ext)
 			_, err = f.NewObject(ctx, newName)
 		}
-		if !fs.Config.DryRun {
+		if !skipDestructive(ctx, o, "rename") {
 			newObj, err := doMove(ctx, o, newName)
 			if err != nil {
 				err = fs.CountError(err)
@@ -52,8 +52,6 @@ outer:
 				continue
 			}
 			fs.Infof(newObj, "renamed from: %v", o)
-		} else {
-			fs.Logf(remote, "Not renaming to %q as --dry-run", newName)
 		}
 	}
 }
@@ -255,15 +253,13 @@ func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]fs
 		return errors.Errorf("%v: can't flush dir cache", f)
 	}
 	for _, dirs := range duplicateDirs {
-		if !fs.Config.DryRun {
+		if !skipDestructive(ctx, dirs[0], "merge duplicate directories") {
 			fs.Infof(dirs[0], "Merging contents of duplicate directories")
 			err := mergeDirs(ctx, dirs)
 			if err != nil {
 				err = fs.CountError(err)
 				fs.Errorf(nil, "merge duplicate dirs: %v", err)
 			}
-		} else {
-			fs.Infof(dirs[0], "NOT Merging contents of duplicate directories as --dry-run")
 		}
 	}
 	dirCacheFlush()
