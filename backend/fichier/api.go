@@ -320,7 +320,7 @@ func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse
 	return response, err
 }
 
-func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
+func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string, options ...fs.OpenOption) (response *http.Response, err error) {
 	// fs.Debugf(f, "Uploading File `%s`", fileName)
 
 	fileName = f.opt.Enc.FromStandardName(fileName)
@@ -338,6 +338,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName,
 		NoResponse:           true,
 		Body:                 in,
 		ContentLength:        &size,
+		Options:              options,
 		MultipartContentName: "file[]",
 		MultipartFileName:    fileName,
 		MultipartParams: map[string][]string{
