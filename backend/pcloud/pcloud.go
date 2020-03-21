@@ -1080,6 +1080,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ContentLength:    &size,
 		Parameters:       url.Values{},
 		TransferEncoding: []string{"identity"}, // pcloud doesn't like chunked encoding
+		Options:          options,
 	}
 	leaf = o.fs.opt.Enc.FromStandardName(leaf)
 	opts.Parameters.Set("filename", leaf)
