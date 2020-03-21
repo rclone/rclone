@@ -1135,6 +1135,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		NoResponse:    true,
 		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
 		ContentType:   fs.MimeType(ctx, src),
+		Options:       options,
 	}
 	if o.fs.useOCMtime || o.fs.hasMD5 || o.fs.hasSHA1 {
 		opts.ExtraHeaders = map[string]string{}
