@@ -1065,7 +1065,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return resp.Body, err
 }
 
-func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeType string) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeType string, options ...fs.OpenOption) (err error) {
 	// prepare upload
 	var resp *http.Response
 	var ur api.AsyncInfo
@@ -1073,6 +1073,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeT
 		Method:     "GET",
 		Path:       "/resources/upload",
 		Parameters: url.Values{},
+		Options:    options,
 	}
 
 	opts.Parameters.Set("path", o.fs.opt.Enc.FromStandardPath(o.filePath()))
@@ -1121,7 +1122,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	//upload file
-	err = o.upload(ctx, in1, true, fs.MimeType(ctx, src))
+	err = o.upload(ctx, in1, true, fs.MimeType(ctx, src), options...)
 	if err != nil {
 		return err
 	}
