@@ -349,3 +349,4 @@ Contributors
   * fishbullet <shindu666@gmail.com>
   * greatroar <@>
   * Bernd Schoolmann <mail@quexten.com>
+  * Elan Ruusamäe <glen@pld-linux.org>
