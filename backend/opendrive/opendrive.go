@@ -687,8 +687,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 				Name:      leaf,
 			}
 			opts := rest.Opts{
-				Method: "POST",
-				Path:   "/upload/create_file.json",
+				Method:  "POST",
+				Options: options,
+				Path:    "/upload/create_file.json",
 			}
 			resp, err = o.fs.srv.CallJSON(ctx, &opts, &createFileData, &response)
 			return o.fs.shouldRetry(resp, err)
@@ -970,8 +971,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		openUploadData := openUpload{SessionID: o.fs.session.SessionID, FileID: o.id, Size: size}
 		// fs.Debugf(nil, "PreOpen: %#v", openUploadData)
 		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/upload/open_file_upload.json",
+			Method:  "POST",
+			Options: options,
+			Path:    "/upload/open_file_upload.json",
 		}
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, &openUploadData, &openResponse)
 		return o.fs.shouldRetry(resp, err)
