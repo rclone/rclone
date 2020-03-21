@@ -954,8 +954,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload the media item in exchange for an UploadToken
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/uploads",
+		Method:  "POST",
+		Path:    "/uploads",
+		Options: options,
 		ExtraHeaders: map[string]string{
 			"X-Goog-Upload-File-Name": fileName,
 			"X-Goog-Upload-Protocol":  "raw",
