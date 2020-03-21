@@ -338,7 +338,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 
-	_, err = f.uploadFile(ctx, in, size, leaf, directoryID, nodeResponse.ID, nodeResponse.URL)
+	_, err = f.uploadFile(ctx, in, size, leaf, directoryID, nodeResponse.ID, nodeResponse.URL, options...)
 	if err != nil {
 		return nil, err
 	}
