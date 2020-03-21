@@ -1290,6 +1290,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "files/v1/allocate",
+		Options:      options,
 		ExtraHeaders: make(map[string]string),
 	}
 	fileDate := api.Time(src.ModTime(ctx)).APIString()
