@@ -1191,7 +1191,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // upload does a single non-multipart upload
 //
 // This is recommended for less than 50 MB of content
-func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time, options ...fs.OpenOption) (err error) {
 	upload := api.UploadFile{
 		Name:              o.fs.opt.Enc.FromStandardName(leaf),
 		ContentModifiedAt: api.Time(modTime),
@@ -1210,6 +1210,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		MultipartContentName:  "contents",
 		MultipartFileName:     upload.Name,
 		RootURL:               uploadURL,
+		Options:               options,
 	}
 	// If object has an ID then it is existing so create a new version
 	if o.id != "" {
@@ -1251,7 +1252,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload with simple or multipart
 	if size <= int64(o.fs.opt.UploadCutoff) {
-		err = o.upload(ctx, in, leaf, directoryID, modTime)
+		err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
 	} else {
 		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime)
 	}
