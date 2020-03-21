@@ -1429,8 +1429,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var resp *http.Response
 	var info api.UploadSpecification
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/Items(" + directoryID + ")/Upload2",
+		Method:  "POST",
+		Path:    "/Items(" + directoryID + ")/Upload2",
+		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, &req, &info)
