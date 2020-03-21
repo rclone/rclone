@@ -1612,7 +1612,7 @@ func (o *Object) getPosition(ctx context.Context, url string) (pos int64, err er
 }
 
 // uploadFragment uploads a part
-func (o *Object) uploadFragment(ctx context.Context, url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64) (info *api.Item, err error) {
+func (o *Object) uploadFragment(ctx context.Context, url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64, options ...fs.OpenOption) (info *api.Item, err error) {
 	//	var response api.UploadFragmentResponse
 	var resp *http.Response
 	var body []byte
@@ -1625,6 +1625,7 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			ContentLength: &toSend,
 			ContentRange:  fmt.Sprintf("bytes %d-%d/%d", start+skip, start+chunkSize-1, totalSize),
 			Body:          chunk,
+			Options:       options,
 		}
 		_, _ = chunk.Seek(skip, io.SeekStart)
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -1682,7 +1683,7 @@ func (o *Object) cancelUploadSession(ctx context.Context, url string) (err error
 }
 
 // uploadMultipart uploads a file using multipart upload
-func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, modTime time.Time, options ...fs.OpenOption) (info *api.Item, err error) {
 	if size <= 0 {
 		return nil, errors.New("unknown-sized upload not supported")
 	}
@@ -1733,7 +1734,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 		}
 		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n)
+		info, err = o.uploadFragment(ctx, uploadURL, position, size, seg, n, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -1746,7 +1747,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 
 // Update the content of a remote file within 4MB size in one single request
 // This function will set modtime after uploading, which will create a new version for the remote file
-func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
+func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64, modTime time.Time, options ...fs.OpenOption) (info *api.Item, err error) {
 	if size < 0 || size > int64(fs.SizeSuffix(4*1024*1024)) {
 		return nil, errors.New("size passed into uploadSinglepart must be >= 0 and <= 4MiB")
 	}
@@ -1763,6 +1764,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 			Path:          "/" + drive + "/items/" + trueDirID + ":/" + rest.URLPathEscape(o.fs.opt.Enc.FromStandardName(leaf)) + ":/content",
 			ContentLength: &size,
 			Body:          in,
+			Options:       options,
 		}
 	} else {
 		opts = rest.Opts{
@@ -1770,6 +1772,7 @@ func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64,
 			Path:          "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
 			ContentLength: &size,
 			Body:          in,
+			Options:       options,
 		}
 	}
 
@@ -1811,9 +1814,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	var info *api.Item
 	if size > 0 {
-		info, err = o.uploadMultipart(ctx, in, size, modTime)
+		info, err = o.uploadMultipart(ctx, in, size, modTime, options...)
 	} else if size == 0 {
-		info, err = o.uploadSinglepart(ctx, in, size, modTime)
+		info, err = o.uploadSinglepart(ctx, in, size, modTime, options...)
 	} else {
 		return errors.New("unknown-sized upload not supported")
 	}
