@@ -1254,7 +1254,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if size <= int64(o.fs.opt.UploadCutoff) {
 		err = o.upload(ctx, in, leaf, directoryID, modTime, options...)
 	} else {
-		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime)
+		err = o.uploadMultipart(ctx, in, leaf, directoryID, size, modTime, options...)
 	}
 	return err
 }
