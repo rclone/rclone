@@ -517,7 +517,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return existingObj, existingObj.Update(ctx, in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
-		return f.PutUnchecked(ctx, in, src)
+		return f.PutUnchecked(ctx, in, src, options...)
 	default:
 		return nil, err
 	}
@@ -1002,6 +1002,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Method:     "POST",
 		Path:       "/folder/uploadinfo",
 		Parameters: o.fs.baseParams(),
+		Options:    options,
 		MultipartParams: url.Values{
 			"id": {directoryID},
 		},
