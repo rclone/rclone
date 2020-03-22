@@ -184,6 +184,28 @@ func init() {
 					log.Fatalf("Failed to query available drives: %v", err)
 				}
 
+				// Also call /me/drive as sometimes /me/drives doesn't return it #4068
+				if opts.Path == "/me/drives" {
+					opts.Path = "/me/drive"
+					meDrive := driveResource{}
+					_, err := srv.CallJSON(ctx, &opts, nil, &meDrive)
+					if err != nil {
+						log.Fatalf("Failed to query available drives: %v", err)
+					}
+					found := false
+					for _, drive := range drives.Drives {
+						if drive.DriveID == meDrive.DriveID {
+							found = true
+							break
+						}
+					}
+					// add the me drive if not found already
+					if !found {
+						fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
+						drives.Drives = append(drives.Drives, meDrive)
+					}
+				}
+
 				if len(drives.Drives) == 0 {
 					log.Fatalf("No drives found")
 				} else {
