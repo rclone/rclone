@@ -1171,7 +1171,7 @@ func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
 		fs.Config.TrackRenamesStrategy = "hash"
 	}()
 
-	canTrackRenames := operations.CanServerSideMove(r.Fremote)
+	canTrackRenames := operations.CanServerSideMove(r.Fremote) && r.Fremote.Precision() != fs.ModTimeNotSupported
 	t.Logf("Can track renames: %v", canTrackRenames)
 
 	f1 := r.WriteFile("potato", "Potato Content", t1)
