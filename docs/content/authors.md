@@ -351,3 +351,4 @@ Contributors
   * Bernd Schoolmann <mail@quexten.com>
   * Elan Ruusamäe <glen@pld-linux.org>
   * Max Sum <max@lolyculture.com>
+  * Mark Spieth <mspieth@users.noreply.github.com>
