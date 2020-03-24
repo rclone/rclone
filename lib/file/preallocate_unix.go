@@ -1,6 +1,6 @@
 //+build linux
 
-package local
+package file
 
 import (
 	"os"
@@ -18,8 +18,8 @@ var (
 	fallocFlagsIndex int32
 )
 
-// preAllocate the file for performance reasons
-func preAllocate(size int64, out *os.File) error {
+// PreAllocate the file for performance reasons
+func PreAllocate(size int64, out *os.File) error {
 	if size <= 0 {
 		return nil
 	}
@@ -45,7 +45,7 @@ again:
 	return err
 }
 
-// setSparse makes the file be a sparse file
-func setSparse(out *os.File) error {
+// SetSparse makes the file be a sparse file
+func SetSparse(out *os.File) error {
 	return nil
 }

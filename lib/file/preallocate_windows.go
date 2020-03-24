@@ -1,6 +1,6 @@
 //+build windows
 
-package local
+package file
 
 import (
 	"os"
@@ -32,8 +32,8 @@ type ioStatusBlock struct {
 	Status, Information uintptr
 }
 
-// preAllocate the file for performance reasons
-func preAllocate(size int64, out *os.File) error {
+// PreAllocate the file for performance reasons
+func PreAllocate(size int64, out *os.File) error {
 	if size <= 0 {
 		return nil
 	}
@@ -82,8 +82,8 @@ const (
 	FSCTL_SET_SPARSE = 0x000900c4
 )
 
-// setSparse makes the file be a sparse file
-func setSparse(out *os.File) error {
+// SetSparse makes the file be a sparse file
+func SetSparse(out *os.File) error {
 	err := syscall.DeviceIoControl(syscall.Handle(out.Fd()), FSCTL_SET_SPARSE, nil, 0, nil, 0, nil, nil)
 	if err != nil {
 		return errors.Wrap(err, "DeviceIoControl FSCTL_SET_SPARSE")
