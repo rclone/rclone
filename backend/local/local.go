@@ -977,7 +977,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			}
 		}
 		// Pre-allocate the file for performance reasons
-		err = preAllocate(src.Size(), f)
+		err = file.PreAllocate(src.Size(), f)
 		if err != nil {
 			fs.Debugf(o, "Failed to pre-allocate: %v", err)
 		}
@@ -1064,12 +1064,12 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		return nil, err
 	}
 	// Pre-allocate the file for performance reasons
-	err = preAllocate(size, out)
+	err = file.PreAllocate(size, out)
 	if err != nil {
 		fs.Debugf(o, "Failed to pre-allocate: %v", err)
 	}
 	// Set the file to be a sparse file (important on Windows)
-	err = setSparse(out)
+	err = file.SetSparse(out)
 	if err != nil {
 		fs.Debugf(o, "Failed to set sparse: %v", err)
 	}
