@@ -101,10 +101,15 @@ y/e/d> y
 obscured so it isn't immediately obvious what it is.  It is in no way
 secure unless you use config file encryption.
 
-A long passphrase is recommended, or you can use a random one.  Note
-that if you reconfigure rclone with the same passwords/passphrases
-elsewhere it will be compatible - all the secrets used are derived
-from those two passwords/passphrases.
+A long passphrase is recommended, or you can use a random one.
+
+The obscured password is created by using AES-CTR with a static key, with
+the salt stored verbatim at the beginning of the obscured password. This
+static key is shared by between all versions of rclone.
+
+If you reconfigure rclone with the same passwords/passphrases
+elsewhere it will be compatible, but the obscured version will be different
+due to the different salt.
 
 Note that rclone does not encrypt
 
