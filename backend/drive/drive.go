@@ -616,6 +616,9 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 					return false, fserrors.FatalError(err)
 				}
 				return true, err
+			} else if f.opt.StopOnUploadLimit && reason == "teamDriveFileLimitExceeded" {
+				fs.Errorf(f, "Received team drive file limit error: %v", err)
+				return false, fserrors.FatalError(err)
 			}
 		}
 	}
