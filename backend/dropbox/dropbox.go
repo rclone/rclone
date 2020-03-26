@@ -225,7 +225,11 @@ func shouldRetry(err error) (bool, error) {
 		return false, err
 	}
 	baseErrString := errors.Cause(err).Error()
-	// handle any official Retry-After header from Dropbox's SDK first
+	// First check for Insufficient Space
+	if strings.Contains(baseErrString, "insufficient_space") {
+		return false, fserrors.FatalError(err)
+	}
+	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
