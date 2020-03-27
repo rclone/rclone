@@ -10,6 +10,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest/mockobject"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,21 +45,11 @@ func (o *reOpenTestObject) Open(ctx context.Context, options ...fs.OpenOption) (
 			return nil, errorTestError
 		}
 		// Read N bytes then an error
-		r := io.MultiReader(&io.LimitedReader{R: rc, N: N}, errorReader{errorTestError})
+		r := io.MultiReader(&io.LimitedReader{R: rc, N: N}, readers.ErrorReader{Err: errorTestError})
 		// Wrap with Close in a new readCloser
 		rc = readCloser{Reader: r, Closer: rc}
 	}
 	return rc, nil
-}
-
-// Return an error only
-type errorReader struct {
-	err error
-}
-
-// Read returning an error
-func (er errorReader) Read(p []byte) (n int, err error) {
-	return 0, er.err
 }
 
 func TestReOpen(t *testing.T) {

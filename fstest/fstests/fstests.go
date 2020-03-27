@@ -225,16 +225,6 @@ func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item)
 	require.NoError(t, obj.Remove(ctx))
 }
 
-// errorReader just returns an error on Read
-type errorReader struct {
-	err error
-}
-
-// Read returns an error immediately
-func (er errorReader) Read(p []byte) (n int, err error) {
-	return 0, er.err
-}
-
 // read the contents of an object as a string
 func readObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
 	what := fmt.Sprintf("readObject(%q) limit=%d, options=%+v", obj, limit, options)
@@ -637,7 +627,7 @@ func Run(t *testing.T, opt *Opt) {
 			// Read N bytes then produce an error
 			contents := random.String(int(N))
 			buf := bytes.NewBufferString(contents)
-			er := &errorReader{errors.New("potato")}
+			er := &readers.ErrorReader{Err: errors.New("potato")}
 			in := io.MultiReader(buf, er)
 
 			obji := object.NewStaticObjectInfo(file2.Path, file2.ModTime, 2*N, true, nil, nil)
