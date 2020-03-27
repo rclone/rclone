@@ -45,6 +45,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1156,14 +1157,6 @@ func TestOverlapping(t *testing.T) {
 	}
 }
 
-type errorReader struct {
-	err error
-}
-
-func (er errorReader) Read(p []byte) (n int, err error) {
-	return 0, er.err
-}
-
 func TestCheckEqualReaders(t *testing.T) {
 	b65a := make([]byte, 65*1024)
 	b65b := make([]byte, 65*1024)
@@ -1189,7 +1182,7 @@ func TestCheckEqualReaders(t *testing.T) {
 	myErr := errors.New("sentinel")
 	wrap := func(b []byte) io.Reader {
 		r := bytes.NewBuffer(b)
-		e := errorReader{myErr}
+		e := readers.ErrorReader{Err: myErr}
 		return io.MultiReader(r, e)
 	}
 
