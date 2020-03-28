@@ -353,3 +353,4 @@ Contributors
   * Max Sum <max@lolyculture.com>
   * Mark Spieth <mspieth@users.noreply.github.com>
   * harry <me@harry.plus>
+  * Samantha McVey <samantham@posteo.net>
