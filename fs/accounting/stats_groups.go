@@ -94,6 +94,7 @@ Returns the following values:
 	"checks": number of checked files,
 	"transfers": number of transferred files,
 	"deletes" : number of deleted files,
+	"renames" : number of renamed files,
 	"elapsedTime": time in seconds since the start of the process,
 	"lastError": last occurred error,
 	"transferring": an array of currently active file transfers:
@@ -356,6 +357,7 @@ func (sg *statsGroups) sum() *StatsInfo {
 			sum.checks += stats.checks
 			sum.transfers += stats.transfers
 			sum.deletes += stats.deletes
+			sum.renames += stats.renames
 			sum.checking.merge(stats.checking)
 			sum.transferring.merge(stats.transferring)
 			sum.inProgress.merge(stats.inProgress)
