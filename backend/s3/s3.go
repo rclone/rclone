@@ -641,7 +641,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "server_side_encryption",
 			Help:     "The server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS",
+			Provider: "AWS,Ceph,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -653,15 +653,45 @@ isn't set then "acl" is used instead.`,
 				Help:  "aws:kms",
 			}},
 		}, {
+			Name:     "sse_customer_algorithm",
+			Help:     "If using SSE-C, the server-side encryption algorithm used when storing this object in S3.",
+			Provider: "AWS,Ceph,Minio",
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}, {
+				Value: "AES256",
+				Help:  "AES256",
+			}},
+		}, {
 			Name:     "sse_kms_key_id",
 			Help:     "If using KMS ID you must provide the ARN of Key.",
-			Provider: "AWS",
+			Provider: "AWS,Ceph,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
 			}, {
 				Value: "arn:aws:kms:us-east-1:*",
 				Help:  "arn:aws:kms:*",
+			}},
+		}, {
+			Name:     "sse_customer_key",
+			Help:     "If using SSE-C you must provide the secret encyption key used to encrypt/decrypt your data.",
+			Provider: "AWS,Ceph,Minio",
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}},
+		}, {
+			Name:     "sse_customer_key_md5",
+			Help:     "If using SSE-C you must provide the secret encryption key MD5 checksum.",
+			Provider: "AWS,Ceph,Minio",
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
 			}},
 		}, {
 			Name:     "storage_class",
@@ -889,6 +919,9 @@ type Options struct {
 	BucketACL             string               `config:"bucket_acl"`
 	ServerSideEncryption  string               `config:"server_side_encryption"`
 	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
+	SSECustomerAlgorithm  string               `config:"sse_customer_algorithm"`
+	SSECustomerKey        string               `config:"sse_customer_key"`
+	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
 	StorageClass          string               `config:"storage_class"`
 	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
@@ -2084,6 +2117,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Bucket: &bucket,
 		Key:    &bucketPath,
 	}
+	if o.fs.opt.SSECustomerAlgorithm != "" {
+		req.SSECustomerAlgorithm = &o.fs.opt.SSECustomerAlgorithm
+	}
+	if o.fs.opt.SSECustomerKey != "" {
+		req.SSECustomerKey = &o.fs.opt.SSECustomerKey
+	}
+	if o.fs.opt.SSECustomerKeyMD5 != "" {
+		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
+	}
 	fs.FixRangeOption(options, o.bytes)
 	for _, option := range options {
 		switch option.(type) {
@@ -2350,6 +2392,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	if o.fs.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
+	}
+	if o.fs.opt.SSECustomerAlgorithm != "" {
+		req.SSECustomerAlgorithm = &o.fs.opt.SSECustomerAlgorithm
+	}
+	if o.fs.opt.SSECustomerKey != "" {
+		req.SSECustomerKey = &o.fs.opt.SSECustomerKey
+	}
+	if o.fs.opt.SSECustomerKeyMD5 != "" {
+		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
 	}
 	if o.fs.opt.SSEKMSKeyID != "" {
 		req.SSEKMSKeyId = &o.fs.opt.SSEKMSKeyID
