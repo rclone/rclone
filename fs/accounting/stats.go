@@ -33,6 +33,7 @@ type StatsInfo struct {
 	transferring      *stringSet
 	transferQueue     int
 	transferQueueSize int64
+	renames           int64
 	renameQueue       int
 	renameQueueSize   int64
 	deletes           int64
@@ -64,6 +65,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["checks"] = s.checks
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
+	out["renames"] = s.renames
 	out["elapsedTime"] = s.totalDuration().Seconds()
 	s.mu.RUnlock()
 	if !s.checking.empty() {
@@ -330,6 +332,9 @@ func (s *StatsInfo) String() string {
 		if s.deletes != 0 {
 			_, _ = fmt.Fprintf(buf, "Deleted:       %10d\n", s.deletes)
 		}
+		if s.renames != 0 {
+			_, _ = fmt.Fprintf(buf, "Renamed:       %10d\n", s.renames)
+		}
 		if s.transfers != 0 || totalTransfer != 0 {
 			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
 				s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
@@ -467,7 +472,15 @@ func (s *StatsInfo) Deletes(deletes int64) int64 {
 	return s.deletes
 }
 
-// ResetCounters sets the counters (bytes, checks, errors, transfers, deletes) to 0 and resets lastError, fatalError and retryError
+// Renames updates the stats for renames
+func (s *StatsInfo) Renames(renames int64) int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.renames += renames
+	return s.renames
+}
+
+// ResetCounters sets the counters (bytes, checks, errors, transfers, deletes, renames) to 0 and resets lastError, fatalError and retryError
 func (s *StatsInfo) ResetCounters() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -480,6 +493,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
+	s.renames = 0
 	s.startedTransfers = nil
 	s.oldDuration = 0
 }

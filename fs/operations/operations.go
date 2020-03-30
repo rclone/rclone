@@ -513,6 +513,9 @@ func SameObject(src, dst fs.Object) bool {
 func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
+		if err == nil {
+			accounting.Stats(ctx).Renames(1)
+		}
 		tr.Done(err)
 	}()
 	newDst = dst
@@ -2058,7 +2061,11 @@ func (l *ListFormat) Format(entry *ListJSONItem) (result string) {
 func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err error) {
 	// Use DirMove if possible
 	if doDirMove := f.Features().DirMove; doDirMove != nil {
-		return doDirMove(ctx, f, srcRemote, dstRemote)
+		err = doDirMove(ctx, f, srcRemote, dstRemote)
+		if err == nil {
+			accounting.Stats(ctx).Renames(1)
+		}
+		return err
 	}
 
 	// Load the directory tree into memory
