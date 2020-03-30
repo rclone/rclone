@@ -844,7 +844,7 @@ func (s *syncCopyMove) run() error {
 	// Read the error out of the context if there is one
 	s.processError(s.ctx.Err())
 
-	if accounting.Stats(s.ctx).GetTransfers() == 0 {
+	if s.deleteMode != fs.DeleteModeOnly && accounting.Stats(s.ctx).GetTransfers() == 0 {
 		fs.Infof(nil, "There was nothing to transfer")
 	}
 
