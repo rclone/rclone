@@ -86,7 +86,7 @@ func main() {
 
 	// Just clean the directories if required
 	if *clean {
-		err := cleanRemotes(conf.Remotes())
+		err := cleanRemotes(conf)
 		if err != nil {
 			log.Fatalf("Failed to clean: %v", err)
 		}
