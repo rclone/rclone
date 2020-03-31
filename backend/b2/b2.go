@@ -668,7 +668,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			}
 			remote := file.Name[len(prefix):]
 			// Check for directory
-			isDirectory := strings.HasSuffix(remote, "/")
+			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
 			if isDirectory {
 				remote = remote[:len(remote)-1]
 			}
