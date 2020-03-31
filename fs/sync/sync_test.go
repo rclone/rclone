@@ -1067,9 +1067,11 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
-	// Check we renamed something
-	renames := accounting.GlobalStats().Renames(0)
-	assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
+	// Check we renamed something if we should have
+	if canTrackRenames {
+		renames := accounting.GlobalStats().Renames(0)
+		assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
+	}
 }
 
 func TestParseRenamesStrategyModtime(t *testing.T) {
@@ -1136,9 +1138,11 @@ func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
-	// Check we renamed something
-	renames := accounting.GlobalStats().Renames(0)
-	assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
+	// Check we renamed something if we should have
+	if canTrackRenames {
+		renames := accounting.GlobalStats().Renames(0)
+		assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
+	}
 }
 
 func toyFileTransfers(r *fstest.Run) int64 {
