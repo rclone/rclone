@@ -354,3 +354,4 @@ Contributors
   * Mark Spieth <mspieth@users.noreply.github.com>
   * harry <me@harry.plus>
   * Samantha McVey <samantham@posteo.net>
+  * Jack Anderson <jack.anderson@metaswitch.com>
