@@ -555,7 +555,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				continue
 			}
 			remote = remote[len(prefix):]
-			isDirectory := strings.HasSuffix(remote, "/")
+			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
 			if addBucket {
 				remote = path.Join(bucket, remote)
 			}
