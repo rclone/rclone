@@ -116,13 +116,16 @@ foreground mode by default, use the --daemon flag to specify background mode mod
 Background mode is only supported on Linux and OSX, you can only run mount in
 foreground mode on Windows.
 
-Start the mount like this
+On Linux/macOS/FreeBSD Start the mount like this where ` + "`/path/to/local/mount`" + `
+is an **empty** **existing** directory.
 
     rclone ` + commandName + ` remote:path/to/files /path/to/local/mount
 
-Or on Windows like this where X: is an unused drive letter
+Or on Windows like this where ` + "`X:`" + ` is an unused drive letter
+or use a path to **non-existent** directory.
 
     rclone ` + commandName + ` remote:path/to/files X:
+    rclone ` + commandName + ` remote:path/to/files C:\path\to\nonexistent\directory
 
 When running in background mode the user will have to stop the mount manually (specified below).
 
@@ -312,6 +315,8 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 				if err != nil {
 					log.Fatalf("Fatal error: %v", err)
 				}
+			} else if AllowNonEmpty && runtime.GOOS == "windows" {
+				fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
 			}
 
 			// Work out the volume name, removing special
@@ -348,7 +353,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &DebugFUSE, "debug-fuse", "", DebugFUSE, "Debug the FUSE internals - needs -v.")
 	// mount options
-	flags.BoolVarP(cmdFlags, &AllowNonEmpty, "allow-non-empty", "", AllowNonEmpty, "Allow mounting over a non-empty directory.")
+	flags.BoolVarP(cmdFlags, &AllowNonEmpty, "allow-non-empty", "", AllowNonEmpty, "Allow mounting over a non-empty directory (not Windows).")
 	flags.BoolVarP(cmdFlags, &AllowRoot, "allow-root", "", AllowRoot, "Allow access to root user.")
 	flags.BoolVarP(cmdFlags, &AllowOther, "allow-other", "", AllowOther, "Allow access to other users.")
 	flags.BoolVarP(cmdFlags, &DefaultPermissions, "default-permissions", "", DefaultPermissions, "Makes kernel enforce access control based on the file mode.")
