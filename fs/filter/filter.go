@@ -88,6 +88,7 @@ type Opt struct {
 	IncludeRule    []string
 	IncludeFrom    []string
 	FilesFrom      []string
+	FilesFromRaw   []string
 	MinAge         fs.Duration
 	MaxAge         fs.Duration
 	MinSize        fs.SizeSuffix
@@ -150,7 +151,7 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 		addImplicitExclude = true
 	}
 	for _, rule := range f.Opt.IncludeFrom {
-		err := forEachLine(rule, func(line string) error {
+		err := forEachLine(rule, false, func(line string) error {
 			return f.Add(true, line)
 		})
 		if err != nil {
@@ -166,7 +167,7 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 		foundExcludeRule = true
 	}
 	for _, rule := range f.Opt.ExcludeFrom {
-		err := forEachLine(rule, func(line string) error {
+		err := forEachLine(rule, false, func(line string) error {
 			return f.Add(false, line)
 		})
 		if err != nil {
@@ -186,25 +187,42 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 		}
 	}
 	for _, rule := range f.Opt.FilterFrom {
-		err := forEachLine(rule, f.AddRule)
+		err := forEachLine(rule, false, f.AddRule)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	inActive := f.InActive()
+
 	for _, rule := range f.Opt.FilesFrom {
 		if !inActive {
-			return nil, fmt.Errorf("The usage of --files-from overrides all other filters, it should be used alone")
+			return nil, fmt.Errorf("The usage of --files-from overrides all other filters, it should be used alone or with --files-from-raw")
 		}
 		f.initAddFile() // init to show --files-from set even if no files within
-		err := forEachLine(rule, func(line string) error {
+		err := forEachLine(rule, false, func(line string) error {
 			return f.AddFile(line)
 		})
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	for _, rule := range f.Opt.FilesFromRaw {
+		// --files-from-raw can be used with --files-from, hence we do
+		// not need to get the value of f.InActive again
+		if !inActive {
+			return nil, fmt.Errorf("The usage of --files-from-raw overrides all other filters, it should be used alone or with --files-from")
+		}
+		f.initAddFile() // init to show --files-from set even if no files within
+		err := forEachLine(rule, true, func(line string) error {
+			return f.AddFile(line)
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if addImplicitExclude {
 		err = f.Add(false, "/**")
 		if err != nil {
@@ -463,8 +481,8 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 
 // forEachLine calls fn on every line in the file pointed to by path
 //
-// It ignores empty lines and lines starting with '#' or ';'
-func forEachLine(path string, fn func(string) error) (err error) {
+// It ignores empty lines and lines starting with '#' or ';' if raw is false
+func forEachLine(path string, raw bool, fn func(string) error) (err error) {
 	var scanner *bufio.Scanner
 	if path == "-" {
 		scanner = bufio.NewScanner(os.Stdin)
@@ -478,9 +496,11 @@ func forEachLine(path string, fn func(string) error) (err error) {
 	}
 	for scanner.Scan() {
 		line := scanner.Text()
-		line = strings.TrimSpace(line)
-		if len(line) == 0 || line[0] == '#' || line[0] == ';' {
-			continue
+		if !raw {
+			line = strings.TrimSpace(line)
+			if len(line) == 0 || line[0] == '#' || line[0] == ';' {
+				continue
+			}
 		}
 		err := fn(line)
 		if err != nil {
