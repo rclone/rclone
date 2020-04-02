@@ -97,8 +97,9 @@ func (f *File) _path() string {
 // Path returns the full path of the file
 func (f *File) Path() string {
 	f.mu.RLock()
-	defer f.mu.RUnlock()
-	return f._path()
+	d, leaf := f.d, f.leaf
+	f.mu.RUnlock()
+	return path.Join(d.Path(), leaf)
 }
 
 // osPath returns the full path of the file in the cache in OS format
