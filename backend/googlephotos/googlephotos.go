@@ -138,7 +138,7 @@ you want to read the media.`,
 			{
 				Name:     "start_year",
 				Default:  2000,
-				Help:     `Year limits the photos to be downloaded  to those which are uploaded before the given time`,
+				Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
 				Advanced: true,
 			},
 		},
