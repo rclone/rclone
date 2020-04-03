@@ -31,6 +31,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringArrayVarP(flagSet, &Opt.IncludeRule, "include", "", nil, "Include files matching pattern")
 	flags.StringArrayVarP(flagSet, &Opt.IncludeFrom, "include-from", "", nil, "Read include patterns from file (use - to read from stdin)")
 	flags.StringArrayVarP(flagSet, &Opt.FilesFrom, "files-from", "", nil, "Read list of source-file names from file (use - to read from stdin)")
+	flags.StringArrayVarP(flagSet, &Opt.FilesFromRaw, "files-from-raw", "", nil, "Read list of source-file names from file without any processing of lines (use - to read from stdin)")
 	flags.FVarP(flagSet, &Opt.MinAge, "min-age", "", "Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y")
 	flags.FVarP(flagSet, &Opt.MaxAge, "max-age", "", "Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y")
 	flags.FVarP(flagSet, &Opt.MinSize, "min-size", "", "Only transfer files bigger than this in k or suffix b|k|M|G")

@@ -1542,6 +1542,7 @@ For the filtering options
   * `--include`
   * `--include-from`
   * `--files-from`
+  * `--files-from-raw`
   * `--min-size`
   * `--max-size`
   * `--min-age`

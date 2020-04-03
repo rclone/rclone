@@ -17,8 +17,9 @@ Each path as it passes through rclone is matched against the include
 and exclude rules like `--include`, `--exclude`, `--include-from`,
 `--exclude-from`, `--filter`, or `--filter-from`. The simplest way to
 try them out is using the `ls` command, or `--dry-run` together with
-`-v`. `--filter-from`, `--exclude-from`, `--include-from`, `--files-from`
-understand `-` as a file name to mean read from standard input.
+`-v`. `--filter-from`, `--exclude-from`, `--include-from`, `--files-from`,
+`--files-from-raw` understand `-` as a file name to mean read from standard
+input.
 
 ## Patterns ##
 
@@ -179,6 +180,7 @@ type.
   * `--exclude-from`
   * `--filter`
   * `--filter-from`
+  * `--filter-from-raw`
 
 **Important** You should not use `--include*` together with `--exclude*`. 
 It may produce different results than you expected. In that case try to use: `--filter*`.
@@ -306,9 +308,9 @@ This reads a list of file names from the file passed in and **only**
 these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
-`--files-from` expects a list of files as it's input. [rclone lsf](/commands/rclone_lsf/)
-has a compatible format that can be used to export file lists from
-remotes.
+`--files-from` expects a list of files as it's input. Leading / trailing
+whitespace is stripped from the input lines and lines starting with `#`
+and `;` are ignored.
 
 Rclone will traverse the file system if you use `--files-from`,
 effectively using the files in `--files-from` as a set of filters.
@@ -324,7 +326,8 @@ are read in the order that they are placed on the command line.
 
 Paths within the `--files-from` file will be interpreted as starting
 with the root specified in the command.  Leading `/` characters are
-ignored.
+ignored. See [--files-from-raw](#files-from-raw-read-list-of-source-file-names-without-any-processing)
+if you need the input to be processed in a raw manner.
 
 For example, suppose you had `files-from.txt` with this content:
 
@@ -383,6 +386,13 @@ In this case there will be an extra `home` directory on the remote:
     /home/user1/important → remote:backup/home/user1/important
     /home/user1/dir/file  → remote:backup/home/user1/dir/file
     /home/user2/stuff     → remote:backup/home/user2/stuff
+
+### `--files-from-raw` - Read list of source-file names without any processing ###
+This option is same as `--files-from` with the only difference being that the input
+is read in a raw manner. This means that lines with leading/trailing whitespace and
+lines starting with `;` or `#` are read without any processing. [rclone lsf](/commands/rclone_lsf/)
+has a compatible format that can be used to export file lists from remotes, which
+can then be used as an input to `--files-from-raw`.
 
 ### `--min-size` - Don't transfer any file smaller than this ###
 
