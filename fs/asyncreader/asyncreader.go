@@ -21,7 +21,8 @@ const (
 	bufferCacheFlushTime = 5 * time.Second // flush the cached buffers after this long
 )
 
-var errorStreamAbandoned = errors.New("stream abandoned")
+// ErrorStreamAbandoned is returned when the input is closed before the end of the stream
+var ErrorStreamAbandoned = errors.New("stream abandoned")
 
 // AsyncReader will do async read-ahead from the input reader
 // and make the data available as an io.Reader.
@@ -132,7 +133,7 @@ func (a *AsyncReader) fill() (err error) {
 		if !ok {
 			// Return an error to show fill failed
 			if a.err == nil {
-				return errorStreamAbandoned
+				return ErrorStreamAbandoned
 			}
 			return a.err
 		}
