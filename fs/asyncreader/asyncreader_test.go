@@ -279,7 +279,7 @@ func testAsyncReaderClose(t *testing.T, writeto bool) {
 	// Abandon the copy
 	a.Abandon()
 	wg.Wait()
-	assert.Equal(t, errorStreamAbandoned, copyErr)
+	assert.Equal(t, ErrorStreamAbandoned, copyErr)
 	// t.Logf("Copied %d bytes, err %v", copyN, copyErr)
 	assert.True(t, copyN > 0)
 }
@@ -353,7 +353,7 @@ func TestAsyncReaderSkipBytes(t *testing.T) {
 								if initialRead >= len(data) {
 									assert.Equal(t, err, io.EOF)
 								} else {
-									assert.True(t, err == errorStreamAbandoned || err == io.EOF)
+									assert.True(t, err == ErrorStreamAbandoned || err == io.EOF)
 								}
 							}
 						})
