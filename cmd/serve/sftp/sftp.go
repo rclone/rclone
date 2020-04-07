@@ -20,7 +20,7 @@ import (
 // Options contains options for the http Server
 type Options struct {
 	ListenAddr     string // Port to listen on
-	Key            string // Path to private key
+	Key            string // Path to private host key
 	AuthorizedKeys string // Path to authorized keys file
 	User           string // single username
 	Pass           string // password for user
@@ -40,7 +40,7 @@ var Opt = DefaultOpt
 func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 	rc.AddOption("sftp", &Opt)
 	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to.")
-	flags.StringVarP(flagSet, &Opt.Key, "key", "", Opt.Key, "SSH private key file (leave blank to auto generate)")
+	flags.StringVarP(flagSet, &Opt.Key, "key", "", Opt.Key, "SSH private host key file (leave blank to auto generate)")
 	flags.StringVarP(flagSet, &Opt.AuthorizedKeys, "authorized-keys", "", Opt.AuthorizedKeys, "Authorized keys file")
 	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication.")
