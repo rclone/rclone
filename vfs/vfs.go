@@ -16,6 +16,9 @@
 // error conditions have ocurred.  It may also return general errors
 // it receives.  It tries to use os Error values (eg os.ErrExist)
 // where possible.
+
+//go:generate sh -c "go run make_open_tests.go | gofmt > open_test.go"
+
 package vfs
 
 import (
