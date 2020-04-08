@@ -4,6 +4,7 @@ package vfs
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -310,4 +311,52 @@ func TestVFSStatfs(t *testing.T) {
 	assert.Equal(t, used, used2)
 	assert.Equal(t, free, free2)
 	assert.Equal(t, oldTime, vfs.usageTime)
+}
+
+func TestFillInMissingSizes(t *testing.T) {
+	const unknownFree = 10
+	for _, test := range []struct {
+		total, free, used             int64
+		wantTotal, wantUsed, wantFree int64
+	}{
+		{
+			total: 20, free: 5, used: 15,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: 20, free: 5, used: -1,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: 20, free: -1, used: 15,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: 20, free: -1, used: -1,
+			wantTotal: 20, wantFree: 20, wantUsed: 0,
+		},
+		{
+			total: -1, free: 5, used: 15,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: -1, free: 15, used: -1,
+			wantTotal: 15, wantFree: 15, wantUsed: 0,
+		},
+		{
+			total: -1, free: -1, used: 15,
+			wantTotal: 25, wantFree: 10, wantUsed: 15,
+		},
+		{
+			total: -1, free: -1, used: -1,
+			wantTotal: 10, wantFree: 10, wantUsed: 0,
+		},
+	} {
+		t.Run(fmt.Sprintf("total=%d,free=%d,used=%d", test.total, test.free, test.used), func(t *testing.T) {
+			gotTotal, gotUsed, gotFree := fillInMissingSizes(test.total, test.used, test.free, unknownFree)
+			assert.Equal(t, test.wantTotal, gotTotal, "total")
+			assert.Equal(t, test.wantUsed, gotUsed, "used")
+			assert.Equal(t, test.wantFree, gotFree, "free")
+		})
+	}
 }

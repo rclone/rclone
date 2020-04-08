@@ -477,6 +477,37 @@ func (vfs *VFS) Rename(oldName, newName string) error {
 	return nil
 }
 
+// This works out the missing values from (total, used, free) using
+// unknownFree as the intended free space
+func fillInMissingSizes(total, used, free, unknownFree int64) (newTotal, newUsed, newFree int64) {
+	if total < 0 {
+		if free >= 0 {
+			total = free
+		} else {
+			total = unknownFree
+		}
+		if used >= 0 {
+			total += used
+		}
+	}
+	// total is now defined
+	if used < 0 {
+		if free >= 0 {
+			used = total - free
+		} else {
+			used = 0
+		}
+	}
+	// used is now defined
+	if free < 0 {
+		free = total - used
+	}
+	return total, used, free
+}
+
+// If the total size isn't known then we will aim for this many bytes free (1PB)
+const unknownFreeBytes = 1 << 50
+
 // Statfs returns into about the filing system if known
 //
 // The values will be -1 if they aren't known
@@ -488,10 +519,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 	defer vfs.usageMu.Unlock()
 	total, used, free = -1, -1, -1
 	doAbout := vfs.f.Features().About
-	if doAbout == nil {
-		return
-	}
-	if vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime {
+	if doAbout != nil && (vfs.usageTime.IsZero() || time.Since(vfs.usageTime) >= vfs.Opt.DirCacheTime) {
 		var err error
 		vfs.usage, err = doAbout(context.TODO())
 		vfs.usageTime = time.Now()
@@ -510,15 +538,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 		if u.Used != nil {
 			used = *u.Used
 		}
-		if total < 0 && free >= 0 && used >= 0 {
-			total = free + used
-		}
-		if free < 0 && total >= 0 && used >= 0 {
-			free = total - used
-		}
-		if used < 0 && total >= 0 && free >= 0 {
-			used = total - free
-		}
 	}
+	total, used, free = fillInMissingSizes(total, used, free, unknownFreeBytes)
 	return
 }

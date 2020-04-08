@@ -268,25 +268,15 @@ func (fsys *FS) Releasedir(path string, fh uint64) (errc int) {
 func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer log.Trace(path, "")("stat=%+v, errc=%d", stat, &errc)
 	const blockSize = 4096
-	const fsBlocks = (1 << 50) / blockSize
-	stat.Blocks = fsBlocks  // Total data blocks in file system.
-	stat.Bfree = fsBlocks   // Free blocks in file system.
-	stat.Bavail = fsBlocks  // Free blocks in file system if you're not root.
-	stat.Files = 1e9        // Total files in file system.
-	stat.Ffree = 1e9        // Free files in file system.
-	stat.Bsize = blockSize  // Block size
-	stat.Namemax = 255      // Maximum file name length?
-	stat.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
-	total, used, free := fsys.VFS.Statfs()
-	if total >= 0 {
-		stat.Blocks = uint64(total) / blockSize
-	}
-	if used >= 0 {
-		stat.Bfree = stat.Blocks - uint64(used)/blockSize
-	}
-	if free >= 0 {
-		stat.Bavail = uint64(free) / blockSize
-	}
+	total, _, free := fsys.VFS.Statfs()
+	stat.Blocks = uint64(total) / blockSize // Total data blocks in file system.
+	stat.Bfree = uint64(free) / blockSize   // Free blocks in file system.
+	stat.Bavail = stat.Bfree                // Free blocks in file system if you're not root.
+	stat.Files = 1e9                        // Total files in file system.
+	stat.Ffree = 1e9                        // Free files in file system.
+	stat.Bsize = blockSize                  // Block size
+	stat.Namemax = 255                      // Maximum file name length?
+	stat.Frsize = blockSize                 // Fragment size, smallest addressable data size in the file system.
 	mountlib.ClipBlocks(&stat.Blocks)
 	mountlib.ClipBlocks(&stat.Bfree)
 	mountlib.ClipBlocks(&stat.Bavail)
