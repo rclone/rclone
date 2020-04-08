@@ -24,9 +24,11 @@ package vfs
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -448,6 +450,21 @@ func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, e
 	return node.Open(flags)
 }
 
+// Open opens the named file for reading. If successful, methods on
+// the returned file can be used for reading; the associated file
+// descriptor has mode O_RDONLY.
+func (vfs *VFS) Open(name string) (Handle, error) {
+	return vfs.OpenFile(name, os.O_RDONLY, 0)
+}
+
+// Create creates the named file with mode 0666 (before umask), truncating
+// it if it already exists. If successful, methods on the returned
+// File can be used for I/O; the associated file descriptor has mode
+// O_RDWR.
+func (vfs *VFS) Create(name string) (Handle, error) {
+	return vfs.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+}
+
 // Rename oldName to newName
 func (vfs *VFS) Rename(oldName, newName string) error {
 	// find the parent directories
@@ -530,4 +547,80 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 	}
 	total, used, free = fillInMissingSizes(total, used, free, unknownFreeBytes)
 	return
+}
+
+// Remove removes the named file or (empty) directory.
+func (vfs *VFS) Remove(name string) error {
+	node, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	err = node.Remove()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Chtimes changes the access and modification times of the named file, similar
+// to the Unix utime() or utimes() functions.
+//
+// The underlying filesystem may truncate or round the values to a less precise
+// time unit.
+func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
+	node, err := vfs.Stat(name)
+	if err != nil {
+		return err
+	}
+	err = node.SetModTime(mtime)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Mkdir creates a new directory with the specified name and permission bits
+// (before umask).
+func (vfs *VFS) Mkdir(name string, perm os.FileMode) error {
+	dir, leaf, err := vfs.StatParent(name)
+	if err != nil {
+		return err
+	}
+	_, err = dir.Mkdir(leaf)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// ReadDir reads the directory named by dirname and returns
+// a list of directory entries sorted by filename.
+func (vfs *VFS) ReadDir(dirname string) ([]os.FileInfo, error) {
+	f, err := vfs.Open(dirname)
+	if err != nil {
+		return nil, err
+	}
+	list, err := f.Readdir(-1)
+	closeErr := f.Close()
+	if err != nil {
+		return nil, err
+	}
+	if closeErr != nil {
+		return nil, closeErr
+	}
+	sort.Slice(list, func(i, j int) bool { return list[i].Name() < list[j].Name() })
+	return list, nil
+}
+
+// ReadFile reads the file named by filename and returns the contents.
+// A successful call returns err == nil, not err == EOF. Because ReadFile
+// reads the whole file, it does not treat an EOF from Read as an error
+// to be reported.
+func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
+	f, err := vfs.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer fs.CheckClose(f, &err)
+	return ioutil.ReadAll(f)
 }
