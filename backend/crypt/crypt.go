@@ -327,7 +327,7 @@ type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ..
 // put implements Put or PutStream
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
 	// Encrypt the data into wrappedIn
-	wrappedIn, err := f.cipher.EncryptData(in)
+	wrappedIn, encrypter, err := f.cipher.encryptData(in)
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 	}
 
 	// Transfer the data
-	o, err := put(ctx, wrappedIn, f.newObjectInfo(src), options...)
+	o, err := put(ctx, wrappedIn, f.newObjectInfo(src, encrypter.nonce), options...)
 	if err != nil {
 		return nil, err
 	}
@@ -504,11 +504,11 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if do == nil {
 		return nil, errors.New("can't PutUnchecked")
 	}
-	wrappedIn, err := f.cipher.EncryptData(in)
+	wrappedIn, encrypter, err := f.cipher.encryptData(in)
 	if err != nil {
 		return nil, err
 	}
-	o, err := do(ctx, wrappedIn, f.newObjectInfo(src))
+	o, err := do(ctx, wrappedIn, f.newObjectInfo(src, encrypter.nonce))
 	if err != nil {
 		return nil, err
 	}
@@ -561,6 +561,37 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 	return f.cipher.DecryptFileName(encryptedFileName)
 }
 
+// computeHashWithNonce takes the nonce and encrypts the contents of
+// src with it, and calculates the hash given by HashType on the fly
+//
+// Note that we break lots of encapsulation in this function.
+func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Object, hashType hash.Type) (hashStr string, err error) {
+	// Open the src for input
+	in, err := src.Open(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to open src")
+	}
+	defer fs.CheckClose(in, &err)
+
+	// Now encrypt the src with the nonce
+	out, err := f.cipher.newEncrypter(in, &nonce)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to make encrypter")
+	}
+
+	// pipe into hash
+	m, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to make hasher")
+	}
+	_, err = io.Copy(m, out)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to hash data")
+	}
+
+	return m.Sums()[hashType], nil
+}
+
 // ComputeHash takes the nonce from o, and encrypts the contents of
 // src with it, and calculates the hash given by HashType on the fly
 //
@@ -597,30 +628,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 		return "", errors.Wrap(err, "failed to close nonce read")
 	}
 
-	// Open the src for input
-	in, err = src.Open(ctx)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to open src")
-	}
-	defer fs.CheckClose(in, &err)
-
-	// Now encrypt the src with the nonce
-	out, err := f.cipher.newEncrypter(in, &nonce)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to make encrypter")
-	}
-
-	// pipe into hash
-	m, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
-	if err != nil {
-		return "", errors.Wrap(err, "failed to make hasher")
-	}
-	_, err = io.Copy(m, out)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to hash data")
-	}
-
-	return m.Sums()[hashType], nil
+	return f.computeHashWithNonce(ctx, nonce, src, hashType)
 }
 
 // MergeDirs merges the contents of all the directories passed
@@ -833,13 +841,15 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 // This encrypts the remote name and adjusts the size
 type ObjectInfo struct {
 	fs.ObjectInfo
-	f *Fs
+	f     *Fs
+	nonce nonce
 }
 
-func (f *Fs) newObjectInfo(src fs.ObjectInfo) *ObjectInfo {
+func (f *Fs) newObjectInfo(src fs.ObjectInfo, nonce nonce) *ObjectInfo {
 	return &ObjectInfo{
 		ObjectInfo: src,
 		f:          f,
+		nonce:      nonce,
 	}
 }
 
@@ -865,6 +875,23 @@ func (o *ObjectInfo) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
+	var srcObj fs.Object
+	var ok bool
+	// Get the underlying object if there is one
+	if srcObj, ok = o.ObjectInfo.(fs.Object); ok {
+		// Prefer direct interface assertion
+	} else if do, ok := o.ObjectInfo.(fs.ObjectUnWrapper); ok {
+		// Otherwise likely is a operations.OverrideRemote
+		srcObj = do.UnWrap()
+	} else {
+		return "", nil
+	}
+	// if this is wrapping a local object then we work out the hash
+	if srcObj.Fs().Features().IsLocal {
+		// Read the data and encrypt it to calculate the hash
+		fs.Debugf(o, "Computing %v hash of encrypted source", hash)
+		return o.f.computeHashWithNonce(ctx, o.nonce, srcObj, hash)
+	}
 	return "", nil
 }
 
