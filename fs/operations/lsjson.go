@@ -81,7 +81,7 @@ type ListJSONOpt struct {
 
 // ListJSON lists fsrc using the options in opt calling callback for each item
 func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJSONItem) error) error {
-	var cipher crypt.Cipher
+	var cipher *crypt.Cipher
 	if opt.ShowEncrypted {
 		fsInfo, _, _, config, err := fs.ConfigFs(fsrc.Name() + ":" + fsrc.Root())
 		if err != nil {

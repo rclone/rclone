@@ -90,7 +90,7 @@ names, or for debugging purposes.`,
 }
 
 // newCipherForConfig constructs a Cipher for the given config name
-func newCipherForConfig(opt *Options) (Cipher, error) {
+func newCipherForConfig(opt *Options) (*Cipher, error) {
 	mode, err := NewNameEncryptionMode(opt.FilenameEncryption)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func newCipherForConfig(opt *Options) (Cipher, error) {
 }
 
 // NewCipher constructs a Cipher for the given config
-func NewCipher(m configmap.Mapper) (Cipher, error) {
+func NewCipher(m configmap.Mapper) (*Cipher, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -203,7 +203,7 @@ type Fs struct {
 	root     string
 	opt      Options
 	features *fs.Features // optional features
-	cipher   Cipher
+	cipher   *Cipher
 }
 
 // Name of the remote (as passed into NewFs)
@@ -572,7 +572,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 	if err != nil {
 		return "", errors.Wrap(err, "failed to open object to read nonce")
 	}
-	d, err := f.cipher.(*cipher).newDecrypter(in)
+	d, err := f.cipher.newDecrypter(in)
 	if err != nil {
 		_ = in.Close()
 		return "", errors.Wrap(err, "failed to open object to read nonce")
@@ -605,7 +605,7 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 	defer fs.CheckClose(in, &err)
 
 	// Now encrypt the src with the nonce
-	out, err := f.cipher.(*cipher).newEncrypter(in, &nonce)
+	out, err := f.cipher.newEncrypter(in, &nonce)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to make encrypter")
 	}
