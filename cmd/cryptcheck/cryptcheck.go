@@ -110,7 +110,6 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 			fs.Errorf(src, err.Error())
 			return true, false
 		}
-		fs.Debugf(src, "OK")
 		return false, false
 	}
 
