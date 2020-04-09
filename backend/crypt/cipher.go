@@ -510,6 +510,7 @@ func (c *Cipher) DecryptDirName(in string) (string, error) {
 	return c.decryptFileName(in)
 }
 
+// NameEncryptionMode returns the encryption mode in use for names
 func (c *Cipher) NameEncryptionMode() NameEncryptionMode {
 	return c.mode
 }
@@ -660,13 +661,19 @@ func (fh *encrypter) finish(err error) (int, error) {
 }
 
 // Encrypt data encrypts the data stream
-func (c *Cipher) EncryptData(in io.Reader) (io.Reader, error) {
+func (c *Cipher) encryptData(in io.Reader) (io.Reader, *encrypter, error) {
 	in, wrap := accounting.UnWrap(in) // unwrap the accounting off the Reader
 	out, err := c.newEncrypter(in, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return wrap(out), nil // and wrap the accounting back on
+	return wrap(out), out, nil // and wrap the accounting back on
+}
+
+// EncryptData encrypts the data stream
+func (c *Cipher) EncryptData(in io.Reader) (io.Reader, error) {
+	out, _, err := c.encryptData(in)
+	return out, err
 }
 
 // decrypter decrypts an io.ReaderCloser on the fly
