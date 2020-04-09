@@ -941,19 +941,18 @@ type Options struct {
 
 // Fs represents a remote s3 server
 type Fs struct {
-	name          string               // the name of the remote
-	root          string               // root of the bucket - ignore all objects above this
-	opt           Options              // parsed options
-	features      *fs.Features         // optional features
-	c             *s3.S3               // the connection to the s3 server
-	ses           *session.Session     // the s3 session
-	rootBucket    string               // bucket part of root (if any)
-	rootDirectory string               // directory part of root (if any)
-	cache         *bucket.Cache        // cache for bucket creation status
-	pacer         *fs.Pacer            // To pace the API calls
-	srv           *http.Client         // a plain http client
-	poolMu        sync.Mutex           // mutex protecting memory pools map
-	pools         map[int64]*pool.Pool // memory pools
+	name          string           // the name of the remote
+	root          string           // root of the bucket - ignore all objects above this
+	opt           Options          // parsed options
+	features      *fs.Features     // optional features
+	c             *s3.S3           // the connection to the s3 server
+	ses           *session.Session // the s3 session
+	rootBucket    string           // bucket part of root (if any)
+	rootDirectory string           // directory part of root (if any)
+	cache         *bucket.Cache    // cache for bucket creation status
+	pacer         *fs.Pacer        // To pace the API calls
+	srv           *http.Client     // a plain http client
+	pool          *pool.Pool       // memory pool
 }
 
 // Object describes a s3 object
@@ -1247,7 +1246,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		pacer: fs.NewPacer(pacer.NewS3(pacer.MinSleep(minSleep))),
 		cache: bucket.NewCache(),
 		srv:   fshttp.NewClient(fs.Config),
-		pools: make(map[int64]*pool.Pool),
+		pool: pool.New(
+			time.Duration(opt.MemoryPoolFlushTime),
+			int(opt.ChunkSize),
+			opt.UploadConcurrency*fs.Config.Transfers,
+			opt.MemoryPoolUseMmap,
+		),
 	}
 
 	f.setRoot(root)
@@ -1938,19 +1942,16 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 func (f *Fs) getMemoryPool(size int64) *pool.Pool {
-	f.poolMu.Lock()
-	defer f.poolMu.Unlock()
-
-	_, ok := f.pools[size]
-	if !ok {
-		f.pools[size] = pool.New(
-			time.Duration(f.opt.MemoryPoolFlushTime),
-			int(size),
-			f.opt.UploadConcurrency*fs.Config.Transfers,
-			f.opt.MemoryPoolUseMmap,
-		)
+	if size == int64(f.opt.ChunkSize) {
+		return f.pool
 	}
-	return f.pools[size]
+
+	return pool.New(
+		time.Duration(f.opt.MemoryPoolFlushTime),
+		int(size),
+		f.opt.UploadConcurrency*fs.Config.Transfers,
+		f.opt.MemoryPoolUseMmap,
+	)
 }
 
 // ------------------------------------------------------------
