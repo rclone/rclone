@@ -2306,7 +2306,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			})
 
 			// return the memory and token
-			memPool.Put(buf[:partSize])
+			memPool.Put(buf)
 			tokens.Put()
 
 			if err != nil {
