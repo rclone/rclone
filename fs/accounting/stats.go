@@ -377,7 +377,7 @@ func (s *StatsInfo) Transferred() []TransferSnapshot {
 func (s *StatsInfo) Log() {
 	if fs.Config.UseJSONLog {
 		out, _ := s.RemoteStats()
-		fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%T\n", map[string]interface{}(out))
+		fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v%v\n", s, fs.LogValue("stats", out))
 	} else {
 		fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v\n", s)
 	}
