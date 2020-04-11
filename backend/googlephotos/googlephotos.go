@@ -139,8 +139,7 @@ you want to read the media.`,
 			Default:  2000,
 			Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
 			Advanced: true,
-		},
-		},
+		}},
 	})
 }
 
