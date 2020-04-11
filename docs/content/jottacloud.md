@@ -174,6 +174,16 @@ Files bigger than this will be cached on disk to calculate the MD5 if required.
 - Type:        SizeSuffix
 - Default:     10M
 
+#### --jottacloud-trashed-only
+
+Only show files that are in the trash.
+This will show trashed files in their original directory structure.
+
+- Config:      trashed_only
+- Env Var:     RCLONE_JOTTACLOUD_TRASHED_ONLY
+- Type:        bool
+- Default:     false
+
 #### --jottacloud-hard-delete
 
 Delete files permanently rather than putting them into the trash.
