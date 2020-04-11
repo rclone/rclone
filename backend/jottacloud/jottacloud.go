@@ -141,6 +141,11 @@ func init() {
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
+			Name:     "trashed_only",
+			Help:     "Only show files that are in the trash.\nThis will show trashed files in their original directory structure.",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "hard_delete",
 			Help:     "Delete files permanently rather than putting them into the trash.",
 			Default:  false,
@@ -174,6 +179,7 @@ type Options struct {
 	Device             string               `config:"device"`
 	Mountpoint         string               `config:"mountpoint"`
 	MD5MemoryThreshold fs.SizeSuffix        `config:"md5_memory_limit"`
+	TrashedOnly        bool                 `config:"trashed_only"`
 	HardDelete         bool                 `config:"hard_delete"`
 	Unlink             bool                 `config:"unlink"`
 	UploadThreshold    fs.SizeSuffix        `config:"upload_resume_limit"`
@@ -519,6 +525,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		WriteMimeType:           true,
 	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
+	if opt.TrashedOnly { // we cannot support showing Trashed Files when using ListR right now
+		f.features.ListR = nil
+	}
 
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
@@ -638,13 +647,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, errors.Wrap(err, "couldn't list files")
 	}
 
-	if result.Deleted {
+	if bool(result.Deleted) && !f.opt.TrashedOnly {
 		return nil, fs.ErrorDirNotFound
 	}
 
 	for i := range result.Folders {
 		item := &result.Folders[i]
-		if item.Deleted {
+		if !f.opt.TrashedOnly && bool(item.Deleted) {
 			continue
 		}
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
@@ -654,8 +663,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	for i := range result.Files {
 		item := &result.Files[i]
-		if item.Deleted || item.State != "COMPLETED" {
-			continue
+		if f.opt.TrashedOnly {
+			if !item.Deleted || item.State != "COMPLETED" {
+				continue
+			}
+		} else {
+			if item.Deleted || item.State != "COMPLETED" {
+				continue
+			}
 		}
 		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
 		o, err := f.newObjectWithInfo(ctx, remote, item)
@@ -1122,7 +1137,7 @@ func (o *Object) readMetaData(ctx context.Context, force bool) (err error) {
 	if err != nil {
 		return err
 	}
-	if info.Deleted {
+	if bool(info.Deleted) && !o.fs.opt.TrashedOnly {
 		return fs.ErrorObjectNotFound
 	}
 	return o.setMetaData(info)
