@@ -1672,8 +1672,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		opts.RootURL = o.fs.opt.DownloadURL
 	}
 
-	// Download by id if set otherwise by name
-	if o.id != "" {
+	// Download by id if set and not using DownloadURL otherwise by name
+	if o.id != "" && o.fs.opt.DownloadURL == "" {
 		opts.Path += "/b2api/v1/b2_download_file_by_id?fileId=" + urlEncode(o.id)
 	} else {
 		bucket, bucketPath := o.split()
