@@ -1064,6 +1064,22 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// CleanUp empties the trash
+func (f *Fs) CleanUp(ctx context.Context) error {
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "files/v1/purge_trash",
+	}
+
+	var info api.TrashResponse
+	_, err := f.apiSrv.CallJSON(ctx, &opts, nil, &info)
+	if err != nil {
+		return errors.Wrap(err, "couldn't empty trash")
+	}
+
+	return nil
+}
+
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
@@ -1370,6 +1386,7 @@ var (
 	_ fs.ListRer      = (*Fs)(nil)
 	_ fs.PublicLinker = (*Fs)(nil)
 	_ fs.Abouter      = (*Fs)(nil)
+	_ fs.CleanUpper   = (*Fs)(nil)
 	_ fs.Object       = (*Object)(nil)
 	_ fs.MimeTyper    = (*Object)(nil)
 )
