@@ -134,13 +134,12 @@ rclone mount needs to know the size of files in advance of reading
 them, so setting this flag when using rclone mount is recommended if
 you want to read the media.`,
 			Advanced: true,
+		}, {
+			Name:     "start_year",
+			Default:  2000,
+			Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
+			Advanced: true,
 		},
-			{
-				Name:     "start_year",
-				Default:  2000,
-				Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
-				Advanced: true,
-			},
 		},
 	})
 }
