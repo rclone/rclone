@@ -66,8 +66,8 @@ option when copying a small number of files into a large destination
 can speed transfers up greatly.
 
 For example, if you have many files in /path/to/src but only a few of
-them change every day, you can to copy all the files which have
-changed recently very efficiently like this:
+them change every day, you can copy all the files which have changed
+recently very efficiently like this:
 
     rclone copy --max-age 24h --no-traverse /path/to/src remote:
 
