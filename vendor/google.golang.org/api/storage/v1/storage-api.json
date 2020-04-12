@@ -26,7 +26,7 @@
   "description": "Stores and retrieves potentially large, immutable data objects.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/storage/docs/json_api/",
-  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/1nXB4dbk0lw3Xe_A6xBKVeN3Y7U\"",
+  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/Hs4LXeoJXbMtbcM0DbLgg3CHzL4\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/cloud_storage-16.png",
     "x32": "https://www.google.com/images/icons/product/cloud_storage-32.png"
@@ -1826,6 +1826,11 @@
               "required": true,
               "type": "string"
             },
+            "destinationKmsKeyName": {
+              "description": "Resource name of the Cloud KMS key, of the form projects/my-project/locations/global/keyRings/my-kr/cryptoKeys/my-key, that will be used to encrypt the object. Overrides the object metadata's kms_key_name value, if any.",
+              "location": "query",
+              "type": "string"
+            },
             "destinationObject": {
               "description": "Name of the new object. Required when the object metadata is not otherwise provided. Overrides the object metadata's name value, if any.",
               "location": "path",
@@ -2310,6 +2315,11 @@
               "location": "query",
               "type": "string"
             },
+            "endOffset": {
+              "description": "Filter results to objects whose names are lexicographically before endOffset. If startOffset is also set, the objects listed will have names between startOffset (inclusive) and endOffset (exclusive).",
+              "location": "query",
+              "type": "string"
+            },
             "includeTrailingDelimiter": {
               "description": "If true, objects that end in exactly one instance of delimiter will have their metadata included in items in addition to prefixes.",
               "location": "query",
@@ -2348,6 +2358,11 @@
             },
             "provisionalUserProject": {
               "description": "The project to be billed for this request if the target bucket is requester-pays bucket.",
+              "location": "query",
+              "type": "string"
+            },
+            "startOffset": {
+              "description": "Filter results to objects whose names are lexicographically equal to or after startOffset. If endOffset is also set, the objects listed will have names between startOffset (inclusive) and endOffset (exclusive).",
               "location": "query",
               "type": "string"
             },
@@ -2882,6 +2897,11 @@
               "location": "query",
               "type": "string"
             },
+            "endOffset": {
+              "description": "Filter results to objects whose names are lexicographically before endOffset. If startOffset is also set, the objects listed will have names between startOffset (inclusive) and endOffset (exclusive).",
+              "location": "query",
+              "type": "string"
+            },
             "includeTrailingDelimiter": {
               "description": "If true, objects that end in exactly one instance of delimiter will have their metadata included in items in addition to prefixes.",
               "location": "query",
@@ -2920,6 +2940,11 @@
             },
             "provisionalUserProject": {
               "description": "The project to be billed for this request if the target bucket is requester-pays bucket.",
+              "location": "query",
+              "type": "string"
+            },
+            "startOffset": {
+              "description": "Filter results to objects whose names are lexicographically equal to or after startOffset. If endOffset is also set, the objects listed will have names between startOffset (inclusive) and endOffset (exclusive).",
               "location": "query",
               "type": "string"
             },
@@ -3204,7 +3229,7 @@
       }
     }
   },
-  "revision": "20191127",
+  "revision": "20200326",
   "rootUrl": "https://storage.googleapis.com/",
   "schemas": {
     "Bucket": {
@@ -3527,6 +3552,17 @@
             }
           },
           "type": "object"
+        },
+        "zoneAffinity": {
+          "description": "The zone or zones from which the bucket is intended to use zonal quota. Requests for data from outside the specified affinities are still allowed but won't be able to use zonal quota. The zone or zones need to be within the bucket location otherwise the requests will fail with a 400 Bad Request response.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "zoneSeparation": {
+          "description": "If set, objects placed in this bucket are required to be separated by disaster domain.",
+          "type": "boolean"
         }
       },
       "type": "object"

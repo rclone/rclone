@@ -143,6 +143,7 @@ func (w withGRPCDialOption) Apply(o *internal.DialSettings) {
 
 // WithGRPCConnectionPool returns a ClientOption that creates a pool of gRPC
 // connections that requests will be balanced between.
+//
 // This is an EXPERIMENTAL API and may be changed or removed in the future.
 func WithGRPCConnectionPool(size int) ClientOption {
 	return withGRPCConnectionPool(size)
