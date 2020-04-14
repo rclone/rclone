@@ -607,6 +607,13 @@ func (f *File) VFS() *VFS {
 	return f.d.vfs
 }
 
+// Fs returns the underlying Fs for the file
+func (f *File) Fs() fs.Fs {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.d.f
+}
+
 // Open a file according to the flags provided
 //
 //   O_RDONLY open the file read-only.

@@ -69,7 +69,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
 		// NB Rcat deals with Stats.Transferring etc
-		o, err := operations.Rcat(context.TODO(), fh.file.d.f, fh.remote, pipeReader, time.Now())
+		o, err := operations.Rcat(context.TODO(), fh.file.Fs(), fh.remote, pipeReader, time.Now())
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
@@ -80,7 +80,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	}()
 	fh.file.setSize(0)
 	fh.truncated = true
-	fh.file.d.addObject(fh.file) // make sure the directory has this object in it now
+	fh.file.Dir().addObject(fh.file) // make sure the directory has this object in it now
 	fh.opened = true
 	return nil
 }
@@ -132,7 +132,7 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 	}
 	if fh.offset != off {
 		// Set a background timer so we don't wait forever
-		maxWait := fh.file.d.vfs.Opt.WriteWait
+		maxWait := fh.file.VFS().Opt.WriteWait
 		timeout := time.NewTimer(maxWait)
 		done := make(chan struct{})
 		abort := int32(0)
