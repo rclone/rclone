@@ -288,7 +288,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 			if file, ok := node.(*File); node != nil && ok {
 				file.setObjectNoUpdate(obj)
 			} else {
-				node = newFile(d, obj, name)
+				node = newFile(d, d.path, obj, name)
 			}
 		case fs.Directory:
 			// Reuse old dir value if it exists
@@ -511,7 +511,7 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 		return nil, EROFS
 	}
 	// This gets added to the directory when the file is opened for write
-	return newFile(d, nil, name), nil
+	return newFile(d, d.Path(), nil, name), nil
 }
 
 // Mkdir creates a new directory
