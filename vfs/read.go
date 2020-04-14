@@ -47,7 +47,7 @@ func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 	var mhash *hash.MultiHasher
 	var err error
 	o := f.getObject()
-	if !f.d.vfs.Opt.NoChecksum {
+	if !f.VFS().Opt.NoChecksum {
 		hashes := hash.NewHashSet(o.Fs().Hashes().GetOne()) // just pick one hash
 		mhash, err = hash.NewMultiHasherTypes(hashes)
 		if err != nil {
@@ -57,7 +57,7 @@ func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 
 	fh := &ReadFileHandle{
 		remote:      o.Remote(),
-		noSeek:      f.d.vfs.Opt.NoSeek,
+		noSeek:      f.VFS().Opt.NoSeek,
 		file:        f,
 		hash:        mhash,
 		size:        nonNegative(o.Size()),
@@ -74,7 +74,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 		return nil
 	}
 	o := fh.file.getObject()
-	r, err := chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit)).Open()
+	r, err := chunkedreader.New(context.TODO(), o, int64(fh.file.VFS().Opt.ChunkSize), int64(fh.file.VFS().Opt.ChunkSizeLimit)).Open()
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		}
 		// re-open with a seek
 		o := fh.file.getObject()
-		r = chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit))
+		r = chunkedreader.New(context.TODO(), o, int64(fh.file.VFS().Opt.ChunkSize), int64(fh.file.VFS().Opt.ChunkSizeLimit))
 		_, err := r.Seek(offset, 0)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
@@ -235,7 +235,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 		// The default time here was made by finding the
 		// smallest when mounting a local backend that didn't
 		// cause seeks.
-		maxWait := fh.file.d.vfs.Opt.ReadWait
+		maxWait := fh.file.VFS().Opt.ReadWait
 		timeout := time.NewTimer(maxWait)
 		done := make(chan struct{})
 		abort := int32(0)
