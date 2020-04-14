@@ -2244,7 +2244,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read description for Google Doc")
 		}
-		createInfo.Description = info.Description
+		// set the description if there is one, or use the default if not
+		if info.Description != "" {
+			createInfo.Description = info.Description
+		}
 	} else {
 		// don't overwrite the description on copy for files
 		// this should work for docs but it doesn't - it is probably a bug in Google Drive
