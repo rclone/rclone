@@ -191,6 +191,26 @@ func (d *Dir) walk(fun func(*Dir)) {
 	fun(d)
 }
 
+// countActiveWriters returns the number of writers active in this
+// directory and any subdirectories.
+func (d *Dir) countActiveWriters() (writers int) {
+	d.walk(func(d *Dir) {
+		// NB d.mu is held by walk() here
+		fs.Debugf(d.path, "Looking for writers")
+		for leaf, item := range d.items {
+			fs.Debugf(leaf, "reading active writers")
+			if file, ok := item.(*File); ok {
+				n := file.activeWriters()
+				if n != 0 {
+					fs.Debugf(file, "active writers %d", n)
+				}
+				writers += n
+			}
+		}
+	})
+	return writers
+}
+
 // age returns the duration since the last time the directory contents
 // was read and the content is cosidered stale. age will be 0 and
 // stale true if the last read time is empty.
@@ -698,7 +718,14 @@ func (d *Dir) Sync() error {
 
 // VFS returns the instance of the VFS
 func (d *Dir) VFS() *VFS {
+	// No locking required
 	return d.vfs
+}
+
+// Fs returns the Fs that the Dir is on
+func (d *Dir) Fs() fs.Fs {
+	// No locking required
+	return d.f
 }
 
 // Truncate changes the size of the named file.
