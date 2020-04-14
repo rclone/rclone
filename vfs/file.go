@@ -14,6 +14,18 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 )
 
+// The File object is tightly coupled to the Dir object. Since they
+// both have locks there is plenty of potential for deadlocks. In
+// order to mitigate this, we use the following conventions
+//
+// File may read directly, without locking, from the read-only section
+// of the Dir object, eg vfs, and f members. File may **not** read any
+// other members directly.
+//
+// File may **not** call Dir methods with the File lock held. This
+// preserves total lock ordering and makes File subordinate to Dir as
+// far as locking is concerned, preventing deadlocks.
+
 // File represents a file
 type File struct {
 	inode uint64 // inode number - read only
@@ -21,6 +33,7 @@ type File struct {
 
 	mu                sync.RWMutex                    // protects the following
 	d                 *Dir                            // parent directory
+	dPath             string                          // path of parent directory. NB dir rename means all Files are flushed
 	o                 fs.Object                       // NB o may be nil if file is being written
 	leaf              string                          // leaf name of the object
 	rwOpenCount       int                             // number of open files on this handle
@@ -39,9 +52,10 @@ type File struct {
 // newFile creates a new File
 //
 // o may be nil
-func newFile(d *Dir, o fs.Object, leaf string) *File {
+func newFile(d *Dir, dPath string, o fs.Object, leaf string) *File {
 	f := &File{
 		d:     d,
+		dPath: dPath,
 		o:     o,
 		leaf:  leaf,
 		inode: newInode(),
@@ -91,15 +105,15 @@ func (f *File) Name() (name string) {
 // _path returns the full path of the file
 // use when lock is held
 func (f *File) _path() string {
-	return path.Join(f.d.Path(), f.leaf)
+	return path.Join(f.dPath, f.leaf)
 }
 
 // Path returns the full path of the file
 func (f *File) Path() string {
 	f.mu.RLock()
-	d, leaf := f.d, f.leaf
+	dPath, leaf := f.dPath, f.leaf
 	f.mu.RUnlock()
-	return path.Join(d.Path(), leaf)
+	return path.Join(dPath, leaf)
 }
 
 // osPath returns the full path of the file in the cache in OS format
@@ -154,7 +168,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		return err
 	}
 
-	newPath := path.Join(destDir.path, newName)
+	// File.mu is unlocked here to call Dir.Path()
+	newPath := path.Join(destDir.Path(), newName)
 
 	renameCall := func(ctx context.Context) error {
 		// chain rename calls if any
@@ -207,8 +222,10 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	}
 
 	// rename the file object
+	dPath := destDir.Path()
 	f.mu.Lock()
 	f.d = destDir
+	f.dPath = dPath
 	f.leaf = newName
 	writing := f._writingInProgress()
 	f.mu.Unlock()
@@ -313,18 +330,19 @@ func (f *File) activeWriters() int {
 // if NoModTime is set then it returns the mod time of the directory
 func (f *File) ModTime() (modTime time.Time) {
 	f.mu.RLock()
-	defer f.mu.RUnlock()
+	d, o, pendingModTime := f.d, f.o, f.pendingModTime
+	f.mu.RUnlock()
 
-	if f.d.vfs.Opt.NoModTime {
-		return f.d.modTime
+	if d.vfs.Opt.NoModTime {
+		return d.ModTime()
 	}
-	if !f.pendingModTime.IsZero() {
-		return f.pendingModTime
+	if !pendingModTime.IsZero() {
+		return pendingModTime
 	}
-	if f.o == nil {
-		return f.d.modTime
+	if o == nil {
+		return d.ModTime()
 	}
-	return f.o.ModTime(context.TODO())
+	return o.ModTime(context.TODO())
 }
 
 // nonNegative returns 0 if i is -ve, i otherwise
@@ -417,6 +435,7 @@ func (f *File) setObject(o fs.Object) {
 	_ = f._applyPendingModTime()
 	f.mu.Unlock()
 
+	// Release File.mu before calling Dir method
 	f.d.addObject(f)
 }
 
@@ -553,6 +572,7 @@ func (f *File) Remove() error {
 	f.muRW.Unlock()
 
 	// Remove the item from the directory listing
+	// called with File.mu released
 	d.delObject(f.Name())
 	// Remove the object from the cache
 	if d.vfs.Opt.CacheMode >= CacheModeMinimal {
@@ -676,6 +696,7 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	}
 	// if creating a file, add the file to the directory
 	if err == nil && flags&os.O_CREATE != 0 {
+		// called without File.mu held
 		d.addObject(f)
 	}
 	return fd, err
