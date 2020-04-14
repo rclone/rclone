@@ -305,21 +305,7 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 	defer tick.Stop()
 	tick.Stop()
 	for {
-		writers := 0
-		vfs.root.walk(func(d *Dir) {
-			fs.Debugf(d.path, "Looking for writers")
-			// NB d.mu is held by walk() here
-			for leaf, item := range d.items {
-				fs.Debugf(leaf, "reading active writers")
-				if file, ok := item.(*File); ok {
-					n := file.activeWriters()
-					if n != 0 {
-						fs.Debugf(file, "active writers %d", n)
-					}
-					writers += n
-				}
-			}
-		})
+		writers := vfs.root.countActiveWriters()
 		if writers == 0 {
 			return
 		}

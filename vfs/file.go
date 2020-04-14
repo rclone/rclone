@@ -18,13 +18,19 @@ import (
 // both have locks there is plenty of potential for deadlocks. In
 // order to mitigate this, we use the following conventions
 //
-// File may read directly, without locking, from the read-only section
-// of the Dir object, eg vfs, and f members. File may **not** read any
-// other members directly.
+// File may **only** call these methods from Dir with the File lock
+// held.
 //
-// File may **not** call Dir methods with the File lock held. This
-// preserves total lock ordering and makes File subordinate to Dir as
-// far as locking is concerned, preventing deadlocks.
+//     Dir.Fs
+//     Dir.VFS
+//
+// (As these are read only and do not need to take the Dir mutex.)
+//
+// File may **not** call any other Dir methods with the File lock
+// held. This preserves total lock ordering and makes File subordinate
+// to Dir as far as locking is concerned, preventing deadlocks.
+//
+// File may **not** read any members of Dir directly.
 
 // File represents a file
 type File struct {
@@ -162,8 +168,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	oldPendingRenameFun := f.pendingRenameFun
 	f.mu.RUnlock()
 
-	if features := d.f.Features(); features.Move == nil && features.Copy == nil {
-		err := errors.Errorf("Fs %q can't rename files (no server side Move or Copy)", d.f)
+	if features := d.Fs().Features(); features.Move == nil && features.Copy == nil {
+		err := errors.Errorf("Fs %q can't rename files (no server side Move or Copy)", d.Fs())
 		fs.Errorf(f.Path(), "Dir.Rename error: %v", err)
 		return err
 	}
@@ -191,8 +197,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 		}
 
 		// do the move of the remote object
-		dstOverwritten, _ := d.f.NewObject(ctx, newPath)
-		newObject, err := operations.Move(ctx, d.f, dstOverwritten, newPath, o)
+		dstOverwritten, _ := d.Fs().NewObject(ctx, newPath)
+		newObject, err := operations.Move(ctx, d.Fs(), dstOverwritten, newPath, o)
 		if err != nil {
 			fs.Errorf(f.Path(), "File.Rename error: %v", err)
 			return err
@@ -611,7 +617,7 @@ func (f *File) VFS() *VFS {
 func (f *File) Fs() fs.Fs {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	return f.d.f
+	return f.d.Fs()
 }
 
 // Open a file according to the flags provided
