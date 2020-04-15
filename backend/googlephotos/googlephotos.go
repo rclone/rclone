@@ -134,14 +134,20 @@ rclone mount needs to know the size of files in advance of reading
 them, so setting this flag when using rclone mount is recommended if
 you want to read the media.`,
 			Advanced: true,
+		}, {
+			Name:     "start_year",
+			Default:  2000,
+			Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ReadOnly bool `config:"read_only"`
-	ReadSize bool `config:"read_size"`
+	ReadOnly  bool `config:"read_only"`
+	ReadSize  bool `config:"read_size"`
+	StartYear int  `config:"start_year"`
 }
 
 // Fs represents a remote storage server
@@ -200,6 +206,11 @@ func (f *Fs) Features() *fs.Features {
 // dirTime returns the time to set a directory to
 func (f *Fs) dirTime() time.Time {
 	return f.startTime
+}
+
+// startYear returns the start year
+func (f *Fs) startYear() int {
+	return f.opt.StartYear
 }
 
 // retryErrorCodes is a slice of error codes that we will retry

@@ -23,6 +23,7 @@ type lister interface {
 	listAlbums(ctx context.Context, shared bool) (all *albums, err error)
 	listUploads(ctx context.Context, dir string) (entries fs.DirEntries, err error)
 	dirTime() time.Time
+	startYear() int
 }
 
 // dirPattern describes a single directory pattern
@@ -222,11 +223,10 @@ func (ds dirPatterns) match(root string, itemPath string, isFile bool) (match []
 	return nil, "", nil
 }
 
-// Return the years from 2000 to today
-// FIXME make configurable?
+// Return the years from startYear to today
 func years(ctx context.Context, f lister, prefix string, match []string) (entries fs.DirEntries, err error) {
 	currentYear := f.dirTime().Year()
-	for year := 2000; year <= currentYear; year++ {
+	for year := f.startYear(); year <= currentYear; year++ {
 		entries = append(entries, fs.NewDir(prefix+fmt.Sprint(year), f.dirTime()))
 	}
 	return entries, nil
