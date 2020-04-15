@@ -1738,7 +1738,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 				err = nil
 			}
 		}
-		return nil
+		return err
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
 	})
