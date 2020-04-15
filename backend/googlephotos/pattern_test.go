@@ -59,6 +59,11 @@ func (f *testLister) dirTime() time.Time {
 	return startTime
 }
 
+// mock startYear for testing
+func (f *testLister) startYear() int {
+	return 2000
+}
+
 func TestPatternMatch(t *testing.T) {
 	for testNumber, test := range []struct {
 		// input
