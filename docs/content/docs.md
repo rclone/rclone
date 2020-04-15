@@ -969,8 +969,7 @@ is fixed all non-ASCII characters will be replaced with `.` when
 
 ### -q, --quiet ###
 
-Normally rclone outputs stats and a completion message.  If you set
-this flag it will make as little output as possible.
+This flag will limit rclone's output to error messages only.
 
 ### --retries int ###
 
