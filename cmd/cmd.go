@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"runtime/pprof"
@@ -503,9 +504,59 @@ func AddBackendFlags() {
 	}
 }
 
+// If rclone was invoked as "rclone.mount" act as if we are a mount
+// script.
+func invokedAsMount() {
+	if filepath.Base(os.Args[0]) != "rclone.mount" {
+		return
+	}
+	log.Printf("Rclone invoked as %v", os.Args)
+	if len(os.Args) < 3 {
+		log.Printf("Too few arguments - need 3")
+		os.Exit(1)
+	}
+	remote, mountpoint := os.Args[1], os.Args[2]
+
+	newArgs := []string{"rclone", "mount"}
+	// Do a quick and nasty job parsing the arguments
+	option := false
+	for _, arg := range os.Args[1:] {
+		if arg == "-o" {
+			option = true
+		} else if option {
+			values := strings.Split(arg, ",")
+			for _, value := range values {
+				switch {
+				case value == "rw":
+				case value == "ro":
+				case value == "dev":
+				case value == "suid":
+				case value == "exec":
+				case value == "auto":
+				case value == "nodev":
+				case value == "nosuid":
+				case value == "noexec":
+				case value == "noauto":
+				case strings.HasPrefix(value, "x-systemd"):
+				default:
+					newArgs = append(newArgs, "--"+value)
+				}
+			}
+		} else {
+			log.Printf("Ignoring argument %q", arg)
+		}
+	}
+
+	newArgs = append(newArgs, remote, mountpoint)
+
+	log.Printf("Translated args: %v", newArgs)
+	os.Args = newArgs
+}
+
 // Main runs rclone interpreting flags and commands out of os.Args
 func Main() {
 	rand.Seed(time.Now().Unix())
+	invokedAsMount()
 	setupRootCommand(Root)
 	AddBackendFlags()
 	if err := Root.Execute(); err != nil {
