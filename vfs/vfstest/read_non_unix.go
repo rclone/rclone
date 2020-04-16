@@ -1,6 +1,6 @@
 // +build !linux,!darwin,!freebsd
 
-package mounttest
+package vfstest
 
 import (
 	"runtime"

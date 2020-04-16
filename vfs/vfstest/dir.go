@@ -1,8 +1,7 @@
-package mounttest
+package vfstest
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -37,7 +36,7 @@ func TestDirCreateAndRemoveDir(t *testing.T) {
 	run.checkDir(t, "dir/|dir/subdir/")
 
 	// Check we can't delete a directory with stuff in
-	err := os.Remove(run.path("dir"))
+	err := run.os.Remove(run.path("dir"))
 	assert.Error(t, err, "file exists")
 
 	// Now delete subdir then dir - should produce no errors
@@ -56,7 +55,7 @@ func TestDirCreateAndRemoveFile(t *testing.T) {
 	run.checkDir(t, "dir/|dir/file 6")
 
 	// Check we can't delete a directory with stuff in
-	err := os.Remove(run.path("dir"))
+	err := run.os.Remove(run.path("dir"))
 	assert.Error(t, err, "file exists")
 
 	// Now delete file
@@ -75,14 +74,14 @@ func TestDirRenameFile(t *testing.T) {
 	run.createFile(t, "file", "potato")
 	run.checkDir(t, "dir/|file 6")
 
-	err := os.Rename(run.path("file"), run.path("file2"))
+	err := run.os.Rename(run.path("file"), run.path("file2"))
 	require.NoError(t, err)
 	run.checkDir(t, "dir/|file2 6")
 
 	data := run.readFile(t, "file2")
 	assert.Equal(t, "potato", data)
 
-	err = os.Rename(run.path("file2"), run.path("dir/file3"))
+	err = run.os.Rename(run.path("file2"), run.path("dir/file3"))
 	require.NoError(t, err)
 	run.checkDir(t, "dir/|dir/file3 6")
 
@@ -103,11 +102,11 @@ func TestDirRenameEmptyDir(t *testing.T) {
 	run.mkdir(t, "dir1")
 	run.checkDir(t, "dir/|dir1/")
 
-	err := os.Rename(run.path("dir1"), run.path("dir/dir2"))
+	err := run.os.Rename(run.path("dir1"), run.path("dir/dir2"))
 	require.NoError(t, err)
 	run.checkDir(t, "dir/|dir/dir2/")
 
-	err = os.Rename(run.path("dir/dir2"), run.path("dir/dir3"))
+	err = run.os.Rename(run.path("dir/dir2"), run.path("dir/dir3"))
 	require.NoError(t, err)
 	run.checkDir(t, "dir/|dir/dir3/")
 
@@ -125,11 +124,11 @@ func TestDirRenameFullDir(t *testing.T) {
 	run.createFile(t, "dir1/potato.txt", "maris piper")
 	run.checkDir(t, "dir/|dir1/|dir1/potato.txt 11")
 
-	err := os.Rename(run.path("dir1"), run.path("dir/dir2"))
+	err := run.os.Rename(run.path("dir1"), run.path("dir/dir2"))
 	require.NoError(t, err)
 	run.checkDir(t, "dir/|dir/dir2/|dir/dir2/potato.txt 11")
 
-	err = os.Rename(run.path("dir/dir2"), run.path("dir/dir3"))
+	err = run.os.Rename(run.path("dir/dir2"), run.path("dir/dir3"))
 	require.NoError(t, err)
 	run.checkDir(t, "dir/|dir/dir3/|dir/dir3/potato.txt 11")
 
@@ -145,10 +144,10 @@ func TestDirModTime(t *testing.T) {
 
 	run.mkdir(t, "dir")
 	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
-	err := os.Chtimes(run.path("dir"), mtime, mtime)
+	err := run.os.Chtimes(run.path("dir"), mtime, mtime)
 	require.NoError(t, err)
 
-	info, err := os.Stat(run.path("dir"))
+	info, err := run.os.Stat(run.path("dir"))
 	require.NoError(t, err)
 
 	// avoid errors because of timezone differences
@@ -214,7 +213,7 @@ func TestDirCacheFlushOnDirRename(t *testing.T) {
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
-	err = os.Rename(run.path("dir"), run.path("rid"))
+	err = run.os.Rename(run.path("dir"), run.path("rid"))
 	require.NoError(t, err)
 
 	dm = newDirMap("rid/|rid/subdir/|rid/file 1")

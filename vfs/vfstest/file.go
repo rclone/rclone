@@ -1,4 +1,4 @@
-package mounttest
+package vfstest
 
 import (
 	"os"
@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,10 +18,10 @@ func TestFileModTime(t *testing.T) {
 	run.createFile(t, "file", "123")
 
 	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
-	err := os.Chtimes(run.path("file"), mtime, mtime)
+	err := run.os.Chtimes(run.path("file"), mtime, mtime)
 	require.NoError(t, err)
 
-	info, err := os.Stat(run.path("file"))
+	info, err := run.os.Stat(run.path("file"))
 	require.NoError(t, err)
 
 	// avoid errors because of timezone differences
@@ -29,14 +30,14 @@ func TestFileModTime(t *testing.T) {
 	run.rm(t, "file")
 }
 
-// os.Create without opening for write too
-func osCreate(name string) (*os.File, error) {
-	return os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+// run.os.Create without opening for write too
+func osCreate(name string) (vfs.OsFiler, error) {
+	return run.os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 }
 
-// os.Create with append
-func osAppend(name string) (*os.File, error) {
-	return os.OpenFile(name, os.O_WRONLY|os.O_APPEND, 0666)
+// run.os.Create with append
+func osAppend(name string) (vfs.OsFiler, error) {
+	return run.os.OpenFile(name, os.O_WRONLY|os.O_APPEND, 0666)
 }
 
 // TestFileModTimeWithOpenWriters tests mod time on open files
@@ -55,7 +56,7 @@ func TestFileModTimeWithOpenWriters(t *testing.T) {
 	_, err = f.Write([]byte{104, 105})
 	require.NoError(t, err)
 
-	err = os.Chtimes(filepath, mtime, mtime)
+	err = run.os.Chtimes(filepath, mtime, mtime)
 	require.NoError(t, err)
 
 	err = f.Close()
@@ -63,7 +64,7 @@ func TestFileModTimeWithOpenWriters(t *testing.T) {
 
 	run.waitForWriters()
 
-	info, err := os.Stat(filepath)
+	info, err := run.os.Stat(filepath)
 	require.NoError(t, err)
 
 	// avoid errors because of timezone differences

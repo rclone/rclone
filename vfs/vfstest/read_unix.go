@@ -1,9 +1,8 @@
 // +build linux darwin freebsd
 
-package mounttest
+package vfstest
 
 import (
-	"os"
 	"syscall"
 	"testing"
 
@@ -12,11 +11,12 @@ import (
 
 // TestReadFileDoubleClose tests double close on read
 func TestReadFileDoubleClose(t *testing.T) {
+	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 
 	run.createFile(t, "testdoubleclose", "hello")
 
-	in, err := os.Open(run.path("testdoubleclose"))
+	in, err := run.os.Open(run.path("testdoubleclose"))
 	assert.NoError(t, err)
 	fd := in.Fd()
 

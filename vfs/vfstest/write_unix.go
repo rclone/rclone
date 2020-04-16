@@ -1,6 +1,6 @@
 // +build linux darwin freebsd
 
-package mounttest
+package vfstest
 
 import (
 	"runtime"
@@ -14,6 +14,7 @@ import (
 
 // TestWriteFileDoubleClose tests double close on write
 func TestWriteFileDoubleClose(t *testing.T) {
+	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 	if runtime.GOOS == "darwin" {
 		t.Skip("Skipping test on OSX")
