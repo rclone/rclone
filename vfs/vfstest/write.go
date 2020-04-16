@@ -1,4 +1,4 @@
-package mounttest
+package vfstest
 
 import (
 	"os"
@@ -89,6 +89,7 @@ func TestWriteFileFsync(t *testing.T) {
 
 // TestWriteFileDup tests behavior of mmap() in Python by using dup() on a file handle
 func TestWriteFileDup(t *testing.T) {
+	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 
 	if run.vfs.Opt.CacheMode < vfs.CacheModeWrites {
@@ -169,7 +170,7 @@ func TestWriteFileAppend(t *testing.T) {
 	err = fh.Close()
 	require.NoError(t, err)
 
-	info, err := os.Stat(filepath)
+	info, err := run.os.Stat(filepath)
 	require.NoError(t, err)
 	require.EqualValues(t, len(testData)+len(appendData), info.Size())
 

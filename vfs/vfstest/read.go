@@ -1,9 +1,8 @@
-package mounttest
+package vfstest
 
 import (
 	"io"
 	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -19,7 +18,7 @@ func TestReadByByte(t *testing.T) {
 	run.checkDir(t, "testfile 10")
 
 	for i := 0; i < len(data); i++ {
-		fd, err := os.Open(run.path("testfile"))
+		fd, err := run.os.Open(run.path("testfile"))
 		assert.NoError(t, err)
 		for j := 0; j < i; j++ {
 			buf := make([]byte, 1)
@@ -50,7 +49,7 @@ func TestReadChecksum(t *testing.T) {
 
 	// The hash comparison would fail in Flush, if we did not
 	// ensure we read the whole file
-	fd, err := os.Open(run.path("bigfile"))
+	fd, err := run.os.Open(run.path("bigfile"))
 	assert.NoError(t, err)
 	buf := make([]byte, 10)
 	_, err = io.ReadFull(fd, buf)
@@ -60,7 +59,7 @@ func TestReadChecksum(t *testing.T) {
 
 	// The hash comparison would fail, because we only read parts
 	// of the file
-	fd, err = os.Open(run.path("bigfile"))
+	fd, err = run.os.Open(run.path("bigfile"))
 	assert.NoError(t, err)
 	// read at start
 	_, err = io.ReadFull(fd, buf)
@@ -85,7 +84,7 @@ func TestReadSeek(t *testing.T) {
 	run.createFile(t, "testfile", string(data))
 	run.checkDir(t, "testfile 10")
 
-	fd, err := os.Open(run.path("testfile"))
+	fd, err := run.os.Open(run.path("testfile"))
 	assert.NoError(t, err)
 
 	// Seek to half way

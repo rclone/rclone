@@ -1,7 +1,6 @@
-package mounttest
+package vfstest
 
 import (
-	"os"
 	"runtime"
 	"testing"
 
@@ -43,7 +42,7 @@ func TestRenameOpenHandle(t *testing.T) {
 	require.NoError(t, err)
 
 	// attempt to rename open file
-	err = os.Rename(path, path+"bla")
+	err = run.os.Rename(path, path+"bla")
 	require.NoError(t, err)
 
 	// close open writers to allow rename on remote to go through
