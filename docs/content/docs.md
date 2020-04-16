@@ -564,6 +564,29 @@ triggering follow-on actions if data was copied, or skipping if not.
 NB: Enabling this option turns a usually non-fatal error into a potentially
 fatal one - please check and adjust your scripts accordingly!
 
+### --header-download ###
+
+Add an HTTP header for all download transactions. The flag can be repeated to
+add multiple headers.
+
+```
+rclone sync s3:test/src ~/dst --header-download "X-Amz-Meta-Test: Foo" --header-download "X-Amz-Meta-Test2: Bar"
+```
+
+See the Github issue [here](https://github.com/rclone/rclone/issues/59) for
+currently supported backends.
+
+### --header-upload ###
+
+Add an HTTP header for all upload transactions. The flag can be repeated to add
+multiple headers.
+
+```
+rclone sync ~/src s3:test/dst --header-upload "Content-Disposition: attachment; filename='cool.html'" --header-upload "X-Amz-Meta-Test: FooBar"
+```
+
+See the Github issue [here](https://github.com/rclone/rclone/issues/59) for
+currently supported backends.
 
 ### --ignore-case-sync ###
 
