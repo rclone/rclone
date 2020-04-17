@@ -325,6 +325,18 @@ func (f *File) Size() int64 {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
+	// Read the size from a dirty item if it exists
+	if f.d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal {
+		if item := f.d.vfs.cache.DirtyItem(f._path()); item != nil {
+			size, err := item.GetSize()
+			if err != nil {
+				fs.Errorf(f._path(), "Size: Item GetSize failed: %v", err)
+			} else {
+				return size
+			}
+		}
+	}
+
 	// if o is nil it isn't valid yet or there are writers, so return the size so far
 	if f._writingInProgress() {
 		return atomic.LoadInt64(&f.size)

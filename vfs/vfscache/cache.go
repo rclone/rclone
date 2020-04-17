@@ -18,7 +18,6 @@ import (
 	fscache "github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -43,6 +42,7 @@ type Cache struct {
 	metaRoot   string             // root of the cache metadata directory
 	hashType   hash.Type          // hash to use locally and remotely
 	hashOption *fs.HashesOption   // corresponding OpenOption
+	writeback  *writeBack         // holds Items for writeback
 
 	mu   sync.Mutex       // protects the following variables
 	item map[string]*Item // files/directories in the cache
@@ -87,6 +87,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options) (*Cache, er
 		item:       make(map[string]*Item),
 		hashType:   hashType,
 		hashOption: hashOption,
+		writeback:  newWriteBack(ctx, opt),
 	}
 
 	// Make sure cache directories exist
@@ -200,6 +201,20 @@ func (c *Cache) InUse(name string) bool {
 	return item.inUse()
 }
 
+// DirtyItem the Item if it exists in the cache and is Dirty
+//
+// name should be a remote path not an osPath
+func (c *Cache) DirtyItem(name string) (item *Item) {
+	name = clean(name)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	item = c.item[name]
+	if item != nil && !item.IsDirty() {
+		item = nil
+	}
+	return item
+}
+
 // get gets a file name from the cache or creates a new one
 //
 // It returns the item and found as to whether this item was found in
@@ -224,20 +239,14 @@ func (c *Cache) Item(name string) (item *Item) {
 	return item
 }
 
-// Exists checks to see if the file exists in the cache or not
+// Exists checks to see if the file exists in the cache or not.
 //
-// FIXME check the metadata exists here too?
+// This is done by bringing the item into the cache which will
+// validate the backing file and metadata and then asking if the Item
+// exists or not.
 func (c *Cache) Exists(name string) bool {
-	osPath := c.toOSPath(name)
-	fi, err := os.Stat(osPath)
-	if err != nil {
-		return false
-	}
-	// checks for non-regular files (e.g. directories, symlinks, devices, etc.)
-	if !fi.Mode().IsRegular() {
-		return false
-	}
-	return true
+	item, _ := c.get(name)
+	return item.Exists()
 }
 
 // rename with os.Rename and more checking
@@ -300,8 +309,13 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 
 // Remove should be called if name is deleted
 func (c *Cache) Remove(name string) {
-	item, _ := c.get(name)
+	name = clean(name)
+	c.mu.Lock()
+	item, _ := c._get(name)
+	delete(c.item, name)
+	c.mu.Unlock()
 	item.remove("file deleted")
+
 }
 
 // SetModTime should be called to set the modification time of the cache file
@@ -506,9 +520,30 @@ func (c *Cache) cleaner(ctx context.Context) {
 	}
 }
 
-// Check the local file is up to date in the cache
-func (c *Cache) Check(ctx context.Context, o fs.Object, remote string) (err error) {
-	defer log.Trace(o, "remote=%q", remote)("err=%v", &err)
-	item, _ := c.get(remote)
-	return item.checkObject(o)
+// TotalInUse returns the number of items in the cache which are InUse
+func (c *Cache) TotalInUse() (n int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, item := range c.item {
+		if item.inUse() {
+			n++
+		}
+	}
+	return n
+}
+
+// Dump the cache into a string for debugging purposes
+func (c *Cache) Dump() string {
+	if c == nil {
+		return "Cache: <nil>\n"
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var out strings.Builder
+	out.WriteString("Cache{\n")
+	for name, item := range c.item {
+		fmt.Fprintf(&out, "\t%q: %+v,\n", name, item)
+	}
+	out.WriteString("}\n")
+	return out.String()
 }
