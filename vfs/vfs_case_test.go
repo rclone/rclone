@@ -36,10 +36,12 @@ func TestCaseSensitivity(t *testing.T) {
 	optCS := vfscommon.DefaultOpt
 	optCS.CaseInsensitive = false
 	vfsCS := New(r.Fremote, &optCS)
+	defer cleanupVFS(t, vfsCS)
 
 	optCI := vfscommon.DefaultOpt
 	optCI.CaseInsensitive = true
 	vfsCI := New(r.Fremote, &optCI)
+	defer cleanupVFS(t, vfsCI)
 
 	// Run basic checks that must pass on VFS of any type.
 	assertFileDataVFS(t, vfsCI, "FiLeA", "data1")

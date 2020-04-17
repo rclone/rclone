@@ -145,6 +145,13 @@ func (item *Item) getATime() time.Time {
 	return item.info.ATime
 }
 
+// getName returns the name of the item
+func (item *Item) getName() string {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item.name
+}
+
 // getDiskSize returns the size on disk (approximately) of the item
 //
 // We return the sizes of the chunks we have fetched, however there is
@@ -374,6 +381,13 @@ func (item *Item) Dirty() {
 	item.mu.Unlock()
 }
 
+// IsDirty returns true if the item is dirty
+func (item *Item) IsDirty() bool {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item.metaDirty || item.info.Dirty
+}
+
 // Open the local file from the object passed in (which may be nil)
 // which implies we are about to create the file
 func (item *Item) Open(o fs.Object) (err error) {
@@ -445,10 +459,9 @@ func (item *Item) Open(o fs.Object) (err error) {
 // Store stores the local cache file to the remote object, returning
 // the new remote object. objOld is the old object if known.
 //
-// call with item lock held
-func (item *Item) _store() (err error) {
+// Call with lock held
+func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	defer log.Trace(item.name, "item=%p", item)("err=%v", &err)
-	ctx := context.Background()
 
 	// Ensure any segments not transferred are brought in
 	err = item._ensure(0, item.info.Size)
@@ -462,23 +475,51 @@ func (item *Item) _store() (err error) {
 		return errors.Wrap(err, "vfs cache: failed to find cache file")
 	}
 
+	item.mu.Unlock()
 	o, err := operations.Copy(ctx, item.c.fremote, item.o, item.name, cacheObj)
+	item.mu.Lock()
 	if err != nil {
 		return errors.Wrap(err, "vfs cache: failed to transfer file from cache to remote")
 	}
 	item.o = o
 	item._updateFingerprint()
+	item.info.Dirty = false
+	err = item._save()
+	if err != nil {
+		fs.Errorf(item.name, "Failed to write metadata file: %v", err)
+	}
+	if storeFn != nil && item.o != nil {
+		// Write the object back to the VFS layer as last
+		// thing we do with mutex unlocked
+		item.mu.Unlock()
+		storeFn(item.o)
+		item.mu.Lock()
+	}
 	return nil
+}
+
+// Store stores the local cache file to the remote object, returning
+// the new remote object. objOld is the old object if known.
+func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item._store(ctx, storeFn)
 }
 
 // Close the cache file
 func (item *Item) Close(storeFn StoreFn) (err error) {
 	defer log.Trace(item.o, "Item.Close")("err=%v", &err)
 	var (
-		downloader *downloader
-		o          fs.Object
+		downloader    *downloader
+		syncWriteBack = item.c.opt.WriteBack <= 0
 	)
-	// close downloader and set item with mutex unlocked
+	// FIXME need to unlock to kill downloader - should we
+	// re-arrange locking so this isn't necessary?  maybe
+	// downloader should use the item mutex for locking? or put a
+	// finer lock on Rs?
+	//
+	// close downloader with mutex unlocked
+	// downloader.Write calls ensure which needs the lock
 	defer func() {
 		if downloader != nil {
 			closeErr := downloader.close(nil)
@@ -486,9 +527,11 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 				err = closeErr
 			}
 		}
-		if err == nil && storeFn != nil && o != nil {
-			// Write the object back to the VFS layer
-			storeFn(item.o)
+		// save the metadata once more since it may be dirty
+		// after the downloader
+		saveErr := item._save()
+		if saveErr != nil && err == nil {
+			err = errors.Wrap(saveErr, "close failed to save item")
 		}
 	}()
 	item.mu.Lock()
@@ -533,15 +576,14 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 
 	// upload the file to backing store if changed
 	if item.info.Dirty {
-		fs.Debugf(item.name, "item changed - writeback")
-		err = item._store()
-		if err != nil {
-			fs.Errorf(item.name, "%v", err)
-			return err
+		fs.Debugf(item.name, "item changed - writeback in %v", item.c.opt.WriteBack)
+		if syncWriteBack {
+			// do synchronous writeback
+			err = item._store(context.Background(), storeFn)
+		} else {
+			// asynchronous writeback
+			item.c.writeback.add(item, storeFn)
 		}
-		fs.Debugf(item.o, "transferred to remote")
-		item.info.Dirty = false
-		o = item.o
 	}
 
 	return err
@@ -588,16 +630,6 @@ func (item *Item) _checkObject(o fs.Object) error {
 	}
 
 	return nil
-}
-
-// check the fingerprint of an object and update the item or delete
-// the cached file accordingly.
-//
-// It ensures the file is the correct size for the object
-func (item *Item) checkObject(o fs.Object) error {
-	item.mu.Lock()
-	defer item.mu.Unlock()
-	return item._checkObject(o)
 }
 
 // remove the cached file
@@ -760,6 +792,10 @@ func (item *Item) setModTime(modTime time.Time) {
 	item.mu.Lock()
 	item._updateFingerprint()
 	item._setModTime(modTime)
+	err := item._save()
+	if err != nil {
+		fs.Errorf(item.name, "vfs cache: setModTime: failed to save item info: %v", err)
+	}
 	item.mu.Unlock()
 }
 
@@ -795,6 +831,10 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 	item._written(off, int64(n))
 	if n > 0 {
 		item._dirty()
+	}
+	end := off + int64(n)
+	if end > item.info.Size {
+		item.info.Size = end
 	}
 	item.mu.Unlock()
 	return n, err

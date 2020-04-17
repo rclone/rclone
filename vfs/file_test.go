@@ -16,10 +16,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func fileCreate(t *testing.T, r *fstest.Run, mode vfscommon.CacheMode) (*VFS, *File, fstest.Item) {
+func fileCreate(t *testing.T, mode vfscommon.CacheMode) (r *fstest.Run, vfs *VFS, fh *File, item fstest.Item, cleanup func()) {
 	opt := vfscommon.DefaultOpt
 	opt.CacheMode = mode
-	vfs := New(r.Fremote, &opt)
+	opt.WriteBack = writeBackDelay
+	r, vfs, cleanup = newTestVFSOpt(t, &opt)
 
 	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -28,13 +29,12 @@ func fileCreate(t *testing.T, r *fstest.Run, mode vfscommon.CacheMode) (*VFS, *F
 	require.NoError(t, err)
 	require.True(t, node.Mode().IsRegular())
 
-	return vfs, node.(*File), file1
+	return r, vfs, node.(*File), file1, cleanup
 }
 
 func TestFileMethods(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r, vfscommon.CacheModeOff)
+	r, vfs, file, _, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+	defer cleanup()
 
 	// String
 	assert.Equal(t, "dir/file1", file.String())
@@ -88,12 +88,11 @@ func TestFileMethods(t *testing.T) {
 }
 
 func TestFileSetModTime(t *testing.T) {
-	r := fstest.NewRun(t)
+	r, vfs, file, file1, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+	defer cleanup()
 	if !canSetModTime(t, r) {
-		return
+		t.Skip("can't set mod time")
 	}
-	defer r.Finalise()
-	vfs, file, file1 := fileCreate(t, r, vfscommon.CacheModeOff)
 
 	err := file.SetModTime(t2)
 	require.NoError(t, err)
@@ -118,9 +117,8 @@ func fileCheckContents(t *testing.T, file *File) {
 }
 
 func TestFileOpenRead(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	_, file, _ := fileCreate(t, r, vfscommon.CacheModeOff)
+	_, _, file, _, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+	defer cleanup()
 
 	fileCheckContents(t, file)
 }
@@ -146,6 +144,7 @@ func TestFileOpenReadUnknownSize(t *testing.T) {
 
 	// create a VFS from that mockfs
 	vfs := New(f, nil)
+	defer cleanupVFS(t, vfs)
 
 	// find the file
 	node, err := vfs.Stat(remote)
@@ -171,9 +170,8 @@ func TestFileOpenReadUnknownSize(t *testing.T) {
 }
 
 func TestFileOpenWrite(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r, vfscommon.CacheModeOff)
+	_, vfs, file, _, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+	defer cleanup()
 
 	fd, err := file.openWrite(os.O_WRONLY | os.O_TRUNC)
 	require.NoError(t, err)
@@ -192,9 +190,8 @@ func TestFileOpenWrite(t *testing.T) {
 }
 
 func TestFileRemove(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r, vfscommon.CacheModeOff)
+	r, vfs, file, _, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+	defer cleanup()
 
 	err := file.Remove()
 	require.NoError(t, err)
@@ -207,9 +204,8 @@ func TestFileRemove(t *testing.T) {
 }
 
 func TestFileRemoveAll(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, file, _ := fileCreate(t, r, vfscommon.CacheModeOff)
+	r, vfs, file, _, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+	defer cleanup()
 
 	err := file.RemoveAll()
 	require.NoError(t, err)
@@ -222,9 +218,8 @@ func TestFileRemoveAll(t *testing.T) {
 }
 
 func TestFileOpen(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	_, file, _ := fileCreate(t, r, vfscommon.CacheModeOff)
+	_, _, file, _, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+	defer cleanup()
 
 	fd, err := file.Open(os.O_RDONLY)
 	require.NoError(t, err)
@@ -242,15 +237,15 @@ func TestFileOpen(t *testing.T) {
 	assert.NoError(t, err)
 	_, ok = fd.(*WriteFileHandle)
 	assert.True(t, ok)
+	require.NoError(t, fd.Close())
 
 	_, err = file.Open(3)
 	assert.Equal(t, EPERM, err)
 }
 
 func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, file, item := fileCreate(t, r, mode)
+	r, vfs, file, item, cleanup := fileCreate(t, mode)
+	defer cleanup()
 
 	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("skip as can't rename files")
@@ -326,6 +321,7 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
 
 	// Check file has now been renamed on the remote
 	item.Path = "newLeaf"
+	vfs.WaitForWriters(waitForWritersDelay)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{newItem}, nil, fs.ModTimeNotSupported)
 }
 

@@ -35,5 +35,6 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.CaseInsensitive, "vfs-case-insensitive", "", Opt.CaseInsensitive, "If a file name not found, find a case insensitive match.")
 	flags.DurationVarP(flagSet, &Opt.WriteWait, "vfs-write-wait", "", Opt.WriteWait, "Time to wait for in-sequence write before giving error.")
 	flags.DurationVarP(flagSet, &Opt.ReadWait, "vfs-read-wait", "", Opt.ReadWait, "Time to wait for in-sequence read before seeking.")
+	flags.DurationVarP(flagSet, &Opt.WriteBack, "vfs-writeback", "", Opt.ReadWait, "Time to writeback files after last use when using cache.")
 	platformFlags(flagSet)
 }

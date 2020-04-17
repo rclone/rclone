@@ -36,7 +36,7 @@ func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 	// get an item to represent this from the cache
 	item := d.vfs.cache.Item(f.Path())
 
-	exists := f.exists() // || item.Exists()
+	exists := f.exists() || item.Exists()
 
 	// if O_CREATE and O_EXCL are set and if path already exists, then return EEXIST
 	if flags&(os.O_CREATE|os.O_EXCL) == os.O_CREATE|os.O_EXCL && exists {
@@ -51,7 +51,7 @@ func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 	}
 
 	// truncate immediately if O_TRUNC is set or O_CREATE is set and file doesn't exist
-	if !fh.readOnly() && (fh.flags&os.O_TRUNC != 0 || (fh.flags&os.O_CREATE != 0 && !(exists || item.Exists()))) {
+	if !fh.readOnly() && (fh.flags&os.O_TRUNC != 0 || (fh.flags&os.O_CREATE != 0 && !exists)) {
 		err = fh.Truncate(0)
 		if err != nil {
 			return nil, errors.Wrap(err, "cache open with O_TRUNC: failed to truncate")

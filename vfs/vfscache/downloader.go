@@ -60,11 +60,12 @@ func newDownloader(item *Item, fcache fs.Fs, remote string, src fs.Object) (dl *
 	if err == nil {
 		// do nothing
 	} else if os.IsNotExist(err) {
-		fs.Debugf(src, "creating empty file")
-		err = item._truncateToCurrentSize()
-		if err != nil {
-			return nil, errors.Wrap(err, "newDownloader: failed to create empty file")
-		}
+		return nil, errors.New("vfs cache: internal error: newDownloader: called before Item.Open")
+		// fs.Debugf(src, "creating empty file")
+		// err = item._truncateToCurrentSize()
+		// if err != nil {
+		// 	return nil, errors.Wrap(err, "newDownloader: failed to create empty file")
+		// }
 	} else {
 		return nil, errors.Wrap(err, "newDownloader: failed to stat cache file")
 	}

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	_ "github.com/rclone/rclone/backend/all" // import all the backends
@@ -25,9 +26,39 @@ var (
 	t3 = fstest.Time("2011-12-30T12:59:59.000000000Z")
 )
 
+// Constants uses in the tests
+const (
+	writeBackDelay      = 100 * time.Millisecond // A short writeback delay for testing
+	waitForWritersDelay = 10 * time.Second       // time to wait for exiting writiers
+)
+
 // TestMain drives the tests
 func TestMain(m *testing.M) {
 	fstest.TestMain(m)
+}
+
+// Clean up a test VFS
+func cleanupVFS(t *testing.T, vfs *VFS) {
+	vfs.WaitForWriters(waitForWritersDelay)
+	err := vfs.CleanUp()
+	require.NoError(t, err)
+	vfs.Shutdown()
+}
+
+// Create a new VFS
+func newTestVFSOpt(t *testing.T, opt *vfscommon.Options) (r *fstest.Run, vfs *VFS, cleanup func()) {
+	r = fstest.NewRun(t)
+	vfs = New(r.Fremote, opt)
+	cleanup = func() {
+		cleanupVFS(t, vfs)
+		r.Finalise()
+	}
+	return r, vfs, cleanup
+}
+
+// Create a new VFS with default options
+func newTestVFS(t *testing.T) (r *fstest.Run, vfs *VFS, cleanup func()) {
+	return newTestVFSOpt(t, nil)
 }
 
 // Check baseHandle performs as advertised
@@ -97,31 +128,33 @@ func TestVFSbaseHandle(t *testing.T) {
 
 // TestNew sees if the New command works properly
 func TestVFSNew(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	// Check making a VFS with nil options
-	vfs := New(r.Fremote, nil)
 	var defaultOpt = vfscommon.DefaultOpt
 	defaultOpt.DirPerms |= os.ModeDir
 	assert.Equal(t, vfs.Opt, defaultOpt)
 	assert.Equal(t, vfs.f, r.Fremote)
+}
 
-	// Check the initialisation
+// TestNew sees if the New command works properly
+func TestVFSNewWithOpts(t *testing.T) {
 	var opt = vfscommon.DefaultOpt
 	opt.DirPerms = 0777
 	opt.FilePerms = 0666
 	opt.Umask = 0002
-	vfs = New(r.Fremote, &opt)
+	_, vfs, cleanup := newTestVFSOpt(t, &opt)
+	defer cleanup()
+
 	assert.Equal(t, os.FileMode(0775)|os.ModeDir, vfs.Opt.DirPerms)
 	assert.Equal(t, os.FileMode(0664), vfs.Opt.FilePerms)
 }
 
 // TestRoot checks root directory is present and correct
 func TestVFSRoot(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	_, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	root, err := vfs.Root()
 	require.NoError(t, err)
@@ -131,9 +164,8 @@ func TestVFSRoot(t *testing.T) {
 }
 
 func TestVFSStat(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
@@ -168,9 +200,8 @@ func TestVFSStat(t *testing.T) {
 }
 
 func TestVFSStatParent(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
@@ -202,9 +233,8 @@ func TestVFSStatParent(t *testing.T) {
 }
 
 func TestVFSOpenFile(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
@@ -238,13 +268,13 @@ func TestVFSOpenFile(t *testing.T) {
 }
 
 func TestVFSRename(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
+
 	features := r.Fremote.Features()
 	if features.Move == nil && features.Copy == nil {
-		return // skip as can't rename files
+		t.Skip("skip as can't rename files")
 	}
-	vfs := New(r.Fremote, nil)
 
 	file1 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -267,9 +297,8 @@ func TestVFSRename(t *testing.T) {
 }
 
 func TestVFSStatfs(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	// pre-conditions
 	assert.Nil(t, vfs.usage)

@@ -265,7 +265,7 @@ func (vfs *VFS) FlushDirCache() {
 // time.Duration has elapsed
 func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 	defer log.Trace(nil, "timeout=%v", timeout)("")
-	const tickTime = 1 * time.Second
+	tickTime := 10 * time.Millisecond
 	deadline := time.NewTimer(timeout)
 	defer deadline.Stop()
 	tick := time.NewTimer(tickTime)
@@ -273,17 +273,25 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 	tick.Stop()
 	for {
 		writers := vfs.root.countActiveWriters()
-		if writers == 0 {
+		cacheInUse := 0
+		if vfs.cache != nil {
+			cacheInUse = vfs.cache.TotalInUse()
+		}
+		if writers == 0 && cacheInUse == 0 {
 			return
 		}
-		fs.Debugf(nil, "Still %d writers active, waiting %v", writers, tickTime)
+		fs.Debugf(nil, "Still %d writers active and %d cache items in use, waiting %v", writers, cacheInUse, tickTime)
 		tick.Reset(tickTime)
 		select {
 		case <-tick.C:
 			break
 		case <-deadline.C:
-			fs.Errorf(nil, "Exiting even though %d writers are active after %v", writers, timeout)
+			fs.Errorf(nil, "Exiting even though %d writers active and %d cache items in use after %v\n%s", writers, cacheInUse, timeout, vfs.cache.Dump())
 			return
+		}
+		tickTime *= 2
+		if tickTime > time.Second {
+			tickTime = time.Second
 		}
 	}
 }

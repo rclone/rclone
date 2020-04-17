@@ -46,17 +46,25 @@ var (
 func RunTests(t *testing.T, useVFS bool, fn MountFn) {
 	mountFn = fn
 	flag.Parse()
-	cacheModes := []vfscommon.CacheMode{
-		vfscommon.CacheModeOff,
-		vfscommon.CacheModeMinimal,
-		vfscommon.CacheModeWrites,
-		vfscommon.CacheModeFull,
+	tests := []struct {
+		cacheMode vfscommon.CacheMode
+		writeBack time.Duration
+	}{
+		{cacheMode: vfscommon.CacheModeOff},
+		{cacheMode: vfscommon.CacheModeMinimal},
+		{cacheMode: vfscommon.CacheModeWrites},
+		{cacheMode: vfscommon.CacheModeFull},
+		{cacheMode: vfscommon.CacheModeFull, writeBack: 100 * time.Millisecond},
 	}
 	run = newRun(useVFS)
-	for _, cacheMode := range cacheModes {
-		run.cacheMode(cacheMode)
-		log.Printf("Starting test run with cache mode %v", cacheMode)
-		ok := t.Run(fmt.Sprintf("CacheMode=%v", cacheMode), func(t *testing.T) {
+	for _, test := range tests {
+		run.cacheMode(test.cacheMode, test.writeBack)
+		what := fmt.Sprintf("CacheMode=%v", test.cacheMode)
+		if test.writeBack > 0 {
+			what += fmt.Sprintf(",WriteBack=%v", test.writeBack)
+		}
+		log.Printf("Starting test run with %s", what)
+		ok := t.Run(what, func(t *testing.T) {
 			t.Run("TestTouchAndDelete", TestTouchAndDelete)
 			t.Run("TestRenameOpenHandle", TestRenameOpenHandle)
 			t.Run("TestDirLs", TestDirLs)
@@ -84,7 +92,7 @@ func RunTests(t *testing.T, useVFS bool, fn MountFn) {
 			t.Run("TestWriteFileDup", TestWriteFileDup)
 			t.Run("TestWriteFileAppend", TestWriteFileAppend)
 		})
-		log.Printf("Finished test run with cache mode %v (ok=%v)", cacheMode, ok)
+		log.Printf("Finished test run with %s (ok=%v)", what, ok)
 		if !ok {
 			break
 		}
@@ -218,8 +226,8 @@ func (r *Run) umount() {
 	}
 }
 
-// cacheMode flushes the VFS and changes the CacheMode
-func (r *Run) cacheMode(cacheMode vfscommon.CacheMode) {
+// cacheMode flushes the VFS and changes the CacheMode and the writeBack time
+func (r *Run) cacheMode(cacheMode vfscommon.CacheMode, writeBack time.Duration) {
 	if r.skip {
 		log.Printf("FUSE not found so skipping cacheMode")
 		return
@@ -239,6 +247,7 @@ func (r *Run) cacheMode(cacheMode vfscommon.CacheMode) {
 	}
 	// Reset the cache mode
 	r.vfs.SetCacheMode(cacheMode)
+	r.vfs.Opt.WriteBack = writeBack
 	// Flush the directory cache
 	r.vfs.FlushDirCache()
 
