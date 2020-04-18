@@ -42,23 +42,72 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
-	graphURL                    = "https://graph.microsoft.com/v1.0"
 	configDriveID               = "drive_id"
 	configDriveType             = "drive_type"
 	driveTypePersonal           = "personal"
 	driveTypeBusiness           = "business"
 	driveTypeSharepoint         = "documentLibrary"
+	graphURLID                  = "graphURL"
+	baseURLID                   = "baseURL"
 	defaultChunkSize            = 10 * fs.MebiByte
 	chunkSizeMultiple           = 320 * fs.KibiByte
 )
+
+func getBaseURLs(c int) map[string]string {
+
+	urlMap := make(map[string]string)
+	switch c {
+	default:
+		fallthrough
+	case 0:
+		urlMap[graphURLID] = "https://graph.microsoft.com/v1.0"
+		urlMap[baseURLID] = "https://login.microsoftonline.com"
+	case 1:
+		urlMap[graphURLID] = "https://graph.microsoft.us/v1.0"
+		urlMap[baseURLID] = "https://login.microsoftonline.us"
+	case 2:
+		urlMap[graphURLID] = "https://dod-graph.microsoft.us/v1.0"
+		urlMap[baseURLID] = "https://login.microsoftonline.us"
+	case 3:
+		urlMap[graphURLID] = "https://graph.microsoft.de/1.0"
+		urlMap[baseURLID] = "https://login.microsoftonline.de"
+	case 4:
+		urlMap[graphURLID] = "https://microsoftgraph.chinacloudapi.cn/v1.0"
+		urlMap[baseURLID] = "https://login.chinacloudapi.cn"
+	}
+
+	return urlMap
+}
+
+var baseURLMap map[string]string = map[string]string{graphURLID: "https://graph.microsoft.com/v1.0", baseURLID: "https://login.microsoftonline.com"}
+
+func setOAuthConfig(c string) {
+	// Description of how to auth for this app for a business account
+	v, err := strconv.Atoi(c)
+	if err != nil {
+		v = 0
+	}
+	baseURLMap = getBaseURLs(v)
+
+	oauthConfig = &oauth2.Config{
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  baseURLMap[baseURLID] + "/common/oauth2/v2.0/authorize",
+			TokenURL: baseURLMap[baseURLID] + "/common/oauth2/v2.0/token",
+		},
+		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
+		ClientID:     rcloneClientID,
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
+		RedirectURL:  oauthutil.RedirectLocalhostURL,
+	}
+}
 
 // Globals
 var (
 	// Description of how to auth for this app for a business account
 	oauthConfig = &oauth2.Config{
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-			TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+			AuthURL:  baseURLMap[baseURLID] + "/common/oauth2/v2.0/authorize",
+			TokenURL: baseURLMap[baseURLID] + "/common/oauth2/v2.0/token",
 		},
 		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
 		ClientID:     rcloneClientID,
@@ -78,6 +127,13 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+
+			nc, ok := m.Get("national_cloud")
+			if ok == false {
+				nc = "0"
+			}
+
+			setOAuthConfig(nc)
 			ctx := context.TODO()
 			err := oauthutil.Config("onedrive", name, m, oauthConfig)
 			if err != nil {
@@ -125,13 +181,13 @@ func init() {
 			case "onedrive":
 				opts = rest.Opts{
 					Method:  "GET",
-					RootURL: graphURL,
+					RootURL: baseURLMap[graphURLID],
 					Path:    "/me/drives",
 				}
 			case "sharepoint":
 				opts = rest.Opts{
 					Method:  "GET",
-					RootURL: graphURL,
+					RootURL: baseURLMap[graphURLID],
 					Path:    "/sites/root/drives",
 				}
 			case "driveid":
@@ -145,7 +201,7 @@ func init() {
 				searchTerm := config.ReadLine()
 				opts = rest.Opts{
 					Method:  "GET",
-					RootURL: graphURL,
+					RootURL: baseURLMap[graphURLID],
 					Path:    "/sites?search=" + searchTerm,
 				}
 
@@ -170,7 +226,7 @@ func init() {
 			if siteID != "" {
 				opts = rest.Opts{
 					Method:  "GET",
-					RootURL: graphURL,
+					RootURL: baseURLMap[graphURLID],
 					Path:    "/sites/" + siteID + "/drives",
 				}
 			}
@@ -220,7 +276,7 @@ func init() {
 			// Test the driveID and get drive type
 			opts = rest.Opts{
 				Method:  "GET",
-				RootURL: graphURL,
+				RootURL: baseURLMap[graphURLID],
 				Path:    "/drives/" + finalDriveID + "/root"}
 			var rootItem api.Item
 			_, err = srv.CallJSON(ctx, &opts, nil, &rootItem)
@@ -244,6 +300,10 @@ func init() {
 		}, {
 			Name: config.ConfigClientSecret,
 			Help: "Microsoft App Client Secret\nLeave blank normally.",
+		}, {
+			Name:    "national_cloud",
+			Help:    "The national Microsoft cloud server to use?\n 0) Microsoft Cloud Global\n 1) Microsoft Cloud for US Govt (L4)\n 2) Microsoft Cloud for US Govt (L5 DOD)\n 3) Microsoft Cloud for Germany\n 4) Microsoft Cloud for China (Operated by 21Vianet)\n Default 0 - Microsoft Cloud Global",
+			Default: 0,
 		}, {
 			Name: "chunk_size",
 			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
@@ -605,7 +665,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:       *opt,
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
-		srv:       rest.NewClient(oAuthClient).SetRoot(graphURL + "/drives/" + opt.DriveID),
+		srv:       rest.NewClient(oAuthClient).SetRoot(baseURLMap[graphURLID] + "/drives/" + opt.DriveID),
 		pacer:     fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
@@ -1861,7 +1921,7 @@ func newOptsCall(normalizedID string, method string, route string) (opts rest.Op
 func parseNormalizedID(ID string) (string, string, string) {
 	if strings.Index(ID, "#") >= 0 {
 		s := strings.Split(ID, "#")
-		return s[1], s[0], graphURL + "/drives"
+		return s[1], s[0], baseURLMap[graphURLID] + "/drives"
 	}
 	return ID, "", ""
 }
