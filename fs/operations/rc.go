@@ -215,8 +215,9 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 			return nil, err
 		}
 		autoFilename, _ := in.GetBool("autoFilename")
+		noClobber, _ := in.GetBool("noClobber")
 
-		_, err = CopyURL(ctx, f, remote, url, autoFilename)
+		_, err = CopyURL(ctx, f, remote, url, autoFilename, noClobber)
 		return nil, err
 	case "cleanup":
 		return nil, CleanUp(ctx, f)
