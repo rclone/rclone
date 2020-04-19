@@ -19,6 +19,9 @@ Setting --auto-filename will cause the file name to be retreived from
 the from URL (after any redirections) and used in the destination
 path.
 
+Setting --no-clobber will prevent overwriting file on the 
+destination if there is one with the same name.
+
 Setting --stdout or making the output file name "-" will cause the
 output to be written to standard output.
 
@@ -31,6 +34,7 @@ rclone copyurl https://example.com dest:path [flags]
 
 ```
   -a, --auto-filename   Get the file name from the URL and use it for destination file path
+      --no-clobber      Prevent file overwriting on destination
   -h, --help            help for copyurl
       --stdout          Write the output to stdout rather than a file
 ```
