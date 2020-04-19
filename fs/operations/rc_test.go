@@ -109,9 +109,21 @@ func TestRcCopyurl(t *testing.T) {
 		"remote":       "file1",
 		"url":          ts.URL,
 		"autoFilename": false,
+		"noClobber":    false,
 	}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+	in = rc.Params{
+		"fs":           r.FremoteName,
+		"remote":       "file1",
+		"url":          ts.URL,
+		"autoFilename": false,
+		"noClobber":    true,
+	}
+	out, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
 	urlFileName := "filename.txt"
@@ -120,6 +132,7 @@ func TestRcCopyurl(t *testing.T) {
 		"remote":       "",
 		"url":          ts.URL + "/" + urlFileName,
 		"autoFilename": true,
+		"noClobber":    false,
 	}
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
@@ -130,6 +143,7 @@ func TestRcCopyurl(t *testing.T) {
 		"remote":       "",
 		"url":          ts.URL,
 		"autoFilename": true,
+		"noClobber":    false,
 	}
 	out, err = call.Fn(context.Background(), in)
 	require.Error(t, err)

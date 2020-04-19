@@ -1718,8 +1718,15 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameF
 }
 
 // CopyURL copies the data from the url to (fdst, dstFileName)
-func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, dstFileNameFromURL bool) (dst fs.Object, err error) {
+func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, dstFileNameFromURL bool, noClobber bool) (dst fs.Object, err error) {
+
 	err = copyURLFn(ctx, dstFileName, url, dstFileNameFromURL, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
+		if noClobber {
+			_, err = fdst.NewObject(ctx, dstFileName)
+			if err == nil {
+				return errors.New("CopyURL failed: file already exist")
+			}
+		}
 		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime)
 		return err
 	})
