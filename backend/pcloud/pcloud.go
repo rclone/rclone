@@ -41,8 +41,7 @@ const (
 	rcloneEncryptedClientSecret = "ej1OIF39VOQQ0PXaSdK9ztkLw3tdLNscW2157TKNQdQKkICR4uU7aFg4eFM"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
-	decayConstant               = 2    // bigger for slower decay, exponential
-	rootID                      = "d0" // ID of root folder is always this
+	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api.pcloud.com"
 )
 
@@ -89,13 +88,19 @@ func init() {
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
 				encoder.EncodeInvalidUtf8),
+		}, {
+			Name:     "root_folder_id",
+			Help:     "Fill in for rclone to use a non root folder as its starting point.",
+			Default:  "d0",
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Enc encoder.MultiEncoder `config:"encoding"`
+	Enc          encoder.MultiEncoder `config:"encoding"`
+	RootFolderID string               `config:"root_folder_id"`
 }
 
 // Fs represents a remote pcloud
@@ -265,7 +270,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return err
 	})
 
-	// Get rootID
+	// Get rootFolderID
+	rootID := f.opt.RootFolderID
 	f.dirCache = dircache.New(root, rootID, f)
 
 	// Find the current root
