@@ -166,8 +166,7 @@ func TestNewObject(t *testing.T) {
 	require.NoError(t, err)
 	tFile := fi.ModTime()
 
-	dt, ok := fstest.CheckTimeEqualWithPrecision(tObj, tFile, time.Second)
-	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", o.Remote(), dt, time.Second, tObj, tFile, time.Second))
+	fstest.AssertTimeEqualWithPrecision(t, o.Remote(), tFile, tObj, time.Second)
 
 	// check object not found
 	o, err = f.NewObject(context.Background(), "not found.txt")
