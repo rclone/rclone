@@ -105,11 +105,11 @@ func translateError(err error) syscall.Errno {
 	switch errors.Cause(err) {
 	case vfs.OK:
 		return 0
-	case vfs.ENOENT:
+	case vfs.ENOENT, fs.ErrorDirNotFound, fs.ErrorObjectNotFound:
 		return syscall.ENOENT
-	case vfs.EEXIST:
+	case vfs.EEXIST, fs.ErrorDirExists:
 		return syscall.EEXIST
-	case vfs.EPERM:
+	case vfs.EPERM, fs.ErrorPermissionDenied:
 		return syscall.EPERM
 	case vfs.ECLOSED:
 		return syscall.EBADF
@@ -121,7 +121,7 @@ func translateError(err error) syscall.Errno {
 		return syscall.EBADF
 	case vfs.EROFS:
 		return syscall.EROFS
-	case vfs.ENOSYS:
+	case vfs.ENOSYS, fs.ErrorNotImplemented:
 		return syscall.ENOSYS
 	case vfs.EINVAL:
 		return syscall.EINVAL
