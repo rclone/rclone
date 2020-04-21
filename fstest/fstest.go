@@ -117,10 +117,16 @@ func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (tim
 	return dt, true
 }
 
+// AssertTimeEqualWithPrecision checks that want is within precision
+// of got, asserting that with t and logging remote
+func AssertTimeEqualWithPrecision(t *testing.T, remote string, want, got time.Time, precision time.Duration) {
+	dt, ok := CheckTimeEqualWithPrecision(want, got, precision)
+	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (want %s vs got %s) (precision %s)", remote, dt, precision, want, got, precision))
+}
+
 // CheckModTime checks the mod time to the given precision
 func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, precision time.Duration) {
-	dt, ok := CheckTimeEqualWithPrecision(modTime, i.ModTime, precision)
-	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", obj.Remote(), dt, precision, modTime, i.ModTime, precision))
+	AssertTimeEqualWithPrecision(t, obj.Remote(), i.ModTime, modTime, precision)
 }
 
 // CheckHashes checks all the hashes the object supports are correct

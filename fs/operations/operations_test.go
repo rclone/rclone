@@ -166,10 +166,7 @@ func TestLsLong(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error parsing %q: %v", m, err)
 		} else {
-			dt, ok := fstest.CheckTimeEqualWithPrecision(expected, modTime, precision)
-			if !ok {
-				t.Errorf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", filename, dt, precision, modTime, expected, precision)
-			}
+			fstest.AssertTimeEqualWithPrecision(t, filename, expected, modTime, precision)
 		}
 	}
 
