@@ -53,8 +53,7 @@ const (
 	rcloneEncryptedClientSecret = "sYbJYm99WB8jzeaLPU0OPDMJKIkZvD2qOn3SyEMfiJr03RdtDt3xcZEIudRhbIDL"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
-	decayConstant               = 2   // bigger for slower decay, exponential
-	rootID                      = "0" // ID of root folder is always this
+	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api.box.com/2.0"
 	uploadURL                   = "https://upload.box.com/api/2.0"
 	listChunks                  = 1000     // chunk size to read directory listings
@@ -121,6 +120,11 @@ func init() {
 		}, {
 			Name: config.ConfigClientSecret,
 			Help: "Box App Client Secret\nLeave blank normally.",
+		}, {
+			Name:     "root_folder_id",
+			Help:     "Fill in for rclone to use a non root folder as its starting point.",
+			Default:  "0",
+			Advanced: true,
 		}, {
 			Name: "box_config_file",
 			Help: "Box App config.json location\nLeave blank normally.",
@@ -236,6 +240,7 @@ type Options struct {
 	UploadCutoff  fs.SizeSuffix        `config:"upload_cutoff"`
 	CommitRetries int                  `config:"commit_retries"`
 	Enc           encoder.MultiEncoder `config:"encoding"`
+	RootFolderID  string               `config:"root_folder_id"`
 }
 
 // Fs represents a remote box
@@ -399,7 +404,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return err
 	})
 
-	// Get rootID
+	// Get rootFolderID
+	rootID := f.opt.RootFolderID
 	f.dirCache = dircache.New(root, rootID, f)
 
 	// Find the current root
