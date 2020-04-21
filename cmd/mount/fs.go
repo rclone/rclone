@@ -77,11 +77,11 @@ func translateError(err error) error {
 	switch errors.Cause(err) {
 	case vfs.OK:
 		return nil
-	case vfs.ENOENT:
+	case vfs.ENOENT, fs.ErrorDirNotFound, fs.ErrorObjectNotFound:
 		return fuse.ENOENT
-	case vfs.EEXIST:
+	case vfs.EEXIST, fs.ErrorDirExists:
 		return fuse.EEXIST
-	case vfs.EPERM:
+	case vfs.EPERM, fs.ErrorPermissionDenied:
 		return fuse.EPERM
 	case vfs.ECLOSED:
 		return fuse.Errno(syscall.EBADF)
@@ -93,7 +93,7 @@ func translateError(err error) error {
 		return fuse.Errno(syscall.EBADF)
 	case vfs.EROFS:
 		return fuse.Errno(syscall.EROFS)
-	case vfs.ENOSYS:
+	case vfs.ENOSYS, fs.ErrorNotImplemented:
 		return fuse.ENOSYS
 	case vfs.EINVAL:
 		return fuse.Errno(syscall.EINVAL)
