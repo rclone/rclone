@@ -185,7 +185,6 @@ func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *jws.ClaimS
 		Iss: boxConfig.BoxAppSettings.ClientID,
 		Sub: boxConfig.EnterpriseID,
 		Aud: tokenURL,
-		Iat: time.Now().Unix(),
 		Exp: time.Now().Add(time.Second * 45).Unix(),
 		PrivateClaims: map[string]interface{}{
 			"box_sub_type": boxSubType,
