@@ -89,22 +89,7 @@ func init() {
 			boxSubType, boxSubTypeOk := m.Get("box_sub_type")
 			var err error
 			if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
-				boxConfig, err := getBoxConfig(jsonFile)
-				if err != nil {
-					log.Fatalf("Failed to configure token: %v", err)
-				}
-				privateKey, err := getDecryptedPrivateKey(boxConfig)
-				if err != nil {
-					log.Fatalf("Failed to configure token: %v", err)
-				}
-				claims, err := getClaims(boxConfig, boxSubType)
-				if err != nil {
-					log.Fatalf("Failed to configure token: %v", err)
-				}
-				signingHeaders := getSigningHeaders(boxConfig)
-				queryParams := getQueryParams(boxConfig)
-				client := fshttp.NewClient(fs.Config)
-				err = jwtutil.Config("box", name, claims, signingHeaders, queryParams, privateKey, m, client)
+				err = refreshJWTToken(jsonFile, boxSubType, name, m)
 				if err != nil {
 					log.Fatalf("Failed to configure token with jwt authentication: %v", err)
 				}
@@ -161,6 +146,26 @@ func init() {
 				encoder.EncodeInvalidUtf8),
 		}},
 	})
+}
+
+func refreshJWTToken(jsonFile string, boxSubType string, name string, m configmap.Mapper) error {
+	boxConfig, err := getBoxConfig(jsonFile)
+	if err != nil {
+		log.Fatalf("Failed to configure token: %v", err)
+	}
+	privateKey, err := getDecryptedPrivateKey(boxConfig)
+	if err != nil {
+		log.Fatalf("Failed to configure token: %v", err)
+	}
+	claims, err := getClaims(boxConfig, boxSubType)
+	if err != nil {
+		log.Fatalf("Failed to configure token: %v", err)
+	}
+	signingHeaders := getSigningHeaders(boxConfig)
+	queryParams := getQueryParams(boxConfig)
+	client := fshttp.NewClient(fs.Config)
+	err = jwtutil.Config("box", name, claims, signingHeaders, queryParams, privateKey, m, client)
+	return err
 }
 
 func getBoxConfig(configFile string) (boxConfig *api.ConfigJSON, err error) {
@@ -393,11 +398,24 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}).Fill(f)
 	f.srv.SetErrorHandler(errorHandler)
 
-	// Renew the token in the background
-	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-		_, err := f.readMetaDataForPath(ctx, "")
-		return err
-	})
+	jsonFile, ok := m.Get("box_config_file")
+	boxSubType, boxSubTypeOk := m.Get("box_sub_type")
+
+	// If using box config.json and JWT, renewing should just refresh the token and
+	// should do so whether there are uploads pending or not.
+	if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
+		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+			err := refreshJWTToken(jsonFile, boxSubType, name, m)
+			return err
+		})
+		f.tokenRenewer.Start()
+	} else {
+		// Renew the token in the background
+		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
+			_, err := f.readMetaDataForPath(ctx, "")
+			return err
+		})
+	}
 
 	// Get rootID
 	f.dirCache = dircache.New(root, rootID, f)
