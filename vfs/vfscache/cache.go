@@ -29,7 +29,8 @@ import (
 //
 // Cache may call into Item but care is needed if Item calls Cache
 
-// FIXME size in cache needs to be size on disk if we have sparse files...
+// FIXME need to purge cache nodes which don't have backing files and aren't dirty
+// these may get created by the VFS layer or may be orphans from reload()
 
 // Cache opened files
 type Cache struct {
@@ -97,7 +98,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options) (*Cache, er
 	}
 
 	// load in the cache and metadata off disk
-	err = c.reload()
+	err = c.reload(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load cache")
 	}
@@ -356,26 +357,30 @@ func (c *Cache) walk(dir string, fn func(osPath string, fi os.FileInfo, name str
 }
 
 // reload walks the cache loading metadata files
-func (c *Cache) reload() error {
-	err := c.walk(c.root, func(osPath string, fi os.FileInfo, name string) error {
-		if !fi.IsDir() {
-			_, _ = c.get(name)
+//
+// It iterates the files first then metadata trees. It doesn't expect
+// to find any new items iterating the metadata but it will clear up
+// orphan files.
+func (c *Cache) reload(ctx context.Context) error {
+	for _, dir := range []string{c.root, c.metaRoot} {
+		err := c.walk(dir, func(osPath string, fi os.FileInfo, name string) error {
+			if fi.IsDir() {
+				return nil
+			}
+			item, found := c.get(name)
+			if !found {
+				err := item.reload(ctx)
+				if err != nil {
+					fs.Errorf(name, "vfs cache: failed to reload item: %v", err)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return errors.Wrapf(err, "failed to walk cache %q", dir)
 		}
-		return nil
-	})
-	if err != nil {
-		return errors.Wrap(err, "failed to walk cache")
 	}
-	err = c.walk(c.root, func(osPathMeta string, fi os.FileInfo, name string) error {
-		if !fi.IsDir() {
-			_, _ = c.get(name)
-		}
-		return nil
-	})
-	if err != nil {
-		return errors.Wrap(err, "failed to walk meta cache")
-	}
-	return err
+	return nil
 }
 
 // purgeOld gets rid of any files that are over age
@@ -491,9 +496,16 @@ func (c *Cache) clean() {
 	// Stats
 	c.mu.Lock()
 	newItems, newUsed := len(c.item), fs.SizeSuffix(c.used)
+	totalInUse := 0
+	for _, item := range c.item {
+		if item.inUse() {
+			totalInUse++
+		}
+	}
 	c.mu.Unlock()
+	uploadsInProgress, uploadsQueued := c.writeback.getStats()
 
-	fs.Infof(nil, "Cleaned the cache: objects %d (was %d), total size %v (was %v)", newItems, oldItems, newUsed, oldUsed)
+	fs.Infof(nil, "Cleaned the cache: objects %d (was %d) in use %d, to upload %d, uploading %d, total size %v (was %v)", newItems, oldItems, totalInUse, uploadsQueued, uploadsInProgress, newUsed, oldUsed)
 }
 
 // cleaner calls clean at regular intervals

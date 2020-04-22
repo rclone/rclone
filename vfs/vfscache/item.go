@@ -589,6 +589,32 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	return err
 }
 
+// reload is called with valid items recovered from a cache reload.
+//
+// it is called before the cache has started so opens will be 0 and
+// metaDirty will be false.
+func (item *Item) reload(ctx context.Context) error {
+	item.mu.Lock()
+	dirty := item.info.Dirty
+	item.mu.Unlock()
+	if !dirty {
+		return nil
+	}
+	// see if the object still exists
+	obj, _ := item.c.fremote.NewObject(ctx, item.name)
+	// open the file with the object (or nil)
+	err := item.Open(obj)
+	if err != nil {
+		return err
+	}
+	// close the file to execute the writeback if needed
+	err = item.Close(nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // check the fingerprint of an object and update the item or delete
 // the cached file accordingly
 //

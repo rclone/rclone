@@ -309,3 +309,10 @@ func (wb *writeBack) uploader(ctx context.Context) {
 		}
 	}
 }
+
+// return the number of uploads in progress
+func (wb *writeBack) getStats() (uploadsInProgress, uploadsQueued int) {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+	return wb.uploads, len(wb.items)
+}
