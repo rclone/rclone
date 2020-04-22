@@ -1733,8 +1733,8 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		if err == nil {
 			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
 		}
-		if err, ok := err.(awserr.Error); ok {
-			if err.Code() == "BucketAlreadyOwnedByYou" {
+		if awsErr, ok := err.(awserr.Error); ok {
+			if code := awsErr.Code(); code == "BucketAlreadyOwnedByYou" || code == "BucketAlreadyExists" {
 				err = nil
 			}
 		}
