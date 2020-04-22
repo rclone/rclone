@@ -280,9 +280,9 @@ func TestVFSStatfs(t *testing.T) {
 	// read
 	total, used, free := vfs.Statfs()
 	if !aboutSupported {
-		assert.Equal(t, int64(-1), total)
-		assert.Equal(t, int64(-1), free)
-		assert.Equal(t, int64(-1), used)
+		assert.Equal(t, int64(unknownFreeBytes), total)
+		assert.Equal(t, int64(unknownFreeBytes), free)
+		assert.Equal(t, int64(0), used)
 		return // can't test anything else if About not supported
 	}
 	require.NotNil(t, vfs.usage)
@@ -290,17 +290,17 @@ func TestVFSStatfs(t *testing.T) {
 	if vfs.usage.Total != nil {
 		assert.Equal(t, *vfs.usage.Total, total)
 	} else {
-		assert.Equal(t, int64(-1), total)
+		assert.True(t, total >= int64(unknownFreeBytes))
 	}
 	if vfs.usage.Free != nil {
 		assert.Equal(t, *vfs.usage.Free, free)
 	} else {
-		assert.Equal(t, int64(-1), free)
+		assert.True(t, free >= int64(unknownFreeBytes))
 	}
 	if vfs.usage.Used != nil {
 		assert.Equal(t, *vfs.usage.Used, used)
 	} else {
-		assert.Equal(t, int64(-1), used)
+		assert.Equal(t, int64(0), used)
 	}
 
 	// read cached
