@@ -257,6 +257,12 @@ var retryErrorCodes = []int{
 func (f *Fs) shouldRetry(err error) (bool, error) {
 	// FIXME interpret special errors - more to do here
 	if storageErr, ok := err.(azblob.StorageError); ok {
+		switch storageErr.ServiceCode() {
+		case "InvalidBlobOrBlock":
+			// These errors happen sometimes in multipart uploads
+			// because of block concurrency issues
+			return true, err
+		}
 		statusCode := storageErr.Response().StatusCode
 		for _, e := range retryErrorCodes {
 			if statusCode == e {
@@ -1322,7 +1328,7 @@ outer:
 			// Upload the block, with MD5 for check
 			md5sum := md5.Sum(buf)
 			transactionalMD5 := md5sum[:]
-			err = o.fs.pacer.Call(func() (bool, error) {
+			err := o.fs.pacer.Call(func() (bool, error) {
 				bufferReader := bytes.NewReader(buf)
 				wrappedReader := wrap(bufferReader)
 				rs := readSeeker{wrappedReader, bufferReader}
