@@ -1296,6 +1296,9 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		if opt.Start > 0 || opt.End >= 0 {
 			options = append(options, &opt)
 		}
+		for _, option := range fs.Config.DownloadHeaders {
+			options = append(options, option)
+		}
 		in, err := o.Open(ctx, options...)
 		if err != nil {
 			err = fs.CountError(err)
