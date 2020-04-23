@@ -784,8 +784,13 @@ The minimum is 0 and the maximum is 5GB.`,
 			Default:  fs.SizeSuffix(maxSizeForCopy),
 			Advanced: true,
 		}, {
-			Name:     "disable_checksum",
-			Help:     "Don't store MD5 checksum with object metadata",
+			Name: "disable_checksum",
+			Help: `Don't store MD5 checksum with object metadata
+
+Normally rclone will calculate the MD5 checksum of the input before
+uploading it so it can add it to metadata on the object. This is great
+for data integrity checking but can cause long delays for large files
+to start uploading.`,
 			Default:  false,
 			Advanced: true,
 		}, {
