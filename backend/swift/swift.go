@@ -1285,6 +1285,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	m.SetModTime(modTime)
 	contentType := fs.MimeType(ctx, src)
 	headers := m.ObjectHeaders()
+	fs.OpenOptionAddHeaders(options, headers)
 	uniquePrefix := ""
 	if size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk) {
 		uniquePrefix, err = o.updateChunks(in, headers, size, contentType)
