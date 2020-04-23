@@ -1539,56 +1539,55 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	ctx := context.Background()
 
 	const sizeCutoff = 2048
-	file1 := r.WriteFile("file1", "file1 contents", t1)
-	file2 := r.WriteFile("file2", "file2 contents"+random.String(sizeCutoff), t2)
+	file1 := r.WriteFile("TestCopyFileMaxTransfer/file1", "file1 contents", t1)
+	file2 := r.WriteFile("TestCopyFileMaxTransfer/file2", "file2 contents"+random.String(sizeCutoff), t2)
+	file3 := r.WriteFile("TestCopyFileMaxTransfer/file3", "file3 contents"+random.String(sizeCutoff), t2)
+	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+random.String(sizeCutoff), t2)
 
-	rfile1 := file1
-	rfile1.Path = "sub/file1"
-	rfile2a := file2
-	rfile2a.Path = "sub/file2a"
-	rfile2b := file2
-	rfile2b.Path = "sub/file2b"
-	rfile2c := file2
-	rfile2c.Path = "sub/file2c"
-
+	// Cutoff mode: Hard
 	fs.Config.MaxTransfer = sizeCutoff
 	fs.Config.CutoffMode = fs.CutoffModeHard
-	accounting.Stats(ctx).ResetCounters()
 
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile1.Path, file1.Path)
+	// file1: Show a small file gets transferred OK
+	accounting.Stats(ctx).ResetCounters()
+	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1, file2)
-	fstest.CheckItems(t, r.Fremote, rfile1)
+	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
+	fstest.CheckItems(t, r.Fremote, file1)
 
+	// file2: show a large file does not get transferred
 	accounting.Stats(ctx).ResetCounters()
-
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile2a.Path, file2.Path)
-	require.NotNil(t, err)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
+	require.NotNil(t, err, "Did not get expected max transfer limit error")
 	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err))
-	fstest.CheckItems(t, r.Flocal, file1, file2)
-	fstest.CheckItems(t, r.Fremote, rfile1)
+	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
+	fstest.CheckItems(t, r.Fremote, file1)
 
+	// Cutoff mode: Cautious
 	fs.Config.CutoffMode = fs.CutoffModeCautious
-	accounting.Stats(ctx).ResetCounters()
 
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile2b.Path, file2.Path)
+	// file3: show a large file does not get transferred
+	accounting.Stats(ctx).ResetCounters()
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file3.Path, file3.Path)
 	require.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err))
-	fstest.CheckItems(t, r.Flocal, file1, file2)
-	fstest.CheckItems(t, r.Fremote, rfile1)
+	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
+	fstest.CheckItems(t, r.Fremote, file1)
 
 	if strings.HasPrefix(r.Fremote.Name(), "TestChunker") {
 		t.Log("skipping remainder of test for chunker as it involves multiple transfers")
 		return
 	}
 
+	// Cutoff mode: Soft
 	fs.Config.CutoffMode = fs.CutoffModeSoft
-	accounting.Stats(ctx).ResetCounters()
 
-	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, rfile2c.Path, file2.Path)
+	// file4: show a large file does get transferred this time
+	accounting.Stats(ctx).ResetCounters()
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file4.Path, file4.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1, file2)
-	fstest.CheckItems(t, r.Fremote, rfile1, rfile2c)
+	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
+	fstest.CheckItems(t, r.Fremote, file1, file4)
 }
