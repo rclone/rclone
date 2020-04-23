@@ -257,7 +257,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	if err != nil {
 		return nil, err
 	}
-	loc, err := f.createUpload(ctx, leaf, size, directoryID, src.ModTime(ctx))
+	loc, err := f.createUpload(ctx, leaf, size, directoryID, src.ModTime(ctx), options)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return f.newObjectWithInfo(ctx, remote, entry)
 }
 
-func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID string, modTime time.Time) (location string, err error) {
+func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID string, modTime time.Time, options []fs.OpenOption) (location string, err error) {
 	// defer log.Trace(f, "name=%v, size=%v, parentID=%v, modTime=%v", name, size, parentID, modTime.String())("location=%v, err=%v", location, &err)
 	err = f.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequest("POST", "https://upload.put.io/files/", nil)
@@ -292,6 +292,7 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		b64parentID := base64.StdEncoding.EncodeToString([]byte(parentID))
 		b64modifiedAt := base64.StdEncoding.EncodeToString([]byte(modTime.Format(time.RFC3339)))
 		req.Header.Set("upload-metadata", fmt.Sprintf("name %s,no-torrent %s,parent_id %s,updated-at %s", b64name, b64true, b64parentID, b64modifiedAt))
+		fs.OpenOptionAddHTTPHeaders(req.Header, options)
 		resp, err := f.oAuthClient.Do(req)
 		retry, err := shouldRetry(err)
 		if retry {
