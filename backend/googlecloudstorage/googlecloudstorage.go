@@ -1069,6 +1069,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if !o.fs.opt.BucketPolicyOnly {
 			insertObject.PredefinedAcl(o.fs.opt.ObjectACL)
 		}
+		fs.OpenOptionAddHTTPHeaders(insertObject.Header(), options)
 		newObject, err = insertObject.Context(ctx).Do()
 		return shouldRetry(err)
 	})
