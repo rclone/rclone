@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -276,6 +277,27 @@ func TestAccountMaxTransfer(t *testing.T) {
 	n, err = acc.Read(b)
 	assert.Equal(t, 10, n)
 	assert.NoError(t, err)
+}
+
+func TestAccountMaxTransferWriteTo(t *testing.T) {
+	old := fs.Config.MaxTransfer
+	oldMode := fs.Config.CutoffMode
+
+	fs.Config.MaxTransfer = 15
+	defer func() {
+		fs.Config.MaxTransfer = old
+		fs.Config.CutoffMode = oldMode
+	}()
+
+	in := ioutil.NopCloser(readers.NewPatternReader(1024))
+	stats := NewStats()
+	acc := newAccountSizeName(stats, in, 1, "test")
+
+	var b bytes.Buffer
+
+	n, err := acc.WriteTo(&b)
+	assert.Equal(t, int64(15), n)
+	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
 }
 
 func TestShortenName(t *testing.T) {

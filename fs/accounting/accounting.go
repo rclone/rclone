@@ -171,22 +171,39 @@ func (acc *Account) averageLoop() {
 	}
 }
 
-// Check the read is valid returning the number of bytes it is over
-func (acc *Account) checkRead() (over int64, err error) {
+// Check the read before it has happened is valid returning the number
+// of bytes remaining to read.
+func (acc *Account) checkReadBefore() (bytesUntilLimit int64, err error) {
 	acc.statmu.Lock()
 	if acc.max >= 0 {
-		over = acc.stats.GetBytes() - acc.max
-		if over >= 0 {
+		bytesUntilLimit = acc.max - acc.stats.GetBytes()
+		if bytesUntilLimit < 0 {
 			acc.statmu.Unlock()
-			return over, ErrorMaxTransferLimitReachedFatal
+			return bytesUntilLimit, ErrorMaxTransferLimitReachedFatal
 		}
+	} else {
+		bytesUntilLimit = 1 << 62
 	}
 	// Set start time.
 	if acc.start.IsZero() {
 		acc.start = time.Now()
 	}
 	acc.statmu.Unlock()
-	return over, nil
+	return bytesUntilLimit, nil
+}
+
+// Check the read call after the read has happened
+func checkReadAfter(bytesUntilLimit int64, n int, err error) (outN int, outErr error) {
+	bytesUntilLimit -= int64(n)
+	if bytesUntilLimit < 0 {
+		// chop the overage off
+		n += int(bytesUntilLimit)
+		if n < 0 {
+			n = 0
+		}
+		err = ErrorMaxTransferLimitReachedFatal
+	}
+	return n, err
 }
 
 // ServerSideCopyStart should be called at the start of a server side copy
@@ -226,18 +243,11 @@ func (acc *Account) accountRead(n int) {
 
 // read bytes from the io.Reader passed in and account them
 func (acc *Account) read(in io.Reader, p []byte) (n int, err error) {
-	_, err = acc.checkRead()
+	bytesUntilLimit, err := acc.checkReadBefore()
 	if err == nil {
 		n, err = in.Read(p)
 		acc.accountRead(n)
-		if over, checkErr := acc.checkRead(); checkErr == ErrorMaxTransferLimitReachedFatal {
-			// chop the overage off
-			n -= int(over)
-			if n < 0 {
-				n = 0
-			}
-			err = checkErr
-		}
+		n, err = checkReadAfter(bytesUntilLimit, n, err)
 	}
 	return n, err
 }
@@ -263,9 +273,10 @@ type accountWriteTo struct {
 //
 // Implementations must not retain p.
 func (awt *accountWriteTo) Write(p []byte) (n int, err error) {
-	_, err = awt.acc.checkRead()
+	bytesUntilLimit, err := awt.acc.checkReadBefore()
 	if err == nil {
 		n, err = awt.w.Write(p)
+		n, err = checkReadAfter(bytesUntilLimit, n, err)
 		awt.acc.accountRead(n)
 	}
 	return n, err
@@ -291,8 +302,9 @@ func (acc *Account) WriteTo(w io.Writer) (n int64, err error) {
 func (acc *Account) AccountRead(n int) (err error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
-	_, err = acc.checkRead()
+	bytesUntilLimit, err := acc.checkReadBefore()
 	if err == nil {
+		n, err = checkReadAfter(bytesUntilLimit, n, err)
 		acc.accountRead(n)
 	}
 	return err
