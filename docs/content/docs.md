@@ -564,6 +564,22 @@ triggering follow-on actions if data was copied, or skipping if not.
 NB: Enabling this option turns a usually non-fatal error into a potentially
 fatal one - please check and adjust your scripts accordingly!
 
+### --header ###
+
+Add an HTTP header for all transactions. The flag can be repeated to
+add multiple headers.
+
+If you want to add headers only for uploads use `--header-upload` and
+if you want to add headers only for downloads use `--header-download`.
+
+This flag is supported for all HTTP based backends even those not
+supported by `--header-upload` and `--header-download` so may be used
+as a workaround for those with care.
+
+```
+rclone ls remote:test --header "X-Rclone: Foo" --header "X-LetMeIn: Yes"
+```
+
 ### --header-download ###
 
 Add an HTTP header for all download transactions. The flag can be repeated to

@@ -113,6 +113,7 @@ type ConfigInfo struct {
 	OrderBy                string // instructions on how to order the transfer
 	UploadHeaders          []*HTTPOption
 	DownloadHeaders        []*HTTPOption
+	Headers                []*HTTPOption
 }
 
 // NewConfig creates a new config with everything set to the default

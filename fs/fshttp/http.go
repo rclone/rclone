@@ -223,6 +223,7 @@ type Transport struct {
 	dump          fs.DumpFlags
 	filterRequest func(req *http.Request)
 	userAgent     string
+	headers       []*fs.HTTPOption
 }
 
 // newTransport wraps the http.Transport passed in and logs all
@@ -232,6 +233,7 @@ func newTransport(ci *fs.ConfigInfo, transport *http.Transport) *Transport {
 		Transport: transport,
 		dump:      ci.Dump,
 		userAgent: ci.UserAgent,
+		headers:   ci.Headers,
 	}
 }
 
@@ -331,6 +333,10 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}
 	// Force user agent
 	req.Header.Set("User-Agent", t.userAgent)
+	// Set user defined headers
+	for _, option := range t.headers {
+		req.Header.Set(option.Key, option.Value)
+	}
 	// Filter the request if required
 	if t.filterRequest != nil {
 		t.filterRequest(req)
