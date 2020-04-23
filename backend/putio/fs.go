@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -34,7 +35,8 @@ type Fs struct {
 	client      *putio.Client      // client for making API calls to Put.io
 	pacer       *fs.Pacer          // To pace the API calls
 	dirCache    *dircache.DirCache // Map of directory path to directory id
-	oAuthClient *http.Client
+	httpClient  *http.Client       // base http client
+	oAuthClient *http.Client       // http client with oauth Authorization
 }
 
 // ------------------------------------------------------------
@@ -68,7 +70,8 @@ func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	if err != nil {
 		return nil, err
 	}
-	oAuthClient, _, err := oauthutil.NewClient(name, m, putioConfig)
+	httpClient := fshttp.NewClient(fs.Config)
+	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(name, m, putioConfig, httpClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure putio")
 	}
@@ -78,6 +81,7 @@ func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 		opt:         *opt,
 		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		client:      putio.NewClient(oAuthClient),
+		httpClient:  httpClient,
 		oAuthClient: oAuthClient,
 	}
 	p.features = (&fs.Features{
