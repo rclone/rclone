@@ -31,6 +31,7 @@ var (
 	disableFeatures string
 	uploadHeaders   []string
 	downloadHeaders []string
+	headers         []string
 )
 
 // AddFlags adds the non filing system specific flags to the command
@@ -116,6 +117,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &fs.Config.OrderBy, "order-by", "", fs.Config.OrderBy, "Instructions on how to order the transfers, eg 'size,descending'")
 	flags.StringArrayVarP(flagSet, &uploadHeaders, "header-upload", "", nil, "Set HTTP header for upload transactions")
 	flags.StringArrayVarP(flagSet, &downloadHeaders, "header-download", "", nil, "Set HTTP header for download transactions")
+	flags.StringArrayVarP(flagSet, &headers, "header", "", nil, "Set HTTP header for all transactions")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions
@@ -236,9 +238,11 @@ func SetFlags() {
 	if len(uploadHeaders) != 0 {
 		fs.Config.UploadHeaders = ParseHeaders(uploadHeaders)
 	}
-
 	if len(downloadHeaders) != 0 {
 		fs.Config.DownloadHeaders = ParseHeaders(downloadHeaders)
+	}
+	if len(headers) != 0 {
+		fs.Config.Headers = ParseHeaders(headers)
 	}
 
 	// Make the config file absolute
