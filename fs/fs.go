@@ -1286,6 +1286,12 @@ func NewFs(path string) (Fs, error) {
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Fix import for rc
+	// f, err := fsInfo.NewFs(configName, fsPath, config)
+	// if err != nil && f.reload != nil {
+	// 	rc.AddOptionReload(f.name, &f.opt, f.reload)
+	// }
+	// return f, err
 	return fsInfo.NewFs(configName, fsPath, config)
 }
 

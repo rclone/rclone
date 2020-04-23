@@ -36,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -542,6 +543,8 @@ type Fs struct {
 	exportExtensions []string           // preferred extensions to download docs
 	importMimeTypes  []string           // MIME types to convert to docs
 	isTeamDrive      bool               // true if this is a team drive
+
+	configMapper configmap.Mapper // TODO: Figure a way around this
 }
 
 type baseObject struct {
@@ -1060,10 +1063,11 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		opt:   *opt,
-		pacer: newPacer(opt),
+		name:         name,
+		root:         root,
+		opt:          *opt,
+		pacer:        newPacer(opt),
+		configMapper: m,
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
 	f.features = (&fs.Features{
@@ -1155,8 +1159,34 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		f.root = tempF.root
 		return f, fs.ErrorIsFile
 	}
-	// fmt.Printf("Root id %s", f.dirCache.RootID())
+	rc.AddOptionReload(f.name, &f.opt, f.reload)
 	return f, nil
+}
+
+func (f *Fs) reload() (err error) {
+	oldCredentials := f.opt.ServiceAccountCredentials
+	f.opt.ServiceAccountCredentials = ""
+	oAuthClient, err := createOAuthClient(&f.opt, f.name, f.configMapper)
+	if err != nil {
+		f.opt.ServiceAccountCredentials = oldCredentials
+		return errors.Wrap(err, "drive: failed when making oauth client")
+	}
+	f.client = oAuthClient
+	oldSvc := f.svc
+	f.svc, err = drive.New(f.client)
+	if err != nil {
+		f.svc = oldSvc
+		return errors.Wrap(err, "couldn't create Drive client")
+	}
+	if f.opt.V2DownloadMinSize >= 0 {
+		oldSvc := f.v2Svc
+		f.v2Svc, err = drive_v2.New(f.client)
+		if err != nil {
+			f.v2Svc = oldSvc
+			return errors.Wrap(err, "couldn't create Drive v2 client")
+		}
+	}
+	return nil
 }
 
 func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {
