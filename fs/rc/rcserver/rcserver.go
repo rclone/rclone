@@ -62,12 +62,7 @@ type Server struct {
 }
 
 func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
-	s := &Server{
-		Server: httplib.NewServer(mux, &opt.HTTPOptions),
-		opt:    opt,
-	}
-	mux.HandleFunc("/", s.handler)
-
+	fileHandler := http.Handler(nil)
 	// Add some more mime types which are often missing
 	_ = mime.AddExtensionType(".wasm", "application/wasm")
 	_ = mime.AddExtensionType(".js", "application/javascript")
@@ -80,7 +75,7 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 			fs.Logf(nil, "--rc-files overrides --rc-web-gui command\n")
 		}
 		fs.Logf(nil, "Serving files from %q", opt.Files)
-		s.files = http.FileServer(http.Dir(opt.Files))
+		fileHandler = http.FileServer(http.Dir(opt.Files))
 	} else if opt.WebUI {
 		if err := rc.CheckAndDownloadWebGUIRelease(opt.WebGUIUpdate, opt.WebGUIForceUpdate, opt.WebGUIFetchURL, config.CacheDir); err != nil {
 			log.Fatalf("Error while fetching the latest release of Web GUI: %v", err)
@@ -104,8 +99,16 @@ func newServer(opt *rc.Options, mux *http.ServeMux) *Server {
 		opt.Serve = true
 
 		fs.Logf(nil, "Serving Web GUI")
-		s.files = http.FileServer(http.Dir(extractPath))
+		fileHandler = http.FileServer(http.Dir(extractPath))
 	}
+
+	s := &Server{
+		Server: httplib.NewServer(mux, &opt.HTTPOptions),
+		opt:    opt,
+		files:  fileHandler,
+	}
+	mux.HandleFunc("/", s.handler)
+
 	return s
 }
 
