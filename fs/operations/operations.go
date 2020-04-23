@@ -1344,6 +1344,9 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	} else {
 		trackingIn = readCounter
 	}
+	for _, option := range fs.Config.UploadHeaders {
+		options = append(options, option)
+	}
 
 	compare := func(dst fs.Object) error {
 		var sums map[hash.Type]string
