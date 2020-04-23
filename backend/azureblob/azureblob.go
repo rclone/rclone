@@ -126,6 +126,16 @@ operations from remote will not be allowed. User should first restore by
 tiering blob to "Hot" or "Cool".`,
 			Advanced: true,
 		}, {
+			Name: "disable_checksum",
+			Help: `Don't store MD5 checksum with object metadata.
+
+Normally rclone will calculate the MD5 checksum of the input before
+uploading it so it can add it to metadata on the object. This is great
+for data integrity checking but can cause long delays for large files
+to start uploading.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -141,16 +151,17 @@ tiering blob to "Hot" or "Cool".`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account       string               `config:"account"`
-	Key           string               `config:"key"`
-	Endpoint      string               `config:"endpoint"`
-	SASURL        string               `config:"sas_url"`
-	UploadCutoff  fs.SizeSuffix        `config:"upload_cutoff"`
-	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
-	ListChunkSize uint                 `config:"list_chunk"`
-	AccessTier    string               `config:"access_tier"`
-	UseEmulator   bool                 `config:"use_emulator"`
-	Enc           encoder.MultiEncoder `config:"encoding"`
+	Account         string               `config:"account"`
+	Key             string               `config:"key"`
+	Endpoint        string               `config:"endpoint"`
+	SASURL          string               `config:"sas_url"`
+	UploadCutoff    fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize       fs.SizeSuffix        `config:"chunk_size"`
+	ListChunkSize   uint                 `config:"list_chunk"`
+	AccessTier      string               `config:"access_tier"`
+	UseEmulator     bool                 `config:"use_emulator"`
+	DisableCheckSum bool                 `config:"disable_checksum"`
+	Enc             encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote azure server
@@ -1395,12 +1406,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
 	// Note: If multipart, a MD5 checksum will also be computed for each uploaded block
 	// 		 in order to validate its integrity during transport
-	if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {
-		sourceMD5bytes, err := hex.DecodeString(sourceMD5)
-		if err == nil {
-			httpHeaders.ContentMD5 = sourceMD5bytes
-		} else {
-			fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
+	if !o.fs.opt.DisableCheckSum {
+		if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {
+			sourceMD5bytes, err := hex.DecodeString(sourceMD5)
+			if err == nil {
+				httpHeaders.ContentMD5 = sourceMD5bytes
+			} else {
+				fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
+			}
 		}
 	}
 
