@@ -17,6 +17,7 @@ import (
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
+	403, // Forbidden (may happen when request limit is exceeded)
 	500, // Internal Server Error
 	502, // Bad Gateway
 	503, // Service Unavailable
