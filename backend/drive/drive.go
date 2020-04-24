@@ -1281,16 +1281,16 @@ func (f *Fs) newObjectWithExportInfo(
 		return f.newRegularObject(remote, info), nil
 	case f.opt.SkipGdocs:
 		fs.Debugf(remote, "Skipping google document type %q", info.MimeType)
-		return nil, nil
+		return nil, fs.ErrorObjectNotFound
 	default:
 		// If item MimeType is in the ExportFormats then it is a google doc
 		if !isDocument {
 			fs.Debugf(remote, "Ignoring unknown document type %q", info.MimeType)
-			return nil, nil
+			return nil, fs.ErrorObjectNotFound
 		}
 		if extension == "" {
 			fs.Debugf(remote, "No export formats found for %q", info.MimeType)
-			return nil, nil
+			return nil, fs.ErrorObjectNotFound
 		}
 		if isLinkMimeType(exportMimeType) {
 			return f.newLinkObject(remote, info, extension, exportMimeType)
@@ -1801,7 +1801,11 @@ func (f *Fs) itemToDirEntry(remote string, item *drive.File) (fs.DirEntry, error
 	case f.opt.AuthOwnerOnly && !isAuthOwned(item):
 		// ignore object
 	default:
-		return f.newObjectWithInfo(remote, item)
+		entry, err = f.newObjectWithInfo(remote, item)
+		if err == fs.ErrorObjectNotFound {
+			return nil, nil
+		}
+		return entry, err
 	}
 	return nil, nil
 }
