@@ -92,8 +92,10 @@ func TestAccountRead(t *testing.T) {
 	acc := newAccountSizeName(stats, in, 1, "test")
 
 	assert.True(t, acc.start.IsZero())
+	acc.statmu.Lock()
 	assert.Equal(t, 0, acc.lpBytes)
 	assert.Equal(t, int64(0), acc.bytes)
+	acc.statmu.Unlock()
 	assert.Equal(t, int64(0), stats.bytes)
 
 	var buf = make([]byte, 2)
@@ -103,8 +105,10 @@ func TestAccountRead(t *testing.T) {
 	assert.Equal(t, []byte{1, 2}, buf[:n])
 
 	assert.False(t, acc.start.IsZero())
+	acc.statmu.Lock()
 	assert.Equal(t, 2, acc.lpBytes)
 	assert.Equal(t, int64(2), acc.bytes)
+	acc.statmu.Unlock()
 	assert.Equal(t, int64(2), stats.bytes)
 
 	n, err = acc.Read(buf)
@@ -132,8 +136,10 @@ func testAccountWriteTo(t *testing.T, withBuffer bool) {
 	}
 
 	assert.True(t, acc.start.IsZero())
+	acc.statmu.Lock()
 	assert.Equal(t, 0, acc.lpBytes)
 	assert.Equal(t, int64(0), acc.bytes)
+	acc.statmu.Unlock()
 	assert.Equal(t, int64(0), stats.bytes)
 
 	var out bytes.Buffer
@@ -144,8 +150,10 @@ func testAccountWriteTo(t *testing.T, withBuffer bool) {
 	assert.Equal(t, buf, out.Bytes())
 
 	assert.False(t, acc.start.IsZero())
+	acc.statmu.Lock()
 	assert.Equal(t, len(buf), acc.lpBytes)
 	assert.Equal(t, int64(len(buf)), acc.bytes)
+	acc.statmu.Unlock()
 	assert.Equal(t, int64(len(buf)), stats.bytes)
 
 	assert.NoError(t, acc.Close())
