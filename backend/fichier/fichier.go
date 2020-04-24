@@ -23,11 +23,12 @@ import (
 )
 
 const (
-	rootID        = "0"
-	apiBaseURL    = "https://api.1fichier.com/v1"
-	minSleep      = 334 * time.Millisecond // 3 API calls per second is recommended
-	maxSleep      = 5 * time.Second
-	decayConstant = 2 // bigger for slower decay, exponential
+	rootID         = "0"
+	apiBaseURL     = "https://api.1fichier.com/v1"
+	minSleep       = 400 * time.Millisecond // api is extremely rate limited now
+	maxSleep       = 5 * time.Second
+	decayConstant  = 2 // bigger for slower decay, exponential
+	attackConstant = 0 // start with max sleep
 )
 
 func init() {
@@ -185,7 +186,7 @@ func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
 		name:       name,
 		root:       root,
 		opt:        *opt,
-		pacer:      fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer:      fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
 		baseClient: &http.Client{},
 	}
 
