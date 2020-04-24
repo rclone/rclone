@@ -224,6 +224,10 @@ func errorHandler(resp *http.Response) error {
 	if err != nil {
 		body = nil
 	}
+	// Google sends 404 messages as images so be prepared for that
+	if strings.HasPrefix(resp.Header.Get("Content-Type"), "image/") {
+		body = []byte("Image not found or broken")
+	}
 	var e = api.Error{
 		Details: api.ErrorDetails{
 			Code:    resp.StatusCode,
