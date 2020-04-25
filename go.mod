@@ -14,6 +14,7 @@ require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/aws/aws-sdk-go v1.29.9
 	github.com/billziss-gh/cgofuse v1.2.0
+	github.com/coreos/go-semver v0.3.0
 	github.com/djherbis/times v1.2.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
