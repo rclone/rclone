@@ -39,6 +39,13 @@ var (
 	AsyncRead          = true        // do async reads by default
 )
 
+type (
+	// UnmountFn is called to unmount the file system
+	UnmountFn func() error
+	// MountFn is called to mount the file system
+	MountFn func(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error)
+)
+
 // Global constants
 const (
 	MaxLeafSize = 4095 // don't pass file names longer than this

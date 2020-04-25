@@ -23,6 +23,8 @@ import (
 
 func init() {
 	mountlib.NewMountCommand("mount", false, Mount)
+	// Add mount to rc
+	mountlib.AddRc("mount", mount)
 }
 
 // mountOptions configures the options from the command line flags
