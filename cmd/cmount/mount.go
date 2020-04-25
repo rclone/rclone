@@ -39,6 +39,9 @@ func init() {
 		name = "mount"
 	}
 	mountlib.NewMountCommand(name, false, Mount)
+	// Add mount to rc
+	mountlib.AddRc("cmount", mount)
+
 }
 
 // mountOptions configures the options from the command line flags
