@@ -50,6 +50,7 @@ See the following for detailed instructions for
   * [premiumize.me](/premiumizeme/)
   * [put.io](/putio/)
   * [QingStor](/qingstor/)
+  * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [SugarSync](/sugarsync/)
   * [Union](/union/)
