@@ -54,6 +54,7 @@ docs = [
     "pcloud.md",
     "premiumizeme.md",
     "putio.md",
+    "seafile.md",
     "sftp.md",
     "sugarsync.md",
     "union.md",
