@@ -13,13 +13,15 @@ import (
 
 // Dir represents a directory found in the remote
 type Dir struct {
-	parent  *Dir
-	path    string
-	mu      sync.Mutex
-	count   int64
-	size    int64
-	entries fs.DirEntries
-	dirs    map[string]*Dir
+	parent            *Dir
+	path              string
+	mu                sync.Mutex
+	count             int64
+	size              int64
+	entries           fs.DirEntries
+	dirs              map[string]*Dir
+	readError         error
+	entriesHaveErrors bool
 }
 
 // Parent returns the directory above this one
@@ -35,12 +37,13 @@ func (d *Dir) Path() string {
 }
 
 // make a new directory
-func newDir(parent *Dir, dirPath string, entries fs.DirEntries) *Dir {
+func newDir(parent *Dir, dirPath string, entries fs.DirEntries, err error) *Dir {
 	d := &Dir{
-		parent:  parent,
-		path:    dirPath,
-		entries: entries,
-		dirs:    make(map[string]*Dir),
+		parent:    parent,
+		path:      dirPath,
+		entries:   entries,
+		dirs:      make(map[string]*Dir),
+		readError: err,
 	}
 	// Count size in this dir
 	for _, entry := range entries {
@@ -61,6 +64,9 @@ func newDir(parent *Dir, dirPath string, entries fs.DirEntries) *Dir {
 		parent.mu.Lock()
 		parent.count += d.count
 		parent.size += d.size
+		if d.readError != nil {
+			parent.entriesHaveErrors = true
+		}
 		parent.mu.Unlock()
 	}
 	return d
@@ -145,18 +151,19 @@ func (d *Dir) Attr() (size int64, count int64) {
 }
 
 // AttrI returns the size, count and flags for the i-th directory entry
-func (d *Dir) AttrI(i int) (size int64, count int64, isDir bool, readable bool) {
+func (d *Dir) AttrI(i int) (size int64, count int64, isDir bool, readable bool, entriesHaveErrors bool, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	subDir, isDir := d.getDir(i)
+
 	if !isDir {
-		return d.entries[i].Size(), 0, false, true
+		return d.entries[i].Size(), 0, false, true, d.entriesHaveErrors, d.readError
 	}
 	if subDir == nil {
-		return 0, 0, true, false
+		return 0, 0, true, false, false, nil
 	}
 	size, count = subDir.Attr()
-	return size, count, true, true
+	return size, count, true, true, subDir.entriesHaveErrors, subDir.readError
 }
 
 // Scan the Fs passed in, returning a root directory channel and an
@@ -169,9 +176,6 @@ func Scan(ctx context.Context, f fs.Fs) (chan *Dir, chan error, chan struct{}) {
 	go func() {
 		parents := map[string]*Dir{}
 		err := walk.Walk(ctx, f, "", false, ci.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
-			if err != nil {
-				return err // FIXME mark directory as errored instead of aborting
-			}
 			var parent *Dir
 			if dirPath != "" {
 				parentPath := path.Dir(dirPath)
@@ -184,7 +188,7 @@ func Scan(ctx context.Context, f fs.Fs) (chan *Dir, chan error, chan struct{}) {
 					errChan <- errors.Errorf("couldn't find parent for %q", dirPath)
 				}
 			}
-			d := newDir(parent, dirPath, entries)
+			d := newDir(parent, dirPath, entries, err)
 			parents[dirPath] = d
 			if dirPath == "" {
 				root <- d
