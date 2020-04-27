@@ -243,6 +243,9 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Value: "COLDLINE",
 				Help:  "Coldline storage class",
 			}, {
+				Value: "ARCHIVE",
+				Help:  "Archive storage class",
+			}, {
 				Value: "DURABLE_REDUCED_AVAILABILITY",
 				Help:  "Durable reduced availability storage class",
 			}},
