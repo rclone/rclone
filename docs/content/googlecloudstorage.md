@@ -422,6 +422,8 @@ The storage class to use when storing objects in Google Cloud Storage.
         - Nearline storage class
     - "COLDLINE"
         - Coldline storage class
+    - "ARCHIVE"
+        - Archive storage class
     - "DURABLE_REDUCED_AVAILABILITY"
         - Durable reduced availability storage class
 
