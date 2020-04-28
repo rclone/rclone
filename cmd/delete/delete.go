@@ -50,12 +50,14 @@ delete all files bigger than 100MBytes.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(true, false, command, func() error {
-			err := operations.Delete(context.Background(), fsrc)
-			if err == nil && rmdirs {
+			if err := operations.Delete(context.Background(), fsrc); err != nil {
+				return err
+			}
+			if rmdirs {
 				fdst := cmd.NewFsDir(args)
 				return operations.Rmdirs(context.Background(), fdst, "", true)
 			}
-			return err
+			return nil
 		})
 	},
 }
