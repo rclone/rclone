@@ -185,6 +185,7 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 		case 'h':
 			list.AddHash(hashType)
 			opt.ShowHash = true
+			opt.HashTypes = []string{hashType.String()}
 		case 'i':
 			list.AddID()
 		case 'm':
