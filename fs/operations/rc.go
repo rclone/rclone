@@ -373,3 +373,88 @@ func rcFsInfo(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	return out, nil
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "backend/command",
+		AuthRequired: true,
+		Fn:           rcBackend,
+		Title:        "Runs a backend command.",
+		Help: `This takes the following parameters
+
+- command - a string with the command name
+- fs - a remote name string eg "drive:"
+- arg - a list of arguments for the backend command
+- opt - a map of string to string of options
+
+Returns
+
+- result - result from the backend command
+
+For example
+
+    rclone rc backend/command command=noop fs=. -o echo=yes -o blue -a path1 -a path2
+
+Returns
+
+` + "```" + `
+{
+	"result": {
+		"arg": [
+			"path1",
+			"path2"
+		],
+		"name": "noop",
+		"opt": {
+			"blue": "",
+			"echo": "yes"
+		}
+	}
+}
+` + "```" + `
+
+Note that this is the direct equivalent of using this "backend"
+command:
+
+    rclone backend noop . -o echo=yes -o blue path1 path2
+
+Note that arguments must be preceeded by the "-a" flag
+
+See the [backend](/commands/rclone_backend/) command for more information.
+`,
+	})
+}
+
+// Make a public link
+func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	f, err := rc.GetFs(in)
+	if err != nil {
+		return nil, err
+	}
+	doCommand := f.Features().Command
+	if doCommand == nil {
+		return nil, errors.Errorf("%v: doesn't support backend commands", f)
+	}
+	command, err := in.GetString("command")
+	if err != nil {
+		return nil, err
+	}
+	var opt = map[string]string{}
+	err = in.GetStructMissingOK("opt", &opt)
+	if err != nil {
+		return nil, err
+	}
+	var arg = []string{}
+	err = in.GetStructMissingOK("arg", &arg)
+	if err != nil {
+		return nil, err
+	}
+	result, err := doCommand(context.Background(), command, arg, opt)
+	if err != nil {
+		return nil, errors.Wrapf(err, "command %q failed", command)
+
+	}
+	out = make(rc.Params)
+	out["result"] = result
+	return out, nil
+}
