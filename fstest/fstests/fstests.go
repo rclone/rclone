@@ -292,9 +292,10 @@ func Run(t *testing.T, opt *Opt) {
 			ModTime: fstest.Time("2001-02-03T04:05:10.123123123Z"),
 			Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`,
 		}
-		isLocalRemote bool
-		purged        bool // whether the dir has been purged or not
-		ctx           = context.Background()
+		isLocalRemote        bool
+		purged               bool // whether the dir has been purged or not
+		ctx                  = context.Background()
+		unwrappableFsMethods = []string{"Command"} // these Fs methods don't need to be wrapped ever
 	)
 
 	if strings.HasSuffix(os.Getenv("RCLONE_CONFIG"), "/notfound") && *fstest.RemoteName == "" {
@@ -398,6 +399,9 @@ func Run(t *testing.T, opt *Opt) {
 			if stringsContains(vName, opt.UnimplementableFsMethods) {
 				continue
 			}
+			if stringsContains(vName, unwrappableFsMethods) {
+				continue
+			}
 			field := v.Field(i)
 			// skip the bools
 			if field.Type().Kind() == reflect.Bool {
@@ -407,6 +411,22 @@ func Run(t *testing.T, opt *Opt) {
 				t.Errorf("Missing Fs wrapper for %s", vName)
 			}
 		}
+	})
+
+	// Check to see if Fs advertises commands and they work and have docs
+	t.Run("FsCommand", func(t *testing.T) {
+		skipIfNotOk(t)
+		doCommand := remote.Features().Command
+		if doCommand == nil {
+			t.Skip("No commands in this remote")
+		}
+		// Check the correct error is generated
+		_, err := doCommand(context.Background(), "NOTFOUND", nil, nil)
+		assert.Equal(t, fs.ErrorCommandNotFound, err, "Incorrect error generated on command not found")
+		// Check there are some commands in the fsInfo
+		fsInfo, _, _, _, err := fs.ConfigFs(remoteName)
+		require.NoError(t, err)
+		assert.True(t, len(fsInfo.CommandHelp) > 0, "Command is declared, must return some help in CommandHelp")
 	})
 
 	// TestFsRmdirNotFound tests deleting a non existent directory
