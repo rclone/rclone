@@ -202,3 +202,13 @@ func (p Params) GetStruct(key string, out interface{}) error {
 	}
 	return nil
 }
+
+// GetStructMissingOK works like GetStruct but doesn't return an error
+// if the key is missing
+func (p Params) GetStructMissingOK(key string, out interface{}) error {
+	_, ok := p[key]
+	if !ok {
+		return nil
+	}
+	return p.GetStruct(key, out)
+}
