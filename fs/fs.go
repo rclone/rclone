@@ -70,6 +70,7 @@ var (
 	ErrorPermissionDenied            = errors.New("permission denied")
 	ErrorCantShareDirectories        = errors.New("this backend can't share directories with link")
 	ErrorNotImplemented              = errors.New("optional feature not implemented")
+	ErrorCommandNotFound             = errors.New("command not found")
 )
 
 // RegInfo provides information about a filesystem
@@ -88,6 +89,8 @@ type RegInfo struct {
 	Config func(name string, config configmap.Mapper) `json:"-"`
 	// Options for the Fs configuration
 	Options Options
+	// The command help, if any
+	CommandHelp []CommandHelp
 }
 
 // FileName returns the on disk file name for this backend
@@ -634,6 +637,17 @@ type Features struct {
 
 	// Disconnect the current user
 	Disconnect func(ctx context.Context) error
+
+	// Command the backend to run a named command
+	//
+	// The command run is name
+	// args may be used to read arguments from
+	// opts may be used to read optional arguments from
+	//
+	// The result should be capable of being JSON encoded
+	// If it is a string or a []string it will be shown to the user
+	// otherwise it will be JSON encoded and shown to the user like that
+	Command func(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -755,6 +769,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(Disconnecter); ok {
 		ft.Disconnect = do.Disconnect
 	}
+	if do, ok := f.(Commander); ok {
+		ft.Command = do.Command
+	}
 	return ft.DisableList(Config.DisableFeatures)
 }
 
@@ -830,6 +847,7 @@ func (ft *Features) Mask(f Fs) *Features {
 	if mask.Disconnect == nil {
 		ft.Disconnect = nil
 	}
+	// Command is always local so we don't mask it
 	return ft.DisableList(Config.DisableFeatures)
 }
 
@@ -1049,6 +1067,30 @@ type UserInfoer interface {
 type Disconnecter interface {
 	// Disconnect the current user
 	Disconnect(ctx context.Context) error
+}
+
+// CommandHelp describes a single backend Command
+//
+// These are automatically inserted in the docs
+type CommandHelp struct {
+	Name  string            // Name of the command, eg "link"
+	Short string            // Single line description
+	Long  string            // Long multi-line description
+	Opts  map[string]string // maps option name to a single line help
+}
+
+// Commander is an iterface to wrap the Command function
+type Commander interface {
+	// Command the backend to run a named command
+	//
+	// The command run is name
+	// args may be used to read arguments from
+	// opts may be used to read optional arguments from
+	//
+	// The result should be capable of being JSON encoded
+	// If it is a string or a []string it will be shown to the user
+	// otherwise it will be JSON encoded and shown to the user like that
+	Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
 }
 
 // ObjectsChan is a channel of Objects
