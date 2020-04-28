@@ -361,3 +361,4 @@ Contributors
   * Martin Stone <martin@d7415.co.uk>
   * David Bramwell <13053834+dbramwell@users.noreply.github.com>
   * Sunil Patra <snl_su@live.com>
+  * Adam Stroud <adam.stroud@gmail.com>
