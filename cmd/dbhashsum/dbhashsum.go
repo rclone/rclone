@@ -24,6 +24,7 @@ hashes are calculated according to [Dropbox content hash
 rules](https://www.dropbox.com/developers/reference/content-hash).
 The output is in the same format as md5sum and sha1sum.
 `,
+	Hidden: true,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
