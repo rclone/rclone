@@ -65,6 +65,7 @@ func init() {
 		Name:        "cache",
 		Description: "Cache a remote",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to cache.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
@@ -1882,6 +1883,31 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 	return do(ctx)
 }
 
+var commandHelp = []fs.CommandHelp{
+	{
+		Name:  "stats",
+		Short: "Print stats on the cache backend in JSON format.",
+	},
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error) {
+	switch name {
+	case "stats":
+		return f.Stats()
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = (*Fs)(nil)
@@ -1899,4 +1925,5 @@ var (
 	_ fs.Abouter        = (*Fs)(nil)
 	_ fs.UserInfoer     = (*Fs)(nil)
 	_ fs.Disconnecter   = (*Fs)(nil)
+	_ fs.Commander      = (*Fs)(nil)
 )
