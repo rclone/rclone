@@ -158,6 +158,7 @@ func init() {
 		Name:        "drive",
 		Description: "Google Drive",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Config: func(name string, m configmap.Mapper) {
 			ctx := context.TODO()
 			// Parse config into Options struct
@@ -398,7 +399,7 @@ will download it anyway.`,
 			Default: false,
 			Help: `Show sizes as storage quota usage, not actual size.
 
-Show the size of a file as the the storage quota used. This is the
+Show the size of a file as the storage quota used. This is the
 current version plus any older versions that have been set to keep
 forever.
 
@@ -555,6 +556,7 @@ type Fs struct {
 	importMimeTypes  []string           // MIME types to convert to docs
 	isTeamDrive      bool               // true if this is a team drive
 	fileFields       googleapi.Field    // fields to fetch file info with
+	m                configmap.Mapper
 }
 
 type baseObject struct {
@@ -1080,6 +1082,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		root:  root,
 		opt:   *opt,
 		pacer: newPacer(opt),
+		m:     m,
 	}
 	f.isTeamDrive = opt.TeamDriveID != ""
 	f.fileFields = f.getFileFields()
@@ -2724,6 +2727,144 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
 }
 
+func (f *Fs) changeChunkSize(chunkSizeString string) (err error) {
+	chunkSizeInt, err := strconv.ParseInt(chunkSizeString, 10, 64)
+	if err != nil {
+		return errors.Wrap(err, "couldn't convert chunk size to int")
+	}
+	chunkSize := fs.SizeSuffix(chunkSizeInt)
+	if chunkSize == f.opt.ChunkSize {
+		return nil
+	}
+	err = checkUploadChunkSize(chunkSize)
+	if err == nil {
+		f.opt.ChunkSize = chunkSize
+	}
+	return err
+}
+
+func (f *Fs) changeServiceAccountFile(file string) (err error) {
+	fs.Debugf(nil, "Changing Service Account File from %s to %s", f.opt.ServiceAccountFile, file)
+	if file == f.opt.ServiceAccountFile {
+		return nil
+	}
+	oldSvc := f.svc
+	oldv2Svc := f.v2Svc
+	oldOAuthClient := f.client
+	oldFile := f.opt.ServiceAccountFile
+	oldCredentials := f.opt.ServiceAccountCredentials
+	defer func() {
+		// Undo all the changes instead of doing selective undo's
+		if err != nil {
+			f.svc = oldSvc
+			f.v2Svc = oldv2Svc
+			f.client = oldOAuthClient
+			f.opt.ServiceAccountFile = oldFile
+			f.opt.ServiceAccountCredentials = oldCredentials
+		}
+	}()
+	f.opt.ServiceAccountFile = file
+	f.opt.ServiceAccountCredentials = ""
+	oAuthClient, err := createOAuthClient(&f.opt, f.name, f.m)
+	if err != nil {
+		return errors.Wrap(err, "drive: failed when making oauth client")
+	}
+	f.client = oAuthClient
+	f.svc, err = drive.New(f.client)
+	if err != nil {
+		return errors.Wrap(err, "couldn't create Drive client")
+	}
+	if f.opt.V2DownloadMinSize >= 0 {
+		f.v2Svc, err = drive_v2.New(f.client)
+		if err != nil {
+			return errors.Wrap(err, "couldn't create Drive v2 client")
+		}
+	}
+	return nil
+}
+
+var commandHelp = []fs.CommandHelp{
+	{
+		Name:  "get",
+		Short: "Get command for fetching the drive config parameters",
+		Long: `This is a get command which will be used to fetch the various drive config parameters
+
+		Usage Examples:
+
+		rclone backend get drive: [-o service_account_file] [-o chunk_size]
+		rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
+		`,
+		Opts: map[string]string{
+			"chunk_size":           "show the current upload chunk size",
+			"service_account_file": "show the current service account file",
+		},
+	},
+	{
+		Name:  "set",
+		Short: "Set command for updating the drive config parameters",
+		Long: `This is a set command which will be used to update the various drive config parameters
+
+		Usage Examples:
+
+		rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+		rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+		`,
+		Opts: map[string]string{
+			"chunk_size":           "update the current upload chunk size",
+			"service_account_file": "update the current service account file",
+		},
+	},
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	switch name {
+	case "get":
+		out := make(map[string]string)
+		if _, ok := opt["service_account_file"]; ok {
+			out["service_account_file"] = f.opt.ServiceAccountFile
+		}
+		if _, ok := opt["chunk_size"]; ok {
+			out["chunk_size"] = fmt.Sprintf("%s", f.opt.ChunkSize)
+		}
+		return out, nil
+	case "set":
+		out := make(map[string]map[string]string)
+		if serviceAccountFile, ok := opt["service_account_file"]; ok {
+			serviceAccountMap := make(map[string]string)
+			serviceAccountMap["previous"] = f.opt.ServiceAccountFile
+			if err = f.changeServiceAccountFile(serviceAccountFile); err != nil {
+				return out, err
+			}
+			f.m.Set("service_account_file", serviceAccountFile)
+			serviceAccountMap["current"] = f.opt.ServiceAccountFile
+			out["service_account_file"] = serviceAccountMap
+		}
+		if chunkSize, ok := opt["chunk_size"]; ok {
+			chunkSizeMap := make(map[string]string)
+			chunkSizeMap["previous"] = fmt.Sprintf("%s", f.opt.ChunkSize)
+			if err = f.changeChunkSize(chunkSize); err != nil {
+				return out, err
+			}
+			chunkSizeString := fmt.Sprintf("%s", f.opt.ChunkSize)
+			f.m.Set("chunk_size", chunkSizeString)
+			chunkSizeMap["current"] = chunkSizeString
+			out["chunk_size"] = chunkSizeMap
+		}
+		return out, nil
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -3219,6 +3360,7 @@ var (
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.Commander       = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
