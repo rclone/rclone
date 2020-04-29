@@ -26,6 +26,7 @@ func init() {
 		Name:        "crypt",
 		Description: "Encrypt/Decrypt a remote",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to encrypt/decrypt.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
@@ -700,6 +701,64 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 	do(ctx, wrappedNotifyFunc, pollIntervalChan)
 }
 
+var commandHelp = []fs.CommandHelp{
+	{
+		Name:  "encode",
+		Short: "Encode the given filename(s)",
+		Long: `Encode the given filename(s)
+
+		Usage Example:
+
+		rclone backend encode crypt: file1 [file2...]
+		rclone rc backend/command command=encode fs=crypt: file1 [file2...]
+		`,
+	},
+	{
+		Name:  "decode",
+		Short: "Decode the given filename(s)",
+		Long: `Decode the given filename(s)
+
+		Usage Example:
+
+		rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
+		rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
+		`,
+	},
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
+	switch name {
+	case "decode":
+		out := make(map[string]string)
+		for _, encryptedFileName := range arg {
+			fileName, err := f.DecryptFileName(encryptedFileName)
+			if err != nil {
+				return out, errors.Wrap(err, fmt.Sprintf("Failed to decrypt : %s", encryptedFileName))
+			}
+			out[encryptedFileName] = fileName
+		}
+		return out, nil
+	case "encode":
+		out := make(map[string]string)
+		for _, fileName := range arg {
+			encryptedFileName := f.EncryptFileName(fileName)
+			out[fileName] = encryptedFileName
+		}
+		return out, nil
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // Object describes a wrapped for being read from the Fs
 //
 // This decrypts the remote name and decrypts the data
@@ -930,6 +989,7 @@ var (
 	_ fs.Copier          = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.Commander       = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ fs.PutStreamer     = (*Fs)(nil)
 	_ fs.CleanUpper      = (*Fs)(nil)
