@@ -987,6 +987,8 @@ Eg
 
 See the [Configuration Encryption](#configuration-encryption) for more info.
 
+See a [Windows Powershell example on the Wiki.](https://github.com/rclone/rclone/wiki/Windows-Powershell-use-rclone-password-command-for-Config-file-password)
+
 ### -P, --progress ###
 
 This flag makes rclone update the stats in a static block in the
