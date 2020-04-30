@@ -131,8 +131,12 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, s.HTMLTemplate)
 	for _, node := range dirEntries {
-		directory.AddEntry(node.Path(), node.IsDir())
+		directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime())
 	}
+
+	sortParm := r.URL.Query().Get("sort")
+	orderParm := r.URL.Query().Get("order")
+	directory.ProcessQueryParams(sortParm, orderParm)
 
 	directory.Serve(w, r)
 }
