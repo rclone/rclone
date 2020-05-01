@@ -1790,7 +1790,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 // itemToDirEntry converts a drive.File to a fs.DirEntry.
 // When the drive.File cannot be represented as a fs.DirEntry
 // (nil, nil) is returned.
-func (f *Fs) itemToDirEntry(remote string, item *drive.File) (fs.DirEntry, error) {
+func (f *Fs) itemToDirEntry(remote string, item *drive.File) (entry fs.DirEntry, err error) {
 	switch {
 	case item.MimeType == driveFolderType:
 		// cache the directory ID for later lookups
