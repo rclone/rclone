@@ -152,6 +152,7 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 	if usingReaddirPlus {
 		host.SetCapReaddirPlus(true)
 	}
+	host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
 
 	// Create options
 	options := mountOptions(f.Name()+":"+f.Root(), mountpoint)
