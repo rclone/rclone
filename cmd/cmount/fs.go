@@ -251,7 +251,14 @@ func (fsys *FS) Readdir(dirPath string,
 				fs.Errorf(dirPath, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 				continue
 			}
-			fill(name, nil, 0)
+			if usingReaddirPlus {
+				// We have called host.SetCapReaddirPlus() so supply the stat information
+				var stat fuse.Stat_t
+				_ = fsys.stat(node, &stat) // not capable of returning an error
+				fill(name, &stat, 0)
+			} else {
+				fill(name, nil, 0)
+			}
 		}
 	}
 	itemsRead = len(items)
