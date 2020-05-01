@@ -32,6 +32,7 @@ type Dir struct {
 	entry   fs.Directory
 	read    time.Time       // time directory entry last read
 	items   map[string]Node // directory entries - can be empty but not nil
+	sys     interface{}     // user defined info to be attached here
 }
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
@@ -92,7 +93,16 @@ func (d *Dir) Path() (name string) {
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
 func (d *Dir) Sys() interface{} {
-	return nil
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.sys
+}
+
+// SetSys sets the underlying data source (can be nil) - satisfies Node interface
+func (d *Dir) SetSys(x interface{}) {
+	d.mu.Lock()
+	d.sys = x
+	d.mu.Unlock()
 }
 
 // Inode returns the inode number - satisfies Node interface

@@ -54,6 +54,10 @@ func TestDirMethods(t *testing.T) {
 	// Sys
 	assert.Equal(t, nil, dir.Sys())
 
+	// SetSys
+	dir.SetSys(42)
+	assert.Equal(t, 42, dir.Sys())
+
 	// Inode
 	assert.NotEqual(t, uint64(0), dir.Inode())
 
