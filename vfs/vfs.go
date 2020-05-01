@@ -34,6 +34,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs/vfscache"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -204,6 +205,11 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 
 	// add the remote control
 	vfs.addRC()
+
+	// Pin the Fs into the cache so that when we use cache.NewFs
+	// with the same remote string we get this one. The Pin is
+	// removed by Shutdown
+	cache.Pin(f)
 	return vfs
 }
 
@@ -233,6 +239,8 @@ func (vfs *VFS) SetCacheMode(cacheMode vfscommon.CacheMode) {
 
 // Shutdown stops any background go-routines
 func (vfs *VFS) Shutdown() {
+	// Unpin the Fs from the cache
+	cache.Unpin(vfs.f)
 	if vfs.cancel != nil {
 		vfs.cancel()
 		vfs.cancel = nil
