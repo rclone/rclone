@@ -1331,6 +1331,17 @@ func NewFs(path string) (Fs, error) {
 	return fsInfo.NewFs(configName, fsPath, config)
 }
 
+// ConfigString returns a canonical version of the config string used
+// to configure the Fs as passed to fs.NewFs
+func ConfigString(f Fs) string {
+	name := f.Name()
+	root := f.Root()
+	if name == "local" && f.Features().IsLocal {
+		return root
+	}
+	return name + ":" + root
+}
+
 // TemporaryLocalFs creates a local FS in the OS's temporary directory.
 //
 // No cleanup is performed, the caller must call Purge on the Fs themselves.
