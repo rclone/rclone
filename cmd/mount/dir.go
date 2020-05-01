@@ -76,13 +76,23 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 		return nil, translateError(err)
 	}
 	resp.EntryValid = mountlib.AttrTimeout
+	// Check the mnode to see if it has a fuse Node cached
+	// We must return the same fuse nodes for vfs Nodes
+	node, ok := mnode.Sys().(fusefs.Node)
+	if ok {
+		return node, nil
+	}
 	switch x := mnode.(type) {
 	case *vfs.File:
-		return &File{x}, nil
+		node = &File{x}
 	case *vfs.Dir:
-		return &Dir{x}, nil
+		node = &Dir{x}
+	default:
+		panic("bad type")
 	}
-	panic("bad type")
+	// Cache the node for later
+	mnode.SetSys(node)
+	return node, nil
 }
 
 // Check interface satisfied
@@ -129,7 +139,9 @@ func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.Cr
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
-	return &File{file}, &FileHandle{fh}, err
+	node = &File{file}
+	file.SetSys(node) // cache the FUSE node for later
+	return node, &FileHandle{fh}, err
 }
 
 var _ fusefs.NodeMkdirer = (*Dir)(nil)
@@ -141,7 +153,9 @@ func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (node fusefs.No
 	if err != nil {
 		return nil, translateError(err)
 	}
-	return &Dir{dir}, nil
+	node = &Dir{dir}
+	dir.SetSys(node) // cache the FUSE node for later
+	return node, nil
 }
 
 var _ fusefs.NodeRemover = (*Dir)(nil)
