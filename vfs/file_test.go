@@ -58,6 +58,10 @@ func TestFileMethods(t *testing.T) {
 	// Sys
 	assert.Equal(t, nil, file.Sys())
 
+	// SetSys
+	file.SetSys(42)
+	assert.Equal(t, 42, file.Sys())
+
 	// Inode
 	assert.NotEqual(t, uint64(0), file.Inode())
 

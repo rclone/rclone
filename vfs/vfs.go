@@ -54,6 +54,7 @@ type Node interface {
 	Open(flags int) (Handle, error)
 	Truncate(size int64) error
 	Path() string
+	SetSys(interface{})
 }
 
 // Check interfaces
