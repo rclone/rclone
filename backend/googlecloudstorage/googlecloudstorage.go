@@ -1066,13 +1066,39 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ContentType: fs.MimeType(ctx, src),
 		Metadata:    metadataFromModTime(modTime),
 	}
+	// Apply upload options
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			object.CacheControl = value
+		case "content-disposition":
+			object.ContentDisposition = value
+		case "content-encoding":
+			object.ContentEncoding = value
+		case "content-language":
+			object.ContentLanguage = value
+		case "content-type":
+			object.ContentType = value
+		default:
+			const googMetaPrefix = "x-goog-meta-"
+			if strings.HasPrefix(lowerKey, googMetaPrefix) {
+				metaKey := lowerKey[len(googMetaPrefix):]
+				object.Metadata[metaKey] = value
+			} else {
+				fs.Errorf(o, "Don't know how to set key %q on upload", key)
+			}
+		}
+	}
 	var newObject *storage.Object
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		insertObject := o.fs.svc.Objects.Insert(bucket, &object).Media(in, googleapi.ContentType("")).Name(object.Name)
 		if !o.fs.opt.BucketPolicyOnly {
 			insertObject.PredefinedAcl(o.fs.opt.ObjectACL)
 		}
-		fs.OpenOptionAddHTTPHeaders(insertObject.Header(), options)
 		newObject, err = insertObject.Context(ctx).Do()
 		return shouldRetry(err)
 	})
