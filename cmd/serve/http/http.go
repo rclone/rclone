@@ -6,6 +6,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/httplib"
@@ -131,7 +132,11 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, s.HTMLTemplate)
 	for _, node := range dirEntries {
-		directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime())
+		if vfsflags.Opt.NoModTime {
+			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})
+		} else {
+			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime().UTC())
+		}
 	}
 
 	sortParm := r.URL.Query().Get("sort")

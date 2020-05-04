@@ -22,6 +22,7 @@ import (
 
 const (
 	testBindAddress = "localhost:0"
+	testTemplate    = "testdata/golden/testindex.html"
 	testFs          = "testdata/files"
 	remoteURL       = "[" + testFs + "]/" // initial URL path to fetch from that remote
 )
@@ -31,6 +32,7 @@ const (
 func TestRcServer(t *testing.T) {
 	opt := rc.DefaultOpt
 	opt.HTTPOptions.ListenAddr = testBindAddress
+	opt.HTTPOptions.Template = testTemplate
 	opt.Enabled = true
 	opt.Serve = true
 	opt.Files = testFs
@@ -82,6 +84,7 @@ type testRun struct {
 // Run a suite of tests
 func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 	mux := http.NewServeMux()
+	opt.HTTPOptions.Template = testTemplate
 	rcServer := newServer(opt, mux)
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
@@ -536,7 +539,7 @@ func makeMetricsTestCases(stats *accounting.StatsInfo) (tests []testRun) {
 	return
 }
 
-var matchRemoteDirListing = regexp.MustCompile(`<title>List of all rclone remotes.</title>`)
+var matchRemoteDirListing = regexp.MustCompile(`<title>Directory listing of /</title>`)
 
 func TestServingRoot(t *testing.T) {
 	tests := []testRun{{

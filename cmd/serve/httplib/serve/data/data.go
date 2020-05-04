@@ -6,10 +6,15 @@ package data
 import (
 	"html/template"
 	"io/ioutil"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 )
+
+func AfterEpoch(t time.Time) bool {
+	return t.After(time.Time{})
+}
 
 // GetTemplate returns the HTML template for serving directories via HTTP/Webdav
 func GetTemplate(tmpl string) (tpl *template.Template, err error) {
@@ -38,7 +43,10 @@ func GetTemplate(tmpl string) (tpl *template.Template, err error) {
 		templateString = string(templateFile)
 	}
 
-	tpl, err = template.New("index").Parse(templateString)
+	funcMap := template.FuncMap{
+		"afterEpoch": AfterEpoch,
+	}
+	tpl, err = template.New("index").Funcs(funcMap).Parse(templateString)
 	if err != nil {
 		return nil, errors.Wrap(err, "get template parse")
 	}
