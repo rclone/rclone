@@ -344,6 +344,11 @@ func (fh *ReadFileHandle) checkHash() error {
 	for hashType, dstSum := range fh.hash.Sums() {
 		srcSum, err := o.Hash(context.TODO(), hashType)
 		if err != nil {
+			if os.IsNotExist(errors.Cause(err)) {
+				// if it was file not found then at
+				// this point we don't care any more
+				continue
+			}
 			return err
 		}
 		if !hash.Equals(dstSum, srcSum) {
