@@ -382,6 +382,46 @@ files.  If deleting them permanently is required then use the
 `--drive-use-trash=false` flag, or set the equivalent environment
 variable.
 
+### Shortcuts ###
+
+In March 2020 Google introduced a new feature in Google Drive called
+[drive shortcuts](https://support.google.com/drive/answer/9700156)
+([API](https://developers.google.com/drive/api/v3/shortcuts)). These
+will (by September 2020) [replace the ability for files or folders to
+be in multiple folders at once](https://cloud.google.com/blog/products/g-suite/simplifying-google-drives-folder-structure-and-sharing-models).
+
+Shortcuts are files that link to other files on Google Drive somewhat
+like a symlink in unix, except they point to the underlying file data
+(eg the inode in unix terms) so they don't break if the source is
+renamed or moved about.
+
+Be default rclone treats these as follows.
+
+For shortcuts pointing to files:
+
+- When listing a file shortcut appears as the destination file.
+- When downloading the contents of the destination file is downloaded.
+- When updating shortcut file with a non shortcut file, the shortcut is removed then a new file is uploaded in place of the shortcut.
+- When server side moving (renaming) the shortcut is renamed, not the destination file.
+- When server side copying the shortcut is copied, not the contents of the shortcut.
+- When deleting the shortcut is deleted not the linked file.
+- When setting the modification time, the modification time of the linked file will be set.
+
+For shortcuts pointing to folders:
+
+- When listing the shortcut appears as a folder and that folder will contain the contents of the linked folder appear (including any sub folders)
+- When downloading the contents of the linked folder and sub contents are downloaded
+- When uploading to a shortcut folder the file will be placed in the linked folder
+- When server side moving (renaming) the shortcut is renamed, not the destination folder
+- When server side copying the contents of the linked folder is copied, not the shortcut.
+- When deleting with `rclone rmdir` or `rclone purge` the shortcut is deleted not the linked folder.
+- **NB** When deleting with `rclone remove` or `rclone mount` the contents of the linked folder will be deleted.
+
+It isn't currently possible to create shortcuts with rclone.
+
+Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
+or the corresponding `skip_shortcuts` configuration setting.
+
 ### Emptying trash ###
 
 If you wish to empty your trash you can use the `rclone cleanup remote:`
@@ -932,6 +972,20 @@ See: https://github.com/rclone/rclone/issues/3857
 
 - Config:      stop_on_upload_limit
 - Env Var:     RCLONE_DRIVE_STOP_ON_UPLOAD_LIMIT
+- Type:        bool
+- Default:     false
+
+#### --drive-skip-shortcuts
+
+If set skip shortcut files
+
+Normally rclone dereferences shortcut files making them appear as if
+they are the original file (see [the shortcuts section](#shortcuts)).
+If this flag is set then rclone will ignore shortcut files completely.
+
+
+- Config:      skip_shortcuts
+- Env Var:     RCLONE_DRIVE_SKIP_SHORTCUTS
 - Type:        bool
 - Default:     false
 

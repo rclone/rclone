@@ -47,7 +47,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
-	github.com/spf13/cobra v0.0.6
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
 	github.com/t3rm1n4l/go-mega v0.0.0-20200117211730-79a813bb328d
@@ -63,7 +63,7 @@ require (
 	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
-	google.golang.org/api v0.18.0
+	google.golang.org/api v0.21.1-0.20200411000818-c8cf5cff125e
 	google.golang.org/genproto v0.0.0-20200225123651-fc8f55426688 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )

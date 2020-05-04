@@ -124,8 +124,13 @@ minimum size.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
-			Name:     "disable_checksum",
-			Help:     `Disable checksums for large (> upload cutoff) files`,
+			Name: "disable_checksum",
+			Help: `Disable checksums for large (> upload cutoff) files
+
+Normally rclone will calculate the SHA1 checksum of the input before
+uploading it so it can add it to metadata on the object. This is great
+for data integrity checking but can cause long delays for large files
+to start uploading.`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -1370,6 +1375,21 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// Clean the SHA1
+//
+// Make sure it is lower case
+//
+// Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
+// Some tools (eg Cyberduck) use this
+func cleanSHA1(sha1 string) (out string) {
+	out = strings.ToLower(sha1)
+	const unverified = "unverified:"
+	if strings.HasPrefix(out, unverified) {
+		out = out[len(unverified):]
+	}
+	return out
+}
+
 // decodeMetaDataRaw sets the metadata from the data passed in
 //
 // Sets
@@ -1385,12 +1405,7 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 	if o.sha1 == "" || o.sha1 == "none" {
 		o.sha1 = Info[sha1Key]
 	}
-	// Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
-	// Some tools (eg Cyberduck) use this
-	const unverified = "unverified:"
-	if strings.HasPrefix(o.sha1, unverified) {
-		o.sha1 = o.sha1[len(unverified):]
-	}
+	o.sha1 = cleanSHA1(o.sha1)
 	o.size = Size
 	// Use the UploadTimestamp if can't get file info
 	o.modTime = time.Time(UploadTimestamp)
@@ -1648,6 +1663,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			o.sha1 = resp.Header.Get(sha1InfoHeader)
 			fs.Debugf(o, "Reading sha1 from info - %q", o.sha1)
 		}
+		o.sha1 = cleanSHA1(o.sha1)
 	}
 	// Don't check length or hash on partial content
 	if resp.StatusCode == http.StatusPartialContent {

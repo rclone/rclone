@@ -434,3 +434,44 @@ func TestRcFsInfo(t *testing.T) {
 	assert.Equal(t, features, got["Features"])
 
 }
+
+// operations/command: Runs a backend command
+func TestRcCommand(t *testing.T) {
+	r, call := rcNewRun(t, "backend/command")
+	defer r.Finalise()
+	in := rc.Params{
+		"fs":      r.FremoteName,
+		"command": "noop",
+		"opt": map[string]string{
+			"echo": "true",
+			"blue": "",
+		},
+		"arg": []string{
+			"path1",
+			"path2",
+		},
+	}
+	got, err := call.Fn(context.Background(), in)
+	if err != nil {
+		assert.False(t, r.Fremote.Features().IsLocal, "mustn't fail on local remote")
+		assert.Contains(t, err.Error(), "command not found")
+		return
+	}
+	want := rc.Params{"result": map[string]interface{}{
+		"arg": []string{
+			"path1",
+			"path2",
+		},
+		"name": "noop",
+		"opt": map[string]string{
+			"blue": "",
+			"echo": "true",
+		},
+	}}
+	assert.Equal(t, want, got)
+	errTxt := "explosion in the sausage factory"
+	in["opt"].(map[string]string)["error"] = errTxt
+	_, err = call.Fn(context.Background(), in)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), errTxt)
+}

@@ -27,11 +27,20 @@ type Node struct {
 var _ fusefs.InodeEmbedder = (*Node)(nil)
 
 // newNode creates a new fusefs.Node from a vfs Node
-func newNode(fsys *FS, node vfs.Node) *Node {
-	return &Node{
-		node: node,
+func newNode(fsys *FS, vfsNode vfs.Node) (node *Node) {
+	// Check the vfsNode to see if it has a fuse Node cached
+	// We must return the same fuse nodes for vfs Nodes
+	node, ok := vfsNode.Sys().(*Node)
+	if ok {
+		return node
+	}
+	node = &Node{
+		node: vfsNode,
 		fsys: fsys,
 	}
+	// Cache the node for later
+	vfsNode.SetSys(node)
+	return node
 }
 
 // String used for pretty printing.
@@ -183,10 +192,7 @@ func (n *Node) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (ino
 	if errno != 0 {
 		return nil, errno
 	}
-	newNode := &Node{
-		node: vfsNode,
-		fsys: n.fsys,
-	}
+	newNode := newNode(n.fsys, vfsNode)
 
 	// FIXME
 	// out.SetEntryTimeout(dt time.Duration)

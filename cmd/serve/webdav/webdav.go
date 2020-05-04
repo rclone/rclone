@@ -204,6 +204,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	}
 	dir := node.(*vfs.Dir)
 	dirEntries, err := dir.ReadDirAll()
+
 	if err != nil {
 		serve.Error(dirRemote, rw, "Failed to list directory", err)
 		return
@@ -212,8 +213,12 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, w.HTMLTemplate)
 	for _, node := range dirEntries {
-		directory.AddEntry(node.Path(), node.IsDir())
+		directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime())
 	}
+
+	sortParm := r.URL.Query().Get("sort")
+	orderParm := r.URL.Query().Get("order")
+	directory.ProcessQueryParams(sortParm, orderParm)
 
 	directory.Serve(rw, r)
 }

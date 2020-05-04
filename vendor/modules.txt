@@ -190,7 +190,7 @@ github.com/shurcooL/sanitized_anchor_name
 github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 github.com/skratchdot/open-golang/open
-# github.com/spf13/cobra v0.0.6
+# github.com/spf13/cobra v1.0.0
 github.com/spf13/cobra
 github.com/spf13/cobra/doc
 # github.com/spf13/pflag v1.0.5
@@ -294,7 +294,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 golang.org/x/time/rate
-# google.golang.org/api v0.18.0
+# google.golang.org/api v0.21.1-0.20200411000818-c8cf5cff125e
 google.golang.org/api/drive/v2
 google.golang.org/api/drive/v3
 google.golang.org/api/googleapi

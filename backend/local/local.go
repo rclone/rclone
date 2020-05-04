@@ -41,6 +41,7 @@ func init() {
 		Name:        "local",
 		Description: "Local Disk",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name: "nounc",
 			Help: "Disable UNC (long path names) conversion on Windows",
@@ -697,6 +698,50 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Supported()
 }
 
+var commandHelp = []fs.CommandHelp{
+	{
+		Name:  "noop",
+		Short: "A null operation for testing backend commands",
+		Long: `This is a test command which has some options
+you can try to change the output.`,
+		Opts: map[string]string{
+			"echo":  "echo the input arguments",
+			"error": "return an error based on option value",
+		},
+	},
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error) {
+	switch name {
+	case "noop":
+		if txt, ok := opt["error"]; ok {
+			if txt == "" {
+				txt = "unspecified error"
+			}
+			return nil, errors.New(txt)
+		}
+		if _, ok := opt["echo"]; ok {
+			out := map[string]interface{}{}
+			out["name"] = name
+			out["arg"] = arg
+			out["opt"] = opt
+			return out, nil
+		}
+		return nil, nil
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -723,8 +768,17 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	oldtime := o.modTime
 	oldsize := o.size
 	err := o.lstat()
+	var changed bool
 	if err != nil {
-		return "", errors.Wrap(err, "hash: failed to stat")
+		if os.IsNotExist(errors.Cause(err)) {
+			// If file not found then we assume any accumulated
+			// hashes are OK - this will error on Open
+			changed = true
+		} else {
+			return "", errors.Wrap(err, "hash: failed to stat")
+		}
+	} else {
+		changed = !o.modTime.Equal(oldtime) || oldsize != o.size
 	}
 
 	o.fs.objectHashesMu.Lock()
@@ -732,7 +786,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	hashValue, hashFound := o.hashes[r]
 	o.fs.objectHashesMu.Unlock()
 
-	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil || !hashFound {
+	if changed || hashes == nil || !hashFound {
 		var in io.ReadCloser
 
 		if !o.translatedLink {
@@ -1164,6 +1218,7 @@ var (
 	_ fs.PutStreamer    = &Fs{}
 	_ fs.Mover          = &Fs{}
 	_ fs.DirMover       = &Fs{}
+	_ fs.Commander      = &Fs{}
 	_ fs.OpenWriterAter = &Fs{}
 	_ fs.Object         = &Object{}
 )

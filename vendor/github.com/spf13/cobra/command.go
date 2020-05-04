@@ -18,7 +18,6 @@ package cobra
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,8 +27,6 @@ import (
 
 	flag "github.com/spf13/pflag"
 )
-
-var ErrSubCommandRequired = errors.New("subcommand is required")
 
 // FParseErrWhitelist configures Flag parse errors to be ignored
 type FParseErrWhitelist flag.ParseErrorsWhitelist
@@ -60,6 +57,10 @@ type Command struct {
 
 	// ValidArgs is list of all valid non-flag arguments that are accepted in bash completions
 	ValidArgs []string
+	// ValidArgsFunction is an optional function that provides valid non-flag arguments for bash completion.
+	// It is a dynamic version of using ValidArgs.
+	// Only one of ValidArgs and ValidArgsFunction can be used for a command.
+	ValidArgsFunction func(cmd *Command, args []string, toComplete string) ([]string, ShellCompDirective)
 
 	// Expected arguments
 	Args PositionalArgs
@@ -84,7 +85,8 @@ type Command struct {
 
 	// Version defines the version for this command. If this value is non-empty and the command does not
 	// define a "version" flag, a "version" boolean flag will be added to the command and, if specified,
-	// will print content of the "Version" variable.
+	// will print content of the "Version" variable. A shorthand "v" flag will also be added if the
+	// command does not define one.
 	Version string
 
 	// The *Run functions are executed in the following order:
@@ -309,7 +311,7 @@ func (c *Command) ErrOrStderr() io.Writer {
 	return c.getErr(os.Stderr)
 }
 
-// InOrStdin returns output to stderr
+// InOrStdin returns input to stdin
 func (c *Command) InOrStdin() io.Reader {
 	return c.getIn(os.Stdin)
 }
@@ -800,7 +802,7 @@ func (c *Command) execute(a []string) (err error) {
 	}
 
 	if !c.Runnable() {
-		return ErrSubCommandRequired
+		return flag.ErrHelp
 	}
 
 	c.preRun()
@@ -913,6 +915,9 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 		args = os.Args[1:]
 	}
 
+	// initialize the hidden command to be used for bash completion
+	c.initCompleteCmd(args)
+
 	var flags []string
 	if c.TraverseChildren {
 		cmd, flags, err = c.Traverse(args)
@@ -949,14 +954,6 @@ func (c *Command) ExecuteC() (cmd *Command, err error) {
 		if err == flag.ErrHelp {
 			cmd.HelpFunc()(cmd, args)
 			return cmd, nil
-		}
-
-		// If command wasn't runnable, show full help, but do return the error.
-		// This will result in apps by default returning a non-success exit code, but also gives them the option to
-		// handle specially.
-		if err == ErrSubCommandRequired {
-			cmd.HelpFunc()(cmd, args)
-			return cmd, err
 		}
 
 		// If root command has SilentErrors flagged,
@@ -1033,7 +1030,11 @@ func (c *Command) InitDefaultVersionFlag() {
 		} else {
 			usage += c.Name()
 		}
-		c.Flags().Bool("version", false, usage)
+		if c.Flags().ShorthandLookup("v") == nil {
+			c.Flags().BoolP("version", "v", false, usage)
+		} else {
+			c.Flags().Bool("version", false, usage)
+		}
 	}
 }
 
