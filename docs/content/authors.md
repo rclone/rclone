@@ -12,6 +12,10 @@ Authors
 Contributors
 ------------
 
+<!--- NB email addresses removed from here need to be addeed to
+bin/.ignore-emails to make sure update-authors.py doesn't immediately
+put them back in again. -->
+
   * Alex Couper <amcouper@gmail.com>
   * Leonid Shalupov <leonid@shalupov.com> <shalupov@diverse.org.ru>
   * Shimon Doodkin <helpmepro1@gmail.com>
@@ -192,7 +196,7 @@ Contributors
   * Sheldon Rupp <me@shel.io>
   * albertony <12441419+albertony@users.noreply.github.com>
   * cron410 <cron410@gmail.com>
-  * Anagh Kumar Baranwal <anaghk.dos@gmail.com> <6824881+darthShadow@users.noreply.github.com>
+  * Anagh Kumar Baranwal <6824881+darthShadow@users.noreply.github.com>
   * Felix Brucker <felix@felixbrucker.com>
   * Santiago Rodríguez <scollazo@users.noreply.github.com>
   * Craig Miskell <craig.miskell@fluxfederation.com>
