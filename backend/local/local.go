@@ -768,8 +768,17 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	oldtime := o.modTime
 	oldsize := o.size
 	err := o.lstat()
+	var changed bool
 	if err != nil {
-		return "", errors.Wrap(err, "hash: failed to stat")
+		if os.IsNotExist(errors.Cause(err)) {
+			// If file not found then we assume any accumulated
+			// hashes are OK - this will error on Open
+			changed = true
+		} else {
+			return "", errors.Wrap(err, "hash: failed to stat")
+		}
+	} else {
+		changed = !o.modTime.Equal(oldtime) || oldsize != o.size
 	}
 
 	o.fs.objectHashesMu.Lock()
@@ -777,7 +786,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	hashValue, hashFound := o.hashes[r]
 	o.fs.objectHashesMu.Unlock()
 
-	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil || !hashFound {
+	if changed || hashes == nil || !hashFound {
 		var in io.ReadCloser
 
 		if !o.translatedLink {
