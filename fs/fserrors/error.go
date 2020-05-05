@@ -372,7 +372,8 @@ var retriableErrorStrings = []string{
 	"http: ContentLength=",             // net/http/transfer.go
 	"server closed idle connection",    // net/http/transport.go
 	"bad record MAC",                   // crypto/tls/alert.go
-	"stream error:",                    // src/net/http/h2_bundle.go
+	"stream error:",                    // net/http/h2_bundle.go
+	"tls: use of closed connection",    // crypto/tls/conn.go
 }
 
 // Errors which indicate networking errors which should be retried
