@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -35,6 +36,7 @@ import (
 )
 
 var promHandler http.Handler
+var onlyOnceWarningAllowOrigin sync.Once
 
 func init() {
 	rcloneCollector := accounting.NewRcloneCollector()
@@ -188,9 +190,11 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 
 	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
 	if allowOrigin != "" {
-		if allowOrigin == "*" {
-			fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
-		}
+		onlyOnceWarningAllowOrigin.Do(func() {
+			if allowOrigin == "*" {
+				fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
+			}
+		})
 		w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
 	} else {
 		w.Header().Add("Access-Control-Allow-Origin", s.URL())

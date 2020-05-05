@@ -143,6 +143,9 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 	orderParm := r.URL.Query().Get("order")
 	directory.ProcessQueryParams(sortParm, orderParm)
 
+	// Set the Last-Modified header to the timestamp
+	w.Header().Set("Last-Modified", dir.ModTime().UTC().Format(http.TimeFormat))
+
 	directory.Serve(w, r)
 }
 
@@ -179,6 +182,9 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	} else {
 		w.Header().Set("Content-Type", mimeType)
 	}
+
+	// Set the Last-Modified header to the timestamp
+	w.Header().Set("Last-Modified", file.ModTime().UTC().Format(http.TimeFormat))
 
 	// If HEAD no need to read the object since we have set the headers
 	if r.Method == "HEAD" {
