@@ -1,18 +1,26 @@
 {
-    "indexes": {
-        "tag": "tags",
-        "group": "groups",
-        "menu": "menu"
-    },
-    "baseurl": "https://rclone.org",
-    "title": "rclone - rsync for cloud storage",
-    "description": "rclone - rsync for cloud storage: google drive, s3, swift, cloudfiles, dropbox, memstore...",
-    "canonifyurls": false,
-    "blackfriday": {
-        "smartDashes": false,
-        "plainIDAnchors": true
-    },
-    "disableKinds": [
-        "taxonomy", "taxonomyTerm"
-    ]
+  "indexes": {
+    "tag": "tags",
+    "group": "groups",
+    "menu": "menu"
+  },
+  "baseurl": "https://rclone.org",
+  "title": "rclone - rsync for cloud storage",
+  "description": "rclone - rsync for cloud storage: google drive, s3, swift, cloudfiles, dropbox, memstore...",
+  "canonifyurls": false,
+  "blackfriday": {
+    "smartDashes": false,
+    "plainIDAnchors": true
+  },
+  "disableKinds": [
+    "taxonomy",
+    "taxonomyTerm"
+  ],
+  "markup": {
+    "goldmark": {
+      "renderer": {
+        "unsafe": true
+      }
+    }
+  }
 }
