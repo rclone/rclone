@@ -215,6 +215,24 @@ This remote supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 
+### Custom upload headers ###
+
+You can set custom upload headers with the `--header-upload`
+flag. Google Cloud Storage supports the headers as described in the
+[working with metadata documentation](https://cloud.google.com/storage/docs/gsutil/addlhelp/WorkingWithObjectMetadata)
+
+- Cache-Control
+- Content-Disposition
+- Content-Encoding
+- Content-Language
+- Content-Type
+- X-Goog-Meta-
+
+Eg `--header-upload "Content-Type text/potato"`
+
+Note that the last of these is for setting custom metadata in the form
+`--header-upload "x-goog-meta-key: value"`
+
 ### Modified time ###
 
 Google google cloud storage stores md5sums natively and rclone stores
