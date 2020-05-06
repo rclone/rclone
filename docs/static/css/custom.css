@@ -1,9 +1,26 @@
-body {
-	margin-top: 75px; /* 100px is double the height of the navbar - I made it a big larger for some more space - keep it at 50px at least if you want to use the fixed top nav */
+/* body { */
+/* 	margin-top: 75px; /\* 100px is double the height of the navbar - I made it a big larger for some more space - keep it at 50px at least if you want to use the fixed top nav *\/ */
+/* } */
+
+/* footer { */
+/* 	margin: 50px 0; */
+/* } */
+
+html {
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 15px;
+    line-height: 1.42857143;
+    color: #222222;
+    background-color: #ffffff;
 }
 
-footer {
-	margin: 50px 0;
+a {
+    color: #3f79ad;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #70caf2;
 }
 
 table {
@@ -51,10 +68,10 @@ h2, h3, h4, h5, h6 {
 }
 
 /* Fix spacing between menu items */
-.navbar-default .dropdown-menu>li>a {
-	padding-top: 6px;
-	padding-bottom: 6px;
-}
+/* .navbar-default .dropdown-menu>li>a { */
+/* 	padding-top: 6px; */
+/* 	padding-bottom: 6px; */
+/* } */
 
 /* custom logo in navbar */
 .rclone-logo {
@@ -62,9 +79,18 @@ h2, h3, h4, h5, h6 {
 }
 
 /* override padding so logo is centered */
-.navbar-brand {
-	padding: 4px 15px;
+/* .navbar-brand { */
+/* 	padding: 4px 15px; */
+/* } */
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-weight: 300;
+    line-height: 1.1;
+    color: inherit;
 }
+
+/*
 
 /* reduce h12345 sizes */
 h1 {
@@ -82,3 +108,4 @@ h4 {
 h5 {
 	font-size: 16px;
 }
+*/
