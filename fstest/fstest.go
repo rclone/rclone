@@ -45,7 +45,7 @@ var (
 	// SizeLimit signals tests to skip maximum test file size and skip inappropriate runs
 	SizeLimit = flag.Int64("size-limit", 0, "Limit maximum test file size")
 	// ListRetries is the number of times to retry a listing to overcome eventual consistency
-	ListRetries = flag.Int("list-retries", 6, "Number or times to retry listing")
+	ListRetries = flag.Int("list-retries", 3, "Number or times to retry listing")
 	// MatchTestRemote matches the remote names used for testing
 	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
 )
