@@ -2927,7 +2927,7 @@ func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 	}
 	directoryID = actualID(directoryID)
 
-	found, err := f.list(ctx, []string{directoryID}, leaf, false, true, false, func(item *drive.File) bool {
+	found, err := f.list(ctx, []string{directoryID}, leaf, false, false, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			extension, exportName, exportMimeType, isDocument = f.findExportFormat(item)
 			if exportName == leaf {
