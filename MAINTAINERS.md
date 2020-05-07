@@ -2,18 +2,19 @@
 
 Current active maintainers of rclone are:
 
-| Name             | GitHub ID   | Specific Responsibilities    |
-| :--------------- | :---------- | :--------------------------  |
-| Nick Craig-Wood  | @ncw        | overall project health       |
-| Stefan Breunig   | @breunigs   |                              |
-| Ishuah Kariuki   | @ishuah     |                              |
-| Remus Bunduc     | @remusb     | cache backend                |
-| Fabian Möller    | @B4dM4n     |                              |
-| Alex Chen        | @Cnly       | onedrive backend             |
-| Sandeep Ummadi   | @sandeepkru | azureblob backend            |
-| Sebastian Bünger | @buengese   | jottacloud & yandex backends |
-| Ivan Andreev     | @ivandeex   | chunker & mailru backends    |
-| Max Sum          | @Max-Sum    | union backend                |
+| Name             | GitHub ID         | Specific Responsibilities    |
+| :--------------- | :---------------- | :--------------------------  |
+| Nick Craig-Wood  | @ncw              | overall project health       |
+| Stefan Breunig   | @breunigs         |                              |
+| Ishuah Kariuki   | @ishuah           |                              |
+| Remus Bunduc     | @remusb           | cache backend                |
+| Fabian Möller    | @B4dM4n           |                              |
+| Alex Chen        | @Cnly             | onedrive backend             |
+| Sandeep Ummadi   | @sandeepkru       | azureblob backend            |
+| Sebastian Bünger | @buengese         | jottacloud & yandex backends |
+| Ivan Andreev     | @ivandeex         | chunker & mailru backends    |
+| Max Sum          | @Max-Sum          | union backend                |
+| Fred             | @creativeprojects | seafile backend              |
 
 **This is a work in progress Draft**
 
