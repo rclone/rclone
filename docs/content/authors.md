@@ -371,3 +371,4 @@ put them back in again. -->
   * gitch1 <63495046+gitch1@users.noreply.github.com>
   * ElonH <elonhhuang@gmail.com>
   * Fred <fred@creativeprojects.tech>
+  * Sébastien Gross <renard@users.noreply.github.com>
