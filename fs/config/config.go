@@ -282,6 +282,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 
 			cmd.Stdout = &stdout
 			cmd.Stderr = &stderr
+			cmd.Stdin = os.Stdin
 
 			if err := cmd.Run(); err != nil {
 				// One does not always get the stderr returned in the wrapped error.
