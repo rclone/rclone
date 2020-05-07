@@ -29,6 +29,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -2783,38 +2784,124 @@ func (f *Fs) changeServiceAccountFile(file string) (err error) {
 	return nil
 }
 
-var commandHelp = []fs.CommandHelp{
-	{
-		Name:  "get",
-		Short: "Get command for fetching the drive config parameters",
-		Long: `This is a get command which will be used to fetch the various drive config parameters
+// Create a shortcut from (f, srcPath) to (dstFs, dstPath)
+//
+// Will not overwrite existing files
+func (f *Fs) makeShorcut(ctx context.Context, srcPath string, dstFs *Fs, dstPath string) (o fs.Object, err error) {
+	srcFs := f
 
-		Usage Examples:
+	// Find source
+	srcObj, err := srcFs.NewObject(ctx, srcPath)
+	var srcID string
+	isDir := false
+	if err != nil {
+		if err != fs.ErrorNotAFile {
+			return nil, errors.Wrap(err, "can't find source")
+		}
+		// source was a directory
+		srcID, err = srcFs.dirCache.FindDir(ctx, srcPath, false)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to find source dir")
+		}
+		isDir = true
 
-		rclone backend get drive: [-o service_account_file] [-o chunk_size]
-		rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
-		`,
-		Opts: map[string]string{
-			"chunk_size":           "show the current upload chunk size",
-			"service_account_file": "show the current service account file",
-		},
-	},
-	{
-		Name:  "set",
-		Short: "Set command for updating the drive config parameters",
-		Long: `This is a set command which will be used to update the various drive config parameters
+	} else {
+		// source was a file
+		srcID = srcObj.(*Object).id
+	}
+	srcID = actualID(srcID) // link to underlying object not to shortcut
 
-		Usage Examples:
+	// Find destination
+	_, err = dstFs.NewObject(ctx, dstPath)
+	if err != fs.ErrorObjectNotFound {
+		if err == nil {
+			err = errors.New("existing file")
+		} else if err == fs.ErrorNotAFile {
+			err = errors.New("existing directory")
+		}
+		return nil, errors.Wrap(err, "not overwriting shortcut target")
+	}
 
-		rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-		rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
-		`,
-		Opts: map[string]string{
-			"chunk_size":           "update the current upload chunk size",
-			"service_account_file": "update the current service account file",
-		},
-	},
+	// Create destination shortcut
+	createInfo, err := dstFs.createFileInfo(ctx, dstPath, time.Now())
+	if err != nil {
+		return nil, errors.Wrap(err, "shortcut destination failed")
+	}
+	createInfo.MimeType = shortcutMimeType
+	createInfo.ShortcutDetails = &drive.FileShortcutDetails{
+		TargetId: srcID,
+	}
+
+	var info *drive.File
+	err = dstFs.pacer.CallNoRetry(func() (bool, error) {
+		info, err = dstFs.svc.Files.Create(createInfo).
+			Fields(partialFields).
+			SupportsAllDrives(true).
+			KeepRevisionForever(dstFs.opt.KeepRevisionForever).
+			Do()
+		return dstFs.shouldRetry(err)
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "shortcut creation failed")
+	}
+	if isDir {
+		return nil, nil
+	}
+	return dstFs.newObjectWithInfo(dstPath, info)
 }
+
+var commandHelp = []fs.CommandHelp{{
+	Name:  "get",
+	Short: "Get command for fetching the drive config parameters",
+	Long: `This is a get command which will be used to fetch the various drive config parameters
+
+Usage Examples:
+
+    rclone backend get drive: [-o service_account_file] [-o chunk_size]
+    rclone rc backend/command command=get fs=drive: [-o service_account_file] [-o chunk_size]
+`,
+	Opts: map[string]string{
+		"chunk_size":           "show the current upload chunk size",
+		"service_account_file": "show the current service account file",
+	},
+}, {
+	Name:  "set",
+	Short: "Set command for updating the drive config parameters",
+	Long: `This is a set command which will be used to update the various drive config parameters
+
+Usage Examples:
+
+    rclone backend set drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+    rclone rc backend/command command=set fs=drive: [-o service_account_file=sa.json] [-o chunk_size=67108864]
+`,
+	Opts: map[string]string{
+		"chunk_size":           "update the current upload chunk size",
+		"service_account_file": "update the current service account file",
+	},
+}, {
+	Name:  "shortcut",
+	Short: "Create shortcuts from files or directories",
+	Long: `This command creates shortcuts from files or directories.
+
+Usage:
+
+    rclone backend shortcut drive: source_item destination_shortcut
+    rclone backend shortcut drive: source_item -o target=drive2: destination_shortcut
+
+In the first example this creates a shortcut from the "source_item"
+which can be a file or a directory to the "destination_shortcut". The
+"source_item" and the "destination_shortcut" should be relative paths
+from "drive:"
+
+In the second example this creates a shortcut from the "source_item"
+relative to "drive:" to the "destination_shortcut" relative to
+"drive2:". This may fail with a permission error if the user
+authenticated with "drive2:" can't read files from "drive:".
+`,
+	Opts: map[string]string{
+		"target": "optional target remote for the shortcut destination",
+	},
+}}
 
 // Command the backend to run a named command
 //
@@ -2860,6 +2947,23 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			out["chunk_size"] = chunkSizeMap
 		}
 		return out, nil
+	case "shortcut":
+		if len(arg) != 2 {
+			return nil, errors.New("need exactly 2 arguments")
+		}
+		dstFs := f
+		target, ok := opt["target"]
+		if ok {
+			targetFs, err := cache.Get(target)
+			if err != nil {
+				return nil, errors.Wrap(err, "couldn't find target")
+			}
+			dstFs, ok = targetFs.(*Fs)
+			if !ok {
+				return nil, errors.New("target is not a drive backend")
+			}
+		}
+		return f.makeShorcut(ctx, arg[0], dstFs, arg[1])
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
