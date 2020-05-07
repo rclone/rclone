@@ -42,6 +42,7 @@ var (
 	urlBase      = flag.String("url-base", "https://pub.rclone.org/integration-tests/", "Base for the online version")
 	uploadPath   = flag.String("upload", "", "Set this to an rclone path to upload the results here")
 	verbose      = flag.Bool("verbose", false, "Set to enable verbose logging in the tests")
+	listRetries  = flag.Int("list-retries", -1, "Number or times to retry listing - set to override the default")
 )
 
 // if matches then is definitely OK in the shell

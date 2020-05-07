@@ -336,6 +336,9 @@ func (r *Run) Init() {
 		r.cmdLine = []string{"./" + r.BinaryName()}
 	}
 	r.cmdLine = append(r.cmdLine, prefix+"v", prefix+"timeout", timeout.String(), "-remote", r.Remote)
+	if *listRetries > 0 {
+		r.cmdLine = append(r.cmdLine, "-list-retries", fmt.Sprint(*listRetries))
+	}
 	r.try = 1
 	if *verbose {
 		r.cmdLine = append(r.cmdLine, "-verbose")
