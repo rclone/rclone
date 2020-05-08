@@ -33,6 +33,7 @@ const (
 	testBindAddress = "localhost:0"
 	testUser        = "user"
 	testPass        = "pass"
+	testTemplate    = "../http/testdata/golden/testindex.html"
 )
 
 // check interfaces
@@ -51,6 +52,7 @@ func TestWebDav(t *testing.T) {
 		opt.ListenAddr = testBindAddress
 		opt.BasicUser = testUser
 		opt.BasicPass = testPass
+		opt.Template = testTemplate
 		hashType = hash.MD5
 
 		// Start the server
@@ -94,6 +96,7 @@ func TestHTTPFunction(t *testing.T) {
 
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
+	opt.Template = testTemplate
 
 	// Start the server
 	w := newWebDAV(f, &opt)

@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -303,12 +304,16 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 	remotes := config.FileSections()
 	sort.Strings(remotes)
 	directory := serve.NewDirectory("", s.HTMLTemplate)
-	directory.Title = "List of all rclone remotes."
+	directory.Name = "List of all rclone remotes."
 	q := url.Values{}
 	for _, remote := range remotes {
 		q.Set("fs", remote)
-		directory.AddEntry("["+remote+":]", true)
+		directory.AddHTMLEntry("["+remote+":]", true, -1, time.Time{})
 	}
+	sortParm := r.URL.Query().Get("sort")
+	orderParm := r.URL.Query().Get("order")
+	directory.ProcessQueryParams(sortParm, orderParm)
+
 	directory.Serve(w, r)
 }
 
@@ -329,8 +334,13 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		directory := serve.NewDirectory(path, s.HTMLTemplate)
 		for _, entry := range entries {
 			_, isDir := entry.(fs.Directory)
-			directory.AddEntry(entry.Remote(), isDir)
+			//directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), entry.ModTime(r.Context()))
+			directory.AddHTMLEntry(entry.Remote(), isDir, entry.Size(), time.Time{})
 		}
+		sortParm := r.URL.Query().Get("sort")
+		orderParm := r.URL.Query().Get("order")
+		directory.ProcessQueryParams(sortParm, orderParm)
+
 		directory.Serve(w, r)
 	} else {
 		path = strings.Trim(path, "/")
