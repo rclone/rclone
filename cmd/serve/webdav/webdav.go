@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/httplib"
@@ -213,7 +214,11 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, w.HTMLTemplate)
 	for _, node := range dirEntries {
-		directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime())
+		if vfsflags.Opt.NoModTime {
+			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})
+		} else {
+			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime().UTC())
+		}
 	}
 
 	sortParm := r.URL.Query().Get("sort")

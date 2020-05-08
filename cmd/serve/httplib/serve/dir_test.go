@@ -16,7 +16,7 @@ import (
 )
 
 func GetTemplate(t *testing.T) *template.Template {
-	htmlTemplate, err := data.GetTemplate("")
+	htmlTemplate, err := data.GetTemplate("../../http/testdata/golden/testindex.html")
 	require.NoError(t, err)
 	return htmlTemplate
 }

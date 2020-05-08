@@ -26,11 +26,13 @@ var (
 
 const (
 	testBindAddress = "localhost:0"
+	testTemplate    = "testdata/golden/testindex.html"
 )
 
 func startServer(t *testing.T, f fs.Fs) {
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
+	opt.Template = testTemplate
 	httpServer = newServer(f, &opt)
 	assert.NoError(t, httpServer.Serve())
 	testURL = httpServer.Server.URL()
