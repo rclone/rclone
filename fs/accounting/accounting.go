@@ -138,6 +138,8 @@ func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.close = in
 	acc.origIn = in
 	acc.closed = false
+	acc.lpBytes = 0
+	acc.bytes = int64(0)
 	if withBuf {
 		acc.WithBuffer()
 	}
