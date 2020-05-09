@@ -372,3 +372,4 @@ put them back in again. -->
   * ElonH <elonhhuang@gmail.com>
   * Fred <fred@creativeprojects.tech>
   * Sébastien Gross <renard@users.noreply.github.com>
+  * Maxime Suret <11944422+msuret@users.noreply.github.com>
