@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 )
 
 // Register with Fs
@@ -200,19 +201,27 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 	o := srcObj.UnWrap()
-	u := o.UpstreamFs()
-	do := u.Features().Copy
-	if do == nil {
+	su := o.UpstreamFs()
+	if su.Features().Copy == nil {
 		return nil, fs.ErrorCantCopy
 	}
-	if !u.IsCreatable() {
+	var du *upstream.Fs
+	for _, u := range f.upstreams {
+		if operations.Same(u.RootFs, su.RootFs) {
+			du = u
+		}
+	}
+	if du == nil {
+		return nil, fs.ErrorCantCopy
+	}
+	if !du.IsCreatable() {
 		return nil, fs.ErrorPermissionDenied
 	}
-	co, err := do(ctx, o, remote)
+	co, err := du.Features().Copy(ctx, o, remote)
 	if err != nil || co == nil {
 		return nil, err
 	}
-	wo, err := f.wrapEntries(u.WrapObject(co))
+	wo, err := f.wrapEntries(du.WrapObject(co))
 	return wo.(*Object), err
 }
 
@@ -243,18 +252,28 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	objs := make([]*upstream.Object, len(entries))
 	errs := Errors(make([]error, len(entries)))
 	multithread(len(entries), func(i int) {
-		u := entries[i].UpstreamFs()
+		su := entries[i].UpstreamFs()
 		o, ok := entries[i].(*upstream.Object)
 		if !ok {
-			errs[i] = errors.Wrap(fs.ErrorNotAFile, u.Name())
+			errs[i] = errors.Wrap(fs.ErrorNotAFile, su.Name())
 			return
 		}
-		mo, err := u.Features().Move(ctx, o.UnWrap(), remote)
+		var du *upstream.Fs
+		for _, u := range f.upstreams {
+			if operations.Same(u.RootFs, su.RootFs) {
+				du = u
+			}
+		}
+		if du == nil {
+			errs[i] = errors.Wrap(fs.ErrorCantMove, su.Name()+":"+remote)
+			return
+		}
+		mo, err := du.Features().Move(ctx, o.UnWrap(), remote)
 		if err != nil || mo == nil {
-			errs[i] = errors.Wrap(err, u.Name())
+			errs[i] = errors.Wrap(err, su.Name())
 			return
 		}
-		objs[i] = u.WrapObject(mo)
+		objs[i] = du.WrapObject(mo)
 	})
 	var en []upstream.Entry
 	for _, o := range objs {
@@ -297,7 +316,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		su := upstreams[i]
 		var du *upstream.Fs
 		for _, u := range f.upstreams {
-			if u.RootFs.Root() == su.RootFs.Root() {
+			if operations.Same(u.RootFs, su.RootFs) {
 				du = u
 			}
 		}
