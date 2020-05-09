@@ -206,34 +206,36 @@ func (s *server) serve() (err error) {
 	}
 
 	// Load the private key, from the cache if not explicitly configured
-	keyPath := s.opt.Key
+	keyPaths := s.opt.HostKeys
 	cachePath := filepath.Join(config.CacheDir, "serve-sftp")
-	if keyPath == "" {
-		keyPath = filepath.Join(cachePath, "id_rsa")
+	if len(keyPaths) == 0 {
+		keyPaths = []string{filepath.Join(cachePath, "id_rsa")}
 	}
-	private, err := loadPrivateKey(keyPath)
-	if err != nil && s.opt.Key == "" {
-		fs.Debugf(nil, "Failed to load %q: %v", keyPath, err)
-		// If loading a cached key failed, make the keys and retry
-		err = os.MkdirAll(cachePath, 0700)
-		if err != nil {
-			return errors.Wrap(err, "failed to create cache path")
+	for _, keyPath := range keyPaths {
+		private, err := loadPrivateKey(keyPath)
+		if err != nil && len(s.opt.HostKeys) == 0 {
+			fs.Debugf(nil, "Failed to load %q: %v", keyPath, err)
+			// If loading a cached key failed, make the keys and retry
+			err = os.MkdirAll(cachePath, 0700)
+			if err != nil {
+				return errors.Wrap(err, "failed to create cache path")
+			}
+			const bits = 2048
+			fs.Logf(nil, "Generating %d bit key pair at %q", bits, keyPath)
+			err = makeSSHKeyPair(bits, keyPath+".pub", keyPath)
+			if err != nil {
+				return errors.Wrap(err, "failed to create SSH key pair")
+			}
+			// reload the new keys
+			private, err = loadPrivateKey(keyPath)
 		}
-		const bits = 2048
-		fs.Logf(nil, "Generating %d bit key pair at %q", bits, keyPath)
-		err = makeSSHKeyPair(bits, keyPath+".pub", keyPath)
 		if err != nil {
-			return errors.Wrap(err, "failed to create SSH key pair")
+			return err
 		}
-		// reload the new keys
-		private, err = loadPrivateKey(keyPath)
-	}
-	if err != nil {
-		return err
-	}
-	fs.Debugf(nil, "Loaded private key from %q", keyPath)
+		fs.Debugf(nil, "Loaded private key from %q", keyPath)
 
-	s.config.AddHostKey(private)
+		s.config.AddHostKey(private)
+	}
 
 	// Once a ServerConfig has been configured, connections can be
 	// accepted.
