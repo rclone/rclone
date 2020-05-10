@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 )
 
+// AfterEpoch returns the time since the epoch for the given time
 func AfterEpoch(t time.Time) bool {
 	return t.After(time.Time{})
 }
