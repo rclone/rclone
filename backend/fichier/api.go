@@ -148,11 +148,6 @@ func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *Fol
 }
 
 func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	err = f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err

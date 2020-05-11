@@ -125,7 +125,7 @@ func (o *Object) setMetadataFromEntry(info putio.File) error {
 // Reads the entry for a file from putio
 func (o *Object) readEntry(ctx context.Context) (f *putio.File, err error) {
 	// defer log.Trace(o, "")("f=%+v, err=%v", f, &err)
-	leaf, directoryID, err := o.fs.dirCache.FindRootAndPath(ctx, o.remote, false)
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, o.remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return nil, fs.ErrorObjectNotFound
