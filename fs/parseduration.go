@@ -48,19 +48,9 @@ var ageSuffixes = []struct {
 	{Suffix: "", Multiplier: time.Second},
 }
 
-// ParseDuration parses a duration string. Accept ms|s|m|h|d|w|M|y suffixes. Defaults to second if not provided
-func ParseDuration(age string) (time.Duration, error) {
+// parse the age as suffixed ages
+func parseDurationSuffixes(age string) (time.Duration, error) {
 	var period float64
-
-	if age == "off" {
-		return time.Duration(DurationOff), nil
-	}
-
-	// Attempt to parse as a time.Duration first
-	d, err := time.ParseDuration(age)
-	if err == nil {
-		return d, nil
-	}
 
 	for _, ageSuffix := range ageSuffixes {
 		if strings.HasSuffix(age, ageSuffix.Suffix) {
@@ -76,6 +66,51 @@ func ParseDuration(age string) (time.Duration, error) {
 	}
 
 	return time.Duration(period), nil
+}
+
+// time formats to try parsing ages as - in order
+var timeFormats = []string{
+	time.RFC3339,
+	"2006-01-02T15:04:05",
+	"2006-01-02 15:04:05",
+	"2006-01-02",
+}
+
+// parse the age as time before the epoch in various date formats
+func parseDurationDates(age string, epoch time.Time) (t time.Duration, err error) {
+	var instant time.Time
+	for _, timeFormat := range timeFormats {
+		instant, err = time.Parse(timeFormat, age)
+		if err == nil {
+			return epoch.Sub(instant), nil
+		}
+	}
+	return t, err
+}
+
+// ParseDuration parses a duration string. Accept ms|s|m|h|d|w|M|y suffixes. Defaults to second if not provided
+func ParseDuration(age string) (d time.Duration, err error) {
+	if age == "off" {
+		return time.Duration(DurationOff), nil
+	}
+
+	// Attempt to parse as a time.Duration first
+	d, err = time.ParseDuration(age)
+	if err == nil {
+		return d, nil
+	}
+
+	d, err = parseDurationSuffixes(age)
+	if err == nil {
+		return d, nil
+	}
+
+	d, err = parseDurationDates(age, time.Now())
+	if err == nil {
+		return d, nil
+	}
+
+	return d, err
 }
 
 // ReadableString parses d into a human readable duration.

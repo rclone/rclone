@@ -429,6 +429,13 @@ seconds or with a suffix of:
 For example `--max-age 2d` means no files older than 2 days will be
 transferred.
 
+This can also be an absolute time in one of these formats
+
+- RFC3339 - eg "2006-01-02T15:04:05Z07:00"
+- ISO8601 Date and time, local timezone - "2006-01-02T15:04:05"
+- ISO8601 Date and time, local timezone - "2006-01-02 15:04:05"
+- ISO8601 Date - "2006-01-02" (YYYY-MM-DD)
+
 ### `--min-age` - Don't transfer any file younger than this ###
 
 This option controls the minimum age of files to transfer.  Give in
