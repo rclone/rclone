@@ -2787,14 +2787,26 @@ func (f *Fs) changeServiceAccountFile(file string) (err error) {
 // Create a shortcut from (f, srcPath) to (dstFs, dstPath)
 //
 // Will not overwrite existing files
-func (f *Fs) makeShorcut(ctx context.Context, srcPath string, dstFs *Fs, dstPath string) (o fs.Object, err error) {
+func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPath string) (o fs.Object, err error) {
 	srcFs := f
+	srcPath = strings.Trim(srcPath, "/")
+	dstPath = strings.Trim(dstPath, "/")
+	if dstPath == "" {
+		return nil, errors.New("shortcut destination can't be root directory")
+	}
 
 	// Find source
-	srcObj, err := srcFs.NewObject(ctx, srcPath)
 	var srcID string
 	isDir := false
-	if err != nil {
+	if srcPath == "" {
+		// source is root directory
+		err = f.dirCache.FindRoot(ctx, false)
+		if err != nil {
+			return nil, err
+		}
+		srcID = f.dirCache.RootID()
+		isDir = true
+	} else if srcObj, err := srcFs.NewObject(ctx, srcPath); err != nil {
 		if err != fs.ErrorNotAFile {
 			return nil, errors.Wrap(err, "can't find source")
 		}
@@ -2804,7 +2816,6 @@ func (f *Fs) makeShorcut(ctx context.Context, srcPath string, dstFs *Fs, dstPath
 			return nil, errors.Wrap(err, "failed to find source dir")
 		}
 		isDir = true
-
 	} else {
 		// source was a file
 		srcID = srcObj.(*Object).id
@@ -2963,7 +2974,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				return nil, errors.New("target is not a drive backend")
 			}
 		}
-		return f.makeShorcut(ctx, arg[0], dstFs, arg[1])
+		return f.makeShortcut(ctx, arg[0], dstFs, arg[1])
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}

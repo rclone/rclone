@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
@@ -268,6 +269,98 @@ func (f *Fs) InternalTestDocumentLink(t *testing.T) {
 	}
 }
 
+// TestIntegration/FsMkdir/FsPutFiles/Internal/Shortcuts
+func (f *Fs) InternalTestShortcuts(t *testing.T) {
+	const (
+		// from fstest/fstests/fstests.go
+		existingDir    = "hello? sausage"
+		existingFile   = "file name.txt"
+		existingSubDir = "êé"
+	)
+	ctx := context.Background()
+	srcObj, err := f.NewObject(ctx, existingFile)
+	require.NoError(t, err)
+	srcHash, err := srcObj.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.NotEqual(t, "", srcHash)
+	t.Run("Errors", func(t *testing.T) {
+		_, err := f.makeShortcut(ctx, "", f, "")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "can't be root")
+
+		_, err = f.makeShortcut(ctx, "notfound", f, "dst")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "can't find source")
+
+		_, err = f.makeShortcut(ctx, existingFile, f, existingFile)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not overwriting")
+		assert.Contains(t, err.Error(), "existing file")
+
+		_, err = f.makeShortcut(ctx, existingFile, f, existingDir)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not overwriting")
+		assert.Contains(t, err.Error(), "existing directory")
+	})
+	t.Run("File", func(t *testing.T) {
+		dstObj, err := f.makeShortcut(ctx, existingFile, f, "shortcut.txt")
+		require.NoError(t, err)
+		require.NotNil(t, dstObj)
+		assert.Equal(t, "shortcut.txt", dstObj.Remote())
+		dstHash, err := dstObj.Hash(ctx, hash.MD5)
+		require.NoError(t, err)
+		assert.Equal(t, srcHash, dstHash)
+		require.NoError(t, dstObj.Remove(ctx))
+	})
+	t.Run("Dir", func(t *testing.T) {
+		dstObj, err := f.makeShortcut(ctx, existingDir, f, "shortcutdir")
+		require.NoError(t, err)
+		require.Nil(t, dstObj)
+		entries, err := f.List(ctx, "shortcutdir")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(entries))
+		require.Equal(t, "shortcutdir/"+existingSubDir, entries[0].Remote())
+		require.NoError(t, f.Rmdir(ctx, "shortcutdir"))
+	})
+	t.Run("Command", func(t *testing.T) {
+		_, err := f.Command(ctx, "shortcut", []string{"one"}, nil)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "need exactly 2 arguments")
+
+		_, err = f.Command(ctx, "shortcut", []string{"one", "two"}, map[string]string{
+			"target": "doesnotexistremote:",
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "couldn't find target")
+
+		_, err = f.Command(ctx, "shortcut", []string{"one", "two"}, map[string]string{
+			"target": ".",
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "target is not a drive backend")
+
+		dstObjI, err := f.Command(ctx, "shortcut", []string{existingFile, "shortcut2.txt"}, map[string]string{
+			"target": fs.ConfigString(f),
+		})
+		require.NoError(t, err)
+		dstObj := dstObjI.(*Object)
+		assert.Equal(t, "shortcut2.txt", dstObj.Remote())
+		dstHash, err := dstObj.Hash(ctx, hash.MD5)
+		require.NoError(t, err)
+		assert.Equal(t, srcHash, dstHash)
+		require.NoError(t, dstObj.Remove(ctx))
+
+		dstObjI, err = f.Command(ctx, "shortcut", []string{existingFile, "shortcut3.txt"}, nil)
+		require.NoError(t, err)
+		dstObj = dstObjI.(*Object)
+		assert.Equal(t, "shortcut3.txt", dstObj.Remote())
+		dstHash, err = dstObj.Hash(ctx, hash.MD5)
+		require.NoError(t, err)
+		assert.Equal(t, srcHash, dstHash)
+		require.NoError(t, dstObj.Remove(ctx))
+	})
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	// These tests all depend on each other so run them as nested tests
 	t.Run("DocumentImport", func(t *testing.T) {
@@ -282,6 +375,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 			})
 		})
 	})
+	t.Run("Shortcuts", f.InternalTestShortcuts)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
