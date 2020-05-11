@@ -53,6 +53,7 @@ See the following for detailed instructions for
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [SugarSync](/sugarsync/)
+  * [Tardigrade](/tardigrade/)
   * [Union](/union/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)

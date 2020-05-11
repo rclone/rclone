@@ -63,6 +63,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * SFTP [:page_facing_up:](https://rclone.org/sftp/)
   * StackPath [:page_facing_up:](https://rclone.org/s3/#stackpath)
   * SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
+  * Tardigrade [:page_facing_up:](https://rclone.org/tardigrade/)
   * Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
   * Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
