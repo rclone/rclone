@@ -57,6 +57,7 @@ docs = [
     "seafile.md",
     "sftp.md",
     "sugarsync.md",
+    "tardigrade.md",
     "union.md",
     "webdav.md",
     "yandex.md",
