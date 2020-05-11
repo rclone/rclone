@@ -201,7 +201,6 @@ backends:
  - backend:  "fichier"
    remote:   "TestFichier:"
    fastlist: false
-   oneonly:  true
  - backend:  "qingstor"
    remote:   "TestQingStor:"
    fastlist: false
