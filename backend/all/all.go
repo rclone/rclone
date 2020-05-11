@@ -36,6 +36,7 @@ import (
 	_ "github.com/rclone/rclone/backend/sharefile"
 	_ "github.com/rclone/rclone/backend/sugarsync"
 	_ "github.com/rclone/rclone/backend/swift"
+	_ "github.com/rclone/rclone/backend/tardigrade"
 	_ "github.com/rclone/rclone/backend/union"
 	_ "github.com/rclone/rclone/backend/webdav"
 	_ "github.com/rclone/rclone/backend/yandex"
