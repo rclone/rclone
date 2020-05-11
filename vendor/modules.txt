@@ -70,6 +70,10 @@ github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/beorn7/perks/quantile
 # github.com/billziss-gh/cgofuse v1.2.0
 github.com/billziss-gh/cgofuse/fuse
+# github.com/btcsuite/btcutil v1.0.1
+github.com/btcsuite/btcutil/base58
+# github.com/calebcase/tmpfile v1.0.1
+github.com/calebcase/tmpfile
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
 # github.com/coreos/go-semver v0.3.0
@@ -94,6 +98,8 @@ github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users
 github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common
+# github.com/gogo/protobuf v1.2.1
+github.com/gogo/protobuf/proto
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.3
@@ -140,6 +146,8 @@ github.com/mattn/go-isatty
 github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/minio/sha256-simd v0.0.0-20190328051042-05b4dd3047e5
+github.com/minio/sha256-simd
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
 # github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
@@ -192,6 +200,11 @@ github.com/shurcooL/sanitized_anchor_name
 github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 github.com/skratchdot/open-golang/open
+# github.com/spacemonkeygo/errors v0.0.0-20171212215202-9064522e9fd1
+github.com/spacemonkeygo/errors
+# github.com/spacemonkeygo/monkit/v3 v3.0.6
+github.com/spacemonkeygo/monkit/v3
+github.com/spacemonkeygo/monkit/v3/monotime
 # github.com/spf13/cobra v1.0.0
 github.com/spf13/cobra
 github.com/spf13/cobra/doc
@@ -202,6 +215,8 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/t3rm1n4l/go-mega v0.0.0-20200117211730-79a813bb328d
 github.com/t3rm1n4l/go-mega
+# github.com/vivint/infectious v0.0.0-20190108171102-2455b059135b
+github.com/vivint/infectious
 # github.com/xanzy/ssh-agent v0.2.1
 github.com/xanzy/ssh-agent
 # github.com/youmark/pkcs8 v0.0.0-20191102193632-94c173a94d60
@@ -218,6 +233,8 @@ github.com/yunify/qingstor-sdk-go/v3/request/signer
 github.com/yunify/qingstor-sdk-go/v3/request/unpacker
 github.com/yunify/qingstor-sdk-go/v3/service
 github.com/yunify/qingstor-sdk-go/v3/utils
+# github.com/zeebo/errs v1.2.2
+github.com/zeebo/errs
 # go.etcd.io/bbolt v1.3.3
 go.etcd.io/bbolt
 # go.opencensus.io v0.22.3
@@ -237,10 +254,23 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
+# go.uber.org/atomic v1.4.0
+go.uber.org/atomic
+# go.uber.org/multierr v1.1.0
+go.uber.org/multierr
+# go.uber.org/zap v1.10.0
+go.uber.org/zap
+go.uber.org/zap/buffer
+go.uber.org/zap/internal/bufferpool
+go.uber.org/zap/internal/color
+go.uber.org/zap/internal/exit
+go.uber.org/zap/zapcore
 # goftp.io/server v0.3.2
 goftp.io/server
 # golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
+golang.org/x/crypto/argon2
 golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blake2b
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
@@ -284,6 +314,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/errgroup
+golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
@@ -362,3 +393,54 @@ google.golang.org/grpc/status
 google.golang.org/grpc/tap
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
+# storj.io/common v0.0.0-20200429074521-4ba140e4b747
+storj.io/common/encryption
+storj.io/common/errs2
+storj.io/common/fpath
+storj.io/common/identity
+storj.io/common/internal/grpchook
+storj.io/common/macaroon
+storj.io/common/memory
+storj.io/common/netutil
+storj.io/common/paths
+storj.io/common/pb
+storj.io/common/peertls
+storj.io/common/peertls/extensions
+storj.io/common/peertls/tlsopts
+storj.io/common/pkcrypto
+storj.io/common/ranger
+storj.io/common/readcloser
+storj.io/common/rpc
+storj.io/common/rpc/rpcpeer
+storj.io/common/rpc/rpcpool
+storj.io/common/rpc/rpcstatus
+storj.io/common/rpc/rpctracing
+storj.io/common/signing
+storj.io/common/storj
+storj.io/common/sync2
+storj.io/common/uuid
+# storj.io/drpc v0.0.11
+storj.io/drpc
+storj.io/drpc/drpcconn
+storj.io/drpc/drpcctx
+storj.io/drpc/drpcdebug
+storj.io/drpc/drpcerr
+storj.io/drpc/drpcmanager
+storj.io/drpc/drpcmetadata
+storj.io/drpc/drpcmetadata/invoke
+storj.io/drpc/drpcmux
+storj.io/drpc/drpcsignal
+storj.io/drpc/drpcstream
+storj.io/drpc/drpcwire
+# storj.io/uplink v1.0.5
+storj.io/uplink
+storj.io/uplink/internal/expose
+storj.io/uplink/internal/telemetryclient
+storj.io/uplink/private/ecclient
+storj.io/uplink/private/eestream
+storj.io/uplink/private/metainfo
+storj.io/uplink/private/metainfo/kvmetainfo
+storj.io/uplink/private/piecestore
+storj.io/uplink/private/storage/segments
+storj.io/uplink/private/storage/streams
+storj.io/uplink/private/stream
