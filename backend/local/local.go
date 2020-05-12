@@ -1249,10 +1249,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Gather source attributes
-	mode, mTime, aTime, err := stat(srcObj.path)
-	if err != nil {
-		return nil, err
-	}
+	si, err := os.Stat(srcObj.path)
+	// mode, mTime, aTime, err := stat(srcObj.path)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// Open the source for reading
 	in, err := os.Open(srcObj.path)
@@ -1262,7 +1263,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	defer in.Close()
 
 	// Open destination for writing
-	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, mode)
+	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, si.Mode())
+	// out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -1274,10 +1276,13 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	out.Close()
+	err = out.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	// Update attributes of destination
-	err = os.Chtimes(dstObj.path, aTime, mTime)
+	err = os.Chtimes(dstObj.path, si.ModTime(), si.ModTime())
 	if err != nil {
 		return nil, err
 	}
