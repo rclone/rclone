@@ -91,11 +91,11 @@ func TestAccountRead(t *testing.T) {
 	stats := NewStats()
 	acc := newAccountSizeName(stats, in, 1, "test")
 
-	assert.True(t, acc.start.IsZero())
-	acc.statmu.Lock()
-	assert.Equal(t, 0, acc.lpBytes)
-	assert.Equal(t, int64(0), acc.bytes)
-	acc.statmu.Unlock()
+	assert.True(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, 0, acc.values.lpBytes)
+	assert.Equal(t, int64(0), acc.values.bytes)
+	acc.values.mu.Unlock()
 	assert.Equal(t, int64(0), stats.bytes)
 
 	var buf = make([]byte, 2)
@@ -104,11 +104,11 @@ func TestAccountRead(t *testing.T) {
 	assert.Equal(t, 2, n)
 	assert.Equal(t, []byte{1, 2}, buf[:n])
 
-	assert.False(t, acc.start.IsZero())
-	acc.statmu.Lock()
-	assert.Equal(t, 2, acc.lpBytes)
-	assert.Equal(t, int64(2), acc.bytes)
-	acc.statmu.Unlock()
+	assert.False(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, 2, acc.values.lpBytes)
+	assert.Equal(t, int64(2), acc.values.bytes)
+	acc.values.mu.Unlock()
 	assert.Equal(t, int64(2), stats.bytes)
 
 	n, err = acc.Read(buf)
@@ -135,11 +135,11 @@ func testAccountWriteTo(t *testing.T, withBuffer bool) {
 		acc = acc.WithBuffer()
 	}
 
-	assert.True(t, acc.start.IsZero())
-	acc.statmu.Lock()
-	assert.Equal(t, 0, acc.lpBytes)
-	assert.Equal(t, int64(0), acc.bytes)
-	acc.statmu.Unlock()
+	assert.True(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, 0, acc.values.lpBytes)
+	assert.Equal(t, int64(0), acc.values.bytes)
+	acc.values.mu.Unlock()
 	assert.Equal(t, int64(0), stats.bytes)
 
 	var out bytes.Buffer
@@ -149,11 +149,11 @@ func testAccountWriteTo(t *testing.T, withBuffer bool) {
 	assert.Equal(t, int64(len(buf)), n)
 	assert.Equal(t, buf, out.Bytes())
 
-	assert.False(t, acc.start.IsZero())
-	acc.statmu.Lock()
-	assert.Equal(t, len(buf), acc.lpBytes)
-	assert.Equal(t, int64(len(buf)), acc.bytes)
-	acc.statmu.Unlock()
+	assert.False(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, len(buf), acc.values.lpBytes)
+	assert.Equal(t, int64(len(buf)), acc.values.bytes)
+	acc.values.mu.Unlock()
 	assert.Equal(t, int64(len(buf)), stats.bytes)
 
 	assert.NoError(t, acc.Close())
