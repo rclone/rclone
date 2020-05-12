@@ -14,6 +14,7 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func init() {
@@ -92,6 +93,26 @@ var configProvidersCommand = &cobra.Command{
 	},
 }
 
+var (
+	configObscure   bool
+	configNoObscure bool
+)
+
+const configPasswordHelp = `
+If any of the parameters passed is a password field, then rclone will
+automatically obscure them if they aren't already obscured before
+putting them in the config file.
+
+**NB** If the password parameter is 22 characters or longer and
+consists only of base64 characters then rclone can get confused about
+whether the password is already obscured or not and put unobscured
+passwords into the config file. If you want to be 100% certain that
+the passwords get obscured then use the "--obscure" flag, or if you
+are 100% certain you are already passing obscured passwords then use
+"--no-obscure".  You can also set osbscured passwords using the
+"rclone config password" command.
+`
+
 var configCreateCommand = &cobra.Command{
 	Use:   "create <name> <type> [<key> <value>]*",
 	Short: `Create a new remote with name, type and options.`,
@@ -107,10 +128,7 @@ you would do:
 Note that if the config process would normally ask a question the
 default is taken.  Each time that happens rclone will print a message
 saying how to affect the value taken.
-
-If any of the parameters passed is a password field, then rclone will
-automatically obscure them before putting them in the config file.
-
+` + configPasswordHelp + `
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
@@ -122,13 +140,20 @@ using remote authorization you would do this:
 		if err != nil {
 			return err
 		}
-		err = config.CreateRemote(args[0], args[1], in)
+		err = config.CreateRemote(args[0], args[1], in, configObscure, configNoObscure)
 		if err != nil {
 			return err
 		}
 		config.ShowRemote(args[0])
 		return nil
 	},
+}
+
+func init() {
+	for _, cmdFlags := range []*pflag.FlagSet{configCreateCommand.Flags(), configUpdateCommand.Flags()} {
+		flags.BoolVarP(cmdFlags, &configObscure, "obscure", "", false, "Force any passwords to be obscured.")
+		flags.BoolVarP(cmdFlags, &configNoObscure, "no-obscure", "", false, "Force any passwords not to be obscured.")
+	}
 }
 
 var configUpdateCommand = &cobra.Command{
@@ -142,10 +167,7 @@ For example to update the env_auth field of a remote of name myremote
 you would do:
 
     rclone config update myremote swift env_auth true
-
-If any of the parameters passed is a password field, then rclone will
-automatically obscure them before putting them in the config file.
-
+` + configPasswordHelp + `
 If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
@@ -157,7 +179,7 @@ require this add an extra parameter thus:
 		if err != nil {
 			return err
 		}
-		err = config.UpdateRemote(args[0], in)
+		err = config.UpdateRemote(args[0], in, configObscure, configNoObscure)
 		if err != nil {
 			return err
 		}
