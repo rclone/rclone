@@ -1243,23 +1243,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, errors.New("can't copy file onto non-file")
 	}
 
-	// Create destination directories
-	err = dstObj.mkdirAll()
-	if err != nil {
-		return nil, err
-	}
-
-	fs.Debugf(f, "Opening destination for writing: %v", dstObj.path)
-
-	// Open destination for writing
-	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, si.Mode())
-	if err != nil {
-		return nil, err
-	}
-	defer out.Close()
-
-	fs.Debugf(f, "Opening source for reading: %v", srcObj.path)
-
 	// Open source for reading
 	in, err := srcObj.Open(ctx)
 	if err != nil {
@@ -1278,6 +1261,23 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	fs.Debugf(f, "Source mode: %v", si.Mode())
 	fs.Debugf(f, "Source modtime: %v", si.ModTime())
 	fs.Debugf(f, "Source size: %v", si.Size())
+
+	// Create destination directories
+	err = dstObj.mkdirAll()
+	if err != nil {
+		return nil, err
+	}
+
+	fs.Debugf(f, "Opening destination for writing: %v", dstObj.path)
+
+	// Open destination for writing
+	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, si.Mode())
+	if err != nil {
+		return nil, err
+	}
+	defer out.Close()
+
+	fs.Debugf(f, "Opening source for reading: %v", srcObj.path)
 
 	// Do the copy
 	_, err = io.Copy(out, in)
