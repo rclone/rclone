@@ -1211,9 +1211,87 @@ func uncPath(l string) string {
 	return l
 }
 
+// Copy src to this remote using server side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	fs.Debugf(f, "Copy obj '%s' -> '%s'", src, remote)
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't copy - not same remote type")
+		return nil, fs.ErrorCantCopy
+	}
+
+	// Temporary Object under construction
+	dstObj := f.newObject(remote)
+
+	// Check it is a file if it exists
+	err := dstObj.lstat()
+	if os.IsNotExist(err) {
+		// OK
+	} else if err != nil {
+		return nil, err
+	} else if !dstObj.fs.isRegular(dstObj.mode) {
+		// It isn't a file
+		return nil, errors.New("can't copy file onto non-file")
+	}
+	// Create destination directories
+	err = dstObj.mkdirAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// Gather source attributes
+	mode, mTime, aTime, err := stat(srcObj.path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Open the source for reading
+	in, err := os.Open(srcObj.path)
+	if err != nil {
+		return nil, err
+	}
+	defer in.Close()
+
+	// Open destination for writing
+	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, mode)
+	if err != nil {
+		return nil, err
+	}
+	defer out.Close()
+
+	// Do the copy
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update attributes of destination
+	err = os.Chtimes(dstObj.path, aTime, mTime)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the info
+	err = dstObj.lstat()
+	if err != nil {
+		return nil, err
+	}
+
+	return dstObj, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = &Fs{}
+	_ fs.Copier         = &Fs{}
 	_ fs.Purger         = &Fs{}
 	_ fs.PutStreamer    = &Fs{}
 	_ fs.Mover          = &Fs{}
