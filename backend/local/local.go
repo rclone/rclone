@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/djherbis/times"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -1286,6 +1287,22 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	return dstObj, nil
+}
+
+func stat(path string) (mode os.FileMode, mTime time.Time, aTime time.Time, err error) {
+	zeroTime := time.Unix(0, 0)
+	zeroMode := os.FileMode(int(0000))
+
+	osStat, err := os.Stat(path)
+	if err != nil {
+		return zeroMode, zeroTime, zeroTime, err
+	}
+	timeStat, err := times.Stat(path)
+	if err != nil {
+		return zeroMode, zeroTime, zeroTime, err
+	}
+
+	return osStat.Mode(), timeStat.ModTime(), timeStat.AccessTime(), nil
 }
 
 // Check the interfaces are satisfied
