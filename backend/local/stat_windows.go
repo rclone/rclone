@@ -8,8 +8,9 @@ import (
 
 func stat(path string) (mode os.FileMode, mTime time.Time, aTime time.Time, err error) {
 	stat, err := os.Stat(path)
+	zeroTime := time.Unix(0, 0)
 	if err != nil {
-		return nil, nil, nil, err
+		return os.FileMode(int(0000)), zeroTime, zeroTime, err
 	}
 	mode = stat.Mode()
 	mTime = time.Unix(0, stat.Sys().(*syscall.Win32FileAttributeData).LastWriteTime.Nanoseconds())
