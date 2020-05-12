@@ -373,3 +373,4 @@ put them back in again. -->
   * Fred <fred@creativeprojects.tech>
   * Sébastien Gross <renard@users.noreply.github.com>
   * Maxime Suret <11944422+msuret@users.noreply.github.com>
+  * Caleb Case <caleb@storj.io>
