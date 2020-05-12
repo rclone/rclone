@@ -1030,7 +1030,10 @@ func suppressConfirm() func() {
 
 // UpdateRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
-func UpdateRemote(name string, keyValues rc.Params) error {
+func UpdateRemote(name string, keyValues rc.Params, doObscure, noObscure bool) error {
+	if doObscure && noObscure {
+		return errors.New("can't use --obscure and --no-obscure together")
+	}
 	err := fspath.CheckConfigName(name)
 	if err != nil {
 		return err
@@ -1039,18 +1042,20 @@ func UpdateRemote(name string, keyValues rc.Params) error {
 
 	// Work out which options need to be obscured
 	needsObscure := map[string]struct{}{}
-	if fsType := FileGet(name, "type"); fsType != "" {
-		if ri, err := fs.Find(fsType); err != nil {
-			fs.Debugf(nil, "Couldn't find fs for type %q", fsType)
-		} else {
-			for _, opt := range ri.Options {
-				if opt.IsPassword {
-					needsObscure[opt.Name] = struct{}{}
+	if !noObscure {
+		if fsType := FileGet(name, "type"); fsType != "" {
+			if ri, err := fs.Find(fsType); err != nil {
+				fs.Debugf(nil, "Couldn't find fs for type %q", fsType)
+			} else {
+				for _, opt := range ri.Options {
+					if opt.IsPassword {
+						needsObscure[opt.Name] = struct{}{}
+					}
 				}
 			}
+		} else {
+			fs.Debugf(nil, "UpdateRemote: Couldn't find fs type")
 		}
-	} else {
-		fs.Debugf(nil, "UpdateRemote: Couldn't find fs type")
 	}
 
 	// Set the config
@@ -1059,8 +1064,9 @@ func UpdateRemote(name string, keyValues rc.Params) error {
 		// Obscure parameter if necessary
 		if _, ok := needsObscure[k]; ok {
 			_, err := obscure.Reveal(vStr)
-			if err != nil {
+			if err != nil || doObscure {
 				// If error => not already obscured, so obscure it
+				// or we are forced to obscure
 				vStr, err = obscure.Obscure(vStr)
 				if err != nil {
 					return errors.Wrap(err, "UpdateRemote: obscure failed")
@@ -1077,7 +1083,7 @@ func UpdateRemote(name string, keyValues rc.Params) error {
 // CreateRemote creates a new remote with name, provider and a list of
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
-func CreateRemote(name string, provider string, keyValues rc.Params) error {
+func CreateRemote(name string, provider string, keyValues rc.Params, doObscure, noObscure bool) error {
 	err := fspath.CheckConfigName(name)
 	if err != nil {
 		return err
@@ -1087,7 +1093,7 @@ func CreateRemote(name string, provider string, keyValues rc.Params) error {
 	// Set the type
 	getConfigData().SetValue(name, "type", provider)
 	// Set the remaining values
-	return UpdateRemote(name, keyValues)
+	return UpdateRemote(name, keyValues, doObscure, noObscure)
 }
 
 // PasswordRemote adds the keyValues passed in to the remote of name.
@@ -1101,7 +1107,7 @@ func PasswordRemote(name string, keyValues rc.Params) error {
 	for k, v := range keyValues {
 		keyValues[k] = obscure.MustObscure(fmt.Sprint(v))
 	}
-	return UpdateRemote(name, keyValues)
+	return UpdateRemote(name, keyValues, false, true)
 }
 
 // JSONListProviders prints all the providers and options in JSON format

@@ -101,11 +101,12 @@ func TestRc(t *testing.T) {
 	t.Run("Password", func(t *testing.T) {
 		call := rc.Calls.Get("config/password")
 		assert.NotNil(t, call)
+		pw2 := obscure.MustObscure("password")
 		in := rc.Params{
 			"name": testName,
 			"parameters": rc.Params{
 				"test_key":  "rutabaga",
-				"test_key2": "cabbage",
+				"test_key2": pw2, // check we encode an already encoded password
 			},
 		}
 		out, err := call.Fn(context.Background(), in)
@@ -114,7 +115,7 @@ func TestRc(t *testing.T) {
 
 		assert.Equal(t, "local", config.FileGet(testName, "type"))
 		assert.Equal(t, "rutabaga", obscure.MustReveal(config.FileGet(testName, "test_key")))
-		assert.Equal(t, "cabbage", obscure.MustReveal(config.FileGet(testName, "test_key2")))
+		assert.Equal(t, pw2, obscure.MustReveal(config.FileGet(testName, "test_key2")))
 	})
 
 	// Delete the test remote
