@@ -1,3 +1,5 @@
+// +build windows
+
 package local
 
 import (
@@ -15,5 +17,5 @@ func stat(path string) (mode os.FileMode, mTime time.Time, aTime time.Time, err 
 	mode = stat.Mode()
 	mTime = time.Unix(0, stat.Sys().(*syscall.Win32FileAttributeData).LastWriteTime.Nanoseconds())
 	aTime = time.Unix(0, stat.Sys().(*syscall.Win32FileAttributeData).LastAccessTime.Nanoseconds())
-	return mode, mTime, aTime, cTime, nil
+	return mode, mTime, aTime, nil
 }

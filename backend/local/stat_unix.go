@@ -1,3 +1,5 @@
+// +build darwin dragonfly freebsd linux
+
 package local
 
 import (
@@ -15,6 +17,6 @@ func stat(path string) (mode os.FileMode, mTime time.Time, aTime time.Time, err 
 	mode = stat.Mode()
 	si := stat.Sys().(*syscall.Stat_t)
 	mTime = stat.ModTime()
-	aTime = time.Unix(int64(si.Atimespec.Sec), int64(si.Atimespec.Nsec))
+	aTime = time.Unix(int64(si.Atim.Sec), int64(si.Atim.Nsec))
 	return mode, mTime, aTime, nil
 }
