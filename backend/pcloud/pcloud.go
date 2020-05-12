@@ -727,33 +727,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.root, srcRemote)
-	dstPath := path.Join(f.root, dstRemote)
 
-	// Refuse to move to or from the root
-	if srcPath == "" || dstPath == "" {
-		fs.Debugf(src, "DirMove error: Can't move root")
-		return errors.New("can't move root directory")
-	}
-
-	// Find ID of dst parent, creating subdirs if necessary
-	leaf, directoryID, err := f.dirCache.FindPath(ctx, dstRemote, true)
-	if err != nil {
-		return err
-	}
-
-	// Check destination does not exist
-	_, err = f.dirCache.FindDir(ctx, dstRemote, false)
-	if err == fs.ErrorDirNotFound {
-		// OK
-	} else if err != nil {
-		return err
-	} else {
-		return fs.ErrorDirExists
-	}
-
-	// Find ID of src
-	srcID, err := srcFs.dirCache.FindDir(ctx, srcRemote, false)
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
 	if err != nil {
 		return err
 	}
@@ -765,8 +740,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		Parameters: url.Values{},
 	}
 	opts.Parameters.Set("folderid", dirIDtoNumber(srcID))
-	opts.Parameters.Set("toname", f.opt.Enc.FromStandardName(leaf))
-	opts.Parameters.Set("tofolderid", dirIDtoNumber(directoryID))
+	opts.Parameters.Set("toname", f.opt.Enc.FromStandardName(dstLeaf))
+	opts.Parameters.Set("tofolderid", dirIDtoNumber(dstDirectoryID))
 	var resp *http.Response
 	var result api.ItemResult
 	err = f.pacer.Call(func() (bool, error) {

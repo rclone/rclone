@@ -1159,43 +1159,19 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.root, srcRemote)
-	dstPath := path.Join(f.root, dstRemote)
 
-	// Refuse to move to or from the root
-	if srcPath == "" || dstPath == "" {
-		fs.Debugf(src, "DirMove error: Can't move root")
-		return errors.New("can't move root directory")
-	}
-
-	// Find ID of dst parent, creating subdirs if necessary
-	leaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, dstRemote, true)
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
 	if err != nil {
 		return err
 	}
+
 	parsedDstDirID, dstDriveID, _ := parseNormalizedID(dstDirectoryID)
-
-	// Find ID of src
-	srcID, err := srcFs.dirCache.FindDir(ctx, srcRemote, false)
-	if err != nil {
-		return err
-	}
 	_, srcDriveID, _ := parseNormalizedID(srcID)
 
 	if dstDriveID != srcDriveID {
 		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
 		// "Items cannot be moved between Drives using this request."
 		return fs.ErrorCantDirMove
-	}
-
-	// Check destination does not exist
-	_, err = f.dirCache.FindDir(ctx, dstRemote, false)
-	if err == fs.ErrorDirNotFound {
-		// OK
-	} else if err != nil {
-		return err
-	} else {
-		return fs.ErrorDirExists
 	}
 
 	// Get timestamps of src so they can be preserved
@@ -1207,7 +1183,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// Do the move
 	opts := newOptsCall(srcID, "PATCH", "")
 	move := api.MoveItemRequest{
-		Name: f.opt.Enc.FromStandardName(leaf),
+		Name: f.opt.Enc.FromStandardName(dstLeaf),
 		ParentReference: &api.ItemReference{
 			DriveID: dstDriveID,
 			ID:      parsedDstDirID,
