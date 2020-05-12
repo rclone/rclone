@@ -1242,33 +1242,42 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// It isn't a file
 		return nil, errors.New("can't copy file onto non-file")
 	}
+
 	// Create destination directories
 	err = dstObj.mkdirAll()
 	if err != nil {
 		return nil, err
 	}
 
-	// Gather source attributes
-	si, err := os.Stat(srcObj.path)
-	// mode, mTime, aTime, err := stat(srcObj.path)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	fs.Debugf(f, "Opening destination for writing: %v", dstObj.path)
 
-	// Open the source for reading
-	in, err := os.Open(srcObj.path)
+	// Open destination for writing
+	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, si.Mode())
+	if err != nil {
+		return nil, err
+	}
+	defer out.Close()
+
+	fs.Debugf(f, "Opening source for reading: %v", srcObj.path)
+
+	// Open source for reading
+	in, err := srcObj.Open(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer in.Close()
 
-	// Open destination for writing
-	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, si.Mode())
-	// out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, mode)
+	fs.Debugf(f, "Gathering attrs of source")
+	// Gather source attributes
+	si, err := os.Stat(srcObj.path)
 	if err != nil {
 		return nil, err
 	}
-	defer out.Close()
+
+	fs.Debugf(f, "Source path: %s", srcObj.path)
+	fs.Debugf(f, "Source mode: %v", si.Mode())
+	fs.Debugf(f, "Source modtime: %v", si.ModTime())
+	fs.Debugf(f, "Source size: %v", si.Size())
 
 	// Do the copy
 	_, err = io.Copy(out, in)
@@ -1282,10 +1291,17 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Update attributes of destination
-	err = os.Chtimes(dstObj.path, si.ModTime(), si.ModTime())
+	err = lChtimes(dstObj.path, si.ModTime(), si.ModTime())
 	if err != nil {
 		return nil, err
 	}
+
+	di, _ := os.Stat(dstObj.path)
+
+	fs.Debugf(f, "Dest path: %s", dstObj.path)
+	fs.Debugf(f, "Dest mode: %v", di.Mode())
+	fs.Debugf(f, "Dest modtime: %v", di.ModTime())
+	fs.Debugf(f, "Dest size: %v", di.Size())
 
 	// Update the info
 	err = dstObj.lstat()
