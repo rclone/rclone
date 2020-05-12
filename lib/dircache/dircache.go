@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path"
 	"strings"
 	"sync"
 
@@ -367,4 +368,67 @@ func (dc *DirCache) ResetRoot() {
 
 	// Put the root directory in
 	dc.Put("", dc.rootID)
+}
+
+// DirMove prepares to move the directory (srcDC, srcRoot, srcRemote)
+// into the directory (dc, dstRoot, dstRemote)
+//
+// It does all the checking, creates intermediate directories and
+// returns leafs and IDs ready for the move.
+//
+// This returns
+//
+// - srcID - ID of the source directory
+// - srcDirectoryID - ID of the parent of the source directory
+// - srcLeaf - leaf name of the source directory
+// - dstDirectoryID - ID of the parent of the destination directory
+// - dstLeaf - leaf name of the destination directory
+//
+// These should be used to do the actual move then
+// srcDC.FlushDir(srcRemote) should be called.
+func (dc *DirCache) DirMove(
+	ctx context.Context, srcDC *DirCache, srcRoot, srcRemote, dstRoot, dstRemote string) (srcID, srcDirectoryID, srcLeaf, dstDirectoryID, dstLeaf string, err error) {
+	var (
+		dstDC   = dc
+		srcPath = path.Join(srcRoot, srcRemote)
+		dstPath = path.Join(dstRoot, dstRemote)
+	)
+
+	// Refuse to move to or from the root
+	if srcPath == "" || dstPath == "" {
+		// fs.Debugf(src, "DirMove error: Can't move root")
+		err = errors.New("can't move root directory")
+		return
+	}
+
+	// Find ID of dst parent, creating subdirs if necessary
+	dstLeaf, dstDirectoryID, err = dstDC.FindPath(ctx, dstRemote, true)
+	if err != nil {
+		return
+	}
+
+	// Check destination does not exist
+	_, err = dstDC.FindDir(ctx, dstRemote, false)
+	if err == fs.ErrorDirNotFound {
+		// OK
+	} else if err != nil {
+		return
+	} else {
+		err = fs.ErrorDirExists
+		return
+	}
+
+	// Find ID of src parent
+	srcLeaf, srcDirectoryID, err = srcDC.FindPath(ctx, srcRemote, false)
+	if err != nil {
+		return
+	}
+
+	// Find ID of src
+	srcID, err = srcDC.FindDir(ctx, srcRemote, false)
+	if err != nil {
+		return
+	}
+
+	return
 }
