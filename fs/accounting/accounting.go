@@ -146,12 +146,16 @@ func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.close = in
 	acc.origIn = in
 	acc.closed = false
-	acc.lpBytes = 0
-	acc.bytes = int64(0)
 	if withBuf {
 		acc.WithBuffer()
 	}
 	acc.mu.Unlock()
+
+	// Reset counter to stop percentage going over 100%
+	acc.values.mu.Lock()
+	acc.values.lpBytes = 0
+	acc.values.bytes = 0
+	acc.values.mu.Unlock()
 }
 
 // averageLoop calculates averages for the stats in the background
