@@ -1274,6 +1274,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
+	out.Close()
+
 	// Update attributes of destination
 	err = os.Chtimes(dstObj.path, aTime, mTime)
 	if err != nil {
