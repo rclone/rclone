@@ -1525,6 +1525,9 @@ func TestRcatSize(t *testing.T) {
 }
 
 func TestCopyFileMaxTransfer(t *testing.T) {
+	if *fstest.RemoteName == "" {
+		t.Skip("Skipping test on local remote")
+	}
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	old := fs.Config.MaxTransfer
