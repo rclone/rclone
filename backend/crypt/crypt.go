@@ -705,24 +705,27 @@ var commandHelp = []fs.CommandHelp{
 	{
 		Name:  "encode",
 		Short: "Encode the given filename(s)",
-		Long: `Encode the given filename(s)
+		Long: `This encodes the filenames given as arguments returning a list of
+strings of the encoded results.
 
-		Usage Example:
+Usage Example:
 
-		rclone backend encode crypt: file1 [file2...]
-		rclone rc backend/command command=encode fs=crypt: file1 [file2...]
-		`,
+    rclone backend encode crypt: file1 [file2...]
+    rclone rc backend/command command=encode fs=crypt: file1 [file2...]
+`,
 	},
 	{
 		Name:  "decode",
 		Short: "Decode the given filename(s)",
-		Long: `Decode the given filename(s)
+		Long: `This decodes the filenames given as arguments returning a list of
+strings of the decoded results. It will return an error if any of the
+inputs are invalid.
 
-		Usage Example:
+Usage Example:
 
-		rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
-		rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
-		`,
+    rclone backend decode crypt: encryptedfile1 [encryptedfile2...]
+    rclone rc backend/command command=decode fs=crypt: encryptedfile1 [encryptedfile2...]
+`,
 	},
 }
 
@@ -738,20 +741,20 @@ var commandHelp = []fs.CommandHelp{
 func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
 	switch name {
 	case "decode":
-		out := make(map[string]string)
+		out := make([]string, 0, len(arg))
 		for _, encryptedFileName := range arg {
 			fileName, err := f.DecryptFileName(encryptedFileName)
 			if err != nil {
 				return out, errors.Wrap(err, fmt.Sprintf("Failed to decrypt : %s", encryptedFileName))
 			}
-			out[encryptedFileName] = fileName
+			out = append(out, fileName)
 		}
 		return out, nil
 	case "encode":
-		out := make(map[string]string)
+		out := make([]string, 0, len(arg))
 		for _, fileName := range arg {
 			encryptedFileName := f.EncryptFileName(fileName)
-			out[fileName] = encryptedFileName
+			out = append(out, encryptedFileName)
 		}
 		return out, nil
 	default:
