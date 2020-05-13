@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 )
 
 // Register with Fs
@@ -597,17 +598,13 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // Don't implement this unless you have a more efficient way
 // of listing recursively that doing a directory traversal.
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
-	for _, u := range f.upstreams {
-		if u.Features().ListR == nil {
-			return errors.Errorf("ListR Unsupported for branch: %s", u.Name())
-		}
-	}
 	var entriess [][]upstream.Entry
 	errs := Errors(make([]error, len(f.upstreams)))
 	var mutex sync.Mutex
 	multithread(len(f.upstreams), func(i int) {
 		u := f.upstreams[i]
-		err := u.Features().ListR(ctx, dir, func(entries fs.DirEntries) error {
+		var err error
+		callback := func(entries fs.DirEntries) error {
 			uEntries := make([]upstream.Entry, len(entries))
 			for j, e := range entries {
 				uEntries[j], _ = u.WrapEntry(e)
@@ -616,7 +613,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			entriess = append(entriess, uEntries)
 			mutex.Unlock()
 			return nil
-		})
+		}
+		do := u.Features().ListR
+		if do != nil {
+			err = do(ctx, dir, callback)
+		} else {
+			err = walk.ListR(ctx, u, dir, true, -1, walk.ListAll, callback)
+		}
 		if err != nil {
 			errs[i] = errors.Wrap(err, u.Name())
 			return
@@ -811,6 +814,19 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}).Fill(f)
 	for _, f := range upstreams {
 		features = features.Mask(f) // Mask all upstream fs
+	}
+
+	// Enable ListR when upstreams either support ListR or is local
+	// But not when all upstreams are local
+	if features.ListR == nil {
+		for _, u := range upstreams {
+			if u.Features().ListR != nil {
+				features.ListR = f.ListR
+			} else if !u.Features().IsLocal {
+				features.ListR = nil
+				break
+			}
+		}
 	}
 
 	f.features = features
