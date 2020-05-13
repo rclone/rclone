@@ -20,3 +20,8 @@ func Open(name string) (*os.File, error) {
 func Create(name string) (*os.File, error) {
 	return OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 }
+
+// Stat returns information about the named file
+func Stat(name string) (os.FileInfo, error) {
+	return os.Stat(name)
+}

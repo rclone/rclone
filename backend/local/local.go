@@ -17,7 +17,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/djherbis/times"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -1229,30 +1228,39 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 
-	// Temporary Object under construction
-	dstObj := f.newObject(remote)
-
 	// Check it is a file if it exists
-	err := dstObj.lstat()
+	di, err := os.Stat(remote)
 	if os.IsNotExist(err) {
 		// OK
 	} else if err != nil {
 		return nil, err
-	} else if !dstObj.fs.isRegular(dstObj.mode) {
+	} else if !di.Mode().IsRegular() {
 		// It isn't a file
 		return nil, errors.New("can't copy file onto non-file")
 	}
 
 	// Open source for reading
-	in, err := srcObj.Open(ctx)
+	fs.Debugf(f, "Opening source for reading: %v", srcObj.path)
+	srcFd, err := file.Open(srcObj.path)
 	if err != nil {
 		return nil, err
 	}
+	srcWrappedFd := readers.NewLimitedReadCloser(srcFd, -1)
+	srcHash, err := hash.NewMultiHasherTypes(hash.Supported())
+	if err != nil {
+		return nil, err
+	}
+	in := localOpenFile{
+		o:    srcObj,
+		in:   srcWrappedFd,
+		hash: srcHash,
+		fd:   srcFd,
+	}
 	defer in.Close()
 
-	fs.Debugf(f, "Gathering attrs of source")
 	// Gather source attributes
-	si, err := os.Stat(srcObj.path)
+	fs.Debugf(f, "Gathering attrs of source")
+	si, err := file.Stat(in.fd.Name())
 	if err != nil {
 		return nil, err
 	}
@@ -1262,70 +1270,50 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	fs.Debugf(f, "Source modtime: %v", si.ModTime())
 	fs.Debugf(f, "Source size: %v", si.Size())
 
-	// Create destination directories
+	// Put destination file
+	fs.Debugf(f, "Opening destination for writing: %v", f.localPath(remote))
+	dstObj := f.newObject(remote)
 	err = dstObj.mkdirAll()
 	if err != nil {
 		return nil, err
 	}
-
-	fs.Debugf(f, "Opening destination for writing: %v", dstObj.path)
-
-	// Open destination for writing
-	out, err := os.OpenFile(dstObj.path, os.O_RDWR|os.O_CREATE, si.Mode())
+	dstFd, err := file.OpenFile(dstObj.path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, si.Mode())
 	if err != nil {
 		return nil, err
 	}
-	defer out.Close()
+	defer dstFd.Close()
 
-	fs.Debugf(f, "Opening source for reading: %v", srcObj.path)
-
-	// Do the copy
-	_, err = io.Copy(out, in)
+	bytesCopied, err := io.Copy(dstFd, &in)
 	if err != nil {
 		return nil, err
 	}
 
-	err = out.Close()
+	fs.Debugf(f, "Copied %v bytes", bytesCopied)
+	fs.Debugf(f, "Setting mod time to %v", si.ModTime())
+
+	err = os.Chtimes(dstObj.path, si.ModTime(), si.ModTime())
 	if err != nil {
 		return nil, err
 	}
 
-	// Update attributes of destination
-	err = lChtimes(dstObj.path, si.ModTime(), si.ModTime())
+	ds, err := file.Stat(dstObj.path)
 	if err != nil {
+		fs.Debugf(f, "Stat failed on %v", dstObj.path)
 		return nil, err
 	}
-
-	di, _ := os.Stat(dstObj.path)
 
 	fs.Debugf(f, "Dest path: %s", dstObj.path)
-	fs.Debugf(f, "Dest mode: %v", di.Mode())
-	fs.Debugf(f, "Dest modtime: %v", di.ModTime())
-	fs.Debugf(f, "Dest size: %v", di.Size())
+	fs.Debugf(f, "Dest mode: %v", ds.Mode())
+	fs.Debugf(f, "Dest modtime: %v", ds.ModTime())
+	fs.Debugf(f, "Dest size: %v", ds.Size())
 
-	// Update the info
+	fs.Debugf(f, "Updating fs object")
 	err = dstObj.lstat()
 	if err != nil {
 		return nil, err
 	}
 
 	return dstObj, nil
-}
-
-func stat(path string) (mode os.FileMode, mTime time.Time, aTime time.Time, err error) {
-	zeroTime := time.Unix(0, 0)
-	zeroMode := os.FileMode(int(0000))
-
-	osStat, err := os.Stat(path)
-	if err != nil {
-		return zeroMode, zeroTime, zeroTime, err
-	}
-	timeStat, err := times.Stat(path)
-	if err != nil {
-		return zeroMode, zeroTime, zeroTime, err
-	}
-
-	return osStat.Mode(), timeStat.ModTime(), timeStat.AccessTime(), nil
 }
 
 // Check the interfaces are satisfied

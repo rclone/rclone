@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
@@ -1011,10 +1012,11 @@ func TestSyncWithMaxDuration(t *testing.T) {
 		accounting.SetBwLimit(fs.SizeSuffix(0))
 	}()
 
-	// 5 files of 60 bytes at 60 bytes/s 5 seconds
 	testFiles := make([]fstest.Item, 5)
+	strLen := 50 * 1024 * 1024 // 50 Megabytes
+	str, _ := random.Password((strLen * 8))
 	for i := 0; i < len(testFiles); i++ {
-		testFiles[i] = r.WriteFile(fmt.Sprintf("file%d", i), "------------------------------------------------------------", t1)
+		testFiles[i] = r.WriteFile(fmt.Sprintf("file%d", i), string(str), t1)
 	}
 
 	fstest.CheckListing(t, r.Flocal, testFiles)
@@ -1027,7 +1029,7 @@ func TestSyncWithMaxDuration(t *testing.T) {
 	require.NoError(t, err)
 
 	elapsed := time.Since(startTime)
-	maxTransferTime := (time.Duration(len(testFiles)) * 60 * time.Second) / time.Duration(bytesPerSecond)
+	maxTransferTime := (time.Duration((len(testFiles) * strLen)) * time.Second) / time.Duration(bytesPerSecond)
 
 	what := fmt.Sprintf("expecting elapsed time %v between %v and %v", elapsed, maxDuration, maxTransferTime)
 	require.True(t, elapsed >= maxDuration, what)
