@@ -18,12 +18,14 @@ import (
 
 var (
 	options []string
+	useJSON bool
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.StringArrayVarP(cmdFlags, &options, "option", "o", options, "Option in the form name=value or name.")
+	flags.BoolVarP(cmdFlags, &useJSON, "json", "", useJSON, "Always output in JSON format.")
 }
 
 var commandDefinition = &cobra.Command{
@@ -97,15 +99,23 @@ Note to run these commands on a running backend then see
 
 			}
 			// Output the result
-			switch x := out.(type) {
-			case nil:
-			case string:
-				fmt.Println(out)
-			case []string:
-				for _, line := range x {
-					fmt.Println(line)
+			writeJSON := false
+			if useJSON {
+				writeJSON = true
+			} else {
+				switch x := out.(type) {
+				case nil:
+				case string:
+					fmt.Println(out)
+				case []string:
+					for _, line := range x {
+						fmt.Println(line)
+					}
+				default:
+					writeJSON = true
 				}
-			default:
+			}
+			if writeJSON {
 				// Write indented JSON to the output
 				enc := json.NewEncoder(os.Stdout)
 				enc.SetIndent("", "\t")
