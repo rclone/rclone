@@ -102,7 +102,7 @@ Note to run these commands on a running backend then see
 			case string:
 				fmt.Println(out)
 			case []string:
-				for line := range x {
+				for _, line := range x {
 					fmt.Println(line)
 				}
 			default:
