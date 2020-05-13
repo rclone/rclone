@@ -866,6 +866,10 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // makeContainer creates the container if it doesn't exist
 func (f *Fs) makeContainer(ctx context.Context, container string) error {
 	return f.cache.Create(container, func() error {
+		// If this is a SAS URL limited to a container then assume it is already created
+		if f.isLimited {
+			return nil
+		}
 		// now try to create the container
 		return f.pacer.Call(func() (bool, error) {
 			_, err := f.cntURL(container).Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
