@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fstest/mockobject"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Some times used in the tests
@@ -313,6 +314,8 @@ func TestMatchListings(t *testing.T) {
 		b    = mockobject.Object("b")
 		c    = mockobject.Object("c")
 		d    = mockobject.Object("d")
+		uE1  = mockobject.Object("é") // one of the unicode E characters
+		uE2  = mockobject.Object("é")  // a different unicode E character
 		dirA = mockdir.New("A")
 		dirb = mockdir.New("b")
 	)
@@ -418,6 +421,28 @@ func TestMatchListings(t *testing.T) {
 				{A, A},
 			},
 			transforms: []matchTransformFn{strings.ToLower},
+		},
+		{
+			what: "Unicode near-duplicate that becomes duplicate with normalization",
+			input: fs.DirEntries{
+				uE1, uE1,
+				uE2, uE2,
+			},
+			matches: []matchPair{
+				{uE1, uE1},
+			},
+			transforms: []matchTransformFn{norm.NFC.String},
+		},
+		{
+			what: "Unicode near-duplicate with no normalization",
+			input: fs.DirEntries{
+				uE1, uE1,
+				uE2, uE2,
+			},
+			matches: []matchPair{
+				{uE1, uE1},
+				{uE2, uE2},
+			},
 		},
 		{
 			what: "File and directory are not duplicates - srcOnly",

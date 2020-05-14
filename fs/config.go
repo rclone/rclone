@@ -70,6 +70,7 @@ type ConfigInfo struct {
 	IgnoreCaseSync         bool
 	NoTraverse             bool
 	NoCheckDest            bool
+	NoUnicodeNormalization bool
 	NoUpdateModTime        bool
 	DataRateUnit           string
 	CompareDest            string
