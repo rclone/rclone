@@ -61,6 +61,12 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// parsePath parses a putio 'url'
+func parsePath(path string) (root string) {
+	root = strings.Trim(path, "/")
+	return
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	// defer log.Trace(name, "root=%v", root)("f=%+v, err=%v", &f, &err)
@@ -70,6 +76,7 @@ func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	if err != nil {
 		return nil, err
 	}
+	root = parsePath(root)
 	httpClient := fshttp.NewClient(fs.Config)
 	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(name, m, putioConfig, httpClient)
 	if err != nil {
