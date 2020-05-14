@@ -908,6 +908,20 @@ changed and won't need copying then you shouldn't use `--no-traverse`.
 
 See [rclone copy](/commands/rclone_copy/) for an example of how to use it.
 
+### --no-unicode-normalization ###
+
+Don't normalize unicode characters in filenames during the sync routine.
+
+Sometimes, an operating system will store filenames containing unicode
+parts in their decomposed form (particularly macOS). Some cloud storage
+systems will then recompose the unicode, resulting in duplicate files if
+the data is ever copied back to a local filesystem.
+
+Using this flag will disable that functionality, treating each unicode
+character as unique. For example, by default é and é will be normalized
+into the same character. With `--no-unicode-normalization` they will be
+treated as unique characters.
+
 ### --no-update-modtime ###
 
 When using this flag, rclone won't update modification times of remote

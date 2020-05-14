@@ -30,42 +30,43 @@ type syncCopyMove struct {
 	deleteEmptySrcDirs bool
 	dir                string
 	// internal state
-	ctx                  context.Context        // internal context for controlling go-routines
-	cancel               func()                 // cancel the context
-	noTraverse           bool                   // if set don't traverse the dst
-	noCheckDest          bool                   // if set transfer all objects regardless without checking dst
-	deletersWg           sync.WaitGroup         // for delete before go routine
-	deleteFilesCh        chan fs.Object         // channel to receive deletes if delete before
-	trackRenames         bool                   // set if we should do server side renames
-	trackRenamesStrategy trackRenamesStrategy   // stratgies used for tracking renames
-	dstFilesMu           sync.Mutex             // protect dstFiles
-	dstFiles             map[string]fs.Object   // dst files, always filled
-	srcFiles             map[string]fs.Object   // src files, only used if deleteBefore
-	srcFilesChan         chan fs.Object         // passes src objects
-	srcFilesResult       chan error             // error result of src listing
-	dstFilesResult       chan error             // error result of dst listing
-	dstEmptyDirsMu       sync.Mutex             // protect dstEmptyDirs
-	dstEmptyDirs         map[string]fs.DirEntry // potentially empty directories
-	srcEmptyDirsMu       sync.Mutex             // protect srcEmptyDirs
-	srcEmptyDirs         map[string]fs.DirEntry // potentially empty directories
-	checkerWg            sync.WaitGroup         // wait for checkers
-	toBeChecked          *pipe                  // checkers channel
-	transfersWg          sync.WaitGroup         // wait for transfers
-	toBeUploaded         *pipe                  // copiers channel
-	errorMu              sync.Mutex             // Mutex covering the errors variables
-	err                  error                  // normal error from copy process
-	noRetryErr           error                  // error with NoRetry set
-	fatalErr             error                  // fatal error
-	commonHash           hash.Type              // common hash type between src and dst
-	renameMapMu          sync.Mutex             // mutex to protect the below
-	renameMap            map[string][]fs.Object // dst files by hash - only used by trackRenames
-	renamerWg            sync.WaitGroup         // wait for renamers
-	toBeRenamed          *pipe                  // renamers channel
-	trackRenamesWg       sync.WaitGroup         // wg for background track renames
-	trackRenamesCh       chan fs.Object         // objects are pumped in here
-	renameCheck          []fs.Object            // accumulate files to check for rename here
-	compareCopyDest      fs.Fs                  // place to check for files to server side copy
-	backupDir            fs.Fs                  // place to store overwrites/deletes
+	ctx                    context.Context        // internal context for controlling go-routines
+	cancel                 func()                 // cancel the context
+	noTraverse             bool                   // if set don't traverse the dst
+	noCheckDest            bool                   // if set transfer all objects regardless without checking dst
+	noUnicodeNormalization bool                   // don't normalize unicode characters in filenames
+	deletersWg             sync.WaitGroup         // for delete before go routine
+	deleteFilesCh          chan fs.Object         // channel to receive deletes if delete before
+	trackRenames           bool                   // set if we should do server side renames
+	trackRenamesStrategy   trackRenamesStrategy   // stratgies used for tracking renames
+	dstFilesMu             sync.Mutex             // protect dstFiles
+	dstFiles               map[string]fs.Object   // dst files, always filled
+	srcFiles               map[string]fs.Object   // src files, only used if deleteBefore
+	srcFilesChan           chan fs.Object         // passes src objects
+	srcFilesResult         chan error             // error result of src listing
+	dstFilesResult         chan error             // error result of dst listing
+	dstEmptyDirsMu         sync.Mutex             // protect dstEmptyDirs
+	dstEmptyDirs           map[string]fs.DirEntry // potentially empty directories
+	srcEmptyDirsMu         sync.Mutex             // protect srcEmptyDirs
+	srcEmptyDirs           map[string]fs.DirEntry // potentially empty directories
+	checkerWg              sync.WaitGroup         // wait for checkers
+	toBeChecked            *pipe                  // checkers channel
+	transfersWg            sync.WaitGroup         // wait for transfers
+	toBeUploaded           *pipe                  // copiers channel
+	errorMu                sync.Mutex             // Mutex covering the errors variables
+	err                    error                  // normal error from copy process
+	noRetryErr             error                  // error with NoRetry set
+	fatalErr               error                  // fatal error
+	commonHash             hash.Type              // common hash type between src and dst
+	renameMapMu            sync.Mutex             // mutex to protect the below
+	renameMap              map[string][]fs.Object // dst files by hash - only used by trackRenames
+	renamerWg              sync.WaitGroup         // wait for renamers
+	toBeRenamed            *pipe                  // renamers channel
+	trackRenamesWg         sync.WaitGroup         // wg for background track renames
+	trackRenamesCh         chan fs.Object         // objects are pumped in here
+	renameCheck            []fs.Object            // accumulate files to check for rename here
+	compareCopyDest        fs.Fs                  // place to check for files to server side copy
+	backupDir              fs.Fs                  // place to store overwrites/deletes
 }
 
 type trackRenamesStrategy byte
@@ -88,24 +89,25 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
 	s := &syncCopyMove{
-		fdst:               fdst,
-		fsrc:               fsrc,
-		deleteMode:         deleteMode,
-		DoMove:             DoMove,
-		copyEmptySrcDirs:   copyEmptySrcDirs,
-		deleteEmptySrcDirs: deleteEmptySrcDirs,
-		dir:                "",
-		srcFilesChan:       make(chan fs.Object, fs.Config.Checkers+fs.Config.Transfers),
-		srcFilesResult:     make(chan error, 1),
-		dstFilesResult:     make(chan error, 1),
-		dstEmptyDirs:       make(map[string]fs.DirEntry),
-		srcEmptyDirs:       make(map[string]fs.DirEntry),
-		noTraverse:         fs.Config.NoTraverse,
-		noCheckDest:        fs.Config.NoCheckDest,
-		deleteFilesCh:      make(chan fs.Object, fs.Config.Checkers),
-		trackRenames:       fs.Config.TrackRenames,
-		commonHash:         fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
-		trackRenamesCh:     make(chan fs.Object, fs.Config.Checkers),
+		fdst:                   fdst,
+		fsrc:                   fsrc,
+		deleteMode:             deleteMode,
+		DoMove:                 DoMove,
+		copyEmptySrcDirs:       copyEmptySrcDirs,
+		deleteEmptySrcDirs:     deleteEmptySrcDirs,
+		dir:                    "",
+		srcFilesChan:           make(chan fs.Object, fs.Config.Checkers+fs.Config.Transfers),
+		srcFilesResult:         make(chan error, 1),
+		dstFilesResult:         make(chan error, 1),
+		dstEmptyDirs:           make(map[string]fs.DirEntry),
+		srcEmptyDirs:           make(map[string]fs.DirEntry),
+		noTraverse:             fs.Config.NoTraverse,
+		noCheckDest:            fs.Config.NoCheckDest,
+		noUnicodeNormalization: fs.Config.NoUnicodeNormalization,
+		deleteFilesCh:          make(chan fs.Object, fs.Config.Checkers),
+		trackRenames:           fs.Config.TrackRenames,
+		commonHash:             fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
+		trackRenamesCh:         make(chan fs.Object, fs.Config.Checkers),
 	}
 	var err error
 	s.toBeChecked, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetCheckQueue, fs.Config.MaxBacklog)
@@ -782,14 +784,15 @@ func (s *syncCopyMove) run() error {
 
 	// set up a march over fdst and fsrc
 	m := &march.March{
-		Ctx:           s.ctx,
-		Fdst:          s.fdst,
-		Fsrc:          s.fsrc,
-		Dir:           s.dir,
-		NoTraverse:    s.noTraverse,
-		Callback:      s,
-		DstIncludeAll: filter.Active.Opt.DeleteExcluded,
-		NoCheckDest:   s.noCheckDest,
+		Ctx:                    s.ctx,
+		Fdst:                   s.fdst,
+		Fsrc:                   s.fsrc,
+		Dir:                    s.dir,
+		NoTraverse:             s.noTraverse,
+		Callback:               s,
+		DstIncludeAll:          filter.Active.Opt.DeleteExcluded,
+		NoCheckDest:            s.noCheckDest,
+		NoUnicodeNormalization: s.noUnicodeNormalization,
 	}
 	s.processError(m.Run())
 
