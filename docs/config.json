@@ -16,6 +16,10 @@
     "taxonomy",
     "taxonomyTerm"
   ],
+  "ignoreFiles": [
+    "~$",
+    "^\\."
+  ],
   "markup": {
     "goldmark": {
       "renderer": {
