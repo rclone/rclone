@@ -429,6 +429,20 @@ Set to 0 to disable the buffering for the minimum memory usage.
 Note that the memory allocation of the buffers is influenced by the
 [--use-mmap](#use-mmap) flag.
 
+### --check-first ###
+
+If this flag is set then in a `sync`, `copy` or `move`, rclone will do
+all the checks to see whether files need to be transferred before
+doing any of the transfers. Normally rclone would start running
+transfers as soon as possible.
+
+This flag can be useful on IO limited systems where transfers
+interfere with checking.
+
+Using this flag can use more memory as it effectively sets
+`--max-backlog` to infinite. This means that all the info on the
+objects to transfer is held in memory before the transfers start.
+
 ### --checkers=N ###
 
 The number of checkers to run in parallel.  Checkers do the equality

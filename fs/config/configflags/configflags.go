@@ -74,6 +74,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &fs.Config.IgnoreChecksum, "ignore-checksum", "", fs.Config.IgnoreChecksum, "Skip post copy check of checksums.")
 	flags.BoolVarP(flagSet, &fs.Config.IgnoreCaseSync, "ignore-case-sync", "", fs.Config.IgnoreCaseSync, "Ignore case when synchronizing")
 	flags.BoolVarP(flagSet, &fs.Config.NoTraverse, "no-traverse", "", fs.Config.NoTraverse, "Don't traverse destination file system on copy.")
+	flags.BoolVarP(flagSet, &fs.Config.CheckFirst, "check-first", "", fs.Config.CheckFirst, "Do all the checks before starting transfers.")
 	flags.BoolVarP(flagSet, &fs.Config.NoCheckDest, "no-check-dest", "", fs.Config.NoCheckDest, "Don't check the destination, copy regardless.")
 	flags.BoolVarP(flagSet, &fs.Config.NoUnicodeNormalization, "no-unicode-normalization", "", fs.Config.NoUnicodeNormalization, "Don't normalize unicode characters in filenames.")
 	flags.BoolVarP(flagSet, &fs.Config.NoUpdateModTime, "no-update-modtime", "", fs.Config.NoUpdateModTime, "Don't update destination mod-time if files identical.")
