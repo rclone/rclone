@@ -383,7 +383,7 @@ alphabetical order of full name of remote (eg `drive` is ordered as
     * update them with `make backenddocs` - revert any changes in other backends
   * `docs/content/overview.md` - overview docs
   * `docs/content/docs.md` - list of remotes in config section
-  * `docs/content/about.md` - front page of rclone.org
+  * `docs/content/_index.md` - front page of rclone.org
   * `docs/layouts/chrome/navbar.html` - add it to the website navigation
   * `bin/make_manual.py` - add the page to the `docs` constant
 

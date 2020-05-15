@@ -13,7 +13,7 @@ outfile = "MANUAL.md"
 
 # Order to add docs segments to make outfile
 docs = [
-    "about.md",
+    "_index.md",
     "install.md",
     "docs.md",
     "remote_setup.md",

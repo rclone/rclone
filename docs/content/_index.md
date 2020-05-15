@@ -3,7 +3,6 @@ title: "Rclone"
 description: "rclone syncs files to and from Google Drive, S3, Swift, Cloudfiles, Dropbox, Google Cloud Storage and Amazon Drive."
 type: page
 date: "2017-09-25"
-groups: ["about"]
 ---
 
 # Rclone - rsync for cloud storage

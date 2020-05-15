@@ -4,11 +4,8 @@
 <div class="container">
     <div class="row">
         <div class="col-md-10">
-          {{ range $key, $value := .Site.Taxonomies.groups.about.Pages }}
-          {{ $value.Content }}
-          {{ end }}
+          {{ .Content }}
         </div>
-
         <!-- Sidebar -->
         <div class="col-md-2">
         {{ template "chrome/menu.html" . }}
