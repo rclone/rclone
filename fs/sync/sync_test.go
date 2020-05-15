@@ -97,6 +97,23 @@ func TestCopyNoTraverse(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 }
 
+// Now with --check-first
+func TestCopyCheckFirst(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.CheckFirst = true
+	defer func() { fs.Config.CheckFirst = false }()
+
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file1)
+}
+
 // Now with --no-traverse
 func TestSyncNoTraverse(t *testing.T) {
 	r := fstest.NewRun(t)
