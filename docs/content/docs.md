@@ -745,6 +745,9 @@ time and make `--order-by` work more accurately.
 Setting this small will make rclone more synchronous to the listings
 of the remote which may be desirable.
 
+Setting this to a negative number will make the backlog as large as
+possible.
+
 ### --max-delete=N ###
 
 This tells rclone not to delete more than N files.  If that limit is
