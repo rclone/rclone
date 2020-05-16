@@ -107,10 +107,20 @@ The SFTP remote supports three authentication methods:
 Key files should be PEM-encoded private key files. For instance `/home/$USER/.ssh/id_rsa`.
 Only unencrypted OpenSSH or PEM encrypted files are supported.
 
-If you don't specify `pass` or `key_file` then rclone will attempt to contact an ssh-agent.
+The key file can be specified in either an external file (key_file) or contained within the 
+rclone config file (key_pem).  If using key_pem in the config file, the entry should be on a
+single line with new line ('\n' or '\r\n') separating lines.  i.e. 
+
+key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+
+This will generate it correctly for key_pem for use in the config:  
+
+    awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
+
+If you don't specify `pass`, `key_file`, or `key_pem` then rclone will attempt to contact an ssh-agent.
 
 You can also specify `key_use_agent` to force the usage of an ssh-agent. In this case
-`key_file` can also be specified to force the usage of a specific key in the ssh-agent.
+`key_file` or `key_pem` can also be specified to force the usage of a specific key in the ssh-agent.
 
 Using an ssh-agent is the only way to load encrypted OpenSSH keys at the moment.
 
