@@ -103,6 +103,12 @@ will be time of upload.
 
 FTP does not support any checksums.
 
+### Usage without a config file ###
+
+An example how to use the ftp remote without a config file:
+
+    rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=`rclone obscure dummy`
+
 #### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)
