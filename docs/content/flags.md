@@ -1,7 +1,7 @@
 ---
 title: "Global Flags"
 description: "Rclone Global Flags"
-date: "2020-05-17T11:53:14+01:00"
+date: "2020-05-18T10:38:09+01:00"
 ---
 
 # Global Flags
@@ -144,7 +144,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.51.0-340-g9ba6ccef-new-docs-beta")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.51.0-346-g560d2619-new-docs-beta")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
