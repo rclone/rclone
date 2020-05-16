@@ -59,7 +59,7 @@ Note to run these commands on a running backend then see
 [backend/command](/rc/#backend/command) in the rc docs.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(2, 1E6, command, args)
+		cmd.CheckArgs(2, 1e6, command, args)
 		name, remote := args[0], args[1]
 		cmd.Run(false, false, command, func() error {
 			// show help if remote is a backend name
