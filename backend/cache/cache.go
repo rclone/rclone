@@ -520,9 +520,6 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	// override only those features that use a temp fs and it doesn't support them
 	//f.features.ChangeNotify = f.ChangeNotify
 	if f.opt.TempWritePath != "" {
-		if f.tempFs.Features().Copy == nil {
-			f.features.Copy = nil
-		}
 		if f.tempFs.Features().Move == nil {
 			f.features.Move = nil
 		}
@@ -1531,6 +1528,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	do := f.Fs.Features().Copy
 	if do == nil {
 		fs.Errorf(src, "source remote (%v) doesn't support Copy", src.Fs())
+		return nil, fs.ErrorCantCopy
+	}
+	if f.opt.TempWritePath != "" && src.Fs() == f.tempFs {
 		return nil, fs.ErrorCantCopy
 	}
 	// the source must be a cached object or we abort
