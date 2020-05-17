@@ -8,10 +8,6 @@
   "title": "rclone - rsync for cloud storage",
   "description": "rclone - rsync for cloud storage: google drive, s3, swift, cloudfiles, dropbox, memstore...",
   "canonifyurls": false,
-  "blackfriday": {
-    "smartDashes": false,
-    "plainIDAnchors": true
-  },
   "disableKinds": [
     "taxonomy",
     "taxonomyTerm"
@@ -22,6 +18,12 @@
   ],
   "markup": {
     "goldmark": {
+      "extensions": {
+        "typographer": false
+      },
+      "parser": {
+        "autoHeadingIDType": "blackfriday"
+      },
       "renderer": {
         "unsafe": true
       }
