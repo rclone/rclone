@@ -2,20 +2,23 @@
 <body>
 {{ template "chrome/navbar.html" . }}
 <div class="container">
-    <div class="row">
-        <div class="col-md-10">
-            <div class="well well-sm">
-                    <h3>{{ .Title }}<br> <small>{{ .Description }}</small></h3>
-                    <hr>
-                    {{ .Content }}
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="col-md-2">
-            {{ template "chrome/menu.html" . }}
-        </div>
+  <div class="row">
+    <div class="col-md-10">
+      <div class="card">
+      <!-- <div class="card-header"> -->
+      <!--   <h3>{{ .Title }}<br> <small>{{ .Description }}</small></h3> -->
+      <!-- </div> -->
+      <div class="card-body bg-light">
+        {{ .Content }}
+      </div>
+      </div>
     </div>
-{{ template "chrome/footer.copyright.html" . }}
+
+    <!-- Sidebar -->
+    <div class="col-md-2">
+      {{ template "chrome/menu.html" . }}
+    </div>
+  </div>
+  {{ template "chrome/footer.copyright.html" . }}
 </div>
 {{ template "chrome/footer.html" . }}
